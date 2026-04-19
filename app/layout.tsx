@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -44,10 +45,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user: User | null = null;
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data.user ?? null;
+  } catch {
+    // Env ausente, restrição de cookies em RSC ou rede — evita 500 na página inteira.
+    user = null;
+  }
 
   return (
     <html

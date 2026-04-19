@@ -3,19 +3,25 @@ import { createClient } from "@/lib/supabase/server";
 
 /** Faixa fixa se o usuário está logado e ainda não aceitou termos/privacidade (LGPD). */
 export async function LegalGate() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user: { id: string } | null = null;
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data.user ?? null;
+    if (!user) return null;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("termos_aceitos_em")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile?.termos_aceitos_em) return null;
+  } catch {
+    return null;
+  }
+
   if (!user) return null;
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("termos_aceitos_em")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profile?.termos_aceitos_em) return null;
 
   return (
     <div
