@@ -1,0 +1,102 @@
+import Link from "next/link";
+import { marcarNotificacaoLida, marcarTodasNotificacoesLidas } from "@/app/comunidade/actions";
+
+export type NotifRow = {
+  id: number;
+  mensagem: string;
+  tipo: string | null;
+  lida: boolean;
+  criada_em: string | null;
+  data_criacao: string | null;
+};
+
+function notifDate(n: NotifRow) {
+  const raw = n.data_criacao ?? n.criada_em;
+  if (!raw) return "";
+  try {
+    return new Date(raw).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  } catch {
+    return "";
+  }
+}
+
+export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) {
+  const unread = items.filter((n) => n.lida !== true).length;
+
+  return (
+    <section id="notificacoes" className="scroll-mt-24">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Notificações</h2>
+          <p className="mt-1 text-sm text-eid-text-secondary">
+            Avisos de match, respostas e lembretes, tudo em um só lugar.
+          </p>
+        </div>
+        {unread > 0 ? (
+          <form action={marcarTodasNotificacoesLidas}>
+            <button
+              type="submit"
+              className="rounded-lg border border-eid-primary-500/40 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:bg-eid-primary-500/10"
+            >
+              Marcar todas lidas ({unread})
+            </button>
+          </form>
+        ) : null}
+      </div>
+
+      {items.length === 0 ? (
+        <p className="mt-4 rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-6 text-center text-sm text-eid-text-secondary">
+          Nenhuma notificação ainda. Quando alguém te desafiar ou responder um pedido, aparece aqui.
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-2">
+          {items.map((n) => (
+            <li
+              key={n.id}
+              className={`rounded-xl border p-3 transition md:rounded-2xl md:p-4 ${
+                n.lida === true
+                  ? "border-[color:var(--eid-border-subtle)] bg-eid-card/80"
+                  : "border-eid-primary-500/35 bg-gradient-to-br from-eid-primary-500/10 to-eid-card"
+              }`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  {n.tipo ? (
+                    <span className="inline-block rounded-full border border-eid-primary-500/30 px-2 py-0.5 text-[10px] font-extrabold uppercase text-eid-primary-300">
+                      {n.tipo}
+                    </span>
+                  ) : null}
+                  <p className={`mt-2 text-sm leading-relaxed ${n.lida === true ? "text-eid-text-secondary" : "text-eid-fg"}`}>
+                    {n.mensagem}
+                  </p>
+                  {notifDate(n) ? (
+                    <p className="mt-2 text-[11px] text-eid-text-secondary">{notifDate(n)}</p>
+                  ) : null}
+                </div>
+                {n.lida !== true ? (
+                  <form action={marcarNotificacaoLida} className="shrink-0">
+                    <input type="hidden" name="notif_id" value={String(n.id)} />
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-[11px] font-semibold text-eid-text-secondary transition hover:border-eid-primary-500/40 hover:text-eid-fg"
+                    >
+                      Lida
+                    </button>
+                  </form>
+                ) : null}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <p className="mt-4 text-center text-[11px] text-eid-text-secondary">
+        Pedidos para aceitar estão na seção &quot;Pedidos de match&quot; abaixo.{" "}
+        <Link href="/agenda" className="font-semibold text-eid-primary-300 hover:underline">
+          Agenda e placares
+        </Link>
+        .
+      </p>
+    </section>
+  );
+}

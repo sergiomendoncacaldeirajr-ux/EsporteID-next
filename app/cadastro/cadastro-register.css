@@ -1,0 +1,92 @@
+/* react-phone-number-input — EsporteID (tema claro/escuro via tokens) */
+
+.cadastro-phone.PhoneInput {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  --PhoneInput-color--focus: var(--eid-primary-500);
+  --PhoneInputCountryFlag-height: 1.15rem;
+  --PhoneInputCountryFlag-borderColor: color-mix(in srgb, var(--eid-fg) 35%, transparent);
+  --PhoneInputCountrySelectArrow-color: var(--eid-text-secondary);
+  --PhoneInputCountrySelectArrow-opacity: 0.95;
+}
+
+.cadastro-phone .PhoneInputCountry {
+  margin-right: 0;
+  flex-shrink: 0;
+}
+
+.cadastro-phone .PhoneInputCountryIcon {
+  box-shadow: none;
+}
+
+.cadastro-phone .PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font-size: 15px;
+  padding-left: 0.25rem;
+  color: var(--eid-fg) !important;
+}
+
+.cadastro-phone .PhoneInputCountrySelect {
+  border: none !important;
+  background: transparent !important;
+  padding-right: 0.35rem;
+}
+
+html[data-eid-theme="dark"] .cadastro-phone .PhoneInputCountrySelect {
+  color-scheme: dark;
+}
+html[data-eid-theme="light"] .cadastro-phone .PhoneInputCountrySelect {
+  color-scheme: light;
+}
+
+/* Opções do <select> de país (melhor esforço — varia por SO/navegador) */
+.cadastro-phone .PhoneInputCountrySelect option {
+  background-color: var(--eid-card);
+  color: var(--eid-fg);
+}
+
+.cadastro-phone .PhoneInputCountrySelect:focus + .PhoneInputCountryIcon--border {
+  box-shadow:
+    0 0 0 1px var(--eid-primary-500),
+    inset 0 0 0 1px var(--eid-primary-500);
+}
+
+.cadastro-phone .PhoneInputCountrySelectArrow {
+  opacity: 0.85;
+}
+
+[data-eid-theme="light"] .cadastro-phone .PhoneInputCountrySelect option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+/* Select de gênero (e outros .eid-select no cadastro) — fundo alinhado ao tema (texto via Tailwind) */
+.eid-select {
+  min-height: 1.5rem;
+  border-radius: 8px;
+  padding-top: 0.15rem;
+  padding-bottom: 0.15rem;
+  background-color: color-mix(in srgb, var(--eid-field-bg) 88%, transparent);
+}
+
+.eid-select option {
+  background-color: var(--eid-card);
+  color: var(--eid-fg);
+}
+
+[data-eid-theme="light"] .eid-select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.eid-select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--eid-primary-500) 45%, transparent);
+  outline-offset: 1px;
+}

@@ -1,0 +1,259 @@
+@import "tailwindcss";
+
+/*
+ * EsporteID — identidade visual (fonte: logo oficial)
+ * ---------------------------------------------------------------------------
+ * • Azul estrutural (#2563eb e escala): navegação, foco, links informativos
+ * • Laranja ação (#f97316 e escala): CTAs, destaques de conversão
+ * • Base ink (#0b1d2e): fundo profundo / PWA (coerente com marca)
+ * • Verde #25D366: apenas ícone WhatsApp (terceiro), nunca cor primária da marca
+ *
+ * Temas: padrão escuro (:root). Tema claro: [data-eid-theme="light"] no <html>.
+ */
+
+:root {
+  /* Marca — núcleo */
+  --eid-brand-ink: #0b1d2e;
+  --eid-primary-950: #0a1628;
+  --eid-primary-900: #172554;
+  --eid-primary-700: #1e3a8a;
+  --eid-primary-500: #2563eb;
+  --eid-primary-400: #3b82f6;
+  --eid-primary-300: #60a5fa;
+  --eid-action-600: #ea580c;
+  --eid-action-500: #f97316;
+  --eid-action-400: #fb923c;
+
+  /* Superfícies — escuro (padrão) */
+  --eid-bg: #070d18;
+  --eid-surface: #0c1424;
+  --eid-card: #111c2e;
+  --eid-field-bg: #131d32;
+
+  /* Texto — escuro */
+  --eid-fg: #f1f5f9;
+  --eid-text-primary: #f1f5f9;
+  --eid-text-secondary: #94a3b8;
+  --eid-text-muted: #b0bfd4;
+  --eid-on-dark: var(--eid-fg);
+
+  /* Bordas / foco */
+  --eid-border: #e2e8f0;
+  --eid-border-subtle: rgba(255, 255, 255, 0.1);
+  --eid-focus-ring: var(--eid-primary-500);
+
+  --background: var(--eid-bg);
+  --foreground: var(--eid-fg);
+}
+
+/* Tema claro — mesma marca, maior contraste em fundos claros */
+[data-eid-theme="light"] {
+  --eid-bg: #f4f7fc;
+  --eid-surface: #ffffff;
+  --eid-card: #ffffff;
+  --eid-field-bg: #f1f5f9;
+
+  --eid-fg: #0f172a;
+  --eid-text-primary: #0f172a;
+  --eid-text-secondary: #475569;
+  --eid-text-muted: #64748b;
+  --eid-on-dark: var(--eid-fg);
+
+  --eid-border-subtle: rgba(15, 23, 42, 0.12);
+  --eid-focus-ring: var(--eid-primary-500);
+}
+
+@theme inline {
+  --color-background: var(--eid-bg);
+  --color-foreground: var(--eid-fg);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-eid-bg: var(--eid-bg);
+  --color-eid-surface: var(--eid-surface);
+  --color-eid-card: var(--eid-card);
+  --color-eid-primary-700: var(--eid-primary-700);
+  --color-eid-primary-500: var(--eid-primary-500);
+  --color-eid-primary-300: var(--eid-primary-300);
+  --color-eid-action-400: var(--eid-action-400);
+  --color-eid-action-500: var(--eid-action-500);
+  --color-eid-action-600: var(--eid-action-600);
+  --color-eid-text: var(--eid-text-primary);
+  --color-eid-text-secondary: var(--eid-text-secondary);
+  --color-eid-text-muted: var(--eid-text-muted);
+  --color-eid-border: var(--eid-border);
+  --color-eid-on-dark: var(--eid-on-dark);
+  --color-eid-fg: var(--eid-fg);
+}
+
+/* Controles nativos (select, etc.) coerentes com tema claro/escuro */
+html {
+  color-scheme: dark;
+}
+html[data-eid-theme="light"] {
+  color-scheme: light;
+}
+
+/* Listas nativas de <select> (Windows/Chrome): força popup coerente com o tema */
+html[data-eid-theme="dark"] select {
+  color-scheme: dark;
+}
+html[data-eid-theme="light"] select {
+  color-scheme: light;
+}
+html[data-eid-theme="dark"] select,
+html[data-eid-theme="dark"] select option {
+  background-color: var(--eid-card);
+  color: var(--eid-fg);
+}
+html[data-eid-theme="light"] select,
+html[data-eid-theme="light"] select option {
+  background-color: var(--eid-card);
+  color: var(--eid-fg);
+}
+
+body {
+  background-color: var(--eid-bg);
+  background-image: radial-gradient(
+    ellipse 120% 70% at 50% -25%,
+    color-mix(in srgb, var(--eid-primary-500) 14%, transparent),
+    transparent 52%
+  );
+  color: var(--eid-fg);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Mobile: fundo sólido e toque mais “app nativo” (menos ruído visual) */
+@media (max-width: 767px) {
+  body {
+    background-image: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+[data-eid-theme="light"] body {
+  background-image: radial-gradient(
+    ellipse 120% 70% at 50% -25%,
+    color-mix(in srgb, var(--eid-primary-500) 10%, transparent),
+    transparent 52%
+  );
+}
+
+/* Auth / login / cadastro — camadas (adapta ao tema) */
+.eid-auth-bg {
+  background-color: var(--eid-bg);
+  background-image:
+    radial-gradient(
+      ellipse 100% 55% at 50% -15%,
+      color-mix(in srgb, var(--eid-primary-500) 16%, transparent),
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 70% 45% at 100% 80%,
+      color-mix(in srgb, var(--eid-action-500) 8%, transparent),
+      transparent 45%
+    ),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--eid-brand-ink) 55%, #050810) 0%,
+      #050810 55%,
+      #060912 100%
+    );
+}
+
+[data-eid-theme="light"] .eid-auth-bg {
+  background-image:
+    radial-gradient(
+      ellipse 100% 55% at 50% -15%,
+      color-mix(in srgb, var(--eid-primary-500) 12%, transparent),
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 70% 45% at 100% 80%,
+      color-mix(in srgb, var(--eid-action-500) 6%, transparent),
+      transparent 45%
+    ),
+    linear-gradient(165deg, #ffffff 0%, var(--eid-bg) 55%, #eef2f8 100%);
+}
+
+/* Cartão em telas de login/cadastro */
+.eid-auth-card {
+  position: relative;
+  border-radius: 1rem;
+  border: 1px solid var(--eid-border-subtle);
+  background: color-mix(in srgb, var(--eid-card) 88%, transparent);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+[data-eid-theme="light"] .eid-auth-card {
+  background: var(--eid-card);
+  backdrop-filter: none;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.1);
+}
+
+/* Botão primário (CTA) — laranja marca */
+.eid-btn-primary {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--eid-action-500);
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease;
+}
+.eid-btn-primary:hover {
+  background: var(--eid-action-400);
+}
+.eid-btn-primary:active {
+  background: var(--eid-action-600);
+}
+.eid-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Cartão */
+.eid-card {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--eid-primary-500) 22%, transparent);
+  background: var(--eid-card);
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+[data-eid-theme="light"] .eid-card {
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+}
+
+/* Campo em telas escuras */
+.eid-input-dark {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--eid-border-subtle);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.75rem;
+  color: var(--eid-fg);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+[data-eid-theme="light"] .eid-input-dark {
+  background: var(--eid-field-bg);
+  border-color: var(--eid-border-subtle);
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.eid-input-dark:focus {
+  outline: none;
+  border-color: var(--eid-primary-500);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.15),
+    0 0 0 2px color-mix(in srgb, var(--eid-primary-500) 28%, transparent);
+}
+
+/* Foco em grupos de input (auth) */
+.eid-focus-ring:focus-within {
+  border-color: var(--eid-focus-ring) !important;
+}
