@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { usuarioPodeCriarTorneio } from "@/lib/torneios/organizador";
 
 export const metadata = {
   title: "Torneios",
@@ -9,14 +10,15 @@ export const metadata = {
 };
 
 type Props = {
-  searchParams?: Promise<{ q?: string; page?: string }>;
+  searchParams?: Promise<{ q?: string; page?: string; esporte_id?: string }>;
 };
 
 function statusStyle(status: string | null) {
   const s = (status ?? "").toLowerCase();
-  if (s.includes("inscri")) return "border-sky-400/40 bg-sky-500/15 text-sky-200";
-  if (s.includes("and") || s.includes("progress")) return "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
-  if (s.includes("final")) return "border-amber-400/40 bg-amber-500/15 text-amber-200";
+  if (s === "aberto") return "border-sky-400/40 bg-sky-500/15 text-sky-200";
+  if (s.includes("andamento") || s.includes("progress")) return "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
+  if (s.includes("encerr") || s.includes("final")) return "border-amber-400/40 bg-amber-500/15 text-amber-200";
+  if (s.includes("cancel")) return "border-red-400/35 bg-red-500/15 text-red-200";
   return "border-eid-primary-500/35 bg-eid-primary-500/10 text-eid-primary-200";
 }
 
@@ -24,12 +26,16 @@ export default async function TorneiosPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const q = (sp.q ?? "").trim().toLowerCase();
   const page = Math.max(1, Number(sp.page ?? 1) || 1);
+  const esporteFiltro = sp.esporte_id ? Number(sp.esporte_id) : NaN;
   const pageSize = 12;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/torneios");
+
+  const podeCriar = await usuarioPodeCriarTorneio(supabase, user.id);
+  const { data: esportesLista } = await supabase.from("esportes").select("id, nome").order("nome", { ascending: true });
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
@@ -40,11 +46,16 @@ export default async function TorneiosPage({ searchParams }: Props) {
   if (q) {
     query = query.ilike("nome", `%${q}%`);
   }
+  if (Number.isFinite(esporteFiltro) && esporteFiltro > 0) {
+    query = query.eq("esporte_id", esporteFiltro);
+  }
   const { data: filtrados, count } = await query.range(from, to);
   const lista = filtrados ?? [];
   const hasPrev = page > 1;
   const hasNext = count != null ? page * pageSize < count : (filtrados?.length ?? 0) === pageSize;
-  const queryBase = `q=${encodeURIComponent(sp.q ?? "")}`;
+  const queryBase = [`q=${encodeURIComponent(sp.q ?? "")}`, sp.esporte_id ? `esporte_id=${encodeURIComponent(sp.esporte_id)}` : ""]
+    .filter(Boolean)
+    .join("&");
 
   return (
     <>
@@ -59,30 +70,65 @@ export default async function TorneiosPage({ searchParams }: Props) {
                 Inscrições, chaves e premiação, com destaque para datas e valores.
               </p>
             </div>
-            <Link
-              href="/dashboard"
-              className="shrink-0 rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-center text-xs font-bold text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg"
-            >
-              Painel
-            </Link>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              {podeCriar ? (
+                <Link
+                  href="/torneios/criar"
+                  className="rounded-xl border border-eid-primary-500/40 px-4 py-2 text-center text-xs font-bold text-eid-primary-300 transition hover:bg-eid-primary-500/10"
+                >
+                  Criar torneio
+                </Link>
+              ) : null}
+              <Link
+                href="/dashboard"
+                className="rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-center text-xs font-bold text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg"
+              >
+                Painel
+              </Link>
+            </div>
           </div>
         </div>
 
-        <form className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <form className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
           <input
             name="q"
             defaultValue={sp.q ?? ""}
             placeholder="Buscar torneio..."
-            className="eid-input-dark h-11 flex-1 rounded-2xl px-4 text-sm text-eid-fg placeholder:text-eid-text-secondary/85"
+            className="eid-input-dark h-11 min-w-0 flex-1 rounded-2xl px-4 text-sm text-eid-fg placeholder:text-eid-text-secondary/85"
           />
+          <select
+            name="esporte_id"
+            defaultValue={sp.esporte_id ?? ""}
+            className="eid-input-dark h-11 min-w-[160px] rounded-2xl px-4 text-sm text-eid-fg"
+          >
+            <option value="">Todos os esportes</option>
+            {(esportesLista ?? []).map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.nome}
+              </option>
+            ))}
+          </select>
           <button type="submit" className="eid-btn-primary h-11 shrink-0 rounded-2xl px-6 text-sm font-black uppercase tracking-wide">
             Filtrar
           </button>
         </form>
 
-        {q ? (
+        {q || sp.esporte_id ? (
           <p className="mb-6 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/10 px-4 py-3 text-xs text-eid-text-secondary">
-            Busca: <span className="font-bold text-eid-fg">{sp.q}</span>
+            {q ? (
+              <>
+                Busca: <span className="font-bold text-eid-fg">{sp.q}</span>
+                {sp.esporte_id ? " · " : null}
+              </>
+            ) : null}
+            {sp.esporte_id ? (
+              <>
+                Esporte:{" "}
+                <span className="font-bold text-eid-fg">
+                  {(esportesLista ?? []).find((e) => String(e.id) === sp.esporte_id)?.nome ?? sp.esporte_id}
+                </span>
+              </>
+            ) : null}
           </p>
         ) : null}
 
