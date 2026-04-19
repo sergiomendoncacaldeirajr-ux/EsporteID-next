@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import { createClient } from "@/lib/supabase/server";
 
 export async function SiteFooter() {
@@ -6,6 +7,7 @@ export async function SiteFooter() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const isPlatformAdmin = user ? await getIsPlatformAdmin() : false;
 
   return (
     <footer className="mt-auto border-t border-[color:var(--eid-border-subtle)] bg-eid-bg/95 py-4 text-sm text-eid-text-secondary backdrop-blur-sm md:py-8">
@@ -49,6 +51,14 @@ export async function SiteFooter() {
           >
             Seus dados
           </Link>
+          {user && isPlatformAdmin ? (
+            <Link
+              href="/admin"
+              className="font-semibold text-eid-primary-400 underline-offset-2 transition hover:text-eid-primary-300 hover:underline"
+            >
+              Administração
+            </Link>
+          ) : null}
         </nav>
       </div>
     </footer>

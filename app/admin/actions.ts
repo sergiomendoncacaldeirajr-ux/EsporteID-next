@@ -2,9 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
+import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
-async function svc() {
+function svc() {
   if (!hasServiceRoleConfig()) throw new Error("Service role não configurada.");
   return createServiceRoleClient();
 }
@@ -13,92 +14,79 @@ async function guard() {
   if (!(await getIsPlatformAdmin())) throw new Error("Acesso negado.");
 }
 
-export type ActionResult = { ok: true } | { ok: false; message: string };
-
-export async function adminSetEsporteAtivo(formData: FormData): Promise<ActionResult> {
+export async function adminSetEsporteAtivo(formData: FormData) {
   try {
     await guard();
     const id = Number(formData.get("id"));
     const ativo = formData.get("ativo") === "true";
-    if (!Number.isFinite(id)) return { ok: false, message: "ID inválido." };
-    const db = await svc();
-    const { error } = await db.from("esportes").update({ ativo }).eq("id", id);
-    if (error) return { ok: false, message: error.message };
+    if (!Number.isFinite(id)) return;
+    const { error } = await svc().from("esportes").update({ ativo }).eq("id", id);
+    if (error) return;
     revalidatePath("/admin/esportes");
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "Erro." };
+  } catch {
+    return;
   }
 }
 
-export async function adminSetTorneioStatus(formData: FormData): Promise<ActionResult> {
+export async function adminSetTorneioStatus(formData: FormData) {
   try {
     await guard();
     const id = Number(formData.get("id"));
     const status = String(formData.get("status") ?? "").trim();
-    if (!Number.isFinite(id) || !status) return { ok: false, message: "Dados inválidos." };
-    const db = await svc();
-    const { error } = await db.from("torneios").update({ status }).eq("id", id);
-    if (error) return { ok: false, message: error.message };
+    if (!Number.isFinite(id) || !status) return;
+    const { error } = await svc().from("torneios").update({ status }).eq("id", id);
+    if (error) return;
     revalidatePath("/admin/torneios");
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "Erro." };
+  } catch {
+    return;
   }
 }
 
-export async function adminSetEspacoStatus(formData: FormData): Promise<ActionResult> {
+export async function adminSetEspacoStatus(formData: FormData) {
   try {
     await guard();
     const id = Number(formData.get("id"));
     const status = String(formData.get("status") ?? "").trim();
-    if (!Number.isFinite(id) || !status) return { ok: false, message: "Dados inválidos." };
-    const db = await svc();
-    const { error } = await db.from("espacos_genericos").update({ status }).eq("id", id);
-    if (error) return { ok: false, message: error.message };
+    if (!Number.isFinite(id) || !status) return;
+    const { error } = await svc().from("espacos_genericos").update({ status }).eq("id", id);
+    if (error) return;
     revalidatePath("/admin/locais");
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "Erro." };
+  } catch {
+    return;
   }
 }
 
-export async function adminSetEspacoListagem(formData: FormData): Promise<ActionResult> {
+export async function adminSetEspacoListagem(formData: FormData) {
   try {
     await guard();
     const id = Number(formData.get("id"));
     const ativo = formData.get("ativo_listagem") === "true";
-    if (!Number.isFinite(id)) return { ok: false, message: "ID inválido." };
-    const db = await svc();
-    const { error } = await db.from("espacos_genericos").update({ ativo_listagem: ativo }).eq("id", id);
-    if (error) return { ok: false, message: error.message };
+    if (!Number.isFinite(id)) return;
+    const { error } = await svc().from("espacos_genericos").update({ ativo_listagem: ativo }).eq("id", id);
+    if (error) return;
     revalidatePath("/admin/locais");
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "Erro." };
+  } catch {
+    return;
   }
 }
 
-export async function adminSetDenunciaStatus(formData: FormData): Promise<ActionResult> {
+export async function adminSetDenunciaStatus(formData: FormData) {
   try {
     await guard();
     const id = Number(formData.get("id"));
     const status = String(formData.get("status") ?? "").trim();
-    if (!Number.isFinite(id) || !status) return { ok: false, message: "Dados inválidos." };
-    const db = await svc();
-    const { error } = await db.from("denuncias").update({ status }).eq("id", id);
-    if (error) return { ok: false, message: error.message };
+    if (!Number.isFinite(id) || !status) return;
+    const { error } = await svc().from("denuncias").update({ status }).eq("id", id);
+    if (error) return;
     revalidatePath("/admin/denuncias");
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "Erro." };
+  } catch {
+    return;
   }
 }
 
-export async function adminUpdateFinanceiro(formData: FormData): Promise<ActionResult> {
+export async function adminUpdateFinanceiro(formData: FormData) {
   try {
     await guard();
-    const db = await svc();
     const row = {
       torneio_taxa_fixa: Number(formData.get("torneio_taxa_fixa")),
       torneio_taxa_promo: Number(formData.get("torneio_taxa_promo")),
@@ -108,30 +96,27 @@ export async function adminUpdateFinanceiro(formData: FormData): Promise<ActionR
       plataforma_sobre_taxa_gateway: Number(formData.get("plataforma_sobre_taxa_gateway")),
       plataforma_sobre_taxa_gateway_promo: Number(formData.get("plataforma_sobre_taxa_gateway_promo")),
     };
-    if (Object.values(row).some((n) => Number.isNaN(n))) {
-      return { ok: false, message: "Valores numéricos inválidos." };
-    }
-    const { error } = await db.from("ei_financeiro_config").update(row).eq("id", 1);
-    if (error) return { ok: false, message: error.message };
+    if (Object.values(row).some((n) => Number.isNaN(n))) return;
+    const { error } = await svc().from("ei_financeiro_config").update(row).eq("id", 1);
+    if (error) return;
     revalidatePath("/admin/financeiro");
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "Erro." };
+  } catch {
+    return;
   }
 }
 
-export async function adminAddPlatformAdmin(formData: FormData): Promise<ActionResult> {
+export async function adminAddPlatformAdmin(formData: FormData) {
   try {
     await guard();
     const email = String(formData.get("email") ?? "")
       .trim()
       .toLowerCase();
-    if (!email.includes("@")) return { ok: false, message: "E-mail inválido." };
-    const db = await svc();
+    if (!email.includes("@")) return;
+    const db = svc();
     let found: { id: string } | null = null;
     for (let page = 1; page <= 20; page++) {
       const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
-      if (error) return { ok: false, message: error.message };
+      if (error) return;
       const u = data.users.find((x) => (x.email ?? "").toLowerCase() === email);
       if (u) {
         found = { id: u.id };
@@ -139,31 +124,29 @@ export async function adminAddPlatformAdmin(formData: FormData): Promise<ActionR
       }
       if (!data.users.length) break;
     }
-    if (!found) return { ok: false, message: "Usuário não encontrado no Auth (confirme o e-mail cadastrado)." };
+    if (!found) return;
     const { error: insErr } = await db.from("platform_admins").upsert({ user_id: found.id }, { onConflict: "user_id" });
-    if (insErr) return { ok: false, message: insErr.message };
+    if (insErr) return;
     revalidatePath("/admin/admins");
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "Erro." };
+  } catch {
+    return;
   }
 }
 
-export async function adminRemovePlatformAdmin(formData: FormData): Promise<ActionResult> {
+export async function adminRemovePlatformAdmin(formData: FormData) {
   try {
     await guard();
     const userId = String(formData.get("user_id") ?? "").trim();
-    if (!userId) return { ok: false, message: "ID inválido." };
+    if (!userId) return;
+    const supabase = await createClient();
     const {
       data: { user },
-    } = await (await import("@/lib/supabase/server")).createClient().auth.getUser();
-    if (user?.id === userId) return { ok: false, message: "Remova outro admin antes de si mesmo." };
-    const db = await svc();
-    const { error } = await db.from("platform_admins").delete().eq("user_id", userId);
-    if (error) return { ok: false, message: error.message };
+    } = await supabase.auth.getUser();
+    if (user?.id === userId) return;
+    const { error } = await svc().from("platform_admins").delete().eq("user_id", userId);
+    if (error) return;
     revalidatePath("/admin/admins");
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : "Erro." };
+  } catch {
+    return;
   }
 }

@@ -1,0 +1,14 @@
+export const ADMIN_NAV_LINKS: { href: string; label: string; hint: string }[] = [
+  { href: "/admin", label: "Visão geral", hint: "Métricas" },
+  { href: "/admin/usuarios", label: "Usuários", hint: "Perfis" },
+  { href: "/admin/esportes", label: "Esportes", hint: "Catálogo" },
+  { href: "/admin/equipes", label: "Equipes", hint: "Times e duplas" },
+  { href: "/admin/locais", label: "Locais", hint: "Espaços" },
+  { href: "/admin/torneios", label: "Torneios", hint: "Eventos" },
+  { href: "/admin/partidas", label: "Partidas", hint: "Confrontos" },
+  { href: "/admin/matches", label: "Pedidos match", hint: "Matches" },
+  { href: "/admin/denuncias", label: "Denúncias", hint: "Moderação" },
+  { href: "/admin/financeiro", label: "Financeiro", hint: "Taxas e promo" },
+  { href: "/admin/regras", label: "Ranking", hint: "Regras EID" },
+  { href: "/admin/admins", label: "Admins", hint: "Acesso" },
+];

@@ -67,12 +67,14 @@ export default async function AdminHomePage() {
           <a
             key={k}
             href={href}
-            className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-4 text-center transition hover:border-eid-primary-500/35"
+            className="group rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-3 py-4 text-center shadow-sm transition hover:border-eid-primary-500/40 hover:bg-eid-card hover:shadow-[0_12px_40px_-16px_rgba(37,99,235,0.35)]"
           >
-            <span className="block text-2xl font-black tabular-nums text-eid-action-500">
+            <span className="block text-2xl font-black tabular-nums text-eid-action-500 transition group-hover:text-eid-action-400">
               {counts[k] ?? "—"}
             </span>
-            <span className="mt-1 block text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">{label}</span>
+            <span className="mt-1 block text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary group-hover:text-eid-text-muted">
+              {label}
+            </span>
           </a>
         ))}
       </div>

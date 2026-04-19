@@ -128,6 +128,8 @@ export function MobileBottomNav({ userId }: Props) {
 
   if (onAuthPage) return null;
 
+  if (pathname.startsWith("/admin")) return null;
+
   const isHome = pathname === "/dashboard";
   const isAgenda =
     pathname === "/agenda" ||

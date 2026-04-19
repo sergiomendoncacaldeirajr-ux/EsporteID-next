@@ -111,6 +111,21 @@ html[data-eid-theme="light"] select option {
   color: var(--eid-fg);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+::selection {
+  background: color-mix(in srgb, var(--eid-primary-500) 38%, transparent);
+  color: var(--eid-fg);
+}
+
 body {
   background-color: var(--eid-bg);
   background-image: radial-gradient(
@@ -215,6 +230,17 @@ body {
 .eid-btn-primary:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+.eid-btn-primary:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--eid-action-500) 65%, transparent);
+  outline-offset: 2px;
+}
+
+/* Foco visível em links interativos (acessibilidade) */
+a:focus-visible:not(.eid-btn-primary) {
+  outline: 2px solid color-mix(in srgb, var(--eid-primary-500) 55%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Cartão */

@@ -31,7 +31,7 @@ export default async function AdminRegrasPage() {
                 const esp = r.esportes as { nome?: string } | null;
                 return (
                   <tr key={`rr-${i}`} className="border-b border-[color:var(--eid-border-subtle)]/50">
-                    <td className="px-2 py-1.5">{esp?.nome ?? r.esporte_id}</td>
+                    <td className="px-2 py-1.5">{String(esp?.nome ?? r.esporte_id ?? "")}</td>
                     <td className="px-2 py-1.5">{String(r.modalidade ?? "")}</td>
                     <td className="px-2 py-1.5">{String(r.pontos_vitoria ?? "")}</td>
                     <td className="px-2 py-1.5">{String(r.pontos_derrota ?? "")}</td>
@@ -61,7 +61,7 @@ export default async function AdminRegrasPage() {
                 const esp = r.esportes as { nome?: string } | null;
                 return (
                   <tr key={`rrm-${i}`} className="border-b border-[color:var(--eid-border-subtle)]/50">
-                    <td className="px-2 py-1.5">{esp?.nome ?? r.esporte_id}</td>
+                    <td className="px-2 py-1.5">{String(esp?.nome ?? r.esporte_id ?? "")}</td>
                     <td className="px-2 py-1.5">{String(r.k_factor ?? "")}</td>
                     <td className="px-2 py-1.5">{String(r.pontos_vitoria ?? "")}</td>
                     <td className="px-2 py-1.5">{String(r.pontos_derrota ?? "")}</td>
