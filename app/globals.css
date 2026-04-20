@@ -122,6 +122,48 @@ html {
   scroll-behavior: smooth;
 }
 
+@keyframes eid-fade-in {
+  from {
+    opacity: 0.98;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.eid-page-transition {
+  animation: eid-fade-in 180ms ease-out;
+}
+
+@keyframes eid-loading-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  55% {
+    transform: translateX(-15%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.eid-top-loading-bar {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--eid-primary-500) 22%, transparent) 0%,
+    color-mix(in srgb, var(--eid-primary-500) 85%, white) 45%,
+    color-mix(in srgb, var(--eid-action-500) 75%, white) 100%
+  );
+  animation: eid-loading-slide 900ms ease-in-out infinite;
+}
+
+.eid-is-locked {
+  pointer-events: none !important;
+  opacity: 0.72;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -147,9 +189,31 @@ body {
 
 /* Mobile: fundo sólido e toque mais “app nativo” (menos ruído visual) */
 @media (max-width: 767px) {
+  html {
+    font-size: 14px;
+  }
+
   body {
     background-image: none;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  .eid-card {
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  .eid-input-dark {
+    border-radius: 9px;
+    padding: 0.42rem 0.58rem;
+    font-size: 0.8125rem;
+  }
+
+  .eid-btn-primary {
+    min-height: 36px;
+    border-radius: 9px;
+    padding: 0.45rem 0.72rem;
+    font-size: 0.8125rem;
   }
 }
 

@@ -19,16 +19,30 @@ function IconUserCircle({ className }: { className?: string }) {
   );
 }
 
-export function DashboardTopbar() {
+type Props = {
+  persistent?: boolean;
+};
+
+export function DashboardTopbar({ persistent = false }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [q, setQ] = useState("");
   const [meId, setMeId] = useState<string | null>(null);
+  const [hideBecausePersistent, setHideBecausePersistent] = useState(false);
 
   useEffect(() => {
     const sb = createClient();
     sb.auth.getUser().then(({ data: { user } }) => setMeId(user?.id ?? null));
   }, []);
+
+  useEffect(() => {
+    if (persistent || typeof document === "undefined") return;
+    if (document.getElementById("eid-persistent-topbar")) {
+      setHideBecausePersistent(true);
+    }
+  }, [persistent]);
+
+  if (hideBecausePersistent) return null;
 
   const baseNavItems = [
     { href: "/dashboard", label: "Painel" },
@@ -64,7 +78,10 @@ export function DashboardTopbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[color:var(--eid-border-subtle)] bg-eid-bg/90 pt-[env(safe-area-inset-top)] shadow-[0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-md supports-[backdrop-filter]:bg-eid-bg/82 md:mb-3">
+    <header
+      id={persistent ? "eid-persistent-topbar" : undefined}
+      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-eid-bg/90 pt-[env(safe-area-inset-top)] shadow-[0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-md supports-[backdrop-filter]:bg-eid-bg/82 md:mb-3`}
+    >
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
         <div className="flex items-center justify-between gap-2 py-2 sm:py-2.5">
           <Link href="/dashboard" className="min-w-0 shrink transition hover:opacity-90">
@@ -102,7 +119,7 @@ export function DashboardTopbar() {
         </form>
       </div>
 
-      <nav className="mx-auto hidden w-full max-w-5xl gap-1 overflow-x-auto px-4 pb-3 md:flex sm:px-6">
+      <nav className="mx-auto hidden w-full max-w-5xl gap-1 overflow-x-auto px-4 pb-2.5 md:flex sm:px-6">
         {navItems.map((item) => {
           const active = navActive(item.href);
           return (

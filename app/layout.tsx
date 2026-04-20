@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
 import { EidThemeToggle } from "@/components/eid-theme-toggle";
+import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { InteractionFeedback } from "@/components/ui/interaction-feedback";
 import { LegalGate } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { SiteFooter } from "@/components/site-footer";
@@ -62,6 +64,7 @@ export default async function RootLayout({
     >
       <body className="flex min-h-full flex-col bg-eid-bg text-eid-fg">
         <EidThemeHydration />
+        <InteractionFeedback />
         {/* Logado: tema/sair no DashboardTopbar (área logada). Visitante: Entrar + tema. */}
         {!user ? (
           <div className="pointer-events-none fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[60] flex items-center gap-2 sm:right-4">
@@ -78,11 +81,12 @@ export default async function RootLayout({
             </div>
           </div>
         ) : null}
+        {user ? <DashboardTopbar persistent /> : null}
         <div
           id="app-main-column"
           className={
             user
-              ? "flex flex-1 flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-28"
+              ? "eid-page-transition flex flex-1 flex-col pb-[calc(3.9rem+env(safe-area-inset-bottom))] pt-[calc(3.35rem+env(safe-area-inset-top))] md:pb-24 md:pt-24"
               : "flex flex-1 flex-col pb-28"
           }
         >
