@@ -6,22 +6,48 @@ import { EidNotaMetric, EidRankingPtsMetric } from "@/components/ui/eid-metrics"
 import { createClient } from "@/lib/supabase/server";
 
 type RadarTipo = "atleta" | "dupla" | "time";
-type Ordenar = "proximo" | "rank" | "eid";
+type SortBy = "eid_score" | "match_ranking_points";
 
 type Search = {
   tipo?: string;
   esporte?: string;
   raio?: string;
-  ordenar?: string;
+  sort_by?: string;
   status?: string;
+};
+
+type AtletaMatchRow = {
+  usuario_id: string;
+  nome: string | null;
+  localizacao: string | null;
+  esporte_id: number | null;
+  esporte_nome: string | null;
+  dist_km: number | null;
+  nota_eid: number | null;
+  pontos_ranking: number | null;
+  modalidade_match: string | null;
+  interesse_match: string | null;
+};
+
+type FormacaoMatchRow = {
+  id: number;
+  nome: string | null;
+  localizacao: string | null;
+  esporte_id: number | null;
+  esporte_nome: string | null;
+  dist_km: number | null;
+  eid_time: number | null;
+  pontos_ranking: number | null;
+  interesse_match: string | null;
+  can_challenge: boolean | null;
 };
 
 function toTipo(v: string | undefined): RadarTipo {
   return v === "dupla" || v === "time" ? v : "atleta";
 }
 
-function toOrdenar(v: string | undefined): Ordenar {
-  return v === "rank" || v === "eid" ? v : "proximo";
+function toSortBy(v: string | undefined): SortBy {
+  return v === "match_ranking_points" ? "match_ranking_points" : "eid_score";
 }
 
 function toRaio(v: string | undefined): number {
@@ -30,20 +56,10 @@ function toRaio(v: string | undefined): number {
   return Math.max(5, Math.min(150, Math.round(n)));
 }
 
-function distanciaKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  if (!Number.isFinite(lat1) || !Number.isFinite(lng1) || !Number.isFinite(lat2) || !Number.isFinite(lng2)) {
-    return 99999;
-  }
-  const degLen = 111.12;
-  const x = (lat2 - lat1) * degLen;
-  const y = (lng2 - lng1) * degLen * Math.cos((lat1 * Math.PI) / 180);
-  return Math.sqrt(x * x + y * y);
-}
-
 export default async function MatchPage({ searchParams }: { searchParams?: Promise<Search> }) {
   const sp = (await searchParams) ?? {};
   const tipo = toTipo(sp.tipo);
-  const ordenar = toOrdenar(sp.ordenar);
+  const sortBy = toSortBy(sp.sort_by);
   const raio = toRaio(sp.raio);
   const esporteParam = sp.esporte ?? "all";
 
@@ -112,77 +128,59 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   }> = [];
 
   if (tipo === "atleta") {
-    let q = supabase
-      .from("usuario_eid")
-      .select("id, usuario_id, esporte_id, nota_eid, pontos_ranking, modalidade_match, interesse_match, profiles!inner(id, nome, localizacao, lat, lng), esportes!inner(nome)")
-      .neq("usuario_id", user.id)
-      .order("id", { ascending: true });
-    if (/^\d+$/.test(esporteSelecionado)) q = q.eq("esporte_id", Number(esporteSelecionado));
-    const { data } = await q.limit(500);
+    const esporteId = /^\d+$/.test(esporteSelecionado) ? Number(esporteSelecionado) : null;
+    const { data } = await supabase.rpc("buscar_match_atletas", {
+      p_viewer_id: user.id,
+      p_lat: Number(me.lat),
+      p_lng: Number(me.lng),
+      p_esporte_id: esporteId,
+      p_raio_km: raio,
+      p_limit: 500,
+    });
 
-    const base = /^\d+$/.test(esporteSelecionado)
-      ? data ?? []
-      : (data ?? []).filter((row, idx, arr) => arr.findIndex((x) => x.usuario_id === row.usuario_id) === idx);
-
-    cards = base.map((row) => {
-      const p = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
-      const esp = Array.isArray(row.esportes) ? row.esportes[0] : row.esportes;
-      const lat = Number(p?.lat ?? NaN);
-      const lng = Number(p?.lng ?? NaN);
+    cards = ((data ?? []) as AtletaMatchRow[]).map((row) => {
       return {
-        id: String(p?.id ?? row.usuario_id),
-        nome: String(p?.nome ?? "Atleta"),
-        localizacao: String(p?.localizacao ?? "Localização não informada"),
-        esporteNome: String(esp?.nome ?? "Esporte"),
+        id: String(row.usuario_id),
+        nome: String(row.nome ?? "Atleta"),
+        localizacao: String(row.localizacao ?? "Localização não informada"),
+        esporteNome: String(row.esporte_nome ?? "Esporte"),
         esporteId: Number(row.esporte_id ?? 0),
-        dist: distanciaKm(Number(me.lat), Number(me.lng), lat, lng),
+        dist: Number(row.dist_km ?? 99999),
         eid: Number(row.nota_eid ?? 1),
         rank: Number(row.pontos_ranking ?? 0),
         modalidade: row.modalidade_match === "dupla" || row.modalidade_match === "time" ? row.modalidade_match : "individual",
         interesseMatch: row.interesse_match === "ranking" ? "ranking" : "ranking_e_amistoso",
-        href: `/perfil/${encodeURIComponent(String(p?.id ?? row.usuario_id ?? ""))}?from=/match`,
+        href: `/perfil/${encodeURIComponent(String(row.usuario_id ?? ""))}?from=/match`,
         canChallenge: true,
       };
     });
   } else {
-    let q = supabase
-      .from("times")
-      .select("id, nome, tipo, esporte_id, localizacao, lat, lng, pontos_ranking, eid_time, interesse_rank_match, disponivel_amistoso, criador_id, esportes(nome)")
-      .eq("tipo", tipo)
-      .order("id", { ascending: false });
-    if (/^\d+$/.test(esporteSelecionado)) q = q.eq("esporte_id", Number(esporteSelecionado));
-    const { data: times } = await q.limit(300);
-    let qMine = supabase.from("times").select("id").eq("criador_id", user.id).eq("tipo", tipo);
-    if (/^\d+$/.test(esporteSelecionado)) {
-      qMine = qMine.eq("esporte_id", Number(esporteSelecionado));
-    }
-    const { data: minhasFormacoes } = await qMine.limit(1);
-    const canChallengeTeam = (minhasFormacoes ?? []).length > 0;
+    const esporteId = /^\d+$/.test(esporteSelecionado) ? Number(esporteSelecionado) : null;
+    const { data: formacoes } = await supabase.rpc("buscar_match_formacoes", {
+      p_viewer_id: user.id,
+      p_tipo: tipo,
+      p_lat: Number(me.lat),
+      p_lng: Number(me.lng),
+      p_esporte_id: esporteId,
+      p_raio_km: raio,
+      p_limit: 300,
+    });
 
-    const criadores = Array.from(new Set((times ?? []).map((t) => t.criador_id).filter(Boolean)));
-    const { data: criadoresProfiles } = criadores.length
-      ? await supabase.from("profiles").select("id, lat, lng").in("id", criadores)
-      : { data: [] };
-    const mapCoords = new Map((criadoresProfiles ?? []).map((p) => [p.id, { lat: Number(p.lat ?? NaN), lng: Number(p.lng ?? NaN) }]));
-
-    cards = (times ?? []).map((t) => {
-      const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
-      const lat = Number(t.lat ?? mapCoords.get(t.criador_id)?.lat ?? NaN);
-      const lng = Number(t.lng ?? mapCoords.get(t.criador_id)?.lng ?? NaN);
+    cards = ((formacoes ?? []) as FormacaoMatchRow[]).map((t) => {
       return {
         id: String(t.id),
         nome: String(t.nome ?? "Time"),
         localizacao: String(t.localizacao ?? "Localização não informada"),
-        esporteNome: String(esp?.nome ?? "Esporte"),
+        esporteNome: String(t.esporte_nome ?? "Esporte"),
         esporteId: Number(t.esporte_id ?? 0),
-        dist: distanciaKm(Number(me.lat), Number(me.lng), lat, lng),
+        dist: Number(t.dist_km ?? 99999),
         eid: Number(t.eid_time ?? 1),
         rank: Number(t.pontos_ranking ?? 0),
         modalidade: tipo,
-        interesseMatch: t.disponivel_amistoso ? "ranking_e_amistoso" : t.interesse_rank_match ? "ranking" : "ranking_e_amistoso",
+        interesseMatch: t.interesse_match === "ranking" ? "ranking" : "ranking_e_amistoso",
         href: `/perfil-time/${t.id}?from=/match`,
-        canChallenge: canChallengeTeam,
-        challengeHint: canChallengeTeam
+        canChallenge: Boolean(t.can_challenge),
+        challengeHint: Boolean(t.can_challenge)
           ? undefined
           : /^\d+$/.test(esporteSelecionado)
             ? `Somente o proprietário (capitão) pode desafiar. Crie sua ${tipo} neste esporte como líder.`
@@ -195,9 +193,10 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   const filtered = cards
     .filter((c) => (!canOrderByDistance ? true : c.dist <= raio))
     .sort((a, b) => {
-      if (ordenar === "rank") return b.rank - a.rank;
-      if (ordenar === "eid") return b.eid - a.eid;
-      return a.dist - b.dist;
+      if (a.dist !== b.dist) return a.dist - b.dist;
+      if (sortBy === "match_ranking_points" && b.rank !== a.rank) return b.rank - a.rank;
+      if (sortBy === "eid_score" && b.eid !== a.eid) return b.eid - a.eid;
+      return a.nome.localeCompare(b.nome, "pt-BR");
     })
     .slice(0, 40);
 
@@ -205,7 +204,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   baseParams.set("tipo", tipo);
   baseParams.set("esporte", /^\d+$/.test(esporteSelecionado) ? esporteSelecionado : "all");
   baseParams.set("raio", String(raio));
-  baseParams.set("ordenar", ordenar);
+  baseParams.set("sort_by", sortBy);
 
   return (
     <>
@@ -214,7 +213,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         <div className="relative mb-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 md:mb-4 md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/25 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-primary-500/10 md:p-6">
           <h1 className="text-lg font-bold tracking-tight text-eid-fg md:text-2xl md:font-black">Radar Match</h1>
           <p className="mt-1 hidden text-sm text-eid-text-secondary md:mt-2 md:block">
-            Filtre por modalidade, esporte, raio e ordenação para encontrar oponentes.
+            A lista sempre prioriza proximidade. Depois, você escolhe o critério técnico: Nota EID ou Pontos de Rank.
           </p>
         </div>
         {sp.status === "enviado" ? (
@@ -267,17 +266,16 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
             </div>
           </div>
           <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-2">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">Ordenar</p>
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">Sort by</p>
             <div className="flex flex-wrap gap-2">
               {[
-                ["proximo", "Mais próximo"],
-                ["rank", "Ranking"],
-                ["eid", "EID"],
+                ["eid_score", "Nota EID"],
+                ["match_ranking_points", "Pontos Rank"],
               ].map(([k, label]) => {
                 const qp = new URLSearchParams(baseParams);
-                qp.set("ordenar", k);
+                qp.set("sort_by", k);
                 return (
-                  <Link key={k} href={`/match?${qp.toString()}`} className={`rounded-full border px-3 py-1 text-xs ${k === ordenar ? "border-eid-primary-500/50 bg-eid-primary-500/15 text-eid-fg" : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"}`}>
+                  <Link key={k} href={`/match?${qp.toString()}`} className={`rounded-full border px-3 py-1 text-xs ${k === sortBy ? "border-eid-primary-500/50 bg-eid-primary-500/15 text-eid-fg" : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"}`}>
                     {label}
                   </Link>
                 );
