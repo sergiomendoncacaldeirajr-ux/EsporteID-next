@@ -17,7 +17,12 @@ function LoginFormFallback() {
   );
 }
 
-export default async function LoginPage() {
+type LoginPageProps = {
+  searchParams?: Promise<{ next?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const sp = (await searchParams) ?? {};
   const supabase = await createClient();
   const {
     data: { user },
@@ -36,7 +41,7 @@ export default async function LoginPage() {
           termosAceitos: !!profile?.termos_aceitos_em,
           perfilCompleto: !!profile?.perfil_completo,
         },
-        null
+        sp.next ?? null
       )
     );
   }

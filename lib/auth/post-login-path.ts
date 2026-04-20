@@ -9,15 +9,21 @@ export function getPostAuthRedirect(
   profile: ProfileGate,
   next?: string | null
 ): string {
+  const n = next?.trim();
+  const safeNext =
+    n && n.startsWith("/") && !n.startsWith("//") ? n : null;
+
   if (!profile.termosAceitos) {
+    if (safeNext) {
+      return `/conta/aceitar-termos?next=${encodeURIComponent(safeNext)}`;
+    }
     return "/conta/aceitar-termos";
   }
   if (!profile.perfilCompleto) {
     return "/onboarding";
   }
-  const n = next?.trim();
-  if (n && n.startsWith("/") && !n.startsWith("//")) {
-    return n;
+  if (safeNext) {
+    return safeNext;
   }
   return "/dashboard";
 }

@@ -53,7 +53,13 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile?.termos_aceitos_em) redirect("/conta/aceitar-termos");
+  if (!profile?.termos_aceitos_em) {
+    const qs = new URLSearchParams();
+    if (sp.editar != null && String(sp.editar).length > 0) qs.set("editar", String(sp.editar));
+    if (sp.step != null && String(sp.step).length > 0) qs.set("step", String(sp.step));
+    const onboardingBack = qs.size > 0 ? `/onboarding?${qs}` : "/onboarding";
+    redirect(`/conta/aceitar-termos?next=${encodeURIComponent(onboardingBack)}`);
+  }
   if (profile.id !== user.id) redirect("/dashboard");
   if (profile.perfil_completo && !modoEditar) redirect("/dashboard");
 

@@ -2,11 +2,19 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { aceitarTermosEprivacidade } from "./actions";
+
+function safeNextPath(raw: string | null): string {
+  const v = (raw ?? "").trim() || "/onboarding";
+  if (!v.startsWith("/") || v.startsWith("//")) return "/onboarding";
+  return v;
+}
 
 export function AceitarForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const afterAccept = safeNextPath(searchParams.get("next"));
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -19,7 +27,7 @@ export function AceitarForm() {
     setPending(false);
     if (r.ok) {
       router.refresh();
-      router.push("/onboarding");
+      router.push(afterAccept);
       return;
     }
     setMessage(r.message);

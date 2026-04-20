@@ -115,13 +115,14 @@ export async function updateSession(request: NextRequest) {
     if (!profile?.termos_aceitos_em) {
       const url = request.nextUrl.clone();
       url.pathname = "/conta/aceitar-termos";
-      url.searchParams.set("next", "/onboarding");
+      url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
       return NextResponse.redirect(url);
     }
     // Mesma regra que app/onboarding/page.tsx: com perfil completo só entra em modo edição (?editar=1|true|sim|yes).
     const editarRaw = request.nextUrl.searchParams.get("editar");
+    const editarNorm = (editarRaw ?? "").trim().toLowerCase();
     const modoEditar =
-      editarRaw === "1" || editarRaw === "true" || editarRaw === "sim" || editarRaw === "yes";
+      editarNorm === "1" || editarNorm === "true" || editarNorm === "sim" || editarNorm === "yes";
     if (profile.perfil_completo && !modoEditar) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";

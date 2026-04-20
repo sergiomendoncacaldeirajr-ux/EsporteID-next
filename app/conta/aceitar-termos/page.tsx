@@ -1,7 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { AceitarForm } from "./aceitar-form";
+
+function AceitarFormFallback() {
+  return (
+    <div
+      className="eid-auth-card mx-auto flex max-h-[200px] min-h-[120px] w-full max-w-lg animate-pulse rounded-2xl p-8"
+      aria-hidden
+    />
+  );
+}
 
 export default async function AceitarTermosPage() {
   const supabase = await createClient();
@@ -34,7 +44,9 @@ export default async function AceitarTermosPage() {
 
   return (
     <div className="flex flex-1 flex-col px-4 py-12">
-      <AceitarForm />
+      <Suspense fallback={<AceitarFormFallback />}>
+        <AceitarForm />
+      </Suspense>
     </div>
   );
 }
