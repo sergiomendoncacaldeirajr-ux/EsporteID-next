@@ -173,13 +173,14 @@ export async function salvarEsportesOnboarding(
   const finalIds = ids.filter((id) => validIds.has(id));
   if (!finalIds.length) return { ok: false, message: "Esportes inválidos." };
 
-  const interessesMap = new Map<number, "ranking" | "ranking_e_amistoso">();
+  const interessesMap = new Map<number, "ranking" | "ranking_e_amistoso" | "amistoso">();
   const modalidadeMap = new Map<number, "individual" | "dupla" | "time">();
   for (const [k, v] of formData.entries()) {
     if (!k.startsWith("esporte_interesse_")) continue;
     const id = Number(k.replace("esporte_interesse_", ""));
     if (!Number.isInteger(id) || id <= 0) continue;
-    const interesse = String(v) === "ranking" ? "ranking" : "ranking_e_amistoso";
+    const raw = String(v);
+    const interesse = raw === "ranking" ? "ranking" : raw === "amistoso" ? "amistoso" : "ranking_e_amistoso";
     interessesMap.set(id, interesse);
   }
   for (const [k, v] of formData.entries()) {
@@ -681,13 +682,30 @@ export async function salvarPerfilOnboarding(
   if (!user) return { ok: false, message: "Sessão expirada. Faça login novamente." };
 
   const nome = String(formData.get("nome") ?? "").trim();
+  const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
+  const username = usernameRaw ? usernameRaw.replace(/[^a-z0-9_]/g, "") : null;
   const localizacao = String(formData.get("localizacao") ?? "").trim();
+  const bio = String(formData.get("bio") ?? "").trim();
+  const estiloJogo = String(formData.get("estilo_jogo") ?? "").trim();
+  const disponibilidadeRaw = String(formData.get("disponibilidade_semana_json") ?? "").trim();
   const alturaRaw = String(formData.get("altura_cm") ?? "").trim();
   const pesoRaw = String(formData.get("peso_kg") ?? "").trim();
   const lado = String(formData.get("lado") ?? "").trim();
 
   if (nome.length < 3) return { ok: false, message: "Informe seu nome completo." };
+  if (username && !/^[a-z0-9_]{3,24}$/.test(username)) {
+    return { ok: false, message: "Username inválido. Use 3-24 caracteres [a-z0-9_]." };
+  }
   if (!localizacao) return { ok: false, message: "Informe cidade/estado." };
+  let disponibilidadeSemana: Record<string, unknown> | null = null;
+  if (disponibilidadeRaw) {
+    try {
+      const parsed = JSON.parse(disponibilidadeRaw);
+      disponibilidadeSemana = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+    } catch {
+      return { ok: false, message: "Disponibilidade inválida. Use JSON válido." };
+    }
+  }
 
   const { data: papeisRows, error: papeisErr } = await supabase
     .from("usuario_papeis")
@@ -757,7 +775,11 @@ export async function salvarPerfilOnboarding(
     .from("profiles")
     .update({
       nome,
+      username,
       localizacao,
+      bio: bio || null,
+      estilo_jogo: estiloJogo || null,
+      disponibilidade_semana_json: disponibilidadeSemana,
       altura_cm: precisaFicha ? altura : null,
       peso_kg: precisaFicha ? peso : null,
       lado: precisaFicha ? lado : null,

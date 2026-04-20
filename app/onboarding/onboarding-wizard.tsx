@@ -57,7 +57,7 @@ type Props = {
   locais: { id: number; nome: string; localizacao: string; donoUsuarioId: string | null }[];
   selectedPapeis: string[];
   selectedEsportes: number[];
-  selectedEsportesInteresse: Record<number, "ranking" | "ranking_e_amistoso">;
+  selectedEsportesInteresse: Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
   selectedEsportesModalidade: Record<number, "individual" | "dupla" | "time">;
   extrasInitial: {
     expModo: "aprox" | "exato";
@@ -84,11 +84,15 @@ type Props = {
   };
   profileInitial: {
     nome: string;
+    username: string;
     localizacao: string;
     alturaCm: number | null;
     pesoKg: number | null;
     lado: string | null;
     avatarUrl: string | null;
+    bio: string;
+    estiloJogo: string;
+    disponibilidadeSemanaJson: string;
   };
 };
 
@@ -114,7 +118,7 @@ export function OnboardingWizard({
 
   const [papeis, setPapeis] = useState<Set<string>>(new Set(selectedPapeis));
   const [esportesSel, setEsportesSel] = useState<Set<number>>(new Set(selectedEsportes));
-  const [esportesInteresse, setEsportesInteresse] = useState<Record<number, "ranking" | "ranking_e_amistoso">>(
+  const [esportesInteresse, setEsportesInteresse] = useState<Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">>(
     selectedEsportesInteresse
   );
   const [esportesModalidade, setEsportesModalidade] = useState<Record<number, "individual" | "dupla" | "time">>(
@@ -153,6 +157,7 @@ export function OnboardingWizard({
   const [espacoCep, setEspacoCep] = useState<string>(extrasInitial.espacoCep);
   const [espacoComplemento, setEspacoComplemento] = useState<string>(extrasInitial.espacoComplemento);
   const [nome, setNome] = useState<string>(profileInitial.nome);
+  const [username, setUsername] = useState<string>(profileInitial.username);
   const [localizacao, setLocalizacao] = useState<string>(profileInitial.localizacao);
   const [alturaCm, setAlturaCm] = useState<string>(
     profileInitial.alturaCm ? String(profileInitial.alturaCm) : ""
@@ -161,6 +166,11 @@ export function OnboardingWizard({
     profileInitial.pesoKg ? String(profileInitial.pesoKg) : ""
   );
   const [lado, setLado] = useState<string>(profileInitial.lado ?? "");
+  const [bio, setBio] = useState<string>(profileInitial.bio);
+  const [estiloJogo, setEstiloJogo] = useState<string>(profileInitial.estiloJogo);
+  const [disponibilidadeSemanaJson, setDisponibilidadeSemanaJson] = useState<string>(
+    profileInitial.disponibilidadeSemanaJson || "{}"
+  );
   const fotoInputRef = useRef<HTMLInputElement | null>(null);
   const fotoCameraInputRef = useRef<HTMLInputElement | null>(null);
   const fotoGaleriaInputRef = useRef<HTMLInputElement | null>(null);
@@ -229,10 +239,14 @@ export function OnboardingWizard({
         espacoCep: string;
         espacoComplemento: string;
         nome: string;
+        username: string;
         localizacao: string;
         alturaCm: string;
         pesoKg: string;
         lado: string;
+        bio: string;
+        estiloJogo: string;
+        disponibilidadeSemanaJson: string;
       }>;
       if (
         draft.step &&
@@ -273,10 +287,14 @@ export function OnboardingWizard({
       if (typeof draft.espacoCep === "string") setEspacoCep(draft.espacoCep);
       if (typeof draft.espacoComplemento === "string") setEspacoComplemento(draft.espacoComplemento);
       if (typeof draft.nome === "string") setNome(draft.nome);
+      if (typeof draft.username === "string") setUsername(draft.username);
       if (typeof draft.localizacao === "string") setLocalizacao(draft.localizacao);
       if (typeof draft.alturaCm === "string") setAlturaCm(draft.alturaCm);
       if (typeof draft.pesoKg === "string") setPesoKg(draft.pesoKg);
       if (typeof draft.lado === "string") setLado(draft.lado);
+      if (typeof draft.bio === "string") setBio(draft.bio);
+      if (typeof draft.estiloJogo === "string") setEstiloJogo(draft.estiloJogo);
+      if (typeof draft.disponibilidadeSemanaJson === "string") setDisponibilidadeSemanaJson(draft.disponibilidadeSemanaJson);
       setRestoredDraftAt(new Date().toLocaleTimeString("pt-BR"));
     } catch {
       window.localStorage.removeItem(draftKey);
@@ -319,10 +337,14 @@ export function OnboardingWizard({
       espacoCep,
       espacoComplemento,
       nome,
+      username,
       localizacao,
       alturaCm,
       pesoKg,
       lado,
+      bio,
+      estiloJogo,
+      disponibilidadeSemanaJson,
     };
     window.localStorage.setItem(draftKey, JSON.stringify(payload));
   }, [
@@ -340,6 +362,10 @@ export function OnboardingWizard({
     lado,
     localizacao,
     nome,
+    username,
+    bio,
+    estiloJogo,
+    disponibilidadeSemanaJson,
     orgEsporteId,
     orgEsportes,
     orgLocalModo,
@@ -433,6 +459,8 @@ export function OnboardingWizard({
 
   const perfilValid = useMemo(() => {
     if (nome.trim().length < 3 || localizacao.trim().length < 3) return false;
+    const uname = username.trim().toLowerCase();
+    if (uname && !/^[a-z0-9_]{3,24}$/.test(uname)) return false;
     if (hasAtletaProfessor) {
       if (!Number.isInteger(perfilAlturaNum) || perfilAlturaNum < 50 || perfilAlturaNum > 260) {
         return false;
@@ -443,7 +471,7 @@ export function OnboardingWizard({
       if (!["Destro", "Canhoto", "Ambos"].includes(lado)) return false;
     }
     return true;
-  }, [hasAtletaProfessor, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum]);
+  }, [hasAtletaProfessor, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum, username]);
 
   function applyResult(r: OnboardingActionResult) {
     if (!r.ok) {
@@ -498,10 +526,14 @@ export function OnboardingWizard({
     setEspacoCep(extrasInitial.espacoCep);
     setEspacoComplemento(extrasInitial.espacoComplemento);
     setNome(profileInitial.nome);
+    setUsername(profileInitial.username);
     setLocalizacao(profileInitial.localizacao);
     setAlturaCm(profileInitial.alturaCm ? String(profileInitial.alturaCm) : "");
     setPesoKg(profileInitial.pesoKg ? String(profileInitial.pesoKg) : "");
     setLado(profileInitial.lado ?? "");
+    setBio(profileInitial.bio ?? "");
+    setEstiloJogo(profileInitial.estiloJogo ?? "");
+    setDisponibilidadeSemanaJson(profileInitial.disponibilidadeSemanaJson ?? "{}");
     setMessage("Rascunho local limpo. Campos restaurados com dados atuais da conta.");
   }
 
@@ -536,7 +568,7 @@ export function OnboardingWizard({
     });
   }
 
-  function setEsporteInteresse(id: number, interesse: "ranking" | "ranking_e_amistoso") {
+  function setEsporteInteresse(id: number, interesse: "ranking" | "ranking_e_amistoso" | "amistoso") {
     setEsportesInteresse((old) => ({ ...old, [id]: interesse }));
   }
 
@@ -813,6 +845,22 @@ export function OnboardingWizard({
                           />
                           Aceito ranking e amistoso
                         </label>
+                        <label className="mt-1 block text-xs text-eid-fg">
+                          <input
+                            type="radio"
+                            name={`esporte_interesse_${e.id}`}
+                            value="amistoso"
+                            checked={(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "amistoso"}
+                            onChange={() => setEsporteInteresse(e.id, "amistoso")}
+                            className="mr-2"
+                          />
+                          Apenas amistosos
+                        </label>
+                        {(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "amistoso" ? (
+                          <p className="mt-2 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1 text-[11px] text-eid-action-400">
+                            Você não aparecerá nas sugestões de Matchmaking Competitivo da plataforma.
+                          </p>
+                        ) : null}
                         <p className="mt-2 text-[11px] text-eid-text-secondary">Como deseja jogar no match:</p>
                         {e.permiteIndividual ? (
                           <label className="mt-1 block text-xs text-eid-fg">
@@ -1392,12 +1440,52 @@ export function OnboardingWizard({
                 className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
               />
               <input
+                name="username"
+                value={username}
+                onChange={(e) =>
+                  setUsername(
+                    e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9_]/g, "")
+                      .slice(0, 24)
+                  )
+                }
+                placeholder="@usuario (opcional)"
+                className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
+              />
+              <p className="text-[11px] text-eid-text-secondary">
+                Use 3-24 caracteres: letras minúsculas, números e underline.
+              </p>
+              <input
                 name="localizacao"
                 required
                 value={localizacao}
                 onChange={(e) => setLocalizacao(e.target.value)}
                 placeholder="Cidade / Estado"
                 className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
+              />
+              <input
+                name="estilo_jogo"
+                value={estiloJogo}
+                onChange={(e) => setEstiloJogo(e.target.value)}
+                placeholder="Estilo de jogo (opcional)"
+                className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
+              />
+              <textarea
+                name="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Bio curta (opcional)"
+                rows={3}
+                className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
+              />
+              <textarea
+                name="disponibilidade_semana_json"
+                value={disponibilidadeSemanaJson}
+                onChange={(e) => setDisponibilidadeSemanaJson(e.target.value)}
+                placeholder='Disponibilidade JSON (ex: {"seg":"noite","sab":"manhã"})'
+                rows={2}
+                className="eid-input-dark w-full rounded-xl px-3 py-3 text-xs text-eid-fg"
               />
 
               {hasAtletaProfessor ? (

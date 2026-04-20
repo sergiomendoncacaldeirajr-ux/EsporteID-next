@@ -128,7 +128,7 @@ export function DashboardTopbar({ persistent = false }: Props) {
               href={item.href}
               className={`whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-medium transition ${
                 active
-                  ? "border-eid-primary-500/45 bg-eid-primary-500/12 text-eid-fg"
+                  ? "border-eid-primary-500/45 bg-eid-primary-500/12 text-eid-fg ring-2 ring-eid-primary-500/35"
                   : "border-transparent bg-transparent text-eid-text-secondary hover:border-eid-primary-500/25 hover:text-eid-fg"
               }`}
             >

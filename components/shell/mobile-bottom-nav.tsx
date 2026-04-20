@@ -149,7 +149,7 @@ export function MobileBottomNav({ userId }: Props) {
               <span
                 className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
                   item.active
-                    ? "bg-eid-primary-500/12 text-eid-primary-400"
+                    ? "bg-eid-primary-500/12 text-eid-primary-400 ring-2 ring-eid-primary-500/30"
                     : "text-eid-text-secondary"
                 }`}
               >
@@ -170,7 +170,7 @@ export function MobileBottomNav({ userId }: Props) {
             <span className={`absolute left-1/2 top-0 h-[2px] w-6 -translate-x-1/2 rounded-full transition ${item.active ? "bg-eid-primary-500/80" : "bg-transparent"}`} />
             <span
               className={`relative flex h-7 items-center justify-center rounded-xl px-2 transition ${
-                item.active ? "bg-eid-primary-500/10 text-eid-primary-400" : ""
+                item.active ? "bg-eid-primary-500/10 text-eid-primary-400 ring-2 ring-eid-primary-500/25" : ""
               }`}
             >
               {item.icon}

@@ -36,7 +36,7 @@ export default async function OnboardingPage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "nome, localizacao, avatar_url, altura_cm, peso_kg, lado, termos_aceitos_em, perfil_completo, onboarding_etapa"
+      "nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, termos_aceitos_em, perfil_completo, onboarding_etapa"
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -69,9 +69,13 @@ export default async function OnboardingPage() {
   const selectedEsportesInteresse = Object.fromEntries(
     (eidRows ?? []).map((r) => [
       r.esporte_id,
-      r.interesse_match === "ranking" ? "ranking" : "ranking_e_amistoso",
+      r.interesse_match === "ranking"
+        ? "ranking"
+        : r.interesse_match === "amistoso"
+          ? "amistoso"
+          : "ranking_e_amistoso",
     ])
-  ) as Record<number, "ranking" | "ranking_e_amistoso">;
+  ) as Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
   const selectedEsportesModalidade = Object.fromEntries(
     (eidRows ?? []).map((r) => [
       r.esporte_id,
@@ -187,11 +191,15 @@ export default async function OnboardingPage() {
       }}
       profileInitial={{
         nome: profile.nome ?? "",
+        username: profile.username ?? "",
         localizacao: profile.localizacao ?? "",
         alturaCm: profile.altura_cm ?? null,
         pesoKg: profile.peso_kg ?? null,
         lado: profile.lado ?? null,
         avatarUrl: profile.avatar_url ?? null,
+        bio: profile.bio ?? "",
+        estiloJogo: profile.estilo_jogo ?? "",
+        disponibilidadeSemanaJson: JSON.stringify(profile.disponibilidade_semana_json ?? {}),
       }}
     />
   );

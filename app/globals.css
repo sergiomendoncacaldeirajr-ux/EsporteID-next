@@ -312,6 +312,32 @@ body {
   outline-offset: 2px;
 }
 
+.eid-btn-match-cta {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--eid-action-400) 80%, #fff) 0%,
+    var(--eid-action-500) 45%,
+    color-mix(in srgb, var(--eid-action-600) 88%, #000) 100%
+  );
+  color: #fff;
+  box-shadow:
+    0 6px 18px -6px color-mix(in srgb, var(--eid-action-500) 70%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    filter 0.14s ease;
+}
+.eid-btn-match-cta:hover {
+  filter: brightness(1.03);
+}
+.eid-btn-match-cta:active {
+  transform: scale(0.97);
+  box-shadow:
+    0 4px 12px -6px color-mix(in srgb, var(--eid-action-500) 70%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
 /* Painel — CTA principal (pílula compacta) */
 .eid-btn-dashboard-cta {
   display: inline-flex;

@@ -26,7 +26,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
 
   const { data: d } = await supabase
     .from("duplas")
-    .select("id, player1_id, player2_id, esporte_id, esportes(nome)")
+    .select("id, username, bio, player1_id, player2_id, esporte_id, esportes(nome)")
     .eq("id", id)
     .maybeSingle();
   if (!d) notFound();
@@ -72,10 +72,12 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             Dupla · {esp?.nome ?? "Esporte"}
           </span>
           <h1 className="mt-3 text-lg font-bold text-eid-fg sm:text-xl">Dupla registrada #{id}</h1>
+          {d.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{d.username}</p> : null}
           <p className="mt-2 text-xs text-eid-text-secondary">
             Par fixo de atletas no mesmo esporte. No radar, duplas também podem aparecer como{" "}
             <strong className="text-eid-fg">formação</strong> — nesse caso use o perfil da formação.
           </p>
+          {d.bio ? <p className="mt-2 text-xs text-eid-text-secondary">{d.bio}</p> : null}
           {mediaEid != null ? (
             <p className="mt-4 text-2xl font-bold text-eid-action-500 sm:text-3xl sm:font-black">
               EID médio {mediaEid.toFixed(1)}
@@ -83,6 +85,12 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
           ) : (
             <p className="mt-4 text-sm text-eid-text-secondary">EID individual disponível nos perfis dos atletas.</p>
           )}
+          <Link
+            href={`/match?tipo=dupla&esporte=${d.esporte_id}`}
+            className="eid-btn-match-cta mt-5 inline-flex min-h-[46px] items-center justify-center rounded-2xl px-4 text-sm font-semibold"
+          >
+            Solicitar Match
+          </Link>
         </div>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2">

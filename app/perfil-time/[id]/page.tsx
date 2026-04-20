@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { resolveBackHref } from "@/lib/perfil/back-href";
@@ -24,10 +25,22 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   } = await supabase.auth.getUser();
   if (!user) redirect(`/login?next=/perfil-time/${id}`);
 
+  async function sairEquipeAction() {
+    "use server";
+    const sb = await createClient();
+    const {
+      data: { user: actionUser },
+    } = await sb.auth.getUser();
+    if (!actionUser) return;
+    await sb.rpc("sair_da_equipe", { p_time_id: id });
+    revalidatePath(`/perfil-time/${id}`);
+    revalidatePath(`/perfil/${actionUser.id}`);
+  }
+
   const { data: t } = await supabase
     .from("times")
     .select(
-      "id, nome, tipo, localizacao, escudo, pontos_ranking, eid_time, esporte_id, criador_id, interesse_rank_match, disponivel_amistoso, esportes(nome)"
+      "id, nome, username, bio, tipo, localizacao, escudo, pontos_ranking, eid_time, esporte_id, criador_id, interesse_rank_match, disponivel_amistoso, esportes(nome)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -75,6 +88,8 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
     .limit(1);
 
   const canChallenge = (minhaFormacao?.length ?? 0) > 0 && t.criador_id !== user.id;
+  const isMember = (membros ?? []).some((m) => m.usuario_id === user.id);
+  const canLeaveTeam = isMember && t.criador_id !== user.id;
 
   return (
     <>
@@ -98,7 +113,9 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
             {(t.tipo ?? "time").toUpperCase()} · {esp?.nome ?? "Esporte"}
           </span>
           <h1 className="mt-2 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
+          {t.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{t.username}</p> : null}
           <p className="mt-2 text-sm text-eid-text-secondary">{t.localizacao ?? "Localização não informada"}</p>
+          {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{t.bio}</p> : null}
 
           <div className="mt-5 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-4">
             <div>
@@ -127,9 +144,9 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           {canChallenge && t.esporte_id ? (
             <Link
               href={`/desafio?id=${id}&tipo=${encodeURIComponent(modalidade)}&esporte=${t.esporte_id}`}
-              className="eid-btn-primary mt-5 inline-flex min-h-[48px] w-full items-center justify-center rounded-xl px-4 text-sm font-bold sm:w-auto"
+              className="eid-btn-match-cta mt-5 inline-flex min-h-[48px] w-full items-center justify-center rounded-2xl px-4 text-sm font-semibold sm:w-auto"
             >
-              Desafiar esta formação
+              Solicitar Match
             </Link>
           ) : t.criador_id === user.id ? (
             <p className="mt-4 text-xs text-eid-text-secondary">Esta é a sua formação.</p>
@@ -138,6 +155,16 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
               Para desafiar, seja líder de uma {modalidade} neste mesmo esporte no radar.
             </p>
           )}
+          {canLeaveTeam ? (
+            <form action={sairEquipeAction} className="mt-3">
+              <button
+                type="submit"
+                className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-red-400/35 px-3 text-xs font-semibold text-red-300"
+              >
+                Sair da equipe
+              </button>
+            </form>
+          ) : null}
         </div>
 
         {(hist ?? []).length > 0 ? (

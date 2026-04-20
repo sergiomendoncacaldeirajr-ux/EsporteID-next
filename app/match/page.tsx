@@ -121,7 +121,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
     eid: number;
     rank: number;
     modalidade: "individual" | "dupla" | "time";
-    interesseMatch: "ranking" | "ranking_e_amistoso";
+    interesseMatch: "ranking" | "ranking_e_amistoso" | "amistoso";
     href: string;
     canChallenge: boolean;
     challengeHint?: string;
@@ -149,7 +149,12 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         eid: Number(row.nota_eid ?? 1),
         rank: Number(row.pontos_ranking ?? 0),
         modalidade: row.modalidade_match === "dupla" || row.modalidade_match === "time" ? row.modalidade_match : "individual",
-        interesseMatch: row.interesse_match === "ranking" ? "ranking" : "ranking_e_amistoso",
+        interesseMatch:
+          row.interesse_match === "ranking"
+            ? "ranking"
+            : row.interesse_match === "amistoso"
+              ? "amistoso"
+              : "ranking_e_amistoso",
         href: `/perfil/${encodeURIComponent(String(row.usuario_id ?? ""))}?from=/match`,
         canChallenge: true,
       };
@@ -191,6 +196,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
 
   const canOrderByDistance = hasLocation;
   const filtered = cards
+    .filter((c) => c.interesseMatch !== "amistoso")
     .filter((c) => (!canOrderByDistance ? true : c.dist <= raio))
     .sort((a, b) => {
       if (a.dist !== b.dist) return a.dist - b.dist;
@@ -314,7 +320,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
                 </div>
                 <div className="mt-3 flex items-center gap-2">
                   <span className="rounded-md border border-[color:var(--eid-border-subtle)] px-2 py-1 text-[11px] text-eid-text-secondary">
-                    {c.interesseMatch === "ranking" ? "RANK" : "RANK + AMISTOSO"}
+                    {c.interesseMatch === "ranking" ? "RANK" : c.interesseMatch === "amistoso" ? "AMISTOSO" : "RANK + AMISTOSO"}
                   </span>
                   <Link href={c.href} className="ml-auto rounded-lg border border-eid-primary-500/40 px-3 py-1.5 text-xs font-semibold text-eid-fg">
                     Ver perfil

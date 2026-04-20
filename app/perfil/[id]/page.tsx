@@ -32,7 +32,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const { data: perfil } = await supabase
     .from("profiles")
     .select(
-      "id, nome, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso"
+      "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, estilo_jogo, bio"
     )
     .eq("id", id)
     .maybeSingle();
@@ -119,7 +119,13 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                     {perfil.tipo_usuario === "organizador" ? "Organizador" : "Atleta"}
                   </span>
                 </div>
+                {perfil.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{perfil.username}</p> : null}
                 <p className="mt-1 text-sm text-eid-text-secondary">{perfil.localizacao ?? "Localização não informada"}</p>
+                {perfil.estilo_jogo ? (
+                  <p className="mt-1 inline-flex rounded-full border border-eid-primary-500/30 px-2 py-0.5 text-[10px] font-semibold text-eid-primary-300">
+                    {perfil.estilo_jogo}
+                  </p>
+                ) : null}
                 {linkWpp ? (
                   <a
                     href={linkWpp}
@@ -170,9 +176,9 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           <div className="mt-4">
             <Link
               href={`/desafio?id=${encodeURIComponent(id)}&tipo=individual&esporte=${primeiroEsporte}`}
-              className="eid-btn-primary inline-flex min-h-[44px] w-full items-center justify-center rounded-xl px-4 text-sm font-bold sm:w-auto"
+              className="eid-btn-match-cta inline-flex min-h-[46px] w-full items-center justify-center rounded-2xl px-4 text-sm font-semibold sm:w-auto"
             >
-              Desafiar neste esporte
+              Solicitar Match
             </Link>
           </div>
         ) : null}
@@ -196,6 +202,12 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-eid-primary-500/40 px-4 text-center text-sm font-semibold text-eid-primary-300 sm:flex-none"
             >
               Abrir Match
+            </Link>
+            <Link
+              href="/times?create=1"
+              className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-eid-action-500/35 px-4 text-center text-sm font-semibold text-eid-action-400 sm:flex-none"
+            >
+              Criar Nova Dupla/Time
             </Link>
           </div>
         ) : null}
@@ -338,6 +350,14 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 );
               })}
             </ul>
+          </section>
+        ) : null}
+        {isSelf && !((duplasCadastro ?? []).length > 0 || (timesLider ?? []).length > 0) ? (
+          <section className="mt-8 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4">
+            <p className="text-sm text-eid-text-secondary">Você ainda não participa de nenhuma dupla/time.</p>
+            <Link href="/times?create=1" className="mt-2 inline-flex text-sm font-semibold text-eid-action-400">
+              Criar Nova Dupla/Time
+            </Link>
           </section>
         ) : null}
       </main>
