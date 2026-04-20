@@ -298,7 +298,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
           ) : (
             filtered.map((c) => (
               <article
-                key={`${c.modalidade}-${c.id}`}
+                key={`${c.modalidade}-${c.id}-${c.esporteId}`}
                 className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card p-3"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

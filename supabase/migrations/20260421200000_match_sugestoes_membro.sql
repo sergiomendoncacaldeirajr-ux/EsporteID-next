@@ -31,6 +31,8 @@ create unique index if not exists idx_match_sugestoes_pendente_par
 
 alter table public.match_sugestoes enable row level security;
 
+drop policy if exists "match_sugestoes_select_participantes" on public.match_sugestoes;
+
 create policy "match_sugestoes_select_participantes"
   on public.match_sugestoes for select
   to authenticated

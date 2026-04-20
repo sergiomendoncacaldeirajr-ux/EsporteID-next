@@ -12,6 +12,7 @@ import {
   resultadoColetivo,
   type PartidaColetivaRow,
 } from "@/lib/perfil/formacao-eid-stats";
+import { labelModalidadesMatchPt, modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { resolverTimeIdParaDuplaRegistrada } from "@/lib/perfil/whatsapp-visibility";
 import { createClient } from "@/lib/supabase/server";
 
@@ -96,7 +97,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
   const { data: ue } = await supabase
     .from("usuario_eid")
     .select(
-      "id, esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas, interesse_match, modalidade_match, posicao_rank, categoria, esportes(nome)"
+      "id, esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas, interesse_match, modalidade_match, modalidades_match, posicao_rank, categoria, esportes(nome)"
     )
     .eq("usuario_id", profileId)
     .eq("esporte_id", esporteId)
@@ -392,7 +393,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
       ranking_e_amistoso: "Ranking e amistoso",
     }[String(ue.interesse_match ?? "").toLowerCase()] ?? (ue.interesse_match ? String(ue.interesse_match) : "—");
 
-  const modalidadeLabel = ue.modalidade_match ? String(ue.modalidade_match) : "—";
+  const modalidadeLabel = labelModalidadesMatchPt(modalidadesFromUsuarioEidRow(ue));
 
   const totalColetivoListados = formationList.reduce(
     (acc, f) => acc + (listaColetivoPorTime.get(f.id)?.length ?? 0),

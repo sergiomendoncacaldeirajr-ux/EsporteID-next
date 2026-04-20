@@ -118,12 +118,8 @@ export async function updateSession(request: NextRequest) {
       url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
       return NextResponse.redirect(url);
     }
-    // Mesma regra que app/onboarding/page.tsx: com perfil completo só entra em modo edição (?editar=1|true|sim|yes).
-    const editarRaw = request.nextUrl.searchParams.get("editar");
-    const editarNorm = (editarRaw ?? "").trim().toLowerCase();
-    const modoEditar =
-      editarNorm === "1" || editarNorm === "true" || editarNorm === "sim" || editarNorm === "yes";
-    if (profile.perfil_completo && !modoEditar) {
+    // Onboarding só para quem ainda não concluiu o cadastro inicial.
+    if (profile.perfil_completo) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       url.search = "";

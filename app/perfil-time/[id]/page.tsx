@@ -15,6 +15,8 @@ import {
   podeExibirWhatsappPerfilFormacao,
   waMeHref,
 } from "@/lib/perfil/whatsapp-visibility";
+import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
+import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF } from "@/lib/routes/conta";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -34,7 +36,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect(`/login?next=/perfil-time/${id}`);
+  if (!user) redirect(loginNextWithOptionalFrom(`/perfil-time/${id}`, sp));
 
   async function sairEquipeAction() {
     "use server";
@@ -279,13 +281,13 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           {isMember || isLeader ? (
             <div className={`grid gap-2 ${isLeader ? "mt-2" : "mt-3"} w-full text-left`}>
               <Link
-                href="/onboarding?editar=1&step=perfil"
+                href={CONTA_PERFIL_HREF}
                 className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
               >
                 Editar perfil pessoal
               </Link>
               <Link
-                href="/onboarding?editar=1&step=esportes"
+                href={CONTA_ESPORTES_EID_HREF}
                 className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
               >
                 Esportes e ranking (EID)

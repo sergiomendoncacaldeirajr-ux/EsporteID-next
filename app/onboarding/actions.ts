@@ -174,7 +174,6 @@ export async function salvarEsportesOnboarding(
   if (!finalIds.length) return { ok: false, message: "Esportes inválidos." };
 
   const interessesMap = new Map<number, "ranking" | "ranking_e_amistoso" | "amistoso">();
-  const modalidadeMap = new Map<number, "individual" | "dupla" | "time">();
   for (const [k, v] of formData.entries()) {
     if (!k.startsWith("esporte_interesse_")) continue;
     const id = Number(k.replace("esporte_interesse_", ""));
@@ -183,24 +182,17 @@ export async function salvarEsportesOnboarding(
     const interesse = raw === "ranking" ? "ranking" : raw === "amistoso" ? "amistoso" : "ranking_e_amistoso";
     interessesMap.set(id, interesse);
   }
-  for (const [k, v] of formData.entries()) {
-    if (!k.startsWith("esporte_modalidade_")) continue;
-    const id = Number(k.replace("esporte_modalidade_", ""));
-    if (!Number.isInteger(id) || id <= 0) continue;
-    const raw = String(v);
-    const modalidade = raw === "dupla" || raw === "time" ? raw : "individual";
-    modalidadeMap.set(id, modalidade);
-  }
 
   const { data: esportesMeta, error: metaErr } = await supabase
     .from("esportes")
-    .select("id, permite_individual, permite_dupla, permite_time")
+    .select("id, nome, permite_individual, permite_dupla, permite_time")
     .in("id", finalIds);
   if (metaErr) return { ok: false, message: metaErr.message };
   const esporteMetaMap = new Map(
     (esportesMeta ?? []).map((r) => [
       Number(r.id),
       {
+        nome: String(r.nome ?? "Esporte"),
         individual: Boolean(r.permite_individual),
         dupla: Boolean(r.permite_dupla),
         time: Boolean(r.permite_time),
@@ -208,16 +200,41 @@ export async function salvarEsportesOnboarding(
     ])
   );
 
-  function modalidadeFinalPara(esporteId: number): "individual" | "dupla" | "time" {
-    const pref = modalidadeMap.get(esporteId) ?? "individual";
+  type Modality = "individual" | "dupla" | "time";
+  const ORDER: Modality[] = ["individual", "dupla", "time"];
+  function sortMods(mods: Modality[]): Modality[] {
+    const s = new Set(mods);
+    return ORDER.filter((m) => s.has(m));
+  }
+
+  const modalidadesMap = new Map<number, Modality[]>();
+  for (const esporteId of finalIds) {
     const meta = esporteMetaMap.get(esporteId);
-    if (!meta) return pref;
-    if (pref === "time" && meta.time) return "time";
-    if (pref === "dupla" && meta.dupla) return "dupla";
-    if (meta.individual) return "individual";
-    if (meta.dupla) return "dupla";
-    if (meta.time) return "time";
-    return "individual";
+    if (!meta) return { ok: false, message: "Esporte inválido." };
+    const allowed: Modality[] = [];
+    if (meta.individual) allowed.push("individual");
+    if (meta.dupla) allowed.push("dupla");
+    if (meta.time) allowed.push("time");
+    if (allowed.length === 0) return { ok: false, message: `O esporte ${meta.nome} não permite modalidades de confronto.` };
+
+    const rawMods = formData.getAll(`esporte_modalidade_${esporteId}`).map(String);
+    const picked = sortMods(
+      rawMods
+        .map((raw) => {
+          const t = raw.trim().toLowerCase();
+          if (t === "individual" || t === "dupla" || t === "time") return t as Modality;
+          return null;
+        })
+        .filter((m): m is Modality => m != null)
+    );
+    const finalMods = sortMods(picked.filter((m) => allowed.includes(m)));
+    if (finalMods.length === 0) {
+      return {
+        ok: false,
+        message: `Em “${meta.nome}”, marque ao menos uma forma de jogar no match (individual, dupla ou time).`,
+      };
+    }
+    modalidadesMap.set(esporteId, finalMods);
   }
 
   const { data: existentes, error: exErr } = await supabase
@@ -241,11 +258,12 @@ export async function salvarEsportesOnboarding(
   }
 
   for (const esporteId of atualizar) {
+    const mods = modalidadesMap.get(esporteId) ?? ["individual"];
     const { error: uErr } = await supabase
       .from("usuario_eid")
       .update({
         interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
-        modalidade_match: modalidadeFinalPara(esporteId),
+        modalidades_match: mods,
       })
       .eq("usuario_id", user.id)
       .eq("esporte_id", esporteId);
@@ -257,7 +275,7 @@ export async function salvarEsportesOnboarding(
       usuario_id: user.id,
       esporte_id: esporteId,
       interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
-      modalidade_match: modalidadeFinalPara(esporteId),
+      modalidades_match: modalidadesMap.get(esporteId) ?? ["individual"],
     }));
     const { error: insErr } = await supabase.from("usuario_eid").insert(rows);
     if (insErr) return { ok: false, message: insErr.message };
@@ -278,6 +296,7 @@ export async function salvarEsportesOnboarding(
   }
 
   revalidatePath("/onboarding");
+  revalidatePath("/conta/esportes-eid");
   revalidatePath(`/perfil/${user.id}`);
   return { ok: true, nextStep: "extras" };
 }
@@ -839,6 +858,7 @@ export async function salvarPerfilOnboarding(
   revalidatePath("/", "layout");
   revalidatePath("/onboarding");
   revalidatePath("/dashboard");
+  revalidatePath("/conta/perfil");
   revalidatePath(`/perfil/${user.id}`);
   return { ok: true, nextStep: "dashboard" };
 }

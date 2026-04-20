@@ -1,4 +1,5 @@
 ﻿import { redirect } from "next/navigation";
+import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { createClient } from "@/lib/supabase/server";
 import { OnboardingWizard } from "./onboarding-wizard";
 
@@ -26,23 +27,13 @@ function parseDetalhes(raw: unknown): Record<string, unknown> {
   }
 }
 
-type PageProps = {
-  searchParams?: Promise<{ editar?: string; step?: string }>;
-};
-
-export default async function OnboardingPage({ searchParams }: PageProps) {
-  const sp = (await searchParams) ?? {};
-  /** Edição (?editar=1): só o titular da sessão. Não existe userId na URL; tudo é filtrado por auth + RLS. */
-  const modoEditar =
-    sp.editar === "1" || sp.editar === "true" || sp.editar === "sim" || sp.editar === "yes";
-
+export default async function OnboardingPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    const nextUrl = modoEditar ? "/onboarding?editar=1" : "/onboarding";
-    redirect(`/login?next=${encodeURIComponent(nextUrl)}`);
+    redirect(`/login?next=${encodeURIComponent("/onboarding")}`);
   }
 
   const { data: profile } = await supabase
@@ -54,14 +45,10 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
     .maybeSingle();
 
   if (!profile?.termos_aceitos_em) {
-    const qs = new URLSearchParams();
-    if (sp.editar != null && String(sp.editar).length > 0) qs.set("editar", String(sp.editar));
-    if (sp.step != null && String(sp.step).length > 0) qs.set("step", String(sp.step));
-    const onboardingBack = qs.size > 0 ? `/onboarding?${qs}` : "/onboarding";
-    redirect(`/conta/aceitar-termos?next=${encodeURIComponent(onboardingBack)}`);
+    redirect(`/conta/aceitar-termos?next=${encodeURIComponent("/onboarding")}`);
   }
   if (profile.id !== user.id) redirect("/dashboard");
-  if (profile.perfil_completo && !modoEditar) redirect("/dashboard");
+  if (profile.perfil_completo) redirect("/dashboard");
 
   const { data: papeisRows } = await supabase
     .from("usuario_papeis")
@@ -82,7 +69,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
 
   const { data: eidRows } = await supabase
     .from("usuario_eid")
-    .select("esporte_id, interesse_match, modalidade_match")
+    .select("esporte_id, interesse_match, modalidade_match, modalidades_match")
     .eq("usuario_id", user.id);
   const selectedEsportes = (eidRows ?? []).map((r) => r.esporte_id);
   const selectedEsportesInteresse = Object.fromEntries(
@@ -95,12 +82,9 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
           : "ranking_e_amistoso",
     ])
   ) as Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
-  const selectedEsportesModalidade = Object.fromEntries(
-    (eidRows ?? []).map((r) => [
-      r.esporte_id,
-      r.modalidade_match === "dupla" || r.modalidade_match === "time" ? r.modalidade_match : "individual",
-    ])
-  ) as Record<number, "individual" | "dupla" | "time">;
+  const selectedEsportesModalidades = Object.fromEntries(
+    (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
+  );
 
   const needsSport = precisaEsportesPratica(papeis);
 
@@ -113,18 +97,6 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
     initialStep = "extras";
   } else {
     initialStep = "perfil";
-  }
-
-  if (modoEditar) {
-    const raw = (sp.step ?? "").toLowerCase();
-    const permitidos: Step[] = ["papeis", "esportes", "extras", "perfil"];
-    if (permitidos.includes(raw as Step)) {
-      initialStep = raw as Step;
-    } else if (needsSport) {
-      initialStep = "esportes";
-    } else {
-      initialStep = "perfil";
-    }
   }
 
   const { data: esportes } = await supabase
@@ -145,7 +117,6 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
       userId={user.id}
       primeiroNome={primeiroNomeDe(profile.nome)}
       initialStep={initialStep}
-      modoEdicao={modoEditar}
       esportes={(esportes ?? []).map((e) => ({
         id: e.id,
         nome: e.nome,
@@ -162,7 +133,7 @@ export default async function OnboardingPage({ searchParams }: PageProps) {
       selectedPapeis={papeis}
       selectedEsportes={selectedEsportes}
       selectedEsportesInteresse={selectedEsportesInteresse}
-      selectedEsportesModalidade={selectedEsportesModalidade}
+      selectedEsportesModalidades={selectedEsportesModalidades}
       extrasInitial={{
         expModo: detalhesAtleta.experiencia_modo === "exato" ? "exato" : "aprox",
         expAprox:

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/brand/logo-full";
+import type { MatchModality } from "@/lib/onboarding/modalidades-match";
+import { sortModalidadesMatch } from "@/lib/onboarding/modalidades-match";
 import {
   salvarPapeisOnboarding,
   salvarEsportesOnboarding,
@@ -47,8 +49,6 @@ type Props = {
   userId: string;
   primeiroNome: string;
   initialStep: Step;
-  /** Permite acessar o fluxo com perfil já completo (edição de esportes, experiência, perfil). */
-  modoEdicao?: boolean;
   esportes: {
     id: number;
     nome: string;
@@ -60,7 +60,7 @@ type Props = {
   selectedPapeis: string[];
   selectedEsportes: number[];
   selectedEsportesInteresse: Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
-  selectedEsportesModalidade: Record<number, "individual" | "dupla" | "time">;
+  selectedEsportesModalidades: Record<number, MatchModality[]>;
   extrasInitial: {
     expModo: "aprox" | "exato";
     expAprox: "menos_1" | "1_3" | "mais_3";
@@ -102,13 +102,12 @@ export function OnboardingWizard({
   userId,
   primeiroNome,
   initialStep,
-  modoEdicao = false,
   esportes,
   locais,
   selectedPapeis,
   selectedEsportes,
   selectedEsportesInteresse,
-  selectedEsportesModalidade,
+  selectedEsportesModalidades,
   extrasInitial,
   profileInitial,
 }: Props) {
@@ -124,8 +123,8 @@ export function OnboardingWizard({
   const [esportesInteresse, setEsportesInteresse] = useState<Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">>(
     selectedEsportesInteresse
   );
-  const [esportesModalidade, setEsportesModalidade] = useState<Record<number, "individual" | "dupla" | "time">>(
-    selectedEsportesModalidade
+  const [esportesModalidades, setEsportesModalidades] = useState<Record<number, MatchModality[]>>(
+    selectedEsportesModalidades
   );
   const [expModo, setExpModo] = useState<"aprox" | "exato">(extrasInitial.expModo);
   const [expAprox, setExpAprox] = useState<"menos_1" | "1_3" | "mais_3">(extrasInitial.expAprox);
@@ -200,13 +199,10 @@ export function OnboardingWizard({
   }, [selectedEsportesInteresse]);
 
   useEffect(() => {
-    setEsportesModalidade(selectedEsportesModalidade);
-  }, [selectedEsportesModalidade]);
+    setEsportesModalidades(selectedEsportesModalidades);
+  }, [selectedEsportesModalidades]);
 
   useEffect(() => {
-    // Em edição (?editar=1&step=…), a URL + servidor definem a etapa e os dados; o rascunho
-    // local costuma apontar para "esportes"/"extras" e impedia abrir "perfil" ao clicar em Editar Perfil.
-    if (modoEdicao) return;
     try {
       const raw = window.localStorage.getItem(draftKey);
       if (!raw) return;
@@ -215,7 +211,8 @@ export function OnboardingWizard({
         papeis: string[];
         esportesSel: number[];
         esportesInteresse: Record<number, "ranking" | "ranking_e_amistoso">;
-        esportesModalidade: Record<number, "individual" | "dupla" | "time">;
+        esportesModalidades?: Record<number, MatchModality[]>;
+        esportesModalidade?: Record<number, "individual" | "dupla" | "time">;
         expModo: "aprox" | "exato";
         expAprox: "menos_1" | "1_3" | "mais_3";
         expMes: string;
@@ -263,7 +260,23 @@ export function OnboardingWizard({
       if (draft.papeis) setPapeis(new Set(draft.papeis));
       if (draft.esportesSel) setEsportesSel(new Set(draft.esportesSel));
       if (draft.esportesInteresse) setEsportesInteresse(draft.esportesInteresse);
-      if (draft.esportesModalidade) setEsportesModalidade(draft.esportesModalidade);
+      const migratedMods = (() => {
+        const raw = draft.esportesModalidades ?? draft.esportesModalidade;
+        if (!raw || typeof raw !== "object") return null;
+        const out: Record<number, MatchModality[]> = {};
+        for (const [k, v] of Object.entries(raw)) {
+          const id = Number(k);
+          if (!Number.isFinite(id)) continue;
+          if (Array.isArray(v)) {
+            const ok = v.filter((x): x is MatchModality => x === "individual" || x === "dupla" || x === "time");
+            if (ok.length) out[id] = sortModalidadesMatch(ok);
+          } else if (v === "individual" || v === "dupla" || v === "time") {
+            out[id] = [v];
+          }
+        }
+        return Object.keys(out).length ? out : null;
+      })();
+      if (migratedMods) setEsportesModalidades(migratedMods);
       if (draft.expModo) setExpModo(draft.expModo);
       if (draft.expAprox) setExpAprox(draft.expAprox);
       if (typeof draft.expMes === "string") setExpMes(draft.expMes);
@@ -305,7 +318,7 @@ export function OnboardingWizard({
     } catch {
       window.localStorage.removeItem(draftKey);
     }
-  }, [draftKey, modoEdicao]);
+  }, [draftKey]);
 
   useEffect(() => {
     const payload = {
@@ -313,7 +326,7 @@ export function OnboardingWizard({
       papeis: [...papeis],
       esportesSel: [...esportesSel],
       esportesInteresse,
-      esportesModalidade,
+      esportesModalidades,
       expModo,
       expAprox,
       expMes,
@@ -359,7 +372,7 @@ export function OnboardingWizard({
     espacoNome,
     esportesSel,
     esportesInteresse,
-    esportesModalidade,
+    esportesModalidades,
     estruturas,
     expAno,
     expAprox,
@@ -491,8 +504,7 @@ export function OnboardingWizard({
     else if (r.nextStep === "perfil") setStep("perfil");
     else if (r.nextStep === "dashboard") {
       window.localStorage.removeItem(draftKey);
-      if (modoEdicao) router.push(`/perfil/${userId}`);
-      else router.push("/dashboard");
+      router.push("/dashboard");
     }
   }
 
@@ -503,7 +515,7 @@ export function OnboardingWizard({
     setPapeis(new Set(selectedPapeis));
     setEsportesSel(new Set(selectedEsportes));
     setEsportesInteresse(selectedEsportesInteresse);
-    setEsportesModalidade(selectedEsportesModalidade);
+    setEsportesModalidades(selectedEsportesModalidades);
     setExpModo(extrasInitial.expModo);
     setExpAprox(extrasInitial.expAprox);
     setExpMes(extrasInitial.expMes ? String(extrasInitial.expMes) : "");
@@ -556,19 +568,28 @@ export function OnboardingWizard({
   function toggleEsporte(id: number) {
     setEsportesSel((prev) => {
       const n = new Set(prev);
-      if (n.has(id)) n.delete(id);
-      else {
+      if (n.has(id)) {
+        n.delete(id);
+        setEsportesModalidades((om) => {
+          const next = { ...om };
+          delete next[id];
+          return next;
+        });
+      } else {
         n.add(id);
         setEsportesInteresse((old) => ({
           ...old,
           [id]: old[id] ?? "ranking_e_amistoso",
         }));
         const esp = esportes.find((e) => e.id === id);
-        const defaultModalidade: "individual" | "dupla" | "time" =
-          esp?.permiteIndividual ? "individual" : esp?.permiteDupla ? "dupla" : "time";
-        setEsportesModalidade((old) => ({
+        const defaultModalidade: MatchModality = esp?.permiteIndividual
+          ? "individual"
+          : esp?.permiteDupla
+            ? "dupla"
+            : "time";
+        setEsportesModalidades((old) => ({
           ...old,
-          [id]: old[id] ?? defaultModalidade,
+          [id]: old[id]?.length ? old[id]! : [defaultModalidade],
         }));
       }
       return n;
@@ -579,8 +600,18 @@ export function OnboardingWizard({
     setEsportesInteresse((old) => ({ ...old, [id]: interesse }));
   }
 
-  function setEsporteModalidade(id: number, modalidade: "individual" | "dupla" | "time") {
-    setEsportesModalidade((old) => ({ ...old, [id]: modalidade }));
+  function toggleEsporteModality(id: number, modalidade: MatchModality, checked: boolean) {
+    setEsportesModalidades((old) => {
+      const cur = old[id] ?? ["individual"];
+      const set = new Set(sortModalidadesMatch(cur));
+      if (checked) {
+        set.add(modalidade);
+      } else {
+        if (set.size <= 1) return old;
+        set.delete(modalidade);
+      }
+      return { ...old, [id]: sortModalidadesMatch([...set]) };
+    });
   }
 
   function submitPapeis(e: React.FormEvent<HTMLFormElement>) {
@@ -707,22 +738,7 @@ export function OnboardingWizard({
           >
             ← Voltar ao início
           </Link>
-          {modoEdicao ? (
-            <Link
-              href={`/perfil/${userId}`}
-              className="inline-block text-[13px] font-semibold text-eid-primary-400 no-underline transition hover:underline"
-            >
-              ← Voltar ao perfil
-            </Link>
-          ) : null}
         </div>
-
-        {modoEdicao ? (
-          <p className="mb-3 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2 text-[12px] text-eid-text-secondary">
-            Você está <strong className="text-eid-fg">editando seu cadastro</strong>. Ajuste esportes do ranking, tempo de
-            prática ou dados do perfil e salve cada etapa.
-          </p>
-        ) : null}
 
         <LogoFull priority className="mb-5 mt-1" />
 
@@ -885,15 +901,17 @@ export function OnboardingWizard({
                             Você não aparecerá nas sugestões de Matchmaking Competitivo da plataforma.
                           </p>
                         ) : null}
-                        <p className="mt-2 text-[11px] text-eid-text-secondary">Como deseja jogar no match:</p>
+                        <p className="mt-2 text-[11px] text-eid-text-secondary">
+                          Como deseja jogar no match (pode marcar mais de uma):
+                        </p>
                         {e.permiteIndividual ? (
                           <label className="mt-1 block text-xs text-eid-fg">
                             <input
-                              type="radio"
+                              type="checkbox"
                               name={`esporte_modalidade_${e.id}`}
                               value="individual"
-                              checked={(esportesModalidade[e.id] ?? "individual") === "individual"}
-                              onChange={() => setEsporteModalidade(e.id, "individual")}
+                              checked={(esportesModalidades[e.id] ?? ["individual"]).includes("individual")}
+                              onChange={(ev) => toggleEsporteModality(e.id, "individual", ev.target.checked)}
                               className="mr-2"
                             />
                             Individual (X1)
@@ -902,11 +920,11 @@ export function OnboardingWizard({
                         {e.permiteDupla ? (
                           <label className="mt-1 block text-xs text-eid-fg">
                             <input
-                              type="radio"
+                              type="checkbox"
                               name={`esporte_modalidade_${e.id}`}
                               value="dupla"
-                              checked={(esportesModalidade[e.id] ?? "individual") === "dupla"}
-                              onChange={() => setEsporteModalidade(e.id, "dupla")}
+                              checked={(esportesModalidades[e.id] ?? ["individual"]).includes("dupla")}
+                              onChange={(ev) => toggleEsporteModality(e.id, "dupla", ev.target.checked)}
                               className="mr-2"
                             />
                             Dupla
@@ -915,11 +933,11 @@ export function OnboardingWizard({
                         {e.permiteTime ? (
                           <label className="mt-1 block text-xs text-eid-fg">
                             <input
-                              type="radio"
+                              type="checkbox"
                               name={`esporte_modalidade_${e.id}`}
                               value="time"
-                              checked={(esportesModalidade[e.id] ?? "individual") === "time"}
-                              onChange={() => setEsporteModalidade(e.id, "time")}
+                              checked={(esportesModalidades[e.id] ?? ["individual"]).includes("time")}
+                              onChange={(ev) => toggleEsporteModality(e.id, "time", ev.target.checked)}
                               className="mr-2"
                             />
                             Time
@@ -1560,15 +1578,7 @@ export function OnboardingWizard({
                 disabled={pending || !perfilValid}
                 className="eid-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50"
               >
-                {pending
-                  ? hasFotoSelecionada
-                    ? "Enviando foto…"
-                    : modoEdicao
-                      ? "Salvando…"
-                      : "Finalizando…"
-                  : modoEdicao
-                    ? "Salvar dados do perfil"
-                    : "Finalizar e entrar no painel"}
+                {pending ? (hasFotoSelecionada ? "Enviando foto…" : "Finalizando…") : "Finalizar e entrar no painel"}
               </button>
             </form>
           ) : null}

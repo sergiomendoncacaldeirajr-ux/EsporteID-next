@@ -11,6 +11,8 @@ import {
   podeExibirWhatsappPerfilPublico,
   waMeHref,
 } from "@/lib/perfil/whatsapp-visibility";
+import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
+import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF } from "@/lib/routes/conta";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -27,7 +29,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect(`/login?next=/perfil/${id}`);
+  if (!user) redirect(loginNextWithOptionalFrom(`/perfil/${id}`, sp));
 
   const { data: perfil } = await supabase
     .from("profiles")
@@ -391,7 +393,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 </Link>
                 {isSelf ? (
                   <Link
-                    href="/onboarding?editar=1&step=perfil"
+                    href={CONTA_PERFIL_HREF}
                     className="inline-flex min-h-[36px] items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
                   >
                     Editar Perfil
@@ -406,7 +408,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             {isSelf ? (
               <div className="mb-2 mt-1">
                 <Link
-                  href="/onboarding?editar=1&step=esportes"
+                  href={CONTA_ESPORTES_EID_HREF}
                   className="inline-flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16 sm:w-auto"
                 >
                   Gerenciar / editar
