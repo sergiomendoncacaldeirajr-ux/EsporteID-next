@@ -140,13 +140,14 @@ export function LoginForm() {
   }
 
   return (
-    <main className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-5 text-eid-fg sm:px-6">
+    <main className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7">
       <div className="w-full max-w-[340px] pb-6">
         <Link
           href="/?home=1"
-          className="mb-3 inline-block text-[13px] text-eid-text-muted no-underline transition hover:text-eid-fg"
+          className="mb-3 inline-block max-w-[calc(100%-5.5rem)] text-[13px] leading-snug text-eid-text-muted no-underline transition hover:text-eid-fg sm:max-w-none"
         >
-          ← Página institucional (melhor no computador)
+          <span className="sm:hidden">← Início (site)</span>
+          <span className="hidden sm:inline">← Página institucional (melhor no computador)</span>
         </Link>
 
         <LogoFull priority className="mb-5 mt-1" />

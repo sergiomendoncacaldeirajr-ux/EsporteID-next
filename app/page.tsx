@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogoFull } from "@/components/brand/logo-full";
+import { EidThemeToggle } from "@/components/eid-theme-toggle";
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
@@ -76,6 +77,17 @@ export default async function Home() {
       />
 
       <main className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 pb-16 pt-6 sm:px-8 sm:pb-20 sm:pt-12">
+        {user ? (
+          <div className="mb-4 flex items-center justify-end gap-2 sm:mb-6">
+            <Link
+              href="/dashboard"
+              className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-3 py-1.5 text-xs font-bold text-eid-primary-300 transition hover:bg-eid-primary-500/20"
+            >
+              Painel
+            </Link>
+            <EidThemeToggle variant="toolbar" />
+          </div>
+        ) : null}
         <LogoFull priority className="mb-6 flex justify-center sm:mb-8" />
 
         <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-eid-primary-500 sm:text-left">

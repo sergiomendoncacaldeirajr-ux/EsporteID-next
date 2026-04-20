@@ -27,12 +27,14 @@ function IconSun({ className }: { className?: string }) {
 
 type Props = {
   className?: string;
+  /** Quadrado compacto para cabeçalho (ícone só). */
+  variant?: "default" | "toolbar";
 };
 
 /**
  * Alterna tema claro/escuro em todo o site (`data-eid-theme` + localStorage).
  */
-export function EidThemeToggle({ className }: Props) {
+export function EidThemeToggle({ className, variant = "default" }: Props) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   const syncFromDom = useCallback(() => {
@@ -52,16 +54,23 @@ export function EidThemeToggle({ className }: Props) {
 
   const isLight = theme === "light";
 
+  const toolbarCls =
+    variant === "toolbar"
+      ? "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-0 text-eid-text-muted shadow-sm transition hover:border-eid-primary-500/35 hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50"
+      : "inline-flex h-10 items-center gap-2 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-3 text-eid-text-muted shadow-sm backdrop-blur-sm transition hover:border-eid-primary-500/30 hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50";
+
   return (
     <button
       type="button"
       onClick={toggle}
-      className={`inline-flex h-10 items-center gap-2 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-3 text-eid-text-muted shadow-sm backdrop-blur-sm transition hover:border-eid-primary-500/30 hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50 ${className ?? ""}`}
+      className={`${toolbarCls} ${className ?? ""}`}
       aria-label={isLight ? "Ativar tema escuro" : "Ativar tema claro"}
       aria-pressed={isLight}
     >
       {isLight ? <IconSun className="text-eid-action-500" /> : <IconMoon className="text-eid-primary-300" />}
-      <span className="hidden text-xs font-semibold sm:inline">{isLight ? "Claro" : "Escuro"}</span>
+      {variant === "default" ? (
+        <span className="hidden text-xs font-semibold sm:inline">{isLight ? "Claro" : "Escuro"}</span>
+      ) : null}
     </button>
   );
 }

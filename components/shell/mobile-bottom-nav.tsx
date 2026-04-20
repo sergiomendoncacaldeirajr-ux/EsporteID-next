@@ -194,7 +194,9 @@ export function MobileBottomNav({ userId }: Props) {
             >
               <span
                 className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
-                  item.active ? "bg-eid-action-500 text-[var(--eid-brand-ink)]" : "bg-eid-action-500/85 text-[var(--eid-brand-ink)]"
+                  item.active
+                    ? "bg-eid-action-500 text-[var(--eid-brand-ink)] shadow-md shadow-eid-action-500/25"
+                    : "border border-[color:var(--eid-border-subtle)] bg-eid-surface text-eid-text-secondary"
                 }`}
               >
                 <span className="flex [&>svg]:h-[18px] [&>svg]:w-[18px]">{item.icon}</span>

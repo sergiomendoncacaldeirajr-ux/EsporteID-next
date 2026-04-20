@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
 import { EidThemeToggle } from "@/components/eid-theme-toggle";
 import { LegalGate } from "@/components/legal-gate";
@@ -63,12 +62,9 @@ export default async function RootLayout({
     >
       <body className="flex min-h-full flex-col bg-eid-bg text-eid-fg">
         <EidThemeHydration />
-        <div className="pointer-events-none fixed right-3 top-3 z-[60] flex items-center gap-2 sm:right-4 sm:top-4">
-          {user ? (
-            <div className="pointer-events-auto">
-              <SignOutButton />
-            </div>
-          ) : (
+        {/* Logado: tema/sair no DashboardTopbar (área logada). Visitante: Entrar + tema. */}
+        {!user ? (
+          <div className="pointer-events-none fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[60] flex items-center gap-2 sm:right-4">
             <div className="pointer-events-auto">
               <Link
                 href="/login"
@@ -77,11 +73,11 @@ export default async function RootLayout({
                 Entrar
               </Link>
             </div>
-          )}
-          <div className="pointer-events-auto">
-            <EidThemeToggle />
+            <div className="pointer-events-auto">
+              <EidThemeToggle />
+            </div>
           </div>
-        </div>
+        ) : null}
         <div
           id="app-main-column"
           className={

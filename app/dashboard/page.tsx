@@ -229,11 +229,11 @@ export default async function DashboardPage({ searchParams }: Props) {
       : "/match";
 
   const navItems = [
-    { label: "Times", href: "/times", icon: IconUsers },
-    { label: "Locais", href: "/locais", icon: IconMapPin },
-    { label: "Torneios", href: "/torneios", icon: IconTrophy },
-    { label: "Rank", href: "/ranking", icon: IconChart },
-    { label: "Performance", href: "/performance", icon: IconStopwatch },
+    { label: "Times", shortLabel: "Times", href: "/times", icon: IconUsers },
+    { label: "Locais", shortLabel: "Locais", href: "/locais", icon: IconMapPin },
+    { label: "Torneios", shortLabel: "Torneios", href: "/torneios", icon: IconTrophy },
+    { label: "Rank", shortLabel: "Rank", href: "/ranking", icon: IconChart },
+    { label: "Performance", shortLabel: "Perf.", href: "/performance", icon: IconStopwatch },
   ];
 
   return (
@@ -275,17 +275,20 @@ export default async function DashboardPage({ searchParams }: Props) {
           </Link>
         </div>
 
-        <div className="mt-4 grid grid-cols-5 gap-2 sm:mt-6 sm:gap-3">
+        <div className="mt-4 grid grid-cols-5 gap-1.5 sm:mt-6 sm:gap-3">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex flex-col items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-1 py-3 text-center transition hover:border-eid-primary-500/35 sm:py-3.5"
+                className="flex min-h-[72px] flex-col items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-0.5 py-2.5 text-center transition hover:border-eid-primary-500/40 hover:shadow-[0_8px_24px_-12px_rgba(37,99,235,0.25)] sm:min-h-0 sm:px-1 sm:py-3.5"
               >
-                <Icon className="mb-1.5 h-[18px] w-[18px] text-eid-primary-400 sm:h-5 sm:w-5" />
-                <span className="text-[9px] font-extrabold uppercase leading-tight text-eid-fg sm:text-[10px]">{item.label}</span>
+                <Icon className="mb-1 h-[17px] w-[17px] shrink-0 text-eid-primary-400 sm:mb-1.5 sm:h-5 sm:w-5" />
+                <span className="text-[8px] font-extrabold uppercase leading-tight text-eid-fg sm:text-[10px]">
+                  <span className="sm:hidden">{item.shortLabel}</span>
+                  <span className="hidden sm:inline">{item.label}</span>
+                </span>
               </Link>
             );
           })}
