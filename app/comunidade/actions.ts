@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export type ResponderMatchState = { ok: true } | { ok: false; message: string };
+export type ResponderConviteState = { ok: true } | { ok: false; message: string };
 
 export async function responderPedidoMatch(
   _prev: ResponderMatchState | undefined,
@@ -70,4 +71,33 @@ export async function marcarTodasNotificacoesLidas() {
 
   revalidatePath("/comunidade");
   revalidatePath("/dashboard");
+}
+
+export async function responderConviteEquipe(
+  _prev: ResponderConviteState | undefined,
+  formData: FormData
+): Promise<ResponderConviteState> {
+  const conviteId = Number(formData.get("convite_id"));
+  const aceitarRaw = formData.get("aceitar");
+  const aceitar = aceitarRaw === "true" || aceitarRaw === "1";
+  if (!Number.isFinite(conviteId) || conviteId < 1) {
+    return { ok: false, message: "Convite inválido." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada." };
+
+  const { error } = await supabase.rpc("responder_convite_time", {
+    p_convite_id: conviteId,
+    p_aceitar: aceitar,
+  });
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/comunidade");
+  revalidatePath(`/perfil/${user.id}`);
+  revalidatePath("/times");
+  return { ok: true };
 }

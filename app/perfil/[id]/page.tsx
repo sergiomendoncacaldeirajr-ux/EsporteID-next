@@ -85,6 +85,20 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
 
   const primeiroEsporte = eids?.[0]?.esporte_id;
 
+  const { data: socioRows } = await supabase
+    .from("membership_requests")
+    .select("espaco_generico_id, espacos_genericos!inner(id, nome_publico, localizacao)")
+    .eq("usuario_id", id)
+    .eq("status", "aprovado")
+    .limit(20);
+
+  const { data: frequentesRows } = await supabase
+    .from("usuario_locais_frequentes")
+    .select("visitas, espacos_genericos!inner(id, nome_publico, localizacao)")
+    .eq("usuario_id", id)
+    .order("visitas", { ascending: false })
+    .limit(10);
+
   return (
     <>
       <DashboardTopbar />
@@ -358,6 +372,48 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             <Link href="/times?create=1" className="mt-2 inline-flex text-sm font-semibold text-eid-action-400">
               Criar Nova Dupla/Time
             </Link>
+          </section>
+        ) : null}
+        {(socioRows ?? []).length > 0 ? (
+          <section className="mt-8">
+            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Sócio de</h2>
+            <ul className="mt-3 grid gap-2">
+              {(socioRows ?? []).map((s, idx) => {
+                const esp = Array.isArray(s.espacos_genericos) ? s.espacos_genericos[0] : s.espacos_genericos;
+                return (
+                  <li key={`${s.espaco_generico_id}-${idx}`}>
+                    <Link
+                      href={`/local/${esp?.id}?from=/perfil/${id}`}
+                      className="block rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 py-3 text-sm text-eid-fg hover:border-eid-primary-500/35"
+                    >
+                      {esp?.nome_publico ?? "Local"} <span className="text-xs text-eid-text-secondary">· {esp?.localizacao ?? "—"}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ) : null}
+
+        {(frequentesRows ?? []).length > 0 ? (
+          <section className="mt-8">
+            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Frequência</h2>
+            <ul className="mt-3 grid gap-2">
+              {(frequentesRows ?? []).map((f, idx) => {
+                const esp = Array.isArray(f.espacos_genericos) ? f.espacos_genericos[0] : f.espacos_genericos;
+                return (
+                  <li key={`${esp?.id}-${idx}`}>
+                    <Link
+                      href={`/local/${esp?.id}?from=/perfil/${id}`}
+                      className="flex items-center justify-between rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 py-3 text-sm hover:border-eid-primary-500/35"
+                    >
+                      <span className="text-eid-fg">{esp?.nome_publico ?? "Local"}</span>
+                      <span className="text-xs font-semibold text-eid-primary-300">{f.visitas ?? 0} visitas</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </section>
         ) : null}
       </main>

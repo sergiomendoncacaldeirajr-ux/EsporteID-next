@@ -37,6 +37,36 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
     revalidatePath(`/perfil/${actionUser.id}`);
   }
 
+  async function convidarAction(formData: FormData) {
+    "use server";
+    const sb = await createClient();
+    const uname = String(formData.get("username") ?? "").trim().toLowerCase();
+    if (!uname) return;
+    await sb.rpc("convidar_para_time", { p_time_id: id, p_username: uname });
+    revalidatePath(`/perfil-time/${id}`);
+    revalidatePath("/comunidade");
+  }
+
+  async function removerMembroAction(formData: FormData) {
+    "use server";
+    const sb = await createClient();
+    const uid = String(formData.get("usuario_id") ?? "");
+    if (!uid) return;
+    await sb.rpc("remover_membro_time", { p_time_id: id, p_usuario_id: uid });
+    revalidatePath(`/perfil-time/${id}`);
+    revalidatePath(`/perfil/${uid}`);
+  }
+
+  async function transferirLiderancaAction(formData: FormData) {
+    "use server";
+    const sb = await createClient();
+    const uid = String(formData.get("usuario_id") ?? "");
+    if (!uid) return;
+    await sb.rpc("transferir_lideranca_time", { p_time_id: id, p_novo_lider: uid });
+    revalidatePath(`/perfil-time/${id}`);
+    revalidatePath(`/perfil/${uid}`);
+  }
+
   const { data: t } = await supabase
     .from("times")
     .select(
@@ -90,6 +120,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   const canChallenge = (minhaFormacao?.length ?? 0) > 0 && t.criador_id !== user.id;
   const isMember = (membros ?? []).some((m) => m.usuario_id === user.id);
   const canLeaveTeam = isMember && t.criador_id !== user.id;
+  const isLeader = t.criador_id === user.id;
 
   return (
     <>
@@ -165,6 +196,14 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
               </button>
             </form>
           ) : null}
+          {isLeader ? (
+            <form action={convidarAction} className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+              <input name="username" placeholder="@username para convidar" className="eid-input-dark rounded-xl px-3 py-2 text-xs text-eid-fg" />
+              <button type="submit" className="eid-btn-primary rounded-xl px-3 py-2 text-xs font-semibold">
+                Convidar
+              </button>
+            </form>
+          ) : null}
         </div>
 
         {(hist ?? []).length > 0 ? (
@@ -192,22 +231,37 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
               if (!p?.id) return null;
               return (
                 <li key={`${m.usuario_id}-${idx}`}>
-                  <Link
-                    href={`/perfil/${p.id}?from=/perfil-time/${id}`}
-                    className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 transition hover:border-eid-primary-500/35"
-                  >
-                    {p.avatar_url ? (
-                      <img src={p.avatar_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-eid-surface text-[10px] font-bold text-eid-primary-300">
-                        EID
+                  <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3">
+                    <Link href={`/perfil/${p.id}?from=/perfil-time/${id}`} className="flex items-center gap-2 transition hover:border-eid-primary-500/35">
+                      {p.avatar_url ? (
+                        <img src={p.avatar_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-eid-surface text-[10px] font-bold text-eid-primary-300">
+                          EID
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold text-eid-fg">{p.nome ?? "Membro"}</p>
+                        <p className="text-[10px] text-eid-text-secondary">{m.cargo ?? "Atleta"}</p>
                       </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold text-eid-fg">{p.nome ?? "Membro"}</p>
-                      <p className="text-[10px] text-eid-text-secondary">{m.cargo ?? "Atleta"}</p>
-                    </div>
-                  </Link>
+                    </Link>
+                    {isLeader && p.id !== t.criador_id ? (
+                      <div className="mt-2 flex gap-2">
+                        <form action={transferirLiderancaAction}>
+                          <input type="hidden" name="usuario_id" value={p.id} />
+                          <button type="submit" className="rounded-lg border border-eid-primary-500/30 px-2 py-1 text-[10px] font-semibold text-eid-primary-300">
+                            Transferir liderança
+                          </button>
+                        </form>
+                        <form action={removerMembroAction}>
+                          <input type="hidden" name="usuario_id" value={p.id} />
+                          <button type="submit" className="rounded-lg border border-red-400/30 px-2 py-1 text-[10px] font-semibold text-red-300">
+                            Remover
+                          </button>
+                        </form>
+                      </div>
+                    ) : null}
+                  </div>
                 </li>
               );
             })}

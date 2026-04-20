@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { TeamManagementPanel } from "@/components/times/team-management-panel";
 
 export const metadata = {
   title: "Times",
@@ -9,12 +10,13 @@ export const metadata = {
 };
 
 type Props = {
-  searchParams?: Promise<{ q?: string; page?: string }>;
+  searchParams?: Promise<{ q?: string; page?: string; create?: string }>;
 };
 
 export default async function TimesPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const q = (sp.q ?? "").trim().toLowerCase();
+  const openCreate = sp.create === "1";
   const page = Math.max(1, Number(sp.page ?? 1) || 1);
   const pageSize = 12;
   const supabase = await createClient();
@@ -22,6 +24,16 @@ export default async function TimesPage({ searchParams }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/times");
+
+  const [{ data: esportes }, { data: minhas }] = await Promise.all([
+    supabase.from("esportes").select("id, nome").eq("ativo", true).order("ordem", { ascending: true }),
+    supabase
+      .from("times")
+      .select("id, nome, tipo, esportes(nome)")
+      .eq("criador_id", user.id)
+      .order("id", { ascending: false })
+      .limit(20),
+  ]);
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
@@ -56,6 +68,14 @@ export default async function TimesPage({ searchParams }: Props) {
             Painel
           </Link>
         </div>
+        <TeamManagementPanel
+          esportes={(esportes ?? []).map((e) => ({ id: e.id, nome: e.nome }))}
+          minhasEquipes={(minhas ?? []).map((t) => {
+            const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
+            return { id: t.id, nome: t.nome ?? "Equipe", tipo: t.tipo ?? "time", esporteNome: esp?.nome ?? "Esporte" };
+          })}
+          defaultOpenCreate={openCreate}
+        />
         <form className="mb-4 flex gap-2">
           <input
             name="q"

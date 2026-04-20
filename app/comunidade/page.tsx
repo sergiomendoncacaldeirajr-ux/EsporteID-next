@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ComunidadeNotificacoesSection, type NotifRow } from "@/components/comunidade/comunidade-notificacoes-section";
+import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { createClient } from "@/lib/supabase/server";
@@ -68,6 +69,30 @@ export default async function ComunidadePage() {
   }));
 
   const nPedidos = pedidosItems.length;
+  const { data: convites } = await supabase
+    .from("time_convites")
+    .select("id, time_id, convidado_por_usuario_id, times!inner(id, nome, tipo, esportes(nome))")
+    .eq("convidado_usuario_id", user.id)
+    .eq("status", "pendente")
+    .order("id", { ascending: false })
+    .limit(30);
+  const inviterIds = [...new Set((convites ?? []).map((c) => c.convidado_por_usuario_id).filter(Boolean))] as string[];
+  const { data: inviteUsers } = inviterIds.length
+    ? await supabase.from("profiles").select("id, nome").in("id", inviterIds)
+    : { data: [] };
+  const inviteUserMap = new Map((inviteUsers ?? []).map((u) => [u.id, u.nome]));
+  const conviteItems: ConviteTimeItem[] = (convites ?? []).map((c) => {
+    const t = Array.isArray(c.times) ? c.times[0] : c.times;
+    const esp = t?.esportes ? (Array.isArray(t.esportes) ? t.esportes[0] : t.esportes) : null;
+    return {
+      id: Number(c.id),
+      equipeNome: t?.nome ?? "Equipe",
+      equipeId: Number(t?.id ?? 0),
+      equipeTipo: String(t?.tipo ?? "time"),
+      esporteNome: esp?.nome ?? "Esporte",
+      convidadoPor: inviteUserMap.get(c.convidado_por_usuario_id) ?? "Líder",
+    };
+  });
   const nNotifUnread = (notificacoes ?? []).filter((n) => n.lida !== true).length;
 
   return (
@@ -87,11 +112,20 @@ export default async function ComunidadePage() {
             <span className="rounded-md border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-action-400 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
               {nPedidos} pedido(s) de match
             </span>
+            <span className="rounded-md border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-primary-300 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
+              {conviteItems.length} convite(s) de equipe
+            </span>
           </div>
         </div>
 
         <div className="mt-5 space-y-6 md:mt-8 md:space-y-10">
           <ComunidadeNotificacoesSection items={(notificacoes ?? []) as NotifRow[]} />
+
+          <section>
+            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Convites de equipe</h2>
+            <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">Aceite para entrar na dupla/time.</p>
+            <ComunidadeConvitesTime items={conviteItems} />
+          </section>
 
           <section>
             <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Pedidos de match</h2>
