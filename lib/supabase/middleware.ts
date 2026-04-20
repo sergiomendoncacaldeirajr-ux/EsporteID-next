@@ -73,7 +73,7 @@ export async function updateSession(request: NextRequest) {
   if (path.startsWith("/onboarding") && !user && !authCode) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", "/onboarding");
+    url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
     return NextResponse.redirect(url);
   }
 
@@ -118,7 +118,11 @@ export async function updateSession(request: NextRequest) {
       url.searchParams.set("next", "/onboarding");
       return NextResponse.redirect(url);
     }
-    if (profile.perfil_completo) {
+    // Mesma regra que app/onboarding/page.tsx: com perfil completo só entra em modo edição (?editar=1|true|sim|yes).
+    const editarRaw = request.nextUrl.searchParams.get("editar");
+    const modoEditar =
+      editarRaw === "1" || editarRaw === "true" || editarRaw === "sim" || editarRaw === "yes";
+    if (profile.perfil_completo && !modoEditar) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       url.search = "";
