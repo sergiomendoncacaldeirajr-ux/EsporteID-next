@@ -26,23 +26,36 @@ function parseDetalhes(raw: unknown): Record<string, unknown> {
   }
 }
 
-export default async function OnboardingPage() {
+type PageProps = {
+  searchParams?: Promise<{ editar?: string; step?: string }>;
+};
+
+export default async function OnboardingPage({ searchParams }: PageProps) {
+  const sp = (await searchParams) ?? {};
+  /** Edição (?editar=1): só o titular da sessão. Não existe userId na URL; tudo é filtrado por auth + RLS. */
+  const modoEditar =
+    sp.editar === "1" || sp.editar === "true" || sp.editar === "sim" || sp.editar === "yes";
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login?next=/onboarding");
+  if (!user) {
+    const nextUrl = modoEditar ? "/onboarding?editar=1" : "/onboarding";
+    redirect(`/login?next=${encodeURIComponent(nextUrl)}`);
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, termos_aceitos_em, perfil_completo, onboarding_etapa"
+      "id, nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, termos_aceitos_em, perfil_completo, onboarding_etapa"
     )
     .eq("id", user.id)
     .maybeSingle();
 
   if (!profile?.termos_aceitos_em) redirect("/conta/aceitar-termos");
-  if (profile.perfil_completo) redirect("/dashboard");
+  if (profile.id !== user.id) redirect("/dashboard");
+  if (profile.perfil_completo && !modoEditar) redirect("/dashboard");
 
   const { data: papeisRows } = await supabase
     .from("usuario_papeis")
@@ -96,6 +109,18 @@ export default async function OnboardingPage() {
     initialStep = "perfil";
   }
 
+  if (modoEditar) {
+    const raw = (sp.step ?? "").toLowerCase();
+    const permitidos: Step[] = ["papeis", "esportes", "extras", "perfil"];
+    if (permitidos.includes(raw as Step)) {
+      initialStep = raw as Step;
+    } else if (needsSport) {
+      initialStep = "esportes";
+    } else {
+      initialStep = "perfil";
+    }
+  }
+
   const { data: esportes } = await supabase
     .from("esportes")
     .select("id, nome, permite_individual, permite_dupla, permite_time")
@@ -114,6 +139,7 @@ export default async function OnboardingPage() {
       userId={user.id}
       primeiroNome={primeiroNomeDe(profile.nome)}
       initialStep={initialStep}
+      modoEdicao={modoEditar}
       esportes={(esportes ?? []).map((e) => ({
         id: e.id,
         nome: e.nome,

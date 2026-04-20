@@ -208,35 +208,77 @@ export async function salvarEsportesOnboarding(
     ])
   );
 
-  const { error: delErr } = await supabase.from("usuario_eid").delete().eq("usuario_id", user.id);
-  if (delErr) return { ok: false, message: delErr.message };
+  function modalidadeFinalPara(esporteId: number): "individual" | "dupla" | "time" {
+    const pref = modalidadeMap.get(esporteId) ?? "individual";
+    const meta = esporteMetaMap.get(esporteId);
+    if (!meta) return pref;
+    if (pref === "time" && meta.time) return "time";
+    if (pref === "dupla" && meta.dupla) return "dupla";
+    if (meta.individual) return "individual";
+    if (meta.dupla) return "dupla";
+    if (meta.time) return "time";
+    return "individual";
+  }
 
-  const rows = finalIds.map((esporteId) => ({
-    usuario_id: user.id,
-    esporte_id: esporteId,
-    interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
-    modalidade_match: (() => {
-      const pref = modalidadeMap.get(esporteId) ?? "individual";
-      const meta = esporteMetaMap.get(esporteId);
-      if (!meta) return pref;
-      if (pref === "time" && meta.time) return "time";
-      if (pref === "dupla" && meta.dupla) return "dupla";
-      if (meta.individual) return "individual";
-      if (meta.dupla) return "dupla";
-      if (meta.time) return "time";
-      return "individual";
-    })(),
-  }));
-  const { error: insErr } = await supabase.from("usuario_eid").insert(rows);
-  if (insErr) return { ok: false, message: insErr.message };
+  const { data: existentes, error: exErr } = await supabase
+    .from("usuario_eid")
+    .select("esporte_id")
+    .eq("usuario_id", user.id);
+  if (exErr) return { ok: false, message: exErr.message };
+  const jaTem = new Set((existentes ?? []).map((r) => Number(r.esporte_id)));
+  const finalSet = new Set(finalIds);
+  const remover = [...jaTem].filter((eid) => !finalSet.has(eid));
+  const adicionar = finalIds.filter((eid) => !jaTem.has(eid));
+  const atualizar = finalIds.filter((eid) => jaTem.has(eid));
 
-  const { error: upErr } = await supabase
+  if (remover.length > 0) {
+    const { error: delErr } = await supabase
+      .from("usuario_eid")
+      .delete()
+      .eq("usuario_id", user.id)
+      .in("esporte_id", remover);
+    if (delErr) return { ok: false, message: delErr.message };
+  }
+
+  for (const esporteId of atualizar) {
+    const { error: uErr } = await supabase
+      .from("usuario_eid")
+      .update({
+        interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
+        modalidade_match: modalidadeFinalPara(esporteId),
+      })
+      .eq("usuario_id", user.id)
+      .eq("esporte_id", esporteId);
+    if (uErr) return { ok: false, message: uErr.message };
+  }
+
+  if (adicionar.length > 0) {
+    const rows = adicionar.map((esporteId) => ({
+      usuario_id: user.id,
+      esporte_id: esporteId,
+      interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
+      modalidade_match: modalidadeFinalPara(esporteId),
+    }));
+    const { error: insErr } = await supabase.from("usuario_eid").insert(rows);
+    if (insErr) return { ok: false, message: insErr.message };
+  }
+
+  const { data: profRow } = await supabase
     .from("profiles")
-    .update({ onboarding_etapa: 2, atualizado_em: new Date().toISOString() })
-    .eq("id", user.id);
-  if (upErr) return { ok: false, message: upErr.message };
+    .select("perfil_completo")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profRow?.perfil_completo) {
+    const { error: upErr } = await supabase
+      .from("profiles")
+      .update({ onboarding_etapa: 2, atualizado_em: new Date().toISOString() })
+      .eq("id", user.id);
+    if (upErr) return { ok: false, message: upErr.message };
+  }
 
   revalidatePath("/onboarding");
+  revalidatePath(`/perfil/${user.id}`);
   return { ok: true, nextStep: "extras" };
 }
 
@@ -652,6 +694,7 @@ export async function salvarExtrasOnboarding(
   if (upErr) return { ok: false, message: upErr.message };
 
   revalidatePath("/onboarding");
+  revalidatePath(`/perfil/${user.id}`);
   return { ok: true, nextStep: "perfil" };
 }
 
@@ -796,5 +839,6 @@ export async function salvarPerfilOnboarding(
   revalidatePath("/", "layout");
   revalidatePath("/onboarding");
   revalidatePath("/dashboard");
+  revalidatePath(`/perfil/${user.id}`);
   return { ok: true, nextStep: "dashboard" };
 }

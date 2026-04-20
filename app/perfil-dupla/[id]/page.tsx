@@ -6,6 +6,7 @@ import { ProfileIdentityHeader, ProfilePrimaryCta, ProfileSection } from "@/comp
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
 import { ProfileMemberCard } from "@/components/perfil/profile-team-members-cards";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { PerfilDuplaEditForm } from "@/components/perfil/perfil-dupla-edit-form";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
   formacaoTemMatchAceitoEntre,
@@ -37,7 +38,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
 
   const { data: d } = await supabase
     .from("duplas")
-    .select("id, username, bio, player1_id, player2_id, esporte_id, esportes(nome)")
+    .select("id, username, bio, player1_id, player2_id, criador_id, esporte_id, esportes(nome)")
     .eq("id", id)
     .maybeSingle();
   if (!d) notFound();
@@ -69,6 +70,8 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
     : { data: null };
 
   const isMembroDupla = user.id === d.player1_id || user.id === d.player2_id;
+  const donoDuplaId = d.criador_id ?? d.player1_id;
+  const isDonoDupla = user.id === donoDuplaId;
 
   const { data: minhaFormacaoDupla } = await supabase
     .from("times")
@@ -172,6 +175,23 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             </>
           }
         />
+
+        {isMembroDupla ? (
+          <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-3">
+            {isDonoDupla ? <PerfilDuplaEditForm duplaId={id} username={d.username ?? null} bio={d.bio ?? null} /> : null}
+            <Link
+              href="/onboarding?editar=1&step=esportes"
+              className={`flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16 ${isDonoDupla ? "mt-3" : ""}`}
+            >
+              Meu cadastro de atleta (EID)
+            </Link>
+            <p className="mt-1.5 text-[10px] text-eid-text-secondary">
+              {isDonoDupla
+                ? "O bloco acima altera @username e bio da dupla registrada. Este link altera apenas o seu perfil de atleta (esportes, ranking, ficha)."
+                : "Só o dono do registro da dupla pode editar @ e bio da dupla. Use este atalho para o seu cadastro pessoal de atleta."}
+            </p>
+          </div>
+        ) : null}
 
         <div className="mt-6 grid gap-6">
           <section>

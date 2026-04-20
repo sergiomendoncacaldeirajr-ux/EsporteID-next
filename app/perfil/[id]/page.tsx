@@ -390,7 +390,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                   Nova Equipe
                 </Link>
                 <Link
-                  href="/onboarding"
+                  href="/onboarding?editar=1&step=perfil"
                   className="inline-flex min-h-[36px] items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
                 >
                   Editar Perfil
@@ -401,6 +401,19 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
 
           {/* ── Performance EID ─────────────────────────────────────── */}
           <ProfileSection title="Performance EID">
+            {isSelf ? (
+              <div className="mb-2 mt-1">
+                <Link
+                  href="/onboarding?editar=1&step=esportes"
+                  className="inline-flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16 sm:w-auto"
+                >
+                  Gerenciar / editar
+                </Link>
+                <p className="mt-1 text-[10px] text-eid-text-secondary">
+                  Esportes do ranking, tempo de prática e ficha — mesmo fluxo do cadastro, em modo edição.
+                </p>
+              </div>
+            ) : null}
             {/* Grid de cards compactos: 3 por linha, clicáveis para stats do esporte */}
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(eids ?? []).length === 0 ? (

@@ -7,6 +7,7 @@ import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-l
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
 import { ProfileMemberCard } from "@/components/perfil/profile-team-members-cards";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { PerfilTimeEditForm } from "@/components/perfil/perfil-time-edit-form";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
   formacaoTemMatchAceitoEntre,
@@ -79,7 +80,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   const { data: t } = await supabase
     .from("times")
     .select(
-      "id, nome, username, bio, tipo, localizacao, escudo, pontos_ranking, eid_time, esporte_id, criador_id, interesse_rank_match, disponivel_amistoso, esportes(nome)"
+      "id, nome, username, bio, tipo, localizacao, escudo, pontos_ranking, eid_time, esporte_id, criador_id, interesse_rank_match, disponivel_amistoso, vagas_abertas, aceita_pedidos, interesse_torneio, nivel_procurado, esportes(nome)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -214,6 +215,48 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
             >
               Estatísticas completas · {esp?.nome ?? "este esporte"}
             </Link>
+          ) : null}
+
+          {isLeader ? (
+            <div className="mt-3 w-full text-left">
+              <Link
+                href={`/times?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
+                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
+              >
+                Gerenciar equipe
+              </Link>
+              <p className="mt-1 text-[10px] text-eid-text-secondary">
+                Convidar atletas e convites — painel completo em Times. Abaixo: editar nome, bio, escudo e preferências desta formação.
+              </p>
+              <PerfilTimeEditForm
+                timeId={id}
+                nome={t.nome ?? ""}
+                username={t.username ?? null}
+                bio={t.bio ?? null}
+                localizacao={t.localizacao ?? null}
+                escudo={t.escudo ?? null}
+                interesse_rank_match={Boolean(t.interesse_rank_match)}
+                disponivel_amistoso={Boolean(t.disponivel_amistoso)}
+                vagas_abertas={Boolean(t.vagas_abertas)}
+                aceita_pedidos={Boolean(t.aceita_pedidos)}
+                interesse_torneio={Boolean(t.interesse_torneio)}
+                nivel_procurado={t.nivel_procurado ?? null}
+              />
+            </div>
+          ) : null}
+
+          {isMember || isLeader ? (
+            <div className={`${isLeader ? "mt-2" : "mt-3"} w-full text-left`}>
+              <Link
+                href="/onboarding?editar=1&step=esportes"
+                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+              >
+                Gerenciar meu cadastro (EID)
+              </Link>
+              <p className="mt-1 text-[10px] text-eid-text-secondary">
+                Esportes do ranking, tempo de prática e ficha — seu perfil de atleta, não o da equipe.
+              </p>
+            </div>
           ) : null}
 
           {criador ? (

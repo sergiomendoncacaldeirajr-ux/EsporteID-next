@@ -47,6 +47,8 @@ type Props = {
   userId: string;
   primeiroNome: string;
   initialStep: Step;
+  /** Permite acessar o fluxo com perfil já completo (edição de esportes, experiência, perfil). */
+  modoEdicao?: boolean;
   esportes: {
     id: number;
     nome: string;
@@ -100,6 +102,7 @@ export function OnboardingWizard({
   userId,
   primeiroNome,
   initialStep,
+  modoEdicao = false,
   esportes,
   locais,
   selectedPapeis,
@@ -485,7 +488,8 @@ export function OnboardingWizard({
     else if (r.nextStep === "perfil") setStep("perfil");
     else if (r.nextStep === "dashboard") {
       window.localStorage.removeItem(draftKey);
-      router.push("/dashboard");
+      if (modoEdicao) router.push(`/perfil/${userId}`);
+      else router.push("/dashboard");
     }
   }
 
@@ -693,12 +697,29 @@ export function OnboardingWizard({
   return (
     <main className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7">
       <div className="w-full max-w-2xl pb-6">
-        <Link
-          href="/"
-          className="mb-3 inline-block text-[13px] text-eid-text-muted no-underline transition hover:text-eid-fg"
-        >
-          ← Voltar ao início
-        </Link>
+        <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <Link
+            href="/"
+            className="inline-block text-[13px] text-eid-text-muted no-underline transition hover:text-eid-fg"
+          >
+            ← Voltar ao início
+          </Link>
+          {modoEdicao ? (
+            <Link
+              href={`/perfil/${userId}`}
+              className="inline-block text-[13px] font-semibold text-eid-primary-400 no-underline transition hover:underline"
+            >
+              ← Voltar ao perfil
+            </Link>
+          ) : null}
+        </div>
+
+        {modoEdicao ? (
+          <p className="mb-3 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2 text-[12px] text-eid-text-secondary">
+            Você está <strong className="text-eid-fg">editando seu cadastro</strong>. Ajuste esportes do ranking, tempo de
+            prática ou dados do perfil e salve cada etapa.
+          </p>
+        ) : null}
 
         <LogoFull priority className="mb-5 mt-1" />
 

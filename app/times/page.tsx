@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { TeamManagementPanel } from "@/components/times/team-management-panel";
+import { resolveBackHref } from "@/lib/perfil/back-href";
 
 export const metadata = {
   title: "Times",
@@ -10,11 +11,12 @@ export const metadata = {
 };
 
 type Props = {
-  searchParams?: Promise<{ q?: string; page?: string; create?: string }>;
+  searchParams?: Promise<{ q?: string; page?: string; create?: string; from?: string }>;
 };
 
 export default async function TimesPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
+  const voltarHref = resolveBackHref(sp.from, "/dashboard");
   const q = (sp.q ?? "").trim().toLowerCase();
   const openCreate = sp.create === "1";
   const page = Math.max(1, Number(sp.page ?? 1) || 1);
@@ -61,12 +63,22 @@ export default async function TimesPage({ searchParams }: Props) {
               Formações em recrutamento — toque para ver o perfil completo.
             </p>
           </div>
-          <Link
-            href="/dashboard"
-            className="shrink-0 rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-center text-xs font-bold text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg sm:text-sm"
-          >
-            Painel
-          </Link>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {sp.from?.trim() ? (
+              <Link
+                href={voltarHref}
+                className="rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-4 py-2 text-center text-xs font-bold text-eid-primary-300 transition hover:border-eid-primary-500/55 sm:text-sm"
+              >
+                ← Voltar
+              </Link>
+            ) : null}
+            <Link
+              href="/dashboard"
+              className="rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-center text-xs font-bold text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg sm:text-sm"
+            >
+              Painel
+            </Link>
+          </div>
         </div>
         <TeamManagementPanel
           esportes={(esportes ?? []).map((e) => ({ id: e.id, nome: e.nome }))}
