@@ -65,6 +65,12 @@ export default async function Home() {
   const secondaryCtaClass =
     "inline-flex min-h-[48px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-6 text-base font-semibold text-eid-fg shadow-sm transition hover:border-eid-primary-500/35 hover:bg-eid-surface active:scale-[0.98]";
 
+  const heroCtaPrimaryClass =
+    "eid-btn-primary inline-flex min-h-[56px] w-full flex-1 items-center justify-center rounded-2xl px-8 text-lg font-bold shadow-lg shadow-eid-primary-500/20 transition active:scale-[0.98] sm:min-h-[60px] sm:max-w-md sm:text-xl";
+
+  const heroCtaSecondaryClass =
+    "inline-flex min-h-[56px] w-full flex-1 items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-card px-8 text-lg font-bold text-eid-fg shadow-sm transition hover:border-eid-primary-500/60 hover:bg-eid-surface active:scale-[0.98] sm:min-h-[60px] sm:max-w-md sm:text-xl";
+
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
       <div
@@ -113,6 +119,28 @@ export default async function Home() {
           ))}
         </ul>
 
+        {!user ? (
+          <section
+            className="mt-10 rounded-2xl border border-eid-primary-500/35 bg-gradient-to-b from-eid-primary-500/15 to-eid-primary-500/5 p-6 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.35)] sm:p-8 md:mt-12"
+            aria-label="Entrar ou criar conta"
+          >
+            <p className="text-center text-base font-bold leading-snug text-eid-fg sm:text-lg">
+              Entre na sua conta ou cadastre-se — leva poucos minutos.
+            </p>
+            <p className="mx-auto mt-2 max-w-xl text-center text-sm text-eid-text-secondary sm:text-base">
+              Acesso com e-mail; depois você completa o perfil e já usa Match, agenda e ranking no mesmo lugar.
+            </p>
+            <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+              <Link href="/login" className={heroCtaPrimaryClass}>
+                Entrar
+              </Link>
+              <Link href="/cadastro" className={heroCtaSecondaryClass}>
+                Criar conta
+              </Link>
+            </div>
+          </section>
+        ) : null}
+
         <section className="mt-12 space-y-4" aria-labelledby="como-funciona">
           <h2 id="como-funciona" className="text-lg font-bold text-eid-fg">
             Como funciona
@@ -121,18 +149,18 @@ export default async function Home() {
             {[
               {
                 step: "1",
-                title: "Crie seu perfil",
-                body: "Cadastro com WhatsApp para combinar contato rápido. Escolha no onboarding se você é atleta, espaço, organizador ou mais de um papel.",
+                title: "Conta e onboarding",
+                body: "Cadastro com e-mail e senha; depois você aceita os termos e passa pelo onboarding: papéis (atleta, professor, organizador, espaço), esportes que pratica e como entra no Match — individual, dupla ou time.",
               },
               {
                 step: "2",
-                title: "Descubra e combine",
-                body: "Veja partidas, eventos e pessoas compatíveis com seu esporte e região; combine rápido e com foco em quem quer jogar de verdade.",
+                title: "Match, agenda e comunidade",
+                body: "No Match você manda e recebe desafios; na agenda e na comunidade acompanha o que rola perto de você. Times, duplas, locais e torneios ficam conectados ao seu perfil.",
               },
               {
                 step: "3",
-                title: "Jogue e evolua",
-                body: "Entre em torneios, registre resultados e acompanhe seu ranking EID. Tudo integrado à sua jornada na plataforma.",
+                title: "Torneios e ranking EID",
+                body: "Inscreva-se em torneios, registre placar quando a competição pedir e acompanhe seu EID no ranking — com foco em jogo real, regras claras e privacidade.",
               },
             ].map((item) => (
               <li key={item.step} className={sectionCard}>
@@ -193,8 +221,9 @@ export default async function Home() {
         <section className="mt-10 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/10 p-5 sm:p-6">
           <h2 className="text-base font-bold text-eid-fg">Pronto para o próximo jogo?</h2>
           <p className="mt-2 text-sm leading-relaxed text-eid-text-secondary">
-            Entre com sua conta ou crie uma em minutos. O WhatsApp é o canal principal da plataforma
-            para combinar tudo com agilidade (como descrito nos termos de uso).
+            {user
+              ? "Continue de onde parou ou abra o painel para ver agenda, Match e torneios."
+              : "Use os botões acima ou estes abaixo para entrar ou criar conta em poucos passos. Comunicações importantes podem usar e-mail e WhatsApp conforme os termos."}
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {user ? (
