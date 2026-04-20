@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { User } from "@supabase/supabase-js";
+import { headers } from "next/headers";
 import { Barlow, Barlow_Condensed, Barlow_Semi_Condensed } from "next/font/google";
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
@@ -9,6 +10,7 @@ import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { SiteFooter } from "@/components/site-footer";
 import { EID_LOGO_ICON_E_SRC } from "@/lib/branding";
+import { EID_HIDE_APP_SHELL_HEADER } from "@/lib/eid-app-shell";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
@@ -69,6 +71,10 @@ export default async function RootLayout({
     user = null;
   }
 
+  const hdrs = await headers();
+  const hideAppShell = hdrs.get(EID_HIDE_APP_SHELL_HEADER) === "1";
+  const showAppChrome = Boolean(user) && !hideAppShell;
+
   return (
     <html
       lang="pt-BR"
@@ -79,19 +85,21 @@ export default async function RootLayout({
         <EidThemeHydration />
         <InteractionFeedback />
         {!user ? <VisitorThemeToggleFloat /> : null}
-        {user ? <DashboardTopbar persistent /> : null}
+        {showAppChrome ? <DashboardTopbar persistent /> : null}
         <div
           id="app-main-column"
           className={
-            user
+            showAppChrome
               ? "eid-page-transition flex flex-1 flex-col pb-[calc(4.25rem+env(safe-area-inset-bottom))] pt-[calc(4.25rem+env(safe-area-inset-top))] md:pb-24 md:pt-24"
-              : "flex flex-1 flex-col pb-28"
+              : hideAppShell
+                ? "eid-page-transition flex min-h-0 flex-1 flex-col"
+                : "flex flex-1 flex-col pb-28"
           }
         >
           {children}
         </div>
-        {user ? <MobileBottomNav userId={user.id} /> : null}
-        <SiteFooter />
+        {showAppChrome && user ? <MobileBottomNav userId={user.id} /> : null}
+        {hideAppShell ? null : <SiteFooter />}
         <LegalGate />
       </body>
     </html>

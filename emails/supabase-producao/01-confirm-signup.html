@@ -32,9 +32,13 @@
                 </td>
               </tr>
             </table>
-            <p style="margin:0 0 12px;font-size:13px;color:#64748b;">Ou use o código de 6 dígitos no app:</p>
+            <p style="margin:0 0 12px;font-size:13px;color:#64748b;">Ou use o código no site ou no app (tela de verificação):</p>
             <p style="margin:0 0 24px;font-size:28px;font-weight:800;letter-spacing:0.35em;color:#2563eb;">{{ .Token }}</p>
-            <p style="margin:0;font-size:12px;color:#94a3b8;word-break:break-all;">Link alternativo (copiar se o botão não abrir):<br /><a href="{{ .ConfirmationURL }}" style="color:#2563eb;">{{ .ConfirmationURL }}</a></p>
+            <p style="margin:0;font-size:12px;color:#64748b;line-height:1.5;">
+              O botão acima usa um link seguro do serviço de autenticação (o endereço não é esporteid.com.br — isso é normal). Depois da confirmação você volta para o EsporteID. Se o botão não abrir, use o código numérico em
+              <a href="https://esporteid.com.br/login" style="color:#2563eb;font-weight:600;">esporteid.com.br/login</a>
+              → “Já tenho o código” / verificação, ou peça um novo código na tela de login.
+            </p>
           </td>
         </tr>
         <tr>

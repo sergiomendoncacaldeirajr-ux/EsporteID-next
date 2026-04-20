@@ -1,5 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { EID_HIDE_APP_SHELL_HEADER } from "@/lib/eid-app-shell";
+
+function buildRequestHeadersForPath(request: NextRequest): Headers {
+  const h = new Headers(request.headers);
+  if (request.nextUrl.pathname.startsWith("/onboarding")) {
+    h.set(EID_HIDE_APP_SHELL_HEADER, "1");
+  }
+  return h;
+}
 
 /** Celular / navegadores móveis — landing institucional fica para desktop (como o PHP: index → login). */
 function isMobileUserAgent(ua: string | null): boolean {
@@ -17,8 +26,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  const requestHeaders = buildRequestHeadersForPath(request);
+
   let supabaseResponse = NextResponse.next({
-    request,
+    request: { headers: requestHeaders },
   });
 
   const supabase = createServerClient(
@@ -32,7 +43,7 @@ export async function updateSession(request: NextRequest) {
         setAll(cookiesToSet) {
           // Next.js 15+: cookies do request são imutáveis no middleware — só Set-Cookie na resposta.
           supabaseResponse = NextResponse.next({
-            request,
+            request: { headers: requestHeaders },
           });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
