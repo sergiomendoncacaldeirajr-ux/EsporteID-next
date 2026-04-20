@@ -83,6 +83,7 @@ export function InteractionFeedback() {
     };
 
     const onSubmitCapture = (event: SubmitEvent) => {
+      if (authPath) return;
       const form = event.target as HTMLFormElement | null;
       if (!form) return;
       navStartedAtRef.current = Date.now();

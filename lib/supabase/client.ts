@@ -8,5 +8,12 @@ export function createClient() {
       "Configuração ausente: o app não encontrou as credenciais do Supabase. Verifique o deploy (variáveis NEXT_PUBLIC_*)."
     );
   }
-  return createBrowserClient(url, anon);
+  const isProd = process.env.NODE_ENV === "production";
+  return createBrowserClient(url, anon, {
+    cookieOptions: {
+      path: "/",
+      sameSite: "lax",
+      secure: isProd,
+    },
+  });
 }

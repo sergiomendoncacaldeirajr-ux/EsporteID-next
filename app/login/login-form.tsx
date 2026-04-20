@@ -123,16 +123,33 @@ export function LoginForm() {
         return;
       }
 
-      const {
-        data: { user: u },
-      } = await supabase.auth.getUser();
-      let dest = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
-      if (u) {
-        const { data: profile } = await supabase
+      const session = signInResult.data?.session;
+      if (!session?.user) {
+        setError(
+          "A sessão não foi criada no navegador. Tente limpar os dados do site para este domínio e entrar de novo."
+        );
+        return;
+      }
+
+      const u = session.user;
+      const PROFILE_MS = 12_000;
+      const profileRace = await Promise.race([
+        supabase
           .from("profiles")
           .select("termos_aceitos_em, perfil_completo")
           .eq("id", u.id)
-          .maybeSingle();
+          .maybeSingle()
+          .then((r) => ({ kind: "ok" as const, r })),
+        new Promise<{ kind: "timeout" }>((resolve) =>
+          setTimeout(() => resolve({ kind: "timeout" }), PROFILE_MS)
+        ),
+      ]);
+
+      let dest: string;
+      if (profileRace.kind === "timeout") {
+        dest = "/dashboard";
+      } else {
+        const profile = profileRace.r.data;
         dest = getPostAuthRedirect(
           {
             termosAceitos: !!profile?.termos_aceitos_em,
@@ -142,12 +159,7 @@ export function LoginForm() {
         );
       }
 
-      router.refresh();
-      try {
-        router.push(dest);
-      } catch {
-        window.location.assign(dest);
-      }
+      window.location.assign(dest);
     } catch (unknown) {
       const msg =
         unknown instanceof Error ? unknown.message : "Não foi possível entrar. Tente novamente.";
