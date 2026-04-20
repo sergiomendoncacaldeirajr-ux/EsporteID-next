@@ -1,6 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { PROFILE_AVATAR_MD, PROFILE_AVATAR_SM, PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
+import {
+  PROFILE_AVATAR_LG,
+  PROFILE_AVATAR_MD,
+  PROFILE_AVATAR_SM,
+  PROFILE_CARD_BASE,
+  PROFILE_CARD_PAD_MD,
+  PROFILE_CARD_SUBTITLE,
+  PROFILE_CARD_TITLE,
+} from "@/components/perfil/profile-ui-tokens";
 
 export function ProfileTeamCard({
   href,
@@ -16,11 +24,17 @@ export function ProfileTeamCard({
   return (
     <Link
       href={href}
-      className={`min-w-[210px] snap-start rounded-2xl hover:border-eid-primary-500/35 ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}
+      className={`min-w-[160px] snap-start transition hover:border-eid-primary-500/35 hover:shadow-[0_2px_16px_rgba(37,99,235,0.15)] ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}
     >
-      {imageUrl ? <img src={imageUrl} alt="" className={PROFILE_AVATAR_MD} /> : null}
-      <p className="mt-2 truncate text-sm font-semibold text-eid-fg">{title}</p>
-      <p className="text-xs text-eid-text-secondary">{subtitle}</p>
+      {imageUrl ? (
+        <img src={imageUrl} alt="" className={PROFILE_AVATAR_MD} />
+      ) : (
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-eid-primary-900/60 text-[8px] font-black tracking-widest text-eid-primary-300">
+          EID
+        </div>
+      )}
+      <p className={`mt-2 truncate ${PROFILE_CARD_TITLE}`}>{title}</p>
+      <p className={PROFILE_CARD_SUBTITLE}>{subtitle}</p>
     </Link>
   );
 }
@@ -32,6 +46,8 @@ export function ProfileMemberCard({
   avatarUrl,
   fallbackLabel = "EID",
   trailing,
+  layout = "row",
+  avatarSize = "sm",
 }: {
   href: string;
   name: string;
@@ -39,20 +55,37 @@ export function ProfileMemberCard({
   avatarUrl?: string | null;
   fallbackLabel?: string;
   trailing?: ReactNode;
+  layout?: "row" | "stacked";
+  avatarSize?: "sm" | "md" | "lg";
 }) {
+  const isStacked = layout === "stacked";
+  const avatarClass =
+    avatarSize === "lg" ? PROFILE_AVATAR_LG : avatarSize === "md" ? PROFILE_AVATAR_MD : PROFILE_AVATAR_SM;
+  const fallbackSize =
+    avatarSize === "lg"
+      ? "h-20 w-20 rounded-2xl text-sm"
+      : avatarSize === "md"
+        ? "h-12 w-12 rounded-xl text-[10px]"
+        : "h-10 w-10 rounded-lg text-[10px]";
+
   return (
     <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-      <Link href={href} className="flex items-center gap-2 transition hover:border-eid-primary-500/35">
+      <Link
+        href={href}
+        className={`transition hover:border-eid-primary-500/35 ${
+          isStacked ? "flex flex-col items-center text-center" : "flex items-center gap-2"
+        }`}
+      >
         {avatarUrl ? (
-          <img src={avatarUrl} alt="" className={PROFILE_AVATAR_SM} />
+          <img src={avatarUrl} alt="" className={avatarClass} />
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-eid-surface text-[10px] font-bold text-eid-primary-300">
+          <div className={`flex items-center justify-center bg-eid-surface font-bold text-eid-primary-300 ${fallbackSize}`}>
             {fallbackLabel}
           </div>
         )}
-        <div className="min-w-0">
-          <p className="truncate text-xs font-semibold text-eid-fg">{name}</p>
-          {subtitle ? <p className="text-[10px] text-eid-text-secondary">{subtitle}</p> : null}
+        <div className={`min-w-0 ${isStacked ? "mt-2 w-full" : ""}`}>
+          <p className={`${PROFILE_CARD_TITLE} truncate ${isStacked ? "text-center" : ""}`}>{name}</p>
+          {subtitle ? <p className={`${PROFILE_CARD_SUBTITLE} ${isStacked ? "text-center" : ""}`}>{subtitle}</p> : null}
         </div>
       </Link>
       {trailing ? <div className="mt-2">{trailing}</div> : null}

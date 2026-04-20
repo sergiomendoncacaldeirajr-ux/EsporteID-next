@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { LogoFull } from "@/components/brand/logo-full";
 import { createClient } from "@/lib/supabase/client";
 import { getSignupEmailRedirectTo } from "@/lib/auth/email-redirects";
-import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
+import { entrarComSenha, type LoginActionState } from "@/app/login/actions";
+
+const loginInitial: LoginActionState = { error: null, pendingConfirmationEmail: null };
 
 function IconEnvelope({ className }: { className?: string }) {
   return (
@@ -37,13 +39,20 @@ export function LoginForm() {
   const registered = searchParams.get("cadastro") === "ok";
   const codeConfirmed = searchParams.get("codigo") === "ok";
 
+  const [state, formAction, isPending] = useActionState(entrarComSenha, loginInitial);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+
+  const displayError = state.error ?? localError;
+  const pendingConfirmationEmail = state.pendingConfirmationEmail;
+
+  useEffect(() => {
+    if (isPending) setLocalError(null);
+  }, [isPending]);
 
   const focusWithinBg = "focus-within:bg-eid-card";
 
@@ -55,88 +64,42 @@ export function LoginForm() {
     return { background: "var(--eid-field-bg)" };
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setInfo(null);
-    setPendingConfirmationEmail(null);
-    setLoading(true);
-    const supabase = createClient();
-    const emailNorm = email.trim().toLowerCase();
-    const { error: err } = await supabase.auth.signInWithPassword({
-      email: emailNorm,
-      password,
-    });
-    setLoading(false);
-    if (err) {
-      const msg = (err.message ?? "").toLowerCase();
-      if (msg.includes("email not confirmed")) {
-        setPendingConfirmationEmail(emailNorm);
-        setError("Seu e-mail ainda não foi confirmado.");
-        return;
-      }
-      setError(
-        err.message === "Invalid login credentials"
-          ? "E-mail ou senha incorretos."
-          : err.message
-      );
-      return;
-    }
-
-    const {
-      data: { user: u },
-    } = await supabase.auth.getUser();
-    let dest = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
-    if (u) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("termos_aceitos_em, perfil_completo")
-        .eq("id", u.id)
-        .maybeSingle();
-      dest = getPostAuthRedirect(
-        {
-          termosAceitos: !!profile?.termos_aceitos_em,
-          perfilCompleto: !!profile?.perfil_completo,
-        },
-        next
-      );
-    }
-
-    router.refresh();
-    router.push(dest);
-  }
-
   async function handleResendConfirmation() {
-    setError(null);
+    setLocalError(null);
     setInfo(null);
     const emailNorm = (pendingConfirmationEmail ?? email).trim().toLowerCase();
     if (!emailNorm) {
-      setError("Informe seu e-mail para reenviar o código.");
+      setLocalError("Informe seu e-mail para reenviar o código.");
       return;
     }
 
     setResending(true);
-    const supabase = createClient();
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const { error: resendErr } = await supabase.auth.resend({
-      type: "signup",
-      email: emailNorm,
-      options: {
-        ...(origin
-          ? {
-              emailRedirectTo: getSignupEmailRedirectTo(origin),
-            }
-          : {}),
-      },
-    });
-    setResending(false);
+    try {
+      const supabase = createClient();
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const { error: resendErr } = await supabase.auth.resend({
+        type: "signup",
+        email: emailNorm,
+        options: {
+          ...(origin
+            ? {
+                emailRedirectTo: getSignupEmailRedirectTo(origin),
+              }
+            : {}),
+        },
+      });
 
-    if (resendErr) {
-      setError(resendErr.message);
-      return;
+      if (resendErr) {
+        setLocalError(resendErr.message);
+        return;
+      }
+      setInfo("Código de confirmação reenviado. Verifique seu e-mail.");
+      router.push(`/verificar-codigo?email=${encodeURIComponent(emailNorm)}`);
+    } catch (e) {
+      setLocalError(e instanceof Error ? e.message : "Não foi possível reenviar. Tente de novo.");
+    } finally {
+      setResending(false);
     }
-    setInfo("Código de confirmação reenviado. Verifique seu e-mail.");
-    router.push(`/verificar-codigo?email=${encodeURIComponent(emailNorm)}`);
   }
 
   return (
@@ -160,7 +123,8 @@ export function LoginForm() {
             Use o mesmo e-mail e senha do seu cadastro.
           </p>
 
-          <form onSubmit={handleSubmit} className="m-0 flex flex-col gap-0">
+          <form action={formAction} noValidate className="m-0 flex flex-col gap-0">
+            <input type="hidden" name="next" value={next} />
             {registered && (
               <p
                 className="mb-[15px] rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-2.5 text-center text-[12px] text-eid-primary-300"
@@ -175,12 +139,12 @@ export function LoginForm() {
                 E-mail confirmado com sucesso. Faça login para continuar.
               </p>
             )}
-            {error && (
+            {displayError && (
               <p
                 className="mb-[15px] rounded-xl border border-[rgba(255,107,107,0.2)] bg-[rgba(255,107,107,0.1)] px-2.5 py-2.5 text-center text-[12px] text-[#ff6b6b]"
                 role="alert"
               >
-                {error}
+                {displayError}
               </p>
             )}
             {info && (
@@ -220,7 +184,6 @@ export function LoginForm() {
                 name="email"
                 type="email"
                 autoComplete="email"
-                required
                 placeholder="E-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -240,7 +203,6 @@ export function LoginForm() {
                 name="password"
                 type="password"
                 autoComplete="current-password"
-                required
                 placeholder="Senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -250,10 +212,10 @@ export function LoginForm() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isPending}
               className="mt-2 flex h-[50px] w-full cursor-pointer items-center justify-center rounded-xl border-0 bg-eid-action-500 text-[14px] font-extrabold uppercase text-white transition hover:bg-eid-action-400 active:scale-[0.97] active:bg-eid-action-600 active:opacity-95 disabled:opacity-60"
             >
-              {loading ? (
+              {isPending ? (
                 <span
                   className="inline-block h-5 w-5 animate-spin rounded-full border-[3px] border-white border-t-transparent"
                   aria-hidden

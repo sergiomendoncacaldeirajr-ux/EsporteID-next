@@ -1,26 +1,39 @@
 import type { Metadata, Viewport } from "next";
 import type { User } from "@supabase/supabase-js";
-import Link from "next/link";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Barlow, Barlow_Condensed, Barlow_Semi_Condensed } from "next/font/google";
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
-import { EidThemeToggle } from "@/components/eid-theme-toggle";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { InteractionFeedback } from "@/components/ui/interaction-feedback";
 import { LegalGate } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
+import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { SiteFooter } from "@/components/site-footer";
 import { EID_LOGO_ICON_E_SRC } from "@/lib/branding";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/* Barlow — família atlética, muito usada em apps esportivos premium */
+const barlow = Barlow({
+  variable: "--font-barlow",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+/* Barlow Condensed — para stats, labels, badges compactos */
+const barlowCondensed = Barlow_Condensed({
+  variable: "--font-barlow-condensed",
   subsets: ["latin"],
+  weight: ["400", "600", "700", "800", "900"],
+  display: "swap",
+});
+
+/* Barlow Semi Condensed — transição entre os dois */
+const barlowSemiCondensed = Barlow_Semi_Condensed({
+  variable: "--font-barlow-semi-condensed",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -60,39 +73,24 @@ export default async function RootLayout({
     <html
       lang="pt-BR"
       data-eid-theme="dark"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${barlow.variable} ${barlowCondensed.variable} ${barlowSemiCondensed.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-eid-bg text-eid-fg">
         <EidThemeHydration />
         <InteractionFeedback />
-        {/* Logado: tema/sair no DashboardTopbar (área logada). Visitante: Entrar + tema. */}
-        {!user ? (
-          <div className="pointer-events-none fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[60] flex items-center gap-2 sm:right-4">
-            <div className="pointer-events-auto">
-              <Link
-                href="/login"
-                className="inline-flex rounded-xl border border-eid-action-500/50 bg-eid-action-500/15 px-3 py-1.5 text-xs font-bold text-eid-action-500 transition hover:bg-eid-action-500/25"
-              >
-                Entrar
-              </Link>
-            </div>
-            <div className="pointer-events-auto">
-              <EidThemeToggle />
-            </div>
-          </div>
-        ) : null}
+        {!user ? <VisitorThemeToggleFloat /> : null}
         {user ? <DashboardTopbar persistent /> : null}
         <div
           id="app-main-column"
           className={
             user
-              ? "eid-page-transition flex flex-1 flex-col pb-[calc(3.9rem+env(safe-area-inset-bottom))] pt-[calc(3.35rem+env(safe-area-inset-top))] md:pb-24 md:pt-24"
+              ? "eid-page-transition flex flex-1 flex-col pb-[calc(4.25rem+env(safe-area-inset-bottom))] pt-[calc(4.25rem+env(safe-area-inset-top))] md:pb-24 md:pt-24"
               : "flex flex-1 flex-col pb-28"
           }
         >
           {children}
         </div>
-        <MobileBottomNav userId={user?.id ?? null} />
+        {user ? <MobileBottomNav userId={user.id} /> : null}
         <SiteFooter />
         <LegalGate />
       </body>

@@ -17,12 +17,25 @@ function isSameOriginNavigationLink(el: HTMLAnchorElement) {
   }
 }
 
-function lockElement(el: HTMLElement) {
+function isAuthPath(pathname: string | null): boolean {
+  const p = pathname ?? "";
+  return (
+    p === "/login" ||
+    p === "/cadastro" ||
+    p === "/recuperar-senha" ||
+    p === "/redefinir-senha" ||
+    p === "/verificar-codigo" ||
+    p.startsWith("/auth/")
+  );
+}
+
+function lockElement(el: HTMLElement, opts?: { disableNative?: boolean }) {
+  const disableNative = opts?.disableNative ?? true;
   if (el.dataset.eidLocked === "1") return false;
   el.dataset.eidLocked = "1";
   el.classList.add("eid-is-locked");
 
-  if (el instanceof HTMLButtonElement || el instanceof HTMLInputElement) {
+  if (disableNative && (el instanceof HTMLButtonElement || el instanceof HTMLInputElement)) {
     el.disabled = true;
   } else {
     el.setAttribute("aria-disabled", "true");
@@ -31,7 +44,7 @@ function lockElement(el: HTMLElement) {
   window.setTimeout(() => {
     el.dataset.eidLocked = "0";
     el.classList.remove("eid-is-locked");
-    if (el instanceof HTMLButtonElement || el instanceof HTMLInputElement) {
+    if (disableNative && (el instanceof HTMLButtonElement || el instanceof HTMLInputElement)) {
       el.disabled = false;
     } else {
       el.removeAttribute("aria-disabled");
@@ -43,6 +56,7 @@ function lockElement(el: HTMLElement) {
 
 export function InteractionFeedback() {
   const pathname = usePathname();
+  const authPath = isAuthPath(pathname);
   const [loading, setLoading] = useState(false);
   const navStartedAtRef = useRef<number>(0);
 
@@ -51,15 +65,7 @@ export function InteractionFeedback() {
       const target = event.target as Element | null;
       if (!target) return;
 
-      const submitEl = target.closest('button[type="submit"],input[type="submit"]') as HTMLElement | null;
-      if (submitEl) {
-        if (submitEl.dataset.eidLocked === "1") {
-          event.preventDefault();
-          event.stopPropagation();
-          return;
-        }
-        lockElement(submitEl);
-      }
+      if (authPath) return;
 
       const linkEl = target.closest("a[href]") as HTMLAnchorElement | null;
       if (!linkEl || linkEl.dataset.eidLock === "off") return;
@@ -77,11 +83,9 @@ export function InteractionFeedback() {
     };
 
     const onSubmitCapture = (event: SubmitEvent) => {
+      if (authPath) return;
       const form = event.target as HTMLFormElement | null;
       if (!form) return;
-      form.querySelectorAll('button[type="submit"],input[type="submit"]').forEach((el) => {
-        lockElement(el as HTMLElement);
-      });
       navStartedAtRef.current = Date.now();
       setLoading(true);
     };
@@ -92,7 +96,7 @@ export function InteractionFeedback() {
       document.removeEventListener("click", onClickCapture, true);
       document.removeEventListener("submit", onSubmitCapture, true);
     };
-  }, []);
+  }, [authPath]);
 
   useEffect(() => {
     if (!loading) return;

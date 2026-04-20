@@ -23,17 +23,17 @@ export function ProfileCompactTimeline({
   emptyText: string;
 }) {
   return (
-    <div className={`mt-3 ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
+    <div className={`mt-2 ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
       <p className={PROFILE_META_TITLE}>{title}</p>
-      <ul className="mt-2 flex flex-wrap gap-2">
+      <ul className="mt-2 flex flex-wrap gap-1.5">
         {items.length > 0 ? (
           items.map((item) => (
-            <li key={item.id} className={`rounded-lg border px-2 py-1 text-[11px] font-semibold ${toneClass(item.tone ?? "neutral")}`}>
+            <li key={item.id} className={`rounded border px-2 py-0.5 text-[10px] font-bold ${toneClass(item.tone ?? "neutral")}`}>
               {item.label}
             </li>
           ))
         ) : (
-          <li className="text-xs text-eid-text-secondary">{emptyText}</li>
+          <li className="text-[11px] text-eid-text-secondary">{emptyText}</li>
         )}
       </ul>
     </div>
@@ -41,7 +41,7 @@ export function ProfileCompactTimeline({
 }
 
 export function ProfileAchievementsShelf({
-  title = "Estante de troféus",
+  title = "Conquistas",
   achievements,
   emptyText,
 }: {
@@ -50,9 +50,9 @@ export function ProfileAchievementsShelf({
   emptyText: string;
 }) {
   return (
-    <div className={`mt-3 ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
+    <div className={`mt-2 ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
       <p className={PROFILE_META_TITLE}>{title}</p>
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap gap-1.5">
         {achievements.length > 0 ? (
           achievements.map((achievement) => (
             <span key={achievement} className={PROFILE_TROPHY_CHIP}>
@@ -60,7 +60,7 @@ export function ProfileAchievementsShelf({
             </span>
           ))
         ) : (
-          <span className="text-xs text-eid-text-secondary">{emptyText}</span>
+          <span className="text-[11px] text-eid-text-secondary">{emptyText}</span>
         )}
       </div>
     </div>
