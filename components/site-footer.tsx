@@ -10,13 +10,13 @@ export async function SiteFooter() {
   const isPlatformAdmin = user ? await getIsPlatformAdmin() : false;
 
   return (
-    <footer className="mt-auto border-t border-[color:var(--eid-border-subtle)] bg-eid-bg/95 py-4 text-sm text-eid-text-secondary backdrop-blur-sm md:py-8">
+    <footer className="mt-auto border-t border-[color:var(--eid-border-subtle)] bg-eid-bg/95 pb-[calc(4.4rem+env(safe-area-inset-bottom))] pt-4 text-sm text-eid-text-secondary backdrop-blur-sm md:pb-8 md:pt-8">
       <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6">
         <div className="text-center sm:text-left">
           <p className="text-eid-text-secondary">© {new Date().getFullYear()} EsporteID</p>
           <p className="text-xs text-eid-text-muted">ESPORTEID - CNPJ 66.343.704/0001-75</p>
         </div>
-        <nav className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-center sm:gap-x-6">
+        <nav className="mb-1 flex flex-wrap justify-center gap-x-5 gap-y-2 text-center sm:gap-x-6">
           {!user ? (
             <>
               <Link

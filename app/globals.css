@@ -149,6 +149,21 @@ html {
   }
 }
 
+@keyframes eid-btn-pulse {
+  0% {
+    opacity: 0.78;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.92;
+    transform: scale(0.992);
+  }
+  100% {
+    opacity: 0.78;
+    transform: scale(1);
+  }
+}
+
 .eid-top-loading-bar {
   background: linear-gradient(
     90deg,
@@ -161,7 +176,14 @@ html {
 
 .eid-is-locked {
   pointer-events: none !important;
-  opacity: 0.72;
+  opacity: 0.78;
+  animation: eid-btn-pulse 850ms ease-in-out infinite;
+}
+
+button.eid-is-locked,
+input.eid-is-locked,
+a.eid-is-locked {
+  cursor: progress !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

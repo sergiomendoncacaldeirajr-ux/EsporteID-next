@@ -31,11 +31,49 @@ function NavBadge({ n }: { n: number }) {
 
 export function MobileBottomNav({ userId }: Props) {
   const pathname = usePathname() ?? "";
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(userId);
   const [agendaBadge, setAgendaBadge] = useState(0);
   const [socialBadge, setSocialBadge] = useState(0);
 
   useEffect(() => {
-    if (!userId) return;
+    // Evita resetar para null em oscilações do SSR após login.
+    if (userId) setResolvedUserId(userId);
+  }, [userId]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let stopped = false;
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (stopped) return;
+      setResolvedUserId(session?.user?.id ?? null);
+    });
+
+    if (resolvedUserId) {
+      return () => {
+        stopped = true;
+        subscription.unsubscribe();
+      };
+    }
+
+    async function resolveUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (stopped) return;
+      setResolvedUserId(user?.id ?? null);
+    }
+    void resolveUser();
+    return () => {
+      stopped = true;
+      subscription.unsubscribe();
+    };
+  }, [resolvedUserId]);
+
+  useEffect(() => {
+    if (!resolvedUserId) return;
     let cancelled = false;
     async function load() {
       const supabase = createClient();
@@ -43,20 +81,24 @@ export function MobileBottomNav({ userId }: Props) {
         supabase
           .from("partidas")
           .select("id", { count: "exact", head: true })
-          .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId}`)
+          .or(`jogador1_id.eq.${resolvedUserId},jogador2_id.eq.${resolvedUserId}`)
           .eq("status", "agendada"),
         supabase
           .from("matches")
           .select("id", { count: "exact", head: true })
-          .eq("adversario_id", userId)
+          .eq("adversario_id", resolvedUserId)
           .eq("status", "Pendente"),
         supabase
           .from("partidas")
           .select("id", { count: "exact", head: true })
-          .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId}`)
+          .or(`jogador1_id.eq.${resolvedUserId},jogador2_id.eq.${resolvedUserId}`)
           .eq("status", "aguardando_confirmacao")
-          .neq("lancado_por", userId),
-        supabase.from("notificacoes").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("lida", false),
+          .neq("lancado_por", resolvedUserId),
+        supabase
+          .from("notificacoes")
+          .select("id", { count: "exact", head: true })
+          .eq("usuario_id", resolvedUserId)
+          .eq("lida", false),
       ]);
       if (cancelled) return;
       setAgendaBadge(agRes.count ?? 0);
@@ -71,9 +113,9 @@ export function MobileBottomNav({ userId }: Props) {
       cancelled = true;
       window.clearInterval(t);
     };
-  }, [userId]);
+  }, [resolvedUserId]);
 
-  if (!userId) return null;
+  if (!resolvedUserId) return null;
 
   const onAuthPage = AUTH_PATH_PREFIXES.some((p) =>
     p.endsWith("/") ? pathname.startsWith(p) : pathname === p || pathname.startsWith(p + "/")
@@ -93,7 +135,7 @@ export function MobileBottomNav({ userId }: Props) {
     pathname.startsWith("/registrar-placar");
   const isRank = pathname === "/ranking" || pathname.startsWith("/ranking/");
   const isSocial = pathname === "/comunidade" || pathname.startsWith("/comunidade/");
-  const isPerfil = pathname === `/perfil/${userId}`;
+  const isPerfil = pathname === `/perfil/${resolvedUserId}`;
 
   const items: Array<{
     href: string;
@@ -123,7 +165,7 @@ export function MobileBottomNav({ userId }: Props) {
       badgeWrap: true,
     },
     {
-      href: `/perfil/${userId}`,
+      href: `/perfil/${resolvedUserId}`,
       label: "Perfil",
       icon: <UserCircle2 strokeWidth={1.7} className="h-[17px] w-[17px]" />,
       active: isPerfil,

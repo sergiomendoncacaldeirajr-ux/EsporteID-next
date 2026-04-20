@@ -6,6 +6,7 @@ import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { InteractionFeedback } from "@/components/ui/interaction-feedback";
 import { LegalGate } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
+import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { SiteFooter } from "@/components/site-footer";
 import { EID_LOGO_ICON_E_SRC } from "@/lib/branding";
 import { createClient } from "@/lib/supabase/server";
@@ -63,6 +64,7 @@ export default async function RootLayout({
       <body className="flex min-h-full flex-col bg-eid-bg text-eid-fg">
         <EidThemeHydration />
         <InteractionFeedback />
+        {!user ? <VisitorThemeToggleFloat /> : null}
         {user ? <DashboardTopbar persistent /> : null}
         <div
           id="app-main-column"
