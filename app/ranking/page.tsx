@@ -109,23 +109,23 @@ export default async function RankingPage({ searchParams }: Props) {
     <>
       <DashboardTopbar />
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
-        <div className="mb-3 flex items-center justify-between gap-3 md:mb-4">
+        <div className="mb-3 flex items-center justify-between gap-3 md:mb-3">
           <div>
-            <h1 className="text-lg font-bold text-eid-fg md:text-xl md:font-semibold">Ranking</h1>
-            <p className="mt-0.5 hidden text-xs text-eid-text-secondary md:mt-1 md:block">
-              Nota EID e interesse em match — <strong className="text-eid-fg/90">só ranking</strong> ou{" "}
-              <strong className="text-eid-fg/90">ranking + amistoso</strong>.
+            <h1 className="text-base font-semibold tracking-tight text-eid-fg md:text-lg">Ranking</h1>
+            <p className="mt-0.5 hidden text-[11px] leading-relaxed text-eid-text-secondary md:mt-1 md:block">
+              Nota EID (azul) e pontos de ranking (laranja); interesse em match —{" "}
+              <span className="text-eid-fg/90">só ranking</span> ou <span className="text-eid-fg/90">ranking + amistoso</span>.
             </p>
           </div>
-          <Link href="/dashboard" className="shrink-0 text-sm text-eid-primary-300 hover:text-eid-fg">
+          <Link href="/dashboard" className="shrink-0 text-xs font-medium text-eid-primary-300 hover:text-eid-fg">
             Painel
           </Link>
         </div>
-        <form className="mb-6 grid gap-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:grid-cols-[1fr_1fr_auto]">
+        <form className="mb-5 grid gap-2 rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card p-2.5 sm:grid-cols-[1fr_1fr_auto]">
           <select
             name="esporte"
             defaultValue={sp.esporte ?? ""}
-            className="eid-input-dark h-10 rounded-xl px-3 text-sm text-eid-fg"
+            className="eid-input-dark h-9 rounded-[var(--eid-radius-md)] px-3 text-sm text-eid-fg"
           >
             <option value="">Todos os esportes</option>
             {esportes?.map((e) => (
@@ -138,9 +138,9 @@ export default async function RankingPage({ searchParams }: Props) {
             name="cidade"
             defaultValue={sp.cidade ?? ""}
             placeholder="Filtrar por cidade (opcional)"
-            className="eid-input-dark h-10 rounded-xl px-3 text-sm text-eid-fg placeholder:text-eid-text-secondary/85"
+            className="eid-input-dark h-9 rounded-[var(--eid-radius-md)] px-3 text-sm text-eid-fg placeholder:text-eid-text-secondary/85"
           />
-          <button type="submit" className="eid-btn-primary rounded-xl px-4 text-sm font-bold">
+          <button type="submit" className="eid-btn-primary rounded-[var(--eid-radius-md)] px-4 text-sm">
             Filtrar
           </button>
         </form>
@@ -150,7 +150,7 @@ export default async function RankingPage({ searchParams }: Props) {
             <h2 className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-eid-primary-500">
               Pódio
             </h2>
-            <div className="grid gap-4 md:grid-cols-3 md:items-end">
+            <div className="grid gap-3 md:grid-cols-3 md:items-end">
               {podium[1] ? (
                 <div className="order-2 md:order-1">
                   <AthleteRankingCard {...rowToCardProps(podium[1], 2, "podium-2")} />
@@ -181,7 +181,7 @@ export default async function RankingPage({ searchParams }: Props) {
                 Demais posições
               </h2>
             ) : null}
-            <div className="grid gap-4">
+            <div className="grid gap-3">
               {pageRest.map((row, idx) => (
                 <AthleteRankingCard
                   key={`${row.usuario_id}-${row.esporte_id}-${start}-${idx}`}

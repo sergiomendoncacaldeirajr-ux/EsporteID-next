@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { EidNotaMetric, EidRankingPtsMetric } from "@/components/ui/eid-metrics";
 import { createClient } from "@/lib/supabase/server";
 
 type RadarTipo = "atleta" | "dupla" | "time";
@@ -294,23 +295,23 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
             filtered.map((c) => (
               <article
                 key={`${c.modalidade}-${c.id}`}
-                className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:p-4"
+                className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card p-3"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-eid-fg">{c.nome}</p>
+                    <p className="text-sm font-medium text-eid-fg">{c.nome}</p>
                     <p className="text-xs text-eid-text-secondary">{c.esporteNome}</p>
                     <p className="mt-1 text-xs text-eid-text-secondary">{c.localizacao}</p>
                     <p className="mt-1 text-xs text-eid-primary-300">
                       {canOrderByDistance ? `${c.dist.toFixed(1).replace(".", ",")} km` : "Distância indisponível"}
                     </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-semibold text-eid-primary-300">EID {c.eid.toFixed(1)}</p>
-                    <p className="text-xs text-eid-text-secondary">Ranking {c.rank}</p>
-                    <p className="mt-1 text-[11px] text-eid-text-secondary">
+                    <p className="mt-1 text-[10px] uppercase tracking-wide text-eid-text-muted">
                       {c.modalidade === "individual" ? "Individual" : c.modalidade === "dupla" ? "Dupla" : "Time"}
                     </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 sm:max-w-[14rem] sm:justify-end">
+                    <EidNotaMetric value={c.eid} size="sm" />
+                    <EidRankingPtsMetric value={c.rank} size="sm" />
                   </div>
                 </div>
                 <div className="mt-3 flex items-center gap-2">

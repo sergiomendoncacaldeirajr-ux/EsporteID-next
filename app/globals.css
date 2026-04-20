@@ -24,22 +24,28 @@
   --eid-action-500: #f97316;
   --eid-action-400: #fb923c;
 
-  /* Superfícies — escuro (padrão) */
-  --eid-bg: #070d18;
-  --eid-surface: #0c1424;
-  --eid-card: #111c2e;
-  --eid-field-bg: #131d32;
+  /* Raios — consistente, compacto (app nativo) */
+  --eid-radius-sm: 8px;
+  --eid-radius-md: 10px;
+  --eid-radius-lg: 14px;
+  --eid-radius-xl: 18px;
+
+  /* Superfícies — escuro: camadas de cinza/azulado (evita “buraco” preto) */
+  --eid-bg: #0b0f14;
+  --eid-surface: #121820;
+  --eid-card: #161d28;
+  --eid-field-bg: #1a222e;
 
   /* Texto — escuro */
-  --eid-fg: #f1f5f9;
-  --eid-text-primary: #f1f5f9;
+  --eid-fg: #eef2f7;
+  --eid-text-primary: #eef2f7;
   --eid-text-secondary: #94a3b8;
-  --eid-text-muted: #b0bfd4;
+  --eid-text-muted: #a8b6c8;
   --eid-on-dark: var(--eid-fg);
 
   /* Bordas / foco */
-  --eid-border: #e2e8f0;
-  --eid-border-subtle: rgba(255, 255, 255, 0.1);
+  --eid-border: rgba(255, 255, 255, 0.12);
+  --eid-border-subtle: rgba(255, 255, 255, 0.09);
   --eid-focus-ring: var(--eid-primary-500);
 
   --background: var(--eid-bg);
@@ -48,7 +54,7 @@
 
 /* Tema claro — mesma marca, maior contraste em fundos claros */
 [data-eid-theme="light"] {
-  --eid-bg: #f4f7fc;
+  --eid-bg: #f3f6fb;
   --eid-surface: #ffffff;
   --eid-card: #ffffff;
   --eid-field-bg: #f1f5f9;
@@ -59,7 +65,8 @@
   --eid-text-muted: #64748b;
   --eid-on-dark: var(--eid-fg);
 
-  --eid-border-subtle: rgba(15, 23, 42, 0.12);
+  --eid-border: #e2e8f0;
+  --eid-border-subtle: rgba(15, 23, 42, 0.1);
   --eid-focus-ring: var(--eid-primary-500);
 }
 
@@ -129,12 +136,13 @@ html {
 body {
   background-color: var(--eid-bg);
   background-image: radial-gradient(
-    ellipse 120% 70% at 50% -25%,
-    color-mix(in srgb, var(--eid-primary-500) 14%, transparent),
-    transparent 52%
+    ellipse 120% 70% at 50% -28%,
+    color-mix(in srgb, var(--eid-primary-500) 9%, transparent),
+    transparent 55%
   );
   color: var(--eid-fg);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-feature-settings: "kern" 1, "liga" 1;
 }
 
 /* Mobile: fundo sólido e toque mais “app nativo” (menos ruído visual) */
@@ -147,9 +155,9 @@ body {
 
 [data-eid-theme="light"] body {
   background-image: radial-gradient(
-    ellipse 120% 70% at 50% -25%,
-    color-mix(in srgb, var(--eid-primary-500) 10%, transparent),
-    transparent 52%
+    ellipse 120% 70% at 50% -28%,
+    color-mix(in srgb, var(--eid-primary-500) 7%, transparent),
+    transparent 55%
   );
 }
 
@@ -193,39 +201,43 @@ body {
 /* Cartão em telas de login/cadastro */
 .eid-auth-card {
   position: relative;
-  border-radius: 1rem;
+  border-radius: var(--eid-radius-lg);
   border: 1px solid var(--eid-border-subtle);
-  background: color-mix(in srgb, var(--eid-card) 88%, transparent);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  background: color-mix(in srgb, var(--eid-card) 92%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
 }
 [data-eid-theme="light"] .eid-auth-card {
   background: var(--eid-card);
   backdrop-filter: none;
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.1);
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.08);
 }
 
 /* Botão primário (CTA) — laranja marca */
 .eid-btn-primary {
   display: inline-flex;
-  min-height: 48px;
+  min-height: 40px;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: var(--eid-radius-md);
   background: var(--eid-action-500);
-  padding: 0.75rem 1rem;
-  font-weight: 700;
+  padding: 0.5rem 0.875rem;
+  font-weight: 600;
+  font-size: 0.875rem;
   color: #fff;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
   transition:
     background 0.15s ease,
-    transform 0.12s ease;
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
 }
 .eid-btn-primary:hover {
   background: var(--eid-action-400);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
 }
 .eid-btn-primary:active {
   background: var(--eid-action-600);
+  transform: scale(0.99);
 }
 .eid-btn-primary:disabled {
   opacity: 0.55;
@@ -236,18 +248,18 @@ body {
   outline-offset: 2px;
 }
 
-/* Painel — CTA principal estilo “app” (pílula, brilho suave) */
+/* Painel — CTA principal (pílula compacta) */
 .eid-btn-dashboard-cta {
   display: inline-flex;
-  min-height: 52px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  padding: 0.75rem 1.25rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  padding: 0.5rem 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   background: linear-gradient(
     165deg,
     var(--eid-action-500) 0%,
@@ -255,8 +267,8 @@ body {
   );
   color: #fff;
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.22),
-    0 12px 32px -8px color-mix(in srgb, var(--eid-action-500) 55%, transparent);
+    0 2px 10px rgba(0, 0, 0, 0.18),
+    0 8px 22px -8px color-mix(in srgb, var(--eid-action-500) 45%, transparent);
   transition:
     background 0.15s ease,
     transform 0.12s ease,
@@ -264,7 +276,7 @@ body {
 }
 @media (min-width: 640px) {
   .eid-btn-dashboard-cta {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
   }
 }
 .eid-btn-dashboard-cta:hover {
@@ -274,11 +286,11 @@ body {
     color-mix(in srgb, var(--eid-action-500) 90%, #000) 100%
   );
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.22),
-    0 14px 36px -6px color-mix(in srgb, var(--eid-action-500) 65%, transparent);
+    0 3px 12px rgba(0, 0, 0, 0.2),
+    0 10px 26px -6px color-mix(in srgb, var(--eid-action-500) 55%, transparent);
 }
 .eid-btn-dashboard-cta:active {
-  transform: scale(0.985);
+  transform: scale(0.988);
 }
 .eid-btn-dashboard-cta:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--eid-action-500) 65%, transparent);
@@ -294,38 +306,79 @@ a:focus-visible:not(.eid-btn-primary) {
 
 /* Cartão */
 .eid-card {
-  border-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--eid-primary-500) 22%, transparent);
+  border-radius: var(--eid-radius-lg);
+  border: 1px solid var(--eid-border-subtle);
   background: var(--eid-card);
-  padding: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  padding: 14px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
 }
 
 [data-eid-theme="light"] .eid-card {
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
 }
 
-/* Campo em telas escuras */
+/* Campos — aparência de app (sem chrome nativo em selects) */
 .eid-input-dark {
   width: 100%;
-  border-radius: 12px;
+  border-radius: var(--eid-radius-md);
   border: 1px solid var(--eid-border-subtle);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem 0.65rem;
   color: var(--eid-fg);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.12);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
 }
+
 [data-eid-theme="light"] .eid-input-dark {
   background: var(--eid-field-bg);
   border-color: var(--eid-border-subtle);
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.04);
 }
+
 .eid-input-dark:focus {
   outline: none;
-  border-color: var(--eid-primary-500);
+  border-color: color-mix(in srgb, var(--eid-primary-500) 55%, var(--eid-border-subtle));
   box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.15),
-    0 0 0 2px color-mix(in srgb, var(--eid-primary-500) 28%, transparent);
+    inset 0 1px 1px rgba(0, 0, 0, 0.1),
+    0 0 0 3px color-mix(in srgb, var(--eid-primary-500) 22%, transparent);
+}
+
+.eid-input-dark::placeholder {
+  color: var(--eid-text-muted);
+  opacity: 0.85;
+}
+
+select.eid-input-dark {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 1rem;
+  cursor: pointer;
+}
+
+[data-eid-theme="light"] select.eid-input-dark {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+textarea.eid-input-dark {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+input.eid-input-dark[type="date"],
+input.eid-input-dark[type="time"],
+input.eid-input-dark[type="datetime-local"] {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 2.5rem;
 }
 
 /* Foco em grupos de input (auth) */

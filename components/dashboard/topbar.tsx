@@ -64,9 +64,9 @@ export function DashboardTopbar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[color:var(--eid-border-subtle)] bg-eid-bg/92 pt-[env(safe-area-inset-top)] shadow-[0_12px_40px_-16px_rgba(37,99,235,0.18)] backdrop-blur-xl supports-[backdrop-filter]:bg-eid-bg/85 md:mb-4">
+    <header className="sticky top-0 z-40 border-b border-[color:var(--eid-border-subtle)] bg-eid-bg/90 pt-[env(safe-area-inset-top)] shadow-[0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-md supports-[backdrop-filter]:bg-eid-bg/82 md:mb-3">
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
-        <div className="flex items-center justify-between gap-2 py-2.5 sm:py-3">
+        <div className="flex items-center justify-between gap-2 py-2 sm:py-2.5">
           <Link href="/dashboard" className="min-w-0 shrink transition hover:opacity-90">
             <LogoWordmark className="h-[1.35rem] max-h-7 max-w-[min(46vw,200px)] object-left sm:h-8 sm:max-w-[min(55vw,220px)]" />
           </Link>
@@ -97,7 +97,7 @@ export function DashboardTopbar() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar atletas, locais…"
-            className="eid-input-dark h-10 w-full rounded-2xl border border-[color:var(--eid-border-subtle)] px-4 text-sm text-eid-fg shadow-[inset_0_2px_6px_rgba(0,0,0,0.12)] placeholder:text-eid-text-secondary/80 md:h-11"
+            className="eid-input-dark h-9 w-full rounded-[var(--eid-radius-md)] border border-[color:var(--eid-border-subtle)] px-3.5 text-sm text-eid-fg placeholder:text-eid-text-secondary/80 md:h-10"
           />
         </form>
       </div>
@@ -109,10 +109,10 @@ export function DashboardTopbar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-semibold shadow-sm transition ${
+              className={`whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-medium transition ${
                 active
-                  ? "border-eid-primary-500/55 bg-eid-primary-500/18 text-eid-fg shadow-[0_4px_14px_-6px_rgba(37,99,235,0.45)]"
-                  : "border-[color:var(--eid-border-subtle)] bg-eid-card/90 text-eid-text-secondary hover:border-eid-primary-500/40 hover:text-eid-fg"
+                  ? "border-eid-primary-500/45 bg-eid-primary-500/12 text-eid-fg"
+                  : "border-transparent bg-transparent text-eid-text-secondary hover:border-eid-primary-500/25 hover:text-eid-fg"
               }`}
             >
               {item.label}

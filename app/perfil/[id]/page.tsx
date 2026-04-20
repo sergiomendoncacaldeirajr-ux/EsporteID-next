@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { EidNotaMetric, EidRankingPtsMetric } from "@/components/ui/eid-metrics";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { podeExibirWhatsappPerfilPublico } from "@/lib/perfil/whatsapp-visibility";
 import { createClient } from "@/lib/supabase/server";
@@ -200,16 +201,14 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
         ) : null}
 
         {principalEid ? (
-          <section className="mt-8 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-center sm:text-left md:rounded-2xl md:border-eid-action-500/30 md:bg-gradient-to-br md:from-eid-action-500/15 md:via-eid-card md:to-eid-primary-500/10 md:p-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-eid-text-secondary">Nota EID principal</p>
-            <p className="mt-1 text-sm font-semibold text-eid-fg">{espPrincipal?.nome ?? "Esporte"}</p>
-            <p className="mt-2 text-4xl font-bold tabular-nums leading-none text-eid-action-500 sm:text-5xl md:text-6xl md:font-black">
-              {Number(principalEid.nota_eid ?? 1).toFixed(1)}
-            </p>
-            <div className="mt-4 flex flex-wrap justify-center gap-3 text-xs text-eid-text-secondary sm:justify-start">
-              <span>
-                Ranking <strong className="text-eid-fg">{Number(principalEid.pontos_ranking ?? 0)}</strong> pts
-              </span>
+          <section className="mt-8 rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-center sm:text-left">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-eid-text-secondary">Desempenho principal</p>
+            <p className="mt-1 text-sm font-medium text-eid-fg">{espPrincipal?.nome ?? "Esporte"}</p>
+            <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+              <EidNotaMetric value={Number(principalEid.nota_eid ?? 1)} />
+              <EidRankingPtsMetric value={Number(principalEid.pontos_ranking ?? 0)} />
+            </div>
+            <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] text-eid-text-secondary sm:justify-start">
               {principalEid.posicao_rank != null ? (
                 <span>
                   Pos. <strong className="text-eid-fg">#{principalEid.posicao_rank}</strong>
@@ -219,7 +218,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 {Number(principalEid.partidas_jogadas ?? 0)} jogos · {principalEid.modalidade_match ?? "individual"}
               </span>
             </div>
-            <p className="mt-3 text-[11px] text-eid-text-secondary">
+            <p className="mt-3 text-[11px] leading-relaxed text-eid-text-secondary">
               A nota EID reflete o histórico de confrontos válidos no esporte. Valores detalhados por esporte abaixo.
             </p>
           </section>
@@ -257,28 +256,28 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 const esp = Array.isArray(e.esportes) ? e.esportes[0] : e.esportes;
                 const soRank = e.interesse_match === "ranking";
                 return (
-                  <article key={`${e.esporte_id}-${idx}`} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4">
+                  <article
+                    key={`${e.esporte_id}-${idx}`}
+                    className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card p-3.5"
+                  >
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-semibold text-eid-fg">{esp?.nome ?? "Esporte"}</p>
-                        <p className="mt-1 text-xl font-bold tabular-nums text-eid-action-500 sm:text-2xl sm:font-black">
-                          {Number(e.nota_eid ?? 1).toFixed(1)}
-                          <span className="ml-2 text-xs font-semibold text-eid-text-secondary">EID</span>
-                        </p>
-                      </div>
+                      <p className="text-sm font-medium text-eid-fg">{esp?.nome ?? "Esporte"}</p>
                       <span
-                        className={`rounded-full border px-2 py-0.5 text-[10px] font-extrabold uppercase ${
+                        className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${
                           soRank
-                            ? "border-amber-400/35 bg-amber-500/10 text-amber-200"
-                            : "border-eid-primary-500/35 bg-eid-primary-500/10 text-eid-primary-200"
+                            ? "border-[color:var(--eid-border-subtle)] bg-eid-surface text-eid-text-secondary"
+                            : "border-eid-primary-500/28 bg-eid-primary-500/[0.07] text-eid-primary-300"
                         }`}
                       >
                         {soRank ? "Só ranking" : "Rank + amistoso"}
                       </span>
                     </div>
-                    <p className="mt-2 text-xs text-eid-text-secondary">
-                      Ranking {Number(e.pontos_ranking ?? 0)} pts · {Number(e.partidas_jogadas ?? 0)} jogos ·{" "}
-                      {e.modalidade_match ?? "individual"}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <EidNotaMetric value={Number(e.nota_eid ?? 1)} size="sm" />
+                      <EidRankingPtsMetric value={Number(e.pontos_ranking ?? 0)} size="sm" />
+                    </div>
+                    <p className="mt-2 text-[11px] text-eid-text-secondary">
+                      {Number(e.partidas_jogadas ?? 0)} jogos · {e.modalidade_match ?? "individual"}
                       {e.posicao_rank != null ? ` · pos. #${e.posicao_rank}` : ""}
                     </p>
                   </article>
