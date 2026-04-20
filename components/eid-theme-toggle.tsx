@@ -56,7 +56,7 @@ export function EidThemeToggle({ className, variant = "default" }: Props) {
 
   const toolbarCls =
     variant === "toolbar"
-      ? "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-0 text-eid-text-muted shadow-sm transition hover:border-eid-primary-500/35 hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50"
+      ? "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-0 text-eid-text-muted shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-eid-primary-500/35 hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50"
       : "inline-flex h-10 items-center gap-2 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-3 text-eid-text-muted shadow-sm backdrop-blur-sm transition hover:border-eid-primary-500/30 hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50";
 
   return (

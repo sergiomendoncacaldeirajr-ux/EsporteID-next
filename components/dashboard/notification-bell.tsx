@@ -97,7 +97,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card text-eid-primary-300 transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10 md:h-10 md:w-10 md:rounded-xl"
+        className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card text-eid-primary-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10 md:h-10 md:w-10"
         aria-label="Notificações e resumos"
         aria-expanded={open}
       >

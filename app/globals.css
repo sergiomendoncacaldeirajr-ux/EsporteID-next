@@ -236,6 +236,55 @@ body {
   outline-offset: 2px;
 }
 
+/* Painel — CTA principal estilo “app” (pílula, brilho suave) */
+.eid-btn-dashboard-cta {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.75rem 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  background: linear-gradient(
+    165deg,
+    var(--eid-action-500) 0%,
+    color-mix(in srgb, var(--eid-action-600) 88%, #000) 100%
+  );
+  color: #fff;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.22),
+    0 12px 32px -8px color-mix(in srgb, var(--eid-action-500) 55%, transparent);
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
+}
+@media (min-width: 640px) {
+  .eid-btn-dashboard-cta {
+    font-size: 0.8125rem;
+  }
+}
+.eid-btn-dashboard-cta:hover {
+  background: linear-gradient(
+    165deg,
+    var(--eid-action-400) 0%,
+    color-mix(in srgb, var(--eid-action-500) 90%, #000) 100%
+  );
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.22),
+    0 14px 36px -6px color-mix(in srgb, var(--eid-action-500) 65%, transparent);
+}
+.eid-btn-dashboard-cta:active {
+  transform: scale(0.985);
+}
+.eid-btn-dashboard-cta:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--eid-action-500) 65%, transparent);
+  outline-offset: 2px;
+}
+
 /* Foco visível em links interativos (acessibilidade) */
 a:focus-visible:not(.eid-btn-primary) {
   outline: 2px solid color-mix(in srgb, var(--eid-primary-500) 55%, transparent);

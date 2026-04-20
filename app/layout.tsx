@@ -82,7 +82,7 @@ export default async function RootLayout({
           id="app-main-column"
           className={
             user
-              ? "flex flex-1 flex-col pb-[calc(3.75rem+env(safe-area-inset-bottom))] md:pb-28"
+              ? "flex flex-1 flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-28"
               : "flex flex-1 flex-col pb-28"
           }
         >

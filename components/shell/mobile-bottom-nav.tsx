@@ -179,7 +179,7 @@ export function MobileBottomNav({ userId }: Props) {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 z-[55] flex h-[calc(52px+env(safe-area-inset-bottom))] w-full items-center justify-around border-t border-[color:var(--eid-border-subtle)] bg-eid-bg pb-[env(safe-area-inset-bottom)] pt-1 md:hidden"
+      className="fixed bottom-0 left-0 z-[55] flex h-[calc(56px+env(safe-area-inset-bottom))] w-full items-end justify-around rounded-t-[1.35rem] border border-[color:var(--eid-border-subtle)] border-b-0 bg-eid-card/92 px-1 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-12px_40px_-8px_rgba(0,0,0,0.45)] backdrop-blur-xl supports-[backdrop-filter]:bg-eid-card/88 md:hidden"
       aria-label="Navegação principal"
     >
       {items.map((item) => {
@@ -188,18 +188,18 @@ export function MobileBottomNav({ userId }: Props) {
             <Link
               key={item.href}
               href={item.href}
-              className={`relative flex flex-1 flex-col items-center justify-center gap-0.5 py-1 text-[10px] font-semibold uppercase tracking-wide transition active:opacity-80 ${
+              className={`relative -mt-3 flex flex-1 flex-col items-center justify-end gap-1 pb-0.5 text-[10px] font-bold uppercase tracking-wide transition active:opacity-85 ${
                 item.active ? "text-eid-action-500" : "text-eid-text-secondary"
               }`}
             >
               <span
-                className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+                className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
                   item.active
-                    ? "bg-eid-action-500 text-[var(--eid-brand-ink)] shadow-md shadow-eid-action-500/25"
-                    : "border border-[color:var(--eid-border-subtle)] bg-eid-surface text-eid-text-secondary"
+                    ? "bg-gradient-to-b from-eid-action-400 to-eid-action-600 text-[var(--eid-brand-ink)] shadow-[0_10px_24px_-6px_rgba(249,115,22,0.55)] ring-2 ring-eid-action-500/35"
+                    : "border border-[color:var(--eid-border-subtle)] bg-eid-surface text-eid-text-secondary shadow-inner"
                 }`}
               >
-                <span className="flex [&>svg]:h-[18px] [&>svg]:w-[18px]">{item.icon}</span>
+                <span className="flex [&>svg]:h-[19px] [&>svg]:w-[19px]">{item.icon}</span>
               </span>
               {item.label}
             </Link>
@@ -209,11 +209,15 @@ export function MobileBottomNav({ userId }: Props) {
           <Link
             key={item.href}
             href={item.href}
-            className={`relative flex min-h-[44px] flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-[10px] font-semibold uppercase tracking-wide transition active:opacity-80 ${
-              item.active ? "text-eid-primary-400" : "text-eid-text-secondary"
+            className={`relative flex min-h-[44px] flex-1 flex-col items-center justify-center gap-1 px-0.5 pb-1 text-[10px] font-bold uppercase tracking-wide transition active:opacity-85 ${
+              item.active ? "text-eid-primary-300" : "text-eid-text-secondary"
             }`}
           >
-            <span className={`relative flex h-6 items-center justify-center ${item.active ? "text-eid-primary-400" : ""}`}>
+            <span
+              className={`relative flex h-7 items-center justify-center rounded-xl px-2 transition ${
+                item.active ? "bg-eid-primary-500/15 text-eid-primary-300" : ""
+              }`}
+            >
               {item.icon}
               {item.badgeWrap ? <NavBadge n={item.badge ?? 0} /> : null}
             </span>

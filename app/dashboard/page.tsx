@@ -97,7 +97,10 @@ function IconStopwatch({ className }: { className?: string }) {
 }
 
 const scrollRow =
-  "-mx-3 flex gap-3 overflow-x-auto px-3 pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-6 sm:px-6 [&::-webkit-scrollbar]:hidden";
+  "-mx-3 flex gap-3 overflow-x-auto px-3 pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 [&::-webkit-scrollbar]:hidden";
+
+const sectionActionClass =
+  "inline-flex shrink-0 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/80 px-3.5 py-1.5 text-[11px] font-bold tracking-wide text-eid-fg shadow-sm transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10 hover:text-eid-primary-300 active:scale-[0.98]";
 
 export default async function DashboardPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
@@ -235,57 +238,69 @@ export default async function DashboardPage({ searchParams }: Props) {
     { label: "Rank", shortLabel: "Rank", href: "/ranking", icon: IconChart },
     { label: "Performance", shortLabel: "Perf.", href: "/performance", icon: IconStopwatch },
   ];
+  const quickNavMain = navItems.slice(0, 4);
+  const perfNav = navItems[4];
 
   return (
     <>
       <DashboardTopbar />
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
-        <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:border-eid-primary-500/25 sm:bg-gradient-to-br sm:from-eid-card sm:via-eid-card sm:to-eid-primary-500/10 sm:p-5 sm:shadow-[0_12px_40px_-20px_rgba(37,99,235,0.35)]">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="relative overflow-hidden rounded-[1.35rem] border border-eid-primary-500/25 bg-gradient-to-br from-eid-card via-eid-card to-eid-primary-950/40 p-4 shadow-[0_24px_56px_-22px_rgba(37,99,235,0.4)] sm:rounded-2xl sm:p-6">
+          <div
+            className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-primary-500/15 blur-3xl"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-eid-action-500/12 blur-3xl"
+            aria-hidden
+          />
+          <div className="relative flex flex-wrap items-center gap-4">
             {profile.avatar_url ? (
               <img
                 src={profile.avatar_url}
                 alt="Seu avatar"
-                className="h-14 w-14 rounded-2xl border-2 border-eid-primary-500/40 object-cover sm:h-16 sm:w-16"
+                className="h-[4.25rem] w-[4.25rem] shrink-0 rounded-full border-[3px] border-eid-primary-500/55 object-cover shadow-[0_8px_24px_-6px_rgba(37,99,235,0.45)] ring-2 ring-eid-primary-500/25 ring-offset-2 ring-offset-eid-card sm:h-[4.5rem] sm:w-[4.5rem]"
               />
             ) : (
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-surface text-base font-bold text-eid-primary-300 sm:h-16 sm:w-16">
+              <div className="flex h-[4.25rem] w-[4.25rem] shrink-0 items-center justify-center rounded-full border-[3px] border-eid-primary-500/55 bg-eid-surface text-lg font-bold text-eid-primary-300 shadow-[0_8px_24px_-6px_rgba(37,99,235,0.35)] ring-2 ring-eid-primary-500/25 ring-offset-2 ring-offset-eid-card sm:h-[4.5rem] sm:w-[4.5rem]">
                 {iniciais(profile.nome)}
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl font-extrabold tracking-tight text-eid-fg sm:text-2xl">
+              <h1 className="text-[1.35rem] font-extrabold leading-tight tracking-tight text-eid-fg sm:text-2xl">
                 Olá, {primeiroNome(profile.nome)}!
               </h1>
-              <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary sm:text-[11px]">
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-eid-primary-400 sm:text-[11px]">
                 Sua evolução está em dia
               </p>
               {profile.localizacao ? (
-                <p className="mt-1 truncate text-xs text-eid-text-secondary">{profile.localizacao}</p>
+                <p className="mt-1.5 truncate text-xs text-eid-text-secondary">{profile.localizacao}</p>
               ) : null}
             </div>
           </div>
 
           <Link
             href={matchHref}
-            className="eid-btn-primary mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl text-xs font-extrabold uppercase tracking-wide shadow-[0_8px_20px_rgba(37,99,235,0.18)] active:scale-[0.98] sm:mt-5 sm:text-sm"
+            className="eid-btn-dashboard-cta relative mt-5 flex w-full items-center justify-center gap-2.5 sm:mt-6"
           >
-            <IconBolt className="h-5 w-5 shrink-0 text-[var(--eid-brand-ink)]" />
+            <IconBolt className="h-5 w-5 shrink-0 text-white drop-shadow-sm" />
             Encontrar match
           </Link>
         </div>
 
-        <div className="mt-4 grid grid-cols-5 gap-1.5 sm:mt-6 sm:gap-3">
-          {navItems.map((item) => {
+        <div className="mt-5 grid grid-cols-4 gap-2 sm:mt-6 sm:gap-3">
+          {quickNavMain.map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex min-h-[72px] flex-col items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-0.5 py-2.5 text-center transition hover:border-eid-primary-500/40 hover:shadow-[0_8px_24px_-12px_rgba(37,99,235,0.25)] sm:min-h-0 sm:px-1 sm:py-3.5"
+                className="group flex min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-gradient-to-b from-eid-surface/95 to-eid-card/90 px-1 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition hover:border-eid-primary-500/45 hover:shadow-[0_14px_32px_-14px_rgba(37,99,235,0.55)] active:scale-[0.98] sm:min-h-[6.25rem] sm:py-4"
               >
-                <Icon className="mb-1 h-[17px] w-[17px] shrink-0 text-eid-primary-400 sm:mb-1.5 sm:h-5 sm:w-5" />
-                <span className="text-[8px] font-extrabold uppercase leading-tight text-eid-fg sm:text-[10px]">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-eid-primary-500/14 text-eid-primary-400 transition group-hover:bg-eid-primary-500/22 group-hover:text-eid-primary-300">
+                  <Icon className="h-[22px] w-[22px] sm:h-6 sm:w-6" />
+                </span>
+                <span className="text-[9px] font-extrabold uppercase leading-tight tracking-wide text-eid-fg sm:text-[10px]">
                   <span className="sm:hidden">{item.shortLabel}</span>
                   <span className="hidden sm:inline">{item.label}</span>
                 </span>
@@ -294,16 +309,31 @@ export default async function DashboardPage({ searchParams }: Props) {
           })}
         </div>
 
+        {perfNav ? (
+          <Link
+            href={perfNav.href}
+            className="mt-2 flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-dashed border-eid-primary-500/35 bg-eid-surface/45 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-fg transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/10 hover:text-eid-primary-200 active:scale-[0.99] sm:text-[11px]"
+          >
+            <IconStopwatch className="h-5 w-5 shrink-0 text-eid-primary-400" />
+            <span>
+              <span className="sm:hidden">{perfNav.shortLabel}</span>
+              <span className="hidden sm:inline">{perfNav.label}</span>
+            </span>
+          </Link>
+        ) : null}
+
         {q ? (
           <p className="mt-4 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-xs text-eid-text-secondary">
             Busca ativa por: <span className="font-semibold text-eid-fg">{sp.q}</span>
           </p>
         ) : null}
 
-        <section className="mt-6 sm:mt-8">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xs font-extrabold uppercase tracking-[0.14em] text-eid-primary-500">Atletas próximos</h2>
-            <Link href={matchHref} className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[10px] font-bold text-eid-fg transition hover:border-eid-primary-500/35">
+        <section className="mt-7 sm:mt-9">
+          <div className="mb-3.5 flex items-center justify-between gap-3">
+            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-eid-primary-400 sm:text-xs">
+              Atletas próximos
+            </h2>
+            <Link href={matchHref} className={sectionActionClass}>
               Ver todos
             </Link>
           </div>
@@ -313,7 +343,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={`${p?.id ?? idx}-${idx}`}
                   href={`/perfil/${encodeURIComponent(String(p?.id ?? ""))}?from=/dashboard`}
-                  className="min-w-[118px] max-w-[118px] shrink-0 snap-start rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-2 py-3 text-center transition hover:border-eid-primary-500/40"
+                  className="min-w-[118px] max-w-[118px] shrink-0 snap-start rounded-3xl border border-eid-primary-500/15 bg-eid-card px-2 py-3.5 text-center shadow-[0_10px_28px_-12px_rgba(0,0,0,0.55)] transition hover:border-eid-primary-500/40 hover:shadow-[0_14px_36px_-14px_rgba(37,99,235,0.35)]"
                 >
                   <div className="relative mx-auto h-14 w-14">
                     {p?.avatar_url ? (
@@ -344,10 +374,12 @@ export default async function DashboardPage({ searchParams }: Props) {
           )}
         </section>
 
-        <section className="mt-6 sm:mt-8">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xs font-extrabold uppercase tracking-[0.14em] text-eid-primary-500">Torneios em aberto</h2>
-            <Link href="/torneios" className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[10px] font-bold text-eid-fg transition hover:border-eid-primary-500/35">
+        <section className="mt-7 sm:mt-9">
+          <div className="mb-3.5 flex items-center justify-between gap-3">
+            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-eid-primary-400 sm:text-xs">
+              Torneios em aberto
+            </h2>
+            <Link href="/torneios" className={sectionActionClass}>
               Explorar
             </Link>
           </div>
@@ -357,7 +389,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={t.id}
                   href={`/torneios/${t.id}?from=/dashboard`}
-                  className="min-w-[210px] max-w-[210px] shrink-0 snap-start overflow-hidden rounded-[20px] border border-[color:var(--eid-border-subtle)] bg-eid-card transition hover:border-eid-primary-500/35"
+                  className="min-w-[210px] max-w-[210px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-eid-primary-500/15 bg-eid-card shadow-[0_12px_32px_-14px_rgba(0,0,0,0.5)] transition hover:border-eid-primary-500/40"
                 >
                   <div className="h-[95px] w-full bg-eid-surface">
                     {t.banner ? (
@@ -371,16 +403,18 @@ export default async function DashboardPage({ searchParams }: Props) {
               ))}
             </div>
           ) : (
-            <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-sm text-eid-text-secondary">
+            <p className="rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-5 text-center text-sm leading-relaxed text-eid-text-secondary">
               {q ? "Nenhum torneio encontrado para essa busca." : "Sem torneios no momento."}
             </p>
           )}
         </section>
 
-        <section className="mt-6 sm:mt-8">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xs font-extrabold uppercase tracking-[0.14em] text-eid-primary-500">Times &amp; recrutamento</h2>
-            <Link href="/times" className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[10px] font-bold text-eid-fg transition hover:border-eid-primary-500/35">
+        <section className="mt-7 sm:mt-9">
+          <div className="mb-3.5 flex items-center justify-between gap-3">
+            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-eid-primary-400 sm:text-xs">
+              Times &amp; recrutamento
+            </h2>
+            <Link href="/times" className={sectionActionClass}>
               Ver todos
             </Link>
           </div>
@@ -390,7 +424,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={t.id}
                   href={`/perfil-time/${t.id}?from=/dashboard`}
-                  className="min-w-[118px] max-w-[118px] shrink-0 snap-start rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-2 py-3 text-center transition hover:border-eid-primary-500/40"
+                  className="min-w-[118px] max-w-[118px] shrink-0 snap-start rounded-3xl border border-eid-primary-500/15 bg-eid-card px-2 py-3.5 text-center shadow-[0_10px_28px_-12px_rgba(0,0,0,0.55)] transition hover:border-eid-primary-500/40"
                 >
                   <div className="mx-auto h-14 w-14">
                     {t.escudo ? (
@@ -415,10 +449,12 @@ export default async function DashboardPage({ searchParams }: Props) {
           )}
         </section>
 
-        <section className="mt-6 sm:mt-8">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xs font-extrabold uppercase tracking-[0.14em] text-eid-primary-500">Locais na comunidade</h2>
-            <Link href="/locais" className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[10px] font-bold text-eid-fg transition hover:border-eid-primary-500/35">
+        <section className="mt-7 sm:mt-9">
+          <div className="mb-3.5 flex items-center justify-between gap-3">
+            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-eid-primary-400 sm:text-xs">
+              Locais na comunidade
+            </h2>
+            <Link href="/locais" className={sectionActionClass}>
               Ver lista
             </Link>
           </div>
@@ -428,7 +464,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={loc.id}
                   href={`/local/${loc.id}?from=/dashboard`}
-                  className="min-w-[140px] max-w-[140px] shrink-0 snap-start rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 transition hover:border-eid-primary-500/35"
+                  className="min-w-[140px] max-w-[140px] shrink-0 snap-start rounded-3xl border border-eid-primary-500/15 bg-eid-card p-3 shadow-[0_10px_28px_-12px_rgba(0,0,0,0.5)] transition hover:border-eid-primary-500/40"
                 >
                   <div className="flex h-12 items-center justify-center overflow-hidden rounded-xl bg-eid-surface">
                     {loc.logo_arquivo ? (
