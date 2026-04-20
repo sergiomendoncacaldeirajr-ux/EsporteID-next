@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { ProfileAchievementsShelf, ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
+import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
+import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
+import { ProfileMemberCard } from "@/components/perfil/profile-team-members-cards";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
@@ -121,6 +125,10 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   const isMember = (membros ?? []).some((m) => m.usuario_id === user.id);
   const canLeaveTeam = isMember && t.criador_id !== user.id;
   const isLeader = t.criador_id === user.id;
+  const conquistas: string[] = [];
+  if (Number(t.pontos_ranking ?? 0) >= 1000) conquistas.push("Rank 1000+");
+  if (Number(t.eid_time ?? 0) >= 7) conquistas.push("EID Elite");
+  if ((membros ?? []).length >= 4) conquistas.push("Elenco Completo");
 
   return (
     <>
@@ -147,6 +155,14 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           {t.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{t.username}</p> : null}
           <p className="mt-2 text-sm text-eid-text-secondary">{t.localizacao ?? "Localização não informada"}</p>
           {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{t.bio}</p> : null}
+          <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+            <span className="rounded-full border border-eid-action-500/30 px-2 py-0.5 text-[10px] font-semibold text-eid-action-400">
+              {t.disponivel_amistoso ? "Amistoso" : "Só competitivo"}
+            </span>
+            <span className="rounded-full border border-eid-primary-500/30 px-2 py-0.5 text-[10px] font-semibold text-eid-primary-300">
+              {t.interesse_rank_match ? "Rank ativo" : "Rank off"}
+            </span>
+          </div>
 
           <div className="mt-5 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-4">
             <div>
@@ -172,107 +188,115 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
             </p>
           ) : null}
 
-          {canChallenge && t.esporte_id ? (
-            <Link
-              href={`/desafio?id=${id}&tipo=${encodeURIComponent(modalidade)}&esporte=${t.esporte_id}`}
-              className="eid-btn-match-cta mt-5 inline-flex min-h-[48px] w-full items-center justify-center rounded-2xl px-4 text-sm font-semibold sm:w-auto"
-            >
-              Solicitar Match
-            </Link>
-          ) : t.criador_id === user.id ? (
-            <p className="mt-4 text-xs text-eid-text-secondary">Esta é a sua formação.</p>
-          ) : (
-            <p className="mt-4 text-xs text-eid-text-secondary">
-              Para desafiar, seja líder de uma {modalidade} neste mesmo esporte no radar.
-            </p>
-          )}
-          {canLeaveTeam ? (
-            <form action={sairEquipeAction} className="mt-3">
-              <button
-                type="submit"
-                className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-red-400/35 px-3 text-xs font-semibold text-red-300"
-              >
-                Sair da equipe
-              </button>
-            </form>
-          ) : null}
-          {isLeader ? (
-            <form action={convidarAction} className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
-              <input name="username" placeholder="@username para convidar" className="eid-input-dark rounded-xl px-3 py-2 text-xs text-eid-fg" />
-              <button type="submit" className="eid-btn-primary rounded-xl px-3 py-2 text-xs font-semibold">
-                Convidar
-              </button>
-            </form>
-          ) : null}
         </div>
 
-        {(hist ?? []).length > 0 ? (
-          <section className="mt-8">
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Histórico EID (recente)</h2>
-            <ul className="mt-2 flex flex-wrap gap-2">
-              {[...(hist ?? [])].reverse().map((h, i) => (
-                <li
-                  key={`${h.data_alteracao}-${i}`}
-                  className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-2 py-1 text-[11px] text-eid-text-secondary"
-                >
-                  <span className="font-semibold text-eid-fg">{Number(h.nota_nova).toFixed(1)}</span>{" "}
-                  {h.data_alteracao ? new Date(h.data_alteracao).toLocaleDateString("pt-BR") : ""}
-                </li>
-              ))}
-            </ul>
+        <div className="mt-6 grid gap-6">
+          <section>
+            <h2 className="sr-only">Ação principal</h2>
+            {canChallenge && t.esporte_id ? (
+              <ProfilePrimaryCta href={`/desafio?id=${id}&tipo=${encodeURIComponent(modalidade)}&esporte=${t.esporte_id}`} />
+            ) : t.criador_id === user.id ? (
+              <p className="text-xs text-eid-text-secondary">Esta é a sua formação.</p>
+            ) : (
+              <p className="text-xs text-eid-text-secondary">
+                Para desafiar, seja líder de uma {modalidade} neste mesmo esporte no radar.
+              </p>
+            )}
+            <div className="mt-2 flex flex-wrap gap-2">
+              {canLeaveTeam ? (
+                <form action={sairEquipeAction}>
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-red-400/35 px-3 text-xs font-semibold text-red-300"
+                  >
+                    Sair da equipe
+                  </button>
+                </form>
+              ) : null}
+            </div>
           </section>
-        ) : null}
 
-        <section className="mt-8">
-          <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Integrantes</h2>
+          <ProfileSection title="Esportes e Estatísticas">
+            <ProfileSportsMetricsCard
+              sportName={esp?.nome ?? "Esporte"}
+              eidValue={Number(t.eid_time ?? 1)}
+              rankValue={Number(t.pontos_ranking ?? 0)}
+              rankLabel="Rank"
+              trendLabel="Evolução EID"
+              trendPoints={
+                (hist ?? []).length >= 3
+                  ? ([
+                      Number((hist ?? [])[2]?.nota_nova ?? t.eid_time ?? 1),
+                      Number((hist ?? [])[1]?.nota_nova ?? t.eid_time ?? 1),
+                      Number((hist ?? [])[0]?.nota_nova ?? t.eid_time ?? 1),
+                    ] as [number, number, number])
+                  : [Number(t.eid_time ?? 1), Number(t.eid_time ?? 1) + 0.15, Number(t.eid_time ?? 1) + 0.3]
+              }
+            />
+          </ProfileSection>
+
+          <ProfileSection title="Minhas Equipes">
+            {isLeader ? (
+              <form action={convidarAction} className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input name="username" placeholder="@username para convidar" className="eid-input-dark rounded-xl px-3 py-2 text-xs text-eid-fg" />
+                <button type="submit" className="eid-btn-primary rounded-xl px-3 py-2 text-xs font-semibold">
+                  Convidar
+                </button>
+              </form>
+            ) : null}
+          </ProfileSection>
+
+          <ProfileSection title="Integrantes">
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
             {(membros ?? []).map((m, idx) => {
               const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
               if (!p?.id) return null;
               return (
                 <li key={`${m.usuario_id}-${idx}`}>
-                  <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3">
-                    <Link href={`/perfil/${p.id}?from=/perfil-time/${id}`} className="flex items-center gap-2 transition hover:border-eid-primary-500/35">
-                      {p.avatar_url ? (
-                        <img src={p.avatar_url} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                      ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-eid-surface text-[10px] font-bold text-eid-primary-300">
-                          EID
+                  <ProfileMemberCard
+                    href={`/perfil/${p.id}?from=/perfil-time/${id}`}
+                    name={p.nome ?? "Membro"}
+                    subtitle={m.cargo ?? "Atleta"}
+                    avatarUrl={p.avatar_url}
+                    trailing={
+                      isLeader && p.id !== t.criador_id ? (
+                        <div className="flex gap-2">
+                          <form action={transferirLiderancaAction}>
+                            <input type="hidden" name="usuario_id" value={p.id} />
+                            <button type="submit" className="rounded-lg border border-eid-primary-500/30 px-2 py-1 text-[10px] font-semibold text-eid-primary-300">
+                              Transferir liderança
+                            </button>
+                          </form>
+                          <form action={removerMembroAction}>
+                            <input type="hidden" name="usuario_id" value={p.id} />
+                            <button type="submit" className="rounded-lg border border-red-400/30 px-2 py-1 text-[10px] font-semibold text-red-300">
+                              Remover
+                            </button>
+                          </form>
                         </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold text-eid-fg">{p.nome ?? "Membro"}</p>
-                        <p className="text-[10px] text-eid-text-secondary">{m.cargo ?? "Atleta"}</p>
-                      </div>
-                    </Link>
-                    {isLeader && p.id !== t.criador_id ? (
-                      <div className="mt-2 flex gap-2">
-                        <form action={transferirLiderancaAction}>
-                          <input type="hidden" name="usuario_id" value={p.id} />
-                          <button type="submit" className="rounded-lg border border-eid-primary-500/30 px-2 py-1 text-[10px] font-semibold text-eid-primary-300">
-                            Transferir liderança
-                          </button>
-                        </form>
-                        <form action={removerMembroAction}>
-                          <input type="hidden" name="usuario_id" value={p.id} />
-                          <button type="submit" className="rounded-lg border border-red-400/30 px-2 py-1 text-[10px] font-semibold text-red-300">
-                            Remover
-                          </button>
-                        </form>
-                      </div>
-                    ) : null}
-                  </div>
+                      ) : null
+                    }
+                  />
                 </li>
               );
             })}
           </ul>
-        </section>
+          </ProfileSection>
 
-        <div className="mt-6 flex flex-wrap gap-2 text-xs text-eid-text-secondary">
-          {t.interesse_rank_match ? <span className="rounded-md border border-eid-primary-500/30 px-2 py-1">Ranking</span> : null}
-          {t.disponivel_amistoso ? (
-            <span className="rounded-md border border-eid-primary-500/30 px-2 py-1">Amistoso</span>
-          ) : null}
+          <ProfileSection title="Histórico e Conquistas">
+            <ProfileCompactTimeline
+              title="Histórico de EID"
+              emptyText="Sem histórico recente."
+              items={[...(hist ?? [])]
+                .reverse()
+                .map((h, i) => ({
+                  id: `${h.data_alteracao ?? "sem-data"}-${i}`,
+                  label: `${Number(h.nota_nova).toFixed(1)} ${h.data_alteracao ? new Date(h.data_alteracao).toLocaleDateString("pt-BR") : ""}`.trim(),
+                  tone: "neutral" as const,
+                }))}
+            />
+            <ProfileAchievementsShelf achievements={conquistas} emptyText="Conquistas aparecerão com a evolução da equipe." />
+          </ProfileSection>
         </div>
       </main>
     </>

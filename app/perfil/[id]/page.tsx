@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
+import { ProfileAchievementsShelf, ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
+import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
+import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
+import { ProfileTeamCard } from "@/components/perfil/profile-team-members-cards";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
-import { EidNotaMetric, EidRankingPtsMetric } from "@/components/ui/eid-metrics";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { podeExibirWhatsappPerfilPublico } from "@/lib/perfil/whatsapp-visibility";
 import { createClient } from "@/lib/supabase/server";
@@ -99,6 +102,32 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     .order("visitas", { ascending: false })
     .limit(10);
 
+  const { data: partidasRecentes } = await supabase
+    .from("partidas")
+    .select("id, jogador1_id, jogador2_id, placar_1, placar_2, status, data_resultado, data_registro")
+    .or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`)
+    .order("data_registro", { ascending: false })
+    .limit(8);
+
+  const timeline = (partidasRecentes ?? []).map((p) => {
+    const isP1 = p.jogador1_id === id;
+    const isP2 = p.jogador2_id === id;
+    let resultado: "V" | "D" | "—" = "—";
+    if (Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2))) {
+      const s1 = Number(p.placar_1 ?? 0);
+      const s2 = Number(p.placar_2 ?? 0);
+      if (isP1) resultado = s1 > s2 ? "V" : s1 < s2 ? "D" : "—";
+      if (isP2) resultado = s2 > s1 ? "V" : s2 < s1 ? "D" : "—";
+    }
+    return { id: p.id, resultado, data: p.data_resultado ?? p.data_registro };
+  });
+
+  const conquistas: string[] = [];
+  if ((eids ?? []).length >= 3) conquistas.push("Multi-esporte");
+  if ((winRate ?? 0) >= 60 && jogosT >= 10) conquistas.push("Winrate 60%+");
+  if ((principalEid?.posicao_rank ?? 9999) <= 10) conquistas.push("Top 10");
+  if ((principalEid?.nota_eid ?? 0) >= 7) conquistas.push("EID Elite");
+
   return (
     <>
       <DashboardTopbar />
@@ -135,11 +164,19 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 </div>
                 {perfil.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{perfil.username}</p> : null}
                 <p className="mt-1 text-sm text-eid-text-secondary">{perfil.localizacao ?? "Localização não informada"}</p>
-                {perfil.estilo_jogo ? (
-                  <p className="mt-1 inline-flex rounded-full border border-eid-primary-500/30 px-2 py-0.5 text-[10px] font-semibold text-eid-primary-300">
-                    {perfil.estilo_jogo}
-                  </p>
-                ) : null}
+                <div className="mt-2 flex flex-wrap justify-center gap-1.5 sm:justify-start">
+                  <span className="rounded-full border border-eid-primary-500/30 px-2 py-0.5 text-[10px] font-semibold text-eid-primary-300">
+                    {perfil.disponivel_amistoso !== false ? "Disponível para amistosos" : "Amistoso indisponível"}
+                  </span>
+                  <span className="rounded-full border border-eid-action-500/35 px-2 py-0.5 text-[10px] font-semibold text-eid-action-400">
+                    {perfil.interesse_rank_match !== false ? "Ranking ativo" : "Somente social"}
+                  </span>
+                  {perfil.estilo_jogo ? (
+                    <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-2 py-0.5 text-[10px] font-semibold text-eid-text-secondary">
+                      {perfil.estilo_jogo}
+                    </span>
+                  ) : null}
+                </div>
                 {linkWpp ? (
                   <a
                     href={linkWpp}
@@ -186,236 +223,168 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           </div>
         </div>
 
-        {!isSelf && primeiroEsporte ? (
-          <div className="mt-4">
-            <Link
-              href={`/desafio?id=${encodeURIComponent(id)}&tipo=individual&esporte=${primeiroEsporte}`}
-              className="eid-btn-match-cta inline-flex min-h-[46px] w-full items-center justify-center rounded-2xl px-4 text-sm font-semibold sm:w-auto"
-            >
-              Solicitar Match
-            </Link>
-          </div>
-        ) : null}
-
-        {isSelf ? (
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <Link
-              href="/onboarding"
-              className="eid-btn-primary inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl px-4 text-center text-sm font-bold sm:flex-none"
-            >
-              Editar perfil
-            </Link>
-            <Link
-              href="/conta/dados-lgpd"
-              className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-4 text-center text-sm font-semibold text-eid-fg transition hover:border-eid-primary-500/35 sm:flex-none"
-            >
-              Dados e privacidade
-            </Link>
-            <Link
-              href="/match"
-              className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-eid-primary-500/40 px-4 text-center text-sm font-semibold text-eid-primary-300 sm:flex-none"
-            >
-              Abrir Match
-            </Link>
-            <Link
-              href="/times?create=1"
-              className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-eid-action-500/35 px-4 text-center text-sm font-semibold text-eid-action-400 sm:flex-none"
-            >
-              Criar Nova Dupla/Time
-            </Link>
-          </div>
-        ) : null}
-
-        {principalEid ? (
-          <section className="mt-8 rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-center sm:text-left">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-eid-text-secondary">Desempenho principal</p>
-            <p className="mt-1 text-sm font-medium text-eid-fg">{espPrincipal?.nome ?? "Esporte"}</p>
-            <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
-              <EidNotaMetric value={Number(principalEid.nota_eid ?? 1)} />
-              <EidRankingPtsMetric value={Number(principalEid.pontos_ranking ?? 0)} />
-            </div>
-            <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[11px] text-eid-text-secondary sm:justify-start">
-              {principalEid.posicao_rank != null ? (
-                <span>
-                  Pos. <strong className="text-eid-fg">#{principalEid.posicao_rank}</strong>
-                </span>
-              ) : null}
-              <span>
-                {Number(principalEid.partidas_jogadas ?? 0)} jogos · {principalEid.modalidade_match ?? "individual"}
-              </span>
-            </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-eid-text-secondary">
-              A nota EID reflete o histórico de confrontos válidos no esporte. Valores detalhados por esporte abaixo.
-            </p>
-          </section>
-        ) : null}
-
-        {isSelf ? (
-          <section className="mt-6 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4">
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Preferências de confronto</h2>
-            <ul className="mt-3 space-y-2 text-sm text-eid-text-secondary">
-              <li>
-                <span className="text-eid-fg">Ranking match: </span>
-                {perfil.interesse_rank_match !== false ? "Ativo" : "Indisponível"}
-              </li>
-              <li>
-                <span className="text-eid-fg">Jogos amistosos: </span>
-                {perfil.disponivel_amistoso !== false ? "Disponível" : "Só ranking"}
-              </li>
-              <li>
-                <span className="text-eid-fg">Torneios: </span>
-                {perfil.interesse_torneio !== false ? "Interessado" : "Não informado"}
-              </li>
-            </ul>
-          </section>
-        ) : null}
-
-        <section className="mt-8">
-          <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">EID por esporte</h2>
-          <div className="mt-3 grid gap-2">
-            {(eids ?? []).length === 0 ? (
-              <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-sm text-eid-text-secondary">
-                Ainda sem EID registrado por esporte.
-              </p>
+        <div className="mt-6 grid gap-6">
+          <section>
+            <h2 className="sr-only">Ação principal</h2>
+            {!isSelf && primeiroEsporte ? (
+              <ProfilePrimaryCta href={`/desafio?id=${encodeURIComponent(id)}&tipo=individual&esporte=${primeiroEsporte}`} />
             ) : (
-              (eids ?? []).map((e, idx) => {
-                const esp = Array.isArray(e.esportes) ? e.esportes[0] : e.esportes;
-                const soRank = e.interesse_match === "ranking";
-                return (
-                  <article
-                    key={`${e.esporte_id}-${idx}`}
-                    className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card p-3.5"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <p className="text-sm font-medium text-eid-fg">{esp?.nome ?? "Esporte"}</p>
-                      <span
-                        className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${
-                          soRank
-                            ? "border-[color:var(--eid-border-subtle)] bg-eid-surface text-eid-text-secondary"
-                            : "border-eid-primary-500/28 bg-eid-primary-500/[0.07] text-eid-primary-300"
-                        }`}
-                      >
-                        {soRank ? "Só ranking" : "Rank + amistoso"}
-                      </span>
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <EidNotaMetric value={Number(e.nota_eid ?? 1)} size="sm" />
-                      <EidRankingPtsMetric value={Number(e.pontos_ranking ?? 0)} size="sm" />
-                    </div>
-                    <p className="mt-2 text-[11px] text-eid-text-secondary">
-                      {Number(e.partidas_jogadas ?? 0)} jogos · {e.modalidade_match ?? "individual"}
-                      {e.posicao_rank != null ? ` · pos. #${e.posicao_rank}` : ""}
-                    </p>
-                  </article>
-                );
-              })
+              <div className="grid gap-2 sm:grid-cols-2">
+                <ProfilePrimaryCta href="/match" />
+                <Link href="/times?create=1" className="inline-flex min-h-[48px] items-center justify-center rounded-2xl border border-eid-action-500/35 px-4 text-sm font-semibold text-eid-action-400">
+                  Criar Nova Dupla/Time
+                </Link>
+                <Link href="/onboarding" className="inline-flex min-h-[44px] items-center justify-center rounded-2xl border border-[color:var(--eid-border-subtle)] px-4 text-sm font-semibold text-eid-fg">
+                  Editar perfil
+                </Link>
+                <Link href="/conta/dados-lgpd" className="inline-flex min-h-[44px] items-center justify-center rounded-2xl border border-[color:var(--eid-border-subtle)] px-4 text-sm font-semibold text-eid-fg">
+                  Dados e privacidade
+                </Link>
+              </div>
             )}
-          </div>
-        </section>
+          </section>
 
-        {(timesLider ?? []).length > 0 ? (
-          <section className="mt-8">
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Formações que você lidera</h2>
-            <ul className="mt-3 space-y-2">
-              {(timesLider ?? []).map((t) => {
-                const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
-                return (
-                  <li key={t.id}>
-                    <Link
-                      href={`/perfil-time/${t.id}?from=/perfil/${id}`}
-                      className="flex items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 transition hover:border-eid-primary-500/35"
-                    >
-                      {t.escudo ? (
-                        <img src={t.escudo} alt="" className="h-11 w-11 rounded-lg object-cover" />
-                      ) : (
-                        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-eid-surface text-[10px] font-bold text-eid-primary-300">
-                          {String(t.tipo ?? "T").slice(0, 1).toUpperCase()}
+          <ProfileSection title="Esportes e Estatísticas">
+            <div className="mt-3 grid gap-2">
+              {(eids ?? []).length === 0 ? (
+                <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-sm text-eid-text-secondary">
+                  Ainda sem EID registrado por esporte.
+                </p>
+              ) : (
+                (eids ?? []).map((e, idx) => {
+                  const esp = Array.isArray(e.esportes) ? e.esportes[0] : e.esportes;
+                  const soRank = e.interesse_match === "ranking";
+                  const eid = Number(e.nota_eid ?? 1);
+                  const rank = Number(e.pontos_ranking ?? 0);
+                  const jogos = Number(e.partidas_jogadas ?? 0);
+                  const p1 = Math.max(0.8, eid - 0.35);
+                  const p2 = Math.max(0.8, eid - 0.1 + Number(e.vitorias ?? 0) * 0.02);
+                  const p3 = Math.max(0.8, eid + Number(e.vitorias ?? 0) * 0.03 - Number(e.derrotas ?? 0) * 0.02);
+                  return (
+                    <details key={`${e.esporte_id}-${idx}`} className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card p-3.5">
+                      <summary className="cursor-pointer list-none">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p className="text-sm font-medium text-eid-fg">{esp?.nome ?? "Esporte"}</p>
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${
+                              soRank
+                                ? "border-[color:var(--eid-border-subtle)] bg-eid-surface text-eid-text-secondary"
+                                : "border-eid-primary-500/28 bg-eid-primary-500/[0.07] text-eid-primary-300"
+                            }`}
+                          >
+                            {soRank ? "Só ranking" : "Rank + amistoso"}
+                          </span>
                         </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-eid-fg">{t.nome}</p>
-                        <p className="text-xs text-eid-text-secondary">
-                          {(t.tipo ?? "time").toUpperCase()} · {esp?.nome ?? "Esporte"}
-                        </p>
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ) : null}
+                      </summary>
+                      <ProfileSportsMetricsCard
+                        sportName={esp?.nome ?? "Esporte"}
+                        eidValue={eid}
+                        rankValue={rank}
+                        trendPoints={[p1, p2, p3]}
+                        footer={
+                          <>
+                            {jogos} jogos · {e.modalidade_match ?? "individual"}
+                            {e.posicao_rank != null ? ` · pos. #${e.posicao_rank}` : ""}
+                          </>
+                        }
+                      />
+                    </details>
+                  );
+                })
+              )}
+            </div>
+          </ProfileSection>
 
-        {(duplasCadastro ?? []).length > 0 ? (
-          <section className="mt-8">
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Duplas (cadastro)</h2>
-            <ul className="mt-3 space-y-2">
-              {(duplasCadastro ?? []).map((d) => {
-                const esp = Array.isArray(d.esportes) ? d.esportes[0] : d.esportes;
-                return (
-                  <li key={d.id}>
-                    <Link
+          <ProfileSection title="Minhas Equipes">
+            {(timesLider ?? []).length > 0 || (duplasCadastro ?? []).length > 0 ? (
+              <div className="mt-3 flex snap-x gap-3 overflow-x-auto pb-1">
+                {(timesLider ?? []).map((t) => {
+                  const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
+                  return (
+                    <ProfileTeamCard
+                      key={`t-${t.id}`}
+                      href={`/perfil-time/${t.id}?from=/perfil/${id}`}
+                      imageUrl={t.escudo}
+                      title={t.nome}
+                      subtitle={`${(t.tipo ?? "time").toUpperCase()} · ${esp?.nome ?? "Esporte"}`}
+                    />
+                  );
+                })}
+                {(duplasCadastro ?? []).map((d) => {
+                  const esp = Array.isArray(d.esportes) ? d.esportes[0] : d.esportes;
+                  return (
+                    <ProfileTeamCard
+                      key={`d-${d.id}`}
                       href={`/perfil-dupla/${d.id}?from=/perfil/${id}`}
-                      className="block rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 py-3 text-sm font-medium text-eid-fg hover:border-eid-primary-500/35"
-                    >
-                      Dupla · {esp?.nome ?? "Esporte"} → ver perfil da dupla
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ) : null}
-        {isSelf && !((duplasCadastro ?? []).length > 0 || (timesLider ?? []).length > 0) ? (
-          <section className="mt-8 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4">
-            <p className="text-sm text-eid-text-secondary">Você ainda não participa de nenhuma dupla/time.</p>
-            <Link href="/times?create=1" className="mt-2 inline-flex text-sm font-semibold text-eid-action-400">
-              Criar Nova Dupla/Time
-            </Link>
-          </section>
-        ) : null}
-        {(socioRows ?? []).length > 0 ? (
-          <section className="mt-8">
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Sócio de</h2>
-            <ul className="mt-3 grid gap-2">
-              {(socioRows ?? []).map((s, idx) => {
-                const esp = Array.isArray(s.espacos_genericos) ? s.espacos_genericos[0] : s.espacos_genericos;
-                return (
-                  <li key={`${s.espaco_generico_id}-${idx}`}>
-                    <Link
-                      href={`/local/${esp?.id}?from=/perfil/${id}`}
-                      className="block rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 py-3 text-sm text-eid-fg hover:border-eid-primary-500/35"
-                    >
-                      {esp?.nome_publico ?? "Local"} <span className="text-xs text-eid-text-secondary">· {esp?.localizacao ?? "—"}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ) : null}
+                      title={`Dupla #${d.id}`}
+                      subtitle={esp?.nome ?? "Esporte"}
+                    />
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-sm text-eid-text-secondary">
+                Sem equipes vinculadas no momento.
+              </p>
+            )}
+          </ProfileSection>
 
-        {(frequentesRows ?? []).length > 0 ? (
-          <section className="mt-8">
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Frequência</h2>
-            <ul className="mt-3 grid gap-2">
-              {(frequentesRows ?? []).map((f, idx) => {
-                const esp = Array.isArray(f.espacos_genericos) ? f.espacos_genericos[0] : f.espacos_genericos;
-                return (
-                  <li key={`${esp?.id}-${idx}`}>
-                    <Link
-                      href={`/local/${esp?.id}?from=/perfil/${id}`}
-                      className="flex items-center justify-between rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 py-3 text-sm hover:border-eid-primary-500/35"
-                    >
-                      <span className="text-eid-fg">{esp?.nome_publico ?? "Local"}</span>
-                      <span className="text-xs font-semibold text-eid-primary-300">{f.visitas ?? 0} visitas</span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ) : null}
+          {(socioRows ?? []).length > 0 || (frequentesRows ?? []).length > 0 ? (
+            <ProfileSection title="Sócio e Frequência">
+              {(socioRows ?? []).length > 0 ? (
+                <div className="mt-3">
+                  <p className="text-[11px] font-semibold text-eid-text-secondary">Sócio de</p>
+                  <ul className="mt-2 grid gap-2">
+                    {(socioRows ?? []).map((s, idx) => {
+                      const esp = Array.isArray(s.espacos_genericos) ? s.espacos_genericos[0] : s.espacos_genericos;
+                      return (
+                        <li key={`${s.espaco_generico_id}-${idx}`}>
+                          <Link href={`/local/${esp?.id}?from=/perfil/${id}`} className="block rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 py-3 text-sm text-eid-fg hover:border-eid-primary-500/35">
+                            {esp?.nome_publico ?? "Local"} <span className="text-xs text-eid-text-secondary">· {esp?.localizacao ?? "—"}</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : null}
+              {(frequentesRows ?? []).length > 0 ? (
+                <div className="mt-4">
+                  <p className="text-[11px] font-semibold text-eid-text-secondary">Onde jogo</p>
+                  <ul className="mt-2 grid gap-2">
+                    {(frequentesRows ?? []).map((f, idx) => {
+                      const esp = Array.isArray(f.espacos_genericos) ? f.espacos_genericos[0] : f.espacos_genericos;
+                      return (
+                        <li key={`${esp?.id}-${idx}`}>
+                          <Link
+                            href={`/local/${esp?.id}?from=/perfil/${id}`}
+                            className="flex items-center justify-between rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 py-3 text-sm hover:border-eid-primary-500/35"
+                          >
+                            <span className="text-eid-fg">{esp?.nome_publico ?? "Local"}</span>
+                            <span className="text-xs font-semibold text-eid-primary-300">{f.visitas ?? 0} visitas</span>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : null}
+            </ProfileSection>
+          ) : null}
+
+          <ProfileSection title="Histórico e Conquistas">
+            <ProfileCompactTimeline
+              title="Timeline (V/D)"
+              emptyText="Sem jogos recentes."
+              items={timeline.map((t) => ({
+                id: String(t.id),
+                label: `${t.resultado} · ${t.data ? new Date(t.data).toLocaleDateString("pt-BR") : "—"}`,
+                tone: t.resultado === "V" ? "positive" : t.resultado === "D" ? "negative" : "neutral",
+              }))}
+            />
+            <ProfileAchievementsShelf achievements={conquistas} emptyText="Conquistas aparecerão conforme evolução." />
+          </ProfileSection>
+        </div>
       </main>
     </>
   );
