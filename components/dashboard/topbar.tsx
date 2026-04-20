@@ -85,7 +85,7 @@ export function DashboardTopbar({ persistent = false }: Props) {
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
         <div className="flex items-center justify-between gap-2 py-2 sm:py-2.5">
           <Link href="/dashboard" className="min-w-0 shrink transition hover:opacity-90">
-            <LogoWordmark className="h-[1.85rem] max-h-10 max-w-[min(58vw,280px)] object-left sm:h-10 sm:max-w-[min(62vw,320px)]" />
+            <LogoWordmark className="h-9 max-w-[min(52vw,240px)] object-left sm:h-11 sm:max-w-[min(58vw,300px)]" />
           </Link>
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">

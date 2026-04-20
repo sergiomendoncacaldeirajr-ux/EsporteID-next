@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { User } from "@supabase/supabase-js";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Barlow, Barlow_Condensed, Barlow_Semi_Condensed } from "next/font/google";
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { InteractionFeedback } from "@/components/ui/interaction-feedback";
@@ -12,14 +12,28 @@ import { EID_LOGO_ICON_E_SRC } from "@/lib/branding";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/* Barlow — família atlética, muito usada em apps esportivos premium */
+const barlow = Barlow({
+  variable: "--font-barlow",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+/* Barlow Condensed — para stats, labels, badges compactos */
+const barlowCondensed = Barlow_Condensed({
+  variable: "--font-barlow-condensed",
   subsets: ["latin"],
+  weight: ["400", "600", "700", "800", "900"],
+  display: "swap",
+});
+
+/* Barlow Semi Condensed — transição entre os dois */
+const barlowSemiCondensed = Barlow_Semi_Condensed({
+  variable: "--font-barlow-semi-condensed",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -59,7 +73,7 @@ export default async function RootLayout({
     <html
       lang="pt-BR"
       data-eid-theme="dark"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${barlow.variable} ${barlowCondensed.variable} ${barlowSemiCondensed.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-eid-bg text-eid-fg">
         <EidThemeHydration />

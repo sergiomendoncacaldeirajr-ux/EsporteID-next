@@ -21,7 +21,7 @@ export function ProfileSection({
 
 export function ProfilePrimaryCta({
   href,
-  label = "Solicitar Match",
+  label = "⚡ Solicitar Match",
   className,
 }: {
   href: string;
@@ -31,7 +31,7 @@ export function ProfilePrimaryCta({
   return (
     <Link
       href={href}
-      className={`eid-btn-match-cta inline-flex min-h-[48px] w-full items-center justify-center rounded-2xl px-4 text-sm font-semibold ${className ?? ""}`}
+      className={`eid-btn-match-cta eid-match-cta-pulse eid-shimmer-btn relative overflow-hidden inline-flex min-h-[44px] w-full items-center justify-center rounded-xl px-4 text-[13px] font-black uppercase tracking-[0.1em] ${className ?? ""}`}
     >
       {label}
     </Link>
@@ -54,12 +54,12 @@ export function ProfileIdentityHeader({
   extra?: ReactNode;
 }) {
   return (
-    <div className={`mt-4 text-center ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_LG}`}>
+    <div className={`mt-3 text-center ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_LG}`}>
       {avatar}
-      {badge ? <div className="mt-4">{badge}</div> : null}
-      <h1 className="mt-2 text-xl font-bold tracking-tight text-eid-fg sm:text-2xl">{name}</h1>
-      {username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{username}</p> : null}
-      {location ? <p className="mt-1 text-sm text-eid-text-secondary">{location}</p> : null}
+      {badge ? <div className="mt-2">{badge}</div> : null}
+      <h1 className="mt-1.5 text-base font-black tracking-tight text-eid-fg sm:text-lg">{name}</h1>
+      {username ? <p className="mt-0.5 text-[11px] font-semibold text-eid-primary-400">@{username}</p> : null}
+      {location ? <p className="mt-0.5 text-[11px] text-eid-text-secondary">{location}</p> : null}
       {extra}
     </div>
   );

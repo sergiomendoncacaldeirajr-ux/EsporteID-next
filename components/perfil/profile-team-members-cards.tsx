@@ -24,9 +24,15 @@ export function ProfileTeamCard({
   return (
     <Link
       href={href}
-      className={`min-w-[210px] snap-start rounded-2xl hover:border-eid-primary-500/35 ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}
+      className={`min-w-[160px] snap-start transition hover:border-eid-primary-500/35 hover:shadow-[0_2px_16px_rgba(37,99,235,0.15)] ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}
     >
-      {imageUrl ? <img src={imageUrl} alt="" className={PROFILE_AVATAR_MD} /> : null}
+      {imageUrl ? (
+        <img src={imageUrl} alt="" className={PROFILE_AVATAR_MD} />
+      ) : (
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-eid-primary-900/60 text-[8px] font-black tracking-widest text-eid-primary-300">
+          EID
+        </div>
+      )}
       <p className={`mt-2 truncate ${PROFILE_CARD_TITLE}`}>{title}</p>
       <p className={PROFILE_CARD_SUBTITLE}>{subtitle}</p>
     </Link>

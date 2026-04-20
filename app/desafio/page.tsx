@@ -27,6 +27,53 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   const esporteId = Number(sp.esporte ?? "");
 
   if (!Number.isFinite(esporteId) || esporteId < 1) {
+    if (modalidade === "individual" && UUID_RE.test(alvoKey)) {
+      const { data: perfilAlvo } = await supabase.from("profiles").select("id, nome").eq("id", alvoKey).maybeSingle();
+      const { data: esportesAlvo } = await supabase
+        .from("usuario_eid")
+        .select("esporte_id, esportes(nome)")
+        .eq("usuario_id", alvoKey)
+        .order("pontos_ranking", { ascending: false });
+
+      const opcoes = (esportesAlvo ?? [])
+        .map((e) => ({
+          esporteId: Number(e.esporte_id),
+          esporteNome: (Array.isArray(e.esportes) ? e.esportes[0] : e.esportes)?.nome ?? "Esporte",
+        }))
+        .filter((e) => Number.isFinite(e.esporteId) && e.esporteId > 0);
+
+      if (perfilAlvo && perfilAlvo.id !== user.id && opcoes.length > 0) {
+        return (
+          <>
+            <DashboardTopbar />
+            <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+              <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+              <p className="mt-2 text-sm text-eid-text-secondary">
+                Escolha o esporte para desafiar <span className="text-eid-fg">{perfilAlvo.nome ?? "Atleta"}</span>.
+              </p>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {opcoes.map((op) => (
+                  <Link
+                    key={op.esporteId}
+                    href={`/desafio?id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${op.esporteId}`}
+                    className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-action-500/35 bg-eid-action-500/10 px-4 text-xs font-semibold text-eid-action-400"
+                  >
+                    {op.esporteNome}
+                  </Link>
+                ))}
+              </div>
+              <Link
+                href={`/perfil/${encodeURIComponent(alvoKey)}?from=/match`}
+                className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg"
+              >
+                Voltar ao perfil
+              </Link>
+            </main>
+          </>
+        );
+      }
+    }
+
     return (
       <>
         <DashboardTopbar />
