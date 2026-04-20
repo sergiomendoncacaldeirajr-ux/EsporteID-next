@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ComunidadeNotificacoesSection, type NotifRow } from "@/components/comunidade/comunidade-notificacoes-section";
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
+import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { createClient } from "@/lib/supabase/server";
 
@@ -69,6 +70,46 @@ export default async function ComunidadePage() {
   }));
 
   const nPedidos = pedidosItems.length;
+
+  const { data: sugestoesRaw } = await supabase
+    .from("match_sugestoes")
+    .select("id, sugeridor_id, sugeridor_time_id, alvo_time_id, esporte_id, modalidade, mensagem")
+    .eq("alvo_dono_id", user.id)
+    .eq("status", "pendente")
+    .order("id", { ascending: false })
+    .limit(25);
+
+  const sugSugIds = [...new Set((sugestoesRaw ?? []).map((s) => s.sugeridor_id).filter(Boolean))] as string[];
+  const sugTimeIds = [
+    ...new Set(
+      (sugestoesRaw ?? []).flatMap((s) => [s.sugeridor_time_id, s.alvo_time_id].filter((x): x is number => x != null))
+    ),
+  ];
+  const { data: sugPerfis } = sugSugIds.length
+    ? await supabase.from("profiles").select("id, nome").in("id", sugSugIds)
+    : { data: [] };
+  const sugPerfilMap = new Map((sugPerfis ?? []).map((p) => [p.id, p.nome]));
+  const { data: sugTimes } = sugTimeIds.length
+    ? await supabase.from("times").select("id, nome").in("id", sugTimeIds)
+    : { data: [] };
+  const sugTimeMap = new Map((sugTimes ?? []).map((t) => [t.id, t.nome]));
+  const sugEspIds = [...new Set((sugestoesRaw ?? []).map((s) => s.esporte_id).filter(Boolean))] as number[];
+  const { data: sugEsportes } = sugEspIds.length
+    ? await supabase.from("esportes").select("id, nome").in("id", sugEspIds)
+    : { data: [] };
+  const sugEspMap = new Map((sugEsportes ?? []).map((e) => [e.id, e.nome]));
+
+  const sugestoesItems: SugestaoMatchItem[] = (sugestoesRaw ?? []).map((s) => ({
+    id: Number(s.id),
+    sugeridorNome: sugPerfilMap.get(s.sugeridor_id) ?? "Atleta",
+    sugeridorId: String(s.sugeridor_id),
+    meuTimeNome: sugTimeMap.get(s.sugeridor_time_id) ?? "Formação",
+    alvoTimeNome: sugTimeMap.get(s.alvo_time_id) ?? "Formação",
+    esporte: (s.esporte_id ? sugEspMap.get(s.esporte_id) : null) ?? "Esporte",
+    modalidade: s.modalidade ?? "time",
+    mensagem: s.mensagem ?? null,
+  }));
+  const nSugestoes = sugestoesItems.length;
   const { data: convites } = await supabase
     .from("time_convites")
     .select("id, time_id, convidado_por_usuario_id, times!inner(id, nome, tipo, esportes(nome))")
@@ -112,6 +153,9 @@ export default async function ComunidadePage() {
             <span className="rounded-md border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-action-400 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
               {nPedidos} pedido(s) de match
             </span>
+            <span className="rounded-md border border-amber-500/35 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-200 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
+              {nSugestoes} sugestão(ões) de membro
+            </span>
             <span className="rounded-md border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-primary-300 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
               {conviteItems.length} convite(s) de equipe
             </span>
@@ -125,6 +169,15 @@ export default async function ComunidadePage() {
             <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Convites de equipe</h2>
             <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">Aceite para entrar na dupla/time.</p>
             <ComunidadeConvitesTime items={conviteItems} />
+          </section>
+
+          <section>
+            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-amber-200/90">Sugestões de match (líder)</h2>
+            <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
+              Um atleta da equipe sugeriu um confronto; ao aprovar, o match é confirmado e todos os membros das duas
+              formações são avisados.
+            </p>
+            <ComunidadeSugestoesMatch items={sugestoesItems} />
           </section>
 
           <section>

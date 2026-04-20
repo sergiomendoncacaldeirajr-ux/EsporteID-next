@@ -7,6 +7,7 @@ import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-l
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
 import { ProfileMemberCard } from "@/components/perfil/profile-team-members-cards";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { SugerirMatchLiderForm } from "@/components/perfil/sugerir-match-lider-form";
 import { PerfilTimeEditForm } from "@/components/perfil/perfil-time-edit-form";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
@@ -133,6 +134,32 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   const canLeaveTeam = isMember && t.criador_id !== user.id;
   const isLeader = t.criador_id === user.id;
 
+  const { data: membroOutrosTimes } = await supabase
+    .from("membros_time")
+    .select("time_id, times!inner(id, nome, criador_id, esporte_id, tipo)")
+    .eq("usuario_id", user.id)
+    .eq("status", "ativo");
+
+  const tipoAlvoNorm = (t.tipo ?? "time").trim().toLowerCase();
+  const espAlvo = t.esporte_id != null ? Number(t.esporte_id) : null;
+
+  const formacoesMembroNaoLider: { id: number; nome: string }[] = [];
+  for (const row of membroOutrosTimes ?? []) {
+    const tm = Array.isArray(row.times) ? row.times[0] : row.times;
+    if (!tm || tm.criador_id === user.id) continue;
+    if (espAlvo == null || Number(tm.esporte_id) !== espAlvo) continue;
+    if (String(tm.tipo ?? "").trim().toLowerCase() !== tipoAlvoNorm) continue;
+    if (Number(tm.id) === id) continue;
+    formacoesMembroNaoLider.push({ id: Number(tm.id), nome: tm.nome ?? "Formação" });
+  }
+
+  const canSugerirMatch =
+    !isMember &&
+    t.criador_id !== user.id &&
+    formacoesMembroNaoLider.length > 0 &&
+    espAlvo != null &&
+    !canChallenge;
+
   const podeVerWhatsappFormacao =
     !isLeader &&
     (await podeExibirWhatsappPerfilFormacao(supabase, user.id, t.criador_id, id, meuTimeId));
@@ -183,6 +210,10 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           <h1 className="mt-2 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
           {t.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{t.username}</p> : null}
           <p className="mt-2 text-sm text-eid-text-secondary">{t.localizacao ?? "Localização não informada"}</p>
+          <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary">
+            Cidade da formação: definida na criação e <strong className="text-eid-fg">não editável</strong>. Para mudar de
+            cidade, crie uma <strong className="text-eid-fg">nova equipe/dupla</strong> em Times.
+          </p>
           {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{t.bio}</p> : null}
           <div className="mt-2 flex flex-wrap justify-center gap-1.5">
             <span className="rounded-full border border-eid-action-500/30 px-2 py-0.5 text-[10px] font-semibold text-eid-action-400">
@@ -246,15 +277,23 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           ) : null}
 
           {isMember || isLeader ? (
-            <div className={`${isLeader ? "mt-2" : "mt-3"} w-full text-left`}>
+            <div className={`grid gap-2 ${isLeader ? "mt-2" : "mt-3"} w-full text-left`}>
+              <Link
+                href="/onboarding?editar=1&step=perfil"
+                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
+              >
+                Editar perfil pessoal
+              </Link>
               <Link
                 href="/onboarding?editar=1&step=esportes"
                 className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
               >
-                Gerenciar meu cadastro (EID)
+                Esportes e ranking (EID)
               </Link>
-              <p className="mt-1 text-[10px] text-eid-text-secondary">
-                Esportes do ranking, tempo de prática e ficha — seu perfil de atleta, não o da equipe.
+              <p className="text-[10px] leading-relaxed text-eid-text-secondary">
+                Seu nome, cidade e dados de atleta são pessoais. A <strong className="text-eid-fg">cidade da equipe</strong>{" "}
+                (formação) aparece acima e <strong className="text-eid-fg">não pode ser alterada</strong>; para mudar de
+                cidade no radar, o líder cria uma <strong className="text-eid-fg">nova formação</strong>.
               </p>
             </div>
           ) : null}
@@ -304,9 +343,20 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
               <p className="text-xs text-eid-text-secondary">Esta é a sua formação.</p>
             ) : (
               <p className="text-xs text-eid-text-secondary">
-                Para desafiar, seja líder de uma {modalidade} neste mesmo esporte no radar.
+                Para desafiar direto, você precisa ser líder de uma {modalidade} neste esporte — ou use a sugestão abaixo
+                se você já faz parte de uma formação.
               </p>
             )}
+            {!isLeader && canSugerirMatch ? (
+              <div className="mt-3">
+                <SugerirMatchLiderForm
+                  alvoTimeId={id}
+                  alvoNome={t.nome ?? "Formação"}
+                  modalidadeLabel={modalidade === "dupla" ? "dupla" : "equipe"}
+                  formacoesMinhas={formacoesMembroNaoLider}
+                />
+              </div>
+            ) : null}
             <div className="mt-2 flex flex-wrap gap-2">
               {canLeaveTeam ? (
                 <form action={sairEquipeAction}>

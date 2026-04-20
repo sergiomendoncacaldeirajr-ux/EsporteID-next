@@ -389,12 +389,14 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 >
                   Nova Equipe
                 </Link>
-                <Link
-                  href="/onboarding?editar=1&step=perfil"
-                  className="inline-flex min-h-[36px] items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
-                >
-                  Editar Perfil
-                </Link>
+                {isSelf ? (
+                  <Link
+                    href="/onboarding?editar=1&step=perfil"
+                    className="inline-flex min-h-[36px] items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+                  >
+                    Editar Perfil
+                  </Link>
+                ) : null}
               </div>
             )}
           </section>

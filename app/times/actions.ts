@@ -106,7 +106,6 @@ export async function atualizarMinhaEquipe(
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
   const username = usernameRaw ? usernameRaw.replace(/[^a-z0-9_]/g, "") : null;
   const bio = String(formData.get("bio") ?? "").trim();
-  const localizacao = String(formData.get("localizacao") ?? "").trim();
   const escudoRaw = String(formData.get("escudo") ?? "").trim();
   const escudo = escudoRaw || null;
   const nivel_procurado = String(formData.get("nivel_procurado") ?? "").trim() || null;
@@ -122,7 +121,6 @@ export async function atualizarMinhaEquipe(
       nome,
       username,
       bio: bio || null,
-      localizacao: localizacao || null,
       escudo,
       nivel_procurado,
       interesse_rank_match: checkboxOn(formData, "interesse_rank_match"),

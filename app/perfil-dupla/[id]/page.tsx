@@ -7,6 +7,7 @@ import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-met
 import { ProfileMemberCard } from "@/components/perfil/profile-team-members-cards";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { PerfilDuplaEditForm } from "@/components/perfil/perfil-dupla-edit-form";
+import { SugerirMatchLiderForm } from "@/components/perfil/sugerir-match-lider-form";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
   formacaoTemMatchAceitoEntre,
@@ -62,7 +63,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   );
 
   const { data: timeResolvido } = timeResolvidoId
-    ? await supabase.from("times").select("id, criador_id").eq("id", timeResolvidoId).maybeSingle()
+    ? await supabase.from("times").select("id, criador_id, nome").eq("id", timeResolvidoId).maybeSingle()
     : { data: null };
 
   const { data: liderDupla } = timeResolvido?.criador_id
@@ -73,6 +74,23 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   const donoDuplaId = d.criador_id ?? d.player1_id;
   const isDonoDupla = user.id === donoDuplaId;
 
+  let formacoesMembroNaoLiderDupla: { id: number; nome: string }[] = [];
+  if (!isMembroDupla && timeResolvidoId && d.esporte_id) {
+    const { data: membroRowsDupla } = await supabase
+      .from("membros_time")
+      .select("time_id, times!inner(id, nome, criador_id, esporte_id, tipo)")
+      .eq("usuario_id", user.id)
+      .eq("status", "ativo");
+    const espD = Number(d.esporte_id);
+    for (const row of membroRowsDupla ?? []) {
+      const tm = Array.isArray(row.times) ? row.times[0] : row.times;
+      if (!tm || tm.criador_id === user.id) continue;
+      if (Number(tm.esporte_id) !== espD) continue;
+      if (String(tm.tipo ?? "").trim().toLowerCase() !== "dupla") continue;
+      if (Number(tm.id) === timeResolvidoId) continue;
+      formacoesMembroNaoLiderDupla.push({ id: Number(tm.id), nome: tm.nome ?? "Dupla" });
+    }
+  }
   const { data: minhaFormacaoDupla } = await supabase
     .from("times")
     .select("id")
@@ -88,6 +106,12 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
     timeResolvidoId != null &&
     timeResolvido?.criador_id != null &&
     timeResolvido.criador_id !== user.id;
+
+  const canSugerirMatchDupla =
+    !isMembroDupla &&
+    formacoesMembroNaoLiderDupla.length > 0 &&
+    timeResolvidoId != null &&
+    !canChallengeDupla;
 
   let linkWpp: string | null = null;
   if (!isMembroDupla && timeResolvidoId && timeResolvido?.criador_id && liderDupla) {
@@ -178,17 +202,32 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
 
         {isMembroDupla ? (
           <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-3">
-            {isDonoDupla ? <PerfilDuplaEditForm duplaId={id} username={d.username ?? null} bio={d.bio ?? null} /> : null}
-            <Link
-              href="/onboarding?editar=1&step=esportes"
-              className={`flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16 ${isDonoDupla ? "mt-3" : ""}`}
-            >
-              Meu cadastro de atleta (EID)
-            </Link>
-            <p className="mt-1.5 text-[10px] text-eid-text-secondary">
+            {isDonoDupla ? (
+              <PerfilDuplaEditForm
+                duplaId={id}
+                username={d.username ?? null}
+                bio={d.bio ?? null}
+                timeFormacaoRadarId={timeResolvidoId}
+              />
+            ) : null}
+            <div className={`grid gap-2 ${isDonoDupla ? "mt-3" : ""}`}>
+              <Link
+                href="/onboarding?editar=1&step=perfil"
+                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
+              >
+                Editar perfil pessoal
+              </Link>
+              <Link
+                href="/onboarding?editar=1&step=esportes"
+                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+              >
+                Esportes e ranking (EID)
+              </Link>
+            </div>
+            <p className="mt-1.5 text-[10px] leading-relaxed text-eid-text-secondary">
               {isDonoDupla
-                ? "O bloco acima altera @username e bio da dupla registrada. Este link altera apenas o seu perfil de atleta (esportes, ranking, ficha)."
-                : "Só o dono do registro da dupla pode editar @ e bio da dupla. Use este atalho para o seu cadastro pessoal de atleta."}
+                ? "Acima: @ e bio da dupla registrada (só o dono). “Editar perfil pessoal”: nome, sua cidade, bio, foto. “EID”: esportes, modalidade e tempo de prática. A cidade da dupla no radar (formação) não é editável — só criando formação nova."
+                : "Só o dono edita @ e bio da dupla registrada. Use “Editar perfil pessoal” para nome e sua cidade; “EID” para esportes e ranking."}
             </p>
           </div>
         ) : null}
@@ -227,6 +266,14 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     label="Duplas no radar"
                   />
                 )}
+                {canSugerirMatchDupla && timeResolvidoId ? (
+                  <SugerirMatchLiderForm
+                    alvoTimeId={timeResolvidoId}
+                    alvoNome={timeResolvido?.nome ?? "Dupla no radar"}
+                    modalidadeLabel="dupla"
+                    formacoesMinhas={formacoesMembroNaoLiderDupla}
+                  />
+                ) : null}
               </div>
             ) : (
               <p className="text-xs text-eid-text-secondary">Você faz parte desta dupla registrada.</p>

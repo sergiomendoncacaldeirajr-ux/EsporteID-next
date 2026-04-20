@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { atualizarMinhaEquipe, type TeamActionState } from "@/app/times/actions";
 
@@ -37,8 +38,21 @@ export function PerfilTimeEditForm({
   return (
     <details className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-3 text-left">
       <summary className="cursor-pointer text-sm font-semibold text-eid-fg">Editar dados da formação</summary>
+      <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary">
+        Nome, @username, bio, escudo e preferências podem ser alterados. A{" "}
+        <strong className="text-eid-fg">cidade da formação não pode ser mudada</strong> depois da criação (ranking e radar
+        dependem disso). Se o time mudou de cidade, é preciso{" "}
+        <Link href="/times" className="font-semibold text-eid-primary-300 underline">
+          criar uma nova formação
+        </Link>{" "}
+        e reorganizar o elenco.
+      </p>
       <form action={formAction} className="mt-3 grid gap-2 sm:grid-cols-2">
         <input type="hidden" name="time_id" value={timeId} />
+        <div className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/5 px-3 py-2 sm:col-span-2">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-eid-primary-400">Cidade da formação (fixa)</p>
+          <p className="mt-1 text-sm text-eid-fg">{localizacao?.trim() ? localizacao : "—"}</p>
+        </div>
         <input
           name="nome"
           required
@@ -50,13 +64,7 @@ export function PerfilTimeEditForm({
           name="username"
           defaultValue={username ?? ""}
           placeholder="@username (opcional)"
-          className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-        />
-        <input
-          name="localizacao"
-          defaultValue={localizacao ?? ""}
-          placeholder="Cidade / Estado"
-          className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
+          className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg sm:col-span-2"
         />
         <input
           name="escudo"

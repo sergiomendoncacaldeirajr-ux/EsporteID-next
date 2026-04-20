@@ -204,6 +204,9 @@ export function OnboardingWizard({
   }, [selectedEsportesModalidade]);
 
   useEffect(() => {
+    // Em edição (?editar=1&step=…), a URL + servidor definem a etapa e os dados; o rascunho
+    // local costuma apontar para "esportes"/"extras" e impedia abrir "perfil" ao clicar em Editar Perfil.
+    if (modoEdicao) return;
     try {
       const raw = window.localStorage.getItem(draftKey);
       if (!raw) return;
@@ -302,7 +305,7 @@ export function OnboardingWizard({
     } catch {
       window.localStorage.removeItem(draftKey);
     }
-  }, [draftKey]);
+  }, [draftKey, modoEdicao]);
 
   useEffect(() => {
     const payload = {
@@ -1557,7 +1560,15 @@ export function OnboardingWizard({
                 disabled={pending || !perfilValid}
                 className="eid-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50"
               >
-                {pending ? (hasFotoSelecionada ? "Enviando foto e finalizando…" : "Finalizando…") : "Finalizar e entrar no painel"}
+                {pending
+                  ? hasFotoSelecionada
+                    ? "Enviando foto…"
+                    : modoEdicao
+                      ? "Salvando…"
+                      : "Finalizando…"
+                  : modoEdicao
+                    ? "Salvar dados do perfil"
+                    : "Finalizar e entrar no painel"}
               </button>
             </form>
           ) : null}

@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 
 export type ResponderMatchState = { ok: true } | { ok: false; message: string };
 export type ResponderConviteState = { ok: true } | { ok: false; message: string };
+export type SugestaoMatchState = { ok: true; message?: string } | { ok: false; message: string };
+export type ResponderSugestaoMatchState = { ok: true } | { ok: false; message: string };
 
 export async function responderPedidoMatch(
   _prev: ResponderMatchState | undefined,
@@ -40,6 +42,72 @@ export async function responderPedidoMatch(
   revalidatePath("/agenda");
   revalidatePath("/match");
   revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+export async function sugerirMatchParaLider(
+  _prev: SugestaoMatchState | undefined,
+  formData: FormData
+): Promise<SugestaoMatchState> {
+  const alvo = Number(formData.get("alvo_time_id"));
+  const sug = Number(formData.get("sugeridor_time_id"));
+  const msg = String(formData.get("mensagem") ?? "").trim();
+
+  if (!Number.isInteger(alvo) || alvo < 1 || !Number.isInteger(sug) || sug < 1) {
+    return { ok: false, message: "Dados inválidos." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada." };
+
+  const { error } = await supabase.rpc("sugerir_match_para_lider", {
+    p_alvo_time_id: alvo,
+    p_sugeridor_time_id: sug,
+    p_mensagem: msg.length > 0 ? msg.slice(0, 500) : null,
+  });
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/comunidade");
+  revalidatePath(`/perfil-time/${alvo}`);
+  revalidatePath(`/perfil-time/${sug}`);
+  return { ok: true, message: "Sugestão enviada ao líder. Ele pode aprovar em Social." };
+}
+
+export async function responderSugestaoMatch(
+  _prev: ResponderSugestaoMatchState | undefined,
+  formData: FormData
+): Promise<ResponderSugestaoMatchState> {
+  const rawId = formData.get("sugestao_id");
+  const aceitarRaw = formData.get("aceitar");
+  const sugestaoId = Number(rawId);
+  const aceitar = aceitarRaw === "true" || aceitarRaw === "1";
+
+  if (!Number.isFinite(sugestaoId) || sugestaoId < 1) {
+    return { ok: false, message: "Sugestão inválida." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada." };
+
+  const { error } = await supabase.rpc("responder_sugestao_match", {
+    p_sugestao_id: sugestaoId,
+    p_aceitar: aceitar,
+  });
+
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/comunidade");
+  revalidatePath("/agenda");
+  revalidatePath("/match");
+  revalidatePath("/dashboard");
+  revalidatePath(`/perfil/${user.id}`);
   return { ok: true };
 }
 
