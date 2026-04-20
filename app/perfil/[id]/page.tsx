@@ -419,7 +419,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                   return (
                     <Link
                       key={`${e.esporte_id}-${idx}`}
-                      href={`/perfil/${encodeURIComponent(id)}/eid/${e.esporte_id}`}
+                      href={`/perfil/${encodeURIComponent(id)}/eid/${e.esporte_id}?from=${encodeURIComponent(`/perfil/${id}`)}`}
                       className="flex overflow-hidden rounded-xl border-0 transition hover:scale-[1.03] active:scale-[0.97]"
                       style={{
                         boxShadow: `0 2px 12px ${eidGlow}, 0 0 0 1.5px ${eidHex}60`,

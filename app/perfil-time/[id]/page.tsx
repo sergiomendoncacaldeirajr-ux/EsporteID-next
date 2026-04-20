@@ -207,6 +207,15 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
             </div>
           </div>
 
+          {t.esporte_id ? (
+            <Link
+              href={`/perfil-time/${id}/eid/${t.esporte_id}?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
+              className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
+            >
+              Estatísticas completas · {esp?.nome ?? "este esporte"}
+            </Link>
+          ) : null}
+
           {criador ? (
             <p className="mt-4 text-xs text-eid-text-secondary">
               Líder:{" "}

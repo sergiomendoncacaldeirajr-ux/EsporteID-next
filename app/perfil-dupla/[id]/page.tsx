@@ -223,6 +223,14 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
               trendLabel="Evolução (proxy)"
               trendPoints={[mediaEid ?? 1, (mediaEid ?? 1) + 0.1, (mediaEid ?? 1) + 0.2]}
             />
+            {d.esporte_id ? (
+              <Link
+                href={`/perfil-dupla/${id}/eid/${d.esporte_id}?from=${encodeURIComponent(`/perfil-dupla/${id}`)}`}
+                className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
+              >
+                Estatísticas da dupla · {esp?.nome ?? "este esporte"}
+              </Link>
+            ) : null}
           </ProfileSection>
 
           <ProfileSection title="Minhas Equipes">
