@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { LogoFull } from "@/components/brand/logo-full";
 import { createClient } from "@/lib/supabase/client";
 import { getSignupEmailRedirectTo } from "@/lib/auth/email-redirects";
-import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
+import { entrarComSenha, type LoginActionState } from "@/app/login/actions";
+
+const loginInitial: LoginActionState = { error: null, pendingConfirmationEmail: null };
 
 function IconEnvelope({ className }: { className?: string }) {
   return (
@@ -37,13 +39,20 @@ export function LoginForm() {
   const registered = searchParams.get("cadastro") === "ok";
   const codeConfirmed = searchParams.get("codigo") === "ok";
 
+  const [state, formAction, isPending] = useActionState(entrarComSenha, loginInitial);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+
+  const displayError = state.error ?? localError;
+  const pendingConfirmationEmail = state.pendingConfirmationEmail;
+
+  useEffect(() => {
+    if (isPending) setLocalError(null);
+  }, [isPending]);
 
   const focusWithinBg = "focus-within:bg-eid-card";
 
@@ -55,126 +64,12 @@ export function LoginForm() {
     return { background: "var(--eid-field-bg)" };
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setInfo(null);
-    setPendingConfirmationEmail(null);
-
-    const emailNorm = email.trim().toLowerCase();
-    if (!emailNorm) {
-      setError("Informe seu e-mail.");
-      return;
-    }
-    if (!password) {
-      setError("Informe sua senha.");
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
-      setError("Digite um e-mail válido.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let supabase;
-      try {
-        supabase = createClient();
-      } catch (cfgErr) {
-        setError(cfgErr instanceof Error ? cfgErr.message : "Erro de configuração do aplicativo.");
-        return;
-      }
-
-      const TIMEOUT_MS = 35_000;
-      const signInResult = await Promise.race([
-        supabase.auth.signInWithPassword({
-          email: emailNorm,
-          password,
-        }),
-        new Promise<{ data: null; error: { message: string } }>((resolve) =>
-          setTimeout(
-            () =>
-              resolve({
-                data: null,
-                error: { message: "__LOGIN_TIMEOUT__" },
-              }),
-            TIMEOUT_MS
-          )
-        ),
-      ]);
-
-      const err = signInResult.error;
-      if (err?.message === "__LOGIN_TIMEOUT__") {
-        setError("A conexão demorou demais. Verifique a internet e tente de novo.");
-        return;
-      }
-      if (err) {
-        const msg = (err.message ?? "").toLowerCase();
-        if (msg.includes("email not confirmed")) {
-          setPendingConfirmationEmail(emailNorm);
-          setError("Seu e-mail ainda não foi confirmado.");
-          return;
-        }
-        setError(
-          err.message === "Invalid login credentials"
-            ? "E-mail ou senha incorretos."
-            : err.message
-        );
-        return;
-      }
-
-      const session = signInResult.data?.session;
-      if (!session?.user) {
-        setError(
-          "A sessão não foi criada no navegador. Tente limpar os dados do site para este domínio e entrar de novo."
-        );
-        return;
-      }
-
-      const u = session.user;
-      const PROFILE_MS = 12_000;
-      const profileRace = await Promise.race([
-        supabase
-          .from("profiles")
-          .select("termos_aceitos_em, perfil_completo")
-          .eq("id", u.id)
-          .maybeSingle()
-          .then((r) => ({ kind: "ok" as const, r })),
-        new Promise<{ kind: "timeout" }>((resolve) =>
-          setTimeout(() => resolve({ kind: "timeout" }), PROFILE_MS)
-        ),
-      ]);
-
-      let dest: string;
-      if (profileRace.kind === "timeout") {
-        dest = "/dashboard";
-      } else {
-        const profile = profileRace.r.data;
-        dest = getPostAuthRedirect(
-          {
-            termosAceitos: !!profile?.termos_aceitos_em,
-            perfilCompleto: !!profile?.perfil_completo,
-          },
-          next
-        );
-      }
-
-      window.location.assign(dest);
-    } catch (unknown) {
-      const msg =
-        unknown instanceof Error ? unknown.message : "Não foi possível entrar. Tente novamente.";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   async function handleResendConfirmation() {
-    setError(null);
+    setLocalError(null);
     setInfo(null);
     const emailNorm = (pendingConfirmationEmail ?? email).trim().toLowerCase();
     if (!emailNorm) {
-      setError("Informe seu e-mail para reenviar o código.");
+      setLocalError("Informe seu e-mail para reenviar o código.");
       return;
     }
 
@@ -195,13 +90,13 @@ export function LoginForm() {
       });
 
       if (resendErr) {
-        setError(resendErr.message);
+        setLocalError(resendErr.message);
         return;
       }
       setInfo("Código de confirmação reenviado. Verifique seu e-mail.");
       router.push(`/verificar-codigo?email=${encodeURIComponent(emailNorm)}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Não foi possível reenviar. Tente de novo.");
+      setLocalError(e instanceof Error ? e.message : "Não foi possível reenviar. Tente de novo.");
     } finally {
       setResending(false);
     }
@@ -228,7 +123,8 @@ export function LoginForm() {
             Use o mesmo e-mail e senha do seu cadastro.
           </p>
 
-          <form noValidate onSubmit={handleSubmit} className="m-0 flex flex-col gap-0">
+          <form action={formAction} noValidate className="m-0 flex flex-col gap-0">
+            <input type="hidden" name="next" value={next} />
             {registered && (
               <p
                 className="mb-[15px] rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-2.5 text-center text-[12px] text-eid-primary-300"
@@ -243,12 +139,12 @@ export function LoginForm() {
                 E-mail confirmado com sucesso. Faça login para continuar.
               </p>
             )}
-            {error && (
+            {displayError && (
               <p
                 className="mb-[15px] rounded-xl border border-[rgba(255,107,107,0.2)] bg-[rgba(255,107,107,0.1)] px-2.5 py-2.5 text-center text-[12px] text-[#ff6b6b]"
                 role="alert"
               >
-                {error}
+                {displayError}
               </p>
             )}
             {info && (
@@ -316,10 +212,10 @@ export function LoginForm() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isPending}
               className="mt-2 flex h-[50px] w-full cursor-pointer items-center justify-center rounded-xl border-0 bg-eid-action-500 text-[14px] font-extrabold uppercase text-white transition hover:bg-eid-action-400 active:scale-[0.97] active:bg-eid-action-600 active:opacity-95 disabled:opacity-60"
             >
-              {loading ? (
+              {isPending ? (
                 <span
                   className="inline-block h-5 w-5 animate-spin rounded-full border-[3px] border-white border-t-transparent"
                   aria-hidden
