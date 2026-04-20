@@ -1,9 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { User } from "@supabase/supabase-js";
-import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
-import { EidThemeToggle } from "@/components/eid-theme-toggle";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { InteractionFeedback } from "@/components/ui/interaction-feedback";
 import { LegalGate } from "@/components/legal-gate";
@@ -65,28 +63,12 @@ export default async function RootLayout({
       <body className="flex min-h-full flex-col bg-eid-bg text-eid-fg">
         <EidThemeHydration />
         <InteractionFeedback />
-        {/* Logado: tema/sair no DashboardTopbar (área logada). Visitante: Entrar + tema. */}
-        {!user ? (
-          <div className="pointer-events-none fixed right-3 top-[max(0.75rem,env(safe-area-inset-top))] z-[60] flex items-center gap-2 sm:right-4">
-            <div className="pointer-events-auto">
-              <Link
-                href="/login"
-                className="inline-flex rounded-xl border border-eid-action-500/50 bg-eid-action-500/15 px-3 py-1.5 text-xs font-bold text-eid-action-500 transition hover:bg-eid-action-500/25"
-              >
-                Entrar
-              </Link>
-            </div>
-            <div className="pointer-events-auto">
-              <EidThemeToggle />
-            </div>
-          </div>
-        ) : null}
         {user ? <DashboardTopbar persistent /> : null}
         <div
           id="app-main-column"
           className={
             user
-              ? "eid-page-transition flex flex-1 flex-col pb-[calc(3.9rem+env(safe-area-inset-bottom))] pt-[calc(3.35rem+env(safe-area-inset-top))] md:pb-24 md:pt-24"
+              ? "eid-page-transition flex flex-1 flex-col pb-[calc(4.25rem+env(safe-area-inset-bottom))] pt-[calc(4.25rem+env(safe-area-inset-top))] md:pb-24 md:pt-24"
               : "flex flex-1 flex-col pb-28"
           }
         >

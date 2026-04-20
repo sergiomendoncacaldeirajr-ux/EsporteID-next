@@ -283,6 +283,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                         trendPoints={[p1, p2, p3]}
                         footer={
                           <>
+                            {perfil.tempo_experiencia ? `${perfil.tempo_experiencia} de prática · ` : ""}
                             {jogos} jogos · {e.modalidade_match ?? "individual"}
                             {e.posicao_rank != null ? ` · pos. #${e.posicao_rank}` : ""}
                           </>

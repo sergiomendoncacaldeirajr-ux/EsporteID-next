@@ -130,8 +130,10 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     subtitle={p.localizacao ?? "—"}
                     avatarUrl={p.avatar_url}
                     fallbackLabel={`${i + 1}o`}
+                    layout="stacked"
+                    avatarSize="lg"
                     trailing={
-                      <p className="text-xs font-semibold text-eid-primary-300">
+                      <p className="text-[11px] font-semibold text-eid-primary-300">
                         EID {i === 0 ? Number(eid1?.nota_eid ?? 1).toFixed(1) : Number(eid2?.nota_eid ?? 1).toFixed(1)}
                       </p>
                     }

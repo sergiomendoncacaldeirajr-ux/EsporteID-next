@@ -85,7 +85,7 @@ export function DashboardTopbar({ persistent = false }: Props) {
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
         <div className="flex items-center justify-between gap-2 py-2 sm:py-2.5">
           <Link href="/dashboard" className="min-w-0 shrink transition hover:opacity-90">
-            <LogoWordmark className="h-[1.35rem] max-h-7 max-w-[min(46vw,200px)] object-left sm:h-8 sm:max-w-[min(55vw,220px)]" />
+            <LogoWordmark className="h-[1.85rem] max-h-10 max-w-[min(58vw,280px)] object-left sm:h-10 sm:max-w-[min(62vw,320px)]" />
           </Link>
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -95,7 +95,7 @@ export function DashboardTopbar({ persistent = false }: Props) {
             {meId ? (
               <Link
                 href={`/perfil/${meId}`}
-                className="hidden h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 text-xs font-bold text-eid-fg transition hover:border-eid-primary-500/50 hover:bg-eid-primary-500/15 md:inline-flex"
+                className="hidden h-9 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 text-xs font-bold text-eid-fg transition hover:border-eid-primary-500/50 hover:bg-eid-primary-500/15 md:inline-flex"
                 aria-label="Meu perfil"
               >
                 <IconUserCircle className="h-[18px] w-[18px] text-eid-primary-300" />

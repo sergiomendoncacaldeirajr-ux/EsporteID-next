@@ -124,7 +124,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card text-eid-primary-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10 md:h-10 md:w-10"
+        className="relative inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card text-eid-primary-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10 md:h-10 md:w-10"
         aria-label="Notificações e resumos"
         aria-expanded={open}
       >
@@ -137,7 +137,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-[min(100vw-2rem,340px)] rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 shadow-xl shadow-black/40">
+        <div className="fixed left-1/2 top-[calc(4.25rem+env(safe-area-inset-top))] z-[70] w-[min(94vw,340px)] -translate-x-1/2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 shadow-xl shadow-black/40 md:absolute md:left-auto md:right-0 md:top-[calc(100%+8px)] md:w-[min(100vw-2rem,340px)] md:translate-x-0">
           <p className="border-b border-[color:var(--eid-border-subtle)] pb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">
             Resumo rápido
           </p>
