@@ -60,50 +60,101 @@ export function LoginForm() {
     setError(null);
     setInfo(null);
     setPendingConfirmationEmail(null);
-    setLoading(true);
-    const supabase = createClient();
+
     const emailNorm = email.trim().toLowerCase();
-    const { error: err } = await supabase.auth.signInWithPassword({
-      email: emailNorm,
-      password,
-    });
-    setLoading(false);
-    if (err) {
-      const msg = (err.message ?? "").toLowerCase();
-      if (msg.includes("email not confirmed")) {
-        setPendingConfirmationEmail(emailNorm);
-        setError("Seu e-mail ainda não foi confirmado.");
-        return;
-      }
-      setError(
-        err.message === "Invalid login credentials"
-          ? "E-mail ou senha incorretos."
-          : err.message
-      );
+    if (!emailNorm) {
+      setError("Informe seu e-mail.");
+      return;
+    }
+    if (!password) {
+      setError("Informe sua senha.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNorm)) {
+      setError("Digite um e-mail válido.");
       return;
     }
 
-    const {
-      data: { user: u },
-    } = await supabase.auth.getUser();
-    let dest = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
-    if (u) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("termos_aceitos_em, perfil_completo")
-        .eq("id", u.id)
-        .maybeSingle();
-      dest = getPostAuthRedirect(
-        {
-          termosAceitos: !!profile?.termos_aceitos_em,
-          perfilCompleto: !!profile?.perfil_completo,
-        },
-        next
-      );
-    }
+    setLoading(true);
+    try {
+      let supabase;
+      try {
+        supabase = createClient();
+      } catch (cfgErr) {
+        setError(cfgErr instanceof Error ? cfgErr.message : "Erro de configuração do aplicativo.");
+        return;
+      }
 
-    router.refresh();
-    router.push(dest);
+      const TIMEOUT_MS = 35_000;
+      const signInResult = await Promise.race([
+        supabase.auth.signInWithPassword({
+          email: emailNorm,
+          password,
+        }),
+        new Promise<{ data: null; error: { message: string } }>((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                data: null,
+                error: { message: "__LOGIN_TIMEOUT__" },
+              }),
+            TIMEOUT_MS
+          )
+        ),
+      ]);
+
+      const err = signInResult.error;
+      if (err?.message === "__LOGIN_TIMEOUT__") {
+        setError("A conexão demorou demais. Verifique a internet e tente de novo.");
+        return;
+      }
+      if (err) {
+        const msg = (err.message ?? "").toLowerCase();
+        if (msg.includes("email not confirmed")) {
+          setPendingConfirmationEmail(emailNorm);
+          setError("Seu e-mail ainda não foi confirmado.");
+          return;
+        }
+        setError(
+          err.message === "Invalid login credentials"
+            ? "E-mail ou senha incorretos."
+            : err.message
+        );
+        return;
+      }
+
+      const {
+        data: { user: u },
+      } = await supabase.auth.getUser();
+      let dest = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+      if (u) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("termos_aceitos_em, perfil_completo")
+          .eq("id", u.id)
+          .maybeSingle();
+        dest = getPostAuthRedirect(
+          {
+            termosAceitos: !!profile?.termos_aceitos_em,
+            perfilCompleto: !!profile?.perfil_completo,
+          },
+          next
+        );
+      }
+
+      router.refresh();
+      try {
+        router.push(dest);
+      } catch {
+        window.location.assign(dest);
+      }
+    } catch (unknown) {
+      const msg =
+        unknown instanceof Error ? unknown.message : "Não foi possível entrar. Tente novamente.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleResendConfirmation() {
@@ -116,27 +167,32 @@ export function LoginForm() {
     }
 
     setResending(true);
-    const supabase = createClient();
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const { error: resendErr } = await supabase.auth.resend({
-      type: "signup",
-      email: emailNorm,
-      options: {
-        ...(origin
-          ? {
-              emailRedirectTo: getSignupEmailRedirectTo(origin),
-            }
-          : {}),
-      },
-    });
-    setResending(false);
+    try {
+      const supabase = createClient();
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const { error: resendErr } = await supabase.auth.resend({
+        type: "signup",
+        email: emailNorm,
+        options: {
+          ...(origin
+            ? {
+                emailRedirectTo: getSignupEmailRedirectTo(origin),
+              }
+            : {}),
+        },
+      });
 
-    if (resendErr) {
-      setError(resendErr.message);
-      return;
+      if (resendErr) {
+        setError(resendErr.message);
+        return;
+      }
+      setInfo("Código de confirmação reenviado. Verifique seu e-mail.");
+      router.push(`/verificar-codigo?email=${encodeURIComponent(emailNorm)}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível reenviar. Tente de novo.");
+    } finally {
+      setResending(false);
     }
-    setInfo("Código de confirmação reenviado. Verifique seu e-mail.");
-    router.push(`/verificar-codigo?email=${encodeURIComponent(emailNorm)}`);
   }
 
   return (
@@ -160,7 +216,7 @@ export function LoginForm() {
             Use o mesmo e-mail e senha do seu cadastro.
           </p>
 
-          <form onSubmit={handleSubmit} className="m-0 flex flex-col gap-0">
+          <form noValidate onSubmit={handleSubmit} className="m-0 flex flex-col gap-0">
             {registered && (
               <p
                 className="mb-[15px] rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-2.5 text-center text-[12px] text-eid-primary-300"
@@ -220,7 +276,6 @@ export function LoginForm() {
                 name="email"
                 type="email"
                 autoComplete="email"
-                required
                 placeholder="E-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -240,7 +295,6 @@ export function LoginForm() {
                 name="password"
                 type="password"
                 autoComplete="current-password"
-                required
                 placeholder="Senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
