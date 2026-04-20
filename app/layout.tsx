@@ -90,7 +90,7 @@ export default async function RootLayout({
         >
           {children}
         </div>
-        <MobileBottomNav userId={user?.id ?? null} />
+        {user ? <MobileBottomNav userId={user.id} /> : null}
         <SiteFooter />
         <LegalGate />
       </body>
