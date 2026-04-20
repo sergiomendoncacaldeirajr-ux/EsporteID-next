@@ -7,6 +7,13 @@ import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-met
 import { ProfileMemberCard } from "@/components/perfil/profile-team-members-cards";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { resolveBackHref } from "@/lib/perfil/back-href";
+import {
+  formacaoTemMatchAceitoEntre,
+  podeExibirWhatsappPerfilFormacao,
+  podeExibirWhatsappPerfilPublico,
+  resolverTimeIdParaDuplaRegistrada,
+  waMeHref,
+} from "@/lib/perfil/whatsapp-visibility";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -37,14 +44,79 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
 
   const { data: p1 } = await supabase
     .from("profiles")
-    .select("id, nome, avatar_url, localizacao")
+    .select("id, nome, avatar_url, localizacao, whatsapp")
     .eq("id", d.player1_id)
     .maybeSingle();
   const { data: p2 } = await supabase
     .from("profiles")
-    .select("id, nome, avatar_url, localizacao")
+    .select("id, nome, avatar_url, localizacao, whatsapp")
     .eq("id", d.player2_id)
     .maybeSingle();
+
+  const timeResolvidoId = await resolverTimeIdParaDuplaRegistrada(
+    supabase,
+    d.player1_id,
+    d.player2_id,
+    d.esporte_id
+  );
+
+  const { data: timeResolvido } = timeResolvidoId
+    ? await supabase.from("times").select("id, criador_id").eq("id", timeResolvidoId).maybeSingle()
+    : { data: null };
+
+  const { data: liderDupla } = timeResolvido?.criador_id
+    ? await supabase.from("profiles").select("id, nome, whatsapp").eq("id", timeResolvido.criador_id).maybeSingle()
+    : { data: null };
+
+  const isMembroDupla = user.id === d.player1_id || user.id === d.player2_id;
+
+  const { data: minhaFormacaoDupla } = await supabase
+    .from("times")
+    .select("id")
+    .eq("criador_id", user.id)
+    .eq("tipo", "dupla")
+    .eq("esporte_id", d.esporte_id)
+    .limit(1);
+
+  const meuTimeIdDupla = minhaFormacaoDupla?.[0]?.id ?? null;
+  const canChallengeDupla =
+    meuTimeIdDupla != null &&
+    !isMembroDupla &&
+    timeResolvidoId != null &&
+    timeResolvido?.criador_id != null &&
+    timeResolvido.criador_id !== user.id;
+
+  let linkWpp: string | null = null;
+  if (!isMembroDupla && timeResolvidoId && timeResolvido?.criador_id && liderDupla) {
+    const podeWa = await podeExibirWhatsappPerfilFormacao(
+      supabase,
+      user.id,
+      timeResolvido.criador_id,
+      timeResolvidoId,
+      meuTimeIdDupla
+    );
+    linkWpp = podeWa ? waMeHref(liderDupla.whatsapp) : null;
+  } else if (!isMembroDupla && p1?.id && p2?.id) {
+    const v1 = await podeExibirWhatsappPerfilPublico(supabase, user.id, p1.id, false);
+    const v2 = await podeExibirWhatsappPerfilPublico(supabase, user.id, p2.id, false);
+    if (v1) linkWpp = waMeHref(p1.whatsapp);
+    else if (v2) linkWpp = waMeHref(p2.whatsapp);
+  }
+
+  const hasAceitoRankDupla =
+    canChallengeDupla &&
+    meuTimeIdDupla != null &&
+    timeResolvidoId != null &&
+    timeResolvido?.criador_id != null &&
+    (await formacaoTemMatchAceitoEntre(
+      supabase,
+      user.id,
+      meuTimeIdDupla,
+      timeResolvidoId,
+      timeResolvido.criador_id,
+      Number(d.esporte_id),
+      "dupla"
+    ));
 
   const { data: eid1 } = await supabase
     .from("usuario_eid")
@@ -104,7 +176,41 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
         <div className="mt-6 grid gap-6">
           <section>
             <h2 className="sr-only">Ação principal</h2>
-            <ProfilePrimaryCta href={`/match?tipo=dupla&esporte=${d.esporte_id}`} />
+            {!isMembroDupla ? (
+              <div className="grid gap-3">
+                {linkWpp ? (
+                  <a
+                    href={linkWpp}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-[13px] font-black uppercase tracking-[0.1em] text-white shadow-[0_0_18px_rgba(37,211,102,0.45)] transition hover:bg-[#1da851]"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                      <path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.534 5.853L.054 23.25a.75.75 0 0 0 .916.916l5.396-1.479A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.986 0-3.84-.552-5.418-1.51l-.388-.232-4.021 1.1 1.1-4.022-.232-.388A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+                    </svg>
+                    Chamar no WhatsApp
+                  </a>
+                ) : null}
+                {canChallengeDupla && !hasAceitoRankDupla && timeResolvidoId ? (
+                  <ProfilePrimaryCta
+                    href={`/desafio?id=${timeResolvidoId}&tipo=dupla&esporte=${d.esporte_id}`}
+                    label={linkWpp ? "⚡ Match no ranking" : undefined}
+                  />
+                ) : hasAceitoRankDupla && timeResolvidoId ? (
+                  <p className="text-xs text-eid-text-secondary">
+                    Match aceito nesta dupla. Registre o resultado na agenda quando jogarem.
+                  </p>
+                ) : (
+                  <ProfilePrimaryCta
+                    href={`/match?tipo=dupla&esporte=${d.esporte_id}`}
+                    label="Duplas no radar"
+                  />
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-eid-text-secondary">Você faz parte desta dupla registrada.</p>
+            )}
           </section>
 
           <ProfileSection title="Esportes e Estatísticas">
