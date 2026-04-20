@@ -19,6 +19,7 @@ export function PerfilTimeEditForm({
   aceita_pedidos,
   interesse_torneio,
   nivel_procurado,
+  variant = "inline",
 }: {
   timeId: number;
   nome: string;
@@ -32,22 +33,26 @@ export function PerfilTimeEditForm({
   aceita_pedidos: boolean;
   interesse_torneio: boolean;
   nivel_procurado: string | null;
+  /** `page`: tela dedicada (sem accordion). */
+  variant?: "inline" | "page";
 }) {
   const [state, formAction, pending] = useActionState(atualizarMinhaEquipe, initial);
 
-  return (
-    <details className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-3 text-left">
-      <summary className="cursor-pointer text-sm font-semibold text-eid-fg">Editar dados da formação</summary>
-      <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary">
-        Nome, @username, bio, escudo e preferências podem ser alterados. A{" "}
-        <strong className="text-eid-fg">cidade da formação não pode ser mudada</strong> depois da criação (ranking e radar
-        dependem disso). Se o time mudou de cidade, é preciso{" "}
-        <Link href="/times" className="font-semibold text-eid-primary-300 underline">
-          criar uma nova formação
-        </Link>{" "}
-        e reorganizar o elenco.
-      </p>
-      <form action={formAction} className="mt-3 grid gap-2 sm:grid-cols-2">
+  const blocoAjuda = (
+    <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary">
+      Nome, @username, bio, escudo e preferências podem ser alterados. A{" "}
+      <strong className="text-eid-fg">cidade da formação não pode ser mudada</strong> depois da criação (ranking e radar
+      dependem disso). Se o time mudou de cidade, é preciso{" "}
+      <Link href="/times" className="font-semibold text-eid-primary-300 underline">
+        criar uma nova formação
+      </Link>{" "}
+      e reorganizar o elenco.
+    </p>
+  );
+
+  const formInner = (
+    <>
+      <form action={formAction} className={`grid gap-2 sm:grid-cols-2 ${variant === "page" ? "mt-4" : "mt-3"}`}>
         <input type="hidden" name="time_id" value={timeId} />
         <div className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/5 px-3 py-2 sm:col-span-2">
           <p className="text-[10px] font-bold uppercase tracking-wide text-eid-primary-400">Cidade da formação (fixa)</p>
@@ -116,6 +121,24 @@ export function PerfilTimeEditForm({
           <p className={`text-xs sm:col-span-2 ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
         ) : null}
       </form>
+    </>
+  );
+
+  if (variant === "page") {
+    return (
+      <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 text-left sm:p-5">
+        <h2 className="text-sm font-semibold text-eid-fg">Dados da formação</h2>
+        {blocoAjuda}
+        {formInner}
+      </section>
+    );
+  }
+
+  return (
+    <details className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-3 text-left">
+      <summary className="cursor-pointer text-sm font-semibold text-eid-fg">Editar dados da formação</summary>
+      {blocoAjuda}
+      {formInner}
     </details>
   );
 }

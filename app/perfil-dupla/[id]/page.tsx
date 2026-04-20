@@ -17,7 +17,7 @@ import {
   waMeHref,
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
-import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF } from "@/lib/routes/conta";
+import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF, contaEditarDuplaRegistradaHref } from "@/lib/routes/conta";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -205,12 +205,20 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
         {isMembroDupla ? (
           <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-3">
             {isDonoDupla ? (
-              <PerfilDuplaEditForm
-                duplaId={id}
-                username={d.username ?? null}
-                bio={d.bio ?? null}
-                timeFormacaoRadarId={timeResolvidoId}
-              />
+              <>
+                <Link
+                  href={`${contaEditarDuplaRegistradaHref(id)}?from=${encodeURIComponent(`/perfil-dupla/${id}`)}`}
+                  className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+                >
+                  Editar em página dedicada
+                </Link>
+                <PerfilDuplaEditForm
+                  duplaId={id}
+                  username={d.username ?? null}
+                  bio={d.bio ?? null}
+                  timeFormacaoRadarId={timeResolvidoId}
+                />
+              </>
             ) : null}
             <div className={`grid gap-2 ${isDonoDupla ? "mt-3" : ""}`}>
               <Link

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { solicitarInscricaoTorneio } from "@/app/torneios/actions";
 import { labelStatusTorneio } from "@/lib/torneios/catalog";
 import { linhasResumoRegras, parseRegrasPlacarJson } from "@/lib/torneios/regras";
+import { contaEditarTorneioHref } from "@/lib/routes/conta";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -133,6 +134,14 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
               ) : null}
             </div>
             <h1 className="mt-3 text-2xl font-black tracking-tight text-eid-fg md:text-3xl">{t.nome}</h1>
+            {isOrganizadorTorneio ? (
+              <Link
+                href={`${contaEditarTorneioHref(id)}?from=${encodeURIComponent(`/torneios/${id}`)}`}
+                className="mt-3 inline-flex rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 hover:border-eid-primary-500/65"
+              >
+                Editar torneio (página dedicada)
+              </Link>
+            ) : null}
             <p className="mt-2 text-sm font-semibold text-eid-primary-300">{esp?.nome ?? "Esporte a definir"}</p>
             {t.categoria ? <p className="mt-2 text-xs text-eid-text-secondary">Categoria: {t.categoria}</p> : null}
           </div>

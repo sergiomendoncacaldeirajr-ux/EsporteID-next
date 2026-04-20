@@ -4,6 +4,7 @@ import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
+import { contaEditarLocalHref } from "@/lib/routes/conta";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -27,7 +28,7 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
   const { data: loc } = await supabase
     .from("espacos_genericos")
     .select(
-      "id, nome_publico, logo_arquivo, localizacao, lat, lng, status, esportes_ids, tipo_quadra, aceita_reserva, ativo_listagem, fotos_json, comodidades_json, criado_por_usuario_id"
+      "id, nome_publico, logo_arquivo, localizacao, lat, lng, status, esportes_ids, tipo_quadra, aceita_reserva, ativo_listagem, fotos_json, comodidades_json, criado_por_usuario_id, responsavel_usuario_id"
     )
     .eq("id", id)
     .maybeSingle();
@@ -43,6 +44,9 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
       : loc.localizacao
         ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.localizacao)}`
         : null;
+
+  const isDonoLocal =
+    loc.criado_por_usuario_id === user.id || loc.responsavel_usuario_id === user.id;
 
   return (
     <>
@@ -101,6 +105,17 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
             </p>
           ) : null}
         </section>
+
+        {isDonoLocal ? (
+          <div className="mt-4">
+            <Link
+              href={`${contaEditarLocalHref(id)}?from=${encodeURIComponent(`/local/${id}`)}`}
+              className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-xs font-bold uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65"
+            >
+              Editar cadastro do local
+            </Link>
+          </div>
+        ) : null}
 
         {!loc.ativo_listagem ? (
           <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">

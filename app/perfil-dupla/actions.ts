@@ -48,6 +48,7 @@ export async function atualizarDuplaRegistro(
   if (error) return { ok: false, message: error.message };
 
   revalidatePath(`/perfil-dupla/${duplaId}`);
+  revalidatePath(`/conta/dupla/${duplaId}`);
   revalidatePath(`/perfil/${user.id}`);
   return { ok: true, message: "Dupla atualizada." };
 }

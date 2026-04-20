@@ -135,6 +135,7 @@ export async function atualizarMinhaEquipe(
   if (error) return { ok: false, message: error.message };
 
   revalidatePath(`/perfil-time/${timeId}`);
+  revalidatePath(`/conta/formacao/time/${timeId}`);
   revalidatePath("/times");
   revalidatePath(`/perfil/${user.id}`);
   return { ok: true, message: "Formação atualizada." };

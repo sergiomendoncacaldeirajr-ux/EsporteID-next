@@ -16,7 +16,7 @@ import {
   waMeHref,
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
-import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF } from "@/lib/routes/conta";
+import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF, contaEditarFormacaoTimeHref } from "@/lib/routes/conta";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -261,6 +261,12 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
               <p className="mt-1 text-[10px] text-eid-text-secondary">
                 Convidar atletas e convites — painel completo em Times. Abaixo: editar nome, bio, escudo e preferências desta formação.
               </p>
+              <Link
+                href={`${contaEditarFormacaoTimeHref(id)}?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
+                className="mt-2 flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+              >
+                Editar em página dedicada
+              </Link>
               <PerfilTimeEditForm
                 timeId={id}
                 nome={t.nome ?? ""}
