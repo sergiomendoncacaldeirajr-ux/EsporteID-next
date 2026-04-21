@@ -229,38 +229,37 @@ export function generateTorneioDraw(input: {
       ? "groups"
       : "knockout";
 
+  const meta = {
+    strategy: input.strategy,
+    formato: stageFormat,
+    modalidade: input.modalidade,
+    publicado: false,
+    gerado_em: new Date().toISOString(),
+  };
+
+  const groups = stageFormat === "groups" ? buildGroupsEntities(entities, input.groupCount) : null;
+  const knockoutRounds = stageFormat === "knockout" ? buildKnockoutEntities(entities) : null;
+
   const payload =
     stageFormat === "groups"
       ? {
-          meta: {
-            strategy: input.strategy,
-            formato: stageFormat,
-            modalidade: input.modalidade,
-            publicado: false,
-            gerado_em: new Date().toISOString(),
-          },
+          meta,
           participants: entities,
-          groups: buildGroupsEntities(entities, input.groupCount),
+          groups: groups ?? [],
         }
       : {
-          meta: {
-            strategy: input.strategy,
-            formato: stageFormat,
-            modalidade: input.modalidade,
-            publicado: false,
-            gerado_em: new Date().toISOString(),
-          },
+          meta,
           participants: entities,
-          rounds: buildKnockoutEntities(entities),
+          rounds: knockoutRounds ?? [],
         };
 
   const rounds =
-    "groups" in payload
-      ? payload.groups.map((group, index) => ({
+    stageFormat === "groups"
+      ? (groups ?? []).map((group, index) => ({
           rodada: index + 1,
           matches: group.jogos,
         }))
-      : payload.rounds;
+      : (knockoutRounds ?? []);
 
   return {
     ...payload,
