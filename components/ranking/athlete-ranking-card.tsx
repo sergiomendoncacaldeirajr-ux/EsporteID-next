@@ -59,6 +59,7 @@ function AvatarBlock({
   avatarUrl: string | null;
   nome: string;
   size: "sm" | "md" | "lg" | "xl";
+  className?: string;
 }) {
   const s =
     size === "xl"
