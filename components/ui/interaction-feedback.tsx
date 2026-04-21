@@ -7,10 +7,93 @@ const LOCK_MS = 1400;
 const NAV_LOADING_FALLBACK_MS = 30000;
 type LoadingCause = "nav" | "submit";
 type OnboardingSkeletonStep = "papeis" | "esportes" | "extras" | "perfil";
+type AuthSkeletonScreen = "login" | "cadastro" | "recuperar" | "codigo" | "redefinir";
 
 function readOnboardingStepFromDom(): OnboardingSkeletonStep | null {
   const raw = document.querySelector("[data-eid-onboarding-step]")?.getAttribute("data-eid-onboarding-step");
   return raw === "papeis" || raw === "esportes" || raw === "extras" || raw === "perfil" ? raw : null;
+}
+
+function readAuthSkeletonScreen(pathname: string | null): AuthSkeletonScreen | null {
+  const p = pathname ?? "";
+  if (p === "/login") return "login";
+  if (p === "/cadastro") return "cadastro";
+  if (p === "/recuperar-senha") return "recuperar";
+  if (p === "/verificar-codigo") return "codigo";
+  if (p === "/redefinir-senha") return "redefinir";
+  return null;
+}
+
+function AuthExactSkeleton({ screen }: { screen: AuthSkeletonScreen }) {
+  return (
+    <div className="mx-auto w-full max-w-[340px] pb-6">
+      {screen === "login" ? <div className="eid-loading-skeleton-block mb-3 h-4 w-44 rounded-md" /> : null}
+      <div className="mb-5 mt-1 flex justify-center">
+        <div className="eid-loading-skeleton-block h-12 w-52 rounded-lg" />
+      </div>
+      <div className="eid-loading-skeleton-block rounded-2xl p-5">
+        <div className="eid-loading-skeleton-block mx-auto h-4 w-28 rounded-md" />
+        <div className="eid-loading-skeleton-block mx-auto mt-3 h-3 w-[82%] rounded-md" />
+
+        {screen === "login" ? (
+          <div className="mt-4 space-y-2">
+            <div className="eid-loading-skeleton-block h-[46px] rounded-[14px]" />
+            <div className="eid-loading-skeleton-block h-[46px] rounded-[14px]" />
+            <div className="eid-loading-skeleton-block mt-2 h-[50px] rounded-xl" />
+            <div className="eid-loading-skeleton-block mx-auto mt-4 h-3 w-28 rounded-md" />
+            <div className="eid-loading-skeleton-block mx-auto mt-3 h-3 w-32 rounded-md" />
+          </div>
+        ) : null}
+
+        {screen === "cadastro" ? (
+          <div className="mt-4 space-y-2">
+            <div className="eid-loading-skeleton-block h-[46px] rounded-[14px]" />
+            <div className="eid-loading-skeleton-block h-[46px] rounded-[14px]" />
+            <div className="eid-loading-skeleton-block h-[46px] rounded-[14px]" />
+            <div className="eid-loading-skeleton-block h-[46px] rounded-[14px]" />
+            <div className="eid-loading-skeleton-block mt-2 h-3 w-36 rounded-md" />
+            <div className="eid-loading-skeleton-block h-[46px] rounded-[14px]" />
+            <div className="eid-loading-skeleton-block mt-2 h-[42px] rounded-xl" />
+            <div className="eid-loading-skeleton-block mt-2 h-[50px] rounded-xl" />
+            <div className="eid-loading-skeleton-block mx-auto mt-4 h-3 w-32 rounded-md" />
+          </div>
+        ) : null}
+
+        {screen === "recuperar" ? (
+          <div className="mt-4 space-y-3">
+            <div className="eid-loading-skeleton-block h-3 w-24 rounded-md" />
+            <div className="eid-loading-skeleton-block h-[46px] rounded-xl" />
+            <div className="eid-loading-skeleton-block h-[50px] rounded-xl" />
+          </div>
+        ) : null}
+
+        {screen === "codigo" ? (
+          <div className="mt-4 space-y-3">
+            <div className="grid grid-cols-6 gap-2">
+              <div className="eid-loading-skeleton-block h-12 rounded-xl" />
+              <div className="eid-loading-skeleton-block h-12 rounded-xl" />
+              <div className="eid-loading-skeleton-block h-12 rounded-xl" />
+              <div className="eid-loading-skeleton-block h-12 rounded-xl" />
+              <div className="eid-loading-skeleton-block h-12 rounded-xl" />
+              <div className="eid-loading-skeleton-block h-12 rounded-xl" />
+            </div>
+            <div className="eid-loading-skeleton-block h-[46px] rounded-xl" />
+            <div className="eid-loading-skeleton-block mx-auto h-3 w-36 rounded-md" />
+          </div>
+        ) : null}
+
+        {screen === "redefinir" ? (
+          <div className="mt-4 space-y-3">
+            <div className="eid-loading-skeleton-block h-3 w-24 rounded-md" />
+            <div className="eid-loading-skeleton-block h-[46px] rounded-xl" />
+            <div className="eid-loading-skeleton-block h-3 w-36 rounded-md" />
+            <div className="eid-loading-skeleton-block h-[46px] rounded-xl" />
+            <div className="eid-loading-skeleton-block h-[46px] rounded-xl" />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 function OnboardingExactSkeleton({ step }: { step: OnboardingSkeletonStep }) {
@@ -186,6 +269,8 @@ export function InteractionFeedback() {
   const pathname = usePathname();
   const authPath = isAuthPath(pathname);
   const isOnboarding = (pathname ?? "").startsWith("/onboarding");
+  const authSkeletonScreen = readAuthSkeletonScreen(pathname);
+  const isAuthOrOnboarding = authPath || isOnboarding;
   const [loading, setLoading] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [contentTopOffsetPx, setContentTopOffsetPx] = useState(0);
@@ -255,8 +340,6 @@ export function InteractionFeedback() {
         });
       }
 
-      if (authPath) return;
-
       const linkEl = target.closest("a[href]") as HTMLAnchorElement | null;
       if (!linkEl || linkEl.dataset.eidLock === "off") return;
       if (!isSameOriginNavigationLink(linkEl)) return;
@@ -284,7 +367,6 @@ export function InteractionFeedback() {
     };
 
     const onSubmitCapture = (event: SubmitEvent) => {
-      if (authPath) return;
       const form = event.target as HTMLFormElement | null;
       if (!form) return;
       clearHideTimer();
@@ -411,6 +493,26 @@ export function InteractionFeedback() {
     };
   }, []);
 
+  /* Evita efeito "subindo de baixo para cima" ao trocar de tela nesses fluxos. */
+  useEffect(() => {
+    if (!isAuthOrOnboarding) return;
+    const root = document.documentElement;
+    const prevBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const main = document.getElementById("app-main-column");
+    if (main) main.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const raf = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      if (main) main.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      root.style.scrollBehavior = prevBehavior;
+    });
+    return () => {
+      window.cancelAnimationFrame(raf);
+      root.style.scrollBehavior = prevBehavior;
+    };
+  }, [pathname, isAuthOrOnboarding]);
+
   return (
     <>
       <div
@@ -433,6 +535,8 @@ export function InteractionFeedback() {
         <div className={`eid-loading-skeleton-screen ${isOnboarding ? "eid-loading-skeleton-screen-onboarding" : ""}`}>
           {isOnboarding ? (
             <OnboardingExactSkeleton step={onboardingSkeletonStep} />
+          ) : authSkeletonScreen ? (
+            <AuthExactSkeleton screen={authSkeletonScreen} />
           ) : (
             <>
               <div className="eid-loading-skeleton-block h-8 w-40 rounded-xl" />
