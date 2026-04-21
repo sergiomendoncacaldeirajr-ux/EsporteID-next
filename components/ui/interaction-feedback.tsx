@@ -284,7 +284,7 @@ export function InteractionFeedback() {
   const navMutationObserverRef = useRef<MutationObserver | null>(null);
   const onboardingStepBeforeSubmitRef = useRef<string | null>(null);
   const prevPathnameRef = useRef<string | null>(pathname ?? null);
-  const suppressAuthSkeletonRef = useRef(false);
+  const suppressCurrentAuthSkeletonRef = useRef(false);
 
   loadingRef.current = loading;
 
@@ -345,7 +345,6 @@ export function InteractionFeedback() {
       const linkEl = target.closest("a[href]") as HTMLAnchorElement | null;
       if (!linkEl || linkEl.dataset.eidLock === "off") return;
       if (!isSameOriginNavigationLink(linkEl)) return;
-      if (authPath && !isOnboarding) return;
 
       if (linkEl.dataset.eidLocked === "1") {
         event.preventDefault();
@@ -377,15 +376,11 @@ export function InteractionFeedback() {
       loadingCauseRef.current = "submit";
       navStartedAtRef.current = Date.now();
       setLoading(true);
-
-      /* Auth: não intercepta loading para não bloquear/nem duplicar fluxo. */
       if (authPath && !isOnboarding) {
-        loadingCauseRef.current = null;
-        suppressAuthSkeletonRef.current = false;
-        setShowSkeleton(false);
-        setLoading(false);
-        return;
+        /* No submit de auth, oculta o skeleton da própria tela atual. */
+        suppressCurrentAuthSkeletonRef.current = true;
       }
+
       if (isOnboarding) {
         const currentStep = readOnboardingStepFromDom();
         onboardingStepBeforeSubmitRef.current = currentStep;
@@ -433,7 +428,7 @@ export function InteractionFeedback() {
     /* Auth: não precisa observer agressivo, finaliza com mínimo visível curto. */
     if (authPath && !isOnboarding) {
       clearNavFallbackTimer();
-      scheduleFinishLoading(320);
+      scheduleFinishLoading(760);
       return () => {
         clearHideTimer();
       };
@@ -464,11 +459,11 @@ export function InteractionFeedback() {
   useEffect(() => {
     if (!loading) {
       clearHideTimer();
+      suppressCurrentAuthSkeletonRef.current = false;
       setShowSkeleton(false);
       return;
     }
     if (loadingCauseRef.current !== "submit") return;
-    if (authPath && !isOnboarding) return;
     /* Auth: saída curta e previsível. Onboarding: mantém janela maior. */
     clearHideTimer();
     const timeoutMs = authPath && !isOnboarding ? 1200 : 8000;
@@ -504,9 +499,10 @@ export function InteractionFeedback() {
       const currentStep = readOnboardingStepFromDom();
       if (currentStep) setOnboardingSkeletonStep(currentStep);
     }
-    const t = window.setTimeout(() => setShowSkeleton(true), 120);
+    const showDelayMs = authPath && !isOnboarding ? 40 : 120;
+    const t = window.setTimeout(() => setShowSkeleton(true), showDelayMs);
     return () => window.clearTimeout(t);
-  }, [loading, isOnboarding]);
+  }, [loading, isOnboarding, authPath]);
 
   useEffect(() => {
     if (!showSkeleton) {
@@ -529,35 +525,9 @@ export function InteractionFeedback() {
     };
   }, []);
 
-  /* Auth -> Onboarding: inicia loading apenas na nova rota (sem skeleton do login). */
-  useEffect(() => {
-    const prevPath = prevPathnameRef.current;
-    const cameFromAuth = isAuthPath(prevPath);
-    if (!cameFromAuth || !isOnboarding) return;
-    if (loadingRef.current) return;
-
-    clearHideTimer();
-    clearNavFallbackTimer();
-    disconnectNavObserver();
-    loadingCauseRef.current = "nav";
-    navStartedAtRef.current = Date.now();
-    suppressAuthSkeletonRef.current = false;
-    setLoading(true);
-
-    navFallbackTimerRef.current = window.setTimeout(() => {
-      navFallbackTimerRef.current = null;
-      if (loadingCauseRef.current === "nav") {
-        loadingCauseRef.current = null;
-        setLoading(false);
-      }
-    }, 6000);
-  }, [isOnboarding, pathname]);
-
   useEffect(() => {
     prevPathnameRef.current = pathname ?? null;
-    if (!authPath) {
-      suppressAuthSkeletonRef.current = false;
-    }
+    if (!authPath) suppressCurrentAuthSkeletonRef.current = false;
   }, [pathname]);
 
   /* Evita efeito "subindo de baixo para cima" ao trocar de tela nesses fluxos. */
@@ -599,7 +569,7 @@ export function InteractionFeedback() {
           showSkeleton ? "opacity-100" : "opacity-0"
         }`}
       >
-        {suppressAuthSkeletonRef.current && authPath && !isOnboarding ? null : (
+        {authPath && !isOnboarding && suppressCurrentAuthSkeletonRef.current ? null : (
         <div className={`eid-loading-skeleton-screen ${isOnboarding ? "eid-loading-skeleton-screen-onboarding" : ""}`}>
           {isOnboarding ? (
             <OnboardingExactSkeleton step={onboardingSkeletonStep} />
