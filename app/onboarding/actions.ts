@@ -385,19 +385,25 @@ export async function salvarEsportesOnboarding(
     if (delErr) return { ok: false, message: delErr.message };
   }
 
-  for (const esporteId of atualizar) {
-    const mods = modalidadesMap.get(esporteId) ?? ["individual"];
-    const tempoExp = tempoExperienciaLabel(expPorEsporte.get(esporteId));
-    const { error: updateErr } = await supabase
-      .from("usuario_eid")
-      .update({
-        interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
-        modalidades_match: mods,
-        tempo_experiencia: tempoExp,
+  if (atualizar.length > 0) {
+    const updateResults = await Promise.all(
+      atualizar.map((esporteId) => {
+        const mods = modalidadesMap.get(esporteId) ?? ["individual"];
+        const tempoExp = tempoExperienciaLabel(expPorEsporte.get(esporteId));
+        return supabase
+          .from("usuario_eid")
+          .update({
+            interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
+            modalidades_match: mods,
+            tempo_experiencia: tempoExp,
+          })
+          .eq("usuario_id", user.id)
+          .eq("esporte_id", esporteId);
       })
-      .eq("usuario_id", user.id)
-      .eq("esporte_id", esporteId);
-    if (updateErr) return { ok: false, message: updateErr.message };
+    );
+    for (const res of updateResults) {
+      if (res.error) return { ok: false, message: res.error.message };
+    }
   }
 
   if (adicionar.length > 0) {
@@ -421,23 +427,22 @@ export async function salvarEsportesOnboarding(
     if (delProfErr) return { ok: false, message: delProfErr.message };
   }
 
-  for (const esporteId of salvarProfessor) {
+  if (salvarProfessor.length > 0) {
+    const agora = new Date().toISOString();
+    const upsertProfRows = salvarProfessor.map((esporteId) => ({
+      professor_id: user.id,
+      esporte_id: esporteId,
+      modo_atuacao: "professor" as const,
+      objetivo_plataforma: professorObjetivosMap.get(esporteId) ?? "somente_exposicao",
+      tipo_atuacao: professorTiposMap.get(esporteId) ?? ["aulas"],
+      tempo_experiencia: tempoExperienciaLabel(expPorEsporte.get(esporteId)),
+      elegivel_match: false,
+      ativo: true,
+      atualizado_em: agora,
+    }));
     const { error: upsertProfErr } = await supabase
       .from("professor_esportes")
-      .upsert(
-        {
-          professor_id: user.id,
-          esporte_id: esporteId,
-          modo_atuacao: "professor",
-          objetivo_plataforma: professorObjetivosMap.get(esporteId) ?? "somente_exposicao",
-          tipo_atuacao: professorTiposMap.get(esporteId) ?? ["aulas"],
-          tempo_experiencia: tempoExperienciaLabel(expPorEsporte.get(esporteId)),
-          elegivel_match: false,
-          ativo: true,
-          atualizado_em: new Date().toISOString(),
-        },
-        { onConflict: "professor_id,esporte_id" }
-      );
+      .upsert(upsertProfRows, { onConflict: "professor_id,esporte_id" });
     if (upsertProfErr) return { ok: false, message: upsertProfErr.message };
   }
 
@@ -489,11 +494,13 @@ export async function salvarEsportesOnboarding(
 
   revalidatePath("/onboarding");
   revalidatePath("/conta/esportes-eid");
-  revalidatePath("/dashboard");
-  revalidatePath("/professor");
-  revalidatePath("/professores");
-  revalidatePath(`/professor/${user.id}`);
   revalidatePath(`/perfil/${user.id}`);
+  revalidatePath("/dashboard");
+  if (hasProfessor) {
+    revalidatePath("/professor");
+    revalidatePath("/professores");
+    revalidatePath(`/professor/${user.id}`);
+  }
   return { ok: true, nextStep: "extras" };
 }
 
@@ -545,19 +552,22 @@ export async function salvarExtrasOnboarding(
         experiencia_ano: null,
       };
 
+      const detProf = {
+        ...detAtleta,
+        papel_contexto: "professor",
+      };
+      const detalhesTasks: Promise<string | null>[] = [];
       if (papeis.includes("atleta")) {
-        const e = await salvarDetalhesPapel(user.id, "atleta", detAtleta);
-        if (e) return { ok: false, message: e };
+        detalhesTasks.push(salvarDetalhesPapel(user.id, "atleta", detAtleta));
       }
       if (papeis.includes("professor")) {
-        const detProf = {
-          ...detAtleta,
-          // Professor pode ter experiência como docente — aqui usamos o mesmo
-          // valor do esporte até que o produto diferencie os dois fluxos.
-          papel_contexto: "professor",
-        };
-        const e = await salvarDetalhesPapel(user.id, "professor", detProf);
-        if (e) return { ok: false, message: e };
+        detalhesTasks.push(salvarDetalhesPapel(user.id, "professor", detProf));
+      }
+      if (detalhesTasks.length > 0) {
+        const detalhesResults = await Promise.all(detalhesTasks);
+        for (const e of detalhesResults) {
+          if (e) return { ok: false, message: e };
+        }
       }
     }
   }
@@ -1029,10 +1039,12 @@ export async function salvarExtrasOnboarding(
   if (upErr) return { ok: false, message: upErr.message };
 
   revalidatePath("/onboarding");
-  revalidatePath("/professor");
-  revalidatePath("/professores");
-  revalidatePath(`/professor/${user.id}`);
   revalidatePath(`/perfil/${user.id}`);
+  if (hasProfessor) {
+    revalidatePath("/professor");
+    revalidatePath("/professores");
+    revalidatePath(`/professor/${user.id}`);
+  }
   return { ok: true, nextStep: "perfil" };
 }
 
@@ -1184,14 +1196,19 @@ export async function salvarPerfilOnboarding(
     .eq("id", user.id);
   if (upErr) return { ok: false, message: upErr.message };
 
+  const papeisIds = (papeisRows ?? []).map((r) => String(r.papel ?? ""));
+  const temProfessor = papeisIds.includes("professor");
+
   revalidatePath("/", "layout");
   revalidatePath("/onboarding");
   revalidatePath("/dashboard");
-  revalidatePath("/professor");
-  revalidatePath("/professores");
-  revalidatePath(`/professor/${user.id}`);
   revalidatePath("/conta/perfil");
   revalidatePath("/conta/esportes-eid");
   revalidatePath(`/perfil/${user.id}`);
+  if (temProfessor) {
+    revalidatePath("/professor");
+    revalidatePath("/professores");
+    revalidatePath(`/professor/${user.id}`);
+  }
   return { ok: true, nextStep: "dashboard" };
 }

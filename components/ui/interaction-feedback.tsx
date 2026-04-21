@@ -454,7 +454,7 @@ export function InteractionFeedback() {
             }
           }
           disconnectSubmitObserver();
-          scheduleFinishLoading(380);
+          scheduleFinishLoading(isOnboarding ? 100 : 380);
         });
         submitMutationObserverRef.current.observe(main, {
           childList: true,
@@ -522,7 +522,7 @@ export function InteractionFeedback() {
     if (loadingCauseRef.current !== "submit") return;
     /* Auth: saída curta e previsível. Onboarding: mantém janela maior. */
     clearHideTimer();
-    const timeoutMs = authPath && !isOnboarding ? 1200 : 8000;
+    const timeoutMs = authPath && !isOnboarding ? 1200 : isOnboarding ? 3500 : 8000;
     hideTimerRef.current = window.setTimeout(() => {
       hideTimerRef.current = null;
       loadingCauseRef.current = null;
@@ -538,7 +538,7 @@ export function InteractionFeedback() {
   /* Failsafe global: nunca deixar loading preso indefinidamente. */
   useEffect(() => {
     if (!loading) return;
-    const hardStopMs = authPath && !isOnboarding ? 3500 : 12000;
+    const hardStopMs = authPath && !isOnboarding ? 3500 : isOnboarding ? 5000 : 12000;
     const t = window.setTimeout(() => {
       loadingCauseRef.current = null;
       setLoading(false);

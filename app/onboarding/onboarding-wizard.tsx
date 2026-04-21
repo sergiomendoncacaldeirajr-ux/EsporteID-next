@@ -1180,10 +1180,8 @@ export function OnboardingWizard({
       router.push("/dashboard");
       return;
     }
-    /* Depois de avançar a etapa no estado, evita competir com o refresh do RSC. */
-    queueMicrotask(() => {
-      router.refresh();
-    });
+    /* Sem router.refresh() aqui: o wizard já avança no cliente + rascunho local; o refresh
+       refazia a página inteira do servidor (várias queries) e deixava a troca de etapa lenta. */
   }
 
   function clearDraft() {
