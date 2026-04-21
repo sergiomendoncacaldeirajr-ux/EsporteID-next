@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/jobs/professor-lembretes",
-      "schedule": "0 */2 * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/jobs/professor-feedback-mensal",
