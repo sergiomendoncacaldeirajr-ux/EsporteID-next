@@ -459,7 +459,9 @@ export function InteractionFeedback() {
         submitMutationObserverRef.current.observe(main, {
           childList: true,
           subtree: true,
-          attributes: false,
+          /* Onboarding avança de etapa em <main data-eid-onboarding-step>; sem isso o loading pode ficar preso. */
+          attributes: isOnboarding,
+          attributeFilter: isOnboarding ? ["data-eid-onboarding-step"] : undefined,
           characterData: false,
         });
       }

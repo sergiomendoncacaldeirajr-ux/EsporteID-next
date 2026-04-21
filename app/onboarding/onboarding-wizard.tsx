@@ -1172,14 +1172,18 @@ export function OnboardingWizard({
       return;
     }
     setMessage(null);
-    router.refresh();
     if (r.nextStep === "esportes") setStep("esportes");
     else if (r.nextStep === "extras") setStep("extras");
     else if (r.nextStep === "perfil") setStep("perfil");
     else if (r.nextStep === "dashboard") {
       window.localStorage.removeItem(draftKey);
       router.push("/dashboard");
+      return;
     }
+    /* Depois de avançar a etapa no estado, evita competir com o refresh do RSC. */
+    queueMicrotask(() => {
+      router.refresh();
+    });
   }
 
   function clearDraft() {
@@ -1376,8 +1380,15 @@ export function OnboardingWizard({
 
   function submitPapeis(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (papeis.size === 0) {
+      setMessage("Selecione um perfil para continuar.");
+      return;
+    }
     setMessage(null);
-    const fd = new FormData(e.currentTarget);
+    const fd = new FormData();
+    for (const p of papeis) {
+      fd.append("papel", p);
+    }
     startTransition(async () => applyResult(await salvarPapeisOnboarding(undefined, fd)));
   }
 
