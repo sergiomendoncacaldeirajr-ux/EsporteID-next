@@ -10,7 +10,11 @@ import { LegalGate } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { SiteFooter } from "@/components/site-footer";
-import { ACTIVE_CONTEXT_COOKIE, resolveActiveAppContext } from "@/lib/auth/active-context";
+import {
+  ACTIVE_CONTEXT_COOKIE,
+  resolveActiveAppContext,
+  type ActiveAppContext,
+} from "@/lib/auth/active-context";
 import { EID_LOGO_ICON_E_SRC } from "@/lib/branding";
 import { EID_HIDE_APP_SHELL_HEADER } from "@/lib/eid-app-shell";
 import { listarPapeis } from "@/lib/roles";
@@ -66,7 +70,7 @@ export default async function RootLayout({
 }>) {
   let user: User | null = null;
   let papeis: string[] = [];
-  let activeContext = "atleta" as const;
+  let activeContext: ActiveAppContext = "atleta";
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
