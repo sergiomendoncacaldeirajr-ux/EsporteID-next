@@ -117,6 +117,12 @@ export async function salvarPapeisOnboarding(
 
   if (papeis.length === 0) return { ok: false, message: "Selecione um perfil para continuar." };
   if (papeis.length > 1) return { ok: false, message: "Escolha apenas um perfil principal." };
+  if (papeis[0] !== "atleta") {
+    return {
+      ok: false,
+      message: "No momento, o onboarding está disponível somente para Atleta / Usuário. Perfis de professor, organizador e espaço serão liberados em breve.",
+    };
+  }
 
   const { error: delErr } = await supabase
     .from("usuario_papeis")

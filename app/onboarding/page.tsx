@@ -75,19 +75,23 @@ export default async function OnboardingPage() {
     (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
   );
 
-  const { data: professorEsportesRows } = await supabase
-    .from("professor_esportes")
-    .select("esporte_id, modo_atuacao, objetivo_plataforma, tipo_atuacao, tempo_experiencia")
-    .eq("professor_id", user.id)
-    .eq("ativo", true);
+  const { data: professorEsportesRows } = professorContaDedicada
+    ? await supabase
+        .from("professor_esportes")
+        .select("esporte_id, modo_atuacao, objetivo_plataforma, tipo_atuacao, tempo_experiencia")
+        .eq("professor_id", user.id)
+        .eq("ativo", true)
+    : { data: [] };
 
-  const { data: professorPerfil } = await supabase
-    .from("professor_perfil")
-    .select(
-      "headline, bio_profissional, certificacoes_json, publico_alvo_json, formato_aula_json, politica_cancelamento_json, aceita_novos_alunos, perfil_publicado"
-    )
-    .eq("usuario_id", user.id)
-    .maybeSingle();
+  const { data: professorPerfil } = professorContaDedicada
+    ? await supabase
+        .from("professor_perfil")
+        .select(
+          "headline, bio_profissional, certificacoes_json, publico_alvo_json, formato_aula_json, politica_cancelamento_json, aceita_novos_alunos, perfil_publicado"
+        )
+        .eq("usuario_id", user.id)
+        .maybeSingle()
+    : { data: null };
 
   const selectedSportModes: Record<number, ProfessorModoEsportivo> = {};
   const selectedProfessorObjetivos: Record<number, ProfessorObjetivoPlataforma> = {};

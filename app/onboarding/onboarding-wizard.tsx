@@ -448,21 +448,25 @@ const ROLES = [
     id: "atleta",
     titulo: "Atleta / Usuário",
     desc: "Perfil com dashboard esportiva, ranking, match e desafios.",
+    enabled: true,
   },
   {
     id: "professor",
     titulo: "Professor / técnico",
     desc: "Acompanha alunos e pode aparecer no ecossistema como referência.",
+    enabled: false,
   },
   {
     id: "organizador",
     titulo: "Organizador de torneios",
     desc: "Cria e gerencia eventos (liberado conforme regras do app).",
+    enabled: false,
   },
   {
     id: "espaco",
     titulo: "Dono de espaço / arena",
     desc: "Quadra, campo, piscina, clube — cadastra o local e esportes atendidos.",
+    enabled: false,
   },
 ] as const;
 
@@ -1143,6 +1147,8 @@ export function OnboardingWizard({
   }
 
   function togglePapel(id: string) {
+    const role = ROLES.find((r) => r.id === id);
+    if (!role?.enabled) return;
     setPapeis(new Set<string>([id]));
   }
 
@@ -1450,10 +1456,15 @@ export function OnboardingWizard({
               <div className="grid gap-3 sm:grid-cols-2">
                 {ROLES.map((r) => {
                   const sel = papeis.has(r.id);
+                  const disabled = !r.enabled;
                   return (
                     <label
                       key={r.id}
-                      className={`relative flex cursor-pointer flex-col rounded-2xl border p-4 text-left transition-all select-none ${
+                      className={`relative flex items-start gap-3 rounded-2xl border p-4 text-left transition-all select-none ${
+                        disabled
+                          ? "cursor-not-allowed border-[color:var(--eid-border-subtle)] bg-eid-surface/35 opacity-70"
+                          : "cursor-pointer"
+                      } ${
                         sel
                           ? "border-eid-primary-500/60 bg-eid-primary-500/10 shadow-sm"
                           : "border-[color:var(--eid-border-subtle)] bg-eid-card/60 hover:border-eid-primary-500/30"
@@ -1465,20 +1476,30 @@ export function OnboardingWizard({
                         value={r.id}
                         checked={sel}
                         onChange={() => togglePapel(r.id)}
+                        disabled={disabled}
                         className="sr-only"
                       />
-                      {/* Checkmark no canto superior direito */}
-                      <span className={`absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full transition-all ${
-                        sel ? "bg-eid-primary-500" : "border border-[color:var(--eid-border-subtle)]"
-                      }`}>
-                        {sel && (
-                          <svg viewBox="0 0 10 10" className="h-3 w-3" fill="none">
-                            <path d="M1.5 5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                      </span>
-                      <span className={`pr-6 text-sm font-bold ${sel ? "text-eid-primary-400" : "text-eid-fg"}`}>{r.titulo}</span>
-                      <span className="mt-1 text-xs leading-relaxed text-eid-text-secondary">{r.desc}</span>
+                      <div className="min-w-0 flex-1">
+                        <span className={`block text-sm font-bold ${sel ? "text-eid-primary-400" : disabled ? "text-eid-text-secondary" : "text-eid-fg"}`}>{r.titulo}</span>
+                        <span className="mt-1 block text-xs leading-relaxed text-eid-text-secondary">{r.desc}</span>
+                      </div>
+                      {disabled ? (
+                        <span className="shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-bg/60 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-eid-text-secondary">
+                          Em breve
+                        </span>
+                      ) : (
+                        <span
+                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-all ${
+                            sel ? "bg-eid-primary-500" : "border border-[color:var(--eid-border-subtle)]"
+                          }`}
+                        >
+                          {sel ? (
+                            <svg viewBox="0 0 10 10" className="h-3 w-3" fill="none">
+                              <path d="M1.5 5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          ) : null}
+                        </span>
+                      )}
                     </label>
                   );
                 })}
@@ -1538,9 +1559,13 @@ export function OnboardingWizard({
                 <div className="space-y-3">
                   {esportes.filter((e) => esportesSel.has(e.id)).map((e) => {
                     const modoEsporte =
-                      esporteModes[e.id] ?? (hasProfessor ? "professor" : "atleta");
-                    const temAtletaNoEsporte = esporteModoTemAtleta(modoEsporte);
-                    const temProfessorNoEsporte = esporteModoTemProfessor(modoEsporte);
+                      hasProfessor && hasAtleta
+                        ? (esporteModes[e.id] ?? "atleta")
+                        : hasProfessor
+                          ? "professor"
+                          : "atleta";
+                    const temAtletaNoEsporte = hasAtleta && esporteModoTemAtleta(modoEsporte);
+                    const temProfessorNoEsporte = hasProfessor && esporteModoTemProfessor(modoEsporte);
                     return (
                     <div
                       key={e.id}
