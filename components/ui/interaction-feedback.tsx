@@ -434,6 +434,8 @@ export function InteractionFeedback() {
   /* Navegação: só libera quando houver mudança real no conteúdo após trocar a rota. */
   useEffect(() => {
     if (!(loadingRef.current && loadingCauseRef.current === "nav")) return;
+    const prevPath = prevPathnameRef.current;
+    const cameFromAuth = isAuthPath(prevPath);
 
     /* Auth: não precisa observer agressivo, finaliza com mínimo visível curto. */
     if (authPath && !isOnboarding) {
@@ -450,7 +452,7 @@ export function InteractionFeedback() {
       navMutationObserverRef.current = new MutationObserver(() => {
         disconnectNavObserver();
         clearNavFallbackTimer();
-        scheduleFinishLoading(420);
+        scheduleFinishLoading(cameFromAuth ? 1200 : 420);
       });
       navMutationObserverRef.current.observe(main, {
         childList: true,
