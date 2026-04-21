@@ -106,6 +106,7 @@ export function InteractionFeedback() {
   const navFallbackTimerRef = useRef<number | null>(null);
   const submitMutationObserverRef = useRef<MutationObserver | null>(null);
   const navMutationObserverRef = useRef<MutationObserver | null>(null);
+  const onboardingStepBeforeSubmitRef = useRef<string | null>(null);
 
   loadingRef.current = loading;
 
@@ -200,12 +201,27 @@ export function InteractionFeedback() {
       loadingCauseRef.current = "submit";
       navStartedAtRef.current = Date.now();
       setLoading(true);
+      if (isOnboarding) {
+        const currentStep = document.querySelector("[data-eid-onboarding-step]")?.getAttribute("data-eid-onboarding-step") ?? null;
+        onboardingStepBeforeSubmitRef.current = currentStep;
+      } else {
+        onboardingStepBeforeSubmitRef.current = null;
+      }
 
       /* Para submits na mesma rota (server actions), só libera após mudança real no conteúdo. */
       disconnectSubmitObserver();
       const main = document.getElementById("app-main-column");
       if (main) {
         submitMutationObserverRef.current = new MutationObserver(() => {
+          if (isOnboarding) {
+            const currentStep =
+              document
+                .querySelector("[data-eid-onboarding-step]")
+                ?.getAttribute("data-eid-onboarding-step") ?? null;
+            if (currentStep === onboardingStepBeforeSubmitRef.current) {
+              return;
+            }
+          }
           disconnectSubmitObserver();
           scheduleFinishLoading(380);
         });
@@ -224,7 +240,7 @@ export function InteractionFeedback() {
       document.removeEventListener("click", onClickCapture, true);
       document.removeEventListener("submit", onSubmitCapture, true);
     };
-  }, [authPath]);
+  }, [authPath, isOnboarding]);
 
   /* Navegação: só libera quando houver mudança real no conteúdo após trocar a rota. */
   useEffect(() => {

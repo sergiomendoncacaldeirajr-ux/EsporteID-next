@@ -1418,7 +1418,10 @@ export function OnboardingWizard({
   }
 
   return (
-    <main className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7">
+    <main
+      data-eid-onboarding-step={step}
+      className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7"
+    >
       <div className="w-full max-w-2xl pb-6">
         <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <Link
