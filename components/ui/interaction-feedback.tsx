@@ -283,6 +283,7 @@ export function InteractionFeedback() {
   const submitMutationObserverRef = useRef<MutationObserver | null>(null);
   const navMutationObserverRef = useRef<MutationObserver | null>(null);
   const onboardingStepBeforeSubmitRef = useRef<string | null>(null);
+  const prevPathnameRef = useRef<string | null>(pathname ?? null);
 
   loadingRef.current = loading;
 
@@ -522,6 +523,24 @@ export function InteractionFeedback() {
       disconnectNavObserver();
     };
   }, []);
+
+  /* Garante efeito visual na transição login/cadastro -> onboarding (primeira tela). */
+  useEffect(() => {
+    const prev = prevPathnameRef.current;
+    const curr = pathname ?? null;
+    const veioDoAuth = isAuthPath(prev);
+    const entrouNoOnboarding = (curr ?? "").startsWith("/onboarding");
+    if (veioDoAuth && entrouNoOnboarding && !loadingRef.current) {
+      clearHideTimer();
+      clearNavFallbackTimer();
+      loadingCauseRef.current = "nav";
+      navStartedAtRef.current = Date.now();
+      setLoading(true);
+      setShowSkeleton(true);
+      scheduleFinishLoading(700);
+    }
+    prevPathnameRef.current = curr;
+  }, [pathname]);
 
   /* Evita efeito "subindo de baixo para cima" ao trocar de tela nesses fluxos. */
   useEffect(() => {
