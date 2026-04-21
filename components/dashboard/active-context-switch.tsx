@@ -8,8 +8,10 @@ import {
 } from "@/lib/auth/active-context";
 
 const LABELS: Record<ActiveAppContext, string> = {
-  atleta: "Modo Atleta",
+  atleta: "Atleta / Usuário",
+  professor: "Professor",
   organizador: "Modo Organizador",
+  espaco: "Espaço",
 };
 
 export function ActiveContextSwitch({

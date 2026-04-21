@@ -115,7 +115,8 @@ export async function salvarPapeisOnboarding(
     .filter((p): p is Papel => (PAPEIS_VALIDOS as readonly string[]).includes(p))
   );
 
-  if (papeis.length === 0) return { ok: false, message: "Selecione ao menos uma opção." };
+  if (papeis.length === 0) return { ok: false, message: "Selecione um perfil para continuar." };
+  if (papeis.length > 1) return { ok: false, message: "Escolha apenas um perfil principal." };
 
   const { error: delErr } = await supabase
     .from("usuario_papeis")

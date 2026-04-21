@@ -213,7 +213,14 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
 
   if (pathname.startsWith("/admin")) return null;
 
-  const isHome = activeContext === "organizador" ? pathname === "/organizador" : pathname === "/dashboard";
+  const isHome =
+    activeContext === "organizador"
+      ? pathname === "/organizador"
+      : activeContext === "professor"
+        ? pathname === "/professor"
+        : activeContext === "espaco"
+          ? pathname === "/espaco"
+          : pathname === "/dashboard";
   const isAgenda =
     pathname === "/agenda" ||
     pathname.startsWith("/match") ||
@@ -227,6 +234,14 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const isTorneios = pathname === "/torneios" || pathname.startsWith("/torneios/");
   const isLocais = pathname === "/locais" || pathname.startsWith("/locais/");
   const isCriar = pathname === "/torneios/criar";
+  const isProfAgenda = pathname === "/professor/agenda" || pathname.startsWith("/professor/agenda/");
+  const isProfAlunos = pathname === "/professor/alunos" || pathname.startsWith("/professor/alunos/");
+  const isProfAvaliacoes =
+    pathname === "/professor/avaliacoes" || pathname.startsWith("/professor/avaliacoes/");
+  const isEspAgenda = pathname === "/espaco/agenda" || pathname.startsWith("/espaco/agenda/");
+  const isEspSocios = pathname === "/espaco/socios" || pathname.startsWith("/espaco/socios/");
+  const isEspFinanceiro =
+    pathname === "/espaco/financeiro" || pathname.startsWith("/espaco/financeiro/");
 
   const items: Array<{
     href: string;
@@ -236,8 +251,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     rank?: boolean;
     badge?: number;
     badgeWrap?: boolean;
-  }> =
-    activeContext === "organizador"
+  }> = activeContext === "organizador"
       ? [
           {
             href: getContextHomeHref(activeContext),
@@ -270,7 +284,73 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
             active: isPerfil,
           },
         ]
-      : [
+      : activeContext === "professor"
+        ? [
+            {
+              href: getContextHomeHref(activeContext),
+              label: "Home",
+              icon: <IconHome active={isHome} />,
+              active: isHome,
+            },
+            {
+              href: "/professor/agenda",
+              label: "Agenda",
+              icon: <IconAgenda active={isProfAgenda} />,
+              active: isProfAgenda,
+            },
+            {
+              href: "/professor/alunos",
+              label: "Alunos",
+              icon: <IconSocial active={isProfAlunos} />,
+              active: isProfAlunos,
+            },
+            {
+              href: "/professor/avaliacoes",
+              label: "Aval.",
+              icon: <IconTrophy active={isProfAvaliacoes} />,
+              active: isProfAvaliacoes,
+            },
+            {
+              href: `/perfil/${resolvedUserId}`,
+              label: "Perfil",
+              icon: <IconPerfil active={isPerfil} />,
+              active: isPerfil,
+            },
+          ]
+        : activeContext === "espaco"
+          ? [
+              {
+                href: getContextHomeHref(activeContext),
+                label: "Home",
+                icon: <IconHome active={isHome} />,
+                active: isHome,
+              },
+              {
+                href: "/espaco/agenda",
+                label: "Agenda",
+                icon: <IconAgenda active={isEspAgenda} />,
+                active: isEspAgenda,
+              },
+              {
+                href: "/espaco/socios",
+                label: "Sócios",
+                icon: <IconSocial active={isEspSocios} />,
+                active: isEspSocios,
+              },
+              {
+                href: "/espaco/financeiro",
+                label: "Financeiro",
+                icon: <IconTrophy active={isEspFinanceiro} />,
+                active: isEspFinanceiro,
+              },
+              {
+                href: `/perfil/${resolvedUserId}`,
+                label: "Perfil",
+                icon: <IconPerfil active={isPerfil} />,
+                active: isPerfil,
+              },
+            ]
+          : [
           {
             href: getContextHomeHref(activeContext),
             label: "Home",

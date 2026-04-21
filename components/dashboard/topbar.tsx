@@ -89,12 +89,35 @@ export function DashboardTopbar({
     { href: "/locais", label: "Locais" },
     { href: "/conta/esportes-eid", label: "EID" },
   ];
-  const baseNavItems = activeContext === "organizador" ? baseOrganizerNavItems : baseAthleteNavItems;
+  const baseProfessorNavItems = [
+    { href: "/professor", label: "Painel" },
+    { href: "/professor/agenda", label: "Agenda" },
+    { href: "/professor/alunos", label: "Alunos" },
+    { href: "/professor/avaliacoes", label: "Avaliações" },
+    { href: "/professor/perfil", label: "Perfil Prof." },
+  ];
+  const baseEspacoNavItems = [
+    { href: "/espaco", label: "Painel" },
+    { href: "/espaco/agenda", label: "Agenda" },
+    { href: "/espaco/socios", label: "Sócios" },
+    { href: "/espaco/financeiro", label: "Financeiro" },
+    { href: "/locais", label: "Locais" },
+  ];
+  const baseNavItems =
+    activeContext === "organizador"
+      ? baseOrganizerNavItems
+      : activeContext === "professor"
+        ? baseProfessorNavItems
+        : activeContext === "espaco"
+          ? baseEspacoNavItems
+          : baseAthleteNavItems;
   const navItems = meId ? [...baseNavItems, { href: `/perfil/${meId}`, label: "Perfil" }] : baseNavItems;
 
   function navActive(href: string) {
     if (href === "/dashboard") return pathname === "/dashboard";
+    if (href === "/professor") return pathname === "/professor";
     if (href === "/organizador") return pathname === "/organizador";
+    if (href === "/espaco") return pathname === "/espaco";
     if (href === "/agenda") return pathname === "/agenda";
     if (href === "/match")
       return pathname === "/match" || pathname.startsWith("/desafio") || pathname.startsWith("/perfil-time");
@@ -149,7 +172,15 @@ export function DashboardTopbar({
             id="eid-topbar-search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder={activeContext === "organizador" ? "Buscar torneios, locais…" : "Buscar atletas, locais…"}
+            placeholder={
+              activeContext === "organizador"
+                ? "Buscar torneios, locais…"
+                : activeContext === "professor"
+                  ? "Buscar alunos, aulas…"
+                  : activeContext === "espaco"
+                    ? "Buscar reservas, sócios…"
+                    : "Buscar atletas, locais…"
+            }
             className="eid-input-dark h-9 w-full rounded-[var(--eid-radius-md)] border border-[color:var(--eid-border-subtle)] px-3.5 text-sm text-eid-fg placeholder:text-eid-text-secondary/80 md:h-10"
           />
         </form>

@@ -444,7 +444,11 @@ import {
 const ONBOARDING_DRAFT_KEY_PREFIX = "eid_onboarding_draft_v1";
 
 const ROLES = [
-  { id: "atleta", titulo: "Atleta", desc: "Joga, busca ranking, match e desafios." },
+  {
+    id: "atleta",
+    titulo: "Atleta / Usuário",
+    desc: "Perfil com dashboard esportiva, ranking, match e desafios.",
+  },
   {
     id: "professor",
     titulo: "Professor / técnico",
@@ -1139,23 +1143,7 @@ export function OnboardingWizard({
   }
 
   function togglePapel(id: string) {
-    setPapeis((prev) => {
-      const current = [...prev];
-      const normalizedCurrent = normalizarPapeisContaPrincipal(current);
-      const isSelected = normalizedCurrent.includes(id as never);
-
-      if (id === "professor") {
-        return isSelected ? new Set<string>() : new Set<string>(["professor"]);
-      }
-
-      const next = new Set(normalizedCurrent);
-      if (next.has("professor")) {
-        next.clear();
-      }
-      if (isSelected) next.delete(id);
-      else next.add(id);
-      return new Set(normalizarPapeisContaPrincipal([...next]));
-    });
+    setPapeis(new Set<string>([id]));
   }
 
   function toggleEsporte(id: number) {
@@ -1440,9 +1428,11 @@ export function OnboardingWizard({
           <h1 className="mt-2 text-xl font-semibold text-eid-fg">Olá, {primeiroNome}!</h1>
           <p className="mt-2 text-sm leading-relaxed text-eid-text-secondary">
             {step === "papeis" &&
-              "Marque tudo que combina com você. Professor usa uma conta principal dedicada e não mistura com atleta neste onboarding."}
+              "Escolha somente um perfil principal para esta conta. Depois você poderá ter outros perfis em painéis separados."}
             {step === "esportes" &&
-              "Selecione os esportes em que esta conta atua. Se for conta de professor, tudo aqui vira focado em aulas e alunos."}
+              (hasProfessor
+                ? "Selecione os esportes que você ensina e informe sua experiência em cada um."
+                : "Selecione os esportes da sua conta Atleta / Usuário e configure como deseja jogar no match.")}
             {step === "extras" &&
               "So mais alguns detalhes para montar seu perfil profissional, operacional e publico dentro da plataforma."}
             {step === "perfil" &&
@@ -1470,7 +1460,7 @@ export function OnboardingWizard({
                       }`}
                     >
                       <input
-                        type="checkbox"
+                        type="radio"
                         name="papel"
                         value={r.id}
                         checked={sel}
@@ -1493,9 +1483,9 @@ export function OnboardingWizard({
                   );
                 })}
               </div>
-              {papeis.has("professor") ? (
+              {papeis.size > 0 ? (
                 <p className="rounded-xl border border-eid-action-500/25 bg-eid-action-500/10 px-3 py-2 text-xs text-eid-text-secondary">
-                  Conta principal de professor e dedicada ao painel de aulas. Se quiser atuar como atleta depois, isso entrará em um perfil secundário em etapa futura.
+                  Esta seleção define o painel principal após o cadastro: atleta/usuário abre dashboard, os demais abrem painéis administrativos.
                 </p>
               ) : null}
               <button
