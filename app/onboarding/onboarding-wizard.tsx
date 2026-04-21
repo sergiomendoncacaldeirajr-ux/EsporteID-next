@@ -447,25 +447,25 @@ const ROLES = [
   {
     id: "atleta",
     titulo: "Atleta / Usuário",
-    desc: "Perfil com dashboard esportiva, ranking, match e desafios.",
+    desc: "Perfil com painel esportivo, ranking, match e desafios.",
     enabled: true,
   },
   {
     id: "professor",
-    titulo: "Professor / técnico",
+    titulo: "Professor / Técnico",
     desc: "Acompanha alunos e pode aparecer no ecossistema como referência.",
     enabled: false,
   },
   {
     id: "organizador",
     titulo: "Organizador de torneios",
-    desc: "Cria e gerencia eventos (liberado conforme regras do app).",
+    desc: "Cria e gerencia eventos (liberado conforme as regras do app).",
     enabled: false,
   },
   {
     id: "espaco",
     titulo: "Dono de espaço / arena",
-    desc: "Quadra, campo, piscina, clube — cadastra o local e esportes atendidos.",
+    desc: "Quadra, campo, piscina, clube — cadastra o local e os esportes atendidos.",
     enabled: false,
   },
 ] as const;
@@ -1440,13 +1440,13 @@ export function OnboardingWizard({
                 ? "Selecione os esportes que você ensina e informe sua experiência em cada um."
                 : "Selecione os esportes da sua conta Atleta / Usuário e configure como deseja jogar no match.")}
             {step === "extras" &&
-              "So mais alguns detalhes para montar seu perfil profissional, operacional e publico dentro da plataforma."}
+              "Só mais alguns detalhes para montar seu perfil profissional, operacional e público dentro da plataforma."}
             {step === "perfil" &&
               "Finalize com presença no app: foto, nome e dados principais."}
           </p>
 
           {message ? (
-            <p className="mt-4 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            <p className="mt-4 rounded-xl border border-eid-action-500/30 bg-eid-action-500/10 px-3 py-2 text-sm text-eid-fg">
               {message}
             </p>
           ) : null}
@@ -1506,7 +1506,7 @@ export function OnboardingWizard({
               </div>
               {papeis.size > 0 ? (
                 <p className="rounded-xl border border-eid-action-500/25 bg-eid-action-500/10 px-3 py-2 text-xs text-eid-text-secondary">
-                  Esta seleção define o painel principal após o cadastro: atleta/usuário abre dashboard, os demais abrem painéis administrativos.
+                  Esta seleção define o painel principal após o cadastro: o perfil Atleta / Usuário abre o dashboard; os demais abrem painéis administrativos.
                 </p>
               ) : null}
               <button
@@ -1589,7 +1589,7 @@ export function OnboardingWizard({
                       {hasProfessor && hasAtleta ? (
                         <>
                           <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
-                            Como voce atua neste esporte
+                            Como você atua neste esporte
                           </p>
                           <div className="mt-1.5 inline-flex flex-wrap gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1">
                             {([
@@ -1623,9 +1623,9 @@ export function OnboardingWizard({
                           </p>
                           <div className="mt-1.5 flex flex-col gap-1.5">
                             {([
-                              { value: "somente_exposicao", label: "Somente exposicao", desc: "Perfil publico e captacao de alunos." },
-                              { value: "gerir_alunos", label: "Gerir alunos", desc: "Agenda, pagamentos, feedbacks e comunicacao." },
-                              { value: "ambos", label: "Exposicao + gestao", desc: "Divulga o perfil e opera aulas pela plataforma." },
+                              { value: "somente_exposicao", label: "Somente exposição", desc: "Perfil público e captação de alunos." },
+                              { value: "gerir_alunos", label: "Gerenciar alunos", desc: "Agenda, pagamentos, feedbacks e comunicação." },
+                              { value: "ambos", label: "Exposição + gestão", desc: "Divulga o perfil e opera aulas pela plataforma." },
                             ] as const).map((opt) => {
                               const active = (professorObjetivos[e.id] ?? "somente_exposicao") === opt.value;
                               return (
@@ -1654,13 +1654,13 @@ export function OnboardingWizard({
                             })}
                           </div>
                           <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
-                            Tipo de atuacao
+                            Tipo de atuação
                           </p>
                           <div className="mt-1.5 flex flex-wrap gap-2">
                             {([
                               { value: "aulas", label: "Aulas" },
                               { value: "treinamento", label: "Treinamento profissional" },
-                              { value: "consultoria", label: "Consultoria tecnica" },
+                              { value: "consultoria", label: "Consultoria técnica" },
                             ] as const).map((opt) => {
                               const active = (professorTipos[e.id] ?? ["aulas"]).includes(opt.value);
                               return (
@@ -1772,7 +1772,7 @@ export function OnboardingWizard({
 
                       {(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "amistoso" && (
                         <p className="mt-2 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1.5 text-[11px] text-eid-action-400">
-                          Você não aparecerá nas sugestões de Matchmaking Competitivo.
+                          Você não aparecerá nas sugestões de matchmaking competitivo.
                         </p>
                       )}
 
@@ -1831,7 +1831,7 @@ export function OnboardingWizard({
                         </>
                       ) : (
                         <p className="mt-3 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1.5 text-[11px] text-eid-action-400">
-                          Neste esporte voce entrara apenas no fluxo de professor, sem match ou ranking competitivo.
+                          Neste esporte você entrará apenas no fluxo de professor, sem match ou ranking competitivo.
                         </p>
                       )}
 
@@ -1896,14 +1896,14 @@ export function OnboardingWizard({
                     Perfil profissional
                   </h2>
                   <p className="mt-2 text-xs text-eid-text-secondary">
-                    Essas informacoes alimentam seu perfil de professor, a descoberta por alunos e os fluxos de aulas.
+                    Essas informações enriquecem seu perfil de professor, a descoberta por alunos e os fluxos de aulas.
                   </p>
                   <div className="mt-3 grid gap-3">
                     <input
                       name="professor_headline"
                       value={professorHeadline}
                       onChange={(e) => setProfessorHeadline(e.target.value)}
-                      placeholder="Ex.: Treinador de beach tennis e preparacao tecnica"
+                      placeholder="Ex.: Treinador de beach tennis e preparação técnica"
                       className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                     />
                     <textarea
@@ -1911,21 +1911,21 @@ export function OnboardingWizard({
                       value={professorBio}
                       onChange={(e) => setProfessorBio(e.target.value)}
                       rows={3}
-                      placeholder="Resumo da sua metodologia, experiencia e diferenciais"
+                      placeholder="Resumo da sua metodologia, experiência e diferenciais"
                       className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                     />
                     <input
                       name="professor_certificacoes"
                       value={professorCertificacoes}
                       onChange={(e) => setProfessorCertificacoes(e.target.value)}
-                      placeholder="Certificacoes (separadas por virgula)"
+                      placeholder="Certificações (separadas por vírgula)"
                       className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                     />
                     <input
                       name="professor_publico_alvo"
                       value={professorPublicoAlvo}
                       onChange={(e) => setProfessorPublicoAlvo(e.target.value)}
-                      placeholder="Publico-alvo (iniciante, infantil, performance...)"
+                      placeholder="Público-alvo (iniciante, infantil, performance...)"
                       className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                     />
                     <input
@@ -1940,7 +1940,7 @@ export function OnboardingWizard({
                       value={professorPoliticaCancelamento}
                       onChange={(e) => setProfessorPoliticaCancelamento(e.target.value)}
                       rows={2}
-                      placeholder="Politica resumida de cancelamento"
+                      placeholder="Política resumida de cancelamento"
                       className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                     />
                     <div className="flex flex-wrap gap-2">
@@ -2220,7 +2220,7 @@ export function OnboardingWizard({
                       { val: "livre",   label: "A definir depois",              desc: "Configure o acesso mais tarde" },
                       { val: "socios",  label: "Gratuito para sócios",          desc: "Prioridade / reserva para membros" },
                       { val: "pago",    label: "Reserva paga (público)",        desc: "Qualquer pessoa pode reservar" },
-                      { val: "misto",   label: "Misto",                         desc: "Sócio grátis + visitante pago" },
+                      { val: "misto",   label: "Misto",                         desc: "Sócio gratuito + visitante pago" },
                     ] as const).map(({ val, label, desc }) => {
                       const active = reservaModelo === val;
                       return (
@@ -2256,7 +2256,7 @@ export function OnboardingWizard({
                       name="espaco_documento"
                       accept=".pdf,.jpg,.jpeg,.png,.webp"
                       label="Enviar documento"
-                      hint="Comprovante do local (obrigatório para análise do administrador)"
+                      hint="Comprovante do local (obrigatório para análise pelo administrador)"
                     />
                   </div>
                   <input
@@ -2364,8 +2364,8 @@ export function OnboardingWizard({
                     </p>
                     <div className="space-y-1 text-xs text-eid-text-secondary">
                       {professorHeadline ? <p><span className="text-eid-fg font-semibold">Headline:</span> {professorHeadline}</p> : null}
-                      {professorAceitaNovosAlunos ? <p>Aceitando novos alunos.</p> : <p>No momento sem captar novos alunos.</p>}
-                      {professorPerfilPublicado ? <p>Perfil publico de professor ativado.</p> : <p>Perfil de professor ainda nao publicado.</p>}
+                      {professorAceitaNovosAlunos ? <p>Aceitando novos alunos.</p> : <p>No momento não está aceitando novos alunos.</p>}
+                      {professorPerfilPublicado ? <p>Perfil público de professor ativado.</p> : <p>Perfil de professor ainda não publicado.</p>}
                     </div>
                   </div>
                 ) : null}
@@ -2507,7 +2507,7 @@ export function OnboardingWizard({
                 className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
               />
               <p className="text-[11px] text-eid-text-secondary">
-                Use 3-24 caracteres: letras minúsculas, números e underline.
+                Use de 3 a 24 caracteres: letras minúsculas, números e sublinhado (_).
               </p>
               <input
                 name="localizacao"
@@ -2528,7 +2528,7 @@ export function OnboardingWizard({
                 name="bio"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder={hasAnyProfessorSport ? "Bio publica curta (opcional)" : "Bio curta (opcional)"}
+                placeholder={hasAnyProfessorSport ? "Bio pública curta (opcional)" : "Bio curta (opcional)"}
                 rows={3}
                 className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
               />

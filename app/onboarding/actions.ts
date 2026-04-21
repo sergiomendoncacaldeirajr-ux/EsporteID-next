@@ -697,7 +697,7 @@ export async function salvarExtrasOnboarding(
               return {
                 ok: false,
                 message:
-                  "Esse local já existe sem responsável. Envie o documento de comprovação para solicitar propriedade.",
+                  "Esse local já existe sem responsável. Envie o documento de comprovação para solicitar a propriedade.",
               };
             }
             const extDoc = (localDoc.name.split(".").pop() || "pdf").toLowerCase();
@@ -1056,16 +1056,22 @@ export async function salvarPerfilOnboarding(
 
   if (nome.length < 3) return { ok: false, message: "Informe seu nome completo." };
   if (username && !/^[a-z0-9_]{3,24}$/.test(username)) {
-    return { ok: false, message: "Username inválido. Use 3-24 caracteres [a-z0-9_]." };
+    return {
+      ok: false,
+      message: "Nome de usuário inválido. Use de 3 a 24 caracteres (letras minúsculas, números e sublinhado).",
+    };
   }
-  if (!localizacao) return { ok: false, message: "Informe cidade/estado." };
+  if (!localizacao) return { ok: false, message: "Informe cidade e estado." };
   let disponibilidadeSemana: Record<string, unknown> | null = null;
   if (disponibilidadeRaw) {
     try {
       const parsed = JSON.parse(disponibilidadeRaw);
       disponibilidadeSemana = parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
     } catch {
-      return { ok: false, message: "Disponibilidade inválida. Use JSON válido." };
+      return {
+        ok: false,
+        message: "Disponibilidade inválida. Atualize a seleção de dias e horários.",
+      };
     }
   }
 
