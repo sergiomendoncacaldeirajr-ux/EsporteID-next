@@ -146,7 +146,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         esporteNome: String(row.esporte_nome ?? "Esporte"),
         esporteId: Number(row.esporte_id ?? 0),
         dist: Number(row.dist_km ?? 99999),
-        eid: Number(row.nota_eid ?? 1),
+        eid: Number(row.nota_eid ?? 0),
         rank: Number(row.pontos_ranking ?? 0),
         modalidade: row.modalidade_match === "dupla" || row.modalidade_match === "time" ? row.modalidade_match : "individual",
         interesseMatch:
@@ -179,7 +179,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         esporteNome: String(t.esporte_nome ?? "Esporte"),
         esporteId: Number(t.esporte_id ?? 0),
         dist: Number(t.dist_km ?? 99999),
-        eid: Number(t.eid_time ?? 1),
+        eid: Number(t.eid_time ?? 0),
         rank: Number(t.pontos_ranking ?? 0),
         modalidade: tipo,
         interesseMatch: t.interesse_match === "ranking" ? "ranking" : "ranking_e_amistoso",

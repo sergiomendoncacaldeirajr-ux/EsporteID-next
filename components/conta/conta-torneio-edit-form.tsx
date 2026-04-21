@@ -9,6 +9,7 @@ import {
   MODALIDADES_PARTICIPACAO,
   STATUS_TORNEIO,
 } from "@/lib/torneios/catalog";
+import { TORNEIO_CATEGORIAS_PUBLICO, type TorneioCategoriaPublico } from "@/lib/torneios/categorias";
 
 const initial: TorneioUpdateState = { ok: false, message: "" };
 
@@ -22,12 +23,14 @@ export type ContaTorneioEditFormProps = {
     data_fim: string;
     valor_inscricao: number;
     categoria: string;
+    categorias_publico: TorneioCategoriaPublico[];
     descricao: string;
     regulamento: string;
     premios: string;
     formato_competicao: string;
     criterio_desempate: string;
     banner: string;
+    logo_arquivo: string;
     espaco_generico_id: number | null;
     modalidade_participacao: string;
     melhor_de: string;
@@ -143,7 +146,7 @@ export function ContaTorneioEditForm({ torneioId, initial: init, esportes, locai
           </div>
           <div>
             <label htmlFor="categoria" className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
-              Categoria / divisão
+              Divisão / classe principal
             </label>
             <input
               id="categoria"
@@ -154,14 +157,46 @@ export function ContaTorneioEditForm({ torneioId, initial: init, esportes, locai
           </div>
         </div>
         <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">Categorias públicas</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {TORNEIO_CATEGORIAS_PUBLICO.map((categoria) => (
+              <label
+                key={categoria.id}
+                className="inline-flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-bg/40 px-3 py-2 text-xs text-eid-fg"
+              >
+                <input
+                  type="checkbox"
+                  name="categoria_publico"
+                  value={categoria.id}
+                  defaultChecked={init.categorias_publico.includes(categoria.id)}
+                />
+                {categoria.label}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div>
           <label htmlFor="banner" className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
-            URL do banner (opcional)
+            URL da capa (opcional)
           </label>
           <input
             id="banner"
             name="banner"
             type="url"
             defaultValue={init.banner}
+            placeholder="https://…"
+            className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm text-eid-fg"
+          />
+        </div>
+        <div>
+          <label htmlFor="logo_arquivo" className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
+            URL do logo (opcional)
+          </label>
+          <input
+            id="logo_arquivo"
+            name="logo_arquivo"
+            type="url"
+            defaultValue={init.logo_arquivo}
             placeholder="https://…"
             className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm text-eid-fg"
           />

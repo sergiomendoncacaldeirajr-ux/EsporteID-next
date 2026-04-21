@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { User } from "@supabase/supabase-js";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Barlow, Barlow_Condensed, Barlow_Semi_Condensed } from "next/font/google";
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
@@ -10,8 +10,10 @@ import { LegalGate } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { SiteFooter } from "@/components/site-footer";
+import { ACTIVE_CONTEXT_COOKIE, resolveActiveAppContext } from "@/lib/auth/active-context";
 import { EID_LOGO_ICON_E_SRC } from "@/lib/branding";
 import { EID_HIDE_APP_SHELL_HEADER } from "@/lib/eid-app-shell";
+import { listarPapeis } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
@@ -63,19 +65,28 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   let user: User | null = null;
+  let papeis: string[] = [];
+  let activeContext = "atleta" as const;
   try {
     const supabase = await createClient();
     const { data } = await supabase.auth.getUser();
     user = data.user ?? null;
+    if (user) {
+      const { data: papeisRows } = await supabase.from("usuario_papeis").select("papel").eq("usuario_id", user.id);
+      papeis = listarPapeis(papeisRows);
+    }
   } catch {
     // Env ausente, restrição de cookies em RSC ou rede — evita 500 na página inteira.
     user = null;
+    papeis = [];
   }
 
   const hdrs = await headers();
+  const cookieStore = await cookies();
   const hideAppShell = hdrs.get(EID_HIDE_APP_SHELL_HEADER) === "1";
   const showAppChrome = Boolean(user) && !hideAppShell;
   const onboardingMinimalChrome = Boolean(user) && hideAppShell;
+  activeContext = resolveActiveAppContext(cookieStore.get(ACTIVE_CONTEXT_COOKIE)?.value ?? null, papeis);
 
   return (
     <html
@@ -88,7 +99,14 @@ export default async function RootLayout({
         <InteractionFeedback />
         {!user ? <VisitorThemeToggleFloat /> : null}
         {onboardingMinimalChrome ? <OnboardingTopbar /> : null}
-        {showAppChrome ? <DashboardTopbar persistent /> : null}
+        {showAppChrome ? (
+          <DashboardTopbar
+            persistent
+            initialMeId={user?.id ?? null}
+            initialPapeis={papeis}
+            initialActiveContext={activeContext}
+          />
+        ) : null}
         <div
           id="app-main-column"
           className={
@@ -103,7 +121,7 @@ export default async function RootLayout({
         >
           {children}
         </div>
-        {showAppChrome && user ? <MobileBottomNav userId={user.id} /> : null}
+        {showAppChrome && user ? <MobileBottomNav userId={user.id} activeContext={activeContext} /> : null}
         {hideAppShell ? null : <SiteFooter />}
         <LegalGate />
       </body>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { distanciaKm } from "@/lib/geo/distance-km";
 
 export const metadata = {
@@ -105,12 +106,14 @@ const sectionActionClass =
 export default async function DashboardPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const q = (sp.q ?? "").trim().toLowerCase();
+  const contextState = await getAuthContextState();
+  const { user, activeContext } = contextState;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   if (!user) {
     redirect("/login?next=/dashboard");
+  }
+  if (activeContext === "organizador" && contextState.papeis.includes("organizador")) {
+    redirect("/organizador");
   }
 
   const { data: profile } = await supabase
@@ -408,7 +411,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                     <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 overflow-hidden rounded-md border border-eid-bg text-[8px] font-black leading-none">
                       <span className="bg-eid-bg px-1 py-0.5 text-eid-fg">EID</span>
                       <span className="bg-eid-primary-500 px-1 py-0.5 text-[var(--eid-brand-ink)]">
-                        {Number(row.nota_eid ?? 1).toFixed(1)}
+                        {Number(row.nota_eid ?? 0).toFixed(1)}
                       </span>
                     </div>
                   </div>

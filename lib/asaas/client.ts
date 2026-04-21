@@ -59,3 +59,11 @@ export async function createAsaasPayment(payload: Record<string, unknown>) {
     body: payload,
   });
 }
+
+export async function refundAsaasPayment(paymentId: string) {
+  const safeId = String(paymentId ?? "").trim();
+  if (!safeId) throw new Error("Pagamento Asaas inválido para estorno.");
+  return asaasFetch<{ id?: string; status?: string }>(`/payments/${safeId}/refund`, {
+    method: "POST",
+  });
+}

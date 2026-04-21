@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { EidBadge } from "@/components/eid/eid-badge";
 import { ProfileAchievementsShelf, ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
@@ -111,6 +112,14 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
     .order("data_alteracao", { ascending: false })
     .limit(12);
 
+  const { data: eidLogs } = await supabase
+    .from("eid_logs")
+    .select("change_amount, reason, created_at, esportes(nome)")
+    .eq("entity_kind", "time")
+    .eq("entity_time_id", id)
+    .order("created_at", { ascending: false })
+    .limit(3);
+
   const { data: membros } = await supabase
     .from("membros_time")
     .select("usuario_id, cargo, status, profiles(id, nome, avatar_url)")
@@ -209,6 +218,9 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           <span className="mt-4 inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
             {(t.tipo ?? "time").toUpperCase()} · {esp?.nome ?? "Esporte"}
           </span>
+          <div className="mt-3 flex justify-center">
+            <EidBadge score={Number(t.eid_time ?? 0)} history={eidLogs ?? []} label="EID formação" />
+          </div>
           <h1 className="mt-2 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
           {t.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{t.username}</p> : null}
           <p className="mt-2 text-sm text-eid-text-secondary">{t.localizacao ?? "Localização não informada"}</p>
@@ -228,7 +240,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
 
           <div className="mt-5 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-4">
             <div>
-              <p className="text-xl font-bold tabular-nums text-eid-action-500 sm:text-2xl sm:font-black">{Number(t.eid_time ?? 1).toFixed(1)}</p>
+              <p className="text-xl font-bold tabular-nums text-eid-action-500 sm:text-2xl sm:font-black">{Number(t.eid_time ?? 0).toFixed(1)}</p>
               <p className="text-[10px] font-bold uppercase text-eid-text-secondary">EID</p>
             </div>
             <div>
@@ -382,18 +394,18 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           <ProfileSection title="Esportes e Estatísticas">
             <ProfileSportsMetricsCard
               sportName={esp?.nome ?? "Esporte"}
-              eidValue={Number(t.eid_time ?? 1)}
+              eidValue={Number(t.eid_time ?? 0)}
               rankValue={Number(t.pontos_ranking ?? 0)}
               rankLabel="Rank"
               trendLabel="Evolução EID"
               trendPoints={
                 (hist ?? []).length >= 3
                   ? ([
-                      Number((hist ?? [])[2]?.nota_nova ?? t.eid_time ?? 1),
-                      Number((hist ?? [])[1]?.nota_nova ?? t.eid_time ?? 1),
-                      Number((hist ?? [])[0]?.nota_nova ?? t.eid_time ?? 1),
+                      Number((hist ?? [])[2]?.nota_nova ?? t.eid_time ?? 0),
+                      Number((hist ?? [])[1]?.nota_nova ?? t.eid_time ?? 0),
+                      Number((hist ?? [])[0]?.nota_nova ?? t.eid_time ?? 0),
                     ] as [number, number, number])
-                  : [Number(t.eid_time ?? 1), Number(t.eid_time ?? 1) + 0.15, Number(t.eid_time ?? 1) + 0.3]
+                  : [Number(t.eid_time ?? 0), Number(t.eid_time ?? 0), Number(t.eid_time ?? 0)]
               }
             />
           </ProfileSection>

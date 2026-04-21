@@ -9,6 +9,7 @@ export const ADMIN_NAV_LINKS: { href: string; label: string; hint: string }[] = 
   { href: "/admin/matches", label: "Pedidos match", hint: "Matches" },
   { href: "/admin/denuncias", label: "Denúncias", hint: "Moderação" },
   { href: "/admin/financeiro", label: "Financeiro", hint: "Taxas e promo" },
+  { href: "/admin/eid", label: "EID", hint: "Motor e auditoria" },
   { href: "/admin/regras", label: "Ranking", hint: "Regras EID" },
   { href: "/admin/admins", label: "Admins", hint: "Acesso" },
 ];

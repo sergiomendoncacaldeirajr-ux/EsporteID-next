@@ -27,7 +27,7 @@ export default async function LocaisPage({ searchParams }: Props) {
   const to = from + pageSize - 1;
   let query = supabase
     .from("espacos_genericos")
-    .select("id, slug, nome_publico, localizacao, status, logo_arquivo, aceita_reserva, tipo_quadra", { count: "exact" })
+    .select("id, slug, nome_publico, localizacao, status, ownership_status, logo_arquivo, aceita_reserva, tipo_quadra", { count: "exact" })
     .eq("ativo_listagem", true)
     .order("id", { ascending: false });
   if (q) {
@@ -110,6 +110,9 @@ export default async function LocaisPage({ searchParams }: Props) {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-extrabold uppercase text-eid-primary-300">
                       {l.status ?? "Ativo"}
+                    </span>
+                    <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-extrabold uppercase text-eid-action-400">
+                      {l.ownership_status === "verificado" ? "Verificado" : "Genérico"}
                     </span>
                     {l.aceita_reserva ? (
                       <span className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-extrabold uppercase text-emerald-200">

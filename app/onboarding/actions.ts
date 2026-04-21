@@ -20,6 +20,7 @@ import {
   precisaEsportesPratica,
 } from "@/lib/roles";
 import { serializarEspacoReservaConfig } from "@/lib/espacos/config";
+import { findDuplicateEspaco } from "@/lib/espacos/duplicate";
 import { slugifyEspaco } from "@/lib/espacos/slug";
 import { createClient } from "@/lib/supabase/server";
 
@@ -55,27 +56,18 @@ const MAX_IMG_BYTES = 5 * 1024 * 1024;
 
 async function findLocalDuplicadoByNome(
   nomePublico: string,
+  localizacao?: string | null,
+  cidade?: string | null,
+  uf?: string | null,
   ignoreId?: number | null
-): Promise<{ id: number; nome_publico: string; responsavel_usuario_id: string | null; criado_por_usuario_id: string } | null> {
+): Promise<{
+  id: number;
+  nome_publico?: string | null;
+  responsavel_usuario_id?: string | null;
+  slug?: string | null;
+} | null> {
   const supabase = await createClient();
-  const nome = nomePublico.trim();
-  if (!nome) return null;
-
-  let q = supabase
-    .from("espacos_genericos")
-    .select("id, nome_publico, responsavel_usuario_id, criado_por_usuario_id");
-  if (ignoreId && Number.isInteger(ignoreId) && ignoreId > 0) {
-    q = q.neq("id", ignoreId);
-  }
-  const { data, error } = await q;
-  if (error) return null;
-
-  const alvo = nome.toLocaleLowerCase("pt-BR");
-  return (
-    (data ?? []).find(
-      (row) => String(row.nome_publico ?? "").trim().toLocaleLowerCase("pt-BR") === alvo
-    ) ?? null
-  );
+  return findDuplicateEspaco(supabase, { nomePublico, localizacao, cidade, uf, ignoreId });
 }
 
 async function salvarDetalhesPapel(
@@ -674,7 +666,13 @@ export async function salvarExtrasOnboarding(
         return { ok: false, message: "Preencha os dados mínimos do novo local (nome, cidade e estado)." };
       }
 
-      const dupNomeGlobal = await findLocalDuplicadoByNome(localNome, null);
+      const dupNomeGlobal = await findLocalDuplicadoByNome(
+        localNome,
+        [localCidade, localEstado.toUpperCase()].filter(Boolean).join(" - "),
+        localCidade,
+        localEstado.toUpperCase(),
+        null
+      );
       if (dupNomeGlobal) {
         if (dupNomeGlobal.responsavel_usuario_id == null) {
           localPreferidoId = dupNomeGlobal.id;
@@ -868,7 +866,13 @@ export async function salvarExtrasOnboarding(
 
     let espacoId = existente?.id ?? null;
     let reivindicarEspacoExistenteSemDono = false;
-    const dupNomeGlobal = await findLocalDuplicadoByNome(espacoNome, espacoId);
+    const dupNomeGlobal = await findLocalDuplicadoByNome(
+      espacoNome,
+      localizacao,
+      cidade,
+      estado,
+      espacoId
+    );
     if (dupNomeGlobal) {
       const semDono = dupNomeGlobal.responsavel_usuario_id == null;
       if (semDono) {

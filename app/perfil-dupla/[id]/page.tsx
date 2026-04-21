@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { EidBadge } from "@/components/eid/eid-badge";
 import { ProfileAchievementsShelf } from "@/components/perfil/profile-history-widgets";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfileIdentityHeader, ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
@@ -65,8 +66,18 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   );
 
   const { data: timeResolvido } = timeResolvidoId
-    ? await supabase.from("times").select("id, criador_id, nome").eq("id", timeResolvidoId).maybeSingle()
+    ? await supabase.from("times").select("id, criador_id, nome, eid_time").eq("id", timeResolvidoId).maybeSingle()
     : { data: null };
+
+  const { data: eidLogsDupla } = timeResolvidoId
+    ? await supabase
+        .from("eid_logs")
+        .select("change_amount, reason, created_at, esportes(nome)")
+        .eq("entity_kind", "time")
+        .eq("entity_time_id", timeResolvidoId)
+        .order("created_at", { ascending: false })
+        .limit(3)
+    : { data: [] };
 
   const { data: liderDupla } = timeResolvido?.criador_id
     ? await supabase.from("profiles").select("id, nome, whatsapp").eq("id", timeResolvido.criador_id).maybeSingle()
@@ -76,7 +87,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   const donoDuplaId = d.criador_id ?? d.player1_id;
   const isDonoDupla = user.id === donoDuplaId;
 
-  let formacoesMembroNaoLiderDupla: { id: number; nome: string }[] = [];
+  const formacoesMembroNaoLiderDupla: { id: number; nome: string }[] = [];
   if (!isMembroDupla && timeResolvidoId && d.esporte_id) {
     const { data: membroRowsDupla } = await supabase
       .from("membros_time")
@@ -193,6 +204,11 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                 <strong className="text-eid-fg">formação</strong>.
               </p>
               {d.bio ? <p className="mt-2 text-xs text-eid-text-secondary">{d.bio}</p> : null}
+              {timeResolvido ? (
+                <div className="mt-3">
+                  <EidBadge score={Number(timeResolvido.eid_time ?? 0)} history={eidLogsDupla ?? []} label="EID dupla" />
+                </div>
+              ) : null}
               {mediaEid != null ? (
                 <p className="mt-4 text-2xl font-bold text-eid-action-500 sm:text-3xl sm:font-black">EID médio {mediaEid.toFixed(1)}</p>
               ) : (
@@ -325,7 +341,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     avatarSize="lg"
                     trailing={
                       <p className="text-[11px] font-semibold text-eid-primary-300">
-                        EID {i === 0 ? Number(eid1?.nota_eid ?? 1).toFixed(1) : Number(eid2?.nota_eid ?? 1).toFixed(1)}
+                        EID {i === 0 ? Number(eid1?.nota_eid ?? 0).toFixed(1) : Number(eid2?.nota_eid ?? 0).toFixed(1)}
                       </p>
                     }
                   />

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getContextHomeHref, type ActiveAppContext } from "@/lib/auth/active-context";
 import { createClient } from "@/lib/supabase/client";
 import type { ReactNode } from "react";
 
@@ -53,7 +54,7 @@ function IconAgenda({ active }: { active: boolean }) {
 /* Troféu — para o rank elevado */
 function IconTrophy({ active }: { active: boolean }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-[21px] w-[21px]" fill="none">
+    <svg viewBox="0 0 24 24" className={`h-[21px] w-[21px] ${active ? "opacity-100" : "opacity-80"}`} fill="none">
       <path d="M7 3h10v8a5 5 0 01-10 0V3z" fill="white" fillOpacity="0.92" />
       <path d="M4 4h3v5a3 3 0 01-3-3V4zM17 4h3v2a3 3 0 01-3 3V4z" fill="white" fillOpacity="0.65" />
       <line x1="12" y1="16" x2="12" y2="19" stroke="white" strokeWidth="2" strokeLinecap="round" />
@@ -109,6 +110,7 @@ const AUTH_PATH_PREFIXES = [
 
 type Props = {
   userId: string | null;
+  activeContext?: ActiveAppContext;
 };
 
 function NavBadge({ n }: { n: number }) {
@@ -120,16 +122,11 @@ function NavBadge({ n }: { n: number }) {
   );
 }
 
-export function MobileBottomNav({ userId }: Props) {
+export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const pathname = usePathname() ?? "";
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(userId);
   const [agendaBadge, setAgendaBadge] = useState(0);
   const [socialBadge, setSocialBadge] = useState(0);
-
-  useEffect(() => {
-    // Evita resetar para null em oscilações do SSR após login.
-    if (userId) setResolvedUserId(userId);
-  }, [userId]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -216,7 +213,7 @@ export function MobileBottomNav({ userId }: Props) {
 
   if (pathname.startsWith("/admin")) return null;
 
-  const isHome = pathname === "/dashboard";
+  const isHome = activeContext === "organizador" ? pathname === "/organizador" : pathname === "/dashboard";
   const isAgenda =
     pathname === "/agenda" ||
     pathname.startsWith("/match") ||
@@ -227,6 +224,9 @@ export function MobileBottomNav({ userId }: Props) {
   const isRank = pathname === "/ranking" || pathname.startsWith("/ranking/");
   const isSocial = pathname === "/comunidade" || pathname.startsWith("/comunidade/");
   const isPerfil = pathname === `/perfil/${resolvedUserId}`;
+  const isTorneios = pathname === "/torneios" || pathname.startsWith("/torneios/");
+  const isLocais = pathname === "/locais" || pathname.startsWith("/locais/");
+  const isCriar = pathname === "/torneios/criar";
 
   const items: Array<{
     href: string;
@@ -236,32 +236,71 @@ export function MobileBottomNav({ userId }: Props) {
     rank?: boolean;
     badge?: number;
     badgeWrap?: boolean;
-  }> = [
-    { href: "/dashboard", label: "Home", icon: <IconHome active={isHome} />, active: isHome },
-    {
-      href: "/agenda",
-      label: "Agenda",
-      icon: <IconAgenda active={isAgenda} />,
-      active: isAgenda,
-      badge: agendaBadge,
-      badgeWrap: true,
-    },
-    { href: "/ranking", label: "Rank", icon: <IconTrophy active={isRank} />, active: isRank, rank: true },
-    {
-      href: "/comunidade",
-      label: "Social",
-      icon: <IconSocial active={isSocial} />,
-      active: isSocial,
-      badge: socialBadge,
-      badgeWrap: true,
-    },
-    {
-      href: `/perfil/${resolvedUserId}`,
-      label: "Perfil",
-      icon: <IconPerfil active={isPerfil} />,
-      active: isPerfil,
-    },
-  ];
+  }> =
+    activeContext === "organizador"
+      ? [
+          {
+            href: getContextHomeHref(activeContext),
+            label: "Home",
+            icon: <IconHome active={isHome} />,
+            active: isHome,
+          },
+          {
+            href: "/torneios",
+            label: "Eventos",
+            icon: <IconTrophy active={isTorneios} />,
+            active: isTorneios,
+          },
+          {
+            href: "/torneios/criar",
+            label: "Criar",
+            icon: <IconAgenda active={isCriar} />,
+            active: isCriar,
+          },
+          {
+            href: "/locais",
+            label: "Locais",
+            icon: <IconSocial active={isLocais} />,
+            active: isLocais,
+          },
+          {
+            href: `/perfil/${resolvedUserId}`,
+            label: "Perfil",
+            icon: <IconPerfil active={isPerfil} />,
+            active: isPerfil,
+          },
+        ]
+      : [
+          {
+            href: getContextHomeHref(activeContext),
+            label: "Home",
+            icon: <IconHome active={isHome} />,
+            active: isHome,
+          },
+          {
+            href: "/agenda",
+            label: "Agenda",
+            icon: <IconAgenda active={isAgenda} />,
+            active: isAgenda,
+            badge: agendaBadge,
+            badgeWrap: true,
+          },
+          { href: "/ranking", label: "Rank", icon: <IconTrophy active={isRank} />, active: isRank, rank: true },
+          {
+            href: "/comunidade",
+            label: "Social",
+            icon: <IconSocial active={isSocial} />,
+            active: isSocial,
+            badge: socialBadge,
+            badgeWrap: true,
+          },
+          {
+            href: `/perfil/${resolvedUserId}`,
+            label: "Perfil",
+            icon: <IconPerfil active={isPerfil} />,
+            active: isPerfil,
+          },
+        ];
 
   return (
     <>

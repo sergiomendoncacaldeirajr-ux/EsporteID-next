@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { createClient } from "@/lib/supabase/server";
+import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -18,14 +19,20 @@ export default async function RegistrarPlacarPage({ params }: Props) {
 
   const { data: p } = await supabase
     .from("partidas")
-    .select("id, jogador1_id, jogador2_id, status, esporte_id, esportes(nome)")
+    .select("id, jogador1_id, jogador2_id, status, esporte_id, torneio_id, esportes(nome)")
     .eq("id", id)
     .maybeSingle();
 
   if (!p) notFound();
 
   const participant = p.jogador1_id === user.id || p.jogador2_id === user.id;
-  if (!participant) notFound();
+  const torneioAccess = p.torneio_id ? await getTorneioStaffAccess(supabase, Number(p.torneio_id), user.id) : null;
+  const podeRegistrarTorneio = torneioAccess ? canLaunchTorneioScore(torneioAccess) : false;
+  if (p.torneio_id) {
+    if (!podeRegistrarTorneio) notFound();
+  } else if (!participant) {
+    notFound();
+  }
 
   const esp = Array.isArray(p.esportes) ? p.esportes[0] : p.esportes;
 
@@ -49,6 +56,11 @@ export default async function RegistrarPlacarPage({ params }: Props) {
           <h1 className="mt-2 text-lg font-bold text-eid-fg md:text-xl md:font-black">Partida #{id}</h1>
           <p className="mt-1 text-sm text-eid-primary-300">{esp?.nome ?? "Esporte"}</p>
           <p className="mt-2 text-xs text-eid-text-secondary">Status atual: {p.status ?? "—"}</p>
+          {p.torneio_id ? (
+            <p className="mt-2 text-xs text-eid-action-400">
+              Partida de torneio: o lançamento é restrito ao organizador e aos lançadores autorizados.
+            </p>
+          ) : null}
 
           <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-bg/50 px-3 py-3 sm:mt-6 sm:rounded-2xl sm:px-4 sm:py-4">
             <div className="min-w-0 flex-1 text-center">

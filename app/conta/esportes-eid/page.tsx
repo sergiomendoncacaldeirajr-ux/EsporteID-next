@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import type {
   ProfessorModoEsportivo,
   ProfessorObjetivoPlataforma,
@@ -36,6 +37,31 @@ export default async function ContaEsportesEidPage() {
   const { data: papeisRows } = await supabase.from("usuario_papeis").select("papel").eq("usuario_id", user.id);
   const papeis = listarPapeis(papeisRows);
   const needsSport = precisaEsportesPratica(papeis);
+  const canAtivarAtleta = papeis.includes("organizador") && !papeis.includes("atleta");
+
+  async function ativarModoAtletaAction() {
+    "use server";
+
+    const sb = await createClient();
+    const {
+      data: { user: actionUser },
+    } = await sb.auth.getUser();
+    if (!actionUser) redirect("/login?next=%2Fconta%2Fesportes-eid");
+
+    await sb
+      .from("usuario_papeis")
+      .upsert(
+        {
+          usuario_id: actionUser.id,
+          papel: "atleta",
+          atualizado_em: new Date().toISOString(),
+        },
+        { onConflict: "usuario_id,papel" }
+      );
+
+    revalidatePath("/conta/esportes-eid");
+    redirect("/conta/esportes-eid");
+  }
 
   const { data: esportes } = await supabase
     .from("esportes")
@@ -135,6 +161,19 @@ export default async function ContaEsportesEidPage() {
               <strong className="text-eid-fg">professor</strong> no cadastro. Seus papéis atuais não incluem essa
               função.
             </p>
+            {canAtivarAtleta ? (
+              <form action={ativarModoAtletaAction} className="mt-4">
+                <button
+                  type="submit"
+                  className="rounded-xl bg-eid-action-500 px-4 py-2 text-xs font-black uppercase tracking-wide text-[var(--eid-brand-ink)] transition hover:brightness-110"
+                >
+                  Ativar perfil de atleta
+                </button>
+                <p className="mt-2 text-xs text-eid-text-secondary">
+                  Isso libera o Modo Atleta no menu e permite configurar seus esportes e EID sem remover o papel de organizador.
+                </p>
+              </form>
+            ) : null}
             <p className="mt-3">
               <Link href="/dashboard" className="font-semibold text-eid-primary-300 underline">
                 Voltar ao painel

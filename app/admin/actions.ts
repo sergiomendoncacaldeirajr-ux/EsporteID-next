@@ -70,6 +70,71 @@ export async function adminSetEspacoListagem(formData: FormData) {
   }
 }
 
+export async function adminReviewEspacoClaim(formData: FormData) {
+  try {
+    await guard();
+    const claimId = Number(formData.get("claim_id"));
+    const decision = String(formData.get("decision") ?? "").trim().toLowerCase();
+    const observacoesAdmin = String(formData.get("observacoes_admin") ?? "").trim() || null;
+    if (!Number.isFinite(claimId) || !["aprovar", "rejeitar"].includes(decision)) return;
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const adminUserId = user?.id ?? null;
+
+    const db = svc();
+    const { data: claim } = await db
+      .from("espaco_reivindicacoes")
+      .select("id, espaco_generico_id, solicitante_id, status")
+      .eq("id", claimId)
+      .maybeSingle();
+    if (!claim) return;
+
+    const reviewedAt = new Date().toISOString();
+    const status = decision === "aprovar" ? "aprovado" : "rejeitado";
+
+    const { error: claimErr } = await db
+      .from("espaco_reivindicacoes")
+      .update({
+        status,
+        revisado_por_usuario_id: adminUserId,
+        revisado_em: reviewedAt,
+        observacoes_admin: observacoesAdmin,
+      })
+      .eq("id", claimId);
+    if (claimErr) return;
+
+    if (decision === "aprovar") {
+      await db
+        .from("espacos_genericos")
+        .update({
+          responsavel_usuario_id: claim.solicitante_id,
+          ownership_status: "verificado",
+          ownership_verificado_em: reviewedAt,
+          ownership_verificado_por_usuario_id: adminUserId,
+          onboarding_documental_status: "aprovado",
+          status: "publico",
+        })
+        .eq("id", claim.espaco_generico_id);
+    } else {
+      await db
+        .from("espacos_genericos")
+        .update({
+          ownership_status: "rejeitado",
+          onboarding_documental_status: "reprovado",
+        })
+        .eq("id", claim.espaco_generico_id);
+    }
+
+    revalidatePath("/admin/locais");
+    revalidatePath(`/local/${claim.espaco_generico_id}`);
+  } catch {
+    return;
+  }
+}
+
 export async function adminSetDenunciaStatus(formData: FormData) {
   try {
     await guard();
@@ -177,6 +242,55 @@ export async function adminRemovePlatformAdmin(formData: FormData) {
     const { error } = await svc().from("platform_admins").delete().eq("user_id", userId);
     if (error) return;
     revalidatePath("/admin/admins");
+  } catch {
+    return;
+  }
+}
+
+export async function adminUpdateEidConfig(formData: FormData) {
+  try {
+    await guard();
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const row = {
+      id: 1,
+      win_base: Number(formData.get("win_base")),
+      loss_base: Number(formData.get("loss_base")),
+      wo_bonus: Number(formData.get("wo_bonus")),
+      score_gap_bonus: Number(formData.get("score_gap_bonus")),
+      double_transfer_pct: Number(formData.get("double_transfer_pct")),
+      updated_at: new Date().toISOString(),
+      updated_by: user?.id ?? null,
+    };
+
+    if (
+      [row.win_base, row.loss_base, row.wo_bonus, row.score_gap_bonus, row.double_transfer_pct].some((value) => !Number.isFinite(value))
+    ) {
+      return;
+    }
+
+    const { error } = await svc().from("eid_config").upsert(row, { onConflict: "id" });
+    if (error) return;
+
+    revalidatePath("/admin/eid");
+  } catch {
+    return;
+  }
+}
+
+export async function adminRecalcularEidHistorico() {
+  try {
+    await guard();
+    const { error } = await svc().rpc("recalcular_eid_historico");
+    if (error) return;
+
+    revalidatePath("/admin/eid");
+    revalidatePath("/ranking");
+    revalidatePath("/dashboard");
+    revalidatePath("/match");
   } catch {
     return;
   }

@@ -118,7 +118,7 @@ export default async function TimesPage({ searchParams }: Props) {
                   Nível: {t.nivel_procurado ?? "a definir"}
                 </p>
                 <p className="mt-1 text-xs font-medium text-eid-primary-300">
-                  EID time: {Number(t.eid_time ?? 1).toFixed(1)}
+                  EID time: {Number(t.eid_time ?? 0).toFixed(1)}
                 </p>
                 {!t.vagas_abertas ? (
                   <p className="mt-2 text-xs text-eid-text-secondary">Sem vagas abertas no momento</p>

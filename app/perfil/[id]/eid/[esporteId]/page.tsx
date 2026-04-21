@@ -133,7 +133,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
       nome: String(t.nome ?? `Equipe #${id}`),
       tipo: t.tipo ?? null,
       escudo: t.escudo ?? null,
-      eid_time: Number(t.eid_time ?? 1),
+      eid_time: Number(t.eid_time ?? 0),
       pontos_ranking: Number(t.pontos_ranking ?? 0),
       duplaRegistroIds: [],
     });
@@ -175,7 +175,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
         nome: String(t.nome ?? `Equipe #${id}`),
         tipo: t.tipo ?? null,
         escudo: t.escudo ?? null,
-        eid_time: Number(t.eid_time ?? 1),
+        eid_time: Number(t.eid_time ?? 0),
         pontos_ranking: Number(t.pontos_ranking ?? 0),
         duplaRegistroIds: [],
       });
@@ -212,7 +212,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
           nome: String(trow.nome ?? `Equipe #${tid}`),
           tipo: trow.tipo ?? null,
           escudo: trow.escudo ?? null,
-          eid_time: Number(trow.eid_time ?? 1),
+          eid_time: Number(trow.eid_time ?? 0),
           pontos_ranking: Number(trow.pontos_ranking ?? 0),
           duplaRegistroIds: [did],
         });
@@ -371,7 +371,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
     .limit(80);
 
   const notasHist = (historicoEid ?? []).map((h) => Number(h.nota_nova)).filter((n) => Number.isFinite(n));
-  const eidNum = Number(ue.nota_eid ?? 1);
+  const eidNum = Number(ue.nota_eid ?? 0);
   const trendPoints: [number, number, number] =
     notasHist.length >= 3
       ? [notasHist[notasHist.length - 3]!, notasHist[notasHist.length - 2]!, notasHist[notasHist.length - 1]!]

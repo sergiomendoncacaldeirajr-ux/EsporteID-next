@@ -20,6 +20,8 @@ export default async function CadastrarLocalPage({
       ? "Informe um nome com pelo menos 2 caracteres."
       : sp.erro === "local"
         ? "Informe cidade/região ou endereço (mín. 3 caracteres)."
+        : sp.erro === "duplicado"
+          ? "Já existe um espaço com esse nome nesta mesma localização. Abra o cadastro existente ou solicite a posse oficial."
         : sp.erro === "gravacao"
           ? "Não foi possível salvar. Tente novamente."
           : null;

@@ -142,7 +142,7 @@ export default async function PerfilDuplaEidEsportePage({ params, searchParams }
       escudoUrl={t.escudo}
       escudoFallbackLetter="D"
       tipoLabel="Dupla"
-      eidTime={Number(t.eid_time ?? 1)}
+      eidTime={Number(t.eid_time ?? 0)}
       pontosRanking={Number(t.pontos_ranking ?? 0)}
       posicaoRank={posicao}
       partidas={partidas}

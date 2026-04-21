@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { LocalOwnershipClaimForm } from "@/components/locais/local-ownership-claim-form";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { resolveBackHref } from "@/lib/perfil/back-href";
@@ -28,7 +29,7 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
   const { data: loc } = await supabase
     .from("espacos_genericos")
     .select(
-      "id, slug, nome_publico, logo_arquivo, localizacao, lat, lng, status, esportes_ids, tipo_quadra, aceita_reserva, ativo_listagem, fotos_json, comodidades_json, criado_por_usuario_id, responsavel_usuario_id"
+      "id, slug, nome_publico, logo_arquivo, localizacao, lat, lng, status, ownership_status, esportes_ids, tipo_quadra, aceita_reserva, ativo_listagem, fotos_json, comodidades_json, criado_por_usuario_id, responsavel_usuario_id"
     )
     .eq("id", id)
     .maybeSingle();
@@ -49,9 +50,20 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
         ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.localizacao)}`
         : null;
 
-  const isDonoLocal =
+  const isGestorLocal =
     user &&
     (loc.criado_por_usuario_id === user.id || loc.responsavel_usuario_id === user.id);
+  const isResponsavelOficial = user && loc.responsavel_usuario_id === user.id;
+  const { data: minhaClaimPendente } =
+    user && !isResponsavelOficial
+      ? await supabase
+          .from("espaco_reivindicacoes")
+          .select("id")
+          .eq("espaco_generico_id", id)
+          .eq("solicitante_id", user.id)
+          .eq("status", "pendente")
+          .maybeSingle()
+      : { data: null };
 
   return (
     <>
@@ -77,6 +89,13 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
           <div className="p-4 sm:p-5">
             <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-eid-primary-300">
               {loc.status ?? "público"}
+            </span>
+            <span className="ml-2 rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-eid-action-400">
+              {loc.ownership_status === "verificado"
+                ? "verificado"
+                : loc.ownership_status === "pendente_validacao"
+                  ? "claim em análise"
+                  : "espaço genérico"}
             </span>
             <h1 className="mt-2 text-xl font-bold text-eid-fg sm:text-2xl">{loc.nome_publico}</h1>
             <p className="mt-2 text-sm text-eid-text-secondary">{loc.localizacao}</p>
@@ -118,7 +137,7 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
           ) : null}
         </section>
 
-        {isDonoLocal ? (
+        {isGestorLocal ? (
           <div className="mt-4">
             <Link
               href={`${contaEditarLocalHref(id)}?from=${encodeURIComponent(`/local/${id}`)}`}
@@ -127,6 +146,13 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
               Editar cadastro do local
             </Link>
           </div>
+        ) : null}
+
+        {!isResponsavelOficial && !minhaClaimPendente ? <LocalOwnershipClaimForm espacoId={id} /> : null}
+        {!isResponsavelOficial && minhaClaimPendente ? (
+          <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">
+            Seu pedido de posse oficial já está em análise pelo admin do EsporteID.
+          </p>
         ) : null}
 
         {!loc.ativo_listagem ? (

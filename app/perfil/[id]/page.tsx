@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { EidBadge } from "@/components/eid/eid-badge";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
@@ -82,6 +83,14 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     )
     .eq("usuario_id", id)
     .order("pontos_ranking", { ascending: false });
+
+  const { data: eidLogs } = await supabase
+    .from("eid_logs")
+    .select("change_amount, reason, created_at, esportes(nome)")
+    .eq("entity_kind", "usuario")
+    .eq("entity_profile_id", id)
+    .order("created_at", { ascending: false })
+    .limit(3);
 
   const principalEid =
     eids && eids.length > 0
@@ -246,6 +255,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                   Torneios
                 </span>
               )}
+              {principalEid ? <EidBadge score={Number(principalEid.nota_eid ?? 0)} history={eidLogs ?? []} /> : null}
             </div>
 
             {/* Localização */}
@@ -518,7 +528,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               ) : (
                 (eids ?? []).map((e, idx) => {
                   const esp = Array.isArray(e.esportes) ? e.esportes[0] : e.esportes;
-                  const eid = Number(e.nota_eid ?? 1);
+                  const eid = Number(e.nota_eid ?? 0);
                   const jogos = Number(e.partidas_jogadas ?? 0);
                   const eidHex = eid >= 7 ? "#22c55e" : eid >= 4 ? "#fb923c" : "#60a5fa";
                   const eidGlow = eid >= 7 ? "rgba(34,197,94,0.5)" : eid >= 4 ? "rgba(251,146,60,0.5)" : "rgba(96,165,250,0.45)";

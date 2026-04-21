@@ -3,10 +3,18 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ActiveContextSwitch } from "@/components/dashboard/active-context-switch";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LogoWordmark } from "@/components/brand/logo-wordmark";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
 import { EidThemeToggle } from "@/components/eid-theme-toggle";
+import {
+  getContextHomeHref,
+  listAvailableAppContexts,
+  resolveActiveAppContext,
+  type ActiveAppContext,
+} from "@/lib/auth/active-context";
+import { listarPapeis } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 
 function IconUserCircle({ className }: { className?: string }) {
@@ -21,17 +29,38 @@ function IconUserCircle({ className }: { className?: string }) {
 
 type Props = {
   persistent?: boolean;
+  initialMeId?: string | null;
+  initialPapeis?: string[];
+  initialActiveContext?: ActiveAppContext;
 };
 
-export function DashboardTopbar({ persistent = false }: Props) {
+export function DashboardTopbar({
+  persistent = false,
+  initialMeId = null,
+  initialPapeis = [],
+  initialActiveContext = "atleta",
+}: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [q, setQ] = useState("");
-  const [meId, setMeId] = useState<string | null>(null);
+  const [meId, setMeId] = useState<string | null>(initialMeId);
+  const [papeis, setPapeis] = useState<string[]>(initialPapeis);
 
   useEffect(() => {
     const sb = createClient();
-    sb.auth.getUser().then(({ data: { user } }) => setMeId(user?.id ?? null));
+    async function load() {
+      const {
+        data: { user },
+      } = await sb.auth.getUser();
+      setMeId(user?.id ?? null);
+      if (!user) {
+        setPapeis([]);
+        return;
+      }
+      const { data: papeisRows } = await sb.from("usuario_papeis").select("papel").eq("usuario_id", user.id);
+      setPapeis(listarPapeis(papeisRows));
+    }
+    void load();
   }, []);
 
   const hideBecausePersistent =
@@ -40,7 +69,9 @@ export function DashboardTopbar({ persistent = false }: Props) {
     Boolean(document.getElementById("eid-persistent-topbar"));
   if (hideBecausePersistent) return null;
 
-  const baseNavItems = [
+  const activeContext = resolveActiveAppContext(initialActiveContext, papeis);
+  const availableContexts = listAvailableAppContexts(papeis);
+  const baseAthleteNavItems = [
     { href: "/dashboard", label: "Painel" },
     { href: "/agenda", label: "Agenda" },
     { href: "/match", label: "Match" },
@@ -51,11 +82,19 @@ export function DashboardTopbar({ persistent = false }: Props) {
     { href: "/ranking", label: "Ranking" },
     { href: "/performance", label: "Performance" },
   ];
-
+  const baseOrganizerNavItems = [
+    { href: "/organizador", label: "Painel" },
+    { href: "/torneios", label: "Eventos" },
+    { href: "/torneios/criar", label: "Criar torneio" },
+    { href: "/locais", label: "Locais" },
+    { href: "/conta/esportes-eid", label: "EID" },
+  ];
+  const baseNavItems = activeContext === "organizador" ? baseOrganizerNavItems : baseAthleteNavItems;
   const navItems = meId ? [...baseNavItems, { href: `/perfil/${meId}`, label: "Perfil" }] : baseNavItems;
 
   function navActive(href: string) {
     if (href === "/dashboard") return pathname === "/dashboard";
+    if (href === "/organizador") return pathname === "/organizador";
     if (href === "/agenda") return pathname === "/agenda";
     if (href === "/match")
       return pathname === "/match" || pathname.startsWith("/desafio") || pathname.startsWith("/perfil-time");
@@ -70,7 +109,7 @@ export function DashboardTopbar({ persistent = false }: Props) {
     e.preventDefault();
     const term = q.trim();
     if (!term) return;
-    router.push(`/dashboard?q=${encodeURIComponent(term)}`);
+    router.push(`${getContextHomeHref(activeContext)}?q=${encodeURIComponent(term)}`);
   }
 
   return (
@@ -80,11 +119,12 @@ export function DashboardTopbar({ persistent = false }: Props) {
     >
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
         <div className="flex items-center justify-between gap-2 py-2 sm:py-2.5">
-          <Link href="/dashboard" className="min-w-0 shrink transition hover:opacity-90">
+          <Link href={getContextHomeHref(activeContext)} className="min-w-0 shrink transition hover:opacity-90">
             <LogoWordmark className="h-9 max-w-[min(52vw,240px)] object-left sm:h-11 sm:max-w-[min(58vw,300px)]" />
           </Link>
 
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <ActiveContextSwitch activeContext={activeContext} availableContexts={availableContexts} />
             <NotificationBell userId={meId} />
             <EidThemeToggle variant="toolbar" />
             <SignOutButton variant="icon" />
@@ -109,7 +149,7 @@ export function DashboardTopbar({ persistent = false }: Props) {
             id="eid-topbar-search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar atletas, locais…"
+            placeholder={activeContext === "organizador" ? "Buscar torneios, locais…" : "Buscar atletas, locais…"}
             className="eid-input-dark h-9 w-full rounded-[var(--eid-radius-md)] border border-[color:var(--eid-border-subtle)] px-3.5 text-sm text-eid-fg placeholder:text-eid-text-secondary/80 md:h-10"
           />
         </form>

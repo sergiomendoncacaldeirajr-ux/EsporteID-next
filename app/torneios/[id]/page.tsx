@@ -5,9 +5,11 @@ import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
 import { solicitarInscricaoTorneio } from "@/app/torneios/actions";
+import { formatTorneioCategorias, parseTorneioCategorias } from "@/lib/torneios/categorias";
 import { labelStatusTorneio } from "@/lib/torneios/catalog";
 import { linhasResumoRegras, parseRegrasPlacarJson } from "@/lib/torneios/regras";
 import { contaEditarTorneioHref } from "@/lib/routes/conta";
+import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -37,7 +39,7 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
   const { data: t } = await supabase
     .from("torneios")
     .select(
-      "id, nome, status, data_inicio, data_fim, banner, lat, lng, categoria, descricao, regulamento, premios, valor_inscricao, formato_competicao, criterio_desempate, regras_placar_json, criador_id, espaco_generico_id, esporte_id, esportes(nome)"
+      "id, nome, status, data_inicio, data_fim, banner, logo_arquivo, lat, lng, categoria, categorias_json, descricao, regulamento, premios, valor_inscricao, formato_competicao, criterio_desempate, regras_placar_json, criador_id, espaco_generico_id, esporte_id, esportes(nome)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -71,7 +73,20 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
 
   const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
   const isOrganizadorTorneio = t.criador_id === user.id;
+  const staffAccess = await getTorneioStaffAccess(supabase, id, user.id);
   const parsedRegras = parseRegrasPlacarJson(t.regras_placar_json);
+  const [{ data: minhasDuplas }, { data: meusTimes }] = await Promise.all([
+    parsedRegras?.modalidade_participacao === "dupla"
+      ? supabase
+          .from("duplas")
+          .select("id, player1_id, player2_id")
+          .or(`player1_id.eq.${user.id},player2_id.eq.${user.id}`)
+      : Promise.resolve({ data: [] as Array<{ id: number; player1_id: string; player2_id: string }> }),
+    parsedRegras?.modalidade_participacao === "equipe"
+      ? supabase.from("times").select("id, nome, criador_id").eq("criador_id", user.id)
+      : Promise.resolve({ data: [] as Array<{ id: number; nome: string | null; criador_id: string }> }),
+  ]);
+  const categoriasPublico = parseTorneioCategorias(t.categorias_json);
   const linhasRegras = linhasResumoRegras(t.formato_competicao, t.criterio_desempate, parsedRegras);
 
   const flashOk = sp.ok === "inscricao";
@@ -133,17 +148,39 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
                 </Link>
               ) : null}
             </div>
+            {t.logo_arquivo ? <img src={t.logo_arquivo} alt="" className="mt-4 h-14 w-14 rounded-2xl object-cover" /> : null}
             <h1 className="mt-3 text-2xl font-black tracking-tight text-eid-fg md:text-3xl">{t.nome}</h1>
             {isOrganizadorTorneio ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href={`${contaEditarTorneioHref(id)}?from=${encodeURIComponent(`/torneios/${id}`)}`}
+                  className="inline-flex rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 hover:border-eid-primary-500/65"
+                >
+                  Editar torneio
+                </Link>
+                <Link
+                  href={`/torneios/${id}/operacao?from=${encodeURIComponent(`/torneios/${id}`)}`}
+                  className="inline-flex rounded-xl border border-eid-action-500/45 bg-eid-action-500/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-eid-action-400 hover:border-eid-action-500/65"
+                >
+                  Operar placares
+                </Link>
+              </div>
+            ) : null}
+            {!isOrganizadorTorneio && canLaunchTorneioScore(staffAccess) ? (
               <Link
-                href={`${contaEditarTorneioHref(id)}?from=${encodeURIComponent(`/torneios/${id}`)}`}
-                className="mt-3 inline-flex rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 hover:border-eid-primary-500/65"
+                href={`/torneios/${id}/operacao?from=${encodeURIComponent(`/torneios/${id}`)}`}
+                className="mt-3 inline-flex rounded-xl border border-eid-action-500/45 bg-eid-action-500/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-eid-action-400 hover:border-eid-action-500/65"
               >
-                Editar torneio (página dedicada)
+                Área do lançador
               </Link>
             ) : null}
             <p className="mt-2 text-sm font-semibold text-eid-primary-300">{esp?.nome ?? "Esporte a definir"}</p>
             {t.categoria ? <p className="mt-2 text-xs text-eid-text-secondary">Categoria: {t.categoria}</p> : null}
+            {categoriasPublico.length > 0 ? (
+              <p className="mt-1 text-xs text-eid-text-secondary">
+                Públicos: <span className="font-semibold text-eid-fg">{formatTorneioCategorias(categoriasPublico)}</span>
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -195,11 +232,45 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
             ) : podeInscricao ? (
               <form action={solicitarInscricaoTorneio} className="mt-3">
                 <input type="hidden" name="torneio_id" value={id} />
+                {parsedRegras?.modalidade_participacao === "dupla" ? (
+                  <select
+                    name="dupla_id"
+                    required
+                    className="eid-input-dark mb-3 w-full rounded-xl px-3 py-2.5 text-sm text-eid-fg"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>
+                      Selecione sua dupla (pagamento pelo dono da entidade)
+                    </option>
+                    {(minhasDuplas ?? []).map((dupla) => (
+                      <option key={dupla.id} value={dupla.id}>
+                        Dupla #{dupla.id}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
+                {parsedRegras?.modalidade_participacao === "equipe" ? (
+                  <select
+                    name="time_id"
+                    required
+                    className="eid-input-dark mb-3 w-full rounded-xl px-3 py-2.5 text-sm text-eid-fg"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>
+                      Selecione seu time (pagamento pelo dono da entidade)
+                    </option>
+                    {(meusTimes ?? []).map((time) => (
+                      <option key={time.id} value={time.id}>
+                        {time.nome ?? `Time #${time.id}`}
+                      </option>
+                    ))}
+                  </select>
+                ) : null}
                 <button type="submit" className="eid-btn-primary w-full min-h-[48px] rounded-2xl text-sm font-black uppercase tracking-wide">
                   Solicitar inscrição
                 </button>
                 <p className="mt-2 text-[11px] text-eid-text-secondary">
-                  Registra pedido como pendente até o pagamento ser habilitado.
+                  A entrada no torneio só acontece após pagamento confirmado pela plataforma.
                 </p>
               </form>
             ) : (

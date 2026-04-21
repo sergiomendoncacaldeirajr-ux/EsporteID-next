@@ -9,6 +9,7 @@ export default async function AdminHomePage() {
     partidas: null,
     matches: null,
     denuncias: null,
+    eids: null,
   };
 
   if (hasServiceRoleConfig()) {
@@ -22,6 +23,7 @@ export default async function AdminHomePage() {
         pa,
         m,
         d,
+        eid,
       ] = await Promise.all([
         db.from("profiles").select("id", { count: "exact", head: true }),
         db.from("torneios").select("id", { count: "exact", head: true }),
@@ -30,6 +32,7 @@ export default async function AdminHomePage() {
         db.from("partidas").select("id", { count: "exact", head: true }),
         db.from("matches").select("id", { count: "exact", head: true }),
         db.from("denuncias").select("id", { count: "exact", head: true }),
+        db.from("usuario_eid").select("id", { count: "exact", head: true }),
       ]);
       counts = {
         profiles: p.count ?? 0,
@@ -39,6 +42,7 @@ export default async function AdminHomePage() {
         partidas: pa.count ?? 0,
         matches: m.count ?? 0,
         denuncias: d.count ?? 0,
+        eids: eid.count ?? 0,
       };
     } catch {
       /* service key inválida etc. */
@@ -53,13 +57,14 @@ export default async function AdminHomePage() {
     { k: "partidas", label: "Partidas", href: "/admin/partidas" },
     { k: "matches", label: "Pedidos", href: "/admin/matches" },
     { k: "denuncias", label: "Denúncias", href: "/admin/denuncias" },
+    { k: "eids", label: "EID", href: "/admin/eid" },
   ] as const;
 
   return (
     <div>
       <h2 className="text-base font-bold text-eid-fg">Visão geral</h2>
       <p className="mt-1 text-sm text-eid-text-secondary">
-        Gerencie usuários, esportes, locais, torneios, partidas, pedidos de match, denúncias e parâmetros financeiros.
+        Gerencie usuários, esportes, locais, torneios, partidas, pedidos de match, denúncias, parâmetros financeiros e o motor EID.
       </p>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">

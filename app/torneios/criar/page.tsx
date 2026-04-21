@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { createClient } from "@/lib/supabase/server";
 import { criarTorneo } from "@/app/torneios/actions";
 import {
@@ -10,6 +11,7 @@ import {
   MODALIDADES_PARTICIPACAO,
   STATUS_TORNEIO,
 } from "@/lib/torneios/catalog";
+import { TORNEIO_CATEGORIAS_PUBLICO } from "@/lib/torneios/categorias";
 import { usuarioPodeCriarTorneio } from "@/lib/torneios/organizador";
 
 export const metadata = {
@@ -23,11 +25,15 @@ export default async function CriarTorneioPage({
   searchParams?: Promise<{ erro?: string }>;
 }) {
   const sp = (await searchParams) ?? {};
+  const contextState = await getAuthContextState();
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/torneios/criar");
+  if (contextState.papeis.includes("organizador") && contextState.activeContext !== "organizador") {
+    redirect("/dashboard?erro=modo_organizador");
+  }
 
   const pode = await usuarioPodeCriarTorneio(supabase, user.id);
   if (!pode) {
@@ -192,7 +198,7 @@ export default async function CriarTorneioPage({
               </div>
               <div>
                 <label htmlFor="categoria" className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
-                  Categoria / divisão
+                  Divisão / classe principal
                 </label>
                 <input
                   id="categoria"
@@ -203,12 +209,38 @@ export default async function CriarTorneioPage({
               </div>
             </div>
             <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">Categorias públicas</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {TORNEIO_CATEGORIAS_PUBLICO.map((categoria) => (
+                  <label
+                    key={categoria.id}
+                    className="inline-flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-bg/40 px-3 py-2 text-xs text-eid-fg"
+                  >
+                    <input type="checkbox" name="categoria_publico" value={categoria.id} />
+                    {categoria.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
               <label htmlFor="banner" className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
-                URL do banner (opcional)
+                URL da capa (opcional)
               </label>
               <input
                 id="banner"
                 name="banner"
+                type="url"
+                placeholder="https://…"
+                className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm text-eid-fg"
+              />
+            </div>
+            <div>
+              <label htmlFor="logo_arquivo" className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
+                URL do logo (opcional)
+              </label>
+              <input
+                id="logo_arquivo"
+                name="logo_arquivo"
                 type="url"
                 placeholder="https://…"
                 className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm text-eid-fg"

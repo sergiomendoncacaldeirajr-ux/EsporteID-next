@@ -80,7 +80,7 @@ export default async function PerfilTimeEidEsportePage({ params, searchParams }:
       escudoUrl={t.escudo}
       escudoFallbackLetter={(t.tipo ?? "T").toUpperCase().slice(0, 1)}
       tipoLabel={tipoLabel}
-      eidTime={Number(t.eid_time ?? 1)}
+      eidTime={Number(t.eid_time ?? 0)}
       pontosRanking={Number(t.pontos_ranking ?? 0)}
       posicaoRank={posicao}
       partidas={partidas}

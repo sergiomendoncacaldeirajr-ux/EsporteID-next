@@ -92,7 +92,7 @@ export default async function RankingPage({ searchParams }: Props) {
       avatarUrl: p?.avatar_url ?? null,
       localizacao: p?.localizacao ?? "Brasil",
       esporteNome: e?.nome ?? "Esporte",
-      eid: Number(row.nota_eid ?? 1),
+      eid: Number(row.nota_eid ?? 0),
       vitorias: Number(row.vitorias ?? 0),
       derrotas: Number(row.derrotas ?? 0),
       pontos: Number(row.pontos_ranking ?? 0),
