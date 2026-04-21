@@ -284,39 +284,38 @@ label:has(input.sr-only):not(.eid-no-press):active {
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
-  background:
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--eid-bg) 80%, transparent) 0%,
-      color-mix(in srgb, var(--eid-bg) 88%, transparent) 100%
-    );
-  backdrop-filter: blur(2px);
+  background-color: var(--eid-bg);
+  background-image: none;
+  backdrop-filter: none;
 }
 
 .eid-loading-skeleton-screen-onboarding {
   padding-top: calc(env(safe-area-inset-top) + 6.25rem);
+  max-width: 42rem;
+  margin-inline: auto;
 }
 
 .eid-loading-skeleton-block {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--eid-border-subtle);
-  background: color-mix(in srgb, var(--eid-card) 78%, transparent);
-  opacity: 0.82;
+  border: 1px solid color-mix(in srgb, var(--eid-border-subtle) 92%, transparent);
+  background: color-mix(in srgb, var(--eid-card) 96%, black);
+  opacity: 0.96;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.14);
 }
 
 .eid-loading-skeleton-block::after {
   content: "";
   position: absolute;
   inset: 0;
-  width: 38%;
+  width: 34%;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    color-mix(in srgb, var(--eid-primary-300) 14%, white) 55%,
+    color-mix(in srgb, var(--eid-primary-300) 10%, white) 55%,
     transparent 100%
   );
-  animation: eid-skeleton-shimmer 1.5s ease-in-out infinite;
+  animation: eid-skeleton-shimmer 1.7s ease-in-out infinite;
 }
 
 .eid-is-locked {

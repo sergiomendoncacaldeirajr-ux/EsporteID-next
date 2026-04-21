@@ -6,6 +6,12 @@ import { useEffect, useRef, useState } from "react";
 const LOCK_MS = 1400;
 const NAV_LOADING_FALLBACK_MS = 30000;
 type LoadingCause = "nav" | "submit";
+type OnboardingSkeletonStep = "papeis" | "esportes" | "extras" | "perfil";
+
+function readOnboardingStepFromDom(): OnboardingSkeletonStep | null {
+  const raw = document.querySelector("[data-eid-onboarding-step]")?.getAttribute("data-eid-onboarding-step");
+  return raw === "papeis" || raw === "esportes" || raw === "extras" || raw === "perfil" ? raw : null;
+}
 
 function isSameOriginNavigationLink(el: HTMLAnchorElement) {
   if (!el.href) return false;
@@ -99,6 +105,7 @@ export function InteractionFeedback() {
   const [loading, setLoading] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const [contentTopOffsetPx, setContentTopOffsetPx] = useState(0);
+  const [onboardingSkeletonStep, setOnboardingSkeletonStep] = useState<OnboardingSkeletonStep>("papeis");
   const navStartedAtRef = useRef<number>(0);
   const loadingCauseRef = useRef<LoadingCause | null>(null);
   const loadingRef = useRef(false);
@@ -202,8 +209,9 @@ export function InteractionFeedback() {
       navStartedAtRef.current = Date.now();
       setLoading(true);
       if (isOnboarding) {
-        const currentStep = document.querySelector("[data-eid-onboarding-step]")?.getAttribute("data-eid-onboarding-step") ?? null;
+        const currentStep = readOnboardingStepFromDom();
         onboardingStepBeforeSubmitRef.current = currentStep;
+        if (currentStep) setOnboardingSkeletonStep(currentStep);
       } else {
         onboardingStepBeforeSubmitRef.current = null;
       }
@@ -214,10 +222,8 @@ export function InteractionFeedback() {
       if (main) {
         submitMutationObserverRef.current = new MutationObserver(() => {
           if (isOnboarding) {
-            const currentStep =
-              document
-                .querySelector("[data-eid-onboarding-step]")
-                ?.getAttribute("data-eid-onboarding-step") ?? null;
+            const currentStep = readOnboardingStepFromDom();
+            if (currentStep) setOnboardingSkeletonStep(currentStep);
             if (currentStep === onboardingStepBeforeSubmitRef.current) {
               return;
             }
@@ -292,9 +298,13 @@ export function InteractionFeedback() {
       setShowSkeleton(false);
       return;
     }
+    if (isOnboarding) {
+      const currentStep = readOnboardingStepFromDom();
+      if (currentStep) setOnboardingSkeletonStep(currentStep);
+    }
     const t = window.setTimeout(() => setShowSkeleton(true), 120);
     return () => window.clearTimeout(t);
-  }, [loading]);
+  }, [loading, isOnboarding]);
 
   useEffect(() => {
     if (!showSkeleton) {
@@ -338,17 +348,52 @@ export function InteractionFeedback() {
       >
         <div className={`eid-loading-skeleton-screen ${isOnboarding ? "eid-loading-skeleton-screen-onboarding" : ""}`}>
           {isOnboarding ? (
-            <>
-              <div className="eid-loading-skeleton-block h-5 w-24 rounded-lg" />
-              <div className="eid-loading-skeleton-block h-4 w-36 rounded-lg" />
-              <div className="eid-loading-skeleton-block h-24 w-full rounded-2xl" />
-              <div className="space-y-2">
-                <div className="eid-loading-skeleton-block h-16 w-full rounded-2xl" />
-                <div className="eid-loading-skeleton-block h-16 w-full rounded-2xl" />
-                <div className="eid-loading-skeleton-block h-16 w-full rounded-2xl" />
-              </div>
-              <div className="eid-loading-skeleton-block h-11 w-full rounded-xl" />
-            </>
+            onboardingSkeletonStep === "papeis" ? (
+              <>
+                <div className="eid-loading-skeleton-block h-5 w-24 rounded-lg" />
+                <div className="eid-loading-skeleton-block h-4 w-36 rounded-lg" />
+                <div className="eid-loading-skeleton-block h-7 w-32 rounded-lg" />
+                <div className="eid-loading-skeleton-block h-3 w-[62%] rounded-md" />
+                <div className="eid-loading-skeleton-block h-3 w-[74%] rounded-md" />
+                <div className="space-y-2">
+                  <div className="eid-loading-skeleton-block h-[4.5rem] w-full rounded-2xl" />
+                  <div className="eid-loading-skeleton-block h-[4.5rem] w-full rounded-2xl" />
+                  <div className="eid-loading-skeleton-block h-[4.5rem] w-full rounded-2xl" />
+                  <div className="eid-loading-skeleton-block h-[4.5rem] w-full rounded-2xl" />
+                </div>
+                <div className="eid-loading-skeleton-block h-11 w-full rounded-xl" />
+              </>
+            ) : onboardingSkeletonStep === "esportes" ? (
+              <>
+                <div className="eid-loading-skeleton-block h-5 w-24 rounded-lg" />
+                <div className="eid-loading-skeleton-block h-4 w-44 rounded-lg" />
+                <div className="flex gap-2">
+                  <div className="eid-loading-skeleton-block h-8 w-20 rounded-full" />
+                  <div className="eid-loading-skeleton-block h-8 w-24 rounded-full" />
+                  <div className="eid-loading-skeleton-block h-8 w-[4.5rem] rounded-full" />
+                </div>
+                <div className="eid-loading-skeleton-block h-28 w-full rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-28 w-full rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-11 w-full rounded-xl" />
+              </>
+            ) : onboardingSkeletonStep === "extras" ? (
+              <>
+                <div className="eid-loading-skeleton-block h-5 w-24 rounded-lg" />
+                <div className="eid-loading-skeleton-block h-4 w-52 rounded-lg" />
+                <div className="eid-loading-skeleton-block h-40 w-full rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-24 w-full rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-11 w-full rounded-xl" />
+              </>
+            ) : (
+              <>
+                <div className="eid-loading-skeleton-block h-5 w-24 rounded-lg" />
+                <div className="eid-loading-skeleton-block h-4 w-40 rounded-lg" />
+                <div className="eid-loading-skeleton-block h-44 w-full rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-12 w-full rounded-xl" />
+                <div className="eid-loading-skeleton-block h-12 w-[82%] rounded-xl" />
+                <div className="eid-loading-skeleton-block h-11 w-full rounded-xl" />
+              </>
+            )
           ) : (
             <>
               <div className="eid-loading-skeleton-block h-8 w-40 rounded-xl" />
