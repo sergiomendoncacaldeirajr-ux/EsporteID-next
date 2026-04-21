@@ -16,15 +16,21 @@ export default async function ProfessoresPage() {
     .limit(30);
 
   const professorIds = (perfis ?? []).map((item) => item.usuario_id);
+  type ProfessorEsporteRow = {
+    professor_id: string;
+    valor_base_centavos: number | null;
+    esportes: { nome?: string | null } | { nome?: string | null }[] | null;
+  };
+
   const { data: esportesRows } = professorIds.length
     ? await supabase
         .from("professor_esportes")
         .select("professor_id, valor_base_centavos, esportes(nome)")
         .in("professor_id", professorIds)
         .eq("ativo", true)
-    : { data: [] as Array<{ professor_id: string; valor_base_centavos: number | null; esportes: { nome?: string | null } | { nome?: string | null }[] | null }> };
+    : { data: [] as ProfessorEsporteRow[] };
 
-  const esportesByProfessor = new Map<string, typeof esportesRows>();
+  const esportesByProfessor = new Map<string, ProfessorEsporteRow[]>();
   for (const row of esportesRows ?? []) {
     const current = esportesByProfessor.get(row.professor_id) ?? [];
     current.push(row);
