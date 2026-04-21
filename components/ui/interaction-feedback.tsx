@@ -635,37 +635,7 @@ export function InteractionFeedback() {
       >
         <div className="eid-top-loading-bar h-full w-full rounded-b-sm" />
       </div>
-      <div
-        aria-hidden
-        style={{
-          top: `${contentTopOffsetPx}px`,
-        }}
-        className={`pointer-events-none fixed bottom-0 left-0 right-0 z-[85] transition-opacity duration-300 ${
-          showSkeleton ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        {authPath && !isOnboarding && suppressCurrentAuthSkeletonRef.current ? null : (
-        <div className={`eid-loading-skeleton-screen ${isOnboarding ? "eid-loading-skeleton-screen-onboarding" : ""}`}>
-          {isOnboarding ? (
-            <OnboardingExactSkeleton step={onboardingSkeletonStep} />
-          ) : authSkeletonScreen ? (
-            <AuthExactSkeleton screen={authSkeletonScreen} />
-          ) : (
-            <>
-              <div className="eid-loading-skeleton-block h-8 w-40 rounded-xl" />
-              <div className="eid-loading-skeleton-block h-24 w-full rounded-2xl" />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="eid-loading-skeleton-block h-20 rounded-2xl" />
-                <div className="eid-loading-skeleton-block h-20 rounded-2xl" />
-              </div>
-              <div className="eid-loading-skeleton-block h-14 w-full rounded-xl" />
-              <div className="eid-loading-skeleton-block h-14 w-[85%] rounded-xl" />
-              <div className="eid-loading-skeleton-block h-14 w-[72%] rounded-xl" />
-            </>
-          )}
-        </div>
-        )}
-      </div>
+      {/* Skeleton global removido a pedido do usuário. */}
     </>
   );
 }
