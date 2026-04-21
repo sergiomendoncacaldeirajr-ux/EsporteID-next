@@ -885,7 +885,7 @@ export async function criarReservaEspacoAction(
         inicio,
         fim,
         esporte_id: esporteId,
-        tipo_reserva,
+        tipo_reserva: tipoReserva,
         origem_reserva: benefit.ok ? "socio" : "avulsa",
         reserva_gratuita: usarBeneficioGratis,
         espaco_socio_id: socio?.id ?? null,
