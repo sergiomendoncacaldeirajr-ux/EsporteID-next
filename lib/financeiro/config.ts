@@ -1,6 +1,3 @@
-type NullableNumber = number | string | null | undefined;
-type NullableDate = string | null | undefined;
-
 export type FinanceiroConfig = {
   asaas_taxa_percentual: number;
   plataforma_sobre_taxa_gateway: number;
@@ -26,7 +23,7 @@ export type FinanceiroConfig = {
 
 type ConfigInput = Partial<Record<keyof FinanceiroConfig, unknown>> | null | undefined;
 
-function num(value: NullableNumber, fallback = 0) {
+function num(value: unknown, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
@@ -35,7 +32,7 @@ function bool(value: unknown, fallback = false) {
   return typeof value === "boolean" ? value : fallback;
 }
 
-function dateValue(value: NullableDate) {
+function dateValue(value: unknown) {
   return typeof value === "string" && value.trim() ? value : null;
 }
 
@@ -66,7 +63,7 @@ export function normalizeFinanceiroConfig(input: ConfigInput): FinanceiroConfig 
       0.2
     ),
     professor_promocao_ativa: bool(input?.professor_promocao_ativa, false),
-    professor_promocao_ate: dateValue(input?.professor_promocao_ate as NullableDate),
+    professor_promocao_ate: dateValue(input?.professor_promocao_ate),
     espaco_taxa_fixa: num(input?.espaco_taxa_fixa, 0),
     espaco_taxa_fixa_promo: num(input?.espaco_taxa_fixa_promo, 0),
     espaco_plataforma_sobre_taxa_gateway: num(
@@ -79,9 +76,9 @@ export function normalizeFinanceiroConfig(input: ConfigInput): FinanceiroConfig 
       0.2
     ),
     espaco_promocao_ativa: bool(input?.espaco_promocao_ativa, false),
-    espaco_promocao_ate: dateValue(input?.espaco_promocao_ate as NullableDate),
+    espaco_promocao_ate: dateValue(input?.espaco_promocao_ate),
     torneio_promocao_ativa: bool(input?.torneio_promocao_ativa, false),
-    torneio_promocao_ate: dateValue(input?.torneio_promocao_ate as NullableDate),
+    torneio_promocao_ate: dateValue(input?.torneio_promocao_ate),
   };
 }
 
