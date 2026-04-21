@@ -212,7 +212,7 @@ export function InteractionFeedback() {
         submitMutationObserverRef.current.observe(main, {
           childList: true,
           subtree: true,
-          attributes: true,
+          attributes: false,
           characterData: false,
         });
       }
@@ -240,7 +240,7 @@ export function InteractionFeedback() {
       navMutationObserverRef.current.observe(main, {
         childList: true,
         subtree: true,
-        attributes: true,
+        attributes: false,
         characterData: false,
       });
     }
