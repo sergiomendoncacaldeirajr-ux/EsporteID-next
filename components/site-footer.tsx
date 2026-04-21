@@ -11,7 +11,10 @@ export async function SiteFooter() {
   const isPlatformAdmin = user ? await getIsPlatformAdmin() : false;
 
   return (
-    <footer className="mt-auto pb-[calc(4.8rem+env(safe-area-inset-bottom))] md:pb-0">
+    <footer
+      className="mt-auto pb-[calc(4.8rem+env(safe-area-inset-bottom))] md:pb-0"
+      style={{ viewTransitionName: "eid-app-footer" }}
+    >
       <div className="h-px bg-gradient-to-r from-transparent via-[color:var(--eid-border)] to-transparent" />
 
       {/*

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { User } from "@supabase/supabase-js";
 import { cookies, headers } from "next/headers";
+import { ViewTransition } from "react";
 import { Barlow, Barlow_Condensed, Barlow_Semi_Condensed } from "next/font/google";
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
@@ -115,15 +116,17 @@ export default async function RootLayout({
           id="app-main-column"
           className={
             showAppChrome
-              ? "eid-page-transition flex flex-1 flex-col pb-[calc(4.25rem+env(safe-area-inset-bottom))] pt-[calc(4.25rem+env(safe-area-inset-top))] md:pb-24 md:pt-24"
+              ? "flex flex-1 flex-col pb-[calc(4.25rem+env(safe-area-inset-bottom))] pt-[calc(4.25rem+env(safe-area-inset-top))] md:pb-24 md:pt-24"
               : onboardingMinimalChrome
-                ? "eid-page-transition flex min-h-0 flex-1 flex-col pt-[calc(3.25rem+env(safe-area-inset-top))]"
+                ? "flex min-h-0 flex-1 flex-col pt-[calc(3.25rem+env(safe-area-inset-top))]"
                 : hideAppShell
-                  ? "eid-page-transition flex min-h-0 flex-1 flex-col"
+                  ? "flex min-h-0 flex-1 flex-col"
                   : "flex flex-1 flex-col pb-28"
           }
         >
-          {children}
+          <ViewTransition default="none" enter="eid-vt-main-in" exit="eid-vt-main-out">
+            {children}
+          </ViewTransition>
         </div>
         {showAppChrome && user ? <MobileBottomNav userId={user.id} activeContext={activeContext} /> : null}
         {hideAppShell ? null : <SiteFooter />}

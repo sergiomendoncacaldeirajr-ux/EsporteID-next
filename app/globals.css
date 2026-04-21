@@ -135,18 +135,61 @@ body {
   letter-spacing: 0.02em;
 }
 
-@keyframes eid-fade-in {
+/* View Transitions (React/Next): anima só o conteúdo em #app-main-column; header/footer/nav fixos permanecem estáveis */
+::view-transition-group(eid-app-topbar),
+::view-transition-group(eid-app-footer),
+::view-transition-group(eid-app-bottomnav) {
+  animation: none !important;
+  z-index: 200;
+}
+
+::view-transition-old(eid-app-topbar),
+::view-transition-new(eid-app-topbar),
+::view-transition-old(eid-app-footer),
+::view-transition-new(eid-app-footer),
+::view-transition-old(eid-app-bottomnav),
+::view-transition-new(eid-app-bottomnav) {
+  animation: none !important;
+}
+
+::view-transition-old(eid-app-topbar),
+::view-transition-old(eid-app-footer),
+::view-transition-old(eid-app-bottomnav) {
+  display: none;
+}
+
+@keyframes eid-vt-main-fade-in {
   from {
-    opacity: 0.98;
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
   }
 }
 
-.eid-page-transition {
-  animation: eid-fade-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity;
+@keyframes eid-vt-main-fade-out {
+  from {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translateY(-8px);
+  }
+}
+
+::view-transition-old(.eid-vt-main-out) {
+  animation: 170ms cubic-bezier(0.22, 1, 0.36, 1) both eid-vt-main-fade-out;
+}
+
+::view-transition-new(.eid-vt-main-in) {
+  animation: 260ms cubic-bezier(0.22, 1, 0.36, 1) 70ms both eid-vt-main-fade-in;
 }
 
 /* Toque / clique estilo app — leve “pressed” em controles comuns */
@@ -313,9 +356,11 @@ a.eid-is-locked {
     scroll-behavior: auto;
   }
 
-  .eid-page-transition {
-    animation: none;
-    will-change: auto;
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
   }
 
   button:not(:disabled):not(.eid-no-press):active,

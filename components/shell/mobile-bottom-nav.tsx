@@ -390,6 +390,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       <nav
         className="fixed bottom-0 left-0 z-[55] w-full md:hidden"
         aria-label="Navegação principal"
+        style={{ viewTransitionName: "eid-app-bottomnav" }}
       >
         <div
           className="relative overflow-visible rounded-t-[18px] border-t border-[color:var(--eid-border-subtle)] bg-eid-card/96 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl"

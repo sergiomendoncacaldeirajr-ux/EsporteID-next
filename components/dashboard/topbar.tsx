@@ -139,6 +139,7 @@ export function DashboardTopbar({
     <header
       id={persistent ? "eid-persistent-topbar" : undefined}
       className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-eid-bg/90 pt-[env(safe-area-inset-top)] shadow-[0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-md supports-[backdrop-filter]:bg-eid-bg/82 md:mb-3`}
+      style={persistent ? { viewTransitionName: "eid-app-topbar" } : undefined}
     >
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
         <div className="flex items-center justify-between gap-2 py-2 sm:py-2.5">
