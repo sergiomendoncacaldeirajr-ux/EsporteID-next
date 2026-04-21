@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AthleteRankingCard } from "@/components/ranking/athlete-ranking-card";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -106,118 +105,136 @@ export default async function RankingPage({ searchParams }: Props) {
   }
 
   return (
-    <>
-      <DashboardTopbar />
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
-        <div className="mb-3 flex items-center justify-between gap-3 md:mb-3">
-          <div>
-            <h1 className="text-base font-semibold tracking-tight text-eid-fg md:text-lg">Ranking</h1>
-            <p className="mt-0.5 hidden text-[11px] leading-relaxed text-eid-text-secondary md:mt-1 md:block">
-              Nota EID (azul) e pontos de ranking (laranja); interesse em match —{" "}
-              <span className="text-eid-fg/90">só ranking</span> ou <span className="text-eid-fg/90">ranking + amistoso</span>.
-            </p>
-          </div>
-          <Link href="/dashboard" className="shrink-0 text-xs font-medium text-eid-primary-300 hover:text-eid-fg">
-            Painel
-          </Link>
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-4 sm:px-6 sm:py-6">
+      <header className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight text-eid-fg md:text-2xl md:font-extrabold">Ranking</h1>
+          <p className="mt-1.5 hidden text-xs leading-relaxed text-eid-text-secondary md:mt-2 md:block md:max-w-xl">
+            Nota EID (azul) e pontos de ranking (laranja); interesse em match —{" "}
+            <span className="font-medium text-eid-fg/90">só ranking</span> ou{" "}
+            <span className="font-medium text-eid-fg/90">ranking + amistoso</span>.
+          </p>
         </div>
-        <form className="mb-5 grid gap-2 rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card p-2.5 sm:grid-cols-[1fr_1fr_auto]">
-          <select
-            name="esporte"
-            defaultValue={sp.esporte ?? ""}
-            className="eid-input-dark h-9 rounded-[var(--eid-radius-md)] px-3 text-sm text-eid-fg"
+        <Link
+          href="/dashboard"
+          className="inline-flex shrink-0 items-center justify-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/[0.08] px-4 py-2.5 text-xs font-bold text-eid-primary-200 shadow-sm transition duration-200 hover:border-eid-primary-500/45 hover:bg-eid-primary-500/15 active:scale-[0.98]"
+        >
+          Painel
+        </Link>
+      </header>
+
+      <form
+        action="/ranking"
+        method="get"
+        className="mb-8 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-4 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.4)] backdrop-blur-sm sm:p-5"
+      >
+        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.16em] text-eid-text-secondary">Filtros</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <label className="min-w-0 flex-1 sm:min-w-[200px]">
+            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Esporte</span>
+            <select
+              name="esporte"
+              defaultValue={sp.esporte ?? ""}
+              className="eid-input-dark h-11 w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3.5 text-sm font-medium text-eid-fg shadow-inner transition duration-200 focus:border-eid-primary-500/40 focus:outline-none focus:ring-2 focus:ring-eid-primary-500/25"
+            >
+              <option value="">Todos os esportes</option>
+              {esportes?.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="min-w-0 flex-1 sm:min-w-[220px]">
+            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Cidade</span>
+            <input
+              name="cidade"
+              defaultValue={sp.cidade ?? ""}
+              placeholder="Filtrar por cidade (opcional)"
+              className="eid-input-dark h-11 w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3.5 text-sm font-medium text-eid-fg shadow-inner placeholder:text-eid-text-secondary/75 transition duration-200 focus:border-eid-primary-500/40 focus:outline-none focus:ring-2 focus:ring-eid-primary-500/25"
+            />
+          </label>
+          <button
+            type="submit"
+            className="eid-btn-primary h-11 shrink-0 rounded-xl px-6 text-sm font-bold shadow-md transition duration-200 active:scale-[0.98] sm:min-w-[7rem]"
           >
-            <option value="">Todos os esportes</option>
-            {esportes?.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.nome}
-              </option>
-            ))}
-          </select>
-          <input
-            name="cidade"
-            defaultValue={sp.cidade ?? ""}
-            placeholder="Filtrar por cidade (opcional)"
-            className="eid-input-dark h-9 rounded-[var(--eid-radius-md)] px-3 text-sm text-eid-fg placeholder:text-eid-text-secondary/85"
-          />
-          <button type="submit" className="eid-btn-primary rounded-[var(--eid-radius-md)] px-4 text-sm">
             Filtrar
           </button>
-        </form>
-
-        {podium.length > 0 && page === 1 ? (
-          <section className="mb-8">
-            <h2 className="mb-3 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-eid-primary-500">
-              Pódio
-            </h2>
-            <div className="grid gap-3 md:grid-cols-3 md:items-end">
-              {podium[1] ? (
-                <div className="order-2 md:order-1">
-                  <AthleteRankingCard {...rowToCardProps(podium[1], 2, "podium-2")} />
-                </div>
-              ) : null}
-              {podium[0] ? (
-                <div className="order-1 md:order-2">
-                  <AthleteRankingCard {...rowToCardProps(podium[0], 1, "podium-1")} />
-                </div>
-              ) : null}
-              {podium[2] ? (
-                <div className="order-3">
-                  <AthleteRankingCard {...rowToCardProps(podium[2], 3, "podium-3")} />
-                </div>
-              ) : null}
-            </div>
-          </section>
-        ) : null}
-
-        {rankingAll.length === 0 ? (
-          <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-sm text-eid-text-secondary">
-            Nenhum atleta encontrado para os filtros selecionados.
-          </p>
-        ) : pageRest.length > 0 ? (
-          <section>
-            {page === 1 && podium.length > 0 ? (
-              <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">
-                Demais posições
-              </h2>
-            ) : null}
-            <div className="grid gap-3">
-              {pageRest.map((row, idx) => (
-                <AthleteRankingCard
-                  key={`${row.usuario_id}-${row.esporte_id}-${start}-${idx}`}
-                  {...rowToCardProps(row, 4 + start + idx, "list")}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        <div className="mt-8 flex items-center justify-between">
-          <Link
-            href={`/ranking?${qs}&page=${page - 1}`}
-            aria-disabled={!hasPrev}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
-              hasPrev
-                ? "border-[color:var(--eid-border-subtle)] text-eid-fg hover:border-eid-primary-500/35"
-                : "pointer-events-none border-[color:var(--eid-border-subtle)] text-eid-text-secondary opacity-50"
-            }`}
-          >
-            ← Anterior
-          </Link>
-          <span className="text-xs text-eid-text-secondary">Página {page}</span>
-          <Link
-            href={`/ranking?${qs}&page=${page + 1}`}
-            aria-disabled={!hasNext}
-            className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
-              hasNext
-                ? "border-[color:var(--eid-border-subtle)] text-eid-fg hover:border-eid-primary-500/35"
-                : "pointer-events-none border-[color:var(--eid-border-subtle)] text-eid-text-secondary opacity-50"
-            }`}
-          >
-            Próxima →
-          </Link>
         </div>
+      </form>
+
+      {podium.length > 0 && page === 1 ? (
+        <section className="relative mb-12 sm:mb-14">
+          <div
+            className="pointer-events-none absolute -inset-x-4 -top-6 bottom-0 -z-10 mx-auto max-w-3xl rounded-[2rem] bg-[radial-gradient(ellipse_80%_60%_at_50%_20%,rgba(74,222,128,0.12),transparent_65%)] opacity-90 md:-inset-x-8"
+            aria-hidden
+          />
+          <h2 className="mb-6 text-center text-xs font-bold uppercase tracking-[0.28em] text-eid-primary-400 md:mb-8">Pódio</h2>
+          <div className="flex flex-col items-stretch gap-6 md:flex-row md:items-end md:justify-center md:gap-5 lg:gap-8">
+            {podium[1] ? (
+              <div className="order-2 w-full md:order-1 md:max-w-[15rem] md:flex-1 md:pb-2">
+                <AthleteRankingCard {...rowToCardProps(podium[1], 2, "podium-2")} />
+              </div>
+            ) : null}
+            {podium[0] ? (
+              <div className="order-1 w-full md:order-2 md:z-10 md:max-w-[19rem] md:flex-[1.2] md:-translate-y-1">
+                <AthleteRankingCard {...rowToCardProps(podium[0], 1, "podium-1")} />
+              </div>
+            ) : null}
+            {podium[2] ? (
+              <div className="order-3 w-full md:order-3 md:max-w-[15rem] md:flex-1 md:pb-2">
+                <AthleteRankingCard {...rowToCardProps(podium[2], 3, "podium-3")} />
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {rankingAll.length === 0 ? (
+        <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-6 text-center text-sm text-eid-text-secondary shadow-inner">
+          Nenhum atleta encontrado para os filtros selecionados.
+        </p>
+      ) : pageRest.length > 0 ? (
+        <section>
+          {page === 1 && podium.length > 0 ? (
+            <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-eid-text-secondary md:mb-5">Demais posições</h2>
+          ) : null}
+          <div className="grid gap-3.5 md:gap-4">
+            {pageRest.map((row, idx) => (
+              <AthleteRankingCard
+                key={`${row.usuario_id}-${row.esporte_id}-${start}-${idx}`}
+                {...rowToCardProps(row, 4 + start + idx, "list")}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <div className="mt-10 flex items-center justify-between gap-3 border-t border-[color:var(--eid-border-subtle)]/80 pt-8">
+        <Link
+          href={`/ranking?${qs}&page=${page - 1}`}
+          aria-disabled={!hasPrev}
+          className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition duration-200 ${
+            hasPrev
+              ? "border-eid-primary-500/30 bg-eid-primary-500/[0.06] text-eid-fg hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10 active:scale-[0.98]"
+              : "pointer-events-none border-[color:var(--eid-border-subtle)] text-eid-text-secondary opacity-45"
+          }`}
+        >
+          ← Anterior
+        </Link>
+        <span className="text-xs font-medium text-eid-text-secondary">Página {page}</span>
+        <Link
+          href={`/ranking?${qs}&page=${page + 1}`}
+          aria-disabled={!hasNext}
+          className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition duration-200 ${
+            hasNext
+              ? "border-eid-primary-500/30 bg-eid-primary-500/[0.06] text-eid-fg hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10 active:scale-[0.98]"
+              : "pointer-events-none border-[color:var(--eid-border-subtle)] text-eid-text-secondary opacity-45"
+          }`}
+        >
+          Próxima →
+        </Link>
       </div>
-    </>
+    </div>
   );
 }
