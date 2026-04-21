@@ -479,6 +479,51 @@ const ESTRUTURAS = [
 ] as const;
 
 type Step = "papeis" | "esportes" | "extras" | "perfil";
+type SportExpAprox = "menos_1" | "1_3" | "mais_3";
+
+function parseSportExpValue(rawValue: unknown): string {
+  const raw = String(rawValue ?? "").trim();
+  if (raw === "menos_1" || raw === "1_3" || raw === "mais_3") return raw;
+  if (raw === "Menos de 1 ano") return "menos_1";
+  if (raw === "1 a 3 anos") return "1_3";
+  if (raw === "Mais de 3 anos") return "mais_3";
+  const m = raw.match(/^(\d{1,2})\/(\d{4})$/);
+  if (!m) return "";
+  const month = Number(m[1]);
+  const year = Number(m[2]);
+  if (!Number.isInteger(month) || month < 1 || month > 12) return "";
+  if (!Number.isInteger(year) || year < 1970 || year > 2100) return "";
+  return `${String(month).padStart(2, "0")}/${year}`;
+}
+
+function isSportExpAprox(value: string): value is SportExpAprox {
+  return value === "menos_1" || value === "1_3" || value === "mais_3";
+}
+
+function toMonthInputValue(expValue: string): string {
+  const m = expValue.match(/^(\d{2})\/(\d{4})$/);
+  if (!m) return "";
+  return `${m[2]}-${m[1]}`;
+}
+
+function fromMonthInputValue(inputValue: string): string {
+  const m = inputValue.match(/^(\d{4})-(\d{2})$/);
+  if (!m) return "";
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  if (!Number.isInteger(month) || month < 1 || month > 12) return "";
+  if (!Number.isInteger(year) || year < 1970 || year > 2100) return "";
+  return `${String(month).padStart(2, "0")}/${year}`;
+}
+
+function formatSportExpLabel(expValue: string): string {
+  if (expValue === "menos_1") return "Menos de 1 ano";
+  if (expValue === "1_3") return "1 a 3 anos";
+  if (expValue === "mais_3") return "Mais de 3 anos";
+  const m = expValue.match(/^(\d{2})\/(\d{4})$/);
+  if (m) return `${m[1]}/${m[2]}`;
+  return "Não definido";
+}
 
 type Props = {
   userId: string;
@@ -588,16 +633,12 @@ export function OnboardingWizard({
   const [expAprox, setExpAprox] = useState<"menos_1" | "1_3" | "mais_3">(extrasInitial.expAprox);
   const [expMes, setExpMes] = useState<string>(extrasInitial.expMes ? String(extrasInitial.expMes) : "");
   const [expAno, setExpAno] = useState<string>(extrasInitial.expAno ? String(extrasInitial.expAno) : "");
-  const [esportesExp, setEsportesExp] = useState<Record<number, "menos_1" | "1_3" | "mais_3">>(
+  const [esportesExp, setEsportesExp] = useState<Record<number, string>>(
     () =>
       Object.fromEntries(
-        Object.entries(selectedProfessorExp).map(([id, val]) => {
-          const raw = String(val);
-          if (raw === "Menos de 1 ano") return [Number(id), "menos_1"];
-          if (raw === "1 a 3 anos") return [Number(id), "1_3"];
-          if (raw === "Mais de 3 anos") return [Number(id), "mais_3"];
-          return [Number(id), "menos_1"];
-        })
+        Object.entries(selectedProfessorExp)
+          .map(([id, val]) => [Number(id), parseSportExpValue(val)] as const)
+          .filter(([, val]) => Boolean(val))
       )
   );
   const [professorHeadline, setProfessorHeadline] = useState<string>(extrasInitial.professorHeadline);
@@ -747,7 +788,7 @@ export function OnboardingWizard({
         espacoEstado: string;
         espacoCep: string;
         espacoComplemento: string;
-        esportesExp: Record<number, "menos_1" | "1_3" | "mais_3">;
+        esportesExp: Record<number, string>;
         espacoLat: string;
         espacoLng: string;
         nome: string;
@@ -834,7 +875,12 @@ export function OnboardingWizard({
       if (typeof draft.espacoCep === "string") setEspacoCep(draft.espacoCep);
       if (typeof draft.espacoComplemento === "string") setEspacoComplemento(draft.espacoComplemento);
       if (draft.esportesExp && typeof draft.esportesExp === "object") {
-        setEsportesExp(draft.esportesExp as Record<number, "menos_1" | "1_3" | "mais_3">);
+        const next = Object.fromEntries(
+          Object.entries(draft.esportesExp as Record<number, string>)
+            .map(([id, val]) => [Number(id), parseSportExpValue(val)] as const)
+            .filter(([, val]) => Boolean(val))
+        );
+        setEsportesExp(next);
       }
       if (typeof draft.espacoLat === "string") setEspacoLat(draft.espacoLat);
       if (typeof draft.espacoLng === "string") setEspacoLng(draft.espacoLng);
@@ -1091,13 +1137,9 @@ export function OnboardingWizard({
     setExpAno(extrasInitial.expAno ? String(extrasInitial.expAno) : "");
     setEsportesExp(
       Object.fromEntries(
-        Object.entries(selectedProfessorExp).map(([id, val]) => {
-          const raw = String(val);
-          if (raw === "Menos de 1 ano") return [Number(id), "menos_1"];
-          if (raw === "1 a 3 anos") return [Number(id), "1_3"];
-          if (raw === "Mais de 3 anos") return [Number(id), "mais_3"];
-          return [Number(id), "menos_1"];
-        })
+        Object.entries(selectedProfessorExp)
+          .map(([id, val]) => [Number(id), parseSportExpValue(val)] as const)
+          .filter(([, val]) => Boolean(val))
       )
     );
     setProfessorHeadline(extrasInitial.professorHeadline);
@@ -1845,31 +1887,82 @@ export function OnboardingWizard({
                                 ? `Experiência com ${e.nome} (joga/ensina)`
                                 : `Há quanto tempo pratica ${e.nome}?`}
                           </p>
-                          <div className="mt-1.5 inline-flex gap-1 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1">
-                            {([
-                              { val: "menos_1", label: "< 1 ano" },
-                              { val: "1_3",     label: "1–3 anos" },
-                              { val: "mais_3",  label: "+ 3 anos" },
-                            ] as const).map(({ val, label }) => {
-                              const active = (esportesExp[e.id] ?? "menos_1") === val;
+                          <div className="mt-1.5 space-y-2">
+                            {(() => {
+                              const expValue = esportesExp[e.id] ?? "";
+                              const usingAprox = isSportExpAprox(expValue);
                               return (
-                                <button
-                                  key={val}
-                                  type="button"
-                                  onClick={() => setEsportesExp((prev) => ({ ...prev, [e.id]: val }))}
-                                  className={`rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all select-none ${
-                                    active ? "bg-eid-primary-500 text-white shadow-sm" : "text-eid-text-secondary hover:text-eid-fg"
-                                  }`}
-                                >
-                                  {label}
-                                </button>
+                                <>
+                                  {!usingAprox ? (
+                                    <div className="space-y-2">
+                                      <input
+                                        type="month"
+                                        value={toMonthInputValue(expValue)}
+                                        onChange={(ev) => {
+                                          const next = fromMonthInputValue(ev.target.value);
+                                          setEsportesExp((prev) => {
+                                            const updated = { ...prev };
+                                            if (next) updated[e.id] = next;
+                                            else delete updated[e.id];
+                                            return updated;
+                                          });
+                                        }}
+                                        className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => setEsportesExp((prev) => ({ ...prev, [e.id]: "menos_1" }))}
+                                        className="text-[11px] font-semibold text-eid-text-secondary underline-offset-2 hover:text-eid-fg hover:underline"
+                                      >
+                                        Não sei o mês/ano exato
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      <div className="inline-flex gap-1 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1">
+                                        {([
+                                          { val: "menos_1", label: "< 1 ano" },
+                                          { val: "1_3", label: "1–3 anos" },
+                                          { val: "mais_3", label: "+ 3 anos" },
+                                        ] as const).map(({ val, label }) => {
+                                          const active = expValue === val;
+                                          return (
+                                            <button
+                                              key={val}
+                                              type="button"
+                                              onClick={() => setEsportesExp((prev) => ({ ...prev, [e.id]: val }))}
+                                              className={`rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all select-none ${
+                                                active ? "bg-eid-primary-500 text-white shadow-sm" : "text-eid-text-secondary hover:text-eid-fg"
+                                              }`}
+                                            >
+                                              {label}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setEsportesExp((prev) => {
+                                            const updated = { ...prev };
+                                            delete updated[e.id];
+                                            return updated;
+                                          })
+                                        }
+                                        className="text-[11px] font-semibold text-eid-text-secondary underline-offset-2 hover:text-eid-fg hover:underline"
+                                      >
+                                        Informar mês/ano
+                                      </button>
+                                    </div>
+                                  )}
+                                </>
                               );
-                            })}
+                            })()}
                           </div>
                           <input
                             type="hidden"
                             name={`exp_esporte_${e.id}`}
-                            value={esportesExp[e.id] ?? "menos_1"}
+                            value={esportesExp[e.id] ?? ""}
                           />
                         </>
                       )}
@@ -2333,7 +2426,7 @@ export function OnboardingWizard({
                     <div className="space-y-1">
                       {Object.entries(esportesExp).map(([idStr, val]) => {
                         const nome = esportes.find((e) => e.id === Number(idStr))?.nome ?? `Esporte ${idStr}`;
-                        const label = val === "menos_1" ? "< 1 ano" : val === "1_3" ? "1–3 anos" : "+ 3 anos";
+                        const label = formatSportExpLabel(String(val));
                         return (
                           <div key={idStr} className="flex items-center justify-between">
                             <span className="text-xs text-eid-text-secondary">{nome}</span>

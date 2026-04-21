@@ -274,11 +274,20 @@ export async function salvarEsportesOnboarding(
     return ORDER.filter((m) => s.has(m));
   }
   function tempoExperienciaLabel(raw: string | undefined): string | null {
-    return raw === "menos_1"
+    const value = String(raw ?? "").trim();
+    const exact = value.match(/^(\d{1,2})\/(\d{4})$/);
+    if (exact) {
+      const month = Number(exact[1]);
+      const year = Number(exact[2]);
+      if (Number.isInteger(month) && month >= 1 && month <= 12 && Number.isInteger(year) && year >= 1970 && year <= 2100) {
+        return `${String(month).padStart(2, "0")}/${year}`;
+      }
+    }
+    return value === "menos_1"
       ? "Menos de 1 ano"
-      : raw === "1_3"
+      : value === "1_3"
         ? "1 a 3 anos"
-        : raw === "mais_3"
+        : value === "mais_3"
           ? "Mais de 3 anos"
           : null;
   }
