@@ -154,7 +154,7 @@ export async function fetchAutomaticHolidaysForYear({
       `https://api.feriadosapi.com/v1/feriados?${query.toString()}`,
       {
         headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
+        next: { revalidate: 3600 },
       }
     );
     if (response.ok) {
@@ -174,7 +174,7 @@ export async function fetchAutomaticHolidaysForYear({
   const fallback = await fetch(
     `https://brasilapi.com.br/api/feriados/v1/${year}`,
     {
-      cache: "no-store",
+      next: { revalidate: 3600 },
     }
   );
   if (!fallback.ok) return [];

@@ -18,8 +18,7 @@ import {
 } from "@/lib/auth/active-context";
 import { EID_LOGO_ICON_E_SRC } from "@/lib/branding";
 import { EID_HIDE_APP_SHELL_HEADER } from "@/lib/eid-app-shell";
-import { listarPapeis } from "@/lib/roles";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
 import "./globals.css";
 
 /* Barlow — família atlética, muito usada em apps esportivos premium */
@@ -73,12 +72,10 @@ export default async function RootLayout({
   let papeis: string[] = [];
   let activeContext: ActiveAppContext = "atleta";
   try {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    user = data.user ?? null;
+    const auth = await getServerAuth();
+    user = auth.user;
     if (user) {
-      const { data: papeisRows } = await supabase.from("usuario_papeis").select("papel").eq("usuario_id", user.id);
-      papeis = listarPapeis(papeisRows);
+      papeis = await getCachedUsuarioPapeis(user.id);
     }
   } catch {
     // Env ausente, restrição de cookies em RSC ou rede — evita 500 na página inteira.

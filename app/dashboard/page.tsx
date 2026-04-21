@@ -129,12 +129,8 @@ export default async function DashboardPage({ searchParams }: Props) {
     redirect("/onboarding");
   }
 
-  const { data: papeisRows } = await supabase
-    .from("usuario_papeis")
-    .select("papel")
-    .eq("usuario_id", user.id);
-  const hasProfessor = (papeisRows ?? []).some((row) => row.papel === "professor");
-  const hasEspaco = (papeisRows ?? []).some((row) => row.papel === "espaco");
+  const hasProfessor = contextState.papeis.includes("professor");
+  const hasEspaco = contextState.papeis.includes("espaco");
 
   const myLat = Number(profile.lat ?? NaN);
   const myLng = Number(profile.lng ?? NaN);

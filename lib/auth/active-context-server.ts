@@ -7,14 +7,10 @@ import {
   resolveActiveAppContext,
   type ActiveAppContext,
 } from "@/lib/auth/active-context";
-import { listarPapeis } from "@/lib/roles";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
 
 export async function getAuthContextState() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getServerAuth();
 
   if (!user) {
     return {
@@ -25,12 +21,7 @@ export async function getAuthContextState() {
     };
   }
 
-  const [{ data: papeisRows }, cookieStore] = await Promise.all([
-    supabase.from("usuario_papeis").select("papel").eq("usuario_id", user.id),
-    cookies(),
-  ]);
-
-  const papeis = listarPapeis(papeisRows);
+  const [papeis, cookieStore] = await Promise.all([getCachedUsuarioPapeis(user.id), cookies()]);
   const activeContext = resolveActiveAppContext(cookieStore.get(ACTIVE_CONTEXT_COOKIE)?.value, papeis);
 
   return {

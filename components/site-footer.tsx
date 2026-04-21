@@ -1,13 +1,10 @@
 import Link from "next/link";
 import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
-import { createClient } from "@/lib/supabase/server";
+import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { LogoWordmark } from "@/components/brand/logo-wordmark";
 
 export async function SiteFooter() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getServerAuth();
   const isPlatformAdmin = user ? await getIsPlatformAdmin() : false;
 
   return (

@@ -1,11 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { getServerAuth } from "@/lib/auth/rsc-auth";
 
 /** Verifica se o usuário logado está em `platform_admins` (via RLS: só vê a própria linha). */
 export async function getIsPlatformAdmin(): Promise<boolean> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getServerAuth();
   if (!user) return false;
   const { data } = await supabase.from("platform_admins").select("user_id").eq("user_id", user.id).maybeSingle();
   return data != null;

@@ -1,13 +1,12 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getServerAuth } from "@/lib/auth/rsc-auth";
 
 /** Faixa fixa se o usuário está logado e ainda não aceitou termos/privacidade (LGPD). */
 export async function LegalGate() {
   let user: { id: string } | null = null;
   try {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    user = data.user ?? null;
+    const { supabase, user: u } = await getServerAuth();
+    user = u;
     if (!user) return null;
 
     const { data: profile } = await supabase
