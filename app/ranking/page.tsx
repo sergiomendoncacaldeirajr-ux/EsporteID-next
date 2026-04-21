@@ -105,8 +105,8 @@ export default async function RankingPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-4 sm:px-6 sm:py-6">
-      <header className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-5 sm:px-6 sm:py-7">
+      <header className="mb-7 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <div className="min-w-0">
           <h1 className="text-xl font-bold tracking-tight text-eid-fg md:text-2xl md:font-extrabold">Ranking</h1>
           <p className="mt-1.5 hidden text-xs leading-relaxed text-eid-text-secondary md:mt-2 md:block md:max-w-xl">
@@ -117,7 +117,7 @@ export default async function RankingPage({ searchParams }: Props) {
         </div>
         <Link
           href="/dashboard"
-          className="inline-flex shrink-0 items-center justify-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/[0.08] px-4 py-2.5 text-xs font-bold text-eid-primary-200 shadow-sm transition duration-200 hover:border-eid-primary-500/45 hover:bg-eid-primary-500/15 active:scale-[0.98]"
+          className="inline-flex h-10 shrink-0 items-center justify-center rounded-full border border-eid-primary-500/28 bg-eid-primary-500/[0.07] px-4 text-xs font-bold text-eid-primary-200 transition duration-200 hover:border-eid-primary-500/42 hover:bg-eid-primary-500/12 active:scale-[0.98]"
         >
           Painel
         </Link>
@@ -126,10 +126,10 @@ export default async function RankingPage({ searchParams }: Props) {
       <form
         action="/ranking"
         method="get"
-        className="mb-8 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-4 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.4)] backdrop-blur-sm sm:p-5"
+        className="mb-9 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/30 p-4 shadow-[0_4px_24px_-12px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:p-5"
       >
-        <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.16em] text-eid-text-secondary">Filtros</p>
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Filtros</p>
+        <div className="flex flex-col gap-3.5 sm:flex-row sm:flex-wrap sm:items-end">
           <label className="min-w-0 flex-1 sm:min-w-[200px]">
             <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Esporte</span>
             <select
@@ -164,13 +164,13 @@ export default async function RankingPage({ searchParams }: Props) {
       </form>
 
       {podium.length > 0 && page === 1 ? (
-        <section className="relative mb-12 sm:mb-14">
+        <section className="relative mb-11 sm:mb-12">
           <div
-            className="pointer-events-none absolute -inset-x-4 -top-6 bottom-0 -z-10 mx-auto max-w-3xl rounded-[2rem] bg-[radial-gradient(ellipse_80%_60%_at_50%_20%,rgba(74,222,128,0.12),transparent_65%)] opacity-90 md:-inset-x-8"
+            className="pointer-events-none absolute -inset-x-4 -top-5 bottom-0 -z-10 mx-auto max-w-3xl rounded-[2rem] bg-[radial-gradient(ellipse_80%_55%_at_50%_18%,rgba(74,222,128,0.1),transparent_68%)] opacity-90 md:-inset-x-8"
             aria-hidden
           />
-          <h2 className="mb-6 text-center text-xs font-bold uppercase tracking-[0.28em] text-eid-primary-400 md:mb-8">Pódio</h2>
-          <div className="flex flex-col items-stretch gap-6 md:flex-row md:items-end md:justify-center md:gap-5 lg:gap-8">
+          <h2 className="mb-5 text-center text-xs font-bold uppercase tracking-[0.22em] text-eid-primary-400 md:mb-6">Pódio</h2>
+          <div className="flex flex-col items-stretch gap-5 md:flex-row md:items-end md:justify-center md:gap-6 lg:gap-7">
             {podium[1] ? (
               <div className="order-2 w-full md:order-1 md:max-w-[15rem] md:flex-1 md:pb-2">
                 <AthleteRankingCard {...rowToCardProps(podium[1], 2, "podium-2")} />
@@ -197,9 +197,9 @@ export default async function RankingPage({ searchParams }: Props) {
       ) : pageRest.length > 0 ? (
         <section>
           {page === 1 && podium.length > 0 ? (
-            <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-eid-text-secondary md:mb-5">Demais posições</h2>
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-eid-text-secondary md:mb-4">Demais posições</h2>
           ) : null}
-          <div className="grid gap-3.5 md:gap-4">
+          <div className="grid gap-3 md:gap-3.5">
             {pageRest.map((row, idx) => (
               <AthleteRankingCard
                 key={`${row.usuario_id}-${row.esporte_id}-${start}-${idx}`}
@@ -210,7 +210,7 @@ export default async function RankingPage({ searchParams }: Props) {
         </section>
       ) : null}
 
-      <div className="mt-10 flex items-center justify-between gap-3 border-t border-[color:var(--eid-border-subtle)]/80 pt-8">
+      <div className="mt-9 flex items-center justify-between gap-3 border-t border-white/[0.06] pt-6">
         <Link
           href={`/ranking?${qs}&page=${page - 1}`}
           aria-disabled={!hasPrev}

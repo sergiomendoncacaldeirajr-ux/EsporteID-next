@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { EidNotaMetric, EidRankingPtsMetric } from "@/components/ui/eid-metrics";
+import { EidNotaMetric } from "@/components/ui/eid-metrics";
 
 export type AthleteRankingCardProps = {
   rank: number;
@@ -23,7 +23,7 @@ function InteresseChip({ interesse }: { interesse: string | null }) {
   const onlyRank = interesse === "ranking";
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] transition duration-200 ${
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[8px] font-semibold uppercase tracking-[0.1em] transition duration-200 ${
         onlyRank
           ? "border-[color:var(--eid-border-subtle)] bg-eid-surface/90 text-eid-text-secondary"
           : "border-eid-primary-500/35 bg-eid-primary-500/10 text-eid-primary-300"
@@ -107,60 +107,54 @@ function PodiumFirst({
 }: AthleteRankingCardProps) {
   const isSelf = viewerId === usuarioId;
   return (
-    <article className="group relative overflow-hidden rounded-2xl border border-eid-primary-500/35 bg-gradient-to-b from-eid-card via-eid-card to-eid-primary-950/40 p-5 shadow-[0_12px_40px_-8px_rgba(74,222,128,0.18),inset_0_1px_0_rgba(255,255,255,0.06)] transition duration-300 ease-out hover:border-eid-primary-500/50 hover:shadow-[0_16px_48px_-6px_rgba(74,222,128,0.22)] md:rounded-3xl md:p-6">
-      <div className="pointer-events-none absolute -top-12 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-eid-primary-500/20 blur-3xl" />
+    <article className="group relative overflow-hidden rounded-2xl border border-eid-primary-500/30 bg-gradient-to-b from-eid-card via-eid-card to-eid-primary-950/35 p-5 shadow-[0_8px_32px_-12px_rgba(74,222,128,0.14),inset_0_1px_0_rgba(255,255,255,0.05)] transition duration-300 ease-out hover:border-eid-primary-500/45 hover:shadow-[0_12px_40px_-10px_rgba(74,222,128,0.18)] md:rounded-3xl md:p-6">
+      <div className="pointer-events-none absolute -top-12 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-eid-primary-500/18 blur-3xl" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-eid-bg/80 to-transparent" />
 
-      <div className="relative flex flex-col items-center text-center">
-        <div className="mb-1 flex h-8 items-center justify-center text-eid-primary-400">
-          <IconCrown className="h-7 w-7" />
-        </div>
-        <div className="relative">
-          <div className="absolute -inset-1 rounded-[1.35rem] bg-gradient-to-br from-eid-primary-400/30 via-transparent to-eid-primary-600/20 opacity-80 blur-[2px]" />
-          <AvatarBlock avatarUrl={avatarUrl} nome={nome} size="xl" className="relative ring-2 ring-eid-primary-500/50 ring-offset-2 ring-offset-eid-card" />
-        </div>
-        <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.22em] text-eid-primary-400">1º lugar</p>
-        <h3 className="mt-1 max-w-[14rem] truncate text-lg font-bold leading-tight text-eid-fg md:text-xl">{nome}</h3>
-        <p className="mt-2 text-3xl font-black tabular-nums leading-none text-eid-primary-300 drop-shadow-sm md:text-4xl">{pontos}</p>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-eid-text-secondary">pontos de ranking</p>
-        <p className="mt-2 max-w-[16rem] truncate text-xs text-eid-text-secondary">{localizacao}</p>
-        <p className="mt-0.5 text-[11px] font-medium text-eid-text-muted">{esporteNome}</p>
-        <div className="mt-3">
-          <InteresseChip interesse={interesseMatch} />
+      <div className="relative flex flex-col items-center gap-4 text-center">
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex h-7 items-center justify-center text-eid-primary-400">
+            <IconCrown className="h-6 w-6" />
+          </div>
+          <div className="relative">
+            <div className="absolute -inset-1 rounded-[1.35rem] bg-gradient-to-br from-eid-primary-400/28 via-transparent to-eid-primary-600/18 opacity-80 blur-[2px]" />
+            <AvatarBlock avatarUrl={avatarUrl} nome={nome} size="xl" className="relative ring-2 ring-eid-primary-500/45 ring-offset-2 ring-offset-eid-card" />
+          </div>
         </div>
 
-        <div className="mt-5 w-full max-w-xs">
+        <div className="flex w-full max-w-[17rem] flex-col gap-1">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-eid-primary-400">1º lugar</p>
+          <h3 className="truncate text-lg font-bold leading-tight text-eid-fg md:text-xl">{nome}</h3>
+          <p className="pt-1 text-3xl font-black tabular-nums leading-none text-eid-primary-300 md:text-4xl">{pontos}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-eid-text-secondary">pontos de ranking</p>
+          <p className="truncate text-xs text-eid-text-secondary">{localizacao}</p>
+          <p className="text-[11px] font-medium text-eid-text-muted">{esporteNome}</p>
+          <div className="pt-1">
+            <InteresseChip interesse={interesseMatch} />
+          </div>
+        </div>
+
+        <div className="w-full max-w-xs space-y-1.5">
           <EidNotaMetric value={eid} size="md" />
-        </div>
-        <p className="mt-2 text-[10px] text-eid-text-muted">{partidas} jogos válidos</p>
-
-        <div className="mt-3 grid w-full max-w-xs grid-cols-2 gap-2 text-center text-[11px]">
-          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 py-2 transition duration-200 group-hover:border-eid-primary-500/20">
-            <span className="block text-[8px] font-semibold uppercase tracking-wide text-eid-text-secondary">Vitórias</span>
-            <span className="font-bold text-eid-fg">{vitorias}</span>
-          </div>
-          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 py-2 transition duration-200 group-hover:border-eid-primary-500/20">
-            <span className="block text-[8px] font-semibold uppercase tracking-wide text-eid-text-secondary">Derrotas</span>
-            <span className="font-bold text-eid-fg">{derrotas}</span>
-          </div>
+          <p className="text-[10px] text-eid-text-muted">{partidas} jogos válidos · {vitorias}V · {derrotas}D</p>
         </div>
 
-        <div className="mt-4 flex w-full max-w-xs flex-wrap gap-2">
+        <div className="flex w-full max-w-xs gap-2">
           <Link
             href={`/perfil/${usuarioId}?from=/ranking`}
-            className="flex-1 rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/5 px-3 py-2.5 text-center text-xs font-bold text-eid-fg transition duration-200 hover:bg-eid-primary-500/15"
+            className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/[0.06] px-3 text-xs font-bold text-eid-fg transition duration-200 hover:bg-eid-primary-500/12"
           >
             Perfil
           </Link>
           {!isSelf ? (
             <Link
               href={`/desafio?id=${encodeURIComponent(usuarioId)}&tipo=individual&esporte=${esporteId}`}
-              className="eid-btn-primary flex-1 rounded-xl px-3 py-2.5 text-center text-xs font-bold transition duration-200 active:scale-[0.98]"
+              className="eid-btn-primary flex min-h-[44px] flex-1 items-center justify-center rounded-xl px-3 text-xs font-bold transition duration-200 active:scale-[0.98]"
             >
               Match
             </Link>
           ) : (
-            <span className="flex-1 rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2.5 text-center text-xs font-semibold text-eid-text-secondary">
+            <span className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-xs font-semibold text-eid-text-secondary">
               Você
             </span>
           )}
@@ -184,48 +178,44 @@ function PodiumSide(props: AthleteRankingCardProps) {
     <article
       className={`group relative overflow-hidden rounded-2xl border bg-gradient-to-b from-eid-card to-eid-bg/80 p-4 transition duration-300 ease-out hover:border-eid-primary-500/35 md:rounded-2xl md:p-4 ${borderAccent}`}
     >
-      <div className="pointer-events-none absolute -right-8 top-0 h-24 w-24 rounded-full bg-eid-primary-500/[0.07] blur-2xl" />
-      <div className="relative flex flex-col items-center text-center">
-        <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-eid-text-secondary">{label}</p>
-        <AvatarBlock avatarUrl={avatarUrl} nome={nome} size="lg" className="mt-2" />
-        <h3 className="mt-2 max-w-[11rem] truncate text-sm font-bold text-eid-fg">{nome}</h3>
-        <p className="mt-2 text-xl font-black tabular-nums text-eid-primary-300">{pontos}</p>
-        <p className="text-[9px] font-semibold uppercase tracking-wide text-eid-text-secondary">pontos</p>
-        <p className="mt-1.5 line-clamp-2 max-w-[12rem] text-[11px] leading-snug text-eid-text-secondary">{localizacao}</p>
-        <p className="mt-0.5 text-[10px] text-eid-text-muted">{esporteNome}</p>
-        <div className="mt-2">
-          <InteresseChip interesse={interesseMatch} />
+      <div className="pointer-events-none absolute -right-8 top-0 h-24 w-24 rounded-full bg-eid-primary-500/[0.06] blur-2xl" />
+      <div className="relative flex flex-col items-center gap-3 text-center">
+        <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-eid-text-secondary">{label}</p>
+        <AvatarBlock avatarUrl={avatarUrl} nome={nome} size="lg" />
+        <div className="flex w-full max-w-[12rem] flex-col gap-0.5">
+          <h3 className="truncate text-sm font-bold text-eid-fg">{nome}</h3>
+          <p className="text-xl font-black tabular-nums leading-none text-eid-primary-300">{pontos}</p>
+          <p className="text-[9px] font-semibold uppercase tracking-wide text-eid-text-secondary">pontos</p>
         </div>
-        <div className="mt-3 w-full">
+        <div className="flex max-w-[12rem] flex-col gap-0.5">
+          <p className="line-clamp-2 text-[11px] leading-snug text-eid-text-secondary">{localizacao}</p>
+          <p className="text-[10px] text-eid-text-muted">{esporteNome}</p>
+        </div>
+        <InteresseChip interesse={interesseMatch} />
+        <div className="w-full space-y-1">
           <EidNotaMetric value={eid} size="sm" />
+          <p className="text-[9px] tabular-nums text-eid-text-muted">
+            {partidas} jogos · {vitorias}V · {derrotas}D
+          </p>
         </div>
-        <p className="mt-1 text-[9px] text-eid-text-muted">{partidas} jogos</p>
-        <div className="mt-2 grid w-full grid-cols-2 gap-1 text-[10px]">
-          <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 py-1">
-            <span className="text-eid-text-secondary">V </span>
-            <span className="font-bold text-eid-fg">{vitorias}</span>
-          </div>
-          <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 py-1">
-            <span className="text-eid-text-secondary">D </span>
-            <span className="font-bold text-eid-fg">{derrotas}</span>
-          </div>
-        </div>
-        <div className="mt-3 flex w-full gap-1.5">
+        <div className="flex w-full gap-2">
           <Link
             href={`/perfil/${usuarioId}?from=/ranking`}
-            className="flex-1 rounded-lg border border-eid-primary-500/30 py-2 text-center text-[11px] font-semibold text-eid-fg transition duration-200 hover:bg-eid-primary-500/10"
+            className="flex min-h-[40px] flex-1 items-center justify-center rounded-xl border border-eid-primary-500/28 text-[11px] font-semibold text-eid-fg transition duration-200 hover:bg-eid-primary-500/10"
           >
             Perfil
           </Link>
           {!isSelf ? (
             <Link
               href={`/desafio?id=${encodeURIComponent(usuarioId)}&tipo=individual&esporte=${esporteId}`}
-              className="eid-btn-primary flex-1 rounded-lg py-2 text-center text-[11px] font-bold"
+              className="eid-btn-primary flex min-h-[40px] flex-1 items-center justify-center rounded-xl text-[11px] font-bold"
             >
               Match
             </Link>
           ) : (
-            <span className="flex-1 rounded-lg border border-[color:var(--eid-border-subtle)] py-2 text-center text-[11px] text-eid-text-secondary">Você</span>
+            <span className="flex min-h-[40px] flex-1 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] text-[11px] text-eid-text-secondary">
+              Você
+            </span>
           )}
         </div>
       </div>
@@ -251,66 +241,52 @@ function ListRankingCard({
 }: AthleteRankingCardProps) {
   const isSelf = viewerId === usuarioId;
   return (
-    <article className="group rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.35)] transition duration-200 ease-out hover:border-eid-primary-500/30 hover:shadow-[0_8px_32px_-10px_rgba(74,222,128,0.12)] md:rounded-[1.25rem]">
-      <div className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:gap-5 md:p-5">
-        <div className="flex flex-1 items-center gap-3.5 min-w-0">
+    <article className="group rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/95 shadow-[0_2px_16px_-4px_rgba(0,0,0,0.28)] transition duration-200 ease-out hover:border-eid-primary-500/28 hover:shadow-[0_6px_24px_-8px_rgba(74,222,128,0.1)] md:rounded-[1.25rem]">
+      <div className="flex flex-col gap-3 px-4 pb-3 pt-4 md:flex-row md:items-center md:gap-6 md:px-5 md:pb-4 md:pt-5">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <div
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-eid-primary-500/35 bg-eid-surface text-base font-black tabular-nums text-eid-primary-300 shadow-inner transition duration-200 group-hover:border-eid-primary-500/50 md:h-14 md:w-14 md:text-lg"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-eid-primary-500/30 bg-eid-surface text-[0.8125rem] font-black tabular-nums text-eid-primary-300 transition duration-200 group-hover:border-eid-primary-500/45 md:h-[3.25rem] md:w-[3.25rem] md:text-base"
             aria-label={`Posição ${rank}`}
           >
             {rank}
           </div>
-          <AvatarBlock avatarUrl={avatarUrl} nome={nome} size="md" className="md:h-[3.75rem] md:w-[3.75rem]" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-base font-bold tracking-tight text-eid-fg md:text-[1.05rem]">{nome}</p>
-            <p className="mt-0.5 truncate text-xs font-medium text-eid-text-secondary">{localizacao}</p>
-            <p className="mt-0.5 truncate text-[11px] text-eid-text-muted">{esporteNome}</p>
-            <div className="mt-2">
-              <InteresseChip interesse={interesseMatch} />
-            </div>
+          <AvatarBlock avatarUrl={avatarUrl} nome={nome} size="md" className="md:h-[3.5rem] md:w-[3.5rem]" />
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="truncate text-[0.9375rem] font-bold leading-tight tracking-tight text-eid-fg md:text-base">{nome}</p>
+            <p className="truncate text-xs text-eid-text-secondary">{localizacao}</p>
+            <p className="truncate text-[11px] text-eid-text-muted">{esporteNome}</p>
+            <InteresseChip interesse={interesseMatch} />
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-4 border-t border-[color:var(--eid-border-subtle)] pt-3 md:w-auto md:flex-col md:items-end md:border-t-0 md:border-l md:pl-5 md:pt-0">
+        <div className="flex w-full shrink-0 justify-end border-t border-white/[0.06] pt-3 md:w-[7.25rem] md:flex-col md:items-end md:justify-start md:border-t-0 md:border-l md:border-white/[0.06] md:pl-6 md:pt-0">
           <div className="text-right">
-            <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Pontos</p>
-            <p className="text-2xl font-black tabular-nums leading-none text-eid-primary-300 md:text-3xl">{pontos}</p>
-            <p className="mt-1 text-[10px] text-eid-text-muted">
-              EID <span className="font-semibold text-eid-fg/90">{eid.toFixed(1)}</span>
-            </p>
+            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Pontos</p>
+            <p className="text-2xl font-black tabular-nums leading-none text-eid-primary-300 md:text-[1.75rem]">{pontos}</p>
           </div>
         </div>
       </div>
 
-      <div className="border-t border-[color:var(--eid-border-subtle)]/80 bg-eid-surface/30 px-4 py-3 md:px-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-1 sm:gap-3">
+      <div className="border-t border-white/[0.06] bg-eid-surface/25 px-4 py-3.5 md:px-5">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+          <div className="min-w-0 max-w-md">
             <EidNotaMetric value={eid} size="sm" />
-            <EidRankingPtsMetric value={pontos} size="sm" />
           </div>
-          <p className="text-center text-[10px] text-eid-text-muted sm:text-right">{partidas} jogos válidos</p>
+          <p className="shrink-0 text-[10px] tabular-nums text-eid-text-muted sm:text-right">
+            {partidas} jogos · {vitorias}V · {derrotas}D
+          </p>
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:max-w-xs">
-          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-3 py-2 text-center text-[11px] transition duration-200 hover:border-eid-primary-500/15">
-            <span className="block text-[8px] font-semibold uppercase text-eid-text-secondary">Vitórias</span>
-            <span className="font-bold text-eid-fg">{vitorias}</span>
-          </div>
-          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-3 py-2 text-center text-[11px] transition duration-200 hover:border-eid-primary-500/15">
-            <span className="block text-[8px] font-semibold uppercase text-eid-text-secondary">Derrotas</span>
-            <span className="font-bold text-eid-fg">{derrotas}</span>
-          </div>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 flex gap-2">
           <Link
             href={`/perfil/${usuarioId}?from=/ranking`}
-            className="min-h-[44px] flex-1 rounded-xl border border-eid-primary-500/35 px-3 py-2.5 text-center text-xs font-bold text-eid-fg transition duration-200 hover:bg-eid-primary-500/10 active:scale-[0.98]"
+            className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-eid-primary-500/30 px-3 text-xs font-bold text-eid-fg transition duration-200 hover:bg-eid-primary-500/[0.08] active:scale-[0.98]"
           >
             Perfil
           </Link>
           {!isSelf ? (
             <Link
               href={`/desafio?id=${encodeURIComponent(usuarioId)}&tipo=individual&esporte=${esporteId}`}
-              className="eid-btn-primary min-h-[44px] flex-1 rounded-xl px-3 py-2.5 text-center text-xs font-bold transition duration-200 active:scale-[0.98]"
+              className="eid-btn-primary flex min-h-[44px] flex-1 items-center justify-center rounded-xl px-3 text-xs font-bold transition duration-200 active:scale-[0.98]"
             >
               Match
             </Link>
