@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 const LOCK_MS = 1400;
-const NAV_LOADING_FALLBACK_MS = 6500;
+const NAV_LOADING_FALLBACK_MS = 30000;
 type LoadingCause = "nav" | "submit";
 
 function isSameOriginNavigationLink(el: HTMLAnchorElement) {
@@ -98,11 +98,13 @@ export function InteractionFeedback() {
   const isOnboarding = (pathname ?? "").startsWith("/onboarding");
   const [loading, setLoading] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
+  const [contentTopOffsetPx, setContentTopOffsetPx] = useState(0);
   const navStartedAtRef = useRef<number>(0);
   const loadingCauseRef = useRef<LoadingCause | null>(null);
   const loadingRef = useRef(false);
   const hideTimerRef = useRef<number | null>(null);
   const navFallbackTimerRef = useRef<number | null>(null);
+  const submitMutationObserverRef = useRef<MutationObserver | null>(null);
 
   loadingRef.current = loading;
 
@@ -117,6 +119,13 @@ export function InteractionFeedback() {
     if (navFallbackTimerRef.current) {
       window.clearTimeout(navFallbackTimerRef.current);
       navFallbackTimerRef.current = null;
+    }
+  }
+
+  function disconnectSubmitObserver() {
+    if (submitMutationObserverRef.current) {
+      submitMutationObserverRef.current.disconnect();
+      submitMutationObserverRef.current = null;
     }
   }
 
@@ -172,6 +181,29 @@ export function InteractionFeedback() {
       loadingCauseRef.current = "submit";
       navStartedAtRef.current = Date.now();
       setLoading(true);
+
+      /* Para submits na mesma rota (server actions), só libera após mudança real no conteúdo. */
+      disconnectSubmitObserver();
+      const main = document.getElementById("app-main-column");
+      if (main) {
+        submitMutationObserverRef.current = new MutationObserver(() => {
+          disconnectSubmitObserver();
+          clearHideTimer();
+          const elapsed = Date.now() - navStartedAtRef.current;
+          const minVisibleMs = 380;
+          hideTimerRef.current = window.setTimeout(() => {
+            hideTimerRef.current = null;
+            loadingCauseRef.current = null;
+            setLoading(false);
+          }, Math.max(0, minVisibleMs - elapsed));
+        });
+        submitMutationObserverRef.current.observe(main, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          characterData: false,
+        });
+      }
     };
 
     document.addEventListener("click", onClickCapture, true);
@@ -199,7 +231,7 @@ export function InteractionFeedback() {
     };
   }, [pathname]);
 
-  /* Formulários / server actions: barra some após um tempo se a rota não mudar. */
+  /* Formulários / server actions: mantém loading por mais tempo para evitar flash da tela anterior. */
   useEffect(() => {
     if (!loading) {
       clearHideTimer();
@@ -212,8 +244,11 @@ export function InteractionFeedback() {
       hideTimerRef.current = null;
       loadingCauseRef.current = null;
       setLoading(false);
-    }, 1500);
-    return clearHideTimer;
+    }, 8000);
+    return () => {
+      clearHideTimer();
+      disconnectSubmitObserver();
+    };
   }, [loading]);
 
   useEffect(() => {
@@ -224,6 +259,26 @@ export function InteractionFeedback() {
     const t = window.setTimeout(() => setShowSkeleton(true), 120);
     return () => window.clearTimeout(t);
   }, [loading]);
+
+  useEffect(() => {
+    if (!showSkeleton) {
+      setContentTopOffsetPx(0);
+      return;
+    }
+    const updateOffset = () => {
+      const fixedTopbar = document.querySelector("header.fixed.left-0.right-0.top-0.z-50") as HTMLElement | null;
+      setContentTopOffsetPx(fixedTopbar?.offsetHeight ?? 0);
+    };
+    updateOffset();
+    window.addEventListener("resize", updateOffset);
+    return () => window.removeEventListener("resize", updateOffset);
+  }, [showSkeleton]);
+
+  useEffect(() => {
+    return () => {
+      disconnectSubmitObserver();
+    };
+  }, []);
 
   return (
     <>
@@ -237,7 +292,10 @@ export function InteractionFeedback() {
       </div>
       <div
         aria-hidden
-        className={`pointer-events-none fixed inset-0 z-[85] transition-opacity duration-300 ${
+        style={{
+          top: `${contentTopOffsetPx}px`,
+        }}
+        className={`pointer-events-none fixed bottom-0 left-0 right-0 z-[85] transition-opacity duration-300 ${
           showSkeleton ? "opacity-100" : "opacity-0"
         }`}
       >
