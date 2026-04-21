@@ -318,6 +318,7 @@ label:has(input.sr-only):not(.eid-no-press):active {
   animation: eid-skeleton-shimmer 1.7s ease-in-out infinite;
 }
 
+
 .eid-is-locked {
   pointer-events: none !important;
   opacity: 0.88;

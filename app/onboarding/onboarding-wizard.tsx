@@ -711,6 +711,10 @@ export function OnboardingWizard({
   }, [initialStep]);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [step]);
+
+  useEffect(() => {
     setPapeis(new Set(normalizarPapeisContaPrincipal(selectedPapeis)));
   }, [selectedPapeis]);
 
@@ -1426,13 +1430,16 @@ export function OnboardingWizard({
         <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <Link
             href="/"
+            data-eid-skeleton="true"
             className="inline-block text-[13px] text-eid-text-muted no-underline transition hover:text-eid-fg"
           >
             ← Voltar ao início
           </Link>
         </div>
 
-        <LogoFull priority className="mb-5 mt-1" />
+        <div data-eid-skeleton="true">
+          <LogoFull priority className="mb-5 mt-1" />
+        </div>
 
         <div className="eid-auth-card p-6 sm:p-8">
           <div className="mb-4">

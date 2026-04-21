@@ -13,6 +13,90 @@ function readOnboardingStepFromDom(): OnboardingSkeletonStep | null {
   return raw === "papeis" || raw === "esportes" || raw === "extras" || raw === "perfil" ? raw : null;
 }
 
+function OnboardingExactSkeleton({ step }: { step: OnboardingSkeletonStep }) {
+  return (
+    <>
+      <div className="mx-auto w-full max-w-2xl pb-6">
+        <div className="mb-3 flex items-center gap-x-4 gap-y-2">
+          <div className="eid-loading-skeleton-block h-4 w-28 rounded-md opacity-0" />
+        </div>
+        <div className="mb-5 mt-1 flex justify-center">
+          <div className="eid-loading-skeleton-block h-12 w-52 rounded-lg" />
+        </div>
+        <div className="eid-loading-skeleton-block rounded-2xl p-6 sm:p-8">
+          <div className="mb-4">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="eid-loading-skeleton-block h-3 w-24 rounded-md" />
+              <div className="flex items-center gap-1.5">
+                <div className="eid-loading-skeleton-block h-7 w-24 rounded-lg" />
+                <div className="eid-loading-skeleton-block h-7 w-20 rounded-lg" />
+              </div>
+            </div>
+            <div className="eid-loading-skeleton-block h-2 w-full rounded-full" />
+            <div className="eid-loading-skeleton-block mt-2 h-3 w-44 rounded-md" />
+          </div>
+
+          <div className="eid-loading-skeleton-block mx-auto h-3 w-24 rounded-md" />
+          <div className="eid-loading-skeleton-block mt-2 h-8 w-44 rounded-lg" />
+          <div className="eid-loading-skeleton-block mt-2 h-3 w-[92%] rounded-md" />
+          <div className="eid-loading-skeleton-block mt-1 h-3 w-[84%] rounded-md" />
+
+          {step === "papeis" ? (
+            <div className="mt-6 space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="eid-loading-skeleton-block h-[6.6rem] rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-[6.6rem] rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-[6.6rem] rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-[6.6rem] rounded-2xl" />
+              </div>
+              <div className="eid-loading-skeleton-block h-[2.6rem] rounded-xl" />
+              <div className="eid-loading-skeleton-block h-[3rem] rounded-xl" />
+            </div>
+          ) : null}
+
+          {step === "esportes" ? (
+            <div className="mt-6 space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <div className="eid-loading-skeleton-block h-8 w-20 rounded-full" />
+                <div className="eid-loading-skeleton-block h-8 w-24 rounded-full" />
+                <div className="eid-loading-skeleton-block h-8 w-16 rounded-full" />
+                <div className="eid-loading-skeleton-block h-8 w-20 rounded-full" />
+                <div className="eid-loading-skeleton-block h-8 w-24 rounded-full" />
+              </div>
+              <div className="space-y-3">
+                <div className="eid-loading-skeleton-block h-[17rem] rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-[17rem] rounded-2xl" />
+              </div>
+              <div className="eid-loading-skeleton-block h-[3rem] rounded-xl" />
+            </div>
+          ) : null}
+
+          {step === "extras" ? (
+            <div className="mt-6 space-y-5">
+              {/* Fluxo atual (Atleta): etapa extras é mínima antes do perfil */}
+              <div className="eid-loading-skeleton-block h-[3.4rem] rounded-xl" />
+              <div className="eid-loading-skeleton-block h-[3rem] rounded-xl" />
+            </div>
+          ) : null}
+
+          {step === "perfil" ? (
+            <div className="mt-6 space-y-4">
+              <div className="eid-loading-skeleton-block h-[15.8rem] rounded-2xl" />
+              <div className="eid-loading-skeleton-block h-[5.4rem] rounded-2xl" />
+              <div className="eid-loading-skeleton-block h-[3.1rem] rounded-xl" />
+              <div className="eid-loading-skeleton-block h-[3.1rem] rounded-xl" />
+              <div className="eid-loading-skeleton-block h-[3.1rem] rounded-xl" />
+              <div className="eid-loading-skeleton-block h-[5.2rem] rounded-xl" />
+              <div className="eid-loading-skeleton-block h-[3.1rem] rounded-xl" />
+              <div className="eid-loading-skeleton-block h-[3.1rem] rounded-xl" />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </>
+  );
+}
+
 function isSameOriginNavigationLink(el: HTMLAnchorElement) {
   if (!el.href) return false;
   if (el.target && el.target !== "_self") return false;
@@ -348,52 +432,7 @@ export function InteractionFeedback() {
       >
         <div className={`eid-loading-skeleton-screen ${isOnboarding ? "eid-loading-skeleton-screen-onboarding" : ""}`}>
           {isOnboarding ? (
-            onboardingSkeletonStep === "papeis" ? (
-              <>
-                <div className="eid-loading-skeleton-block h-5 w-24 rounded-lg" />
-                <div className="eid-loading-skeleton-block h-4 w-36 rounded-lg" />
-                <div className="eid-loading-skeleton-block h-7 w-32 rounded-lg" />
-                <div className="eid-loading-skeleton-block h-3 w-[62%] rounded-md" />
-                <div className="eid-loading-skeleton-block h-3 w-[74%] rounded-md" />
-                <div className="space-y-2">
-                  <div className="eid-loading-skeleton-block h-[4.5rem] w-full rounded-2xl" />
-                  <div className="eid-loading-skeleton-block h-[4.5rem] w-full rounded-2xl" />
-                  <div className="eid-loading-skeleton-block h-[4.5rem] w-full rounded-2xl" />
-                  <div className="eid-loading-skeleton-block h-[4.5rem] w-full rounded-2xl" />
-                </div>
-                <div className="eid-loading-skeleton-block h-11 w-full rounded-xl" />
-              </>
-            ) : onboardingSkeletonStep === "esportes" ? (
-              <>
-                <div className="eid-loading-skeleton-block h-5 w-24 rounded-lg" />
-                <div className="eid-loading-skeleton-block h-4 w-44 rounded-lg" />
-                <div className="flex gap-2">
-                  <div className="eid-loading-skeleton-block h-8 w-20 rounded-full" />
-                  <div className="eid-loading-skeleton-block h-8 w-24 rounded-full" />
-                  <div className="eid-loading-skeleton-block h-8 w-[4.5rem] rounded-full" />
-                </div>
-                <div className="eid-loading-skeleton-block h-28 w-full rounded-2xl" />
-                <div className="eid-loading-skeleton-block h-28 w-full rounded-2xl" />
-                <div className="eid-loading-skeleton-block h-11 w-full rounded-xl" />
-              </>
-            ) : onboardingSkeletonStep === "extras" ? (
-              <>
-                <div className="eid-loading-skeleton-block h-5 w-24 rounded-lg" />
-                <div className="eid-loading-skeleton-block h-4 w-52 rounded-lg" />
-                <div className="eid-loading-skeleton-block h-40 w-full rounded-2xl" />
-                <div className="eid-loading-skeleton-block h-24 w-full rounded-2xl" />
-                <div className="eid-loading-skeleton-block h-11 w-full rounded-xl" />
-              </>
-            ) : (
-              <>
-                <div className="eid-loading-skeleton-block h-5 w-24 rounded-lg" />
-                <div className="eid-loading-skeleton-block h-4 w-40 rounded-lg" />
-                <div className="eid-loading-skeleton-block h-44 w-full rounded-2xl" />
-                <div className="eid-loading-skeleton-block h-12 w-full rounded-xl" />
-                <div className="eid-loading-skeleton-block h-12 w-[82%] rounded-xl" />
-                <div className="eid-loading-skeleton-block h-11 w-full rounded-xl" />
-              </>
-            )
+            <OnboardingExactSkeleton step={onboardingSkeletonStep} />
           ) : (
             <>
               <div className="eid-loading-skeleton-block h-8 w-40 rounded-xl" />
