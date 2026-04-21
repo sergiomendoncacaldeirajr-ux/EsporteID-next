@@ -35,7 +35,7 @@ function getLockableClickTarget(target: Element): HTMLElement | null {
   const inputEl = target.closest("input") as HTMLInputElement | null;
   if (inputEl) {
     const t = inputEl.type;
-    if (t === "checkbox" || t === "radio" || t === "button" || t === "submit") return inputEl;
+    if (t === "checkbox" || t === "radio" || t === "button" || t === "submit" || t === "image") return inputEl;
   }
   const buttonEl = target.closest("button") as HTMLButtonElement | null;
   if (buttonEl) return buttonEl;
@@ -46,24 +46,45 @@ function getLockableClickTarget(target: Element): HTMLElement | null {
   return null;
 }
 
+/** Não usar disabled=true no capture do clique — o browser cancela o submit do formulário. */
+function isFormSubmitControl(el: HTMLElement): boolean {
+  if (el instanceof HTMLInputElement) {
+    return el.type === "submit" || el.type === "image";
+  }
+  if (el instanceof HTMLButtonElement) {
+    return el.type === "submit";
+  }
+  return false;
+}
+
 function lockElement(el: HTMLElement, opts?: { disableNative?: boolean }) {
   const disableNative = opts?.disableNative ?? true;
   if (el.dataset.eidLocked === "1") return false;
   el.dataset.eidLocked = "1";
-  el.classList.add("eid-is-locked");
-
-  if (disableNative && (el instanceof HTMLButtonElement || el instanceof HTMLInputElement)) {
-    el.disabled = true;
+  /* Submit: aplica “locked” no próximo frame para não interferir no envio do formulário. */
+  if (isFormSubmitControl(el)) {
+    requestAnimationFrame(() => el.classList.add("eid-is-locked"));
   } else {
+    el.classList.add("eid-is-locked");
+  }
+
+  const canDisableNative =
+    disableNative &&
+    (el instanceof HTMLButtonElement || el instanceof HTMLInputElement) &&
+    !isFormSubmitControl(el);
+
+  if (canDisableNative) {
+    el.disabled = true;
+  } else if (!(el instanceof HTMLButtonElement || el instanceof HTMLInputElement)) {
     el.setAttribute("aria-disabled", "true");
   }
 
   window.setTimeout(() => {
     el.dataset.eidLocked = "0";
     el.classList.remove("eid-is-locked");
-    if (disableNative && (el instanceof HTMLButtonElement || el instanceof HTMLInputElement)) {
+    if (canDisableNative) {
       el.disabled = false;
-    } else {
+    } else if (!(el instanceof HTMLButtonElement || el instanceof HTMLInputElement)) {
       el.removeAttribute("aria-disabled");
     }
   }, LOCK_MS);
