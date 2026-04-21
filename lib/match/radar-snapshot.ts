@@ -1,0 +1,160 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+export type RadarTipo = "atleta" | "dupla" | "time";
+export type SortBy = "eid_score" | "match_ranking_points";
+
+export type MatchRadarCard = {
+  id: string;
+  nome: string;
+  localizacao: string;
+  esporteNome: string;
+  esporteId: number;
+  dist: number;
+  eid: number;
+  rank: number;
+  modalidade: "individual" | "dupla" | "time";
+  interesseMatch: "ranking" | "ranking_e_amistoso" | "amistoso";
+  href: string;
+  canChallenge: boolean;
+  challengeHint?: string;
+  avatarUrl: string | null;
+  /** Disponível para amistoso (verde) — perfil ou time */
+  disponivelAmistoso: boolean;
+};
+
+type AtletaRow = {
+  usuario_id: string;
+  nome: string | null;
+  localizacao: string | null;
+  esporte_id: number | null;
+  esporte_nome: string | null;
+  dist_km: number | null;
+  nota_eid: number | null;
+  pontos_ranking: number | null;
+  modalidade_match: string | null;
+  interesse_match: string | null;
+  avatar_url?: string | null;
+  disponivel_amistoso?: boolean | null;
+};
+
+type FormacaoRow = {
+  id: number;
+  nome: string | null;
+  localizacao: string | null;
+  esporte_id: number | null;
+  esporte_nome: string | null;
+  dist_km: number | null;
+  eid_time: number | null;
+  pontos_ranking: number | null;
+  interesse_match: string | null;
+  can_challenge: boolean | null;
+  disponivel_amistoso?: boolean | null;
+};
+
+export type RadarSnapshotInput = {
+  viewerId: string;
+  tipo: RadarTipo;
+  sortBy: SortBy;
+  raio: number;
+  esporteSelecionado: string;
+  lat: number;
+  lng: number;
+};
+
+export async function fetchMatchRadarCards(
+  supabase: SupabaseClient,
+  input: RadarSnapshotInput
+): Promise<MatchRadarCard[]> {
+  const { viewerId, tipo, sortBy, raio, esporteSelecionado, lat, lng } = input;
+  const esporteId = /^\d+$/.test(esporteSelecionado) ? Number(esporteSelecionado) : null;
+
+  let cards: MatchRadarCard[] = [];
+
+  if (tipo === "atleta") {
+    const { data } = await supabase.rpc("buscar_match_atletas", {
+      p_viewer_id: viewerId,
+      p_lat: lat,
+      p_lng: lng,
+      p_esporte_id: esporteId,
+      p_raio_km: raio,
+      p_limit: 500,
+    });
+
+    cards = ((data ?? []) as AtletaRow[]).map((row) => ({
+      id: String(row.usuario_id),
+      nome: String(row.nome ?? "Atleta"),
+      localizacao: String(row.localizacao ?? "Localização não informada"),
+      esporteNome: String(row.esporte_nome ?? "Esporte"),
+      esporteId: Number(row.esporte_id ?? 0),
+      dist: Number(row.dist_km ?? 99999),
+      eid: Number(row.nota_eid ?? 0),
+      rank: Number(row.pontos_ranking ?? 0),
+      modalidade:
+        row.modalidade_match === "dupla" || row.modalidade_match === "time" ? row.modalidade_match : "individual",
+      interesseMatch:
+        row.interesse_match === "ranking"
+          ? "ranking"
+          : row.interesse_match === "amistoso"
+            ? "amistoso"
+            : "ranking_e_amistoso",
+      href: `/perfil/${encodeURIComponent(String(row.usuario_id ?? ""))}?from=/match`,
+      canChallenge: true,
+      avatarUrl: row.avatar_url ? String(row.avatar_url) : null,
+      disponivelAmistoso: row.disponivel_amistoso !== false,
+    }));
+  } else {
+    const { data: formacoes } = await supabase.rpc("buscar_match_formacoes", {
+      p_viewer_id: viewerId,
+      p_tipo: tipo,
+      p_lat: lat,
+      p_lng: lng,
+      p_esporte_id: esporteId,
+      p_raio_km: raio,
+      p_limit: 300,
+    });
+
+    cards = ((formacoes ?? []) as FormacaoRow[]).map((t) => ({
+      id: String(t.id),
+      nome: String(t.nome ?? "Time"),
+      localizacao: String(t.localizacao ?? "Localização não informada"),
+      esporteNome: String(t.esporte_nome ?? "Esporte"),
+      esporteId: Number(t.esporte_id ?? 0),
+      dist: Number(t.dist_km ?? 99999),
+      eid: Number(t.eid_time ?? 0),
+      rank: Number(t.pontos_ranking ?? 0),
+      modalidade: tipo,
+      interesseMatch: t.interesse_match === "ranking" ? "ranking" : "ranking_e_amistoso",
+      href: `/perfil-time/${t.id}?from=/match`,
+      canChallenge: Boolean(t.can_challenge),
+      challengeHint: Boolean(t.can_challenge)
+        ? undefined
+        : /^\d+$/.test(esporteSelecionado)
+          ? `Somente o proprietário (capitão) pode desafiar. Crie sua ${tipo} neste esporte como líder.`
+          : `Selecione um esporte e seja proprietário de uma ${tipo} para desafiar.`,
+      avatarUrl: null,
+      disponivelAmistoso: t.disponivel_amistoso !== false,
+    }));
+  }
+
+  return filterAndSortRadarCards(cards, { sortBy, raio });
+}
+
+export function filterAndSortRadarCards(
+  cards: MatchRadarCard[],
+  opts: { sortBy: SortBy; raio: number }
+): MatchRadarCard[] {
+  const { sortBy, raio } = opts;
+  const canOrderByDistance = true;
+
+  return cards
+    .filter((c) => c.interesseMatch !== "amistoso")
+    .filter((c) => (!canOrderByDistance ? true : c.dist <= raio))
+    .sort((a, b) => {
+      if (a.disponivelAmistoso !== b.disponivelAmistoso) return a.disponivelAmistoso ? -1 : 1;
+      if (a.dist !== b.dist) return a.dist - b.dist;
+      if (sortBy === "match_ranking_points" && b.rank !== a.rank) return b.rank - a.rank;
+      if (sortBy === "eid_score" && b.eid !== a.eid) return b.eid - a.eid;
+      return a.nome.localeCompare(b.nome, "pt-BR");
+    })
+    .slice(0, 40);
+}

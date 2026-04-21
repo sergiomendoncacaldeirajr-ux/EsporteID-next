@@ -1,6 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getServerAuth } from "@/lib/auth/rsc-auth";
+import {
+  fetchMatchRadarCards,
+  type MatchRadarCard,
+  type RadarSnapshotInput,
+  type RadarTipo,
+  type SortBy,
+} from "@/lib/match/radar-snapshot";
 import { createClient } from "@/lib/supabase/server";
 
 export type MatchLocationResult = { ok: true } | { ok: false; message: string };
@@ -28,5 +36,56 @@ export async function atualizarLocalizacaoMatch(lat: number, lng: number): Promi
 
   revalidatePath("/match");
   revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+export type RefreshMatchRadarResult =
+  | { ok: true; cards: MatchRadarCard[] }
+  | { ok: false; error: "auth" | "no_location" };
+
+/** Recarrega lista do radar sem navegação (filtros no cliente). */
+export async function refreshMatchRadarAction(input: {
+  tipo: RadarTipo;
+  sortBy: SortBy;
+  raio: number;
+  esporteSelecionado: string;
+}): Promise<RefreshMatchRadarResult> {
+  const { supabase, user } = await getServerAuth();
+  if (!user) return { ok: false, error: "auth" };
+
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("lat, lng")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const lat = Number(me?.lat);
+  const lng = Number(me?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return { ok: false, error: "no_location" };
+  }
+
+  const snap: RadarSnapshotInput = {
+    viewerId: user.id,
+    tipo: input.tipo,
+    sortBy: input.sortBy,
+    raio: input.raio,
+    esporteSelecionado: input.esporteSelecionado,
+    lat,
+    lng,
+  };
+
+  const cards = await fetchMatchRadarCards(supabase, snap);
+  return { ok: true, cards };
+}
+
+export type SetDisponivelResult = { ok: true } | { ok: false; error: string };
+
+export async function setViewerDisponivelAmistoso(disponivel: boolean): Promise<SetDisponivelResult> {
+  const { supabase, user } = await getServerAuth();
+  if (!user) return { ok: false, error: "Sessão expirada." };
+
+  const { error } = await supabase.from("profiles").update({ disponivel_amistoso: disponivel }).eq("id", user.id);
+  if (error) return { ok: false, error: error.message };
   return { ok: true };
 }
