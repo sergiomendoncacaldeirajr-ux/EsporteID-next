@@ -235,7 +235,9 @@ export async function salvarEsportesOnboarding(
       if (!Number.isInteger(id) || id <= 0) continue;
       const raw = String(value).trim().toLowerCase();
       if (!isProfessorTipoAtuacao(raw)) continue;
-      const current = new Set(professorTiposMap.get(id) ?? ["aulas"]);
+      const current = new Set<ProfessorTipoAtuacao>(
+        professorTiposMap.get(id) ?? (["aulas"] as ProfessorTipoAtuacao[])
+      );
       current.add(raw);
       professorTiposMap.set(id, [...current]);
     }
