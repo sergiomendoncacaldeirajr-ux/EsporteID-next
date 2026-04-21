@@ -6,6 +6,424 @@ import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/brand/logo-full";
 import type { MatchModality } from "@/lib/onboarding/modalidades-match";
 import { sortModalidadesMatch } from "@/lib/onboarding/modalidades-match";
+
+/* ── Seletor de localização via GPS ────────────────────────────────── */
+function LocationPicker({
+  latName,
+  lngName,
+  lat,
+  lng,
+  onCapture,
+}: {
+  latName: string;
+  lngName: string;
+  lat: string;
+  lng: string;
+  onCapture: (lat: string, lng: string) => void;
+}) {
+  const [gpsStatus, setGpsStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [gpsError, setGpsError] = useState("");
+  const [showManual, setShowManual] = useState(false);
+
+  function captureGps() {
+    if (!navigator.geolocation) {
+      setGpsStatus("error");
+      setGpsError("Seu navegador não suporta geolocalização.");
+      return;
+    }
+    setGpsStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        onCapture(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6));
+        setGpsStatus("ok");
+        setShowManual(false);
+      },
+      (err) => {
+        setGpsStatus("error");
+        setGpsError(
+          err.code === 1
+            ? "Permissão negada. Habilite a localização no navegador."
+            : "Não foi possível obter a localização. Tente novamente.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  function clear() {
+    onCapture("", "");
+    setGpsStatus("idle");
+    setGpsError("");
+  }
+
+  const hasCoords = !!lat && !!lng;
+
+  return (
+    <div className="sm:col-span-2 space-y-2">
+      <input type="hidden" name={latName} value={lat} />
+      <input type="hidden" name={lngName} value={lng} />
+
+      {/* Coordenadas capturadas */}
+      {hasCoords && !showManual && (
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/8 px-3 py-2">
+          <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0 text-emerald-400" fill="none">
+            <circle cx="8" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M8 2C5.24 2 3 4.24 3 7c0 3.5 5 7 5 7s5-3.5 5-7c0-2.76-2.24-5-5-5z" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold text-emerald-400">Localização definida</p>
+            <p className="font-mono text-[10px] text-eid-text-secondary">{lat}, {lng}</p>
+          </div>
+          <button type="button" onClick={clear}
+            className="ml-1 rounded-md p-1 text-eid-text-secondary hover:text-eid-fg transition-colors">
+            <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
+              <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Botões de ação (sempre visíveis enquanto não há coords) */}
+      {!hasCoords && (
+        <div className="flex flex-wrap items-center gap-2">
+          {/* GPS — para quem está fisicamente no local */}
+          <button
+            type="button"
+            onClick={captureGps}
+            disabled={gpsStatus === "loading"}
+            className="flex items-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-xs font-semibold text-eid-fg transition hover:border-eid-primary-500/40 hover:bg-eid-primary-500/5 disabled:opacity-60"
+          >
+            {gpsStatus === "loading" ? (
+              <svg className="h-3.5 w-3.5 animate-spin text-eid-primary-400" viewBox="0 0 16 16" fill="none">
+                <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeDashoffset="10"/>
+              </svg>
+            ) : (
+              <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-eid-primary-400" fill="none">
+                <circle cx="8" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M8 1v1.5M8 12.5V14M1 7h1.5M12.5 7H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M8 2C5.24 2 3 4.24 3 7c0 3.5 5 7 5 7s5-3.5 5-7c0-2.76-2.24-5-5-5z" stroke="currentColor" strokeWidth="1.4"/>
+              </svg>
+            )}
+            {gpsStatus === "loading" ? "Obtendo localização…" : "Estou no local agora"}
+          </button>
+
+          {/* Toggle manual */}
+          <button
+            type="button"
+            onClick={() => setShowManual((v) => !v)}
+            className="text-[11px] text-eid-text-secondary underline-offset-2 hover:text-eid-fg hover:underline transition-colors"
+          >
+            {showManual ? "Cancelar" : "Inserir coordenadas manualmente"}
+          </button>
+        </div>
+      )}
+
+      {/* Inputs manuais */}
+      {showManual && (
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-eid-text-secondary">
+              Latitude
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={lat}
+              onChange={(e) => onCapture(e.target.value, lng)}
+              placeholder="-23.550520"
+              className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm font-mono text-eid-fg"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-eid-text-secondary">
+              Longitude
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={lng}
+              onChange={(e) => onCapture(lat, e.target.value)}
+              placeholder="-46.633308"
+              className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm font-mono text-eid-fg"
+            />
+          </div>
+          <p className="col-span-2 text-[10px] text-eid-text-secondary">
+            Você pode copiar as coordenadas do Google Maps clicando com o botão direito no local.
+          </p>
+        </div>
+      )}
+
+      {/* Erros de GPS */}
+      {gpsStatus === "error" && (
+        <p className="text-[11px] text-red-400">{gpsError}</p>
+      )}
+
+      {/* Hint — apenas quando não tem coords */}
+      {!hasCoords && !showManual && (
+        <p className="text-[10px] text-eid-text-secondary">
+          Opcional — permite exibir o local no mapa para outros usuários.
+        </p>
+      )}
+
+      {/* Botão de redefinir quando tem coords */}
+      {hasCoords && !showManual && (
+        <button
+          type="button"
+          onClick={() => setShowManual(true)}
+          className="text-[11px] text-eid-text-secondary underline-offset-2 hover:text-eid-fg hover:underline transition-colors"
+        >
+          Editar manualmente
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ── Seletor de disponibilidade semanal ─────────────────────────────── */
+const DIAS = [
+  { key: "seg", label: "Seg" },
+  { key: "ter", label: "Ter" },
+  { key: "qua", label: "Qua" },
+  { key: "qui", label: "Qui" },
+  { key: "sex", label: "Sex" },
+  { key: "sab", label: "Sáb" },
+  { key: "dom", label: "Dom" },
+] as const;
+
+const TURNOS = [
+  { key: "manhã",    label: "Manhã" },
+  { key: "tarde",    label: "Tarde" },
+  { key: "noite",    label: "Noite" },
+  { key: "qualquer", label: "Qualquer" },
+] as const;
+
+type DiaKey  = (typeof DIAS)[number]["key"];
+type TurnoKey = (typeof TURNOS)[number]["key"];
+
+function DisponibilidadePicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (json: string) => void;
+}) {
+  const parsed = useMemo<Partial<Record<DiaKey, TurnoKey>>>(() => {
+    try { return JSON.parse(value || "{}"); } catch { return {}; }
+  }, [value]);
+
+  function toggleDia(dia: DiaKey) {
+    const next = { ...parsed };
+    if (next[dia]) {
+      delete next[dia];
+    } else {
+      next[dia] = "qualquer";
+    }
+    onChange(JSON.stringify(next));
+  }
+
+  function setTurno(dia: DiaKey, turno: TurnoKey) {
+    const next = { ...parsed, [dia]: turno };
+    onChange(JSON.stringify(next));
+  }
+
+  const selecionados = DIAS.filter((d) => parsed[d.key]);
+
+  return (
+    <div className="space-y-3">
+      {/* Dias da semana */}
+      <div className="flex flex-wrap gap-1.5">
+        {DIAS.map(({ key, label }) => {
+          const active = !!parsed[key];
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => toggleDia(key)}
+              className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all select-none ${
+                active
+                  ? "bg-eid-primary-500 text-white shadow-sm"
+                  : "border border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:border-eid-primary-500/40 hover:text-eid-fg"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Turnos para cada dia selecionado */}
+      {selecionados.length > 0 && (
+        <div className="space-y-1.5">
+          {selecionados.map(({ key, label }) => (
+            <div key={key} className="flex items-center gap-2">
+              <span className="w-7 text-[11px] font-bold text-eid-fg">{label}</span>
+              <div className="inline-flex gap-1">
+                {TURNOS.map(({ key: tKey, label: tLabel }) => {
+                  const active = parsed[key] === tKey;
+                  return (
+                    <button
+                      key={tKey}
+                      type="button"
+                      onClick={() => setTurno(key, tKey)}
+                      className={`rounded-md px-2 py-0.5 text-[10px] font-semibold transition-all select-none ${
+                        active
+                          ? "bg-eid-action-500 text-white"
+                          : "border border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:text-eid-fg"
+                      }`}
+                    >
+                      {tLabel}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {selecionados.length === 0 && (
+        <p className="text-[11px] text-eid-text-secondary">
+          Selecione os dias em que você costuma estar disponível.
+        </p>
+      )}
+    </div>
+  );
+}
+
+
+function EidFilePicker({
+  name,
+  accept,
+  label = "Selecionar arquivo",
+  hint,
+}: {
+  name: string;
+  accept?: string;
+  label?: string;
+  hint?: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string>("");
+
+  return (
+    <div>
+      {hint && <p className="mb-1.5 text-[11px] text-eid-text-secondary">{hint}</p>}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => ref.current?.click()}
+          className="flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-1.5 text-xs font-semibold text-eid-fg transition hover:border-eid-primary-500/40 hover:bg-eid-primary-500/5"
+        >
+          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-eid-text-secondary" fill="none">
+            <path d="M8 2v8M4 6l4-4 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2 12h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+          </svg>
+          {label}
+        </button>
+        {fileName && (
+          <span className="truncate text-[11px] text-eid-text-secondary max-w-[180px]">{fileName}</span>
+        )}
+        {!fileName && (
+          <span className="text-[11px] text-eid-text-secondary/50">Nenhum arquivo escolhido</span>
+        )}
+      </div>
+      <input
+        ref={ref}
+        type="file"
+        name={name}
+        accept={accept}
+        className="hidden"
+        onChange={(e) => setFileName(e.target.files?.[0]?.name ?? "")}
+      />
+    </div>
+  );
+}
+
+/* ── Dropdown customizado estilo nativo ─────────────────────────────── */
+function EidSelect({
+  value,
+  onChange,
+  options,
+  placeholder = "Selecione…",
+  name,
+  className = "",
+}: {
+  value: string | number;
+  onChange: (v: string) => void;
+  options: { value: string | number; label: string }[];
+  placeholder?: string;
+  name?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = options.find((o) => String(o.value) === String(value));
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className={`relative ${className}`}>
+      {name && <input type="hidden" name={name} value={value} />}
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
+          open
+            ? "border-eid-primary-500/60 bg-eid-card shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
+            : "border-[color:var(--eid-border-subtle)] bg-eid-card hover:border-eid-primary-500/40"
+        }`}
+      >
+        <span className={selected ? "text-eid-fg" : "text-eid-text-secondary"}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <svg
+          viewBox="0 0 16 16"
+          className={`h-4 w-4 shrink-0 text-eid-text-secondary transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          fill="none"
+        >
+          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
+          <div className="max-h-52 overflow-y-auto py-1">
+            {options.map((opt) => {
+              const active = String(opt.value) === String(value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => { onChange(String(opt.value)); setOpen(false); }}
+                  className={`flex w-full items-center justify-between px-3 py-2.5 text-sm transition-colors ${
+                    active
+                      ? "bg-eid-primary-500/10 text-eid-primary-400 font-semibold"
+                      : "text-eid-fg hover:bg-eid-primary-500/6"
+                  }`}
+                >
+                  {opt.label}
+                  {active && (
+                    <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 shrink-0" fill="none">
+                      <path d="M2 6l3 3 5-5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 import {
   salvarPapeisOnboarding,
   salvarEsportesOnboarding,
@@ -158,6 +576,8 @@ export function OnboardingWizard({
   const [espacoEstado, setEspacoEstado] = useState<string>(extrasInitial.espacoEstado);
   const [espacoCep, setEspacoCep] = useState<string>(extrasInitial.espacoCep);
   const [espacoComplemento, setEspacoComplemento] = useState<string>(extrasInitial.espacoComplemento);
+  const [espacoLat, setEspacoLat] = useState<string>("");
+  const [espacoLng, setEspacoLng] = useState<string>("");
   const [nome, setNome] = useState<string>(profileInitial.nome);
   const [username, setUsername] = useState<string>(profileInitial.username);
   const [localizacao, setLocalizacao] = useState<string>(profileInitial.localizacao);
@@ -805,27 +1225,40 @@ export function OnboardingWizard({
           {step === "papeis" ? (
             <form onSubmit={submitPapeis} className="mt-6 space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
-                {ROLES.map((r) => (
-                  <label
-                    key={r.id}
-                    className={`flex cursor-pointer flex-col rounded-2xl border p-4 text-left transition ${
-                      papeis.has(r.id)
-                        ? "border-eid-primary-500/50 bg-eid-primary-500/10"
-                        : "border-[color:var(--eid-border-subtle)] bg-eid-card/60 hover:border-eid-primary-500/30"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      name="papel"
-                      value={r.id}
-                      checked={papeis.has(r.id)}
-                      onChange={() => togglePapel(r.id)}
-                      className="sr-only"
-                    />
-                    <span className="font-semibold text-eid-fg">{r.titulo}</span>
-                    <span className="mt-1 text-xs leading-relaxed text-eid-text-secondary">{r.desc}</span>
-                  </label>
-                ))}
+                {ROLES.map((r) => {
+                  const sel = papeis.has(r.id);
+                  return (
+                    <label
+                      key={r.id}
+                      className={`relative flex cursor-pointer flex-col rounded-2xl border p-4 text-left transition-all select-none ${
+                        sel
+                          ? "border-eid-primary-500/60 bg-eid-primary-500/10 shadow-sm"
+                          : "border-[color:var(--eid-border-subtle)] bg-eid-card/60 hover:border-eid-primary-500/30"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        name="papel"
+                        value={r.id}
+                        checked={sel}
+                        onChange={() => togglePapel(r.id)}
+                        className="sr-only"
+                      />
+                      {/* Checkmark no canto superior direito */}
+                      <span className={`absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full transition-all ${
+                        sel ? "bg-eid-primary-500" : "border border-[color:var(--eid-border-subtle)]"
+                      }`}>
+                        {sel && (
+                          <svg viewBox="0 0 10 10" className="h-3 w-3" fill="none">
+                            <path d="M1.5 5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </span>
+                      <span className={`pr-6 text-sm font-bold ${sel ? "text-eid-primary-400" : "text-eid-fg"}`}>{r.titulo}</span>
+                      <span className="mt-1 text-xs leading-relaxed text-eid-text-secondary">{r.desc}</span>
+                    </label>
+                  );
+                })}
               </div>
               <button
                 type="submit"
@@ -839,115 +1272,205 @@ export function OnboardingWizard({
 
           {step === "esportes" ? (
             <form onSubmit={submitEsportes} className="mt-6 space-y-4">
-              <div className="grid gap-2 sm:grid-cols-3">
-                {esportes.map((e) => (
-                  <div
-                    key={e.id}
-                    className={`rounded-xl border px-3 py-2 transition ${
-                      esportesSel.has(e.id)
-                        ? "border-eid-primary-500/50 bg-eid-primary-500/10"
-                        : "border-[color:var(--eid-border-subtle)] bg-eid-card/60 hover:border-eid-primary-500/30"
-                    }`}
-                  >
-                    <label className="cursor-pointer text-sm font-semibold text-eid-fg">
+
+              {/* ── Grade de seleção de esportes: pills compactos ── */}
+              <div className="flex flex-wrap gap-2">
+                {esportes.map((e) => {
+                  const sel = esportesSel.has(e.id);
+                  return (
+                    <label
+                      key={e.id}
+                      className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                        sel
+                          ? "border-eid-primary-500 bg-eid-primary-500 text-white shadow-sm"
+                          : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:border-eid-primary-500/40 hover:text-eid-fg"
+                      }`}
+                    >
                       <input
                         type="checkbox"
-                        className="mr-2"
                         name="esporte_id"
                         value={e.id}
-                        checked={esportesSel.has(e.id)}
+                        checked={sel}
                         onChange={() => toggleEsporte(e.id)}
+                        className="sr-only"
                       />
+                      {sel && (
+                        <svg viewBox="0 0 10 10" className="h-3 w-3 shrink-0" fill="none">
+                          <path d="M1.5 5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
                       {e.nome}
                     </label>
-                    {esportesSel.has(e.id) ? (
-                      <div className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-bg/60 p-2">
-                        <p className="text-[11px] text-eid-text-secondary">Interesse no match desse esporte:</p>
-                        <label className="mt-1 block text-xs text-eid-fg">
-                          <input
-                            type="radio"
-                            name={`esporte_interesse_${e.id}`}
-                            value="ranking"
-                            checked={(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "ranking"}
-                            onChange={() => setEsporteInteresse(e.id, "ranking")}
-                            className="mr-2"
-                          />
-                          Só partidas valendo ranking
-                        </label>
-                        <label className="mt-1 block text-xs text-eid-fg">
-                          <input
-                            type="radio"
-                            name={`esporte_interesse_${e.id}`}
-                            value="ranking_e_amistoso"
-                            checked={(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "ranking_e_amistoso"}
-                            onChange={() => setEsporteInteresse(e.id, "ranking_e_amistoso")}
-                            className="mr-2"
-                          />
-                          Aceito ranking e amistoso
-                        </label>
-                        <label className="mt-1 block text-xs text-eid-fg">
-                          <input
-                            type="radio"
-                            name={`esporte_interesse_${e.id}`}
-                            value="amistoso"
-                            checked={(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "amistoso"}
-                            onChange={() => setEsporteInteresse(e.id, "amistoso")}
-                            className="mr-2"
-                          />
-                          Apenas amistosos
-                        </label>
-                        {(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "amistoso" ? (
-                          <p className="mt-2 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1 text-[11px] text-eid-action-400">
-                            Você não aparecerá nas sugestões de Matchmaking Competitivo da plataforma.
-                          </p>
-                        ) : null}
-                        <p className="mt-2 text-[11px] text-eid-text-secondary">
-                          Como deseja jogar no match (pode marcar mais de uma):
-                        </p>
-                        {e.permiteIndividual ? (
-                          <label className="mt-1 block text-xs text-eid-fg">
-                            <input
-                              type="checkbox"
-                              name={`esporte_modalidade_${e.id}`}
-                              value="individual"
-                              checked={(esportesModalidades[e.id] ?? ["individual"]).includes("individual")}
-                              onChange={(ev) => toggleEsporteModality(e.id, "individual", ev.target.checked)}
-                              className="mr-2"
-                            />
-                            Individual (X1)
-                          </label>
-                        ) : null}
-                        {e.permiteDupla ? (
-                          <label className="mt-1 block text-xs text-eid-fg">
-                            <input
-                              type="checkbox"
-                              name={`esporte_modalidade_${e.id}`}
-                              value="dupla"
-                              checked={(esportesModalidades[e.id] ?? ["individual"]).includes("dupla")}
-                              onChange={(ev) => toggleEsporteModality(e.id, "dupla", ev.target.checked)}
-                              className="mr-2"
-                            />
-                            Dupla
-                          </label>
-                        ) : null}
-                        {e.permiteTime ? (
-                          <label className="mt-1 block text-xs text-eid-fg">
-                            <input
-                              type="checkbox"
-                              name={`esporte_modalidade_${e.id}`}
-                              value="time"
-                              checked={(esportesModalidades[e.id] ?? ["individual"]).includes("time")}
-                              onChange={(ev) => toggleEsporteModality(e.id, "time", ev.target.checked)}
-                              className="mr-2"
-                            />
-                            Time
-                          </label>
-                        ) : null}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
+
+              {/* ── Detalhes dos esportes selecionados ── */}
+              {esportesSel.size > 0 && (
+                <div className="space-y-3">
+                  {esportes.filter((e) => esportesSel.has(e.id)).map((e) => (
+                    <div
+                      key={e.id}
+                      className="rounded-2xl border border-eid-primary-500/30 bg-eid-card/60 p-4"
+                    >
+                      {/* Header do esporte */}
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-black uppercase tracking-wide text-eid-fg">{e.nome}</h3>
+                        <button
+                          type="button"
+                          onClick={() => toggleEsporte(e.id)}
+                          className="rounded-full p-1 text-eid-text-secondary hover:text-eid-action-500 transition"
+                          aria-label={`Remover ${e.nome}`}
+                        >
+                          <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none">
+                            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Interesse no match */}
+                      <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
+                        Interesse no match
+                      </p>
+                      <div className="mt-1.5 flex flex-col gap-1.5">
+                        {([
+                          {
+                            val: "ranking",
+                            label: "Só ranking",
+                            desc: "Apenas partidas competitivas",
+                            icon: (
+                              <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0" fill="none">
+                                <path d="M5 2h6v7a3 3 0 01-6 0V2z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                                <path d="M2 3h3v4a2 2 0 01-2-2V3zM11 3h3v2a2 2 0 01-2 2V3z" fill="currentColor" fillOpacity="0.3"/>
+                                <line x1="8" y1="12" x2="8" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                                <line x1="6" y1="14" x2="10" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                              </svg>
+                            ),
+                            color: "var(--eid-primary-500)",
+                          },
+                          {
+                            val: "ranking_e_amistoso",
+                            label: "Ranking + Amistoso",
+                            desc: "Aceito os dois tipos de partida",
+                            icon: (
+                              <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0" fill="none">
+                                <path d="M8 1l1.5 3.5L13 5l-2.5 2.5.5 3.5L8 9.5 5 11l.5-3.5L3 5l3.5-.5L8 1z" fill="currentColor" fillOpacity="0.25" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                              </svg>
+                            ),
+                            color: "var(--eid-action-500)",
+                          },
+                          {
+                            val: "amistoso",
+                            label: "Apenas amistosos",
+                            desc: "Partidas sem impacto no ranking",
+                            icon: (
+                              <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0" fill="none">
+                                <circle cx="5.5" cy="5" r="2" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.4"/>
+                                <circle cx="10.5" cy="5" r="2" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.4"/>
+                                <path d="M1 13c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+                                <path d="M10 10c.8-.6 1.8-1 3-1 2 0 3 1.2 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
+                              </svg>
+                            ),
+                            color: "#22c55e",
+                          },
+                        ] as const).map(({ val, label, desc, icon, color }) => {
+                          const active = (esportesInteresse[e.id] ?? "ranking_e_amistoso") === val;
+                          return (
+                            <label
+                              key={val}
+                              className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 transition-all select-none ${
+                                active
+                                  ? "border-eid-primary-500/40 bg-eid-primary-500/8"
+                                  : "border-[color:var(--eid-border-subtle)] hover:border-eid-primary-500/25"
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name={`esporte_interesse_${e.id}`}
+                                value={val}
+                                checked={active}
+                                onChange={() => setEsporteInteresse(e.id, val)}
+                                className="sr-only"
+                              />
+                              <span style={{ color: active ? color : "var(--eid-text-secondary)" }}>{icon}</span>
+                              <div className="min-w-0">
+                                <p className={`text-xs font-bold ${active ? "text-eid-fg" : "text-eid-text-secondary"}`}>{label}</p>
+                                <p className="text-[10px] text-eid-text-secondary">{desc}</p>
+                              </div>
+                              {active && (
+                                <span className="ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-eid-primary-500">
+                                  <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" fill="none">
+                                    <path d="M1.5 5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </span>
+                              )}
+                            </label>
+                          );
+                        })}
+                      </div>
+
+                      {(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "amistoso" && (
+                        <p className="mt-2 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1.5 text-[11px] text-eid-action-400">
+                          Você não aparecerá nas sugestões de Matchmaking Competitivo.
+                        </p>
+                      )}
+
+                      {/* Modalidades */}
+                      {(e.permiteIndividual || e.permiteDupla || e.permiteTime) && (
+                        <>
+                          <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
+                            Como deseja jogar
+                          </p>
+                          <div className="mt-1.5 flex flex-wrap gap-2">
+                            {e.permiteIndividual && (
+                              <label className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
+                                (esportesModalidades[e.id] ?? ["individual"]).includes("individual")
+                                  ? "border-eid-primary-500 bg-eid-primary-500/15 text-eid-primary-400"
+                                  : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
+                              }`}>
+                                <input type="checkbox" name={`esporte_modalidade_${e.id}`} value="individual"
+                                  checked={(esportesModalidades[e.id] ?? ["individual"]).includes("individual")}
+                                  onChange={(ev) => toggleEsporteModality(e.id, "individual", ev.target.checked)}
+                                  className="sr-only"
+                                />
+                                Individual (X1)
+                              </label>
+                            )}
+                            {e.permiteDupla && (
+                              <label className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
+                                (esportesModalidades[e.id] ?? ["individual"]).includes("dupla")
+                                  ? "border-eid-primary-500 bg-eid-primary-500/15 text-eid-primary-400"
+                                  : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
+                              }`}>
+                                <input type="checkbox" name={`esporte_modalidade_${e.id}`} value="dupla"
+                                  checked={(esportesModalidades[e.id] ?? ["individual"]).includes("dupla")}
+                                  onChange={(ev) => toggleEsporteModality(e.id, "dupla", ev.target.checked)}
+                                  className="sr-only"
+                                />
+                                Dupla
+                              </label>
+                            )}
+                            {e.permiteTime && (
+                              <label className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
+                                (esportesModalidades[e.id] ?? ["individual"]).includes("time")
+                                  ? "border-eid-primary-500 bg-eid-primary-500/15 text-eid-primary-400"
+                                  : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
+                              }`}>
+                                <input type="checkbox" name={`esporte_modalidade_${e.id}`} value="time"
+                                  checked={(esportesModalidades[e.id] ?? ["individual"]).includes("time")}
+                                  onChange={(ev) => toggleEsporteModality(e.id, "time", ev.target.checked)}
+                                  className="sr-only"
+                                />
+                                Time
+                              </label>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={pending || esportesSel.size === 0}
@@ -965,65 +1488,79 @@ export function OnboardingWizard({
                   <h2 className="text-sm font-bold uppercase tracking-wide text-eid-primary-500">
                     Experiência como atleta
                   </h2>
-                  <div className="mt-3 flex gap-2">
-                    <label className="rounded-full border border-[color:var(--eid-border-subtle)] px-3 py-1 text-xs text-eid-fg">
-                      <input
-                        type="radio"
-                        name="exp_modo"
-                        value="aprox"
-                        checked={expModo === "aprox"}
-                        onChange={() => setExpModo("aprox")}
-                        className="mr-1"
-                      />
-                      Aproximado
-                    </label>
-                    <label className="rounded-full border border-[color:var(--eid-border-subtle)] px-3 py-1 text-xs text-eid-fg">
-                      <input
-                        type="radio"
-                        name="exp_modo"
-                        value="exato"
-                        checked={expModo === "exato"}
-                        onChange={() => setExpModo("exato")}
-                        className="mr-1"
-                      />
-                      Mês e ano
-                    </label>
+                  {/* Segmented control — Aproximado / Mês e ano */}
+                  <div className="mt-3 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1 gap-1">
+                    {(["aprox", "exato"] as const).map((val) => {
+                      const label = val === "aprox" ? "Aproximado" : "Mês e ano";
+                      const active = expModo === val;
+                      return (
+                        <label
+                          key={val}
+                          className={`cursor-pointer rounded-lg px-4 py-1.5 text-xs font-semibold transition-all select-none ${
+                            active
+                              ? "bg-eid-primary-500 text-white shadow-sm"
+                              : "text-eid-text-secondary hover:text-eid-fg"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="exp_modo"
+                            value={val}
+                            checked={active}
+                            onChange={() => setExpModo(val)}
+                            className="sr-only"
+                          />
+                          {label}
+                        </label>
+                      );
+                    })}
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                    <select
-                      name="exp_aprox"
-                      value={expAprox}
-                      onChange={(e) => setExpAprox(e.target.value as "menos_1" | "1_3" | "mais_3")}
-                      disabled={expModo !== "aprox"}
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg [&>option]:bg-[#0b1220] [&>option]:text-white"
-                    >
-                      <option value="menos_1">Menos de 1 ano</option>
-                      <option value="1_3">Entre 1 e 3 anos</option>
-                      <option value="mais_3">Mais de 3 anos</option>
-                    </select>
-                    <input
-                      type="number"
-                      name="exp_mes"
-                      min={1}
-                      max={12}
-                      value={expMes}
-                      onChange={(e) => setExpMes(e.target.value)}
-                      disabled={expModo !== "exato"}
-                      placeholder="Mês"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                    />
-                    <input
-                      type="number"
-                      name="exp_ano"
-                      min={1970}
-                      max={2100}
-                      value={expAno}
-                      onChange={(e) => setExpAno(e.target.value)}
-                      disabled={expModo !== "exato"}
-                      placeholder="Ano"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                    />
-                  </div>
+                  {/* Experiência aproximada — pills verticais (só visível quando modo=aprox) */}
+                  {expModo === "aprox" && (
+                    <div className="mt-3 flex flex-col gap-1.5">
+                      {([
+                        { val: "menos_1", label: "Menos de 1 ano",  desc: "Ainda iniciante no esporte" },
+                        { val: "1_3",     label: "Entre 1 e 3 anos", desc: "Já tenho alguma experiência" },
+                        { val: "mais_3",  label: "Mais de 3 anos",   desc: "Pratico há bastante tempo" },
+                      ] as const).map(({ val, label, desc }) => {
+                        const active = expAprox === val;
+                        return (
+                          <label
+                            key={val}
+                            className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 transition-all select-none ${
+                              active
+                                ? "border-eid-primary-500/40 bg-eid-primary-500/8"
+                                : "border-[color:var(--eid-border-subtle)] hover:border-eid-primary-500/25"
+                            }`}
+                          >
+                            <input type="radio" name="exp_aprox" value={val} checked={active}
+                              onChange={() => setExpAprox(val)} className="sr-only" />
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-xs font-bold ${active ? "text-eid-fg" : "text-eid-text-secondary"}`}>{label}</p>
+                              <p className="text-[10px] text-eid-text-secondary">{desc}</p>
+                            </div>
+                            {active && (
+                              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-eid-primary-500">
+                                <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" fill="none">
+                                  <path d="M1.5 5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </span>
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {expModo === "exato" && (
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      <input type="number" name="exp_mes" min={1} max={12} value={expMes}
+                        onChange={(e) => setExpMes(e.target.value)} placeholder="Mês (1-12)"
+                        className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg" />
+                      <input type="number" name="exp_ano" min={1970} max={2100} value={expAno}
+                        onChange={(e) => setExpAno(e.target.value)} placeholder="Ano (ex: 2020)"
+                        className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg" />
+                    </div>
+                  )}
                 </section>
               ) : null}
 
@@ -1032,67 +1569,71 @@ export function OnboardingWizard({
                   <h2 className="text-sm font-bold uppercase tracking-wide text-eid-primary-500">
                     Organização de torneios
                   </h2>
-                  <label className="mt-3 block text-xs text-eid-text-secondary">
-                    Esportes dos eventos (selecione um ou mais)
-                  </label>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {esportes.map((e) => (
-                      <label key={`org-esp-${e.id}`} className="text-xs text-eid-fg">
-                        <input
-                          type="checkbox"
-                          name="org_esporte_ids"
-                          value={e.id}
-                          checked={orgEsportes.has(e.id)}
-                          onChange={() => toggleOrgEsporte(e.id)}
-                          className="mr-2"
-                        />
-                        {e.nome}
-                      </label>
-                    ))}
+                  <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
+                    Esportes dos eventos
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {esportes.map((e) => {
+                      const sel = orgEsportes.has(e.id);
+                      return (
+                        <label key={`org-esp-${e.id}`} className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                          sel ? "border-eid-primary-500 bg-eid-primary-500 text-white shadow-sm" : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:border-eid-primary-500/40 hover:text-eid-fg"
+                        }`}>
+                          <input type="checkbox" name="org_esporte_ids" value={e.id} checked={sel} onChange={() => toggleOrgEsporte(e.id)} className="sr-only" />
+                          {sel && <svg viewBox="0 0 10 10" className="h-3 w-3 shrink-0" fill="none"><path d="M1.5 5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          {e.nome}
+                        </label>
+                      );
+                    })}
                   </div>
                   <input type="hidden" name="org_esporte_id" value={orgEsporteId} />
 
                   <p className="mt-4 text-xs text-eid-text-secondary">Local para seus torneios</p>
-                  <div className="mt-2 flex gap-2">
-                    <label className="rounded-full border border-[color:var(--eid-border-subtle)] px-3 py-1 text-xs text-eid-fg">
-                      <input
-                        type="radio"
-                        name="org_local_modo"
-                        value="existente"
-                        checked={orgLocalModo === "existente"}
-                        onChange={() => setOrgLocalModo("existente")}
-                        className="mr-1"
-                      />
-                      Escolher local já cadastrado
-                    </label>
-                    <label className="rounded-full border border-[color:var(--eid-border-subtle)] px-3 py-1 text-xs text-eid-fg">
-                      <input
-                        type="radio"
-                        name="org_local_modo"
-                        value="novo"
-                        checked={orgLocalModo === "novo"}
-                        onChange={() => setOrgLocalModo("novo")}
-                        className="mr-1"
-                      />
-                      Cadastrar novo local
-                    </label>
+                  {/* Segmented control — Existente / Novo */}
+                  <div className="mt-2 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1 gap-1">
+                    {([
+                      { val: "existente", label: "Já cadastrado" },
+                      { val: "novo",      label: "Novo local"    },
+                    ] as const).map(({ val, label }) => {
+                      const active = orgLocalModo === val;
+                      return (
+                        <label
+                          key={val}
+                          className={`cursor-pointer rounded-lg px-4 py-1.5 text-xs font-semibold transition-all select-none ${
+                            active
+                              ? "bg-eid-primary-500 text-white shadow-sm"
+                              : "text-eid-text-secondary hover:text-eid-fg"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="org_local_modo"
+                            value={val}
+                            checked={active}
+                            onChange={() => setOrgLocalModo(val)}
+                            className="sr-only"
+                          />
+                          {label}
+                        </label>
+                      );
+                    })}
                   </div>
 
                   {orgLocalModo === "existente" ? (
                     <>
-                      <select
+                      <EidSelect
                         name="org_local_id"
                         value={orgLocalId}
-                        onChange={(e) => setOrgLocalId(e.target.value)}
-                        className="eid-input-dark mt-3 w-full rounded-xl px-3 py-2 text-sm text-eid-fg [&>option]:bg-[#0b1220] [&>option]:text-white"
-                      >
-                        <option value={0}>Selecione o local...</option>
-                        {locais.map((l) => (
-                          <option key={l.id} value={l.id}>
-                            {l.nome} {l.localizacao ? `- ${l.localizacao}` : ""}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setOrgLocalId}
+                        placeholder="Selecione o local…"
+                        className="mt-3"
+                        options={[
+                          ...locais.map((l) => ({
+                            value: l.id,
+                            label: `${l.nome}${l.localizacao ? ` — ${l.localizacao}` : ""}`,
+                          })),
+                        ]}
+                      />
                       <input
                         name="org_local_msg"
                         value={orgLocalMsg}
@@ -1114,16 +1655,15 @@ export function OnboardingWizard({
                         name="org_novo_local_endereco"
                         value={orgNovoLocalEndereco}
                         onChange={(e) => setOrgNovoLocalEndereco(e.target.value)}
-                        placeholder="Endereco"
+                        placeholder="Endereço"
                         className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg sm:col-span-2"
                       />
                       <div className="sm:col-span-2">
-                        <p className="mb-1 text-xs text-eid-text-secondary">Logo do local (opcional)</p>
-                        <input
-                          type="file"
+                        <EidFilePicker
                           name="org_novo_local_logo"
                           accept="image/*"
-                          className="block w-full text-xs text-eid-text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-eid-action-500 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-white"
+                          label="Escolher logo"
+                          hint="Logo do local (opcional)"
                         />
                       </div>
                       <input
@@ -1147,29 +1687,19 @@ export function OnboardingWizard({
                         placeholder="CEP (opcional)"
                         className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
                       />
-                      <input
-                        name="org_novo_local_lat"
-                        value={orgNovoLocalLat}
-                        onChange={(e) => setOrgNovoLocalLat(e.target.value)}
-                        placeholder="Latitude (opcional)"
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                      />
-                      <input
-                        name="org_novo_local_lng"
-                        value={orgNovoLocalLng}
-                        onChange={(e) => setOrgNovoLocalLng(e.target.value)}
-                        placeholder="Longitude (opcional)"
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
+                      <LocationPicker
+                        latName="org_novo_local_lat"
+                        lngName="org_novo_local_lng"
+                        lat={orgNovoLocalLat}
+                        lng={orgNovoLocalLng}
+                        onCapture={(lat, lng) => { setOrgNovoLocalLat(lat); setOrgNovoLocalLng(lng); }}
                       />
                       <div className="sm:col-span-2">
-                        <p className="mb-1 text-xs text-eid-text-secondary">
-                          Se esse nome já existir sem dono, envie comprovante para solicitar a propriedade.
-                        </p>
-                        <input
-                          type="file"
+                        <EidFilePicker
                           name="org_novo_local_documento"
                           accept=".pdf,.jpg,.jpeg,.png,.webp"
-                          className="block w-full text-xs text-eid-text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-eid-action-500 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-white"
+                          label="Enviar comprovante"
+                          hint="Se esse nome já existir sem dono, envie comprovante para solicitar a propriedade."
                         />
                       </div>
                     </div>
@@ -1194,7 +1724,7 @@ export function OnboardingWizard({
                       name="espaco_endereco"
                       value={espacoEndereco}
                       onChange={(e) => setEspacoEndereco(e.target.value)}
-                      placeholder="Endereco"
+                      placeholder="Endereço"
                       className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg sm:col-span-2"
                     />
                     <input
@@ -1239,62 +1769,78 @@ export function OnboardingWizard({
                       placeholder="Complemento (opcional)"
                       className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
                     />
-                    <input
-                      name="espaco_lat"
-                      placeholder="Latitude (opcional)"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                    />
-                    <input
-                      name="espaco_lng"
-                      placeholder="Longitude (opcional)"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
+                    <LocationPicker
+                      latName="espaco_lat"
+                      lngName="espaco_lng"
+                      lat={espacoLat}
+                      lng={espacoLng}
+                      onCapture={(lat, lng) => { setEspacoLat(lat); setEspacoLng(lng); }}
                     />
                   </div>
-                  <p className="mt-3 text-xs text-eid-text-secondary">Esportes atendidos no local</p>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {esportes.map((e) => (
-                      <label key={`esp-${e.id}`} className="text-xs text-eid-fg">
-                        <input
-                          type="checkbox"
-                          name="espaco_esportes"
-                          value={e.id}
-                          checked={espacoEsportes.has(e.id)}
-                          onChange={() => toggleEspacoEsporte(e.id)}
-                          className="mr-2"
-                        />
-                        {e.nome}
-                      </label>
-                    ))}
+                  <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
+                    Esportes atendidos no local
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {esportes.map((e) => {
+                      const sel = espacoEsportes.has(e.id);
+                      return (
+                        <label key={`esp-${e.id}`} className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                          sel ? "border-eid-primary-500 bg-eid-primary-500 text-white shadow-sm" : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:border-eid-primary-500/40 hover:text-eid-fg"
+                        }`}>
+                          <input type="checkbox" name="espaco_esportes" value={e.id} checked={sel} onChange={() => toggleEspacoEsporte(e.id)} className="sr-only" />
+                          {sel && <svg viewBox="0 0 10 10" className="h-3 w-3 shrink-0" fill="none"><path d="M1.5 5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          {e.nome}
+                        </label>
+                      );
+                    })}
                   </div>
-                  <p className="mt-3 text-xs text-eid-text-secondary">Estruturas</p>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {ESTRUTURAS.map((e) => (
-                      <label key={e.id} className="text-xs text-eid-fg">
-                        <input
-                          type="checkbox"
-                          name="estrutura"
-                          value={e.id}
-                          checked={estruturas.has(e.id)}
-                          onChange={() => toggleEstrutura(e.id)}
-                          className="mr-2"
-                        />
-                        {e.label}
-                      </label>
-                    ))}
+
+                  <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
+                    Estruturas disponíveis
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {ESTRUTURAS.map((e) => {
+                      const sel = estruturas.has(e.id);
+                      return (
+                        <label key={e.id} className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
+                          sel ? "border-eid-action-500 bg-eid-action-500/15 text-eid-action-500 shadow-sm" : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:border-eid-action-500/40 hover:text-eid-fg"
+                        }`}>
+                          <input type="checkbox" name="estrutura" value={e.id} checked={sel} onChange={() => toggleEstrutura(e.id)} className="sr-only" />
+                          {sel && <svg viewBox="0 0 10 10" className="h-3 w-3 shrink-0" fill="none"><path d="M1.5 5l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          {e.label}
+                        </label>
+                      );
+                    })}
                   </div>
-                  <select
-                    name="reserva_modelo"
-                    value={reservaModelo}
-                    onChange={(e) =>
-                      setReservaModelo(e.target.value as "livre" | "socios" | "pago" | "misto")
-                    }
-                    className="eid-input-dark mt-3 w-full rounded-xl px-3 py-2 text-sm text-eid-fg [&>option]:bg-[#0b1220] [&>option]:text-white"
-                  >
-                    <option value="livre">A definir depois</option>
-                    <option value="socios">Prioridade / gratuito para sócios</option>
-                    <option value="pago">Reserva paga (público)</option>
-                    <option value="misto">Misto (sócio + visitante pago)</option>
-                  </select>
+                  <div className="mt-3 flex flex-col gap-1.5">
+                    {([
+                      { val: "livre",   label: "A definir depois",              desc: "Configure o acesso mais tarde" },
+                      { val: "socios",  label: "Gratuito para sócios",          desc: "Prioridade / reserva para membros" },
+                      { val: "pago",    label: "Reserva paga (público)",        desc: "Qualquer pessoa pode reservar" },
+                      { val: "misto",   label: "Misto",                         desc: "Sócio grátis + visitante pago" },
+                    ] as const).map(({ val, label, desc }) => {
+                      const active = reservaModelo === val;
+                      return (
+                        <label key={val} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 transition-all select-none ${
+                          active ? "border-eid-primary-500/40 bg-eid-primary-500/8" : "border-[color:var(--eid-border-subtle)] hover:border-eid-primary-500/25"
+                        }`}>
+                          <input type="radio" name="reserva_modelo" value={val} checked={active}
+                            onChange={() => setReservaModelo(val)} className="sr-only" />
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-xs font-bold ${active ? "text-eid-fg" : "text-eid-text-secondary"}`}>{label}</p>
+                            <p className="text-[10px] text-eid-text-secondary">{desc}</p>
+                          </div>
+                          {active && (
+                            <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-eid-primary-500">
+                              <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" fill="none">
+                                <path d="M1.5 5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
                   <input
                     name="reserva_notas"
                     value={reservaNotas}
@@ -1302,18 +1848,17 @@ export function OnboardingWizard({
                     placeholder="Observações"
                     className="eid-input-dark mt-2 w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                   />
-                  <p className="mt-3 text-xs text-eid-text-secondary">
-                    Documento de comprovacao do local (obrigatorio para analise do admin)
-                  </p>
-                  <input
-                    type="file"
-                    name="espaco_documento"
-                    accept=".pdf,.jpg,.jpeg,.png,.webp"
-                    className="mt-1 block w-full text-xs text-eid-text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-eid-action-500 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-white"
-                  />
+                  <div className="mt-3">
+                    <EidFilePicker
+                      name="espaco_documento"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      label="Enviar documento"
+                      hint="Comprovante do local (obrigatório para análise do administrador)"
+                    />
+                  </div>
                   <input
                     name="espaco_doc_msg"
-                    placeholder="Observacao para aprovacao (opcional)"
+                    placeholder="Observação para aprovação (opcional)"
                     className="eid-input-dark mt-2 w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                   />
                 </section>
@@ -1521,14 +2066,16 @@ export function OnboardingWizard({
                 rows={3}
                 className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
               />
-              <textarea
-                name="disponibilidade_semana_json"
-                value={disponibilidadeSemanaJson}
-                onChange={(e) => setDisponibilidadeSemanaJson(e.target.value)}
-                placeholder='Disponibilidade JSON (ex: {"seg":"noite","sab":"manhã"})'
-                rows={2}
-                className="eid-input-dark w-full rounded-xl px-3 py-3 text-xs text-eid-fg"
-              />
+              <div>
+                <p className="mb-2 text-xs font-semibold text-eid-text-secondary uppercase tracking-wider">
+                  Disponibilidade semanal (opcional)
+                </p>
+                <DisponibilidadePicker
+                  value={disponibilidadeSemanaJson}
+                  onChange={setDisponibilidadeSemanaJson}
+                />
+                <input type="hidden" name="disponibilidade_semana_json" value={disponibilidadeSemanaJson} />
+              </div>
 
               {hasAtletaProfessor ? (
                 <>
@@ -1556,20 +2103,26 @@ export function OnboardingWizard({
                       className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
                     />
                   </div>
-                  <select
-                    name="lado"
-                    required
-                    value={lado}
-                    onChange={(e) => setLado(e.target.value)}
-                    className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg [&>option]:bg-[#0b1220] [&>option]:text-white"
-                  >
-                    <option value="" disabled>
-                      Mão dominante
-                    </option>
-                    <option value="Destro">Destro</option>
-                    <option value="Canhoto">Canhoto</option>
-                    <option value="Ambos">Ambidestro</option>
-                  </select>
+                  {/* Mão dominante — segmented control */}
+                  <input type="hidden" name="lado" value={lado} />
+                  <div className="inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1 gap-1">
+                    {([
+                      { val: "Destro",   label: "Destro" },
+                      { val: "Canhoto",  label: "Canhoto" },
+                      { val: "Ambos",    label: "Ambidestro" },
+                    ] as const).map(({ val, label }) => {
+                      const active = lado === val;
+                      return (
+                        <button key={val} type="button" onClick={() => setLado(val)}
+                          className={`cursor-pointer rounded-lg px-4 py-1.5 text-xs font-semibold transition-all select-none ${
+                            active ? "bg-eid-primary-500 text-white shadow-sm" : "text-eid-text-secondary hover:text-eid-fg"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </>
               ) : null}
 
