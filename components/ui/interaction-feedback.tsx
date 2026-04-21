@@ -95,6 +95,7 @@ function lockElement(el: HTMLElement, opts?: { disableNative?: boolean }) {
 export function InteractionFeedback() {
   const pathname = usePathname();
   const authPath = isAuthPath(pathname);
+  const isOnboarding = (pathname ?? "").startsWith("/onboarding");
   const [loading, setLoading] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(false);
   const navStartedAtRef = useRef<number>(0);
@@ -236,20 +237,36 @@ export function InteractionFeedback() {
       </div>
       <div
         aria-hidden
-        className={`pointer-events-none fixed inset-0 z-[85] transition-opacity duration-200 ${
+        className={`pointer-events-none fixed inset-0 z-[85] transition-opacity duration-300 ${
           showSkeleton ? "opacity-100" : "opacity-0"
         }`}
       >
-        <div className="eid-loading-skeleton-screen">
-          <div className="eid-loading-skeleton-block h-8 w-40 rounded-xl" />
-          <div className="eid-loading-skeleton-block h-24 w-full rounded-2xl" />
-          <div className="grid grid-cols-2 gap-3">
-            <div className="eid-loading-skeleton-block h-20 rounded-2xl" />
-            <div className="eid-loading-skeleton-block h-20 rounded-2xl" />
-          </div>
-          <div className="eid-loading-skeleton-block h-14 w-full rounded-xl" />
-          <div className="eid-loading-skeleton-block h-14 w-[85%] rounded-xl" />
-          <div className="eid-loading-skeleton-block h-14 w-[72%] rounded-xl" />
+        <div className={`eid-loading-skeleton-screen ${isOnboarding ? "eid-loading-skeleton-screen-onboarding" : ""}`}>
+          {isOnboarding ? (
+            <>
+              <div className="eid-loading-skeleton-block h-5 w-24 rounded-lg" />
+              <div className="eid-loading-skeleton-block h-4 w-36 rounded-lg" />
+              <div className="eid-loading-skeleton-block h-24 w-full rounded-2xl" />
+              <div className="space-y-2">
+                <div className="eid-loading-skeleton-block h-16 w-full rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-16 w-full rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-16 w-full rounded-2xl" />
+              </div>
+              <div className="eid-loading-skeleton-block h-11 w-full rounded-xl" />
+            </>
+          ) : (
+            <>
+              <div className="eid-loading-skeleton-block h-8 w-40 rounded-xl" />
+              <div className="eid-loading-skeleton-block h-24 w-full rounded-2xl" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="eid-loading-skeleton-block h-20 rounded-2xl" />
+                <div className="eid-loading-skeleton-block h-20 rounded-2xl" />
+              </div>
+              <div className="eid-loading-skeleton-block h-14 w-full rounded-xl" />
+              <div className="eid-loading-skeleton-block h-14 w-[85%] rounded-xl" />
+              <div className="eid-loading-skeleton-block h-14 w-[72%] rounded-xl" />
+            </>
+          )}
         </div>
       </div>
     </>
