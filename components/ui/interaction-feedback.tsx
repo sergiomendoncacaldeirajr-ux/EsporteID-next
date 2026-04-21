@@ -374,6 +374,13 @@ export function InteractionFeedback() {
       loadingCauseRef.current = "submit";
       navStartedAtRef.current = Date.now();
       setLoading(true);
+
+      /* Auth (login/cadastro/etc.): finalização curta para não ficar "infinito". */
+      if (authPath && !isOnboarding) {
+        disconnectSubmitObserver();
+        scheduleFinishLoading(900);
+        return;
+      }
       if (isOnboarding) {
         const currentStep = readOnboardingStepFromDom();
         onboardingStepBeforeSubmitRef.current = currentStep;
@@ -417,6 +424,16 @@ export function InteractionFeedback() {
   /* Navegação: só libera quando houver mudança real no conteúdo após trocar a rota. */
   useEffect(() => {
     if (!(loadingRef.current && loadingCauseRef.current === "nav")) return;
+
+    /* Auth: não precisa observer agressivo, finaliza com mínimo visível curto. */
+    if (authPath && !isOnboarding) {
+      clearNavFallbackTimer();
+      scheduleFinishLoading(320);
+      return () => {
+        clearHideTimer();
+      };
+    }
+
     disconnectNavObserver();
     const main = document.getElementById("app-main-column");
     if (main) {
@@ -446,18 +463,31 @@ export function InteractionFeedback() {
       return;
     }
     if (loadingCauseRef.current !== "submit") return;
+    /* Auth: saída curta e previsível. Onboarding: mantém janela maior. */
     clearHideTimer();
+    const timeoutMs = authPath && !isOnboarding ? 1200 : 8000;
     hideTimerRef.current = window.setTimeout(() => {
       hideTimerRef.current = null;
       loadingCauseRef.current = null;
       setLoading(false);
-    }, 8000);
+    }, timeoutMs);
     return () => {
       clearHideTimer();
       disconnectSubmitObserver();
       disconnectNavObserver();
     };
-  }, [loading]);
+  }, [loading, authPath, isOnboarding]);
+
+  /* Failsafe global: nunca deixar loading preso indefinidamente. */
+  useEffect(() => {
+    if (!loading) return;
+    const hardStopMs = authPath && !isOnboarding ? 3500 : 12000;
+    const t = window.setTimeout(() => {
+      loadingCauseRef.current = null;
+      setLoading(false);
+    }, hardStopMs);
+    return () => window.clearTimeout(t);
+  }, [loading, authPath, isOnboarding]);
 
   useEffect(() => {
     if (!loading) {
