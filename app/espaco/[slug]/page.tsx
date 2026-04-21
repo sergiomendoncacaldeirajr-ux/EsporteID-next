@@ -85,7 +85,8 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
         .select("id, reserva_quadra_id, papel, profiles(id, nome, avatar_url)")
         .in("reserva_quadra_id", reservaIds)
     : { data: [] };
-  const participantesByReserva = new Map<number, typeof participantes>();
+  type ReservaParticipante = NonNullable<typeof participantes>[number];
+  const participantesByReserva = new Map<number, ReservaParticipante[]>();
   for (const item of participantes ?? []) {
     const reservaId = Number(item.reserva_quadra_id ?? 0);
     if (!participantesByReserva.has(reservaId)) participantesByReserva.set(reservaId, []);
