@@ -274,6 +274,19 @@ body {
   color: var(--eid-fg);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   font-feature-settings: "kern" 1, "liga" 1;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"],
+[data-eid-allow-selection="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 
 /* Mobile: fundo sólido e toque mais “app nativo” (menos ruído visual) */

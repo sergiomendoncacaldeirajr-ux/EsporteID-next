@@ -29,6 +29,21 @@ function isAuthPath(pathname: string | null): boolean {
   );
 }
 
+function getLockableClickTarget(target: Element): HTMLElement | null {
+  const inputEl = target.closest("input") as HTMLInputElement | null;
+  if (inputEl) {
+    const t = inputEl.type;
+    if (t === "checkbox" || t === "radio" || t === "button" || t === "submit") return inputEl;
+  }
+  const buttonEl = target.closest("button") as HTMLButtonElement | null;
+  if (buttonEl) return buttonEl;
+  const roleButtonEl = target.closest('[role="button"]') as HTMLElement | null;
+  if (roleButtonEl) return roleButtonEl;
+  const labelEl = target.closest("label") as HTMLLabelElement | null;
+  if (labelEl) return labelEl;
+  return null;
+}
+
 function lockElement(el: HTMLElement, opts?: { disableNative?: boolean }) {
   const disableNative = opts?.disableNative ?? true;
   if (el.dataset.eidLocked === "1") return false;
@@ -64,6 +79,17 @@ export function InteractionFeedback() {
     const onClickCapture = (event: MouseEvent) => {
       const target = event.target as Element | null;
       if (!target) return;
+      const lockTarget = getLockableClickTarget(target);
+      if (lockTarget && lockTarget.dataset.eidLock !== "off") {
+        if (lockTarget.dataset.eidLocked === "1") {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        lockElement(lockTarget, {
+          disableNative: lockTarget instanceof HTMLButtonElement || lockTarget instanceof HTMLInputElement,
+        });
+      }
 
       if (authPath) return;
 

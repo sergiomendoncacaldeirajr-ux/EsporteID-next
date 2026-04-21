@@ -1912,9 +1912,9 @@ export function OnboardingWizard({
                                       <button
                                         type="button"
                                         onClick={() => setEsportesExp((prev) => ({ ...prev, [e.id]: "menos_1" }))}
-                                        className="text-[11px] font-semibold text-eid-text-secondary underline-offset-2 hover:text-eid-fg hover:underline"
+                                        className="inline-flex items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-1.5 text-[11px] font-semibold text-eid-text-secondary transition-all hover:border-eid-primary-500/40 hover:text-eid-fg"
                                       >
-                                        Não sei o mês/ano exato
+                                        Usar tempo aproximado
                                       </button>
                                     </div>
                                   ) : (
@@ -1949,9 +1949,9 @@ export function OnboardingWizard({
                                             return updated;
                                           })
                                         }
-                                        className="text-[11px] font-semibold text-eid-text-secondary underline-offset-2 hover:text-eid-fg hover:underline"
+                                        className="inline-flex items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-1.5 text-[11px] font-semibold text-eid-text-secondary transition-all hover:border-eid-primary-500/40 hover:text-eid-fg"
                                       >
-                                        Informar mês/ano
+                                        Usar mês/ano exato
                                       </button>
                                     </div>
                                   )}
