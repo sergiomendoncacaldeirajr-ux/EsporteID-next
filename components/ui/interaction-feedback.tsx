@@ -379,6 +379,16 @@ export function InteractionFeedback() {
       if (authPath && !isOnboarding) {
         /* No submit de auth, oculta o skeleton da própria tela atual. */
         suppressCurrentAuthSkeletonRef.current = true;
+        /* Trata submit de auth como navegação para exibir skeleton da próxima rota. */
+        loadingCauseRef.current = "nav";
+        navFallbackTimerRef.current = window.setTimeout(() => {
+          navFallbackTimerRef.current = null;
+          if (loadingCauseRef.current === "nav") {
+            loadingCauseRef.current = null;
+            setLoading(false);
+          }
+        }, 6000);
+        return;
       }
 
       if (isOnboarding) {
