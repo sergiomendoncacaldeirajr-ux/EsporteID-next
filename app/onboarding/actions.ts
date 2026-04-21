@@ -159,6 +159,17 @@ export async function salvarEsportesOnboarding(
     .map((v) => Number(v))
     .filter((n) => Number.isInteger(n) && n > 0);
 
+  // Experiência por esporte: campos exp_esporte_{id}
+  const expPorEsporte = new Map<number, string>();
+  for (const [key, val] of formData.entries()) {
+    const m = key.match(/^exp_esporte_(\d+)$/);
+    if (m) {
+      const eid = Number(m[1]);
+      const v = String(val).trim();
+      if (["menos_1", "1_3", "mais_3"].includes(v)) expPorEsporte.set(eid, v);
+    }
+  }
+
   if (ids.length === 0) {
     return { ok: false, message: "Selecione ao menos um esporte." };
   }
@@ -259,11 +270,17 @@ export async function salvarEsportesOnboarding(
 
   for (const esporteId of atualizar) {
     const mods = modalidadesMap.get(esporteId) ?? ["individual"];
+    const expVal = expPorEsporte.get(esporteId);
+    const tempoExp = expVal === "menos_1" ? "Menos de 1 ano"
+      : expVal === "1_3"    ? "1 a 3 anos"
+      : expVal === "mais_3" ? "Mais de 3 anos"
+      : null;
     const { error: uErr } = await supabase
       .from("usuario_eid")
       .update({
         interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
         modalidades_match: mods,
+        ...(tempoExp ? { tempo_experiencia: tempoExp } : {}),
       })
       .eq("usuario_id", user.id)
       .eq("esporte_id", esporteId);
@@ -271,12 +288,20 @@ export async function salvarEsportesOnboarding(
   }
 
   if (adicionar.length > 0) {
-    const rows = adicionar.map((esporteId) => ({
-      usuario_id: user.id,
-      esporte_id: esporteId,
-      interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
-      modalidades_match: modalidadesMap.get(esporteId) ?? ["individual"],
-    }));
+    const rows = adicionar.map((esporteId) => {
+      const expVal = expPorEsporte.get(esporteId);
+      const tempoExp = expVal === "menos_1" ? "Menos de 1 ano"
+        : expVal === "1_3"    ? "1 a 3 anos"
+        : expVal === "mais_3" ? "Mais de 3 anos"
+        : null;
+      return {
+        usuario_id: user.id,
+        esporte_id: esporteId,
+        interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
+        modalidades_match: modalidadesMap.get(esporteId) ?? ["individual"],
+        ...(tempoExp ? { tempo_experiencia: tempoExp } : {}),
+      };
+    });
     const { error: insErr } = await supabase.from("usuario_eid").insert(rows);
     if (insErr) return { ok: false, message: insErr.message };
   }
@@ -323,35 +348,45 @@ export async function salvarExtrasOnboarding(
   const hasEspaco = papeis.includes("espaco");
 
   if (hasAtletaProfessor) {
-    const expModo = formData.get("exp_modo") === "exato" ? "exato" : "aprox";
-    const expAprox = String(formData.get("exp_aprox") ?? "").trim();
-    const expMes = Number(formData.get("exp_mes") ?? 0);
-    const expAno = Number(formData.get("exp_ano") ?? 0);
+    // Experiência agora é salva por esporte em usuario_eid (etapa "esportes").
+    // Aqui apenas lemos o primeiro valor disponível para manter profiles.tempo_experiencia
+    // e gravamos detalhes_json nos papéis para compatibilidade com código legado.
+    const { data: eidRows } = await supabase
+      .from("usuario_eid")
+      .select("tempo_experiencia")
+      .eq("usuario_id", user.id)
+      .not("tempo_experiencia", "is", null)
+      .limit(1)
+      .maybeSingle();
 
-    if (expModo === "aprox" && !["menos_1", "1_3", "mais_3"].includes(expAprox)) {
-      return { ok: false, message: "Selecione um tempo aproximado válido." };
-    }
-    if (
-      expModo === "exato" &&
-      (!Number.isInteger(expMes) || expMes < 1 || expMes > 12 || !Number.isInteger(expAno) || expAno < 1970 || expAno > 2100)
-    ) {
-      return { ok: false, message: "Informe mês e ano válidos para experiência." };
-    }
+    if (eidRows?.tempo_experiencia) {
+      const te = eidRows.tempo_experiencia;
+      const expAprox =
+        te === "Menos de 1 ano" ? "menos_1" :
+        te === "1 a 3 anos"     ? "1_3" :
+        te === "Mais de 3 anos" ? "mais_3" : null;
 
-    const detAtleta = {
-      experiencia_modo: expModo,
-      experiencia_aprox: expAprox,
-      experiencia_mes: expModo === "exato" ? expMes : null,
-      experiencia_ano: expModo === "exato" ? expAno : null,
-    };
+      const detAtleta = {
+        experiencia_modo: "aprox",
+        experiencia_aprox: expAprox ?? "menos_1",
+        experiencia_mes: null,
+        experiencia_ano: null,
+      };
 
-    if (papeis.includes("atleta")) {
-      const e = await salvarDetalhesPapel(user.id, "atleta", detAtleta);
-      if (e) return { ok: false, message: e };
-    }
-    if (papeis.includes("professor")) {
-      const e = await salvarDetalhesPapel(user.id, "professor", detAtleta);
-      if (e) return { ok: false, message: e };
+      if (papeis.includes("atleta")) {
+        const e = await salvarDetalhesPapel(user.id, "atleta", detAtleta);
+        if (e) return { ok: false, message: e };
+      }
+      if (papeis.includes("professor")) {
+        const detProf = {
+          ...detAtleta,
+          // Professor pode ter experiência como docente — aqui usamos o mesmo
+          // valor do esporte até que o produto diferencie os dois fluxos.
+          papel_contexto: "professor",
+        };
+        const e = await salvarDetalhesPapel(user.id, "professor", detProf);
+        if (e) return { ok: false, message: e };
+      }
     }
   }
 
@@ -447,7 +482,7 @@ export async function salvarExtrasOnboarding(
               return {
                 ok: false,
                 message:
-                  "Nao foi possivel enviar o comprovante. Verifique o bucket 'espaco-documentos' e tente novamente.",
+                  "Não foi possível enviar o comprovante. Verifique o bucket 'espaco-documentos' e tente novamente.",
               };
             }
             const { error: revErr } = await supabase.from("espaco_reivindicacoes").insert({
@@ -506,7 +541,7 @@ export async function salvarExtrasOnboarding(
           return {
             ok: false,
             message:
-              "Nao foi possivel enviar a logo do local. Verifique o bucket 'espaco-logos' ou tente sem logo.",
+              "Não foi possível enviar a logo do local. Verifique o bucket 'espaco-logos' ou tente sem logo.",
           };
         }
         logoArquivo = path;
@@ -547,6 +582,9 @@ export async function salvarExtrasOnboarding(
   if (hasEspaco) {
     const espacoNome = String(formData.get("espaco_nome") ?? "").trim();
     const espacoEsportes = parseIntList(formData.getAll("espaco_esportes"));
+    if (espacoEsportes.length === 0) {
+      return { ok: false, message: "Selecione ao menos um esporte atendido no espaço." };
+    }
     const estruturas = formData
       .getAll("estrutura")
       .map((v) => String(v))
@@ -672,7 +710,7 @@ export async function salvarExtrasOnboarding(
         if (!docArquivo) {
           return {
             ok: false,
-            message: "Envie o documento de comprovacao para concluir o onboarding de espaco.",
+            message: "Envie o documento de comprovação para concluir o onboarding de espaço.",
           };
         }
         const { error: revErr } = await supabase.from("espaco_reivindicacoes").insert({

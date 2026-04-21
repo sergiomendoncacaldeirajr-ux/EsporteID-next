@@ -548,6 +548,7 @@ export function OnboardingWizard({
   const [expAprox, setExpAprox] = useState<"menos_1" | "1_3" | "mais_3">(extrasInitial.expAprox);
   const [expMes, setExpMes] = useState<string>(extrasInitial.expMes ? String(extrasInitial.expMes) : "");
   const [expAno, setExpAno] = useState<string>(extrasInitial.expAno ? String(extrasInitial.expAno) : "");
+  const [esportesExp, setEsportesExp] = useState<Record<number, "menos_1" | "1_3" | "mais_3">>({});
   const [orgEsporteId, setOrgEsporteId] = useState<string>(
     extrasInitial.orgEsporteId ? String(extrasInitial.orgEsporteId) : "0"
   );
@@ -630,7 +631,7 @@ export function OnboardingWizard({
         step: Step;
         papeis: string[];
         esportesSel: number[];
-        esportesInteresse: Record<number, "ranking" | "ranking_e_amistoso">;
+        esportesInteresse: Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
         esportesModalidades?: Record<number, MatchModality[]>;
         esportesModalidade?: Record<number, "individual" | "dupla" | "time">;
         expModo: "aprox" | "exato";
@@ -725,6 +726,11 @@ export function OnboardingWizard({
       if (typeof draft.espacoEstado === "string") setEspacoEstado(draft.espacoEstado);
       if (typeof draft.espacoCep === "string") setEspacoCep(draft.espacoCep);
       if (typeof draft.espacoComplemento === "string") setEspacoComplemento(draft.espacoComplemento);
+      if (draft.esportesExp && typeof draft.esportesExp === "object") {
+        setEsportesExp(draft.esportesExp as Record<number, "menos_1" | "1_3" | "mais_3">);
+      }
+      if (typeof draft.espacoLat === "string") setEspacoLat(draft.espacoLat);
+      if (typeof draft.espacoLng === "string") setEspacoLng(draft.espacoLng);
       if (typeof draft.nome === "string") setNome(draft.nome);
       if (typeof draft.username === "string") setUsername(draft.username);
       if (typeof draft.localizacao === "string") setLocalizacao(draft.localizacao);
@@ -775,6 +781,9 @@ export function OnboardingWizard({
       espacoEstado,
       espacoCep,
       espacoComplemento,
+      esportesExp,
+      espacoLat,
+      espacoLng,
       nome,
       username,
       localizacao,
@@ -828,6 +837,9 @@ export function OnboardingWizard({
     espacoEstado,
     espacoCep,
     espacoComplemento,
+    esportesExp,
+    espacoLat,
+    espacoLng,
     step,
     draftKey,
   ]);
@@ -854,14 +866,6 @@ export function OnboardingWizard({
   }, [fotoPreviewUrl]);
 
   const extrasValid = useMemo(() => {
-    if (hasAtletaProfessor) {
-      if (expModo === "aprox") {
-        if (!["menos_1", "1_3", "mais_3"].includes(expAprox)) return false;
-      } else {
-        if (!Number.isInteger(expMesNum) || expMesNum < 1 || expMesNum > 12) return false;
-        if (!Number.isInteger(expAnoNum) || expAnoNum < 1970 || expAnoNum > 2100) return false;
-      }
-    }
     if (hasEspaco && espacoNome.trim().length < 3) return false;
     if (hasOrganizador && orgEsportes.size === 0) return false;
     if (hasOrganizador && orgLocalModo === "existente" && Number(orgLocalId) <= 0) return false;
@@ -874,6 +878,7 @@ export function OnboardingWizard({
       if (espacoEndereco.trim().length < 3) return false;
       if (espacoCidade.trim().length < 2) return false;
       if (espacoEstado.trim().length < 2) return false;
+      if (espacoEsportes.size === 0) return false;
     }
     return true;
   }, [
@@ -881,11 +886,7 @@ export function OnboardingWizard({
     espacoEndereco,
     espacoEstado,
     espacoNome,
-    expAnoNum,
-    expAprox,
-    expMesNum,
-    expModo,
-    hasAtletaProfessor,
+    espacoEsportes,
     hasEspaco,
     hasOrganizador,
     orgEsportes,
@@ -964,6 +965,9 @@ export function OnboardingWizard({
     setEspacoEstado(extrasInitial.espacoEstado);
     setEspacoCep(extrasInitial.espacoCep);
     setEspacoComplemento(extrasInitial.espacoComplemento);
+    setEsportesExp({});
+    setEspacoLat("");
+    setEspacoLng("");
     setNome(profileInitial.nome);
     setUsername(profileInitial.username);
     setLocalizacao(profileInitial.localizacao);
@@ -1467,6 +1471,45 @@ export function OnboardingWizard({
                           </div>
                         </>
                       )}
+
+                      {/* Experiência por esporte — só para atleta/professor */}
+                      {hasAtletaProfessor && (
+                        <>
+                          <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
+                            {papeis.has("professor") && !papeis.has("atleta")
+                              ? `Há quanto tempo ensina ${e.nome}?`
+                              : papeis.has("professor") && papeis.has("atleta")
+                                ? `Experiência com ${e.nome} (joga/ensina)`
+                                : `Há quanto tempo pratica ${e.nome}?`}
+                          </p>
+                          <div className="mt-1.5 inline-flex gap-1 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1">
+                            {([
+                              { val: "menos_1", label: "< 1 ano" },
+                              { val: "1_3",     label: "1–3 anos" },
+                              { val: "mais_3",  label: "+ 3 anos" },
+                            ] as const).map(({ val, label }) => {
+                              const active = (esportesExp[e.id] ?? "menos_1") === val;
+                              return (
+                                <button
+                                  key={val}
+                                  type="button"
+                                  onClick={() => setEsportesExp((prev) => ({ ...prev, [e.id]: val }))}
+                                  className={`rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all select-none ${
+                                    active ? "bg-eid-primary-500 text-white shadow-sm" : "text-eid-text-secondary hover:text-eid-fg"
+                                  }`}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <input
+                            type="hidden"
+                            name={`exp_esporte_${e.id}`}
+                            value={esportesExp[e.id] ?? "menos_1"}
+                          />
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -1483,87 +1526,6 @@ export function OnboardingWizard({
 
           {step === "extras" ? (
             <form onSubmit={submitExtras} className="mt-6 space-y-5">
-              {hasAtletaProfessor ? (
-                <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-4">
-                  <h2 className="text-sm font-bold uppercase tracking-wide text-eid-primary-500">
-                    Experiência como atleta
-                  </h2>
-                  {/* Segmented control — Aproximado / Mês e ano */}
-                  <div className="mt-3 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1 gap-1">
-                    {(["aprox", "exato"] as const).map((val) => {
-                      const label = val === "aprox" ? "Aproximado" : "Mês e ano";
-                      const active = expModo === val;
-                      return (
-                        <label
-                          key={val}
-                          className={`cursor-pointer rounded-lg px-4 py-1.5 text-xs font-semibold transition-all select-none ${
-                            active
-                              ? "bg-eid-primary-500 text-white shadow-sm"
-                              : "text-eid-text-secondary hover:text-eid-fg"
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="exp_modo"
-                            value={val}
-                            checked={active}
-                            onChange={() => setExpModo(val)}
-                            className="sr-only"
-                          />
-                          {label}
-                        </label>
-                      );
-                    })}
-                  </div>
-                  {/* Experiência aproximada — pills verticais (só visível quando modo=aprox) */}
-                  {expModo === "aprox" && (
-                    <div className="mt-3 flex flex-col gap-1.5">
-                      {([
-                        { val: "menos_1", label: "Menos de 1 ano",  desc: "Ainda iniciante no esporte" },
-                        { val: "1_3",     label: "Entre 1 e 3 anos", desc: "Já tenho alguma experiência" },
-                        { val: "mais_3",  label: "Mais de 3 anos",   desc: "Pratico há bastante tempo" },
-                      ] as const).map(({ val, label, desc }) => {
-                        const active = expAprox === val;
-                        return (
-                          <label
-                            key={val}
-                            className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 transition-all select-none ${
-                              active
-                                ? "border-eid-primary-500/40 bg-eid-primary-500/8"
-                                : "border-[color:var(--eid-border-subtle)] hover:border-eid-primary-500/25"
-                            }`}
-                          >
-                            <input type="radio" name="exp_aprox" value={val} checked={active}
-                              onChange={() => setExpAprox(val)} className="sr-only" />
-                            <div className="min-w-0 flex-1">
-                              <p className={`text-xs font-bold ${active ? "text-eid-fg" : "text-eid-text-secondary"}`}>{label}</p>
-                              <p className="text-[10px] text-eid-text-secondary">{desc}</p>
-                            </div>
-                            {active && (
-                              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-eid-primary-500">
-                                <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" fill="none">
-                                  <path d="M1.5 5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                              </span>
-                            )}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {expModo === "exato" && (
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      <input type="number" name="exp_mes" min={1} max={12} value={expMes}
-                        onChange={(e) => setExpMes(e.target.value)} placeholder="Mês (1-12)"
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg" />
-                      <input type="number" name="exp_ano" min={1970} max={2100} value={expAno}
-                        onChange={(e) => setExpAno(e.target.value)} placeholder="Ano (ex: 2020)"
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg" />
-                    </div>
-                  )}
-                </section>
-              ) : null}
-
               {hasOrganizador ? (
                 <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-4">
                   <h2 className="text-sm font-bold uppercase tracking-wide text-eid-primary-500">
@@ -1731,7 +1693,7 @@ export function OnboardingWizard({
                       name="espaco_numero"
                       value={espacoNumero}
                       onChange={(e) => setEspacoNumero(e.target.value)}
-                      placeholder="Numero"
+                      placeholder="Número"
                       className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
                     />
                     <input
@@ -1921,21 +1883,24 @@ export function OnboardingWizard({
                   </div>
                 </div>
 
-                {/* Experiência (atleta/professor) */}
-                {hasAtletaProfessor && (
+                {/* Experiência (atleta/professor) — por esporte */}
+                {hasAtletaProfessor && Object.keys(esportesExp).length > 0 && (
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary mb-1">
-                      Experiência no esporte
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary mb-1.5">
+                      Experiência por esporte
                     </p>
-                    <span className="text-xs font-semibold text-eid-fg">
-                      {expModo === "aprox"
-                        ? expAprox === "menos_1" ? "Menos de 1 ano"
-                          : expAprox === "1_3"   ? "1 a 3 anos"
-                          : "Mais de 3 anos"
-                        : expMes && expAno
-                          ? `Desde ${expMes}/${expAno}`
-                          : "Não informada"}
-                    </span>
+                    <div className="space-y-1">
+                      {Object.entries(esportesExp).map(([idStr, val]) => {
+                        const nome = esportes.find((e) => e.id === Number(idStr))?.nome ?? `Esporte ${idStr}`;
+                        const label = val === "menos_1" ? "< 1 ano" : val === "1_3" ? "1–3 anos" : "+ 3 anos";
+                        return (
+                          <div key={idStr} className="flex items-center justify-between">
+                            <span className="text-xs text-eid-text-secondary">{nome}</span>
+                            <span className="text-xs font-semibold text-eid-fg">{label}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
