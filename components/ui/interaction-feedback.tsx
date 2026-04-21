@@ -330,6 +330,26 @@ export function InteractionFeedback() {
     const onClickCapture = (event: MouseEvent) => {
       const target = event.target as Element | null;
       if (!target) return;
+      if (authPath && !isOnboarding) {
+        const authLink = target.closest("a[href]") as HTMLAnchorElement | null;
+        if (!authLink || !isSameOriginNavigationLink(authLink)) return;
+        clearHideTimer();
+        clearNavFallbackTimer();
+        disconnectNavObserver();
+        loadingCauseRef.current = "nav";
+        navStartedAtRef.current = Date.now();
+        suppressCurrentAuthSkeletonRef.current = true;
+        setLoading(true);
+        setShowSkeleton(true);
+        navFallbackTimerRef.current = window.setTimeout(() => {
+          navFallbackTimerRef.current = null;
+          if (loadingCauseRef.current === "nav") {
+            loadingCauseRef.current = null;
+            setLoading(false);
+          }
+        }, 6000);
+        return;
+      }
       const lockTarget = getLockableClickTarget(target);
       if (lockTarget && lockTarget.dataset.eidLock !== "off") {
         if (lockTarget.dataset.eidLocked === "1") {
@@ -358,6 +378,10 @@ export function InteractionFeedback() {
       disconnectNavObserver();
       loadingCauseRef.current = "nav";
       navStartedAtRef.current = Date.now();
+      if (authPath && !isOnboarding) {
+        /* Em auth por link, evita mostrar skeleton da tela atual (só o da próxima). */
+        suppressCurrentAuthSkeletonRef.current = true;
+      }
       setLoading(true);
       navFallbackTimerRef.current = window.setTimeout(() => {
         navFallbackTimerRef.current = null;
@@ -371,6 +395,24 @@ export function InteractionFeedback() {
     const onSubmitCapture = (event: SubmitEvent) => {
       const form = event.target as HTMLFormElement | null;
       if (!form) return;
+      if (authPath && !isOnboarding) {
+        clearHideTimer();
+        clearNavFallbackTimer();
+        disconnectNavObserver();
+        loadingCauseRef.current = "nav";
+        navStartedAtRef.current = Date.now();
+        suppressCurrentAuthSkeletonRef.current = true;
+        setLoading(true);
+        setShowSkeleton(true);
+        navFallbackTimerRef.current = window.setTimeout(() => {
+          navFallbackTimerRef.current = null;
+          if (loadingCauseRef.current === "nav") {
+            loadingCauseRef.current = null;
+            setLoading(false);
+          }
+        }, 6000);
+        return;
+      }
       clearHideTimer();
       clearNavFallbackTimer();
       loadingCauseRef.current = "submit";
@@ -536,6 +578,27 @@ export function InteractionFeedback() {
       disconnectNavObserver();
     };
   }, []);
+
+  /* Auth: fallback por troca de rota para transições iniciadas sem clique/submit local. */
+  useEffect(() => {
+    const prevPath = prevPathnameRef.current;
+    const currentPath = pathname ?? null;
+    if (!prevPath || !currentPath || prevPath === currentPath) return;
+
+    const cameFromAuth = isAuthPath(prevPath);
+    const isAuthNow = authPath && !isOnboarding;
+    if (!cameFromAuth && !isAuthNow) return;
+
+    if (!loadingRef.current) {
+      clearHideTimer();
+      clearNavFallbackTimer();
+      disconnectNavObserver();
+      loadingCauseRef.current = "nav";
+      navStartedAtRef.current = Date.now();
+      setLoading(true);
+    }
+    scheduleFinishLoading(520);
+  }, [pathname, authPath, isOnboarding]);
 
   useEffect(() => {
     prevPathnameRef.current = pathname ?? null;
