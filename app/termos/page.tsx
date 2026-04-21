@@ -112,6 +112,38 @@ export default function TermosPage() {
             , em conformidade com a Lei nº 13.709/2018 (LGPD).
           </p>
         </div>
+        <div className="space-y-2 rounded-xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-4">
+          <h3 className="text-base font-semibold text-eid-fg">
+            2.2 Idade mínima, cadastro e encontros entre usuários
+          </h3>
+          <p className="text-sm leading-relaxed">
+            O cadastro na Plataforma é permitido apenas a pessoas{" "}
+            <strong className="font-semibold text-eid-fg">maiores de 18 (dezoito) anos</strong>, com
+            capacidade civil compatível com o uso dos serviços. Ao criar conta, você declara que as
+            informações fornecidas — inclusive{" "}
+            <strong className="font-semibold text-eid-fg">data de nascimento</strong> — são
+            verdadeiras e que atende a esse requisito etário.
+          </p>
+          <p className="text-sm leading-relaxed">
+            A EsporteID é uma plataforma de esporte e relacionamento entre usuários (por exemplo,
+            combinar <strong className="font-semibold text-eid-fg">partidas, treinos, encontros
+            esportivos ou contato após match</strong>). No ordenamento jurídico brasileiro, crianças e
+            adolescentes merecem proteção especial (inclusive sob a perspectiva do Estatuto da
+            Criança e do Adolescente — Lei nº 8.069/1990). Por isso,{" "}
+            <strong className="font-semibold text-eid-fg">
+              funcionalidades que envolvam interação direta entre usuários, marcação de encontros
+              presenciais ou uso de canais como o WhatsApp para esse fim são destinadas exclusivamente
+              a maiores de 18 anos
+            </strong>
+            . É vedado o uso da Plataforma por menores de 18 anos; a violação pode implicar suspensão
+            ou exclusão da conta e comunicações às autoridades quando a lei assim exigir.
+          </p>
+          <p className="text-sm leading-relaxed">
+            A Plataforma não se destina a fins de relacionamento romântico ou sexual entre adultos e
+            menores; conteúdo ou conduta ilícita, inclusive envolvendo menores, pode ser removido e
+            reportado conforme a legislação aplicável.
+          </p>
+        </div>
       </section>
 
       <section className="mt-8 space-y-3">

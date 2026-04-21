@@ -58,7 +58,9 @@ export function AceitarForm() {
           <Link href="/termos" className="font-medium text-eid-primary-300 underline hover:text-eid-fg">
             Termos de Uso
           </Link>
-          .
+          , incluindo a regra de{" "}
+          <strong className="font-semibold text-eid-fg">idade mínima de 18 anos</strong> para uso da
+          Plataforma e para funcionalidades que envolvam encontros ou interação entre usuários.
         </span>
       </label>
 
