@@ -105,19 +105,25 @@ export default async function RankingPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-5 sm:px-6 sm:py-7">
-      <header className="mb-7 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+    <div className="relative flex min-h-full flex-1 flex-col">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg" aria-hidden />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-[min(52vh,28rem)] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)]"
+        aria-hidden
+      />
+      <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-6 sm:px-6 sm:py-8">
+      <header className="mb-8 flex flex-col gap-4 sm:mb-9 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <div className="min-w-0">
           <h1 className="text-xl font-bold tracking-tight text-eid-fg md:text-2xl md:font-extrabold">Ranking</h1>
-          <p className="mt-1.5 hidden text-xs leading-relaxed text-eid-text-secondary md:mt-2 md:block md:max-w-xl">
+          <p className="mt-2 hidden text-xs leading-relaxed text-eid-text-secondary md:block md:max-w-xl">
             Nota EID (azul) e pontos de ranking (laranja); interesse em match —{" "}
-            <span className="font-medium text-eid-fg/90">só ranking</span> ou{" "}
-            <span className="font-medium text-eid-fg/90">ranking + amistoso</span>.
+            <span className="font-medium text-eid-fg">só ranking</span> ou{" "}
+            <span className="font-medium text-eid-fg">ranking + amistoso</span>.
           </p>
         </div>
         <Link
           href="/dashboard"
-          className="inline-flex h-10 shrink-0 items-center justify-center rounded-full border border-eid-primary-500/28 bg-eid-primary-500/[0.07] px-4 text-xs font-bold text-eid-primary-200 transition duration-200 hover:border-eid-primary-500/42 hover:bg-eid-primary-500/12 active:scale-[0.98]"
+          className="inline-flex h-10 shrink-0 items-center justify-center rounded-full border border-eid-primary-500/25 bg-eid-primary-500/[0.06] px-4 text-xs font-bold text-eid-primary-300 transition duration-200 hover:border-eid-primary-500/38 hover:bg-eid-primary-500/10 active:scale-[0.98]"
         >
           Painel
         </Link>
@@ -126,16 +132,16 @@ export default async function RankingPage({ searchParams }: Props) {
       <form
         action="/ranking"
         method="get"
-        className="mb-9 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/30 p-4 shadow-[0_4px_24px_-12px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:p-5"
+        className="mb-10 rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-5 shadow-[0_8px_32px_-16px_rgba(0,0,0,0.55)] sm:rounded-2xl sm:p-6"
       >
         <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Filtros</p>
-        <div className="flex flex-col gap-3.5 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
           <label className="min-w-0 flex-1 sm:min-w-[200px]">
-            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Esporte</span>
+            <span className="mb-2 block text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Esporte</span>
             <select
               name="esporte"
               defaultValue={sp.esporte ?? ""}
-              className="eid-input-dark h-11 w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3.5 text-sm font-medium text-eid-fg shadow-inner transition duration-200 focus:border-eid-primary-500/40 focus:outline-none focus:ring-2 focus:ring-eid-primary-500/25"
+              className="eid-input-dark h-11 w-full rounded-[var(--eid-radius-md)] border border-[color:var(--eid-border-subtle)] bg-[color:var(--eid-field-bg)] px-3.5 text-sm font-medium text-eid-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 focus:border-eid-primary-500/45 focus:outline-none focus:ring-2 focus:ring-eid-primary-500/20"
             >
               <option value="">Todos os esportes</option>
               {esportes?.map((e) => (
@@ -146,17 +152,17 @@ export default async function RankingPage({ searchParams }: Props) {
             </select>
           </label>
           <label className="min-w-0 flex-1 sm:min-w-[220px]">
-            <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Cidade</span>
+            <span className="mb-2 block text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Cidade</span>
             <input
               name="cidade"
               defaultValue={sp.cidade ?? ""}
               placeholder="Filtrar por cidade (opcional)"
-              className="eid-input-dark h-11 w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3.5 text-sm font-medium text-eid-fg shadow-inner placeholder:text-eid-text-secondary/75 transition duration-200 focus:border-eid-primary-500/40 focus:outline-none focus:ring-2 focus:ring-eid-primary-500/25"
+              className="eid-input-dark h-11 w-full rounded-[var(--eid-radius-md)] border border-[color:var(--eid-border-subtle)] bg-[color:var(--eid-field-bg)] px-3.5 text-sm font-medium text-eid-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] placeholder:text-eid-text-secondary/80 transition duration-200 focus:border-eid-primary-500/45 focus:outline-none focus:ring-2 focus:ring-eid-primary-500/20"
             />
           </label>
           <button
             type="submit"
-            className="eid-btn-primary h-11 shrink-0 rounded-xl px-6 text-sm font-bold shadow-md transition duration-200 active:scale-[0.98] sm:min-w-[7rem]"
+            className="eid-btn-primary h-11 shrink-0 rounded-[var(--eid-radius-md)] px-6 text-sm font-bold shadow-md transition duration-200 active:scale-[0.98] sm:min-w-[7rem]"
           >
             Filtrar
           </button>
@@ -164,25 +170,27 @@ export default async function RankingPage({ searchParams }: Props) {
       </form>
 
       {podium.length > 0 && page === 1 ? (
-        <section className="relative mb-11 sm:mb-12">
+        <section className="relative mb-12 sm:mb-14">
           <div
-            className="pointer-events-none absolute -inset-x-4 -top-5 bottom-0 -z-10 mx-auto max-w-3xl rounded-[2rem] bg-[radial-gradient(ellipse_80%_55%_at_50%_18%,rgba(74,222,128,0.1),transparent_68%)] opacity-90 md:-inset-x-8"
+            className="pointer-events-none absolute -inset-x-4 -top-6 bottom-0 -z-10 mx-auto max-w-3xl rounded-[2rem] bg-[radial-gradient(ellipse_85%_60%_at_50%_15%,rgba(37,99,235,0.11),transparent_65%)] md:-inset-x-8"
             aria-hidden
           />
-          <h2 className="mb-5 text-center text-xs font-bold uppercase tracking-[0.22em] text-eid-primary-400 md:mb-6">Pódio</h2>
-          <div className="flex flex-col items-stretch gap-5 md:flex-row md:items-end md:justify-center md:gap-6 lg:gap-7">
+          <h2 className="mb-6 text-center text-[11px] font-bold uppercase tracking-[0.2em] text-eid-text-secondary md:mb-7">
+            Pódio de destaques
+          </h2>
+          <div className="flex flex-row items-end justify-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
             {podium[1] ? (
-              <div className="order-2 w-full md:order-1 md:max-w-[15rem] md:flex-1 md:pb-2">
+              <div className="order-1 min-w-0 w-[32%] max-w-[15rem] shrink pb-1 sm:w-auto sm:flex-1 sm:pb-2">
                 <AthleteRankingCard {...rowToCardProps(podium[1], 2, "podium-2")} />
               </div>
             ) : null}
             {podium[0] ? (
-              <div className="order-1 w-full md:order-2 md:z-10 md:max-w-[19rem] md:flex-[1.2] md:-translate-y-1">
+              <div className="order-2 z-10 min-w-0 w-[36%] max-w-[19rem] shrink sm:w-auto sm:flex-[1.15] md:-translate-y-1">
                 <AthleteRankingCard {...rowToCardProps(podium[0], 1, "podium-1")} />
               </div>
             ) : null}
             {podium[2] ? (
-              <div className="order-3 w-full md:order-3 md:max-w-[15rem] md:flex-1 md:pb-2">
+              <div className="order-3 min-w-0 w-[32%] max-w-[15rem] shrink pb-1 sm:w-auto sm:flex-1 sm:pb-2">
                 <AthleteRankingCard {...rowToCardProps(podium[2], 3, "podium-3")} />
               </div>
             ) : null}
@@ -191,15 +199,17 @@ export default async function RankingPage({ searchParams }: Props) {
       ) : null}
 
       {rankingAll.length === 0 ? (
-        <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-6 text-center text-sm text-eid-text-secondary shadow-inner">
+        <p className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-8 text-center text-sm leading-relaxed text-eid-text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:rounded-2xl">
           Nenhum atleta encontrado para os filtros selecionados.
         </p>
       ) : pageRest.length > 0 ? (
         <section>
           {page === 1 && podium.length > 0 ? (
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-eid-text-secondary md:mb-4">Demais posições</h2>
+            <h2 className="mb-4 text-[11px] font-bold uppercase tracking-[0.18em] text-eid-text-secondary md:mb-5">
+              Classificação geral
+            </h2>
           ) : null}
-          <div className="grid gap-3 md:gap-3.5">
+          <div className="grid gap-4 md:gap-4">
             {pageRest.map((row, idx) => (
               <AthleteRankingCard
                 key={`${row.usuario_id}-${row.esporte_id}-${start}-${idx}`}
@@ -210,7 +220,7 @@ export default async function RankingPage({ searchParams }: Props) {
         </section>
       ) : null}
 
-      <div className="mt-9 flex items-center justify-between gap-3 border-t border-white/[0.06] pt-6">
+      <div className="mt-10 flex items-center justify-between gap-3 border-t border-[color:var(--eid-border-subtle)] pt-8">
         <Link
           href={`/ranking?${qs}&page=${page - 1}`}
           aria-disabled={!hasPrev}
@@ -234,6 +244,7 @@ export default async function RankingPage({ searchParams }: Props) {
         >
           Próxima →
         </Link>
+      </div>
       </div>
     </div>
   );

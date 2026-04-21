@@ -8,15 +8,15 @@ export default function LoadingRanking() {
         <SkBlock className="h-10 w-24 rounded-full" />
       </div>
       <SkBlock className="mb-9 h-28 w-full rounded-2xl" />
-      <div className="mb-11 flex flex-col gap-5 md:flex-row md:items-end md:justify-center md:gap-6">
-        <SkBlock className="mx-auto h-52 w-full max-w-[15rem] rounded-2xl md:order-1" />
-        <SkBlock className="mx-auto h-64 w-full max-w-[19rem] rounded-3xl md:order-2" />
-        <SkBlock className="mx-auto h-52 w-full max-w-[15rem] rounded-2xl md:order-3" />
+      <div className="mb-11 flex flex-row items-end justify-center gap-2 sm:gap-4 md:gap-6">
+        <SkBlock className="h-48 w-[32%] max-w-[15rem] rounded-2xl" />
+        <SkBlock className="h-56 w-[36%] max-w-[19rem] rounded-3xl" />
+        <SkBlock className="h-48 w-[32%] max-w-[15rem] rounded-2xl" />
       </div>
-      <SkBlock className="mb-3 h-4 w-48 rounded-md" />
-      <div className="grid gap-3 md:gap-3.5">
+      <SkBlock className="mb-4 h-4 w-56 rounded-md" />
+      <div className="grid gap-4 md:gap-4">
         {Array.from({ length: 6 }).map((_, idx) => (
-          <SkBlock key={idx} className="h-32 rounded-2xl" />
+          <SkBlock key={idx} className="h-36 rounded-2xl" />
         ))}
       </div>
     </SkMain>
