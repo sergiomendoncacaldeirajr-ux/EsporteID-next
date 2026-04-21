@@ -662,6 +662,9 @@ export function OnboardingWizard({
         espacoEstado: string;
         espacoCep: string;
         espacoComplemento: string;
+        esportesExp: Record<number, "menos_1" | "1_3" | "mais_3">;
+        espacoLat: string;
+        espacoLng: string;
         nome: string;
         username: string;
         localizacao: string;
