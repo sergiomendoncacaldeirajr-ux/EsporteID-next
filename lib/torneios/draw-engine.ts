@@ -20,6 +20,16 @@ type DrawTeam = {
   seed: number;
 };
 
+type KnockoutMatch = {
+  id: string;
+  rodada: number;
+  slot: number;
+  lado_a?: DrawEntity | DrawTeam;
+  lado_b?: DrawEntity | DrawTeam;
+  fonte_a?: string;
+  fonte_b?: string;
+};
+
 function shuffle<T>(items: readonly T[]): T[] {
   const copy = [...items];
   for (let index = copy.length - 1; index > 0; index -= 1) {
@@ -93,7 +103,7 @@ function buildKnockoutEntities(entities: Array<DrawEntity | DrawTeam>) {
     } as DrawTeam);
   }
 
-  const firstRoundMatches = [];
+  const firstRoundMatches: KnockoutMatch[] = [];
   for (let index = 0; index < seeded.length / 2; index += 1) {
     const ladoA = seeded[index];
     const ladoB = seeded[seeded.length - 1 - index];
@@ -106,11 +116,13 @@ function buildKnockoutEntities(entities: Array<DrawEntity | DrawTeam>) {
     });
   }
 
-  const rounds = [{ rodada: 1, matches: firstRoundMatches }];
+  const rounds: Array<{ rodada: number; matches: KnockoutMatch[] }> = [
+    { rodada: 1, matches: firstRoundMatches },
+  ];
   let currentSize = firstRoundMatches.length;
   let currentRound = 2;
   while (currentSize > 1) {
-    const matches = [];
+    const matches: KnockoutMatch[] = [];
     for (let index = 0; index < currentSize / 2; index += 1) {
       matches.push({
         id: `r${currentRound}-m${index + 1}`,
