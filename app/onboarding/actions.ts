@@ -19,6 +19,8 @@ import {
   parseDetalhesPapel,
   precisaEsportesPratica,
 } from "@/lib/roles";
+import { serializarEspacoReservaConfig } from "@/lib/espacos/config";
+import { slugifyEspaco } from "@/lib/espacos/slug";
 import { createClient } from "@/lib/supabase/server";
 
 const ESTRUTURAS_VALIDAS = ["quadra", "campo", "piscina", "sala", "estadio"] as const;
@@ -842,6 +844,19 @@ export async function salvarExtrasOnboarding(
       complemento,
       origem: "onboarding-espaco",
     };
+    const slug = slugifyEspaco(espacoNome);
+    const configuracaoReservas = serializarEspacoReservaConfig({
+      limiteReservasDia: reservaModelo === "livre" ? 1 : 3,
+      limiteReservasSemana: reservaModelo === "socios" ? 7 : 3,
+      cooldownHoras: reservaModelo === "livre" ? 0 : 2,
+      antecedenciaMinHoras: 1,
+      antecedenciaMaxDias: 30,
+      waitlistExpiracaoMinutos: 60,
+      bloqueiaInadimplente: reservaModelo === "socios" || reservaModelo === "misto",
+      reservasGratisLiberadas: reservaModelo === "socios" || reservaModelo === "misto",
+      politicaCancelamento: reservaNotas,
+      observacoesPublicas: reservaNotas,
+    });
 
     const { data: existente } = await supabase
       .from("espacos_genericos")
@@ -869,11 +884,17 @@ export async function salvarExtrasOnboarding(
         .from("espacos_genericos")
         .update({
           nome_publico: espacoNome,
+          slug: slug || null,
           localizacao,
+          cidade,
+          uf: estado,
           lat: lat || null,
           lng: lng || null,
           esportes_ids: JSON.stringify(espacoEsportes),
           venue_config_json: JSON.stringify(venueConfig),
+          configuracao_reservas_json: configuracaoReservas,
+          aceita_socios: reservaModelo === "socios" || reservaModelo === "misto",
+          operacao_status: "rascunho",
           status: "pendente_validacao",
         })
         .eq("id", espacoId);
@@ -883,7 +904,10 @@ export async function salvarExtrasOnboarding(
         .from("espacos_genericos")
         .insert({
           nome_publico: espacoNome,
+          slug: slug || null,
           localizacao,
+          cidade,
+          uf: estado,
           lat: lat || null,
           lng: lng || null,
           criado_por_usuario_id: user.id,
@@ -891,6 +915,9 @@ export async function salvarExtrasOnboarding(
           status: "pendente_validacao",
           esportes_ids: JSON.stringify(espacoEsportes),
           venue_config_json: JSON.stringify(venueConfig),
+          configuracao_reservas_json: configuracaoReservas,
+          aceita_socios: reservaModelo === "socios" || reservaModelo === "misto",
+          operacao_status: "rascunho",
         })
         .select("id")
         .single();

@@ -81,6 +81,11 @@ export async function criarTorneo(formData: FormData): Promise<void> {
   if (error) redirect("/torneios/criar?erro=gravacao");
 
   revalidatePath("/torneios");
+  if (espacoGenericoId) {
+    revalidatePath("/locais");
+    revalidatePath(`/local/${espacoGenericoId}`);
+    revalidatePath("/espaco");
+  }
   redirect(`/torneios/${data.id}?from=/torneios/criar`);
 }
 
@@ -166,6 +171,11 @@ export async function atualizarMeuTorneio(
   revalidatePath(`/torneios/${torneioId}`);
   revalidatePath(`/conta/torneio/${torneioId}`);
   revalidatePath("/torneios");
+  if (espacoGenericoId) {
+    revalidatePath("/locais");
+    revalidatePath(`/local/${espacoGenericoId}`);
+    revalidatePath("/espaco");
+  }
   return { ok: true, message: "Torneio atualizado." };
 }
 

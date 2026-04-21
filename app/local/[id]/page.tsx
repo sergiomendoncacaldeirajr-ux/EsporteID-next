@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
@@ -23,16 +24,19 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect(`/login?next=/local/${id}`);
 
   const { data: loc } = await supabase
     .from("espacos_genericos")
     .select(
-      "id, nome_publico, logo_arquivo, localizacao, lat, lng, status, esportes_ids, tipo_quadra, aceita_reserva, ativo_listagem, fotos_json, comodidades_json, criado_por_usuario_id, responsavel_usuario_id"
+      "id, slug, nome_publico, logo_arquivo, localizacao, lat, lng, status, esportes_ids, tipo_quadra, aceita_reserva, ativo_listagem, fotos_json, comodidades_json, criado_por_usuario_id, responsavel_usuario_id"
     )
     .eq("id", id)
     .maybeSingle();
   if (!loc) notFound();
+
+  if (loc.slug) {
+    redirect(`/espaco/${loc.slug}`);
+  }
 
   const { data: dono } = loc.criado_por_usuario_id
     ? await supabase.from("profiles").select("id, nome").eq("id", loc.criado_por_usuario_id).maybeSingle()
@@ -46,7 +50,8 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
         : null;
 
   const isDonoLocal =
-    loc.criado_por_usuario_id === user.id || loc.responsavel_usuario_id === user.id;
+    user &&
+    (loc.criado_por_usuario_id === user.id || loc.responsavel_usuario_id === user.id);
 
   return (
     <>
@@ -57,7 +62,14 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
         <div className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card sm:rounded-2xl">
           <div className="flex h-32 items-center justify-center bg-eid-surface sm:h-36 md:bg-gradient-to-br md:from-eid-primary-500/20 md:to-eid-card md:h-40">
             {loc.logo_arquivo ? (
-              <img src={loc.logo_arquivo} alt="" className="max-h-28 max-w-[85%] object-contain sm:max-h-32" />
+              <Image
+                src={loc.logo_arquivo}
+                alt=""
+                width={420}
+                height={180}
+                unoptimized
+                className="max-h-28 max-w-[85%] object-contain sm:max-h-32"
+              />
             ) : (
               <span className="text-3xl font-bold text-eid-primary-500/35 sm:text-4xl sm:font-black sm:text-eid-primary-500/40">Local</span>
             )}

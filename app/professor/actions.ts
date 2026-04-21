@@ -219,7 +219,7 @@ export async function criarAulaProfessorAction(formData: FormData) {
   const inicio = String(formData.get("inicio") ?? "").trim();
   const fim = String(formData.get("fim") ?? "").trim();
 
-  const { error } = await supabase.rpc("professor_agendar_aula", {
+  const { data: aulaId, error } = await supabase.rpc("professor_agendar_aula", {
     p_esporte_id: esporteId,
     p_inicio: inicio,
     p_fim: fim,
@@ -233,8 +233,43 @@ export async function criarAulaProfessorAction(formData: FormData) {
   });
   if (error) throw new Error(error.message);
 
+  if (espacoId && aulaId) {
+    const { data: reserva } = await supabase
+      .from("reservas_quadra")
+      .insert({
+        espaco_generico_id: espacoId,
+        usuario_solicitante_id: user.id,
+        valor_total: 0,
+        payment_status: "isento",
+        status_reserva: "confirmada",
+        inicio,
+        fim,
+        esporte_id: esporteId,
+        tipo_reserva: "professor",
+        origem_reserva: "professor",
+        reserva_gratuita: true,
+        professor_aula_id: aulaId,
+        atualizado_por: user.id,
+      })
+      .select("id")
+      .single();
+
+    if (reserva?.id) {
+      await supabase
+        .from("professor_aulas")
+        .update({
+          reserva_quadra_id: reserva.id,
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq("id", aulaId)
+        .eq("professor_id", user.id);
+    }
+  }
+
   revalidatePath("/professor");
   revalidatePath("/professor/agenda");
+  revalidatePath("/espaco");
+  revalidatePath("/espaco/agenda");
   revalidatePath(`/perfil/${user.id}`);
 }
 
@@ -321,10 +356,31 @@ export async function cancelarAulaProfessorAction(formData: FormData) {
   });
   if (error) throw new Error(error.message);
 
+  const { data: aula } = await supabase
+    .from("professor_aulas")
+    .select("id, reserva_quadra_id")
+    .eq("id", aulaId)
+    .eq("professor_id", user.id)
+    .maybeSingle();
+  if (aula?.reserva_quadra_id) {
+    await supabase
+      .from("reservas_quadra")
+      .update({
+        status_reserva: "cancelada",
+        motivo_cancelamento: motivo || "Aula cancelada pelo professor.",
+        cancelado_por: user.id,
+        cancelado_em: new Date().toISOString(),
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq("id", aula.reserva_quadra_id);
+  }
+
   revalidatePath("/professor");
   revalidatePath("/professor/agenda");
   revalidatePath("/professor/alunos");
   revalidatePath("/comunidade");
+  revalidatePath("/espaco");
+  revalidatePath("/espaco/agenda");
   revalidatePath(`/professor/${user.id}`);
 }
 

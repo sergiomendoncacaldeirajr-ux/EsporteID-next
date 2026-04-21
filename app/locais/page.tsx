@@ -27,7 +27,7 @@ export default async function LocaisPage({ searchParams }: Props) {
   const to = from + pageSize - 1;
   let query = supabase
     .from("espacos_genericos")
-    .select("id, nome_publico, localizacao, status, logo_arquivo, aceita_reserva, tipo_quadra", { count: "exact" })
+    .select("id, slug, nome_publico, localizacao, status, logo_arquivo, aceita_reserva, tipo_quadra", { count: "exact" })
     .eq("ativo_listagem", true)
     .order("id", { ascending: false });
   if (q) {
@@ -92,7 +92,7 @@ export default async function LocaisPage({ searchParams }: Props) {
             {lista.map((l) => (
               <Link
                 key={l.id}
-                href={`/local/${l.id}?from=/locais`}
+                href={l.slug ? `/espaco/${l.slug}` : `/local/${l.id}?from=/locais`}
                 className="group relative block overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card transition hover:border-eid-primary-500/40 md:rounded-3xl md:shadow-lg md:shadow-black/20 md:hover:shadow-eid-primary-500/10"
               >
                 <div className="flex h-24 items-center justify-center bg-eid-surface md:h-32 md:bg-gradient-to-br md:from-eid-primary-500/20 md:via-eid-surface md:to-eid-card">

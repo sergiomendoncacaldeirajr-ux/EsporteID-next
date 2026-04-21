@@ -9,7 +9,7 @@ export default async function AdminLocaisPage() {
   const db = createServiceRoleClient();
   const { data, error } = await db
     .from("espacos_genericos")
-    .select("id, nome_publico, localizacao, status, ativo_listagem, criado_em")
+    .select("id, slug, nome_publico, localizacao, status, operacao_status, aceita_socios, ativo_listagem, criado_em")
     .order("id", { ascending: false })
     .limit(200);
   if (error) {
@@ -27,6 +27,7 @@ export default async function AdminLocaisPage() {
               <th className="px-3 py-2">ID</th>
               <th className="px-3 py-2">Nome</th>
               <th className="px-3 py-2">Status</th>
+              <th className="px-3 py-2">Operação</th>
               <th className="px-3 py-2">Listagem</th>
               <th className="px-3 py-2">App</th>
             </tr>
@@ -38,6 +39,9 @@ export default async function AdminLocaisPage() {
                 <td className="px-3 py-2">
                   <span className="font-medium text-eid-fg">{l.nome_publico}</span>
                   <span className="mt-0.5 block text-[11px] text-eid-text-secondary">{l.localizacao}</span>
+                  <span className="mt-0.5 block text-[11px] text-eid-text-secondary">
+                    {l.slug ? `/${l.slug}` : "Sem slug"} · {l.aceita_socios ? "aceita sócios" : "sem adesão"}
+                  </span>
                 </td>
                 <td className="px-3 py-2">
                   <form action={adminSetEspacoStatus} className="flex flex-wrap items-center gap-1">
@@ -47,6 +51,9 @@ export default async function AdminLocaisPage() {
                       Salvar
                     </button>
                   </form>
+                </td>
+                <td className="px-3 py-2 text-[11px] text-eid-text-secondary">
+                  {l.operacao_status ?? "rascunho"}
                 </td>
                 <td className="px-3 py-2">
                   {l.ativo_listagem ? (
@@ -68,8 +75,8 @@ export default async function AdminLocaisPage() {
                   )}
                 </td>
                 <td className="px-3 py-2">
-                  <Link href={`/local/${l.id}`} className="text-eid-primary-300 hover:underline" target="_blank" rel="noreferrer">
-                    Ver
+                  <Link href={l.slug ? `/espaco/${l.slug}` : `/local/${l.id}`} className="text-eid-primary-300 hover:underline" target="_blank" rel="noreferrer">
+                    Abrir
                   </Link>
                 </td>
               </tr>

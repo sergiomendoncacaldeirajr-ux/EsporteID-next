@@ -131,6 +131,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     .select("papel")
     .eq("usuario_id", user.id);
   const hasProfessor = (papeisRows ?? []).some((row) => row.papel === "professor");
+  const hasEspaco = (papeisRows ?? []).some((row) => row.papel === "espaco");
 
   const myLat = Number(profile.lat ?? NaN);
   const myLng = Number(profile.lng ?? NaN);
@@ -354,6 +355,15 @@ export default async function DashboardPage({ searchParams }: Props) {
             </Link>
           </div>
         )}
+        {hasEspaco ? (
+          <Link
+            href="/espaco"
+            className="mt-2 flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/16 active:scale-[0.99] sm:text-[11px]"
+          >
+            <IconMapPin className="h-5 w-5 shrink-0 text-eid-primary-300" />
+            Painel do espaço
+          </Link>
+        ) : null}
         {hasProfessor ? (
           <Link
             href="/comunidade"
