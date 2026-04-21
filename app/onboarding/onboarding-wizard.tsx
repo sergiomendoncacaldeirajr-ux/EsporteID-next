@@ -700,6 +700,7 @@ export function OnboardingWizard({
   const fotoInputRef = useRef<HTMLInputElement | null>(null);
   const fotoCameraInputRef = useRef<HTMLInputElement | null>(null);
   const fotoGaleriaInputRef = useRef<HTMLInputElement | null>(null);
+  const topAnchorRef = useRef<HTMLDivElement | null>(null);
   const [fotoPreviewUrl, setFotoPreviewUrl] = useState<string | null>(null);
   const [fotoPosX, setFotoPosX] = useState<number>(50);
   const [fotoPosY, setFotoPosY] = useState<number>(50);
@@ -711,11 +712,25 @@ export function OnboardingWizard({
   }, [initialStep]);
 
   useLayoutEffect(() => {
-    document.documentElement.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    document.body.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    const main = document.getElementById("app-main-column");
-    if (main) main.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const scrollTopHard = () => {
+      topAnchorRef.current?.scrollIntoView({ block: "start", behavior: "auto" });
+      document.documentElement.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.body.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      const main = document.getElementById("app-main-column");
+      if (main) main.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    };
+    const root = document.documentElement;
+    const prevBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = "auto";
+    scrollTopHard();
+    const raf1 = window.requestAnimationFrame(() => scrollTopHard());
+    const raf2 = window.requestAnimationFrame(() => scrollTopHard());
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      window.cancelAnimationFrame(raf2);
+      root.style.scrollBehavior = prevBehavior;
+    };
   }, [step]);
 
   useEffect(() => {
@@ -1430,6 +1445,7 @@ export function OnboardingWizard({
       data-eid-onboarding-step={step}
       className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7"
     >
+      <div ref={topAnchorRef} />
       <div className="w-full max-w-2xl pb-6">
         <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <Link
