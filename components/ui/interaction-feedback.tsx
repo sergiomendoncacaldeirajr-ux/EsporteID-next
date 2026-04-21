@@ -629,14 +629,31 @@ export function InteractionFeedback() {
 
   return (
     <>
-      <div
-        aria-hidden
-        className={`pointer-events-none fixed left-0 right-0 top-0 z-[90] h-[3px] overflow-hidden shadow-[0_1px_8px_rgba(37,99,235,0.35)] transition-opacity duration-300 sm:h-[2px] ${
-          loading ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        <div className="eid-top-loading-bar h-full w-full rounded-b-sm" />
-      </div>
+      {loading ? (
+        <div
+          className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="sr-only">Carregando</span>
+          <svg
+            className="h-10 w-10 animate-spin text-eid-primary-500"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden
+          >
+            <circle
+              cx="8"
+              cy="8"
+              r="6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeDasharray="28"
+              strokeDashoffset="10"
+            />
+          </svg>
+        </div>
+      ) : null}
       {/* Skeleton global removido a pedido do usuário. */}
     </>
   );

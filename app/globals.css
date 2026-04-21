@@ -173,18 +173,6 @@ label:has(input.sr-only):not(.eid-no-press):active {
   transform: scale(0.97);
 }
 
-@keyframes eid-loading-slide {
-  0% {
-    transform: translateX(-100%);
-  }
-  55% {
-    transform: translateX(-15%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
 @keyframes eid-skeleton-shimmer {
   0% {
     transform: translateX(-110%);
@@ -263,16 +251,6 @@ label:has(input.sr-only):not(.eid-no-press):active {
 }
 [data-eid-theme="light"] .eid-score-label {
   color: rgba(255, 255, 255, 0.75);
-}
-
-.eid-top-loading-bar {
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--eid-primary-500) 22%, transparent) 0%,
-    color-mix(in srgb, var(--eid-primary-500) 85%, white) 45%,
-    color-mix(in srgb, var(--eid-action-500) 75%, white) 100%
-  );
-  animation: eid-loading-slide 900ms ease-in-out infinite;
 }
 
 .eid-loading-skeleton-screen {
