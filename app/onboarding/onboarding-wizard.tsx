@@ -1876,33 +1876,80 @@ export function OnboardingWizard({
 
           {step === "perfil" ? (
             <form onSubmit={submitPerfil} className="mt-6 space-y-4">
-              <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-4">
+              <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-4 space-y-3">
                 <h2 className="text-sm font-bold uppercase tracking-wide text-eid-primary-500">
                   Resumo antes de concluir
                 </h2>
-                <ul className="mt-3 list-inside list-disc text-xs leading-relaxed text-eid-text-secondary">
-                  <li>Papéis: {[...papeis].join(", ") || "não definido"}</li>
-                  <li>
-                    Esportes:{" "}
-                    {[...esportesSel]
-                      .map((id) => esportes.find((e) => e.id === id)?.nome)
-                      .filter(Boolean)
-                      .join(", ") || "não definido"}
-                  </li>
-                  {hasAtletaProfessor ? (
-                    <li>
-                      Experiência:{" "}
+
+                {/* Quem você é */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary mb-1.5">
+                    Quem você é na plataforma
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ROLES.filter((r) => papeis.has(r.id)).length > 0
+                      ? ROLES.filter((r) => papeis.has(r.id)).map((r) => (
+                          <span
+                            key={r.id}
+                            className="inline-flex items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/8 px-2.5 py-0.5 text-xs font-semibold text-eid-primary-400"
+                          >
+                            {r.titulo}
+                          </span>
+                        ))
+                      : <span className="text-xs text-eid-text-secondary">Não definido</span>}
+                  </div>
+                </div>
+
+                {/* Esportes */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary mb-1.5">
+                    Esportes
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[...esportesSel].length > 0
+                      ? [...esportesSel].map((id) => {
+                          const nome = esportes.find((e) => e.id === id)?.nome;
+                          return nome ? (
+                            <span key={id}
+                              className="inline-flex items-center rounded-full border border-[color:var(--eid-border-subtle)] px-2.5 py-0.5 text-xs font-semibold text-eid-fg"
+                            >
+                              {nome}
+                            </span>
+                          ) : null;
+                        })
+                      : <span className="text-xs text-eid-text-secondary">Não definido</span>}
+                  </div>
+                </div>
+
+                {/* Experiência (atleta/professor) */}
+                {hasAtletaProfessor && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary mb-1">
+                      Experiência no esporte
+                    </p>
+                    <span className="text-xs font-semibold text-eid-fg">
                       {expModo === "aprox"
-                        ? expAprox === "menos_1"
-                          ? "Menos de 1 ano"
-                          : expAprox === "1_3"
-                            ? "1 a 3 anos"
-                            : "Mais de 3 anos"
-                        : `${expMes || "--"}/${expAno || "----"}`}
-                    </li>
-                  ) : null}
-                  {hasEspaco ? <li>Espaço: {espacoNome || "não definido"}</li> : null}
-                </ul>
+                        ? expAprox === "menos_1" ? "Menos de 1 ano"
+                          : expAprox === "1_3"   ? "1 a 3 anos"
+                          : "Mais de 3 anos"
+                        : expMes && expAno
+                          ? `Desde ${expMes}/${expAno}`
+                          : "Não informada"}
+                    </span>
+                  </div>
+                )}
+
+                {/* Espaço */}
+                {hasEspaco && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary mb-1">
+                      Espaço / arena
+                    </p>
+                    <span className="text-xs font-semibold text-eid-fg">
+                      {espacoNome || <span className="text-eid-text-secondary font-normal">Nome não definido</span>}
+                    </span>
+                  </div>
+                )}
               </section>
               <div className="flex items-center gap-3">
                 {hasFotoSelecionada ? (
