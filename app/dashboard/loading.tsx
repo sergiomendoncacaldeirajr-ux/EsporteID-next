@@ -1,21 +1,21 @@
+import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
+
+/** Espelha o painel: título, busca, atalhos e grade de cards. */
 export default function LoadingDashboard() {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 py-4 sm:px-6">
-      <div className="h-12 w-48 animate-pulse rounded-xl bg-eid-card" />
-      <div className="mt-6 h-12 w-full animate-pulse rounded-xl bg-eid-card" />
+    <SkMain variant="wide5">
+      <SkBlock className="h-12 w-48 rounded-xl" />
+      <SkBlock className="mt-6 h-12 w-full rounded-xl" />
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {Array.from({ length: 5 }).map((_, idx) => (
-          <div key={idx} className="h-16 animate-pulse rounded-xl bg-eid-card" />
+          <SkBlock key={idx} className="h-16 rounded-xl" />
         ))}
       </div>
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, idx) => (
-          <div
-            key={idx}
-            className="h-28 animate-pulse rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card"
-          />
+          <SkBlock key={idx} className="h-28 rounded-2xl" />
         ))}
       </div>
-    </main>
+    </SkMain>
   );
 }
