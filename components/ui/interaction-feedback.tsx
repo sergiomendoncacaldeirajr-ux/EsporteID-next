@@ -105,6 +105,7 @@ export function InteractionFeedback() {
   const hideTimerRef = useRef<number | null>(null);
   const navFallbackTimerRef = useRef<number | null>(null);
   const submitMutationObserverRef = useRef<MutationObserver | null>(null);
+  const navMutationObserverRef = useRef<MutationObserver | null>(null);
 
   loadingRef.current = loading;
 
@@ -127,6 +128,23 @@ export function InteractionFeedback() {
       submitMutationObserverRef.current.disconnect();
       submitMutationObserverRef.current = null;
     }
+  }
+
+  function disconnectNavObserver() {
+    if (navMutationObserverRef.current) {
+      navMutationObserverRef.current.disconnect();
+      navMutationObserverRef.current = null;
+    }
+  }
+
+  function scheduleFinishLoading(minVisibleMs: number) {
+    clearHideTimer();
+    const elapsed = Date.now() - navStartedAtRef.current;
+    hideTimerRef.current = window.setTimeout(() => {
+      hideTimerRef.current = null;
+      loadingCauseRef.current = null;
+      setLoading(false);
+    }, Math.max(0, minVisibleMs - elapsed));
   }
 
   useEffect(() => {
@@ -160,6 +178,7 @@ export function InteractionFeedback() {
       lockElement(linkEl);
       clearHideTimer();
       clearNavFallbackTimer();
+      disconnectNavObserver();
       loadingCauseRef.current = "nav";
       navStartedAtRef.current = Date.now();
       setLoading(true);
@@ -188,14 +207,7 @@ export function InteractionFeedback() {
       if (main) {
         submitMutationObserverRef.current = new MutationObserver(() => {
           disconnectSubmitObserver();
-          clearHideTimer();
-          const elapsed = Date.now() - navStartedAtRef.current;
-          const minVisibleMs = 380;
-          hideTimerRef.current = window.setTimeout(() => {
-            hideTimerRef.current = null;
-            loadingCauseRef.current = null;
-            setLoading(false);
-          }, Math.max(0, minVisibleMs - elapsed));
+          scheduleFinishLoading(380);
         });
         submitMutationObserverRef.current.observe(main, {
           childList: true,
@@ -214,20 +226,27 @@ export function InteractionFeedback() {
     };
   }, [authPath]);
 
-  /* Navegação: esconde após troca de rota (com tempo mínimo visível). */
+  /* Navegação: só libera quando houver mudança real no conteúdo após trocar a rota. */
   useEffect(() => {
-    clearHideTimer();
     if (!(loadingRef.current && loadingCauseRef.current === "nav")) return;
-    clearNavFallbackTimer();
-    const elapsed = Date.now() - navStartedAtRef.current;
-    const minAfterNavMs = 340;
-    hideTimerRef.current = window.setTimeout(() => {
-      hideTimerRef.current = null;
-      loadingCauseRef.current = null;
-      setLoading(false);
-    }, Math.max(0, minAfterNavMs - elapsed));
+    disconnectNavObserver();
+    const main = document.getElementById("app-main-column");
+    if (main) {
+      navMutationObserverRef.current = new MutationObserver(() => {
+        disconnectNavObserver();
+        clearNavFallbackTimer();
+        scheduleFinishLoading(420);
+      });
+      navMutationObserverRef.current.observe(main, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: false,
+      });
+    }
     return () => {
       clearHideTimer();
+      disconnectNavObserver();
     };
   }, [pathname]);
 
@@ -248,6 +267,7 @@ export function InteractionFeedback() {
     return () => {
       clearHideTimer();
       disconnectSubmitObserver();
+      disconnectNavObserver();
     };
   }, [loading]);
 
@@ -277,6 +297,7 @@ export function InteractionFeedback() {
   useEffect(() => {
     return () => {
       disconnectSubmitObserver();
+      disconnectNavObserver();
     };
   }, []);
 
