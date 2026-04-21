@@ -706,9 +706,13 @@ export function OnboardingWizard({
   const [fotoPosY, setFotoPosY] = useState<number>(50);
   const [fotoZoom, setFotoZoom] = useState<number>(1);
   const [fotoSelecionadaNome, setFotoSelecionadaNome] = useState<string | null>(null);
+  const didHydrateFromServerRef = useRef(false);
+  const forceResetKey = `${draftKey}:force_reset`;
 
   useEffect(() => {
+    if (didHydrateFromServerRef.current) return;
     setStep(initialStep);
+    didHydrateFromServerRef.current = true;
   }, [initialStep]);
 
   useLayoutEffect(() => {
@@ -763,6 +767,26 @@ export function OnboardingWizard({
 
   useEffect(() => {
     try {
+      const forceReset = window.localStorage.getItem(forceResetKey) === "1";
+      if (forceReset) {
+        window.localStorage.setItem(
+          draftKey,
+          JSON.stringify({
+            step: "papeis" as Step,
+            papeis: [] as string[],
+            esportesSel: [] as number[],
+            esportesInteresse: {} as Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">,
+            esportesModalidades: {} as Record<number, MatchModality[]>,
+            esporteModes: {} as Record<number, ProfessorModoEsportivo>,
+            professorObjetivos: {} as Record<number, ProfessorObjetivoPlataforma>,
+            professorTipos: {} as Record<number, ProfessorTipoAtuacao[]>,
+            esportesExp: {} as Record<number, string>,
+            espacoLat: "",
+            espacoLng: "",
+          })
+        );
+        window.localStorage.removeItem(forceResetKey);
+      }
       const raw = window.localStorage.getItem(draftKey);
       if (!raw) return;
       const draft = JSON.parse(raw) as Partial<{
@@ -920,7 +944,7 @@ export function OnboardingWizard({
     } catch {
       window.localStorage.removeItem(draftKey);
     }
-  }, [draftKey]);
+  }, [draftKey, forceResetKey]);
 
   useEffect(() => {
     const payload = {
@@ -1144,27 +1168,36 @@ export function OnboardingWizard({
   }
 
   function clearDraft() {
-    window.localStorage.removeItem(draftKey);
+    const clearedDraft = {
+      step: "papeis" as Step,
+      papeis: [] as string[],
+      esportesSel: [] as number[],
+      esportesInteresse: {} as Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">,
+      esportesModalidades: {} as Record<number, MatchModality[]>,
+      esporteModes: {} as Record<number, ProfessorModoEsportivo>,
+      professorObjetivos: {} as Record<number, ProfessorObjetivoPlataforma>,
+      professorTipos: {} as Record<number, ProfessorTipoAtuacao[]>,
+      esportesExp: {} as Record<number, string>,
+      espacoLat: "",
+      espacoLng: "",
+    };
+    window.localStorage.setItem(forceResetKey, "1");
+    window.localStorage.setItem(draftKey, JSON.stringify(clearedDraft));
     setRestoredDraftAt(null);
-    setStep(initialStep);
-    setPapeis(new Set(normalizarPapeisContaPrincipal(selectedPapeis)));
-    setEsportesSel(new Set(selectedEsportes));
-    setEsportesInteresse(selectedEsportesInteresse);
-    setEsportesModalidades(selectedEsportesModalidades);
-    setEsporteModes(selectedSportModes);
-    setProfessorObjetivos(selectedProfessorObjetivos);
-    setProfessorTipos(selectedProfessorTipos);
+    didHydrateFromServerRef.current = true;
+    setStep("papeis");
+    setPapeis(new Set());
+    setEsportesSel(new Set());
+    setEsportesInteresse({});
+    setEsportesModalidades({});
+    setEsporteModes({});
+    setProfessorObjetivos({});
+    setProfessorTipos({});
     setExpModo(extrasInitial.expModo);
     setExpAprox(extrasInitial.expAprox);
     setExpMes(extrasInitial.expMes ? String(extrasInitial.expMes) : "");
     setExpAno(extrasInitial.expAno ? String(extrasInitial.expAno) : "");
-    setEsportesExp(
-      Object.fromEntries(
-        Object.entries(selectedProfessorExp)
-          .map(([id, val]) => [Number(id), parseSportExpValue(val)] as const)
-          .filter(([, val]) => Boolean(val))
-      )
-    );
+    setEsportesExp({});
     setProfessorHeadline(extrasInitial.professorHeadline);
     setProfessorBio(extrasInitial.professorBio);
     setProfessorCertificacoes(extrasInitial.professorCertificacoes);
@@ -1208,7 +1241,7 @@ export function OnboardingWizard({
     setBio(profileInitial.bio ?? "");
     setEstiloJogo(profileInitial.estiloJogo ?? "");
     setDisponibilidadeSemanaJson(profileInitial.disponibilidadeSemanaJson ?? "{}");
-    setMessage("Rascunho local limpo. Campos restaurados com dados atuais da conta.");
+    setMessage("Rascunho local limpo. O onboarding foi reiniciado na primeira etapa.");
   }
 
   function togglePapel(id: string) {
