@@ -99,8 +99,8 @@ export function InteractionFeedback() {
   const navStartedAtRef = useRef<number>(0);
   const loadingCauseRef = useRef<LoadingCause | null>(null);
   const loadingRef = useRef(false);
-  const hideTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
-  const navFallbackTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+  const hideTimerRef = useRef<number | null>(null);
+  const navFallbackTimerRef = useRef<number | null>(null);
 
   loadingRef.current = loading;
 
