@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 const LOCK_MS = 1400;
+const NAV_LOADING_FALLBACK_MS = 6500;
+type LoadingCause = "nav" | "submit";
 
 function isSameOriginNavigationLink(el: HTMLAnchorElement) {
   if (!el.href) return false;
@@ -74,6 +76,26 @@ export function InteractionFeedback() {
   const authPath = isAuthPath(pathname);
   const [loading, setLoading] = useState(false);
   const navStartedAtRef = useRef<number>(0);
+  const loadingCauseRef = useRef<LoadingCause | null>(null);
+  const loadingRef = useRef(false);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const navFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  loadingRef.current = loading;
+
+  function clearHideTimer() {
+    if (hideTimerRef.current) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  }
+
+  function clearNavFallbackTimer() {
+    if (navFallbackTimerRef.current) {
+      window.clearTimeout(navFallbackTimerRef.current);
+      navFallbackTimerRef.current = null;
+    }
+  }
 
   useEffect(() => {
     const onClickCapture = (event: MouseEvent) => {
@@ -104,14 +126,27 @@ export function InteractionFeedback() {
       }
 
       lockElement(linkEl);
+      clearHideTimer();
+      clearNavFallbackTimer();
+      loadingCauseRef.current = "nav";
       navStartedAtRef.current = Date.now();
       setLoading(true);
+      navFallbackTimerRef.current = window.setTimeout(() => {
+        navFallbackTimerRef.current = null;
+        if (loadingCauseRef.current === "nav") {
+          loadingCauseRef.current = null;
+          setLoading(false);
+        }
+      }, NAV_LOADING_FALLBACK_MS);
     };
 
     const onSubmitCapture = (event: SubmitEvent) => {
       if (authPath) return;
       const form = event.target as HTMLFormElement | null;
       if (!form) return;
+      clearHideTimer();
+      clearNavFallbackTimer();
+      loadingCauseRef.current = "submit";
       navStartedAtRef.current = Date.now();
       setLoading(true);
     };
@@ -124,24 +159,47 @@ export function InteractionFeedback() {
     };
   }, [authPath]);
 
+  /* Navegação: esconde após troca de rota (com tempo mínimo visível). */
   useEffect(() => {
-    if (!loading) return;
+    clearHideTimer();
+    if (!(loadingRef.current && loadingCauseRef.current === "nav")) return;
+    clearNavFallbackTimer();
     const elapsed = Date.now() - navStartedAtRef.current;
-    const minVisibleMs = 260;
-    const wait = Math.max(0, minVisibleMs - elapsed);
-    const t = window.setTimeout(() => setLoading(false), wait);
-    return () => window.clearTimeout(t);
-    // pathname/search mudaram => navegação finalizou
-  }, [pathname, loading]);
+    const minAfterNavMs = 340;
+    hideTimerRef.current = window.setTimeout(() => {
+      hideTimerRef.current = null;
+      loadingCauseRef.current = null;
+      setLoading(false);
+    }, Math.max(0, minAfterNavMs - elapsed));
+    return () => {
+      clearHideTimer();
+    };
+  }, [pathname]);
+
+  /* Formulários / server actions: barra some após um tempo se a rota não mudar. */
+  useEffect(() => {
+    if (!loading) {
+      clearHideTimer();
+      return;
+    }
+    if (loadingCauseRef.current !== "submit") return;
+    clearHideTimer();
+    hideTimerRef.current = window.setTimeout(() => {
+      hideTimerRef.current = null;
+      loadingCauseRef.current = null;
+      setLoading(false);
+    }, 1500);
+    return clearHideTimer;
+  }, [loading]);
 
   return (
     <div
       aria-hidden
-      className={`pointer-events-none fixed left-0 right-0 top-0 z-[90] h-[2px] overflow-hidden transition-opacity duration-200 ${
+      className={`pointer-events-none fixed left-0 right-0 top-0 z-[90] h-[3px] overflow-hidden shadow-[0_1px_8px_rgba(37,99,235,0.35)] transition-opacity duration-300 sm:h-[2px] ${
         loading ? "opacity-100" : "opacity-0"
       }`}
     >
-      <div className="eid-top-loading-bar h-full w-full" />
+      <div className="eid-top-loading-bar h-full w-full rounded-b-sm" />
     </div>
   );
 }

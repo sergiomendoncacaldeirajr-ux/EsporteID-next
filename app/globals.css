@@ -120,6 +120,8 @@ html[data-eid-theme="light"] select option {
 
 html {
   scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 /* Fonte padrão: Barlow — atlética, compacta, premium */
@@ -145,7 +147,32 @@ body {
 }
 
 .eid-page-transition {
-  animation: eid-fade-in 180ms ease-out;
+  animation: eid-fade-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+/* Toque / clique estilo app — leve “pressed” em controles comuns */
+button:not(:disabled):not(.eid-no-press),
+[role="button"]:not([aria-disabled="true"]):not(.eid-no-press),
+summary:not(.eid-no-press),
+label.cursor-pointer:not(.eid-no-press),
+label:has(input.sr-only):not(.eid-no-press) {
+  touch-action: manipulation;
+  transition:
+    transform 0.14s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease,
+    filter 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+button:not(:disabled):not(.eid-no-press):active,
+[role="button"]:not([aria-disabled="true"]):not(.eid-no-press):active,
+summary:not(.eid-no-press):active,
+label.cursor-pointer:not(.eid-no-press):active,
+label:has(input.sr-only):not(.eid-no-press):active {
+  transform: scale(0.97);
 }
 
 @keyframes eid-loading-slide {
@@ -243,8 +270,9 @@ body {
 
 .eid-is-locked {
   pointer-events: none !important;
-  opacity: 0.78;
-  animation: eid-btn-pulse 850ms ease-in-out infinite;
+  opacity: 0.88;
+  filter: brightness(0.96);
+  animation: eid-btn-pulse 1100ms ease-in-out infinite;
 }
 
 button.eid-is-locked,
@@ -256,6 +284,23 @@ a.eid-is-locked {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .eid-page-transition {
+    animation: none;
+    will-change: auto;
+  }
+
+  button:not(:disabled):not(.eid-no-press):active,
+  [role="button"]:not([aria-disabled="true"]):not(.eid-no-press):active,
+  summary:not(.eid-no-press):active,
+  label.cursor-pointer:not(.eid-no-press):active,
+  label:has(input.sr-only):not(.eid-no-press):active {
+    transform: none;
+  }
+
+  .eid-is-locked {
+    animation: none;
   }
 }
 
@@ -297,7 +342,6 @@ select,
 
   body {
     background-image: none;
-    -webkit-tap-highlight-color: transparent;
   }
 
   .eid-card {
@@ -403,7 +447,7 @@ select,
 }
 .eid-btn-primary:active {
   background: var(--eid-action-600);
-  transform: scale(0.99);
+  transform: scale(0.97);
 }
 .eid-btn-primary:disabled {
   opacity: 0.55;
