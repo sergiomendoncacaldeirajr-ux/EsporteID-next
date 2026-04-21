@@ -708,6 +708,7 @@ export function OnboardingWizard({
   const [fotoSelecionadaNome, setFotoSelecionadaNome] = useState<string | null>(null);
   const didHydrateFromServerRef = useRef(false);
   const forceResetKey = `${draftKey}:force_reset`;
+  const lastServerPapeisKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (didHydrateFromServerRef.current) return;
@@ -738,7 +739,11 @@ export function OnboardingWizard({
   }, [step]);
 
   useEffect(() => {
-    setPapeis(new Set(normalizarPapeisContaPrincipal(selectedPapeis)));
+    const normalized = normalizarPapeisContaPrincipal(selectedPapeis);
+    const key = [...normalized].sort().join("|");
+    if (lastServerPapeisKeyRef.current === key) return;
+    lastServerPapeisKeyRef.current = key;
+    setPapeis(new Set(normalized));
   }, [selectedPapeis]);
 
   useEffect(() => {
