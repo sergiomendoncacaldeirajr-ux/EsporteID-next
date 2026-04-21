@@ -1,5 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {
+  ComunidadeAulasSection,
+  type ComunidadeProfessorProfileRow,
+  type ComunidadeSolicitacaoAulaItem,
+  type ComunidadeVinculoAulaItem,
+} from "@/components/comunidade/comunidade-aulas-section";
 import { ComunidadeNotificacoesSection, type NotifRow } from "@/components/comunidade/comunidade-notificacoes-section";
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
@@ -136,6 +142,73 @@ export default async function ComunidadePage() {
   });
   const nNotifUnread = (notificacoes ?? []).filter((n) => n.lida !== true).length;
 
+  const [{ data: solicitacoes }, { data: vinculos }] = await Promise.all([
+    supabase
+      .from("professor_solicitacoes_aula")
+      .select(
+        "id, professor_id, esporte_id, mensagem, status, criado_em, respondido_em, esportes(nome)"
+      )
+      .eq("aluno_id", user.id)
+      .order("criado_em", { ascending: false }),
+    supabase
+      .from("professor_aula_alunos")
+      .select(
+        "id, aula_id, aluno_id, valor_centavos, status_inscricao, status_pagamento, taxa_cancelamento_centavos, motivo_cancelamento, professor_aulas!inner(id, professor_id, titulo, inicio, fim, status, esportes(nome))"
+      )
+      .eq("aluno_id", user.id)
+      .order("id", { ascending: false }),
+  ]);
+
+  const professorIds = [
+    ...new Set([
+      ...(solicitacoes ?? []).map((item) => item.professor_id),
+      ...(vinculos ?? []).map((item) => {
+        const aula = Array.isArray(item.professor_aulas)
+          ? item.professor_aulas[0]
+          : item.professor_aulas;
+        return aula?.professor_id ?? null;
+      }),
+    ].filter(Boolean)),
+  ] as string[];
+
+  const [{ data: professores }, { data: professorPerfis }] = professorIds.length
+    ? await Promise.all([
+        supabase.from("profiles").select("id, nome, whatsapp").in("id", professorIds),
+        supabase
+          .from("professor_perfil")
+          .select("usuario_id, whatsapp_visibilidade, headline, politica_cancelamento_json")
+          .in("usuario_id", professorIds),
+      ])
+    : [
+        { data: [] as Array<{ id: string; nome: string | null; whatsapp: string | null }> },
+        {
+          data: [] as Array<{
+            usuario_id: string;
+            whatsapp_visibilidade: string | null;
+            headline: string | null;
+            politica_cancelamento_json: unknown;
+          }>,
+        },
+      ];
+
+  const professorMap = new Map<string, ComunidadeProfessorProfileRow>();
+  const professorPerfilMap = new Map(
+    (professorPerfis ?? []).map((item) => [item.usuario_id, item])
+  );
+  for (const item of professores ?? []) {
+    const professorPerfil = professorPerfilMap.get(item.id);
+    professorMap.set(item.id, {
+      id: item.id,
+      nome: item.nome ?? null,
+      whatsapp: item.whatsapp ?? null,
+      whatsapp_visibilidade: professorPerfil?.whatsapp_visibilidade ?? "publico",
+      headline: professorPerfil?.headline ?? null,
+      politica_cancelamento_json: professorPerfil?.politica_cancelamento_json ?? null,
+    });
+  }
+
+  const nAulas = (solicitacoes?.length ?? 0) + (vinculos?.length ?? 0);
+
   return (
     <>
       <DashboardTopbar />
@@ -159,11 +232,20 @@ export default async function ComunidadePage() {
             <span className="rounded-md border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-primary-300 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
               {conviteItems.length} convite(s) de equipe
             </span>
+            <span className="rounded-md border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-action-300 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
+              {nAulas} item(ns) de aulas
+            </span>
           </div>
         </div>
 
         <div className="mt-5 space-y-6 md:mt-8 md:space-y-10">
           <ComunidadeNotificacoesSection items={(notificacoes ?? []) as NotifRow[]} />
+
+          <ComunidadeAulasSection
+            solicitacoes={(solicitacoes ?? []) as ComunidadeSolicitacaoAulaItem[]}
+            vinculos={(vinculos ?? []) as ComunidadeVinculoAulaItem[]}
+            professorMap={professorMap}
+          />
 
           <section>
             <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Convites de equipe</h2>

@@ -126,6 +126,12 @@ export default async function DashboardPage({ searchParams }: Props) {
     redirect("/onboarding");
   }
 
+  const { data: papeisRows } = await supabase
+    .from("usuario_papeis")
+    .select("papel")
+    .eq("usuario_id", user.id);
+  const hasProfessor = (papeisRows ?? []).some((row) => row.papel === "professor");
+
   const myLat = Number(profile.lat ?? NaN);
   const myLng = Number(profile.lng ?? NaN);
   const hasMyCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
@@ -203,7 +209,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     timesQuery = timesQuery.eq("esporte_id", esportePrincipalId);
   }
   const { data: timesRaw } = await timesQuery;
-  let timesComDist = (timesRaw ?? []).map((t) => {
+  const timesComDist = (timesRaw ?? []).map((t) => {
     const lat = Number(t.lat ?? NaN);
     const lng = Number(t.lng ?? NaN);
     const dist = hasMyCoords && Number.isFinite(lat) && Number.isFinite(lng) ? distanciaKm(myLat, myLng, lat, lng) : 99999;
@@ -319,6 +325,42 @@ export default async function DashboardPage({ searchParams }: Props) {
               <span className="sm:hidden">{perfNav.shortLabel}</span>
               <span className="hidden sm:inline">{perfNav.label}</span>
             </span>
+          </Link>
+        ) : null}
+
+        {hasProfessor ? (
+          <Link
+            href="/professor"
+            className="mt-2 flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-eid-action-500/35 bg-eid-action-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-action-400 transition hover:border-eid-action-500/55 hover:bg-eid-action-500/16 active:scale-[0.99] sm:text-[11px]"
+          >
+            <IconUsers className="h-5 w-5 shrink-0 text-eid-action-400" />
+            Painel do professor
+          </Link>
+        ) : (
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            <Link
+              href="/professores"
+              className="flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-eid-action-500/25 bg-eid-surface/45 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-fg transition hover:border-eid-action-500/45 hover:bg-eid-action-500/10 active:scale-[0.99] sm:text-[11px]"
+            >
+              <IconUsers className="h-5 w-5 shrink-0 text-eid-action-400" />
+              Explorar professores
+            </Link>
+            <Link
+              href="/comunidade"
+              className="flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-primary-300 transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/16 active:scale-[0.99] sm:text-[11px]"
+            >
+              <IconStopwatch className="h-5 w-5 shrink-0 text-eid-primary-300" />
+              Social e aulas
+            </Link>
+          </div>
+        )}
+        {hasProfessor ? (
+          <Link
+            href="/comunidade"
+            className="mt-2 flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-primary-300 transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/16 active:scale-[0.99] sm:text-[11px]"
+          >
+            <IconStopwatch className="h-5 w-5 shrink-0 text-eid-primary-300" />
+            Social e aulas
           </Link>
         ) : null}
 

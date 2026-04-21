@@ -1,9 +1,18 @@
 ﻿"use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/brand/logo-full";
+import {
+  esporteModoTemAtleta,
+  esporteModoTemProfessor,
+  type ProfessorModoEsportivo,
+  type ProfessorObjetivoPlataforma,
+  type ProfessorTipoAtuacao,
+} from "@/lib/professor/constants";
+import { normalizarPapeisContaPrincipal } from "@/lib/roles";
 import type { MatchModality } from "@/lib/onboarding/modalidades-match";
 import { sortModalidadesMatch } from "@/lib/onboarding/modalidades-match";
 
@@ -479,11 +488,23 @@ type Props = {
   selectedEsportes: number[];
   selectedEsportesInteresse: Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
   selectedEsportesModalidades: Record<number, MatchModality[]>;
+  selectedSportModes: Record<number, ProfessorModoEsportivo>;
+  selectedProfessorObjetivos: Record<number, ProfessorObjetivoPlataforma>;
+  selectedProfessorTipos: Record<number, ProfessorTipoAtuacao[]>;
+  selectedProfessorExp: Record<number, string>;
   extrasInitial: {
     expModo: "aprox" | "exato";
     expAprox: "menos_1" | "1_3" | "mais_3";
     expMes: number | null;
     expAno: number | null;
+    professorHeadline: string;
+    professorBio: string;
+    professorCertificacoes: string;
+    professorPublicoAlvo: string;
+    professorFormatoAula: string;
+    professorPoliticaCancelamento: string;
+    professorAceitaNovosAlunos: boolean;
+    professorPerfilPublicado: boolean;
     orgEsporteId: number | null;
     orgEsportesIds: number[];
     orgLocalModo: "existente" | "novo";
@@ -526,6 +547,10 @@ export function OnboardingWizard({
   selectedEsportes,
   selectedEsportesInteresse,
   selectedEsportesModalidades,
+  selectedSportModes,
+  selectedProfessorObjetivos,
+  selectedProfessorTipos,
+  selectedProfessorExp,
   extrasInitial,
   profileInitial,
 }: Props) {
@@ -536,7 +561,9 @@ export function OnboardingWizard({
   const [restoredDraftAt, setRestoredDraftAt] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const [papeis, setPapeis] = useState<Set<string>>(new Set(selectedPapeis));
+  const [papeis, setPapeis] = useState<Set<string>>(
+    new Set(normalizarPapeisContaPrincipal(selectedPapeis))
+  );
   const [esportesSel, setEsportesSel] = useState<Set<number>>(new Set(selectedEsportes));
   const [esportesInteresse, setEsportesInteresse] = useState<Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">>(
     selectedEsportesInteresse
@@ -544,11 +571,38 @@ export function OnboardingWizard({
   const [esportesModalidades, setEsportesModalidades] = useState<Record<number, MatchModality[]>>(
     selectedEsportesModalidades
   );
+  const [esporteModes, setEsporteModes] = useState<Record<number, ProfessorModoEsportivo>>(selectedSportModes);
+  const [professorObjetivos, setProfessorObjetivos] =
+    useState<Record<number, ProfessorObjetivoPlataforma>>(selectedProfessorObjetivos);
+  const [professorTipos, setProfessorTipos] =
+    useState<Record<number, ProfessorTipoAtuacao[]>>(selectedProfessorTipos);
   const [expModo, setExpModo] = useState<"aprox" | "exato">(extrasInitial.expModo);
   const [expAprox, setExpAprox] = useState<"menos_1" | "1_3" | "mais_3">(extrasInitial.expAprox);
   const [expMes, setExpMes] = useState<string>(extrasInitial.expMes ? String(extrasInitial.expMes) : "");
   const [expAno, setExpAno] = useState<string>(extrasInitial.expAno ? String(extrasInitial.expAno) : "");
-  const [esportesExp, setEsportesExp] = useState<Record<number, "menos_1" | "1_3" | "mais_3">>({});
+  const [esportesExp, setEsportesExp] = useState<Record<number, "menos_1" | "1_3" | "mais_3">>(
+    () =>
+      Object.fromEntries(
+        Object.entries(selectedProfessorExp).map(([id, val]) => {
+          const raw = String(val);
+          if (raw === "Menos de 1 ano") return [Number(id), "menos_1"];
+          if (raw === "1 a 3 anos") return [Number(id), "1_3"];
+          if (raw === "Mais de 3 anos") return [Number(id), "mais_3"];
+          return [Number(id), "menos_1"];
+        })
+      )
+  );
+  const [professorHeadline, setProfessorHeadline] = useState<string>(extrasInitial.professorHeadline);
+  const [professorBio, setProfessorBio] = useState<string>(extrasInitial.professorBio);
+  const [professorCertificacoes, setProfessorCertificacoes] = useState<string>(extrasInitial.professorCertificacoes);
+  const [professorPublicoAlvo, setProfessorPublicoAlvo] = useState<string>(extrasInitial.professorPublicoAlvo);
+  const [professorFormatoAula, setProfessorFormatoAula] = useState<string>(extrasInitial.professorFormatoAula);
+  const [professorPoliticaCancelamento, setProfessorPoliticaCancelamento] =
+    useState<string>(extrasInitial.professorPoliticaCancelamento);
+  const [professorAceitaNovosAlunos, setProfessorAceitaNovosAlunos] =
+    useState<boolean>(extrasInitial.professorAceitaNovosAlunos);
+  const [professorPerfilPublicado, setProfessorPerfilPublicado] =
+    useState<boolean>(extrasInitial.professorPerfilPublicado);
   const [orgEsporteId, setOrgEsporteId] = useState<string>(
     extrasInitial.orgEsporteId ? String(extrasInitial.orgEsporteId) : "0"
   );
@@ -608,7 +662,7 @@ export function OnboardingWizard({
   }, [initialStep]);
 
   useEffect(() => {
-    setPapeis(new Set(selectedPapeis));
+    setPapeis(new Set(normalizarPapeisContaPrincipal(selectedPapeis)));
   }, [selectedPapeis]);
 
   useEffect(() => {
@@ -624,6 +678,18 @@ export function OnboardingWizard({
   }, [selectedEsportesModalidades]);
 
   useEffect(() => {
+    setEsporteModes(selectedSportModes);
+  }, [selectedSportModes]);
+
+  useEffect(() => {
+    setProfessorObjetivos(selectedProfessorObjetivos);
+  }, [selectedProfessorObjetivos]);
+
+  useEffect(() => {
+    setProfessorTipos(selectedProfessorTipos);
+  }, [selectedProfessorTipos]);
+
+  useEffect(() => {
     try {
       const raw = window.localStorage.getItem(draftKey);
       if (!raw) return;
@@ -634,10 +700,21 @@ export function OnboardingWizard({
         esportesInteresse: Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
         esportesModalidades?: Record<number, MatchModality[]>;
         esportesModalidade?: Record<number, "individual" | "dupla" | "time">;
+        esporteModes?: Record<number, ProfessorModoEsportivo>;
+        professorObjetivos?: Record<number, ProfessorObjetivoPlataforma>;
+        professorTipos?: Record<number, ProfessorTipoAtuacao[]>;
         expModo: "aprox" | "exato";
         expAprox: "menos_1" | "1_3" | "mais_3";
         expMes: string;
         expAno: string;
+        professorHeadline: string;
+        professorBio: string;
+        professorCertificacoes: string;
+        professorPublicoAlvo: string;
+        professorFormatoAula: string;
+        professorPoliticaCancelamento: string;
+        professorAceitaNovosAlunos: boolean;
+        professorPerfilPublicado: boolean;
         orgEsporteId: string;
         orgEsportes: number[];
         orgLocalModo: "existente" | "novo";
@@ -681,9 +758,14 @@ export function OnboardingWizard({
       ) {
         setStep(draft.step);
       }
-      if (draft.papeis) setPapeis(new Set(draft.papeis));
+      if (draft.papeis) {
+        setPapeis(new Set(normalizarPapeisContaPrincipal(draft.papeis as string[])));
+      }
       if (draft.esportesSel) setEsportesSel(new Set(draft.esportesSel));
       if (draft.esportesInteresse) setEsportesInteresse(draft.esportesInteresse);
+      if (draft.esporteModes) setEsporteModes(draft.esporteModes);
+      if (draft.professorObjetivos) setProfessorObjetivos(draft.professorObjetivos);
+      if (draft.professorTipos) setProfessorTipos(draft.professorTipos);
       const migratedMods = (() => {
         const raw = draft.esportesModalidades ?? draft.esportesModalidade;
         if (!raw || typeof raw !== "object") return null;
@@ -705,6 +787,20 @@ export function OnboardingWizard({
       if (draft.expAprox) setExpAprox(draft.expAprox);
       if (typeof draft.expMes === "string") setExpMes(draft.expMes);
       if (typeof draft.expAno === "string") setExpAno(draft.expAno);
+      if (typeof draft.professorHeadline === "string") setProfessorHeadline(draft.professorHeadline);
+      if (typeof draft.professorBio === "string") setProfessorBio(draft.professorBio);
+      if (typeof draft.professorCertificacoes === "string") setProfessorCertificacoes(draft.professorCertificacoes);
+      if (typeof draft.professorPublicoAlvo === "string") setProfessorPublicoAlvo(draft.professorPublicoAlvo);
+      if (typeof draft.professorFormatoAula === "string") setProfessorFormatoAula(draft.professorFormatoAula);
+      if (typeof draft.professorPoliticaCancelamento === "string") {
+        setProfessorPoliticaCancelamento(draft.professorPoliticaCancelamento);
+      }
+      if (typeof draft.professorAceitaNovosAlunos === "boolean") {
+        setProfessorAceitaNovosAlunos(draft.professorAceitaNovosAlunos);
+      }
+      if (typeof draft.professorPerfilPublicado === "boolean") {
+        setProfessorPerfilPublicado(draft.professorPerfilPublicado);
+      }
       if (typeof draft.orgEsporteId === "string") setOrgEsporteId(draft.orgEsporteId);
       if (draft.orgEsportes) setOrgEsportes(new Set(draft.orgEsportes));
       if (draft.orgLocalModo) setOrgLocalModo(draft.orgLocalModo);
@@ -756,10 +852,21 @@ export function OnboardingWizard({
       esportesSel: [...esportesSel],
       esportesInteresse,
       esportesModalidades,
+      esporteModes,
+      professorObjetivos,
+      professorTipos,
       expModo,
       expAprox,
       expMes,
       expAno,
+      professorHeadline,
+      professorBio,
+      professorCertificacoes,
+      professorPublicoAlvo,
+      professorFormatoAula,
+      professorPoliticaCancelamento,
+      professorAceitaNovosAlunos,
+      professorPerfilPublicado,
       orgEsporteId,
       orgEsportes: [...orgEsportes],
       orgLocalModo,
@@ -805,11 +912,22 @@ export function OnboardingWizard({
     esportesSel,
     esportesInteresse,
     esportesModalidades,
+    esporteModes,
+    professorObjetivos,
+    professorTipos,
     estruturas,
     expAno,
     expAprox,
     expMes,
     expModo,
+    professorHeadline,
+    professorBio,
+    professorCertificacoes,
+    professorPublicoAlvo,
+    professorFormatoAula,
+    professorPoliticaCancelamento,
+    professorAceitaNovosAlunos,
+    professorPerfilPublicado,
     lado,
     localizacao,
     nome,
@@ -851,13 +969,29 @@ export function OnboardingWizard({
     () => [...papeis].some((p) => p === "atleta" || p === "professor"),
     [papeis]
   );
+  const hasProfessor = useMemo(() => [...papeis].includes("professor"), [papeis]);
+  const hasAtleta = useMemo(() => [...papeis].includes("atleta"), [papeis]);
   const hasOrganizador = useMemo(() => [...papeis].includes("organizador"), [papeis]);
   const hasEspaco = useMemo(() => [...papeis].includes("espaco"), [papeis]);
+  const hasAnyAthleteSport = useMemo(
+    () =>
+      [...esportesSel].some((id) => {
+        const mode = esporteModes[id] ?? (hasProfessor ? "professor" : "atleta");
+        return esporteModoTemAtleta(mode);
+      }),
+    [esporteModes, esportesSel, hasProfessor]
+  );
+  const hasAnyProfessorSport = useMemo(
+    () =>
+      [...esportesSel].some((id) => {
+        const mode = esporteModes[id] ?? (hasProfessor ? "professor" : "atleta");
+        return esporteModoTemProfessor(mode);
+      }),
+    [esporteModes, esportesSel, hasProfessor]
+  );
   const stepOrder: Step[] = ["papeis", "esportes", "extras", "perfil"];
   const activeStepIndex = stepOrder.indexOf(step);
   const progressPct = ((activeStepIndex + 1) / stepOrder.length) * 100;
-  const expMesNum = Number(expMes);
-  const expAnoNum = Number(expAno);
   const perfilAlturaNum = Number(alturaCm);
   const perfilPesoNum = Number(pesoKg);
   const hasFotoSelecionada = Boolean(fotoPreviewUrl);
@@ -904,7 +1038,7 @@ export function OnboardingWizard({
     if (nome.trim().length < 3 || localizacao.trim().length < 3) return false;
     const uname = username.trim().toLowerCase();
     if (uname && !/^[a-z0-9_]{3,24}$/.test(uname)) return false;
-    if (hasAtletaProfessor) {
+    if (hasAnyAthleteSport) {
       if (!Number.isInteger(perfilAlturaNum) || perfilAlturaNum < 50 || perfilAlturaNum > 260) {
         return false;
       }
@@ -914,7 +1048,7 @@ export function OnboardingWizard({
       if (!["Destro", "Canhoto", "Ambos"].includes(lado)) return false;
     }
     return true;
-  }, [hasAtletaProfessor, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum, username]);
+  }, [hasAnyAthleteSport, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum, username]);
 
   function applyResult(r: OnboardingActionResult) {
     if (!r.ok) {
@@ -936,14 +1070,36 @@ export function OnboardingWizard({
     window.localStorage.removeItem(draftKey);
     setRestoredDraftAt(null);
     setStep(initialStep);
-    setPapeis(new Set(selectedPapeis));
+    setPapeis(new Set(normalizarPapeisContaPrincipal(selectedPapeis)));
     setEsportesSel(new Set(selectedEsportes));
     setEsportesInteresse(selectedEsportesInteresse);
     setEsportesModalidades(selectedEsportesModalidades);
+    setEsporteModes(selectedSportModes);
+    setProfessorObjetivos(selectedProfessorObjetivos);
+    setProfessorTipos(selectedProfessorTipos);
     setExpModo(extrasInitial.expModo);
     setExpAprox(extrasInitial.expAprox);
     setExpMes(extrasInitial.expMes ? String(extrasInitial.expMes) : "");
     setExpAno(extrasInitial.expAno ? String(extrasInitial.expAno) : "");
+    setEsportesExp(
+      Object.fromEntries(
+        Object.entries(selectedProfessorExp).map(([id, val]) => {
+          const raw = String(val);
+          if (raw === "Menos de 1 ano") return [Number(id), "menos_1"];
+          if (raw === "1 a 3 anos") return [Number(id), "1_3"];
+          if (raw === "Mais de 3 anos") return [Number(id), "mais_3"];
+          return [Number(id), "menos_1"];
+        })
+      )
+    );
+    setProfessorHeadline(extrasInitial.professorHeadline);
+    setProfessorBio(extrasInitial.professorBio);
+    setProfessorCertificacoes(extrasInitial.professorCertificacoes);
+    setProfessorPublicoAlvo(extrasInitial.professorPublicoAlvo);
+    setProfessorFormatoAula(extrasInitial.professorFormatoAula);
+    setProfessorPoliticaCancelamento(extrasInitial.professorPoliticaCancelamento);
+    setProfessorAceitaNovosAlunos(extrasInitial.professorAceitaNovosAlunos);
+    setProfessorPerfilPublicado(extrasInitial.professorPerfilPublicado);
     setOrgEsporteId(extrasInitial.orgEsporteId ? String(extrasInitial.orgEsporteId) : "0");
     setOrgEsportes(new Set(extrasInitial.orgEsportesIds));
     setOrgLocalModo(extrasInitial.orgLocalModo);
@@ -968,7 +1124,6 @@ export function OnboardingWizard({
     setEspacoEstado(extrasInitial.espacoEstado);
     setEspacoCep(extrasInitial.espacoCep);
     setEspacoComplemento(extrasInitial.espacoComplemento);
-    setEsportesExp({});
     setEspacoLat("");
     setEspacoLng("");
     setNome(profileInitial.nome);
@@ -985,10 +1140,21 @@ export function OnboardingWizard({
 
   function togglePapel(id: string) {
     setPapeis((prev) => {
-      const n = new Set(prev);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
+      const current = [...prev];
+      const normalizedCurrent = normalizarPapeisContaPrincipal(current);
+      const isSelected = normalizedCurrent.includes(id as never);
+
+      if (id === "professor") {
+        return isSelected ? new Set<string>() : new Set<string>(["professor"]);
+      }
+
+      const next = new Set(normalizedCurrent);
+      if (next.has("professor")) {
+        next.clear();
+      }
+      if (isSelected) next.delete(id);
+      else next.add(id);
+      return new Set(normalizarPapeisContaPrincipal([...next]));
     });
   }
 
@@ -997,6 +1163,21 @@ export function OnboardingWizard({
       const n = new Set(prev);
       if (n.has(id)) {
         n.delete(id);
+        setEsporteModes((old) => {
+          const next = { ...old };
+          delete next[id];
+          return next;
+        });
+        setProfessorObjetivos((old) => {
+          const next = { ...old };
+          delete next[id];
+          return next;
+        });
+        setProfessorTipos((old) => {
+          const next = { ...old };
+          delete next[id];
+          return next;
+        });
         setEsportesModalidades((om) => {
           const next = { ...om };
           delete next[id];
@@ -1007,6 +1188,19 @@ export function OnboardingWizard({
         setEsportesInteresse((old) => ({
           ...old,
           [id]: old[id] ?? "ranking_e_amistoso",
+        }));
+        const defaultMode: ProfessorModoEsportivo = hasProfessor ? "professor" : "atleta";
+        setEsporteModes((old) => ({
+          ...old,
+          [id]: old[id] ?? defaultMode,
+        }));
+        setProfessorObjetivos((old) => ({
+          ...old,
+          [id]: old[id] ?? "somente_exposicao",
+        }));
+        setProfessorTipos((old) => ({
+          ...old,
+          [id]: old[id]?.length ? old[id]! : ["aulas"],
         }));
         const esp = esportes.find((e) => e.id === id);
         const defaultModalidade: MatchModality = esp?.permiteIndividual
@@ -1020,6 +1214,38 @@ export function OnboardingWizard({
         }));
       }
       return n;
+    });
+  }
+
+  function setEsporteMode(id: number, mode: ProfessorModoEsportivo) {
+    setEsporteModes((old) => ({ ...old, [id]: mode }));
+    if (!esporteModoTemProfessor(mode)) {
+      setProfessorObjetivos((old) => {
+        const next = { ...old };
+        delete next[id];
+        return next;
+      });
+      setProfessorTipos((old) => {
+        const next = { ...old };
+        delete next[id];
+        return next;
+      });
+    } else {
+      setProfessorObjetivos((old) => ({ ...old, [id]: old[id] ?? "somente_exposicao" }));
+      setProfessorTipos((old) => ({ ...old, [id]: old[id]?.length ? old[id]! : ["aulas"] }));
+    }
+  }
+
+  function setProfessorObjetivo(id: number, objetivo: ProfessorObjetivoPlataforma) {
+    setProfessorObjetivos((old) => ({ ...old, [id]: objetivo }));
+  }
+
+  function toggleProfessorTipo(id: number, tipo: ProfessorTipoAtuacao, checked: boolean) {
+    setProfessorTipos((old) => {
+      const current = new Set(old[id] ?? ["aulas"]);
+      if (checked) current.add(tipo);
+      else if (current.size > 1) current.delete(tipo);
+      return { ...old, [id]: [...current] as ProfessorTipoAtuacao[] };
     });
   }
 
@@ -1214,11 +1440,11 @@ export function OnboardingWizard({
           <h1 className="mt-2 text-xl font-semibold text-eid-fg">Olá, {primeiroNome}!</h1>
           <p className="mt-2 text-sm leading-relaxed text-eid-text-secondary">
             {step === "papeis" &&
-              "Marque tudo que combina com você. Você pode escolher mais de um perfil."}
+              "Marque tudo que combina com você. Professor usa uma conta principal dedicada e não mistura com atleta neste onboarding."}
             {step === "esportes" &&
-              "Selecione os esportes em que você atua como atleta ou professor."}
+              "Selecione os esportes em que esta conta atua. Se for conta de professor, tudo aqui vira focado em aulas e alunos."}
             {step === "extras" &&
-              "Só mais alguns detalhes dos papéis escolhidos para deixar seu perfil completo."}
+              "So mais alguns detalhes para montar seu perfil profissional, operacional e publico dentro da plataforma."}
             {step === "perfil" &&
               "Finalize com presença no app: foto, nome e dados principais."}
           </p>
@@ -1267,6 +1493,11 @@ export function OnboardingWizard({
                   );
                 })}
               </div>
+              {papeis.has("professor") ? (
+                <p className="rounded-xl border border-eid-action-500/25 bg-eid-action-500/10 px-3 py-2 text-xs text-eid-text-secondary">
+                  Conta principal de professor e dedicada ao painel de aulas. Se quiser atuar como atleta depois, isso entrará em um perfil secundário em etapa futura.
+                </p>
+              ) : null}
               <button
                 type="submit"
                 disabled={pending || papeis.size === 0}
@@ -1315,7 +1546,12 @@ export function OnboardingWizard({
               {/* ── Detalhes dos esportes selecionados ── */}
               {esportesSel.size > 0 && (
                 <div className="space-y-3">
-                  {esportes.filter((e) => esportesSel.has(e.id)).map((e) => (
+                  {esportes.filter((e) => esportesSel.has(e.id)).map((e) => {
+                    const modoEsporte =
+                      esporteModes[e.id] ?? (hasProfessor ? "professor" : "atleta");
+                    const temAtletaNoEsporte = esporteModoTemAtleta(modoEsporte);
+                    const temProfessorNoEsporte = esporteModoTemProfessor(modoEsporte);
+                    return (
                     <div
                       key={e.id}
                       className="rounded-2xl border border-eid-primary-500/30 bg-eid-card/60 p-4"
@@ -1335,7 +1571,110 @@ export function OnboardingWizard({
                         </button>
                       </div>
 
-                      {/* Interesse no match */}
+                      {hasProfessor && hasAtleta ? (
+                        <>
+                          <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
+                            Como voce atua neste esporte
+                          </p>
+                          <div className="mt-1.5 inline-flex flex-wrap gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1">
+                            {([
+                              { value: "atleta", label: "Atleta" },
+                              { value: "professor", label: "Professor" },
+                              { value: "ambos", label: "Ambos" },
+                            ] as const).map((opt) => {
+                              const active = modoEsporte === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => setEsporteMode(e.id, opt.value)}
+                                  className={`rounded-lg px-3 py-1.5 text-[11px] font-bold transition-all select-none ${
+                                    active ? "bg-eid-primary-500 text-white shadow-sm" : "text-eid-text-secondary hover:text-eid-fg"
+                                  }`}
+                                >
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      ) : null}
+
+                      {temProfessorNoEsporte ? (
+                        <>
+                          <input type="hidden" name={`esporte_modo_${e.id}`} value={modoEsporte} />
+                          <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
+                            Objetivo como professor
+                          </p>
+                          <div className="mt-1.5 flex flex-col gap-1.5">
+                            {([
+                              { value: "somente_exposicao", label: "Somente exposicao", desc: "Perfil publico e captacao de alunos." },
+                              { value: "gerir_alunos", label: "Gerir alunos", desc: "Agenda, pagamentos, feedbacks e comunicacao." },
+                              { value: "ambos", label: "Exposicao + gestao", desc: "Divulga o perfil e opera aulas pela plataforma." },
+                            ] as const).map((opt) => {
+                              const active = (professorObjetivos[e.id] ?? "somente_exposicao") === opt.value;
+                              return (
+                                <label
+                                  key={opt.value}
+                                  className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 transition-all select-none ${
+                                    active
+                                      ? "border-eid-action-500/40 bg-eid-action-500/8"
+                                      : "border-[color:var(--eid-border-subtle)] hover:border-eid-action-500/25"
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name={`esporte_professor_objetivo_${e.id}`}
+                                    value={opt.value}
+                                    checked={active}
+                                    onChange={() => setProfessorObjetivo(e.id, opt.value)}
+                                    className="sr-only"
+                                  />
+                                  <div className="min-w-0">
+                                    <p className={`text-xs font-bold ${active ? "text-eid-fg" : "text-eid-text-secondary"}`}>{opt.label}</p>
+                                    <p className="text-[10px] text-eid-text-secondary">{opt.desc}</p>
+                                  </div>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
+                            Tipo de atuacao
+                          </p>
+                          <div className="mt-1.5 flex flex-wrap gap-2">
+                            {([
+                              { value: "aulas", label: "Aulas" },
+                              { value: "treinamento", label: "Treinamento profissional" },
+                              { value: "consultoria", label: "Consultoria tecnica" },
+                            ] as const).map((opt) => {
+                              const active = (professorTipos[e.id] ?? ["aulas"]).includes(opt.value);
+                              return (
+                                <label
+                                  key={opt.value}
+                                  className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
+                                    active
+                                      ? "border-eid-action-500 bg-eid-action-500/15 text-eid-action-500"
+                                      : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    name={`esporte_professor_tipo_${e.id}`}
+                                    value={opt.value}
+                                    checked={active}
+                                    onChange={(ev) => toggleProfessorTipo(e.id, opt.value, ev.target.checked)}
+                                    className="sr-only"
+                                  />
+                                  {opt.label}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </>
+                      ) : null}
+
+                      {temAtletaNoEsporte ? (
+                        <>
                       <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
                         Interesse no match
                       </p>
@@ -1474,6 +1813,12 @@ export function OnboardingWizard({
                           </div>
                         </>
                       )}
+                        </>
+                      ) : (
+                        <p className="mt-3 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1.5 text-[11px] text-eid-action-400">
+                          Neste esporte voce entrara apenas no fluxo de professor, sem match ou ranking competitivo.
+                        </p>
+                      )}
 
                       {/* Experiência por esporte — só para atleta/professor */}
                       {hasAtletaProfessor && (
@@ -1514,7 +1859,8 @@ export function OnboardingWizard({
                         </>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
               <button
@@ -1529,6 +1875,83 @@ export function OnboardingWizard({
 
           {step === "extras" ? (
             <form onSubmit={submitExtras} className="mt-6 space-y-5">
+              {hasProfessor ? (
+                <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-4">
+                  <h2 className="text-sm font-bold uppercase tracking-wide text-eid-primary-500">
+                    Perfil profissional
+                  </h2>
+                  <p className="mt-2 text-xs text-eid-text-secondary">
+                    Essas informacoes alimentam seu perfil de professor, a descoberta por alunos e os fluxos de aulas.
+                  </p>
+                  <div className="mt-3 grid gap-3">
+                    <input
+                      name="professor_headline"
+                      value={professorHeadline}
+                      onChange={(e) => setProfessorHeadline(e.target.value)}
+                      placeholder="Ex.: Treinador de beach tennis e preparacao tecnica"
+                      className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
+                    />
+                    <textarea
+                      name="professor_bio_profissional"
+                      value={professorBio}
+                      onChange={(e) => setProfessorBio(e.target.value)}
+                      rows={3}
+                      placeholder="Resumo da sua metodologia, experiencia e diferenciais"
+                      className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
+                    />
+                    <input
+                      name="professor_certificacoes"
+                      value={professorCertificacoes}
+                      onChange={(e) => setProfessorCertificacoes(e.target.value)}
+                      placeholder="Certificacoes (separadas por virgula)"
+                      className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
+                    />
+                    <input
+                      name="professor_publico_alvo"
+                      value={professorPublicoAlvo}
+                      onChange={(e) => setProfessorPublicoAlvo(e.target.value)}
+                      placeholder="Publico-alvo (iniciante, infantil, performance...)"
+                      className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
+                    />
+                    <input
+                      name="professor_formato_aula"
+                      value={professorFormatoAula}
+                      onChange={(e) => setProfessorFormatoAula(e.target.value)}
+                      placeholder="Formato das aulas (individual, grupo, online...)"
+                      className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
+                    />
+                    <textarea
+                      name="professor_politica_cancelamento"
+                      value={professorPoliticaCancelamento}
+                      onChange={(e) => setProfessorPoliticaCancelamento(e.target.value)}
+                      rows={2}
+                      placeholder="Politica resumida de cancelamento"
+                      className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      <label className="inline-flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-fg">
+                        <input
+                          type="checkbox"
+                          name="professor_aceita_novos_alunos"
+                          checked={professorAceitaNovosAlunos}
+                          onChange={(e) => setProfessorAceitaNovosAlunos(e.target.checked)}
+                        />
+                        Aceito novos alunos
+                      </label>
+                      <label className="inline-flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-fg">
+                        <input
+                          type="checkbox"
+                          name="professor_perfil_publicado"
+                          checked={professorPerfilPublicado}
+                          onChange={(e) => setProfessorPerfilPublicado(e.target.checked)}
+                        />
+                        Publicar perfil de professor no app
+                      </label>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
               {hasOrganizador ? (
                 <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-4">
                   <h2 className="text-sm font-bold uppercase tracking-wide text-eid-primary-500">
@@ -1918,6 +2341,19 @@ export function OnboardingWizard({
                     </span>
                   </div>
                 )}
+
+                {hasAnyProfessorSport ? (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary mb-1.5">
+                      Perfil profissional
+                    </p>
+                    <div className="space-y-1 text-xs text-eid-text-secondary">
+                      {professorHeadline ? <p><span className="text-eid-fg font-semibold">Headline:</span> {professorHeadline}</p> : null}
+                      {professorAceitaNovosAlunos ? <p>Aceitando novos alunos.</p> : <p>No momento sem captar novos alunos.</p>}
+                      {professorPerfilPublicado ? <p>Perfil publico de professor ativado.</p> : <p>Perfil de professor ainda nao publicado.</p>}
+                    </div>
+                  </div>
+                ) : null}
               </section>
               <div className="flex items-center gap-3">
                 {hasFotoSelecionada ? (
@@ -2070,14 +2506,14 @@ export function OnboardingWizard({
                 name="estilo_jogo"
                 value={estiloJogo}
                 onChange={(e) => setEstiloJogo(e.target.value)}
-                placeholder="Estilo de jogo (opcional)"
+                placeholder={hasAnyProfessorSport && !hasAnyAthleteSport ? "Metodologia / especialidade (opcional)" : "Estilo de jogo (opcional)"}
                 className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
               />
               <textarea
                 name="bio"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                placeholder="Bio curta (opcional)"
+                placeholder={hasAnyProfessorSport ? "Bio publica curta (opcional)" : "Bio curta (opcional)"}
                 rows={3}
                 className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
               />
@@ -2092,7 +2528,7 @@ export function OnboardingWizard({
                 <input type="hidden" name="disponibilidade_semana_json" value={disponibilidadeSemanaJson} />
               </div>
 
-              {hasAtletaProfessor ? (
+              {hasAnyAthleteSport ? (
                 <>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <input

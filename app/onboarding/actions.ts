@@ -1,13 +1,29 @@
 ﻿"use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  esporteModoTemAtleta,
+  esporteModoTemProfessor,
+  isProfessorModoEsportivo,
+  isProfessorObjetivoPlataforma,
+  isProfessorTipoAtuacao,
+  type ProfessorModoEsportivo,
+  type ProfessorObjetivoPlataforma,
+  type ProfessorTipoAtuacao,
+} from "@/lib/professor/constants";
+import {
+  PAPEIS_VALIDOS,
+  type Papel,
+  legacyTipoUsuarioFromPapeis,
+  normalizarPapeisContaPrincipal,
+  parseDetalhesPapel,
+  precisaEsportesPratica,
+} from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
-const PAPEIS_VALIDOS = ["atleta", "professor", "organizador", "espaco"] as const;
 const ESTRUTURAS_VALIDAS = ["quadra", "campo", "piscina", "sala", "estadio"] as const;
 const RESERVA_MODELOS = ["livre", "socios", "pago", "misto"] as const;
 
-type Papel = (typeof PAPEIS_VALIDOS)[number];
 type Estrutura = (typeof ESTRUTURAS_VALIDAS)[number];
 
 type NextStep = "papeis" | "esportes" | "extras" | "perfil" | "dashboard";
@@ -16,20 +32,8 @@ export type OnboardingActionResult =
   | { ok: true; nextStep?: NextStep }
   | { ok: false; message: string };
 
-function precisaEsportesPratica(papeis: string[]): boolean {
-  return papeis.some((p) => p === "atleta" || p === "professor");
-}
-
 function parseDetalhesJson(raw: unknown): Record<string, unknown> {
-  if (!raw) return {};
-  if (typeof raw === "object") return raw as Record<string, unknown>;
-  if (typeof raw !== "string") return {};
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
-  } catch {
-    return {};
-  }
+  return parseDetalhesPapel(raw);
 }
 
 function parseIntList(values: FormDataEntryValue[]): number[] {
@@ -110,10 +114,12 @@ export async function salvarPapeisOnboarding(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Sessão expirada. Faça login novamente." };
 
-  const papeis = formData
+  const papeis = normalizarPapeisContaPrincipal(
+    formData
     .getAll("papel")
     .map((v) => String(v).toLowerCase().trim())
-    .filter((p): p is Papel => (PAPEIS_VALIDOS as readonly string[]).includes(p));
+    .filter((p): p is Papel => (PAPEIS_VALIDOS as readonly string[]).includes(p))
+  );
 
   if (papeis.length === 0) return { ok: false, message: "Selecione ao menos uma opção." };
 
@@ -132,6 +138,7 @@ export async function salvarPapeisOnboarding(
   const { error: upErr } = await supabase
     .from("profiles")
     .update({
+      tipo_usuario: legacyTipoUsuarioFromPapeis(papeis),
       onboarding_etapa: needsSport ? 1 : 2,
       perfil_completo: false,
       onboarding_completo: false,
@@ -153,21 +160,30 @@ export async function salvarEsportesOnboarding(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Sessão expirada. Faça login novamente." };
+  const { data: papeisRows, error: papeisErr } = await supabase
+    .from("usuario_papeis")
+    .select("papel")
+    .eq("usuario_id", user.id);
+  if (papeisErr) return { ok: false, message: papeisErr.message };
+
+  const papeis = normalizarPapeisContaPrincipal(
+    (papeisRows ?? []).map((row) => String(row.papel ?? ""))
+  );
+  const hasProfessor = papeis.includes("professor");
+  const hasAtleta = papeis.includes("atleta");
 
   const ids = formData
     .getAll("esporte_id")
     .map((v) => Number(v))
     .filter((n) => Number.isInteger(n) && n > 0);
 
-  // Experiência por esporte: campos exp_esporte_{id}
   const expPorEsporte = new Map<number, string>();
   for (const [key, val] of formData.entries()) {
     const m = key.match(/^exp_esporte_(\d+)$/);
-    if (m) {
-      const eid = Number(m[1]);
-      const v = String(val).trim();
-      if (["menos_1", "1_3", "mais_3"].includes(v)) expPorEsporte.set(eid, v);
-    }
+    if (!m) continue;
+    const eid = Number(m[1]);
+    const value = String(val).trim();
+    if (["menos_1", "1_3", "mais_3"].includes(value)) expPorEsporte.set(eid, value);
   }
 
   if (ids.length === 0) {
@@ -180,18 +196,54 @@ export async function salvarEsportesOnboarding(
     .in("id", ids)
     .eq("ativo", true);
   if (qErr) return { ok: false, message: qErr.message };
+
   const validIds = new Set((validos ?? []).map((r) => r.id));
   const finalIds = ids.filter((id) => validIds.has(id));
   if (!finalIds.length) return { ok: false, message: "Esportes inválidos." };
 
   const interessesMap = new Map<number, "ranking" | "ranking_e_amistoso" | "amistoso">();
-  for (const [k, v] of formData.entries()) {
-    if (!k.startsWith("esporte_interesse_")) continue;
-    const id = Number(k.replace("esporte_interesse_", ""));
-    if (!Number.isInteger(id) || id <= 0) continue;
-    const raw = String(v);
-    const interesse = raw === "ranking" ? "ranking" : raw === "amistoso" ? "amistoso" : "ranking_e_amistoso";
-    interessesMap.set(id, interesse);
+  const sportModes = new Map<number, ProfessorModoEsportivo>();
+  const professorObjetivosMap = new Map<number, ProfessorObjetivoPlataforma>();
+  const professorTiposMap = new Map<number, ProfessorTipoAtuacao[]>();
+
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith("esporte_interesse_")) {
+      const id = Number(key.replace("esporte_interesse_", ""));
+      if (!Number.isInteger(id) || id <= 0) continue;
+      const raw = String(value);
+      const interesse =
+        raw === "ranking" ? "ranking" : raw === "amistoso" ? "amistoso" : "ranking_e_amistoso";
+      interessesMap.set(id, interesse);
+      continue;
+    }
+
+    if (key.startsWith("esporte_modo_")) {
+      const id = Number(key.replace("esporte_modo_", ""));
+      if (!Number.isInteger(id) || id <= 0) continue;
+      const raw = String(value).trim().toLowerCase();
+      if (isProfessorModoEsportivo(raw)) sportModes.set(id, raw);
+      continue;
+    }
+
+    if (key.startsWith("esporte_professor_objetivo_")) {
+      const id = Number(key.replace("esporte_professor_objetivo_", ""));
+      if (!Number.isInteger(id) || id <= 0) continue;
+      const raw = String(value).trim().toLowerCase();
+      if (isProfessorObjetivoPlataforma(raw)) {
+        professorObjetivosMap.set(id, raw);
+      }
+      continue;
+    }
+
+    if (key.startsWith("esporte_professor_tipo_")) {
+      const id = Number(key.replace("esporte_professor_tipo_", ""));
+      if (!Number.isInteger(id) || id <= 0) continue;
+      const raw = String(value).trim().toLowerCase();
+      if (!isProfessorTipoAtuacao(raw)) continue;
+      const current = new Set(professorTiposMap.get(id) ?? ["aulas"]);
+      current.add(raw);
+      professorTiposMap.set(id, [...current]);
+    }
   }
 
   const { data: esportesMeta, error: metaErr } = await supabase
@@ -199,6 +251,7 @@ export async function salvarEsportesOnboarding(
     .select("id, nome, permite_individual, permite_dupla, permite_time")
     .in("id", finalIds);
   if (metaErr) return { ok: false, message: metaErr.message };
+
   const esporteMetaMap = new Map(
     (esportesMeta ?? []).map((r) => [
       Number(r.id),
@@ -217,23 +270,49 @@ export async function salvarEsportesOnboarding(
     const s = new Set(mods);
     return ORDER.filter((m) => s.has(m));
   }
+  function tempoExperienciaLabel(raw: string | undefined): string | null {
+    return raw === "menos_1"
+      ? "Menos de 1 ano"
+      : raw === "1_3"
+        ? "1 a 3 anos"
+        : raw === "mais_3"
+          ? "Mais de 3 anos"
+          : null;
+  }
 
   const modalidadesMap = new Map<number, Modality[]>();
+  const finalSportModes = new Map<number, ProfessorModoEsportivo>();
+
   for (const esporteId of finalIds) {
     const meta = esporteMetaMap.get(esporteId);
     if (!meta) return { ok: false, message: "Esporte inválido." };
+
+    const modoEsporte: ProfessorModoEsportivo = hasProfessor
+      ? "professor"
+      : hasAtleta
+        ? sportModes.get(esporteId) ?? "atleta"
+        : "atleta";
+    finalSportModes.set(esporteId, modoEsporte);
+
     const allowed: Modality[] = [];
     if (meta.individual) allowed.push("individual");
     if (meta.dupla) allowed.push("dupla");
     if (meta.time) allowed.push("time");
-    if (allowed.length === 0) return { ok: false, message: `O esporte ${meta.nome} não permite modalidades de confronto.` };
+
+    if (esporteModoTemAtleta(modoEsporte) && allowed.length === 0) {
+      return { ok: false, message: `O esporte ${meta.nome} não permite modalidades de confronto.` };
+    }
+
+    if (!esporteModoTemAtleta(modoEsporte)) continue;
 
     const rawMods = formData.getAll(`esporte_modalidade_${esporteId}`).map(String);
     const picked = sortMods(
       rawMods
         .map((raw) => {
-          const t = raw.trim().toLowerCase();
-          if (t === "individual" || t === "dupla" || t === "time") return t as Modality;
+          const normalized = raw.trim().toLowerCase();
+          if (normalized === "individual" || normalized === "dupla" || normalized === "time") {
+            return normalized as Modality;
+          }
           return null;
         })
         .filter((m): m is Modality => m != null)
@@ -253,11 +332,27 @@ export async function salvarEsportesOnboarding(
     .select("esporte_id")
     .eq("usuario_id", user.id);
   if (exErr) return { ok: false, message: exErr.message };
+
+  const { data: existentesProfessor, error: exProfErr } = await supabase
+    .from("professor_esportes")
+    .select("esporte_id")
+    .eq("professor_id", user.id);
+  if (exProfErr) return { ok: false, message: exProfErr.message };
+
   const jaTem = new Set((existentes ?? []).map((r) => Number(r.esporte_id)));
+  const jaTemProfessor = new Set((existentesProfessor ?? []).map((r) => Number(r.esporte_id)));
   const finalSet = new Set(finalIds);
-  const remover = [...jaTem].filter((eid) => !finalSet.has(eid));
-  const adicionar = finalIds.filter((eid) => !jaTem.has(eid));
-  const atualizar = finalIds.filter((eid) => jaTem.has(eid));
+  const esporteTemAtleta = (esporteId: number) => esporteModoTemAtleta(finalSportModes.get(esporteId) ?? "atleta");
+  const esporteTemProfessorFn = (esporteId: number) =>
+    hasProfessor &&
+    esporteModoTemProfessor(finalSportModes.get(esporteId) ?? "professor");
+  const remover = [...jaTem].filter((eid) => !finalSet.has(eid) || !esporteTemAtleta(eid));
+  const adicionar = finalIds.filter((eid) => esporteTemAtleta(eid) && !jaTem.has(eid));
+  const atualizar = finalIds.filter((eid) => esporteTemAtleta(eid) && jaTem.has(eid));
+  const removerProfessor = [...jaTemProfessor].filter(
+    (eid) => !finalSet.has(eid) || !esporteTemProfessorFn(eid)
+  );
+  const salvarProfessor = finalIds.filter((eid) => esporteTemProfessorFn(eid));
 
   if (remover.length > 0) {
     const { error: delErr } = await supabase
@@ -270,40 +365,90 @@ export async function salvarEsportesOnboarding(
 
   for (const esporteId of atualizar) {
     const mods = modalidadesMap.get(esporteId) ?? ["individual"];
-    const expVal = expPorEsporte.get(esporteId);
-    const tempoExp = expVal === "menos_1" ? "Menos de 1 ano"
-      : expVal === "1_3"    ? "1 a 3 anos"
-      : expVal === "mais_3" ? "Mais de 3 anos"
-      : null;
-    const { error: uErr } = await supabase
+    const tempoExp = tempoExperienciaLabel(expPorEsporte.get(esporteId));
+    const { error: updateErr } = await supabase
       .from("usuario_eid")
       .update({
         interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
         modalidades_match: mods,
-        ...(tempoExp ? { tempo_experiencia: tempoExp } : {}),
+        tempo_experiencia: tempoExp,
       })
       .eq("usuario_id", user.id)
       .eq("esporte_id", esporteId);
-    if (uErr) return { ok: false, message: uErr.message };
+    if (updateErr) return { ok: false, message: updateErr.message };
   }
 
   if (adicionar.length > 0) {
-    const rows = adicionar.map((esporteId) => {
-      const expVal = expPorEsporte.get(esporteId);
-      const tempoExp = expVal === "menos_1" ? "Menos de 1 ano"
-        : expVal === "1_3"    ? "1 a 3 anos"
-        : expVal === "mais_3" ? "Mais de 3 anos"
-        : null;
-      return {
-        usuario_id: user.id,
-        esporte_id: esporteId,
-        interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
-        modalidades_match: modalidadesMap.get(esporteId) ?? ["individual"],
-        ...(tempoExp ? { tempo_experiencia: tempoExp } : {}),
-      };
+    const rows = adicionar.map((esporteId) => ({
+      usuario_id: user.id,
+      esporte_id: esporteId,
+      interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
+      modalidades_match: modalidadesMap.get(esporteId) ?? ["individual"],
+      tempo_experiencia: tempoExperienciaLabel(expPorEsporte.get(esporteId)),
+    }));
+    const { error: insertErr } = await supabase.from("usuario_eid").insert(rows);
+    if (insertErr) return { ok: false, message: insertErr.message };
+  }
+
+  if (removerProfessor.length > 0) {
+    const { error: delProfErr } = await supabase
+      .from("professor_esportes")
+      .delete()
+      .eq("professor_id", user.id)
+      .in("esporte_id", removerProfessor);
+    if (delProfErr) return { ok: false, message: delProfErr.message };
+  }
+
+  for (const esporteId of salvarProfessor) {
+    const { error: upsertProfErr } = await supabase
+      .from("professor_esportes")
+      .upsert(
+        {
+          professor_id: user.id,
+          esporte_id: esporteId,
+          modo_atuacao: "professor",
+          objetivo_plataforma: professorObjetivosMap.get(esporteId) ?? "somente_exposicao",
+          tipo_atuacao: professorTiposMap.get(esporteId) ?? ["aulas"],
+          tempo_experiencia: tempoExperienciaLabel(expPorEsporte.get(esporteId)),
+          elegivel_match: false,
+          ativo: true,
+          atualizado_em: new Date().toISOString(),
+        },
+        { onConflict: "professor_id,esporte_id" }
+      );
+    if (upsertProfErr) return { ok: false, message: upsertProfErr.message };
+  }
+
+  if (hasProfessor && salvarProfessor.length > 0) {
+    const { error: perfilProfessorErr } = await supabase
+      .from("professor_perfil")
+      .upsert(
+        {
+          usuario_id: user.id,
+          objetivo_padrao: professorObjetivosMap.get(salvarProfessor[0]!) ?? "somente_exposicao",
+          tipo_atuacao: professorTiposMap.get(salvarProfessor[0]!) ?? ["aulas"],
+          atualizado_em: new Date().toISOString(),
+        },
+        { onConflict: "usuario_id" }
+      );
+    if (perfilProfessorErr) return { ok: false, message: perfilProfessorErr.message };
+  }
+
+  if (hasProfessor) {
+    const error = await salvarDetalhesPapel(user.id, "professor", {
+      esportes_professor_ids: salvarProfessor,
+      esportes_professor_modo: Object.fromEntries(
+        salvarProfessor.map((esporteId) => [esporteId, finalSportModes.get(esporteId) ?? "professor"])
+      ),
     });
-    const { error: insErr } = await supabase.from("usuario_eid").insert(rows);
-    if (insErr) return { ok: false, message: insErr.message };
+    if (error) return { ok: false, message: error };
+  }
+
+  if (hasAtleta) {
+    const error = await salvarDetalhesPapel(user.id, "atleta", {
+      esportes_atleta_ids: finalIds.filter((esporteId) => esporteTemAtleta(esporteId)),
+    });
+    if (error) return { ok: false, message: error };
   }
 
   const { data: profRow } = await supabase
@@ -322,6 +467,10 @@ export async function salvarEsportesOnboarding(
 
   revalidatePath("/onboarding");
   revalidatePath("/conta/esportes-eid");
+  revalidatePath("/dashboard");
+  revalidatePath("/professor");
+  revalidatePath("/professores");
+  revalidatePath(`/professor/${user.id}`);
   revalidatePath(`/perfil/${user.id}`);
   return { ok: true, nextStep: "extras" };
 }
@@ -344,6 +493,7 @@ export async function salvarExtrasOnboarding(
 
   const papeis = (papeisRows ?? []).map((r) => r.papel as Papel);
   const hasAtletaProfessor = precisaEsportesPratica(papeis);
+  const hasProfessor = papeis.includes("professor");
   const hasOrganizador = papeis.includes("organizador");
   const hasEspaco = papeis.includes("espaco");
 
@@ -388,6 +538,75 @@ export async function salvarExtrasOnboarding(
         if (e) return { ok: false, message: e };
       }
     }
+  }
+
+  if (hasProfessor) {
+    const headline = String(formData.get("professor_headline") ?? "").trim();
+    const bioProfissional = String(formData.get("professor_bio_profissional") ?? "").trim();
+    const certificacoes = String(formData.get("professor_certificacoes") ?? "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const publicoAlvo = String(formData.get("professor_publico_alvo") ?? "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const formatoAula = String(formData.get("professor_formato_aula") ?? "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const politicaCancelamento = String(formData.get("professor_politica_cancelamento") ?? "").trim();
+    const aceitaNovosAlunos = formData.get("professor_aceita_novos_alunos") === "on";
+    const perfilPublicado = formData.get("professor_perfil_publicado") === "on";
+
+    const { data: primeiroProfessorEsporte } = await supabase
+      .from("professor_esportes")
+      .select("objetivo_plataforma, tipo_atuacao")
+      .eq("professor_id", user.id)
+      .eq("ativo", true)
+      .order("id", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    const { error: professorPerfilErr } = await supabase
+      .from("professor_perfil")
+      .upsert(
+        {
+          usuario_id: user.id,
+          headline: headline || null,
+          bio_profissional: bioProfissional || null,
+          objetivo_padrao:
+            primeiroProfessorEsporte?.objetivo_plataforma === "gerir_alunos" ||
+            primeiroProfessorEsporte?.objetivo_plataforma === "ambos"
+              ? primeiroProfessorEsporte.objetivo_plataforma
+              : "somente_exposicao",
+          tipo_atuacao:
+            Array.isArray(primeiroProfessorEsporte?.tipo_atuacao) && primeiroProfessorEsporte.tipo_atuacao.length > 0
+              ? primeiroProfessorEsporte.tipo_atuacao
+              : ["aulas"],
+          certificacoes_json: certificacoes,
+          publico_alvo_json: publicoAlvo,
+          formato_aula_json: formatoAula,
+          politica_cancelamento_json: { resumo: politicaCancelamento || null },
+          aceita_novos_alunos: aceitaNovosAlunos,
+          perfil_publicado: perfilPublicado,
+          atualizado_em: new Date().toISOString(),
+        },
+        { onConflict: "usuario_id" }
+      );
+    if (professorPerfilErr) return { ok: false, message: professorPerfilErr.message };
+
+    const detalhesProfessorErr = await salvarDetalhesPapel(user.id, "professor", {
+      headline,
+      bio_profissional: bioProfissional,
+      certificacoes,
+      publico_alvo: publicoAlvo,
+      formato_aula: formatoAula,
+      politica_cancelamento: politicaCancelamento,
+      aceita_novos_alunos: aceitaNovosAlunos,
+      perfil_publicado: perfilPublicado,
+    });
+    if (detalhesProfessorErr) return { ok: false, message: detalhesProfessorErr };
   }
 
   if (hasOrganizador) {
@@ -751,6 +970,9 @@ export async function salvarExtrasOnboarding(
   if (upErr) return { ok: false, message: upErr.message };
 
   revalidatePath("/onboarding");
+  revalidatePath("/professor");
+  revalidatePath("/professores");
+  revalidatePath(`/professor/${user.id}`);
   revalidatePath(`/perfil/${user.id}`);
   return { ok: true, nextStep: "perfil" };
 }
@@ -813,8 +1035,12 @@ export async function salvarPerfilOnboarding(
     .eq("usuario_id", user.id);
   if (papeisErr) return { ok: false, message: papeisErr.message };
 
-  const papeis = papeisRows?.map((r) => r.papel) ?? [];
-  const precisaFicha = precisaEsportesPratica(papeis);
+  const { count: atletaSportsCount, error: atletaCountErr } = await supabase
+    .from("usuario_eid")
+    .select("esporte_id", { count: "exact", head: true })
+    .eq("usuario_id", user.id);
+  if (atletaCountErr) return { ok: false, message: atletaCountErr.message };
+  const precisaFicha = (atletaSportsCount ?? 0) > 0;
 
   const altura = alturaRaw ? Number(alturaRaw) : null;
   const peso = pesoRaw ? Number(pesoRaw) : null;
@@ -896,7 +1122,11 @@ export async function salvarPerfilOnboarding(
   revalidatePath("/", "layout");
   revalidatePath("/onboarding");
   revalidatePath("/dashboard");
+  revalidatePath("/professor");
+  revalidatePath("/professores");
+  revalidatePath(`/professor/${user.id}`);
   revalidatePath("/conta/perfil");
+  revalidatePath("/conta/esportes-eid");
   revalidatePath(`/perfil/${user.id}`);
   return { ok: true, nextStep: "dashboard" };
 }

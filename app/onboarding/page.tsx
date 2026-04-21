@@ -1,4 +1,15 @@
 ﻿import { redirect } from "next/navigation";
+import {
+  type ProfessorModoEsportivo,
+  type ProfessorObjetivoPlataforma,
+  type ProfessorTipoAtuacao,
+} from "@/lib/professor/constants";
+import {
+  listarPapeis,
+  normalizarPapeisContaPrincipal,
+  obterDetalhesPapel,
+  precisaEsportesPratica,
+} from "@/lib/roles";
 import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { createClient } from "@/lib/supabase/server";
 import { OnboardingWizard } from "./onboarding-wizard";
@@ -9,22 +20,6 @@ function primeiroNomeDe(nome: string | null | undefined): string {
   const t = (nome ?? "").trim();
   if (!t) return "Atleta";
   return t.split(/\s+/u)[0] || "Atleta";
-}
-
-function precisaEsportesPratica(papeis: string[]): boolean {
-  return papeis.some((p) => p === "atleta" || p === "professor");
-}
-
-function parseDetalhes(raw: unknown): Record<string, unknown> {
-  if (!raw) return {};
-  if (typeof raw === "object") return raw as Record<string, unknown>;
-  if (typeof raw !== "string") return {};
-  try {
-    const p = JSON.parse(raw);
-    return p && typeof p === "object" ? (p as Record<string, unknown>) : {};
-  } catch {
-    return {};
-  }
 }
 
 export default async function OnboardingPage() {
@@ -55,17 +50,11 @@ export default async function OnboardingPage() {
     .select("papel, detalhes_json")
     .eq("usuario_id", user.id);
 
-  const papeis = (papeisRows ?? []).map((r) => r.papel);
-  const detalhesAtleta = parseDetalhes(
-    (papeisRows ?? []).find((r) => r.papel === "atleta" || r.papel === "professor")
-      ?.detalhes_json
-  );
-  const detalhesOrganizador = parseDetalhes(
-    (papeisRows ?? []).find((r) => r.papel === "organizador")?.detalhes_json
-  );
-  const detalhesEspaco = parseDetalhes(
-    (papeisRows ?? []).find((r) => r.papel === "espaco")?.detalhes_json
-  );
+  const papeis = normalizarPapeisContaPrincipal(listarPapeis(papeisRows));
+  const detalhesAtleta = obterDetalhesPapel(papeisRows, "atleta");
+  const detalhesOrganizador = obterDetalhesPapel(papeisRows, "organizador");
+  const detalhesEspaco = obterDetalhesPapel(papeisRows, "espaco");
+  const professorContaDedicada = papeis.includes("professor");
 
   const { data: eidRows } = await supabase
     .from("usuario_eid")
@@ -86,12 +75,68 @@ export default async function OnboardingPage() {
     (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
   );
 
+  const { data: professorEsportesRows } = await supabase
+    .from("professor_esportes")
+    .select("esporte_id, modo_atuacao, objetivo_plataforma, tipo_atuacao, tempo_experiencia")
+    .eq("professor_id", user.id)
+    .eq("ativo", true);
+
+  const { data: professorPerfil } = await supabase
+    .from("professor_perfil")
+    .select(
+      "headline, bio_profissional, certificacoes_json, publico_alvo_json, formato_aula_json, politica_cancelamento_json, aceita_novos_alunos, perfil_publicado"
+    )
+    .eq("usuario_id", user.id)
+    .maybeSingle();
+
+  const selectedSportModes: Record<number, ProfessorModoEsportivo> = {};
+  const selectedProfessorObjetivos: Record<number, ProfessorObjetivoPlataforma> = {};
+  const selectedProfessorTipos: Record<number, ProfessorTipoAtuacao[]> = {};
+  const selectedProfessorExp: Record<number, string> = {};
+  const selectedEsportesSet = new Set<number>(selectedEsportes);
+
+  for (const row of professorEsportesRows ?? []) {
+    const esporteId = Number(row.esporte_id);
+    if (!Number.isFinite(esporteId)) continue;
+    selectedEsportesSet.add(esporteId);
+    selectedSportModes[esporteId] = professorContaDedicada
+      ? "professor"
+      : row.modo_atuacao === "professor_e_atleta"
+        ? "ambos"
+        : "professor";
+    selectedProfessorObjetivos[esporteId] =
+      row.objetivo_plataforma === "gerir_alunos" || row.objetivo_plataforma === "ambos"
+        ? row.objetivo_plataforma
+        : "somente_exposicao";
+    selectedProfessorTipos[esporteId] = Array.isArray(row.tipo_atuacao)
+      ? row.tipo_atuacao
+          .map((item) => String(item))
+          .filter((item): item is ProfessorTipoAtuacao =>
+            ["aulas", "treinamento", "consultoria"].includes(item)
+          )
+      : ["aulas"];
+    if (row.tempo_experiencia) {
+      selectedProfessorExp[esporteId] = String(row.tempo_experiencia);
+    }
+  }
+
+  for (const esporteId of selectedEsportes) {
+    if (!selectedSportModes[esporteId]) {
+      selectedSportModes[esporteId] = professorContaDedicada ? "professor" : "atleta";
+    }
+  }
+
+  const selectedEsportesAll = [...selectedEsportesSet];
+  const hasAthleteSports =
+    !professorContaDedicada &&
+    selectedEsportes.some((esporteId) => selectedSportModes[esporteId] !== "professor");
+
   const needsSport = precisaEsportesPratica(papeis);
 
   let initialStep: Step = "perfil";
   if (papeis.length === 0) {
     initialStep = "papeis";
-  } else if (needsSport && selectedEsportes.length === 0) {
+  } else if (needsSport && selectedEsportesAll.length === 0) {
     initialStep = "esportes";
   } else if ((profile.onboarding_etapa ?? 0) < 3) {
     initialStep = "extras";
@@ -131,9 +176,12 @@ export default async function OnboardingPage() {
         donoUsuarioId: l.responsavel_usuario_id ?? l.criado_por_usuario_id ?? null,
       }))}
       selectedPapeis={papeis}
-      selectedEsportes={selectedEsportes}
+      selectedEsportes={selectedEsportesAll}
       selectedEsportesInteresse={selectedEsportesInteresse}
       selectedEsportesModalidades={selectedEsportesModalidades}
+      selectedSportModes={selectedSportModes}
+      selectedProfessorObjetivos={selectedProfessorObjetivos}
+      selectedProfessorTipos={selectedProfessorTipos}
       extrasInitial={{
         expModo: detalhesAtleta.experiencia_modo === "exato" ? "exato" : "aprox",
         expAprox:
@@ -149,6 +197,33 @@ export default async function OnboardingPage() {
           typeof detalhesAtleta.experiencia_ano === "number"
             ? detalhesAtleta.experiencia_ano
             : null,
+        professorHeadline:
+          typeof professorPerfil?.headline === "string" ? professorPerfil.headline : "",
+        professorBio:
+          typeof professorPerfil?.bio_profissional === "string" ? professorPerfil.bio_profissional : "",
+        professorCertificacoes: Array.isArray(professorPerfil?.certificacoes_json)
+          ? professorPerfil?.certificacoes_json.map((item) => String(item)).join(", ")
+          : "",
+        professorPublicoAlvo: Array.isArray(professorPerfil?.publico_alvo_json)
+          ? professorPerfil?.publico_alvo_json.map((item) => String(item)).join(", ")
+          : "",
+        professorFormatoAula: Array.isArray(professorPerfil?.formato_aula_json)
+          ? professorPerfil?.formato_aula_json.map((item) => String(item)).join(", ")
+          : "",
+        professorPoliticaCancelamento:
+          typeof professorPerfil?.politica_cancelamento_json === "object" &&
+          professorPerfil?.politica_cancelamento_json &&
+          "resumo" in professorPerfil.politica_cancelamento_json
+            ? String(professorPerfil.politica_cancelamento_json.resumo ?? "")
+            : "",
+        professorAceitaNovosAlunos:
+          typeof professorPerfil?.aceita_novos_alunos === "boolean"
+            ? professorPerfil.aceita_novos_alunos
+            : true,
+        professorPerfilPublicado:
+          typeof professorPerfil?.perfil_publicado === "boolean"
+            ? professorPerfil.perfil_publicado
+            : false,
         orgEsporteId:
           typeof detalhesOrganizador.esporte_torneio_id === "number" ? detalhesOrganizador.esporte_torneio_id : null,
         orgEsportesIds: Array.isArray(detalhesOrganizador.esporte_torneio_ids)
@@ -196,14 +271,15 @@ export default async function OnboardingPage() {
         nome: profile.nome ?? "",
         username: profile.username ?? "",
         localizacao: profile.localizacao ?? "",
-        alturaCm: profile.altura_cm ?? null,
-        pesoKg: profile.peso_kg ?? null,
-        lado: profile.lado ?? null,
+        alturaCm: hasAthleteSports ? (profile.altura_cm ?? null) : null,
+        pesoKg: hasAthleteSports ? (profile.peso_kg ?? null) : null,
+        lado: hasAthleteSports ? (profile.lado ?? null) : null,
         avatarUrl: profile.avatar_url ?? null,
         bio: profile.bio ?? "",
         estiloJogo: profile.estilo_jogo ?? "",
         disponibilidadeSemanaJson: JSON.stringify(profile.disponibilidade_semana_json ?? {}),
       }}
+      selectedProfessorExp={selectedProfessorExp}
     />
   );
 }

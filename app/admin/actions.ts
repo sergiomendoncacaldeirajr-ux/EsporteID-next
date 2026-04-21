@@ -95,8 +95,39 @@ export async function adminUpdateFinanceiro(formData: FormData) {
       asaas_taxa_percentual: Number(formData.get("asaas_taxa_percentual")),
       plataforma_sobre_taxa_gateway: Number(formData.get("plataforma_sobre_taxa_gateway")),
       plataforma_sobre_taxa_gateway_promo: Number(formData.get("plataforma_sobre_taxa_gateway_promo")),
+      professor_taxa_fixa: Number(formData.get("professor_taxa_fixa")),
+      professor_taxa_fixa_promo: Number(formData.get("professor_taxa_fixa_promo")),
+      professor_plataforma_sobre_taxa_gateway: Number(formData.get("professor_plataforma_sobre_taxa_gateway")),
+      professor_plataforma_sobre_taxa_gateway_promo: Number(formData.get("professor_plataforma_sobre_taxa_gateway_promo")),
+      professor_promocao_ativa: formData.get("professor_promocao_ativa") === "on",
+      professor_promocao_ate: String(formData.get("professor_promocao_ate") ?? "").trim() || null,
+      espaco_taxa_fixa: Number(formData.get("espaco_taxa_fixa")),
+      espaco_taxa_fixa_promo: Number(formData.get("espaco_taxa_fixa_promo")),
+      espaco_plataforma_sobre_taxa_gateway: Number(formData.get("espaco_plataforma_sobre_taxa_gateway")),
+      espaco_plataforma_sobre_taxa_gateway_promo: Number(formData.get("espaco_plataforma_sobre_taxa_gateway_promo")),
+      espaco_promocao_ativa: formData.get("espaco_promocao_ativa") === "on",
+      espaco_promocao_ate: String(formData.get("espaco_promocao_ate") ?? "").trim() || null,
+      torneio_promocao_ativa: formData.get("torneio_promocao_ativa") === "on",
+      torneio_promocao_ate: String(formData.get("torneio_promocao_ate") ?? "").trim() || null,
     };
-    if (Object.values(row).some((n) => Number.isNaN(n))) return;
+    const numericKeys = [
+      "torneio_taxa_fixa",
+      "torneio_taxa_promo",
+      "promocao_dias",
+      "clube_mensalidade",
+      "asaas_taxa_percentual",
+      "plataforma_sobre_taxa_gateway",
+      "plataforma_sobre_taxa_gateway_promo",
+      "professor_taxa_fixa",
+      "professor_taxa_fixa_promo",
+      "professor_plataforma_sobre_taxa_gateway",
+      "professor_plataforma_sobre_taxa_gateway_promo",
+      "espaco_taxa_fixa",
+      "espaco_taxa_fixa_promo",
+      "espaco_plataforma_sobre_taxa_gateway",
+      "espaco_plataforma_sobre_taxa_gateway_promo",
+    ] as const;
+    if (numericKeys.some((key) => Number.isNaN(row[key]))) return;
     const { error } = await svc().from("ei_financeiro_config").update(row).eq("id", 1);
     if (error) return;
     revalidatePath("/admin/financeiro");

@@ -28,6 +28,11 @@ function VerificarCodigoPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = useMemo(() => (searchParams.get("email") ?? "").trim().toLowerCase(), [searchParams]);
+  const next = useMemo(() => {
+    const raw = (searchParams.get("next") ?? "").trim();
+    if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return null;
+    return raw;
+  }, [searchParams]);
   const mode: VerifyMode = useMemo(
     () => (searchParams.get("tipo") === "recovery" ? "recovery" : "signup"),
     [searchParams]
@@ -151,7 +156,7 @@ function VerificarCodigoPageInner() {
         termosAceitos: !!profile?.termos_aceitos_em,
         perfilCompleto: !!profile?.perfil_completo,
       },
-      null
+      next
     );
     router.refresh();
     router.push(dest);
@@ -203,7 +208,11 @@ function VerificarCodigoPageInner() {
     <main className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7">
       <div className="w-full max-w-[340px] pb-6">
         <Link
-          href={mode === "recovery" ? "/recuperar-senha" : "/cadastro"}
+          href={
+            mode === "recovery"
+              ? "/recuperar-senha"
+              : `/cadastro${next ? `?next=${encodeURIComponent(next)}` : ""}`
+          }
           className="mb-3 inline-block text-[13px] text-eid-text-muted no-underline transition hover:text-eid-fg"
         >
           {mode === "recovery" ? "← Voltar para recuperação" : "← Voltar ao cadastro"}

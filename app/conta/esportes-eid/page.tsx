@@ -1,17 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type {
+  ProfessorModoEsportivo,
+  ProfessorObjetivoPlataforma,
+  ProfessorTipoAtuacao,
+} from "@/lib/professor/constants";
 import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { CONTA_PERFIL_HREF } from "@/lib/routes/conta";
+import { listarPapeis, precisaEsportesPratica } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { ContaEsportesForm } from "./conta-esportes-form";
 
 export const metadata = {
   title: "Esportes e EID · EsporteID",
 };
-
-function precisaEsportesPratica(papeis: string[]): boolean {
-  return papeis.some((p) => p === "atleta" || p === "professor");
-}
 
 export default async function ContaEsportesEidPage() {
   const supabase = await createClient();
@@ -32,7 +34,7 @@ export default async function ContaEsportesEidPage() {
   if (!profile.perfil_completo) redirect("/onboarding");
 
   const { data: papeisRows } = await supabase.from("usuario_papeis").select("papel").eq("usuario_id", user.id);
-  const papeis = (papeisRows ?? []).map((r) => r.papel);
+  const papeis = listarPapeis(papeisRows);
   const needsSport = precisaEsportesPratica(papeis);
 
   const { data: esportes } = await supabase
@@ -43,7 +45,7 @@ export default async function ContaEsportesEidPage() {
 
   const { data: eidRows } = await supabase
     .from("usuario_eid")
-    .select("esporte_id, interesse_match, modalidade_match, modalidades_match")
+    .select("esporte_id, interesse_match, modalidade_match, modalidades_match, tempo_experiencia")
     .eq("usuario_id", user.id);
 
   const selectedEsportes = (eidRows ?? []).map((r) => r.esporte_id);
@@ -60,6 +62,57 @@ export default async function ContaEsportesEidPage() {
   const selectedEsportesModalidades = Object.fromEntries(
     (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
   );
+  const selectedExperiencias = Object.fromEntries(
+    (eidRows ?? []).map((r) => [
+      r.esporte_id,
+      r.tempo_experiencia === "Menos de 1 ano"
+        ? "menos_1"
+        : r.tempo_experiencia === "1 a 3 anos"
+          ? "1_3"
+          : "mais_3",
+    ])
+  ) as Record<number, "menos_1" | "1_3" | "mais_3">;
+
+  const { data: professorRows } = await supabase
+    .from("professor_esportes")
+    .select("esporte_id, modo_atuacao, objetivo_plataforma, tipo_atuacao, tempo_experiencia")
+    .eq("professor_id", user.id)
+    .eq("ativo", true);
+
+  const selectedSportModes: Record<number, ProfessorModoEsportivo> = {};
+  const selectedProfessorObjetivos: Record<number, ProfessorObjetivoPlataforma> = {};
+  const selectedProfessorTipos: Record<number, ProfessorTipoAtuacao[]> = {};
+  const selectedSet = new Set<number>(selectedEsportes);
+
+  for (const row of professorRows ?? []) {
+    const esporteId = Number(row.esporte_id);
+    if (!Number.isFinite(esporteId)) continue;
+    selectedSet.add(esporteId);
+    selectedSportModes[esporteId] =
+      row.modo_atuacao === "professor_e_atleta" ? "ambos" : "professor";
+    selectedProfessorObjetivos[esporteId] =
+      row.objetivo_plataforma === "gerir_alunos" || row.objetivo_plataforma === "ambos"
+        ? row.objetivo_plataforma
+        : "somente_exposicao";
+    selectedProfessorTipos[esporteId] = Array.isArray(row.tipo_atuacao)
+      ? row.tipo_atuacao
+          .map((item) => String(item))
+          .filter((item): item is ProfessorTipoAtuacao =>
+            ["aulas", "treinamento", "consultoria"].includes(item)
+          )
+      : ["aulas"];
+    if (!selectedExperiencias[esporteId]) {
+      selectedExperiencias[esporteId] =
+        row.tempo_experiencia === "Menos de 1 ano"
+          ? "menos_1"
+          : row.tempo_experiencia === "1 a 3 anos"
+            ? "1_3"
+            : "mais_3";
+    }
+  }
+  for (const esporteId of selectedEsportes) {
+    if (!selectedSportModes[esporteId]) selectedSportModes[esporteId] = "atleta";
+  }
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
@@ -67,7 +120,7 @@ export default async function ContaEsportesEidPage() {
           <div>
             <h1 className="text-lg font-bold tracking-tight text-eid-fg sm:text-xl">Esportes e EID</h1>
             <p className="mt-1 text-sm text-eid-text-secondary">
-              Esportes do ranking, interesse em match e modalidades (individual, dupla, time).
+              Configure por esporte se voce atua como atleta, professor ou ambos.
             </p>
           </div>
           <Link href="/dashboard" className="shrink-0 text-xs font-medium text-eid-primary-300 hover:text-eid-fg">
@@ -104,9 +157,15 @@ export default async function ContaEsportesEidPage() {
                 permiteDupla: Boolean(e.permite_dupla),
                 permiteTime: Boolean(e.permite_time),
               }))}
-              selectedEsportes={selectedEsportes}
+              selectedEsportes={[...selectedSet]}
               selectedEsportesInteresse={selectedEsportesInteresse}
               selectedEsportesModalidades={selectedEsportesModalidades}
+              selectedSportModes={selectedSportModes}
+              selectedProfessorObjetivos={selectedProfessorObjetivos}
+              selectedProfessorTipos={selectedProfessorTipos}
+              selectedExperiencias={selectedExperiencias}
+              hasProfessor={papeis.includes("professor")}
+              hasAtleta={papeis.includes("atleta")}
             />
           </>
         )}

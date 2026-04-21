@@ -28,20 +28,16 @@ export function DashboardTopbar({ persistent = false }: Props) {
   const pathname = usePathname();
   const [q, setQ] = useState("");
   const [meId, setMeId] = useState<string | null>(null);
-  const [hideBecausePersistent, setHideBecausePersistent] = useState(false);
 
   useEffect(() => {
     const sb = createClient();
     sb.auth.getUser().then(({ data: { user } }) => setMeId(user?.id ?? null));
   }, []);
 
-  useEffect(() => {
-    if (persistent || typeof document === "undefined") return;
-    if (document.getElementById("eid-persistent-topbar")) {
-      setHideBecausePersistent(true);
-    }
-  }, [persistent]);
-
+  const hideBecausePersistent =
+    !persistent &&
+    typeof document !== "undefined" &&
+    Boolean(document.getElementById("eid-persistent-topbar"));
   if (hideBecausePersistent) return null;
 
   const baseNavItems = [

@@ -8,6 +8,7 @@ import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
   esporteIdsComMatchAceitoEntre,
+  podeExibirWhatsappProfessor,
   podeExibirWhatsappPerfilPublico,
   waMeHref,
 } from "@/lib/perfil/whatsapp-visibility";
@@ -42,7 +43,33 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
 
   const isSelf = user.id === id;
 
-  const podeVerWhatsapp = await podeExibirWhatsappPerfilPublico(supabase, user.id, id, isSelf);
+  const [{ data: papeisRows }, { data: professorPerfil }, { data: professorEsportes }, { data: professorMetricas }] =
+    await Promise.all([
+      supabase.from("usuario_papeis").select("papel").eq("usuario_id", id),
+      supabase
+        .from("professor_perfil")
+        .select("headline, bio_profissional, aceita_novos_alunos, perfil_publicado")
+        .eq("usuario_id", id)
+        .maybeSingle(),
+      supabase
+        .from("professor_esportes")
+        .select("tipo_atuacao, valor_base_centavos, esportes(nome)")
+        .eq("professor_id", id)
+        .eq("ativo", true),
+      supabase
+        .from("professor_metricas")
+        .select("nota_docente, total_avaliacoes_validas, esportes(nome)")
+        .eq("professor_id", id)
+        .order("nota_docente", { ascending: false }),
+    ]);
+  const papeis = (papeisRows ?? []).map((row) => row.papel);
+  const hasProfessor = papeis.includes("professor");
+
+  const podeVerWhatsappAtleta = await podeExibirWhatsappPerfilPublico(supabase, user.id, id, isSelf);
+  const podeVerWhatsappProfessor = hasProfessor
+    ? await podeExibirWhatsappProfessor(supabase, user.id, id, isSelf)
+    : false;
+  const podeVerWhatsapp = podeVerWhatsappAtleta || podeVerWhatsappProfessor;
   const linkWpp = podeVerWhatsapp ? waMeHref(perfil.whatsapp) : null;
   const esportesMatchAceito = isSelf
     ? new Set<number>()
@@ -60,12 +87,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     eids && eids.length > 0
       ? [...eids].sort((a, b) => Number(b.nota_eid ?? 0) - Number(a.nota_eid ?? 0))[0]
       : null;
-  const espPrincipal = principalEid
-    ? Array.isArray(principalEid.esportes)
-      ? principalEid.esportes[0]
-      : principalEid.esportes
-    : null;
-
   let vitT = 0;
   let derT = 0;
   for (const e of eids ?? []) {
@@ -210,6 +231,11 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               <span className="rounded border border-eid-primary-500/30 bg-eid-primary-500/10 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-eid-primary-500">
                 {perfil.tipo_usuario === "organizador" ? "Org" : "Atleta"}
               </span>
+              {hasProfessor ? (
+                <span className="rounded border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-eid-action-500">
+                  Professor
+                </span>
+              ) : null}
               {perfil.interesse_rank_match !== false && (
                 <span className="rounded border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-eid-action-500">
                   Rank
@@ -385,9 +411,17 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 {!isSelf ? <ProfilePrimaryCta href="/match" className="col-span-2" /> : null}
+                {hasProfessor ? (
+                  <Link
+                    href={`/professor/${id}`}
+                    className="col-span-2 inline-flex min-h-[36px] items-center justify-center rounded-lg border border-eid-action-500/30 px-3 text-[11px] font-bold uppercase tracking-wide text-eid-action-400 transition hover:bg-eid-action-500/8"
+                  >
+                    Ver perfil profissional
+                  </Link>
+                ) : null}
                 <Link
                   href="/times?create=1"
-                  className={`${isSelf ? "col-span-2" : ""} inline-flex min-h-[36px] items-center justify-center rounded-lg border border-eid-action-500/30 px-3 text-[11px] font-bold uppercase tracking-wide text-eid-action-400 transition hover:bg-eid-action-500/8`}
+                  className={`${isSelf && !hasProfessor ? "col-span-2" : ""} inline-flex min-h-[36px] items-center justify-center rounded-lg border border-eid-action-500/30 px-3 text-[11px] font-bold uppercase tracking-wide text-eid-action-400 transition hover:bg-eid-action-500/8`}
                 >
                   Nova Equipe
                 </Link>
@@ -402,6 +436,63 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               </div>
             )}
           </section>
+
+          {hasProfessor ? (
+            <ProfileSection title="Professor">
+              <div className="space-y-3">
+                <div className="rounded-xl border border-eid-action-500/20 bg-eid-action-500/8 p-4">
+                  <p className="text-sm font-semibold text-eid-fg">
+                    {professorPerfil?.headline ?? "Professor ativo na plataforma"}
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">
+                    {professorPerfil?.bio_profissional ?? "Use o perfil profissional para divulgar aulas, treinamento e consultoria."}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-3 py-1 text-[10px] font-semibold text-eid-fg">
+                      {professorPerfil?.aceita_novos_alunos ? "Aceitando novos alunos" : "Captação sob consulta"}
+                    </span>
+                    {professorPerfil?.perfil_publicado ? (
+                      <Link href={`/professor/${id}`} className="rounded-full border border-eid-action-500/35 px-3 py-1 text-[10px] font-semibold text-eid-action-400">
+                        Abrir página pública
+                      </Link>
+                    ) : null}
+                  </div>
+                </div>
+
+                {(professorEsportes ?? []).length ? (
+                  <div className="grid gap-2">
+                    {(professorEsportes ?? []).map((item, idx) => {
+                      const esporte = Array.isArray(item.esportes) ? item.esportes[0] : item.esportes;
+                      const metrica = (professorMetricas ?? []).find((m) => {
+                        const esporteM = Array.isArray(m.esportes) ? m.esportes[0] : m.esportes;
+                        return esporteM?.nome === esporte?.nome;
+                      });
+                      return (
+                        <div key={`${esporte?.nome ?? "esp"}-${idx}`} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-3">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-eid-fg">{esporte?.nome ?? "Esporte"}</p>
+                              <p className="mt-1 text-xs text-eid-text-secondary">
+                                {(item.tipo_atuacao ?? []).join(", ") || "aulas"}
+                              </p>
+                            </div>
+                            <p className="text-xs font-bold text-eid-action-400">
+                              A partir de R$ {(Number(item.valor_base_centavos ?? 0) / 100).toFixed(2).replace(".", ",")}
+                            </p>
+                          </div>
+                          {metrica ? (
+                            <p className="mt-2 text-xs text-eid-text-secondary">
+                              Nota docente {Number(metrica.nota_docente ?? 0).toFixed(2)} · {metrica.total_avaliacoes_validas ?? 0} avaliações
+                            </p>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            </ProfileSection>
+          ) : null}
 
           {/* ── Performance EID ─────────────────────────────────────── */}
           <ProfileSection title="Performance EID">
@@ -429,7 +520,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                   const esp = Array.isArray(e.esportes) ? e.esportes[0] : e.esportes;
                   const eid = Number(e.nota_eid ?? 1);
                   const jogos = Number(e.partidas_jogadas ?? 0);
-                  const rank = Number(e.pontos_ranking ?? 0);
                   const eidHex = eid >= 7 ? "#22c55e" : eid >= 4 ? "#fb923c" : "#60a5fa";
                   const eidGlow = eid >= 7 ? "rgba(34,197,94,0.5)" : eid >= 4 ? "rgba(251,146,60,0.5)" : "rgba(96,165,250,0.45)";
 

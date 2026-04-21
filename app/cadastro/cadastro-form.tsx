@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import type { Country, Value } from "react-phone-number-input";
 import { isPossiblePhoneNumber } from "react-phone-number-input";
@@ -21,6 +21,12 @@ const PhoneInput = dynamic(() => import("react-phone-number-input"), {
 function eiWhatsappValido(raw: string | undefined): boolean {
   const d = (raw ?? "").replace(/\D/g, "");
   return d.length >= 8 && d.length <= 15;
+}
+
+function safeNext(raw: string | null): string | null {
+  const n = (raw ?? "").trim();
+  if (!n || !n.startsWith("/") || n.startsWith("//")) return null;
+  return n;
 }
 
 function IconUser({ className }: { className?: string }) {
@@ -121,6 +127,8 @@ function IconLocationArrow() {
 
 export function CadastroForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = safeNext(searchParams.get("next"));
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -232,14 +240,18 @@ export function CadastroForm() {
             termosAceitos: !!profile?.termos_aceitos_em,
             perfilCompleto: !!profile?.perfil_completo,
           },
-          null
+          next
         );
       }
       router.refresh();
       router.push(dest);
       return;
     }
-    router.push(`/verificar-codigo?email=${encodeURIComponent(emailNorm)}`);
+    router.push(
+      `/verificar-codigo?email=${encodeURIComponent(emailNorm)}${
+        next ? `&next=${encodeURIComponent(next)}` : ""
+      }`
+    );
   }
 
   function useCurrentLocation() {

@@ -2,15 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CONTA_ESPORTES_EID_HREF } from "@/lib/routes/conta";
 import { createClient } from "@/lib/supabase/server";
+import { listarPapeis } from "@/lib/roles";
 import { ContaPerfilForm } from "./conta-perfil-form";
 
 export const metadata = {
   title: "Editar perfil · EsporteID",
 };
-
-function precisaEsportesPratica(papeis: string[]): boolean {
-  return papeis.some((p) => p === "atleta" || p === "professor");
-}
 
 export default async function ContaPerfilPage() {
   const supabase = await createClient();
@@ -33,8 +30,13 @@ export default async function ContaPerfilPage() {
   if (!profile.perfil_completo) redirect("/onboarding");
 
   const { data: papeisRows } = await supabase.from("usuario_papeis").select("papel").eq("usuario_id", user.id);
-  const papeis = (papeisRows ?? []).map((r) => r.papel);
-  const hasAtletaProfessor = precisaEsportesPratica(papeis);
+  const papeis = listarPapeis(papeisRows);
+  const { count: athleteSportsCount } = await supabase
+    .from("usuario_eid")
+    .select("esporte_id", { count: "exact", head: true })
+    .eq("usuario_id", user.id);
+  const hasAthleteSports = (athleteSportsCount ?? 0) > 0;
+  const hasProfessor = papeis.includes("professor");
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
@@ -50,7 +52,7 @@ export default async function ContaPerfilPage() {
           </Link>
         </div>
 
-        {hasAtletaProfessor ? (
+        {hasAthleteSports ? (
           <p className="mb-4 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2 text-xs text-eid-text-secondary">
             Para esportes do ranking, interesse no match e modalidades (individual/dupla/time), use{" "}
             <Link href={CONTA_ESPORTES_EID_HREF} className="font-semibold text-eid-primary-300 underline">
@@ -59,10 +61,20 @@ export default async function ContaPerfilPage() {
             .
           </p>
         ) : null}
+        {hasProfessor ? (
+          <p className="mb-4 rounded-xl border border-eid-action-500/25 bg-eid-action-500/10 px-3 py-2 text-xs text-eid-text-secondary">
+            Seu perfil profissional de professor, agenda, alunos e recebimentos ficam em{" "}
+            <Link href="/professor" className="font-semibold text-eid-action-400 underline">
+              Painel do professor
+            </Link>
+            .
+          </p>
+        ) : null}
 
         <ContaPerfilForm
           userId={user.id}
-          hasAtletaProfessor={hasAtletaProfessor}
+          hasAtletaProfessor={hasAthleteSports}
+          hasProfessor={hasProfessor}
           profileInitial={{
             nome: profile.nome ?? "",
             username: profile.username ?? "",

@@ -62,6 +62,44 @@ export async function podeExibirWhatsappPerfilPublico(
   return (t2?.length ?? 0) > 0;
 }
 
+export async function podeExibirWhatsappProfessor(
+  supabase: SupabaseClient,
+  visitanteId: string | null | undefined,
+  professorId: string,
+  isSelf: boolean
+): Promise<boolean> {
+  if (isSelf) return true;
+
+  const { data: perfil } = await supabase
+    .from("professor_perfil")
+    .select("whatsapp_visibilidade, perfil_publicado")
+    .eq("usuario_id", professorId)
+    .maybeSingle();
+
+  const visibilidade = String(perfil?.whatsapp_visibilidade ?? "publico");
+  if (visibilidade === "oculto") return false;
+  if (visibilidade === "publico") return true;
+  if (!visitanteId) return false;
+
+  const { data: solicitacaoAceita } = await supabase
+    .from("professor_solicitacoes_aula")
+    .select("id")
+    .eq("professor_id", professorId)
+    .eq("aluno_id", visitanteId)
+    .eq("status", "aceita")
+    .limit(1);
+  if ((solicitacaoAceita?.length ?? 0) > 0) return true;
+
+  const { data: vinculo } = await supabase
+    .from("professor_aula_alunos")
+    .select("id, professor_aulas!inner(professor_id)")
+    .eq("aluno_id", visitanteId)
+    .eq("professor_aulas.professor_id", professorId)
+    .limit(1);
+
+  return (vinculo?.length ?? 0) > 0;
+}
+
 /**
  * Esportes em que já existe pedido de match com status "Aceito" entre os dois perfis
  * (fluxo de ranking / lançamento de resultado). Usado para não esconder "Solicitar match"

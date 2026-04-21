@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getTorneioFinanceiro } from "@/lib/financeiro/config";
 import { createClient } from "@/lib/supabase/server";
 import { usuarioPodeCriarTorneio } from "@/lib/torneios/organizador";
 import { parseRegrasPlacarJson } from "@/lib/torneios/regras";
@@ -178,7 +179,7 @@ export async function solicitarInscricaoTorneio(formData: FormData): Promise<voi
 
   const { data: t } = await supabase
     .from("torneios")
-    .select("id, status, criador_id, regras_placar_json")
+    .select("id, status, criador_id, regras_placar_json, valor_inscricao")
     .eq("id", torneioId)
     .maybeSingle();
   if (!t) redirect(`/torneios/${torneioId}?erro=torneio`);
@@ -214,11 +215,27 @@ export async function solicitarInscricaoTorneio(formData: FormData): Promise<voi
     redirect(`/torneios/${torneioId}?erro=ja_inscrito`);
   }
 
+  const { data: financeiroConfig } = await supabase
+    .from("ei_financeiro_config")
+    .select(
+      "torneio_taxa_fixa, torneio_taxa_promo, promocao_dias, torneio_promocao_ativa, torneio_promocao_ate"
+    )
+    .eq("id", 1)
+    .maybeSingle();
+  const torneioFinanceiro = getTorneioFinanceiro(financeiroConfig);
+  const valorInscricao = Number(t.valor_inscricao ?? 0);
+  const taxaPlataforma = Number(torneioFinanceiro.taxaFixa ?? 0);
+  const valorTotalCobranca = Math.max(0, valorInscricao + taxaPlataforma);
+  const valorParaOrganizador = Math.max(0, valorInscricao);
+
   const { error } = await supabase.from("torneio_inscricoes").insert({
     torneio_id: torneioId,
     usuario_id: user.id,
     payment_status: "pending",
     status_inscricao: "pendente",
+    valor_taxa_plataforma_fixa: taxaPlataforma,
+    valor_total_cobranca: valorTotalCobranca,
+    valor_para_organizador: valorParaOrganizador,
   });
 
   if (error) {

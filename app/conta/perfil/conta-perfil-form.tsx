@@ -22,10 +22,11 @@ type ProfileInitial = {
 type Props = {
   userId: string;
   hasAtletaProfessor: boolean;
+  hasProfessor: boolean;
   profileInitial: ProfileInitial;
 };
 
-export function ContaPerfilForm({ userId, hasAtletaProfessor, profileInitial }: Props) {
+export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, profileInitial }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -273,14 +274,14 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, profileInitial }: 
           name="estilo_jogo"
           value={estiloJogo}
           onChange={(ev) => setEstiloJogo(ev.target.value)}
-          placeholder="Estilo de jogo (opcional)"
+          placeholder={hasProfessor && !hasAtletaProfessor ? "Metodologia / especialidade (opcional)" : "Estilo de jogo (opcional)"}
           className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
         />
         <textarea
           name="bio"
           value={bio}
           onChange={(ev) => setBio(ev.target.value)}
-          placeholder="Bio (opcional)"
+          placeholder={hasProfessor ? "Bio publica (opcional)" : "Bio (opcional)"}
           rows={3}
           className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
         />
@@ -342,7 +343,7 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, profileInitial }: 
           href={CONTA_ESPORTES_EID_HREF}
           className="text-center text-sm font-medium text-eid-primary-300 hover:text-eid-fg sm:text-left"
         >
-          Esportes, EID e modalidades no match →
+          {hasProfessor ? "Esportes, atuacao e Match/EID ->" : "Esportes, EID e modalidades no match ->"}
         </Link>
         <button
           type="submit"

@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/jobs/professor-lembretes",
+      "schedule": "0 */2 * * *"
+    },
+    {
+      "path": "/api/jobs/professor-feedback-mensal",
+      "schedule": "0 5 1 * *"
+    },
+    {
+      "path": "/api/jobs/professor-metricas",
+      "schedule": "15 5 * * *"
+    }
+  ]
+}
