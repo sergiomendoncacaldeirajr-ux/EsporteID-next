@@ -1090,6 +1090,14 @@ export function OnboardingWizard({
       }),
     [esporteModes, esportesSel, hasProfessor]
   );
+  const esportesExpValid = useMemo(() => {
+    if (esportesSel.size === 0) return false;
+    for (const esporteId of esportesSel) {
+      const parsed = parseSportExpValue(esportesExp[esporteId] ?? "");
+      if (!parsed) return false;
+    }
+    return true;
+  }, [esportesExp, esportesSel]);
   const stepOrder: Step[] = ["papeis", "esportes", "extras", "perfil"];
   const activeStepIndex = stepOrder.indexOf(step);
   const progressPct = ((activeStepIndex + 1) / stepOrder.length) * 100;
@@ -1140,16 +1148,18 @@ export function OnboardingWizard({
     const uname = username.trim().toLowerCase();
     if (uname && !/^[a-z0-9_]{3,24}$/.test(uname)) return false;
     if (hasAnyAthleteSport) {
-      if (!Number.isInteger(perfilAlturaNum) || perfilAlturaNum < 50 || perfilAlturaNum > 260) {
+      const alturaRaw = alturaCm.trim();
+      const pesoRaw = pesoKg.trim();
+      if (alturaRaw.length > 0 && (!Number.isInteger(perfilAlturaNum) || perfilAlturaNum < 50 || perfilAlturaNum > 260)) {
         return false;
       }
-      if (!Number.isInteger(perfilPesoNum) || perfilPesoNum < 20 || perfilPesoNum > 300) {
+      if (pesoRaw.length > 0 && (!Number.isInteger(perfilPesoNum) || perfilPesoNum < 20 || perfilPesoNum > 300)) {
         return false;
       }
       if (!["Destro", "Canhoto", "Ambos"].includes(lado)) return false;
     }
     return true;
-  }, [hasAnyAthleteSport, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum, username]);
+  }, [alturaCm, hasAnyAthleteSport, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum, pesoKg, username]);
 
   function applyResult(r: OnboardingActionResult) {
     if (!r.ok) {
@@ -1368,6 +1378,10 @@ export function OnboardingWizard({
 
   function submitEsportes(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (!esportesExpValid) {
+      setMessage("Informe o tempo de prática em todos os esportes selecionados para continuar.");
+      return;
+    }
     setMessage(null);
     const fd = new FormData(e.currentTarget);
     startTransition(async () => applyResult(await salvarEsportesOnboarding(undefined, fd)));
@@ -2036,7 +2050,7 @@ export function OnboardingWizard({
               )}
               <button
                 type="submit"
-                disabled={pending || esportesSel.size === 0}
+                disabled={pending || esportesSel.size === 0 || !esportesExpValid}
                 className="eid-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50"
               >
                 {pending ? "Salvando…" : "Continuar"}

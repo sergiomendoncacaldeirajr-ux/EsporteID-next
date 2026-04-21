@@ -184,7 +184,10 @@ export async function salvarEsportesOnboarding(
     if (!m) continue;
     const eid = Number(m[1]);
     const value = String(val).trim();
-    if (["menos_1", "1_3", "mais_3"].includes(value)) expPorEsporte.set(eid, value);
+    const exact = value.match(/^(\d{1,2})\/(\d{4})$/);
+    if (["menos_1", "1_3", "mais_3"].includes(value) || exact) {
+      expPorEsporte.set(eid, value);
+    }
   }
 
   if (ids.length === 0) {
@@ -298,6 +301,13 @@ export async function salvarEsportesOnboarding(
   for (const esporteId of finalIds) {
     const meta = esporteMetaMap.get(esporteId);
     if (!meta) return { ok: false, message: "Esporte inválido." };
+    const tempoExp = tempoExperienciaLabel(expPorEsporte.get(esporteId));
+    if (!tempoExp) {
+      return {
+        ok: false,
+        message: `Em “${meta.nome}”, informe o tempo de prática (aproximado ou mês/ano).`,
+      };
+    }
 
     const modoEsporte: ProfessorModoEsportivo = hasProfessor
       ? "professor"
