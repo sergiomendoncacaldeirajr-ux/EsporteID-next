@@ -255,7 +255,7 @@ export function generateTorneioDraw(input: {
         };
 
   const rounds =
-    stageFormat === "groups"
+    "groups" in payload
       ? payload.groups.map((group, index) => ({
           rodada: index + 1,
           matches: group.jogos,
