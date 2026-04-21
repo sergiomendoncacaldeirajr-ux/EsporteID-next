@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/brand/logo-full";
 import {
@@ -710,8 +710,12 @@ export function OnboardingWizard({
     setStep(initialStep);
   }, [initialStep]);
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "auto" });
+  useLayoutEffect(() => {
+    document.documentElement.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.body.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const main = document.getElementById("app-main-column");
+    if (main) main.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [step]);
 
   useEffect(() => {
