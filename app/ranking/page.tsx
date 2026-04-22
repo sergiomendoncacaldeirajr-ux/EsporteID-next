@@ -276,9 +276,9 @@ export default async function RankingPage({ searchParams }: Props) {
         className="pointer-events-none absolute inset-x-0 top-0 h-[min(52vh,28rem)] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)]"
         aria-hidden
       />
-      <div className="relative mx-auto flex w-full max-w-2xl flex-1 flex-col px-6 pb-4 pt-2">
-        <header className="mb-2">
-          <h1 className="text-2xl font-bold tracking-tight text-eid-fg">Ranking</h1>
+      <div className="relative mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-3 pt-1.5 sm:px-5">
+        <header className="mb-1.5">
+          <h1 className="text-xl font-bold tracking-tight text-eid-fg sm:text-[1.35rem]">Ranking</h1>
         </header>
 
         <RankingFilterBar
@@ -316,9 +316,9 @@ export default async function RankingPage({ searchParams }: Props) {
 
             {rankingAll.length > 0 ? (
               <>
-                <section className="mt-2.5">
-                  <h2 className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Classificação geral</h2>
-                  <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-3.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
+                <section className="mt-2">
+                  <h2 className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Classificação geral</h2>
+                  <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] sm:px-3">
                     {pageSlice.length === 0 ? (
                       <p className="py-5 text-center text-sm text-eid-text-secondary">Fim da lista.</p>
                     ) : (
@@ -341,10 +341,10 @@ export default async function RankingPage({ searchParams }: Props) {
                 </section>
 
                 {hasMore ? (
-                  <div className="mt-4 flex justify-center">
+                  <div className="mt-3 flex justify-center">
                     <Link
                       href={rankingHref({ page: state.page + 1 }, state, esportePrincipalId)}
-                      className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-7 text-sm font-medium text-eid-fg transition hover:border-[color:var(--eid-border)] hover:bg-eid-surface/85"
+                      className="inline-flex min-h-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-5 text-xs font-medium text-eid-fg transition hover:border-[color:var(--eid-border)] hover:bg-eid-surface/85"
                     >
                       Ver mais
                     </Link>
