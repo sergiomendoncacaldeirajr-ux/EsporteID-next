@@ -96,7 +96,7 @@ export default async function RootLayout({
       data-eid-theme="dark"
       className={`${barlow.variable} ${barlowCondensed.variable} ${barlowSemiCondensed.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-eid-bg text-eid-fg">
+      <body className={`flex min-h-dvh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}>
         <EidThemeHydration />
         <InteractionFeedback />
         {!user ? <VisitorThemeToggleFloat /> : null}
@@ -113,7 +113,7 @@ export default async function RootLayout({
           id="app-main-column"
           className={
             showAppChrome
-              ? "flex min-h-0 flex-1 flex-col pt-[var(--eid-shell-header-offset)] pb-[var(--eid-shell-footer-offset)]"
+              ? "flex min-h-0 flex-1 flex-col"
               : onboardingMinimalChrome
                 ? "flex min-h-0 flex-1 flex-col pt-[calc(3.25rem+env(safe-area-inset-top))]"
                 : hideAppShell

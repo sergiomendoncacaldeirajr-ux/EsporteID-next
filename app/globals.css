@@ -56,16 +56,27 @@
    * compensação única no #app-main-column — não duplicar em cada página.
    * Alturas alinhadas ao topbar (≈4.5–5rem + safe-top) e barra inferior (~54px + label + folga p/ botão central).
    */
-  --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 4.75rem);
-  --eid-shell-footer-offset: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
+  --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 5.25rem);
+  --eid-shell-footer-offset: calc(env(safe-area-inset-bottom, 0px) + 6rem);
 }
 
 @media (min-width: 768px) {
   :root {
-    --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 5rem);
-    /* Nav inferior oculta em md+; folga p/ não colar no rodapé / home indicator */
-    --eid-shell-footer-offset: calc(2.5rem + max(0px, env(safe-area-inset-bottom, 0px)));
+    --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 5.25rem);
+    /* Nav inferior oculta em md+; folga p/ rodapé / home indicator */
+    --eid-shell-footer-offset: calc(3rem + max(0px, env(safe-area-inset-bottom, 0px)));
   }
+}
+
+/*
+ * Shell logado: topbar e bottom nav são position:fixed (fora do fluxo).
+ * Sem recuo no body, o primeiro bloco em fluxo (#app-main-column) começa em y=0 e fica POR BAIXO do header.
+ * Padding aqui empurra main + footer para a faixa visível entre as barras fixas.
+ */
+body.eid-app-shell {
+  box-sizing: border-box;
+  padding-top: var(--eid-shell-header-offset);
+  padding-bottom: var(--eid-shell-footer-offset);
 }
 
 /* Tema claro — mesma marca, maior contraste em fundos claros */
