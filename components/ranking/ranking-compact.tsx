@@ -189,9 +189,9 @@ export function RankingRankToggle({
 
 function tipoSegmentButton(active: boolean) {
   return cn(
-    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap px-1 text-[10px] font-semibold uppercase leading-none tracking-[0.04em] transition-all duration-200",
+    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-sm px-1 text-[10px] font-semibold uppercase leading-none tracking-[0.04em] transition-all duration-200",
     active
-      ? "bg-eid-primary-500/20 text-eid-fg shadow-[0_4px_14px_-8px_rgba(37,99,235,0.35)]"
+      ? "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_4px_14px_-8px_rgba(37,99,235,0.38)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35 hover:text-eid-fg"
   );
 }
