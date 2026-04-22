@@ -369,8 +369,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         <div
           className="relative overflow-visible rounded-t-[16px] border-t border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_-6px_18px_rgba(0,0,0,0.18)] backdrop-blur-xl"
           style={{
-            minHeight: "calc(3.85rem + env(safe-area-inset-bottom))",
-            paddingBottom: "max(1rem, calc(env(safe-area-inset-bottom) + 0.6rem))",
+            minHeight: "calc(4rem + max(12px, env(safe-area-inset-bottom, 0px)))",
+            paddingBottom: "calc(max(12px, env(safe-area-inset-bottom, 0px)) + 0.5rem)",
             paddingLeft: "max(0px, env(safe-area-inset-left))",
             paddingRight: "max(0px, env(safe-area-inset-right))",
           }}

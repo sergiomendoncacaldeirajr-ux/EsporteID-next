@@ -160,8 +160,13 @@ export function DashboardTopbar({
   return (
     <header
       id={persistent ? "eid-persistent-topbar" : undefined}
-      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] pt-[env(safe-area-inset-top)] shadow-[0_6px_18px_-12px_rgba(0,0,0,0.34)] backdrop-blur-xl md:mb-3`}
-      style={persistent ? { viewTransitionName: "eid-app-topbar" } : undefined}
+      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_6px_18px_-12px_rgba(0,0,0,0.34)] backdrop-blur-xl md:mb-3`}
+      style={{
+        paddingTop: "max(0px, env(safe-area-inset-top, 0px))",
+        paddingLeft: "max(0px, env(safe-area-inset-left, 0px))",
+        paddingRight: "max(0px, env(safe-area-inset-right, 0px))",
+        ...(persistent ? { viewTransitionName: "eid-app-topbar" } : {}),
+      }}
     >
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
         <div className="flex items-center justify-between gap-2 py-1.5 sm:py-2">
