@@ -302,7 +302,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                   </div>
                 </div>
                 {perfil.username || perfil.localizacao ? (
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px]">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px]">
                     {perfil.username ? (
                       <p className="font-semibold text-eid-primary-400">@{perfil.username}</p>
                     ) : null}
@@ -729,7 +729,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 <ProfileEditDrawerTrigger
                   href={`/editar/historico?from=${encodeURIComponent(`/perfil/${id}`)}`}
                   title="Privacidade do histórico"
-                  className="relative top-2 inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
+                  className="relative top-0.5 inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
                 >
                   <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
                     <path d="M10.5 1a.75.75 0 0 1 0 1.5H5.25A2.75 2.75 0 0 0 2.5 5.25v5.5A2.75 2.75 0 0 0 5.25 13.5h5.5a2.75 2.75 0 0 0 2.75-2.75V5.5a.75.75 0 0 1 1.5 0v5.25A4.25 4.25 0 0 1 10.75 15h-5.5A4.25 4.25 0 0 1 1 10.75v-5.5A4.25 4.25 0 0 1 5.25 1h5.25Zm2.28.22a.75.75 0 0 1 1.06 0l1.94 1.94a.75.75 0 0 1 0 1.06l-5.47 5.47a.75.75 0 0 1-.33.2l-2.4.66a.75.75 0 0 1-.92-.92l.66-2.4a.75.75 0 0 1 .2-.33l5.47-5.47Z" />
