@@ -37,7 +37,11 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
       subtitle="Escolha uma formação para abrir a edição dedicada."
       showBack={!isEmbed}
       topAction={
-        <Link href="/times?create=1" className="text-[10px] font-semibold text-eid-primary-300 underline">
+        <Link
+          href="/times?create=1"
+          className="inline-flex items-center gap-1 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18"
+        >
+          <span aria-hidden>+</span>
           Nova equipe
         </Link>
       }

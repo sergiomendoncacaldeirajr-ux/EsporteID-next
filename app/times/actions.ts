@@ -23,12 +23,34 @@ export async function criarEquipe(
   const esporteId = Number(formData.get("esporte_id") ?? 0);
   const localizacao = String(formData.get("localizacao") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
+  const escudoFile = formData.get("escudo_file");
 
   if (nome.length < 3) return { ok: false, message: "Nome da equipe inválido." };
   if (!Number.isInteger(esporteId) || esporteId < 1) return { ok: false, message: "Selecione um esporte válido." };
   if (username && !/^[a-z0-9_]{3,24}$/.test(username)) {
     return { ok: false, message: "Username inválido. Use 3-24 caracteres [a-z0-9_]." };
   }
+  if (!(escudoFile instanceof File) || escudoFile.size === 0) {
+    return { ok: false, message: "A foto da equipe/dupla é obrigatória." };
+  }
+  if (!escudoFile.type.startsWith("image/")) {
+    return { ok: false, message: "Arquivo inválido. Envie uma imagem." };
+  }
+  if (escudoFile.size > 5 * 1024 * 1024) {
+    return { ok: false, message: "A imagem deve ter no máximo 5MB." };
+  }
+
+  const originalName = escudoFile.name || "escudo";
+  const ext = originalName.includes(".") ? originalName.split(".").pop()?.toLowerCase() ?? "jpg" : "jpg";
+  const safeExt = ext.replace(/[^a-z0-9]/g, "") || "jpg";
+  const path = `times/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
+  const up = await supabase.storage.from("avatars").upload(path, escudoFile, {
+    upsert: true,
+    contentType: escudoFile.type || "image/jpeg",
+    cacheControl: "3600",
+  });
+  if (up.error) return { ok: false, message: "Não foi possível enviar a foto da equipe." };
+  const escudo = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
 
   const { error } = await supabase.from("times").insert({
     nome,
@@ -37,6 +59,7 @@ export async function criarEquipe(
     tipo,
     esporte_id: esporteId,
     localizacao: localizacao || null,
+    escudo,
     criador_id: user.id,
     interesse_rank_match: true,
     disponivel_amistoso: true,

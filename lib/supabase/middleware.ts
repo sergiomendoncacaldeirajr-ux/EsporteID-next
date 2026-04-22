@@ -4,10 +4,12 @@ import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/
 
 function buildRequestHeadersForPath(request: NextRequest): Headers {
   const h = new Headers(request.headers);
-  if (request.nextUrl.pathname.startsWith("/onboarding") || request.nextUrl.pathname.startsWith("/editar")) {
+  const pathname = request.nextUrl.pathname;
+  const isPerfilHistoricoRoute = /^\/perfil\/[^/]+\/historico(?:\/.*)?$/.test(pathname);
+  if (pathname.startsWith("/onboarding") || pathname.startsWith("/editar") || isPerfilHistoricoRoute) {
     h.set(EID_HIDE_APP_SHELL_HEADER, "1");
   }
-  if (request.nextUrl.pathname.startsWith("/onboarding")) {
+  if (pathname.startsWith("/onboarding")) {
     h.set(EID_SHOW_ONBOARDING_CHROME_HEADER, "1");
   }
   return h;

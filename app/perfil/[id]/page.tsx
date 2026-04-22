@@ -550,6 +550,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 <ProfileEditDrawerTrigger
                   href={`/editar/performance-eid?from=${encodeURIComponent(`/perfil/${id}`)}`}
                   title="Editar Performance EID"
+                  topMode="backOnly"
                   className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
                 >
                   <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
@@ -604,6 +605,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 <ProfileEditDrawerTrigger
                   href={`/editar/equipes?from=${encodeURIComponent(`/perfil/${id}`)}`}
                   title="Editar equipes"
+                  topMode="backOnly"
                   className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
                 >
                   <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
@@ -729,6 +731,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 <ProfileEditDrawerTrigger
                   href={`/editar/historico?from=${encodeURIComponent(`/perfil/${id}`)}`}
                   title="Privacidade do histórico"
+                  topMode="backOnly"
                   className="relative top-0.5 inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
                 >
                   <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
@@ -786,21 +789,27 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       ))}
                     </ul>
                     <div className="mt-2 flex justify-end">
-                      <Link
-                        href={`/perfil/${id}/historico`}
+                      <ProfileEditDrawerTrigger
+                        href={`/perfil/${id}/historico?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                        title="Histórico completo"
+                        fullscreen
+                        topMode="backOnly"
                         className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
                       >
                         <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
                           <path d="M8 1.5a.75.75 0 0 1 .75.75V8h4.5a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 7.25 8V2.25A.75.75 0 0 1 8 1.5Zm0 13a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Zm-8-6.5a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z" />
                         </svg>
                         VER HISTÓRICO COMPLETO
-                      </Link>
+                      </ProfileEditDrawerTrigger>
                     </div>
                   </>
                 ) : (
-                  <Link
-                    href={`/perfil/${id}/historico`}
-                    className="eid-list-item mt-2 flex min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
+                  <ProfileEditDrawerTrigger
+                    href={`/perfil/${id}/historico?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                    title="Histórico completo"
+                    fullscreen
+                    topMode="backOnly"
+                    className="eid-list-item mt-2 flex w-full min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
                   >
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-surface/65 text-eid-primary-300">
                       <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden>
@@ -809,7 +818,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                     </span>
                     <p className="text-[11px] font-bold text-eid-fg">Nenhum histórico registrado ainda</p>
                     <p className="text-[9px] text-eid-text-secondary">Toque para ver o histórico completo.</p>
-                  </Link>
+                  </ProfileEditDrawerTrigger>
                 )}
               </ProfileSection>
             ) : (
