@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { RankingSearchState } from "@/lib/ranking/ranking-href";
 import { rankingHref } from "@/lib/ranking/ranking-href";
+import CityGpsLabel from "@/components/ranking/city-gps-label";
 
 function cn(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(" ");
@@ -56,7 +57,7 @@ export function RankingFilterBar({
 
       <div className="grid grid-cols-3 gap-2 rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.68),rgba(15,23,42,0.5))] p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
         <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
-          <span className="truncate">Cidade</span>
+          <CityGpsLabel fallbackCity={cidadeDisplay} />
         </Link>
         <Link href={href({ local: "brasil", page: 1 })} className={blockButton(state.local === "brasil")}>
           <span className="truncate">Brasil</span>
@@ -87,7 +88,7 @@ export function RankingFilterBar({
                   href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                   title={isPrincipal ? "Esporte principal do perfil" : undefined}
                   className={cn(
-                    "inline-flex h-8 w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-[13px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
+                    "inline-flex h-[1.875rem] w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2.5 text-xs font-medium leading-none tracking-[0.01em] transition-all duration-200",
                     active
                       ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
                       : "border-white/15 bg-transparent text-[#9CA3AF] hover:border-white/25 hover:bg-white/[0.04] hover:text-eid-fg",
@@ -149,7 +150,7 @@ export function RankingPeriodToggle({
 
 function segmentButton(active: boolean) {
   return cn(
-    "inline-flex h-8 w-auto flex-1 items-center justify-center rounded-full border px-2.5 text-[13px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
+    "inline-flex h-[1.875rem] w-auto flex-1 items-center justify-center rounded-full border px-2.5 text-xs font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
       ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
       : "border-white/15 bg-transparent text-[#9CA3AF] hover:border-white/25 hover:bg-white/[0.04] hover:text-eid-fg"
@@ -158,7 +159,7 @@ function segmentButton(active: boolean) {
 
 function blockButton(active: boolean) {
   return cn(
-    "inline-flex h-8 w-auto min-w-0 items-center justify-center rounded-full border px-2.5 text-[13px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
+    "inline-flex h-[1.875rem] w-auto min-w-0 items-center justify-center rounded-full border px-2.5 text-xs font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
       ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
       : "border-white/15 bg-transparent text-[#9CA3AF] hover:border-white/25 hover:bg-white/[0.04] hover:text-eid-fg"
