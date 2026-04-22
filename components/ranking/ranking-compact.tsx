@@ -34,41 +34,34 @@ export function RankingFilterBar({
 }: FilterBarProps) {
   const pe = principalEsporteId;
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, pe);
-  const chip = (active: boolean, subtle = false) => pillRow(active, subtle);
+  const rankIsMatch = state.rank === "match";
+  const rankToggleHref = href({ rank: rankIsMatch ? "eid" : "match", page: 1 });
 
   return (
-    <div className="mb-3 px-1 sm:mb-3.5 sm:px-2">
-      <div className="flex items-center gap-2">
-        <Link href={href({ tipo: "individual", page: 1 })} className={chip(state.tipo === "individual")}>
+    <div className="mb-3 space-y-3 px-1 sm:mb-3.5 sm:space-y-3.5 sm:px-2">
+      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)]/80 bg-eid-surface/55 p-1">
+        <div className="flex items-center gap-1">
+          <Link href={href({ tipo: "individual", page: 1 })} className={segmentButton(state.tipo === "individual")}>
           Individual
-        </Link>
-        <Link href={href({ tipo: "dupla", page: 1 })} className={chip(state.tipo === "dupla")}>
+          </Link>
+          <Link href={href({ tipo: "dupla", page: 1 })} className={segmentButton(state.tipo === "dupla")}>
           Dupla
-        </Link>
-        <Link href={href({ tipo: "time", page: 1 })} className={chip(state.tipo === "time")}>
+          </Link>
+          <Link href={href({ tipo: "time", page: 1 })} className={segmentButton(state.tipo === "time")}>
           Time
-        </Link>
+          </Link>
+        </div>
       </div>
 
-      <div className="mt-2 flex items-center gap-2">
-        <Link href={href({ rank: "match", page: 1 })} className={chip(state.rank === "match", true)}>
-          Rank Match
+      <div className="grid grid-cols-3 gap-2">
+        <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
+          <span className="truncate">Cidade</span>
         </Link>
-        <Link href={href({ rank: "eid", page: 1 })} className={chip(state.rank === "eid", true)}>
-          Rank EID
+        <Link href={href({ local: "brasil", page: 1 })} className={blockButton(state.local === "brasil")}>
+          <span className="truncate">Brasil</span>
         </Link>
-      </div>
-
-      <div className="mt-2 flex items-center gap-2">
-        <Link
-          href={href({ local: "cidade", page: 1 })}
-          className={chip(state.local === "cidade", true)}
-          title={cidadeDisplay ? `Cidade: ${cidadeDisplay}` : undefined}
-        >
-          Cidade
-        </Link>
-        <Link href={href({ local: "brasil", page: 1 })} className={chip(state.local === "brasil", true)}>
-          Brasil
+        <Link href={rankToggleHref} className={blockButton(true)} title={`Alternar para ${rankIsMatch ? "Rank EID" : "Rank Match"}`}>
+          <span className="truncate">{rankIsMatch ? "Rank Match" : "Rank EID"}</span>
         </Link>
       </div>
       {needsCidadeFallback ? (
@@ -81,7 +74,7 @@ export function RankingFilterBar({
       ) : null}
 
       {todosEsportes.length > 0 ? (
-        <div className="mt-2 border-t border-[color:var(--eid-border-subtle)]/50 pt-2">
+        <div className="border-t border-[color:var(--eid-border-subtle)]/55 pt-2">
           <div className="flex min-w-0 items-center gap-2 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
           <div className="flex min-w-max flex-nowrap items-center gap-2">
             {todosEsportes.map((opt) => {
@@ -93,10 +86,10 @@ export function RankingFilterBar({
                   href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                   title={isPrincipal ? "Esporte principal do perfil" : undefined}
                   className={cn(
-                    "inline-flex h-9 w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2.5 text-sm font-medium leading-none transition",
+                    "inline-flex h-9 w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-xl border px-3.5 text-sm font-medium leading-none transition",
                     active
-                      ? "border-eid-primary-500/75 bg-eid-primary-500/90 text-white"
-                      : "border-[color:var(--eid-border-subtle)]/80 bg-transparent text-eid-text-secondary/90 hover:border-eid-primary-500/25 hover:text-eid-fg",
+                      ? "border-eid-primary-500/85 bg-eid-primary-500 text-white"
+                      : "border-[color:var(--eid-border-subtle)]/85 bg-eid-surface/45 text-eid-text-secondary hover:border-eid-primary-500/30 hover:text-eid-fg",
                     isPrincipal && !active && "ring-1 ring-eid-primary-500/25"
                   )}
                 >
@@ -112,14 +105,21 @@ export function RankingFilterBar({
   );
 }
 
-function pillRow(active: boolean, subtle = false) {
+function segmentButton(active: boolean) {
   return cn(
-    "inline-flex h-9 w-auto items-center justify-center rounded-full border px-2.5 text-sm font-medium leading-none transition",
+    "inline-flex h-9 w-auto flex-1 items-center justify-center rounded-xl px-3 text-sm font-medium leading-none transition",
     active
-      ? "border-eid-primary-500/75 bg-eid-primary-500/90 text-white"
-      : subtle
-        ? "border-[color:var(--eid-border-subtle)]/70 bg-transparent text-eid-text-secondary/80 hover:border-eid-primary-500/20 hover:text-eid-fg"
-        : "border-[color:var(--eid-border-subtle)]/85 bg-transparent text-eid-text-secondary/95 hover:border-eid-primary-500/30 hover:text-eid-fg"
+      ? "bg-eid-primary-500 text-white shadow-[0_6px_14px_-10px_rgba(37,99,235,0.6)]"
+      : "text-eid-text-secondary hover:bg-eid-surface/70 hover:text-eid-fg"
+  );
+}
+
+function blockButton(active: boolean) {
+  return cn(
+    "inline-flex h-10 w-auto min-w-0 items-center justify-center rounded-xl border px-3 text-sm font-medium leading-none transition",
+    active
+      ? "border-eid-primary-500/80 bg-eid-primary-500/90 text-white"
+      : "border-[color:var(--eid-border-subtle)]/85 bg-eid-surface/45 text-eid-text-secondary hover:border-eid-primary-500/30 hover:text-eid-fg"
   );
 }
 
