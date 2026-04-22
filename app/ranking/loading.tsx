@@ -7,16 +7,16 @@ export default function LoadingRanking() {
         <SkBlock className="h-9 w-40 rounded-xl" />
         <SkBlock className="h-10 w-24 rounded-full" />
       </div>
-      <SkBlock className="mb-9 h-28 w-full rounded-2xl" />
-      <div className="mb-11 flex flex-row items-end justify-center gap-2 sm:gap-4 md:gap-6">
-        <SkBlock className="h-48 w-[32%] max-w-[15rem] rounded-2xl" />
-        <SkBlock className="h-56 w-[36%] max-w-[19rem] rounded-3xl" />
-        <SkBlock className="h-48 w-[32%] max-w-[15rem] rounded-2xl" />
+      <SkBlock className="mb-5 h-24 w-full rounded-2xl" />
+      <div className="mb-8 flex flex-row items-end justify-center gap-2 sm:gap-4 md:gap-6">
+        <SkBlock className="h-40 w-[32%] max-w-[12rem] rounded-2xl" />
+        <SkBlock className="h-44 w-[34%] max-w-[13rem] rounded-2xl" />
+        <SkBlock className="h-40 w-[32%] max-w-[12rem] rounded-2xl" />
       </div>
-      <SkBlock className="mb-4 h-4 w-56 rounded-md" />
-      <div className="grid gap-4 md:gap-4">
-        {Array.from({ length: 6 }).map((_, idx) => (
-          <SkBlock key={idx} className="h-36 rounded-2xl" />
+      <SkBlock className="mb-3 h-3 w-40 rounded-md" />
+      <div className="space-y-2 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/40 p-2">
+        {Array.from({ length: 10 }).map((_, idx) => (
+          <SkBlock key={idx} className="h-10 w-full rounded-lg" />
         ))}
       </div>
     </SkMain>
