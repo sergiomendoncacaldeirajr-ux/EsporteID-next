@@ -86,8 +86,8 @@ export function RankingFilterBar({
                     className={cn(
                       "inline-flex h-[1.86rem] w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
                       active
-                        ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
-                        : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/45 hover:text-eid-fg",
+                        ? "border-eid-primary-500/35 bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.08)]"
+                        : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/55 hover:text-eid-fg",
                       isPrincipal && !active && "ring-1 ring-eid-primary-500/25"
                     )}
                   >
@@ -117,7 +117,7 @@ export function RankingPeriodToggle({
       <div className="relative inline-flex h-6.5 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[11px] backdrop-blur-sm">
         <span
           className={cn(
-            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/90 shadow-[0_8px_16px_-8px_rgba(37,99,235,0.9)] transition-all duration-200",
+            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-all duration-200",
             state.periodo === "mes" ? "translate-x-[calc(100%+1px)]" : "translate-x-0"
           )}
           aria-hidden
@@ -126,7 +126,7 @@ export function RankingPeriodToggle({
           href={href({ periodo: "ano", page: 1 })}
           className={cn(
             "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
-            state.periodo === "ano" ? "text-white" : "text-eid-text-secondary hover:text-eid-fg"
+            state.periodo === "ano" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
           Ano
@@ -135,7 +135,7 @@ export function RankingPeriodToggle({
           href={href({ periodo: "mes", page: 1 })}
           className={cn(
             "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
-            state.periodo === "mes" ? "text-white" : "text-eid-text-secondary hover:text-eid-fg"
+            state.periodo === "mes" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
           Mês
@@ -159,7 +159,7 @@ export function RankingRankToggle({
       <div className="relative inline-flex h-6.5 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[11px] backdrop-blur-sm">
         <span
           className={cn(
-            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/90 shadow-[0_8px_16px_-8px_rgba(37,99,235,0.9)] transition-all duration-200",
+            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-all duration-200",
             rankIsMatch ? "translate-x-0" : "translate-x-[calc(100%+1px)]"
           )}
           aria-hidden
@@ -168,7 +168,7 @@ export function RankingRankToggle({
           href={href({ rank: "match", page: 1 })}
           className={cn(
             "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
-            rankIsMatch ? "text-white" : "text-eid-text-secondary hover:text-eid-fg"
+            rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
           Match
@@ -177,7 +177,7 @@ export function RankingRankToggle({
           href={href({ rank: "eid", page: 1 })}
           className={cn(
             "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
-            !rankIsMatch ? "text-white" : "text-eid-text-secondary hover:text-eid-fg"
+            !rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
           EID
@@ -191,8 +191,8 @@ function segmentButton(active: boolean) {
   return cn(
     "inline-flex h-[1.86rem] w-auto flex-1 items-center justify-center rounded-full border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
-      ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
-      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/45 hover:text-eid-fg"
+      ? "border-eid-primary-500/35 bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.08)]"
+      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/55 hover:text-eid-fg"
   );
 }
 
@@ -200,8 +200,8 @@ function blockButton(active: boolean) {
   return cn(
     "inline-flex h-[1.86rem] w-auto min-w-0 items-center justify-center rounded-full border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
-      ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
-      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/45 hover:text-eid-fg"
+      ? "border-eid-primary-500/35 bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.08)]"
+      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/55 hover:text-eid-fg"
   );
 }
 
