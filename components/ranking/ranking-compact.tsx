@@ -39,8 +39,8 @@ export function RankingFilterBar({
   const rankToggleHref = href({ rank: rankIsMatch ? "eid" : "match", page: 1 });
 
   return (
-    <div className="mb-3 space-y-3 px-2 sm:mb-3.5">
-      <div className="rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.72),rgba(15,23,42,0.52))] p-1.5 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
+    <div className="mb-3 space-y-2.5 px-2 sm:mb-3.5">
+      <div className="rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.72),rgba(15,23,42,0.52))] p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
         <div className="flex items-center gap-2">
           <Link href={href({ tipo: "individual", page: 1 })} className={segmentButton(state.tipo === "individual")}>
           Individual
@@ -54,7 +54,7 @@ export function RankingFilterBar({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.68),rgba(15,23,42,0.5))] p-1.5 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
+      <div className="grid grid-cols-3 gap-2 rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.68),rgba(15,23,42,0.5))] p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
         <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
           <span className="truncate">Cidade</span>
         </Link>
@@ -75,7 +75,7 @@ export function RankingFilterBar({
       ) : null}
 
       {todosEsportes.length > 0 ? (
-        <div className="rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.68),rgba(15,23,42,0.5))] p-1.5 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
+        <div className="rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.68),rgba(15,23,42,0.5))] p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
           <div className="flex min-w-0 items-center gap-2 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 select-none [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
             <div className="flex min-w-max flex-nowrap items-center gap-2">
             {todosEsportes.map((opt) => {
@@ -87,7 +87,7 @@ export function RankingFilterBar({
                   href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                   title={isPrincipal ? "Esporte principal do perfil" : undefined}
                   className={cn(
-                    "inline-flex h-9 w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3.5 text-sm font-medium leading-none tracking-[0.01em] transition-all duration-200",
+                    "inline-flex h-8 w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-[13px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
                     active
                       ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
                       : "border-white/15 bg-transparent text-[#9CA3AF] hover:border-white/25 hover:bg-white/[0.04] hover:text-eid-fg",
@@ -116,10 +116,10 @@ export function RankingPeriodToggle({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
   return (
     <div className="flex justify-end">
-      <div className="relative inline-flex h-7 items-center rounded-full border border-white/15 bg-black/25 p-0.5 text-xs backdrop-blur-sm">
+      <div className="relative inline-flex h-6.5 items-center rounded-full border border-white/15 bg-black/25 p-0.5 text-[11px] backdrop-blur-sm">
         <span
           className={cn(
-            "pointer-events-none absolute top-0.5 h-6 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/80 shadow-[0_0_10px_-6px_rgba(37,99,235,0.75)] transition-all duration-200",
+            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/80 shadow-[0_0_10px_-6px_rgba(37,99,235,0.75)] transition-all duration-200",
             state.periodo === "mes" ? "translate-x-[calc(100%+1px)]" : "translate-x-0"
           )}
           aria-hidden
@@ -127,7 +127,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "ano", page: 1 })}
           className={cn(
-            "relative z-[1] inline-flex h-6 min-w-[3.1rem] items-center justify-center rounded-full px-2 text-xs font-semibold transition-colors duration-200",
+            "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
             state.periodo === "ano" ? "text-white" : "text-[#9CA3AF] hover:text-eid-fg"
           )}
         >
@@ -136,7 +136,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "mes", page: 1 })}
           className={cn(
-            "relative z-[1] inline-flex h-6 min-w-[3.1rem] items-center justify-center rounded-full px-2 text-xs font-semibold transition-colors duration-200",
+            "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
             state.periodo === "mes" ? "text-white" : "text-[#9CA3AF] hover:text-eid-fg"
           )}
         >
@@ -149,7 +149,7 @@ export function RankingPeriodToggle({
 
 function segmentButton(active: boolean) {
   return cn(
-    "inline-flex h-9 w-auto flex-1 items-center justify-center rounded-full border px-3 text-sm font-medium leading-none tracking-[0.01em] transition-all duration-200",
+    "inline-flex h-8 w-auto flex-1 items-center justify-center rounded-full border px-2.5 text-[13px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
       ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
       : "border-white/15 bg-transparent text-[#9CA3AF] hover:border-white/25 hover:bg-white/[0.04] hover:text-eid-fg"
@@ -158,7 +158,7 @@ function segmentButton(active: boolean) {
 
 function blockButton(active: boolean) {
   return cn(
-    "inline-flex h-9 w-auto min-w-0 items-center justify-center rounded-full border px-3 text-sm font-medium leading-none tracking-[0.01em] transition-all duration-200",
+    "inline-flex h-8 w-auto min-w-0 items-center justify-center rounded-full border px-2.5 text-[13px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
       ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
       : "border-white/15 bg-transparent text-[#9CA3AF] hover:border-white/25 hover:bg-white/[0.04] hover:text-eid-fg"
