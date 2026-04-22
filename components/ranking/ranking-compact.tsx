@@ -16,6 +16,39 @@ function IconCrown({ className }: { className?: string }) {
   );
 }
 
+function IconSingle({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
+      <circle cx="12" cy="8" r="3.25" />
+      <path d="M6.75 18.5a5.25 5.25 0 0 1 10.5 0" />
+    </svg>
+  );
+}
+
+function IconDouble({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
+      <circle cx="9" cy="8.25" r="2.5" />
+      <circle cx="15.4" cy="9" r="2.2" />
+      <path d="M4.75 18a4.2 4.2 0 0 1 8.4 0" />
+      <path d="M12.7 18.2a3.55 3.55 0 0 1 5.9-2.6" />
+    </svg>
+  );
+}
+
+function IconTeam({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
+      <circle cx="12" cy="7.8" r="2.6" />
+      <circle cx="6.8" cy="10" r="2.1" />
+      <circle cx="17.2" cy="10" r="2.1" />
+      <path d="M7 18.5a5 5 0 0 1 10 0" />
+      <path d="M2.8 18.5a3.7 3.7 0 0 1 3.9-3.2" />
+      <path d="M17.3 15.3a3.7 3.7 0 0 1 3.9 3.2" />
+    </svg>
+  );
+}
+
 type FilterBarProps = {
   state: RankingSearchState;
   principalEsporteId: number | null;
@@ -41,15 +74,18 @@ export function RankingFilterBar({
     <div className="mb-3">
       <div className="space-y-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2 backdrop-blur-sm shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)] [&_a]:[-webkit-tap-highlight-color:transparent]">
         <div className="rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
-          <div className="flex h-[1.62rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)]">
+          <div className="flex h-[1.5rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)]">
             <Link href={href({ tipo: "individual", page: 1 })} className={tipoSegmentButton(state.tipo === "individual")}>
-              Individual
+              <IconSingle className="h-2.5 w-2.5 shrink-0" />
+              <span>Individual</span>
             </Link>
             <Link href={href({ tipo: "dupla", page: 1 })} className={tipoSegmentButton(state.tipo === "dupla")}>
-              Duplas
+              <IconDouble className="h-2.5 w-2.5 shrink-0" />
+              <span>Duplas</span>
             </Link>
             <Link href={href({ tipo: "time", page: 1 })} className={tipoSegmentButton(state.tipo === "time")}>
-              Times
+              <IconTeam className="h-2.5 w-2.5 shrink-0" />
+              <span>Times</span>
             </Link>
           </div>
         </div>
@@ -189,7 +225,7 @@ export function RankingRankToggle({
 
 function tipoSegmentButton(active: boolean) {
   return cn(
-    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-sm px-1 text-[10px] font-semibold uppercase leading-none tracking-[0.04em] transition-all duration-200",
+    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-sm px-1 text-[9px] font-semibold uppercase leading-none tracking-[0.035em] transition-all duration-200",
     active
       ? "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_4px_14px_-8px_rgba(37,99,235,0.38)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35 hover:text-eid-fg"
