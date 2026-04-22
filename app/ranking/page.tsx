@@ -73,7 +73,6 @@ function normalizeCityHint(raw: string | null | undefined): string {
   return part.toLowerCase();
 }
 
-/** Primeira parte da localização do perfil para exibição (cidade). */
 function cidadeDisplayFromProfile(raw: string | null | undefined): string | null {
   const s = String(raw ?? "").trim();
   if (!s) return null;
@@ -119,34 +118,38 @@ export default async function RankingPage({ searchParams }: Props) {
   if (!user) redirect("/login?next=/ranking");
   const viewerId = user.id;
 
-  const [{ data: me }, { data: meusEsportesRaw }, { data: criados }, { data: membro }] = await Promise.all([
+  const [{ data: me }, { data: meusEsportesRaw }, { data: criados }, { data: membro }, { data: esportesCatalogoRaw }] = await Promise.all([
     supabase.from("profiles").select("localizacao").eq("id", viewerId).maybeSingle(),
     supabase.from("usuario_eid").select("esporte_id, esportes(nome)").eq("usuario_id", viewerId).order("esporte_id", { ascending: true }),
     supabase.from("times").select("id").eq("criador_id", viewerId),
     supabase.from("membros_time").select("time_id").eq("usuario_id", viewerId).eq("status", "ativo"),
+    supabase.from("esportes").select("id, nome").eq("ativo", true).order("ordem", { ascending: true }),
   ]);
 
   const meusEsportes = (meusEsportesRaw ?? []) as MeuEsporteRow[];
-  const userEsporteIds = new Set<number>();
-  const esporteOptions: { id: number; nome: string }[] = [];
-  for (const row of meusEsportes) {
-    if (typeof row.esporte_id === "number" && Number.isFinite(row.esporte_id)) {
-      userEsporteIds.add(row.esporte_id);
-      const nome = String(firstOf(row.esportes)?.nome ?? "").trim() || "Esporte";
-      esporteOptions.push({ id: row.esporte_id, nome });
-    }
-  }
-
   const esportePrincipalId = meusEsportes[0]?.esporte_id ?? null;
+
+  const todosEsportes = (esportesCatalogoRaw ?? [])
+    .filter((e): e is { id: number; nome: string | null } => typeof (e as { id?: number }).id === "number" && Number.isFinite((e as { id: number }).id))
+    .map((e) => ({
+      id: e.id,
+      nome: String(e.nome ?? "").trim() || "Esporte",
+    }));
+
+  const allEsporteIds = new Set(todosEsportes.map((e) => e.id));
+
   const parsedEsporteParam = Number(state.esporte);
-  let selectedEsporteId: number | null = esportePrincipalId;
-  if (Number.isFinite(parsedEsporteParam) && parsedEsporteParam > 0 && userEsporteIds.has(parsedEsporteParam)) {
+  let selectedEsporteId: number | null = null;
+  if (Number.isFinite(parsedEsporteParam) && parsedEsporteParam > 0 && allEsporteIds.has(parsedEsporteParam)) {
     selectedEsporteId = parsedEsporteParam;
+  } else if (esportePrincipalId != null && allEsporteIds.has(esportePrincipalId)) {
+    selectedEsporteId = esportePrincipalId;
+  } else {
+    selectedEsporteId = todosEsportes[0]?.id ?? null;
   }
 
   const cidadeDisplay = cidadeDisplayFromProfile(me?.localizacao ?? null);
   const needsCidadeFallback = state.local === "cidade" && !cidadeDisplay;
-  const esporteAtualNome = esporteOptions.find((e) => e.id === selectedEsporteId)?.nome ?? null;
 
   const myTeamIds = new Set<number>();
   for (const r of criados ?? []) {
@@ -228,7 +231,7 @@ export default async function RankingPage({ searchParams }: Props) {
   const podiumFirst = toPodiumSlot(podiumRows[0], "1º");
   const podiumThird = toPodiumSlot(podiumRows[2], "3º");
 
-  const noSportHint = esportePrincipalId === null;
+  const noCatalogHint = todosEsportes.length === 0;
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
@@ -237,30 +240,23 @@ export default async function RankingPage({ searchParams }: Props) {
         className="pointer-events-none absolute inset-x-0 top-0 h-[min(52vh,28rem)] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)]"
         aria-hidden
       />
-      {/* Padding vertical vem do layout global (#app-main-column); aqui só respiro lateral + mínimo entre blocos */}
       <div className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pb-3 pt-1 sm:max-w-2xl sm:px-6 sm:pb-4 sm:pt-2">
-        <header className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
+        <header className="mb-1.5 sm:mb-2">
           <h1 className="text-xl font-bold tracking-tight text-eid-fg md:text-2xl">Ranking</h1>
-          <Link
-            href="/dashboard"
-            className="inline-flex h-9 shrink-0 items-center justify-center rounded-full border border-eid-primary-500/25 bg-eid-primary-500/[0.06] px-3 text-xs font-bold text-eid-primary-300 transition hover:border-eid-primary-500/38 hover:bg-eid-primary-500/10"
-          >
-            Painel
-          </Link>
         </header>
 
         <RankingFilterBar
           state={state}
           principalEsporteId={esportePrincipalId}
+          selectedEsporteId={selectedEsporteId}
           cidadeDisplay={cidadeDisplay}
           needsCidadeFallback={needsCidadeFallback}
-          esporteAtualNome={esporteAtualNome}
-          esporteOptions={esporteOptions}
+          todosEsportes={todosEsportes}
         />
 
-        {noSportHint ? (
+        {noCatalogHint ? (
           <p className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-5 text-center text-sm leading-relaxed text-eid-text-secondary sm:rounded-2xl">
-            Cadastre pelo menos um esporte no seu perfil EID para ver o ranking neste esporte.
+            Nenhum esporte disponível no momento.
           </p>
         ) : rankingAll.length === 0 ? (
           <p className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-6 text-center text-sm text-eid-text-secondary sm:rounded-2xl">
@@ -274,8 +270,8 @@ export default async function RankingPage({ searchParams }: Props) {
 
             {showViewerCard && viewerRank !== null ? <ViewerRankCard rank={viewerRank} /> : null}
 
-            <section className="mt-4 sm:mt-5">
-              <h2 className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Classificação</h2>
+            <section className="mt-2 sm:mt-2.5">
+              <h2 className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Classificação</h2>
               <div className="overflow-hidden rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 px-2.5 sm:rounded-2xl sm:px-3.5">
                 {pageSlice.length === 0 ? (
                   <p className="py-5 text-center text-sm text-eid-text-secondary">Fim da lista.</p>
@@ -298,7 +294,7 @@ export default async function RankingPage({ searchParams }: Props) {
             </section>
 
             {hasMore ? (
-              <div className="mt-4 flex justify-center sm:mt-5">
+              <div className="mt-3 flex justify-center sm:mt-4">
                 <Link
                   href={rankingHref({ page: state.page + 1 }, state, esportePrincipalId)}
                   className="inline-flex min-h-10 items-center justify-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/[0.08] px-7 text-sm font-bold text-eid-fg transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/12"
