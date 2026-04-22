@@ -154,7 +154,7 @@ export function RankingFilterBar({
                     href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                     title={isPrincipal ? "Esporte principal do perfil" : undefined}
                     className={cn(
-                      "inline-flex h-[1.38rem] w-auto shrink-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200",
+                      "inline-flex h-[1.38rem] w-auto shrink-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97]",
                       active
                         ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
                         : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55 hover:text-eid-fg",
@@ -196,7 +196,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "ano", page: 1 })}
           className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
             state.periodo === "ano" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -205,7 +205,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "mes", page: 1 })}
           className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
             state.periodo === "mes" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -238,7 +238,7 @@ export function RankingRankToggle({
         <Link
           href={href({ rank: "match", page: 1 })}
           className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
             rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -247,7 +247,7 @@ export function RankingRankToggle({
         <Link
           href={href({ rank: "eid", page: 1 })}
           className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
             !rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -260,7 +260,7 @@ export function RankingRankToggle({
 
 function tipoSegmentButton(active: boolean) {
   return cn(
-    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-sm px-1 text-[9px] font-semibold uppercase leading-none tracking-[0.035em] transition-all duration-200",
+    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-sm px-1 text-[9px] font-semibold uppercase leading-none tracking-[0.035em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.98]",
     active
       ? "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_4px_14px_-8px_rgba(37,99,235,0.38)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35 hover:text-eid-fg"
@@ -269,7 +269,7 @@ function tipoSegmentButton(active: boolean) {
 
 function blockButton(active: boolean) {
   return cn(
-    "inline-flex h-[1.38rem] w-auto min-w-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200",
+    "inline-flex h-[1.38rem] w-auto min-w-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.98]",
     active
       ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55 hover:text-eid-fg"
@@ -380,7 +380,7 @@ function PodiumFace({ slot, highlight, rankKind }: { slot: PodiumSlot; highlight
       )}
       <Link
         href={slot.href}
-        className="group relative flex flex-col items-center outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
+        className="group relative flex flex-col items-center transition-transform duration-200 ease-out motion-safe:transform-gpu hover:scale-[1.02] active:scale-[0.98] outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
         aria-label={`Perfil de ${slot.nome}`}
       >
         <div className="relative pb-1.5">
@@ -438,7 +438,7 @@ export function RankingRow({
       <span className="w-7 shrink-0 text-center text-sm font-black tabular-nums text-eid-primary-300">{rank}º</span>
       <Link
         href={href}
-        className="group relative h-9 w-9 shrink-0 outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
+        className="group relative h-9 w-9 shrink-0 transition-transform duration-200 ease-out motion-safe:transform-gpu hover:scale-[1.03] active:scale-[0.97] outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
         aria-label={`Perfil de ${nome}`}
       >
         <div className="relative pb-1.5">

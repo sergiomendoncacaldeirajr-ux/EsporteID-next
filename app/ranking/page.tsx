@@ -376,7 +376,7 @@ export default async function RankingPage({ searchParams }: Props) {
                   <div className="mt-3 flex justify-center">
                     <Link
                       href={rankingHref({ page: state.page + 1 }, state, esportePrincipalId)}
-                      className="inline-flex min-h-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-5 text-xs font-medium text-eid-fg transition hover:border-[color:var(--eid-border)] hover:bg-eid-surface/85"
+                      className="inline-flex min-h-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-5 text-xs font-medium text-eid-fg transition-all duration-200 ease-out motion-safe:transform-gpu hover:-translate-y-[1px] hover:border-[color:var(--eid-border)] hover:bg-eid-surface/85 active:translate-y-0 active:scale-[0.98]"
                     >
                       Ver mais
                     </Link>
