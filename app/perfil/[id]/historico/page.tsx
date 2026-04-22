@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { createClient } from "@/lib/supabase/server";
 
@@ -35,7 +34,7 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
   const { data: partidasRaw } = await supabase
     .from("partidas")
     .select(
-      "id, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, torneio_id, data_resultado, data_registro"
+      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, torneio_id, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id"
     )
     .or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`)
     .order("data_registro", { ascending: false })
@@ -51,11 +50,37 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
   const oponenteIds = [
     ...new Set(partidas.map((p) => (p.jogador1_id === id ? p.jogador2_id : p.jogador1_id)).filter((x): x is string => !!x)),
   ];
-  const nomeOponente = new Map<string, string>();
+  const oponenteMap = new Map<string, { nome: string; avatarUrl: string | null; username: string | null }>();
   if (oponenteIds.length > 0) {
-    const { data: oponentes } = await supabase.from("profiles").select("id, nome").in("id", oponenteIds);
+    const { data: oponentes } = await supabase.from("profiles").select("id, nome, avatar_url, username").in("id", oponenteIds);
     for (const op of oponentes ?? []) {
-      if (op.id) nomeOponente.set(op.id, op.nome ?? "Atleta");
+      if (!op.id) continue;
+      oponenteMap.set(op.id, {
+        nome: op.nome ?? "Atleta",
+        avatarUrl: op.avatar_url ?? null,
+        username: op.username ?? null,
+      });
+    }
+  }
+
+  const esporteIds = [...new Set(partidas.map((p) => Number(p.esporte_id)).filter((x) => Number.isFinite(x) && x > 0))];
+  const esporteNomeMap = new Map<number, string>();
+  if (esporteIds.length > 0) {
+    const { data: esportesRows } = await supabase.from("esportes").select("id, nome").in("id", esporteIds);
+    for (const e of esportesRows ?? []) {
+      if (e.id != null) esporteNomeMap.set(Number(e.id), e.nome ?? "Esporte");
+    }
+  }
+
+  const localEspacoIds = [...new Set(partidas.map((p) => Number(p.local_espaco_id)).filter((x) => Number.isFinite(x) && x > 0))];
+  const localEspacoNomeMap = new Map<number, string>();
+  if (localEspacoIds.length > 0) {
+    const { data: locaisRows } = await supabase
+      .from("espacos_genericos")
+      .select("id, nome_publico")
+      .in("id", localEspacoIds);
+    for (const loc of locaisRows ?? []) {
+      if (loc.id != null) localEspacoNomeMap.set(Number(loc.id), loc.nome_publico ?? "Local");
     }
   }
 
@@ -75,20 +100,15 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
   );
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto w-full max-w-lg px-2.5 pb-6 pt-2 sm:max-w-2xl sm:px-5 sm:pb-8 sm:pt-3">
-        <div className="eid-surface-panel rounded-2xl p-3 sm:p-4">
+    <main className="mx-auto w-full max-w-lg px-2.5 pb-6 pt-2 sm:max-w-2xl sm:px-5 sm:pb-8 sm:pt-3">
+      <div className="eid-surface-panel rounded-2xl p-3 sm:p-4">
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-sm font-black uppercase tracking-[0.08em] text-eid-fg">Histórico completo</h1>
-            <Link
-              href={`/perfil/${id}`}
-              className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
-            >
-              Voltar ao perfil
-            </Link>
           </div>
           <p className="mt-0.5 text-[10px] text-eid-text-secondary">{perfil.nome ?? "Atleta"} · somente confrontos individuais</p>
+          <p className="mt-1 text-[9px] text-eid-text-secondary">
+            Aqui estão todos os confrontos deste perfil. Para ver resultados por esporte, volte ao perfil e acesse as estatísticas no EID de cada esporte.
+          </p>
 
           <div className="mt-3 grid grid-cols-5 gap-1.5">
             <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
@@ -123,12 +143,21 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
                 const venceu = isP1 ? s1 > s2 : s2 > s1;
                 const resultado = empatou ? "E" : venceu ? "V" : "D";
                 const oponenteId = isP1 ? p.jogador2_id : p.jogador1_id;
-                const oponenteNome = oponenteId ? nomeOponente.get(oponenteId) ?? "Atleta" : "Atleta";
-                const data = p.data_resultado ?? p.data_registro;
+                const oponente = oponenteId ? oponenteMap.get(oponenteId) : null;
+                const oponenteNome = oponente?.nome ?? "Atleta";
+                const data = p.data_resultado ?? p.data_partida ?? p.data_registro;
+                const esporteNome = p.esporte_id != null ? esporteNomeMap.get(Number(p.esporte_id)) ?? "Esporte" : "Esporte";
+                const modalidade = String(p.modalidade ?? "individual").trim();
+                const modalidadeFmt = modalidade ? modalidade.charAt(0).toUpperCase() + modalidade.slice(1) : "Individual";
+                const localNome =
+                  (p.local_espaco_id != null ? localEspacoNomeMap.get(Number(p.local_espaco_id)) : null) ??
+                  String(p.local_str ?? "").trim() ||
+                  String(p.local_cidade ?? "").trim() ||
+                  "Local não informado";
                 return (
                   <li
                     key={p.id}
-                    className={`eid-list-item flex items-center justify-between rounded-lg bg-eid-surface/45 px-2 py-1.5 text-[10px] ${
+                    className={`eid-list-item flex items-center gap-2 rounded-xl bg-eid-surface/45 px-2 py-2 text-[10px] ${
                       resultado === "V"
                         ? "border-emerald-400/30"
                         : resultado === "D"
@@ -136,15 +165,48 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
                           : "border-[color:var(--eid-border-subtle)]"
                     }`}
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-[10px] font-semibold text-eid-fg">
-                        {p.torneio_id ? "Torneio" : "Rank"} · vs {oponenteNome}
+                    {oponenteId ? (
+                      <Link href={`/perfil/${oponenteId}?from=${encodeURIComponent(`/perfil/${id}/historico`)}`} className="shrink-0">
+                        {oponente?.avatarUrl ? (
+                          <img
+                            src={oponente.avatarUrl}
+                            alt={oponenteNome}
+                            className="h-10 w-10 rounded-full border border-[color:var(--eid-border-subtle)] object-cover"
+                          />
+                        ) : (
+                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300">
+                            {oponenteNome.trim().slice(0, 1).toUpperCase() || "A"}
+                          </span>
+                        )}
+                      </Link>
+                    ) : (
+                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300">
+                        A
+                      </span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <p className="truncate text-[10px] font-semibold text-eid-fg">vs {oponenteNome}</p>
+                        <span className="text-[8px] text-eid-text-secondary">@{oponente?.username ?? "atleta"}</span>
+                      </div>
+                      <p className="mt-0.5 text-[9px] font-semibold text-eid-fg">
+                        {p.torneio_id ? "Torneio" : "Rank"} · {s1}x{s2}
                       </p>
-                      <p className="text-[9px] text-eid-text-secondary">
-                        {s1}x{s2} · {data ? new Date(data).toLocaleDateString("pt-BR") : "—"}
+                      <p className="mt-0.5 line-clamp-2 text-[9px] text-eid-text-secondary">
+                        {data ? new Date(data).toLocaleDateString("pt-BR") : "—"} · {esporteNome} · {modalidadeFmt} · {localNome}
                       </p>
                     </div>
-                    <span className="ml-2 text-[12px] font-black text-eid-fg">{resultado}</span>
+                    <span
+                      className={`ml-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
+                        resultado === "V"
+                          ? "bg-emerald-500/18 text-emerald-300"
+                          : resultado === "D"
+                            ? "bg-red-500/18 text-red-300"
+                            : "bg-eid-primary-500/18 text-eid-primary-300"
+                      }`}
+                    >
+                      {resultado}
+                    </span>
                   </li>
                 );
               })}
@@ -162,9 +224,8 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
               </p>
             </div>
           )}
-        </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }
 
