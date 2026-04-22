@@ -107,10 +107,9 @@ export function LoginForm() {
       <div className="w-full max-w-[340px] pb-6">
         <Link
           href="/?home=1"
-          className="mb-3 inline-block max-w-[calc(100%-5.5rem)] text-[13px] leading-snug text-eid-text-muted no-underline transition hover:text-eid-fg sm:max-w-none"
+          className="mb-3 hidden max-w-none text-[13px] leading-snug text-eid-text-muted no-underline transition hover:text-eid-fg sm:inline-block"
         >
-          <span className="sm:hidden">← Início (site)</span>
-          <span className="hidden sm:inline">← Página institucional (melhor no computador)</span>
+          ← Página institucional (melhor no computador)
         </Link>
 
         <LogoFull priority className="mb-5 mt-1" />

@@ -1108,20 +1108,34 @@ export async function salvarPerfilOnboarding(
   if (atletaCountErr) return { ok: false, message: atletaCountErr.message };
   const precisaFicha = (atletaSportsCount ?? 0) > 0;
 
-  const altura = alturaRaw ? Number(alturaRaw) : null;
-  const peso = pesoRaw ? Number(pesoRaw) : null;
+  const altura = alturaRaw ? Number.parseInt(alturaRaw, 10) : null;
+  const peso = pesoRaw ? Number.parseInt(pesoRaw, 10) : null;
 
   if (precisaFicha) {
-    if (!altura || altura < 50 || altura > 260) {
-      return { ok: false, message: "Informe uma altura válida (cm)." };
+    if (alturaRaw) {
+      if (!Number.isFinite(altura) || altura === null || altura < 50 || altura > 260) {
+        return { ok: false, message: "Informe uma altura válida (cm), entre 50 e 260, ou deixe em branco." };
+      }
     }
-    if (!peso || peso < 20 || peso > 300) {
-      return { ok: false, message: "Informe um peso válido (kg)." };
+    if (pesoRaw) {
+      if (!Number.isFinite(peso) || peso === null || peso < 20 || peso > 300) {
+        return { ok: false, message: "Informe um peso válido (kg), entre 20 e 300, ou deixe em branco." };
+      }
     }
-    if (!lado || !["Destro", "Canhoto", "Ambos"].includes(lado)) {
-      return { ok: false, message: "Selecione a mão dominante." };
+    if (lado && !["Destro", "Canhoto", "Ambos"].includes(lado)) {
+      return { ok: false, message: "Selecione a mão dominante ou deixe sem escolher." };
     }
   }
+
+  const { data: perfilAvatarRow } = await supabase
+    .from("profiles")
+    .select("avatar_url")
+    .eq("id", user.id)
+    .maybeSingle();
+  const avatarExistente =
+    perfilAvatarRow?.avatar_url && String(perfilAvatarRow.avatar_url).trim().length > 0
+      ? String(perfilAvatarRow.avatar_url).trim()
+      : null;
 
   let avatarUrl: string | null = null;
   const fotoPrincipal = formData.get("foto");
@@ -1132,6 +1146,11 @@ export async function salvarPerfilOnboarding(
     (fotoCamera instanceof File && fotoCamera.size > 0 && fotoCamera) ||
     (fotoGaleria instanceof File && fotoGaleria.size > 0 && fotoGaleria) ||
     null;
+
+  if (!foto && !avatarExistente) {
+    return { ok: false, message: "Envie uma foto de perfil (câmera ou galeria) para finalizar o cadastro." };
+  }
+
   if (foto instanceof File && foto.size > 0) {
     if (!IMG_ACCEPT.has(foto.type)) {
       return { ok: false, message: "Formato da foto inválido. Use JPG, PNG ou WEBP." };
@@ -1172,9 +1191,25 @@ export async function salvarPerfilOnboarding(
       bio: bio || null,
       estilo_jogo: estiloJogo || null,
       disponibilidade_semana_json: disponibilidadeSemana,
-      altura_cm: precisaFicha ? altura : null,
-      peso_kg: precisaFicha ? peso : null,
-      lado: precisaFicha ? lado : null,
+      altura_cm:
+        precisaFicha &&
+        alturaRaw &&
+        Number.isFinite(altura) &&
+        altura !== null &&
+        altura >= 50 &&
+        altura <= 260
+          ? altura
+          : null,
+      peso_kg:
+        precisaFicha &&
+        pesoRaw &&
+        Number.isFinite(peso) &&
+        peso !== null &&
+        peso >= 20 &&
+        peso <= 300
+          ? peso
+          : null,
+      lado: precisaFicha && lado && ["Destro", "Canhoto", "Ambos"].includes(lado) ? lado : null,
       tempo_experiencia: tempoExperiencia,
       ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
       perfil_completo: true,

@@ -1099,6 +1099,8 @@ export function OnboardingWizard({
   const perfilAlturaNum = Number(alturaCm);
   const perfilPesoNum = Number(pesoKg);
   const hasFotoSelecionada = Boolean(fotoPreviewUrl);
+  const hasFotoParaFinalizar =
+    hasFotoSelecionada || Boolean(profileInitial.avatarUrl && profileInitial.avatarUrl.trim().length > 0);
 
   useEffect(() => {
     return () => {
@@ -1142,6 +1144,7 @@ export function OnboardingWizard({
     if (nome.trim().length < 3 || localizacao.trim().length < 3) return false;
     const uname = username.trim().toLowerCase();
     if (uname && !/^[a-z0-9_]{3,24}$/.test(uname)) return false;
+    if (!hasFotoParaFinalizar) return false;
     if (hasAnyAthleteSport) {
       const alturaRaw = alturaCm.trim();
       const pesoRaw = pesoKg.trim();
@@ -1151,10 +1154,21 @@ export function OnboardingWizard({
       if (pesoRaw.length > 0 && (!Number.isInteger(perfilPesoNum) || perfilPesoNum < 20 || perfilPesoNum > 300)) {
         return false;
       }
-      if (!["Destro", "Canhoto", "Ambos"].includes(lado)) return false;
+      if (lado && !["Destro", "Canhoto", "Ambos"].includes(lado)) return false;
     }
     return true;
-  }, [alturaCm, hasAnyAthleteSport, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum, pesoKg, username]);
+  }, [
+    alturaCm,
+    hasAnyAthleteSport,
+    hasFotoParaFinalizar,
+    lado,
+    localizacao,
+    nome,
+    perfilAlturaNum,
+    perfilPesoNum,
+    pesoKg,
+    username,
+  ]);
 
   function applyResult(r: OnboardingActionResult) {
     if (!r.ok) {
@@ -2473,7 +2487,7 @@ export function OnboardingWizard({
                   </div>
                 )}
                 <div className="flex-1">
-                  <label className="text-sm font-medium text-eid-fg">Foto de perfil</label>
+                  <label className="text-sm font-medium text-eid-fg">Foto de perfil (obrigatória)</label>
                   <div className="mt-1 flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -2557,7 +2571,7 @@ export function OnboardingWizard({
                     </div>
                   ) : null}
                   <p className="mt-1 text-[11px] text-eid-text-secondary">
-                    Apenas foto (JPG/PNG/WEBP), recomendado até 5MB.
+                    JPG, PNG ou WEBP, até 5MB. É necessário enviar uma foto para concluir o cadastro.
                   </p>
                 </div>
               </div>
@@ -2629,10 +2643,9 @@ export function OnboardingWizard({
                       name="altura_cm"
                       min={50}
                       max={260}
-                      required
                       value={alturaCm}
                       onChange={(e) => setAlturaCm(e.target.value)}
-                      placeholder="Altura (cm)"
+                      placeholder="Altura (cm) — opcional"
                       className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
                     />
                     <input
@@ -2640,15 +2653,15 @@ export function OnboardingWizard({
                       name="peso_kg"
                       min={20}
                       max={300}
-                      required
                       value={pesoKg}
                       onChange={(e) => setPesoKg(e.target.value)}
-                      placeholder="Peso (kg)"
+                      placeholder="Peso (kg) — opcional"
                       className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
                     />
                   </div>
-                  {/* Mão dominante — segmented control */}
+                  {/* Mão dominante — opcional */}
                   <input type="hidden" name="lado" value={lado} />
+                  <p className="text-[11px] text-eid-text-secondary">Mão dominante (opcional)</p>
                   <div className="inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1 gap-1">
                     {([
                       { val: "Destro",   label: "Destro" },

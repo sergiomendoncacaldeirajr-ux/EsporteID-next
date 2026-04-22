@@ -75,7 +75,7 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
       {
         esporteId,
         modalidades,
-        tempoTipo: "faixa",
+        tempoTipo: "inicio",
         tempo: "1 a 3 anos",
         tempoAnos: 0,
         tempoMeses: 0,
@@ -148,30 +148,16 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
                   </button>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">
-                    Tempo de experiência neste esporte
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(
-                      [
-                        { id: "faixa" as const, label: "Faixa aproximada" },
-                        { id: "inicio" as const, label: "Desde mês e ano" },
-                      ] as const
-                    ).map((opt) => (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => updateItem(item.esporteId, { tempoTipo: opt.id })}
-                        className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition ${
-                          item.tempoTipo === opt.id
-                            ? "border-eid-primary-500/50 bg-eid-primary-500/15 text-eid-fg"
-                            : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:text-eid-fg"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">
+                      Tempo de experiência neste esporte
+                    </p>
+                    <p className="mt-0.5 text-[10px] leading-snug text-eid-text-secondary">
+                      Informe o <span className="font-semibold text-eid-fg">mês e o ano</span> em que começou a praticar. A faixa
+                      aproximada é só se preferir não usar data.
+                    </p>
                   </div>
+
                   {item.tempoTipo === "inicio" ? (
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       <label className="grid gap-1">
@@ -207,7 +193,36 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
                         </select>
                       </label>
                     </div>
-                  ) : (
+                  ) : null}
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-eid-text-secondary">
+                      {item.tempoTipo === "inicio" ? "Opcional" : "Forma de informar"}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(
+                        [
+                          { id: "inicio" as const, label: "Mês e ano" },
+                          { id: "faixa" as const, label: "Faixa aproximada (opcional)" },
+                        ] as const
+                      ).map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => updateItem(item.esporteId, { tempoTipo: opt.id })}
+                          className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition ${
+                            item.tempoTipo === opt.id
+                              ? "border-eid-primary-500/50 bg-eid-primary-500/15 text-eid-fg"
+                              : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:text-eid-fg"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {item.tempoTipo === "faixa" ? (
                     <div className="grid gap-2 sm:grid-cols-2">
                       <select
                         value={item.tempo}
@@ -247,10 +262,10 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
                         />
                       </div>
                       <p className="sm:col-span-2 text-[10px] leading-snug text-eid-text-secondary">
-                        Opcional: preencha anos e meses para um texto mais preciso (ex.: &quot;2 anos e 3 meses&quot;).
+                        Opcional: anos e meses refinam o texto (ex.: &quot;2 anos e 3 meses&quot;).
                       </p>
                     </div>
-                  )}
+                  ) : null}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {sport.permiteIndividual ? (
