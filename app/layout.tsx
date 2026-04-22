@@ -118,7 +118,7 @@ export default async function RootLayout({
                 ? "flex min-h-0 flex-1 flex-col pt-[calc(3.25rem+env(safe-area-inset-top))]"
                 : hideAppShell
                   ? "flex min-h-0 flex-1 flex-col"
-                  : "flex flex-1 flex-col pb-28"
+                  : "flex flex-1 flex-col pb-8 md:pb-28"
           }
         >
           <ViewTransition default="none" enter="eid-vt-main-in" exit="eid-vt-main-out">

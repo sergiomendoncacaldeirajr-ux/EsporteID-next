@@ -9,7 +9,7 @@ export async function SiteFooter() {
 
   return (
     <footer
-      className="mt-auto pb-[calc(4.8rem+env(safe-area-inset-bottom))] md:pb-0"
+      className="mt-auto hidden md:block"
       style={{ viewTransitionName: "eid-app-footer" }}
     >
       <div className="h-px bg-gradient-to-r from-transparent via-[color:var(--eid-border)] to-transparent" />
