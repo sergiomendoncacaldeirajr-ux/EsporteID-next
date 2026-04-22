@@ -256,17 +256,31 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
 
             {/* Avatar + Nome/Selos lado a lado */}
             <div className="relative z-[3] -mt-6 flex items-end gap-3 sm:-mt-7">
-              {perfil.avatar_url ? (
-                <img
-                  src={perfil.avatar_url}
-                  alt=""
-                  className="relative z-10 h-[68px] w-[68px] shrink-0 rounded-full border-[3px] border-eid-card object-cover shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]"
-                />
-              ) : (
-                <div className="relative z-10 flex h-[68px] w-[68px] shrink-0 items-center justify-center rounded-full border-[3px] border-eid-card bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-sm font-black tracking-widest text-eid-primary-200 shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]">
-                  EID
-                </div>
-              )}
+              <div className="relative z-10 h-[68px] w-[68px] shrink-0">
+                {perfil.avatar_url ? (
+                  <img
+                    src={perfil.avatar_url}
+                    alt=""
+                    className="h-[68px] w-[68px] rounded-full border-[3px] border-eid-card object-cover shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]"
+                  />
+                ) : (
+                  <div className="flex h-[68px] w-[68px] items-center justify-center rounded-full border-[3px] border-eid-card bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-sm font-black tracking-widest text-eid-primary-200 shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]">
+                    EID
+                  </div>
+                )}
+                {isSelf ? (
+                  <Link
+                    href={CONTA_PERFIL_HREF}
+                    className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/92 text-eid-text-secondary transition-colors hover:text-eid-fg"
+                    aria-label="Editar foto de perfil"
+                    title="Editar foto de perfil"
+                  >
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3" aria-hidden>
+                      <path d="M2.5 4A1.5 1.5 0 0 1 4 2.5h1.124a1 1 0 0 0 .8-.4l.352-.47A1.5 1.5 0 0 1 7.476 1h1.048a1.5 1.5 0 0 1 1.2.63l.352.47a1 1 0 0 0 .8.4H12A1.5 1.5 0 0 1 13.5 4v8A1.5 1.5 0 0 1 12 13.5H4A1.5 1.5 0 0 1 2.5 12V4Zm5.5 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+                    </svg>
+                  </Link>
+                ) : null}
+              </div>
               <div className="min-w-0 flex-1 pb-1">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <h1 className="text-[13px] font-black leading-tight tracking-tight text-eid-fg drop-shadow-[0_1px_6px_rgba(0,0,0,0.45)] break-words">
@@ -343,34 +357,32 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             </div>
 
             {/* Ficha técnica — sem tempo_experiencia (fica nos cards EID por esporte) */}
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <div className="mt-2 flex flex-nowrap items-center gap-x-2 overflow-x-auto pb-0.5">
               {perfil.altura_cm ? (
-                <p className="text-[10px] text-eid-text-secondary">
+                <p className="shrink-0 whitespace-nowrap text-[9px] text-eid-text-secondary">
                   Altura <span className="font-semibold text-eid-fg">{perfil.altura_cm} cm</span>
                 </p>
               ) : null}
               {perfil.peso_kg ? (
-                <p className="text-[10px] text-eid-text-secondary">
+                <p className="shrink-0 whitespace-nowrap text-[9px] text-eid-text-secondary">
                   Peso <span className="font-semibold text-eid-fg">{perfil.peso_kg} kg</span>
                 </p>
               ) : null}
-              <div className="ml-auto inline-flex shrink-0 items-center gap-3 whitespace-nowrap">
-                {perfil.lado ? (
-                  <p className="text-[10px] text-eid-text-secondary">
-                    Lado <span className="font-semibold text-eid-fg">{perfil.lado}</span>
-                  </p>
-                ) : null}
-                <div className="inline-flex items-center whitespace-nowrap">
-                  <span className="mr-1 text-[10px] text-eid-text-secondary">Amistoso</span>
-                  <ProfileFriendlyStatusToggle
-                    userId={id}
-                    initialOn={perfil.disponivel_amistoso === true}
-                    canToggle={isSelf}
-                  />
-                </div>
+              {perfil.lado ? (
+                <p className="shrink-0 whitespace-nowrap text-[9px] text-eid-text-secondary">
+                  Lado <span className="font-semibold text-eid-fg">{perfil.lado}</span>
+                </p>
+              ) : null}
+              <div className="ml-auto inline-flex shrink-0 items-center whitespace-nowrap">
+                <span className="mr-1 text-[9px] text-eid-text-secondary">Amistoso</span>
+                <ProfileFriendlyStatusToggle
+                  userId={id}
+                  initialOn={perfil.disponivel_amistoso === true}
+                  canToggle={isSelf}
+                />
               </div>
               {perfil.estilo_jogo ? (
-                <p className="text-[10px] text-eid-text-secondary">
+                <p className="shrink-0 whitespace-nowrap text-[9px] text-eid-text-secondary">
                   Estilo <span className="font-semibold text-eid-fg">{perfil.estilo_jogo}</span>
                 </p>
               ) : null}
