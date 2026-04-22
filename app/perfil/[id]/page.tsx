@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
 import { ProfileCoverControl } from "@/components/perfil/profile-cover-control";
+import { ProfileHistoryVisibilityToggle } from "@/components/perfil/profile-history-visibility-toggle";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
-import { ProfileTeamCard } from "@/components/perfil/profile-team-members-cards";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import {
   esporteIdsComMatchAceitoEntre,
@@ -21,6 +20,8 @@ type Props = {
   searchParams?: Promise<{ from?: string }>;
 };
 
+const HISTORICO_STATUS_CONCLUIDO = new Set(["concluida", "concluído", "finalizada", "encerrada"]);
+
 export default async function PerfilPublicoPage({ params, searchParams }: Props) {
   const { id } = await params;
   const sp = (await searchParams) ?? {};
@@ -34,7 +35,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const { data: perfil } = await supabase
     .from("profiles")
     .select(
-      "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, estilo_jogo, bio"
+      "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, mostrar_historico_publico, estilo_jogo, bio"
     )
     .eq("id", id)
     .maybeSingle();
@@ -134,25 +135,58 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     .order("visitas", { ascending: false })
     .limit(10);
 
-  const { data: partidasRecentes } = await supabase
+  const { data: partidasHistoricoRaw } = await supabase
     .from("partidas")
-    .select("id, jogador1_id, jogador2_id, placar_1, placar_2, status, data_resultado, data_registro")
+    .select(
+      "id, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, torneio_id, data_resultado, data_registro"
+    )
     .or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`)
     .order("data_registro", { ascending: false })
-    .limit(8);
+    .limit(180);
 
-  const timeline = (partidasRecentes ?? []).map((p) => {
+  const partidasHistorico = (partidasHistoricoRaw ?? []).filter((p) => {
+    if (!p.jogador1_id || !p.jogador2_id) return false;
+    if (p.time1_id != null || p.time2_id != null) return false;
+    const st = String(p.status ?? "").toLowerCase();
+    return HISTORICO_STATUS_CONCLUIDO.has(st);
+  });
+
+  const resumoHistorico = partidasHistorico.slice(0, 6).map((p) => {
     const isP1 = p.jogador1_id === id;
-    const isP2 = p.jogador2_id === id;
-    let resultado: "V" | "D" | "—" = "—";
-    if (Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2))) {
+    const s1 = Number(p.placar_1 ?? 0);
+    const s2 = Number(p.placar_2 ?? 0);
+    const venceu = isP1 ? s1 > s2 : s2 > s1;
+    const empatou = s1 === s2;
+    const origem = p.torneio_id ? "Torneio" : "Rank";
+    const resultado = empatou ? "E" : venceu ? "V" : "D";
+    const dataIso = p.data_resultado ?? p.data_registro;
+    const dataFmt = dataIso ? new Date(dataIso).toLocaleDateString("pt-BR") : "—";
+    return {
+      id: String(p.id),
+      resultado,
+      origem,
+      placar: `${s1}x${s2}`,
+      dataFmt,
+      tone: empatou ? "neutral" : venceu ? "positive" : "negative",
+    };
+  });
+
+  const historicoTotais = partidasHistorico.reduce(
+    (acc, p) => {
+      const isP1 = p.jogador1_id === id;
       const s1 = Number(p.placar_1 ?? 0);
       const s2 = Number(p.placar_2 ?? 0);
-      if (isP1) resultado = s1 > s2 ? "V" : s1 < s2 ? "D" : "—";
-      if (isP2) resultado = s2 > s1 ? "V" : s2 < s1 ? "D" : "—";
-    }
-    return { id: p.id, resultado, data: p.data_resultado ?? p.data_registro };
-  });
+      if (s1 === s2) acc.empates += 1;
+      else if ((isP1 && s1 > s2) || (!isP1 && s2 > s1)) acc.vitorias += 1;
+      else acc.derrotas += 1;
+      if (p.torneio_id) acc.torneio += 1;
+      else acc.rank += 1;
+      return acc;
+    },
+    { vitorias: 0, derrotas: 0, empates: 0, rank: 0, torneio: 0 }
+  );
+  const mostrarHistoricoPublico = perfil.mostrar_historico_publico !== false;
+  const podeVerHistorico = isSelf || mostrarHistoricoPublico;
 
   const conquistas: string[] = [];
   if ((eids ?? []).length >= 3) conquistas.push("Multi-esporte");
@@ -440,12 +474,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                     Ver perfil profissional
                   </Link>
                 ) : null}
-                <Link
-                  href="/times?create=1"
-                  className={`${isSelf && !hasProfessor ? "col-span-2" : ""} eid-btn-soft inline-flex min-h-[36px] items-center justify-center rounded-xl border-eid-action-500/30 px-3 text-[11px] font-bold uppercase tracking-wide text-eid-action-400`}
-                >
-                  Nova Equipe
-                </Link>
               </div>
             )}
           </section>
@@ -508,117 +536,137 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           ) : null}
 
           {/* ── Performance EID ─────────────────────────────────────── */}
-          <ProfileSection title="Performance EID">
+          <div className="-mt-3">
             {isSelf ? (
-              <div className="mb-2 mt-1">
+              <div className="-mb-5 mt-0 flex justify-end">
                 <Link
                   href={CONTA_ESPORTES_EID_HREF}
-                  className="eid-btn-soft inline-flex min-h-[38px] w-full items-center justify-center rounded-xl border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 sm:w-auto"
+                  className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
                 >
-                  Gerenciar / editar
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
+                    <path d="M11.875 1.625a1.768 1.768 0 0 1 2.5 2.5l-7.54 7.54a1 1 0 0 1-.46.262l-3.018.805a.5.5 0 0 1-.612-.612l.805-3.018a1 1 0 0 1 .262-.46l7.54-7.54Zm1.793 1.207a.768.768 0 0 0-1.086 0l-.812.812 1.086 1.086.812-.812a.768.768 0 0 0 0-1.086ZM11.149 5.29 4.314 12.126l-1.02.272.272-1.02L10.4 4.544l.75.75Z" />
+                  </svg>
+                  GERENCIAR / EDITAR
                 </Link>
-                <p className="mt-1 text-[10px] text-eid-text-secondary">
-                  Esportes do ranking, tempo de prática e ficha — mesmo fluxo do cadastro, em modo edição.
-                </p>
               </div>
             ) : null}
-            {/* Grid de cards compactos: 3 por linha, clicáveis para stats do esporte */}
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              {(eids ?? []).length === 0 ? (
-                <p className="eid-list-item col-span-3 rounded-xl bg-eid-card p-3 text-[11px] text-eid-text-secondary">
-                  Ainda sem EID registrado por esporte.
-                </p>
-              ) : (
-                (eids ?? []).map((e, idx) => {
-                  const esp = Array.isArray(e.esportes) ? e.esportes[0] : e.esportes;
-                  const eid = Number(e.nota_eid ?? 0);
-                  const jogos = Number(e.partidas_jogadas ?? 0);
-                  const eidHex = eid >= 7 ? "#22c55e" : eid >= 4 ? "#fb923c" : "#60a5fa";
-                  const eidGlow = eid >= 7 ? "rgba(34,197,94,0.5)" : eid >= 4 ? "rgba(251,146,60,0.5)" : "rgba(96,165,250,0.45)";
+            <ProfileSection title="Performance EID">
+              {/* Grid de cards compactos: 3 por linha, clicáveis para stats do esporte */}
+              <div className="eid-list-item mt-2 rounded-xl bg-eid-card/55 p-2">
+                {(eids ?? []).length === 0 ? (
+                  <p className="w-full rounded-xl bg-eid-surface/45 p-3 text-[11px] text-eid-text-secondary">
+                    Ainda sem EID registrado por esporte.
+                  </p>
+                ) : (
+                  <div className="flex snap-x gap-2 overflow-x-auto pb-1">
+                    {(eids ?? []).map((e, idx) => {
+                      const esp = Array.isArray(e.esportes) ? e.esportes[0] : e.esportes;
+                      const eid = Number(e.nota_eid ?? 0);
+                      const jogos = Number(e.partidas_jogadas ?? 0);
 
-                  return (
-                    <Link
-                      key={`${e.esporte_id}-${idx}`}
-                      href={`/perfil/${encodeURIComponent(id)}/eid/${e.esporte_id}?from=${encodeURIComponent(`/perfil/${id}`)}`}
-                      className="flex overflow-hidden rounded-xl border-0 transition hover:scale-[1.03] active:scale-[0.97]"
-                      style={{
-                        boxShadow: `0 2px 12px ${eidGlow}, 0 0 0 1.5px ${eidHex}60`,
-                      }}
-                    >
-                      {/* Painel esquerdo — cor sólida do nível, texto branco */}
-                      <div
-                        className="flex w-[36px] shrink-0 flex-col items-center justify-center py-1.5"
-                        style={{ background: `linear-gradient(160deg, ${eidHex}ee 0%, ${eidHex}99 100%)` }}
-                      >
-                        <span className="text-[6px] font-black uppercase tracking-[0.18em] text-white/70">
-                          EID
-                        </span>
-                        <span
-                          className="font-black leading-none tabular-nums text-white"
-                          style={{ fontSize: 15, textShadow: `0 1px 5px rgba(0,0,0,0.35)` }}
+                      return (
+                        <Link
+                          key={`${e.esporte_id}-${idx}`}
+                          href={`/perfil/${encodeURIComponent(id)}/eid/${e.esporte_id}?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                          className="relative flex min-h-[42px] min-w-[108px] snap-start touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl bg-eid-surface/45 px-1 py-1 transition-all duration-200 ease-out motion-safe:transform-gpu hover:-translate-y-[1px] hover:bg-eid-surface/60 active:translate-y-0 active:scale-[0.98]"
+                          aria-label={`Abrir estatística de ${esp?.nome ?? "esporte"}`}
                         >
-                          {eid.toFixed(1)}
-                        </span>
-                      </div>
-
-                      {/* Painel direito */}
-                      <div className="flex min-w-0 flex-1 flex-col items-center justify-center bg-eid-card px-1 py-1.5">
-                        <span className="line-clamp-1 text-center text-[9px] font-black uppercase tracking-wide text-eid-fg">
-                          {esp?.nome ?? "—"}
-                        </span>
-                        <span className="text-[7px] font-semibold text-eid-text-secondary">
-                          {jogos} jogo{jogos !== 1 ? "s" : ""}
-                        </span>
-                        {e.posicao_rank != null && (
-                          <span
-                            className="mt-0.5 rounded px-1 py-px text-[6px] font-bold"
-                            style={{ background: `${eidHex}20`, color: eidHex }}
-                          >
-                            #{e.posicao_rank}
+                          <div className="inline-flex items-center rounded-full border border-eid-primary-500/45 text-[10px] font-black uppercase leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
+                            <span className="rounded-l-full bg-black px-[7px] py-px">EID</span>
+                            <span className="rounded-r-full bg-eid-primary-500 px-[7px] py-px tabular-nums">
+                              {eid.toFixed(1)}
+                            </span>
+                          </div>
+                          <span className="line-clamp-1 text-center text-[8px] font-black uppercase tracking-[0.09em] text-eid-fg">
+                            {esp?.nome ?? "—"}
                           </span>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-            </div>
-          </ProfileSection>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </ProfileSection>
+          </div>
 
           {/* ── Equipes ──────────────────────────────────────────────── */}
-          <ProfileSection title="Equipes">
-            {(timesLider ?? []).length > 0 || (duplasCadastro ?? []).length > 0 ? (
-              <div className="mt-2 flex snap-x gap-2 overflow-x-auto pb-1">
-                {(timesLider ?? []).map((t) => {
-                  const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
-                  return (
-                    <ProfileTeamCard
-                      key={`t-${t.id}`}
-                      href={`/perfil-time/${t.id}?from=/perfil/${id}`}
-                      imageUrl={t.escudo}
-                      title={t.nome}
-                      subtitle={`${(t.tipo ?? "time").toUpperCase()} · ${esp?.nome ?? "Esporte"}`}
-                    />
-                  );
-                })}
-                {(duplasCadastro ?? []).map((d) => {
-                  const esp = Array.isArray(d.esportes) ? d.esportes[0] : d.esportes;
-                  return (
-                    <ProfileTeamCard
-                      key={`d-${d.id}`}
-                      href={`/perfil-dupla/${d.id}?from=/perfil/${id}`}
-                      title={`Dupla #${d.id}`}
-                      subtitle={esp?.nome ?? "Esporte"}
-                    />
-                  );
-                })}
+          <div className="mt-2">
+            {isSelf ? (
+              <div className="-mb-5 mt-0 flex justify-end">
+                <Link
+                  href="/times"
+                  className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
+                    <path d="M11.875 1.625a1.768 1.768 0 0 1 2.5 2.5l-7.54 7.54a1 1 0 0 1-.46.262l-3.018.805a.5.5 0 0 1-.612-.612l.805-3.018a1 1 0 0 1 .262-.46l7.54-7.54Zm1.793 1.207a.768.768 0 0 0-1.086 0l-.812.812 1.086 1.086.812-.812a.768.768 0 0 0 0-1.086ZM11.149 5.29 4.314 12.126l-1.02.272.272-1.02L10.4 4.544l.75.75Z" />
+                  </svg>
+                  GERENCIAR / EDITAR
+                </Link>
               </div>
-            ) : (
-              <p className="eid-list-item mt-2 rounded-xl bg-eid-card p-3 text-[11px] text-eid-text-secondary">
-                Sem equipes vinculadas no momento.
-              </p>
-            )}
-          </ProfileSection>
+            ) : null}
+            <ProfileSection title="Equipes">
+              {(timesLider ?? []).length > 0 || (duplasCadastro ?? []).length > 0 ? (
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {(timesLider ?? []).map((t) => {
+                    const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
+                    const initials = (t.nome?.trim().slice(0, 2) || "EQ").toUpperCase();
+                    return (
+                      <Link
+                        key={`t-${t.id}`}
+                        href={`/perfil-time/${t.id}?from=/perfil/${id}`}
+                        className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2 transition-all duration-200 ease-out hover:-translate-y-[1px] hover:border-eid-primary-500/30"
+                        aria-label={`Abrir perfil da equipe ${t.nome}`}
+                      >
+                        {t.escudo ? (
+                          <img src={t.escudo} alt="" className="h-10 w-10 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
+                        ) : (
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                            {initials}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="truncate text-[11px] font-bold text-eid-fg">{t.nome}</p>
+                          <p className="truncate text-[9px] text-eid-text-secondary">{`${(t.tipo ?? "time").toUpperCase()} · ${esp?.nome ?? "Esporte"}`}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                  {(duplasCadastro ?? []).map((d) => {
+                    const esp = Array.isArray(d.esportes) ? d.esportes[0] : d.esportes;
+                    return (
+                      <Link
+                        key={`d-${d.id}`}
+                        href={`/perfil-dupla/${d.id}?from=/perfil/${id}`}
+                        className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2 transition-all duration-200 ease-out hover:-translate-y-[1px] hover:border-eid-primary-500/30"
+                        aria-label={`Abrir perfil da dupla ${d.id}`}
+                      >
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                          D{d.id}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-[11px] font-bold text-eid-fg">{`Dupla #${d.id}`}</p>
+                          <p className="truncate text-[9px] text-eid-text-secondary">{esp?.nome ?? "Esporte"}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <Link
+                  href="/times?create=1"
+                  className="eid-list-item mt-2 flex min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
+                >
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-surface/65 text-eid-primary-300">
+                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden>
+                      <path d="M10 2a.75.75 0 0 1 .75.75v6.5h6.5a.75.75 0 0 1 0 1.5h-6.5v6.5a.75.75 0 0 1-1.5 0v-6.5h-6.5a.75.75 0 0 1 0-1.5h6.5v-6.5A.75.75 0 0 1 10 2Z" />
+                    </svg>
+                  </span>
+                  <p className="text-[11px] font-bold text-eid-fg">Nenhuma equipe cadastrada</p>
+                  <p className="text-[9px] text-eid-text-secondary">Toque para cadastrar equipe</p>
+                </Link>
+              )}
+            </ProfileSection>
+          </div>
 
           {/* ── Sócio e Frequência ───────────────────────────────────── */}
           {(socioRows ?? []).length > 0 || (frequentesRows ?? []).length > 0 ? (
@@ -666,17 +714,104 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           ) : null}
 
           {/* ── Histórico ────────────────────────────────────────────── */}
-          <ProfileSection title="Histórico">
-            <ProfileCompactTimeline
-              title="Timeline V/D"
-              emptyText="Sem jogos recentes."
-              items={timeline.map((t) => ({
-                id: String(t.id),
-                label: `${t.resultado} · ${t.data ? new Date(t.data).toLocaleDateString("pt-BR") : "—"}`,
-                tone: t.resultado === "V" ? "positive" : t.resultado === "D" ? "negative" : "neutral",
-              }))}
-            />
-          </ProfileSection>
+          <div className="mt-4">
+            <div className="-mb-5 mt-0 flex items-center justify-between gap-2">
+              {isSelf ? (
+                <div className="inline-flex items-center gap-1">
+                  <span className="text-[10px] text-eid-text-secondary">Histórico público</span>
+                  <ProfileHistoryVisibilityToggle
+                    userId={id}
+                    initialOn={mostrarHistoricoPublico}
+                    canToggle={isSelf}
+                  />
+                </div>
+              ) : (
+                <span />
+              )}
+              {podeVerHistorico ? (
+                <Link
+                  href={`/perfil/${id}/historico`}
+                  className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
+                    <path d="M8 1.5a.75.75 0 0 1 .75.75V8h4.5a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 7.25 8V2.25A.75.75 0 0 1 8 1.5Zm0 13a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Zm-8-6.5a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z" />
+                  </svg>
+                  VER HISTÓRICO COMPLETO
+                </Link>
+              ) : null}
+            </div>
+            {podeVerHistorico ? (
+              <ProfileSection title="Histórico">
+                {partidasHistorico.length > 0 ? (
+                  <>
+                    <div className="mt-2 grid grid-cols-5 gap-1.5">
+                      <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
+                        <p className="text-[11px] font-black text-emerald-300">{historicoTotais.vitorias}</p>
+                        <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">V</p>
+                      </div>
+                      <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
+                        <p className="text-[11px] font-black text-red-300">{historicoTotais.derrotas}</p>
+                        <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">D</p>
+                      </div>
+                      <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
+                        <p className="text-[11px] font-black text-eid-primary-300">{historicoTotais.empates}</p>
+                        <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">E</p>
+                      </div>
+                      <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
+                        <p className="text-[11px] font-black text-eid-fg">{historicoTotais.rank}</p>
+                        <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">Rank</p>
+                      </div>
+                      <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
+                        <p className="text-[11px] font-black text-eid-fg">{historicoTotais.torneio}</p>
+                        <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">Torneio</p>
+                      </div>
+                    </div>
+                    <ul className="mt-2 grid gap-1.5">
+                      {resumoHistorico.map((item) => (
+                        <li
+                          key={item.id}
+                          className={`eid-list-item flex items-center justify-between rounded-lg bg-eid-surface/45 px-2 py-1.5 text-[10px] ${
+                            item.tone === "positive"
+                              ? "border-emerald-400/30"
+                              : item.tone === "negative"
+                                ? "border-red-400/30"
+                                : "border-[color:var(--eid-border-subtle)]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-black text-eid-fg">{item.resultado}</span>
+                            <span className="font-semibold text-eid-text-secondary">{item.origem}</span>
+                            <span className="font-bold text-eid-fg">{item.placar}</span>
+                          </div>
+                          <span className="text-[9px] text-eid-text-secondary">{item.dataFmt}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <Link
+                    href={isSelf ? "/match" : `/desafio?id=${encodeURIComponent(id)}&tipo=individual`}
+                    className="eid-list-item mt-2 flex min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
+                  >
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-surface/65 text-eid-primary-300">
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden>
+                        <path d="M10 2.25a.75.75 0 0 1 .75.75V10h4.25a.75.75 0 0 1 0 1.5H10A.75.75 0 0 1 9.25 10V3a.75.75 0 0 1 .75-.75Zm0 15a7.25 7.25 0 1 0 0-14.5 7.25 7.25 0 0 0 0 14.5ZM1.25 10a8.75 8.75 0 1 1 17.5 0 8.75 8.75 0 0 1-17.5 0Z" />
+                      </svg>
+                    </span>
+                    <p className="text-[11px] font-bold text-eid-fg">Nenhum histórico registrado ainda</p>
+                    <p className="text-[9px] text-eid-text-secondary">Quando houver partidas concluídas de rank ou torneio, elas aparecem aqui.</p>
+                  </Link>
+                )}
+              </ProfileSection>
+            ) : (
+              <ProfileSection title="Histórico">
+                <div className="eid-list-item mt-2 rounded-xl bg-eid-card/55 p-3 text-center">
+                  <p className="text-[11px] font-bold text-eid-fg">Histórico privado</p>
+                  <p className="mt-0.5 text-[9px] text-eid-text-secondary">Este usuário optou por não exibir o histórico no perfil público.</p>
+                </div>
+              </ProfileSection>
+            )}
+          </div>
         </div>
       </main>
     </>
