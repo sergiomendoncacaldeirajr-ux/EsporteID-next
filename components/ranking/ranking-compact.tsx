@@ -39,7 +39,7 @@ export function RankingFilterBar({
 
   return (
     <div className="mb-3 space-y-2 px-2 sm:mb-3.5">
-      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
+      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
         <div className="flex items-center gap-1.5">
           <Link href={href({ tipo: "individual", page: 1 })} className={segmentButton(state.tipo === "individual")}>
           Individual
@@ -53,7 +53,7 @@ export function RankingFilterBar({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
+      <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
         <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
           <CityGpsLabel fallbackCity={cidadeDisplay} />
         </Link>
@@ -71,7 +71,7 @@ export function RankingFilterBar({
       ) : null}
 
       {todosEsportes.length > 0 ? (
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
+        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
           <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 select-none [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
             <div className="flex min-w-max flex-nowrap items-center gap-1.5">
             {todosEsportes.map((opt) => {
@@ -112,10 +112,10 @@ export function RankingPeriodToggle({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
   return (
     <div className="flex justify-end">
-      <div className="relative inline-flex h-6.5 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 p-0.5 text-[11px] backdrop-blur-sm">
+      <div className="relative inline-flex h-6.5 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[11px] backdrop-blur-sm">
         <span
           className={cn(
-            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/80 shadow-[0_0_10px_-6px_rgba(37,99,235,0.75)] transition-all duration-200",
+            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/85 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.72)] transition-all duration-200",
             state.periodo === "mes" ? "translate-x-[calc(100%+1px)]" : "translate-x-0"
           )}
           aria-hidden
@@ -154,10 +154,10 @@ export function RankingRankToggle({
   const rankIsMatch = state.rank === "match";
   return (
     <div className="flex justify-start">
-      <div className="relative inline-flex h-6.5 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 p-0.5 text-[11px] backdrop-blur-sm">
+      <div className="relative inline-flex h-6.5 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[11px] backdrop-blur-sm">
         <span
           className={cn(
-            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/80 shadow-[0_0_10px_-6px_rgba(37,99,235,0.75)] transition-all duration-200",
+            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/85 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.72)] transition-all duration-200",
             rankIsMatch ? "translate-x-0" : "translate-x-[calc(100%+1px)]"
           )}
           aria-hidden

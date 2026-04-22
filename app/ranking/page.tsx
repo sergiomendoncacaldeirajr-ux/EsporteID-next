@@ -291,7 +291,7 @@ export default async function RankingPage({ searchParams }: Props) {
         />
 
         {noCatalogHint ? (
-          <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 p-5 text-center text-sm leading-relaxed text-eid-text-secondary backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
+          <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-5 text-center text-sm leading-relaxed text-eid-text-secondary backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
             Nenhum esporte disponível no momento.
           </p>
         ) : (
@@ -309,7 +309,7 @@ export default async function RankingPage({ searchParams }: Props) {
             {showViewerCard && viewerRank !== null ? <ViewerRankCard rank={viewerRank} /> : null}
 
             {rankingAll.length === 0 ? (
-              <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 p-6 text-center text-sm text-eid-text-secondary backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
+              <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-6 text-center text-sm text-eid-text-secondary backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
                 Nenhum resultado para estes filtros.
               </p>
             ) : null}
@@ -318,7 +318,7 @@ export default async function RankingPage({ searchParams }: Props) {
               <>
                 <section className="mt-2 sm:mt-2.5">
                   <h2 className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Classificação</h2>
-                  <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 px-2.5 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)] sm:px-3.5">
+                  <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] sm:px-3.5">
                     {pageSlice.length === 0 ? (
                       <p className="py-5 text-center text-sm text-eid-text-secondary">Fim da lista.</p>
                     ) : (
@@ -343,7 +343,7 @@ export default async function RankingPage({ searchParams }: Props) {
                   <div className="mt-3 flex justify-center sm:mt-4">
                     <Link
                       href={rankingHref({ page: state.page + 1 }, state, esportePrincipalId)}
-                      className="inline-flex min-h-10 items-center justify-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/[0.08] px-7 text-sm font-bold text-eid-fg transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/12"
+                      className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-7 text-sm font-medium text-eid-fg transition hover:border-[color:var(--eid-border)] hover:bg-eid-surface/85"
                     >
                       Ver mais
                     </Link>
