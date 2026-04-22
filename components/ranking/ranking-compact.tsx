@@ -37,7 +37,7 @@ export function RankingFilterBar({
 
   return (
     <div className="mb-2.5 sm:mb-3">
-      <div className="flex gap-0.5">
+      <div className="flex flex-wrap gap-2">
         <Link href={href({ tipo: "individual", page: 1 })} className={pillRow(state.tipo === "individual")}>
           Individual
         </Link>
@@ -48,7 +48,7 @@ export function RankingFilterBar({
           Time
         </Link>
       </div>
-      <div className="mt-0.5 flex gap-0.5">
+      <div className="mt-1 flex flex-wrap gap-2">
         <Link href={href({ rank: "match", page: 1 })} className={pillRow(state.rank === "match")}>
           Rank Match
         </Link>
@@ -56,7 +56,7 @@ export function RankingFilterBar({
           Rank EID
         </Link>
       </div>
-      <div className="mt-0.5 flex flex-wrap gap-0.5">
+      <div className="mt-1 flex flex-wrap gap-2">
         <Link
           href={href({ local: "cidade", page: 1 })}
           className={cn(pillRow(state.local === "cidade"), cidadeDisplay ? "min-h-[1.85rem] flex-col gap-0 py-0.5" : undefined)}
@@ -82,7 +82,7 @@ export function RankingFilterBar({
 
       {todosEsportes.length > 0 ? (
         <div className="mt-1 border-t border-[color:var(--eid-border-subtle)]/70 pt-1">
-          <div className="flex min-w-0 gap-0.5 overflow-x-auto overscroll-x-contain scroll-smooth pb-0.5 pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-0 flex-nowrap gap-1 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-0.5 pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
             {todosEsportes.map((opt) => {
               const active = selectedEsporteId === opt.id;
               const isPrincipal = principalEsporteId != null && opt.id === principalEsporteId;
@@ -92,10 +92,10 @@ export function RankingFilterBar({
                   href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                   title={isPrincipal ? "Esporte principal do perfil" : undefined}
                   className={cn(
-                    "shrink-0 whitespace-nowrap rounded-full px-2 py-[3px] text-center text-[8px] font-bold leading-none transition sm:text-[9px]",
+                    "shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-center text-sm font-semibold leading-none transition",
                     active
                       ? "bg-eid-primary-500 text-white"
-                      : "border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-text-secondary hover:border-eid-primary-500/35 hover:text-eid-fg",
+                      : "border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 text-eid-fg hover:border-eid-primary-500/35 hover:text-eid-fg",
                     isPrincipal && !active && "ring-1 ring-eid-primary-500/25"
                   )}
                 >
@@ -112,7 +112,7 @@ export function RankingFilterBar({
 
 function pillRow(active: boolean) {
   return cn(
-    "inline-flex min-h-[1.3rem] flex-1 items-center justify-center rounded-full px-1.5 py-px text-center text-[8px] font-bold leading-none transition sm:min-h-[1.35rem] sm:px-2 sm:text-[9px]",
+    "inline-flex min-h-[1.35rem] w-auto items-center justify-center rounded-full px-2 py-px text-center text-[9px] font-bold leading-none transition sm:min-h-[1.4rem] sm:px-2.5",
     active
       ? "bg-eid-primary-500 text-white"
       : "border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-text-secondary hover:border-eid-primary-500/30 hover:text-eid-fg"
@@ -159,7 +159,7 @@ export function RankingPodium({ second, first, third }: { second: PodiumSlot | n
 
   return (
     <section className="relative mb-0.5 sm:mb-1">
-      <div className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)]/70 bg-eid-surface/15 px-1 py-2 shadow-[0_0_20px_-10px_rgba(37,99,235,0.18),inset_0_1px_0_rgba(255,255,255,0.03)] sm:px-2 sm:py-2.5">
+      <div className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)]/70 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.14),rgba(15,23,42,0.08)_40%,rgba(15,23,42,0.02)_72%)] px-1 py-2 shadow-[0_0_20px_-10px_rgba(37,99,235,0.18),inset_0_1px_0_rgba(255,255,255,0.03)] sm:px-2 sm:py-2.5">
         <h2 className="mb-2 text-center text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary sm:mb-2.5 sm:text-[10px]">
           Pódio
         </h2>
