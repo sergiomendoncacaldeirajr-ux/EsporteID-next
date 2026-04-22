@@ -83,7 +83,25 @@ export async function uploadProfileAvatarAction(formData: FormData): Promise<voi
   revalidatePath("/conta/perfil");
 }
 
-export async function setViewerHistoricoPublicoAction(mostrar: boolean, _formData?: FormData): Promise<void> {
+export async function removeProfileAvatarAction(): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: null, atualizado_em: new Date().toISOString() })
+    .eq("id", user.id);
+  if (error) return;
+
+  revalidatePath(`/perfil/${user.id}`);
+  revalidatePath("/conta/perfil");
+}
+
+export async function setViewerHistoricoPublicoAction(mostrar: boolean, formData?: FormData): Promise<void> {
+  void formData;
   const supabase = await createClient();
   const {
     data: { user },

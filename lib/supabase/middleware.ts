@@ -4,7 +4,7 @@ import { EID_HIDE_APP_SHELL_HEADER } from "@/lib/eid-app-shell";
 
 function buildRequestHeadersForPath(request: NextRequest): Headers {
   const h = new Headers(request.headers);
-  if (request.nextUrl.pathname.startsWith("/onboarding")) {
+  if (request.nextUrl.pathname.startsWith("/onboarding") || request.nextUrl.pathname.startsWith("/editar")) {
     h.set(EID_HIDE_APP_SHELL_HEADER, "1");
   }
   return h;
@@ -64,7 +64,7 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  if (path.startsWith("/conta") && !user) {
+  if ((path.startsWith("/conta") || path.startsWith("/editar")) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set(
