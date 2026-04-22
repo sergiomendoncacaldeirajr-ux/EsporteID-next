@@ -251,7 +251,7 @@ export function RankingPodium({
             <div className="min-w-0">{periodToggle}</div>
           </div>
         ) : null}
-        <h2 className="eid-podium-title -mt-2 mb-0.5 text-center text-[10px] font-black uppercase tracking-[0.18em] text-transparent bg-gradient-to-b from-white via-eid-primary-300 to-eid-primary-500 bg-clip-text drop-shadow-[0_1px_3px_rgba(37,99,235,0.45)] sm:-mt-2.5 sm:mb-1 sm:text-[11px]">
+        <h2 className="eid-podium-title -mt-4 mb-0.5 text-center text-[10px] font-black uppercase tracking-[0.18em] text-transparent bg-gradient-to-b from-white via-eid-primary-300 to-eid-primary-500 bg-clip-text drop-shadow-[0_1px_3px_rgba(37,99,235,0.45)] sm:-mt-5 sm:mb-1 sm:text-[11px]">
           Pódio
         </h2>
         {hasAnyPodium ? (
