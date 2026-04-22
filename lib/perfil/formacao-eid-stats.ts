@@ -35,67 +35,55 @@ export function fmtDataLocalPtBr(d: Date): string {
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(d);
 }
 
-/** Valores salvos quando o atleta usa só o seletor de tempo aproximado (sem anos/meses explícitos). */
-export const TEMPO_EXPERIENCIA_APROXIMADO = ["Menos de 1 ano", "1 a 3 anos", "Mais de 3 anos"] as const;
-
-export function isTempoExperienciaAproximado(s: string | null | undefined): boolean {
-  if (!s) return false;
-  return (TEMPO_EXPERIENCIA_APROXIMADO as readonly string[]).includes(s.trim());
-}
-
 /**
- * Interpreta strings geradas em `savePerformanceEidAction` (ex.: "2 anos", "3 meses", "2 anos e 1 mês").
+ * Detecta data de calendário explícita no texto (ex.: 2020-03-15, 15/03/2020, 03/2020 = 1º do mês).
+ * Durações como "2 anos", "1 a 3 anos" não entram aqui → ficam com "Pratica há …".
  */
-export function parseTempoExperienciaAnosMeses(s: string): { anos: number; meses: number } | null {
+function parseDataCalendarioSeExata(s: string): Date | null {
   const t = s.trim();
-  if (isTempoExperienciaAproximado(t)) return null;
-
-  let m = t.match(/^(\d+)\s+anos?\s+e\s+(\d+)\s+(mês|meses)$/i);
-  if (m) {
-    return { anos: Number.parseInt(m[1]!, 10), meses: Number.parseInt(m[2]!, 10) };
+  if (!t) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) {
+    const d = new Date(`${t}T12:00:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
   }
-  m = t.match(/^(\d+)\s+anos?$/i);
-  if (m) {
-    return { anos: Number.parseInt(m[1]!, 10), meses: 0 };
+  const dmy = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) {
+    const day = Number(dmy[1]);
+    const month = Number(dmy[2]);
+    const year = Number(dmy[3]);
+    const d = new Date(year, month - 1, day);
+    return Number.isNaN(d.getTime()) ? null : d;
   }
-  m = t.match(/^(\d+)\s+(mês|meses)$/i);
-  if (m) {
-    return { anos: 0, meses: Number.parseInt(m[1]!, 10) };
+  const my = t.match(/^(\d{1,2})\/(\d{4})$/);
+  if (my) {
+    const month = Number(my[1]);
+    const year = Number(my[2]);
+    if (month < 1 || month > 12) return null;
+    const d = new Date(year, month - 1, 1);
+    return Number.isNaN(d.getTime()) ? null : d;
   }
   return null;
 }
 
-function subtractAnosMesesFromDate(ref: Date, anos: number, meses: number): Date {
-  const d = new Date(ref.getTime());
-  d.setMonth(d.getMonth() - meses);
-  d.setFullYear(d.getFullYear() - anos);
-  return d;
-}
-
 /**
- * Linha única no cabeçalho da página EID por esporte: deixa claro se é tempo aproximado ou data (estimada ou da 1ª partida).
+ * Cabeçalho EID por esporte: "Pratica há …" para tempo aproximado ou duração informada;
+ * "Pratica desde: …" só para data explícita ou 1ª partida registrada quando não há texto de experiência.
  */
 export function formatLinhaExperienciaEid(
   tempoExperienciaUsuarioEid: string | null | undefined,
-  primeiraPartidaIso: string | null | undefined,
-  refDate: Date = new Date()
+  primeiraPartidaIso: string | null | undefined
 ): string {
   const raw = tempoExperienciaUsuarioEid?.trim();
-  if (raw && isTempoExperienciaAproximado(raw)) {
+  if (raw) {
+    const dataExata = parseDataCalendarioSeExata(raw);
+    if (dataExata) {
+      return `Pratica desde: ${fmtDataLocalPtBr(dataExata)}`;
+    }
     const rest = raw.charAt(0).toLowerCase() + raw.slice(1);
     return `Pratica há ${rest}`;
-  }
-  const det = raw ? parseTempoExperienciaAnosMeses(raw) : null;
-  if (det && (det.anos > 0 || det.meses > 0)) {
-    const inicio = subtractAnosMesesFromDate(refDate, det.anos, det.meses);
-    return `Pratica desde: ${fmtDataLocalPtBr(inicio)}`;
   }
   if (primeiraPartidaIso) {
     return `Pratica desde: ${fmtDataPtBr(primeiraPartidaIso)}`;
-  }
-  if (raw) {
-    const rest = raw.charAt(0).toLowerCase() + raw.slice(1);
-    return `Pratica há ${rest}`;
   }
   return "Tempo de prática ainda não disponível para este esporte.";
 }
