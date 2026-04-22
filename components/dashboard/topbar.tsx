@@ -19,10 +19,9 @@ import { createClient } from "@/lib/supabase/client";
 
 function IconUserCircle({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="9" r="3" />
-      <path d="M6.5 19c1.3-2.2 3.7-3.5 5.5-3.5s4.2 1.3 5.5 3.5" strokeLinecap="round" />
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="8.2" r="3.5" fill="currentColor" fillOpacity="0.92" />
+      <path d="M5 19.2c.9-3.3 3.7-5.3 7-5.3s6.1 2 7 5.3H5z" fill="currentColor" fillOpacity="0.92" />
     </svg>
   );
 }
@@ -138,16 +137,16 @@ export function DashboardTopbar({
   return (
     <header
       id={persistent ? "eid-persistent-topbar" : undefined}
-      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-eid-bg/90 pt-[env(safe-area-inset-top)] shadow-[0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-md supports-[backdrop-filter]:bg-eid-bg/82 md:mb-3`}
+      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] pt-[env(safe-area-inset-top)] shadow-[0_4px_16px_-12px_rgba(0,0,0,0.28)] backdrop-blur-xl md:mb-3`}
       style={persistent ? { viewTransitionName: "eid-app-topbar" } : undefined}
     >
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
-        <div className="flex items-center justify-between gap-2 py-2 sm:py-2.5">
+        <div className="flex items-center justify-between gap-2 py-1.5 sm:py-2">
           <Link href={getContextHomeHref(activeContext)} className="min-w-0 shrink transition hover:opacity-90">
-            <LogoWordmark className="h-9 max-w-[min(52vw,240px)] object-left sm:h-11 sm:max-w-[min(58vw,300px)]" />
+            <LogoWordmark className="h-8 max-w-[min(52vw,230px)] object-left sm:h-10 sm:max-w-[min(58vw,300px)]" />
           </Link>
 
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <div className="flex shrink-0 items-center gap-1.5">
             <ActiveContextSwitch activeContext={activeContext} availableContexts={availableContexts} />
             <NotificationBell userId={meId} />
             <EidThemeToggle variant="toolbar" />
@@ -155,17 +154,17 @@ export function DashboardTopbar({
             {meId ? (
               <Link
                 href={`/perfil/${meId}`}
-                className="hidden h-9 shrink-0 items-center justify-center gap-1.5 rounded-2xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 text-xs font-bold text-eid-fg transition hover:border-eid-primary-500/50 hover:bg-eid-primary-500/15 md:inline-flex"
+                className="hidden h-8 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2.5 text-[11px] font-medium text-eid-fg transition hover:border-[color:var(--eid-border)] hover:bg-eid-surface/75 md:inline-flex"
                 aria-label="Meu perfil"
               >
-                <IconUserCircle className="h-[18px] w-[18px] text-eid-primary-300" />
+                <IconUserCircle className="h-4 w-4 text-eid-text-secondary" />
                 Perfil
               </Link>
             ) : null}
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="pb-3">
+        <form onSubmit={onSubmit} className="pb-2.5">
           <label htmlFor="eid-topbar-search" className="sr-only">
             Buscar no painel
           </label>

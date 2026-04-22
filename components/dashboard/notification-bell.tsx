@@ -124,11 +124,11 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card text-eid-primary-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10 md:h-10 md:w-10"
+        className="relative inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition hover:border-[color:var(--eid-border)] hover:bg-eid-surface/75 hover:text-eid-fg md:h-9 md:w-9"
         aria-label="Notificações e resumos"
         aria-expanded={open}
       >
-        <IconBell className="h-5 w-5" />
+        <IconBell className="h-4.5 w-4.5" />
         {bellCount > 0 ? (
           <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-eid-action-500 px-1 text-[9px] font-black text-[var(--eid-brand-ink)] shadow-md">
             {bellCount > 99 ? "99+" : bellCount}
