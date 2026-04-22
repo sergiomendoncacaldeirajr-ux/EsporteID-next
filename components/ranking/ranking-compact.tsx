@@ -49,6 +49,36 @@ function IconTeam({ className }: { className?: string }) {
   );
 }
 
+function IconPin({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
+      <path d="M12 21s6-5.6 6-10a6 6 0 1 0-12 0c0 4.4 6 10 6 10z" />
+      <circle cx="12" cy="11" r="2.3" />
+    </svg>
+  );
+}
+
+function IconBrazil({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
+      <rect x="4.2" y="5" width="15.6" height="14" rx="2.2" />
+      <path d="M12 8.1l4.2 3-4.2 3-4.2-3 4.2-3z" />
+      <circle cx="12" cy="11.1" r="1.2" />
+    </svg>
+  );
+}
+
+function IconSport({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
+      <circle cx="12" cy="12" r="7.2" />
+      <path d="M12 4.8v14.4M4.8 12h14.4" />
+      <path d="M7.4 7.4c1.5 1.4 2.2 2.9 2.2 4.6s-.7 3.2-2.2 4.6" />
+      <path d="M16.6 7.4c-1.5 1.4-2.2 2.9-2.2 4.6s.7 3.2 2.2 4.6" />
+    </svg>
+  );
+}
+
 type FilterBarProps = {
   state: RankingSearchState;
   principalEsporteId: number | null;
@@ -92,9 +122,13 @@ export function RankingFilterBar({
 
         <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm">
           <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
-            <CityGpsLabel fallbackCity={cidadeDisplay} />
+            <IconPin className="h-2.5 w-2.5 shrink-0" />
+            <span className="min-w-0 truncate">
+              <CityGpsLabel fallbackCity={cidadeDisplay} />
+            </span>
           </Link>
           <Link href={href({ local: "brasil", page: 1 })} className={blockButton(state.local === "brasil")}>
+            <IconBrazil className="h-2.5 w-2.5 shrink-0" />
             <span className="truncate">Brasil</span>
           </Link>
         </div>
@@ -127,7 +161,8 @@ export function RankingFilterBar({
                       isPrincipal && !active && "bg-eid-primary-500/08 text-eid-fg/90"
                     )}
                   >
-                    {opt.nome}
+                    <IconSport className="h-2.5 w-2.5 shrink-0" />
+                    <span>{opt.nome}</span>
                   </Link>
                 );
               })}
@@ -234,7 +269,7 @@ function tipoSegmentButton(active: boolean) {
 
 function blockButton(active: boolean) {
   return cn(
-    "inline-flex h-[1.62rem] w-auto min-w-0 touch-manipulation items-center justify-center whitespace-nowrap rounded-md px-2 text-[10px] font-semibold uppercase leading-none tracking-[0.04em] transition-all duration-200",
+    "inline-flex h-[1.38rem] w-auto min-w-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200",
     active
       ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55 hover:text-eid-fg"
