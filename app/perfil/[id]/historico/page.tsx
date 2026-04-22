@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { createClient } from "@/lib/supabase/server";
 
@@ -100,8 +101,8 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
   );
 
   return (
-    <main className="mx-auto w-full max-w-lg px-2.5 pb-6 pt-2 sm:max-w-2xl sm:px-5 sm:pb-8 sm:pt-3">
-      <div className="eid-surface-panel rounded-2xl p-3 sm:p-4">
+    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+      <div className={`${PROFILE_HERO_PANEL_CLASS} p-3 sm:p-4`}>
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-sm font-black uppercase tracking-[0.08em] text-eid-fg">Histórico completo</h1>
           </div>

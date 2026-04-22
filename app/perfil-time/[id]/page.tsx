@@ -18,6 +18,7 @@ import {
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF, contaEditarFormacaoTimeHref } from "@/lib/routes/conta";
+import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -200,10 +201,10 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   return (
     <>
       <DashboardTopbar />
-      <main className="mx-auto w-full max-w-lg px-3 pb-8 pt-3 sm:max-w-2xl sm:px-6 sm:pb-10 sm:pt-4">
+      <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         <PerfilBackLink href={backHref} label="Voltar" />
 
-        <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-center sm:rounded-2xl sm:p-5">
+        <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 text-center sm:p-4`}>
           {t.escudo ? (
             <img
               src={t.escudo}

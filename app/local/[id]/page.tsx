@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { LocalOwnershipClaimForm } from "@/components/locais/local-ownership-claim-form";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
+import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
+import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
@@ -68,43 +70,52 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
   return (
     <>
       <DashboardTopbar />
-      <main className="mx-auto w-full max-w-lg px-3 pb-8 pt-3 sm:max-w-2xl sm:px-6 sm:pb-10 sm:pt-4">
+      <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         <PerfilBackLink href={backHref} label="Voltar aos locais" />
 
-        <div className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card sm:rounded-2xl">
-          <div className="flex h-32 items-center justify-center bg-eid-surface sm:h-36 md:bg-gradient-to-br md:from-eid-primary-500/20 md:to-eid-card md:h-40">
-            {loc.logo_arquivo ? (
-              <Image
-                src={loc.logo_arquivo}
-                alt=""
-                width={420}
-                height={180}
-                unoptimized
-                className="max-h-28 max-w-[85%] object-contain sm:max-h-32"
-              />
-            ) : (
-              <span className="text-3xl font-bold text-eid-primary-500/35 sm:text-4xl sm:font-black sm:text-eid-primary-500/40">Local</span>
-            )}
+        <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2`}>
+          <div className="relative flex h-28 items-center justify-center bg-eid-surface sm:h-32">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-40"
+              style={{ background: "linear-gradient(135deg,#172554 0%,#0b1d2e 55%,#0b0f14 100%)" }}
+              aria-hidden
+            />
+            <div className="relative z-[1] flex w-full items-center justify-center px-3">
+              {loc.logo_arquivo ? (
+                <Image
+                  src={loc.logo_arquivo}
+                  alt=""
+                  width={420}
+                  height={180}
+                  unoptimized
+                  className="max-h-24 max-w-[85%] object-contain sm:max-h-28"
+                />
+              ) : (
+                <span className="text-2xl font-black text-eid-primary-300/80 sm:text-3xl">Local</span>
+              )}
+            </div>
           </div>
-          <div className="p-4 sm:p-5">
-            <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-eid-primary-300">
-              {loc.status ?? "público"}
-            </span>
-            <span className="ml-2 rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-eid-action-400">
-              {loc.ownership_status === "verificado"
-                ? "verificado"
-                : loc.ownership_status === "pendente_validacao"
-                  ? "claim em análise"
-                  : "espaço genérico"}
-            </span>
-            <h1 className="mt-2 text-xl font-bold text-eid-fg sm:text-2xl">{loc.nome_publico}</h1>
-            <p className="mt-2 text-sm text-eid-text-secondary">{loc.localizacao}</p>
+          <div className="px-3 pb-3 pt-3 sm:px-4">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-eid-primary-300">
+                {loc.status ?? "público"}
+              </span>
+              <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-eid-action-400">
+                {loc.ownership_status === "verificado"
+                  ? "verificado"
+                  : loc.ownership_status === "pendente_validacao"
+                    ? "claim em análise"
+                    : "espaço genérico"}
+              </span>
+            </div>
+            <h1 className="mt-2 text-[15px] font-black leading-tight text-eid-fg sm:text-lg">{loc.nome_publico}</h1>
+            <p className="mt-1 text-[11px] text-eid-text-secondary sm:text-xs">{loc.localizacao}</p>
             {mapsHref ? (
               <a
                 href={mapsHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-flex rounded-xl border border-eid-primary-500/40 px-4 py-2 text-xs font-semibold text-eid-primary-300 hover:bg-eid-primary-500/10"
+                className="mt-3 inline-flex min-h-[40px] items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-3 text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:bg-eid-primary-500/16"
               >
                 Abrir no mapa
               </a>
@@ -112,30 +123,32 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
           </div>
         </div>
 
-        <section className="mt-6 grid gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-sm">
-          {loc.tipo_quadra ? (
+        <ProfileSection title="Informações" className="mt-4">
+          <div className={`${PROFILE_CARD_BASE} grid gap-2 p-3 text-[11px] sm:p-4 sm:text-xs`}>
+            {loc.tipo_quadra ? (
+              <p className="text-eid-text-secondary">
+                Tipo de quadra: <span className="font-semibold text-eid-fg">{loc.tipo_quadra}</span>
+              </p>
+            ) : null}
             <p className="text-eid-text-secondary">
-              Tipo de quadra: <span className="text-eid-fg">{loc.tipo_quadra}</span>
+              Reservas:{" "}
+              <span className="font-semibold text-eid-fg">{loc.aceita_reserva ? "Aceita reserva" : "Consulte o responsável"}</span>
             </p>
-          ) : null}
-          <p className="text-eid-text-secondary">
-            Reservas:{" "}
-            <span className="text-eid-fg">{loc.aceita_reserva ? "Aceita reserva" : "Consulte o responsável"}</span>
-          </p>
-          {loc.esportes_ids ? (
-            <p className="text-xs text-eid-text-secondary">
-              Esportes (referência): <span className="text-eid-fg">{loc.esportes_ids}</span>
-            </p>
-          ) : null}
-          {dono ? (
-            <p className="text-xs text-eid-text-secondary">
-              Cadastro ligado a{" "}
-              <Link href={`/perfil/${dono.id}?from=/local/${id}`} className="font-semibold text-eid-primary-300 hover:underline">
-                {dono.nome ?? "perfil"}
-              </Link>
-            </p>
-          ) : null}
-        </section>
+            {loc.esportes_ids ? (
+              <p className="text-[10px] text-eid-text-secondary sm:text-[11px]">
+                Esportes (referência): <span className="text-eid-fg">{loc.esportes_ids}</span>
+              </p>
+            ) : null}
+            {dono ? (
+              <p className="text-[10px] text-eid-text-secondary sm:text-[11px]">
+                Cadastro ligado a{" "}
+                <Link href={`/perfil/${dono.id}?from=/local/${id}`} className="font-semibold text-eid-primary-300 hover:underline">
+                  {dono.nome ?? "perfil"}
+                </Link>
+              </p>
+            ) : null}
+          </div>
+        </ProfileSection>
 
         {isGestorLocal ? (
           <div className="mt-4">

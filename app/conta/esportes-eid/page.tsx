@@ -10,6 +10,7 @@ import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match
 import { CONTA_PERFIL_HREF } from "@/lib/routes/conta";
 import { listarPapeis, precisaEsportesPratica } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
+import { parseTempoExperienciaParaChaveAprox } from "@/lib/perfil/parse-tempo-experiencia-eid";
 import { ContaEsportesForm } from "./conta-esportes-form";
 
 export const metadata = {
@@ -89,14 +90,7 @@ export default async function ContaEsportesEidPage() {
     (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
   );
   const selectedExperiencias = Object.fromEntries(
-    (eidRows ?? []).map((r) => [
-      r.esporte_id,
-      r.tempo_experiencia === "Menos de 1 ano"
-        ? "menos_1"
-        : r.tempo_experiencia === "1 a 3 anos"
-          ? "1_3"
-          : "mais_3",
-    ])
+    (eidRows ?? []).map((r) => [r.esporte_id, parseTempoExperienciaParaChaveAprox(r.tempo_experiencia)])
   ) as Record<number, "menos_1" | "1_3" | "mais_3">;
 
   const { data: professorRows } = await supabase
@@ -128,12 +122,7 @@ export default async function ContaEsportesEidPage() {
           )
       : ["aulas"];
     if (!selectedExperiencias[esporteId]) {
-      selectedExperiencias[esporteId] =
-        row.tempo_experiencia === "Menos de 1 ano"
-          ? "menos_1"
-          : row.tempo_experiencia === "1 a 3 anos"
-            ? "1_3"
-            : "mais_3";
+      selectedExperiencias[esporteId] = parseTempoExperienciaParaChaveAprox(row.tempo_experiencia);
     }
   }
   for (const esporteId of selectedEsportes) {

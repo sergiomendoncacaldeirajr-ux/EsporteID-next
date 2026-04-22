@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
-import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
+import {
+  PROFILE_CARD_BASE,
+  PROFILE_CARD_PAD_MD,
+  PROFILE_HERO_PANEL_CLASS,
+  PROFILE_PUBLIC_MAIN_CLASS,
+} from "@/components/perfil/profile-ui-tokens";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import {
@@ -70,14 +75,14 @@ export function FormacaoEidEsporteView({
   return (
     <>
       <DashboardTopbar />
-      <main className="mx-auto w-full max-w-lg px-2.5 pb-8 pt-2 sm:max-w-2xl sm:px-5 sm:pt-3">
+      <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         <PerfilBackLink href={backHref} label="Voltar" />
 
         {avisoTopo ? (
           <p className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100/90">{avisoTopo}</p>
         ) : null}
 
-        <div className="mt-3 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
+        <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS}`}>
           <div className={`flex flex-wrap items-start gap-3 ${PROFILE_CARD_PAD_MD}`}>
             <Link
               href={linkPerfilFormacao}
@@ -140,7 +145,7 @@ export function FormacaoEidEsporteView({
           </div>
         </div>
 
-        <div className={`mt-3 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card`}>
+        <div className={`mt-3 overflow-hidden ${PROFILE_CARD_BASE}`}>
           <ProfileSportsMetricsCard
             sportName={`${nomeEsporte} · ${titulo}`}
             eidValue={eidTime}
@@ -179,7 +184,7 @@ export function FormacaoEidEsporteView({
 
         <ProfileSection title="Histórico de partidas (formação)" className="mt-4">
           {partidas.length === 0 ? (
-            <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-[11px] text-eid-text-secondary">
+            <p className={`mt-2 ${PROFILE_CARD_BASE} p-3 text-[11px] text-eid-text-secondary`}>
               Nenhuma partida em equipe listada para esta formação neste esporte. Quando houver jogos válidos no ranking,
               eles aparecem aqui.
             </p>

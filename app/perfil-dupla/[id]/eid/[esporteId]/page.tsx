@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { FormacaoEidEsporteView } from "@/components/perfil/formacao-eid-esporte-view";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
   carregarHistoricoNotasColetivo,
@@ -68,9 +69,9 @@ export default async function PerfilDuplaEidEsportePage({ params, searchParams }
     return (
       <>
         <DashboardTopbar />
-        <main className="mx-auto w-full max-w-lg px-2.5 pb-8 pt-2 sm:max-w-2xl sm:px-5 sm:pt-3">
+        <main className={PROFILE_PUBLIC_MAIN_CLASS}>
           <PerfilBackLink href={backHref} label="Voltar" />
-          <div className="mt-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4">
+          <div className={`mt-4 p-4 ${PROFILE_HERO_PANEL_CLASS}`}>
             <p className="text-[10px] font-bold uppercase tracking-wider text-eid-action-500">Dupla · {nomeEsporte}</p>
             <h1 className="mt-1 text-lg font-black text-eid-fg">Dupla #{duplaId}</h1>
             {d.username ? <p className="text-xs text-eid-primary-300">@{d.username}</p> : null}
@@ -100,9 +101,9 @@ export default async function PerfilDuplaEidEsportePage({ params, searchParams }
     return (
       <>
         <DashboardTopbar />
-        <main className="mx-auto w-full max-w-lg px-2.5 pb-8 pt-2 sm:max-w-2xl sm:px-5 sm:pt-3">
+        <main className={PROFILE_PUBLIC_MAIN_CLASS}>
           <PerfilBackLink href={backHref} label="Voltar" />
-          <div className="mt-4 rounded-2xl border border-amber-500/25 bg-eid-card p-4">
+          <div className={`mt-4 p-4 ${PROFILE_CARD_BASE} border-amber-500/30`}>
             <p className="text-sm text-eid-text-secondary">
               O time vinculado a esta dupla está em outro esporte ou foi alterado. Abra o{" "}
               <Link href={linkPerfilDupla} className="font-semibold text-eid-primary-400 underline">

@@ -6,6 +6,8 @@ import {
   EspacoPublicReservaForm,
   EspacoPublicWaitlistForm,
 } from "@/components/espaco/espaco-public-cta";
+import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
+import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_WIDE_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { createClient } from "@/lib/supabase/server";
 
@@ -98,8 +100,10 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
   return (
     <>
       <DashboardTopbar />
-      <main className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6">
-        <section className="relative overflow-hidden rounded-[2rem] border border-eid-primary-500/20 bg-gradient-to-br from-eid-card via-eid-card to-eid-primary-950/30 p-5 shadow-[0_24px_56px_-26px_rgba(37,99,235,0.45)] sm:p-6">
+      <main className={PROFILE_PUBLIC_MAIN_WIDE_CLASS}>
+        <section
+          className={`${PROFILE_HERO_PANEL_CLASS} mt-2 border border-eid-primary-500/25 p-4 sm:p-5`}
+        >
           <div
             className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-primary-500/15 blur-3xl"
             aria-hidden
@@ -152,7 +156,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                 ) : null}
               </div>
             </div>
-            <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-4">
+            <div className={`${PROFILE_CARD_BASE} p-3 sm:p-4`}>
               {espaco.cover_arquivo ? (
                 <Image
                   src={espaco.cover_arquivo}
@@ -171,9 +175,9 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
           </div>
         </section>
 
-        <section className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
-          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-            <h2 className="text-lg font-bold text-eid-fg">Estrutura</h2>
+        <section className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
+          <div className={`${PROFILE_CARD_BASE} p-4 sm:p-5`}>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-primary-400">Estrutura</h2>
             <div className="mt-4 space-y-2">
               {(unidades ?? []).length ? (
                 (unidades ?? []).map((unidade) => (
@@ -201,8 +205,8 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-            <h2 className="text-lg font-bold text-eid-fg">Planos de sócio</h2>
+          <div className={`${PROFILE_CARD_BASE} p-4 sm:p-5`}>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-primary-400">Planos de sócio</h2>
             <div className="mt-4 space-y-2">
               {(planos ?? []).length ? (
                 (planos ?? []).map((plano) => (
@@ -228,8 +232,8 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-            <h2 className="text-lg font-bold text-eid-fg">Horários</h2>
+          <div className={`${PROFILE_CARD_BASE} p-4 sm:p-5`}>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-primary-400">Horários</h2>
             <div className="mt-4 space-y-2">
               {(horarios ?? []).length ? (
                 (horarios ?? []).map((item) => (
@@ -250,9 +254,9 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
           </div>
         </section>
 
-        <section className="mt-5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-          <h2 className="text-lg font-bold text-eid-fg">Quem vai jogar aqui</h2>
-          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        <ProfileSection title="Quem vai jogar aqui" className="mt-4">
+          <div className={`${PROFILE_CARD_BASE} p-4 sm:p-5`}>
+            <div className="grid gap-3 lg:grid-cols-2">
             {(reservas ?? []).length ? (
               (reservas ?? []).map((reserva) => {
                 const unidade = (unidades ?? []).find(
@@ -320,12 +324,13 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                 Nenhuma ocupação publicada ainda.
               </p>
             )}
+            </div>
           </div>
-        </section>
+        </ProfileSection>
 
-        <section className="mt-5 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-            <h2 className="text-lg font-bold text-eid-fg">Professores parceiros</h2>
+        <section className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className={`${PROFILE_CARD_BASE} p-4 sm:p-5`}>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-primary-400">Professores parceiros</h2>
             <div className="mt-4 space-y-2">
               {(professores ?? []).length ? (
                 (professores ?? []).map((item) => {
@@ -371,8 +376,8 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-            <h2 className="text-lg font-bold text-eid-fg">Torneios neste espaço</h2>
+          <div className={`${PROFILE_CARD_BASE} p-4 sm:p-5`}>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-primary-400">Torneios neste espaço</h2>
             <div className="mt-4 space-y-2">
               {(torneios ?? []).length ? (
                 (torneios ?? []).map((torneio) => (
@@ -396,10 +401,10 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
           </div>
         </section>
 
-        <section className="mt-5 grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
+        <section className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
           {!user ? (
-            <div className="lg:col-span-3 rounded-2xl border border-eid-action-500/25 bg-eid-action-500/10 p-5">
-              <h2 className="text-lg font-bold text-eid-fg">Entrar para continuar</h2>
+            <div className="lg:col-span-3 rounded-2xl border border-eid-action-500/25 bg-eid-action-500/10 p-4 sm:p-5">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-action-400">Entrar para continuar</h2>
               <p className="mt-2 text-sm text-eid-text-secondary">
                 Faça login ou cadastro para solicitar associação, reservar horários
                 e entrar na fila de espera do espaço.
@@ -424,7 +429,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
               {espaco.aceita_socios ? (
                 <EspacoPublicJoinForm espacoId={espaco.id} planos={planos ?? []} />
               ) : (
-                <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 text-sm text-eid-text-secondary">
+                <div className={`${PROFILE_CARD_BASE} p-4 text-sm text-eid-text-secondary`}>
                   Este espaço não está com adesão de sócios aberta agora.
                 </div>
               )}

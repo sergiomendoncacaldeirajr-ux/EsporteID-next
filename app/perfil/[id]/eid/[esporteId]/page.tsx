@@ -4,7 +4,12 @@ import { EidIndividualPartidaRow } from "@/components/perfil/eid-individual-part
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
-import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
+import {
+  PROFILE_CARD_BASE,
+  PROFILE_CARD_PAD_MD,
+  PROFILE_HERO_PANEL_CLASS,
+  PROFILE_PUBLIC_MAIN_CLASS,
+} from "@/components/perfil/profile-ui-tokens";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
   fmtDataPtBr,
@@ -488,10 +493,10 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
   };
 
   return (
-      <main className="mx-auto w-full max-w-lg px-2.5 pb-8 pt-2 sm:max-w-2xl sm:px-5 sm:pt-3">
+      <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         {!isEmbed ? <PerfilBackLink href={backHref} label="Voltar ao perfil" /> : null}
 
-        <div className={`mt-3 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-[0_4px_24px_rgba(0,0,0,0.3)]`}>
+        <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS}`}>
           <div className="px-3 py-3 sm:px-4 sm:py-4">
             <p className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-eid-action-400">
               <span aria-hidden>{esporteIcon}</span>
@@ -523,7 +528,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
           </div>
         </div>
 
-        <div className={`mt-3 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card`}>
+        <div className={`mt-3 overflow-hidden ${PROFILE_CARD_BASE}`}>
           <ProfileSportsMetricsCard
             sportName={nomeEsporte}
             eidValue={eidNum}
@@ -543,7 +548,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
           />
         </div>
 
-        <div className="mt-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-2">
+        <div className={`mt-3 p-2 ${PROFILE_CARD_BASE}`}>
           <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Ver estatísticas</p>
           <div className="flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {([
@@ -709,7 +714,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                 return (
                   <div
                     key={`form-${f.id}`}
-                    className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card"
+                    className={`overflow-hidden ${PROFILE_CARD_BASE}`}
                   >
                     <div className={`flex flex-wrap items-start gap-3 ${PROFILE_CARD_PAD_MD}`}>
                       <Link

@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { EidIndividualPartidaRow } from "@/components/perfil/eid-individual-partida-row";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
+import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { PARTIDA_STATUS_CONCLUIDA, resultadoPartidaIndividual } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
@@ -99,17 +100,17 @@ export default async function PerfilEidEsporteHistoricoIndividualPage({ params, 
   }
 
   return (
-    <main className="mx-auto w-full max-w-lg px-2.5 pb-8 pt-2 sm:max-w-2xl sm:px-5 sm:pt-3">
+    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
       {!isEmbed ? <PerfilBackLink href={backHref} label="Voltar" /> : null}
 
-      <div className="mt-3 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-3 shadow-[0_4px_24px_rgba(0,0,0,0.3)] sm:px-4 sm:py-4">
+      <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}>
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-eid-action-400">{nomeEsporte}</p>
         <h1 className="mt-1 text-base font-black leading-tight text-eid-fg sm:text-lg">Histórico individual</h1>
         <p className="mt-1 text-[10px] text-eid-text-secondary">{perfil.nome ?? "Atleta"} · todas as partidas 1v1 neste esporte</p>
       </div>
 
       {lista.length === 0 ? (
-        <p className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-[11px] text-eid-text-secondary">
+        <p className={`mt-4 p-4 text-[11px] text-eid-text-secondary ${PROFILE_CARD_BASE}`}>
           Nenhuma partida individual listada para este esporte.
         </p>
       ) : (

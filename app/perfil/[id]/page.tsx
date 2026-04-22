@@ -4,6 +4,7 @@ import { ProfileAvatarControl } from "@/components/perfil/profile-avatar-control
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileCoverControl } from "@/components/perfil/profile-cover-control";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
+import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import {
@@ -197,14 +198,14 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   return (
     <>
       <DashboardTopbar />
-      <main className="mx-auto w-full max-w-lg px-2.5 pb-[calc(var(--eid-shell-footer-offset)+1rem)] pt-2 sm:max-w-2xl sm:px-5 sm:pb-8 sm:pt-3">
+      <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         {/* ── Hero Card ─────────────────────────────────────────────── */}
         {/* ── Hero Card ──
              overflow-hidden no container clipa tudo dentro dos cantos arredondados.
              O avatar fica na frente da capa via z-10 (elementos com z-index > 0
              sobrepõem elementos sem z-index dentro do mesmo contexto).
         */}
-        <div className="eid-surface-panel relative mt-2 overflow-hidden rounded-2xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_16px_32px_-20px_rgba(15,23,42,0.45),0_0_20px_-16px_rgba(37,99,235,0.48)]">
+        <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2`}>
 
           {/* Capa — banner generoso, claramente atrás de tudo */}
           <div className="relative h-24 w-full sm:h-28">

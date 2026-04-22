@@ -5,24 +5,11 @@ import { listarPapeis, precisaEsportesPratica } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-fullscreen-shell";
 import { ProfilePerformanceEditor } from "@/components/perfil/edit/profile-performance-editor";
+import { parseTempoExperienciaParaEditor } from "@/lib/perfil/parse-tempo-experiencia-eid";
 
 type Props = {
   searchParams?: Promise<{ from?: string; embed?: string }>;
 };
-
-function parseTempoDetalhado(raw: string | null | undefined): { tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos"; anos: number; meses: number } {
-  const txt = String(raw ?? "").toLowerCase();
-  const anosMatch = txt.match(/(\d+)\s*ano/);
-  const mesesMatch = txt.match(/(\d+)\s*m[eê]s/);
-  const anos = anosMatch ? Number(anosMatch[1]) : 0;
-  const meses = mesesMatch ? Number(mesesMatch[1]) : 0;
-  if (txt.includes("menos de 1 ano")) return { tempo: "Menos de 1 ano", anos, meses };
-  if (txt.includes("mais de 3 anos")) return { tempo: "Mais de 3 anos", anos, meses };
-  if (txt.includes("1 a 3 anos")) return { tempo: "1 a 3 anos", anos, meses };
-  if (anos >= 4) return { tempo: "Mais de 3 anos", anos, meses };
-  if (anos >= 1) return { tempo: "1 a 3 anos", anos, meses };
-  return { tempo: "Menos de 1 ano", anos, meses };
-}
 
 export default async function EditarPerformanceEidFullscreenPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
@@ -92,7 +79,7 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
     (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
   );
   const selectedExperiencias = Object.fromEntries(
-    (eidRows ?? []).map((r) => [r.esporte_id, parseTempoDetalhado(r.tempo_experiencia)])
+    (eidRows ?? []).map((r) => [r.esporte_id, parseTempoExperienciaParaEditor(r.tempo_experiencia)])
   ) as Record<number, { tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos"; anos: number; meses: number }>;
 
   return (

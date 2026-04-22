@@ -501,9 +501,13 @@ function isSportExpAprox(value: string): value is SportExpAprox {
 }
 
 function toMonthInputValue(expValue: string): string {
-  const m = expValue.match(/^(\d{2})\/(\d{4})$/);
+  const m = expValue.match(/^(\d{1,2})\/(\d{4})$/);
   if (!m) return "";
-  return `${m[2]}-${m[1]}`;
+  const month = Number(m[1]);
+  const year = Number(m[2]);
+  if (!Number.isInteger(month) || month < 1 || month > 12) return "";
+  if (!Number.isInteger(year) || year < 1970 || year > 2100) return "";
+  return `${year}-${String(month).padStart(2, "0")}`;
 }
 
 function fromMonthInputValue(inputValue: string): string {
