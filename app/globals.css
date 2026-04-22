@@ -717,3 +717,25 @@ input.eid-input-dark[type="datetime-local"] {
 .eid-focus-ring:focus-within {
   border-color: var(--eid-focus-ring) !important;
 }
+
+/* Ranking — pódio com leitura melhor no tema claro */
+[data-eid-theme="light"] .eid-podium-card {
+  background-image: radial-gradient(
+    ellipse at top,
+    color-mix(in srgb, var(--eid-primary-500) 16%, transparent),
+    color-mix(in srgb, #ffffff 92%, transparent) 46%,
+    color-mix(in srgb, var(--eid-bg) 96%, transparent) 100%
+  );
+  box-shadow:
+    0 14px 28px -20px rgba(15, 23, 42, 0.18),
+    0 0 20px -14px rgba(37, 99, 235, 0.2);
+}
+
+[data-eid-theme="light"] .eid-podium-title {
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--eid-primary-700) 92%, #0f172a),
+    var(--eid-primary-500)
+  );
+  filter: drop-shadow(0 1px 2px rgba(37, 99, 235, 0.22));
+}

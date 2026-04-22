@@ -243,15 +243,15 @@ export function RankingPodium({
   if (!hasAnyPodium && !periodToggle && !rankToggle) return null;
 
   return (
-    <section className="relative mb-0.5 sm:mb-1">
-      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_20%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2 py-2 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_24px_-14px_rgba(37,99,235,0.35)] sm:px-3 sm:py-2.5">
+    <section className="relative -mt-5 mb-0.5 sm:-mt-6 sm:mb-1">
+      <div className="eid-podium-card rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_20%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2 py-2 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_24px_-14px_rgba(37,99,235,0.35)] sm:px-3 sm:py-2.5">
         {rankToggle || periodToggle ? (
           <div className="mb-0.5 flex items-center justify-between gap-2 sm:mb-1">
             <div className="min-w-0">{rankToggle}</div>
             <div className="min-w-0">{periodToggle}</div>
           </div>
         ) : null}
-        <h2 className="mb-1 text-center text-[10px] font-black uppercase tracking-[0.18em] text-transparent bg-gradient-to-b from-white via-eid-primary-300 to-eid-primary-500 bg-clip-text drop-shadow-[0_1px_3px_rgba(37,99,235,0.45)] sm:mb-1.5 sm:text-[11px]">
+        <h2 className="eid-podium-title mb-1 text-center text-[10px] font-black uppercase tracking-[0.18em] text-transparent bg-gradient-to-b from-white via-eid-primary-300 to-eid-primary-500 bg-clip-text drop-shadow-[0_1px_3px_rgba(37,99,235,0.45)] sm:mb-1.5 sm:text-[11px]">
           Pódio
         </h2>
         {hasAnyPodium ? (
@@ -259,7 +259,7 @@ export function RankingPodium({
             <div className="min-h-[1px]">
               {second ? <PodiumFace slot={second} highlight={false} /> : null}
             </div>
-            <div className="z-10 md:-translate-y-0.5">
+            <div className="z-10 -translate-y-1 sm:-translate-y-1.5">
               {first ? <PodiumFace slot={first} highlight /> : null}
             </div>
             <div className="min-h-[1px]">
@@ -285,13 +285,13 @@ function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean 
   const avatarClass = cn(
     "relative mx-auto shrink-0 overflow-hidden rounded-full",
     highlight
-      ? "h-[3.35rem] w-[3.35rem] border-[1.5px] sm:h-[3.6rem] sm:w-[3.6rem]"
+      ? "h-[3.55rem] w-[3.55rem] border-[1.5px] sm:h-[3.85rem] sm:w-[3.85rem]"
       : "h-[2.7rem] w-[2.7rem] border-[1.5px] sm:h-[2.95rem] sm:w-[2.95rem]",
     placeTone,
     "before:pointer-events-none before:absolute before:inset-0 before:rounded-full before:bg-white/5 before:opacity-70 before:animate-[pulse_2.8s_ease-in-out_infinite]"
   );
   return (
-    <div className={cn("flex flex-col items-center text-center", highlight && "scale-[1.02] sm:scale-[1.025]")}>
+    <div className={cn("flex flex-col items-center text-center", highlight && "scale-[1.05] sm:scale-[1.055]")}>
       <span className="mb-0.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1.5 py-px text-[8px] font-black tabular-nums text-eid-primary-300 sm:text-[9px]">
         {slot.place}
       </span>
