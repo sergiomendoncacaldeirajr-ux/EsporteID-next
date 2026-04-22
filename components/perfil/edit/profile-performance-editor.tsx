@@ -17,6 +17,8 @@ type ItemState = {
   interesse: "ranking" | "ranking_e_amistoso" | "amistoso";
   modalidades: Array<"individual" | "dupla" | "time">;
   tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos";
+  tempoAnos?: number;
+  tempoMeses?: number;
 };
 
 type Props = {
@@ -138,6 +140,26 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
                     <option value="1 a 3 anos">1 a 3 anos</option>
                     <option value="Mais de 3 anos">Mais de 3 anos</option>
                   </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={80}
+                      value={item.tempoAnos ?? 0}
+                      onChange={(ev) => updateItem(item.esporteId, { tempoAnos: Number(ev.target.value || 0) })}
+                      placeholder="Anos"
+                      className="eid-input-dark w-full rounded-lg px-2.5 py-1.5 text-xs text-eid-fg"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      max={11}
+                      value={item.tempoMeses ?? 0}
+                      onChange={(ev) => updateItem(item.esporteId, { tempoMeses: Number(ev.target.value || 0) })}
+                      placeholder="Meses"
+                      className="eid-input-dark w-full rounded-lg px-2.5 py-1.5 text-xs text-eid-fg"
+                    />
+                  </div>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {sport.permiteIndividual ? (

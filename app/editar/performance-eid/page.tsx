@@ -10,6 +10,20 @@ type Props = {
   searchParams?: Promise<{ from?: string; embed?: string }>;
 };
 
+function parseTempoDetalhado(raw: string | null | undefined): { tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos"; anos: number; meses: number } {
+  const txt = String(raw ?? "").toLowerCase();
+  const anosMatch = txt.match(/(\d+)\s*ano/);
+  const mesesMatch = txt.match(/(\d+)\s*m[eê]s/);
+  const anos = anosMatch ? Number(anosMatch[1]) : 0;
+  const meses = mesesMatch ? Number(mesesMatch[1]) : 0;
+  if (txt.includes("menos de 1 ano")) return { tempo: "Menos de 1 ano", anos, meses };
+  if (txt.includes("mais de 3 anos")) return { tempo: "Mais de 3 anos", anos, meses };
+  if (txt.includes("1 a 3 anos")) return { tempo: "1 a 3 anos", anos, meses };
+  if (anos >= 4) return { tempo: "Mais de 3 anos", anos, meses };
+  if (anos >= 1) return { tempo: "1 a 3 anos", anos, meses };
+  return { tempo: "Menos de 1 ano", anos, meses };
+}
+
 export default async function EditarPerformanceEidFullscreenPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const supabase = await createClient();
@@ -78,11 +92,8 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
     (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
   );
   const selectedExperiencias = Object.fromEntries(
-    (eidRows ?? []).map((r) => [
-      r.esporte_id,
-      r.tempo_experiencia === "Menos de 1 ano" ? "menos_1" : r.tempo_experiencia === "1 a 3 anos" ? "1_3" : "mais_3",
-    ])
-  ) as Record<number, "menos_1" | "1_3" | "mais_3">;
+    (eidRows ?? []).map((r) => [r.esporte_id, parseTempoDetalhado(r.tempo_experiencia)])
+  ) as Record<number, { tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos"; anos: number; meses: number }>;
 
   return (
     <ProfileEditFullscreenShell
@@ -127,11 +138,9 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
                 (selectedEsportesModalidades[esporteId] as Array<"individual" | "dupla" | "time"> | undefined) ??
                 ["individual"],
               tempo:
-                selectedExperiencias[esporteId] === "menos_1"
-                  ? "Menos de 1 ano"
-                  : selectedExperiencias[esporteId] === "mais_3"
-                    ? "Mais de 3 anos"
-                    : "1 a 3 anos",
+                selectedExperiencias[esporteId]?.tempo ?? "1 a 3 anos",
+              tempoAnos: selectedExperiencias[esporteId]?.anos ?? 0,
+              tempoMeses: selectedExperiencias[esporteId]?.meses ?? 0,
             }))}
           />
         </>

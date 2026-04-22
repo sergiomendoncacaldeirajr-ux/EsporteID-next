@@ -30,6 +30,97 @@ export function fmtDataPtBr(iso: string | null | undefined): string {
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(d);
 }
 
+export function fmtDataLocalPtBr(d: Date): string {
+  if (Number.isNaN(d.getTime())) return "—";
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(d);
+}
+
+/** Valores salvos quando o atleta usa só o seletor de tempo aproximado (sem anos/meses explícitos). */
+export const TEMPO_EXPERIENCIA_APROXIMADO = ["Menos de 1 ano", "1 a 3 anos", "Mais de 3 anos"] as const;
+
+export function isTempoExperienciaAproximado(s: string | null | undefined): boolean {
+  if (!s) return false;
+  return (TEMPO_EXPERIENCIA_APROXIMADO as readonly string[]).includes(s.trim());
+}
+
+/**
+ * Interpreta strings geradas em `savePerformanceEidAction` (ex.: "2 anos", "3 meses", "2 anos e 1 mês").
+ */
+export function parseTempoExperienciaAnosMeses(s: string): { anos: number; meses: number } | null {
+  const t = s.trim();
+  if (isTempoExperienciaAproximado(t)) return null;
+
+  let m = t.match(/^(\d+)\s+anos?\s+e\s+(\d+)\s+(mês|meses)$/i);
+  if (m) {
+    return { anos: Number.parseInt(m[1]!, 10), meses: Number.parseInt(m[2]!, 10) };
+  }
+  m = t.match(/^(\d+)\s+anos?$/i);
+  if (m) {
+    return { anos: Number.parseInt(m[1]!, 10), meses: 0 };
+  }
+  m = t.match(/^(\d+)\s+(mês|meses)$/i);
+  if (m) {
+    return { anos: 0, meses: Number.parseInt(m[1]!, 10) };
+  }
+  return null;
+}
+
+function subtractAnosMesesFromDate(ref: Date, anos: number, meses: number): Date {
+  const d = new Date(ref.getTime());
+  d.setMonth(d.getMonth() - meses);
+  d.setFullYear(d.getFullYear() - anos);
+  return d;
+}
+
+/**
+ * Linha única no cabeçalho da página EID por esporte: deixa claro se é tempo aproximado ou data (estimada ou da 1ª partida).
+ */
+export function formatLinhaExperienciaEid(
+  tempoExperienciaUsuarioEid: string | null | undefined,
+  primeiraPartidaIso: string | null | undefined,
+  refDate: Date = new Date()
+): string {
+  const raw = tempoExperienciaUsuarioEid?.trim();
+  if (raw && isTempoExperienciaAproximado(raw)) {
+    const rest = raw.charAt(0).toLowerCase() + raw.slice(1);
+    return `Pratica há ${rest}`;
+  }
+  const det = raw ? parseTempoExperienciaAnosMeses(raw) : null;
+  if (det && (det.anos > 0 || det.meses > 0)) {
+    const inicio = subtractAnosMesesFromDate(refDate, det.anos, det.meses);
+    return `Pratica desde: ${fmtDataLocalPtBr(inicio)}`;
+  }
+  if (primeiraPartidaIso) {
+    return `Pratica desde: ${fmtDataPtBr(primeiraPartidaIso)}`;
+  }
+  if (raw) {
+    const rest = raw.charAt(0).toLowerCase() + raw.slice(1);
+    return `Pratica há ${rest}`;
+  }
+  return "Tempo de prática ainda não disponível para este esporte.";
+}
+
+export function resultadoPartidaIndividual(
+  profileId: string,
+  p: { jogador1_id: string | null; jogador2_id: string | null; placar_1: number | null; placar_2: number | null }
+): { label: "V" | "D" | "E" | "—"; tone: string } {
+  const isP1 = p.jogador1_id === profileId;
+  const isP2 = p.jogador2_id === profileId;
+  if (!isP1 && !isP2) return { label: "—", tone: "text-eid-text-secondary" };
+  const s1 = Number(p.placar_1);
+  const s2 = Number(p.placar_2);
+  if (!Number.isFinite(s1) || !Number.isFinite(s2)) return { label: "—", tone: "text-eid-text-secondary" };
+  if (s1 === s2) return { label: "E", tone: "text-eid-primary-300" };
+  if (isP1) {
+    return s1 > s2
+      ? { label: "V", tone: "text-emerald-400" }
+      : { label: "D", tone: "text-rose-400" };
+  }
+  return s2 > s1
+    ? { label: "V", tone: "text-emerald-400" }
+    : { label: "D", tone: "text-rose-400" };
+}
+
 export function resultadoColetivo(
   myTeamId: number,
   p: Pick<PartidaColetivaRow, "time1_id" | "time2_id" | "placar_1" | "placar_2" | "vencedor_id">

@@ -57,6 +57,8 @@ type PerformancePayloadItem = {
   interesse: "ranking" | "ranking_e_amistoso" | "amistoso";
   modalidades: Array<"individual" | "dupla" | "time">;
   tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos";
+  tempoAnos?: number;
+  tempoMeses?: number;
 };
 
 export async function savePerformanceEidAction(formData: FormData): Promise<SaveProfileResult> {
@@ -80,19 +82,29 @@ export async function savePerformanceEidAction(formData: FormData): Promise<Save
   const nowIso = new Date().toISOString();
   const rows = parsed
     .filter((item) => Number.isFinite(item.esporteId) && item.esporteId > 0)
-    .map((item) => ({
-      usuario_id: user.id,
-      esporte_id: item.esporteId,
-      interesse_match: item.interesse,
-      modalidade_match: item.modalidades.includes("individual")
-        ? "individual"
-        : item.modalidades.includes("dupla")
-          ? "dupla"
-          : "time",
-      modalidades_match: item.modalidades,
-      tempo_experiencia: item.tempo,
-      atualizado_em: nowIso,
-    }));
+    .map((item) => {
+      const anos = Number(item.tempoAnos ?? 0);
+      const meses = Number(item.tempoMeses ?? 0);
+      const anosOk = Number.isFinite(anos) && anos > 0 ? Math.trunc(anos) : 0;
+      const mesesOk = Number.isFinite(meses) && meses > 0 ? Math.min(11, Math.trunc(meses)) : 0;
+      const tempoDetalhado =
+        anosOk > 0 || mesesOk > 0
+          ? `${anosOk > 0 ? `${anosOk} ano${anosOk === 1 ? "" : "s"}` : ""}${anosOk > 0 && mesesOk > 0 ? " e " : ""}${mesesOk > 0 ? `${mesesOk} ${mesesOk === 1 ? "mês" : "meses"}` : ""}`
+          : item.tempo;
+      return {
+        usuario_id: user.id,
+        esporte_id: item.esporteId,
+        interesse_match: item.interesse,
+        modalidade_match: item.modalidades.includes("individual")
+          ? "individual"
+          : item.modalidades.includes("dupla")
+            ? "dupla"
+            : "time",
+        modalidades_match: item.modalidades,
+        tempo_experiencia: tempoDetalhado,
+        atualizado_em: nowIso,
+      };
+    });
 
   if (rows.length === 0) return { ok: false, message: "Nenhum esporte válido informado." };
 

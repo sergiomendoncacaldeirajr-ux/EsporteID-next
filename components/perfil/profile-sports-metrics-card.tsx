@@ -11,6 +11,8 @@ type ProfileSportsMetricsCardProps = {
   trendLabel?: string;
   trendPoints?: [number, number, number];
   footer?: ReactNode;
+  /** Quando false, oculta os badges de nota/pontos (útil se já exibidos no cabeçalho). */
+  showScoreTiles?: boolean;
 };
 
 export function ProfileSportsMetricsCard({
@@ -22,17 +24,20 @@ export function ProfileSportsMetricsCard({
   trendLabel = "Gráfico de evolução",
   trendPoints,
   footer,
+  showScoreTiles = true,
 }: ProfileSportsMetricsCardProps) {
   const [p1, p2, p3] = trendPoints ?? [eidValue, eidValue, eidValue];
   const toY = (value: number) => 32 - Math.max(0.8, value) * 3;
 
   return (
     <div className="border-t border-[color:var(--eid-border-subtle)] px-2.5 pb-2.5 pt-2">
-      <div className="flex flex-wrap gap-2">
-        <EidNotaMetric value={eidValue} label={eidLabel} size="sm" />
-        <EidRankingPtsMetric value={rankValue} label={rankLabel} size="sm" />
-      </div>
-      <div className="mt-2 rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 p-2">
+      {showScoreTiles ? (
+        <div className="flex flex-wrap gap-2">
+          <EidNotaMetric value={eidValue} label={eidLabel} size="sm" />
+          <EidRankingPtsMetric value={rankValue} label={rankLabel} size="sm" />
+        </div>
+      ) : null}
+      <div className={`rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 p-2 ${showScoreTiles ? "mt-2" : ""}`}>
         <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">{trendLabel}</p>
         <svg viewBox="0 0 120 34" className="mt-1 h-7 w-full" aria-hidden>
           <defs>
