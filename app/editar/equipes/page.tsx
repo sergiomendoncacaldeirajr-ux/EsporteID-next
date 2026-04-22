@@ -38,7 +38,7 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
       showBack={!isEmbed}
       topAction={
         <Link
-          href={`/editar/equipes/cadastrar?from=${encodeURIComponent("/editar/equipes")}${isEmbed ? "&embed=1" : ""}`}
+          href={`/editar/equipes/cadastrar?from=${encodeURIComponent(from)}${isEmbed ? "&embed=1" : ""}`}
           className="inline-flex items-center gap-1 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18"
         >
           <span aria-hidden>+</span>
@@ -56,7 +56,7 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
                 return (
                   <Link
                     key={`t-${t.id}`}
-                    href={`/editar/time/${t.id}?from=${encodeURIComponent("/editar/equipes")}`}
+                    href={`/editar/time/${t.id}?from=${encodeURIComponent(from)}${isEmbed ? "&embed=1" : ""}`}
                     className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2 transition-all duration-200 hover:border-eid-primary-500/30"
                   >
                     {t.escudo ? (
@@ -88,7 +88,7 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
                 return (
                   <Link
                     key={`d-${d.id}`}
-                    href={`/editar/dupla/${d.id}?from=${encodeURIComponent("/editar/equipes")}`}
+                    href={`/editar/dupla/${d.id}?from=${encodeURIComponent(from)}${isEmbed ? "&embed=1" : ""}`}
                     className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2 transition-all duration-200 hover:border-eid-primary-500/30"
                   >
                     <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">

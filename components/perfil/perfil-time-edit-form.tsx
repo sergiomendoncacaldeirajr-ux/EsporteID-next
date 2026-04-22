@@ -40,9 +40,9 @@ export function PerfilTimeEditForm({
 
   const blocoAjuda = (
     <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary">
-      Nome, @username, bio, escudo e preferências podem ser alterados. A{" "}
-      <strong className="text-eid-fg">cidade da formação não pode ser mudada</strong> depois da criação (ranking e radar
-      dependem disso). Se o time mudou de cidade, é preciso{" "}
+      Nome, @username, bio, escudo e preferências podem ser alterados. O{" "}
+      <strong className="text-eid-fg">esporte e a cidade da formação são fixos</strong> depois da criação (ranking e radar
+      dependem disso). Se o time mudou de cidade ou for atuar em outro esporte, é preciso{" "}
       <Link href="/times" className="font-semibold text-eid-primary-300 underline">
         criar uma nova formação
       </Link>{" "}
@@ -54,9 +54,18 @@ export function PerfilTimeEditForm({
     <>
       <form action={formAction} className={`grid gap-2 sm:grid-cols-2 ${variant === "page" ? "mt-4" : "mt-3"}`}>
         <input type="hidden" name="time_id" value={timeId} />
-        <div className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/5 px-3 py-2 sm:col-span-2">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-eid-primary-400">Cidade da formação (fixa)</p>
-          <p className="mt-1 text-sm text-eid-fg">{localizacao?.trim() ? localizacao : "—"}</p>
+        <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 sm:col-span-2">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">Cidade da formação (fixa)</p>
+          <input type="hidden" name="localizacao" value={localizacao ?? ""} />
+          <input
+            type="text"
+            value={localizacao?.trim() ? localizacao : "Não informada"}
+            disabled
+            className="mt-1 w-full cursor-not-allowed rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2.5 py-1.5 text-sm text-eid-text-secondary opacity-85"
+          />
+          <p className="mt-1 rounded-lg border border-[#f5c56b] bg-[#fff3cd] px-2 py-1 text-[11px] font-bold text-[#5a3200]">
+            Esta cidade não pode ser editada. Para mudar a localização, crie outra equipe/dupla.
+          </p>
         </div>
         <input
           name="nome"

@@ -42,6 +42,7 @@ export default async function CadastrarEquipeFullscreenPage({ searchParams }: Pr
           return { id: t.id, nome: t.nome ?? "Equipe", tipo: t.tipo ?? "time", esporteNome: esp?.nome ?? "Esporte" };
         })}
         defaultOpenCreate
+        manageHrefTemplate={`/editar/time/:id?from=${encodeURIComponent(from)}${isEmbed ? "&embed=1" : ""}`}
       />
     </ProfileEditFullscreenShell>
   );

@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export type TeamActionState = { ok: true; message: string } | { ok: false; message: string };
+export type TeamActionState =
+  | { ok: true; message: string; createdTimeId?: number }
+  | { ok: false; message: string };
 
 export async function criarEquipe(
   _prev: TeamActionState | undefined,
@@ -22,7 +24,6 @@ export async function criarEquipe(
   const tipo = tipoRaw === "dupla" ? "dupla" : "time";
   const esporteId = Number(formData.get("esporte_id") ?? 0);
   const localizacao = String(formData.get("localizacao") ?? "").trim();
-  const bio = String(formData.get("bio") ?? "").trim();
   const escudoFile = formData.get("escudo_file");
 
   if (nome.length < 3) return { ok: false, message: "Nome da equipe inválido." };
@@ -52,10 +53,12 @@ export async function criarEquipe(
   if (up.error) return { ok: false, message: "Não foi possível enviar a foto da equipe." };
   const escudo = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
 
-  const { error } = await supabase.from("times").insert({
+  const { data: created, error } = await supabase
+    .from("times")
+    .insert({
     nome,
     username,
-    bio: bio || null,
+    bio: null,
     tipo,
     esporte_id: esporteId,
     localizacao: localizacao || null,
@@ -64,13 +67,15 @@ export async function criarEquipe(
     interesse_rank_match: true,
     disponivel_amistoso: true,
     vagas_abertas: true,
-  });
+    })
+    .select("id")
+    .single();
 
   if (error) return { ok: false, message: error.message };
 
   revalidatePath("/times");
   revalidatePath(`/perfil/${user.id}`);
-  return { ok: true, message: "Equipe criada com sucesso." };
+  return { ok: true, message: "Formação criada com sucesso.", createdTimeId: Number(created?.id ?? 0) || undefined };
 }
 
 export async function convidarUsuarioParaEquipe(
@@ -88,11 +93,44 @@ export async function convidarUsuarioParaEquipe(
   if (!Number.isInteger(timeId) || timeId < 1) return { ok: false, message: "Equipe inválida." };
   if (!username) return { ok: false, message: "Informe o @username do atleta." };
 
+  const [{ data: timeRow }, { data: targetProfile }] = await Promise.all([
+    supabase.from("times").select("id, esporte_id, criador_id").eq("id", timeId).maybeSingle(),
+    supabase.from("profiles").select("id").eq("username", username).maybeSingle(),
+  ]);
+  if (!timeRow || timeRow.criador_id !== user.id) return { ok: false, message: "Sem permissão para convidar nesta equipe." };
+  if (!targetProfile?.id) {
+    return { ok: false, message: "Usuário não encontrado. Verifique o @username informado." };
+  }
+  if (timeRow.esporte_id != null) {
+    const { data: esporteConfig } = await supabase
+      .from("usuario_eid")
+      .select("usuario_id")
+      .eq("usuario_id", targetProfile.id)
+      .eq("esporte_id", Number(timeRow.esporte_id))
+      .maybeSingle();
+    if (!esporteConfig) {
+      return {
+        ok: false,
+        message:
+          "Esse usuário ainda não configurou esse esporte no perfil. Para aparecer na busca de adicionar ao time/dupla, ele precisa configurar o esporte no EID.",
+      };
+    }
+  }
+
   const { error } = await supabase.rpc("convidar_para_time", {
     p_time_id: timeId,
     p_username: username,
   });
-  if (error) return { ok: false, message: error.message };
+  if (error) {
+    if (String(error.message || "").toLowerCase().includes("usuário não encontrado")) {
+      return {
+        ok: false,
+        message:
+          "Usuário não encontrado. Para aparecer na opção de adicionar ao time/dupla, o atleta precisa ter esse esporte configurado no perfil.",
+      };
+    }
+    return { ok: false, message: error.message };
+  }
 
   revalidatePath("/times");
   revalidatePath("/comunidade");
@@ -119,11 +157,26 @@ export async function atualizarMinhaEquipe(
 
   const { data: owned } = await supabase
     .from("times")
-    .select("id")
+    .select("id, localizacao, esporte_id")
     .eq("id", timeId)
     .eq("criador_id", user.id)
     .maybeSingle();
   if (!owned) return { ok: false, message: "Sem permissão para editar esta equipe." };
+
+  // Trava de segurança: localização da formação é imutável após criação.
+  const localizacaoEnviada = String(formData.get("localizacao") ?? "").trim();
+  const localizacaoAtual = String(owned.localizacao ?? "").trim();
+  if (localizacaoEnviada && localizacaoEnviada !== localizacaoAtual) {
+    return { ok: false, message: "A localização da formação não pode ser alterada. Crie outra equipe/dupla para mudar a cidade." };
+  }
+  const esporteEnviadoRaw = formData.get("esporte_id");
+  if (esporteEnviadoRaw != null && String(esporteEnviadoRaw).trim() !== "") {
+    const esporteEnviado = Number(esporteEnviadoRaw);
+    const esporteAtual = Number(owned.esporte_id ?? 0);
+    if (Number.isFinite(esporteEnviado) && esporteEnviado > 0 && esporteEnviado !== esporteAtual) {
+      return { ok: false, message: "O esporte da formação não pode ser alterado após o cadastro." };
+    }
+  }
 
   const nome = String(formData.get("nome") ?? "").trim();
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
