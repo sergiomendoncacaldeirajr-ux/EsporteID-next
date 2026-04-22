@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 
 /* ── Cores reativas ao tema ── */
 const IC = {
-  active: "var(--eid-primary-500)",
+  active: "var(--eid-fg)",
   inactive: "var(--eid-text-secondary)",
 };
 
@@ -19,13 +19,8 @@ const IC = {
 function IconHome({ active }: { active: boolean }) {
   const c = active ? IC.active : IC.inactive;
   return (
-    <svg viewBox="0 0 24 24" className="h-[20px] w-[20px]" fill="none">
-      {/* Telhado */}
-      <path d="M3 11L12 3l9 8" stroke={c} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-      {/* Corpo */}
-      <path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9" fill={c} fillOpacity={active ? 0.18 : 0.1} stroke={c} strokeWidth="1.8" strokeLinejoin="round" />
-      {/* Porta */}
-      <rect x="10" y="14" width="4" height="6" rx="0.5" fill={c} fillOpacity={active ? 0.55 : 0.3} />
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" aria-hidden>
+      <path d="M4 11.3L12 4l8 7.3V20h-5.4v-4.8H9.4V20H4v-8.7z" fill={c} fillOpacity={active ? 0.96 : 0.8} />
     </svg>
   );
 }
@@ -34,33 +29,24 @@ function IconHome({ active }: { active: boolean }) {
 function IconAgenda({ active }: { active: boolean }) {
   const c = active ? IC.active : IC.inactive;
   return (
-    <svg viewBox="0 0 24 24" className="h-[20px] w-[20px]" fill="none">
-      {/* Corpo do apito */}
-      <path
-        d="M14 8H8a4 4 0 000 8h4l2-8z"
-        fill={c} fillOpacity={active ? 0.2 : 0.12}
-        stroke={c} strokeWidth="1.8" strokeLinejoin="round"
-      />
-      {/* Bico */}
-      <path d="M14 8l3-3 2 2-1 3-4-2z" fill={c} fillOpacity={active ? 0.55 : 0.35} stroke={c} strokeWidth="1.5" strokeLinejoin="round" />
-      {/* Cordinha */}
-      <path d="M8 12h3" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
-      {/* Bolinha do bico */}
-      <circle cx="19" cy="5" r="1.2" fill={c} fillOpacity={active ? 0.8 : 0.5} />
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" aria-hidden>
+      <rect x="4" y="5.5" width="16" height="14.5" rx="2.5" fill={c} fillOpacity={active ? 0.96 : 0.8} />
+      <rect x="7.3" y="3.2" width="2.1" height="4.3" rx="1.05" fill={c} />
+      <rect x="14.6" y="3.2" width="2.1" height="4.3" rx="1.05" fill={c} />
+      <path d="M4 10h16" stroke="var(--eid-card)" strokeWidth="1.6" />
     </svg>
   );
 }
 
 /* Troféu — para o rank elevado */
 function IconTrophy({ active }: { active: boolean }) {
+  const c = active ? IC.active : IC.inactive;
   return (
-    <svg viewBox="0 0 24 24" className={`h-[21px] w-[21px] ${active ? "opacity-100" : "opacity-80"}`} fill="none">
-      <path d="M7 3h10v8a5 5 0 01-10 0V3z" fill="white" fillOpacity="0.92" />
-      <path d="M4 4h3v5a3 3 0 01-3-3V4zM17 4h3v2a3 3 0 01-3 3V4z" fill="white" fillOpacity="0.65" />
-      <line x1="12" y1="16" x2="12" y2="19" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <rect x="8" y="19" width="8" height="2.5" rx="1.25" fill="white" fillOpacity="0.85" />
-      {/* Estrela no topo do troféu */}
-      <path d="M12 5.5l.8 1.6 1.7.25-1.25 1.2.3 1.7L12 9.4l-1.55.85.3-1.7L9.5 7.35l1.7-.25L12 5.5z" fill="rgba(249,115,22,0.9)" />
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" aria-hidden>
+      <path d="M7.1 4.5h9.8v5.4a4.9 4.9 0 01-9.8 0V4.5z" fill={c} fillOpacity={active ? 0.96 : 0.8} />
+      <path d="M5 5.7h2.1V8a2.3 2.3 0 01-2.1-2.3zm13.9 0H21V8a2.3 2.3 0 01-2.1 2.3z" fill={c} fillOpacity={active ? 0.96 : 0.8} />
+      <path d="M12 15v3.1" stroke={c} strokeWidth="2" strokeLinecap="round" />
+      <rect x="8.4" y="18.1" width="7.2" height="2.4" rx="1.2" fill={c} fillOpacity={active ? 0.96 : 0.8} />
     </svg>
   );
 }
@@ -69,13 +55,11 @@ function IconTrophy({ active }: { active: boolean }) {
 function IconSocial({ active }: { active: boolean }) {
   const c = active ? IC.active : IC.inactive;
   return (
-    <svg viewBox="0 0 24 24" className="h-[20px] w-[20px]" fill="none">
-      {/* Jogador esquerda */}
-      <circle cx="8" cy="8" r="2.8" fill={c} fillOpacity={active ? 0.25 : 0.15} stroke={c} strokeWidth="1.6" />
-      <path d="M3 19c0-3 2.2-5 5-5s5 2 5 5" stroke={c} strokeWidth="1.7" strokeLinecap="round" fill="none" />
-      {/* Jogador direita */}
-      <circle cx="16" cy="8" r="2.8" fill={c} fillOpacity={active ? 0.45 : 0.2} stroke={c} strokeWidth="1.6" />
-      <path d="M11 19c0-3 2.2-5 5-5s5 2 5 5" stroke={c} strokeWidth="1.7" strokeLinecap="round" fill="none" />
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" aria-hidden>
+      <path d="M5 6.8h14a2 2 0 012 2v6.1a2 2 0 01-2 2h-5.5l-2.9 2.6v-2.6H5a2 2 0 01-2-2V8.8a2 2 0 012-2z" fill={c} fillOpacity={active ? 0.96 : 0.8} />
+      <circle cx="9.2" cy="11.8" r="1.1" fill="var(--eid-card)" />
+      <circle cx="12" cy="11.8" r="1.1" fill="var(--eid-card)" />
+      <circle cx="14.8" cy="11.8" r="1.1" fill="var(--eid-card)" />
     </svg>
   );
 }
@@ -84,17 +68,9 @@ function IconSocial({ active }: { active: boolean }) {
 function IconPerfil({ active }: { active: boolean }) {
   const c = active ? IC.active : IC.inactive;
   return (
-    <svg viewBox="0 0 24 24" className="h-[20px] w-[20px]" fill="none">
-      {/* Camiseta esportiva */}
-      <path
-        d="M9 3L6 6l-3 1.5 2 4 3-1.5V21h8V10l3 1.5 2-4L18 6l-3-3"
-        fill={c} fillOpacity={active ? 0.18 : 0.1}
-        stroke={c} strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round"
-      />
-      {/* Gola */}
-      <path d="M9 3c0 1.657 1.343 3 3 3s3-1.343 3-3" stroke={c} strokeWidth="1.7" strokeLinecap="round" fill="none" />
-      {/* Número */}
-      <text x="12" y="17" textAnchor="middle" fontSize="5.5" fontWeight="900" fill={c} fillOpacity={active ? 0.8 : 0.5}>10</text>
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" aria-hidden>
+      <circle cx="12" cy="8.2" r="3.5" fill={c} fillOpacity={active ? 0.96 : 0.8} />
+      <path d="M5 19.2c.9-3.3 3.7-5.3 7-5.3s6.1 2 7 5.3H5z" fill={c} fillOpacity={active ? 0.96 : 0.8} />
     </svg>
   );
 }
@@ -391,43 +367,40 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         style={{ viewTransitionName: "eid-app-bottomnav" }}
       >
         <div
-          className="relative overflow-visible rounded-t-[18px] border-t border-[color:var(--eid-border-subtle)] bg-eid-card/96 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] backdrop-blur-xl"
+          className="relative overflow-visible rounded-t-[16px] border-t border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_-6px_18px_rgba(0,0,0,0.18)] backdrop-blur-xl"
           style={{ paddingBottom: "max(0.3rem, env(safe-area-inset-bottom))" }}
         >
-          <div className="flex items-center justify-around px-1 pt-1.5">
+          <div className="flex items-end justify-around px-1 pt-1.5">
             {items.map((item) => {
               if (item.rank) {
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 pt-1.5 transition-transform active:scale-90"
+                    className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 pt-1.5 transition-transform active:scale-95"
                     aria-label={item.label}
                   >
-                    {/* Glow permanente — destaque de feature principal */}
                     <span
-                      className="pointer-events-none absolute -top-8 left-1/2 h-16 w-16 -translate-x-1/2 rounded-full blur-2xl"
+                      className="pointer-events-none absolute -top-6 left-1/2 h-12 w-12 -translate-x-1/2 rounded-full blur-xl"
                       style={{
                         background: item.active
-                          ? "radial-gradient(circle, rgba(249,115,22,0.75), transparent 70%)"
-                          : "radial-gradient(circle, rgba(249,115,22,0.35), transparent 70%)",
+                          ? "radial-gradient(circle, color-mix(in srgb, var(--eid-action-400) 70%, transparent), transparent 72%)"
+                          : "radial-gradient(circle, color-mix(in srgb, var(--eid-action-400) 36%, transparent), transparent 72%)",
                       }}
                     />
-                    {/* Botão elevado */}
                     <span
-                      className={`absolute -top-7 flex h-[56px] w-[56px] items-center justify-center rounded-full transition-all ${
+                      className={`absolute -top-[1.62rem] flex h-[46px] w-[46px] items-center justify-center rounded-full transition-all ${
                         item.active
-                          ? "bg-eid-action-500 ring-[3px] ring-eid-card shadow-[0_8px_28px_-4px_rgba(249,115,22,0.95),0_0_0_5px_rgba(249,115,22,0.18)]"
-                          : "bg-gradient-to-b from-eid-action-400 to-eid-action-600 ring-[3px] ring-eid-card shadow-[0_6px_20px_-4px_rgba(249,115,22,0.7),0_0_0_4px_rgba(249,115,22,0.1)]"
+                          ? "bg-eid-action-400 ring-[2.5px] ring-eid-card shadow-[0_8px_20px_-6px_color-mix(in_srgb,var(--eid-action-500)_80%,transparent)]"
+                          : "bg-eid-action-500/85 ring-[2.5px] ring-eid-card shadow-[0_6px_14px_-7px_color-mix(in_srgb,var(--eid-action-500)_70%,transparent)]"
                       }`}
                     >
                       <IconTrophy active={item.active} />
                     </span>
-                    {/* Espaçador invisível que reserva a altura do ícone, alinhando o label */}
-                    <span className="h-[28px] w-[42px]" aria-hidden />
+                    <span className="h-[22px] w-[36px]" aria-hidden />
                     <span
-                      className="text-[8px] font-semibold uppercase tracking-[0.12em] leading-none"
-                      style={{ color: item.active ? "var(--eid-action-500)" : "var(--eid-text-secondary)" }}
+                      className="text-[8px] font-medium leading-none"
+                      style={{ color: item.active ? "var(--eid-fg)" : "var(--eid-text-secondary)" }}
                     >
                       {item.label}
                     </span>
@@ -439,24 +412,12 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 transition-transform active:scale-90"
+                  className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 transition-transform active:scale-95"
                   aria-label={item.label}
                 >
-                  {/* Raio de luz no topo quando ativo */}
-                  {item.active && (
-                    <span
-                      className="pointer-events-none absolute -top-px left-1/2 h-[2px] w-7 -translate-x-1/2 rounded-full"
-                      style={{
-                        background: "linear-gradient(90deg,transparent,var(--eid-primary-400),transparent)",
-                        boxShadow: "0 0 7px 1.5px rgba(96,165,250,0.55)",
-                      }}
-                    />
-                  )}
-
-                  {/* Ícone */}
                   <span
-                    className={`relative flex h-[28px] w-[42px] items-center justify-center rounded-xl transition-all ${
-                      item.active ? "bg-eid-primary-500/12" : ""
+                    className={`relative flex h-[25px] w-[36px] items-center justify-center rounded-xl transition-all ${
+                      item.active ? "bg-eid-primary-500/12" : "bg-transparent"
                     }`}
                     style={{ color: item.active ? "var(--eid-primary-500)" : "var(--eid-text-secondary)" }}
                   >
@@ -465,8 +426,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   </span>
 
                   <span
-                    className="text-[8px] font-semibold uppercase tracking-[0.12em] leading-none transition"
-                    style={{ color: item.active ? "var(--eid-primary-500)" : "var(--eid-text-secondary)" }}
+                    className="text-[8px] font-medium leading-none transition"
+                    style={{ color: item.active ? "var(--eid-fg)" : "var(--eid-text-secondary)" }}
                   >
                     {item.label}
                   </span>
