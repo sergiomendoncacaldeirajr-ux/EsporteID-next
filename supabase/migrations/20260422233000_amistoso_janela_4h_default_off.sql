@@ -30,6 +30,23 @@ where interesse_match is distinct from 'ranking';
 alter table public.usuario_eid
   alter column interesse_match set default 'ranking';
 
+-- CREATE OR REPLACE não altera o row type de RETURNS TABLE. Remove todas as assinaturas antigas
+-- (produção pode ter menos colunas no retorno ou parâmetros com tipos diferentes).
+do $drop_match_rpc$
+declare
+  sig text;
+begin
+  for sig in
+    select p.oid::regprocedure::text
+    from pg_proc p
+    where p.pronamespace = 'public'::regnamespace
+      and p.proname in ('buscar_match_atletas', 'buscar_match_formacoes')
+  loop
+    execute format('drop function %s cascade', sig);
+  end loop;
+end;
+$drop_match_rpc$;
+
 create or replace function public.buscar_match_atletas(
   p_viewer_id uuid,
   p_lat double precision,

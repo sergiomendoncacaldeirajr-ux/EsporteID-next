@@ -4,6 +4,28 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { savePerformanceEidAction } from "@/app/editar/actions";
 
+const MESES_PT = [
+  { v: 1, l: "Janeiro" },
+  { v: 2, l: "Fevereiro" },
+  { v: 3, l: "Março" },
+  { v: 4, l: "Abril" },
+  { v: 5, l: "Maio" },
+  { v: 6, l: "Junho" },
+  { v: 7, l: "Julho" },
+  { v: 8, l: "Agosto" },
+  { v: 9, l: "Setembro" },
+  { v: 10, l: "Outubro" },
+  { v: 11, l: "Novembro" },
+  { v: 12, l: "Dezembro" },
+] as const;
+
+function anosParaSelect(): number[] {
+  const y = new Date().getFullYear();
+  const out: number[] = [];
+  for (let a = y; a >= 1970; a--) out.push(a);
+  return out;
+}
+
 type Sport = {
   id: number;
   nome: string;
@@ -15,9 +37,12 @@ type Sport = {
 type ItemState = {
   esporteId: number;
   modalidades: Array<"individual" | "dupla" | "time">;
+  tempoTipo: "faixa" | "inicio";
   tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos";
   tempoAnos?: number;
   tempoMeses?: number;
+  inicioMes: number;
+  inicioAno: number;
 };
 
 type Props = {
@@ -32,6 +57,7 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
   const [items, setItems] = useState<ItemState[]>(initialItems);
 
   const sportsMap = useMemo(() => new Map(sports.map((s) => [s.id, s])), [sports]);
+  const yearChoices = useMemo(() => anosParaSelect(), []);
   const selectedIds = new Set(items.map((it) => it.esporteId));
   const availableToAdd = sports.filter((s) => !selectedIds.has(s.id));
 
@@ -43,13 +69,18 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
     else if (sport.permiteDupla) modalidades.push("dupla");
     else modalidades.push("time");
 
+    const y = new Date().getFullYear();
     setItems((prev) => [
       ...prev,
       {
         esporteId,
-        interesse: "ranking_e_amistoso",
         modalidades,
+        tempoTipo: "faixa",
         tempo: "1 a 3 anos",
+        tempoAnos: 0,
+        tempoMeses: 0,
+        inicioMes: 1,
+        inicioAno: Math.max(1970, y - 2),
       },
     ]);
   }
@@ -116,36 +147,110 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
                     Remover
                   </button>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <select
-                    value={item.tempo}
-                    onChange={(ev) => updateItem(item.esporteId, { tempo: ev.target.value as ItemState["tempo"] })}
-                    className="eid-input-dark w-full rounded-lg px-2.5 py-1.5 text-xs text-eid-fg [&>option]:bg-[#0b1220] [&>option]:text-white"
-                  >
-                    <option value="Menos de 1 ano">Menos de 1 ano</option>
-                    <option value="1 a 3 anos">1 a 3 anos</option>
-                    <option value="Mais de 3 anos">Mais de 3 anos</option>
-                  </select>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="number"
-                      min={0}
-                      max={80}
-                      value={item.tempoAnos ?? 0}
-                      onChange={(ev) => updateItem(item.esporteId, { tempoAnos: Number(ev.target.value || 0) })}
-                      placeholder="Anos"
-                      className="eid-input-dark w-full rounded-lg px-2.5 py-1.5 text-xs text-eid-fg"
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      max={11}
-                      value={item.tempoMeses ?? 0}
-                      onChange={(ev) => updateItem(item.esporteId, { tempoMeses: Number(ev.target.value || 0) })}
-                      placeholder="Meses"
-                      className="eid-input-dark w-full rounded-lg px-2.5 py-1.5 text-xs text-eid-fg"
-                    />
+                <div className="space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">
+                    Tempo de experiência neste esporte
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(
+                      [
+                        { id: "faixa" as const, label: "Faixa aproximada" },
+                        { id: "inicio" as const, label: "Desde mês e ano" },
+                      ] as const
+                    ).map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => updateItem(item.esporteId, { tempoTipo: opt.id })}
+                        className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide transition ${
+                          item.tempoTipo === opt.id
+                            ? "border-eid-primary-500/50 bg-eid-primary-500/15 text-eid-fg"
+                            : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:text-eid-fg"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
                   </div>
+                  {item.tempoTipo === "inicio" ? (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <label className="grid gap-1">
+                        <span className="text-[10px] font-medium text-eid-text-secondary">Mês de início</span>
+                        <select
+                          value={item.inicioMes}
+                          onChange={(ev) =>
+                            updateItem(item.esporteId, { inicioMes: Number(ev.target.value) })
+                          }
+                          className="eid-input-dark w-full rounded-lg px-2.5 py-1.5 text-xs text-eid-fg [&>option]:bg-[#0b1220] [&>option]:text-white"
+                        >
+                          {MESES_PT.map((m) => (
+                            <option key={m.v} value={m.v}>
+                              {m.l}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="grid gap-1">
+                        <span className="text-[10px] font-medium text-eid-text-secondary">Ano</span>
+                        <select
+                          value={item.inicioAno}
+                          onChange={(ev) =>
+                            updateItem(item.esporteId, { inicioAno: Number(ev.target.value) })
+                          }
+                          className="eid-input-dark w-full rounded-lg px-2.5 py-1.5 text-xs text-eid-fg [&>option]:bg-[#0b1220] [&>option]:text-white"
+                        >
+                          {yearChoices.map((a) => (
+                            <option key={a} value={a}>
+                              {a}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <select
+                        value={item.tempo}
+                        onChange={(ev) =>
+                          updateItem(item.esporteId, { tempo: ev.target.value as ItemState["tempo"] })
+                        }
+                        className="eid-input-dark w-full rounded-lg px-2.5 py-1.5 text-xs text-eid-fg [&>option]:bg-[#0b1220] [&>option]:text-white"
+                      >
+                        <option value="Menos de 1 ano">Menos de 1 ano</option>
+                        <option value="1 a 3 anos">1 a 3 anos</option>
+                        <option value="Mais de 3 anos">Mais de 3 anos</option>
+                      </select>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={80}
+                          value={item.tempoAnos ?? 0}
+                          onChange={(ev) =>
+                            updateItem(item.esporteId, { tempoAnos: Number(ev.target.value || 0) })
+                          }
+                          placeholder="Anos"
+                          aria-label="Anos de prática"
+                          className="eid-input-dark w-full rounded-lg px-2.5 py-1.5 text-xs text-eid-fg"
+                        />
+                        <input
+                          type="number"
+                          min={0}
+                          max={11}
+                          value={item.tempoMeses ?? 0}
+                          onChange={(ev) =>
+                            updateItem(item.esporteId, { tempoMeses: Number(ev.target.value || 0) })
+                          }
+                          placeholder="Meses"
+                          aria-label="Meses além dos anos completos"
+                          className="eid-input-dark w-full rounded-lg px-2.5 py-1.5 text-xs text-eid-fg"
+                        />
+                      </div>
+                      <p className="sm:col-span-2 text-[10px] leading-snug text-eid-text-secondary">
+                        Opcional: preencha anos e meses para um texto mais preciso (ex.: &quot;2 anos e 3 meses&quot;).
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {sport.permiteIndividual ? (

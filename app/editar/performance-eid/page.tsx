@@ -5,7 +5,10 @@ import { listarPapeis, precisaEsportesPratica } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-fullscreen-shell";
 import { ProfilePerformanceEditor } from "@/components/perfil/edit/profile-performance-editor";
-import { parseTempoExperienciaParaEditor } from "@/lib/perfil/parse-tempo-experiencia-eid";
+import {
+  extrairMesAnoInicio,
+  parseTempoExperienciaParaEditor,
+} from "@/lib/perfil/parse-tempo-experiencia-eid";
 
 type Props = {
   searchParams?: Promise<{ from?: string; embed?: string }>;
@@ -69,12 +72,14 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
     .eq("usuario_id", user.id);
 
   const selectedEsportes = (eidRows ?? []).map((r) => r.esporte_id);
+  const eidRowPorEsporte = new Map((eidRows ?? []).map((r) => [r.esporte_id, r]));
   const selectedEsportesModalidades = Object.fromEntries(
     (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
   );
   const selectedExperiencias = Object.fromEntries(
     (eidRows ?? []).map((r) => [r.esporte_id, parseTempoExperienciaParaEditor(r.tempo_experiencia)])
   ) as Record<number, { tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos"; anos: number; meses: number }>;
+  const refAno = new Date().getFullYear();
 
   return (
     <ProfileEditFullscreenShell
@@ -112,16 +117,23 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
               permiteDupla: Boolean(e.permite_dupla),
               permiteTime: Boolean(e.permite_time),
             }))}
-            initialItems={selectedEsportes.map((esporteId) => ({
-              esporteId,
-              modalidades:
-                (selectedEsportesModalidades[esporteId] as Array<"individual" | "dupla" | "time"> | undefined) ??
-                ["individual"],
-              tempo:
-                selectedExperiencias[esporteId]?.tempo ?? "1 a 3 anos",
-              tempoAnos: selectedExperiencias[esporteId]?.anos ?? 0,
-              tempoMeses: selectedExperiencias[esporteId]?.meses ?? 0,
-            }))}
+            initialItems={selectedEsportes.map((esporteId) => {
+              const raw = eidRowPorEsporte.get(esporteId)?.tempo_experiencia;
+              const ma = extrairMesAnoInicio(raw);
+              const ed = selectedExperiencias[esporteId] ?? parseTempoExperienciaParaEditor(raw);
+              return {
+                esporteId,
+                modalidades:
+                  (selectedEsportesModalidades[esporteId] as Array<"individual" | "dupla" | "time"> | undefined) ??
+                  ["individual"],
+                tempoTipo: ma ? "inicio" : "faixa",
+                tempo: ed.tempo ?? "1 a 3 anos",
+                tempoAnos: ed.anos ?? 0,
+                tempoMeses: ed.meses ?? 0,
+                inicioMes: ma?.mes ?? 1,
+                inicioAno: ma?.ano ?? Math.max(1970, refAno - 2),
+              };
+            })}
           />
         </>
       )}

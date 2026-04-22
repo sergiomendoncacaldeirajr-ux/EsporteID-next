@@ -63,6 +63,18 @@ export function parseTempoExperienciaParaEditor(raw: string | null | undefined):
   };
 }
 
+/** Retorna mês (1–12) e ano se o valor gravado for exatamente MM/YYYY. */
+export function extrairMesAnoInicio(raw: string | null | undefined): { mes: number; ano: number } | null {
+  const original = String(raw ?? "").trim();
+  const my = original.match(/^(\d{1,2})\/(\d{4})$/);
+  if (!my) return null;
+  const month = Number(my[1]);
+  const year = Number(my[2]);
+  if (!Number.isInteger(month) || month < 1 || month > 12) return null;
+  if (!Number.isInteger(year) || year < 1970 || year > 2100) return null;
+  return { mes: month, ano: year };
+}
+
 export function parseTempoExperienciaParaChaveAprox(raw: string | null | undefined): "menos_1" | "1_3" | "mais_3" {
   const { tempo } = parseTempoExperienciaParaEditor(raw);
   if (tempo === "Menos de 1 ano") return "menos_1";

@@ -56,6 +56,12 @@
   --eid-border-subtle: rgba(255, 255, 255, 0.09);
   --eid-focus-ring: var(--eid-primary-500);
 
+  /* Status legível no escuro (evitar 300 em fundo claro — ver tema light) */
+  --eid-hist-status-on: var(--eid-success-400);
+  --eid-hist-status-off: var(--eid-danger-400);
+  --eid-hist-status-on-bg: color-mix(in srgb, var(--eid-success-500) 16%, transparent);
+  --eid-hist-status-off-bg: color-mix(in srgb, var(--eid-danger-500) 16%, transparent);
+
   --background: var(--eid-bg);
   --foreground: var(--eid-fg);
 
@@ -104,6 +110,11 @@ body.eid-app-shell {
   --eid-border: #e2e8f0;
   --eid-border-subtle: rgba(15, 23, 42, 0.1);
   --eid-focus-ring: var(--eid-primary-500);
+
+  --eid-hist-status-on: #047857;
+  --eid-hist-status-off: #b91c1c;
+  --eid-hist-status-on-bg: color-mix(in srgb, var(--eid-success-500) 14%, var(--eid-surface));
+  --eid-hist-status-off-bg: color-mix(in srgb, var(--eid-danger-500) 14%, var(--eid-surface));
 }
 
 @theme inline {

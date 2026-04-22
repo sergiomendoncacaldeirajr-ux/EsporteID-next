@@ -55,9 +55,13 @@ export async function saveProfileMainAction(formData: FormData): Promise<SavePro
 type PerformancePayloadItem = {
   esporteId: number;
   modalidades: Array<"individual" | "dupla" | "time">;
+  /** "faixa" = rótulo aproximado; "inicio" = grava MM/YYYY */
+  tempoTipo?: "faixa" | "inicio";
   tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos";
   tempoAnos?: number;
   tempoMeses?: number;
+  inicioMes?: number;
+  inicioAno?: number;
 };
 
 export async function savePerformanceEidAction(formData: FormData): Promise<SaveProfileResult> {
@@ -82,6 +86,27 @@ export async function savePerformanceEidAction(formData: FormData): Promise<Save
   const rows = parsed
     .filter((item) => Number.isFinite(item.esporteId) && item.esporteId > 0)
     .map((item) => {
+      const tipo = item.tempoTipo ?? "faixa";
+      if (tipo === "inicio") {
+        const mes = Number(item.inicioMes ?? 0);
+        const ano = Number(item.inicioAno ?? 0);
+        const mesOk = Number.isFinite(mes) ? Math.min(12, Math.max(1, Math.trunc(mes))) : 1;
+        const anoOk = Number.isFinite(ano) ? Math.min(2100, Math.max(1970, Math.trunc(ano))) : new Date().getFullYear();
+        const tempoDetalhado = `${String(mesOk).padStart(2, "0")}/${anoOk}`;
+        return {
+          usuario_id: user.id,
+          esporte_id: item.esporteId,
+          interesse_match: "ranking",
+          modalidade_match: item.modalidades.includes("individual")
+            ? "individual"
+            : item.modalidades.includes("dupla")
+              ? "dupla"
+              : "time",
+          modalidades_match: item.modalidades,
+          tempo_experiencia: tempoDetalhado,
+          atualizado_em: nowIso,
+        };
+      }
       const anos = Number(item.tempoAnos ?? 0);
       const meses = Number(item.tempoMeses ?? 0);
       const anosOk = Number.isFinite(anos) && anos > 0 ? Math.trunc(anos) : 0;

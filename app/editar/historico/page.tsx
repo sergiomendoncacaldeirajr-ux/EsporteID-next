@@ -33,14 +33,22 @@ export default async function EditarHistoricoFullscreenPage({ searchParams }: Pr
     >
       <div className="eid-surface-panel rounded-2xl p-3">
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Dados de privacidade</p>
-        <p className="text-sm font-semibold text-eid-fg">
-          Atualmente:{" "}
-          <span className={mostrarHistoricoPublico ? "text-emerald-300" : "text-red-300"}>
-            {mostrarHistoricoPublico ? "Histórico visível" : "Histórico oculto"}
-          </span>
-        </p>
-        <p className="mt-1 text-xs text-eid-text-secondary">
-          Isso controla a exibição do resumo de resultados e o acesso ao histórico completo para outros usuários.
+        <div
+          className="inline-flex flex-col gap-1 rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2"
+          style={{
+            backgroundColor: mostrarHistoricoPublico ? "var(--eid-hist-status-on-bg)" : "var(--eid-hist-status-off-bg)",
+          }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Status atual</p>
+          <p
+            className="text-sm font-black tracking-tight"
+            style={{ color: mostrarHistoricoPublico ? "var(--eid-hist-status-on)" : "var(--eid-hist-status-off)" }}
+          >
+            {mostrarHistoricoPublico ? "Histórico visível no perfil público" : "Histórico oculto no perfil público"}
+          </p>
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">
+          Isso controla o resumo de resultados e o acesso ao histórico completo para <strong className="text-eid-fg">outros usuários</strong>.
         </p>
         <form action={setViewerHistoricoPublicoAction.bind(null, !mostrarHistoricoPublico)} className="mt-3">
           <button
