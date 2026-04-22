@@ -299,11 +299,14 @@ export default async function RankingPage({ searchParams }: Props) {
       />
       <div className="relative z-[1] mx-auto flex w-full min-w-0 max-w-2xl flex-col px-4 pb-3 pt-1.5 sm:px-5">
         <header className="mb-1.5">
-          <div className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/25 bg-eid-primary-500/[0.08] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-eid-primary-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-eid-primary-400 shadow-[0_0_10px_rgba(96,165,250,0.6)]" aria-hidden />
+          <div className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)_86%)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-primary-500)_72%,var(--eid-fg)_28%)]">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-[color:color-mix(in_srgb,var(--eid-primary-500)_78%,white_22%)] shadow-[0_0_10px_color-mix(in_srgb,var(--eid-primary-500)_52%,transparent)]"
+              aria-hidden
+            />
             Painel competitivo
           </div>
-          <h1 className="mt-1 text-[1.45rem] font-black tracking-[0.01em] text-transparent bg-gradient-to-b from-white via-eid-primary-200 to-eid-primary-400 bg-clip-text drop-shadow-[0_1px_6px_rgba(37,99,235,0.38)] sm:text-[1.7rem]">
+          <h1 className="mt-1 text-[1.45rem] font-black tracking-[0.01em] text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_78%,var(--eid-fg)_22%))] bg-clip-text drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_34%,transparent)] sm:text-[1.7rem]">
             Ranking
           </h1>
         </header>
