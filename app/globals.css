@@ -58,7 +58,7 @@
   /* Topo: −4px em relação a 6.5rem (só um “milímetro” a mais de conteúdo visível) */
   --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 6.5rem - 4px);
   /* Rodapé mobile: pouca folga além do safe-area (evita faixa vazia enorme acima da nav) */
-  --eid-shell-footer-offset: calc(env(safe-area-inset-bottom, 0px) + 2.25rem);
+  --eid-shell-footer-offset: calc(env(safe-area-inset-bottom, 0px) + 2.7rem);
 }
 
 @media (min-width: 768px) {
