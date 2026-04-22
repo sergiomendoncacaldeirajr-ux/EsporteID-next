@@ -5,7 +5,7 @@ import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-ful
 import { contaNextPath, requireContaPerfilPronto } from "@/lib/conta/require-perfil-pronto";
 import { createClient } from "@/lib/supabase/server";
 
-type Props = { params: Promise<{ id: string }>; searchParams?: Promise<{ from?: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams?: Promise<{ from?: string; embed?: string }> };
 
 export default async function EditarTimeFullscreenPage({ params, searchParams }: Props) {
   const { id: raw } = await params;
@@ -14,6 +14,7 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
 
   const sp = (await searchParams) ?? {};
   const from = typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : `/editar/equipes`;
+  const isEmbed = sp.embed === "1";
 
   const supabase = await createClient();
   const {
@@ -40,6 +41,7 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
       backHref={from}
       title="Editar equipe"
       subtitle="Altere nome público, @username, bio, escudo e preferências da equipe."
+      showBack={!isEmbed}
       topAction={
         <Link href={`/times?from=${encodeURIComponent(`/editar/time/${id}`)}`} className="text-[10px] font-semibold text-eid-primary-300 underline">
           Gerenciar elenco

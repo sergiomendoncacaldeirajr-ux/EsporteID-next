@@ -7,7 +7,7 @@ import { listarPapeis } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
-  searchParams?: Promise<{ from?: string }>;
+  searchParams?: Promise<{ from?: string; embed?: string }>;
 };
 
 export default async function EditarPerfilFullscreenPage({ searchParams }: Props) {
@@ -40,12 +40,14 @@ export default async function EditarPerfilFullscreenPage({ searchParams }: Props
   const hasAthleteSports = (athleteSportsCount ?? 0) > 0;
   void papeis;
   const from = typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : `/perfil/${user.id}`;
+  const isEmbed = sp.embed === "1";
 
   return (
     <ProfileEditFullscreenShell
       backHref={from}
       title="Editar perfil"
       subtitle="Dados pessoais públicos. Alterações entram em vigor após salvar."
+      showBack={!isEmbed}
     >
       {hasAthleteSports ? (
         <p className="eid-list-item mb-3 rounded-xl border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2 text-xs text-eid-text-secondary">

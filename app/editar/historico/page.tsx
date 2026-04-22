@@ -4,7 +4,7 @@ import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-ful
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
-  searchParams?: Promise<{ from?: string }>;
+  searchParams?: Promise<{ from?: string; embed?: string }>;
 };
 
 export default async function EditarHistoricoFullscreenPage({ searchParams }: Props) {
@@ -22,12 +22,14 @@ export default async function EditarHistoricoFullscreenPage({ searchParams }: Pr
     .maybeSingle();
   const mostrarHistoricoPublico = profile?.mostrar_historico_publico !== false;
   const from = typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : `/perfil/${user.id}`;
+  const isEmbed = sp.embed === "1";
 
   return (
     <ProfileEditFullscreenShell
       backHref={from}
       title="Privacidade do histórico"
       subtitle="Defina se os visitantes podem ver seu histórico no perfil público."
+      showBack={!isEmbed}
     >
       <div className="eid-list-item rounded-xl bg-eid-card/55 p-3">
         <p className="text-sm font-semibold text-eid-fg">

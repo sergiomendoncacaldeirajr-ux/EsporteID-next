@@ -20,7 +20,45 @@ export function ProfileMediaEditor({ avatarUrl, coverUrl }: Props) {
   const coverInputRef = useRef<HTMLInputElement | null>(null);
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-3">
+      <section className="eid-surface-panel rounded-2xl p-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Foto de capa</p>
+        <div className="mt-2">
+          <div className="h-16 w-full overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45">
+            {coverUrl ? <img src={coverUrl} alt="" className="h-full w-full object-cover" /> : null}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <form ref={coverFormRef} action={uploadProfileCoverAction}>
+              <input
+                ref={coverInputRef}
+                type="file"
+                name="cover_file"
+                accept="image/*"
+                className="sr-only"
+                onChange={() => coverFormRef.current?.requestSubmit()}
+              />
+              <button
+                type="button"
+                onClick={() => coverInputRef.current?.click()}
+                className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2 py-1 text-[10px] font-semibold text-eid-fg"
+              >
+                {coverUrl ? "Trocar capa" : "Adicionar capa"}
+              </button>
+            </form>
+            {coverUrl ? (
+              <form action={removeProfileCoverAction}>
+                <button
+                  type="submit"
+                  className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2 py-1 text-[10px] font-semibold text-eid-text-secondary"
+                >
+                  Remover
+                </button>
+              </form>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
       <section className="eid-surface-panel rounded-2xl p-3">
         <p className="text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Foto de perfil</p>
         <div className="mt-2 flex items-center gap-3">
@@ -51,44 +89,6 @@ export function ProfileMediaEditor({ avatarUrl, coverUrl }: Props) {
             </form>
             {avatarUrl ? (
               <form action={removeProfileAvatarAction}>
-                <button
-                  type="submit"
-                  className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2 py-1 text-[10px] font-semibold text-eid-text-secondary"
-                >
-                  Remover
-                </button>
-              </form>
-            ) : null}
-          </div>
-        </div>
-      </section>
-
-      <section className="eid-surface-panel rounded-2xl p-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Foto de capa</p>
-        <div className="mt-2">
-          <div className="h-16 w-full overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45">
-            {coverUrl ? <img src={coverUrl} alt="" className="h-full w-full object-cover" /> : null}
-          </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <form ref={coverFormRef} action={uploadProfileCoverAction}>
-              <input
-                ref={coverInputRef}
-                type="file"
-                name="cover_file"
-                accept="image/*"
-                className="sr-only"
-                onChange={() => coverFormRef.current?.requestSubmit()}
-              />
-              <button
-                type="button"
-                onClick={() => coverInputRef.current?.click()}
-                className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2 py-1 text-[10px] font-semibold text-eid-fg"
-              >
-                {coverUrl ? "Trocar capa" : "Adicionar capa"}
-              </button>
-            </form>
-            {coverUrl ? (
-              <form action={removeProfileCoverAction}>
                 <button
                   type="submit"
                   className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2 py-1 text-[10px] font-semibold text-eid-text-secondary"

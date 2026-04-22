@@ -4,7 +4,7 @@ import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-ful
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
-  searchParams?: Promise<{ from?: string }>;
+  searchParams?: Promise<{ from?: string; embed?: string }>;
 };
 
 export default async function EditarEquipesFullscreenPage({ searchParams }: Props) {
@@ -28,12 +28,14 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
     .order("id", { ascending: false });
 
   const from = typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : `/perfil/${user.id}`;
+  const isEmbed = sp.embed === "1";
 
   return (
     <ProfileEditFullscreenShell
       backHref={from}
       title="Editar equipes e duplas"
       subtitle="Escolha uma formação para abrir a edição dedicada."
+      showBack={!isEmbed}
       topAction={
         <Link href="/times?create=1" className="text-[10px] font-semibold text-eid-primary-300 underline">
           Nova equipe

@@ -5,7 +5,7 @@ import { resolverTimeIdParaDuplaRegistrada } from "@/lib/perfil/whatsapp-visibil
 import { contaNextPath, requireContaPerfilPronto } from "@/lib/conta/require-perfil-pronto";
 import { createClient } from "@/lib/supabase/server";
 
-type Props = { params: Promise<{ id: string }>; searchParams?: Promise<{ from?: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams?: Promise<{ from?: string; embed?: string }> };
 
 export default async function EditarDuplaFullscreenPage({ params, searchParams }: Props) {
   const { id: raw } = await params;
@@ -14,6 +14,7 @@ export default async function EditarDuplaFullscreenPage({ params, searchParams }
 
   const sp = (await searchParams) ?? {};
   const from = typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : `/editar/equipes`;
+  const isEmbed = sp.embed === "1";
 
   const supabase = await createClient();
   const {
@@ -46,6 +47,7 @@ export default async function EditarDuplaFullscreenPage({ params, searchParams }
       backHref={from}
       title="Editar dupla"
       subtitle="Atualize dados públicos e vínculo da dupla registrada."
+      showBack={!isEmbed}
     >
       <PerfilDuplaEditForm
         variant="page"

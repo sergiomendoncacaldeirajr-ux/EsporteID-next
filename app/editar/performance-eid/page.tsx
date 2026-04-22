@@ -8,7 +8,7 @@ import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-ful
 import { ProfilePerformanceEditor } from "@/components/perfil/edit/profile-performance-editor";
 
 type Props = {
-  searchParams?: Promise<{ from?: string }>;
+  searchParams?: Promise<{ from?: string; embed?: string }>;
 };
 
 export default async function EditarPerformanceEidFullscreenPage({ searchParams }: Props) {
@@ -34,6 +34,7 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
   const needsSport = precisaEsportesPratica(papeis);
   const canAtivarAtleta = papeis.includes("organizador") && !papeis.includes("atleta");
   const from = typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : `/perfil/${user.id}`;
+  const isEmbed = sp.embed === "1";
 
   async function ativarModoAtletaAction() {
     "use server";
@@ -89,6 +90,7 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
       backHref={from}
       title="Editar Performance EID"
       subtitle="Configure por esporte se atua como atleta, professor ou ambos."
+      showBack={!isEmbed}
     >
       {!needsSport ? (
         <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-5 text-sm text-eid-text-secondary">
