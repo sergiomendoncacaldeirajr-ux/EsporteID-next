@@ -113,7 +113,7 @@ export default async function RootLayout({
           id="app-main-column"
           className={
             showAppChrome
-              ? "flex flex-1 flex-col pb-[calc(4.25rem+env(safe-area-inset-bottom))] pt-[calc(4.25rem+env(safe-area-inset-top))] md:pb-24 md:pt-24"
+              ? "flex min-h-0 flex-1 flex-col pt-[var(--eid-shell-header-offset)] pb-[var(--eid-shell-footer-offset)]"
               : onboardingMinimalChrome
                 ? "flex min-h-0 flex-1 flex-col pt-[calc(3.25rem+env(safe-area-inset-top))]"
                 : hideAppShell

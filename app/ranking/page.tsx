@@ -237,9 +237,9 @@ export default async function RankingPage({ searchParams }: Props) {
         className="pointer-events-none absolute inset-x-0 top-0 h-[min(52vh,28rem)] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)]"
         aria-hidden
       />
-      {/* Folga extra p/ nav fixa (≈54px + safe-area) e rodapé — soma ao pb do #app-main no layout */}
-      <div className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pb-[calc(5.5rem+max(16px,env(safe-area-inset-bottom)))] pt-5 sm:max-w-2xl sm:px-6 sm:pb-[calc(5rem+max(16px,env(safe-area-inset-bottom)))] sm:pt-6 md:pb-28 md:pt-8">
-        <header className="mb-5 flex items-center justify-between gap-3 sm:mb-6">
+      {/* Padding vertical vem do layout global (#app-main-column); aqui só respiro lateral + mínimo entre blocos */}
+      <div className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pb-3 pt-1 sm:max-w-2xl sm:px-6 sm:pb-4 sm:pt-2">
+        <header className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
           <h1 className="text-xl font-bold tracking-tight text-eid-fg md:text-2xl">Ranking</h1>
           <Link
             href="/dashboard"
@@ -274,8 +274,8 @@ export default async function RankingPage({ searchParams }: Props) {
 
             {showViewerCard && viewerRank !== null ? <ViewerRankCard rank={viewerRank} /> : null}
 
-            <section className="mt-7 sm:mt-8">
-              <h2 className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Classificação</h2>
+            <section className="mt-4 sm:mt-5">
+              <h2 className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Classificação</h2>
               <div className="overflow-hidden rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 px-2.5 sm:rounded-2xl sm:px-3.5">
                 {pageSlice.length === 0 ? (
                   <p className="py-5 text-center text-sm text-eid-text-secondary">Fim da lista.</p>
@@ -298,7 +298,7 @@ export default async function RankingPage({ searchParams }: Props) {
             </section>
 
             {hasMore ? (
-              <div className="mt-5 flex justify-center pb-2 sm:mt-6">
+              <div className="mt-4 flex justify-center sm:mt-5">
                 <Link
                   href={rankingHref({ page: state.page + 1 }, state, esportePrincipalId)}
                   className="inline-flex min-h-10 items-center justify-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/[0.08] px-7 text-sm font-bold text-eid-fg transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/12"

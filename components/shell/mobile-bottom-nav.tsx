@@ -384,9 +384,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
 
   return (
     <>
-      {/* Espaçador para o conteúdo não ficar atrás da nav */}
-      <div className="h-[calc(54px+env(safe-area-inset-bottom))] md:hidden" aria-hidden />
-
+      {/* Padding do conteúdo: #app-main-column (--eid-shell-footer-offset). Espaçador removido para não duplicar folga. */}
       <nav
         className="fixed bottom-0 left-0 z-[55] w-full md:hidden"
         aria-label="Navegação principal"

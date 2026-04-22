@@ -50,6 +50,22 @@
 
   --background: var(--eid-bg);
   --foreground: var(--eid-fg);
+
+  /*
+   * Shell logado (DashboardTopbar fixed + MobileBottomNav fixed):
+   * compensação única no #app-main-column — não duplicar em cada página.
+   * Alturas alinhadas ao topbar (≈4.5–5rem + safe-top) e barra inferior (~54px + label + folga p/ botão central).
+   */
+  --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 4.75rem);
+  --eid-shell-footer-offset: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 5rem);
+    /* Nav inferior oculta em md+; folga p/ não colar no rodapé / home indicator */
+    --eid-shell-footer-offset: calc(2.5rem + max(0px, env(safe-area-inset-bottom, 0px)));
+  }
 }
 
 /* Tema claro — mesma marca, maior contraste em fundos claros */

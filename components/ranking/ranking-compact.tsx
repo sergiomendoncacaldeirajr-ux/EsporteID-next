@@ -36,7 +36,7 @@ export function RankingFilterBar({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, pe);
 
   return (
-    <div className="mb-7 space-y-1.5 rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-2 shadow-[0_4px_24px_-12px_rgba(0,0,0,0.4)] sm:mb-8 sm:rounded-2xl sm:p-2.5">
+    <div className="mb-4 space-y-1 rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-1.5 shadow-[0_3px_18px_-10px_rgba(0,0,0,0.35)] sm:mb-5 sm:rounded-2xl sm:p-2">
       <div>
         <p className="mb-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Tipo</p>
         <div className="flex gap-1">
@@ -101,14 +101,16 @@ export function RankingFilterBar({
             {esporteAtualNome ?? "—"}
           </p>
           {esporteOptions.length > 1 ? (
-            <details className="group mt-2">
-              <summary className="flex w-full cursor-pointer list-none items-center justify-center gap-1 rounded-md py-1 text-center text-[10px] font-semibold text-eid-primary-300 underline decoration-eid-primary-500/40 underline-offset-[3px] transition hover:bg-eid-surface/40 hover:decoration-eid-primary-500/70 [&::-webkit-details-marker]:hidden">
-                Ver outros esportes
-                <span className="text-[9px] text-eid-text-secondary/90 transition group-open:rotate-180" aria-hidden>
-                  ▾
+            <details className="group mt-1">
+              <summary className="block w-full cursor-pointer list-none py-0.5 text-left text-[10px] font-medium text-eid-primary-300 underline decoration-eid-primary-500/35 underline-offset-[3px] transition hover:decoration-eid-primary-500/65 [&::-webkit-details-marker]:hidden">
+                <span className="inline-flex items-center gap-1">
+                  Ver outros esportes
+                  <span className="text-[9px] font-normal text-eid-text-secondary transition group-open:rotate-180" aria-hidden>
+                    ▾
+                  </span>
                 </span>
               </summary>
-              <ul className="mt-2 max-h-36 space-y-0.5 overflow-y-auto rounded-[var(--eid-radius-md)] border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1 py-1.5">
+              <ul className="mt-1.5 max-h-36 space-y-0.5 overflow-y-auto rounded-[var(--eid-radius-md)] border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1 py-1">
                 {esporteOptions.map((opt) => {
                   const active = state.esporte ? state.esporte === String(opt.id) : opt.id === principalEsporteId;
                   return (
@@ -139,7 +141,7 @@ export function RankingFilterBar({
 
 function pillActive(active: boolean) {
   return cn(
-    "inline-flex min-h-[1.625rem] flex-1 items-center justify-center rounded-full px-1.5 py-0.5 text-center text-[9px] font-bold leading-none transition sm:min-h-[1.75rem] sm:px-2 sm:text-[10px]",
+    "inline-flex min-h-[1.5rem] flex-1 items-center justify-center rounded-full px-1.5 py-px text-center text-[9px] font-bold leading-none transition sm:min-h-[1.625rem] sm:px-2 sm:text-[10px]",
     active
       ? "bg-eid-primary-500 text-white"
       : "border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 text-eid-text-secondary hover:border-eid-primary-500/30 hover:text-eid-fg"
@@ -158,7 +160,7 @@ export function RankingEidSeal({ score, variant = "below" }: { score: number; va
   if (variant === "overlap") {
     return (
       <span
-        className="pointer-events-none absolute bottom-0 left-1/2 z-[3] flex -translate-x-1/2 translate-y-1/2 items-center rounded-full border border-eid-primary-500/45 text-[7px] font-black uppercase leading-none text-white shadow-[0_2px_6px_rgba(0,0,0,0.25)] sm:text-[8px]"
+        className="pointer-events-none absolute bottom-0 left-1/2 z-[3] flex -translate-x-1/2 translate-y-[42%] items-center rounded-full border border-eid-primary-500/45 text-[7px] font-black uppercase leading-none text-white shadow-[0_1px_4px_rgba(0,0,0,0.2)] sm:text-[8px]"
         aria-hidden
       >
         {pill}
@@ -200,13 +202,13 @@ export function RankingPodium({ second, first, third }: { second: PodiumSlot | n
         : "min-w-0 w-[30%] max-w-[9.5rem] shrink sm:max-w-[11rem] md:w-[31%]";
 
   return (
-    <section className="relative mb-2 sm:mb-3">
-      <h2 className="mb-4 text-center text-[10px] font-bold uppercase tracking-[0.16em] text-eid-text-secondary sm:mb-5 sm:text-[11px]">
+    <section className="relative mb-1 sm:mb-2">
+      <h2 className="mb-3 text-center text-[10px] font-bold uppercase tracking-[0.16em] text-eid-text-secondary sm:text-[11px]">
         Pódio
       </h2>
       <div
         className={cn(
-          "flex flex-row items-end justify-center gap-4 sm:gap-6 md:gap-10",
+          "flex flex-row items-end justify-center gap-3.5 sm:gap-5 md:gap-8",
           n === 1 && "mx-auto max-w-sm",
           n === 2 && "mx-auto max-w-md"
         )}
@@ -226,39 +228,41 @@ function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean 
   const avatarClass = cn(
     "relative mx-auto shrink-0 overflow-hidden rounded-full",
     highlight
-      ? "h-16 w-16 border border-eid-primary-500/45 shadow-[0_6px_22px_-10px_rgba(37,99,235,0.35)] sm:h-[4.25rem] sm:w-[4.25rem]"
-      : "h-[2.65rem] w-[2.65rem] border border-eid-primary-500/25 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.2)] sm:h-12 sm:w-12"
+      ? "h-14 w-14 border border-eid-primary-500/42 shadow-[0_4px_16px_-8px_rgba(37,99,235,0.28)] sm:h-[3.6rem] sm:w-[3.6rem]"
+      : "h-10 w-10 border border-eid-primary-500/22 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.18)] sm:h-[2.65rem] sm:w-[2.65rem]"
   );
   return (
     <div
       className={cn(
         "flex flex-col items-center text-center",
-        highlight && "scale-[1.03] sm:scale-[1.035]"
+        highlight && "scale-[1.025] sm:scale-[1.03]"
       )}
     >
       {highlight ? (
-        <div className="mb-0.5 text-eid-primary-400/75" aria-hidden>
-          <IconCrown className="mx-auto h-3.5 w-3.5 sm:h-4 sm:w-4" />
+        <div className="mb-0.5 text-eid-primary-400/65" aria-hidden>
+          <IconCrown className="mx-auto h-3 w-3 sm:h-3.5 sm:w-3.5" />
         </div>
       ) : (
-        <div className="mb-0.5 h-3.5 sm:h-4" aria-hidden />
+        <div className="mb-0.5 h-3 sm:h-3.5" aria-hidden />
       )}
       <div className="flex w-full flex-col items-center">
-        <div className="mb-1 flex w-full flex-col items-center px-0.5">
+        <div className="mb-0.5 flex w-full flex-col items-center px-0.5 pb-1">
           <Link
             href={slot.href}
-            className="group flex w-full flex-col items-center outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
+            className="group relative flex flex-col items-center outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
             aria-label={`Perfil de ${slot.nome}`}
           >
-            <div className={avatarClass}>
-              {slot.avatarUrl ? (
-                <img src={slot.avatarUrl} alt="" className="h-full w-full object-cover transition group-hover:opacity-95" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[8px] font-bold text-eid-primary-300 sm:text-[9px]">{initial}</div>
-              )}
+            <div className="relative">
+              <div className={avatarClass}>
+                {slot.avatarUrl ? (
+                  <img src={slot.avatarUrl} alt="" className="h-full w-full object-cover transition group-hover:opacity-95" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[8px] font-bold text-eid-primary-300 sm:text-[9px]">{initial}</div>
+                )}
+              </div>
+              <RankingEidSeal score={slot.notaEid} variant="overlap" />
             </div>
           </Link>
-          <RankingEidSeal score={slot.notaEid} variant="below" />
         </div>
         <p className="line-clamp-2 max-w-[9.5rem] text-[10px] font-bold leading-snug text-eid-fg sm:max-w-[10rem] sm:text-[11px]">{slot.nome}</p>
         <p className="mt-0.5 text-[9px] font-black tabular-nums text-eid-text-secondary sm:text-[10px]">{slot.place}</p>
@@ -306,7 +310,7 @@ export function RankingRow({
 
 export function ViewerRankCard({ rank }: { rank: number }) {
   return (
-    <div className="mb-5 rounded-[var(--eid-radius-lg)] border border-eid-primary-500/25 bg-eid-primary-500/[0.06] px-3 py-2 text-center sm:mb-6 sm:rounded-xl">
+    <div className="mb-3 rounded-[var(--eid-radius-lg)] border border-eid-primary-500/25 bg-eid-primary-500/[0.06] px-3 py-2 text-center sm:mb-4 sm:rounded-xl">
       <p className="text-sm text-eid-text-secondary">
         Sua posição: <span className="text-base font-black tabular-nums text-eid-primary-300 sm:text-lg">{rank}º</span>
       </p>
