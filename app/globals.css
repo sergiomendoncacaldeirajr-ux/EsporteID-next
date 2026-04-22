@@ -186,26 +186,18 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* View Transitions (React/Next): anima só o conteúdo em #app-main-column; header/footer/nav fixos permanecem estáveis */
-::view-transition-group(eid-app-topbar),
-::view-transition-group(eid-app-footer),
-::view-transition-group(eid-app-bottomnav) {
+/* View Transitions (React/Next): anima só o conteúdo em #app-main-column; topbar fixo sem snapshot de footer/nav */
+::view-transition-group(eid-app-topbar) {
   animation: none !important;
   z-index: 200;
 }
 
 ::view-transition-old(eid-app-topbar),
-::view-transition-new(eid-app-topbar),
-::view-transition-old(eid-app-footer),
-::view-transition-new(eid-app-footer),
-::view-transition-old(eid-app-bottomnav),
-::view-transition-new(eid-app-bottomnav) {
+::view-transition-new(eid-app-topbar) {
   animation: none !important;
 }
 
-::view-transition-old(eid-app-topbar),
-::view-transition-old(eid-app-footer),
-::view-transition-old(eid-app-bottomnav) {
+::view-transition-old(eid-app-topbar) {
   display: none;
 }
 

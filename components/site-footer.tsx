@@ -1,17 +1,16 @@
 import Link from "next/link";
-import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
-import { getServerAuth } from "@/lib/auth/rsc-auth";
+import type { User } from "@supabase/supabase-js";
 import { LogoWordmark } from "@/components/brand/logo-wordmark";
 
-export async function SiteFooter() {
-  const { user } = await getServerAuth();
-  const isPlatformAdmin = user ? await getIsPlatformAdmin() : false;
+type Props = {
+  user: User | null;
+  isPlatformAdmin: boolean;
+};
 
+/** Rodapé síncrono: `user` e `isPlatformAdmin` vêm do layout (sem suspender em cada navegação). */
+export function SiteFooter({ user, isPlatformAdmin }: Props) {
   return (
-    <footer
-      className="mt-auto hidden md:block"
-      style={{ viewTransitionName: "eid-app-footer" }}
-    >
+    <footer className="mt-auto hidden md:block">
       <div className="h-px bg-gradient-to-r from-transparent via-[color:var(--eid-border)] to-transparent" />
 
       {/*

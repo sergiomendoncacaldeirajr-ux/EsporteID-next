@@ -18,6 +18,7 @@ import {
 } from "@/lib/auth/active-context";
 import { EID_LOGO_ICON_E_SRC } from "@/lib/branding";
 import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
+import { getCachedIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
 import "./globals.css";
 
@@ -90,6 +91,7 @@ export default async function RootLayout({
   const showAppChrome = Boolean(user) && !hideAppShell;
   const onboardingMinimalChrome = Boolean(user) && hideAppShell && showOnboardingChrome;
   activeContext = resolveActiveAppContext(cookieStore.get(ACTIVE_CONTEXT_COOKIE)?.value ?? null, papeis);
+  const isPlatformAdmin = user ? await getCachedIsPlatformAdmin() : false;
 
   return (
     <html
@@ -127,7 +129,7 @@ export default async function RootLayout({
           </ViewTransition>
         </div>
         {showAppChrome && user ? <MobileBottomNav userId={user.id} activeContext={activeContext} /> : null}
-        {hideAppShell ? null : <SiteFooter />}
+        {hideAppShell ? null : <SiteFooter user={user} isPlatformAdmin={isPlatformAdmin} />}
         <LegalGate />
       </body>
     </html>
