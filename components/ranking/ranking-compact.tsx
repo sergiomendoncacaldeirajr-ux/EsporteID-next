@@ -34,45 +34,49 @@ export function RankingFilterBar({
 }: FilterBarProps) {
   const pe = principalEsporteId;
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, pe);
+  const chip = (active: boolean) => pillRow(active);
 
   return (
-    <div className="mb-2.5 sm:mb-3">
+    <div className="mb-3 sm:mb-3.5">
       <div className="flex flex-wrap gap-2">
-        <Link href={href({ tipo: "individual", page: 1 })} className={pillRow(state.tipo === "individual")}>
+        <Link href={href({ tipo: "individual", page: 1 })} className={chip(state.tipo === "individual")}>
           Individual
         </Link>
-        <Link href={href({ tipo: "dupla", page: 1 })} className={pillRow(state.tipo === "dupla")}>
+        <Link href={href({ tipo: "dupla", page: 1 })} className={chip(state.tipo === "dupla")}>
           Dupla
         </Link>
-        <Link href={href({ tipo: "time", page: 1 })} className={pillRow(state.tipo === "time")}>
+        <Link href={href({ tipo: "time", page: 1 })} className={chip(state.tipo === "time")}>
           Time
         </Link>
       </div>
-      <div className="mt-1 flex flex-wrap gap-2">
-        <Link href={href({ rank: "match", page: 1 })} className={pillRow(state.rank === "match")}>
-          Rank Match
-        </Link>
-        <Link href={href({ rank: "eid", page: 1 })} className={pillRow(state.rank === "eid")}>
-          Rank EID
-        </Link>
-      </div>
-      <div className="mt-1 flex flex-wrap gap-2">
-        <Link
-          href={href({ local: "cidade", page: 1 })}
-          className={cn(pillRow(state.local === "cidade"), cidadeDisplay ? "min-h-[1.85rem] flex-col gap-0 py-0.5" : undefined)}
-          title={cidadeDisplay ? `Cidade: ${cidadeDisplay}` : undefined}
-        >
-          <span className="leading-none">Cidade</span>
-          {cidadeDisplay ? (
-            <span className="max-w-[5.5rem] truncate text-[8px] font-semibold normal-case opacity-90">{cidadeDisplay}</span>
-          ) : null}
-        </Link>
-        <Link href={href({ local: "brasil", page: 1 })} className={pillRow(state.local === "brasil")}>
-          Brasil
-        </Link>
+
+      <div className="mt-3 space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <Link href={href({ rank: "match", page: 1 })} className={chip(state.rank === "match")}>
+            Rank Match
+          </Link>
+          <Link href={href({ rank: "eid", page: 1 })} className={chip(state.rank === "eid")}>
+            Rank EID
+          </Link>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={href({ local: "cidade", page: 1 })}
+            className={cn(chip(state.local === "cidade"), cidadeDisplay ? "h-9 min-h-0 flex-col items-start justify-center gap-0 px-3 py-1.5" : undefined)}
+            title={cidadeDisplay ? `Cidade: ${cidadeDisplay}` : undefined}
+          >
+            <span className="leading-none">Cidade</span>
+            {cidadeDisplay ? (
+              <span className="max-w-[8rem] truncate text-xs font-normal normal-case text-white/75">{cidadeDisplay}</span>
+            ) : null}
+          </Link>
+          <Link href={href({ local: "brasil", page: 1 })} className={chip(state.local === "brasil")}>
+            Brasil
+          </Link>
+        </div>
       </div>
       {needsCidadeFallback ? (
-        <p className="mt-0.5 px-0.5 text-[8px] leading-snug text-eid-text-secondary">
+        <p className="mt-1 px-0.5 text-xs leading-snug text-eid-text-secondary">
           Sem cidade —{" "}
           <Link href="/conta/perfil" className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">
             perfil
@@ -81,8 +85,8 @@ export function RankingFilterBar({
       ) : null}
 
       {todosEsportes.length > 0 ? (
-        <div className="mt-1 border-t border-[color:var(--eid-border-subtle)]/70 pt-1">
-          <div className="flex min-w-0 flex-nowrap gap-1 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-0.5 pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
+        <div className="mt-4 border-t border-[color:var(--eid-border-subtle)]/70 pt-2">
+          <div className="flex min-w-0 flex-nowrap gap-2 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
             {todosEsportes.map((opt) => {
               const active = selectedEsporteId === opt.id;
               const isPrincipal = principalEsporteId != null && opt.id === principalEsporteId;
@@ -92,10 +96,10 @@ export function RankingFilterBar({
                   href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                   title={isPrincipal ? "Esporte principal do perfil" : undefined}
                   className={cn(
-                    "shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-center text-sm font-semibold leading-none transition",
+                    "shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-center text-sm leading-none transition",
                     active
-                      ? "bg-eid-primary-500 text-white"
-                      : "border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 text-eid-fg hover:border-eid-primary-500/35 hover:text-eid-fg",
+                      ? "border-eid-primary-500 bg-eid-primary-500 text-white font-medium"
+                      : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 text-eid-text-secondary font-normal hover:border-eid-primary-500/35 hover:text-eid-fg",
                     isPrincipal && !active && "ring-1 ring-eid-primary-500/25"
                   )}
                 >
@@ -112,10 +116,10 @@ export function RankingFilterBar({
 
 function pillRow(active: boolean) {
   return cn(
-    "inline-flex min-h-[1.35rem] w-auto items-center justify-center rounded-full px-2 py-px text-center text-[9px] font-bold leading-none transition sm:min-h-[1.4rem] sm:px-2.5",
+    "inline-flex h-8 w-auto items-center justify-center rounded-full border px-3 text-sm leading-none transition",
     active
-      ? "bg-eid-primary-500 text-white"
-      : "border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-text-secondary hover:border-eid-primary-500/30 hover:text-eid-fg"
+      ? "border-eid-primary-500 bg-eid-primary-500 text-white font-medium"
+      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary font-normal hover:border-eid-primary-500/30 hover:text-eid-fg"
   );
 }
 
