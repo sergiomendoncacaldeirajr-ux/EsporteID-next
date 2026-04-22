@@ -185,7 +185,7 @@ export function RankingPeriodToggle({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
   return (
     <div className="flex justify-end">
-      <div className="relative grid h-7 min-w-[6.75rem] grid-cols-2 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[10px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="relative grid h-7 min-w-[6.75rem] grid-cols-2 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[10px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent] [&_a]:block [&_a]:h-full [&_a]:w-full">
         <span
           className={cn(
             "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
@@ -196,7 +196,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "ano", page: 1 })}
           className={cn(
-            "relative z-[1] flex h-full min-h-0 w-full min-w-0 touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200",
+            "relative z-[1] flex h-full w-full touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200 cursor-pointer",
             state.periodo === "ano" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -205,7 +205,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "mes", page: 1 })}
           className={cn(
-            "relative z-[1] flex h-full min-h-0 w-full min-w-0 touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200",
+            "relative z-[1] flex h-full w-full touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200 cursor-pointer",
             state.periodo === "mes" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -227,7 +227,7 @@ export function RankingRankToggle({
   const rankIsMatch = state.rank === "match";
   return (
     <div className="flex justify-start">
-      <div className="relative grid h-7 min-w-[6.75rem] grid-cols-2 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[10px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="relative grid h-7 min-w-[6.75rem] grid-cols-2 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[10px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent] [&_a]:block [&_a]:h-full [&_a]:w-full">
         <span
           className={cn(
             "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
@@ -238,7 +238,7 @@ export function RankingRankToggle({
         <Link
           href={href({ rank: "match", page: 1 })}
           className={cn(
-            "relative z-[1] flex h-full min-h-0 w-full min-w-0 touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200",
+            "relative z-[1] flex h-full w-full touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200 cursor-pointer",
             rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -247,7 +247,7 @@ export function RankingRankToggle({
         <Link
           href={href({ rank: "eid", page: 1 })}
           className={cn(
-            "relative z-[1] flex h-full min-h-0 w-full min-w-0 touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200",
+            "relative z-[1] flex h-full w-full touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200 cursor-pointer",
             !rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
