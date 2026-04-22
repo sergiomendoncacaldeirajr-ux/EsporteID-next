@@ -36,10 +36,10 @@ export function RankingFilterBar({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, pe);
 
   return (
-    <div className="mb-4 space-y-2.5 rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-2.5 shadow-[0_8px_32px_-16px_rgba(0,0,0,0.55)] sm:rounded-2xl sm:p-3">
+    <div className="mb-3 space-y-1.5 rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-2 shadow-[0_8px_32px_-16px_rgba(0,0,0,0.55)] sm:rounded-2xl sm:p-2.5">
       <div>
-        <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Tipo</p>
-        <div className="flex gap-1.5">
+        <p className="mb-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Tipo</p>
+        <div className="flex gap-1">
           <Link href={href({ tipo: "individual", page: 1 })} className={pillActive(state.tipo === "individual")}>
             Individual
           </Link>
@@ -52,8 +52,8 @@ export function RankingFilterBar({
         </div>
       </div>
       <div>
-        <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Ranking</p>
-        <div className="flex gap-1.5">
+        <p className="mb-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Ranking</p>
+        <div className="flex gap-1">
           <Link href={href({ rank: "match", page: 1 })} className={pillActive(state.rank === "match")}>
             Rank Match
           </Link>
@@ -63,11 +63,11 @@ export function RankingFilterBar({
         </div>
       </div>
       <div>
-        <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Local</p>
-        <div className="flex flex-wrap gap-1.5">
+        <p className="mb-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Local</p>
+        <div className="flex flex-wrap gap-1">
           <Link
             href={href({ local: "cidade", page: 1 })}
-            className={pillActive(state.local === "cidade")}
+            className={cn(pillActive(state.local === "cidade"), "min-h-[2.1rem] py-1")}
             title={cidadeDisplay ? `Cidade: ${cidadeDisplay}` : undefined}
           >
             <span className="flex flex-col items-center leading-none">
@@ -84,7 +84,7 @@ export function RankingFilterBar({
           </Link>
         </div>
         {needsCidadeFallback ? (
-          <p className="mt-1.5 text-[10px] leading-snug text-eid-text-secondary">
+          <p className="mt-1 text-[9px] leading-snug text-eid-text-secondary">
             Sem cidade no perfil —{" "}
             <Link href="/conta/perfil" className="font-bold text-eid-primary-300 underline-offset-2 hover:underline">
               definir manualmente
@@ -95,20 +95,22 @@ export function RankingFilterBar({
       </div>
 
       {esporteOptions.length > 0 ? (
-        <div className="border-t border-[color:var(--eid-border-subtle)] pt-2.5">
-          <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Esporte</p>
-          <p className="mb-1 truncate text-[11px] font-semibold text-eid-fg" title={esporteAtualNome ?? undefined}>
+        <div className="border-t border-[color:var(--eid-border-subtle)] pt-1.5">
+          <p className="mb-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Esporte</p>
+          <p className="truncate text-[10px] font-semibold leading-tight text-eid-fg" title={esporteAtualNome ?? undefined}>
             {esporteAtualNome ?? "—"}
           </p>
           {esporteOptions.length > 1 ? (
-            <details className="group rounded-[var(--eid-radius-md)] border border-[color:var(--eid-border-subtle)] bg-eid-surface/40">
-              <summary className="cursor-pointer list-none px-2 py-1.5 text-[10px] font-bold text-eid-primary-300 transition hover:bg-eid-surface/60 [&::-webkit-details-marker]:hidden">
-                <span className="flex items-center justify-between gap-2">
+            <details className="group mt-1.5">
+              <summary className="cursor-pointer list-none text-left text-[10px] font-bold text-eid-primary-300 underline decoration-eid-primary-500/35 underline-offset-2 transition hover:decoration-eid-primary-500/60 [&::-webkit-details-marker]:hidden">
+                <span className="inline-flex items-center gap-1">
                   Ver outros esportes
-                  <span className="text-eid-text-secondary transition group-open:rotate-180">▾</span>
+                  <span className="text-[9px] text-eid-text-secondary transition group-open:rotate-180" aria-hidden>
+                    ▾
+                  </span>
                 </span>
               </summary>
-              <ul className="max-h-40 space-y-0.5 overflow-y-auto border-t border-[color:var(--eid-border-subtle)] px-1.5 py-1.5">
+              <ul className="mt-1.5 max-h-36 space-y-0.5 overflow-y-auto rounded-[var(--eid-radius-md)] border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1 py-1">
                 {esporteOptions.map((opt) => {
                   const active = state.esporte ? state.esporte === String(opt.id) : opt.id === principalEsporteId;
                   return (
@@ -116,7 +118,7 @@ export function RankingFilterBar({
                       <Link
                         href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                         className={cn(
-                          "block truncate rounded-md px-2 py-1 text-[11px] font-semibold transition",
+                          "block truncate rounded px-2 py-1 text-[10px] font-semibold transition",
                           active ? "bg-eid-primary-500/15 text-eid-primary-300" : "text-eid-fg hover:bg-eid-surface/80"
                         )}
                       >
@@ -139,23 +141,23 @@ export function RankingFilterBar({
 
 function pillActive(active: boolean) {
   return cn(
-    "inline-flex min-h-[2rem] flex-1 items-center justify-center rounded-full px-2 py-1 text-center text-[10px] font-bold leading-tight transition sm:min-h-[2.125rem] sm:px-2.5 sm:text-[11px]",
+    "inline-flex min-h-[1.625rem] flex-1 items-center justify-center rounded-full px-1.5 py-0.5 text-center text-[9px] font-bold leading-none transition sm:min-h-[1.75rem] sm:px-2 sm:text-[10px]",
     active
       ? "bg-eid-primary-500 text-white shadow-sm"
       : "border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 text-eid-text-secondary hover:border-eid-primary-500/30 hover:text-eid-fg"
   );
 }
 
-/** Selo EID compacto (preto + azul primário), posicionado para ficar visível fora do círculo da foto. */
+/** Selo EID compacto (preto + azul primário), âncora na base do avatar (metade para fora = “badge”). */
 export function RankingEidSeal({ score }: { score: number }) {
   const safe = Number.isFinite(score) ? score : 0;
   return (
     <span
-      className="pointer-events-none absolute left-1/2 top-full z-[2] flex -translate-x-1/2 -translate-y-1/2 items-center overflow-visible rounded-full border border-eid-primary-500/45 text-[7px] font-black uppercase leading-none text-white shadow-[0_2px_8px_rgba(0,0,0,0.35)] sm:text-[8px]"
+      className="pointer-events-none absolute bottom-0 left-1/2 z-[3] flex -translate-x-1/2 translate-y-1/2 items-center rounded-full border border-eid-primary-500/50 text-[7px] font-black uppercase leading-none text-white shadow-[0_3px_10px_rgba(0,0,0,0.4)] sm:text-[8px]"
       aria-hidden
     >
-      <span className="bg-black px-[5px] py-[3px] sm:px-1.5 sm:py-0.5">EID</span>
-      <span className="bg-eid-primary-500 px-[5px] py-[3px] tabular-nums sm:px-1.5 sm:py-0.5">{safe.toFixed(1)}</span>
+      <span className="rounded-l-full bg-black px-[5px] py-[2px] pl-[6px] sm:py-0.5">EID</span>
+      <span className="rounded-r-full bg-eid-primary-500 px-[5px] py-[2px] pr-[6px] tabular-nums sm:py-0.5">{safe.toFixed(1)}</span>
     </span>
   );
 }
@@ -185,24 +187,28 @@ export function RankingPodium({ second, first, third }: { second: PodiumSlot | n
         : "min-w-0 w-[30%] max-w-[9.5rem] shrink sm:max-w-[11rem] md:w-[31%]";
 
   return (
-    <section className="relative mb-6 sm:mb-7">
-      <div
-        className="pointer-events-none absolute -inset-x-4 -top-4 bottom-0 -z-10 mx-auto max-w-3xl rounded-[2rem] bg-[radial-gradient(ellipse_85%_55%_at_50%_12%,rgba(37,99,235,0.1),transparent_65%)] md:-inset-x-8"
-        aria-hidden
-      />
-      <h2 className="mb-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-eid-text-secondary">Pódio</h2>
-      <div
-        className={cn(
-          "flex flex-row items-end justify-center gap-2 sm:gap-4 md:gap-8",
-          n === 1 && "mx-auto max-w-sm",
-          n === 2 && "mx-auto max-w-md"
-        )}
-      >
-        {slots.map((s) => (
-          <div key={s.key} className={cn(wrap, s.lift && "z-10 md:-translate-y-1.5")}>
-            <PodiumFace slot={s} highlight={s.highlight} />
-          </div>
-        ))}
+    <section className="relative mb-5 sm:mb-6">
+      <div className="relative overflow-hidden rounded-[1.25rem] border border-[color:var(--eid-border-subtle)] bg-gradient-to-b from-eid-surface/55 via-eid-card/40 to-eid-card/25 px-2.5 pb-4 pt-3 shadow-[0_16px_48px_-24px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-[2px] sm:rounded-3xl sm:px-4 sm:pb-5 sm:pt-4">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(ellipse_90%_80%_at_50%_0%,rgba(37,99,235,0.12),transparent_70%)] sm:h-28"
+          aria-hidden
+        />
+        <h2 className="relative mb-3 text-center text-[10px] font-bold uppercase tracking-[0.16em] text-eid-text-secondary sm:mb-4 sm:text-[11px]">
+          Pódio
+        </h2>
+        <div
+          className={cn(
+            "relative flex flex-row items-end justify-center gap-3 sm:gap-5 md:gap-8",
+            n === 1 && "mx-auto max-w-sm",
+            n === 2 && "mx-auto max-w-md"
+          )}
+        >
+          {slots.map((s) => (
+            <div key={s.key} className={cn(wrap, s.lift && "z-10 md:-translate-y-2")}>
+              <PodiumFace slot={s} highlight={s.highlight} />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -211,41 +217,46 @@ export function RankingPodium({ second, first, third }: { second: PodiumSlot | n
 function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean }) {
   const initial = (slot.nome.trim().slice(0, 2) || "—").toUpperCase();
   const avatarClass = cn(
-    "relative shrink-0 overflow-hidden rounded-full border-2",
+    "relative shrink-0 overflow-hidden rounded-full",
     highlight
-      ? "h-[4.85rem] w-[4.85rem] border-eid-primary-500/60 shadow-[0_8px_28px_-10px_rgba(37,99,235,0.45)] sm:h-[5.15rem] sm:w-[5.15rem]"
-      : "h-12 w-12 border-eid-primary-500/30 sm:h-[3.35rem] sm:w-[3.35rem]"
+      ? "h-[5rem] w-[5rem] border border-eid-primary-500/55 shadow-[0_0_0_1px_rgba(37,99,235,0.2),0_10px_36px_-8px_rgba(37,99,235,0.55),0_4px_20px_-6px_rgba(0,0,0,0.45)] sm:h-[5.35rem] sm:w-[5.35rem]"
+      : "h-11 w-11 border border-eid-primary-500/28 shadow-[0_4px_14px_-6px_rgba(0,0,0,0.35)] sm:h-[3.15rem] sm:w-[3.15rem]"
   );
   return (
-    <div className="flex flex-col items-center text-center">
+    <div
+      className={cn(
+        "flex flex-col items-center text-center",
+        highlight && "scale-[1.02] sm:scale-[1.04]"
+      )}
+    >
       {highlight ? (
-        <div className="mb-0.5 text-eid-primary-400" aria-hidden>
-          <IconCrown className="mx-auto h-5 w-5 sm:h-6 sm:w-6" />
+        <div className="mb-0.5 text-eid-primary-400 drop-shadow-[0_0_12px_rgba(96,165,250,0.35)]" aria-hidden>
+          <IconCrown className="mx-auto h-[1.15rem] w-[1.15rem] sm:h-6 sm:w-6" />
         </div>
       ) : (
-        <div className="mb-0.5 h-5 sm:h-6" aria-hidden />
+        <div className="mb-0.5 h-[1.15rem] sm:h-6" aria-hidden />
       )}
       <div className="flex w-full flex-col items-center">
-        <div className="relative mb-3 w-full overflow-visible px-1 pt-0.5">
+        <div className="relative mb-2.5 w-full overflow-visible px-0.5 pt-0.5">
           <Link
             href={slot.href}
-            className="group relative mx-auto block w-fit outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
+            className="group relative mx-auto block w-fit pb-2.5 outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
             aria-label={`Perfil de ${slot.nome}`}
           >
             <div className={avatarClass}>
               {slot.avatarUrl ? (
                 <img src={slot.avatarUrl} alt="" className="h-full w-full object-cover transition group-hover:opacity-95" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[10px] font-bold text-eid-primary-300 sm:text-[11px]">{initial}</div>
+                <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[9px] font-bold text-eid-primary-300 sm:text-[10px]">{initial}</div>
               )}
             </div>
             <RankingEidSeal score={slot.notaEid} />
           </Link>
         </div>
-        <p className="line-clamp-2 max-w-[9.5rem] text-[11px] font-bold leading-tight text-eid-fg sm:max-w-[10rem] sm:text-xs">{slot.nome}</p>
-        <p className="mt-0.5 text-[10px] font-black tabular-nums text-eid-text-secondary">{slot.place}</p>
-        <p className="mt-0.5 text-[11px] font-black tabular-nums text-eid-primary-300 sm:text-xs">
-          {slot.pontos} <span className="text-[9px] font-bold uppercase tracking-wide text-eid-text-secondary">PTS</span>
+        <p className="line-clamp-2 max-w-[9.5rem] text-[10px] font-bold leading-snug text-eid-fg sm:max-w-[10rem] sm:text-[11px]">{slot.nome}</p>
+        <p className="mt-0.5 text-[9px] font-black tabular-nums text-eid-text-secondary sm:text-[10px]">{slot.place}</p>
+        <p className="mt-0.5 text-[10px] font-black tabular-nums text-eid-primary-300 sm:text-xs">
+          {slot.pontos} <span className="text-[8px] font-bold uppercase tracking-wide text-eid-text-secondary">PTS</span>
         </p>
       </div>
     </div>
@@ -288,7 +299,7 @@ export function RankingRow({
 
 export function ViewerRankCard({ rank }: { rank: number }) {
   return (
-    <div className="mb-3 rounded-[var(--eid-radius-lg)] border border-eid-primary-500/25 bg-eid-primary-500/[0.06] px-3 py-2.5 text-center sm:rounded-xl">
+    <div className="mb-2 rounded-[var(--eid-radius-lg)] border border-eid-primary-500/25 bg-eid-primary-500/[0.06] px-3 py-2 text-center sm:rounded-xl">
       <p className="text-sm text-eid-text-secondary">
         Sua posição: <span className="text-base font-black tabular-nums text-eid-primary-300 sm:text-lg">{rank}º</span>
       </p>
