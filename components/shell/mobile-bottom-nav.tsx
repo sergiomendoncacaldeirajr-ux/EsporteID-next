@@ -362,14 +362,15 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     <>
       {/* Padding do conteúdo: #app-main-column (--eid-shell-footer-offset). Espaçador removido para não duplicar folga. */}
       <nav
-        className="fixed bottom-0 left-0 z-[55] w-full md:hidden"
+        className="fixed bottom-0 left-0 z-[55] w-full bg-eid-card md:hidden"
         aria-label="Navegação principal"
         style={{ viewTransitionName: "eid-app-bottomnav" }}
       >
         <div
           className="relative overflow-visible rounded-t-[16px] border-t border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_-6px_18px_rgba(0,0,0,0.18)] backdrop-blur-xl"
           style={{
-            paddingBottom: "max(0.8rem, calc(env(safe-area-inset-bottom) + 0.25rem))",
+            minHeight: "calc(3.85rem + env(safe-area-inset-bottom))",
+            paddingBottom: "max(1rem, calc(env(safe-area-inset-bottom) + 0.6rem))",
             paddingLeft: "max(0px, env(safe-area-inset-left))",
             paddingRight: "max(0px, env(safe-area-inset-right))",
           }}
