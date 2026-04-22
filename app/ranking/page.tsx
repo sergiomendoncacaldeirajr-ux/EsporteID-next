@@ -145,7 +145,7 @@ export default async function RankingPage({ searchParams }: Props) {
 
   const [{ data: me }, { data: meusEsportesRaw }, { data: criados }, { data: membro }, { data: esportesCatalogoRaw }] = await Promise.all([
     supabase.from("profiles").select("localizacao").eq("id", viewerId).maybeSingle(),
-    supabase.from("usuario_eid").select("esporte_id, esportes(nome)").eq("usuario_id", viewerId).order("esporte_id", { ascending: true }),
+    supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", viewerId).order("esporte_id", { ascending: true }),
     supabase.from("times").select("id").eq("criador_id", viewerId),
     supabase.from("membros_time").select("time_id").eq("usuario_id", viewerId).eq("status", "ativo"),
     supabase.from("esportes").select("id, nome").eq("ativo", true).order("ordem", { ascending: true }),
@@ -193,7 +193,7 @@ export default async function RankingPage({ searchParams }: Props) {
     if (state.tipo === "individual") {
       let q = supabase
         .from("usuario_eid")
-        .select("usuario_id, esporte_id, nota_eid, pontos_ranking, profiles!inner(nome, avatar_url, localizacao), esportes!inner(nome)")
+        .select("usuario_id, esporte_id, nota_eid, pontos_ranking, profiles!inner(nome, avatar_url, localizacao)")
         .eq("esporte_id", selectedEsporteId);
       q = state.rank === "match" ? q.order("pontos_ranking", { ascending: false }) : q.order("nota_eid", { ascending: false });
       const { data: raw } = await q;
@@ -220,7 +220,7 @@ export default async function RankingPage({ searchParams }: Props) {
       const tipoTime = state.tipo === "dupla" ? "dupla" : "time";
       let q = supabase
         .from("times")
-        .select("id, nome, escudo, localizacao, pontos_ranking, eid_time, esporte_id, tipo, esportes(nome)")
+        .select("id, nome, escudo, localizacao, pontos_ranking, eid_time, esporte_id, tipo")
         .eq("tipo", tipoTime)
         .eq("esporte_id", selectedEsporteId);
       q = state.rank === "match" ? q.order("pontos_ranking", { ascending: false }) : q.order("eid_time", { ascending: false });
@@ -244,13 +244,24 @@ export default async function RankingPage({ searchParams }: Props) {
 
   if (state.periodo === "mes" && selectedEsporteId != null) {
     const now = new Date();
-    const monthStartMs = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    const nextMonthStartMs = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const monthStartMs = monthStart.getTime();
+    const nextMonthStartMs = nextMonthStart.getTime();
+    const monthStartIso = monthStart.toISOString();
+    const nextMonthStartIso = nextMonthStart.toISOString();
+    const partidaSelect =
+      state.tipo === "individual"
+        ? "jogador1_id, jogador2_id, data_resultado, data_partida, data_registro"
+        : "time1_id, time2_id, data_resultado, data_partida, data_registro";
 
     const { data: partidasBrutas } = await supabase
       .from("partidas")
-      .select("jogador1_id, jogador2_id, time1_id, time2_id, data_resultado, data_partida, data_registro")
+      .select(partidaSelect)
       .eq("esporte_id", selectedEsporteId)
+      .or(
+        `and(data_resultado.gte.${monthStartIso},data_resultado.lt.${nextMonthStartIso}),and(data_partida.gte.${monthStartIso},data_partida.lt.${nextMonthStartIso}),and(data_registro.gte.${monthStartIso},data_registro.lt.${nextMonthStartIso})`
+      )
       .in("status", ["encerrada", "finalizada", "concluida", "concluída", "validada"]);
 
     const rows = ((partidasBrutas ?? []) as PartidaPeriodoRow[]).filter((p) =>
