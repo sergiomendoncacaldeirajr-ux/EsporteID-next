@@ -4,7 +4,12 @@ import { MatchPageShell } from "@/components/match/match-page-shell";
 import { MatchRadarApp } from "@/components/match/match-radar-app";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { getEsportesConfrontoCached } from "@/lib/match/esportes-confronto";
-import { fetchMatchRadarCards, type RadarTipo, type SortBy } from "@/lib/match/radar-snapshot";
+import {
+  fetchMatchRadarCards,
+  type MatchRadarFinalidade,
+  type RadarTipo,
+  type SortBy,
+} from "@/lib/match/radar-snapshot";
 import { safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import {
   computeDisponivelAmistosoEffective,
@@ -17,6 +22,7 @@ type Search = {
   raio?: string;
   sort_by?: string;
   status?: string;
+  finalidade?: string;
 };
 
 function toTipo(v: string | undefined): RadarTipo {
@@ -33,9 +39,23 @@ function toRaio(v: string | undefined): number {
   return Math.max(5, Math.min(150, Math.round(n)));
 }
 
+function toMatchFinalidade(v: string | undefined): MatchRadarFinalidade {
+  return String(v ?? "").trim().toLowerCase() === "amistoso" ? "amistoso" : "ranking";
+}
+
 export default async function MatchPage({ searchParams }: { searchParams?: Promise<Search> }) {
   const sp = (await searchParams) ?? {};
   const tipo = toTipo(sp.tipo);
+  const matchFinalidade = toMatchFinalidade(sp.finalidade);
+  if (matchFinalidade === "amistoso" && tipo !== "atleta") {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(sp)) {
+      if (typeof v === "string" && v.length > 0) q.set(k, v);
+    }
+    q.set("tipo", "atleta");
+    q.set("finalidade", "amistoso");
+    redirect(`/match?${q.toString()}`);
+  }
   const sortBy = toSortBy(sp.sort_by);
   const raio = toRaio(sp.raio);
   const esporteParam = sp.esporte ?? "all";
@@ -59,6 +79,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   if (sp.raio) qs.set("raio", sp.raio);
   if (sp.sort_by) qs.set("sort_by", sp.sort_by);
   if (sp.status) qs.set("status", sp.status);
+  if (sp.finalidade) qs.set("finalidade", sp.finalidade);
   const matchNext = safeNextInternalPath(qs.toString() ? `/match?${qs}` : "/match");
   if (!(me as { match_maioridade_confirmada?: boolean }).match_maioridade_confirmada) {
     redirect(`/conta/confirmar-maioridade-match?next=${encodeURIComponent(matchNext)}`);
@@ -121,6 +142,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
     esporteSelecionado,
     lat: Number(me.lat),
     lng: Number(me.lng),
+    finalidade: matchFinalidade,
   });
 
   return (
@@ -133,6 +155,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         initialTipo={tipo}
         initialSortBy={sortBy}
         initialRaio={raio}
+        initialFinalidade={matchFinalidade}
         viewerDisponivelAmistoso={viewerAmistosoOn}
         viewerAmistosoExpiresAt={viewerAmistosoExpiresAt}
         showSentBanner={sp.status === "enviado"}

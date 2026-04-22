@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import type { MatchRadarCard } from "@/lib/match/radar-snapshot";
+import type { MatchRadarCard, MatchRadarFinalidade } from "@/lib/match/radar-snapshot";
 
 type Props = {
   card: MatchRadarCard;
   esporteContextId: string;
+  matchFinalidade: MatchRadarFinalidade;
 };
 
-export function MatchRadarCardView({ card, esporteContextId }: Props) {
+export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: Props) {
   const esporteParam = card.esporteId > 0 ? String(card.esporteId) : esporteContextId;
-  const desafioHref = `/desafio?id=${encodeURIComponent(card.id)}&tipo=${encodeURIComponent(card.modalidade)}&esporte=${encodeURIComponent(esporteParam)}`;
+  const desafioHref = `/desafio?id=${encodeURIComponent(card.id)}&tipo=${encodeURIComponent(card.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(matchFinalidade)}`;
 
   const initials = card.nome
     .split(/\s+/u)
@@ -71,7 +72,7 @@ export function MatchRadarCardView({ card, esporteContextId }: Props) {
           href={desafioHref}
           className="eid-btn-match-cta inline-flex min-h-[40px] flex-1 items-center justify-center rounded-xl px-4 text-xs font-black uppercase tracking-wide"
         >
-          Solicitar Match
+          {matchFinalidade === "amistoso" ? "Solicitar match amistoso" : "Solicitar match ranking"}
         </Link>
         <Link
           href={card.href}

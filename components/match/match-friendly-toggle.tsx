@@ -3,6 +3,11 @@
 import { useEffect, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { setViewerDisponivelAmistoso } from "@/app/match/actions";
+import {
+  AMISTOSO_4H_AVISO_TEXTO,
+  amistoso4hFirstUseWarningJaAceito,
+  marcarAmistoso4hFirstUseWarningAceito,
+} from "@/lib/perfil/amistoso-4h-first-warning";
 import { AMISTOSO_DURACAO_MS, computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 
 type Props = {
@@ -72,6 +77,11 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId }: Pro
   }, [on, expiresAt, tick]);
 
   function toggle(next: boolean) {
+    if (next && !amistoso4hFirstUseWarningJaAceito()) {
+      const ok = window.confirm(`${AMISTOSO_4H_AVISO_TEXTO}\n\nLigar o modo amistoso agora?`);
+      if (!ok) return;
+      marcarAmistoso4hFirstUseWarningAceito();
+    }
     setOn(next);
     setExpiresAt(next ? new Date(Date.now() + AMISTOSO_DURACAO_MS).toISOString() : null);
     startTransition(async () => {

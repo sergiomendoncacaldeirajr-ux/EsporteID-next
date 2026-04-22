@@ -24,15 +24,18 @@ function formatWhen(iso: string | null) {
   }
 }
 
+const cardBase =
+  "rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] backdrop-blur-sm transition md:p-4";
+
 export function PartidaAgendaCard({ id, esporteNome, j1Nome, j2Nome, dataRef, localLabel, variant }: Props) {
   const isPlacar = variant === "placar";
   return (
     <article
-      className={`rounded-xl border p-3 shadow-none transition md:rounded-[22px] md:p-4 md:shadow-lg ${
+      className={
         isPlacar
-          ? "border-eid-action-500/30 bg-eid-card md:border-eid-action-500/35 md:bg-gradient-to-br md:from-eid-action-500/12 md:to-eid-card"
-          : "border-[color:var(--eid-border-subtle)] bg-eid-card md:shadow-black/20"
-      }`}
+          ? `${cardBase} border-[color:color-mix(in_srgb,var(--eid-action-500)_38%,var(--eid-border-subtle)_62%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-action-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_24px_-14px_color-mix(in_srgb,var(--eid-action-500)_28%,transparent)]`
+          : cardBase
+      }
     >
       <div className="flex flex-wrap items-center gap-2 text-[9px] font-semibold uppercase tracking-wide text-eid-primary-400 md:text-[10px] md:font-black">
         <span className="inline-flex items-center gap-1">
@@ -66,7 +69,11 @@ export function PartidaAgendaCard({ id, esporteNome, j1Nome, j2Nome, dataRef, lo
 
       <Link
         href={`/registrar-placar/${id}`}
-        className="eid-btn-primary mt-3 flex min-h-[44px] w-full items-center justify-center rounded-lg text-center text-[11px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:rounded-2xl md:text-xs md:font-black"
+        className={
+          isPlacar
+            ? "eid-btn-match-cta mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl text-center text-[11px] font-black uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs"
+            : "eid-btn-primary mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl text-center text-[11px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs md:font-black"
+        }
       >
         {isPlacar ? "Revisar placar" : "Registrar placar"}
       </Link>

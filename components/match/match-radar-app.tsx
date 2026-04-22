@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import Link from "next/link";
 import { refreshMatchRadarAction } from "@/app/match/actions";
 import type { EsporteConfrontoRow } from "@/lib/match/esportes-confronto";
-import type { MatchRadarCard, RadarTipo, SortBy } from "@/lib/match/radar-snapshot";
+import type { MatchRadarCard, MatchRadarFinalidade, RadarTipo, SortBy } from "@/lib/match/radar-snapshot";
 import { MatchFriendlyToggle } from "@/components/match/match-friendly-toggle";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import { MatchRadarCardView } from "@/components/match/match-radar-card";
@@ -44,6 +44,7 @@ type Props = {
   initialTipo: RadarTipo;
   initialSortBy: SortBy;
   initialRaio: number;
+  initialFinalidade: MatchRadarFinalidade;
   viewerDisponivelAmistoso: boolean;
   /** ISO da janela de 4h quando o modo amistoso está ligado */
   viewerAmistosoExpiresAt: string | null;
@@ -60,6 +61,7 @@ export function MatchRadarApp({
   initialTipo,
   initialSortBy,
   initialRaio,
+  initialFinalidade,
   viewerDisponivelAmistoso,
   viewerAmistosoExpiresAt,
   showSentBanner,
@@ -68,30 +70,32 @@ export function MatchRadarApp({
   const [sortBy, setSortBy] = useState<SortBy>(initialSortBy);
   const [raio, setRaio] = useState(initialRaio);
   const [esporte, setEsporte] = useState(esporteSelecionado);
+  const [finalidade, setFinalidade] = useState<MatchRadarFinalidade>(initialFinalidade);
   const [cards, setCards] = useState<MatchRadarCard[]>(initialCards);
   const [isPending, startTransition] = useTransition();
 
   const syncUrl = useCallback(
-    (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string }) => {
+    (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
       const q = new URLSearchParams();
       q.set("tipo", next.tipo);
       q.set("esporte", /^\d+$/.test(next.esporte) ? next.esporte : "all");
       q.set("raio", String(next.raio));
       q.set("sort_by", next.sortBy);
-      const path = `/match?${q.toString()}`;
-      window.history.replaceState(null, "", path);
+      q.set("finalidade", next.finalidade);
+      window.history.replaceState(null, "", `/match?${q.toString()}`);
     },
     []
   );
 
   const runRefresh = useCallback(
-    (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string }) => {
+    (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
       startTransition(async () => {
         const res = await refreshMatchRadarAction({
           tipo: next.tipo,
           sortBy: next.sortBy,
           raio: next.raio,
           esporteSelecionado: next.esporte,
+          finalidade: next.finalidade,
         });
         if (res.ok) {
           setCards(res.cards);
@@ -101,6 +105,7 @@ export function MatchRadarApp({
           q.set("esporte", /^\d+$/.test(next.esporte) ? next.esporte : "all");
           q.set("raio", String(next.raio));
           q.set("sort_by", next.sortBy);
+          q.set("finalidade", next.finalidade);
           const nextPath = `/match?${q.toString()}`;
           window.location.href = `/conta/confirmar-maioridade-match?next=${encodeURIComponent(nextPath)}`;
         }
@@ -110,21 +115,28 @@ export function MatchRadarApp({
   );
 
   const applyFilters = useCallback(
-    (patch: Partial<{ tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string }>) => {
+    (patch: Partial<{ tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }>) => {
+      const nextFinalidade = patch.finalidade ?? finalidade;
+      let nextTipo = patch.tipo ?? tipo;
+      if (nextFinalidade === "amistoso" && nextTipo !== "atleta") {
+        nextTipo = "atleta";
+      }
       const next = {
-        tipo: patch.tipo ?? tipo,
+        tipo: nextTipo,
         sortBy: patch.sortBy ?? sortBy,
         raio: patch.raio ?? raio,
         esporte: patch.esporte ?? esporte,
+        finalidade: nextFinalidade,
       };
       setTipo(next.tipo);
       setSortBy(next.sortBy);
       setRaio(next.raio);
       setEsporte(next.esporte);
+      setFinalidade(next.finalidade);
       syncUrl(next);
       runRefresh(next);
     },
-    [tipo, sortBy, raio, esporte, runRefresh, syncUrl]
+    [tipo, sortBy, raio, esporte, finalidade, runRefresh, syncUrl]
   );
 
   useEffect(() => {
@@ -132,8 +144,9 @@ export function MatchRadarApp({
     setSortBy(initialSortBy);
     setRaio(initialRaio);
     setEsporte(esporteSelecionado);
+    setFinalidade(initialFinalidade);
     setCards(initialCards);
-  }, [initialTipo, initialSortBy, initialRaio, esporteSelecionado, initialCards]);
+  }, [initialTipo, initialSortBy, initialRaio, esporteSelecionado, initialFinalidade, initialCards]);
 
   const esporteOptions = useMemo(() => [{ id: "all", nome: "Todos" }, ...esportes.map((e) => ({ id: String(e.id), nome: e.nome ?? "" }))], [esportes]);
 
@@ -152,7 +165,9 @@ export function MatchRadarApp({
             Match
           </h1>
           <p className="mt-1 max-w-prose text-[11px] leading-relaxed text-eid-text-secondary sm:text-xs">
-            Oponentes por proximidade; ordene por nota EID ou pontos do ranking. Troque modalidade e filtros sem recarregar.
+            {finalidade === "amistoso"
+              ? "Atletas com modo amistoso ativo e interesse em jogo casual. O botão Solicitar match já envia pedido amistoso (sem carência de meses)."
+              : "Oponentes por proximidade; ordene por nota EID ou pontos do ranking. Troque modalidade e filtros sem recarregar."}
           </p>
         </div>
 
@@ -162,6 +177,33 @@ export function MatchRadarApp({
           userId={viewerId}
         />
       </header>
+
+      <div className={cn(FILTER_CARD_CLASS, "mb-3")}>
+        <p className={PROFILE_SECTION_TITLE}>Tipo de match</p>
+        <div className="mt-2 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
+          <nav className="flex min-h-[2.25rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:min-h-[1.5rem]" aria-label="Tipo de match">
+            {(
+              [
+                ["ranking", "Match ranking"],
+                ["amistoso", "Match amistoso"],
+              ] as const
+            ).map(([value, label]) => {
+              const active = finalidade === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => applyFilters({ finalidade: value })}
+                  className={segmentTab(active)}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </div>
 
       {showSentBanner ? (
         <p className="mb-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-3 py-2.5 text-sm leading-snug text-eid-fg shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] backdrop-blur-sm">
@@ -187,11 +229,13 @@ export function MatchRadarApp({
                 ] as const
               ).map(([value, label]) => {
                 const active = tipo === value;
+                const bloqueadoAmistoso = finalidade === "amistoso" && value !== "atleta";
                 return (
                   <button
                     key={value}
                     type="button"
-                    disabled={isPending}
+                    disabled={isPending || bloqueadoAmistoso}
+                    title={bloqueadoAmistoso ? "Match amistoso no radar é só no individual." : undefined}
                     onClick={() => applyFilters({ tipo: value })}
                     className={segmentTab(active)}
                   >
@@ -278,13 +322,19 @@ export function MatchRadarApp({
           </p>
         ) : (
           cards.map((c) => (
-            <MatchRadarCardView key={`${c.modalidade}-${c.id}-${c.esporteId}`} card={c} esporteContextId={esporte} />
+            <MatchRadarCardView
+              key={`${c.modalidade}-${c.id}-${c.esporteId}`}
+              card={c}
+              esporteContextId={esporte}
+              matchFinalidade={finalidade}
+            />
           ))
         )}
       </section>
 
-      <p className="mt-6 text-center text-[10px] text-eid-text-secondary">
-        Preferência de jogo e privacidade no{" "}
+      <p className="mt-6 text-center text-[10px] leading-relaxed text-eid-text-secondary">
+        O esporte do confronto é o selecionado acima em <span className="font-semibold text-eid-fg/90">Esporte</span> (se
+        você tem mais de um EID, troque o chip antes de solicitar). Preferência de jogo e privacidade no{" "}
         <Link
           href="/conta/perfil"
           className="font-semibold text-eid-primary-400 underline-offset-2 transition hover:text-eid-primary-300 hover:underline"

@@ -51,6 +51,8 @@ type FormacaoRow = {
   disponivel_amistoso?: boolean | null;
 };
 
+export type MatchRadarFinalidade = "ranking" | "amistoso";
+
 export type RadarSnapshotInput = {
   viewerId: string;
   tipo: RadarTipo;
@@ -59,13 +61,15 @@ export type RadarSnapshotInput = {
   esporteSelecionado: string;
   lat: number;
   lng: number;
+  /** Aba do radar: ranking (padrão) ou amistoso — filtra cartões e define link do desafio. */
+  finalidade: MatchRadarFinalidade;
 };
 
 export async function fetchMatchRadarCards(
   supabase: SupabaseClient,
   input: RadarSnapshotInput
 ): Promise<MatchRadarCard[]> {
-  const { viewerId, tipo, sortBy, raio, esporteSelecionado, lat, lng } = input;
+  const { viewerId, tipo, sortBy, raio, esporteSelecionado, lat, lng, finalidade } = input;
   const esporteId = /^\d+$/.test(esporteSelecionado) ? Number(esporteSelecionado) : null;
 
   let cards: MatchRadarCard[] = [];
@@ -136,18 +140,24 @@ export async function fetchMatchRadarCards(
     }));
   }
 
-  return filterAndSortRadarCards(cards, { sortBy, raio });
+  return filterAndSortRadarCards(cards, { sortBy, raio, finalidade });
 }
 
 export function filterAndSortRadarCards(
   cards: MatchRadarCard[],
-  opts: { sortBy: SortBy; raio: number }
+  opts: { sortBy: SortBy; raio: number; finalidade: MatchRadarFinalidade }
 ): MatchRadarCard[] {
-  const { sortBy, raio } = opts;
+  const { sortBy, raio, finalidade } = opts;
   const canOrderByDistance = true;
 
-  return cards
-    .filter((c) => c.interesseMatch !== "amistoso")
+  let list = cards;
+  if (finalidade === "ranking") {
+    list = list.filter((c) => c.interesseMatch !== "amistoso");
+  } else {
+    list = list.filter((c) => c.interesseMatch !== "ranking" && c.disponivelAmistoso);
+  }
+
+  return list
     .filter((c) => (!canOrderByDistance ? true : c.dist <= raio))
     .sort((a, b) => {
       if (a.disponivelAmistoso !== b.disponivelAmistoso) return a.disponivelAmistoso ? -1 : 1;

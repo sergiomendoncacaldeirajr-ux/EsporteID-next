@@ -191,7 +191,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
                   <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-300">Match amistoso</p>
                   <p className="mt-2 text-sm font-semibold text-eid-fg">Sem pontos · combinar no WhatsApp</p>
                   <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
-                    Não abre fluxo de agenda nem placar para ranking. Para valer ponto e agendamento oficial, depois solicite um{" "}
+                    Não há carência de meses entre pedidos amistosos com a mesma pessoa: você pode solicitar de novo quando quiser. Não abre fluxo de agenda nem placar de ranking. Para pontos e agendamento oficial, use{" "}
                     <span className="font-semibold text-eid-fg">match de ranking</span>.
                   </p>
                 </Link>

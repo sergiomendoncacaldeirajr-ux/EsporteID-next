@@ -5,6 +5,7 @@ import { getServerAuth } from "@/lib/auth/rsc-auth";
 import {
   fetchMatchRadarCards,
   type MatchRadarCard,
+  type MatchRadarFinalidade,
   type RadarSnapshotInput,
   type RadarTipo,
   type SortBy,
@@ -50,6 +51,7 @@ export async function refreshMatchRadarAction(input: {
   sortBy: SortBy;
   raio: number;
   esporteSelecionado: string;
+  finalidade: MatchRadarFinalidade;
 }): Promise<RefreshMatchRadarResult> {
   const { supabase, user } = await getServerAuth();
   if (!user) return { ok: false, error: "auth" };
@@ -78,6 +80,7 @@ export async function refreshMatchRadarAction(input: {
     esporteSelecionado: input.esporteSelecionado,
     lat,
     lng,
+    finalidade: input.finalidade,
   };
 
   const cards = await fetchMatchRadarCards(supabase, snap);
