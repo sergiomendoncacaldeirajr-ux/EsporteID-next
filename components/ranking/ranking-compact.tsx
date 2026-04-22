@@ -40,8 +40,8 @@ export function RankingFilterBar({
   return (
     <div className="mb-3 sm:mb-3.5">
       <div className="space-y-2.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2.5 backdrop-blur-sm shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)]">
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_76%,var(--eid-bg)_24%),color-mix(in_srgb,var(--eid-surface)_70%,var(--eid-bg)_30%))] p-1.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.28)]">
-          <div className="flex h-[1.86rem] overflow-hidden rounded-md ring-1 ring-[color:var(--eid-border-subtle)] divide-x divide-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,transparent)]">
+        <div className="rounded-xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_76%,var(--eid-bg)_24%),color-mix(in_srgb,var(--eid-surface)_70%,var(--eid-bg)_30%))] p-1.5 backdrop-blur-sm">
+          <div className="flex h-[1.86rem] overflow-hidden rounded-md">
             <Link href={href({ tipo: "individual", page: 1 })} className={tipoSegmentButton(state.tipo === "individual")}>
               Individual
             </Link>
@@ -54,7 +54,7 @@ export function RankingFilterBar({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1.5 backdrop-blur-sm">
           <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
             <CityGpsLabel fallbackCity={cidadeDisplay} />
           </Link>
@@ -72,7 +72,7 @@ export function RankingFilterBar({
         ) : null}
 
         {todosEsportes.length > 0 ? (
-          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
+          <div className="rounded-xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1.5 backdrop-blur-sm">
             <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 select-none [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
               <div className="flex min-w-max flex-nowrap items-center gap-1.5">
               {todosEsportes.map((opt) => {
@@ -84,11 +84,11 @@ export function RankingFilterBar({
                     href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                     title={isPrincipal ? "Esporte principal do perfil" : undefined}
                     className={cn(
-                      "inline-flex h-[1.86rem] w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-md border px-2.5 text-[11px] font-semibold uppercase leading-none tracking-[0.05em] transition-all duration-200",
+                      "inline-flex h-[1.86rem] w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-md px-2.5 text-[11px] font-semibold uppercase leading-none tracking-[0.05em] transition-all duration-200",
                       active
-                        ? "border-eid-primary-500/35 bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.08)]"
-                        : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/55 hover:text-eid-fg",
-                      isPrincipal && !active && "ring-1 ring-eid-primary-500/25"
+                        ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
+                        : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55 hover:text-eid-fg",
+                      isPrincipal && !active && "bg-eid-primary-500/08 text-eid-fg/90"
                     )}
                   >
                     {opt.nome}
@@ -191,17 +191,17 @@ function tipoSegmentButton(active: boolean) {
   return cn(
     "inline-flex min-w-0 flex-1 items-center justify-center px-1.5 text-[11px] font-semibold uppercase leading-none tracking-[0.05em] transition-all duration-200",
     active
-      ? "bg-eid-primary-500/20 text-eid-fg shadow-[inset_0_0_0_1px_rgba(37,99,235,0.38),0_4px_14px_-8px_rgba(37,99,235,0.35)]"
+      ? "bg-eid-primary-500/20 text-eid-fg shadow-[0_4px_14px_-8px_rgba(37,99,235,0.35)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35 hover:text-eid-fg"
   );
 }
 
 function blockButton(active: boolean) {
   return cn(
-    "inline-flex h-[1.86rem] w-auto min-w-0 items-center justify-center rounded-md border px-2.5 text-[11px] font-semibold uppercase leading-none tracking-[0.05em] transition-all duration-200",
+    "inline-flex h-[1.86rem] w-auto min-w-0 items-center justify-center rounded-md px-2.5 text-[11px] font-semibold uppercase leading-none tracking-[0.05em] transition-all duration-200",
     active
-      ? "border-eid-primary-500/35 bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.08)]"
-      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/55 hover:text-eid-fg"
+      ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
+      : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55 hover:text-eid-fg"
   );
 }
 
