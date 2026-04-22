@@ -36,8 +36,8 @@ export function RankingFilterBar({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, pe);
 
   return (
-    <div className="mb-3 rounded-[var(--eid-radius-md)] border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-1.5 py-1 shadow-[0_2px_12px_-8px_rgba(0,0,0,0.3)] sm:mb-3.5 sm:px-2 sm:py-1.5">
-      <div className="flex gap-1">
+    <div className="mb-2.5 sm:mb-3">
+      <div className="flex gap-0.5">
         <Link href={href({ tipo: "individual", page: 1 })} className={pillRow(state.tipo === "individual")}>
           Individual
         </Link>
@@ -48,7 +48,7 @@ export function RankingFilterBar({
           Time
         </Link>
       </div>
-      <div className="mt-1 flex gap-1">
+      <div className="mt-0.5 flex gap-0.5">
         <Link href={href({ rank: "match", page: 1 })} className={pillRow(state.rank === "match")}>
           Rank Match
         </Link>
@@ -56,7 +56,7 @@ export function RankingFilterBar({
           Rank EID
         </Link>
       </div>
-      <div className="mt-1 flex flex-wrap gap-1">
+      <div className="mt-0.5 flex flex-wrap gap-0.5">
         <Link
           href={href({ local: "cidade", page: 1 })}
           className={cn(pillRow(state.local === "cidade"), cidadeDisplay ? "min-h-[1.85rem] flex-col gap-0 py-0.5" : undefined)}
@@ -72,7 +72,7 @@ export function RankingFilterBar({
         </Link>
       </div>
       {needsCidadeFallback ? (
-        <p className="mt-1 px-0.5 text-[8px] leading-snug text-eid-text-secondary">
+        <p className="mt-0.5 px-0.5 text-[8px] leading-snug text-eid-text-secondary">
           Sem cidade —{" "}
           <Link href="/conta/perfil" className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">
             perfil
@@ -81,8 +81,8 @@ export function RankingFilterBar({
       ) : null}
 
       {todosEsportes.length > 0 ? (
-        <div className="mt-1.5 -mx-0.5 border-t border-[color:var(--eid-border-subtle)] pt-1.5">
-          <div className="flex gap-1 overflow-x-auto overscroll-x-contain pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mt-1 border-t border-[color:var(--eid-border-subtle)]/70 pt-1">
+          <div className="flex min-w-0 gap-0.5 overflow-x-auto overscroll-x-contain scroll-smooth pb-0.5 pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
             {todosEsportes.map((opt) => {
               const active = selectedEsporteId === opt.id;
               const isPrincipal = principalEsporteId != null && opt.id === principalEsporteId;
@@ -92,7 +92,7 @@ export function RankingFilterBar({
                   href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                   title={isPrincipal ? "Esporte principal do perfil" : undefined}
                   className={cn(
-                    "shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-center text-[9px] font-bold leading-none transition sm:text-[10px]",
+                    "shrink-0 whitespace-nowrap rounded-full px-2 py-[3px] text-center text-[8px] font-bold leading-none transition sm:text-[9px]",
                     active
                       ? "bg-eid-primary-500 text-white"
                       : "border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-text-secondary hover:border-eid-primary-500/35 hover:text-eid-fg",
@@ -112,7 +112,7 @@ export function RankingFilterBar({
 
 function pillRow(active: boolean) {
   return cn(
-    "inline-flex min-h-[1.45rem] flex-1 items-center justify-center rounded-full px-2 py-0.5 text-center text-[9px] font-bold leading-none transition sm:min-h-[1.5rem] sm:text-[10px]",
+    "inline-flex min-h-[1.3rem] flex-1 items-center justify-center rounded-full px-1.5 py-px text-center text-[8px] font-bold leading-none transition sm:min-h-[1.35rem] sm:px-2 sm:text-[9px]",
     active
       ? "bg-eid-primary-500 text-white"
       : "border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-text-secondary hover:border-eid-primary-500/30 hover:text-eid-fg"
@@ -183,11 +183,20 @@ export function RankingPodium({ second, first, third }: { second: PodiumSlot | n
 
 function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean }) {
   const initial = (slot.nome.trim().slice(0, 2) || "—").toUpperCase();
+  const placeTone =
+    slot.place === "1º"
+      ? "border-amber-300/80 shadow-[0_0_16px_-7px_rgba(251,191,36,0.45)]"
+      : slot.place === "2º"
+        ? "border-slate-200/80 shadow-[0_0_14px_-7px_rgba(226,232,240,0.4)]"
+        : "border-amber-700/70 shadow-[0_0_14px_-7px_rgba(180,83,9,0.4)]";
   const avatarClass = cn(
     "relative mx-auto shrink-0 overflow-hidden rounded-full",
     highlight
-      ? "h-12 w-12 border border-eid-primary-500/38 shadow-[0_3px_14px_-6px_rgba(37,99,235,0.35)] sm:h-[3.05rem] sm:w-[3.05rem]"
-      : "h-[2.35rem] w-[2.35rem] border border-eid-primary-500/20 shadow-[0_2px_6px_-4px_rgba(0,0,0,0.15)] sm:h-10 sm:w-10"
+      ? "h-[2.7rem] w-[2.7rem] border-[1.5px] sm:h-[2.85rem] sm:w-[2.85rem]"
+      : "h-[2.1rem] w-[2.1rem] border-[1.5px] sm:h-[2.25rem] sm:w-[2.25rem]",
+    placeTone,
+    "before:pointer-events-none before:absolute before:inset-0 before:rounded-full before:bg-white/5 before:opacity-0 before:animate-[pulse_3s_ease-in-out_infinite]",
+    highlight && "before:opacity-100"
   );
   return (
     <div className={cn("flex flex-col items-center text-center", highlight && "scale-[1.02] sm:scale-[1.025]")}>
@@ -217,7 +226,9 @@ function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean 
           <RankingEidSeal score={slot.notaEid} />
         </div>
       </Link>
-      <p className="line-clamp-2 max-w-[8.5rem] px-0.5 text-[9px] font-bold leading-tight text-eid-fg sm:max-w-[9.5rem] sm:text-[10px]">{slot.nome}</p>
+      <p className="mt-1 line-clamp-2 max-w-[8.5rem] px-0.5 text-[9px] font-bold leading-tight text-eid-fg sm:mt-1.5 sm:max-w-[9.5rem] sm:text-[10px]">
+        {slot.nome}
+      </p>
       <p className="mt-0.5 text-[9px] font-black tabular-nums text-eid-primary-300 sm:text-[10px]">
         {slot.pontos} <span className="text-[7px] font-bold uppercase tracking-wide text-eid-text-secondary">PTS</span>
       </p>
