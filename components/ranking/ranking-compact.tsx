@@ -322,12 +322,12 @@ export function RankingPodium({
     <section className="relative z-[1] mb-0.5 isolate">
       <div className="eid-podium-card overflow-visible rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_28%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2.5 py-3 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_30px_-12px_rgba(37,99,235,0.55)] [&_a]:[-webkit-tap-highlight-color:transparent]">
         {rankToggle || periodToggle ? (
-          <div className="mb-0 flex items-center justify-between gap-1.5">
+          <div className="relative z-[3] mb-0.5 flex items-center justify-between gap-1.5">
             <div className="min-w-0">{rankToggle}</div>
             <div className="min-w-0">{periodToggle}</div>
           </div>
         ) : null}
-        <h2 className="eid-podium-title -mt-6 mb-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-transparent bg-gradient-to-b from-white via-eid-primary-300 to-eid-primary-500 bg-clip-text drop-shadow-[0_1px_3px_rgba(37,99,235,0.45)]">
+        <h2 className="pointer-events-none eid-podium-title -mt-5 mb-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-transparent bg-gradient-to-b from-white via-eid-primary-300 to-eid-primary-500 bg-clip-text drop-shadow-[0_1px_3px_rgba(37,99,235,0.45)]">
           Pódio
         </h2>
         {hasAnyPodium ? (
