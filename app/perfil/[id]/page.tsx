@@ -574,11 +574,13 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       const eid = Number(e.nota_eid ?? 0);
 
                       return (
-                        <Link
+                        <ProfileEditDrawerTrigger
                           key={`${e.esporte_id}-${idx}`}
                           href={`/perfil/${encodeURIComponent(id)}/eid/${e.esporte_id}?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                          title={`Estatística de ${esp?.nome ?? "esporte"}`}
+                          fullscreen
+                          topMode="backOnly"
                           className="relative flex min-h-[42px] min-w-[108px] snap-start touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl bg-eid-surface/45 px-1 py-1 transition-all duration-200 ease-out motion-safe:transform-gpu hover:-translate-y-[1px] hover:bg-eid-surface/60 active:translate-y-0 active:scale-[0.98]"
-                          aria-label={`Abrir estatística de ${esp?.nome ?? "esporte"}`}
                         >
                           <div className="inline-flex items-center rounded-full border border-eid-primary-500/45 text-[10px] font-black uppercase leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
                             <span className="rounded-l-full bg-black px-[7px] py-px">EID</span>
@@ -589,7 +591,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                           <span className="line-clamp-1 text-center text-[8px] font-black uppercase tracking-[0.09em] text-eid-fg">
                             {esp?.nome ?? "—"}
                           </span>
-                        </Link>
+                        </ProfileEditDrawerTrigger>
                       );
                     })}
                   </div>

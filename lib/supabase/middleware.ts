@@ -6,7 +6,8 @@ function buildRequestHeadersForPath(request: NextRequest): Headers {
   const h = new Headers(request.headers);
   const pathname = request.nextUrl.pathname;
   const isPerfilHistoricoRoute = /^\/perfil\/[^/]+\/historico(?:\/.*)?$/.test(pathname);
-  if (pathname.startsWith("/onboarding") || pathname.startsWith("/editar") || isPerfilHistoricoRoute) {
+  const isPerfilEidRoute = /^\/perfil\/[^/]+\/eid\/[^/]+(?:\/.*)?$/.test(pathname);
+  if (pathname.startsWith("/onboarding") || pathname.startsWith("/editar") || isPerfilHistoricoRoute || isPerfilEidRoute) {
     h.set(EID_HIDE_APP_SHELL_HEADER, "1");
   }
   if (pathname.startsWith("/onboarding")) {

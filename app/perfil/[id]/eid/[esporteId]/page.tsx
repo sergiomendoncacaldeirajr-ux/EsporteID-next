@@ -4,7 +4,6 @@ import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
 import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
   fmtDataPtBr,
@@ -18,7 +17,7 @@ import { createClient } from "@/lib/supabase/server";
 
 type Props = {
   params: Promise<{ id: string; esporteId: string }>;
-  searchParams?: Promise<{ from?: string }>;
+  searchParams?: Promise<{ from?: string; embed?: string }>;
 };
 
 function parseEsporteId(raw: string): number | null {
@@ -74,6 +73,7 @@ function resultadoPartida(
 export default async function PerfilEidEsportePage({ params, searchParams }: Props) {
   const { id: profileId, esporteId: esporteRaw } = await params;
   const sp = (await searchParams) ?? {};
+  const isEmbed = sp.embed === "1";
   const backHref = resolveBackHref(sp.from, `/perfil/${profileId}`);
 
   const esporteId = parseEsporteId(esporteRaw);
@@ -410,10 +410,8 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
   };
 
   return (
-    <>
-      <DashboardTopbar />
       <main className="mx-auto w-full max-w-lg px-2.5 pb-8 pt-2 sm:max-w-2xl sm:px-5 sm:pt-3">
-        <PerfilBackLink href={backHref} label="Voltar ao perfil" />
+        {!isEmbed ? <PerfilBackLink href={backHref} label="Voltar ao perfil" /> : null}
 
         <div className={`relative mt-3 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-[0_4px_24px_rgba(0,0,0,0.3)]`}>
           <div className="relative h-20 w-full sm:h-24">
@@ -856,6 +854,5 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
           )}
         </ProfileSection>
       </main>
-    </>
   );
 }
