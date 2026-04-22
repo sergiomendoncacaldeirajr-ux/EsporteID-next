@@ -290,54 +290,64 @@ export default async function RankingPage({ searchParams }: Props) {
         />
 
         {noCatalogHint ? (
-          <p className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-5 text-center text-sm leading-relaxed text-eid-text-secondary sm:rounded-2xl">
+          <p className="rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.78),rgba(15,23,42,0.56))] p-5 text-center text-sm leading-relaxed text-eid-text-secondary backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
             Nenhum esporte disponível no momento.
-          </p>
-        ) : rankingAll.length === 0 ? (
-          <p className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-6 text-center text-sm text-eid-text-secondary sm:rounded-2xl">
-            Nenhum resultado para estes filtros.
           </p>
         ) : (
           <>
-            <RankingPeriodToggle state={state} principalEsporteId={esportePrincipalId} />
-            {state.page === 1 && podiumRows.length > 0 ? (
-              <RankingPodium second={podiumSecond} first={podiumFirst} third={podiumThird} />
+            {state.page === 1 ? (
+              <RankingPodium
+                second={podiumSecond}
+                first={podiumFirst}
+                third={podiumThird}
+                periodToggle={<RankingPeriodToggle state={state} principalEsporteId={esportePrincipalId} />}
+              />
             ) : null}
 
             {showViewerCard && viewerRank !== null ? <ViewerRankCard rank={viewerRank} /> : null}
 
-            <section className="mt-2 sm:mt-2.5">
-              <h2 className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Classificação</h2>
-              <div className="overflow-hidden rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 px-2.5 sm:rounded-2xl sm:px-3.5">
-                {pageSlice.length === 0 ? (
-                  <p className="py-5 text-center text-sm text-eid-text-secondary">Fim da lista.</p>
-                ) : (
-                  pageSlice.map((row, i) => {
-                    const rank = 4 + start + i;
-                    return (
-                      <RankingRow
-                        key={row.key}
-                        rank={rank}
-                        nome={row.nome}
-                        pontos={row.pontos}
-                        avatarUrl={row.avatarUrl}
-                        href={row.href}
-                      />
-                    );
-                  })
-                )}
-              </div>
-            </section>
+            {rankingAll.length === 0 ? (
+              <p className="rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.78),rgba(15,23,42,0.56))] p-6 text-center text-sm text-eid-text-secondary backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
+                Nenhum resultado para estes filtros.
+              </p>
+            ) : null}
 
-            {hasMore ? (
-              <div className="mt-3 flex justify-center sm:mt-4">
-                <Link
-                  href={rankingHref({ page: state.page + 1 }, state, esportePrincipalId)}
-                  className="inline-flex min-h-10 items-center justify-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/[0.08] px-7 text-sm font-bold text-eid-fg transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/12"
-                >
-                  Ver mais
-                </Link>
-              </div>
+            {rankingAll.length > 0 ? (
+              <>
+                <section className="mt-2 sm:mt-2.5">
+                  <h2 className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Classificação</h2>
+                  <div className="overflow-hidden rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.78),rgba(15,23,42,0.56))] px-2.5 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)] sm:px-3.5">
+                    {pageSlice.length === 0 ? (
+                      <p className="py-5 text-center text-sm text-eid-text-secondary">Fim da lista.</p>
+                    ) : (
+                      pageSlice.map((row, i) => {
+                        const rank = 4 + start + i;
+                        return (
+                          <RankingRow
+                            key={row.key}
+                            rank={rank}
+                            nome={row.nome}
+                            pontos={row.pontos}
+                            avatarUrl={row.avatarUrl}
+                            href={row.href}
+                          />
+                        );
+                      })
+                    )}
+                  </div>
+                </section>
+
+                {hasMore ? (
+                  <div className="mt-3 flex justify-center sm:mt-4">
+                    <Link
+                      href={rankingHref({ page: state.page + 1 }, state, esportePrincipalId)}
+                      className="inline-flex min-h-10 items-center justify-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/[0.08] px-7 text-sm font-bold text-eid-fg transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/12"
+                    >
+                      Ver mais
+                    </Link>
+                  </div>
+                ) : null}
+              </>
             ) : null}
           </>
         )}
