@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { EidBadge } from "@/components/eid/eid-badge";
-import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
+import { ProfileCoverControl } from "@/components/perfil/profile-cover-control";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
+import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
 import { ProfileTeamCard } from "@/components/perfil/profile-team-members-cards";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
-import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
   esporteIdsComMatchAceitoEntre,
   podeExibirWhatsappProfessor,
@@ -25,7 +24,6 @@ type Props = {
 export default async function PerfilPublicoPage({ params, searchParams }: Props) {
   const { id } = await params;
   const sp = (await searchParams) ?? {};
-  const backHref = resolveBackHref(sp.from, "/match");
 
   const supabase = await createClient();
   const {
@@ -65,6 +63,8 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     ]);
   const papeis = (papeisRows ?? []).map((row) => row.papel);
   const hasProfessor = papeis.includes("professor");
+  const hasOrganizador = papeis.includes("organizador");
+  const hasEspaco = papeis.includes("espaco");
 
   const podeVerWhatsappAtleta = await podeExibirWhatsappPerfilPublico(supabase, user.id, id, isSelf);
   const podeVerWhatsappProfessor = hasProfessor
@@ -83,14 +83,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     )
     .eq("usuario_id", id)
     .order("pontos_ranking", { ascending: false });
-
-  const { data: eidLogs } = await supabase
-    .from("eid_logs")
-    .select("change_amount, reason, created_at, esportes(nome)")
-    .eq("entity_kind", "usuario")
-    .eq("entity_profile_id", id)
-    .order("created_at", { ascending: false })
-    .limit(3);
 
   const principalEid =
     eids && eids.length > 0
@@ -172,15 +164,13 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     <>
       <DashboardTopbar />
       <main className="mx-auto w-full max-w-lg px-2.5 pb-6 pt-2 sm:max-w-2xl sm:px-5 sm:pb-8 sm:pt-3">
-        <PerfilBackLink href={backHref} label="Voltar" />
-
         {/* ── Hero Card ─────────────────────────────────────────────── */}
         {/* ── Hero Card ──
              overflow-hidden no container clipa tudo dentro dos cantos arredondados.
              O avatar fica na frente da capa via z-10 (elementos com z-index > 0
              sobrepõem elementos sem z-index dentro do mesmo contexto).
         */}
-        <div className="relative mt-2 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
+        <div className="eid-surface-panel relative mt-2 overflow-hidden rounded-2xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_16px_32px_-20px_rgba(15,23,42,0.45),0_0_20px_-16px_rgba(37,99,235,0.48)]">
 
           {/* Capa — banner generoso, claramente atrás de tudo */}
           <div className="relative h-24 w-full sm:h-28">
@@ -198,6 +188,25 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 1px,transparent 14px)" }} />
               </>
             )}
+
+            {isSelf ? (
+              <div className="absolute right-2 top-2 z-[3] flex items-center gap-1.5">
+                <ProfileCoverControl hasCover={Boolean(perfil.foto_capa)} />
+              </div>
+            ) : null}
+
+            {isSelf ? (
+              <Link
+                href={CONTA_PERFIL_HREF}
+                className="absolute -bottom-[20px] right-2 z-[4] inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
+              >
+                <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
+                  <path d="M11.875 1.625a1.768 1.768 0 0 1 2.5 2.5l-7.54 7.54a1 1 0 0 1-.46.262l-3.018.805a.5.5 0 0 1-.612-.612l.805-3.018a1 1 0 0 1 .262-.46l7.54-7.54Zm1.793 1.207a.768.768 0 0 0-1.086 0l-.812.812 1.086 1.086.812-.812a.768.768 0 0 0 0-1.086ZM11.149 5.29 4.314 12.126l-1.02.272.272-1.02L10.4 4.544l.75.75Z" />
+                </svg>
+                EDITAR PERFIL
+              </Link>
+            ) : null}
+
           </div>
 
           {/*
@@ -211,74 +220,65 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           */}
           <div className="px-3 pb-3 pt-0">
 
-            {/* Avatar + Nome lado a lado, alinhados pela base */}
-            <div className="-mt-10 flex items-end gap-3">
+            {/* Avatar + Nome/Selos lado a lado */}
+            <div className="relative z-[3] -mt-6 flex items-end gap-3 sm:-mt-7">
               {perfil.avatar_url ? (
                 <img
                   src={perfil.avatar_url}
                   alt=""
-                  className="relative z-10 h-[68px] w-[68px] shrink-0 rounded-xl border-[3px] border-eid-card object-cover shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]"
+                  className="relative z-10 h-[68px] w-[68px] shrink-0 rounded-full border-[3px] border-eid-card object-cover shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]"
                 />
               ) : (
-                <div className="relative z-10 flex h-[68px] w-[68px] shrink-0 items-center justify-center rounded-xl border-[3px] border-eid-card bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-sm font-black tracking-widest text-eid-primary-200 shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]">
+                <div className="relative z-10 flex h-[68px] w-[68px] shrink-0 items-center justify-center rounded-full border-[3px] border-eid-card bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-sm font-black tracking-widest text-eid-primary-200 shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]">
                   EID
                 </div>
               )}
-              {/* Nome alinhado ao fundo do avatar — 1 linha ~20px, sempre abaixo da capa */}
               <div className="min-w-0 flex-1 pb-1">
-                <h1 className="text-[13px] font-black tracking-tight text-eid-fg leading-tight break-words">
-                  {perfil.nome ?? "Atleta"}
-                </h1>
-                {perfil.username ? (
-                  <p className="mt-0.5 text-[10px] font-semibold text-eid-primary-400">@{perfil.username}</p>
-                ) : null}
-              </div>
-            </div>
-
-            {/* Badges de papel / interesse — logo abaixo do nome */}
-            <div className="mt-2 flex flex-wrap gap-1">
-              <span className="rounded border border-eid-primary-500/30 bg-eid-primary-500/10 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-eid-primary-500">
-                {perfil.tipo_usuario === "organizador" ? "Org" : "Atleta"}
-              </span>
-              {hasProfessor ? (
-                <span className="rounded border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-eid-action-500">
-                  Professor
-                </span>
-              ) : null}
-              {perfil.interesse_rank_match !== false && (
-                <span className="rounded border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-eid-action-500">
-                  Rank
-                </span>
-              )}
-              {perfil.interesse_torneio !== false && (
-                <span className="rounded border border-eid-primary-400/25 bg-eid-primary-400/8 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-eid-primary-400">
-                  Torneios
-                </span>
-              )}
-              {principalEid ? <EidBadge score={Number(principalEid.nota_eid ?? 0)} history={eidLogs ?? []} /> : null}
-            </div>
-
-            {/* Localização */}
-            {perfil.localizacao ? (
-              <p className="mt-1.5 flex items-center gap-1 text-[11px] text-eid-text-secondary">
-                <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3 shrink-0 text-eid-action-500">
-                  <path fillRule="evenodd" d="M8 1.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9ZM2 6a6 6 0 1 1 10.95 3.396l-3.535 5.142a1.5 1.5 0 0 1-2.83 0L2.95 9.396A5.972 5.972 0 0 1 2 6Zm6 2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" clipRule="evenodd" />
-                </svg>
-                {perfil.localizacao}
-              </p>
-            ) : null}
-
-            {/* Interesses e estilo de jogo */}
-            <div className="mt-2">
-              <p className="mb-1 text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Estou disponível para:</p>
-              <div className="flex flex-wrap gap-1">
-                <span className="rounded border border-eid-primary-500/20 px-1.5 py-px text-[9px] font-semibold text-eid-primary-400">
-                  {perfil.disponivel_amistoso !== false ? "✓ Amistosos" : "✗ Amistosos"}
-                </span>
-                {perfil.estilo_jogo ? (
-                  <span className="rounded border border-[color:var(--eid-border-subtle)] px-1.5 py-px text-[9px] font-semibold text-eid-text-secondary">
-                    {perfil.estilo_jogo}
-                  </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <h1 className="text-[13px] font-black leading-tight tracking-tight text-eid-fg drop-shadow-[0_1px_6px_rgba(0,0,0,0.45)] break-words">
+                    {perfil.nome ?? "Atleta"}
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="inline-flex items-center rounded-full border border-white/35 bg-black/35 px-1.5 py-px text-[8px] font-black uppercase tracking-[0.1em] text-white shadow-[0_1px_5px_rgba(0,0,0,0.35)]">
+                      {perfil.tipo_usuario === "organizador" ? "Organizador" : "Atleta"}
+                    </span>
+                    {hasProfessor ? (
+                      <span className="inline-flex items-center rounded-full border border-white/35 bg-black/35 px-1.5 py-px text-[8px] font-black uppercase tracking-[0.1em] text-white shadow-[0_1px_5px_rgba(0,0,0,0.35)]">
+                        Professor
+                      </span>
+                    ) : null}
+                    {hasOrganizador ? (
+                      <span className="inline-flex items-center rounded-full border border-white/35 bg-black/35 px-1.5 py-px text-[8px] font-black uppercase tracking-[0.1em] text-white shadow-[0_1px_5px_rgba(0,0,0,0.35)]">
+                        Organizador
+                      </span>
+                    ) : null}
+                    {hasEspaco ? (
+                      <span className="inline-flex items-center rounded-full border border-white/35 bg-black/35 px-1.5 py-px text-[8px] font-black uppercase tracking-[0.1em] text-white shadow-[0_1px_5px_rgba(0,0,0,0.35)]">
+                        Espaço
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                {perfil.username || perfil.localizacao ? (
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px]">
+                    {perfil.username ? (
+                      <p className="font-semibold text-eid-primary-400">@{perfil.username}</p>
+                    ) : null}
+                    {perfil.username && perfil.localizacao ? (
+                      <span
+                        className="h-2.5 w-px rounded-full bg-[color:color-mix(in_srgb,var(--eid-primary-500)_32%,var(--eid-border-subtle)_68%)]"
+                        aria-hidden
+                      />
+                    ) : null}
+                    {perfil.localizacao ? (
+                      <p className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-px text-eid-text-secondary">
+                        <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5 shrink-0 text-eid-action-500/90">
+                          <path fillRule="evenodd" d="M8 1.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9ZM2 6a6 6 0 1 1 10.95 3.396l-3.535 5.142a1.5 1.5 0 0 1-2.83 0L2.95 9.396A5.972 5.972 0 0 1 2 6Zm6 2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" clipRule="evenodd" />
+                        </svg>
+                        {perfil.localizacao}
+                      </p>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             </div>
@@ -289,7 +289,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             ) : null}
 
             {/* Stats bar */}
-            <div className="mt-3 grid grid-cols-4 divide-x divide-[color:var(--eid-border-subtle)] rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 text-center">
+            <div className="eid-list-item mt-3 grid grid-cols-4 divide-x divide-[color:var(--eid-border-subtle)] rounded-xl bg-eid-surface/45 text-center">
               <div className="py-2">
                 <p className="text-sm font-black text-eid-fg">{vitT}</p>
                 <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Vitórias</p>
@@ -309,25 +309,36 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             </div>
 
             {/* Ficha técnica — sem tempo_experiencia (fica nos cards EID por esporte) */}
-            {(perfil.altura_cm || perfil.peso_kg || perfil.lado) ? (
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-                {perfil.altura_cm ? (
-                  <p className="text-[10px] text-eid-text-secondary">
-                    Altura <span className="font-semibold text-eid-fg">{perfil.altura_cm} cm</span>
-                  </p>
-                ) : null}
-                {perfil.peso_kg ? (
-                  <p className="text-[10px] text-eid-text-secondary">
-                    Peso <span className="font-semibold text-eid-fg">{perfil.peso_kg} kg</span>
-                  </p>
-                ) : null}
-                {perfil.lado ? (
-                  <p className="text-[10px] text-eid-text-secondary">
-                    Lado <span className="font-semibold text-eid-fg">{perfil.lado}</span>
-                  </p>
-                ) : null}
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+              {perfil.altura_cm ? (
+                <p className="text-[10px] text-eid-text-secondary">
+                  Altura <span className="font-semibold text-eid-fg">{perfil.altura_cm} cm</span>
+                </p>
+              ) : null}
+              {perfil.peso_kg ? (
+                <p className="text-[10px] text-eid-text-secondary">
+                  Peso <span className="font-semibold text-eid-fg">{perfil.peso_kg} kg</span>
+                </p>
+              ) : null}
+              {perfil.lado ? (
+                <p className="text-[10px] text-eid-text-secondary">
+                  Lado <span className="font-semibold text-eid-fg">{perfil.lado}</span>
+                </p>
+              ) : null}
+              <div className="ml-auto inline-flex items-center">
+                <span className="mr-1 text-[10px] text-eid-text-secondary">Amistoso</span>
+                <ProfileFriendlyStatusToggle
+                  userId={id}
+                  initialOn={perfil.disponivel_amistoso === true}
+                  canToggle={isSelf}
+                />
               </div>
-            ) : null}
+              {perfil.estilo_jogo ? (
+                <p className="text-[10px] text-eid-text-secondary">
+                  Estilo <span className="font-semibold text-eid-fg">{perfil.estilo_jogo}</span>
+                </p>
+              ) : null}
+            </div>
 
             {/* ── Selos de conquista — prova social imediata ── */}
             {conquistas.length > 0 && (() => {
@@ -388,7 +399,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                   ) : null}
                   {esportesParaDesafio.length > 0 ? (
                     maisDeUmDesafio ? (
-                      <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3">
+                      <div className="eid-surface-panel rounded-xl p-3">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-eid-text-secondary">
                           {linkWpp ? "Match no ranking" : "Solicitar Match"}
                         </p>
@@ -402,7 +413,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                             <Link
                               key={esp.esporteId}
                               href={`/desafio?id=${encodeURIComponent(id)}&tipo=individual&esporte=${esp.esporteId}`}
-                              className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-eid-action-500/35 bg-eid-action-500/10 px-3 text-xs font-bold uppercase tracking-wide text-eid-action-400 transition hover:bg-eid-action-500/15"
+                              className="eid-btn-soft inline-flex min-h-[40px] items-center justify-center rounded-xl border-eid-action-500/35 bg-eid-action-500/10 px-3 text-xs font-bold uppercase tracking-wide text-eid-action-400"
                             >
                               {esp.nome}
                             </Link>
@@ -424,25 +435,17 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 {hasProfessor ? (
                   <Link
                     href={`/professor/${id}`}
-                    className="col-span-2 inline-flex min-h-[36px] items-center justify-center rounded-lg border border-eid-action-500/30 px-3 text-[11px] font-bold uppercase tracking-wide text-eid-action-400 transition hover:bg-eid-action-500/8"
+                    className="eid-btn-soft col-span-2 inline-flex min-h-[36px] items-center justify-center rounded-xl border-eid-action-500/30 px-3 text-[11px] font-bold uppercase tracking-wide text-eid-action-400"
                   >
                     Ver perfil profissional
                   </Link>
                 ) : null}
                 <Link
                   href="/times?create=1"
-                  className={`${isSelf && !hasProfessor ? "col-span-2" : ""} inline-flex min-h-[36px] items-center justify-center rounded-lg border border-eid-action-500/30 px-3 text-[11px] font-bold uppercase tracking-wide text-eid-action-400 transition hover:bg-eid-action-500/8`}
+                  className={`${isSelf && !hasProfessor ? "col-span-2" : ""} eid-btn-soft inline-flex min-h-[36px] items-center justify-center rounded-xl border-eid-action-500/30 px-3 text-[11px] font-bold uppercase tracking-wide text-eid-action-400`}
                 >
                   Nova Equipe
                 </Link>
-                {isSelf ? (
-                  <Link
-                    href={CONTA_PERFIL_HREF}
-                    className="inline-flex min-h-[36px] items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
-                  >
-                    Editar Perfil
-                  </Link>
-                ) : null}
               </div>
             )}
           </section>
@@ -450,7 +453,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           {hasProfessor ? (
             <ProfileSection title="Professor">
               <div className="space-y-3">
-                <div className="rounded-xl border border-eid-action-500/20 bg-eid-action-500/8 p-4">
+                <div className="eid-list-item rounded-xl border-eid-action-500/24 bg-eid-action-500/8 p-4">
                   <p className="text-sm font-semibold text-eid-fg">
                     {professorPerfil?.headline ?? "Professor ativo na plataforma"}
                   </p>
@@ -478,7 +481,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                         return esporteM?.nome === esporte?.nome;
                       });
                       return (
-                        <div key={`${esporte?.nome ?? "esp"}-${idx}`} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-3">
+                        <div key={`${esporte?.nome ?? "esp"}-${idx}`} className="eid-list-item rounded-xl bg-eid-surface/45 p-3">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <p className="text-sm font-semibold text-eid-fg">{esporte?.nome ?? "Esporte"}</p>
@@ -510,7 +513,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               <div className="mb-2 mt-1">
                 <Link
                   href={CONTA_ESPORTES_EID_HREF}
-                  className="inline-flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16 sm:w-auto"
+                  className="eid-btn-soft inline-flex min-h-[38px] w-full items-center justify-center rounded-xl border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 sm:w-auto"
                 >
                   Gerenciar / editar
                 </Link>
@@ -522,7 +525,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             {/* Grid de cards compactos: 3 por linha, clicáveis para stats do esporte */}
             <div className="mt-2 grid grid-cols-3 gap-2">
               {(eids ?? []).length === 0 ? (
-                <p className="col-span-3 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-[11px] text-eid-text-secondary">
+                <p className="eid-list-item col-span-3 rounded-xl bg-eid-card p-3 text-[11px] text-eid-text-secondary">
                   Ainda sem EID registrado por esporte.
                 </p>
               ) : (
@@ -611,7 +614,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 })}
               </div>
             ) : (
-              <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-[11px] text-eid-text-secondary">
+              <p className="eid-list-item mt-2 rounded-xl bg-eid-card p-3 text-[11px] text-eid-text-secondary">
                 Sem equipes vinculadas no momento.
               </p>
             )}
