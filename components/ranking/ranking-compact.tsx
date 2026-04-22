@@ -239,45 +239,32 @@ export function RankingPodium({
   rankToggle?: ReactNode;
   periodToggle?: ReactNode;
 }) {
-  const slots: (PodiumSlot & { key: string; highlight: boolean; lift: boolean })[] = [];
-  if (second) slots.push({ ...second, key: "2", highlight: false, lift: false });
-  if (first) slots.push({ ...first, key: "1", highlight: true, lift: true });
-  if (third) slots.push({ ...third, key: "3", highlight: false, lift: false });
-  if (slots.length === 0 && !periodToggle && !rankToggle) return null;
-
-  const n = slots.length;
-  const wrap =
-    n === 1
-      ? "mx-auto w-full max-w-[12.5rem]"
-      : n === 2
-        ? "min-w-0 w-[48%] max-w-[11rem] shrink sm:max-w-[12rem]"
-        : "min-w-0 w-[31.5%] max-w-[10.25rem] shrink sm:max-w-[11rem] md:w-[32%]";
+  const hasAnyPodium = !!(first || second || third);
+  if (!hasAnyPodium && !periodToggle && !rankToggle) return null;
 
   return (
     <section className="relative mb-0.5 sm:mb-1">
-      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_20%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2 py-2.5 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_24px_-14px_rgba(37,99,235,0.35)] sm:px-3 sm:py-3">
+      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_20%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2 py-2 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_24px_-14px_rgba(37,99,235,0.35)] sm:px-3 sm:py-2.5">
         {rankToggle || periodToggle ? (
-          <div className="mb-1.5 flex items-center justify-between gap-2 sm:mb-2">
+          <div className="mb-1 flex items-center justify-between gap-2 sm:mb-1.5">
             <div className="min-w-0">{rankToggle}</div>
             <div className="min-w-0">{periodToggle}</div>
           </div>
         ) : null}
-        <h2 className="mb-2 text-center text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary sm:mb-2.5 sm:text-[10px]">
+        <h2 className="mb-1.5 text-center text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary sm:mb-2 sm:text-[10px]">
           Pódio
         </h2>
-        {slots.length > 0 ? (
-          <div
-            className={cn(
-              "flex flex-row items-end justify-center gap-2 sm:gap-3.5 md:gap-4.5",
-              n === 1 && "mx-auto max-w-sm",
-              n === 2 && "mx-auto max-w-lg"
-            )}
-          >
-            {slots.map((s) => (
-              <div key={s.key} className={cn(wrap, s.lift && "z-10 md:-translate-y-0.5")}>
-                <PodiumFace slot={s} highlight={s.highlight} />
-              </div>
-            ))}
+        {hasAnyPodium ? (
+          <div className="mx-auto grid w-full max-w-2xl grid-cols-3 items-end gap-2 sm:gap-3.5 md:gap-4.5">
+            <div className="min-h-[1px]">
+              {second ? <PodiumFace slot={second} highlight={false} /> : null}
+            </div>
+            <div className="z-10 md:-translate-y-0.5">
+              {first ? <PodiumFace slot={first} highlight /> : null}
+            </div>
+            <div className="min-h-[1px]">
+              {third ? <PodiumFace slot={third} highlight={false} /> : null}
+            </div>
           </div>
         ) : (
           <p className="py-4 text-center text-sm text-eid-text-secondary">Sem pódio para o período selecionado.</p>

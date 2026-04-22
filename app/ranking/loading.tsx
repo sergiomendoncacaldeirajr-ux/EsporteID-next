@@ -1,24 +1,79 @@
-import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
+import { SkBlock } from "@/components/loading/skeleton-primitives";
 
 export default function LoadingRanking() {
   return (
-    <SkMain variant="wide5">
-      <div className="mb-7 flex items-center justify-between gap-4">
-        <SkBlock className="h-9 w-40 rounded-xl" />
-        <SkBlock className="h-10 w-24 rounded-full" />
-      </div>
-      <SkBlock className="mb-5 h-24 w-full rounded-2xl" />
-      <div className="mb-8 flex flex-row items-end justify-center gap-2 sm:gap-4 md:gap-6">
-        <SkBlock className="h-40 w-[32%] max-w-[12rem] rounded-2xl" />
-        <SkBlock className="h-44 w-[34%] max-w-[13rem] rounded-2xl" />
-        <SkBlock className="h-40 w-[32%] max-w-[12rem] rounded-2xl" />
-      </div>
-      <SkBlock className="mb-3 h-3 w-40 rounded-md" />
-      <div className="space-y-2 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/40 p-2">
-        {Array.from({ length: 10 }).map((_, idx) => (
-          <SkBlock key={idx} className="h-10 w-full rounded-lg" />
-        ))}
-      </div>
-    </SkMain>
+    <div className="relative flex min-h-full flex-1 flex-col">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg" aria-hidden />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-[min(52vh,28rem)] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)]"
+        aria-hidden
+      />
+
+      <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pb-3 pt-1 sm:max-w-2xl sm:px-6 sm:pb-4 sm:pt-2">
+        <header className="mb-1.5 sm:mb-2">
+          <SkBlock className="h-8 w-32 rounded-lg" />
+        </header>
+
+        <section className="mb-3 space-y-2 px-2 sm:mb-3.5">
+          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
+            <div className="flex items-center gap-1.5">
+              <SkBlock className="h-[1.72rem] flex-1 rounded-full" />
+              <SkBlock className="h-[1.72rem] flex-1 rounded-full" />
+              <SkBlock className="h-[1.72rem] flex-1 rounded-full" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
+            <SkBlock className="h-[1.72rem] rounded-full" />
+            <SkBlock className="h-[1.72rem] rounded-full" />
+          </div>
+
+          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
+            <div className="flex min-w-0 items-center gap-1.5 overflow-hidden pb-1 pr-0.5">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <SkBlock key={i} className="h-[1.72rem] w-20 shrink-0 rounded-full" />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="relative mb-0.5 sm:mb-1">
+          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 px-2 py-2.5 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35)] sm:px-3 sm:py-3">
+            <div className="mb-1.5 flex items-center justify-between gap-2 sm:mb-2">
+              <SkBlock className="h-6.5 w-24 rounded-full" />
+              <SkBlock className="h-6.5 w-24 rounded-full" />
+            </div>
+
+            <SkBlock className="mx-auto mb-2 h-3 w-20 rounded-md sm:mb-2.5" />
+
+            <div className="flex flex-row items-end justify-center gap-2 sm:gap-3.5 md:gap-4.5">
+              <div className="w-[31.5%] max-w-[10.25rem]">
+                <SkBlock className="h-36 w-full rounded-2xl" />
+              </div>
+              <div className="w-[31.5%] max-w-[10.25rem]">
+                <SkBlock className="h-44 w-full rounded-2xl" />
+              </div>
+              <div className="w-[31.5%] max-w-[10.25rem]">
+                <SkBlock className="h-36 w-full rounded-2xl" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-2 sm:mt-2.5">
+          <SkBlock className="mb-1 h-3 w-24 rounded-md" />
+          <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 px-2.5 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)] sm:px-3.5">
+            {Array.from({ length: 8 }).map((_, idx) => (
+              <div key={idx} className="flex items-center gap-2 py-1.5 sm:gap-2.5 sm:py-2">
+                <SkBlock className="h-6 w-7 rounded-md sm:w-8" />
+                <SkBlock className="h-9 w-9 rounded-full sm:h-10 sm:w-10" />
+                <SkBlock className="h-4 flex-1 rounded-md" />
+                <SkBlock className="h-5 w-12 rounded-md" />
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
   );
 }
