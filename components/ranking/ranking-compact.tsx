@@ -38,9 +38,9 @@ export function RankingFilterBar({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, pe);
 
   return (
-    <div className="mb-3 px-2 sm:mb-3.5">
-      <div className="space-y-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2 backdrop-blur-sm shadow-[0_10px_22px_-16px_rgba(15,23,42,0.26)]">
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
+    <div className="mb-3 sm:mb-3.5">
+      <div className="space-y-2.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2.5 backdrop-blur-sm shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)]">
+        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-1.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
           <div className="flex items-center gap-1.5">
             <Link href={href({ tipo: "individual", page: 1 })} className={segmentButton(state.tipo === "individual")}>
             Individual
@@ -54,7 +54,7 @@ export function RankingFilterBar({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
+        <div className="grid grid-cols-2 gap-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
           <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
             <CityGpsLabel fallbackCity={cidadeDisplay} />
           </Link>
@@ -72,7 +72,7 @@ export function RankingFilterBar({
         ) : null}
 
         {todosEsportes.length > 0 ? (
-          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
+          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
             <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 select-none [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
               <div className="flex min-w-max flex-nowrap items-center gap-1.5">
               {todosEsportes.map((opt) => {
@@ -84,7 +84,7 @@ export function RankingFilterBar({
                     href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                     title={isPrincipal ? "Esporte principal do perfil" : undefined}
                     className={cn(
-                      "inline-flex h-[1.72rem] w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
+                      "inline-flex h-[1.86rem] w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
                       active
                         ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
                         : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/45 hover:text-eid-fg",
@@ -189,7 +189,7 @@ export function RankingRankToggle({
 
 function segmentButton(active: boolean) {
   return cn(
-    "inline-flex h-[1.72rem] w-auto flex-1 items-center justify-center rounded-full border px-2 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
+    "inline-flex h-[1.86rem] w-auto flex-1 items-center justify-center rounded-full border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
       ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
       : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/45 hover:text-eid-fg"
@@ -198,7 +198,7 @@ function segmentButton(active: boolean) {
 
 function blockButton(active: boolean) {
   return cn(
-    "inline-flex h-[1.72rem] w-auto min-w-0 items-center justify-center rounded-full border px-2 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
+    "inline-flex h-[1.86rem] w-auto min-w-0 items-center justify-center rounded-full border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
       ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
       : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/45 hover:text-eid-fg"
