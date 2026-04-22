@@ -38,66 +38,68 @@ export function RankingFilterBar({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, pe);
 
   return (
-    <div className="mb-3 space-y-2 px-2 sm:mb-3.5">
-      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
-        <div className="flex items-center gap-1.5">
-          <Link href={href({ tipo: "individual", page: 1 })} className={segmentButton(state.tipo === "individual")}>
-          Individual
-          </Link>
-          <Link href={href({ tipo: "dupla", page: 1 })} className={segmentButton(state.tipo === "dupla")}>
-          Dupla
-          </Link>
-          <Link href={href({ tipo: "time", page: 1 })} className={segmentButton(state.tipo === "time")}>
-          Time
-          </Link>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
-        <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
-          <CityGpsLabel fallbackCity={cidadeDisplay} />
-        </Link>
-        <Link href={href({ local: "brasil", page: 1 })} className={blockButton(state.local === "brasil")}>
-          <span className="truncate">Brasil</span>
-        </Link>
-      </div>
-      {needsCidadeFallback ? (
-        <p className="px-0.5 text-xs leading-snug text-eid-text-secondary">
-          Sem cidade —{" "}
-          <Link href="/conta/perfil" className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">
-            perfil
-          </Link>
-        </p>
-      ) : null}
-
-      {todosEsportes.length > 0 ? (
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
-          <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 select-none [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max flex-nowrap items-center gap-1.5">
-            {todosEsportes.map((opt) => {
-              const active = selectedEsporteId === opt.id;
-              const isPrincipal = principalEsporteId != null && opt.id === principalEsporteId;
-              return (
-                <Link
-                  key={opt.id}
-                  href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
-                  title={isPrincipal ? "Esporte principal do perfil" : undefined}
-                  className={cn(
-                    "inline-flex h-[1.72rem] w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
-                    active
-                      ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
-                      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/45 hover:text-eid-fg",
-                    isPrincipal && !active && "ring-1 ring-eid-primary-500/25"
-                  )}
-                >
-                  {opt.nome}
-                </Link>
-              );
-            })}
+    <div className="mb-3 px-2 sm:mb-3.5">
+      <div className="space-y-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2 backdrop-blur-sm shadow-[0_10px_22px_-16px_rgba(15,23,42,0.26)]">
+        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
+          <div className="flex items-center gap-1.5">
+            <Link href={href({ tipo: "individual", page: 1 })} className={segmentButton(state.tipo === "individual")}>
+            Individual
+            </Link>
+            <Link href={href({ tipo: "dupla", page: 1 })} className={segmentButton(state.tipo === "dupla")}>
+            Dupla
+            </Link>
+            <Link href={href({ tipo: "time", page: 1 })} className={segmentButton(state.tipo === "time")}>
+            Time
+            </Link>
           </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
+          <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
+            <CityGpsLabel fallbackCity={cidadeDisplay} />
+          </Link>
+          <Link href={href({ local: "brasil", page: 1 })} className={blockButton(state.local === "brasil")}>
+            <span className="truncate">Brasil</span>
+          </Link>
         </div>
-      ) : null}
+        {needsCidadeFallback ? (
+          <p className="px-0.5 text-xs leading-snug text-eid-text-secondary">
+            Sem cidade —{" "}
+            <Link href="/conta/perfil" className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">
+              perfil
+            </Link>
+          </p>
+        ) : null}
+
+        {todosEsportes.length > 0 ? (
+          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
+            <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 select-none [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
+              <div className="flex min-w-max flex-nowrap items-center gap-1.5">
+              {todosEsportes.map((opt) => {
+                const active = selectedEsporteId === opt.id;
+                const isPrincipal = principalEsporteId != null && opt.id === principalEsporteId;
+                return (
+                  <Link
+                    key={opt.id}
+                    href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
+                    title={isPrincipal ? "Esporte principal do perfil" : undefined}
+                    className={cn(
+                      "inline-flex h-[1.72rem] w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
+                      active
+                        ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
+                        : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/45 hover:text-eid-fg",
+                      isPrincipal && !active && "ring-1 ring-eid-primary-500/25"
+                    )}
+                  >
+                    {opt.nome}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -244,7 +246,7 @@ export function RankingPodium({
 
   return (
     <section className="relative mb-0.5 sm:mb-1">
-      <div className="eid-podium-card rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_28%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2 py-2 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_30px_-12px_rgba(37,99,235,0.55)] sm:px-3 sm:py-2.5">
+      <div className="eid-podium-card rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_28%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2 py-3.5 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_30px_-12px_rgba(37,99,235,0.55)] sm:px-3 sm:py-4">
         {rankToggle || periodToggle ? (
           <div className="mb-0 flex items-center justify-between gap-2 sm:mb-0.5">
             <div className="min-w-0">{rankToggle}</div>
@@ -331,17 +333,20 @@ function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean 
 export function RankingRow({
   rank,
   nome,
-  pontos,
+  metricValue,
+  metricKind,
   avatarUrl,
   href,
 }: {
   rank: number;
   nome: string;
-  pontos: number;
+  metricValue: number;
+  metricKind: "pontos" | "eid";
   avatarUrl: string | null;
   href: string;
 }) {
   const initial = (nome.trim().slice(0, 2) || "—").toUpperCase();
+  const valueText = metricKind === "eid" ? metricValue.toFixed(1) : String(metricValue);
   return (
     <div className="flex items-center gap-2 border-b border-[color:var(--eid-border-subtle)] py-1.5 last:border-b-0 sm:gap-2.5 sm:py-2">
       <span className="w-7 shrink-0 text-center text-base font-black tabular-nums text-eid-primary-300 sm:w-8 sm:text-lg">{rank}º</span>
@@ -357,7 +362,7 @@ export function RankingRow({
         )}
       </Link>
       <p className="min-w-0 flex-1 truncate text-sm font-semibold text-eid-fg">{nome}</p>
-      <p className="shrink-0 text-base font-black tabular-nums text-eid-primary-300 sm:text-lg">{pontos}</p>
+      <p className="shrink-0 text-base font-black tabular-nums text-eid-primary-300 sm:text-lg">{valueText}</p>
     </div>
   );
 }
