@@ -43,6 +43,11 @@ type TimeRow = {
   esportes?: SportMini | SportMini[] | null;
 };
 
+type MeuEsporteRow = {
+  esporte_id: number;
+  esportes?: SportMini | SportMini[] | null;
+};
+
 type UnifiedRank = {
   key: string;
   nome: string;
@@ -66,6 +71,14 @@ function normalizeCityHint(raw: string | null | undefined): string {
   if (!s) return "";
   const part = s.split(",")[0]?.trim() ?? s;
   return part.toLowerCase();
+}
+
+/** Primeira parte da localização do perfil para exibição (cidade). */
+function cidadeDisplayFromProfile(raw: string | null | undefined): string | null {
+  const s = String(raw ?? "").trim();
+  if (!s) return null;
+  const part = s.split(",")[0]?.trim() ?? s;
+  return part || null;
 }
 
 function bestViewerRankIndex(rows: UnifiedRank[], viewerId: string, teamIds: Set<number>, mode: RankingSearchState["tipo"]): number | null {
@@ -106,12 +119,34 @@ export default async function RankingPage({ searchParams }: Props) {
   if (!user) redirect("/login?next=/ranking");
   const viewerId = user.id;
 
-  const [{ data: me }, { data: meusEsportes }, { data: criados }, { data: membro }] = await Promise.all([
+  const [{ data: me }, { data: meusEsportesRaw }, { data: criados }, { data: membro }] = await Promise.all([
     supabase.from("profiles").select("localizacao").eq("id", viewerId).maybeSingle(),
-    supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", viewerId).order("esporte_id", { ascending: true }).limit(3),
+    supabase.from("usuario_eid").select("esporte_id, esportes(nome)").eq("usuario_id", viewerId).order("esporte_id", { ascending: true }),
     supabase.from("times").select("id").eq("criador_id", viewerId),
     supabase.from("membros_time").select("time_id").eq("usuario_id", viewerId).eq("status", "ativo"),
   ]);
+
+  const meusEsportes = (meusEsportesRaw ?? []) as MeuEsporteRow[];
+  const userEsporteIds = new Set<number>();
+  const esporteOptions: { id: number; nome: string }[] = [];
+  for (const row of meusEsportes) {
+    if (typeof row.esporte_id === "number" && Number.isFinite(row.esporte_id)) {
+      userEsporteIds.add(row.esporte_id);
+      const nome = String(firstOf(row.esportes)?.nome ?? "").trim() || "Esporte";
+      esporteOptions.push({ id: row.esporte_id, nome });
+    }
+  }
+
+  const esportePrincipalId = meusEsportes[0]?.esporte_id ?? null;
+  const parsedEsporteParam = Number(state.esporte);
+  let selectedEsporteId: number | null = esportePrincipalId;
+  if (Number.isFinite(parsedEsporteParam) && parsedEsporteParam > 0 && userEsporteIds.has(parsedEsporteParam)) {
+    selectedEsporteId = parsedEsporteParam;
+  }
+
+  const cidadeDisplay = cidadeDisplayFromProfile(me?.localizacao ?? null);
+  const needsCidadeFallback = state.local === "cidade" && !cidadeDisplay;
+  const esporteAtualNome = esporteOptions.find((e) => e.id === selectedEsporteId)?.nome ?? null;
 
   const myTeamIds = new Set<number>();
   for (const r of criados ?? []) {
@@ -122,17 +157,16 @@ export default async function RankingPage({ searchParams }: Props) {
     if (Number.isFinite(id)) myTeamIds.add(id);
   }
 
-  const esportePrincipalId = meusEsportes?.[0]?.esporte_id ?? null;
   const cityNeedle = state.local === "cidade" ? normalizeCityHint(me?.localizacao ?? null) : "";
 
   let rankingAll: UnifiedRank[] = [];
 
-  if (esportePrincipalId != null) {
+  if (selectedEsporteId != null) {
     if (state.tipo === "individual") {
       let q = supabase
         .from("usuario_eid")
         .select("usuario_id, esporte_id, nota_eid, pontos_ranking, profiles!inner(nome, avatar_url, localizacao), esportes!inner(nome)")
-        .eq("esporte_id", esportePrincipalId);
+        .eq("esporte_id", selectedEsporteId);
       q = state.rank === "match" ? q.order("pontos_ranking", { ascending: false }) : q.order("nota_eid", { ascending: false });
       const { data: raw } = await q;
       const rows = ((raw ?? []) as UsuarioEidRow[]).filter((r) => {
@@ -160,7 +194,7 @@ export default async function RankingPage({ searchParams }: Props) {
         .from("times")
         .select("id, nome, escudo, localizacao, pontos_ranking, eid_time, esporte_id, tipo, esportes(nome)")
         .eq("tipo", tipoTime)
-        .eq("esporte_id", esportePrincipalId);
+        .eq("esporte_id", selectedEsporteId);
       q = state.rank === "match" ? q.order("pontos_ranking", { ascending: false }) : q.order("eid_time", { ascending: false });
       const { data: raw } = await q;
       const rows = ((raw ?? []) as TimeRow[]).filter((r) => {
@@ -203,8 +237,9 @@ export default async function RankingPage({ searchParams }: Props) {
         className="pointer-events-none absolute inset-x-0 top-0 h-[min(52vh,28rem)] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)]"
         aria-hidden
       />
-      <div className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-5 sm:max-w-2xl sm:px-6 sm:py-7">
-        <header className="mb-5 flex items-center justify-between gap-3">
+      {/* Safe area: reserva espaço extra além do shell (header fixo + nav inferior + footer) */}
+      <div className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] pt-3 sm:max-w-2xl sm:px-6 sm:pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pt-4 md:pb-32 md:pt-5">
+        <header className="mb-4 flex items-center justify-between gap-3">
           <h1 className="text-xl font-bold tracking-tight text-eid-fg md:text-2xl">Ranking</h1>
           <Link
             href="/dashboard"
@@ -214,7 +249,14 @@ export default async function RankingPage({ searchParams }: Props) {
           </Link>
         </header>
 
-        <RankingFilterBar state={state} />
+        <RankingFilterBar
+          state={state}
+          principalEsporteId={esportePrincipalId}
+          cidadeDisplay={cidadeDisplay}
+          needsCidadeFallback={needsCidadeFallback}
+          esporteAtualNome={esporteAtualNome}
+          esporteOptions={esporteOptions}
+        />
 
         {noSportHint ? (
           <p className="rounded-[var(--eid-radius-lg)] border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-5 text-center text-sm leading-relaxed text-eid-text-secondary sm:rounded-2xl">
@@ -258,7 +300,7 @@ export default async function RankingPage({ searchParams }: Props) {
             {hasMore ? (
               <div className="mt-4 flex justify-center">
                 <Link
-                  href={rankingHref({ page: state.page + 1 }, state)}
+                  href={rankingHref({ page: state.page + 1 }, state, esportePrincipalId)}
                   className="inline-flex min-h-10 items-center justify-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/[0.08] px-7 text-sm font-bold text-eid-fg transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/12"
                 >
                   Ver mais
