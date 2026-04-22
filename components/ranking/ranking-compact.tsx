@@ -38,9 +38,9 @@ export function RankingFilterBar({
   const rankToggleHref = href({ rank: rankIsMatch ? "eid" : "match", page: 1 });
 
   return (
-    <div className="mb-3 space-y-3 px-1 sm:mb-3.5 sm:space-y-3.5 sm:px-2">
-      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)]/80 bg-eid-surface/55 p-1">
-        <div className="flex items-center gap-1">
+    <div className="mb-3 space-y-2 px-4 sm:mb-3.5">
+      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)]/70 bg-eid-surface/45 p-1">
+        <div className="flex items-center gap-2">
           <Link href={href({ tipo: "individual", page: 1 })} className={segmentButton(state.tipo === "individual")}>
           Individual
           </Link>
@@ -53,7 +53,7 @@ export function RankingFilterBar({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 rounded-2xl border border-[color:var(--eid-border-subtle)]/65 bg-eid-surface/35 p-1">
         <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
           <span className="truncate">Cidade</span>
         </Link>
@@ -74,7 +74,7 @@ export function RankingFilterBar({
       ) : null}
 
       {todosEsportes.length > 0 ? (
-        <div className="border-t border-[color:var(--eid-border-subtle)]/55 pt-2">
+        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)]/60 bg-eid-surface/30 p-1">
           <div className="flex min-w-0 items-center gap-2 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
           <div className="flex min-w-max flex-nowrap items-center gap-2">
             {todosEsportes.map((opt) => {
@@ -86,10 +86,10 @@ export function RankingFilterBar({
                   href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                   title={isPrincipal ? "Esporte principal do perfil" : undefined}
                   className={cn(
-                    "inline-flex h-9 w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-xl border px-3.5 text-sm font-medium leading-none transition",
+                    "inline-flex h-8 w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-xl border px-3 text-[13px] font-medium leading-none transition-all duration-200",
                     active
-                      ? "border-eid-primary-500/85 bg-eid-primary-500 text-white"
-                      : "border-[color:var(--eid-border-subtle)]/85 bg-eid-surface/45 text-eid-text-secondary hover:border-eid-primary-500/30 hover:text-eid-fg",
+                      ? "scale-[0.98] border-eid-primary-500/75 bg-eid-primary-500/90 text-white shadow-[0_6px_12px_-9px_rgba(37,99,235,0.65)]"
+                      : "border-[color:var(--eid-border-subtle)]/80 bg-eid-surface/45 text-eid-text-secondary hover:border-eid-primary-500/30 hover:bg-eid-surface/60 hover:text-eid-fg",
                     isPrincipal && !active && "ring-1 ring-eid-primary-500/25"
                   )}
                 >
@@ -107,19 +107,19 @@ export function RankingFilterBar({
 
 function segmentButton(active: boolean) {
   return cn(
-    "inline-flex h-9 w-auto flex-1 items-center justify-center rounded-xl px-3 text-sm font-medium leading-none transition",
+    "inline-flex h-8 w-auto flex-1 items-center justify-center rounded-xl border px-2.5 text-[13px] font-medium leading-none transition-all duration-200",
     active
-      ? "bg-eid-primary-500 text-white shadow-[0_6px_14px_-10px_rgba(37,99,235,0.6)]"
-      : "text-eid-text-secondary hover:bg-eid-surface/70 hover:text-eid-fg"
+      ? "scale-[0.98] border-eid-primary-500/75 bg-eid-primary-500/90 text-white shadow-[0_6px_12px_-9px_rgba(37,99,235,0.65)]"
+      : "border-[color:var(--eid-border-subtle)]/80 bg-transparent text-eid-text-secondary hover:border-eid-primary-500/30 hover:bg-eid-surface/60 hover:text-eid-fg"
   );
 }
 
 function blockButton(active: boolean) {
   return cn(
-    "inline-flex h-10 w-auto min-w-0 items-center justify-center rounded-xl border px-3 text-sm font-medium leading-none transition",
+    "inline-flex h-8 w-auto min-w-0 items-center justify-center rounded-xl border px-2.5 text-[13px] font-medium leading-none transition-all duration-200",
     active
-      ? "border-eid-primary-500/80 bg-eid-primary-500/90 text-white"
-      : "border-[color:var(--eid-border-subtle)]/85 bg-eid-surface/45 text-eid-text-secondary hover:border-eid-primary-500/30 hover:text-eid-fg"
+      ? "scale-[0.98] border-eid-primary-500/75 bg-eid-primary-500/90 text-white shadow-[0_6px_12px_-9px_rgba(37,99,235,0.65)]"
+      : "border-[color:var(--eid-border-subtle)]/80 bg-eid-surface/45 text-eid-text-secondary hover:border-eid-primary-500/30 hover:bg-eid-surface/60 hover:text-eid-fg"
   );
 }
 
