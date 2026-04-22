@@ -105,6 +105,47 @@ export function RankingFilterBar({
   );
 }
 
+export function RankingPeriodToggle({
+  state,
+  principalEsporteId,
+}: {
+  state: RankingSearchState;
+  principalEsporteId: number | null;
+}) {
+  const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
+  return (
+    <div className="mb-1.5 flex justify-end sm:mb-2">
+      <div className="relative inline-flex h-7 items-center rounded-full border border-[color:var(--eid-border-subtle)]/70 bg-eid-surface/45 p-0.5 text-xs">
+        <span
+          className={cn(
+            "pointer-events-none absolute top-0.5 h-6 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/90 shadow-[0_4px_10px_-8px_rgba(37,99,235,0.65)] transition-all duration-200",
+            state.periodo === "mes" ? "translate-x-[calc(100%+1px)]" : "translate-x-0"
+          )}
+          aria-hidden
+        />
+        <Link
+          href={href({ periodo: "ano", page: 1 })}
+          className={cn(
+            "relative z-[1] inline-flex h-6 min-w-[3.1rem] items-center justify-center rounded-full px-2 text-xs font-semibold transition-colors duration-200",
+            state.periodo === "ano" ? "text-white" : "text-eid-text-secondary hover:text-eid-fg"
+          )}
+        >
+          Ano
+        </Link>
+        <Link
+          href={href({ periodo: "mes", page: 1 })}
+          className={cn(
+            "relative z-[1] inline-flex h-6 min-w-[3.1rem] items-center justify-center rounded-full px-2 text-xs font-semibold transition-colors duration-200",
+            state.periodo === "mes" ? "text-white" : "text-eid-text-secondary hover:text-eid-fg"
+          )}
+        >
+          Mês
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function segmentButton(active: boolean) {
   return cn(
     "inline-flex h-8 w-auto flex-1 items-center justify-center rounded-xl border px-2.5 text-[13px] font-medium leading-none transition-all duration-200",

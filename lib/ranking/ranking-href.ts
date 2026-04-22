@@ -4,6 +4,7 @@ export type RankingSearchState = {
   tipo: "individual" | "dupla" | "time";
   rank: "match" | "eid";
   local: "brasil" | "cidade";
+  periodo: "ano" | "mes";
   /** Vazio = esporte principal do perfil (omitido na URL). */
   esporte: string;
   page: number;
@@ -21,9 +22,11 @@ export function parseRankingSearch(sp: Record<string, string | string[] | undefi
   const rank: RankingSearchState["rank"] = rankRaw === "eid" ? "eid" : "match";
   const localRaw = (g("local") ?? "cidade").toLowerCase();
   const local: RankingSearchState["local"] = localRaw === "brasil" ? "brasil" : "cidade";
+  const periodoRaw = (g("periodo") ?? "ano").toLowerCase();
+  const periodo: RankingSearchState["periodo"] = periodoRaw === "mes" ? "mes" : "ano";
   const esporte = String(g("esporte") ?? "").trim();
   const page = Math.max(1, Number(g("page") ?? 1) || 1);
-  return { tipo, rank, local, esporte, page };
+  return { tipo, rank, local, periodo, esporte, page };
 }
 
 /**
@@ -38,6 +41,7 @@ export function rankingHref(
     tipo: next.tipo ?? base.tipo,
     rank: next.rank ?? base.rank,
     local: next.local ?? base.local,
+    periodo: next.periodo ?? base.periodo,
     esporte: next.esporte !== undefined ? next.esporte : base.esporte,
     page: next.page !== undefined ? next.page : base.page,
   };
@@ -45,6 +49,7 @@ export function rankingHref(
   if (merged.tipo !== "individual") u.set("tipo", merged.tipo);
   if (merged.rank !== "match") u.set("rank", merged.rank);
   if (merged.local !== "cidade") u.set("local", merged.local);
+  if (merged.periodo !== "ano") u.set("periodo", merged.periodo);
   const pe = principalEsporteId != null && principalEsporteId > 0 ? String(principalEsporteId) : "";
   if (merged.esporte && merged.esporte !== pe) u.set("esporte", merged.esporte);
   if (merged.page > 1) u.set("page", String(merged.page));

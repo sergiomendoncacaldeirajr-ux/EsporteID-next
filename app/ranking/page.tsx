@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   RankingFilterBar,
+  RankingPeriodToggle,
   RankingPodium,
   RankingRow,
   ViewerRankCard,
@@ -57,6 +58,12 @@ type UnifiedRank = {
   usuarioId?: string;
   timeId?: number;
   href: string;
+};
+type PartidaPeriodoRow = {
+  jogador1_id?: string | null;
+  jogador2_id?: string | null;
+  time1_id?: number | null;
+  time2_id?: number | null;
 };
 
 const LIST_PAGE_SIZE = 10;
@@ -217,6 +224,34 @@ export default async function RankingPage({ searchParams }: Props) {
     }
   }
 
+  if (state.periodo === "mes" && selectedEsporteId != null) {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+    const { data: partidasPeriodo } = await supabase
+      .from("partidas")
+      .select("jogador1_id, jogador2_id, time1_id, time2_id")
+      .eq("esporte_id", selectedEsporteId)
+      .in("status", ["encerrada", "finalizada", "concluida", "concluída", "validada"])
+      .gte("data_registro", monthStart)
+      .lt("data_registro", nextMonthStart);
+
+    const rows = (partidasPeriodo ?? []) as PartidaPeriodoRow[];
+    const activeUsers = new Set<string>();
+    const activeTeams = new Set<number>();
+    rows.forEach((p) => {
+      if (p.jogador1_id) activeUsers.add(p.jogador1_id);
+      if (p.jogador2_id) activeUsers.add(p.jogador2_id);
+      if (typeof p.time1_id === "number") activeTeams.add(p.time1_id);
+      if (typeof p.time2_id === "number") activeTeams.add(p.time2_id);
+    });
+
+    rankingAll = rankingAll.filter((r) => {
+      if (state.tipo === "individual") return !!r.usuarioId && activeUsers.has(r.usuarioId);
+      return typeof r.timeId === "number" && activeTeams.has(r.timeId);
+    });
+  }
+
   const podiumRows = rankingAll.slice(0, 3);
   const afterPodium = rankingAll.slice(3);
   const start = (state.page - 1) * LIST_PAGE_SIZE;
@@ -264,6 +299,7 @@ export default async function RankingPage({ searchParams }: Props) {
           </p>
         ) : (
           <>
+            <RankingPeriodToggle state={state} principalEsporteId={esportePrincipalId} />
             {state.page === 1 && podiumRows.length > 0 ? (
               <RankingPodium second={podiumSecond} first={podiumFirst} third={podiumThird} />
             ) : null}
