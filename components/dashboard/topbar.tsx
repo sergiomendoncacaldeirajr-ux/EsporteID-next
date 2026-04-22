@@ -17,15 +17,6 @@ import {
 import { listarPapeis } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 
-function IconUserCircle({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="8.2" r="3.5" fill="currentColor" fillOpacity="0.92" />
-      <path d="M5 19.2c.9-3.3 3.7-5.3 7-5.3s6.1 2 7 5.3H5z" fill="currentColor" fillOpacity="0.92" />
-    </svg>
-  );
-}
-
 type Props = {
   persistent?: boolean;
   initialMeId?: string | null;
@@ -179,16 +170,6 @@ export function DashboardTopbar({
             <NotificationBell userId={meId} />
             <EidThemeToggle variant="toolbar" />
             <SignOutButton variant="icon" />
-            {meId ? (
-              <Link
-                href={`/perfil/${meId}`}
-                className="eid-btn-ghost hidden h-8 shrink-0 gap-1.5 px-2.5 text-[11px] font-medium md:inline-flex"
-                aria-label="Meu perfil"
-              >
-                <IconUserCircle className="h-4 w-4 text-eid-text-secondary" />
-                Perfil
-              </Link>
-            ) : null}
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { setViewerHistoricoPublicoAction } from "@/app/perfil/actions";
 import { ProfileCoverControl } from "@/components/perfil/profile-cover-control";
-import { ProfileHistoryVisibilityToggle } from "@/components/perfil/profile-history-visibility-toggle";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
@@ -151,7 +151,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     return HISTORICO_STATUS_CONCLUIDO.has(st);
   });
 
-  const resumoHistorico = partidasHistorico.slice(0, 6).map((p) => {
+  const resumoHistorico = partidasHistorico.slice(0, 4).map((p) => {
     const isP1 = p.jogador1_id === id;
     const s1 = Number(p.placar_1 ?? 0);
     const s2 = Number(p.placar_2 ?? 0);
@@ -197,7 +197,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   return (
     <>
       <DashboardTopbar />
-      <main className="mx-auto w-full max-w-lg px-2.5 pb-6 pt-2 sm:max-w-2xl sm:px-5 sm:pb-8 sm:pt-3">
+      <main className="mx-auto w-full max-w-lg px-2.5 pb-[calc(var(--eid-shell-footer-offset)+1rem)] pt-2 sm:max-w-2xl sm:px-5 sm:pb-8 sm:pt-3">
         {/* ── Hero Card ─────────────────────────────────────────────── */}
         {/* ── Hero Card ──
              overflow-hidden no container clipa tudo dentro dos cantos arredondados.
@@ -714,54 +714,44 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           ) : null}
 
           {/* ── Histórico ────────────────────────────────────────────── */}
-          <div className="mt-4">
-            <div className="-mb-5 mt-0 flex items-center justify-between gap-2">
-              {isSelf ? (
-                <div className="inline-flex items-center gap-1">
-                  <span className="text-[10px] text-eid-text-secondary">Histórico público</span>
-                  <ProfileHistoryVisibilityToggle
-                    userId={id}
-                    initialOn={mostrarHistoricoPublico}
-                    canToggle={isSelf}
-                  />
-                </div>
-              ) : (
-                <span />
-              )}
-              {podeVerHistorico ? (
-                <Link
-                  href={`/perfil/${id}/historico`}
-                  className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
-                >
-                  <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
-                    <path d="M8 1.5a.75.75 0 0 1 .75.75V8h4.5a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 7.25 8V2.25A.75.75 0 0 1 8 1.5Zm0 13a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Zm-8-6.5a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z" />
-                  </svg>
-                  VER HISTÓRICO COMPLETO
-                </Link>
-              ) : null}
-            </div>
+          <div className="mt-0">
+            {isSelf ? (
+              <div className="-mb-5 mt-0 flex justify-end">
+                <form action={setViewerHistoricoPublicoAction.bind(null, !mostrarHistoricoPublico)}>
+                  <button
+                    type="submit"
+                    className="relative top-2 inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
+                  >
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
+                      <path d="M10.5 1a.75.75 0 0 1 0 1.5H5.25A2.75 2.75 0 0 0 2.5 5.25v5.5A2.75 2.75 0 0 0 5.25 13.5h5.5a2.75 2.75 0 0 0 2.75-2.75V5.5a.75.75 0 0 1 1.5 0v5.25A4.25 4.25 0 0 1 10.75 15h-5.5A4.25 4.25 0 0 1 1 10.75v-5.5A4.25 4.25 0 0 1 5.25 1h5.25Zm2.28.22a.75.75 0 0 1 1.06 0l1.94 1.94a.75.75 0 0 1 0 1.06l-5.47 5.47a.75.75 0 0 1-.33.2l-2.4.66a.75.75 0 0 1-.92-.92l.66-2.4a.75.75 0 0 1 .2-.33l5.47-5.47Z" />
+                    </svg>
+                    {mostrarHistoricoPublico ? "OCULTAR HISTÓRICO" : "MOSTRAR HISTÓRICO"}
+                  </button>
+                </form>
+              </div>
+            ) : null}
             {podeVerHistorico ? (
               <ProfileSection title="Histórico">
                 {partidasHistorico.length > 0 ? (
                   <>
                     <div className="mt-2 grid grid-cols-5 gap-1.5">
-                      <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
+                      <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1 text-center">
                         <p className="text-[11px] font-black text-emerald-300">{historicoTotais.vitorias}</p>
                         <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">V</p>
                       </div>
-                      <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
+                      <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1 text-center">
                         <p className="text-[11px] font-black text-red-300">{historicoTotais.derrotas}</p>
                         <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">D</p>
                       </div>
-                      <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
+                      <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1 text-center">
                         <p className="text-[11px] font-black text-eid-primary-300">{historicoTotais.empates}</p>
                         <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">E</p>
                       </div>
-                      <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
+                      <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1 text-center">
                         <p className="text-[11px] font-black text-eid-fg">{historicoTotais.rank}</p>
                         <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">Rank</p>
                       </div>
-                      <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
+                      <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1 text-center">
                         <p className="text-[11px] font-black text-eid-fg">{historicoTotais.torneio}</p>
                         <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">Torneio</p>
                       </div>
@@ -770,7 +760,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       {resumoHistorico.map((item) => (
                         <li
                           key={item.id}
-                          className={`eid-list-item flex items-center justify-between rounded-lg bg-eid-surface/45 px-2 py-1.5 text-[10px] ${
+                            className={`flex items-center justify-between rounded-lg border bg-eid-surface/45 px-2 py-1.5 text-[10px] ${
                             item.tone === "positive"
                               ? "border-emerald-400/30"
                               : item.tone === "negative"
@@ -787,10 +777,21 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                         </li>
                       ))}
                     </ul>
+                    <div className="mt-2 flex justify-end">
+                      <Link
+                        href={`/perfil/${id}/historico`}
+                        className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
+                      >
+                        <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
+                          <path d="M8 1.5a.75.75 0 0 1 .75.75V8h4.5a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 7.25 8V2.25A.75.75 0 0 1 8 1.5Zm0 13a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Zm-8-6.5a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z" />
+                        </svg>
+                        VER HISTÓRICO COMPLETO
+                      </Link>
+                    </div>
                   </>
                 ) : (
                   <Link
-                    href={isSelf ? "/match" : `/desafio?id=${encodeURIComponent(id)}&tipo=individual`}
+                    href={`/perfil/${id}/historico`}
                     className="eid-list-item mt-2 flex min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
                   >
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-surface/65 text-eid-primary-300">
@@ -799,7 +800,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       </svg>
                     </span>
                     <p className="text-[11px] font-bold text-eid-fg">Nenhum histórico registrado ainda</p>
-                    <p className="text-[9px] text-eid-text-secondary">Quando houver partidas concluídas de rank ou torneio, elas aparecem aqui.</p>
+                    <p className="text-[9px] text-eid-text-secondary">Toque para ver o histórico completo.</p>
                   </Link>
                 )}
               </ProfileSection>
