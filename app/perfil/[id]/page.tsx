@@ -354,18 +354,20 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                   Peso <span className="font-semibold text-eid-fg">{perfil.peso_kg} kg</span>
                 </p>
               ) : null}
-              {perfil.lado ? (
-                <p className="text-[10px] text-eid-text-secondary">
-                  Lado <span className="font-semibold text-eid-fg">{perfil.lado}</span>
-                </p>
-              ) : null}
-              <div className="ml-auto inline-flex items-center">
-                <span className="mr-1 text-[10px] text-eid-text-secondary">Amistoso</span>
-                <ProfileFriendlyStatusToggle
-                  userId={id}
-                  initialOn={perfil.disponivel_amistoso === true}
-                  canToggle={isSelf}
-                />
+              <div className="ml-auto inline-flex shrink-0 items-center gap-3 whitespace-nowrap">
+                {perfil.lado ? (
+                  <p className="text-[10px] text-eid-text-secondary">
+                    Lado <span className="font-semibold text-eid-fg">{perfil.lado}</span>
+                  </p>
+                ) : null}
+                <div className="inline-flex items-center whitespace-nowrap">
+                  <span className="mr-1 text-[10px] text-eid-text-secondary">Amistoso</span>
+                  <ProfileFriendlyStatusToggle
+                    userId={id}
+                    initialOn={perfil.disponivel_amistoso === true}
+                    canToggle={isSelf}
+                  />
+                </div>
               </div>
               {perfil.estilo_jogo ? (
                 <p className="text-[10px] text-eid-text-secondary">

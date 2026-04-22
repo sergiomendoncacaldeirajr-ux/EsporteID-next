@@ -53,22 +53,21 @@ export async function removeProfileCoverAction(): Promise<void> {
   revalidatePath("/conta/perfil");
 }
 
-export async function setViewerHistoricoPublicoAction(mostrar: boolean): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function setViewerHistoricoPublicoAction(mostrar: boolean, _formData?: FormData): Promise<void> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "Sessão expirada." };
+  if (!user) return;
 
   const { error } = await supabase
     .from("profiles")
     .update({ mostrar_historico_publico: mostrar, atualizado_em: new Date().toISOString() })
     .eq("id", user.id);
-  if (error) return { ok: false, error: error.message };
+  if (error) return;
 
   revalidatePath(`/perfil/${user.id}`);
   revalidatePath(`/perfil/${user.id}/historico`);
   revalidatePath("/conta/perfil");
-  return { ok: true };
 }
 
