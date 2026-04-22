@@ -154,7 +154,7 @@ export function RankingFilterBar({
                     href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                     title={isPrincipal ? "Esporte principal do perfil" : undefined}
                     className={cn(
-                      "inline-flex h-[1.62rem] w-auto shrink-0 touch-manipulation items-center justify-center whitespace-nowrap rounded-md px-2 text-[10px] font-semibold uppercase leading-none tracking-[0.04em] transition-all duration-200",
+                      "inline-flex h-[1.38rem] w-auto shrink-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200",
                       active
                         ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
                         : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55 hover:text-eid-fg",
