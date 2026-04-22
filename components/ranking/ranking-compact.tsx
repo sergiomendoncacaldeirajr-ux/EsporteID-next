@@ -246,12 +246,12 @@ export function RankingPodium({
     <section className="relative mb-0.5 sm:mb-1">
       <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_20%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2 py-2 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_24px_-14px_rgba(37,99,235,0.35)] sm:px-3 sm:py-2.5">
         {rankToggle || periodToggle ? (
-          <div className="mb-1 flex items-center justify-between gap-2 sm:mb-1.5">
+          <div className="mb-0.5 flex items-center justify-between gap-2 sm:mb-1">
             <div className="min-w-0">{rankToggle}</div>
             <div className="min-w-0">{periodToggle}</div>
           </div>
         ) : null}
-        <h2 className="mb-1.5 text-center text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary sm:mb-2 sm:text-[10px]">
+        <h2 className="mb-1 text-center text-[10px] font-black uppercase tracking-[0.18em] text-transparent bg-gradient-to-b from-white via-eid-primary-300 to-eid-primary-500 bg-clip-text drop-shadow-[0_1px_3px_rgba(37,99,235,0.45)] sm:mb-1.5 sm:text-[11px]">
           Pódio
         </h2>
         {hasAnyPodium ? (
