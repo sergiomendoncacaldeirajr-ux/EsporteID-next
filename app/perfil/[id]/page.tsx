@@ -233,6 +233,8 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               <ProfileEditDrawerTrigger
                 href={`/editar/perfil?from=${encodeURIComponent(`/perfil/${id}`)}`}
                 title="Editar perfil"
+                fullscreen
+                topMode="backOnly"
                 className="absolute -bottom-[20px] right-2 z-[4] inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
               >
                 <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
