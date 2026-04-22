@@ -1,16 +1,11 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import type {
-  ProfessorModoEsportivo,
-  ProfessorObjetivoPlataforma,
-  ProfessorTipoAtuacao,
-} from "@/lib/professor/constants";
 import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { listarPapeis, precisaEsportesPratica } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-fullscreen-shell";
-import { ContaEsportesForm } from "@/app/conta/esportes-eid/conta-esportes-form";
+import { ProfilePerformanceEditor } from "@/components/perfil/edit/profile-performance-editor";
 
 type Props = {
   searchParams?: Promise<{ from?: string }>;
@@ -89,44 +84,6 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
     ])
   ) as Record<number, "menos_1" | "1_3" | "mais_3">;
 
-  const { data: professorRows } = await supabase
-    .from("professor_esportes")
-    .select("esporte_id, modo_atuacao, objetivo_plataforma, tipo_atuacao, tempo_experiencia")
-    .eq("professor_id", user.id)
-    .eq("ativo", true);
-
-  const selectedSportModes: Record<number, ProfessorModoEsportivo> = {};
-  const selectedProfessorObjetivos: Record<number, ProfessorObjetivoPlataforma> = {};
-  const selectedProfessorTipos: Record<number, ProfessorTipoAtuacao[]> = {};
-  const selectedSet = new Set<number>(selectedEsportes);
-
-  for (const row of professorRows ?? []) {
-    const esporteId = Number(row.esporte_id);
-    if (!Number.isFinite(esporteId)) continue;
-    selectedSet.add(esporteId);
-    selectedSportModes[esporteId] = row.modo_atuacao === "professor_e_atleta" ? "ambos" : "professor";
-    selectedProfessorObjetivos[esporteId] =
-      row.objetivo_plataforma === "gerir_alunos" || row.objetivo_plataforma === "ambos"
-        ? row.objetivo_plataforma
-        : "somente_exposicao";
-    selectedProfessorTipos[esporteId] = Array.isArray(row.tipo_atuacao)
-      ? row.tipo_atuacao
-          .map((item) => String(item))
-          .filter((item): item is ProfessorTipoAtuacao => ["aulas", "treinamento", "consultoria"].includes(item))
-      : ["aulas"];
-    if (!selectedExperiencias[esporteId]) {
-      selectedExperiencias[esporteId] =
-        row.tempo_experiencia === "Menos de 1 ano"
-          ? "menos_1"
-          : row.tempo_experiencia === "1 a 3 anos"
-            ? "1_3"
-            : "mais_3";
-    }
-  }
-  for (const esporteId of selectedEsportes) {
-    if (!selectedSportModes[esporteId]) selectedSportModes[esporteId] = "atleta";
-  }
-
   return (
     <ProfileEditFullscreenShell
       backHref={from}
@@ -158,23 +115,27 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
               Editar perfil
             </Link>
           </p>
-          <ContaEsportesForm
-            esportes={(esportes ?? []).map((e) => ({
+          <ProfilePerformanceEditor
+            sports={(esportes ?? []).map((e) => ({
               id: e.id,
               nome: e.nome,
               permiteIndividual: Boolean(e.permite_individual),
               permiteDupla: Boolean(e.permite_dupla),
               permiteTime: Boolean(e.permite_time),
             }))}
-            selectedEsportes={[...selectedSet]}
-            selectedEsportesInteresse={selectedEsportesInteresse}
-            selectedEsportesModalidades={selectedEsportesModalidades}
-            selectedSportModes={selectedSportModes}
-            selectedProfessorObjetivos={selectedProfessorObjetivos}
-            selectedProfessorTipos={selectedProfessorTipos}
-            selectedExperiencias={selectedExperiencias}
-            hasProfessor={papeis.includes("professor")}
-            hasAtleta={papeis.includes("atleta")}
+            initialItems={selectedEsportes.map((esporteId) => ({
+              esporteId,
+              interesse: selectedEsportesInteresse[esporteId] ?? "ranking_e_amistoso",
+              modalidades:
+                (selectedEsportesModalidades[esporteId] as Array<"individual" | "dupla" | "time"> | undefined) ??
+                ["individual"],
+              tempo:
+                selectedExperiencias[esporteId] === "menos_1"
+                  ? "Menos de 1 ano"
+                  : selectedExperiencias[esporteId] === "mais_3"
+                    ? "Mais de 3 anos"
+                    : "1 a 3 anos",
+            }))}
           />
         </>
       )}

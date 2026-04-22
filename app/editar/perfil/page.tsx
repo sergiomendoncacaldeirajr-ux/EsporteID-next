@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ContaPerfilForm } from "@/app/conta/perfil/conta-perfil-form";
 import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-fullscreen-shell";
+import { ProfileMainEditor } from "@/components/perfil/edit/profile-main-editor";
+import { ProfileMediaEditor } from "@/components/perfil/edit/profile-media-editor";
 import { listarPapeis } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,7 +21,7 @@ export default async function EditarPerfilFullscreenPage({ searchParams }: Props
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, termos_aceitos_em"
+      "nome, username, localizacao, avatar_url, foto_capa, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, termos_aceitos_em"
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -37,7 +38,7 @@ export default async function EditarPerfilFullscreenPage({ searchParams }: Props
     .select("esporte_id", { count: "exact", head: true })
     .eq("usuario_id", user.id);
   const hasAthleteSports = (athleteSportsCount ?? 0) > 0;
-  const hasProfessor = papeis.includes("professor");
+  void papeis;
   const from = typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : `/perfil/${user.id}`;
 
   return (
@@ -55,23 +56,21 @@ export default async function EditarPerfilFullscreenPage({ searchParams }: Props
           .
         </p>
       ) : null}
-      <ContaPerfilForm
-        userId={user.id}
-        hasAtletaProfessor={hasAthleteSports}
-        hasProfessor={hasProfessor}
-        profileInitial={{
-          nome: profile.nome ?? "",
-          username: profile.username ?? "",
-          localizacao: profile.localizacao ?? "",
-          alturaCm: profile.altura_cm ?? null,
-          pesoKg: profile.peso_kg ?? null,
-          lado: profile.lado ?? null,
-          avatarUrl: profile.avatar_url ?? null,
-          bio: profile.bio ?? "",
-          estiloJogo: profile.estilo_jogo ?? "",
-          disponibilidadeSemanaJson: JSON.stringify(profile.disponibilidade_semana_json ?? {}),
-        }}
-      />
+      <div className="space-y-3">
+        <ProfileMediaEditor avatarUrl={profile.avatar_url ?? null} coverUrl={profile.foto_capa ?? null} />
+        <ProfileMainEditor
+          initial={{
+            nome: profile.nome ?? "",
+            username: profile.username ?? "",
+            localizacao: profile.localizacao ?? "",
+            alturaCm: profile.altura_cm ?? null,
+            pesoKg: profile.peso_kg ?? null,
+            lado: profile.lado ?? null,
+            bio: profile.bio ?? "",
+            estiloJogo: profile.estilo_jogo ?? "",
+          }}
+        />
+      </div>
     </ProfileEditFullscreenShell>
   );
 }
