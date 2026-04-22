@@ -165,7 +165,7 @@ export function RankingRankToggle({
         <Link
           href={href({ rank: "match", page: 1 })}
           className={cn(
-            "relative z-[1] inline-flex h-5.5 min-w-[3.35rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
+            "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
             rankIsMatch ? "text-white" : "text-[#9CA3AF] hover:text-eid-fg"
           )}
         >
