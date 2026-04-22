@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
@@ -93,7 +92,8 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
       showBack={!isEmbed}
     >
       {!needsSport ? (
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-5 text-sm text-eid-text-secondary">
+        <div className="eid-surface-panel rounded-2xl p-4 sm:p-5 text-sm text-eid-text-secondary">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Esportes e EID</p>
           <p>
             Esta área é para quem atua como <strong className="text-eid-fg">atleta</strong> ou{" "}
             <strong className="text-eid-fg">professor</strong>.
@@ -111,12 +111,7 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
         </div>
       ) : (
         <>
-          <p className="mb-4 text-xs text-eid-text-secondary">
-            Nome, foto e cidade:{" "}
-            <Link href={`/editar/perfil?from=${encodeURIComponent(from)}`} className="font-semibold text-eid-primary-300 underline">
-              Editar perfil
-            </Link>
-          </p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Esportes e EID</p>
           <ProfilePerformanceEditor
             sports={(esportes ?? []).map((e) => ({
               id: e.id,

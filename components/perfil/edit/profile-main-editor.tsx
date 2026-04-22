@@ -12,8 +12,6 @@ type Props = {
     alturaCm: number | null;
     pesoKg: number | null;
     lado: string | null;
-    bio: string;
-    estiloJogo: string;
   };
 };
 
@@ -28,8 +26,6 @@ export function ProfileMainEditor({ initial }: Props) {
   const [alturaCm, setAlturaCm] = useState(initial.alturaCm ? String(initial.alturaCm) : "");
   const [pesoKg, setPesoKg] = useState(initial.pesoKg ? String(initial.pesoKg) : "");
   const [lado, setLado] = useState(initial.lado ?? "");
-  const [bio, setBio] = useState(initial.bio);
-  const [estiloJogo, setEstiloJogo] = useState(initial.estiloJogo);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -47,6 +43,7 @@ export function ProfileMainEditor({ initial }: Props) {
 
   return (
     <form onSubmit={onSubmit} className="eid-surface-panel rounded-2xl p-3 sm:p-4">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Dados pessoais</p>
       {message ? (
         <p className="mb-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2 text-xs text-eid-fg">
           {message}
@@ -116,21 +113,6 @@ export function ProfileMainEditor({ initial }: Props) {
           <option value="Canhoto">Canhoto</option>
           <option value="Ambos">Ambidestro</option>
         </select>
-        <input
-          name="estilo_jogo"
-          value={estiloJogo}
-          onChange={(ev) => setEstiloJogo(ev.target.value)}
-          placeholder="Estilo de jogo"
-          className="eid-input-dark w-full rounded-xl px-3 py-2.5 text-sm text-eid-fg"
-        />
-        <textarea
-          name="bio"
-          value={bio}
-          onChange={(ev) => setBio(ev.target.value)}
-          placeholder="Bio"
-          rows={3}
-          className="eid-input-dark w-full rounded-xl px-3 py-2.5 text-sm text-eid-fg"
-        />
       </div>
       <div className="mt-3 flex justify-end">
         <button

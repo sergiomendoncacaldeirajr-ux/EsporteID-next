@@ -22,8 +22,6 @@ export async function saveProfileMainAction(formData: FormData): Promise<SavePro
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
   const username = usernameRaw ? usernameRaw.replace(/[^a-z0-9_]/g, "").slice(0, 24) : null;
   const localizacao = String(formData.get("localizacao") ?? "").trim();
-  const bio = String(formData.get("bio") ?? "").trim();
-  const estiloJogo = String(formData.get("estilo_jogo") ?? "").trim();
   const altura = parseIntOrNull(formData.get("altura_cm"));
   const peso = parseIntOrNull(formData.get("peso_kg"));
   const ladoRaw = String(formData.get("lado") ?? "").trim();
@@ -39,8 +37,6 @@ export async function saveProfileMainAction(formData: FormData): Promise<SavePro
     nome,
     username,
     localizacao,
-    bio: bio || null,
-    estilo_jogo: estiloJogo || null,
     altura_cm: altura,
     peso_kg: peso,
     lado,

@@ -43,7 +43,7 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
       }
     >
       <div className="space-y-4">
-        <section>
+        <section className="eid-surface-panel rounded-2xl p-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Equipes</p>
           {(timesRows ?? []).length > 0 ? (
             <div className="mt-2 grid gap-2">
@@ -75,7 +75,7 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
           )}
         </section>
 
-        <section>
+        <section className="eid-surface-panel rounded-2xl p-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Duplas</p>
           {(duplasRows ?? []).length > 0 ? (
             <div className="mt-2 grid gap-2">

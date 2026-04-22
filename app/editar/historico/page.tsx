@@ -31,7 +31,8 @@ export default async function EditarHistoricoFullscreenPage({ searchParams }: Pr
       subtitle="Defina se os visitantes podem ver seu histórico no perfil público."
       showBack={!isEmbed}
     >
-      <div className="eid-list-item rounded-xl bg-eid-card/55 p-3">
+      <div className="eid-surface-panel rounded-2xl p-3">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Dados de privacidade</p>
         <p className="text-sm font-semibold text-eid-fg">
           Atualmente:{" "}
           <span className={mostrarHistoricoPublico ? "text-emerald-300" : "text-red-300"}>

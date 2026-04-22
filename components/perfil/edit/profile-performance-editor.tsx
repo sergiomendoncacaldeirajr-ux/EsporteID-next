@@ -92,6 +92,7 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
 
   return (
     <div className="eid-surface-panel rounded-2xl p-3 sm:p-4">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Dados de performance</p>
       {message ? (
         <p className="mb-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2 text-xs text-eid-fg">
           {message}
