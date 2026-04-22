@@ -8,6 +8,32 @@ import type { MatchRadarCard, RadarTipo, SortBy } from "@/lib/match/radar-snapsh
 import { MatchFriendlyToggle } from "@/components/match/match-friendly-toggle";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import { MatchRadarCardView } from "@/components/match/match-radar-card";
+import { PROFILE_SECTION_TITLE } from "@/components/perfil/profile-ui-tokens";
+
+function cn(...xs: (string | false | undefined)[]) {
+  return xs.filter(Boolean).join(" ");
+}
+
+function segmentTab(active: boolean) {
+  return cn(
+    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-sm px-1 py-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.035em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985] disabled:opacity-50 sm:py-0 sm:text-[9px]",
+    active
+      ? "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
+      : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35"
+  );
+}
+
+function filterChip(active: boolean) {
+  return cn(
+    "inline-flex touch-manipulation items-center justify-center whitespace-nowrap rounded-md px-2 py-1 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.985] disabled:opacity-50",
+    active
+      ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_7px_16px_-11px_rgba(37,99,235,0.4)]"
+      : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55"
+  );
+}
+
+const FILTER_CARD_CLASS =
+  "rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2.5 backdrop-blur-sm shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)]";
 
 type Props = {
   viewerId: string;
@@ -69,6 +95,14 @@ export function MatchRadarApp({
         });
         if (res.ok) {
           setCards(res.cards);
+        } else if (res.error === "no_maioridade") {
+          const q = new URLSearchParams();
+          q.set("tipo", next.tipo);
+          q.set("esporte", /^\d+$/.test(next.esporte) ? next.esporte : "all");
+          q.set("raio", String(next.raio));
+          q.set("sort_by", next.sortBy);
+          const nextPath = `/match?${q.toString()}`;
+          window.location.href = `/conta/confirmar-maioridade-match?next=${encodeURIComponent(nextPath)}`;
         }
       });
     },
@@ -104,13 +138,21 @@ export function MatchRadarApp({
   const esporteOptions = useMemo(() => [{ id: "all", nome: "Todos" }, ...esportes.map((e) => ({ id: String(e.id), nome: e.nome ?? "" }))], [esportes]);
 
   return (
-    <div className="mx-auto w-full max-w-lg px-3 py-3 sm:max-w-2xl sm:px-4 sm:py-4">
-      <header className="mb-3 space-y-3">
-        <div className="rounded-3xl border border-cyan-500/20 bg-gradient-to-br from-eid-card via-eid-primary-950/30 to-eid-bg px-4 py-3 shadow-[0_12px_40px_-18px_rgba(34,211,238,0.25)]">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300/90">Radar</p>
-          <h1 className="mt-1 text-xl font-black tracking-tight text-eid-fg sm:text-2xl">Match</h1>
-          <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary sm:text-xs">
-            Oponentes por proximidade; depois EID ou pontos de rank. Troque aba e filtros sem recarregar a página.
+    <div className="w-full min-w-0">
+      <header className="mb-3 mt-0.5 space-y-3">
+        <div>
+          <div className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)_86%)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-primary-500)_72%,var(--eid-fg)_28%)]">
+            <span
+              className="h-1.5 w-1.5 rounded-full bg-[color:color-mix(in_srgb,var(--eid-primary-500)_78%,white_22%)] shadow-[0_0_10px_color-mix(in_srgb,var(--eid-primary-500)_52%,transparent)]"
+              aria-hidden
+            />
+            Radar de oponentes
+          </div>
+          <h1 className="mt-1 text-[1.45rem] font-black tracking-[0.01em] text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_78%,var(--eid-fg)_22%))] bg-clip-text drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_34%,transparent)] sm:text-[1.7rem]">
+            Match
+          </h1>
+          <p className="mt-1 max-w-prose text-[11px] leading-relaxed text-eid-text-secondary sm:text-xs">
+            Oponentes por proximidade; ordene por nota EID ou pontos do ranking. Troque modalidade e filtros sem recarregar.
           </p>
         </div>
 
@@ -122,42 +164,50 @@ export function MatchRadarApp({
       </header>
 
       {showSentBanner ? (
-        <p className="mb-3 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-sm text-eid-fg">
-          Pedido de Match enviado. O adversário será notificado.
+        <p className="mb-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-3 py-2.5 text-sm leading-snug text-eid-fg shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] backdrop-blur-sm">
+          Pedido de match enviado. O adversário será notificado.
         </p>
       ) : null}
 
       <MatchLocationPrompt hasLocation />
 
-      <nav className="mt-3 flex gap-1 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-1" aria-label="Modalidade">
-        {(
-          [
-            ["atleta", "Individual"],
-            ["dupla", "Duplas"],
-            ["time", "Times"],
-          ] as const
-        ).map(([value, label]) => {
-          const active = tipo === value;
-          return (
-            <button
-              key={value}
-              type="button"
-              disabled={isPending}
-              onClick={() => applyFilters({ tipo: value })}
-              className={`min-h-[40px] flex-1 rounded-xl text-center text-[11px] font-bold uppercase tracking-wide transition ${
-                active ? "bg-cyan-500/20 text-cyan-100 ring-1 ring-cyan-400/40" : "text-eid-text-secondary hover:text-eid-fg"
-              }`}
+      <div className="mb-3">
+        <div className="space-y-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2 backdrop-blur-sm shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)] [&_button]:[-webkit-tap-highlight-color:transparent]">
+          <p className={PROFILE_SECTION_TITLE}>Modalidade</p>
+          <div className="rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
+            <nav
+              className="flex min-h-[2.25rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:min-h-[1.5rem]"
+              aria-label="Modalidade"
             >
-              {label}
-            </button>
-          );
-        })}
-      </nav>
+              {(
+                [
+                  ["atleta", "Individual"],
+                  ["dupla", "Duplas"],
+                  ["time", "Times"],
+                ] as const
+              ).map(([value, label]) => {
+                const active = tipo === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => applyFilters({ tipo: value })}
+                    className={segmentTab(active)}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      </div>
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-2.5">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">Esporte</p>
-          <div className="flex max-h-[5.5rem] flex-wrap gap-1.5 overflow-y-auto">
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className={FILTER_CARD_CLASS}>
+          <p className={cn(PROFILE_SECTION_TITLE, "mb-2")}>Esporte</p>
+          <div className="flex max-h-[5.5rem] flex-wrap gap-1 overflow-y-auto rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-1.5">
             {esporteOptions.map((e) => {
               const active = String(esporte) === String(e.id);
               return (
@@ -166,9 +216,7 @@ export function MatchRadarApp({
                   type="button"
                   disabled={isPending}
                   onClick={() => applyFilters({ esporte: e.id === "all" ? "all" : e.id })}
-                  className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
-                    active ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-100" : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
-                  }`}
+                  className={filterChip(active)}
                 >
                   {e.nome}
                 </button>
@@ -176,18 +224,16 @@ export function MatchRadarApp({
             })}
           </div>
         </div>
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-2.5">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">Raio</p>
-          <div className="flex flex-wrap gap-1.5">
+        <div className={FILTER_CARD_CLASS}>
+          <p className={cn(PROFILE_SECTION_TITLE, "mb-2")}>Raio</p>
+          <div className="flex flex-wrap gap-1 rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-1.5">
             {RAII.map((r) => (
               <button
                 key={r}
                 type="button"
                 disabled={isPending}
                 onClick={() => applyFilters({ raio: r })}
-                className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
-                  r === raio ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-100" : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
-                }`}
+                className={filterChip(r === raio)}
               >
                 {r} km
               </button>
@@ -196,9 +242,9 @@ export function MatchRadarApp({
         </div>
       </div>
 
-      <div className="mt-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-2.5">
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">Ordenação técnica</p>
-        <div className="flex flex-wrap gap-1.5">
+      <div className={cn(FILTER_CARD_CLASS, "mt-2")}>
+        <p className={cn(PROFILE_SECTION_TITLE, "mb-2")}>Ordenação</p>
+        <div className="flex flex-wrap gap-1 rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-1.5">
           {(
             [
               ["eid_score", "Nota EID"],
@@ -210,9 +256,7 @@ export function MatchRadarApp({
               type="button"
               disabled={isPending}
               onClick={() => applyFilters({ sortBy: k })}
-              className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
-                sortBy === k ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-100" : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
-              }`}
+              className={filterChip(sortBy === k)}
             >
               {label}
             </button>
@@ -221,14 +265,15 @@ export function MatchRadarApp({
       </div>
 
       {isPending ? (
-        <p className="mt-3 text-center text-[11px] text-cyan-300/80" aria-live="polite">
+        <p className="mt-3 text-center text-[11px] font-medium text-eid-primary-400/90" aria-live="polite">
           Atualizando radar…
         </p>
       ) : null}
 
       <section className="mt-4 space-y-2.5" aria-busy={isPending}>
+        <h2 className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Resultados</h2>
         {cards.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-card/40 p-5 text-center text-sm text-eid-text-secondary">
+          <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-6 text-center text-sm text-eid-text-secondary shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] backdrop-blur-sm">
             Nenhum oponente com esses filtros.
           </p>
         ) : (
@@ -240,7 +285,10 @@ export function MatchRadarApp({
 
       <p className="mt-6 text-center text-[10px] text-eid-text-secondary">
         Preferência de jogo e privacidade no{" "}
-        <Link href="/conta/perfil" className="font-semibold text-cyan-400 underline-offset-2 hover:underline">
+        <Link
+          href="/conta/perfil"
+          className="font-semibold text-eid-primary-400 underline-offset-2 transition hover:text-eid-primary-300 hover:underline"
+        >
           perfil
         </Link>
         .

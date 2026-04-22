@@ -18,6 +18,8 @@ export async function solicitarDesafioMatch(
 
   const p_esporte_id = Number(esporteRaw);
   const p_modalidade = String(modalidadeRaw ?? "").trim();
+  const finRaw = String(formData.get("finalidade") ?? "ranking").trim().toLowerCase();
+  const p_finalidade = finRaw === "amistoso" ? "amistoso" : "ranking";
 
   if (!Number.isFinite(p_esporte_id) || p_esporte_id < 1) {
     return { ok: false, message: "Esporte inválido." };
@@ -52,6 +54,7 @@ export async function solicitarDesafioMatch(
     p_modalidade: mod,
     p_alvo_usuario_id,
     p_alvo_time_id,
+    p_finalidade,
   });
 
   if (error) {

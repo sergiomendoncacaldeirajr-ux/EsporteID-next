@@ -86,7 +86,7 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId }: Pro
   const restanteMs = on && expiresAt ? new Date(expiresAt).getTime() - Date.now() : 0;
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5">
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-3 py-2.5 shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)] backdrop-blur-sm">
       <div className="min-w-0">
         <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-eid-primary-300">Modo amistoso</p>
         <p className="text-[10px] text-eid-text-secondary">

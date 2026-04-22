@@ -6,7 +6,10 @@ import { TeamRosterManager } from "@/components/times/team-roster-manager";
 import { contaNextPath, requireContaPerfilPronto } from "@/lib/conta/require-perfil-pronto";
 import { createClient } from "@/lib/supabase/server";
 
-type Props = { params: Promise<{ id: string }>; searchParams?: Promise<{ from?: string; embed?: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ from?: string; embed?: string; convidar?: string }>;
+};
 
 export default async function EditarTimeFullscreenPage({ params, searchParams }: Props) {
   const { id: raw } = await params;
@@ -16,6 +19,10 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
   const sp = (await searchParams) ?? {};
   const from = typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : `/editar/equipes`;
   const isEmbed = sp.embed === "1";
+  const convidarParam = typeof sp.convidar === "string" ? sp.convidar.trim() : "";
+  const convidarUsuarioId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(convidarParam)
+    ? convidarParam
+    : null;
 
   const supabase = await createClient();
   const {
@@ -35,6 +42,12 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
   if (!t) notFound();
   if (t.criador_id !== user.id) {
     redirect(`/perfil-time/${id}?from=${encodeURIComponent(from)}`);
+  }
+
+  let prefillConvidarNome: string | null = null;
+  if (convidarUsuarioId) {
+    const { data: alvo } = await supabase.from("profiles").select("nome").eq("id", convidarUsuarioId).maybeSingle();
+    prefillConvidarNome = alvo?.nome ?? null;
   }
 
   const [{ data: membrosRows }, { data: convitesRows }] = await Promise.all([
@@ -117,6 +130,8 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
       <div className="mt-3">
         <TeamRosterManager
           timeId={id}
+          prefillConvidarUsuarioId={convidarUsuarioId}
+          prefillConvidarNome={prefillConvidarNome}
           membros={(membrosRows ?? []).map((m) => {
             const p = profileMap.get(String(m.usuario_id ?? ""));
             return {

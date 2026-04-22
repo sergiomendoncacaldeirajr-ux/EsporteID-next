@@ -26,10 +26,14 @@ export function TeamRosterManager({
   timeId,
   membros,
   convites,
+  prefillConvidarUsuarioId = null,
+  prefillConvidarNome = null,
 }: {
   timeId: number;
   membros: MemberItem[];
   convites: InviteItem[];
+  prefillConvidarUsuarioId?: string | null;
+  prefillConvidarNome?: string | null;
 }) {
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
 
@@ -38,11 +42,31 @@ export function TeamRosterManager({
       <p className="text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Gestão do elenco</p>
       <p className="mt-1 text-[11px] text-eid-text-secondary">Adicione atletas por @username e acompanhe status de pendente/aprovado.</p>
 
+      {prefillConvidarUsuarioId ? (
+        <div className="mt-3 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-primary-300">Convite rápido</p>
+          <p className="mt-1 text-[11px] text-eid-text-secondary">
+            Enviar convite para <span className="font-semibold text-eid-fg">{prefillConvidarNome ?? "atleta"}</span> entrar nesta formação.
+          </p>
+          <form action={inviteAction} className="mt-2">
+            <input type="hidden" name="time_id" value={timeId} />
+            <input type="hidden" name="convidado_usuario_id" value={prefillConvidarUsuarioId} />
+            <button
+              type="submit"
+              disabled={invitePending}
+              className="eid-btn-primary w-full rounded-xl py-2.5 text-sm font-bold disabled:opacity-60"
+            >
+              {invitePending ? "Enviando..." : "Enviar convite"}
+            </button>
+          </form>
+        </div>
+      ) : null}
+
       <form action={inviteAction} className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
         <input type="hidden" name="time_id" value={timeId} />
         <input
           name="username"
-          required
+          required={!prefillConvidarUsuarioId}
           placeholder="@username do atleta"
           className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
         />

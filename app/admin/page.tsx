@@ -1,4 +1,15 @@
+import { adminMarcarAlertaLido } from "@/app/admin/actions";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
+
+type Alerta = {
+  id: number;
+  tipo: string;
+  titulo: string;
+  corpo: string | null;
+  payload_json: Record<string, unknown> | null;
+  lido: boolean;
+  criado_em: string;
+};
 
 export default async function AdminHomePage() {
   let counts: Record<string, number | null> = {
@@ -9,8 +20,11 @@ export default async function AdminHomePage() {
     partidas: null,
     matches: null,
     denuncias: null,
+    denuncias_abertas: null,
     eids: null,
   };
+
+  let alertas: Alerta[] = [];
 
   if (hasServiceRoleConfig()) {
     try {
@@ -23,7 +37,9 @@ export default async function AdminHomePage() {
         pa,
         m,
         d,
+        dAbertas,
         eid,
+        al,
       ] = await Promise.all([
         db.from("profiles").select("id", { count: "exact", head: true }),
         db.from("torneios").select("id", { count: "exact", head: true }),
@@ -32,7 +48,17 @@ export default async function AdminHomePage() {
         db.from("partidas").select("id", { count: "exact", head: true }),
         db.from("matches").select("id", { count: "exact", head: true }),
         db.from("denuncias").select("id", { count: "exact", head: true }),
+        db
+          .from("denuncias")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["aberta", "em_analise"]),
         db.from("usuario_eid").select("id", { count: "exact", head: true }),
+        db
+          .from("admin_alertas")
+          .select("id, tipo, titulo, corpo, payload_json, lido, criado_em")
+          .eq("lido", false)
+          .order("criado_em", { ascending: false })
+          .limit(20),
       ]);
       counts = {
         profiles: p.count ?? 0,
@@ -42,8 +68,10 @@ export default async function AdminHomePage() {
         partidas: pa.count ?? 0,
         matches: m.count ?? 0,
         denuncias: d.count ?? 0,
+        denuncias_abertas: dAbertas.count ?? 0,
         eids: eid.count ?? 0,
       };
+      alertas = (al.data ?? []) as Alerta[];
     } catch {
       /* service key inválida etc. */
     }
@@ -66,6 +94,66 @@ export default async function AdminHomePage() {
       <p className="mt-1 text-sm text-eid-text-secondary">
         Gerencie usuários, esportes, locais, torneios, partidas, pedidos de match, denúncias, parâmetros financeiros e o motor EID.
       </p>
+
+      {counts.denuncias_abertas != null && counts.denuncias_abertas > 0 ? (
+        <a
+          href="/admin/denuncias"
+          className="mt-4 flex items-center justify-between rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 transition hover:border-amber-400/50"
+        >
+          <span>
+            <span className="font-bold">{counts.denuncias_abertas}</span> denúncia(s) aguardando análise
+          </span>
+          <span className="text-xs font-bold uppercase tracking-wide text-amber-200">Abrir →</span>
+        </a>
+      ) : null}
+
+      {alertas.length > 0 ? (
+        <div className="mt-6">
+          <h3 className="text-sm font-bold text-eid-fg">Alertas recentes (não lidos)</h3>
+          <p className="mt-0.5 text-xs text-eid-text-secondary">Denúncias, verificações de idade e outros eventos.</p>
+          <ul className="mt-3 space-y-2">
+            {alertas.map((a) => {
+              const payload = a.payload_json ?? {};
+              const alvo = typeof payload.alvo_usuario_id === "string" ? payload.alvo_usuario_id : null;
+              const usuarioVer = typeof payload.usuario_id === "string" ? payload.usuario_id : null;
+              return (
+                <li
+                  key={a.id}
+                  className="flex flex-wrap items-start justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-mono uppercase tracking-wide text-eid-text-secondary">{a.tipo}</p>
+                    <p className="text-sm font-semibold text-eid-fg">{a.titulo}</p>
+                    {a.corpo ? <p className="mt-1 text-xs text-eid-text-secondary">{a.corpo}</p> : null}
+                    <p className="mt-1 text-[10px] text-eid-text-secondary">
+                      {new Date(a.criado_em).toLocaleString("pt-BR")}
+                    </p>
+                    {alvo ? (
+                      <a href={`/perfil/${alvo}`} className="mt-1 inline-block text-xs font-semibold text-eid-primary-300">
+                        Ver perfil alvo
+                      </a>
+                    ) : null}
+                    {usuarioVer && !alvo ? (
+                      <a href={`/perfil/${usuarioVer}`} className="mt-1 inline-block text-xs font-semibold text-eid-primary-300">
+                        Ver perfil
+                      </a>
+                    ) : null}
+                  </div>
+                  <form action={adminMarcarAlertaLido}>
+                    <input type="hidden" name="id" value={a.id} />
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2 py-1 text-[10px] font-bold text-eid-text-secondary hover:border-eid-primary-500/40"
+                    >
+                      Marcar lido
+                    </button>
+                  </form>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
         {pills.map(({ k, label, href }) => (

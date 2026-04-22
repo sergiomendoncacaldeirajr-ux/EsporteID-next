@@ -42,7 +42,7 @@ export async function atualizarLocalizacaoMatch(lat: number, lng: number): Promi
 
 export type RefreshMatchRadarResult =
   | { ok: true; cards: MatchRadarCard[] }
-  | { ok: false; error: "auth" | "no_location" };
+  | { ok: false; error: "auth" | "no_location" | "no_maioridade" };
 
 /** Recarrega lista do radar sem navegação (filtros no cliente). */
 export async function refreshMatchRadarAction(input: {
@@ -56,9 +56,13 @@ export async function refreshMatchRadarAction(input: {
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("lat, lng")
+    .select("lat, lng, match_maioridade_confirmada")
     .eq("id", user.id)
     .maybeSingle();
+
+  if (!(me as { match_maioridade_confirmada?: boolean } | null)?.match_maioridade_confirmada) {
+    return { ok: false, error: "no_maioridade" };
+  }
 
   const lat = Number(me?.lat);
   const lng = Number(me?.lng);

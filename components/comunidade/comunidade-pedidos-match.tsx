@@ -12,6 +12,7 @@ export type PedidoMatchItem = {
   esporte: string;
   modalidade: string;
   timeNome?: string | null;
+  finalidade?: "ranking" | "amistoso";
 };
 
 const initial: ResponderMatchState = { ok: false, message: "" };
@@ -58,6 +59,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 <p className="mt-1 text-xs text-eid-text-secondary">
                   {m.esporte} · {m.modalidade}
                   {m.timeNome ? ` · ${m.timeNome}` : ""}
+                  {m.finalidade === "amistoso" ? " · amistoso (sem ranking)" : ""}
                 </p>
                 <Link
                   href={`/perfil/${m.desafianteId}?from=/comunidade`}
@@ -66,9 +68,20 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                   Ver perfil →
                 </Link>
               </div>
-              <span className="rounded-full border border-amber-400/35 bg-amber-500/15 px-2.5 py-1 text-[10px] font-extrabold uppercase text-amber-200">
-                Pendente
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span className="rounded-full border border-amber-400/35 bg-amber-500/15 px-2.5 py-1 text-[10px] font-extrabold uppercase text-amber-200">
+                  Pendente
+                </span>
+                {m.finalidade === "amistoso" ? (
+                  <span className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-200">
+                    Amistoso
+                  </span>
+                ) : (
+                  <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-primary-200">
+                    Ranking
+                  </span>
+                )}
+              </div>
             </div>
             <div className="relative mt-4 flex flex-wrap gap-2">
               <form action={formAction}>

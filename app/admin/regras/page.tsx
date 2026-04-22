@@ -1,3 +1,4 @@
+import { adminSetMatchRankCooldownMeses } from "@/app/admin/actions";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 export default async function AdminRegrasPage() {
@@ -5,13 +6,47 @@ export default async function AdminRegrasPage() {
     return <p className="text-sm text-eid-text-secondary">Configure a service role.</p>;
   }
   const db = createServiceRoleClient();
-  const [rr, rrm] = await Promise.all([
+  const [rr, rrm, cooldownRow] = await Promise.all([
     db.from("regras_ranking").select("*, esportes(nome)").order("esporte_id", { ascending: true }).limit(100),
     db.from("regras_ranking_match").select("*, esportes(nome)").order("esporte_id", { ascending: true }).limit(100),
+    db.from("app_config").select("value_json").eq("key", "match_rank_cooldown_meses").maybeSingle(),
   ]);
+
+  let cooldownMeses = 12;
+  const cj = cooldownRow.data?.value_json;
+  if (cj && typeof cj === "object" && !Array.isArray(cj) && "meses" in cj) {
+    const n = Number((cj as { meses?: unknown }).meses);
+    if (Number.isFinite(n) && n >= 1) cooldownMeses = Math.min(120, Math.floor(n));
+  }
 
   return (
     <div className="space-y-10">
+      <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
+        <h2 className="text-base font-bold text-eid-fg">Match de ranking · carência entre oponentes</h2>
+        <p className="mt-1 text-sm text-eid-text-secondary">
+          Período mínimo (em meses) após um confronto individual válido para ranking no mesmo esporte, antes que o mesmo par possa solicitar outro match de ranking. Não se aplica a match amistoso.
+        </p>
+        <form action={adminSetMatchRankCooldownMeses} className="mt-4 flex flex-wrap items-end gap-3">
+          <label className="grid gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">Meses</span>
+            <input
+              type="number"
+              name="meses"
+              min={1}
+              max={120}
+              defaultValue={cooldownMeses}
+              className="eid-input-dark h-10 w-28 rounded-lg px-2 text-sm text-eid-fg"
+            />
+          </label>
+          <button
+            type="submit"
+            className="rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg"
+          >
+            Salvar
+          </button>
+        </form>
+      </section>
+
       <section>
         <h2 className="text-base font-bold text-eid-fg">Regras de ranking (modalidade)</h2>
         <p className="mt-1 text-sm text-eid-text-secondary">Leitura via service role — ajustes finos podem ser feitos por migração SQL.</p>

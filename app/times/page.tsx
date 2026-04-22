@@ -11,7 +11,7 @@ export const metadata = {
 };
 
 type Props = {
-  searchParams?: Promise<{ q?: string; page?: string; create?: string; from?: string }>;
+  searchParams?: Promise<{ q?: string; page?: string; create?: string; from?: string; convidar?: string }>;
 };
 
 export default async function TimesPage({ searchParams }: Props) {
@@ -19,6 +19,12 @@ export default async function TimesPage({ searchParams }: Props) {
   const voltarHref = resolveBackHref(sp.from, "/dashboard");
   const q = (sp.q ?? "").trim().toLowerCase();
   const openCreate = sp.create === "1";
+  const convidar = String(sp.convidar ?? "").trim();
+  const convidarOk = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(convidar);
+  const fromForConvite =
+    typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : convidarOk ? `/perfil/${convidar}` : "/times";
+  const manageHrefTemplate =
+    openCreate && convidarOk ? `/editar/time/:id?from=${encodeURIComponent(fromForConvite)}&convidar=${encodeURIComponent(convidar)}` : undefined;
   const page = Math.max(1, Number(sp.page ?? 1) || 1);
   const pageSize = 12;
   const supabase = await createClient();
@@ -87,6 +93,7 @@ export default async function TimesPage({ searchParams }: Props) {
             return { id: t.id, nome: t.nome ?? "Equipe", tipo: t.tipo ?? "time", esporteNome: esp?.nome ?? "Esporte" };
           })}
           defaultOpenCreate={openCreate}
+          manageHrefTemplate={manageHrefTemplate}
         />
         <form className="mb-4 flex gap-2">
           <input

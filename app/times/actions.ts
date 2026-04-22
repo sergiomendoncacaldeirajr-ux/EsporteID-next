@@ -90,23 +90,52 @@ export async function convidarUsuarioParaEquipe(
   if (!user) return { ok: false, message: "Sessão expirada." };
 
   const timeId = Number(formData.get("time_id") ?? 0);
-  const username = String(formData.get("username") ?? "").trim().toLowerCase();
-  if (!Number.isInteger(timeId) || timeId < 1) return { ok: false, message: "Equipe inválida." };
-  if (!username) return { ok: false, message: "Informe o @username do atleta." };
+  const convidadoIdRaw = String(formData.get("convidado_usuario_id") ?? "").trim();
+  const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
 
-  const [{ data: timeRow }, { data: targetProfile }] = await Promise.all([
+  if (!Number.isInteger(timeId) || timeId < 1) return { ok: false, message: "Equipe inválida." };
+
+  let username: string;
+  let targetProfileId: string;
+
+  if (convidadoIdRaw && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(convidadoIdRaw)) {
+    const { data: targetById } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .eq("id", convidadoIdRaw)
+      .maybeSingle();
+    if (!targetById?.id) {
+      return { ok: false, message: "Perfil não encontrado." };
+    }
+    const u = String(targetById.username ?? "").trim();
+    if (!u) {
+      return {
+        ok: false,
+        message: "Este atleta ainda não definiu @username no perfil. Peça para configurar antes de convidar.",
+      };
+    }
+    username = u;
+    targetProfileId = targetById.id;
+  } else {
+    const u = usernameRaw.replace(/^@+/, "");
+    if (!u) return { ok: false, message: "Informe o @username do atleta." };
+    username = u;
+    const { data: targetProfile } = await supabase.from("profiles").select("id").eq("username", username).maybeSingle();
+    if (!targetProfile?.id) {
+      return { ok: false, message: "Usuário não encontrado. Verifique o @username informado." };
+    }
+    targetProfileId = targetProfile.id;
+  }
+
+  const [{ data: timeRow }] = await Promise.all([
     supabase.from("times").select("id, esporte_id, criador_id").eq("id", timeId).maybeSingle(),
-    supabase.from("profiles").select("id").eq("username", username).maybeSingle(),
   ]);
   if (!timeRow || timeRow.criador_id !== user.id) return { ok: false, message: "Sem permissão para convidar nesta equipe." };
-  if (!targetProfile?.id) {
-    return { ok: false, message: "Usuário não encontrado. Verifique o @username informado." };
-  }
   if (timeRow.esporte_id != null) {
     const { data: esporteConfig } = await supabase
       .from("usuario_eid")
       .select("usuario_id")
-      .eq("usuario_id", targetProfile.id)
+      .eq("usuario_id", targetProfileId)
       .eq("esporte_id", Number(timeRow.esporte_id))
       .maybeSingle();
     if (!esporteConfig) {
@@ -136,7 +165,8 @@ export async function convidarUsuarioParaEquipe(
   revalidatePath("/times");
   revalidatePath("/comunidade");
   revalidatePath(`/perfil-time/${timeId}`);
-  return { ok: true, message: "Convite enviado." };
+  revalidatePath(`/perfil/${targetProfileId}`);
+  return { ok: true, message: "Convite enviado. A pessoa recebe aviso em Social para aceitar ou recusar." };
 }
 
 function checkboxOn(formData: FormData, name: string): boolean {

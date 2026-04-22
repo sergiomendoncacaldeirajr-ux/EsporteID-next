@@ -9,11 +9,19 @@ type Props = {
   esporteId: number;
   alvoUsuarioId?: string;
   alvoTimeId?: number;
+  /** ranking = pontos EID/agenda; amistoso = só combinar (WhatsApp), sem ranking. */
+  finalidade?: "ranking" | "amistoso";
 };
 
 const initial: SolicitarDesafioState = { ok: false, message: "" };
 
-export function DesafioEnviarForm({ modalidade, esporteId, alvoUsuarioId, alvoTimeId }: Props) {
+export function DesafioEnviarForm({
+  modalidade,
+  esporteId,
+  alvoUsuarioId,
+  alvoTimeId,
+  finalidade = "ranking",
+}: Props) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(solicitarDesafioMatch, initial);
 
@@ -29,6 +37,7 @@ export function DesafioEnviarForm({ modalidade, esporteId, alvoUsuarioId, alvoTi
     <form action={formAction} className="mt-4 space-y-4">
       <input type="hidden" name="modalidade" value={modalidade === "individual" ? "individual" : modalidade} />
       <input type="hidden" name="esporte_id" value={String(esporteId)} />
+      <input type="hidden" name="finalidade" value={finalidade} />
       {modalidade === "individual" && alvoUsuarioId ? (
         <input type="hidden" name="alvo_usuario_id" value={alvoUsuarioId} />
       ) : null}
@@ -45,7 +54,7 @@ export function DesafioEnviarForm({ modalidade, esporteId, alvoUsuarioId, alvoTi
         disabled={pending}
         className="eid-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50 sm:w-auto sm:px-8"
       >
-        {pending ? "Enviando…" : "Confirmar pedido de Match"}
+        {pending ? "Enviando…" : finalidade === "amistoso" ? "Confirmar match amistoso" : "Confirmar match de ranking"}
       </button>
     </form>
   );

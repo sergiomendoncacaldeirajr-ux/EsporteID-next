@@ -29,34 +29,6 @@ function safeNext(raw: string | null): string | null {
   return n;
 }
 
-function formatDateOnlyLocal(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-/** Última data de nascimento permitida para ter 18 anos completos hoje (fuso local). */
-function maxDataNascimentoCadastro(): string {
-  const t = new Date();
-  return formatDateOnlyLocal(new Date(t.getFullYear() - 18, t.getMonth(), t.getDate()));
-}
-
-function idadeEmAnosCompleta(isoDate: string): number | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate.trim());
-  if (!m) return null;
-  const y = Number(m[1]);
-  const mo = Number(m[2]);
-  const d = Number(m[3]);
-  const birth = new Date(y, mo - 1, d);
-  if (birth.getFullYear() !== y || birth.getMonth() !== mo - 1 || birth.getDate() !== d) return null;
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const md = today.getMonth() - birth.getMonth();
-  if (md < 0 || (md === 0 && today.getDate() < birth.getDate())) age--;
-  return age;
-}
-
 function IconUser({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" width={20} height={20} aria-hidden>
@@ -96,17 +68,6 @@ function IconGender({ className }: { className?: string }) {
       <path
         fill="currentColor"
         d="M17.5 9c0 3.04-2.46 5.5-5.5 5.5S6.5 12.04 6.5 9 8.96 3.5 12 3.5 17.5 5.96 17.5 9zM2 17l4-4 1.5 1.5L3.5 19H2v-2zm20 0v2h-1.5l-4-4.5L18 15l4 4z"
-      />
-    </svg>
-  );
-}
-
-function IconCalendar({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" width={20} height={20} aria-hidden>
-      <path
-        fill="currentColor"
-        d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5zm2 8h5v-5H7v5z"
       />
     </svg>
   );
@@ -173,7 +134,6 @@ export function CadastroForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [genero, setGenero] = useState("");
-  const [dataNascimento, setDataNascimento] = useState("");
   const [whatsapp, setWhatsapp] = useState<Value | undefined>(undefined);
   const [phoneCountry, setPhoneCountry] = useState<Country>("BR");
   const [localizacao, setLocalizacao] = useState("");
@@ -215,21 +175,6 @@ export function CadastroForm() {
       setError("Selecione uma opção de gênero válida.");
       return;
     }
-    if (!dataNascimento.trim()) {
-      setError("Informe sua data de nascimento.");
-      return;
-    }
-    const idade = idadeEmAnosCompleta(dataNascimento);
-    if (idade == null) {
-      setError("Data de nascimento inválida.");
-      return;
-    }
-    if (idade < 18) {
-      setError(
-        "É necessário ter pelo menos 18 anos para criar uma conta. A plataforma é destinada a maiores de idade, inclusive para combinar partidas e encontros entre usuários, conforme os Termos de Uso."
-      );
-      return;
-    }
     const wa = typeof whatsapp === "string" ? whatsapp : "";
     if (!wa || !eiWhatsappValido(wa) || !isPossiblePhoneNumber(wa)) {
       setError(
@@ -248,7 +193,6 @@ export function CadastroForm() {
     const meta: Record<string, string> = {
       nome: nomeTrim,
       genero,
-      data_nascimento: dataNascimento.trim(),
       whatsapp: wa,
       localizacao: locTrim,
     };
@@ -361,8 +305,9 @@ export function CadastroForm() {
             Criar Conta
           </h2>
           <p className="-mt-2 mb-4 text-center text-[12px] leading-snug text-eid-text-muted">
-            Cadastro único. Depois, no onboarding, você escolhe se é atleta, espaço, organizador
-            etc.
+            Cadastro único. Depois, no onboarding, você escolhe se é atleta, espaço, organizador etc. Para usar{" "}
+            <strong className="text-eid-fg">Match</strong>, será solicitada confirmação de maioridade (18+) com registro para
+            auditoria.
           </p>
 
           <form onSubmit={handleSubmit} className="m-0">
@@ -462,31 +407,6 @@ export function CadastroForm() {
                 <option value="Outro">Outro</option>
               </select>
             </div>
-
-            <div
-              className={`${inputGroupClass()} mb-2 text-eid-fg ${focusWithinBg}`}
-              style={inputGroupStyle()}
-            >
-              <span className="text-eid-primary-500">
-                <IconCalendar />
-              </span>
-              <input
-                type="date"
-                name="data_nascimento"
-                id="cad-data-nascimento"
-                required
-                value={dataNascimento}
-                min="1900-01-01"
-                max={maxDataNascimentoCadastro()}
-                onChange={(e) => setDataNascimento(e.target.value)}
-                className="min-w-0 flex-1 cursor-pointer border-0 bg-transparent pl-2.5 text-[15px] text-eid-fg outline-none"
-                aria-label="Data de nascimento"
-              />
-            </div>
-            <p className="-mt-1 mb-2 text-[12px] leading-snug text-eid-text-secondary">
-              É obrigatório ter <strong className="font-semibold text-eid-fg">18 anos ou mais</strong>.
-              Menores de idade não podem se cadastrar.
-            </p>
 
             <div className="mb-1.5">
               <label

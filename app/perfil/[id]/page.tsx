@@ -4,7 +4,11 @@ import { ProfileAvatarControl } from "@/components/perfil/profile-avatar-control
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileCoverControl } from "@/components/perfil/profile-cover-control";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
+import { ProfileSolicitarMatchMenu } from "@/components/perfil/profile-solicitar-match-menu";
+import { ProfileDenunciarButton } from "@/components/perfil/profile-denunciar-button";
+import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
 import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { ProfileConviteFormacaoCta } from "@/components/perfil/profile-convite-formacao-cta";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import {
@@ -63,6 +67,26 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   }
   const amistosoPerfilOn = computeDisponivelAmistosoEffective(disponivelAmistosoVal, disponivelAmistosoAteVal);
   const amistosoPerfilExpiresAt = amistosoPerfilOn && disponivelAmistosoAteVal ? String(disponivelAmistosoAteVal) : null;
+
+  let viewerAmistosoOn = false;
+  if (!isSelf) {
+    await expireDisponivelAmistosoProfileIfNeeded(supabase, user.id);
+    const { data: viewerAmRow } = await supabase
+      .from("profiles")
+      .select("disponivel_amistoso, disponivel_amistoso_ate")
+      .eq("id", user.id)
+      .maybeSingle();
+    viewerAmistosoOn = computeDisponivelAmistosoEffective(
+      viewerAmRow?.disponivel_amistoso,
+      viewerAmRow?.disponivel_amistoso_ate
+    );
+  }
+
+  let viewerMatchIdadeGate = "ok";
+  if (isSelf) {
+    const { data: mgRow } = await supabase.from("profiles").select("match_idade_gate").eq("id", user.id).maybeSingle();
+    viewerMatchIdadeGate = String(mgRow?.match_idade_gate ?? "ok");
+  }
 
   const [{ data: papeisRows }, { data: professorPerfil }, { data: professorEsportes }, { data: professorMetricas }] =
     await Promise.all([
@@ -132,6 +156,56 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     .or(`player1_id.eq.${id},player2_id.eq.${id}`)
     .limit(12);
 
+  const [
+    { count: alvoMembrosCount },
+    { count: alvoLiderTimesCount },
+    { count: alvoDuplasCount },
+  ] = await Promise.all([
+    supabase
+      .from("membros_time")
+      .select("id", { count: "exact", head: true })
+      .eq("usuario_id", id)
+      .in("status", ["ativo", "aceito", "aprovado"]),
+    supabase.from("times").select("id", { count: "exact", head: true }).eq("criador_id", id),
+    supabase.from("duplas").select("id", { count: "exact", head: true }).or(`player1_id.eq.${id},player2_id.eq.${id}`),
+  ]);
+
+  const alvoSemFormacao =
+    (alvoMembrosCount ?? 0) === 0 && (alvoLiderTimesCount ?? 0) === 0 && (alvoDuplasCount ?? 0) === 0;
+
+  let minhasFormacoesLider: Array<{
+    id: number;
+    nome: string;
+    tipo: string | null;
+    esporte_id: number | null;
+    esporteNome: string;
+  }> = [];
+
+  if (!isSelf) {
+    const { data: liderRows } = await supabase
+      .from("times")
+      .select("id, nome, tipo, esporte_id, esportes(nome)")
+      .eq("criador_id", user.id)
+      .order("id", { ascending: false });
+    minhasFormacoesLider = (liderRows ?? []).map((t) => {
+      const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
+      return {
+        id: Number(t.id),
+        nome: t.nome ?? "Formação",
+        tipo: t.tipo ?? null,
+        esporte_id: t.esporte_id != null ? Number(t.esporte_id) : null,
+        esporteNome: esp?.nome ?? "Esporte",
+      };
+    });
+  }
+
+  const targetEsporteIdsParaConvite = new Set(
+    (eids ?? []).map((e) => Number(e.esporte_id)).filter((n) => Number.isFinite(n) && n > 0)
+  );
+  const eligibleTeamsConvite = minhasFormacoesLider.filter(
+    (t) => t.esporte_id != null && targetEsporteIdsParaConvite.has(t.esporte_id)
+  );
+
   const primeiroEsporte = eids?.[0]?.esporte_id;
   const esportesDoPerfil = (eids ?? [])
     .map((e) => ({
@@ -140,7 +214,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     }))
     .filter((e) => Number.isFinite(e.esporteId) && e.esporteId > 0);
   const esportesParaDesafio = esportesDoPerfil.filter((e) => !esportesMatchAceito.has(e.esporteId));
-  const maisDeUmDesafio = esportesParaDesafio.length > 1;
 
   const { data: socioRows } = await supabase
     .from("membership_requests")
@@ -444,6 +517,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
         </div>
 
         <div className="mt-4 grid gap-4">
+          {isSelf ? <MatchIdadeGateBanner gate={viewerMatchIdadeGate} /> : null}
           {/* ── Ação principal ──────────────────────────────────────── */}
           <section>
             <h2 className="sr-only">Ação principal</h2>
@@ -462,34 +536,13 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                     </a>
                   ) : null}
                   {esportesParaDesafio.length > 0 ? (
-                    maisDeUmDesafio ? (
-                      <div className="eid-surface-panel rounded-xl p-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-eid-text-secondary">
-                          {linkWpp ? "Match no ranking" : "Solicitar Match"}
-                        </p>
-                        <p className="mt-1 text-xs text-eid-text-secondary">
-                          {linkWpp
-                            ? "Vocês já podem falar no WhatsApp (ex.: torneio). Para valer pontos no ranking, envie o pedido de match no esporte:"
-                            : "Este atleta joga mais de um esporte. Escolha qual esporte você quer desafiar:"}
-                        </p>
-                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                          {esportesParaDesafio.map((esp) => (
-                            <Link
-                              key={esp.esporteId}
-                              href={`/desafio?id=${encodeURIComponent(id)}&tipo=individual&esporte=${esp.esporteId}`}
-                              className="eid-btn-soft inline-flex min-h-[40px] items-center justify-center rounded-xl border-eid-action-500/35 bg-eid-action-500/10 px-3 text-xs font-bold uppercase tracking-wide text-eid-action-400"
-                            >
-                              {esp.nome}
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <ProfilePrimaryCta
-                        href={`/desafio?id=${encodeURIComponent(id)}&tipo=individual&esporte=${esportesParaDesafio[0]!.esporteId}`}
-                        label={linkWpp ? "⚡ Match no ranking" : undefined}
-                      />
-                    )
+                    <ProfileSolicitarMatchMenu
+                      alvoId={id}
+                      esportes={esportesParaDesafio.map((e) => ({ esporteId: e.esporteId, nome: e.nome }))}
+                      viewerAmistosoOn={viewerAmistosoOn}
+                      alvoAmistosoOn={amistosoPerfilOn}
+                      mostrarDicaWppRanking={Boolean(linkWpp)}
+                    />
                   ) : null}
                 </div>
               ) : null
@@ -507,6 +560,21 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               </div>
             )}
           </section>
+
+          {!isSelf ? <ProfileDenunciarButton alvoUsuarioId={id} /> : null}
+
+          {!isSelf && alvoSemFormacao ? (
+            <ProfileSection title="Convidar para sua formação">
+              <ProfileConviteFormacaoCta
+                targetUserId={id}
+                targetNome={perfil.nome ?? "Atleta"}
+                targetHasEsportes={(eids ?? []).length > 0}
+                eligibleTeams={eligibleTeamsConvite}
+                viewerHasAnyLiderTeam={minhasFormacoesLider.length > 0}
+                perfilPath={`/perfil/${id}`}
+              />
+            </ProfileSection>
+          ) : null}
 
           {hasProfessor ? (
             <ProfileSection title="Professor">

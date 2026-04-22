@@ -42,7 +42,7 @@ export default async function ComunidadePage() {
 
   const { data: recebidos } = await supabase
     .from("matches")
-    .select("id, modalidade_confronto, data_solicitacao, data_registro, usuario_id, esporte_id, adversario_time_id")
+    .select("id, modalidade_confronto, data_solicitacao, data_registro, usuario_id, esporte_id, adversario_time_id, finalidade")
     .eq("adversario_id", user.id)
     .eq("status", "Pendente")
     .order("data_registro", { ascending: false })
@@ -73,6 +73,7 @@ export default async function ComunidadePage() {
     esporte: (m.esporte_id ? espMap.get(m.esporte_id) : null) ?? "Esporte",
     modalidade: m.modalidade_confronto ?? "individual",
     timeNome: m.adversario_time_id ? timeMap.get(m.adversario_time_id) ?? null : null,
+    finalidade: (String(m.finalidade ?? "ranking") === "amistoso" ? "amistoso" : "ranking") as "ranking" | "amistoso",
   }));
 
   const nPedidos = pedidosItems.length;

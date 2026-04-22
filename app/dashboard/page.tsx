@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { distanciaKm } from "@/lib/geo/distance-km";
 
@@ -118,7 +119,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("nome, avatar_url, localizacao, lat, lng, termos_aceitos_em, perfil_completo")
+    .select("nome, avatar_url, localizacao, lat, lng, termos_aceitos_em, perfil_completo, match_idade_gate")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -237,6 +238,8 @@ export default async function DashboardPage({ searchParams }: Props) {
       ? `/match?esporte=${encodeURIComponent(String(esportePrincipalId))}&tipo=atleta`
       : "/match";
 
+  const matchIdadeGate = String(profile.match_idade_gate ?? "ok");
+
   const navItems = [
     { label: "Times", shortLabel: "Times", href: "/times", icon: IconUsers },
     { label: "Locais", shortLabel: "Locais", href: "/locais", icon: IconMapPin },
@@ -283,6 +286,10 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <p className="mt-1.5 truncate text-xs text-eid-text-secondary">{profile.localizacao}</p>
               ) : null}
             </div>
+          </div>
+
+          <div className="mt-4">
+            <MatchIdadeGateBanner gate={matchIdadeGate} />
           </div>
 
           <Link

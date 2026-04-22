@@ -117,12 +117,11 @@ export default function TermosPage() {
             2.2 Idade mínima, cadastro e encontros entre usuários
           </h3>
           <p className="text-sm leading-relaxed">
-            O cadastro na Plataforma é permitido apenas a pessoas{" "}
-            <strong className="font-semibold text-eid-fg">maiores de 18 (dezoito) anos</strong>, com
-            capacidade civil compatível com o uso dos serviços. Ao criar conta, você declara que as
-            informações fornecidas — inclusive{" "}
-            <strong className="font-semibold text-eid-fg">data de nascimento</strong> — são
-            verdadeiras e que atende a esse requisito etário.
+            O uso de funcionalidades que envolvam <strong className="font-semibold text-eid-fg">interação direta entre usuários para combinar partidas e contato após match</strong> (em especial a funcionalidade <strong className="font-semibold text-eid-fg">Match</strong>) é permitido apenas a pessoas{" "}
+            <strong className="font-semibold text-eid-fg">maiores de 18 (dezoito) anos</strong>. Antes de acessar o Match, o sistema solicita confirmação explícita de idade, com registro de data/hora, endereço de rede (IP), dados do navegador e demais metadados necessários à comprovação e às obrigações legais (incluindo LGPD).
+          </p>
+          <p className="text-sm leading-relaxed">
+            O cadastro básico pode não exigir data de nascimento; a declaração etária para Match é feita no momento próprio ao uso dessa função.
           </p>
           <p className="text-sm leading-relaxed">
             A EsporteID é uma plataforma de esporte e relacionamento entre usuários (por exemplo,

@@ -19,7 +19,7 @@ export function MatchRadarCardView({ card, esporteContextId }: Props) {
     .join("") || "?";
 
   return (
-    <article className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-gradient-to-br from-eid-card/95 to-eid-primary-950/20 p-3 shadow-sm [content-visibility:auto]">
+    <article className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] backdrop-blur-sm [content-visibility:auto]">
       <div className="flex gap-3">
         <div className="relative shrink-0">
           {card.avatarUrl ? (
@@ -47,7 +47,7 @@ export function MatchRadarCardView({ card, esporteContextId }: Props) {
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-eid-fg">{card.nome}</p>
-              <p className="text-[11px] font-medium text-cyan-300/90">{card.esporteNome}</p>
+              <p className="text-[11px] font-medium text-eid-primary-400">{card.esporteNome}</p>
             </div>
             <div className="shrink-0 text-right">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-eid-text-secondary">EID</p>
@@ -58,7 +58,7 @@ export function MatchRadarCardView({ card, esporteContextId }: Props) {
             <span>
               Rank <span className="font-bold text-eid-fg/90">{card.rank}</span>
             </span>
-            <span className="text-cyan-400/80">{card.dist.toFixed(1).replace(".", ",")} km</span>
+            <span className="text-eid-primary-400/85">{card.dist.toFixed(1).replace(".", ",")} km</span>
             <span className="rounded-md bg-eid-surface/80 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-eid-text-secondary">
               {card.modalidade === "individual" ? "Indiv." : card.modalidade === "dupla" ? "Dupla" : "Time"}
             </span>
@@ -75,7 +75,7 @@ export function MatchRadarCardView({ card, esporteContextId }: Props) {
         </Link>
         <Link
           href={card.href}
-          className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-xs font-semibold text-eid-text-secondary transition hover:border-cyan-500/35 hover:text-cyan-200"
+          className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-xs font-semibold text-eid-text-secondary transition hover:border-[color:color-mix(in_srgb,var(--eid-primary-500)_40%,var(--eid-border-subtle)_60%)] hover:text-eid-primary-300"
         >
           Perfil
         </Link>

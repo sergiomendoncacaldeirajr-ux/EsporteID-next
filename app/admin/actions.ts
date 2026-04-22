@@ -149,6 +149,19 @@ export async function adminSetDenunciaStatus(formData: FormData) {
   }
 }
 
+export async function adminMarcarAlertaLido(formData: FormData) {
+  try {
+    await guard();
+    const id = Number(formData.get("id"));
+    if (!Number.isFinite(id)) return;
+    const { error } = await svc().from("admin_alertas").update({ lido: true }).eq("id", id);
+    if (error) return;
+    revalidatePath("/admin");
+  } catch {
+    return;
+  }
+}
+
 export async function adminUpdateFinanceiro(formData: FormData) {
   try {
     await guard();
@@ -291,6 +304,30 @@ export async function adminRecalcularEidHistorico() {
     revalidatePath("/ranking");
     revalidatePath("/dashboard");
     revalidatePath("/match");
+  } catch {
+    return;
+  }
+}
+
+/** Carência mínima (meses) entre confrontos de ranking válidos para o mesmo par de atletas no mesmo esporte. */
+export async function adminSetMatchRankCooldownMeses(formData: FormData) {
+  try {
+    await guard();
+    const raw = Number(formData.get("meses"));
+    const meses = Number.isFinite(raw) ? Math.max(1, Math.min(120, Math.floor(raw))) : 12;
+    const { error } = await svc()
+      .from("app_config")
+      .upsert(
+        {
+          key: "match_rank_cooldown_meses",
+          value_json: { meses },
+          atualizado_em: new Date().toISOString(),
+        },
+        { onConflict: "key" }
+      );
+    if (error) return;
+    revalidatePath("/admin/regras");
+    revalidatePath("/desafio");
   } catch {
     return;
   }

@@ -2,12 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
+import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
+import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
+import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { createClient } from "@/lib/supabase/server";
 
 type Params = {
   id?: string;
   tipo?: string;
   esporte?: string;
+  finalidade?: string;
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -15,10 +19,18 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export default async function DesafioPage({ searchParams }: { searchParams?: Promise<Params> }) {
   const sp = (await searchParams) ?? {};
   const supabase = await createClient();
+  const desafioQs = new URLSearchParams();
+  for (const [k, v] of Object.entries(sp)) {
+    if (typeof v === "string" && v.length > 0) desafioQs.set(k, v);
+  }
+  const desafioNext = safeNextInternalPath(desafioQs.toString() ? `/desafio?${desafioQs}` : "/desafio");
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login?next=/match");
+  if (!user) redirect(`/login?next=${encodeURIComponent(desafioNext)}`);
+
+  await redirectUnlessMatchMaioridadeConfirmada(supabase, user.id, desafioNext);
 
   const tipoRaw = (sp.tipo ?? "individual").toLowerCase();
   const modalidade: "individual" | "dupla" | "time" =
@@ -112,7 +124,11 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       );
     }
 
-    const { data: perfil } = await supabase.from("profiles").select("id, nome").eq("id", alvoKey).maybeSingle();
+    const { data: perfil } = await supabase
+      .from("profiles")
+      .select("id, nome, disponivel_amistoso, disponivel_amistoso_ate")
+      .eq("id", alvoKey)
+      .maybeSingle();
     if (!perfil || perfil.id === user.id) {
       return (
         <>
@@ -128,22 +144,122 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       );
     }
 
+    const finRaw = String(sp.finalidade ?? "").trim().toLowerCase();
+    const finalidadeEscolhida: "ranking" | "amistoso" | null =
+      finRaw === "amistoso" ? "amistoso" : finRaw === "ranking" ? "ranking" : null;
+
+    if (!finalidadeEscolhida) {
+      const [{ data: viewerProf }, cooldownMeses] = await Promise.all([
+        supabase.from("profiles").select("disponivel_amistoso, disponivel_amistoso_ate").eq("id", user.id).maybeSingle(),
+        getMatchRankCooldownMeses(supabase),
+      ]);
+      const viewerAm = computeDisponivelAmistosoEffective(
+        viewerProf?.disponivel_amistoso,
+        viewerProf?.disponivel_amistoso_ate
+      );
+      const alvoAm = computeDisponivelAmistosoEffective(perfil.disponivel_amistoso, perfil.disponivel_amistoso_ate);
+      const amistosoPermitido = viewerAm && alvoAm;
+      const baseQs = `id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${esporteId}`;
+
+      return (
+        <>
+          <DashboardTopbar />
+          <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+            <h1 className="text-lg font-bold text-eid-fg">Solicitar match</h1>
+            <p className="mt-2 text-sm text-eid-text-secondary">
+              <span className="text-eid-fg">{perfil.nome ?? "Atleta"}</span> · {esporteNome} (individual). Escolha o tipo de confronto.
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <Link
+                href={`/desafio?${baseQs}&finalidade=ranking`}
+                className="rounded-2xl border border-eid-primary-500/35 bg-eid-primary-500/10 p-4 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/15"
+              >
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-eid-primary-300">Match de ranking</p>
+                <p className="mt-2 text-sm font-semibold text-eid-fg">Vale pontos no ranking</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
+                  Após aceito, use a agenda para agendar e o lançador de resultado. Novo match de ranking com a mesma pessoa neste esporte só após{" "}
+                  <span className="font-semibold text-eid-fg">{cooldownMeses}</span> meses do último confronto válido.
+                </p>
+              </Link>
+
+              {amistosoPermitido ? (
+                <Link
+                  href={`/desafio?${baseQs}&finalidade=amistoso`}
+                  className="rounded-2xl border border-emerald-500/35 bg-emerald-500/10 p-4 transition hover:border-emerald-500/55 hover:bg-emerald-500/15"
+                >
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-300">Match amistoso</p>
+                  <p className="mt-2 text-sm font-semibold text-eid-fg">Sem pontos · combinar no WhatsApp</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
+                    Não abre fluxo de agenda nem placar para ranking. Para valer ponto e agendamento oficial, depois solicite um{" "}
+                    <span className="font-semibold text-eid-fg">match de ranking</span>.
+                  </p>
+                </Link>
+              ) : (
+                <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4 opacity-70">
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-eid-text-secondary">Match amistoso</p>
+                  <p className="mt-2 text-sm font-semibold text-eid-text-secondary">Indisponível</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
+                    Você e o oponente precisam estar com o <span className="font-semibold">modo amistoso</span> ligado no perfil (janela ativa).
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <Link
+              href={`/perfil/${encodeURIComponent(alvoKey)}`}
+              className="mt-6 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg"
+            >
+              Voltar ao perfil
+            </Link>
+          </main>
+        </>
+      );
+    }
+
     return (
       <>
         <DashboardTopbar />
         <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
           <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">
-            Confirme o pedido de confronto no esporte <span className="text-eid-fg">{esporteNome}</span> (individual).
+            Confirme o pedido no esporte <span className="text-eid-fg">{esporteNome}</span> (individual) ·{" "}
+            <span className="font-semibold text-eid-fg">
+              {finalidadeEscolhida === "amistoso" ? "Match amistoso" : "Match de ranking"}
+            </span>
+            .
           </p>
+          {finalidadeEscolhida === "amistoso" ? (
+            <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+              Este pedido <span className="font-semibold text-emerald-200">não soma pontos</span> e não usa agenda de ranking. O WhatsApp será liberado após aceite, para vocês combinarem. Para confronto que valha ranking, agenda e resultado, volte ao perfil e escolha{" "}
+              <span className="font-semibold text-eid-fg">match de ranking</span>.
+            </div>
+          ) : (
+            <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+              Match de ranking: após aceito, use a <span className="font-semibold text-eid-fg">agenda</span> e o lançamento de resultado para atualizar o ranking.
+            </div>
+          )}
           <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:p-4">
             <p className="text-sm font-semibold text-eid-fg">{perfil.nome ?? "Atleta"}</p>
             <p className="mt-1 text-xs text-eid-text-secondary">Modalidade: individual</p>
           </div>
-          <DesafioEnviarForm modalidade="individual" esporteId={esporteId} alvoUsuarioId={perfil.id} />
-          <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
-            Cancelar
-          </Link>
+          <DesafioEnviarForm
+            modalidade="individual"
+            esporteId={esporteId}
+            alvoUsuarioId={perfil.id}
+            finalidade={finalidadeEscolhida}
+          />
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Link
+              href={`/desafio?id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${esporteId}`}
+              className="inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg"
+            >
+              ← Trocar tipo de match
+            </Link>
+            <Link href="/match" className="inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
+              Cancelar
+            </Link>
+          </div>
         </main>
       </>
     );
@@ -216,7 +332,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           <p className="text-sm font-semibold text-eid-fg">{timeRow.nome ?? "Formação"}</p>
           <p className="mt-1 text-xs text-eid-text-secondary">Modalidade: {modalidade}</p>
         </div>
-        <DesafioEnviarForm modalidade={modalidade} esporteId={esporteId} alvoTimeId={timeRow.id} />
+        <DesafioEnviarForm modalidade={modalidade} esporteId={esporteId} alvoTimeId={timeRow.id} finalidade="ranking" />
         <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
           Cancelar
         </Link>

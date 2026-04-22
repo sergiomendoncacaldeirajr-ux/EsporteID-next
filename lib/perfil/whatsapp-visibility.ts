@@ -116,6 +116,7 @@ export async function esporteIdsComMatchAceitoEntre(
     .from("matches")
     .select("esporte_id")
     .eq("status", "Aceito")
+    .eq("finalidade", "ranking")
     .eq("usuario_id", visitanteId)
     .eq("adversario_id", perfilId);
 
@@ -123,6 +124,7 @@ export async function esporteIdsComMatchAceitoEntre(
     .from("matches")
     .select("esporte_id")
     .eq("status", "Aceito")
+    .eq("finalidade", "ranking")
     .eq("usuario_id", perfilId)
     .eq("adversario_id", visitanteId);
 
@@ -200,6 +202,7 @@ export async function formacaoTemMatchAceitoEntre(
     .from("matches")
     .select("id")
     .eq("status", "Aceito")
+    .eq("finalidade", "ranking")
     .eq("usuario_id", visitanteId)
     .eq("adversario_time_id", alvoTimeId)
     .eq("esporte_id", esporteId)
@@ -211,6 +214,7 @@ export async function formacaoTemMatchAceitoEntre(
       .from("matches")
       .select("id")
       .eq("status", "Aceito")
+      .eq("finalidade", "ranking")
       .eq("usuario_id", alvoCriadorId)
       .eq("adversario_id", visitanteId)
       .eq("adversario_time_id", visitanteTimeId)

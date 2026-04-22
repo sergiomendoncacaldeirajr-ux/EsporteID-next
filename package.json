@@ -11,6 +11,7 @@
     "migrate:mysql": "node scripts/migrate-from-mysql.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-rekognition": "^3.1035.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.3",
     "lucide-react": "^1.8.0",

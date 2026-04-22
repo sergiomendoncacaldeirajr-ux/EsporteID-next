@@ -8,7 +8,7 @@ export default async function AdminUsuariosPage() {
   const db = createServiceRoleClient();
   const { data, error } = await db
     .from("profiles")
-    .select("id, nome, tipo_usuario, perfil_completo, criado_em")
+    .select("id, nome, tipo_usuario, perfil_completo, criado_em, match_maioridade_confirmada, match_maioridade_confirmada_em")
     .order("criado_em", { ascending: false })
     .limit(200);
   if (error) {
@@ -37,11 +37,19 @@ export default async function AdminUsuariosPage() {
                 <td className="px-3 py-2 text-eid-text-secondary">{p.tipo_usuario}</td>
                 <td className="px-3 py-2">{p.perfil_completo ? "Completo" : "Pendente"}</td>
                 <td className="px-3 py-2 text-eid-text-secondary">
+                  {p.match_maioridade_confirmada
+                    ? `Sim · ${p.match_maioridade_confirmada_em ? new Date(p.match_maioridade_confirmada_em).toLocaleString("pt-BR") : ""}`
+                    : "Não"}
+                </td>
+                <td className="px-3 py-2 text-eid-text-secondary">
                   {p.criado_em ? new Date(p.criado_em).toLocaleString("pt-BR") : "—"}
                 </td>
                 <td className="px-3 py-2">
+                  <Link href={`/admin/usuarios/${p.id}`} className="mr-2 font-semibold text-eid-action-400 hover:underline">
+                    Auditoria
+                  </Link>
                   <Link href={`/perfil/${p.id}`} className="font-semibold text-eid-primary-300 hover:underline" target="_blank" rel="noreferrer">
-                    Abrir
+                    Perfil
                   </Link>
                 </td>
               </tr>
