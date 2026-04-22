@@ -351,7 +351,17 @@ export default async function RankingPage({ searchParams }: Props) {
                   <h2 className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Classificação geral</h2>
                   <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] sm:px-3">
                     {pageSlice.length === 0 ? (
-                      <p className="py-5 text-center text-sm text-eid-text-secondary">Fim da lista.</p>
+                      <div className="flex flex-col items-center justify-center gap-1.5 py-5 text-center">
+                        <span
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 text-eid-primary-300 shadow-[0_8px_16px_-12px_rgba(37,99,235,0.55)]"
+                          aria-hidden
+                        >
+                          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
+                            <path d="M7 4h10v2h2a1 1 0 0 1 1 1v2a4.5 4.5 0 0 1-4 4.47A5.02 5.02 0 0 1 13 16.8V19h3v2H8v-2h3v-2.2a5.02 5.02 0 0 1-3-3.33A4.5 4.5 0 0 1 4 9V7a1 1 0 0 1 1-1h2V4zm-1 4v1a2.5 2.5 0 0 0 2 2.45V8H6zm12 0v3.45A2.5 2.5 0 0 0 20 9V8h-2z" />
+                          </svg>
+                        </span>
+                        <p className="text-xs font-medium text-eid-text-secondary">Sem resultados aqui</p>
+                      </div>
                     ) : (
                       pageSlice.map((row, i) => {
                         const rank = 4 + start + i;

@@ -185,7 +185,7 @@ export function RankingPeriodToggle({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
   return (
     <div className="flex justify-end">
-      <div className="relative flex h-6 min-w-[6.4rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[9px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="relative flex h-[1.3rem] min-w-[6rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[8px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
         <span
           className={cn(
             "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
@@ -196,7 +196,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "ano", page: 1 })}
           className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1 text-[8px] font-semibold uppercase leading-none tracking-[0.025em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
             state.periodo === "ano" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -205,7 +205,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "mes", page: 1 })}
           className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1 text-[8px] font-semibold uppercase leading-none tracking-[0.025em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
             state.periodo === "mes" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -227,7 +227,7 @@ export function RankingRankToggle({
   const rankIsMatch = state.rank === "match";
   return (
     <div className="flex justify-start">
-      <div className="relative flex h-6 min-w-[6.4rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[9px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="relative flex h-[1.3rem] min-w-[6rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[8px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
         <span
           className={cn(
             "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
@@ -238,7 +238,7 @@ export function RankingRankToggle({
         <Link
           href={href({ rank: "match", page: 1 })}
           className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1 text-[8px] font-semibold uppercase leading-none tracking-[0.025em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
             rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -247,7 +247,7 @@ export function RankingRankToggle({
         <Link
           href={href({ rank: "eid", page: 1 })}
           className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1 text-[8px] font-semibold uppercase leading-none tracking-[0.025em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.97] cursor-pointer",
             !rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -322,9 +322,15 @@ export function RankingPodium({
     <section className="relative z-[1] mb-0.5 isolate">
       <div className="eid-podium-card overflow-visible rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_28%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2.5 py-3 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_30px_-12px_rgba(37,99,235,0.55)] [&_a]:[-webkit-tap-highlight-color:transparent]">
         {rankToggle || periodToggle ? (
-          <div className="relative z-[3] mb-0.5 flex items-center justify-between gap-1.5">
-            <div className="min-w-0">{rankToggle}</div>
-            <div className="min-w-0">{periodToggle}</div>
+          <div className="relative z-[3] mb-0.5 grid grid-cols-2 items-start gap-1.5">
+            <div className="min-w-0 w-fit flex flex-col items-start">
+              <p className="mb-0.5 w-full text-left text-[7px] font-semibold uppercase tracking-[0.1em] text-eid-text-secondary">Tipo de rank</p>
+              {rankToggle}
+            </div>
+            <div className="ml-auto min-w-0 w-fit flex flex-col items-end">
+              <p className="mb-0.5 w-full text-right text-[7px] font-semibold uppercase tracking-[0.1em] text-eid-text-secondary">Período</p>
+              {periodToggle}
+            </div>
           </div>
         ) : null}
         <h2 className="pointer-events-none eid-podium-title -mt-5 mb-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-transparent bg-gradient-to-b from-white via-eid-primary-300 to-eid-primary-500 bg-clip-text drop-shadow-[0_1px_3px_rgba(37,99,235,0.45)]">
