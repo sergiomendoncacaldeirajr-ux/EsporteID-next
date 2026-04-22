@@ -23,6 +23,14 @@
   --eid-action-600: #ea580c;
   --eid-action-500: #f97316;
   --eid-action-400: #fb923c;
+  --eid-success-500: #22c55e;
+  --eid-success-400: #4ade80;
+  --eid-warning-500: #f59e0b;
+  --eid-warning-400: #fbbf24;
+  --eid-danger-500: #ef4444;
+  --eid-danger-400: #f87171;
+  --eid-info-500: #0ea5e9;
+  --eid-info-400: #38bdf8;
 
   /* Raios — consistente, compacto (app nativo) */
   --eid-radius-sm: 8px;
@@ -112,6 +120,10 @@ body.eid-app-shell {
   --color-eid-action-400: var(--eid-action-400);
   --color-eid-action-500: var(--eid-action-500);
   --color-eid-action-600: var(--eid-action-600);
+  --color-eid-success-500: var(--eid-success-500);
+  --color-eid-warning-500: var(--eid-warning-500);
+  --color-eid-danger-500: var(--eid-danger-500);
+  --color-eid-info-500: var(--eid-info-500);
   --color-eid-text: var(--eid-text-primary);
   --color-eid-text-secondary: var(--eid-text-secondary);
   --color-eid-text-muted: var(--eid-text-muted);
@@ -738,4 +750,162 @@ input.eid-input-dark[type="datetime-local"] {
     var(--eid-primary-500)
   );
   filter: drop-shadow(0 1px 2px rgba(37, 99, 235, 0.22));
+}
+
+/* Superfície padrão tipo Ranking (glass card). */
+.eid-surface-panel {
+  border: 1px solid var(--eid-border-subtle);
+  border-radius: var(--eid-radius-xl);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--eid-card) 97%, transparent),
+    color-mix(in srgb, var(--eid-surface) 94%, transparent)
+  );
+  box-shadow:
+    0 12px 26px -18px rgba(15, 23, 42, 0.4),
+    0 0 24px -20px rgba(37, 99, 235, 0.45);
+  backdrop-filter: blur(10px);
+}
+
+/* Chip interativo reutilizável (ativo/inativo). */
+.eid-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 1.75rem;
+  border-radius: 9999px;
+  padding: 0.22rem 0.62rem;
+  border: 1px solid var(--eid-border-subtle);
+  background: transparent;
+  color: var(--eid-text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.14s ease;
+}
+.eid-chip:hover {
+  background: color-mix(in srgb, var(--eid-surface) 80%, transparent);
+}
+.eid-chip:active {
+  transform: scale(0.985);
+}
+.eid-chip-active {
+  border-color: color-mix(in srgb, var(--eid-primary-500) 38%, var(--eid-border-subtle));
+  background: color-mix(in srgb, var(--eid-primary-500) 16%, var(--eid-surface) 84%);
+  color: var(--eid-fg);
+}
+
+/* Toggle segmentado no estilo compacto do ranking. */
+.eid-segment-toggle {
+  position: relative;
+  display: flex;
+  min-height: 1.38rem;
+  border: 1px solid var(--eid-border-subtle);
+  border-radius: 9999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--eid-bg) 24%, var(--eid-surface) 76%);
+  padding: 2px;
+}
+.eid-segment-toggle > a,
+.eid-segment-toggle > button {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding-inline: 0.48rem;
+  color: var(--eid-text-secondary);
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  transition: all 0.22s ease;
+}
+.eid-segment-toggle > a:hover,
+.eid-segment-toggle > button:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.eid-segment-toggle > a[aria-current="page"],
+.eid-segment-toggle > button[aria-pressed="true"] {
+  color: var(--eid-fg);
+  background: color-mix(in srgb, var(--eid-primary-500) 18%, var(--eid-surface) 82%);
+  border: 1px solid color-mix(in srgb, var(--eid-primary-500) 30%, transparent);
+}
+
+/* Botões secundários reutilizáveis no shell logado. */
+.eid-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.15rem;
+  border-radius: var(--eid-radius-md);
+  border: 1px solid var(--eid-border-subtle);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--eid-card) 94%, transparent),
+    color-mix(in srgb, var(--eid-surface) 92%, transparent)
+  );
+  color: var(--eid-fg);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.eid-btn-ghost:hover {
+  border-color: color-mix(in srgb, var(--eid-primary-500) 36%, var(--eid-border-subtle));
+  background: color-mix(in srgb, var(--eid-primary-500) 10%, var(--eid-surface) 90%);
+}
+.eid-btn-ghost:active {
+  transform: translateY(0.5px) scale(0.985);
+}
+
+.eid-btn-soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.15rem;
+  border-radius: var(--eid-radius-md);
+  border: 1px solid color-mix(in srgb, var(--eid-primary-500) 30%, var(--eid-border-subtle));
+  background: color-mix(in srgb, var(--eid-primary-500) 13%, var(--eid-surface) 87%);
+  color: var(--eid-fg);
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.eid-btn-soft:hover {
+  background: color-mix(in srgb, var(--eid-primary-500) 18%, var(--eid-surface) 82%);
+}
+.eid-btn-soft:active {
+  transform: translateY(0.5px) scale(0.985);
+}
+
+/* Item de lista reutilizável para blocos de cards. */
+.eid-list-item {
+  border-radius: var(--eid-radius-lg);
+  border: 1px solid var(--eid-border-subtle);
+  background: color-mix(in srgb, var(--eid-card) 96%, transparent);
+  box-shadow: 0 8px 20px -16px rgba(15, 23, 42, 0.45);
+}
+
+/* Badges semânticos para estados globais. */
+.eid-badge-warning {
+  border: 1px solid color-mix(in srgb, var(--eid-warning-500) 42%, transparent);
+  background: color-mix(in srgb, var(--eid-warning-500) 14%, transparent);
+  color: color-mix(in srgb, var(--eid-warning-400) 82%, var(--eid-fg) 18%);
+}
+.eid-badge-danger {
+  border: 1px solid color-mix(in srgb, var(--eid-danger-500) 42%, transparent);
+  background: color-mix(in srgb, var(--eid-danger-500) 14%, transparent);
+  color: color-mix(in srgb, var(--eid-danger-400) 82%, var(--eid-fg) 18%);
+}
+.eid-badge-success {
+  border: 1px solid color-mix(in srgb, var(--eid-success-500) 42%, transparent);
+  background: color-mix(in srgb, var(--eid-success-500) 14%, transparent);
+  color: color-mix(in srgb, var(--eid-success-400) 82%, var(--eid-fg) 18%);
 }

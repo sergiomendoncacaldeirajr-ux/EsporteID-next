@@ -139,7 +139,7 @@ export default async function PerformancePage({ searchParams }: Props) {
     <>
       <DashboardTopbar />
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
-        <div className="relative mb-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 md:mb-6 md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/20 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-primary-500/10 md:p-8">
+        <div className="eid-surface-panel relative mb-4 rounded-xl p-3 md:mb-6 md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/20 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-primary-500/10 md:p-8">
           <div className="pointer-events-none absolute right-0 top-0 hidden h-36 w-36 rounded-full bg-eid-action-500/15 blur-3xl md:block" />
           <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between md:gap-4">
             <div>
@@ -150,14 +150,14 @@ export default async function PerformancePage({ searchParams }: Props) {
             </div>
             <Link
               href="/dashboard"
-              className="shrink-0 rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-center text-xs font-bold text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg"
+              className="eid-btn-ghost shrink-0 rounded-xl px-4 py-2 text-center text-xs font-bold text-eid-text-secondary hover:text-eid-fg"
             >
               Painel
             </Link>
           </div>
         </div>
 
-        <form className="mb-6 grid gap-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:grid-cols-[1fr_180px_auto]">
+        <form className="eid-surface-panel mb-6 grid gap-2 rounded-2xl p-3 sm:grid-cols-[1fr_180px_auto]">
           <select
             name="esporte"
             defaultValue={sp.esporte ?? ""}
@@ -194,7 +194,7 @@ export default async function PerformancePage({ searchParams }: Props) {
                 return (
                   <article
                     key={`${r.id}-${idx}`}
-                    className="relative overflow-hidden rounded-xl border border-eid-primary-500/20 bg-eid-card p-3 shadow-sm sm:rounded-2xl sm:bg-gradient-to-br sm:from-eid-card sm:to-eid-primary-500/[0.07] sm:p-4 sm:shadow-md sm:shadow-black/20"
+                    className="eid-list-item relative overflow-hidden rounded-xl border-eid-primary-500/20 bg-eid-card p-3 shadow-sm sm:rounded-2xl sm:bg-gradient-to-br sm:from-eid-card sm:to-eid-primary-500/[0.07] sm:p-4 sm:shadow-md sm:shadow-black/20"
                   >
                     <div className="pointer-events-none absolute -right-4 -top-4 hidden h-16 w-16 rounded-full bg-eid-primary-500/15 blur-2xl sm:block" />
                     <p className="relative text-sm font-bold text-eid-fg">{e?.nome ?? "Esporte"}</p>
@@ -226,11 +226,11 @@ export default async function PerformancePage({ searchParams }: Props) {
                 const rank = idx + 1;
                 const medal =
                   rank === 1
-                    ? "from-amber-400/25 border-amber-400/40"
+                    ? "from-[color:color-mix(in_srgb,var(--eid-warning-500)_26%,transparent)] border-[color:color-mix(in_srgb,var(--eid-warning-500)_40%,transparent)]"
                     : rank === 2
-                      ? "from-slate-300/20 border-slate-400/35"
+                      ? "from-[color:color-mix(in_srgb,var(--eid-info-500)_20%,transparent)] border-[color:color-mix(in_srgb,var(--eid-info-500)_34%,transparent)]"
                       : rank === 3
-                        ? "from-orange-400/20 border-orange-400/35"
+                        ? "from-[color:color-mix(in_srgb,var(--eid-action-500)_20%,transparent)] border-[color:color-mix(in_srgb,var(--eid-action-500)_36%,transparent)]"
                         : "from-eid-card border-[color:var(--eid-border-subtle)]";
                 return (
                   <article
@@ -251,7 +251,7 @@ export default async function PerformancePage({ searchParams }: Props) {
               })}
             </div>
           ) : (
-            <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-sm text-eid-text-secondary">
+            <p className="eid-list-item rounded-xl bg-eid-card p-4 text-sm text-eid-text-secondary">
               Ainda não há ranking de performance para esse filtro.
             </p>
           )}
@@ -269,7 +269,7 @@ export default async function PerformancePage({ searchParams }: Props) {
                 return (
                   <article
                     key={h.id}
-                    className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-4 py-3"
+                    className="eid-list-item rounded-2xl bg-eid-card/90 px-4 py-3"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-eid-fg">{e?.nome ?? "Esporte"}</p>
@@ -278,7 +278,7 @@ export default async function PerformancePage({ searchParams }: Props) {
                           st === "pendente"
                             ? "text-eid-action-500"
                             : st === "rejeitado"
-                              ? "text-red-300"
+                              ? "text-[color:color-mix(in_srgb,var(--eid-danger-400)_78%,var(--eid-fg)_22%)]"
                               : "text-eid-primary-300"
                         }`}
                       >
@@ -296,7 +296,7 @@ export default async function PerformancePage({ searchParams }: Props) {
               })}
             </div>
           ) : (
-            <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-sm text-eid-text-secondary">
+            <p className="eid-list-item rounded-xl bg-eid-card p-4 text-sm text-eid-text-secondary">
               Você ainda não possui registros de performance.
             </p>
           )}

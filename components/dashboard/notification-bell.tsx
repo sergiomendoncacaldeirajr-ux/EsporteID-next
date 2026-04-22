@@ -137,18 +137,18 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       </button>
 
       {open ? (
-        <div className="fixed left-1/2 top-[var(--eid-shell-header-offset)] z-[70] w-[min(94vw,340px)] -translate-x-1/2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 shadow-[0_16px_30px_-16px_rgba(0,0,0,0.52),0_0_24px_-14px_rgba(37,99,235,0.5)] backdrop-blur-xl md:absolute md:left-auto md:right-0 md:top-[calc(100%+8px)] md:w-[min(100vw-2rem,340px)] md:translate-x-0">
+        <div className="eid-surface-panel fixed left-1/2 top-[var(--eid-shell-header-offset)] z-[70] w-[min(94vw,340px)] -translate-x-1/2 p-3 md:absolute md:left-auto md:right-0 md:top-[calc(100%+8px)] md:w-[min(100vw-2rem,340px)] md:translate-x-0">
           <p className="border-b border-[color:var(--eid-border-subtle)] pb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">
             Resumo rápido
           </p>
           <ul className="mt-2 space-y-2 text-sm">
-            <li className="flex justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-3 py-2">
+            <li className="eid-list-item flex justify-between gap-2 px-3 py-2">
               <span className="text-eid-text-secondary">Agenda (jogos agendados)</span>
               <Link href="/agenda" className="font-bold tabular-nums text-eid-fg transition hover:opacity-85" onClick={() => setOpen(false)}>
                 {agendaN}
               </Link>
             </li>
-            <li className="flex justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-3 py-2">
+            <li className="eid-list-item flex justify-between gap-2 px-3 py-2">
               <span className="text-eid-text-secondary">Social (pedidos)</span>
               <Link
                 href="/comunidade"
@@ -158,7 +158,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                 {matchN}
               </Link>
             </li>
-            <li className="flex justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-3 py-2">
+            <li className="eid-list-item flex justify-between gap-2 px-3 py-2">
               <span className="text-eid-text-secondary">Placar aguardando você</span>
               <Link
                 href="/agenda#placares"
@@ -176,7 +176,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
           ) : (
             <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto pr-1">
               {preview.map((n) => (
-                <li key={n.id} className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2 py-1.5 text-xs">
+                <li key={n.id} className="eid-list-item rounded-lg px-2 py-1.5 text-xs">
                   <p className={`line-clamp-2 ${n.lida ? "text-eid-text-secondary" : "font-medium text-eid-fg"}`}>{n.mensagem}</p>
                   <p className="mt-0.5 text-[10px] text-eid-text-secondary">{formatShort(n.data_criacao ?? n.criada_em)}</p>
                 </li>
@@ -186,7 +186,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
 
           <Link
             href="/comunidade#notificacoes"
-            className="mt-3 flex min-h-[40px] items-center justify-center rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/14 text-xs font-bold text-eid-primary-300 transition-all duration-200 ease-out hover:bg-eid-primary-500/22 active:translate-y-[0.5px] active:scale-[0.99]"
+            className="eid-btn-soft mt-3 min-h-[40px] w-full rounded-xl text-xs font-bold text-eid-primary-300"
             onClick={() => setOpen(false)}
           >
             Abrir central Social

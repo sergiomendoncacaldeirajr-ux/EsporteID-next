@@ -53,7 +53,7 @@ export default async function ContaPerfilPage() {
         </div>
 
         {hasAthleteSports ? (
-          <p className="mb-4 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2 text-xs text-eid-text-secondary">
+          <p className="eid-list-item mb-4 rounded-xl border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2 text-xs text-eid-text-secondary">
             Para esportes do ranking, interesse no match e modalidades (individual/dupla/time), use{" "}
             <Link href={CONTA_ESPORTES_EID_HREF} className="font-semibold text-eid-primary-300 underline">
               Esportes e EID
@@ -62,7 +62,7 @@ export default async function ContaPerfilPage() {
           </p>
         ) : null}
         {hasProfessor ? (
-          <p className="mb-4 rounded-xl border border-eid-action-500/25 bg-eid-action-500/10 px-3 py-2 text-xs text-eid-text-secondary">
+          <p className="eid-list-item mb-4 rounded-xl border-eid-action-500/25 bg-eid-action-500/10 px-3 py-2 text-xs text-eid-text-secondary">
             Seu perfil profissional de professor, agenda, alunos e recebimentos ficam em{" "}
             <Link href="/professor" className="font-semibold text-eid-action-400 underline">
               Painel do professor

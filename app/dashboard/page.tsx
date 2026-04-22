@@ -101,7 +101,7 @@ const scrollRow =
   "-mx-3 flex gap-3 overflow-x-auto px-3 pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-6 sm:gap-4 sm:px-6 [&::-webkit-scrollbar]:hidden";
 
 const sectionActionClass =
-  "inline-flex shrink-0 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/80 px-3.5 py-1.5 text-[11px] font-bold tracking-wide text-eid-fg shadow-sm transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10 hover:text-eid-primary-300 active:scale-[0.98]";
+  "eid-btn-ghost inline-flex shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-wide";
 
 export default async function DashboardPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
@@ -251,7 +251,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     <>
       <DashboardTopbar />
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
-        <div className="relative overflow-hidden rounded-[1.35rem] border border-eid-primary-500/25 bg-gradient-to-br from-eid-card via-eid-card to-eid-primary-950/40 p-4 shadow-[0_24px_56px_-22px_rgba(37,99,235,0.4)] sm:rounded-2xl sm:p-6">
+        <div className="eid-surface-panel relative overflow-hidden rounded-[1.35rem] border-eid-primary-500/25 bg-gradient-to-br from-eid-card via-eid-card to-eid-primary-950/40 p-4 shadow-[0_24px_56px_-22px_rgba(37,99,235,0.4)] sm:rounded-2xl sm:p-6">
           <div
             className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-primary-500/15 blur-3xl"
             aria-hidden
@@ -301,7 +301,7 @@ export default async function DashboardPage({ searchParams }: Props) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="group flex min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-gradient-to-b from-eid-surface/95 to-eid-card/90 px-1 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition hover:border-eid-primary-500/45 hover:shadow-[0_14px_32px_-14px_rgba(37,99,235,0.55)] active:scale-[0.98] sm:min-h-[6.25rem] sm:py-4"
+                className="eid-list-item group flex min-h-[5.5rem] flex-col items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-eid-surface/95 to-eid-card/90 px-1 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition hover:border-eid-primary-500/45 hover:shadow-[0_14px_32px_-14px_rgba(37,99,235,0.55)] active:scale-[0.98] sm:min-h-[6.25rem] sm:py-4"
               >
                 <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-eid-primary-500/14 text-eid-primary-400 transition group-hover:bg-eid-primary-500/22 group-hover:text-eid-primary-300">
                   <Icon className="h-[22px] w-[22px] sm:h-6 sm:w-6" />
@@ -318,7 +318,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         {perfNav ? (
           <Link
             href={perfNav.href}
-            className="mt-2 flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-dashed border-eid-primary-500/35 bg-eid-surface/45 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-fg transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/10 hover:text-eid-primary-200 active:scale-[0.99] sm:text-[11px]"
+            className="eid-btn-ghost mt-2 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl border-dashed border-eid-primary-500/35 bg-eid-surface/45 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider hover:bg-eid-primary-500/10 sm:text-[11px]"
           >
             <IconStopwatch className="h-5 w-5 shrink-0 text-eid-primary-400" />
             <span>
@@ -331,7 +331,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         {hasProfessor ? (
           <Link
             href="/professor"
-            className="mt-2 flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-eid-action-500/35 bg-eid-action-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-action-400 transition hover:border-eid-action-500/55 hover:bg-eid-action-500/16 active:scale-[0.99] sm:text-[11px]"
+            className="eid-btn-soft mt-2 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl border-eid-action-500/35 bg-eid-action-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-action-400 sm:text-[11px]"
           >
             <IconUsers className="h-5 w-5 shrink-0 text-eid-action-400" />
             Painel do professor
@@ -340,14 +340,14 @@ export default async function DashboardPage({ searchParams }: Props) {
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <Link
               href="/professores"
-              className="flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-eid-action-500/25 bg-eid-surface/45 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-fg transition hover:border-eid-action-500/45 hover:bg-eid-action-500/10 active:scale-[0.99] sm:text-[11px]"
+              className="eid-btn-ghost flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border-eid-action-500/25 bg-eid-surface/45 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider sm:text-[11px]"
             >
               <IconUsers className="h-5 w-5 shrink-0 text-eid-action-400" />
               Explorar professores
             </Link>
             <Link
               href="/comunidade"
-              className="flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-primary-300 transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/16 active:scale-[0.99] sm:text-[11px]"
+              className="eid-btn-soft flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-primary-300 sm:text-[11px]"
             >
               <IconStopwatch className="h-5 w-5 shrink-0 text-eid-primary-300" />
               Social e aulas
@@ -357,7 +357,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         {hasEspaco ? (
           <Link
             href="/espaco"
-            className="mt-2 flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/16 active:scale-[0.99] sm:text-[11px]"
+            className="eid-btn-soft mt-2 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl border-eid-primary-500/35 bg-eid-primary-500/12 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-primary-300 sm:text-[11px]"
           >
             <IconMapPin className="h-5 w-5 shrink-0 text-eid-primary-300" />
             Painel do espaço
@@ -366,7 +366,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         {hasProfessor ? (
           <Link
             href="/comunidade"
-            className="mt-2 flex min-h-[3rem] items-center justify-center gap-2 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-primary-300 transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/16 active:scale-[0.99] sm:text-[11px]"
+            className="eid-btn-soft mt-2 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-primary-300 sm:text-[11px]"
           >
             <IconStopwatch className="h-5 w-5 shrink-0 text-eid-primary-300" />
             Social e aulas
@@ -419,7 +419,7 @@ export default async function DashboardPage({ searchParams }: Props) {
               ))}
             </div>
           ) : (
-            <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-sm text-eid-text-secondary">
+            <p className="eid-list-item rounded-xl p-4 text-sm text-eid-text-secondary">
               {q ? "Nenhum atleta encontrado para essa busca." : "Ainda não há atletas sugeridos para seu esporte principal."}
             </p>
           )}
@@ -454,7 +454,7 @@ export default async function DashboardPage({ searchParams }: Props) {
               ))}
             </div>
           ) : (
-            <p className="rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-5 text-center text-sm leading-relaxed text-eid-text-secondary">
+            <p className="eid-list-item rounded-2xl border-dashed bg-eid-surface/50 p-5 text-center text-sm leading-relaxed text-eid-text-secondary">
               {q ? "Nenhum torneio encontrado para essa busca." : "Sem torneios no momento."}
             </p>
           )}
@@ -494,7 +494,7 @@ export default async function DashboardPage({ searchParams }: Props) {
               ))}
             </div>
           ) : (
-            <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-sm text-eid-text-secondary">
+            <p className="eid-list-item rounded-xl p-4 text-sm text-eid-text-secondary">
               {q ? "Nenhum time encontrado para essa busca." : "Nenhum time por perto."}
             </p>
           )}
@@ -530,7 +530,7 @@ export default async function DashboardPage({ searchParams }: Props) {
               ))}
             </div>
           ) : (
-            <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-sm text-eid-text-secondary">
+            <p className="eid-list-item rounded-xl p-4 text-sm text-eid-text-secondary">
               Nenhum local em destaque ainda.
             </p>
           )}

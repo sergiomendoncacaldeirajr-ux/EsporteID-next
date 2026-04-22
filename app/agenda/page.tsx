@@ -145,22 +145,22 @@ export default async function AgendaPage() {
     <>
       <DashboardTopbar />
       <main className="mx-auto w-full max-w-lg px-3 py-3 sm:max-w-2xl sm:px-6 sm:py-4">
-        <div className="relative rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 md:relative md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/25 md:bg-gradient-to-br md:from-eid-card md:via-eid-primary-500/10 md:to-eid-card md:p-6 md:shadow-lg md:shadow-eid-primary-500/10">
+        <div className="eid-surface-panel relative rounded-xl p-3 md:relative md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/25 md:bg-gradient-to-br md:from-eid-card md:via-eid-primary-500/10 md:to-eid-card md:p-6 md:shadow-lg md:shadow-eid-primary-500/10">
           <div className="pointer-events-none absolute -right-16 -top-16 hidden h-40 w-40 rounded-full bg-eid-primary-500/20 blur-3xl md:block" />
           <h1 className="text-lg font-bold tracking-tight text-eid-fg md:text-2xl md:font-black">Agenda</h1>
           <p className="mt-1 hidden text-sm leading-relaxed text-eid-text-secondary md:mt-2 md:block">
             Conexões, jogos agendados e pendências de placar, em um só fluxo.
           </p>
           <div className="mt-3 grid grid-cols-3 gap-1.5 text-center md:mt-5 md:gap-2">
-            <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-bg/40 px-1 py-2 md:rounded-2xl md:px-2 md:py-3">
+            <div className="eid-list-item rounded-lg bg-eid-bg/40 px-1 py-2 md:rounded-2xl md:px-2 md:py-3">
               <p className="text-base font-bold tabular-nums text-eid-primary-300 md:text-xl md:font-black">{nAgendadas}</p>
               <p className="text-[8px] font-semibold uppercase tracking-wide text-eid-text-secondary md:text-[9px] md:font-bold">Agendados</p>
             </div>
-            <div className="rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-1 py-2 md:rounded-2xl md:px-2 md:py-3">
+            <div className="eid-list-item rounded-lg border-eid-action-500/30 bg-eid-action-500/10 px-1 py-2 md:rounded-2xl md:px-2 md:py-3">
               <p className="text-base font-bold tabular-nums text-eid-action-500 md:text-xl md:font-black">{nPlacar}</p>
               <p className="text-[8px] font-semibold uppercase tracking-wide text-eid-text-secondary md:text-[9px] md:font-bold">Placar</p>
             </div>
-            <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-bg/40 px-1 py-2 md:rounded-2xl md:px-2 md:py-3">
+            <div className="eid-list-item rounded-lg bg-eid-bg/40 px-1 py-2 md:rounded-2xl md:px-2 md:py-3">
               <p className="text-base font-bold tabular-nums text-eid-fg md:text-xl md:font-black">{nPendEnvio}</p>
               <p className="text-[8px] font-semibold uppercase tracking-wide text-eid-text-secondary md:text-[9px] md:font-bold">Enviei</p>
             </div>
@@ -178,7 +178,7 @@ export default async function AgendaPage() {
         <section className="mt-6 md:mt-10" id="placares">
           <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-action-500">Placar aguardando você</h2>
           {(placarPendente ?? []).length === 0 ? (
-            <p className="mt-3 rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-5 text-center text-sm text-eid-text-secondary">
+            <p className="eid-list-item mt-3 rounded-2xl border-dashed bg-eid-card/50 p-5 text-center text-sm text-eid-text-secondary">
               Nenhum placar pendente de confirmação.
             </p>
           ) : (
@@ -206,7 +206,7 @@ export default async function AgendaPage() {
         <section className="mt-6 md:mt-10">
           <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-500">Jogos agendados</h2>
           {(partidasAgendadas ?? []).length === 0 ? (
-            <div className="mt-4 rounded-[22px] border-2 border-dashed border-[color:var(--eid-border-subtle)] bg-eid-card/40 py-10 text-center">
+            <div className="eid-list-item mt-4 rounded-[22px] border-2 border-dashed bg-eid-card/40 py-10 text-center">
               <p className="text-sm font-bold text-eid-fg">Nenhuma pendência</p>
               <p className="mt-1 text-xs text-eid-text-secondary">Sua agenda está em dia. Combine um match no radar.</p>
             </div>
@@ -235,7 +235,7 @@ export default async function AgendaPage() {
         <section className="mt-6 md:mt-10">
           <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Pedidos que você enviou</h2>
           {(pendentesEnvio ?? []).length === 0 ? (
-            <p className="mt-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-4 text-sm text-eid-text-secondary">
+            <p className="eid-list-item mt-3 rounded-2xl bg-eid-card/80 p-4 text-sm text-eid-text-secondary">
               Você não tem pedidos aguardando resposta.
             </p>
           ) : (
@@ -263,7 +263,7 @@ export default async function AgendaPage() {
                         </p>
                       </div>
                     </div>
-                    <span className="rounded-full border border-amber-500/35 bg-amber-500/10 px-2 py-0.5 text-[10px] font-extrabold uppercase text-amber-200">
+                    <span className="eid-badge-warning rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase">
                       Aguardando
                     </span>
                   </li>

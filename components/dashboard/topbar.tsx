@@ -182,7 +182,7 @@ export function DashboardTopbar({
             {meId ? (
               <Link
                 href={`/perfil/${meId}`}
-                className="hidden h-8 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2.5 text-[11px] font-medium text-eid-fg transition hover:border-[color:var(--eid-border)] hover:bg-eid-surface/75 md:inline-flex"
+                className="eid-btn-ghost hidden h-8 shrink-0 gap-1.5 px-2.5 text-[11px] font-medium md:inline-flex"
                 aria-label="Meu perfil"
               >
                 <IconUserCircle className="h-4 w-4 text-eid-text-secondary" />

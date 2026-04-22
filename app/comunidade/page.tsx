@@ -213,26 +213,26 @@ export default async function ComunidadePage() {
     <>
       <DashboardTopbar />
       <main className="mx-auto w-full max-w-lg px-3 py-3 sm:max-w-2xl sm:px-6 sm:py-4">
-        <div className="relative rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-3 md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/20 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-primary-500/[0.12] md:p-6 md:shadow-xl md:shadow-black/20">
+        <div className="eid-surface-panel relative rounded-xl px-3 py-3 md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/20 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-primary-500/[0.12] md:p-6 md:shadow-xl md:shadow-black/20">
           <div className="pointer-events-none absolute -left-10 -bottom-10 hidden h-36 w-36 rounded-full bg-eid-action-500/15 blur-3xl md:block" />
           <h1 className="text-lg font-bold tracking-tight text-eid-fg md:text-2xl md:font-black">Comunidade</h1>
           <p className="mt-1 hidden text-sm leading-relaxed text-eid-text-secondary md:mt-2 md:block">
             Central de <strong className="text-eid-fg">notificações e pedidos</strong>, com interface clara e rápida.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5 md:mt-5 md:gap-2">
-            <span className="rounded-md border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-primary-200 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
+            <span className="eid-chip eid-chip-active rounded-md px-2 py-0.5 text-[10px] font-medium text-eid-primary-200 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
               {nNotifUnread} não lida(s)
             </span>
-            <span className="rounded-md border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-action-400 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
+            <span className="eid-chip rounded-md border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-action-400 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
               {nPedidos} pedido(s) de match
             </span>
-            <span className="rounded-md border border-amber-500/35 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-200 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
+            <span className="eid-chip eid-badge-warning rounded-md px-2 py-0.5 text-[10px] font-medium md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
               {nSugestoes} sugestão(ões) de membro
             </span>
-            <span className="rounded-md border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-primary-300 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
+            <span className="eid-chip eid-chip-active rounded-md px-2 py-0.5 text-[10px] font-medium text-eid-primary-300 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
               {conviteItems.length} convite(s) de equipe
             </span>
-            <span className="rounded-md border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-action-300 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
+            <span className="eid-chip rounded-md border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-action-300 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
               {nAulas} item(ns) de aulas
             </span>
           </div>
@@ -254,7 +254,7 @@ export default async function ComunidadePage() {
           </section>
 
           <section>
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-amber-200/90">Sugestões de match (líder)</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-warning-400)_78%,var(--eid-fg)_22%)]">Sugestões de match (líder)</h2>
             <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
               Um atleta da equipe sugeriu um confronto; ao aprovar, o match é confirmado e todos os membros das duas
               formações são avisados.
@@ -268,7 +268,7 @@ export default async function ComunidadePage() {
             <ComunidadePedidosMatch items={pedidosItems} />
           </section>
 
-          <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
+          <section className="eid-list-item rounded-2xl bg-eid-card/90 p-5">
             <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Em breve</h2>
             <ul className="mt-3 space-y-2 text-sm text-eid-text-secondary">
               <li className="flex gap-2">
@@ -285,19 +285,19 @@ export default async function ComunidadePage() {
           <div className="flex flex-wrap gap-3 pb-8">
             <Link
               href="/times"
-              className="rounded-2xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-5 py-2.5 text-xs font-bold text-eid-fg transition hover:border-eid-primary-500/60"
+              className="eid-btn-soft rounded-2xl border-eid-primary-500/40 bg-eid-primary-500/10 px-5 py-2.5 text-xs font-bold"
             >
               Times
             </Link>
             <Link
               href="/torneios"
-              className="rounded-2xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-5 py-2.5 text-xs font-bold text-eid-fg transition hover:border-eid-primary-500/60"
+              className="eid-btn-soft rounded-2xl border-eid-primary-500/40 bg-eid-primary-500/10 px-5 py-2.5 text-xs font-bold"
             >
               Torneios
             </Link>
             <Link
               href="/agenda"
-              className="rounded-2xl border border-[color:var(--eid-border-subtle)] px-5 py-2.5 text-xs font-bold text-eid-text-secondary transition hover:text-eid-fg"
+              className="eid-btn-ghost rounded-2xl px-5 py-2.5 text-xs font-bold text-eid-text-secondary hover:text-eid-fg"
             >
               Agenda
             </Link>

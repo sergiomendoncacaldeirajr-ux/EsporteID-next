@@ -92,7 +92,7 @@ type Props = {
 function NavBadge({ n }: { n: number }) {
   if (n < 1) return null;
   return (
-    <span className="absolute -right-1.5 -top-1.5 flex min-h-[17px] min-w-[17px] items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-black leading-none text-white shadow-md">
+    <span className="absolute -right-1.5 -top-1.5 flex min-h-[17px] min-w-[17px] items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-danger-500)_45%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-danger-500)_88%,transparent)] px-1 text-[9px] font-black leading-none text-white shadow-[0_5px_12px_-7px_color-mix(in_srgb,var(--eid-danger-500)_88%,transparent)]">
       {n > 99 ? "99+" : n}
     </span>
   );
@@ -367,7 +367,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         style={{ viewTransitionName: "eid-app-bottomnav" }}
       >
         <div
-          className="relative overflow-visible rounded-t-[16px] border-t border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_-6px_18px_rgba(0,0,0,0.18)] backdrop-blur-xl"
+          className="eid-surface-panel relative overflow-visible rounded-t-[16px] border-t"
           style={{
             minHeight: "calc(4rem + max(12px, env(safe-area-inset-bottom, 0px)))",
             paddingBottom: "calc(max(12px, env(safe-area-inset-bottom, 0px)) + 0.5rem)",
