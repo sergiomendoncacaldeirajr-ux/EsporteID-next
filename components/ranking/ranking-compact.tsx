@@ -40,8 +40,8 @@ export function RankingFilterBar({
   return (
     <div className="mb-3 sm:mb-3.5">
       <div className="space-y-2.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2.5 backdrop-blur-sm shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)]">
-        <div className="rounded-xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_76%,var(--eid-bg)_24%),color-mix(in_srgb,var(--eid-surface)_70%,var(--eid-bg)_30%))] p-1.5 backdrop-blur-sm">
-          <div className="flex h-[1.86rem] overflow-hidden rounded-md">
+        <div className="rounded-xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_52%,var(--eid-bg)_48%),color-mix(in_srgb,var(--eid-surface)_46%,var(--eid-bg)_54%))] p-1.5 backdrop-blur-sm">
+          <div className="flex h-[1.86rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_14%,var(--eid-surface)_86%)]">
             <Link href={href({ tipo: "individual", page: 1 })} className={tipoSegmentButton(state.tipo === "individual")}>
               Individual
             </Link>

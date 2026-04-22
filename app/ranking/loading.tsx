@@ -15,8 +15,10 @@ export default function LoadingRanking() {
         </header>
 
         <section className="mb-3 space-y-2 px-2 sm:mb-3.5">
-          <div className="rounded-xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_76%,var(--eid-bg)_24%),color-mix(in_srgb,var(--eid-surface)_70%,var(--eid-bg)_30%))] p-1.5 backdrop-blur-sm">
-            <SkBlock className="h-[1.86rem] w-full rounded-md" />
+          <div className="rounded-xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_52%,var(--eid-bg)_48%),color-mix(in_srgb,var(--eid-surface)_46%,var(--eid-bg)_54%))] p-1.5 backdrop-blur-sm">
+            <div className="rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_14%,var(--eid-surface)_86%)] p-0">
+              <SkBlock className="h-[1.86rem] w-full rounded-md" />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 rounded-xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1.5 backdrop-blur-sm">
