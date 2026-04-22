@@ -65,16 +65,10 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
 
   const { data: eidRows } = await supabase
     .from("usuario_eid")
-    .select("esporte_id, interesse_match, modalidade_match, modalidades_match, tempo_experiencia")
+    .select("esporte_id, modalidade_match, modalidades_match, tempo_experiencia")
     .eq("usuario_id", user.id);
 
   const selectedEsportes = (eidRows ?? []).map((r) => r.esporte_id);
-  const selectedEsportesInteresse = Object.fromEntries(
-    (eidRows ?? []).map((r) => [
-      r.esporte_id,
-      r.interesse_match === "ranking" ? "ranking" : r.interesse_match === "amistoso" ? "amistoso" : "ranking_e_amistoso",
-    ])
-  ) as Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
   const selectedEsportesModalidades = Object.fromEntries(
     (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
   );
@@ -120,7 +114,6 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
             }))}
             initialItems={selectedEsportes.map((esporteId) => ({
               esporteId,
-              interesse: selectedEsportesInteresse[esporteId] ?? "ranking_e_amistoso",
               modalidades:
                 (selectedEsportesModalidades[esporteId] as Array<"individual" | "dupla" | "time"> | undefined) ??
                 ["individual"],

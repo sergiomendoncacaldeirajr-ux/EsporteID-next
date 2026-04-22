@@ -65,7 +65,8 @@ export async function criarEquipe(
     escudo,
     criador_id: user.id,
     interesse_rank_match: true,
-    disponivel_amistoso: true,
+    disponivel_amistoso: false,
+    disponivel_amistoso_ate: null,
     vagas_abertas: true,
     })
     .select("id")
@@ -200,7 +201,6 @@ export async function atualizarMinhaEquipe(
       escudo,
       nivel_procurado,
       interesse_rank_match: checkboxOn(formData, "interesse_rank_match"),
-      disponivel_amistoso: checkboxOn(formData, "disponivel_amistoso"),
       vagas_abertas: checkboxOn(formData, "vagas_abertas"),
       aceita_pedidos: checkboxOn(formData, "aceita_pedidos"),
       interesse_torneio: checkboxOn(formData, "interesse_torneio"),

@@ -14,7 +14,6 @@ export function PerfilTimeEditForm({
   localizacao,
   escudo,
   interesse_rank_match,
-  disponivel_amistoso,
   vagas_abertas,
   aceita_pedidos,
   interesse_torneio,
@@ -28,7 +27,6 @@ export function PerfilTimeEditForm({
   localizacao: string | null;
   escudo: string | null;
   interesse_rank_match: boolean;
-  disponivel_amistoso: boolean;
   vagas_abertas: boolean;
   aceita_pedidos: boolean;
   interesse_torneio: boolean;
@@ -102,10 +100,6 @@ export function PerfilTimeEditForm({
         <label className="flex items-center gap-2 text-xs text-eid-text-secondary sm:col-span-2">
           <input type="checkbox" name="interesse_rank_match" defaultChecked={interesse_rank_match} className="rounded border-eid-border-subtle" />
           Interesse em match no ranking
-        </label>
-        <label className="flex items-center gap-2 text-xs text-eid-text-secondary sm:col-span-2">
-          <input type="checkbox" name="disponivel_amistoso" defaultChecked={disponivel_amistoso} className="rounded border-eid-border-subtle" />
-          Disponível para amistoso
         </label>
         <label className="flex items-center gap-2 text-xs text-eid-text-secondary sm:col-span-2">
           <input type="checkbox" name="vagas_abertas" defaultChecked={vagas_abertas} className="rounded border-eid-border-subtle" />

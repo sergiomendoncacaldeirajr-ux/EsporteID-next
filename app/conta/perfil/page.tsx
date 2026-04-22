@@ -54,7 +54,7 @@ export default async function ContaPerfilPage() {
 
         {hasAthleteSports ? (
           <p className="eid-list-item mb-4 rounded-xl border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2 text-xs text-eid-text-secondary">
-            Para esportes do ranking, interesse no match e modalidades (individual/dupla/time), use{" "}
+            Para esportes do ranking e modalidades (individual/dupla/time), use{" "}
             <Link href={CONTA_ESPORTES_EID_HREF} className="font-semibold text-eid-primary-300 underline">
               Esportes e EID
             </Link>

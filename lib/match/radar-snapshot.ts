@@ -100,7 +100,7 @@ export async function fetchMatchRadarCards(
       href: `/perfil/${encodeURIComponent(String(row.usuario_id ?? ""))}?from=/match`,
       canChallenge: true,
       avatarUrl: row.avatar_url ? String(row.avatar_url) : null,
-      disponivelAmistoso: row.disponivel_amistoso !== false,
+      disponivelAmistoso: row.disponivel_amistoso === true,
     }));
   } else {
     const { data: formacoes } = await supabase.rpc("buscar_match_formacoes", {
@@ -132,7 +132,7 @@ export async function fetchMatchRadarCards(
           ? `Somente o proprietário (capitão) pode desafiar. Crie sua ${tipo} neste esporte como líder.`
           : `Selecione um esporte e seja proprietário de uma ${tipo} para desafiar.`,
       avatarUrl: null,
-      disponivelAmistoso: t.disponivel_amistoso !== false,
+      disponivelAmistoso: t.disponivel_amistoso === true,
     }));
   }
 

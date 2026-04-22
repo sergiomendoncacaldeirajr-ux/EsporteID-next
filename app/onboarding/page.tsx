@@ -61,16 +61,6 @@ export default async function OnboardingPage() {
     .select("esporte_id, interesse_match, modalidade_match, modalidades_match")
     .eq("usuario_id", user.id);
   const selectedEsportes = (eidRows ?? []).map((r) => r.esporte_id);
-  const selectedEsportesInteresse = Object.fromEntries(
-    (eidRows ?? []).map((r) => [
-      r.esporte_id,
-      r.interesse_match === "ranking"
-        ? "ranking"
-        : r.interesse_match === "amistoso"
-          ? "amistoso"
-          : "ranking_e_amistoso",
-    ])
-  ) as Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
   const selectedEsportesModalidades = Object.fromEntries(
     (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
   );
@@ -181,7 +171,6 @@ export default async function OnboardingPage() {
       }))}
       selectedPapeis={papeis}
       selectedEsportes={selectedEsportesAll}
-      selectedEsportesInteresse={selectedEsportesInteresse}
       selectedEsportesModalidades={selectedEsportesModalidades}
       selectedSportModes={selectedSportModes}
       selectedProfessorObjetivos={selectedProfessorObjetivos}

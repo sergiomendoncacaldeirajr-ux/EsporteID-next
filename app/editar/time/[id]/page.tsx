@@ -109,7 +109,6 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
         localizacao={t.localizacao ?? null}
         escudo={t.escudo ?? null}
         interesse_rank_match={Boolean(t.interesse_rank_match)}
-        disponivel_amistoso={Boolean(t.disponivel_amistoso)}
         vagas_abertas={Boolean(t.vagas_abertas)}
         aceita_pedidos={Boolean(t.aceita_pedidos)}
         interesse_torneio={Boolean(t.interesse_torneio)}

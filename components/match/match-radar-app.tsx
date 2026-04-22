@@ -19,6 +19,8 @@ type Props = {
   initialSortBy: SortBy;
   initialRaio: number;
   viewerDisponivelAmistoso: boolean;
+  /** ISO da janela de 4h quando o modo amistoso está ligado */
+  viewerAmistosoExpiresAt: string | null;
   showSentBanner: boolean;
 };
 
@@ -33,6 +35,7 @@ export function MatchRadarApp({
   initialSortBy,
   initialRaio,
   viewerDisponivelAmistoso,
+  viewerAmistosoExpiresAt,
   showSentBanner,
 }: Props) {
   const [tipo, setTipo] = useState<RadarTipo>(initialTipo);
@@ -111,7 +114,11 @@ export function MatchRadarApp({
           </p>
         </div>
 
-        <MatchFriendlyToggle initialOn={viewerDisponivelAmistoso} userId={viewerId} />
+        <MatchFriendlyToggle
+          initialOn={viewerDisponivelAmistoso}
+          initialExpiresAt={viewerAmistosoExpiresAt}
+          userId={viewerId}
+        />
       </header>
 
       {showSentBanner ? (

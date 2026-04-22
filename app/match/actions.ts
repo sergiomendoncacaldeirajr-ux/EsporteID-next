@@ -9,6 +9,7 @@ import {
   type RadarTipo,
   type SortBy,
 } from "@/lib/match/radar-snapshot";
+import { nextDisponivelAmistosoPayload } from "@/lib/perfil/disponivel-amistoso";
 import { createClient } from "@/lib/supabase/server";
 
 export type MatchLocationResult = { ok: true } | { ok: false; message: string };
@@ -85,7 +86,10 @@ export async function setViewerDisponivelAmistoso(disponivel: boolean): Promise<
   const { supabase, user } = await getServerAuth();
   if (!user) return { ok: false, error: "Sessão expirada." };
 
-  const { error } = await supabase.from("profiles").update({ disponivel_amistoso: disponivel }).eq("id", user.id);
+  const payload = nextDisponivelAmistosoPayload(disponivel);
+  const { error } = await supabase.from("profiles").update(payload).eq("id", user.id);
   if (error) return { ok: false, error: error.message };
+  revalidatePath("/match");
+  revalidatePath(`/perfil/${user.id}`);
   return { ok: true };
 }

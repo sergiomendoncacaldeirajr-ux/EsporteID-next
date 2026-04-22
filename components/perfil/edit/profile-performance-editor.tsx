@@ -14,7 +14,6 @@ type Sport = {
 
 type ItemState = {
   esporteId: number;
-  interesse: "ranking" | "ranking_e_amistoso" | "amistoso";
   modalidades: Array<"individual" | "dupla" | "time">;
   tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos";
   tempoAnos?: number;
@@ -118,19 +117,6 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
                   </button>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <select
-                    value={item.interesse}
-                    onChange={(ev) =>
-                      updateItem(item.esporteId, {
-                        interesse: ev.target.value as ItemState["interesse"],
-                      })
-                    }
-                    className="eid-input-dark w-full rounded-lg px-2.5 py-1.5 text-xs text-eid-fg [&>option]:bg-[#0b1220] [&>option]:text-white"
-                  >
-                    <option value="ranking">Somente ranking</option>
-                    <option value="ranking_e_amistoso">Ranking + amistoso</option>
-                    <option value="amistoso">Somente amistoso</option>
-                  </select>
                   <select
                     value={item.tempo}
                     onChange={(ev) => updateItem(item.esporteId, { tempo: ev.target.value as ItemState["tempo"] })}

@@ -401,12 +401,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
   const decisoes = vit + der;
   const winRate = decisoes > 0 ? Math.round((vit / decisoes) * 100) : null;
 
-  const interesseLabel =
-    {
-      ranking: "Ranking",
-      amistoso: "Amistoso",
-      ranking_e_amistoso: "Ranking e amistoso",
-    }[String(ue.interesse_match ?? "").toLowerCase()] ?? (ue.interesse_match ? String(ue.interesse_match) : "—");
+  const interesseLabel = "Ranking";
 
   const modalidadeLabel = labelModalidadesMatchPt(modalidadesFromUsuarioEidRow(ue));
 

@@ -543,7 +543,6 @@ type Props = {
   locais: { id: number; nome: string; localizacao: string; donoUsuarioId: string | null }[];
   selectedPapeis: string[];
   selectedEsportes: number[];
-  selectedEsportesInteresse: Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
   selectedEsportesModalidades: Record<number, MatchModality[]>;
   selectedSportModes: Record<number, ProfessorModoEsportivo>;
   selectedProfessorObjetivos: Record<number, ProfessorObjetivoPlataforma>;
@@ -602,7 +601,6 @@ export function OnboardingWizard({
   locais,
   selectedPapeis,
   selectedEsportes,
-  selectedEsportesInteresse,
   selectedEsportesModalidades,
   selectedSportModes,
   selectedProfessorObjetivos,
@@ -622,9 +620,6 @@ export function OnboardingWizard({
     new Set(normalizarPapeisContaPrincipal(selectedPapeis))
   );
   const [esportesSel, setEsportesSel] = useState<Set<number>>(new Set(selectedEsportes));
-  const [esportesInteresse, setEsportesInteresse] = useState<Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">>(
-    selectedEsportesInteresse
-  );
   const [esportesModalidades, setEsportesModalidades] = useState<Record<number, MatchModality[]>>(
     selectedEsportesModalidades
   );
@@ -755,10 +750,6 @@ export function OnboardingWizard({
   }, [selectedEsportes]);
 
   useEffect(() => {
-    setEsportesInteresse(selectedEsportesInteresse);
-  }, [selectedEsportesInteresse]);
-
-  useEffect(() => {
     setEsportesModalidades(selectedEsportesModalidades);
   }, [selectedEsportesModalidades]);
 
@@ -784,7 +775,6 @@ export function OnboardingWizard({
             step: "papeis" as Step,
             papeis: [] as string[],
             esportesSel: [] as number[],
-            esportesInteresse: {} as Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">,
             esportesModalidades: {} as Record<number, MatchModality[]>,
             esporteModes: {} as Record<number, ProfessorModoEsportivo>,
             professorObjetivos: {} as Record<number, ProfessorObjetivoPlataforma>,
@@ -802,7 +792,6 @@ export function OnboardingWizard({
         step: Step;
         papeis: string[];
         esportesSel: number[];
-        esportesInteresse: Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
         esportesModalidades?: Record<number, MatchModality[]>;
         esportesModalidade?: Record<number, "individual" | "dupla" | "time">;
         esporteModes?: Record<number, ProfessorModoEsportivo>;
@@ -867,7 +856,6 @@ export function OnboardingWizard({
         setPapeis(new Set(normalizarPapeisContaPrincipal(draft.papeis as string[])));
       }
       if (draft.esportesSel) setEsportesSel(new Set(draft.esportesSel));
-      if (draft.esportesInteresse) setEsportesInteresse(draft.esportesInteresse);
       if (draft.esporteModes) setEsporteModes(draft.esporteModes);
       if (draft.professorObjetivos) setProfessorObjetivos(draft.professorObjetivos);
       if (draft.professorTipos) setProfessorTipos(draft.professorTipos);
@@ -960,7 +948,6 @@ export function OnboardingWizard({
       step,
       papeis: [...papeis],
       esportesSel: [...esportesSel],
-      esportesInteresse,
       esportesModalidades,
       esporteModes,
       professorObjetivos,
@@ -1020,7 +1007,6 @@ export function OnboardingWizard({
     espacoEsportes,
     espacoNome,
     esportesSel,
-    esportesInteresse,
     esportesModalidades,
     esporteModes,
     professorObjetivos,
@@ -1193,7 +1179,6 @@ export function OnboardingWizard({
       step: "papeis" as Step,
       papeis: [] as string[],
       esportesSel: [] as number[],
-      esportesInteresse: {} as Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">,
       esportesModalidades: {} as Record<number, MatchModality[]>,
       esporteModes: {} as Record<number, ProfessorModoEsportivo>,
       professorObjetivos: {} as Record<number, ProfessorObjetivoPlataforma>,
@@ -1209,7 +1194,6 @@ export function OnboardingWizard({
     setStep("papeis");
     setPapeis(new Set());
     setEsportesSel(new Set());
-    setEsportesInteresse({});
     setEsportesModalidades({});
     setEsporteModes({});
     setProfessorObjetivos({});
@@ -1298,10 +1282,6 @@ export function OnboardingWizard({
         });
       } else {
         n.add(id);
-        setEsportesInteresse((old) => ({
-          ...old,
-          [id]: old[id] ?? "ranking_e_amistoso",
-        }));
         const defaultMode: ProfessorModoEsportivo = hasProfessor ? "professor" : "atleta";
         setEsporteModes((old) => ({
           ...old,
@@ -1360,10 +1340,6 @@ export function OnboardingWizard({
       else if (current.size > 1) current.delete(tipo);
       return { ...old, [id]: [...current] as ProfessorTipoAtuacao[] };
     });
-  }
-
-  function setEsporteInteresse(id: number, interesse: "ranking" | "ranking_e_amistoso" | "amistoso") {
-    setEsportesInteresse((old) => ({ ...old, [id]: interesse }));
   }
 
   function toggleEsporteModality(id: number, modalidade: MatchModality, checked: boolean) {
@@ -1827,92 +1803,6 @@ export function OnboardingWizard({
 
                       {temAtletaNoEsporte ? (
                         <>
-                      <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
-                        Interesse no match
-                      </p>
-                      <div className="mt-1.5 flex flex-col gap-1.5">
-                        {([
-                          {
-                            val: "ranking",
-                            label: "Só ranking",
-                            desc: "Apenas partidas competitivas",
-                            icon: (
-                              <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0" fill="none">
-                                <path d="M5 2h6v7a3 3 0 01-6 0V2z" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-                                <path d="M2 3h3v4a2 2 0 01-2-2V3zM11 3h3v2a2 2 0 01-2 2V3z" fill="currentColor" fillOpacity="0.3"/>
-                                <line x1="8" y1="12" x2="8" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                                <line x1="6" y1="14" x2="10" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                              </svg>
-                            ),
-                            color: "var(--eid-primary-500)",
-                          },
-                          {
-                            val: "ranking_e_amistoso",
-                            label: "Ranking + Amistoso",
-                            desc: "Aceito os dois tipos de partida",
-                            icon: (
-                              <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0" fill="none">
-                                <path d="M8 1l1.5 3.5L13 5l-2.5 2.5.5 3.5L8 9.5 5 11l.5-3.5L3 5l3.5-.5L8 1z" fill="currentColor" fillOpacity="0.25" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-                              </svg>
-                            ),
-                            color: "var(--eid-action-500)",
-                          },
-                          {
-                            val: "amistoso",
-                            label: "Apenas amistosos",
-                            desc: "Partidas sem impacto no ranking",
-                            icon: (
-                              <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0" fill="none">
-                                <circle cx="5.5" cy="5" r="2" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.4"/>
-                                <circle cx="10.5" cy="5" r="2" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="1.4"/>
-                                <path d="M1 13c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
-                                <path d="M10 10c.8-.6 1.8-1 3-1 2 0 3 1.2 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none"/>
-                              </svg>
-                            ),
-                            color: "#22c55e",
-                          },
-                        ] as const).map(({ val, label, desc, icon, color }) => {
-                          const active = (esportesInteresse[e.id] ?? "ranking_e_amistoso") === val;
-                          return (
-                            <label
-                              key={val}
-                              className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 transition-all select-none ${
-                                active
-                                  ? "border-eid-primary-500/40 bg-eid-primary-500/8"
-                                  : "border-[color:var(--eid-border-subtle)] hover:border-eid-primary-500/25"
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name={`esporte_interesse_${e.id}`}
-                                value={val}
-                                checked={active}
-                                onChange={() => setEsporteInteresse(e.id, val)}
-                                className="sr-only"
-                              />
-                              <span style={{ color: active ? color : "var(--eid-text-secondary)" }}>{icon}</span>
-                              <div className="min-w-0">
-                                <p className={`text-xs font-bold ${active ? "text-eid-fg" : "text-eid-text-secondary"}`}>{label}</p>
-                                <p className="text-[10px] text-eid-text-secondary">{desc}</p>
-                              </div>
-                              {active && (
-                                <span className="ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-eid-primary-500">
-                                  <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" fill="none">
-                                    <path d="M1.5 5l2.5 2.5 4.5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                                  </svg>
-                                </span>
-                              )}
-                            </label>
-                          );
-                        })}
-                      </div>
-
-                      {(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "amistoso" && (
-                        <p className="mt-2 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1.5 text-[11px] text-eid-action-400">
-                          Você não aparecerá nas sugestões de matchmaking competitivo.
-                        </p>
-                      )}
-
                       {/* Modalidades */}
                       {(e.permiteIndividual || e.permiteDupla || e.permiteTime) && (
                         <>

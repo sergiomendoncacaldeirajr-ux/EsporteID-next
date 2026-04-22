@@ -3,20 +3,25 @@
 import { useEffect, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { setViewerDisponivelAmistoso } from "@/app/match/actions";
+import { AMISTOSO_DURACAO_MS, computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 
 type Props = {
   userId: string;
   initialOn: boolean;
+  initialExpiresAt: string | null;
   canToggle: boolean;
 };
 
-export function ProfileFriendlyStatusToggle({ userId, initialOn, canToggle }: Props) {
+export function ProfileFriendlyStatusToggle({ userId, initialOn, initialExpiresAt, canToggle }: Props) {
   const [on, setOn] = useState(initialOn);
+  const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt);
+  const [tick, setTick] = useState(0);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
     setOn(initialOn);
-  }, [initialOn]);
+    setExpiresAt(initialExpiresAt);
+  }, [initialOn, initialExpiresAt]);
 
   useEffect(() => {
     const sb = createClient();
@@ -26,8 +31,13 @@ export function ProfileFriendlyStatusToggle({ userId, initialOn, canToggle }: Pr
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${userId}` },
         (payload) => {
-          const row = payload.new as { disponivel_amistoso?: boolean | null };
-          setOn(row.disponivel_amistoso === true);
+          const row = payload.new as {
+            disponivel_amistoso?: boolean | null;
+            disponivel_amistoso_ate?: string | null;
+          };
+          const eff = computeDisponivelAmistosoEffective(row.disponivel_amistoso, row.disponivel_amistoso_ate);
+          setOn(eff);
+          setExpiresAt(eff ? (row.disponivel_amistoso_ate ?? null) : null);
         }
       )
       .subscribe();
@@ -36,13 +46,32 @@ export function ProfileFriendlyStatusToggle({ userId, initialOn, canToggle }: Pr
     };
   }, [userId]);
 
+  useEffect(() => {
+    if (!on || !expiresAt) return;
+    const id = window.setInterval(() => setTick((x) => x + 1), 15_000);
+    return () => window.clearInterval(id);
+  }, [on, expiresAt]);
+
+  useEffect(() => {
+    if (!on || !expiresAt) return;
+    const end = new Date(expiresAt).getTime();
+    if (Number.isNaN(end) || end <= Date.now()) {
+      setOn(false);
+      setExpiresAt(null);
+    }
+  }, [on, expiresAt, tick]);
+
   function toggle() {
     if (!canToggle || pending) return;
     const next = !on;
     setOn(next);
+    setExpiresAt(next ? new Date(Date.now() + AMISTOSO_DURACAO_MS).toISOString() : null);
     startTransition(async () => {
       const res = await setViewerDisponivelAmistoso(next);
-      if (!res.ok) setOn(!next);
+      if (!res.ok) {
+        setOn(!next);
+        setExpiresAt(null);
+      }
     });
   }
 
@@ -52,9 +81,17 @@ export function ProfileFriendlyStatusToggle({ userId, initialOn, canToggle }: Pr
 
   const dotTone = on ? "bg-eid-success-500" : "bg-eid-danger-500";
 
+  const titleExtra =
+    on && expiresAt
+      ? ` · até ${new Date(expiresAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+      : "";
+
   if (!canToggle) {
     return (
-      <span className={`inline-flex min-h-[22px] items-center gap-1 rounded-full border px-2 py-px text-[10px] font-semibold ${tone}`}>
+      <span
+        className={`inline-flex min-h-[22px] items-center gap-1 rounded-full border px-2 py-px text-[10px] font-semibold ${tone}`}
+        title={on && expiresAt ? `Expira às ${new Date(expiresAt).toLocaleString("pt-BR")}` : undefined}
+      >
         <span className={`h-1.5 w-1.5 rounded-full ${dotTone}`} />
         {on ? "ON" : "OFF"}
       </span>
@@ -68,8 +105,8 @@ export function ProfileFriendlyStatusToggle({ userId, initialOn, canToggle }: Pr
       disabled={pending}
       className={`inline-flex min-h-[22px] items-center gap-1 rounded-full border px-2 py-px text-[10px] font-semibold transition-all duration-200 ${tone} ${pending ? "opacity-70" : ""}`}
       aria-pressed={on}
-      aria-label={`Amistoso ${on ? "ligado" : "desligado"}`}
-      title="Alternar disponibilidade para amistoso"
+      aria-label={`Amistoso ${on ? "ligado" : "desligado"}${titleExtra}`}
+      title={`Alternar disponibilidade para amistoso (até 4 h ligado)${titleExtra}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${dotTone}`} />
       {on ? "ON" : "OFF"}

@@ -26,7 +26,6 @@ type EsporteOpt = {
 type Props = {
   esportes: EsporteOpt[];
   selectedEsportes: number[];
-  selectedEsportesInteresse: Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">;
   selectedEsportesModalidades: Record<number, MatchModality[]>;
   selectedSportModes: Record<number, ProfessorModoEsportivo>;
   selectedProfessorObjetivos: Record<number, ProfessorObjetivoPlataforma>;
@@ -39,7 +38,6 @@ type Props = {
 export function ContaEsportesForm({
   esportes,
   selectedEsportes,
-  selectedEsportesInteresse,
   selectedEsportesModalidades,
   selectedSportModes,
   selectedProfessorObjetivos,
@@ -53,8 +51,6 @@ export function ContaEsportesForm({
   const [message, setMessage] = useState<string | null>(null);
 
   const [esportesSel, setEsportesSel] = useState<Set<number>>(() => new Set(selectedEsportes));
-  const [esportesInteresse, setEsportesInteresse] =
-    useState<Record<number, "ranking" | "ranking_e_amistoso" | "amistoso">>(selectedEsportesInteresse);
   const [esportesModalidades, setEsportesModalidades] =
     useState<Record<number, MatchModality[]>>(selectedEsportesModalidades);
   const [sportModes, setSportModes] = useState<Record<number, ProfessorModoEsportivo>>(selectedSportModes);
@@ -113,10 +109,6 @@ export function ContaEsportesForm({
           ...old,
           [id]: old[id] ?? "menos_1",
         }));
-        setEsportesInteresse((old) => ({
-          ...old,
-          [id]: old[id] ?? "ranking_e_amistoso",
-        }));
         const esp = esportes.find((e) => e.id === id);
         const defaultModalidade: MatchModality = esp?.permiteIndividual
           ? "individual"
@@ -134,10 +126,6 @@ export function ContaEsportesForm({
 
   function setSportMode(id: number, mode: ProfessorModoEsportivo) {
     setSportModes((old) => ({ ...old, [id]: mode }));
-  }
-
-  function setEsporteInteresse(id: number, interesse: "ranking" | "ranking_e_amistoso" | "amistoso") {
-    setEsportesInteresse((old) => ({ ...old, [id]: interesse }));
   }
 
   function setProfessorObjetivo(id: number, objetivo: ProfessorObjetivoPlataforma) {
@@ -288,45 +276,6 @@ export function ContaEsportesForm({
                 ) : null}
                 {esporteModoTemAtleta(sportModes[e.id] ?? (hasProfessor ? (hasAtleta ? "ambos" : "professor") : "atleta")) ? (
                   <>
-                    <p className="mt-2 text-[11px] text-eid-text-secondary">Interesse no match neste esporte</p>
-                    <label className="mt-1 block text-xs text-eid-fg">
-                      <input
-                        type="radio"
-                        name={`esporte_interesse_${e.id}`}
-                        value="ranking"
-                        checked={(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "ranking"}
-                        onChange={() => setEsporteInteresse(e.id, "ranking")}
-                        className="mr-2"
-                      />
-                      Só ranking
-                    </label>
-                    <label className="mt-1 block text-xs text-eid-fg">
-                      <input
-                        type="radio"
-                        name={`esporte_interesse_${e.id}`}
-                        value="ranking_e_amistoso"
-                        checked={(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "ranking_e_amistoso"}
-                        onChange={() => setEsporteInteresse(e.id, "ranking_e_amistoso")}
-                        className="mr-2"
-                      />
-                      Ranking e amistoso
-                    </label>
-                    <label className="mt-1 block text-xs text-eid-fg">
-                      <input
-                        type="radio"
-                        name={`esporte_interesse_${e.id}`}
-                        value="amistoso"
-                        checked={(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "amistoso"}
-                        onChange={() => setEsporteInteresse(e.id, "amistoso")}
-                        className="mr-2"
-                      />
-                      Apenas amistosos
-                    </label>
-                    {(esportesInteresse[e.id] ?? "ranking_e_amistoso") === "amistoso" ? (
-                      <p className="mt-2 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1 text-[11px] text-eid-action-400">
-                        Você não aparece no matchmaking competitivo do radar.
-                      </p>
-                    ) : null}
                     <p className="mt-2 text-[11px] text-eid-text-secondary">Modalidades no match (marque as que quiser):</p>
                     {e.permiteIndividual ? (
                       <label className="mt-1 block text-xs text-eid-fg">

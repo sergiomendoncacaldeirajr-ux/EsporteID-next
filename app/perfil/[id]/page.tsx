@@ -14,6 +14,10 @@ import {
   waMeHref,
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
+import {
+  computeDisponivelAmistosoEffective,
+  expireDisponivelAmistosoProfileIfNeeded,
+} from "@/lib/perfil/disponivel-amistoso";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -36,13 +40,29 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const { data: perfil } = await supabase
     .from("profiles")
     .select(
-      "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, mostrar_historico_publico, estilo_jogo, bio"
+      "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, disponivel_amistoso_ate, mostrar_historico_publico, estilo_jogo, bio"
     )
     .eq("id", id)
     .maybeSingle();
   if (!perfil) notFound();
 
   const isSelf = user.id === id;
+  let disponivelAmistosoVal = perfil.disponivel_amistoso;
+  let disponivelAmistosoAteVal = perfil.disponivel_amistoso_ate as string | null | undefined;
+  if (isSelf) {
+    await expireDisponivelAmistosoProfileIfNeeded(supabase, user.id);
+    const { data: amRow } = await supabase
+      .from("profiles")
+      .select("disponivel_amistoso, disponivel_amistoso_ate")
+      .eq("id", id)
+      .maybeSingle();
+    if (amRow) {
+      disponivelAmistosoVal = amRow.disponivel_amistoso;
+      disponivelAmistosoAteVal = amRow.disponivel_amistoso_ate;
+    }
+  }
+  const amistosoPerfilOn = computeDisponivelAmistosoEffective(disponivelAmistosoVal, disponivelAmistosoAteVal);
+  const amistosoPerfilExpiresAt = amistosoPerfilOn && disponivelAmistosoAteVal ? String(disponivelAmistosoAteVal) : null;
 
   const [{ data: papeisRows }, { data: professorPerfil }, { data: professorEsportes }, { data: professorMetricas }] =
     await Promise.all([
@@ -372,7 +392,8 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 <span className="mr-1 text-[9px] text-eid-text-secondary">Amistoso</span>
                 <ProfileFriendlyStatusToggle
                   userId={id}
-                  initialOn={perfil.disponivel_amistoso === true}
+                  initialOn={amistosoPerfilOn}
+                  initialExpiresAt={amistosoPerfilExpiresAt}
                   canToggle={isSelf}
                 />
               </div>

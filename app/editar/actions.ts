@@ -54,7 +54,6 @@ export async function saveProfileMainAction(formData: FormData): Promise<SavePro
 
 type PerformancePayloadItem = {
   esporteId: number;
-  interesse: "ranking" | "ranking_e_amistoso" | "amistoso";
   modalidades: Array<"individual" | "dupla" | "time">;
   tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos";
   tempoAnos?: number;
@@ -94,7 +93,7 @@ export async function savePerformanceEidAction(formData: FormData): Promise<Save
       return {
         usuario_id: user.id,
         esporte_id: item.esporteId,
-        interesse_match: item.interesse,
+        interesse_match: "ranking",
         modalidade_match: item.modalidades.includes("individual")
           ? "individual"
           : item.modalidades.includes("dupla")

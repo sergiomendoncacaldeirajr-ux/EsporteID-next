@@ -205,22 +205,11 @@ export async function salvarEsportesOnboarding(
   const finalIds = ids.filter((id) => validIds.has(id));
   if (!finalIds.length) return { ok: false, message: "Esportes inválidos." };
 
-  const interessesMap = new Map<number, "ranking" | "ranking_e_amistoso" | "amistoso">();
   const sportModes = new Map<number, ProfessorModoEsportivo>();
   const professorObjetivosMap = new Map<number, ProfessorObjetivoPlataforma>();
   const professorTiposMap = new Map<number, ProfessorTipoAtuacao[]>();
 
   for (const [key, value] of formData.entries()) {
-    if (key.startsWith("esporte_interesse_")) {
-      const id = Number(key.replace("esporte_interesse_", ""));
-      if (!Number.isInteger(id) || id <= 0) continue;
-      const raw = String(value);
-      const interesse =
-        raw === "ranking" ? "ranking" : raw === "amistoso" ? "amistoso" : "ranking_e_amistoso";
-      interessesMap.set(id, interesse);
-      continue;
-    }
-
     if (key.startsWith("esporte_modo_")) {
       const id = Number(key.replace("esporte_modo_", ""));
       if (!Number.isInteger(id) || id <= 0) continue;
@@ -393,7 +382,7 @@ export async function salvarEsportesOnboarding(
         return supabase
           .from("usuario_eid")
           .update({
-            interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
+            interesse_match: "ranking",
             modalidades_match: mods,
             tempo_experiencia: tempoExp,
           })
@@ -410,7 +399,7 @@ export async function salvarEsportesOnboarding(
     const rows = adicionar.map((esporteId) => ({
       usuario_id: user.id,
       esporte_id: esporteId,
-      interesse_match: interessesMap.get(esporteId) ?? "ranking_e_amistoso",
+      interesse_match: "ranking",
       modalidades_match: modalidadesMap.get(esporteId) ?? ["individual"],
       tempo_experiencia: tempoExperienciaLabel(expPorEsporte.get(esporteId)),
     }));

@@ -4,6 +4,10 @@ import { MatchRadarApp } from "@/components/match/match-radar-app";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { getEsportesConfrontoCached } from "@/lib/match/esportes-confronto";
 import { fetchMatchRadarCards, type RadarTipo, type SortBy } from "@/lib/match/radar-snapshot";
+import {
+  computeDisponivelAmistosoEffective,
+  expireDisponivelAmistosoProfileIfNeeded,
+} from "@/lib/perfil/disponivel-amistoso";
 
 type Search = {
   tipo?: string;
@@ -39,11 +43,25 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
 
   const { data: me } = await supabase
     .from("profiles")
-    .select("id, lat, lng, termos_aceitos_em, perfil_completo, disponivel_amistoso")
+    .select("id, lat, lng, termos_aceitos_em, perfil_completo, disponivel_amistoso, disponivel_amistoso_ate")
     .eq("id", user.id)
     .maybeSingle();
   if (!me?.termos_aceitos_em) redirect("/conta/aceitar-termos");
   if (!me.perfil_completo) redirect("/onboarding");
+  await expireDisponivelAmistosoProfileIfNeeded(supabase, user.id);
+  const { data: meAm } = await supabase
+    .from("profiles")
+    .select("disponivel_amistoso, disponivel_amistoso_ate")
+    .eq("id", user.id)
+    .maybeSingle();
+  const viewerAmistosoOn = computeDisponivelAmistosoEffective(
+    meAm?.disponivel_amistoso ?? me.disponivel_amistoso,
+    meAm?.disponivel_amistoso_ate ?? me.disponivel_amistoso_ate
+  );
+  const viewerAmistosoExpiresAt =
+    viewerAmistosoOn && (meAm?.disponivel_amistoso_ate ?? me.disponivel_amistoso_ate)
+      ? String(meAm?.disponivel_amistoso_ate ?? me.disponivel_amistoso_ate)
+      : null;
   const hasLocation = Number.isFinite(Number(me.lat)) && Number.isFinite(Number(me.lng));
 
   if (!hasLocation) {
@@ -91,7 +109,8 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
       initialTipo={tipo}
       initialSortBy={sortBy}
       initialRaio={raio}
-      viewerDisponivelAmistoso={me.disponivel_amistoso !== false}
+      viewerDisponivelAmistoso={viewerAmistosoOn}
+      viewerAmistosoExpiresAt={viewerAmistosoExpiresAt}
       showSentBanner={sp.status === "enviado"}
     />
   );

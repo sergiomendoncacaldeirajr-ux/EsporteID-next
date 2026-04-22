@@ -17,6 +17,7 @@ import {
   waMeHref,
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
+import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF, contaEditarFormacaoTimeHref } from "@/lib/routes/conta";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
@@ -92,11 +93,18 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   const { data: t } = await supabase
     .from("times")
     .select(
-      "id, nome, username, bio, tipo, localizacao, escudo, pontos_ranking, eid_time, esporte_id, criador_id, interesse_rank_match, disponivel_amistoso, vagas_abertas, aceita_pedidos, interesse_torneio, nivel_procurado, esportes(nome)"
+      "id, nome, username, bio, tipo, localizacao, escudo, pontos_ranking, eid_time, esporte_id, criador_id, interesse_rank_match, disponivel_amistoso, disponivel_amistoso_ate, vagas_abertas, aceita_pedidos, interesse_torneio, nivel_procurado, esportes(nome)"
     )
     .eq("id", id)
     .maybeSingle();
   if (!t) notFound();
+
+  const timeAmistosoOn = computeDisponivelAmistosoEffective(
+    t.disponivel_amistoso,
+    "disponivel_amistoso_ate" in t
+      ? (t as { disponivel_amistoso_ate: string | null }).disponivel_amistoso_ate
+      : null
+  );
 
   const { data: criador } = await supabase
     .from("profiles")
@@ -243,7 +251,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{t.bio}</p> : null}
           <div className="mt-2 flex flex-wrap justify-center gap-1.5">
             <span className="rounded-full border border-eid-action-500/30 px-2 py-0.5 text-[10px] font-semibold text-eid-action-400">
-              {t.disponivel_amistoso ? "Amistoso" : "Só competitivo"}
+              {timeAmistosoOn ? "Amistoso (agora)" : "Só competitivo"}
             </span>
             <span className="rounded-full border border-eid-primary-500/30 px-2 py-0.5 text-[10px] font-semibold text-eid-primary-300">
               {t.interesse_rank_match ? "Rank ativo" : "Rank off"}
@@ -473,7 +481,6 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 localizacao={t.localizacao ?? null}
                 escudo={t.escudo ?? null}
                 interesse_rank_match={Boolean(t.interesse_rank_match)}
-                disponivel_amistoso={Boolean(t.disponivel_amistoso)}
                 vagas_abertas={Boolean(t.vagas_abertas)}
                 aceita_pedidos={Boolean(t.aceita_pedidos)}
                 interesse_torneio={Boolean(t.interesse_torneio)}
