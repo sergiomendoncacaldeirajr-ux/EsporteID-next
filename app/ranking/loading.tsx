@@ -15,23 +15,19 @@ export default function LoadingRanking() {
         </header>
 
         <section className="mb-3 space-y-2 px-2 sm:mb-3.5">
-          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
-            <div className="flex items-center gap-1.5">
-              <SkBlock className="h-[1.72rem] flex-1 rounded-md" />
-              <SkBlock className="h-[1.72rem] flex-1 rounded-md" />
-              <SkBlock className="h-[1.72rem] flex-1 rounded-md" />
-            </div>
+          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_76%,var(--eid-bg)_24%),color-mix(in_srgb,var(--eid-surface)_70%,var(--eid-bg)_30%))] p-1.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.28)]">
+            <SkBlock className="h-[1.86rem] w-full rounded-md" />
           </div>
 
           <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
-            <SkBlock className="h-[1.72rem] rounded-md" />
-            <SkBlock className="h-[1.72rem] rounded-md" />
+            <SkBlock className="h-[1.86rem] rounded-md" />
+            <SkBlock className="h-[1.86rem] rounded-md" />
           </div>
 
           <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
             <div className="flex min-w-0 items-center gap-1.5 overflow-hidden pb-1 pr-0.5">
               {Array.from({ length: 7 }).map((_, i) => (
-                <SkBlock key={i} className="h-[1.72rem] w-20 shrink-0 rounded-md" />
+                <SkBlock key={i} className="h-[1.86rem] w-20 shrink-0 rounded-md" />
               ))}
             </div>
           </div>
