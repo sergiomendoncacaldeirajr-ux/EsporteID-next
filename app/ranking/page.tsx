@@ -291,7 +291,7 @@ export default async function RankingPage({ searchParams }: Props) {
         />
 
         {noCatalogHint ? (
-          <p className="rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.78),rgba(15,23,42,0.56))] p-5 text-center text-sm leading-relaxed text-eid-text-secondary backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
+          <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 p-5 text-center text-sm leading-relaxed text-eid-text-secondary backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
             Nenhum esporte disponível no momento.
           </p>
         ) : (
@@ -309,7 +309,7 @@ export default async function RankingPage({ searchParams }: Props) {
             {showViewerCard && viewerRank !== null ? <ViewerRankCard rank={viewerRank} /> : null}
 
             {rankingAll.length === 0 ? (
-              <p className="rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.78),rgba(15,23,42,0.56))] p-6 text-center text-sm text-eid-text-secondary backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
+              <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 p-6 text-center text-sm text-eid-text-secondary backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
                 Nenhum resultado para estes filtros.
               </p>
             ) : null}
@@ -318,7 +318,7 @@ export default async function RankingPage({ searchParams }: Props) {
               <>
                 <section className="mt-2 sm:mt-2.5">
                   <h2 className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Classificação</h2>
-                  <div className="overflow-hidden rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.78),rgba(15,23,42,0.56))] px-2.5 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)] sm:px-3.5">
+                  <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 px-2.5 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)] sm:px-3.5">
                     {pageSlice.length === 0 ? (
                       <p className="py-5 text-center text-sm text-eid-text-secondary">Fim da lista.</p>
                     ) : (

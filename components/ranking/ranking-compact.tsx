@@ -39,7 +39,7 @@ export function RankingFilterBar({
 
   return (
     <div className="mb-3 space-y-2 px-2 sm:mb-3.5">
-      <div className="rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.72),rgba(15,23,42,0.52))] p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
+      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
         <div className="flex items-center gap-1.5">
           <Link href={href({ tipo: "individual", page: 1 })} className={segmentButton(state.tipo === "individual")}>
           Individual
@@ -53,7 +53,7 @@ export function RankingFilterBar({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.68),rgba(15,23,42,0.5))] p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
+      <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
         <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
           <CityGpsLabel fallbackCity={cidadeDisplay} />
         </Link>
@@ -71,7 +71,7 @@ export function RankingFilterBar({
       ) : null}
 
       {todosEsportes.length > 0 ? (
-        <div className="rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.68),rgba(15,23,42,0.5))] p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
+        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.28)]">
           <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 select-none [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
             <div className="flex min-w-max flex-nowrap items-center gap-1.5">
             {todosEsportes.map((opt) => {
@@ -86,7 +86,7 @@ export function RankingFilterBar({
                     "inline-flex h-[1.72rem] w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
                     active
                       ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
-                      : "border-white/15 bg-transparent text-[#9CA3AF] hover:border-white/25 hover:bg-white/[0.04] hover:text-eid-fg",
+                      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/45 hover:text-eid-fg",
                     isPrincipal && !active && "ring-1 ring-eid-primary-500/25"
                   )}
                 >
@@ -112,7 +112,7 @@ export function RankingPeriodToggle({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
   return (
     <div className="flex justify-end">
-      <div className="relative inline-flex h-6.5 items-center rounded-full border border-white/15 bg-black/25 p-0.5 text-[11px] backdrop-blur-sm">
+      <div className="relative inline-flex h-6.5 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 p-0.5 text-[11px] backdrop-blur-sm">
         <span
           className={cn(
             "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/80 shadow-[0_0_10px_-6px_rgba(37,99,235,0.75)] transition-all duration-200",
@@ -124,7 +124,7 @@ export function RankingPeriodToggle({
           href={href({ periodo: "ano", page: 1 })}
           className={cn(
             "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
-            state.periodo === "ano" ? "text-white" : "text-[#9CA3AF] hover:text-eid-fg"
+            state.periodo === "ano" ? "text-white" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
           Ano
@@ -133,7 +133,7 @@ export function RankingPeriodToggle({
           href={href({ periodo: "mes", page: 1 })}
           className={cn(
             "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
-            state.periodo === "mes" ? "text-white" : "text-[#9CA3AF] hover:text-eid-fg"
+            state.periodo === "mes" ? "text-white" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
           Mês
@@ -154,7 +154,7 @@ export function RankingRankToggle({
   const rankIsMatch = state.rank === "match";
   return (
     <div className="flex justify-start">
-      <div className="relative inline-flex h-6.5 items-center rounded-full border border-white/15 bg-black/25 p-0.5 text-[11px] backdrop-blur-sm">
+      <div className="relative inline-flex h-6.5 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 p-0.5 text-[11px] backdrop-blur-sm">
         <span
           className={cn(
             "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/80 shadow-[0_0_10px_-6px_rgba(37,99,235,0.75)] transition-all duration-200",
@@ -166,7 +166,7 @@ export function RankingRankToggle({
           href={href({ rank: "match", page: 1 })}
           className={cn(
             "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
-            rankIsMatch ? "text-white" : "text-[#9CA3AF] hover:text-eid-fg"
+            rankIsMatch ? "text-white" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
           Match
@@ -175,7 +175,7 @@ export function RankingRankToggle({
           href={href({ rank: "eid", page: 1 })}
           className={cn(
             "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
-            !rankIsMatch ? "text-white" : "text-[#9CA3AF] hover:text-eid-fg"
+            !rankIsMatch ? "text-white" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
           EID
@@ -190,7 +190,7 @@ function segmentButton(active: boolean) {
     "inline-flex h-[1.72rem] w-auto flex-1 items-center justify-center rounded-full border px-2 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
       ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
-      : "border-white/15 bg-transparent text-[#9CA3AF] hover:border-white/25 hover:bg-white/[0.04] hover:text-eid-fg"
+      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/45 hover:text-eid-fg"
   );
 }
 
@@ -199,7 +199,7 @@ function blockButton(active: boolean) {
     "inline-flex h-[1.72rem] w-auto min-w-0 items-center justify-center rounded-full border px-2 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
       ? "border-blue-500/85 bg-gradient-to-b from-[#2563EB] to-[#1D4ED8] text-white shadow-[0_0_14px_-7px_rgba(37,99,235,0.8),inset_0_1px_0_rgba(255,255,255,0.22)]"
-      : "border-white/15 bg-transparent text-[#9CA3AF] hover:border-white/25 hover:bg-white/[0.04] hover:text-eid-fg"
+      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/45 hover:text-eid-fg"
   );
 }
 
@@ -255,7 +255,7 @@ export function RankingPodium({
 
   return (
     <section className="relative mb-0.5 sm:mb-1">
-      <div className="rounded-2xl border border-white/15 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.2),rgba(15,23,42,0.82)_42%,rgba(2,6,23,0.92)_100%)] px-2 py-2.5 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.95),0_0_24px_-14px_rgba(37,99,235,0.45)] sm:px-3 sm:py-3">
+      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_20%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2 py-2.5 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_24px_-14px_rgba(37,99,235,0.35)] sm:px-3 sm:py-3">
         {rankToggle || periodToggle ? (
           <div className="mb-1.5 flex items-center justify-between gap-2 sm:mb-2">
             <div className="min-w-0">{rankToggle}</div>
