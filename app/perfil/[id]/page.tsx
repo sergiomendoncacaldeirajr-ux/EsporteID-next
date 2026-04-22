@@ -663,9 +663,12 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                   })}
                 </div>
               ) : (
-                <Link
-                  href="/times?create=1"
-                  className="eid-list-item mt-2 flex min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
+                <ProfileEditDrawerTrigger
+                  href={`/editar/equipes/cadastrar?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                  title="Cadastrar equipe"
+                  fullscreen
+                  topMode="backOnly"
+                  className="eid-list-item mt-2 flex w-full min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
                 >
                   <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-surface/65 text-eid-primary-300">
                     <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden>
@@ -674,7 +677,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                   </span>
                   <p className="text-[11px] font-bold text-eid-fg">Nenhuma equipe cadastrada</p>
                   <p className="text-[9px] text-eid-text-secondary">Toque para cadastrar equipe</p>
-                </Link>
+                </ProfileEditDrawerTrigger>
               )}
             </ProfileSection>
           </div>

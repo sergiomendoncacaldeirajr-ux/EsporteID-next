@@ -151,9 +151,9 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
                 const modalidadeFmt = modalidade ? modalidade.charAt(0).toUpperCase() + modalidade.slice(1) : "Individual";
                 const localNome =
                   (p.local_espaco_id != null ? localEspacoNomeMap.get(Number(p.local_espaco_id)) : null) ??
-                  String(p.local_str ?? "").trim() ||
-                  String(p.local_cidade ?? "").trim() ||
-                  "Local não informado";
+                  (String(p.local_str ?? "").trim() ||
+                    String(p.local_cidade ?? "").trim() ||
+                    "Local não informado");
                 return (
                   <li
                     key={p.id}
