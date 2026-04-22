@@ -56,9 +56,7 @@ function SectionTitleSkeleton({ className }: { className?: string }) {
 /** Perfil público — hero, stats, ficha, ação, EID, equipes, histórico (sem bloco Professor para manter altura estável). */
 export function ProfilePublicPageSkeleton() {
   return (
-    <>
-      <DashboardTopbarSkeleton />
-      <main className={MAIN_PROFILE}>
+    <main className={MAIN_PROFILE}>
         <div className={HERO_PANEL}>
           <div className="relative h-24 w-full sm:h-28">
             <div
@@ -192,7 +190,6 @@ export function ProfilePublicPageSkeleton() {
           </div>
         </div>
       </main>
-    </>
   );
 }
 

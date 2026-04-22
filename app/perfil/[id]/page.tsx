@@ -10,7 +10,6 @@ import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banne
 import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { ProfileConviteFormacaoCta } from "@/components/perfil/profile-convite-formacao-cta";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import {
   esporteIdsComMatchAceitoEntre,
   podeExibirWhatsappProfessor,
@@ -289,9 +288,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   if ((principalEid?.nota_eid ?? 0) >= 7) conquistas.push("EID Elite");
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         {/* ── Hero Card ─────────────────────────────────────────────── */}
         {/* ── Hero Card ──
              overflow-hidden no container clipa tudo dentro dos cantos arredondados.
@@ -927,6 +924,5 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           </div>
         </div>
       </main>
-    </>
   );
 }
