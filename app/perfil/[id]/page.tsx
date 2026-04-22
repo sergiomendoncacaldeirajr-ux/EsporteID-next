@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ProfileAvatarControl } from "@/components/perfil/profile-avatar-control";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileCoverControl } from "@/components/perfil/profile-cover-control";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
@@ -229,15 +230,16 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             ) : null}
 
             {isSelf ? (
-              <Link
+              <ProfileEditDrawerTrigger
                 href={`/editar/perfil?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                title="Editar perfil"
                 className="absolute -bottom-[20px] right-2 z-[4] inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
               >
                 <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
                   <path d="M11.875 1.625a1.768 1.768 0 0 1 2.5 2.5l-7.54 7.54a1 1 0 0 1-.46.262l-3.018.805a.5.5 0 0 1-.612-.612l.805-3.018a1 1 0 0 1 .262-.46l7.54-7.54Zm1.793 1.207a.768.768 0 0 0-1.086 0l-.812.812 1.086 1.086.812-.812a.768.768 0 0 0 0-1.086ZM11.149 5.29 4.314 12.126l-1.02.272.272-1.02L10.4 4.544l.75.75Z" />
                 </svg>
                 EDITAR PERFIL
-              </Link>
+              </ProfileEditDrawerTrigger>
             ) : null}
 
           </div>
@@ -543,15 +545,16 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           <div className="-mt-3">
             {isSelf ? (
               <div className="-mb-5 mt-0 flex justify-end">
-                <Link
+                <ProfileEditDrawerTrigger
                   href={`/editar/performance-eid?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                  title="Editar Performance EID"
                   className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
                 >
                   <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
                     <path d="M11.875 1.625a1.768 1.768 0 0 1 2.5 2.5l-7.54 7.54a1 1 0 0 1-.46.262l-3.018.805a.5.5 0 0 1-.612-.612l.805-3.018a1 1 0 0 1 .262-.46l7.54-7.54Zm1.793 1.207a.768.768 0 0 0-1.086 0l-.812.812 1.086 1.086.812-.812a.768.768 0 0 0 0-1.086ZM11.149 5.29 4.314 12.126l-1.02.272.272-1.02L10.4 4.544l.75.75Z" />
                   </svg>
                   GERENCIAR / EDITAR
-                </Link>
+                </ProfileEditDrawerTrigger>
               </div>
             ) : null}
             <ProfileSection title="Performance EID">
@@ -596,15 +599,16 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           <div className="mt-2">
             {isSelf ? (
               <div className="-mb-5 mt-0 flex justify-end">
-                <Link
+                <ProfileEditDrawerTrigger
                   href={`/editar/equipes?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                  title="Editar equipes"
                   className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
                 >
                   <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
                     <path d="M11.875 1.625a1.768 1.768 0 0 1 2.5 2.5l-7.54 7.54a1 1 0 0 1-.46.262l-3.018.805a.5.5 0 0 1-.612-.612l.805-3.018a1 1 0 0 1 .262-.46l7.54-7.54Zm1.793 1.207a.768.768 0 0 0-1.086 0l-.812.812 1.086 1.086.812-.812a.768.768 0 0 0 0-1.086ZM11.149 5.29 4.314 12.126l-1.02.272.272-1.02L10.4 4.544l.75.75Z" />
                   </svg>
                   GERENCIAR / EDITAR
-                </Link>
+                </ProfileEditDrawerTrigger>
               </div>
             ) : null}
             <ProfileSection title="Equipes">
@@ -720,15 +724,16 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           <div className="mt-0">
             {isSelf ? (
               <div className="-mb-5 mt-0 flex justify-end">
-                <Link
+                <ProfileEditDrawerTrigger
                   href={`/editar/historico?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                  title="Privacidade do histórico"
                   className="relative top-2 inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
                 >
                   <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
                     <path d="M10.5 1a.75.75 0 0 1 0 1.5H5.25A2.75 2.75 0 0 0 2.5 5.25v5.5A2.75 2.75 0 0 0 5.25 13.5h5.5a2.75 2.75 0 0 0 2.75-2.75V5.5a.75.75 0 0 1 1.5 0v5.25A4.25 4.25 0 0 1 10.75 15h-5.5A4.25 4.25 0 0 1 1 10.75v-5.5A4.25 4.25 0 0 1 5.25 1h5.25Zm2.28.22a.75.75 0 0 1 1.06 0l1.94 1.94a.75.75 0 0 1 0 1.06l-5.47 5.47a.75.75 0 0 1-.33.2l-2.4.66a.75.75 0 0 1-.92-.92l.66-2.4a.75.75 0 0 1 .2-.33l5.47-5.47Z" />
                   </svg>
                   {mostrarHistoricoPublico ? "OCULTAR HISTÓRICO" : "MOSTRAR HISTÓRICO"}
-                </Link>
+                </ProfileEditDrawerTrigger>
               </div>
             ) : null}
             {podeVerHistorico ? (

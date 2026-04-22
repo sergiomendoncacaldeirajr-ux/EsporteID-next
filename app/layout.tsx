@@ -17,7 +17,7 @@ import {
   type ActiveAppContext,
 } from "@/lib/auth/active-context";
 import { EID_LOGO_ICON_E_SRC } from "@/lib/branding";
-import { EID_HIDE_APP_SHELL_HEADER } from "@/lib/eid-app-shell";
+import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
 import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
 import "./globals.css";
 
@@ -86,8 +86,9 @@ export default async function RootLayout({
   const hdrs = await headers();
   const cookieStore = await cookies();
   const hideAppShell = hdrs.get(EID_HIDE_APP_SHELL_HEADER) === "1";
+  const showOnboardingChrome = hdrs.get(EID_SHOW_ONBOARDING_CHROME_HEADER) === "1";
   const showAppChrome = Boolean(user) && !hideAppShell;
-  const onboardingMinimalChrome = Boolean(user) && hideAppShell;
+  const onboardingMinimalChrome = Boolean(user) && hideAppShell && showOnboardingChrome;
   activeContext = resolveActiveAppContext(cookieStore.get(ACTIVE_CONTEXT_COOKIE)?.value ?? null, papeis);
 
   return (

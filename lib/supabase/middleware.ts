@@ -1,11 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { EID_HIDE_APP_SHELL_HEADER } from "@/lib/eid-app-shell";
+import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
 
 function buildRequestHeadersForPath(request: NextRequest): Headers {
   const h = new Headers(request.headers);
   if (request.nextUrl.pathname.startsWith("/onboarding") || request.nextUrl.pathname.startsWith("/editar")) {
     h.set(EID_HIDE_APP_SHELL_HEADER, "1");
+  }
+  if (request.nextUrl.pathname.startsWith("/onboarding")) {
+    h.set(EID_SHOW_ONBOARDING_CHROME_HEADER, "1");
   }
   return h;
 }
