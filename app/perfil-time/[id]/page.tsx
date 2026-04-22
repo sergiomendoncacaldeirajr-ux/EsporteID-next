@@ -18,7 +18,14 @@ import {
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF, contaEditarFormacaoTimeHref } from "@/lib/routes/conta";
-import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
+import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
+import {
+  carregarPartidasColetivasDoTime,
+  mapNomesTimesAdversarios,
+  mapTorneioNomes,
+} from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -105,6 +112,13 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
     .gt("pontos_ranking", t.pontos_ranking ?? 0);
 
   const posicao = (acima ?? 0) + 1;
+
+  const esporteIdNum = t.esporte_id != null ? Number(t.esporte_id) : 0;
+  const partidasColetivas =
+    esporteIdNum > 0 ? await carregarPartidasColetivasDoTime(supabase, id, esporteIdNum, user.id) : [];
+  const torneioNomeMap = await mapTorneioNomes(supabase, partidasColetivas);
+  const nomeOponenteMap = await mapNomesTimesAdversarios(supabase, id, partidasColetivas);
+  const bundleResultados = buildFormacaoResultadosPerfil(partidasColetivas, id, nomeOponenteMap, torneioNomeMap);
 
   const { data: hist } = await supabase
     .from("historico_eid_coletivo")
@@ -219,10 +233,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           <span className="mt-4 inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
             {(t.tipo ?? "time").toUpperCase()} · {esp?.nome ?? "Esporte"}
           </span>
-          <div className="mt-3 flex justify-center">
-            <EidBadge score={Number(t.eid_time ?? 0)} history={eidLogs ?? []} label="EID formação" />
-          </div>
-          <h1 className="mt-2 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
+          <h1 className="mt-3 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
           {t.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{t.username}</p> : null}
           <p className="mt-2 text-sm text-eid-text-secondary">{t.localizacao ?? "Localização não informada"}</p>
           <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary">
@@ -238,86 +249,6 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
               {t.interesse_rank_match ? "Rank ativo" : "Rank off"}
             </span>
           </div>
-
-          <div className="mt-5 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-4">
-            <div>
-              <p className="text-xl font-bold tabular-nums text-eid-action-500 sm:text-2xl sm:font-black">{Number(t.eid_time ?? 0).toFixed(1)}</p>
-              <p className="text-[10px] font-bold uppercase text-eid-text-secondary">EID</p>
-            </div>
-            <div>
-              <p className="text-xl font-bold tabular-nums text-eid-fg sm:text-2xl sm:font-black">{t.pontos_ranking ?? 0}</p>
-              <p className="text-[10px] font-bold uppercase text-eid-text-secondary">Pts</p>
-            </div>
-            <div>
-              <p className="text-xl font-bold tabular-nums text-eid-primary-300 sm:text-2xl sm:font-black">#{posicao}</p>
-              <p className="text-[10px] font-bold uppercase text-eid-text-secondary">Rank</p>
-            </div>
-          </div>
-
-          {t.esporte_id ? (
-            <Link
-              href={`/perfil-time/${id}/eid/${t.esporte_id}?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
-              className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
-            >
-              Estatísticas completas · {esp?.nome ?? "este esporte"}
-            </Link>
-          ) : null}
-
-          {isLeader ? (
-            <div className="mt-3 w-full text-left">
-              <Link
-                href={`/times?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
-                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
-              >
-                Gerenciar equipe
-              </Link>
-              <p className="mt-1 text-[10px] text-eid-text-secondary">
-                Convidar atletas e convites — painel completo em Times. Abaixo: editar nome, bio, escudo e preferências desta formação.
-              </p>
-              <Link
-                href={`${contaEditarFormacaoTimeHref(id)}?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
-                className="mt-2 flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
-              >
-                Editar em página dedicada
-              </Link>
-              <PerfilTimeEditForm
-                timeId={id}
-                nome={t.nome ?? ""}
-                username={t.username ?? null}
-                bio={t.bio ?? null}
-                localizacao={t.localizacao ?? null}
-                escudo={t.escudo ?? null}
-                interesse_rank_match={Boolean(t.interesse_rank_match)}
-                disponivel_amistoso={Boolean(t.disponivel_amistoso)}
-                vagas_abertas={Boolean(t.vagas_abertas)}
-                aceita_pedidos={Boolean(t.aceita_pedidos)}
-                interesse_torneio={Boolean(t.interesse_torneio)}
-                nivel_procurado={t.nivel_procurado ?? null}
-              />
-            </div>
-          ) : null}
-
-          {isMember || isLeader ? (
-            <div className={`grid gap-2 ${isLeader ? "mt-2" : "mt-3"} w-full text-left`}>
-              <Link
-                href={CONTA_PERFIL_HREF}
-                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
-              >
-                Editar perfil pessoal
-              </Link>
-              <Link
-                href={CONTA_ESPORTES_EID_HREF}
-                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
-              >
-                Esportes e ranking (EID)
-              </Link>
-              <p className="text-[10px] leading-relaxed text-eid-text-secondary">
-                Seu nome, cidade e dados de atleta são pessoais. A <strong className="text-eid-fg">cidade da equipe</strong>{" "}
-                (formação) aparece acima e <strong className="text-eid-fg">não pode ser alterada</strong>; para mudar de
-                cidade no radar, o líder cria uma <strong className="text-eid-fg">nova formação</strong>.
-              </p>
-            </div>
-          ) : null}
 
           {criador ? (
             <p className="mt-4 text-xs text-eid-text-secondary">
@@ -392,77 +323,57 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
             </div>
           </section>
 
-          <ProfileSection title="Esportes e Estatísticas">
-            <ProfileSportsMetricsCard
-              sportName={esp?.nome ?? "Esporte"}
-              eidValue={Number(t.eid_time ?? 0)}
-              rankValue={Number(t.pontos_ranking ?? 0)}
-              rankLabel="Rank"
-              trendLabel="Evolução EID"
-              trendPoints={
-                (hist ?? []).length >= 3
-                  ? ([
-                      Number((hist ?? [])[2]?.nota_nova ?? t.eid_time ?? 0),
-                      Number((hist ?? [])[1]?.nota_nova ?? t.eid_time ?? 0),
-                      Number((hist ?? [])[0]?.nota_nova ?? t.eid_time ?? 0),
-                    ] as [number, number, number])
-                  : [Number(t.eid_time ?? 0), Number(t.eid_time ?? 0), Number(t.eid_time ?? 0)]
-              }
-            />
-          </ProfileSection>
-
-          <ProfileSection title="Minhas Equipes">
-            {isLeader ? (
-              <form action={convidarAction} className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <input name="username" placeholder="@username para convidar" className="eid-input-dark rounded-xl px-3 py-2 text-xs text-eid-fg" />
-                <button type="submit" className="eid-btn-primary rounded-xl px-3 py-2 text-xs font-semibold">
-                  Convidar
-                </button>
-              </form>
-            ) : null}
-          </ProfileSection>
-
-          <ProfileSection title="Integrantes">
-          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-            {(membros ?? []).map((m, idx) => {
-              const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
-              if (!p?.id) return null;
-              return (
-                <li key={`${m.usuario_id}-${idx}`}>
-                  <ProfileMemberCard
-                    href={`/perfil/${p.id}?from=/perfil-time/${id}`}
-                    name={p.nome ?? "Membro"}
-                    subtitle={m.cargo ?? "Atleta"}
-                    avatarUrl={p.avatar_url}
-                    trailing={
-                      isLeader && p.id !== t.criador_id ? (
-                        <div className="flex gap-2">
-                          <form action={transferirLiderancaAction}>
-                            <input type="hidden" name="usuario_id" value={p.id} />
-                            <button type="submit" className="rounded-lg border border-eid-primary-500/30 px-2 py-1 text-[10px] font-semibold text-eid-primary-300">
-                              Transferir liderança
-                            </button>
-                          </form>
-                          <form action={removerMembroAction}>
-                            <input type="hidden" name="usuario_id" value={p.id} />
-                            <button type="submit" className="rounded-lg border border-red-400/30 px-2 py-1 text-[10px] font-semibold text-red-300">
-                              Remover
-                            </button>
-                          </form>
-                        </div>
-                      ) : null
-                    }
-                  />
-                </li>
-              );
-            })}
-          </ul>
-          </ProfileSection>
-
-          <ProfileSection title="Histórico e Conquistas">
+          <ProfileSection title="EID e estatísticas">
+            <div className={`${PROFILE_CARD_BASE} mt-2 p-3`}>
+              <div className="flex justify-center">
+                <EidBadge score={Number(t.eid_time ?? 0)} history={eidLogs ?? []} label="EID formação" />
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-4">
+                <div className="text-center">
+                  <p className="text-lg font-bold tabular-nums text-eid-action-500 sm:text-xl sm:font-black">
+                    {Number(t.eid_time ?? 0).toFixed(1)}
+                  </p>
+                  <p className="text-[9px] font-bold uppercase text-eid-text-secondary">EID</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold tabular-nums text-eid-fg sm:text-xl sm:font-black">{t.pontos_ranking ?? 0}</p>
+                  <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Pts</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold tabular-nums text-eid-primary-300 sm:text-xl sm:font-black">#{posicao}</p>
+                  <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Posição</p>
+                </div>
+              </div>
+              {t.esporte_id ? (
+                <Link
+                  href={`/perfil-time/${id}/eid/${t.esporte_id}?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
+                  className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
+                >
+                  Estatísticas completas · {esp?.nome ?? "este esporte"}
+                </Link>
+              ) : null}
+            </div>
+            <div className={`${PROFILE_CARD_BASE} mt-3 overflow-hidden p-0`}>
+              <ProfileSportsMetricsCard
+                sportName={esp?.nome ?? "Esporte"}
+                eidValue={Number(t.eid_time ?? 0)}
+                rankValue={Number(t.pontos_ranking ?? 0)}
+                rankLabel="Pontos no ranking"
+                trendLabel="Evolução EID"
+                trendPoints={
+                  (hist ?? []).length >= 3
+                    ? ([
+                        Number((hist ?? [])[2]?.nota_nova ?? t.eid_time ?? 0),
+                        Number((hist ?? [])[1]?.nota_nova ?? t.eid_time ?? 0),
+                        Number((hist ?? [])[0]?.nota_nova ?? t.eid_time ?? 0),
+                      ] as [number, number, number])
+                    : [Number(t.eid_time ?? 0), Number(t.eid_time ?? 0), Number(t.eid_time ?? 0)]
+                }
+              />
+            </div>
             <ProfileCompactTimeline
-              title="Histórico de EID"
-              emptyText="Sem histórico recente."
+              title="Histórico de notas EID"
+              emptyText="Sem histórico recente de EID."
               items={[...(hist ?? [])]
                 .reverse()
                 .map((h, i) => ({
@@ -471,6 +382,129 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                   tone: "neutral" as const,
                 }))}
             />
+          </ProfileSection>
+
+          <ProfileSection title="Resultados">
+            <ProfileFormacaoResultados
+              totais={bundleResultados.totais}
+              items={bundleResultados.items}
+              emptyText="Nenhuma partida em equipe concluída listada ainda para esta formação."
+            />
+          </ProfileSection>
+
+          <ProfileSection title="Participantes">
+            {isLeader ? (
+              <form action={convidarAction} className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                <input
+                  name="username"
+                  placeholder="@username para convidar"
+                  className="eid-input-dark rounded-xl px-3 py-2 text-xs text-eid-fg"
+                />
+                <button type="submit" className="eid-btn-primary rounded-xl px-3 py-2 text-xs font-semibold">
+                  Convidar
+                </button>
+              </form>
+            ) : null}
+            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+              {(membros ?? []).map((m, idx) => {
+                const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+                if (!p?.id) return null;
+                return (
+                  <li key={`${m.usuario_id}-${idx}`}>
+                    <ProfileMemberCard
+                      href={`/perfil/${p.id}?from=/perfil-time/${id}`}
+                      name={p.nome ?? "Membro"}
+                      subtitle={m.cargo ?? "Atleta"}
+                      avatarUrl={p.avatar_url}
+                      trailing={
+                        isLeader && p.id !== t.criador_id ? (
+                          <div className="flex gap-2">
+                            <form action={transferirLiderancaAction}>
+                              <input type="hidden" name="usuario_id" value={p.id} />
+                              <button
+                                type="submit"
+                                className="rounded-lg border border-eid-primary-500/30 px-2 py-1 text-[10px] font-semibold text-eid-primary-300"
+                              >
+                                Transferir liderança
+                              </button>
+                            </form>
+                            <form action={removerMembroAction}>
+                              <input type="hidden" name="usuario_id" value={p.id} />
+                              <button
+                                type="submit"
+                                className="rounded-lg border border-red-400/30 px-2 py-1 text-[10px] font-semibold text-red-300"
+                              >
+                                Remover
+                              </button>
+                            </form>
+                          </div>
+                        ) : null
+                      }
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          </ProfileSection>
+
+          {isLeader ? (
+            <div className="eid-list-item rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">Gestão da formação</p>
+              <Link
+                href={`/times?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
+                className="mt-2 flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
+              >
+                Gerenciar equipe
+              </Link>
+              <p className="mt-1 text-[10px] text-eid-text-secondary">
+                Convidar atletas e convites — painel completo em Times.
+              </p>
+              <Link
+                href={`${contaEditarFormacaoTimeHref(id)}?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
+                className="mt-2 flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+              >
+                Editar em página dedicada
+              </Link>
+              <PerfilTimeEditForm
+                timeId={id}
+                nome={t.nome ?? ""}
+                username={t.username ?? null}
+                bio={t.bio ?? null}
+                localizacao={t.localizacao ?? null}
+                escudo={t.escudo ?? null}
+                interesse_rank_match={Boolean(t.interesse_rank_match)}
+                disponivel_amistoso={Boolean(t.disponivel_amistoso)}
+                vagas_abertas={Boolean(t.vagas_abertas)}
+                aceita_pedidos={Boolean(t.aceita_pedidos)}
+                interesse_torneio={Boolean(t.interesse_torneio)}
+                nivel_procurado={t.nivel_procurado ?? null}
+              />
+            </div>
+          ) : null}
+
+          {isMember || isLeader ? (
+            <div className="grid gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3">
+              <Link
+                href={CONTA_PERFIL_HREF}
+                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
+              >
+                Editar perfil pessoal
+              </Link>
+              <Link
+                href={CONTA_ESPORTES_EID_HREF}
+                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+              >
+                Esportes e ranking (EID)
+              </Link>
+              <p className="text-[10px] leading-relaxed text-eid-text-secondary">
+                Seu nome, cidade e dados de atleta são pessoais. A <strong className="text-eid-fg">cidade da equipe</strong>{" "}
+                (formação) aparece no topo e <strong className="text-eid-fg">não pode ser alterada</strong>; para mudar de
+                cidade no radar, o líder cria uma <strong className="text-eid-fg">nova formação</strong>.
+              </p>
+            </div>
+          ) : null}
+
+          <ProfileSection title="Conquistas">
             <ProfileAchievementsShelf achievements={conquistas} emptyText="Conquistas aparecerão com a evolução da equipe." />
           </ProfileSection>
         </div>

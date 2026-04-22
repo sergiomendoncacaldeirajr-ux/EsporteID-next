@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { EidBadge } from "@/components/eid/eid-badge";
-import { ProfileAchievementsShelf } from "@/components/perfil/profile-history-widgets";
+import { ProfileAchievementsShelf, ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
-import { ProfileIdentityHeader, ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
+import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
 import { ProfileMemberCard } from "@/components/perfil/profile-team-members-cards";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
@@ -19,7 +19,14 @@ import {
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF, contaEditarDuplaRegistradaHref } from "@/lib/routes/conta";
-import { PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
+import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
+import {
+  carregarPartidasColetivasDoTime,
+  mapNomesTimesAdversarios,
+  mapTorneioNomes,
+} from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -67,8 +74,36 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   );
 
   const { data: timeResolvido } = timeResolvidoId
-    ? await supabase.from("times").select("id, criador_id, nome, eid_time").eq("id", timeResolvidoId).maybeSingle()
+    ? await supabase
+        .from("times")
+        .select("id, criador_id, nome, username, escudo, localizacao, eid_time, pontos_ranking")
+        .eq("id", timeResolvidoId)
+        .maybeSingle()
     : { data: null };
+
+  let posicaoDupla: number | null = null;
+  if (timeResolvidoId && timeResolvido && d.esporte_id) {
+    const { count: acimaD } = await supabase
+      .from("times")
+      .select("id", { count: "exact", head: true })
+      .eq("esporte_id", d.esporte_id)
+      .eq("tipo", "dupla")
+      .gt("pontos_ranking", timeResolvido.pontos_ranking ?? 0);
+    posicaoDupla = (acimaD ?? 0) + 1;
+  }
+
+  const espIdNum = d.esporte_id != null ? Number(d.esporte_id) : 0;
+  const partidasColetivasDupla =
+    timeResolvidoId && espIdNum > 0
+      ? await carregarPartidasColetivasDoTime(supabase, timeResolvidoId, espIdNum, user.id)
+      : [];
+  const torneioNomeDupla = timeResolvidoId ? await mapTorneioNomes(supabase, partidasColetivasDupla) : new Map();
+  const nomeOponenteDupla = timeResolvidoId
+    ? await mapNomesTimesAdversarios(supabase, timeResolvidoId, partidasColetivasDupla)
+    : new Map();
+  const bundleResultadosDupla = timeResolvidoId
+    ? buildFormacaoResultadosPerfil(partidasColetivasDupla, timeResolvidoId, nomeOponenteDupla, torneioNomeDupla)
+    : { items: [], totais: { vitorias: 0, derrotas: 0, empates: 0, rank: 0, torneio: 0 } };
 
   const { data: eidLogsDupla } = timeResolvidoId
     ? await supabase
@@ -78,6 +113,15 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
         .eq("entity_time_id", timeResolvidoId)
         .order("created_at", { ascending: false })
         .limit(3)
+    : { data: [] };
+
+  const { data: histDupla } = timeResolvidoId
+    ? await supabase
+        .from("historico_eid_coletivo")
+        .select("nota_nova, data_alteracao")
+        .eq("time_id", timeResolvidoId)
+        .order("data_alteracao", { ascending: false })
+        .limit(12)
     : { data: [] };
 
   const { data: liderDupla } = timeResolvido?.criador_id
@@ -183,81 +227,58 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   if (rankTotal >= 1200) conquistas.push("Rank Forte");
   if ((p1?.id ? 1 : 0) + (p2?.id ? 1 : 0) === 2) conquistas.push("Dupla Completa");
 
+  const nomeExibicao = timeResolvido?.nome ?? `Dupla registrada #${id}`;
+  const usernameExibicao = timeResolvido?.username ?? d.username;
+  const localExibicao =
+    timeResolvido?.localizacao?.trim() ||
+    [p1?.localizacao, p2?.localizacao]
+      .map((x) => (x ? String(x).trim() : ""))
+      .filter(Boolean)
+      .join(" · ") ||
+    null;
+
   return (
     <>
       <DashboardTopbar />
       <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         <PerfilBackLink href={backHref} label="Voltar" />
 
-        <ProfileIdentityHeader
-          avatar={
-            <span className="inline-flex rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
-              Dupla · {esp?.nome ?? "Esporte"}
-            </span>
-          }
-          name={`Dupla registrada #${id}`}
-          username={d.username}
-          location={null}
-          extra={
-            <>
-              <p className="mt-2 text-xs text-eid-text-secondary">
-                Par fixo de atletas no mesmo esporte. No radar, duplas também podem aparecer como{" "}
-                <strong className="text-eid-fg">formação</strong>.
-              </p>
-              {d.bio ? <p className="mt-2 text-xs text-eid-text-secondary">{d.bio}</p> : null}
-              {timeResolvido ? (
-                <div className="mt-3">
-                  <EidBadge score={Number(timeResolvido.eid_time ?? 0)} history={eidLogsDupla ?? []} label="EID dupla" />
-                </div>
-              ) : null}
-              {mediaEid != null ? (
-                <p className="mt-4 text-2xl font-bold text-eid-action-500 sm:text-3xl sm:font-black">EID médio {mediaEid.toFixed(1)}</p>
-              ) : (
-                <p className="mt-4 text-sm text-eid-text-secondary">EID individual disponível nos perfis dos atletas.</p>
-              )}
-            </>
-          }
-        />
-
-        {isMembroDupla ? (
-          <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-3">
-            {isDonoDupla ? (
-              <>
-                <Link
-                  href={`${contaEditarDuplaRegistradaHref(id)}?from=${encodeURIComponent(`/perfil-dupla/${id}`)}`}
-                  className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
-                >
-                  Editar em página dedicada
-                </Link>
-                <PerfilDuplaEditForm
-                  duplaId={id}
-                  username={d.username ?? null}
-                  bio={d.bio ?? null}
-                  timeFormacaoRadarId={timeResolvidoId}
-                />
-              </>
-            ) : null}
-            <div className={`grid gap-2 ${isDonoDupla ? "mt-3" : ""}`}>
-              <Link
-                href={CONTA_PERFIL_HREF}
-                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
-              >
-                Editar perfil pessoal
-              </Link>
-              <Link
-                href={CONTA_ESPORTES_EID_HREF}
-                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
-              >
-                Esportes e ranking (EID)
-              </Link>
+        <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 text-center sm:p-4`}>
+          {timeResolvido?.escudo ? (
+            <img
+              src={timeResolvido.escudo}
+              alt=""
+              className="mx-auto h-24 w-24 rounded-2xl border-2 border-eid-action-500/50 object-cover shadow-lg sm:h-28 sm:w-28"
+            />
+          ) : (
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-surface text-sm font-black text-eid-primary-300 sm:h-28 sm:w-28">
+              D
             </div>
-            <p className="mt-1.5 text-[10px] leading-relaxed text-eid-text-secondary">
-              {isDonoDupla
-                ? "Acima: @ e bio da dupla registrada (só o dono). “Editar perfil pessoal”: nome, sua cidade, bio, foto. “EID”: esportes, modalidade e tempo de prática. A cidade da dupla no radar (formação) não é editável — só criando formação nova."
-                : "Só o dono edita @ e bio da dupla registrada. Use “Editar perfil pessoal” para nome e sua cidade; “EID” para esportes e ranking."}
+          )}
+          <span className="mt-4 inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
+            DUPLA · {esp?.nome ?? "Esporte"}
+          </span>
+          <h1 className="mt-3 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{nomeExibicao}</h1>
+          {usernameExibicao ? (
+            <p className="mt-1 text-xs font-medium text-eid-primary-300">@{usernameExibicao}</p>
+          ) : null}
+          <p className="mt-2 text-sm text-eid-text-secondary">{localExibicao ?? "Localização não informada"}</p>
+          <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary">
+            Par fixo de atletas no mesmo esporte. Com time ativo no radar, escudo e cidade da <strong className="text-eid-fg">formação</strong> vêm do ranking.
+          </p>
+          {d.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{d.bio}</p> : null}
+          {liderDupla ? (
+            <p className="mt-3 text-xs text-eid-text-secondary">
+              Líder:{" "}
+              <Link
+                href={`/perfil/${liderDupla.id}?from=/perfil-dupla/${id}`}
+                className="font-semibold text-eid-primary-300 hover:underline"
+              >
+                {liderDupla.nome ?? "—"}
+              </Link>
             </p>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
 
         <div className="mt-6 grid gap-6">
           <section>
@@ -307,28 +328,129 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             )}
           </section>
 
-          <ProfileSection title="Esportes e Estatísticas">
-            <ProfileSportsMetricsCard
-              sportName={esp?.nome ?? "Esporte"}
-              eidValue={mediaEid ?? 1}
-              rankValue={rankTotal}
-              eidLabel="EID médio"
-              rankLabel="Rank total"
-              trendLabel="Evolução (proxy)"
-              trendPoints={[mediaEid ?? 1, (mediaEid ?? 1) + 0.1, (mediaEid ?? 1) + 0.2]}
-            />
-            {d.esporte_id ? (
-              <Link
-                href={`/perfil-dupla/${id}/eid/${d.esporte_id}?from=${encodeURIComponent(`/perfil-dupla/${id}`)}`}
-                className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
-              >
-                Estatísticas da dupla · {esp?.nome ?? "este esporte"}
-              </Link>
-            ) : null}
+          <ProfileSection title="EID e estatísticas">
+            {timeResolvido ? (
+              <>
+                <div className={`${PROFILE_CARD_BASE} mt-2 p-3`}>
+                  <div className="flex justify-center">
+                    <EidBadge score={Number(timeResolvido.eid_time ?? 0)} history={eidLogsDupla ?? []} label="EID dupla" />
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-4">
+                    <div className="text-center">
+                      <p className="text-lg font-bold tabular-nums text-eid-action-500 sm:text-xl sm:font-black">
+                        {Number(timeResolvido.eid_time ?? 0).toFixed(1)}
+                      </p>
+                      <p className="text-[9px] font-bold uppercase text-eid-text-secondary">EID</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-bold tabular-nums text-eid-fg sm:text-xl sm:font-black">
+                        {timeResolvido.pontos_ranking ?? 0}
+                      </p>
+                      <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Pts</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-bold tabular-nums text-eid-primary-300 sm:text-xl sm:font-black">
+                        {posicaoDupla != null ? `#${posicaoDupla}` : "—"}
+                      </p>
+                      <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Posição</p>
+                    </div>
+                  </div>
+                  {d.esporte_id ? (
+                    <Link
+                      href={`/perfil-dupla/${id}/eid/${d.esporte_id}?from=${encodeURIComponent(`/perfil-dupla/${id}`)}`}
+                      className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
+                    >
+                      Estatísticas completas · {esp?.nome ?? "este esporte"}
+                    </Link>
+                  ) : null}
+                </div>
+                <div className={`${PROFILE_CARD_BASE} mt-3 overflow-hidden p-0`}>
+                  <ProfileSportsMetricsCard
+                    sportName={esp?.nome ?? "Esporte"}
+                    eidValue={Number(timeResolvido.eid_time ?? 0)}
+                    rankValue={Number(timeResolvido.pontos_ranking ?? 0)}
+                    rankLabel="Pontos no ranking"
+                    trendLabel="Evolução EID"
+                    trendPoints={
+                      (histDupla ?? []).length >= 3
+                        ? ([
+                            Number((histDupla ?? [])[2]?.nota_nova ?? timeResolvido.eid_time ?? 0),
+                            Number((histDupla ?? [])[1]?.nota_nova ?? timeResolvido.eid_time ?? 0),
+                            Number((histDupla ?? [])[0]?.nota_nova ?? timeResolvido.eid_time ?? 0),
+                          ] as [number, number, number])
+                        : [
+                            Number(timeResolvido.eid_time ?? 0),
+                            Number(timeResolvido.eid_time ?? 0),
+                            Number(timeResolvido.eid_time ?? 0),
+                          ]
+                    }
+                  />
+                </div>
+                <ProfileCompactTimeline
+                  title="Histórico de notas EID"
+                  emptyText="Sem histórico recente de EID."
+                  items={[...(histDupla ?? [])]
+                    .reverse()
+                    .map((h, i) => ({
+                      id: `${h.data_alteracao ?? "sem-data"}-${i}`,
+                      label: `${Number(h.nota_nova).toFixed(1)} ${h.data_alteracao ? new Date(h.data_alteracao).toLocaleDateString("pt-BR") : ""}`.trim(),
+                      tone: "neutral" as const,
+                    }))}
+                />
+              </>
+            ) : (
+              <div className={`${PROFILE_CARD_BASE} mt-2 p-3`}>
+                <p className="text-xs text-eid-text-secondary">
+                  Ainda não há <strong className="text-eid-fg">time de dupla ativo</strong> no ranking com estes dois atletas. O EID de equipe aparece quando a formação existir no radar.
+                </p>
+                {mediaEid != null ? (
+                  <div className="mt-3">
+                    <ProfileSportsMetricsCard
+                      sportName={esp?.nome ?? "Esporte"}
+                      eidValue={mediaEid}
+                      rankValue={rankTotal}
+                      eidLabel="EID médio (atletas)"
+                      rankLabel="Soma pontos individuais"
+                      trendLabel="Referência"
+                      trendPoints={[mediaEid, mediaEid + 0.05, mediaEid + 0.1]}
+                    />
+                  </div>
+                ) : null}
+                {d.esporte_id ? (
+                  <Link
+                    href={`/perfil-dupla/${id}/eid/${d.esporte_id}?from=${encodeURIComponent(`/perfil-dupla/${id}`)}`}
+                    className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
+                  >
+                    Abrir estatísticas · {esp?.nome ?? "este esporte"}
+                  </Link>
+                ) : null}
+              </div>
+            )}
           </ProfileSection>
 
-          <ProfileSection title="Minhas Equipes">
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <ProfileSection title="Resultados">
+            {timeResolvidoId ? (
+              <ProfileFormacaoResultados
+                totais={bundleResultadosDupla.totais}
+                items={bundleResultadosDupla.items}
+                emptyText="Nenhuma partida em dupla concluída listada ainda."
+              />
+            ) : (
+              <p className="mt-2 text-xs text-eid-text-secondary">
+                Resultados de ranking e torneio aparecem quando houver time de dupla ativo no radar.
+              </p>
+            )}
+            <p className="mt-3 text-[10px] text-eid-text-secondary">
+              Para desafiar outra dupla no radar:{" "}
+              <Link href="/match?tipo=dupla" className="font-semibold text-eid-primary-300 underline">
+                Match → Duplas
+              </Link>
+              .
+            </p>
+          </ProfileSection>
+
+          <ProfileSection title="Participantes">
+            <div className="mt-2 grid gap-3 sm:grid-cols-2">
               {[p1, p2].map((p, i) =>
                 p ? (
                   <ProfileMemberCard
@@ -351,19 +473,49 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             </div>
           </ProfileSection>
 
-          <ProfileSection title="Histórico e Conquistas">
-            <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-3 text-xs leading-relaxed text-eid-text-secondary">
-              Para desafiar uma <strong className="text-eid-fg">formação dupla</strong> cadastrada como time, abra o radar em{" "}
-              <Link href="/match?tipo=dupla" className="font-semibold text-eid-primary-300 underline">
-                Match → Duplas
-              </Link>
-              .
-            </p>
-            <ProfileAchievementsShelf
-              title="Estante de troféus"
-              achievements={conquistas}
-              emptyText="Conquistas aparecerão conforme evolução da dupla."
-            />
+          {isMembroDupla ? (
+            <div className="eid-list-item rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3">
+              {isDonoDupla ? (
+                <>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">Sua dupla registrada</p>
+                  <Link
+                    href={`${contaEditarDuplaRegistradaHref(id)}?from=${encodeURIComponent(`/perfil-dupla/${id}`)}`}
+                    className="mt-2 flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+                  >
+                    Editar em página dedicada
+                  </Link>
+                  <PerfilDuplaEditForm
+                    duplaId={id}
+                    username={d.username ?? null}
+                    bio={d.bio ?? null}
+                    timeFormacaoRadarId={timeResolvidoId}
+                  />
+                </>
+              ) : null}
+              <div className={`grid gap-2 ${isDonoDupla ? "mt-3" : ""}`}>
+                <Link
+                  href={CONTA_PERFIL_HREF}
+                  className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
+                >
+                  Editar perfil pessoal
+                </Link>
+                <Link
+                  href={CONTA_ESPORTES_EID_HREF}
+                  className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+                >
+                  Esportes e ranking (EID)
+                </Link>
+              </div>
+              <p className="mt-1.5 text-[10px] leading-relaxed text-eid-text-secondary">
+                {isDonoDupla
+                  ? "Só o dono edita @ e bio da dupla registrada. Cidade da formação no radar segue o time ativo."
+                  : "Só o dono edita @ e bio da dupla registrada."}
+              </p>
+            </div>
+          ) : null}
+
+          <ProfileSection title="Conquistas">
+            <ProfileAchievementsShelf achievements={conquistas} emptyText="Conquistas aparecerão conforme evolução da dupla." />
           </ProfileSection>
         </div>
       </main>

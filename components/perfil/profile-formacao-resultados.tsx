@@ -5,7 +5,7 @@ import { PROFILE_CARD_BASE } from "@/components/perfil/profile-ui-tokens";
 
 export type FormacaoResultadoItem = {
   id: string;
-  resultado: "V" | "D" | "E";
+  resultado: "V" | "D" | "E" | "—";
   origem: "Rank" | "Torneio";
   placar: string;
   dataFmt: string;
@@ -114,7 +114,7 @@ export function ProfileFormacaoResultados({
             }`}
           >
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-black text-eid-fg">{item.resultado}</span>
+              <span className="text-[11px] font-black text-eid-fg tabular-nums">{item.resultado}</span>
               <span className="font-semibold text-eid-text-secondary">{item.origem}</span>
               <span className="font-bold text-eid-fg">{item.placar}</span>
               <span className="text-[9px] text-eid-text-secondary">vs {item.adversarioLabel}</span>

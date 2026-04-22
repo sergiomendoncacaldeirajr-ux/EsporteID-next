@@ -1,0 +1,51 @@
+import type { FormacaoResultadoItem } from "@/components/perfil/profile-formacao-resultados";
+import { fmtDataPtBr, resultadoColetivo, type PartidaColetivaRow } from "@/lib/perfil/formacao-eid-stats";
+
+export type FormacaoResultadosBundle = {
+  items: FormacaoResultadoItem[];
+  totais: { vitorias: number; derrotas: number; empates: number; rank: number; torneio: number };
+};
+
+export function buildFormacaoResultadosPerfil(
+  partidas: PartidaColetivaRow[],
+  timeId: number,
+  nomeOponente: Map<number, string>,
+  torneioNome: Map<number, string>
+): FormacaoResultadosBundle {
+  const totais = { vitorias: 0, derrotas: 0, empates: 0, rank: 0, torneio: 0 };
+  const items: FormacaoResultadoItem[] = [];
+
+  for (const p of partidas) {
+    const res = resultadoColetivo(timeId, p);
+    const t1 = p.time1_id != null ? Number(p.time1_id) : null;
+    const t2 = p.time2_id != null ? Number(p.time2_id) : null;
+    const oppId = t1 === timeId ? t2 : t1;
+    const adversarioLabel = oppId != null ? nomeOponente.get(oppId) ?? `Equipe #${oppId}` : "—";
+
+    const s1 = Number(p.placar_1 ?? 0);
+    const s2 = Number(p.placar_2 ?? 0);
+    if (s1 === s2) totais.empates += 1;
+    else if (res.label === "V") totais.vitorias += 1;
+    else if (res.label === "D") totais.derrotas += 1;
+
+    const torId = p.torneio_id != null ? Number(p.torneio_id) : null;
+    if (torId) totais.torneio += 1;
+    else totais.rank += 1;
+
+    const dataIso = p.data_resultado ?? p.data_registro;
+    const torneioLabel = torId ? torneioNome.get(torId) ?? null : null;
+
+    items.push({
+      id: String(p.id),
+      resultado: res.label,
+      origem: torId ? "Torneio" : "Rank",
+      placar: `${s1}x${s2}`,
+      dataFmt: dataIso ? fmtDataPtBr(dataIso) : "—",
+      tone: res.label === "V" ? "positive" : res.label === "D" ? "negative" : "neutral",
+      adversarioLabel,
+      torneioLabel,
+    });
+  }
+
+  return { items, totais };
+}
