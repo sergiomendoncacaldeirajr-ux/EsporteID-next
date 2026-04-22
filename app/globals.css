@@ -52,19 +52,20 @@
   --foreground: var(--eid-fg);
 
   /*
-   * Shell logado (DashboardTopbar fixed + MobileBottomNav fixed):
-   * compensação única no #app-main-column — não duplicar em cada página.
-   * Alturas alinhadas ao topbar (≈4.5–5rem + safe-top) e barra inferior (~54px + label + folga p/ botão central).
+   * Shell logado (DashboardTopbar fixed + MobileBottomNav fixed).
+   * Topbar real no mobile: safe-top + linha logo (py-2 + h-9) + formulário de busca (h-9 + pb-3) ≈ 6.5–7.5rem, não só uma faixa fina.
+   * Bottom: barra + botão central que invade ~1.75rem para cima do fundo.
    */
-  --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 5.25rem);
-  --eid-shell-footer-offset: calc(env(safe-area-inset-bottom, 0px) + 6rem);
+  --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 8rem);
+  --eid-shell-footer-offset: calc(env(safe-area-inset-bottom, 0px) + 7.5rem);
 }
 
 @media (min-width: 768px) {
   :root {
-    --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 5.25rem);
-    /* Nav inferior oculta em md+; folga p/ rodapé / home indicator */
-    --eid-shell-footer-offset: calc(3rem + max(0px, env(safe-area-inset-bottom, 0px)));
+    /* md+: mesma busca + faixa de nav horizontal (pb-2.5) — header mais alto */
+    --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 10.5rem);
+    /* Nav inferior oculta; folga p/ rodapé / home indicator */
+    --eid-shell-footer-offset: calc(3.5rem + max(0px, env(safe-area-inset-bottom, 0px)));
   }
 }
 
