@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { TeamManagementPanel } from "@/components/times/team-management-panel";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 
@@ -59,9 +58,7 @@ export default async function TimesPage({ searchParams }: Props) {
   const queryBase = `q=${encodeURIComponent(sp.q ?? "")}`;
 
   return (
-    <>
-      <DashboardTopbar />
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
         <div className="relative mb-4 flex flex-col gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:flex-row sm:items-end sm:justify-between md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/20 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-primary-500/10 md:p-6">
           <div>
             <h1 className="text-lg font-bold tracking-tight text-eid-fg md:text-2xl md:font-black">Times</h1>
@@ -168,6 +165,5 @@ export default async function TimesPage({ searchParams }: Props) {
           </Link>
         </div>
       </div>
-    </>
   );
 }

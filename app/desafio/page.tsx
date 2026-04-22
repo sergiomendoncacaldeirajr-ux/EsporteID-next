@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
@@ -56,8 +55,6 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
       if (perfilAlvo && perfilAlvo.id !== user.id && opcoes.length > 0) {
         return (
-          <>
-            <DashboardTopbar />
             <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
               <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
               <p className="mt-2 text-sm text-eid-text-secondary">
@@ -81,15 +78,12 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
                 Voltar ao perfil
               </Link>
             </main>
-          </>
         );
       }
     }
 
     return (
-      <>
-        <DashboardTopbar />
-        <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
           <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">
             Escolha um esporte no radar (não use &quot;Todos&quot;) para enviar um desafio com o esporte correto.
@@ -101,7 +95,6 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             Voltar ao radar
           </Link>
         </main>
-      </>
     );
   }
 
@@ -111,16 +104,13 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   if (modalidade === "individual") {
     if (!UUID_RE.test(alvoKey)) {
       return (
-        <>
-          <DashboardTopbar />
-          <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+        <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
             <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
             <p className="mt-2 text-sm text-red-200">Identificador do atleta inválido.</p>
             <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
               Voltar ao radar
             </Link>
           </main>
-        </>
       );
     }
 
@@ -131,16 +121,13 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       .maybeSingle();
     if (!perfil || perfil.id === user.id) {
       return (
-        <>
-          <DashboardTopbar />
-          <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+        <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
             <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
             <p className="mt-2 text-sm text-eid-text-secondary">Atleta não encontrado ou inválido para desafio.</p>
             <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
               Voltar ao radar
             </Link>
           </main>
-        </>
       );
     }
 
@@ -162,9 +149,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       const baseQs = `id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${esporteId}`;
 
       return (
-        <>
-          <DashboardTopbar />
-          <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+        <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
             <h1 className="text-lg font-bold text-eid-fg">Solicitar match</h1>
             <p className="mt-2 text-sm text-eid-text-secondary">
               <span className="text-eid-fg">{perfil.nome ?? "Atleta"}</span> · {esporteNome} (individual). Escolha o tipo de confronto.
@@ -213,14 +198,11 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
               Voltar ao perfil
             </Link>
           </main>
-        </>
       );
     }
 
     return (
-      <>
-        <DashboardTopbar />
-        <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
           <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">
             Confirme o pedido no esporte <span className="text-eid-fg">{esporteNome}</span> (individual) ·{" "}
@@ -261,23 +243,19 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             </Link>
           </div>
         </main>
-      </>
     );
   }
 
   const timeId = Number(alvoKey);
   if (!Number.isFinite(timeId) || timeId < 1) {
     return (
-      <>
-        <DashboardTopbar />
-        <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
           <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
           <p className="mt-2 text-sm text-red-200">Identificador da formação inválido.</p>
           <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
             Voltar ao radar
           </Link>
         </main>
-      </>
     );
   }
 
@@ -292,38 +270,30 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     .toLowerCase();
   if (!timeRow || (tipoFormacao !== "dupla" && tipoFormacao !== "time") || tipoFormacao !== modalidade) {
     return (
-      <>
-        <DashboardTopbar />
-        <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
           <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">Formação não encontrada ou modalidade diferente do link.</p>
           <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
             Voltar ao radar
           </Link>
         </main>
-      </>
     );
   }
 
   if (Number(timeRow.esporte_id) !== esporteId) {
     return (
-      <>
-        <DashboardTopbar />
-        <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
           <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">O esporte selecionado não confere com esta formação. Ajuste o filtro no radar.</p>
           <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
             Voltar ao radar
           </Link>
         </main>
-      </>
     );
   }
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+    <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
         <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
         <p className="mt-2 text-sm text-eid-text-secondary">
           Confirme o pedido no esporte <span className="text-eid-fg">{esporteNome}</span> ({modalidade === "dupla" ? "dupla" : "time"}).
@@ -337,6 +307,5 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           Cancelar
         </Link>
       </main>
-    </>
   );
 }

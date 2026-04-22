@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { createClient } from "@/lib/supabase/server";
 import { criarTorneo } from "@/app/torneios/actions";
@@ -38,8 +37,6 @@ export default async function CriarTorneioPage({
   const pode = await usuarioPodeCriarTorneio(supabase, user.id);
   if (!pode) {
     return (
-      <>
-        <DashboardTopbar />
         <main className="mx-auto w-full max-w-lg px-3 py-6 sm:max-w-2xl sm:px-6">
           <Link href="/torneios" className="text-xs font-semibold text-eid-primary-300 hover:underline">
             ← Voltar aos torneios
@@ -53,7 +50,6 @@ export default async function CriarTorneioPage({
             Ir ao painel
           </Link>
         </main>
-      </>
     );
   }
 
@@ -78,9 +74,7 @@ export default async function CriarTorneioPage({
     .limit(200);
 
   return (
-    <>
-      <DashboardTopbar />
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
         <div className="relative mb-6 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 md:overflow-hidden md:rounded-3xl md:border-eid-action-500/25 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-action-500/10 md:p-8">
           <div className="pointer-events-none absolute -left-10 top-0 hidden h-40 w-40 rounded-full bg-eid-action-500/20 blur-3xl md:block" />
           <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -403,6 +397,5 @@ export default async function CriarTorneioPage({
           </button>
         </form>
       </div>
-    </>
   );
 }

@@ -8,7 +8,6 @@ import {
   PROFILE_PUBLIC_MAIN_CLASS,
 } from "@/components/perfil/profile-ui-tokens";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import {
   fmtDataPtBr,
   resultadoColetivo,
@@ -73,9 +72,7 @@ export function FormacaoEidEsporteView({
   const trendPoints = trendTripletFromNotas(historicoNotas, eidTime);
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         <PerfilBackLink href={backHref} label="Voltar" />
 
         {avisoTopo ? (
@@ -248,6 +245,5 @@ export function FormacaoEidEsporteView({
           )}
         </ProfileSection>
       </main>
-    </>
   );
 }

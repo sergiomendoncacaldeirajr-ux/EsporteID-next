@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
-
 export const metadata = {
   title: "Performance",
   description: "Performance esportiva no EsporteID",
@@ -136,9 +134,7 @@ export default async function PerformancePage({ searchParams }: Props) {
   const qs = `esporte=${encodeURIComponent(sp.esporte ?? "")}&tipo=${encodeURIComponent(sp.tipo ?? tipoParam)}`;
 
   return (
-    <>
-      <DashboardTopbar />
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
         <div className="eid-surface-panel relative mb-4 rounded-xl p-3 md:mb-6 md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/20 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-primary-500/10 md:p-8">
           <div className="pointer-events-none absolute right-0 top-0 hidden h-36 w-36 rounded-full bg-eid-action-500/15 blur-3xl md:block" />
           <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between md:gap-4">
@@ -329,6 +325,5 @@ export default async function PerformancePage({ searchParams }: Props) {
           ) : null}
         </section>
       </div>
-    </>
   );
 }

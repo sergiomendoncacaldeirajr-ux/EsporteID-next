@@ -6,7 +6,6 @@ import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
 import { ProfileMemberCard } from "@/components/perfil/profile-team-members-cards";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { PerfilDuplaEditForm } from "@/components/perfil/perfil-dupla-edit-form";
 import { SugerirMatchLiderForm } from "@/components/perfil/sugerir-match-lider-form";
 import { resolveBackHref } from "@/lib/perfil/back-href";
@@ -238,9 +237,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
     null;
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         <PerfilBackLink href={backHref} label="Voltar" />
 
         <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 text-center sm:p-4`}>
@@ -519,6 +516,5 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
           </ProfileSection>
         </div>
       </main>
-    </>
   );
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { requireEspacoManagerUser } from "@/lib/espacos/server";
 
 export default async function EspacoLayout({
@@ -19,9 +18,7 @@ export default async function EspacoLayout({
   ];
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-4 sm:px-6">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-4 sm:px-6">
         <div className="relative overflow-hidden rounded-[2rem] border border-eid-primary-500/20 bg-gradient-to-br from-eid-card via-eid-card to-eid-primary-500/10 p-5 shadow-[0_24px_56px_-26px_rgba(37,99,235,0.45)] sm:p-6">
           <div
             className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-primary-500/12 blur-3xl"
@@ -68,6 +65,5 @@ export default async function EspacoLayout({
         </div>
         <div className="mt-5">{children}</div>
       </main>
-    </>
   );
 }

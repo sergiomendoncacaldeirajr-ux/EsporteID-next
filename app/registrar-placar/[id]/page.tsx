@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { createClient } from "@/lib/supabase/server";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
 
@@ -44,9 +43,7 @@ export default async function RegistrarPlacarPage({ params }: Props) {
     : { data: null };
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-4 sm:py-6">
+    <main className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-4 sm:py-6">
         <Link
           href="/agenda"
           className="inline-flex text-xs font-semibold text-eid-primary-400 underline-offset-2 transition hover:text-eid-primary-300 hover:underline"
@@ -87,6 +84,5 @@ export default async function RegistrarPlacarPage({ params }: Props) {
           </div>
         </div>
       </main>
-    </>
   );
 }

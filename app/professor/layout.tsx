@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { requireProfessorUser } from "@/lib/professor/server";
 
 export default async function ProfessorLayout({ children }: { children: ReactNode }) {
@@ -17,9 +16,7 @@ export default async function ProfessorLayout({ children }: { children: ReactNod
   ];
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-4 sm:px-6">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-4 sm:px-6">
         <div className="relative overflow-hidden rounded-[2rem] border border-eid-action-500/25 bg-gradient-to-br from-eid-card via-eid-card to-eid-action-500/10 p-5 shadow-[0_24px_56px_-26px_rgba(251,146,60,0.45)] sm:p-6">
           <div
             className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-action-500/12 blur-3xl"
@@ -57,6 +54,5 @@ export default async function ProfessorLayout({ children }: { children: ReactNod
         </div>
         <div className="mt-5">{children}</div>
       </main>
-    </>
   );
 }

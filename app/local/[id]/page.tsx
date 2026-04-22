@@ -5,7 +5,6 @@ import { LocalOwnershipClaimForm } from "@/components/locais/local-ownership-cla
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
 import { contaEditarLocalHref } from "@/lib/routes/conta";
@@ -68,9 +67,7 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
       : { data: null };
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         <PerfilBackLink href={backHref} label="Voltar aos locais" />
 
         <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2`}>
@@ -174,6 +171,5 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
           </p>
         ) : null}
       </main>
-    </>
   );
 }

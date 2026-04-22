@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ConexoesStrip, type ConexaoPeer } from "@/components/agenda/conexoes-strip";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -142,9 +141,7 @@ export default async function AgendaPage() {
   }
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto w-full max-w-lg px-3 py-3 sm:max-w-2xl sm:px-6 sm:py-4">
+    <main className="mx-auto w-full max-w-lg px-3 py-3 sm:max-w-2xl sm:px-6 sm:py-4">
         <div className="eid-surface-panel relative rounded-xl p-3 md:relative md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/25 md:bg-gradient-to-br md:from-eid-card md:via-eid-primary-500/10 md:to-eid-card md:p-6 md:shadow-lg md:shadow-eid-primary-500/10">
           <div className="pointer-events-none absolute -right-16 -top-16 hidden h-40 w-40 rounded-full bg-eid-primary-500/20 blur-3xl md:block" />
           <h1 className="text-lg font-bold tracking-tight text-eid-fg md:text-2xl md:font-black">Agenda</h1>
@@ -281,6 +278,5 @@ export default async function AgendaPage() {
           .
         </p>
       </main>
-    </>
   );
 }

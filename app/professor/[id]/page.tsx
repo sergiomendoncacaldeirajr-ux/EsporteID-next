@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import {
   PROFILE_CARD_BASE,
@@ -83,9 +82,7 @@ export default async function ProfessorPublicPage({
     .map((item) => ({ id: item.esporteId, nome: item.nome }));
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2`}>
           <div className="relative h-20 w-full sm:h-24">
             <div
@@ -340,6 +337,5 @@ export default async function ProfessorPublicPage({
           </ProfileSection>
         </div>
       </main>
-    </>
   );
 }

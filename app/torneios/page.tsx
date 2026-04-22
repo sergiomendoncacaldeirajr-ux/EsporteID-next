@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { usuarioPodeCriarTorneio } from "@/lib/torneios/organizador";
 
 export const metadata = {
@@ -58,9 +57,7 @@ export default async function TorneiosPage({ searchParams }: Props) {
     .join("&");
 
   return (
-    <>
-      <DashboardTopbar />
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
         <div className="relative mb-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 md:mb-6 md:overflow-hidden md:rounded-3xl md:border-eid-action-500/25 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-action-500/10 md:p-8">
           <div className="pointer-events-none absolute -left-10 top-0 hidden h-40 w-40 rounded-full bg-eid-action-500/20 blur-3xl md:block" />
           <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between md:gap-4">
@@ -205,6 +202,5 @@ export default async function TorneiosPage({ searchParams }: Props) {
           </Link>
         </div>
       </div>
-    </>
   );
 }

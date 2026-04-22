@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
 import { solicitarInscricaoTorneio } from "@/app/torneios/actions";
@@ -109,9 +108,7 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
     !isOrganizadorTorneio && t.status === "aberto" && !minhaInscricao && !(parsedRegras?.vagas_max && totalInscritos != null && totalInscritos >= (parsedRegras.vagas_max ?? 0));
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto w-full max-w-5xl px-3 pb-10 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
+    <main className="mx-auto w-full max-w-5xl px-3 pb-10 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
         <PerfilBackLink href={backHref} label="Voltar aos torneios" />
 
         {flashOk ? (
@@ -360,6 +357,5 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
           </section>
         ) : null}
       </main>
-    </>
   );
 }

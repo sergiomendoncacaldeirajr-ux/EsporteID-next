@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { distanciaKm } from "@/lib/geo/distance-km";
@@ -251,9 +250,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   const perfNav = navItems[4];
 
   return (
-    <>
-      <DashboardTopbar />
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
         <div className="eid-surface-panel relative overflow-hidden rounded-[1.35rem] border-eid-primary-500/25 bg-gradient-to-br from-eid-card via-eid-card to-eid-primary-950/40 p-4 shadow-[0_24px_56px_-22px_rgba(37,99,235,0.4)] sm:rounded-2xl sm:p-6">
           <div
             className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-primary-500/15 blur-3xl"
@@ -553,7 +550,6 @@ export default async function DashboardPage({ searchParams }: Props) {
             Qualquer pessoa pode sugerir um espaço. Para ser o responsável oficial, envie documentação pela página do local após criá-lo.
           </p>
         </section>
-      </div>
-    </>
+    </div>
   );
 }

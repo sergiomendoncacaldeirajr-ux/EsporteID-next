@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { requireOrganizerContext } from "@/lib/auth/active-context-server";
 import { createClient } from "@/lib/supabase/server";
 import { formatTorneioCategorias, parseTorneioCategorias } from "@/lib/torneios/categorias";
@@ -66,9 +65,7 @@ export default async function OrganizadorPage({
   });
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto w-full max-w-5xl flex-1 px-3 py-3 sm:px-6 sm:py-4">
+    <main className="mx-auto w-full max-w-5xl flex-1 px-3 py-3 sm:px-6 sm:py-4">
         <div className="rounded-3xl border border-eid-action-500/25 bg-gradient-to-br from-eid-card via-eid-card to-eid-action-500/10 p-5 shadow-[0_24px_56px_-22px_rgba(249,115,22,0.32)]">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-eid-action-400">Modo Organizador</p>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-eid-fg">Painel operacional</h1>
@@ -233,6 +230,5 @@ export default async function OrganizadorPage({
           </div>
         </section>
       </main>
-    </>
   );
 }

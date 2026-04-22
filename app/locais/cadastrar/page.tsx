@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { createClient } from "@/lib/supabase/server";
 import { cadastrarLocalGenerico } from "./actions";
 
@@ -33,9 +32,7 @@ export default async function CadastrarLocalPage({
   if (!user) redirect("/login?next=/locais/cadastrar");
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-6 sm:py-6">
+    <main className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-6 sm:py-6">
         <Link href="/locais" className="text-xs font-semibold text-eid-primary-300 hover:underline">
           ← Voltar aos locais
         </Link>
@@ -89,6 +86,5 @@ export default async function CadastrarLocalPage({
           suporte após criar o perfil do local.
         </p>
       </main>
-    </>
   );
 }

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { publicarChaveTorneio } from "@/app/torneios/actions";
 import { DrawPlannerForm } from "@/components/torneios/draw-planner-form";
 import { resolveBackHref } from "@/lib/perfil/back-href";
@@ -102,9 +101,7 @@ export default async function TorneioChavePage({ params, searchParams }: Props) 
   const showDraw = isPublished || canSeeDraft;
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto w-full max-w-5xl px-3 pb-10 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
+    <main className="mx-auto w-full max-w-5xl px-3 pb-10 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
         <PerfilBackLink href={backHref} label="Voltar ao torneio" />
 
         <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 md:rounded-3xl md:p-8">
@@ -229,6 +226,5 @@ export default async function TorneioChavePage({ params, searchParams }: Props) 
           </Link>
         </p>
       </main>
-    </>
   );
 }

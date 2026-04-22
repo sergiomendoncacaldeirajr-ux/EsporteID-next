@@ -10,7 +10,6 @@ import { ComunidadeNotificacoesSection, type NotifRow } from "@/components/comun
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -211,9 +210,7 @@ export default async function ComunidadePage() {
   const nAulas = (solicitacoes?.length ?? 0) + (vinculos?.length ?? 0);
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto w-full max-w-lg px-3 py-3 sm:max-w-2xl sm:px-6 sm:py-4">
+    <main className="mx-auto w-full max-w-lg px-3 py-3 sm:max-w-2xl sm:px-6 sm:py-4">
         <div className="eid-surface-panel relative rounded-xl px-3 py-3 md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/20 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-primary-500/[0.12] md:p-6 md:shadow-xl md:shadow-black/20">
           <div className="pointer-events-none absolute -left-10 -bottom-10 hidden h-36 w-36 rounded-full bg-eid-action-500/15 blur-3xl md:block" />
           <h1 className="text-lg font-bold tracking-tight text-eid-fg md:text-2xl md:font-black">Comunidade</h1>
@@ -305,6 +302,5 @@ export default async function ComunidadePage() {
           </div>
         </div>
       </main>
-    </>
   );
 }

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { FormacaoEidEsporteView } from "@/components/perfil/formacao-eid-esporte-view";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
@@ -67,8 +66,6 @@ export default async function PerfilDuplaEidEsportePage({ params, searchParams }
 
   if (timeResolvidoId == null) {
     return (
-      <>
-        <DashboardTopbar />
         <main className={PROFILE_PUBLIC_MAIN_CLASS}>
           <PerfilBackLink href={backHref} label="Voltar" />
           <div className={`mt-4 p-4 ${PROFILE_HERO_PANEL_CLASS}`}>
@@ -87,7 +84,6 @@ export default async function PerfilDuplaEidEsportePage({ params, searchParams }
             </Link>
           </div>
         </main>
-      </>
     );
   }
 
@@ -99,8 +95,6 @@ export default async function PerfilDuplaEidEsportePage({ params, searchParams }
 
   if (!t || Number(t.esporte_id) !== esporteId) {
     return (
-      <>
-        <DashboardTopbar />
         <main className={PROFILE_PUBLIC_MAIN_CLASS}>
           <PerfilBackLink href={backHref} label="Voltar" />
           <div className={`mt-4 p-4 ${PROFILE_CARD_BASE} border-amber-500/30`}>
@@ -113,7 +107,6 @@ export default async function PerfilDuplaEidEsportePage({ params, searchParams }
             </p>
           </div>
         </main>
-      </>
     );
   }
 

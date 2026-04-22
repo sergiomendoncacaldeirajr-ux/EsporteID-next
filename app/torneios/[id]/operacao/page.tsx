@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revogarTorneioStaff } from "@/app/torneios/actions";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { TorneioInscricoesManager } from "@/components/torneios/torneio-inscricoes-manager";
 import { TorneioJogoScoreForm } from "@/components/torneios/torneio-jogo-score-form";
@@ -82,9 +81,7 @@ export default async function TorneioOperacaoPage({ params, searchParams }: Prop
   const timeMap = new Map((times ?? []).map((t) => [Number(t.id), t]));
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className="mx-auto w-full max-w-5xl px-3 pb-10 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
+    <main className="mx-auto w-full max-w-5xl px-3 pb-10 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
         <PerfilBackLink href={backHref} label="Voltar" />
 
         <section className="mt-4 rounded-3xl border border-eid-action-500/25 bg-gradient-to-br from-eid-card via-eid-card to-eid-action-500/10 p-5">
@@ -241,6 +238,5 @@ export default async function TorneioOperacaoPage({ params, searchParams }: Prop
           )}
         </section>
       </main>
-    </>
   );
 }

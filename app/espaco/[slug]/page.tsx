@@ -8,7 +8,6 @@ import {
 } from "@/components/espaco/espaco-public-cta";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_WIDE_CLASS } from "@/components/perfil/profile-ui-tokens";
-import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -98,9 +97,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
   const unidadePrincipal = unidades?.[0] ?? null;
 
   return (
-    <>
-      <DashboardTopbar />
-      <main className={PROFILE_PUBLIC_MAIN_WIDE_CLASS}>
+    <main className={PROFILE_PUBLIC_MAIN_WIDE_CLASS}>
         <section
           className={`${PROFILE_HERO_PANEL_CLASS} mt-2 border border-eid-primary-500/25 p-4 sm:p-5`}
         >
@@ -447,6 +444,5 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
           )}
         </section>
       </main>
-    </>
   );
 }
