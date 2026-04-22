@@ -248,10 +248,10 @@ export function RankingPodium({
   const n = slots.length;
   const wrap =
     n === 1
-      ? "mx-auto w-full max-w-[10rem]"
+      ? "mx-auto w-full max-w-[12.5rem]"
       : n === 2
-        ? "min-w-0 w-[46%] max-w-[9rem] shrink sm:max-w-[10rem]"
-        : "min-w-0 w-[30%] max-w-[8.5rem] shrink sm:max-w-[10rem] md:w-[31%]";
+        ? "min-w-0 w-[48%] max-w-[11rem] shrink sm:max-w-[12rem]"
+        : "min-w-0 w-[31.5%] max-w-[10.25rem] shrink sm:max-w-[11rem] md:w-[32%]";
 
   return (
     <section className="relative mb-0.5 sm:mb-1">
@@ -268,9 +268,9 @@ export function RankingPodium({
         {slots.length > 0 ? (
           <div
             className={cn(
-              "flex flex-row items-end justify-center gap-2.5 sm:gap-4 md:gap-6",
+              "flex flex-row items-end justify-center gap-2 sm:gap-3.5 md:gap-4.5",
               n === 1 && "mx-auto max-w-sm",
-              n === 2 && "mx-auto max-w-md"
+              n === 2 && "mx-auto max-w-lg"
             )}
           >
             {slots.map((s) => (
@@ -298,8 +298,8 @@ function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean 
   const avatarClass = cn(
     "relative mx-auto shrink-0 overflow-hidden rounded-full",
     highlight
-      ? "h-[2.7rem] w-[2.7rem] border-[1.5px] sm:h-[2.85rem] sm:w-[2.85rem]"
-      : "h-[2.1rem] w-[2.1rem] border-[1.5px] sm:h-[2.25rem] sm:w-[2.25rem]",
+      ? "h-[3rem] w-[3rem] border-[1.5px] sm:h-[3.2rem] sm:w-[3.2rem]"
+      : "h-[2.45rem] w-[2.45rem] border-[1.5px] sm:h-[2.65rem] sm:w-[2.65rem]",
     placeTone,
     "before:pointer-events-none before:absolute before:inset-0 before:rounded-full before:bg-white/5 before:opacity-70 before:animate-[pulse_2.8s_ease-in-out_infinite]"
   );
@@ -331,11 +331,11 @@ function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean 
           <RankingEidSeal score={slot.notaEid} />
         </div>
       </Link>
-      <p className="mt-1.5 line-clamp-2 max-w-[8.5rem] px-0.5 text-[9px] font-bold leading-tight text-eid-fg sm:mt-2 sm:max-w-[9.5rem] sm:text-[10px]">
+      <p className="mt-1.5 line-clamp-2 max-w-[9.75rem] px-0.5 text-[10px] font-bold leading-tight text-eid-fg sm:mt-2 sm:max-w-[10.5rem] sm:text-[11px]">
         {slot.nome}
       </p>
-      <p className="mt-0.5 text-[9px] font-black tabular-nums text-eid-primary-300 sm:text-[10px]">
-        {slot.pontos} <span className="text-[7px] font-bold uppercase tracking-wide text-eid-text-secondary">PTS</span>
+      <p className="mt-0.5 text-[10px] font-black tabular-nums text-eid-primary-300 sm:text-[11px]">
+        {slot.pontos} <span className="text-[8px] font-bold uppercase tracking-wide text-eid-text-secondary">PTS</span>
       </p>
     </div>
   );
