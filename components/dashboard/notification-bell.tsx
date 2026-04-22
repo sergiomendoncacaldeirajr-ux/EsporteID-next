@@ -124,45 +124,45 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition hover:border-[color:var(--eid-border)] hover:bg-eid-surface/75 hover:text-eid-fg md:h-9 md:w-9"
+        className="relative inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] text-eid-text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_14px_-12px_rgba(0,0,0,0.45)] transition-all duration-200 ease-out hover:border-eid-primary-500/30 hover:text-eid-fg active:translate-y-[0.5px] active:scale-[0.985] md:h-9 md:w-9"
         aria-label="Notificações e resumos"
         aria-expanded={open}
       >
         <IconBell className="h-4.5 w-4.5" />
         {bellCount > 0 ? (
-          <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-eid-action-500 px-1 text-[9px] font-black text-[var(--eid-brand-ink)] shadow-md">
+          <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-eid-action-500 px-1 text-[9px] font-black text-[var(--eid-brand-ink)] shadow-[0_6px_14px_-8px_color-mix(in_srgb,var(--eid-action-500)_85%,transparent)] ring-1 ring-white/20">
             {bellCount > 99 ? "99+" : bellCount}
           </span>
         ) : null}
       </button>
 
       {open ? (
-        <div className="fixed left-1/2 top-[var(--eid-shell-header-offset)] z-[70] w-[min(94vw,340px)] -translate-x-1/2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 shadow-xl shadow-black/40 md:absolute md:left-auto md:right-0 md:top-[calc(100%+8px)] md:w-[min(100vw-2rem,340px)] md:translate-x-0">
+        <div className="fixed left-1/2 top-[var(--eid-shell-header-offset)] z-[70] w-[min(94vw,340px)] -translate-x-1/2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 shadow-[0_16px_30px_-16px_rgba(0,0,0,0.52),0_0_24px_-14px_rgba(37,99,235,0.5)] backdrop-blur-xl md:absolute md:left-auto md:right-0 md:top-[calc(100%+8px)] md:w-[min(100vw-2rem,340px)] md:translate-x-0">
           <p className="border-b border-[color:var(--eid-border-subtle)] pb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">
             Resumo rápido
           </p>
           <ul className="mt-2 space-y-2 text-sm">
-            <li className="flex justify-between gap-2 rounded-xl bg-eid-surface/80 px-3 py-2">
+            <li className="flex justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-3 py-2">
               <span className="text-eid-text-secondary">Agenda (jogos agendados)</span>
-              <Link href="/agenda" className="font-bold tabular-nums text-eid-fg hover:text-eid-primary-300" onClick={() => setOpen(false)}>
+              <Link href="/agenda" className="font-bold tabular-nums text-eid-fg transition hover:opacity-85" onClick={() => setOpen(false)}>
                 {agendaN}
               </Link>
             </li>
-            <li className="flex justify-between gap-2 rounded-xl bg-eid-surface/80 px-3 py-2">
+            <li className="flex justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-3 py-2">
               <span className="text-eid-text-secondary">Social (pedidos)</span>
               <Link
                 href="/comunidade"
-                className="font-bold tabular-nums text-eid-fg hover:text-eid-primary-300"
+                className="font-bold tabular-nums text-eid-fg transition hover:opacity-85"
                 onClick={() => setOpen(false)}
               >
                 {matchN}
               </Link>
             </li>
-            <li className="flex justify-between gap-2 rounded-xl bg-eid-surface/80 px-3 py-2">
+            <li className="flex justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-3 py-2">
               <span className="text-eid-text-secondary">Placar aguardando você</span>
               <Link
                 href="/agenda#placares"
-                className="font-bold tabular-nums text-eid-fg hover:text-eid-primary-300"
+                className="font-bold tabular-nums text-eid-fg transition hover:opacity-85"
                 onClick={() => setOpen(false)}
               >
                 {placarN}
@@ -186,7 +186,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
 
           <Link
             href="/comunidade#notificacoes"
-            className="mt-3 flex min-h-[40px] items-center justify-center rounded-xl bg-eid-primary-500/15 text-xs font-bold text-eid-primary-300 hover:bg-eid-primary-500/25"
+            className="mt-3 flex min-h-[40px] items-center justify-center rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/14 text-xs font-bold text-eid-primary-300 transition-all duration-200 ease-out hover:bg-eid-primary-500/22 active:translate-y-[0.5px] active:scale-[0.99]"
             onClick={() => setOpen(false)}
           >
             Abrir central Social

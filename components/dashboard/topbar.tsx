@@ -47,19 +47,41 @@ export function DashboardTopbar({
 
   useEffect(() => {
     const sb = createClient();
+    let disposed = false;
+
     async function load() {
       const {
         data: { user },
       } = await sb.auth.getUser();
+      if (disposed) return;
       setMeId(user?.id ?? null);
       if (!user) {
         setPapeis([]);
         return;
       }
       const { data: papeisRows } = await sb.from("usuario_papeis").select("papel").eq("usuario_id", user.id);
+      if (disposed) return;
       setPapeis(listarPapeis(papeisRows));
     }
+
+    const {
+      data: { subscription },
+    } = sb.auth.onAuthStateChange((_event, session) => {
+      if (disposed) return;
+      const uid = session?.user?.id ?? null;
+      setMeId(uid);
+      if (!uid) {
+        setPapeis([]);
+      } else {
+        void load();
+      }
+    });
+
     void load();
+    return () => {
+      disposed = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const hideBecausePersistent =
@@ -67,6 +89,7 @@ export function DashboardTopbar({
     typeof document !== "undefined" &&
     Boolean(document.getElementById("eid-persistent-topbar"));
   if (hideBecausePersistent) return null;
+  if (!meId) return null;
 
   const activeContext = resolveActiveAppContext(initialActiveContext, papeis);
   const availableContexts = listAvailableAppContexts(papeis);
@@ -137,7 +160,7 @@ export function DashboardTopbar({
   return (
     <header
       id={persistent ? "eid-persistent-topbar" : undefined}
-      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] pt-[env(safe-area-inset-top)] shadow-[0_4px_16px_-12px_rgba(0,0,0,0.28)] backdrop-blur-xl md:mb-3`}
+      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] pt-[env(safe-area-inset-top)] shadow-[0_6px_18px_-12px_rgba(0,0,0,0.34)] backdrop-blur-xl md:mb-3`}
       style={persistent ? { viewTransitionName: "eid-app-topbar" } : undefined}
     >
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
