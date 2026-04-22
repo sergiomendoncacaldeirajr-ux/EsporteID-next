@@ -255,7 +255,7 @@ export function RankingPodium({
           Pódio
         </h2>
         {hasAnyPodium ? (
-          <div className="mx-auto grid w-full max-w-2xl grid-cols-3 items-end gap-2 sm:gap-3.5 md:gap-4.5">
+          <div className="mx-auto grid w-full max-w-[46rem] grid-cols-3 items-end gap-1.5 sm:gap-2.5 md:gap-3.5">
             <div className="min-h-[1px]">
               {second ? <PodiumFace slot={second} highlight={false} /> : null}
             </div>
@@ -285,8 +285,8 @@ function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean 
   const avatarClass = cn(
     "relative mx-auto shrink-0 overflow-hidden rounded-full",
     highlight
-      ? "h-[3rem] w-[3rem] border-[1.5px] sm:h-[3.2rem] sm:w-[3.2rem]"
-      : "h-[2.45rem] w-[2.45rem] border-[1.5px] sm:h-[2.65rem] sm:w-[2.65rem]",
+      ? "h-[3.35rem] w-[3.35rem] border-[1.5px] sm:h-[3.6rem] sm:w-[3.6rem]"
+      : "h-[2.7rem] w-[2.7rem] border-[1.5px] sm:h-[2.95rem] sm:w-[2.95rem]",
     placeTone,
     "before:pointer-events-none before:absolute before:inset-0 before:rounded-full before:bg-white/5 before:opacity-70 before:animate-[pulse_2.8s_ease-in-out_infinite]"
   );
@@ -318,7 +318,7 @@ function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean 
           <RankingEidSeal score={slot.notaEid} />
         </div>
       </Link>
-      <p className="mt-1.5 line-clamp-2 max-w-[9.75rem] px-0.5 text-[10px] font-bold leading-tight text-eid-fg sm:mt-2 sm:max-w-[10.5rem] sm:text-[11px]">
+      <p className="mt-1.5 line-clamp-2 max-w-[10.75rem] px-0.5 text-[10px] font-bold leading-tight text-eid-fg sm:mt-2 sm:max-w-[11.5rem] sm:text-[11px]">
         {slot.nome}
       </p>
       <p className="mt-0.5 text-[10px] font-black tabular-nums text-eid-primary-300 sm:text-[11px]">
