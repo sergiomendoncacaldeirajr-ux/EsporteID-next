@@ -115,7 +115,7 @@ export function RankingPeriodToggle({
       <div className="relative inline-flex h-6.5 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[11px] backdrop-blur-sm">
         <span
           className={cn(
-            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/85 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.72)] transition-all duration-200",
+            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/90 shadow-[0_8px_16px_-8px_rgba(37,99,235,0.9)] transition-all duration-200",
             state.periodo === "mes" ? "translate-x-[calc(100%+1px)]" : "translate-x-0"
           )}
           aria-hidden
@@ -157,7 +157,7 @@ export function RankingRankToggle({
       <div className="relative inline-flex h-6.5 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[11px] backdrop-blur-sm">
         <span
           className={cn(
-            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/85 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.72)] transition-all duration-200",
+            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/90 shadow-[0_8px_16px_-8px_rgba(37,99,235,0.9)] transition-all duration-200",
             rankIsMatch ? "translate-x-0" : "translate-x-[calc(100%+1px)]"
           )}
           aria-hidden
@@ -244,7 +244,7 @@ export function RankingPodium({
 
   return (
     <section className="relative mb-0.5 sm:mb-1">
-      <div className="eid-podium-card rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_20%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2 py-2 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_24px_-14px_rgba(37,99,235,0.35)] sm:px-3 sm:py-2.5">
+      <div className="eid-podium-card rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_28%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2 py-2 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_30px_-12px_rgba(37,99,235,0.55)] sm:px-3 sm:py-2.5">
         {rankToggle || periodToggle ? (
           <div className="mb-0 flex items-center justify-between gap-2 sm:mb-0.5">
             <div className="min-w-0">{rankToggle}</div>
