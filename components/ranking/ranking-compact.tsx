@@ -84,7 +84,7 @@ export function RankingFilterBar({
                     href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                     title={isPrincipal ? "Esporte principal do perfil" : undefined}
                     className={cn(
-                      "inline-flex h-[1.86rem] w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
+                      "inline-flex h-[1.86rem] w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-md border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
                       active
                         ? "border-eid-primary-500/35 bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.08)]"
                         : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/55 hover:text-eid-fg",
@@ -189,7 +189,7 @@ export function RankingRankToggle({
 
 function segmentButton(active: boolean) {
   return cn(
-    "inline-flex h-[1.86rem] w-auto flex-1 items-center justify-center rounded-full border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
+    "inline-flex h-[1.86rem] w-auto flex-1 items-center justify-center rounded-md border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
       ? "border-eid-primary-500/35 bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.08)]"
       : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/55 hover:text-eid-fg"
@@ -198,7 +198,7 @@ function segmentButton(active: boolean) {
 
 function blockButton(active: boolean) {
   return cn(
-    "inline-flex h-[1.86rem] w-auto min-w-0 items-center justify-center rounded-full border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
+    "inline-flex h-[1.86rem] w-auto min-w-0 items-center justify-center rounded-md border px-2.5 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
     active
       ? "border-eid-primary-500/35 bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.08)]"
       : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-[color:var(--eid-border)] hover:bg-eid-surface/55 hover:text-eid-fg"
