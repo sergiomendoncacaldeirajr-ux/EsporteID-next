@@ -299,7 +299,13 @@ export default async function RankingPage({ searchParams }: Props) {
       />
       <div className="relative z-[1] mx-auto flex w-full min-w-0 max-w-2xl flex-col px-4 pb-3 pt-1.5 sm:px-5">
         <header className="mb-1.5">
-          <h1 className="text-xl font-bold tracking-tight text-eid-fg sm:text-[1.35rem]">Ranking</h1>
+          <div className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/25 bg-eid-primary-500/[0.08] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-eid-primary-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-eid-primary-400 shadow-[0_0_10px_rgba(96,165,250,0.6)]" aria-hidden />
+            Painel competitivo
+          </div>
+          <h1 className="mt-1 text-[1.45rem] font-black tracking-[0.01em] text-transparent bg-gradient-to-b from-white via-eid-primary-200 to-eid-primary-400 bg-clip-text drop-shadow-[0_1px_6px_rgba(37,99,235,0.38)] sm:text-[1.7rem]">
+            Ranking
+          </h1>
         </header>
 
         <RankingFilterBar
