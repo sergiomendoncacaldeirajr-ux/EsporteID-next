@@ -37,8 +37,8 @@ export function RankingFilterBar({
   const chip = (active: boolean) => pillRow(active);
 
   return (
-    <div className="mb-3 sm:mb-3.5">
-      <div className="flex flex-wrap gap-2">
+    <div className="mb-3 space-y-2 sm:mb-3.5">
+      <div className="flex items-center gap-2">
         <Link href={href({ tipo: "individual", page: 1 })} className={chip(state.tipo === "individual")}>
           Individual
         </Link>
@@ -50,33 +50,25 @@ export function RankingFilterBar({
         </Link>
       </div>
 
-      <div className="mt-3 space-y-2">
-        <div className="flex flex-wrap gap-2">
-          <Link href={href({ rank: "match", page: 1 })} className={chip(state.rank === "match")}>
-            Rank Match
-          </Link>
-          <Link href={href({ rank: "eid", page: 1 })} className={chip(state.rank === "eid")}>
-            Rank EID
-          </Link>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={href({ local: "cidade", page: 1 })}
-            className={cn(chip(state.local === "cidade"), cidadeDisplay ? "h-9 min-h-0 flex-col items-start justify-center gap-0 px-3 py-1.5" : undefined)}
-            title={cidadeDisplay ? `Cidade: ${cidadeDisplay}` : undefined}
-          >
-            <span className="leading-none">Cidade</span>
-            {cidadeDisplay ? (
-              <span className="max-w-[8rem] truncate text-xs font-normal normal-case text-white/75">{cidadeDisplay}</span>
-            ) : null}
-          </Link>
-          <Link href={href({ local: "brasil", page: 1 })} className={chip(state.local === "brasil")}>
-            Brasil
-          </Link>
-        </div>
+      <div className="flex items-center gap-2">
+        <Link href={href({ rank: "match", page: 1 })} className={chip(state.rank === "match")}>
+          Rank Match
+        </Link>
+        <Link href={href({ rank: "eid", page: 1 })} className={chip(state.rank === "eid")}>
+          Rank EID
+        </Link>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Link href={href({ local: "cidade", page: 1 })} className={chip(state.local === "cidade")} title={cidadeDisplay ? `Cidade: ${cidadeDisplay}` : undefined}>
+          Cidade
+        </Link>
+        <Link href={href({ local: "brasil", page: 1 })} className={chip(state.local === "brasil")}>
+          Brasil
+        </Link>
       </div>
       {needsCidadeFallback ? (
-        <p className="mt-1 px-0.5 text-xs leading-snug text-eid-text-secondary">
+        <p className="px-0.5 text-xs leading-snug text-eid-text-secondary">
           Sem cidade —{" "}
           <Link href="/conta/perfil" className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">
             perfil
@@ -85,8 +77,8 @@ export function RankingFilterBar({
       ) : null}
 
       {todosEsportes.length > 0 ? (
-        <div className="mt-4 border-t border-[color:var(--eid-border-subtle)]/70 pt-2">
-          <div className="flex min-w-0 flex-nowrap gap-2 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
+        <div className="flex min-w-0 items-center gap-2 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-1 pr-0.5 [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-max flex-nowrap items-center gap-2">
             {todosEsportes.map((opt) => {
               const active = selectedEsporteId === opt.id;
               const isPrincipal = principalEsporteId != null && opt.id === principalEsporteId;
@@ -96,10 +88,10 @@ export function RankingFilterBar({
                   href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                   title={isPrincipal ? "Esporte principal do perfil" : undefined}
                   className={cn(
-                    "shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-center text-sm leading-none transition",
+                    "inline-flex h-9 w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-3 text-sm font-medium leading-none transition",
                     active
-                      ? "border-eid-primary-500 bg-eid-primary-500 text-white font-medium"
-                      : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 text-eid-text-secondary font-normal hover:border-eid-primary-500/35 hover:text-eid-fg",
+                      ? "border-eid-primary-500 bg-eid-primary-500 text-white"
+                      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-eid-primary-500/35 hover:text-eid-fg",
                     isPrincipal && !active && "ring-1 ring-eid-primary-500/25"
                   )}
                 >
@@ -116,10 +108,10 @@ export function RankingFilterBar({
 
 function pillRow(active: boolean) {
   return cn(
-    "inline-flex h-8 w-auto items-center justify-center rounded-full border px-3 text-sm leading-none transition",
+    "inline-flex h-9 w-auto items-center justify-center rounded-full border px-3 text-sm font-medium leading-none transition",
     active
-      ? "border-eid-primary-500 bg-eid-primary-500 text-white font-medium"
-      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary font-normal hover:border-eid-primary-500/30 hover:text-eid-fg"
+      ? "border-eid-primary-500 bg-eid-primary-500 text-white"
+      : "border-[color:var(--eid-border-subtle)] bg-transparent text-eid-text-secondary hover:border-eid-primary-500/30 hover:text-eid-fg"
   );
 }
 
