@@ -185,7 +185,7 @@ export function RankingPeriodToggle({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
   return (
     <div className="flex justify-end">
-      <div className="relative grid h-7 min-w-[6.75rem] grid-cols-2 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[10px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent] [&_a]:block [&_a]:h-full [&_a]:w-full">
+      <div className="relative flex h-6 min-w-[6.4rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[9px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
         <span
           className={cn(
             "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
@@ -196,7 +196,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "ano", page: 1 })}
           className={cn(
-            "relative z-[1] flex h-full w-full touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200 cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 cursor-pointer",
             state.periodo === "ano" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -205,7 +205,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "mes", page: 1 })}
           className={cn(
-            "relative z-[1] flex h-full w-full touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200 cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 cursor-pointer",
             state.periodo === "mes" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -227,7 +227,7 @@ export function RankingRankToggle({
   const rankIsMatch = state.rank === "match";
   return (
     <div className="flex justify-start">
-      <div className="relative grid h-7 min-w-[6.75rem] grid-cols-2 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[10px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent] [&_a]:block [&_a]:h-full [&_a]:w-full">
+      <div className="relative flex h-6 min-w-[6.4rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[9px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
         <span
           className={cn(
             "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
@@ -238,7 +238,7 @@ export function RankingRankToggle({
         <Link
           href={href({ rank: "match", page: 1 })}
           className={cn(
-            "relative z-[1] flex h-full w-full touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200 cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 cursor-pointer",
             rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -247,7 +247,7 @@ export function RankingRankToggle({
         <Link
           href={href({ rank: "eid", page: 1 })}
           className={cn(
-            "relative z-[1] flex h-full w-full touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200 cursor-pointer",
+            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1.5 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 cursor-pointer",
             !rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -419,6 +419,7 @@ export function RankingRow({
   nome,
   metricValue,
   metricKind,
+  eidScore,
   avatarUrl,
   href,
 }: {
@@ -426,6 +427,7 @@ export function RankingRow({
   nome: string;
   metricValue: number;
   metricKind: "pontos" | "eid";
+  eidScore: number;
   avatarUrl: string | null;
   href: string;
 }) {
@@ -433,20 +435,28 @@ export function RankingRow({
   const valueText = metricKind === "eid" ? metricValue.toFixed(1) : String(metricValue);
   return (
     <div className="flex items-center gap-2 border-b border-[color:var(--eid-border-subtle)] py-1.5 last:border-b-0">
-      <span className="w-7 shrink-0 text-center text-base font-black tabular-nums text-eid-primary-300">{rank}º</span>
+      <span className="w-7 shrink-0 text-center text-sm font-black tabular-nums text-eid-primary-300">{rank}º</span>
       <Link
         href={href}
-        className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] transition hover:border-eid-primary-500/35"
+        className="group relative h-9 w-9 shrink-0 outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
         aria-label={`Perfil de ${nome}`}
       >
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[9px] font-bold text-eid-primary-300">{initial}</div>
-        )}
+        <div className="relative pb-1.5">
+          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] transition group-hover:border-eid-primary-500/35">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[9px] font-bold text-eid-primary-300">{initial}</div>
+            )}
+          </div>
+          <RankingEidSeal score={eidScore} />
+        </div>
       </Link>
-      <p className="min-w-0 flex-1 truncate text-xs font-semibold text-eid-fg">{nome}</p>
-      <p className="shrink-0 text-base font-black tabular-nums text-eid-primary-300">{valueText}</p>
+      <p className="min-w-0 flex-1 truncate text-xs font-bold text-eid-fg">{nome}</p>
+      <p className="shrink-0 text-base font-black tabular-nums text-eid-primary-300">
+        {valueText}
+        <span className="ml-1 text-[8px] font-bold uppercase tracking-wide text-eid-text-secondary">{metricKind === "eid" ? "EID" : "PTS"}</span>
+      </p>
     </div>
   );
 }

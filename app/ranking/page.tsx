@@ -360,8 +360,9 @@ export default async function RankingPage({ searchParams }: Props) {
                             key={row.key}
                             rank={rank}
                             nome={row.nome}
-                        metricValue={state.rank === "eid" ? row.notaEid : row.pontos}
-                        metricKind={state.rank === "eid" ? "eid" : "pontos"}
+                            metricValue={state.rank === "eid" ? row.notaEid : row.pontos}
+                            metricKind={state.rank === "eid" ? "eid" : "pontos"}
+                            eidScore={row.notaEid}
                             avatarUrl={row.avatarUrl}
                             href={row.href}
                           />
