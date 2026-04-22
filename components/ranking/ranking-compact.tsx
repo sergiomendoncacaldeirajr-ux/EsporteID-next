@@ -36,8 +36,6 @@ export function RankingFilterBar({
 }: FilterBarProps) {
   const pe = principalEsporteId;
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, pe);
-  const rankIsMatch = state.rank === "match";
-  const rankToggleHref = href({ rank: rankIsMatch ? "eid" : "match", page: 1 });
 
   return (
     <div className="mb-3 space-y-2 px-2 sm:mb-3.5">
@@ -55,15 +53,12 @@ export function RankingFilterBar({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-1.5 rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.68),rgba(15,23,42,0.5))] p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
+      <div className="grid grid-cols-2 gap-1.5 rounded-2xl border border-white/15 bg-[linear-gradient(180deg,rgba(15,23,42,0.68),rgba(15,23,42,0.5))] p-1 backdrop-blur-sm shadow-[0_12px_24px_-18px_rgba(15,23,42,0.9)]">
         <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
           <CityGpsLabel fallbackCity={cidadeDisplay} />
         </Link>
         <Link href={href({ local: "brasil", page: 1 })} className={blockButton(state.local === "brasil")}>
           <span className="truncate">Brasil</span>
-        </Link>
-        <Link href={rankToggleHref} className={blockButton(rankIsMatch)} title={`Padrão: Rank Match. Alternar para ${rankIsMatch ? "Rank EID" : "Rank Match"}`}>
-          <span className="truncate">{rankIsMatch ? "Rank Match" : "Rank EID"}</span>
         </Link>
       </div>
       {needsCidadeFallback ? (
@@ -148,6 +143,48 @@ export function RankingPeriodToggle({
   );
 }
 
+export function RankingRankToggle({
+  state,
+  principalEsporteId,
+}: {
+  state: RankingSearchState;
+  principalEsporteId: number | null;
+}) {
+  const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
+  const rankIsMatch = state.rank === "match";
+  return (
+    <div className="flex justify-start">
+      <div className="relative inline-flex h-6.5 items-center rounded-full border border-white/15 bg-black/25 p-0.5 text-[11px] backdrop-blur-sm">
+        <span
+          className={cn(
+            "pointer-events-none absolute top-0.5 h-5.5 w-[calc(50%-2px)] rounded-full bg-eid-primary-500/80 shadow-[0_0_10px_-6px_rgba(37,99,235,0.75)] transition-all duration-200",
+            rankIsMatch ? "translate-x-0" : "translate-x-[calc(100%+1px)]"
+          )}
+          aria-hidden
+        />
+        <Link
+          href={href({ rank: "match", page: 1 })}
+          className={cn(
+            "relative z-[1] inline-flex h-5.5 min-w-[3.35rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
+            rankIsMatch ? "text-white" : "text-[#9CA3AF] hover:text-eid-fg"
+          )}
+        >
+          Match
+        </Link>
+        <Link
+          href={href({ rank: "eid", page: 1 })}
+          className={cn(
+            "relative z-[1] inline-flex h-5.5 min-w-[2.9rem] items-center justify-center rounded-full px-2 text-[11px] font-semibold transition-colors duration-200",
+            !rankIsMatch ? "text-white" : "text-[#9CA3AF] hover:text-eid-fg"
+          )}
+        >
+          EID
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function segmentButton(active: boolean) {
   return cn(
     "inline-flex h-[1.72rem] w-auto flex-1 items-center justify-center rounded-full border px-2 text-[11px] font-medium leading-none tracking-[0.01em] transition-all duration-200",
@@ -193,18 +230,20 @@ export function RankingPodium({
   second,
   first,
   third,
+  rankToggle,
   periodToggle,
 }: {
   second: PodiumSlot | null;
   first: PodiumSlot | null;
   third: PodiumSlot | null;
+  rankToggle?: ReactNode;
   periodToggle?: ReactNode;
 }) {
   const slots: (PodiumSlot & { key: string; highlight: boolean; lift: boolean })[] = [];
   if (second) slots.push({ ...second, key: "2", highlight: false, lift: false });
   if (first) slots.push({ ...first, key: "1", highlight: true, lift: true });
   if (third) slots.push({ ...third, key: "3", highlight: false, lift: false });
-  if (slots.length === 0 && !periodToggle) return null;
+  if (slots.length === 0 && !periodToggle && !rankToggle) return null;
 
   const n = slots.length;
   const wrap =
@@ -217,7 +256,12 @@ export function RankingPodium({
   return (
     <section className="relative mb-0.5 sm:mb-1">
       <div className="rounded-2xl border border-white/15 bg-[radial-gradient(ellipse_at_top,rgba(37,99,235,0.2),rgba(15,23,42,0.82)_42%,rgba(2,6,23,0.92)_100%)] px-2 py-2.5 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.95),0_0_24px_-14px_rgba(37,99,235,0.45)] sm:px-3 sm:py-3">
-        {periodToggle ? <div className="mb-1.5 flex justify-end sm:mb-2">{periodToggle}</div> : null}
+        {rankToggle || periodToggle ? (
+          <div className="mb-1.5 flex items-center justify-between gap-2 sm:mb-2">
+            <div className="min-w-0">{rankToggle}</div>
+            <div className="min-w-0">{periodToggle}</div>
+          </div>
+        ) : null}
         <h2 className="mb-2 text-center text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary sm:mb-2.5 sm:text-[10px]">
           Pódio
         </h2>

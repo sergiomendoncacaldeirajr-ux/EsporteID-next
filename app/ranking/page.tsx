@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import {
   RankingFilterBar,
   RankingPeriodToggle,
+  RankingRankToggle,
   RankingPodium,
   RankingRow,
   ViewerRankCard,
@@ -300,6 +301,7 @@ export default async function RankingPage({ searchParams }: Props) {
                 second={podiumSecond}
                 first={podiumFirst}
                 third={podiumThird}
+                rankToggle={<RankingRankToggle state={state} principalEsporteId={esportePrincipalId} />}
                 periodToggle={<RankingPeriodToggle state={state} principalEsporteId={esportePrincipalId} />}
               />
             ) : null}
