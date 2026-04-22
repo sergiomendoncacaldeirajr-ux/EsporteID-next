@@ -57,14 +57,14 @@
    */
   /* Topo: −4px em relação a 6.5rem (só um “milímetro” a mais de conteúdo visível) */
   --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 6.5rem - 4px);
-  /* Rodapé: menos vazio acima da nav fixa (safe-area continua somado) */
-  --eid-shell-footer-offset: calc(env(safe-area-inset-bottom, 0px) + 4.125rem);
+  /* Rodapé: só o necessário acima da nav + safe-area (evita faixa vazia grande) */
+  --eid-shell-footer-offset: calc(env(safe-area-inset-bottom, 0px) + 2.625rem);
 }
 
 @media (min-width: 768px) {
   :root {
     --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 8.75rem - 3px);
-    --eid-shell-footer-offset: calc(1.5rem + max(0px, env(safe-area-inset-bottom, 0px)));
+    --eid-shell-footer-offset: calc(1rem + max(0px, env(safe-area-inset-bottom, 0px)));
   }
 }
 
