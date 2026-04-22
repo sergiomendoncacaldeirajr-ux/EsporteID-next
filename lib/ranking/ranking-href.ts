@@ -18,7 +18,9 @@ export function parseRankingSearch(sp: Record<string, string | string[] | undefi
   const tipoRaw = (g("tipo") ?? "individual").toLowerCase();
   const tipo: RankingSearchState["tipo"] =
     tipoRaw === "dupla" ? "dupla" : tipoRaw === "time" ? "time" : "individual";
-  const rankRaw = (g("rank") ?? "match").toLowerCase();
+  const rankRaw = String(g("rank") ?? "match")
+    .trim()
+    .toLowerCase();
   const rank: RankingSearchState["rank"] = rankRaw === "eid" ? "eid" : "match";
   const localRaw = (g("local") ?? "cidade").toLowerCase();
   const local: RankingSearchState["local"] = localRaw === "brasil" ? "brasil" : "cidade";

@@ -114,10 +114,10 @@ export function RankingPeriodToggle({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
   return (
     <div className="flex justify-end">
-      <div className="relative inline-flex h-6 min-w-[6.5rem] items-stretch rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[10px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="relative grid h-7 min-w-[6.75rem] grid-cols-2 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[10px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
         <span
           className={cn(
-            "pointer-events-none absolute inset-y-0.5 left-0.5 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
+            "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
             state.periodo === "mes" ? "translate-x-[calc(100%+1px)]" : "translate-x-0"
           )}
           aria-hidden
@@ -125,7 +125,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "ano", page: 1 })}
           className={cn(
-            "relative z-[1] flex min-w-0 flex-1 touch-manipulation items-center justify-center rounded-full px-1.5 text-[10px] font-semibold transition-colors duration-200",
+            "relative z-[1] flex h-full min-h-0 w-full min-w-0 touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200",
             state.periodo === "ano" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -134,7 +134,7 @@ export function RankingPeriodToggle({
         <Link
           href={href({ periodo: "mes", page: 1 })}
           className={cn(
-            "relative z-[1] flex min-w-0 flex-1 touch-manipulation items-center justify-center rounded-full px-1.5 text-[10px] font-semibold transition-colors duration-200",
+            "relative z-[1] flex h-full min-h-0 w-full min-w-0 touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200",
             state.periodo === "mes" ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -156,10 +156,10 @@ export function RankingRankToggle({
   const rankIsMatch = state.rank === "match";
   return (
     <div className="flex justify-start">
-      <div className="relative inline-flex h-6 min-w-[6.5rem] items-stretch rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[10px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="relative grid h-7 min-w-[6.75rem] grid-cols-2 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 p-0.5 text-[10px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
         <span
           className={cn(
-            "pointer-events-none absolute inset-y-0.5 left-0.5 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
+            "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
             rankIsMatch ? "translate-x-0" : "translate-x-[calc(100%+1px)]"
           )}
           aria-hidden
@@ -167,7 +167,7 @@ export function RankingRankToggle({
         <Link
           href={href({ rank: "match", page: 1 })}
           className={cn(
-            "relative z-[1] flex min-w-0 flex-1 touch-manipulation items-center justify-center rounded-full px-1.5 text-[10px] font-semibold transition-colors duration-200",
+            "relative z-[1] flex h-full min-h-0 w-full min-w-0 touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200",
             rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -176,7 +176,7 @@ export function RankingRankToggle({
         <Link
           href={href({ rank: "eid", page: 1 })}
           className={cn(
-            "relative z-[1] flex min-w-0 flex-1 touch-manipulation items-center justify-center rounded-full px-1.5 text-[10px] font-semibold transition-colors duration-200",
+            "relative z-[1] flex h-full min-h-0 w-full min-w-0 touch-manipulation items-center justify-center rounded-full px-1 text-[10px] font-semibold transition-colors duration-200",
             !rankIsMatch ? "text-eid-fg" : "text-eid-text-secondary hover:text-eid-fg"
           )}
         >
@@ -232,12 +232,15 @@ export function RankingPodium({
   second,
   first,
   third,
+  rankKind = "match",
   rankToggle,
   periodToggle,
 }: {
   second: PodiumSlot | null;
   first: PodiumSlot | null;
   third: PodiumSlot | null;
+  /** Métrica exibida no pódio: pontos (match) ou nota EID. */
+  rankKind?: "match" | "eid";
   rankToggle?: ReactNode;
   periodToggle?: ReactNode;
 }) {
@@ -245,8 +248,8 @@ export function RankingPodium({
   if (!hasAnyPodium && !periodToggle && !rankToggle) return null;
 
   return (
-    <section className="relative mb-0.5">
-      <div className="eid-podium-card rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_28%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2.5 py-3 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_30px_-12px_rgba(37,99,235,0.55)] [&_a]:[-webkit-tap-highlight-color:transparent]">
+    <section className="relative z-[1] mb-0.5 isolate">
+      <div className="eid-podium-card overflow-visible rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_28%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2.5 py-3 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_30px_-12px_rgba(37,99,235,0.55)] [&_a]:[-webkit-tap-highlight-color:transparent]">
         {rankToggle || periodToggle ? (
           <div className="mb-0 flex items-center justify-between gap-1.5">
             <div className="min-w-0">{rankToggle}</div>
@@ -259,13 +262,13 @@ export function RankingPodium({
         {hasAnyPodium ? (
           <div className="mx-auto grid w-full max-w-[46rem] grid-cols-3 items-end gap-2">
             <div className="min-h-[1px]">
-              {second ? <PodiumFace slot={second} highlight={false} /> : null}
+              {second ? <PodiumFace slot={second} highlight={false} rankKind={rankKind} /> : null}
             </div>
             <div className="z-10 -translate-y-1">
-              {first ? <PodiumFace slot={first} highlight /> : null}
+              {first ? <PodiumFace slot={first} highlight rankKind={rankKind} /> : null}
             </div>
             <div className="min-h-[1px]">
-              {third ? <PodiumFace slot={third} highlight={false} /> : null}
+              {third ? <PodiumFace slot={third} highlight={false} rankKind={rankKind} /> : null}
             </div>
           </div>
         ) : (
@@ -276,7 +279,7 @@ export function RankingPodium({
   );
 }
 
-function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean }) {
+function PodiumFace({ slot, highlight, rankKind }: { slot: PodiumSlot; highlight: boolean; rankKind: "match" | "eid" }) {
   const initial = (slot.nome.trim().slice(0, 2) || "—").toUpperCase();
   const placeTone =
     slot.place === "1º"
@@ -317,14 +320,24 @@ function PodiumFace({ slot, highlight }: { slot: PodiumSlot; highlight: boolean 
               <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[7px] font-bold text-eid-primary-300">{initial}</div>
             )}
           </div>
-          <RankingEidSeal score={slot.notaEid} />
+          {rankKind === "match" ? <RankingEidSeal score={slot.notaEid} /> : null}
         </div>
       </Link>
       <p className="mt-1.5 line-clamp-2 max-w-[10rem] px-0.5 text-[10px] font-bold leading-tight text-eid-fg">
         {slot.nome}
       </p>
       <p className="mt-0.5 text-[10px] font-black tabular-nums text-eid-primary-300">
-        {slot.pontos} <span className="text-[7px] font-bold uppercase tracking-wide text-eid-text-secondary">PTS</span>
+        {rankKind === "eid" ? (
+          <>
+            {(Number.isFinite(slot.notaEid) ? slot.notaEid : 0).toFixed(1)}{" "}
+            <span className="text-[7px] font-bold uppercase tracking-wide text-eid-text-secondary">EID</span>
+          </>
+        ) : (
+          <>
+            {slot.pontos}{" "}
+            <span className="text-[7px] font-bold uppercase tracking-wide text-eid-text-secondary">PTS</span>
+          </>
+        )}
       </p>
     </div>
   );

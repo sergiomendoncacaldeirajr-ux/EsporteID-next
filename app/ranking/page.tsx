@@ -63,9 +63,26 @@ type UnifiedRank = {
 type PartidaPeriodoRow = {
   jogador1_id?: string | null;
   jogador2_id?: string | null;
-  time1_id?: number | null;
-  time2_id?: number | null;
+  time1_id?: number | string | null;
+  time2_id?: number | string | null;
+  data_resultado?: string | null;
+  data_partida?: string | null;
+  data_registro?: string | null;
 };
+
+function timestampPartidaNoMesAtual(p: PartidaPeriodoRow, monthStartMs: number, nextMonthStartMs: number): boolean {
+  const raw = p.data_resultado ?? p.data_partida ?? p.data_registro;
+  if (raw == null || raw === "") return false;
+  const t = new Date(raw).getTime();
+  if (!Number.isFinite(t)) return false;
+  return t >= monthStartMs && t < nextMonthStartMs;
+}
+
+function numTimeId(v: number | string | null | undefined): number | null {
+  if (v == null) return null;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
+}
 
 const LIST_PAGE_SIZE = 10;
 
@@ -227,28 +244,32 @@ export default async function RankingPage({ searchParams }: Props) {
 
   if (state.periodo === "mes" && selectedEsporteId != null) {
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
-    const { data: partidasPeriodo } = await supabase
-      .from("partidas")
-      .select("jogador1_id, jogador2_id, time1_id, time2_id")
-      .eq("esporte_id", selectedEsporteId)
-      .in("status", ["encerrada", "finalizada", "concluida", "concluída", "validada"])
-      .gte("data_registro", monthStart)
-      .lt("data_registro", nextMonthStart);
+    const monthStartMs = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const nextMonthStartMs = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
 
-    const rows = (partidasPeriodo ?? []) as PartidaPeriodoRow[];
+    const { data: partidasBrutas } = await supabase
+      .from("partidas")
+      .select("jogador1_id, jogador2_id, time1_id, time2_id, data_resultado, data_partida, data_registro")
+      .eq("esporte_id", selectedEsporteId)
+      .in("status", ["encerrada", "finalizada", "concluida", "concluída", "validada"]);
+
+    const rows = ((partidasBrutas ?? []) as PartidaPeriodoRow[]).filter((p) =>
+      timestampPartidaNoMesAtual(p, monthStartMs, nextMonthStartMs)
+    );
+
     const activeUsers = new Set<string>();
     const activeTeams = new Set<number>();
     rows.forEach((p) => {
-      if (p.jogador1_id) activeUsers.add(p.jogador1_id);
-      if (p.jogador2_id) activeUsers.add(p.jogador2_id);
-      if (typeof p.time1_id === "number") activeTeams.add(p.time1_id);
-      if (typeof p.time2_id === "number") activeTeams.add(p.time2_id);
+      if (p.jogador1_id) activeUsers.add(String(p.jogador1_id));
+      if (p.jogador2_id) activeUsers.add(String(p.jogador2_id));
+      const t1 = numTimeId(p.time1_id);
+      const t2 = numTimeId(p.time2_id);
+      if (t1 != null) activeTeams.add(t1);
+      if (t2 != null) activeTeams.add(t2);
     });
 
     rankingAll = rankingAll.filter((r) => {
-      if (state.tipo === "individual") return !!r.usuarioId && activeUsers.has(r.usuarioId);
+      if (state.tipo === "individual") return !!r.usuarioId && activeUsers.has(String(r.usuarioId));
       return typeof r.timeId === "number" && activeTeams.has(r.timeId);
     });
   }
@@ -270,13 +291,13 @@ export default async function RankingPage({ searchParams }: Props) {
   const noCatalogHint = todosEsportes.length === 0;
 
   return (
-    <div className="relative flex min-h-full flex-1 flex-col">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg" aria-hidden />
+    <div className="relative z-0 flex w-full min-w-0 flex-1 flex-col">
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg" aria-hidden />
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[min(52vh,28rem)] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(52vh,28rem)] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)]"
         aria-hidden
       />
-      <div className="relative mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-3 pt-1.5 sm:px-5">
+      <div className="relative z-[1] mx-auto flex w-full min-w-0 max-w-2xl flex-col px-4 pb-3 pt-1.5 sm:px-5">
         <header className="mb-1.5">
           <h1 className="text-xl font-bold tracking-tight text-eid-fg sm:text-[1.35rem]">Ranking</h1>
         </header>
@@ -301,6 +322,7 @@ export default async function RankingPage({ searchParams }: Props) {
                 second={podiumSecond}
                 first={podiumFirst}
                 third={podiumThird}
+                rankKind={state.rank}
                 rankToggle={<RankingRankToggle state={state} principalEsporteId={esportePrincipalId} />}
                 periodToggle={<RankingPeriodToggle state={state} principalEsporteId={esportePrincipalId} />}
               />
@@ -316,7 +338,7 @@ export default async function RankingPage({ searchParams }: Props) {
 
             {rankingAll.length > 0 ? (
               <>
-                <section className="mt-2">
+                <section className="relative z-[1] mt-2">
                   <h2 className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Classificação geral</h2>
                   <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] sm:px-3">
                     {pageSlice.length === 0 ? (
