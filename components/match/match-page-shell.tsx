@@ -10,7 +10,7 @@ export function MatchPageShell({ children }: { children: ReactNode }) {
         className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(52vh,28rem)] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)]"
         aria-hidden
       />
-      <main className={`relative z-[1] ${PROFILE_PUBLIC_MAIN_CLASS}`}>{children}</main>
+      <main className={`relative z-[1] ${PROFILE_PUBLIC_MAIN_CLASS} !pt-0.5 sm:!pt-1.5`}>{children}</main>
     </div>
   );
 }

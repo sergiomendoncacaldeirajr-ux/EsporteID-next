@@ -165,33 +165,33 @@ export function MatchRadarApp({
 
   return (
     <div className="w-full min-w-0">
-      <header className="mb-2 mt-0 space-y-1.5">
-        <div className="min-w-0">
-          <div className="flex w-full min-w-0 items-start justify-between gap-2">
-            <div className="inline-flex min-w-0 items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)_86%)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-primary-500)_72%,var(--eid-fg)_28%)]">
+      <header className="mb-2 mt-0">
+        <div className="flex w-full min-w-0 items-start justify-between gap-2 sm:gap-3">
+          <div className="min-w-0 flex-1 space-y-0.5">
+            <div className="inline-flex min-w-0 max-w-full items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)_86%)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-primary-500)_72%,var(--eid-fg)_28%)]">
               <span
                 className="h-1.5 w-1.5 shrink-0 rounded-full bg-[color:color-mix(in_srgb,var(--eid-primary-500)_78%,white_22%)] shadow-[0_0_10px_color-mix(in_srgb,var(--eid-primary-500)_52%,transparent)]"
                 aria-hidden
               />
               <span className="truncate">Radar de oponentes</span>
             </div>
-            <div className="flex shrink-0 flex-col items-end gap-1">
-              <MatchLocationPrompt hasLocation />
-              <MatchFriendlyToggle
-                initialOn={viewerDisponivelAmistoso}
-                initialExpiresAt={viewerAmistosoExpiresAt}
-                userId={viewerId}
-              />
-            </div>
+            <h1 className="pt-0.5 text-[1.35rem] font-black leading-none tracking-[0.01em] text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_78%,var(--eid-fg)_22%))] bg-clip-text drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_34%,transparent)] sm:text-[1.6rem]">
+              Match
+            </h1>
+            <p className="max-w-prose pt-0.5 text-[10px] leading-snug text-eid-text-secondary sm:text-[11px]">
+              {finalidade === "amistoso"
+                ? "Atletas com modo amistoso ativo e interesse em jogo casual. O botão Solicitar match já envia pedido amistoso (sem carência de meses)."
+                : "Oponentes por proximidade; ordene por nota EID ou pontos do ranking. Troque modalidade e filtros sem recarregar."}
+            </p>
           </div>
-          <h1 className="mt-0.5 text-[1.35rem] font-black tracking-[0.01em] text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_78%,var(--eid-fg)_22%))] bg-clip-text drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_34%,transparent)] sm:text-[1.6rem]">
-            Match
-          </h1>
-          <p className="mt-0.5 max-w-prose text-[10px] leading-snug text-eid-text-secondary sm:text-[11px]">
-            {finalidade === "amistoso"
-              ? "Atletas com modo amistoso ativo e interesse em jogo casual. O botão Solicitar match já envia pedido amistoso (sem carência de meses)."
-              : "Oponentes por proximidade; ordene por nota EID ou pontos do ranking. Troque modalidade e filtros sem recarregar."}
-          </p>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <MatchLocationPrompt hasLocation />
+            <MatchFriendlyToggle
+              initialOn={viewerDisponivelAmistoso}
+              initialExpiresAt={viewerAmistosoExpiresAt}
+              userId={viewerId}
+            />
+          </div>
         </div>
       </header>
 
