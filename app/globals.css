@@ -84,10 +84,9 @@
 }
 
 /*
- * Shell logado: topbar fixa (fora do fluxo).
- * No mobile, a nav inferior fica no fluxo (irmã do #app-main-column) — evita bugs do WebKit com
- * position:fixed + viewport em PWA. O padding-bottom do body só cobre safe-area; a altura da nav
- * entra no layout. Em ≥md a nav some e o rodapé do site volta a precisar do offset clássico.
+ * Shell logado: topbar fixa; nav inferior mobile também fixa (bottom:0 do viewport).
+ * Body no mobile: altura travada + overflow hidden → scroll só em #app-main-column (evita “pulo”
+ * do iOS). `100lvh` costuma alinhar melhor à borda física que `100dvh` (que pode ficar curto).
  */
 body.eid-app-shell {
   box-sizing: border-box;
@@ -97,15 +96,16 @@ body.eid-app-shell {
 
 @media (max-width: 767px) {
   body.eid-app-shell {
-    --eid-shell-footer-offset: max(14px, env(safe-area-inset-bottom, 0px));
-    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
-    /*
-     * Altura travada na janela visível: sem isso o flex soma altura de todo o conteúdo
-     * e a nav no fluxo some “abaixo da dobra”. overflow no body: scroll só em #app-main-column.
-     */
+    /* Mesmo recuo que as páginas usam em `pb-[calc(var(--eid-shell-footer-offset)-…)]` */
+    --eid-shell-footer-offset: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 2.7rem);
+    /* Reserva a faixa da nav fixa para o flex não “subir” por baixo dela. */
+    padding-bottom: var(--eid-shell-footer-offset);
     height: 100dvh;
     max-height: 100dvh;
     min-height: 100dvh;
+    height: 100lvh;
+    max-height: 100lvh;
+    min-height: 100lvh;
     overflow: hidden;
   }
 }

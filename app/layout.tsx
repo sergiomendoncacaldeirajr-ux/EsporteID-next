@@ -137,21 +137,23 @@ export default async function RootLayout({
           />
         ) : null}
         {showAppChrome ? (
-          <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col max-md:min-h-0 max-md:overflow-hidden">
-            <div
-              id="app-main-column"
-              data-eid-app-scroll-root="1"
-              className="flex min-h-0 flex-1 flex-col max-md:overflow-y-auto max-md:overscroll-y-contain"
-            >
-              {children}
+          <>
+            <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col max-md:min-h-0 max-md:overflow-hidden">
+              <div
+                id="app-main-column"
+                data-eid-app-scroll-root="1"
+                className="flex min-h-0 flex-1 flex-col max-md:overflow-y-auto max-md:overscroll-y-contain"
+              >
+                {children}
+              </div>
             </div>
             <div
               id="eid-mobile-bottom-nav"
-              className="pointer-events-none z-[55] w-full shrink-0 md:hidden"
+              className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] md:hidden"
             >
               <MobileBottomNav userId={user!.id} activeContext={activeContext} />
             </div>
-          </div>
+          </>
         ) : (
           <div
             id="app-main-column"
