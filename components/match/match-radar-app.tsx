@@ -453,22 +453,28 @@ export function MatchRadarApp({
         : null}
       {mounted && showRankRulesPrompt && !showEntryPrompt
         ? createPortal(
-            <div className="fixed inset-0 z-[2147482800] flex items-center justify-center bg-black/60 px-3">
+            <div className="fixed inset-0 z-[2147483700] flex items-center justify-center bg-black/60 px-3">
               <div className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_18px_44px_-24px_rgba(2,6,23,0.78)] sm:p-4">
                 <p className="text-sm font-black text-eid-fg">Como funciona o Desafio de ranking</p>
                 <ul className="mt-2 space-y-1.5 text-[11px] leading-snug text-eid-text-secondary sm:text-xs">
                   <li>
-                    - O ranking considera confrontos validos na janela de <span className="font-semibold text-eid-fg">12 meses</span>.
+                    - O ranking considera confrontos válidos na janela de <span className="font-semibold text-eid-fg">12 meses</span>.
                   </li>
                   <li>
-                    - Cada jogador pode manter ate <span className="font-semibold text-eid-fg">2 jogos pendentes</span> de resultado.
+                    - Cada esporte possui ranking próprio (individual, dupla e time são separados por modalidade).
                   </li>
                   <li>
-                    - Resultado pendente pode ser autoaprovado em <span className="font-semibold text-eid-fg">24h</span> sem contestacao.
+                    - Cada jogador pode manter até <span className="font-semibold text-eid-fg">2 jogos pendentes</span> de resultado.
+                  </li>
+                  <li>
+                    - Resultado pendente pode ser autoaprovado em <span className="font-semibold text-eid-fg">24h</span>, se não houver contestação.
+                  </li>
+                  <li>
+                    - Em dupla ou time, somente o <span className="font-semibold text-eid-fg">capitão</span> aceita o desafio; os demais participantes apenas sugerem.
                   </li>
                 </ul>
                 <p className="mt-2 text-[10px] text-eid-text-secondary">
-                  Dica: se não houver acordo de data após o aceite, você pode cancelar e solicitar de novo depois.
+                  Dica: se não houver acordo de data após o aceite, você pode cancelar e solicitar novamente depois.
                 </p>
                 <button
                   type="button"
@@ -752,7 +758,7 @@ export function MatchRadarApp({
           ) : null}
         </div>
         ) : null}
-        {!isFullView && finalidade === "amistoso" && amistosoLigado ? (
+        {finalidade === "amistoso" && amistosoLigado ? (
           <div className="mb-2 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2 shadow-[0_6px_16px_-12px_rgba(15,23,42,0.26)] sm:p-2.5">
             <MatchFriendlyToggle
               initialOn={viewerDisponivelAmistoso}
@@ -763,9 +769,9 @@ export function MatchRadarApp({
             />
           </div>
         ) : null}
-        {!isFullView && finalidade === "amistoso" && !amistosoLigado && mounted
+        {finalidade === "amistoso" && !amistosoLigado && mounted
           ? createPortal(
-              <div className="fixed inset-0 z-[2147482900] flex items-center justify-center bg-black/55 px-3">
+              <div className="fixed inset-0 z-[2147483650] flex items-center justify-center bg-black/55 px-3">
                 <div className="w-full max-w-md rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 shadow-[0_16px_40px_-20px_rgba(2,6,23,0.78)] sm:p-4">
                   <p className="text-[11px] leading-snug text-eid-fg sm:text-xs">
                     Para funcionar no <span className="font-semibold text-eid-primary-300">modo amistoso</span>, ligue
