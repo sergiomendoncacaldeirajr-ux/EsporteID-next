@@ -368,21 +368,23 @@ export function MatchRadarApp({
         </p>
       ) : null}
 
-      <section className="mt-3 space-y-2" aria-busy={isPending}>
-        <h2 className="mb-0 text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Resultados</h2>
+      <section className="mt-3" aria-busy={isPending}>
+        <h2 className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Resultados</h2>
         {cards.length === 0 ? (
           <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-4 text-center text-xs text-eid-text-secondary shadow-[0_6px_16px_-12px_rgba(15,23,42,0.22)] backdrop-blur-sm">
             Nenhum oponente com esses filtros.
           </p>
         ) : (
-          cards.map((c) => (
-            <MatchRadarCardView
-              key={`${c.modalidade}-${c.id}-${c.esporteId}`}
-              card={c}
-              esporteContextId={esporte}
-              matchFinalidade={finalidade}
-            />
-          ))
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2.5">
+            {cards.map((c) => (
+              <MatchRadarCardView
+                key={`${c.modalidade}-${c.id}-${c.esporteId}`}
+                card={c}
+                esporteContextId={esporte}
+                matchFinalidade={finalidade}
+              />
+            ))}
+          </div>
         )}
       </section>
 
