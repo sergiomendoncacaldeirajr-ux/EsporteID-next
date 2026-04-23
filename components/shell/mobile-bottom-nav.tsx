@@ -362,10 +362,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   return (
     <>
       {/* Padding do conteúdo: #app-main-column (--eid-shell-footer-offset). Espaçador removido para não duplicar folga. */}
-      <nav
-        className="fixed bottom-0 left-0 z-[55] w-full bg-eid-card md:hidden"
-        aria-label="Navegação principal"
-      >
+      <nav className="pointer-events-auto w-full bg-eid-card" aria-label="Navegação principal">
         <div
           className="eid-surface-panel relative overflow-visible rounded-t-[16px] border-t"
           style={{
@@ -382,7 +379,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 pt-1.5 transition-transform active:scale-95"
+                    className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 pt-1.5 transition-opacity active:opacity-80"
                     aria-label={item.label}
                   >
                     <span
@@ -417,7 +414,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 transition-transform active:scale-95"
+                  className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 transition-opacity active:opacity-80"
                   aria-label={item.label}
                 >
                   <span

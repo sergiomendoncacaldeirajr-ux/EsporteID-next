@@ -118,7 +118,11 @@ export default async function RootLayout({
       className={`${barlow.variable} ${barlowCondensed.variable} ${barlowSemiCondensed.variable} h-full antialiased`}
     >
       <body
-        className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}
+        className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${
+          showAppChrome
+            ? " eid-app-shell max-md:h-[100dvh] max-md:max-h-[100dvh] max-md:overflow-hidden"
+            : ""
+        }`}
       >
         <EidThemeHydration />
         <PwaBootstrap />
@@ -139,7 +143,7 @@ export default async function RootLayout({
           id="app-main-column"
           className={
             showAppChrome
-              ? "flex min-h-0 flex-1 flex-col"
+              ? "flex min-h-0 flex-1 flex-col max-md:min-h-0 max-md:overflow-y-auto max-md:overscroll-y-contain"
               : onboardingMinimalChrome
                 ? "flex min-h-0 flex-1 flex-col pt-[calc(3.25rem+env(safe-area-inset-top))]"
                 : hideAppShell
@@ -150,7 +154,10 @@ export default async function RootLayout({
           {children}
         </div>
         {showAppChrome && user ? (
-          <div id="eid-mobile-bottom-nav">
+          <div
+            id="eid-mobile-bottom-nav"
+            className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] md:hidden"
+          >
             <MobileBottomNav userId={user.id} activeContext={activeContext} />
           </div>
         ) : null}

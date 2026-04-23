@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 function forceTop() {
+  const main = document.getElementById("app-main-column");
+  if (main) main.scrollTop = 0;
   window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   if (document.documentElement) document.documentElement.scrollTop = 0;
   if (document.body) document.body.scrollTop = 0;

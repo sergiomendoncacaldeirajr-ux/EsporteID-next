@@ -210,6 +210,11 @@ header#eid-persistent-topbar textarea {
 #eid-mobile-bottom-nav {
   -webkit-user-select: none;
   user-select: none;
+  /* iOS/WebKit: camada estável para `position: fixed` não “pular” com mudança de viewport */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 button,
