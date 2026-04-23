@@ -137,6 +137,7 @@ export default async function RootLayout({
         ) : null}
         <div
           id="app-main-column"
+          data-eid-app-scroll-root={showAppChrome ? "1" : undefined}
           className={
             showAppChrome
               ? "flex min-h-0 flex-1 flex-col max-md:min-h-0 max-md:overflow-y-auto max-md:overscroll-y-contain"
