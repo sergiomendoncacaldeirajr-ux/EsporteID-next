@@ -99,7 +99,9 @@ export default async function RootLayout({
       data-eid-theme="dark"
       className={`${barlow.variable} ${barlowCondensed.variable} ${barlowSemiCondensed.variable} h-full antialiased`}
     >
-      <body className={`flex min-h-dvh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}>
+      <body
+        className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}
+      >
         <EidThemeHydration />
         <InteractionFeedback />
         {!user ? <VisitorThemeToggleFloat /> : null}

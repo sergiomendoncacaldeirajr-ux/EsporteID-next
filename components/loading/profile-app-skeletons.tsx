@@ -53,143 +53,169 @@ function SectionTitleSkeleton({ className }: { className?: string }) {
   );
 }
 
+function ProfilePublicHeroSkeleton() {
+  return (
+    <div className={HERO_PANEL}>
+      <div className="relative h-24 w-full sm:h-28">
+        <div
+          className="h-full w-full opacity-90"
+          style={{ background: "linear-gradient(135deg,#172554 0%,#0b1d2e 55%,#0b0f14 100%)" }}
+        />
+        <SkBlock className="absolute right-2 top-2 z-[3] h-7 w-20 rounded-lg" />
+      </div>
+      <div className="px-3 pb-3 pt-0">
+        <div className="relative z-[3] -mt-6 flex items-end gap-3 sm:-mt-7">
+          <SkBlock className="z-10 h-[68px] w-[68px] shrink-0 rounded-full shadow-[0_0_0_2px_rgba(249,115,22,0.55)]" />
+          <div className="min-w-0 flex-1 space-y-2 pb-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <SkBlock className="h-4 w-40 max-w-full rounded-md" />
+              <SkBlock className="h-4 w-14 rounded-full" />
+              <SkBlock className="h-4 w-16 rounded-full" />
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <SkBlock className="h-3 w-24 rounded-md" />
+              <SkBlock className="h-3 w-px" />
+              <SkBlock className="h-3 w-28 rounded-full" />
+            </div>
+          </div>
+        </div>
+        <SkBlock className="mt-2 h-8 w-full max-w-md rounded-md" />
+        <div className="eid-list-item mt-3 grid grid-cols-4 divide-x divide-[color:var(--eid-border-subtle)] rounded-xl bg-eid-surface/45 text-center">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="py-2">
+              <SkBlock className="mx-auto h-5 w-8 rounded-md" />
+              <SkBlock className="mx-auto mt-1 h-2 w-14 rounded" />
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 flex flex-nowrap items-center gap-x-2 overflow-x-auto pb-0.5">
+          <SkBlock className="h-3 w-16 shrink-0 rounded" />
+          <SkBlock className="h-3 w-14 shrink-0 rounded" />
+          <SkBlock className="h-3 w-12 shrink-0 rounded" />
+          <SkBlock className="ml-auto h-6 w-20 shrink-0 rounded-full" />
+        </div>
+        <div className="mt-3">
+          <SkBlock className="mb-1.5 h-2 w-24 rounded" />
+          <div className="flex flex-wrap gap-1.5">
+            <SkBlock className="h-7 w-28 rounded-full" />
+            <SkBlock className="h-7 w-24 rounded-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Rota `/perfil/[id]` durante navegação: só hero + poucos blocos.
+ * O skeleton completo era muito mais alto que muitos perfis reais → sensação de “abrir grande e encolher”.
+ */
+export function ProfilePublicRouteLoadingCompact() {
+  return (
+    <main className={MAIN_PROFILE}>
+      <ProfilePublicHeroSkeleton />
+      <div className="mt-4 grid gap-2">
+        <SkBlock className="h-11 w-full rounded-xl" />
+        <SkBlock className="h-9 w-full rounded-xl" />
+        <section className="mt-2">
+          <SectionTitleSkeleton />
+          <SkBlock className="mt-2 h-28 w-full rounded-xl" />
+        </section>
+      </div>
+    </main>
+  );
+}
+
 /** Perfil público — hero, stats, ficha, ação, EID, equipes, histórico (sem bloco Professor para manter altura estável). */
 export function ProfilePublicPageSkeleton() {
   return (
     <main className={MAIN_PROFILE}>
-        <div className={HERO_PANEL}>
-          <div className="relative h-24 w-full sm:h-28">
-            <div
-              className="h-full w-full opacity-90"
-              style={{ background: "linear-gradient(135deg,#172554 0%,#0b1d2e 55%,#0b0f14 100%)" }}
-            />
-            <SkBlock className="absolute right-2 top-2 z-[3] h-7 w-20 rounded-lg" />
+      <ProfilePublicHeroSkeleton />
+
+      <div className="mt-4 grid gap-4">
+        <div className="grid grid-cols-2 gap-2">
+          <SkBlock className="col-span-2 h-11 rounded-xl" />
+          <SkBlock className="col-span-2 h-9 rounded-xl" />
+        </div>
+
+        <div className="-mt-3">
+          <div className="-mb-5 flex justify-end">
+            <SkBlock className="h-4 w-28 rounded" />
           </div>
-          <div className="px-3 pb-3 pt-0">
-            <div className="relative z-[3] -mt-6 flex items-end gap-3 sm:-mt-7">
-              <SkBlock className="z-10 h-[68px] w-[68px] shrink-0 rounded-full shadow-[0_0_0_2px_rgba(249,115,22,0.55)]" />
-              <div className="min-w-0 flex-1 space-y-2 pb-1">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <SkBlock className="h-4 w-40 max-w-full rounded-md" />
-                  <SkBlock className="h-4 w-14 rounded-full" />
-                  <SkBlock className="h-4 w-16 rounded-full" />
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <SkBlock className="h-3 w-24 rounded-md" />
-                  <SkBlock className="h-3 w-px" />
-                  <SkBlock className="h-3 w-28 rounded-full" />
-                </div>
+          <section>
+            <SectionTitleSkeleton />
+            <div className="eid-list-item mt-2 rounded-xl bg-eid-card/55 p-2">
+              <div className="flex snap-x gap-2 overflow-x-auto pb-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex min-h-[42px] min-w-[108px] shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-xl bg-eid-surface/45 px-1 py-1"
+                  >
+                    <SkBlock className="h-5 w-[88px] rounded-full" />
+                    <SkBlock className="h-2 w-16 rounded" />
+                  </div>
+                ))}
               </div>
             </div>
-            <SkBlock className="mt-2 h-8 w-full max-w-md rounded-md" />
-            <div className="eid-list-item mt-3 grid grid-cols-4 divide-x divide-[color:var(--eid-border-subtle)] rounded-xl bg-eid-surface/45 text-center">
+          </section>
+        </div>
+
+        <div className="mt-2">
+          <div className="-mb-5 flex justify-end">
+            <SkBlock className="h-4 w-28 rounded" />
+          </div>
+          <section>
+            <SectionTitleSkeleton />
+            <div className="mt-2 grid grid-cols-2 gap-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="py-2">
-                  <SkBlock className="mx-auto h-5 w-8 rounded-md" />
-                  <SkBlock className="mx-auto mt-1 h-2 w-14 rounded" />
+                <div key={i} className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2">
+                  <SkBlock className="h-10 w-10 shrink-0 rounded-full" />
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <SkBlock className="h-3 w-full rounded" />
+                    <SkBlock className="h-2 w-3/4 max-w-[120px] rounded" />
+                  </div>
                 </div>
               ))}
             </div>
-            <div className="mt-2 flex flex-nowrap items-center gap-x-2 overflow-x-auto pb-0.5">
-              <SkBlock className="h-3 w-16 shrink-0 rounded" />
-              <SkBlock className="h-3 w-14 shrink-0 rounded" />
-              <SkBlock className="h-3 w-12 shrink-0 rounded" />
-              <SkBlock className="ml-auto h-6 w-20 shrink-0 rounded-full" />
-            </div>
-            <div className="mt-3">
-              <SkBlock className="mb-1.5 h-2 w-24 rounded" />
-              <div className="flex flex-wrap gap-1.5">
-                <SkBlock className="h-7 w-28 rounded-full" />
-                <SkBlock className="h-7 w-24 rounded-full" />
-              </div>
-            </div>
-          </div>
+          </section>
         </div>
 
-        <div className="mt-4 grid gap-4">
-          <div className="grid grid-cols-2 gap-2">
-            <SkBlock className="col-span-2 h-11 rounded-xl" />
-            <SkBlock className="col-span-2 h-9 rounded-xl" />
+        <div className="mt-0">
+          <div className="-mb-5 flex justify-end">
+            <SkBlock className="relative top-0.5 h-4 w-32 rounded" />
           </div>
-
-          <div className="-mt-3">
-            <div className="-mb-5 flex justify-end">
-              <SkBlock className="h-4 w-28 rounded" />
-            </div>
-            <section>
-              <SectionTitleSkeleton />
-              <div className="eid-list-item mt-2 rounded-xl bg-eid-card/55 p-2">
-                <div className="flex snap-x gap-2 overflow-x-auto pb-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="flex min-h-[42px] min-w-[108px] shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-xl bg-eid-surface/45 px-1 py-1"
-                    >
-                      <SkBlock className="h-5 w-[88px] rounded-full" />
-                      <SkBlock className="h-2 w-16 rounded" />
-                    </div>
-                  ))}
+          <section>
+            <SectionTitleSkeleton />
+            <div className="mt-2 grid grid-cols-5 gap-1.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1">
+                  <SkBlock className="mx-auto h-4 w-6 rounded" />
+                  <SkBlock className="mx-auto mt-1 h-2 w-8 rounded" />
                 </div>
-              </div>
-            </section>
-          </div>
-
-          <div className="mt-2">
-            <div className="-mb-5 flex justify-end">
-              <SkBlock className="h-4 w-28 rounded" />
+              ))}
             </div>
-            <section>
-              <SectionTitleSkeleton />
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2">
-                    <SkBlock className="h-10 w-10 shrink-0 rounded-full" />
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <SkBlock className="h-3 w-full rounded" />
-                      <SkBlock className="h-2 w-3/4 max-w-[120px] rounded" />
-                    </div>
+            <ul className="mt-2 grid gap-1.5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <li
+                  key={i}
+                  className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2 py-1.5"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <SkBlock className="h-4 w-4 rounded" />
+                    <SkBlock className="h-3 w-10 rounded" />
+                    <SkBlock className="h-3 w-8 rounded" />
                   </div>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          <div className="mt-0">
-            <div className="-mb-5 flex justify-end">
-              <SkBlock className="relative top-0.5 h-4 w-32 rounded" />
+                  <SkBlock className="h-2 w-16 rounded" />
+                </li>
+              ))}
+            </ul>
+            <div className="mt-2 flex justify-end">
+              <SkBlock className="h-4 w-40 rounded" />
             </div>
-            <section>
-              <SectionTitleSkeleton />
-              <div className="mt-2 grid grid-cols-5 gap-1.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1">
-                    <SkBlock className="mx-auto h-4 w-6 rounded" />
-                    <SkBlock className="mx-auto mt-1 h-2 w-8 rounded" />
-                  </div>
-                ))}
-              </div>
-              <ul className="mt-2 grid gap-1.5">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <li
-                    key={i}
-                    className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2 py-1.5"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <SkBlock className="h-4 w-4 rounded" />
-                      <SkBlock className="h-3 w-10 rounded" />
-                      <SkBlock className="h-3 w-8 rounded" />
-                    </div>
-                    <SkBlock className="h-2 w-16 rounded" />
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-2 flex justify-end">
-                <SkBlock className="h-4 w-40 rounded" />
-              </div>
-            </section>
-          </div>
+          </section>
         </div>
-      </main>
+      </div>
+    </main>
   );
 }
 
