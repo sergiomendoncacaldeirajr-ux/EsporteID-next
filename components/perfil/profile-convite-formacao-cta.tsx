@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
 
 const initial: TeamActionState = { ok: false, message: "" };
@@ -24,6 +24,11 @@ type Props = {
   perfilPath: string;
 };
 
+function primeiroNome(nome: string) {
+  const p = nome.trim().split(/\s+/)[0];
+  return p || nome;
+}
+
 export function ProfileConviteFormacaoCta({
   targetUserId,
   targetNome,
@@ -34,18 +39,19 @@ export function ProfileConviteFormacaoCta({
 }: Props) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(convidarUsuarioParaEquipe, initial);
+  const primeiro = primeiroNome(targetNome);
 
   useEffect(() => {
     if (state.ok) router.refresh();
   }, [state.ok, router]);
 
-  const timesHref = `/times?create=1&from=${encodeURIComponent(perfilPath)}&convidar=${encodeURIComponent(targetUserId)}`;
+  const cadastrarHref = `/editar/equipes/cadastrar?from=${encodeURIComponent(perfilPath)}&convidar=${encodeURIComponent(targetUserId)}`;
 
   if (!targetHasEsportes) {
     return (
       <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-        <p className="text-[11px] leading-relaxed text-eid-text-secondary">
-          Quando <span className="font-semibold text-eid-fg">{targetNome}</span> configurar pelo menos um esporte no EID, você poderá convidar para a sua dupla ou time no mesmo esporte.
+        <p className="text-center text-[11px] text-eid-text-secondary">
+          Com esportes no EID, dá para convidar <span className="font-medium text-eid-fg">{primeiro}</span> para sua dupla/time no mesmo esporte.
         </p>
       </div>
     );
@@ -53,17 +59,9 @@ export function ProfileConviteFormacaoCta({
 
   return (
     <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} space-y-3`}>
-      <p className="text-[11px] leading-relaxed text-eid-text-secondary">
-        {targetNome} ainda não está em dupla nem time na plataforma. Envie um convite da sua formação (você precisa ser líder). A pessoa recebe o pedido em{" "}
-        <Link href="/comunidade" className="font-semibold text-eid-primary-400 underline-offset-2 hover:underline">
-          Social
-        </Link>{" "}
-        e pode aceitar ou recusar.
-      </p>
-
       {eligibleTeams.length > 0 ? (
         <div className="space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Suas formações (mesmo esporte no EID)</p>
+          <p className="text-center text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">Convidar · seu esporte</p>
           <ul className="grid gap-2">
             {eligibleTeams.map((t) => (
               <li key={t.id}>
@@ -88,27 +86,31 @@ export function ProfileConviteFormacaoCta({
             ))}
           </ul>
         </div>
-      ) : viewerHasAnyLiderTeam ? (
-        <p className="rounded-xl border border-eid-action-500/25 bg-eid-action-500/8 px-3 py-2 text-[11px] text-eid-text-secondary">
-          Você já lidera formações, mas nenhuma está no mesmo esporte que este atleta cadastrou no EID. Crie uma nova dupla ou time no esporte certo ou peça para a pessoa adicionar o esporte no perfil.
+      ) : null}
+
+      {eligibleTeams.length === 0 && viewerHasAnyLiderTeam ? (
+        <p className="text-center text-[11px] text-eid-text-secondary">
+          Suas formações não batem no esporte EID de {primeiro}. Ajuste o esporte na formação ou peça para incluir no perfil.
         </p>
       ) : null}
 
-      <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2">
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Não tem dupla/time ainda?</p>
-        <Link
-          href={timesHref}
-          className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-3 text-center text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18"
+      {eligibleTeams.length === 0 && !viewerHasAnyLiderTeam ? (
+        <p className="text-center text-[11px] text-eid-text-secondary">Crie uma formação como líder para convidar {primeiro}.</p>
+      ) : null}
+
+      <div className="border-t border-[color:var(--eid-border-subtle)] pt-3">
+        <ProfileEditDrawerTrigger
+          href={cadastrarHref}
+          title="Nova formação"
+          className="flex min-h-10 w-full items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-3 text-center text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18"
         >
-          Criar dupla ou time e convidar {targetNome.split(" ")[0] ?? "esta pessoa"}
-        </Link>
-        <p className="mt-2 text-[10px] text-eid-text-secondary">
-          Depois de criar, abrimos a edição da formação para você enviar o convite automaticamente.
-        </p>
+          Criar dupla ou time e convidar {primeiro}
+        </ProfileEditDrawerTrigger>
+        <p className="mt-2 text-center text-[10px] text-eid-text-secondary">Painel ao lado · convite em Social</p>
       </div>
 
       {state.message ? (
-        <p className={`text-xs ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
+        <p className={`text-center text-xs ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
       ) : null}
     </div>
   );

@@ -1,11 +1,62 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 export type TeamActionState =
-  | { ok: true; message: string; createdTimeId?: number }
+  | { ok: true; message: string; createdTimeId?: number; inviteAutoSent?: boolean }
   | { ok: false; message: string };
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Convite por @ já resolvido — usado por `convidarUsuarioParaEquipe` e após `criarEquipe`. */
+async function conviteUsuarioParaTimeCore(
+  supabase: SupabaseClient,
+  donoId: string,
+  timeId: number,
+  targetProfileId: string,
+  usernameParaRpc: string
+): Promise<TeamActionState> {
+  const { data: timeRow } = await supabase.from("times").select("id, esporte_id, criador_id").eq("id", timeId).maybeSingle();
+  if (!timeRow || timeRow.criador_id !== donoId) return { ok: false, message: "Sem permissão para convidar nesta equipe." };
+  if (timeRow.esporte_id != null) {
+    const { data: esporteConfig } = await supabase
+      .from("usuario_eid")
+      .select("usuario_id")
+      .eq("usuario_id", targetProfileId)
+      .eq("esporte_id", Number(timeRow.esporte_id))
+      .maybeSingle();
+    if (!esporteConfig) {
+      return {
+        ok: false,
+        message:
+          "Esse usuário ainda não configurou esse esporte no perfil. Para aparecer na busca de adicionar ao time/dupla, ele precisa configurar o esporte no EID.",
+      };
+    }
+  }
+
+  const { error } = await supabase.rpc("convidar_para_time", {
+    p_time_id: timeId,
+    p_username: usernameParaRpc,
+  });
+  if (error) {
+    if (String(error.message || "").toLowerCase().includes("usuário não encontrado")) {
+      return {
+        ok: false,
+        message:
+          "Usuário não encontrado. Para aparecer na opção de adicionar ao time/dupla, o atleta precisa ter esse esporte configurado no perfil.",
+      };
+    }
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/times");
+  revalidatePath("/comunidade");
+  revalidatePath(`/perfil-time/${timeId}`);
+  revalidatePath(`/perfil/${targetProfileId}`);
+  return { ok: true, message: "Convite enviado. A pessoa recebe aviso em Social para aceitar ou recusar." };
+}
 
 export async function criarEquipe(
   _prev: TeamActionState | undefined,
@@ -74,9 +125,37 @@ export async function criarEquipe(
 
   if (error) return { ok: false, message: error.message };
 
+  const createdId = Number(created?.id ?? 0) || 0;
+  const convidarUid = String(formData.get("convidar_usuario_id") ?? "").trim();
+  let message = "Formação criada com sucesso.";
+  let inviteAutoSent = false;
+
+  if (convidarUid && UUID_RE.test(convidarUid)) {
+    const { data: targetById } = await supabase.from("profiles").select("id, username").eq("id", convidarUid).maybeSingle();
+    const u = String(targetById?.username ?? "").trim();
+    if (!targetById?.id) {
+      message = "Formação criada. Convite não enviado (perfil não encontrado).";
+    } else if (!u) {
+      message = "Formação criada. Convite não enviado: o atleta precisa definir @username no perfil.";
+    } else {
+      const inv = await conviteUsuarioParaTimeCore(supabase, user.id, createdId, String(targetById.id), u);
+      if (inv.ok) {
+        inviteAutoSent = true;
+        message = "Formação criada e convite enviado. A pessoa vê em Social.";
+      } else {
+        message = `Formação criada. Convite não enviado: ${inv.message}`;
+      }
+    }
+  }
+
   revalidatePath("/times");
   revalidatePath(`/perfil/${user.id}`);
-  return { ok: true, message: "Formação criada com sucesso.", createdTimeId: Number(created?.id ?? 0) || undefined };
+  return {
+    ok: true,
+    message,
+    createdTimeId: createdId || undefined,
+    ...(inviteAutoSent ? { inviteAutoSent: true } : {}),
+  };
 }
 
 export async function convidarUsuarioParaEquipe(
@@ -98,7 +177,7 @@ export async function convidarUsuarioParaEquipe(
   let username: string;
   let targetProfileId: string;
 
-  if (convidadoIdRaw && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(convidadoIdRaw)) {
+  if (convidadoIdRaw && UUID_RE.test(convidadoIdRaw)) {
     const { data: targetById } = await supabase
       .from("profiles")
       .select("id, username")
@@ -127,46 +206,7 @@ export async function convidarUsuarioParaEquipe(
     targetProfileId = targetProfile.id;
   }
 
-  const [{ data: timeRow }] = await Promise.all([
-    supabase.from("times").select("id, esporte_id, criador_id").eq("id", timeId).maybeSingle(),
-  ]);
-  if (!timeRow || timeRow.criador_id !== user.id) return { ok: false, message: "Sem permissão para convidar nesta equipe." };
-  if (timeRow.esporte_id != null) {
-    const { data: esporteConfig } = await supabase
-      .from("usuario_eid")
-      .select("usuario_id")
-      .eq("usuario_id", targetProfileId)
-      .eq("esporte_id", Number(timeRow.esporte_id))
-      .maybeSingle();
-    if (!esporteConfig) {
-      return {
-        ok: false,
-        message:
-          "Esse usuário ainda não configurou esse esporte no perfil. Para aparecer na busca de adicionar ao time/dupla, ele precisa configurar o esporte no EID.",
-      };
-    }
-  }
-
-  const { error } = await supabase.rpc("convidar_para_time", {
-    p_time_id: timeId,
-    p_username: username,
-  });
-  if (error) {
-    if (String(error.message || "").toLowerCase().includes("usuário não encontrado")) {
-      return {
-        ok: false,
-        message:
-          "Usuário não encontrado. Para aparecer na opção de adicionar ao time/dupla, o atleta precisa ter esse esporte configurado no perfil.",
-      };
-    }
-    return { ok: false, message: error.message };
-  }
-
-  revalidatePath("/times");
-  revalidatePath("/comunidade");
-  revalidatePath(`/perfil-time/${timeId}`);
-  revalidatePath(`/perfil/${targetProfileId}`);
-  return { ok: true, message: "Convite enviado. A pessoa recebe aviso em Social para aceitar ou recusar." };
+  return conviteUsuarioParaTimeCore(supabase, user.id, timeId, targetProfileId, username);
 }
 
 function checkboxOn(formData: FormData, name: string): boolean {

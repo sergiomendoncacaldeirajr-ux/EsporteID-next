@@ -561,7 +561,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           {!isSelf ? <ProfileDenunciarButton alvoUsuarioId={id} /> : null}
 
           {!isSelf && alvoSemFormacao ? (
-            <ProfileSection title="Convidar para sua formação">
+            <ProfileSection title="Dupla ou time">
               <ProfileConviteFormacaoCta
                 targetUserId={id}
                 targetNome={perfil.nome ?? "Atleta"}

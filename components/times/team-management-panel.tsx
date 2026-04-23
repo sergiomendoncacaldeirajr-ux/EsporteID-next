@@ -16,16 +16,22 @@ export function TeamManagementPanel({
   minhasEquipes,
   defaultOpenCreate,
   manageHrefTemplate,
+  convidarUsuarioIdAposCriar,
+  defaultTipoFormacao,
 }: {
   esportes: Sport[];
   minhasEquipes: Team[];
   defaultOpenCreate?: boolean;
   manageHrefTemplate?: string;
+  /** UUID do atleta: após criar a formação, envia convite automaticamente (server action). */
+  convidarUsuarioIdAposCriar?: string;
+  /** Ao convidar a partir do perfil, sugerimos dupla por padrão. */
+  defaultTipoFormacao?: "time" | "dupla";
 }) {
   const router = useRouter();
   const [createState, createAction, createPending] = useActionState(criarEquipe, initial);
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
-  const [tipo, setTipo] = useState<"time" | "dupla">("time");
+  const [tipo, setTipo] = useState<"time" | "dupla">(defaultTipoFormacao ?? "time");
   const [esporteId, setEsporteId] = useState<string>("");
   const [localizacao, setLocalizacao] = useState("");
   const [gpsStatus, setGpsStatus] = useState<"idle" | "loading" | "error">("idle");
@@ -34,7 +40,17 @@ export function TeamManagementPanel({
   useEffect(() => {
     if (!manageHrefTemplate) return;
     if (!createState.ok || !createState.createdTimeId) return;
-    const nextHref = manageHrefTemplate.replace(":id", String(createState.createdTimeId));
+    let nextHref = manageHrefTemplate.replace(":id", String(createState.createdTimeId));
+    if (createState.inviteAutoSent) {
+      try {
+        const base = "https://eid.local";
+        const u = new URL(nextHref, base);
+        u.searchParams.delete("convidar");
+        nextHref = `${u.pathname}${u.search}`;
+      } catch {
+        /* manter href */
+      }
+    }
     router.push(nextHref);
   }, [createState, manageHrefTemplate, router]);
 
@@ -81,8 +97,13 @@ export function TeamManagementPanel({
     <section className="mb-4 min-w-0 space-y-3">
       <details className="eid-surface-panel rounded-2xl p-3 sm:p-4" open={defaultOpenCreate}>
         <summary className="cursor-pointer text-sm font-semibold text-eid-fg">Criar nova dupla ou time</summary>
-        <p className="mt-2 text-[11px] text-eid-text-secondary">Preencha os dados da formação e envie uma foto obrigatória para criar.</p>
+        <p className="mt-2 text-[11px] text-eid-text-secondary">
+          {convidarUsuarioIdAposCriar
+            ? "Escudo obrigatório. Ao salvar, o convite vai para o atleta do perfil (Social)."
+            : "Preencha os dados da formação e envie uma foto obrigatória para criar."}
+        </p>
         <form action={createAction} className="mt-3 grid min-w-0 gap-2 sm:grid-cols-2">
+          {convidarUsuarioIdAposCriar ? <input type="hidden" name="convidar_usuario_id" value={convidarUsuarioIdAposCriar} /> : null}
           <div className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 sm:col-span-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-primary-300">Escudo do time ou dupla</p>
             <p className="mt-1 text-[10px] text-eid-text-secondary">Envie o escudo do time ou da dupla. Esse envio é obrigatório para concluir o cadastro.</p>
@@ -183,7 +204,11 @@ export function TeamManagementPanel({
             disabled={createPending}
             className="rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/22 px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/65 hover:bg-eid-primary-500/30 disabled:opacity-60 sm:col-span-2"
           >
-            {createPending ? "Criando formação..." : "Criar formação e abrir gestão"}
+            {createPending
+              ? "Criando…"
+              : convidarUsuarioIdAposCriar
+                ? "Criar e enviar convite"
+                : "Criar formação e abrir gestão"}
           </button>
           {createState.message ? (
             <p className={`text-xs sm:col-span-2 ${createState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{createState.message}</p>

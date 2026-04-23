@@ -91,6 +91,8 @@ export default async function TimesPage({ searchParams }: Props) {
           })}
           defaultOpenCreate={openCreate}
           manageHrefTemplate={manageHrefTemplate}
+          convidarUsuarioIdAposCriar={convidarOk ? convidar : undefined}
+          defaultTipoFormacao={convidarOk ? "dupla" : undefined}
         />
         <form className="mb-4 flex gap-2">
           <input

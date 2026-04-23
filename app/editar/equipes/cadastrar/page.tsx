@@ -4,7 +4,7 @@ import { TeamManagementPanel } from "@/components/times/team-management-panel";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
-  searchParams?: Promise<{ from?: string; embed?: string }>;
+  searchParams?: Promise<{ from?: string; embed?: string; convidar?: string }>;
 };
 
 export default async function CadastrarEquipeFullscreenPage({ searchParams }: Props) {
@@ -27,12 +27,21 @@ export default async function CadastrarEquipeFullscreenPage({ searchParams }: Pr
 
   const from = typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : `/editar/equipes`;
   const isEmbed = sp.embed === "1";
+  const convidarRaw = typeof sp.convidar === "string" ? sp.convidar.trim() : "";
+  const convidarUid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(convidarRaw) ? convidarRaw : undefined;
+
+  const manageQs = new URLSearchParams();
+  manageQs.set("from", from);
+  if (isEmbed) manageQs.set("embed", "1");
+  if (convidarUid) manageQs.set("convidar", convidarUid);
+  const manageHrefTemplate = `/editar/time/:id?${manageQs.toString()}`;
 
   return (
     <ProfileEditFullscreenShell
       backHref={from}
-      title="Cadastrar equipe ou dupla"
-      subtitle="Crie uma nova formação no padrão do perfil."
+      title={convidarUid ? "Nova dupla ou time" : "Cadastrar equipe ou dupla"}
+      subtitle={convidarUid ? "Preencha abaixo — ao criar, o convite é enviado ao atleta." : "Crie uma nova formação no padrão do perfil."}
       showBack={!isEmbed}
     >
       <TeamManagementPanel
@@ -42,7 +51,9 @@ export default async function CadastrarEquipeFullscreenPage({ searchParams }: Pr
           return { id: t.id, nome: t.nome ?? "Equipe", tipo: t.tipo ?? "time", esporteNome: esp?.nome ?? "Esporte" };
         })}
         defaultOpenCreate
-        manageHrefTemplate={`/editar/time/:id?from=${encodeURIComponent(from)}${isEmbed ? "&embed=1" : ""}`}
+        manageHrefTemplate={manageHrefTemplate}
+        convidarUsuarioIdAposCriar={convidarUid}
+        defaultTipoFormacao={convidarUid ? "dupla" : undefined}
       />
     </ProfileEditFullscreenShell>
   );
