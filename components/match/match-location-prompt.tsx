@@ -46,20 +46,21 @@ export function MatchLocationPrompt({ hasLocation, className }: Props) {
 
   if (hasLocation) {
     return (
-      <div
-        className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-2.5 py-1.5 shadow-[0_6px_16px_-12px_rgba(15,23,42,0.2)] backdrop-blur-sm ${className ?? ""}`}
-      >
-        <p className="text-[11px] text-eid-text-secondary">
-          Localização atual ativa para o radar (atualizada ao tocar abaixo).
-        </p>
+      <div className={`flex shrink-0 flex-col items-end gap-1 ${className ?? ""}`}>
         <button
           type="button"
           onClick={requestLocation}
           disabled={pending}
-          className="rounded-lg border border-eid-primary-500/40 px-3 py-1.5 text-xs font-semibold text-eid-fg transition hover:bg-eid-primary-500/10 disabled:opacity-50"
+          title="Grava sua posição atual no perfil e atualiza o radar"
+          className="touch-manipulation rounded-lg border border-eid-primary-500/45 bg-[color-mix(in_srgb,var(--eid-surface)_40%,transparent)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-fg shadow-[0_4px_12px_-8px_rgba(15,23,42,0.35)] transition hover:bg-eid-primary-500/10 disabled:opacity-50 sm:px-3 sm:text-[10px]"
         >
-          {pending ? "Atualizando…" : "Atualizar posição"}
+          {pending ? "Atualizando…" : "Atualizar localização"}
         </button>
+        {error ? (
+          <p role="alert" className="max-w-[min(18rem,85vw)] text-right text-[9px] leading-snug text-red-200">
+            {error}
+          </p>
+        ) : null}
       </div>
     );
   }
