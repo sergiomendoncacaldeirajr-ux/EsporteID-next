@@ -94,6 +94,17 @@ body.eid-app-shell {
   padding-bottom: var(--eid-shell-footer-offset);
 }
 
+/* Fallback client-side: garante full limpo no /match?view=full e restaura no grid. */
+body.eid-app-shell.eid-force-hide-shell {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+body.eid-force-hide-shell #eid-persistent-topbar,
+body.eid-force-hide-shell #eid-mobile-bottom-nav,
+body.eid-force-hide-shell #eid-site-footer {
+  display: none !important;
+}
+
 /* Tema claro — mesma marca, maior contraste em fundos claros */
 [data-eid-theme="light"] {
   --eid-bg: #f3f6fb;

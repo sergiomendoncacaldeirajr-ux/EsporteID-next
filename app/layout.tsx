@@ -11,6 +11,7 @@ import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { SiteFooter } from "@/components/site-footer";
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
+import { ShellVisibilitySync } from "@/components/system/shell-visibility-sync";
 import {
   ACTIVE_CONTEXT_COOKIE,
   resolveActiveAppContext,
@@ -105,6 +106,7 @@ export default async function RootLayout({
       >
         <EidThemeHydration />
         <GlobalScrollReset />
+        <ShellVisibilitySync />
         <InteractionFeedback />
         {!user ? <VisitorThemeToggleFloat /> : null}
         {onboardingMinimalChrome ? <OnboardingTopbar /> : null}
@@ -130,8 +132,16 @@ export default async function RootLayout({
         >
           {children}
         </div>
-        {showAppChrome && user ? <MobileBottomNav userId={user.id} activeContext={activeContext} /> : null}
-        {hideAppShell ? null : <SiteFooter user={user} isPlatformAdmin={isPlatformAdmin} />}
+        {showAppChrome && user ? (
+          <div id="eid-mobile-bottom-nav">
+            <MobileBottomNav userId={user.id} activeContext={activeContext} />
+          </div>
+        ) : null}
+        {hideAppShell ? null : (
+          <div id="eid-site-footer">
+            <SiteFooter user={user} isPlatformAdmin={isPlatformAdmin} />
+          </div>
+        )}
         <LegalGate show={showLegalGate} />
       </body>
     </html>

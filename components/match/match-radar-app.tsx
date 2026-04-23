@@ -67,6 +67,15 @@ const RAII = [10, 30, 50, 100] as const;
 
 const MATCH_RADAR_FILTROS_PANEL_ID = "match-radar-filtros-esporte-raio-ord";
 const MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY = "eid_match_amistoso_entry_info_seen_v1";
+const MATCH_AMISTOSO_ENTRY_DECLINED_DAY_KEY = "eid_match_amistoso_entry_declined_day_v1";
+
+function todayYmd() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 function sortByLabelShort(sortBy: SortBy) {
   return sortBy === "eid_score" ? "Nota EID" : "Pontos rank";
@@ -187,6 +196,7 @@ export function MatchRadarApp({
 
   useEffect(() => {
     let skipPromptThisLoad = false;
+    let declinedToday = false;
     try {
       const params = new URLSearchParams(window.location.search);
       skipPromptThisLoad = params.get("entry_done") === "1";
@@ -199,10 +209,16 @@ export function MatchRadarApp({
     } catch {
       setShowEntryInfo(false);
     }
-    setShowEntryPrompt(!skipPromptThisLoad);
+    try {
+      declinedToday = window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_DECLINED_DAY_KEY) === todayYmd();
+    } catch {
+      declinedToday = false;
+    }
+    const shouldAskEntry = !skipPromptThisLoad && !viewerDisponivelAmistoso && !declinedToday;
+    setShowEntryPrompt(shouldAskEntry);
     setEntryError(null);
     setViewMode("full");
-  }, []);
+  }, [viewerDisponivelAmistoso]);
 
   useEffect(() => {
     setActiveCardIdx(0);
@@ -240,6 +256,11 @@ export function MatchRadarApp({
     setShowEntryInfo(false);
     switchViewMode("full");
     if (!wantsAmistoso) {
+      try {
+        window.localStorage.setItem(MATCH_AMISTOSO_ENTRY_DECLINED_DAY_KEY, todayYmd());
+      } catch {
+        /* ignore */
+      }
       const q = new URLSearchParams();
       q.set("tipo", tipo);
       q.set("esporte", /^\d+$/.test(esporte) ? esporte : "all");

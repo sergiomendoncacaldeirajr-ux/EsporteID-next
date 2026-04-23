@@ -4,8 +4,10 @@ import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/
 
 function buildRequestHeadersForPath(request: NextRequest): Headers {
   const h = new Headers(request.headers);
+  h.delete(EID_HIDE_APP_SHELL_HEADER);
+  h.delete(EID_SHOW_ONBOARDING_CHROME_HEADER);
   const pathname = request.nextUrl.pathname;
-  const isMatchFullView = pathname === "/match" && request.nextUrl.searchParams.get("view") === "full";
+  const isMatchFullView = pathname === "/match" && request.nextUrl.searchParams.get("view") !== "grid";
   const isPerfilHistoricoRoute = /^\/perfil\/[^/]+\/historico(?:\/.*)?$/.test(pathname);
   const isPerfilEidRoute = /^\/perfil\/[^/]+\/eid\/[^/]+(?:\/.*)?$/.test(pathname);
   if (

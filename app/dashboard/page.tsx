@@ -289,13 +289,13 @@ export default async function DashboardPage({ searchParams }: Props) {
             <MatchIdadeGateBanner gate={matchIdadeGate} />
           </div>
 
-          <Link
+          <a
             href={matchHref}
             className="eid-btn-dashboard-cta relative mt-5 flex w-full items-center justify-center gap-2.5 sm:mt-6"
           >
             <IconBolt className="h-5 w-5 shrink-0 text-white drop-shadow-sm" />
             Encontrar desafio
-          </Link>
+          </a>
         </div>
 
         <div className="mt-5 grid grid-cols-4 gap-2 sm:mt-6 sm:gap-3">
@@ -388,9 +388,9 @@ export default async function DashboardPage({ searchParams }: Props) {
             <h2 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-eid-primary-400 sm:text-xs">
               Atletas próximos
             </h2>
-            <Link href={matchHref} className={sectionActionClass}>
+            <a href={matchHref} className={sectionActionClass}>
               Ver todos
-            </Link>
+            </a>
           </div>
           {atletasFiltrados.length > 0 ? (
             <div className={scrollRow}>
