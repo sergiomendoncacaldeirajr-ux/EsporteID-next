@@ -173,11 +173,58 @@ html {
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  /* PWA / mobile: reduz bounce e pull-to-refresh “de site” no topo */
+  overscroll-behavior-y: none;
+}
+
+@media (display-mode: standalone) {
+  html {
+    overscroll-behavior-y: none;
+  }
+}
+
+body {
+  overscroll-behavior-y: none;
 }
 
 /* Fonte padrão: Barlow — atlética, compacta, premium */
 body {
   font-family: var(--font-barlow), system-ui, sans-serif;
+}
+
+/*
+ * Sensação de app: evita seleção acidental ao tocar em chrome de navegação / CTAs.
+ * Campos de formulário e conteúdo continuam selecionáveis.
+ */
+header#eid-persistent-topbar {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+header#eid-persistent-topbar input,
+header#eid-persistent-topbar textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+#eid-mobile-bottom-nav {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+a[class*="eid-btn-"],
+a[class*="eid-chip"] {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Classe utilitária para stats, labels e badges compactos */

@@ -15,5 +15,16 @@ export const EID_LOGO_ICON_E_SRC = "/brand/logo-icon-e.png";
 export const EID_LOGO_ICON_E_WIDTH = 1024;
 export const EID_LOGO_ICON_E_HEIGHT = 1024;
 
-/** Fundo sólido para PWA / ícone instalado — alinhado a `--eid-brand-ink` em `globals.css`. */
+/**
+ * Cor “ink” da marca — única fonte para:
+ * - splash / `background_color` do manifest PWA
+ * - `theme_color` do manifest (Chrome/Android, tela de instalação)
+ * - `theme-color` do viewport (aba + PWA)
+ * - harmonia visual com iOS em `black-translucent` (área atrás da status bar)
+ *
+ * Alinhado a `--eid-brand-ink` em `globals.css`.
+ */
 export const EID_PWA_BACKGROUND = "#0b1d2e";
+
+/** Alias explícito: mesma cor do manifest `theme_color` e da meta `theme-color` do layout. */
+export const EID_APP_CHROME_THEME_COLOR = EID_PWA_BACKGROUND;

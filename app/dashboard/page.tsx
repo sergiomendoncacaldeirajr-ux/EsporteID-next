@@ -562,7 +562,6 @@ export default async function DashboardPage({ searchParams }: Props) {
           </p>
         ) : null}
 
-        {canSeeTorneios ? (
         <section className={`mt-7 sm:mt-9 ${dashboardBlockClass}`}>
           <div className="mb-3.5 flex items-center justify-between gap-3">
             <h2 className={sectionTitleClass}>Atletas próximos</h2>
@@ -694,9 +693,8 @@ export default async function DashboardPage({ searchParams }: Props) {
             </p>
           )}
         </section>
-        ) : null}
 
-        {canSeeLocais ? (
+        {canSeeTorneios ? (
         <section className={`mt-7 sm:mt-9 ${dashboardBlockClass}`}>
           <div className="mb-3.5 flex items-center justify-between gap-3">
             <h2 className={sectionTitleClass}>Torneios em aberto</h2>
