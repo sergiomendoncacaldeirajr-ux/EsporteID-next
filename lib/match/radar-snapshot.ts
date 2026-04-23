@@ -53,6 +53,19 @@ type FormacaoRow = {
 
 export type MatchRadarFinalidade = "ranking" | "amistoso";
 
+/** Página de estatísticas EID no esporte (perfil atleta, dupla ou time), com retorno ao Match. */
+export function matchCardEidStatsHref(card: MatchRadarCard): string | null {
+  if (!card.esporteId || card.esporteId <= 0) return null;
+  const from = encodeURIComponent("/match");
+  if (card.modalidade === "individual") {
+    return `/perfil/${encodeURIComponent(card.id)}/eid/${card.esporteId}?from=${from}`;
+  }
+  if (card.modalidade === "dupla") {
+    return `/perfil-dupla/${encodeURIComponent(card.id)}/eid/${card.esporteId}?from=${from}`;
+  }
+  return `/perfil-time/${encodeURIComponent(card.id)}/eid/${card.esporteId}?from=${from}`;
+}
+
 export type RadarSnapshotInput = {
   viewerId: string;
   tipo: RadarTipo;
