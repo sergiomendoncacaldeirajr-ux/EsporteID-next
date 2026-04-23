@@ -9,6 +9,7 @@ import type { MatchRadarCard, MatchRadarFinalidade, RadarTipo, SortBy } from "@/
 import { MatchFriendlyToggle } from "@/components/match/match-friendly-toggle";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import { MatchRadarCardView } from "@/components/match/match-radar-card";
+import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 
 function cn(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(" ");
@@ -48,6 +49,7 @@ type Props = {
   initialRaio: number;
   initialFinalidade: MatchRadarFinalidade;
   initialView: "full" | "grid";
+  initialGeneroFiltro: "all" | "masculino" | "feminino" | "outro";
   viewerDisponivelAmistoso: boolean;
   /** ISO da janela de 4h quando o modo amistoso está ligado */
   viewerAmistosoExpiresAt: string | null;
@@ -73,6 +75,7 @@ export function MatchRadarApp({
   initialRaio,
   initialFinalidade,
   initialView,
+  initialGeneroFiltro,
   viewerDisponivelAmistoso,
   viewerAmistosoExpiresAt,
   showSentBanner,
@@ -84,6 +87,7 @@ export function MatchRadarApp({
   const [finalidade, setFinalidade] = useState<MatchRadarFinalidade>(initialFinalidade);
   const [cards, setCards] = useState<MatchRadarCard[]>(initialCards);
   const [viewMode, setViewMode] = useState<"full" | "grid">(initialView);
+  const [generoFiltro, setGeneroFiltro] = useState<"all" | "masculino" | "feminino" | "outro">(initialGeneroFiltro);
   const [activeCardIdx, setActiveCardIdx] = useState(0);
   const [isPending, startTransition] = useTransition();
   const [entryPending, setEntryPending] = useState(false);
@@ -102,9 +106,10 @@ export function MatchRadarApp({
       q.set("sort_by", next.sortBy);
       q.set("finalidade", next.finalidade);
       q.set("view", viewMode);
+      q.set("genero", generoFiltro);
       window.history.replaceState(null, "", `/match?${q.toString()}`);
     },
-    [viewMode]
+    [viewMode, generoFiltro]
   );
 
   const runRefresh = useCallback(
@@ -168,7 +173,8 @@ export function MatchRadarApp({
     setCards(initialCards);
     setAmistosoLigado(viewerDisponivelAmistoso);
     setViewMode(initialView);
-  }, [initialTipo, initialSortBy, initialRaio, esporteSelecionado, initialFinalidade, initialCards, viewerDisponivelAmistoso, initialView]);
+    setGeneroFiltro(initialGeneroFiltro);
+  }, [initialTipo, initialSortBy, initialRaio, esporteSelecionado, initialFinalidade, initialCards, viewerDisponivelAmistoso, initialView, initialGeneroFiltro]);
 
   useEffect(() => {
     try {
@@ -204,6 +210,7 @@ export function MatchRadarApp({
     q.set("sort_by", sortBy);
     q.set("finalidade", finalidade);
     q.set("view", next);
+    q.set("genero", generoFiltro);
     window.history.replaceState(null, "", `/match?${q.toString()}`);
   }
 
@@ -235,8 +242,20 @@ export function MatchRadarApp({
     q.set("sort_by", sortBy);
     q.set("finalidade", "amistoso");
     q.set("view", "full");
+    q.set("genero", generoFiltro);
     window.location.href = `/match?${q.toString()}`;
   }
+
+  const cardsFiltradosGenero = useMemo(() => {
+    if (generoFiltro === "all") return cards;
+    return cards.filter((c) => {
+      if (c.modalidade !== "individual") return true;
+      const g = String(c.genero ?? "").trim().toLowerCase();
+      if (generoFiltro === "masculino") return g === "masculino";
+      if (generoFiltro === "feminino") return g === "feminino";
+      return g !== "" && g !== "masculino" && g !== "feminino";
+    });
+  }, [cards, generoFiltro]);
 
   return (
     <div className="w-full min-w-0">
@@ -309,6 +328,7 @@ export function MatchRadarApp({
         </p>
       ) : null}
 
+      {viewMode === "grid" ? (
       <div className={cn(FILTER_CARD_CLASS, "mb-2 space-y-1.5 [&_button]:[-webkit-tap-highlight-color:transparent]")}>
         <div>
           <p className={FILTER_LABEL}>Tipo de match</p>
@@ -482,7 +502,40 @@ export function MatchRadarApp({
             </div>
           ) : null}
         </div>
+        <div>
+          <p className={FILTER_LABEL}>Gênero</p>
+          <div className="mt-0.5 flex flex-wrap gap-0.5 rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-0.5 sm:gap-1 sm:rounded-lg sm:p-1">
+            {([
+              ["all", "Todos"],
+              ["masculino", "Masculino"],
+              ["feminino", "Feminino"],
+              ["outro", "Outros"],
+            ] as const).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                disabled={isPending}
+                onClick={() => {
+                  setGeneroFiltro(key);
+                  const q = new URLSearchParams();
+                  q.set("tipo", tipo);
+                  q.set("esporte", /^\d+$/.test(esporte) ? esporte : "all");
+                  q.set("raio", String(raio));
+                  q.set("sort_by", sortBy);
+                  q.set("finalidade", finalidade);
+                  q.set("view", viewMode);
+                  q.set("genero", key);
+                  window.history.replaceState(null, "", `/match?${q.toString()}`);
+                }}
+                className={filterChip(generoFiltro === key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
+      ) : null}
 
       {isPending ? (
         <p className="mt-2 text-center text-[10px] font-medium text-eid-primary-400/90" aria-live="polite">
@@ -524,42 +577,42 @@ export function MatchRadarApp({
             </div>
           </div>
         ) : null}
-        {cards.length === 0 ? (
+        {cardsFiltradosGenero.length === 0 ? (
           <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-4 text-center text-xs text-eid-text-secondary shadow-[0_6px_16px_-12px_rgba(15,23,42,0.22)] backdrop-blur-sm">
             Nenhum oponente com esses filtros.
           </p>
         ) : viewMode === "full" ? (
           <div className="space-y-2">
-            {activeCard ? (
-              <MatchRadarCardView
-                key={`${activeCard.modalidade}-${activeCard.id}-${activeCard.esporteId}-full`}
-                card={activeCard}
-                esporteContextId={esporte}
-                matchFinalidade={finalidade}
-              />
-            ) : null}
-            <div className="flex items-center justify-between gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveCardIdx((prev) => Math.max(prev - 1, 0))}
-                disabled={activeCardIdx <= 0}
-                className="inline-flex min-h-[34px] items-center gap-1 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2.5 text-[10px] font-bold uppercase tracking-[0.06em] text-eid-fg transition disabled:opacity-45"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
-                Anterior
-              </button>
-              <span className="text-[10px] font-semibold text-eid-text-secondary">
-                {activeCardIdx + 1} / {cards.length}
-              </span>
-              <button
-                type="button"
-                onClick={() => setActiveCardIdx((prev) => Math.min(prev + 1, Math.max(cards.length - 1, 0)))}
-                disabled={activeCardIdx >= cards.length - 1}
-                className="inline-flex min-h-[34px] items-center gap-1 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2.5 text-[10px] font-bold uppercase tracking-[0.06em] text-eid-fg transition disabled:opacity-45"
-              >
-                Próximo
-                <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
-              </button>
+            <div className="grid min-w-0 grid-cols-2 gap-1.5 max-[340px]:grid-cols-1 sm:gap-2.5">
+              {cardsFiltradosGenero.map((c) => {
+                const esporteParam = c.esporteId > 0 ? String(c.esporteId) : esporte;
+                const desafioHref = `/desafio?id=${encodeURIComponent(c.id)}&tipo=${encodeURIComponent(c.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(finalidade)}`;
+                const esporteIcon = sportIconEmoji(c.esporteNome);
+                const nomeCurto = c.nome.trim().split(/\s+/u)[0] || c.nome;
+                return (
+                  <article
+                    key={`${c.modalidade}-${c.id}-${c.esporteId}-mini`}
+                    className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Link href={c.href} className="block h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65">
+                        {c.avatarUrl ? <img src={c.avatarUrl} alt="" className="h-full w-full object-cover" /> : null}
+                      </Link>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-black text-eid-fg" title={c.nome}>{nomeCurto}</p>
+                        <p className="truncate text-[9px] text-eid-primary-300">{esporteIcon} {c.esporteNome}</p>
+                        <p className="text-[9px] font-semibold text-eid-action-400">{c.rank} pts</p>
+                      </div>
+                    </div>
+                    <Link
+                      href={desafioHref}
+                      className="eid-btn-match-cta mt-1.5 inline-flex min-h-[30px] w-full items-center justify-center rounded-lg px-2 text-[9px] font-black uppercase tracking-[0.08em]"
+                    >
+                      Match
+                    </Link>
+                  </article>
+                );
+              })}
             </div>
             <button
               type="button"
@@ -572,7 +625,7 @@ export function MatchRadarApp({
           </div>
         ) : (
           <div className="grid min-w-0 grid-cols-2 gap-1.5 max-[340px]:grid-cols-1 sm:gap-3">
-            {cards.map((c) => (
+            {cardsFiltradosGenero.map((c) => (
               <MatchRadarCardView
                 key={`${c.modalidade}-${c.id}-${c.esporteId}`}
                 card={c}

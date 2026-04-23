@@ -24,9 +24,11 @@ type Search = {
   status?: string;
   finalidade?: string;
   view?: string;
+  genero?: string;
 };
 
 type RadarViewMode = "full" | "grid";
+type RadarGeneroFiltro = "all" | "masculino" | "feminino" | "outro";
 
 function toTipo(v: string | undefined): RadarTipo {
   return v === "dupla" || v === "time" ? v : "atleta";
@@ -50,6 +52,16 @@ function toMatchFinalidade(v: string | undefined): MatchRadarFinalidade {
 
 function toViewMode(v: string | undefined): RadarViewMode {
   return String(v ?? "").trim().toLowerCase() === "grid" ? "grid" : "full";
+}
+
+function toGeneroFiltro(v: string | undefined, perfilGenero: string | null | undefined): RadarGeneroFiltro {
+  const raw = String(v ?? "").trim().toLowerCase();
+  if (raw === "masculino" || raw === "feminino" || raw === "outro" || raw === "all") return raw;
+  const g = String(perfilGenero ?? "").trim().toLowerCase();
+  if (g === "masculino") return "masculino";
+  if (g === "feminino") return "feminino";
+  if (g) return "outro";
+  return "all";
 }
 
 export default async function MatchPage({ searchParams }: { searchParams?: Promise<Search> }) {
@@ -76,7 +88,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   const { data: me } = await supabase
     .from("profiles")
     .select(
-      "id, lat, lng, termos_aceitos_em, perfil_completo, disponivel_amistoso, disponivel_amistoso_ate, match_maioridade_confirmada"
+      "id, lat, lng, genero, termos_aceitos_em, perfil_completo, disponivel_amistoso, disponivel_amistoso_ate, match_maioridade_confirmada"
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -145,6 +157,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
     .limit(1);
   const esporteDefault = String(meusEids?.[0]?.esporte_id ?? "all");
   const esporteSelecionado = esporteParam === "all" ? esporteDefault : esporteParam;
+  const initialGeneroFiltro = toGeneroFiltro(sp.genero, (me as { genero?: string | null })?.genero ?? null);
 
   const initialCards = await fetchMatchRadarCards(supabase, {
     viewerId: user.id,
@@ -169,6 +182,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         initialRaio={raio}
         initialFinalidade={matchFinalidade}
         initialView={initialView}
+        initialGeneroFiltro={initialGeneroFiltro}
         viewerDisponivelAmistoso={viewerAmistosoOn}
         viewerAmistosoExpiresAt={viewerAmistosoExpiresAt}
         showSentBanner={sp.status === "enviado"}

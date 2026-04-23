@@ -20,6 +20,8 @@ export type MatchRadarCard = {
   avatarUrl: string | null;
   /** Disponível para amistoso (verde) — perfil ou time */
   disponivelAmistoso: boolean;
+  /** Gênero do perfil (quando modalidade individual). */
+  genero?: "Masculino" | "Feminino" | "Outro" | null;
 };
 
 type AtletaRow = {
@@ -97,28 +99,48 @@ export async function fetchMatchRadarCards(
       p_limit: 500,
     });
 
-    cards = ((data ?? []) as AtletaRow[]).map((row) => ({
-      id: String(row.usuario_id),
-      nome: String(row.nome ?? "Atleta"),
-      localizacao: String(row.localizacao ?? "Localização não informada"),
-      esporteNome: String(row.esporte_nome ?? "Esporte"),
-      esporteId: Number(row.esporte_id ?? 0),
-      dist: Number(row.dist_km ?? 99999),
-      eid: Number(row.nota_eid ?? 0),
-      rank: Number(row.pontos_ranking ?? 0),
-      modalidade:
-        row.modalidade_match === "dupla" || row.modalidade_match === "time" ? row.modalidade_match : "individual",
-      interesseMatch:
-        row.interesse_match === "ranking"
-          ? "ranking"
-          : row.interesse_match === "amistoso"
-            ? "amistoso"
-            : "ranking_e_amistoso",
-      href: `/perfil/${encodeURIComponent(String(row.usuario_id ?? ""))}?from=/match`,
-      canChallenge: true,
-      avatarUrl: row.avatar_url ? String(row.avatar_url) : null,
-      disponivelAmistoso: row.disponivel_amistoso === true,
-    }));
+    const baseCards: MatchRadarCard[] = ((data ?? []) as AtletaRow[]).map((row) => {
+      const modalidade: MatchRadarCard["modalidade"] =
+        row.modalidade_match === "dupla" || row.modalidade_match === "time" ? row.modalidade_match : "individual";
+      return {
+        id: String(row.usuario_id),
+        nome: String(row.nome ?? "Atleta"),
+        localizacao: String(row.localizacao ?? "Localização não informada"),
+        esporteNome: String(row.esporte_nome ?? "Esporte"),
+        esporteId: Number(row.esporte_id ?? 0),
+        dist: Number(row.dist_km ?? 99999),
+        eid: Number(row.nota_eid ?? 0),
+        rank: Number(row.pontos_ranking ?? 0),
+        modalidade,
+        interesseMatch:
+          row.interesse_match === "ranking"
+            ? "ranking"
+            : row.interesse_match === "amistoso"
+              ? "amistoso"
+              : "ranking_e_amistoso",
+        href: `/perfil/${encodeURIComponent(String(row.usuario_id ?? ""))}?from=/match`,
+        canChallenge: true,
+        avatarUrl: row.avatar_url ? String(row.avatar_url) : null,
+        disponivelAmistoso: row.disponivel_amistoso === true,
+        genero: null,
+      };
+    });
+
+    const ids = [...new Set(baseCards.map((c) => c.id))];
+    if (ids.length > 0) {
+      const { data: profRows } = await supabase.from("profiles").select("id, genero").in("id", ids);
+      const generoByUser = new Map<string, "Masculino" | "Feminino" | "Outro" | null>();
+      for (const row of profRows ?? []) {
+        const g = String((row as { genero?: string | null }).genero ?? "").trim().toLowerCase();
+        if (g === "masculino") generoByUser.set(String((row as { id: string }).id), "Masculino");
+        else if (g === "feminino") generoByUser.set(String((row as { id: string }).id), "Feminino");
+        else if (g) generoByUser.set(String((row as { id: string }).id), "Outro");
+        else generoByUser.set(String((row as { id: string }).id), null);
+      }
+      cards = baseCards.map((c) => ({ ...c, genero: generoByUser.get(c.id) ?? null }));
+    } else {
+      cards = baseCards;
+    }
   } else {
     const { data: formacoes } = await supabase.rpc("buscar_match_formacoes", {
       p_viewer_id: viewerId,
@@ -150,6 +172,7 @@ export async function fetchMatchRadarCards(
           : `Selecione um esporte e seja proprietário de uma ${tipo} para desafiar.`,
       avatarUrl: null,
       disponivelAmistoso: t.disponivel_amistoso === true,
+      genero: null,
     }));
   }
 
