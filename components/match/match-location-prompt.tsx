@@ -1,5 +1,6 @@
 "use client";
 
+import { MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { atualizarLocalizacaoMatch } from "@/app/match/actions";
@@ -52,9 +53,11 @@ export function MatchLocationPrompt({ hasLocation, className }: Props) {
           onClick={requestLocation}
           disabled={pending}
           title="Grava sua posição atual no perfil e atualiza o radar"
-          className="touch-manipulation rounded-lg border border-eid-primary-500/45 bg-[color-mix(in_srgb,var(--eid-surface)_40%,transparent)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-fg shadow-[0_4px_12px_-8px_rgba(15,23,42,0.35)] transition hover:bg-eid-primary-500/10 disabled:opacity-50 sm:px-3 sm:text-[10px]"
+          aria-label={pending ? "Atualizando localização" : "Atualizar localização"}
+          className="inline-flex touch-manipulation items-center gap-0.5 rounded-md border border-eid-primary-500/40 bg-[color-mix(in_srgb,var(--eid-surface)_40%,transparent)] px-1 py-0.5 text-[7px] font-bold uppercase leading-none tracking-[0.04em] text-eid-fg shadow-[0_2px_6px_-4px_rgba(15,23,42,0.3)] transition hover:bg-eid-primary-500/10 disabled:opacity-50 sm:gap-1 sm:px-1.5 sm:text-[8px]"
         >
-          {pending ? "Atualizando…" : "Atualizar localização"}
+          <MapPin className="h-2.5 w-2.5 shrink-0 text-eid-primary-400 sm:h-3 sm:w-3" strokeWidth={2.25} aria-hidden />
+          <span className="whitespace-nowrap">{pending ? "Atualizando…" : "Atualizar localização"}</span>
         </button>
         {error ? (
           <p role="alert" className="max-w-[min(18rem,85vw)] text-right text-[9px] leading-snug text-red-200">
