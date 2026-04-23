@@ -156,7 +156,6 @@ export function DashboardTopbar({
         paddingTop: "max(0px, env(safe-area-inset-top, 0px))",
         paddingLeft: "max(0px, env(safe-area-inset-left, 0px))",
         paddingRight: "max(0px, env(safe-area-inset-right, 0px))",
-        ...(persistent ? { viewTransitionName: "eid-app-topbar" } : {}),
       }}
     >
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">

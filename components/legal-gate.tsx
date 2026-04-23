@@ -1,26 +1,29 @@
+import { cache } from "react";
 import Link from "next/link";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 
-/** Faixa fixa se o usuário está logado e ainda não aceitou termos/privacidade (LGPD). */
-export async function LegalGate() {
-  let user: { id: string } | null = null;
+/**
+ * Resolve no layout (com React.cache): evita `LegalGate` assíncrono atrasar o streaming
+ * do shell (rodapé / chrome) na navegação client.
+ */
+export const getCachedShowLegalGate = cache(async (): Promise<boolean> => {
   try {
-    const { supabase, user: u } = await getServerAuth();
-    user = u;
-    if (!user) return null;
-
+    const { supabase, user } = await getServerAuth();
+    if (!user) return false;
     const { data: profile } = await supabase
       .from("profiles")
       .select("termos_aceitos_em")
       .eq("id", user.id)
       .maybeSingle();
-
-    if (profile?.termos_aceitos_em) return null;
+    return !profile?.termos_aceitos_em;
   } catch {
-    return null;
+    return false;
   }
+});
 
-  if (!user) return null;
+/** Faixa fixa se o usuário está logado e ainda não aceitou termos/privacidade (LGPD). */
+export function LegalGate({ show }: { show: boolean }) {
+  if (!show) return null;
 
   return (
     <div

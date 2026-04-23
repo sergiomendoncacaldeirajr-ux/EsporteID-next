@@ -1,13 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import type { User } from "@supabase/supabase-js";
 import { cookies, headers } from "next/headers";
-import { ViewTransition } from "react";
 import { Barlow, Barlow_Condensed, Barlow_Semi_Condensed } from "next/font/google";
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { OnboardingTopbar } from "@/components/onboarding/onboarding-topbar";
 import { InteractionFeedback } from "@/components/ui/interaction-feedback";
-import { LegalGate } from "@/components/legal-gate";
+import { getCachedShowLegalGate, LegalGate } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { SiteFooter } from "@/components/site-footer";
@@ -92,6 +91,7 @@ export default async function RootLayout({
   const onboardingMinimalChrome = Boolean(user) && hideAppShell && showOnboardingChrome;
   activeContext = resolveActiveAppContext(cookieStore.get(ACTIVE_CONTEXT_COOKIE)?.value ?? null, papeis);
   const isPlatformAdmin = user ? await getCachedIsPlatformAdmin() : false;
+  const showLegalGate = await getCachedShowLegalGate();
 
   return (
     <html
@@ -124,13 +124,11 @@ export default async function RootLayout({
                   : "flex flex-1 flex-col pb-8 md:pb-28"
           }
         >
-          <ViewTransition default="none" enter="eid-vt-main-in" exit="eid-vt-main-out">
-            {children}
-          </ViewTransition>
+          {children}
         </div>
         {showAppChrome && user ? <MobileBottomNav userId={user.id} activeContext={activeContext} /> : null}
         {hideAppShell ? null : <SiteFooter user={user} isPlatformAdmin={isPlatformAdmin} />}
-        <LegalGate />
+        <LegalGate show={showLegalGate} />
       </body>
     </html>
   );
