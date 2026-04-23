@@ -92,7 +92,7 @@ export function InstallAppOffer() {
     window.addEventListener("appinstalled", onAppInstalled);
 
     /* iOS não dispara beforeinstallprompt: oferecemos instruções após um breve delay */
-    let t: ReturnType<typeof setTimeout> | undefined;
+    let t: ReturnType<typeof window.setTimeout> | undefined;
     if (isIOSLike() && !dismissed) {
       t = window.setTimeout(() => setIosOpen(true), 900);
     }
@@ -100,7 +100,7 @@ export function InstallAppOffer() {
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
       window.removeEventListener("appinstalled", onAppInstalled);
-      if (t) window.clearTimeout(t);
+      if (t !== undefined) window.clearTimeout(t);
     };
   }, []);
 
