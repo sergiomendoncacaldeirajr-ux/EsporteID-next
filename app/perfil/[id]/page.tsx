@@ -172,6 +172,10 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const alvoSemFormacao =
     (alvoMembrosCount ?? 0) === 0 && (alvoLiderTimesCount ?? 0) === 0 && (alvoDuplasCount ?? 0) === 0;
 
+  const semCardsEquipesPerfil = (timesLider ?? []).length === 0 && (duplasCadastro ?? []).length === 0;
+  /** Visitante vendo atleta sem formação: o bloco "Dupla ou time" cobre o vazio — não repetir seção Equipes. */
+  const ocultarSecaoEquipesParaVisitante = !isSelf && alvoSemFormacao && semCardsEquipesPerfil;
+
   let minhasFormacoesLider: Array<{
     id: number;
     nome: string;
@@ -687,89 +691,91 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             </ProfileSection>
           </div>
 
-          {/* ── Equipes ──────────────────────────────────────────────── */}
-          <div className="mt-2">
-            {isSelf ? (
-              <div className="-mb-5 mt-0 flex justify-end">
-                <ProfileEditDrawerTrigger
-                  href={`/editar/equipes?from=${encodeURIComponent(`/perfil/${id}`)}`}
-                  title="Editar equipes"
-                  topMode="backOnly"
-                  className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
-                >
-                  <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
-                    <path d="M11.875 1.625a1.768 1.768 0 0 1 2.5 2.5l-7.54 7.54a1 1 0 0 1-.46.262l-3.018.805a.5.5 0 0 1-.612-.612l.805-3.018a1 1 0 0 1 .262-.46l7.54-7.54Zm1.793 1.207a.768.768 0 0 0-1.086 0l-.812.812 1.086 1.086.812-.812a.768.768 0 0 0 0-1.086ZM11.149 5.29 4.314 12.126l-1.02.272.272-1.02L10.4 4.544l.75.75Z" />
-                  </svg>
-                  GERENCIAR / EDITAR
-                </ProfileEditDrawerTrigger>
-              </div>
-            ) : null}
-            <ProfileSection title="Equipes">
-              {(timesLider ?? []).length > 0 || (duplasCadastro ?? []).length > 0 ? (
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {(timesLider ?? []).map((t) => {
-                    const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
-                    const initials = (t.nome?.trim().slice(0, 2) || "EQ").toUpperCase();
-                    return (
-                      <Link
-                        key={`t-${t.id}`}
-                        href={`/perfil-time/${t.id}?from=/perfil/${id}`}
-                        className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2 transition-all duration-200 ease-out hover:-translate-y-[1px] hover:border-eid-primary-500/30"
-                        aria-label={`Abrir perfil da equipe ${t.nome}`}
-                      >
-                        {t.escudo ? (
-                          <img src={t.escudo} alt="" className="h-10 w-10 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
-                        ) : (
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
-                            {initials}
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <p className="truncate text-[11px] font-bold text-eid-fg">{t.nome}</p>
-                          <p className="truncate text-[9px] text-eid-text-secondary">{`${(t.tipo ?? "time").toUpperCase()} · ${esp?.nome ?? "Esporte"}`}</p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                  {(duplasCadastro ?? []).map((d) => {
-                    const esp = Array.isArray(d.esportes) ? d.esportes[0] : d.esportes;
-                    return (
-                      <Link
-                        key={`d-${d.id}`}
-                        href={`/perfil-dupla/${d.id}?from=/perfil/${id}`}
-                        className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2 transition-all duration-200 ease-out hover:-translate-y-[1px] hover:border-eid-primary-500/30"
-                        aria-label={`Abrir perfil da dupla ${d.id}`}
-                      >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
-                          D{d.id}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-[11px] font-bold text-eid-fg">{`Dupla #${d.id}`}</p>
-                          <p className="truncate text-[9px] text-eid-text-secondary">{esp?.nome ?? "Esporte"}</p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : (
-                <ProfileEditDrawerTrigger
-                  href={`/editar/equipes/cadastrar?from=${encodeURIComponent(`/perfil/${id}`)}`}
-                  title="Cadastrar equipe"
-                  fullscreen
-                  topMode="backOnly"
-                  className="eid-list-item mt-2 flex w-full min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
-                >
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-surface/65 text-eid-primary-300">
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden>
-                      <path d="M10 2a.75.75 0 0 1 .75.75v6.5h6.5a.75.75 0 0 1 0 1.5h-6.5v6.5a.75.75 0 0 1-1.5 0v-6.5h-6.5a.75.75 0 0 1 0-1.5h6.5v-6.5A.75.75 0 0 1 10 2Z" />
+          {/* ── Equipes (omitida para visitante sem formação: bloco "Dupla ou time" acima) ── */}
+          {ocultarSecaoEquipesParaVisitante ? null : (
+            <div className="mt-2">
+              {isSelf ? (
+                <div className="-mb-5 mt-0 flex justify-end">
+                  <ProfileEditDrawerTrigger
+                    href={`/editar/equipes?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                    title="Editar equipes"
+                    topMode="backOnly"
+                    className="inline-flex items-center justify-center gap-1 p-0 text-[7px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-colors hover:text-eid-fg"
+                  >
+                    <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
+                      <path d="M11.875 1.625a1.768 1.768 0 0 1 2.5 2.5l-7.54 7.54a1 1 0 0 1-.46.262l-3.018.805a.5.5 0 0 1-.612-.612l.805-3.018a1 1 0 0 1 .262-.46l7.54-7.54Zm1.793 1.207a.768.768 0 0 0-1.086 0l-.812.812 1.086 1.086.812-.812a.768.768 0 0 0 0-1.086ZM11.149 5.29 4.314 12.126l-1.02.272.272-1.02L10.4 4.544l.75.75Z" />
                     </svg>
-                  </span>
-                  <p className="text-[11px] font-bold text-eid-fg">Nenhuma equipe cadastrada</p>
-                  <p className="text-[9px] text-eid-text-secondary">Toque para cadastrar equipe</p>
-                </ProfileEditDrawerTrigger>
-              )}
-            </ProfileSection>
-          </div>
+                    GERENCIAR / EDITAR
+                  </ProfileEditDrawerTrigger>
+                </div>
+              ) : null}
+              <ProfileSection title="Equipes">
+                {(timesLider ?? []).length > 0 || (duplasCadastro ?? []).length > 0 ? (
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    {(timesLider ?? []).map((t) => {
+                      const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
+                      const initials = (t.nome?.trim().slice(0, 2) || "EQ").toUpperCase();
+                      return (
+                        <Link
+                          key={`t-${t.id}`}
+                          href={`/perfil-time/${t.id}?from=/perfil/${id}`}
+                          className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2 transition-all duration-200 ease-out hover:-translate-y-[1px] hover:border-eid-primary-500/30"
+                          aria-label={`Abrir perfil da equipe ${t.nome}`}
+                        >
+                          {t.escudo ? (
+                            <img src={t.escudo} alt="" className="h-10 w-10 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                              {initials}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="truncate text-[11px] font-bold text-eid-fg">{t.nome}</p>
+                            <p className="truncate text-[9px] text-eid-text-secondary">{`${(t.tipo ?? "time").toUpperCase()} · ${esp?.nome ?? "Esporte"}`}</p>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                    {(duplasCadastro ?? []).map((d) => {
+                      const esp = Array.isArray(d.esportes) ? d.esportes[0] : d.esportes;
+                      return (
+                        <Link
+                          key={`d-${d.id}`}
+                          href={`/perfil-dupla/${d.id}?from=/perfil/${id}`}
+                          className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2 transition-all duration-200 ease-out hover:-translate-y-[1px] hover:border-eid-primary-500/30"
+                          aria-label={`Abrir perfil da dupla ${d.id}`}
+                        >
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                            D{d.id}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-[11px] font-bold text-eid-fg">{`Dupla #${d.id}`}</p>
+                            <p className="truncate text-[9px] text-eid-text-secondary">{esp?.nome ?? "Esporte"}</p>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <ProfileEditDrawerTrigger
+                    href={`/editar/equipes/cadastrar?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                    title="Cadastrar equipe"
+                    fullscreen
+                    topMode="backOnly"
+                    className="eid-list-item mt-2 flex w-full min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
+                  >
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-surface/65 text-eid-primary-300">
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden>
+                        <path d="M10 2a.75.75 0 0 1 .75.75v6.5h6.5a.75.75 0 0 1 0 1.5h-6.5v6.5a.75.75 0 0 1-1.5 0v-6.5h-6.5a.75.75 0 0 1 0-1.5h6.5v-6.5A.75.75 0 0 1 10 2Z" />
+                      </svg>
+                    </span>
+                    <p className="text-[11px] font-bold text-eid-fg">Nenhuma equipe cadastrada</p>
+                    <p className="text-[9px] text-eid-text-secondary">Toque para cadastrar equipe</p>
+                  </ProfileEditDrawerTrigger>
+                )}
+              </ProfileSection>
+            </div>
+          )}
 
           {/* ── Sócio e Frequência ───────────────────────────────────── */}
           {(socioRows ?? []).length > 0 || (frequentesRows ?? []).length > 0 ? (
