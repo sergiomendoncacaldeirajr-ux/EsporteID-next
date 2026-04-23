@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "migrate:mysql": "node scripts/migrate-from-mysql.mjs"
+    "migrate:mysql": "node scripts/migrate-from-mysql.mjs",
+    "icons:pwa": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-rekognition": "^3.1035.0",
