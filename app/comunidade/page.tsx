@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { FlowHeaderLink, FlowPageHeader } from "@/components/app/flow-page-header";
 import {
   ComunidadeAulasSection,
   type ComunidadeProfessorProfileRow,
@@ -10,6 +11,8 @@ import { ComunidadeNotificacoesSection, type NotifRow } from "@/components/comun
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
+import { PushToggleCard } from "@/components/pwa/push-toggle-card";
+import { PwaQuickActions } from "@/components/pwa/pwa-quick-actions";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -213,32 +216,27 @@ export default async function ComunidadePage() {
 
   return (
     <main className="mx-auto w-full max-w-lg px-3 py-3 sm:max-w-2xl sm:px-6 sm:py-4">
-        <div className="eid-surface-panel relative rounded-xl px-3 py-3 md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/20 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-primary-500/[0.12] md:p-6 md:shadow-xl md:shadow-black/20">
-          <div className="pointer-events-none absolute -left-10 -bottom-10 hidden h-36 w-36 rounded-full bg-eid-action-500/15 blur-3xl md:block" />
-          <h1 className="text-lg font-bold tracking-tight text-eid-fg md:text-2xl md:font-black">Comunidade</h1>
-          <p className="mt-1 hidden text-sm leading-relaxed text-eid-text-secondary md:mt-2 md:block">
-            Central de <strong className="text-eid-fg">notificações e pedidos</strong>, com interface clara e rápida.
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1.5 md:mt-5 md:gap-2">
-            <span className="eid-chip eid-chip-active rounded-md px-2 py-0.5 text-[10px] font-medium text-eid-primary-200 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
-              {nNotifUnread} não lida(s)
-            </span>
-            <span className="eid-chip rounded-md border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-action-400 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
-              {nPedidos} pedido(s) de match
-            </span>
-            <span className="eid-chip eid-badge-warning rounded-md px-2 py-0.5 text-[10px] font-medium md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
-              {nSugestoes} sugestão(ões) de membro
-            </span>
-            <span className="eid-chip eid-chip-active rounded-md px-2 py-0.5 text-[10px] font-medium text-eid-primary-300 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
-              {conviteItems.length} convite(s) de equipe
-            </span>
-            <span className="eid-chip rounded-md border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-medium text-eid-action-300 md:rounded-full md:px-3 md:py-1 md:text-[11px] md:font-bold">
-              {nAulas} item(ns) de aulas
-            </span>
-          </div>
-        </div>
+      <FlowPageHeader
+        title="Comunidade"
+        subtitle="Central de notificações, pedidos e convites para você agir rápido."
+        stats={[
+          { label: "não lida(s)", value: nNotifUnread, tone: "primary" },
+          { label: "pedido(s) de match", value: nPedidos, tone: "action" },
+          { label: "sugestão(ões)", value: nSugestoes, tone: "default" },
+          { label: "convite(s) de equipe", value: conviteItems.length, tone: "primary" },
+          { label: "item(ns) de aula", value: nAulas, tone: "default" },
+        ]}
+        actions={
+          <>
+            <FlowHeaderLink href="/agenda" label="Ir para Agenda" />
+            <FlowHeaderLink href="/vagas" label="Abrir Vagas" tone="primary" />
+            <PwaQuickActions />
+          </>
+        }
+      />
 
         <div className="mt-5 space-y-6 md:mt-8 md:space-y-10">
+          <PushToggleCard defaultEnabled />
           <ComunidadeNotificacoesSection items={(notificacoes ?? []) as NotifRow[]} />
 
           <ComunidadeAulasSection
@@ -309,6 +307,6 @@ export default async function ComunidadePage() {
             </Link>
           </div>
         </div>
-      </main>
+    </main>
   );
 }

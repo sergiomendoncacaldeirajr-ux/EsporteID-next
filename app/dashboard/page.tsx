@@ -126,9 +126,12 @@ function IconTrophy({ className }: { className?: string }) {
 function IconMarketplace({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-      <path d="M4 9.2h16l-1.1 9.1a2 2 0 0 1-2 1.7H7.1a2 2 0 0 1-2-1.7L4 9.2Z" />
-      <path d="M7.5 9.2V7.8a4.5 4.5 0 1 1 9 0v1.4" />
-      <path d="M9 13.2h6" />
+      <path d="M4.5 9.5h15l-1.2 8.8a2 2 0 0 1-2 1.7H7.7a2 2 0 0 1-2-1.7L4.5 9.5Z" />
+      <path d="M8 9.5V8a4 4 0 1 1 8 0v1.5" />
+      <path d="M12 12.7v3.8" />
+      <path d="M10.1 14.6H13.9" />
+      <path d="M15.9 6.1l1.4-1.4" />
+      <path d="M6.7 6.1l1.4-1.4" />
     </svg>
   );
 }
@@ -136,8 +139,9 @@ function IconMarketplace({ className }: { className?: string }) {
 function IconLocationCard({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-      <path d="M12 21s6-5.5 6-10a6 6 0 1 0-12 0c0 4.5 6 10 6 10Z" />
-      <circle cx="12" cy="11" r="2.4" />
+      <path d="M12 20.8s5.8-5.2 5.8-9.5A5.8 5.8 0 0 0 6.2 11.3c0 4.3 5.8 9.5 5.8 9.5Z" />
+      <circle cx="12" cy="11.2" r="2.1" />
+      <path d="M4 19.5c2.3-1.2 4.8-1.8 8-1.8s5.7.6 8 1.8" />
     </svg>
   );
 }
@@ -145,11 +149,13 @@ function IconLocationCard({ className }: { className?: string }) {
 function IconTorneioCard({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-      <path d="M7 4h10v3a5 5 0 0 1-10 0V4Z" />
-      <path d="M7 6H4a2 2 0 0 0 2 2h1" />
-      <path d="M17 6h3a2 2 0 0 1-2 2h-1" />
-      <path d="M12 12v4" />
-      <path d="M9 20h6" />
+      <path d="M4.2 6.2h3.2v3H4.2z" />
+      <path d="M16.6 6.2h3.2v3h-3.2z" />
+      <path d="M4.2 14.8h3.2v3H4.2z" />
+      <path d="M16.6 14.8h3.2v3h-3.2z" />
+      <path d="M7.4 7.7h2.4v8.6H7.4" />
+      <path d="M14.2 7.7h-2.4v8.6h2.4" />
+      <path d="M9.8 12h2" />
     </svg>
   );
 }

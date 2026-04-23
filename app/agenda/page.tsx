@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { FlowHeaderLink, FlowPageHeader } from "@/components/app/flow-page-header";
 import { ConexoesStrip, type ConexaoPeer } from "@/components/agenda/conexoes-strip";
 import { AgendaAceitosCancelaveis } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
+import { PwaQuickActions } from "@/components/pwa/pwa-quick-actions";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -95,6 +97,12 @@ export default async function AgendaPage() {
     .order("data_registro", { ascending: false })
     .limit(20);
 
+  const { count: nNotifUnread = 0 } = await supabase
+    .from("notificacoes")
+    .select("id", { count: "exact", head: true })
+    .eq("usuario_id", user.id)
+    .eq("lida", false);
+
   const allLocalIds = [
     ...new Set(
       [...(partidasAgendadas ?? []), ...(placarPendente ?? [])]
@@ -185,35 +193,25 @@ export default async function AgendaPage() {
 
   return (
     <main className="mx-auto w-full max-w-lg px-3 py-3 sm:max-w-2xl sm:px-6 sm:py-4">
-        <div className="eid-surface-panel relative rounded-xl p-3 md:relative md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/25 md:bg-gradient-to-br md:from-eid-card md:via-eid-primary-500/10 md:to-eid-card md:p-6 md:shadow-lg md:shadow-eid-primary-500/10">
-          <div className="pointer-events-none absolute -right-16 -top-16 hidden h-40 w-40 rounded-full bg-eid-primary-500/20 blur-3xl md:block" />
-          <h1 className="text-lg font-bold tracking-tight text-eid-fg md:text-2xl md:font-black">Agenda</h1>
-          <p className="mt-1 hidden text-sm leading-relaxed text-eid-text-secondary md:mt-2 md:block">
-            Conexões, jogos agendados e pendências de placar, em um só fluxo.
-          </p>
-          <div className="mt-3 grid grid-cols-3 gap-1.5 text-center md:mt-5 md:gap-2">
-            <div className="eid-list-item rounded-lg bg-eid-bg/40 px-1 py-2 md:rounded-2xl md:px-2 md:py-3">
-              <p className="text-base font-bold tabular-nums text-eid-primary-300 md:text-xl md:font-black">{nAgendadas}</p>
-              <p className="text-[8px] font-semibold uppercase tracking-wide text-eid-text-secondary md:text-[9px] md:font-bold">Agendados</p>
-            </div>
-            <div className="eid-list-item rounded-lg border-eid-action-500/30 bg-eid-action-500/10 px-1 py-2 md:rounded-2xl md:px-2 md:py-3">
-              <p className="text-base font-bold tabular-nums text-eid-action-500 md:text-xl md:font-black">{nPlacar}</p>
-              <p className="text-[8px] font-semibold uppercase tracking-wide text-eid-text-secondary md:text-[9px] md:font-bold">Placar</p>
-            </div>
-            <div className="eid-list-item rounded-lg bg-eid-bg/40 px-1 py-2 md:rounded-2xl md:px-2 md:py-3">
-              <p className="text-base font-bold tabular-nums text-eid-fg md:text-xl md:font-black">{nPendEnvio}</p>
-              <p className="text-[8px] font-semibold uppercase tracking-wide text-eid-text-secondary md:text-[9px] md:font-bold">Enviei</p>
-            </div>
-          </div>
-          <Link
-            href="/match"
-            className="eid-btn-primary relative mt-3 flex min-h-[44px] w-full items-center justify-center rounded-lg text-xs font-bold uppercase tracking-wide md:mt-5 md:min-h-[50px] md:rounded-2xl md:text-sm md:font-black"
-          >
-            Abrir radar Match
-          </Link>
-        </div>
+      <FlowPageHeader
+        title="Agenda"
+        subtitle="Conexões, jogos agendados e pendências em um fluxo simples e claro."
+        stats={[
+          { label: "não lida(s)", value: nNotifUnread, tone: "primary" },
+          { label: "agendado(s)", value: nAgendadas, tone: "default" },
+          { label: "placar(es)", value: nPlacar, tone: "action" },
+          { label: "pedido(s) enviados", value: nPendEnvio, tone: "default" },
+        ]}
+        actions={
+          <>
+            <FlowHeaderLink href="/match" label="Abrir radar Match" tone="primary" />
+            <FlowHeaderLink href="/comunidade#notificacoes" label="Ver notificações" />
+            <PwaQuickActions />
+          </>
+        }
+      />
 
-        <ConexoesStrip peers={conexoes} />
+      <ConexoesStrip peers={conexoes} />
 
         <section className="mt-6 md:mt-10" id="placares">
           <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-action-500">Placar aguardando você</h2>
@@ -322,6 +320,6 @@ export default async function AgendaPage() {
           </Link>
           .
         </p>
-      </main>
+    </main>
   );
 }
