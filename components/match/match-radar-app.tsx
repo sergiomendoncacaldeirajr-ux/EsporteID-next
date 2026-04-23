@@ -804,7 +804,11 @@ export function MatchRadarApp({
             aria-modal="true"
             aria-label="Modo tela cheia de desafio"
           >
-            <div className="mb-2 flex items-center justify-end">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-primary-400">Modo tela cheia</p>
+                <h2 className="truncate text-sm font-black tracking-[0.01em] text-eid-fg sm:text-base">Sugestões de desafios</h2>
+              </div>
               <button
                 type="button"
                 onClick={() => switchViewMode("grid")}
