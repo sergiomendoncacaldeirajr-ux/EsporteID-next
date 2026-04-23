@@ -32,6 +32,8 @@ export default async function ComunidadePage() {
   if (!profile?.termos_aceitos_em) redirect("/conta/aceitar-termos");
   if (!profile.perfil_completo) redirect("/onboarding");
 
+  await supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id });
+
   const { data: notificacoes } = await supabase
     .from("notificacoes")
     .select("id, mensagem, tipo, lida, criada_em, data_criacao")

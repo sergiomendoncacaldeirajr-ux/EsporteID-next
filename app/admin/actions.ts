@@ -332,3 +332,52 @@ export async function adminSetMatchRankCooldownMeses(formData: FormData) {
     return;
   }
 }
+
+/** Limite de jogos de ranking pendentes de resultado por jogador. */
+export async function adminSetMatchRankPendingLimit(formData: FormData) {
+  try {
+    await guard();
+    const raw = Number(formData.get("limite"));
+    const limite = Number.isFinite(raw) ? Math.max(1, Math.min(20, Math.floor(raw))) : 2;
+    const { error } = await svc()
+      .from("app_config")
+      .upsert(
+        {
+          key: "match_rank_pending_result_limit",
+          value_json: { limite },
+          atualizado_em: new Date().toISOString(),
+        },
+        { onConflict: "key" }
+      );
+    if (error) return;
+    revalidatePath("/admin/regras");
+    revalidatePath("/desafio");
+    revalidatePath("/match");
+  } catch {
+    return;
+  }
+}
+
+/** Prazo (em horas) para autoaprovar resultado pendente sem contestação. */
+export async function adminSetMatchResultadoAutoAprovacaoHoras(formData: FormData) {
+  try {
+    await guard();
+    const raw = Number(formData.get("horas"));
+    const horas = Number.isFinite(raw) ? Math.max(1, Math.min(168, Math.floor(raw))) : 24;
+    const { error } = await svc()
+      .from("app_config")
+      .upsert(
+        {
+          key: "match_resultado_autoaprovacao_horas",
+          value_json: { horas },
+          atualizado_em: new Date().toISOString(),
+        },
+        { onConflict: "key" }
+      );
+    if (error) return;
+    revalidatePath("/admin/regras");
+    revalidatePath("/agenda");
+  } catch {
+    return;
+  }
+}

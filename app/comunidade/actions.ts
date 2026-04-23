@@ -7,6 +7,7 @@ export type ResponderMatchState = { ok: true } | { ok: false; message: string };
 export type ResponderConviteState = { ok: true } | { ok: false; message: string };
 export type SugestaoMatchState = { ok: true; message?: string } | { ok: false; message: string };
 export type ResponderSugestaoMatchState = { ok: true } | { ok: false; message: string };
+export type CancelarMatchState = { ok: true } | { ok: false; message: string };
 
 export async function responderPedidoMatch(
   _prev: ResponderMatchState | undefined,
@@ -40,6 +41,40 @@ export async function responderPedidoMatch(
 
   revalidatePath("/comunidade");
   revalidatePath("/agenda");
+  revalidatePath("/match");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+export async function cancelarMatchAceito(
+  _prev: CancelarMatchState | undefined,
+  formData: FormData
+): Promise<CancelarMatchState> {
+  const matchId = Number(formData.get("match_id"));
+  const motivo = String(formData.get("motivo") ?? "").trim();
+
+  if (!Number.isFinite(matchId) || matchId < 1) {
+    return { ok: false, message: "Match inválido." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, message: "Sessão expirada. Faça login novamente." };
+  }
+
+  const { error } = await supabase.rpc("cancelar_match_aceito", {
+    p_match_id: matchId,
+    p_motivo: motivo.length > 0 ? motivo.slice(0, 240) : null,
+  });
+  if (error) {
+    return { ok: false, message: error.message };
+  }
+
+  revalidatePath("/agenda");
+  revalidatePath("/comunidade");
   revalidatePath("/match");
   revalidatePath("/dashboard");
   return { ok: true };

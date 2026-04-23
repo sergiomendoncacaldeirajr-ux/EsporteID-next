@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ConexoesStrip, type ConexaoPeer } from "@/components/agenda/conexoes-strip";
+import { AgendaAceitosCancelaveis } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,6 +43,8 @@ export default async function AgendaPage() {
     .maybeSingle();
   if (!profile?.termos_aceitos_em) redirect("/conta/aceitar-termos");
   if (!profile.perfil_completo) redirect("/onboarding");
+
+  await supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id });
 
   const { data: aceitos } = await supabase
     .from("matches")
@@ -118,6 +121,15 @@ export default async function AgendaPage() {
     .order("data_registro", { ascending: false })
     .limit(20);
 
+  const { data: aceitosCancelaveis } = await supabase
+    .from("matches")
+    .select("id, usuario_id, adversario_id, modalidade_confronto, esporte_id")
+    .eq("status", "Aceito")
+    .eq("finalidade", "ranking")
+    .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+    .order("data_confirmacao", { ascending: false })
+    .limit(20);
+
   const advIds = [...new Set((pendentesEnvio ?? []).map((m) => m.adversario_id).filter(Boolean))] as string[];
   const { data: adversarios } = advIds.length
     ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", advIds)
@@ -125,10 +137,36 @@ export default async function AgendaPage() {
   const advMap = new Map((adversarios ?? []).map((p) => [p.id, p]));
 
   const eids = [...new Set((pendentesEnvio ?? []).map((m) => m.esporte_id).filter(Boolean))] as number[];
+  const eidsAceitos = [...new Set((aceitosCancelaveis ?? []).map((m) => m.esporte_id).filter(Boolean))] as number[];
   const { data: esportes } = eids.length
     ? await supabase.from("esportes").select("id, nome").in("id", eids)
     : { data: [] };
+  const { data: esportesAceitos } = eidsAceitos.length
+    ? await supabase.from("esportes").select("id, nome").in("id", eidsAceitos)
+    : { data: [] };
   const espMap = new Map((esportes ?? []).map((e) => [e.id, e.nome]));
+  const espMapAceitos = new Map((esportesAceitos ?? []).map((e) => [e.id, e.nome]));
+
+  const oponenteIdsAceitos = [
+    ...new Set(
+      (aceitosCancelaveis ?? [])
+        .map((m) => (m.usuario_id === user.id ? m.adversario_id : m.usuario_id))
+        .filter((x): x is string => typeof x === "string" && x.length > 0)
+    ),
+  ];
+  const { data: oponentesAceitos } = oponenteIdsAceitos.length
+    ? await supabase.from("profiles").select("id, nome").in("id", oponenteIdsAceitos)
+    : { data: [] };
+  const oponenteMapAceitos = new Map((oponentesAceitos ?? []).map((p) => [p.id, p.nome ?? "Oponente"]));
+  const aceitosItems = (aceitosCancelaveis ?? []).map((m) => {
+    const opp = m.usuario_id === user.id ? m.adversario_id : m.usuario_id;
+    return {
+      id: Number(m.id),
+      nomeOponente: (opp ? oponenteMapAceitos.get(opp) : null) ?? "Oponente",
+      esporte: (m.esporte_id ? espMapAceitos.get(m.esporte_id) : null) ?? "Esporte",
+      modalidade: m.modalidade_confronto ?? "individual",
+    };
+  });
 
   const nAgendadas = partidasAgendadas?.length ?? 0;
   const nPlacar = placarPendente?.length ?? 0;
@@ -228,6 +266,8 @@ export default async function AgendaPage() {
             </div>
           )}
         </section>
+
+        <AgendaAceitosCancelaveis items={aceitosItems} />
 
         <section className="mt-6 md:mt-10">
           <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Pedidos que você enviou</h2>
