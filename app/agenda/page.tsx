@@ -97,11 +97,12 @@ export default async function AgendaPage() {
     .order("data_registro", { ascending: false })
     .limit(20);
 
-  const { count: nNotifUnread = 0 } = await supabase
+  const { count: nNotifUnreadRaw } = await supabase
     .from("notificacoes")
     .select("id", { count: "exact", head: true })
     .eq("usuario_id", user.id)
     .eq("lida", false);
+  const nNotifUnread = nNotifUnreadRaw ?? 0;
 
   const allLocalIds = [
     ...new Set(
