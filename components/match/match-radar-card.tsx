@@ -23,12 +23,12 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase() ?? "")
     .join("") || "?";
+  const displayName = card.nome.trim().split(/\s+/u)[0] || card.nome;
 
-  const avatarSize = "h-16 w-16 sm:h-[4.25rem] sm:w-[4.25rem]";
+  const avatarSize = "h-[4.5rem] w-[4.5rem] sm:h-[4.85rem] sm:w-[4.85rem]";
   const esporteIcon = sportIconEmoji(card.esporteNome);
   const matchCtaTitle =
     matchFinalidade === "amistoso" ? "Solicitar match amistoso" : "Solicitar match ranking";
-  const matchCtaShort = matchFinalidade === "amistoso" ? "Amistoso" : "Ranking";
 
   const avatarInner = card.avatarUrl ? (
     <img
@@ -49,26 +49,42 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
     <ProfileEidPerformanceSeal
       notaEid={card.eid}
       compact
-      className="transition hover:brightness-110 motion-safe:hover:scale-[1.02]"
+      className="scale-110 transition hover:brightness-110 motion-safe:hover:scale-[1.12]"
       title={`Nota EID ${card.eid.toFixed(1)} — ver estatísticas no esporte`}
     />
   );
 
   return (
     <article
-      className={`${PROFILE_CARD_BASE} flex min-w-0 flex-col p-2.5 [content-visibility:auto] motion-safe:transition-[box-shadow] motion-safe:hover:shadow-[0_12px_28px_-16px_rgba(15,23,42,0.38),0_0_16px_-14px_rgba(37,99,235,0.35)] sm:p-3`}
+      className={`${PROFILE_CARD_BASE} relative isolate overflow-hidden flex min-w-0 flex-col p-2.5 [content-visibility:auto] motion-safe:transition-[box-shadow] motion-safe:hover:shadow-[0_12px_28px_-16px_rgba(15,23,42,0.38),0_0_16px_-14px_rgba(37,99,235,0.35)] sm:p-3`}
     >
-      <div className="flex min-w-0 gap-2.5 sm:gap-3">
+      <span
+        className="pointer-events-none absolute inset-0 z-0 opacity-80"
+        aria-hidden
+        style={{
+          background:
+            "radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--eid-primary-500) 16%, transparent) 0%, transparent 62%), radial-gradient(110% 70% at 100% 100%, color-mix(in srgb, var(--eid-action-500) 14%, transparent) 0%, transparent 66%)",
+        }}
+      />
+      <div className="relative z-[1] flex min-w-0 gap-2.5 sm:gap-3">
         <div className={`relative shrink-0 self-start ${avatarSize}`}>
           <Link
             href={card.href}
-            className="block rounded-full outline-none ring-offset-2 ring-offset-eid-card transition hover:opacity-95 focus-visible:ring-2 focus-visible:ring-eid-primary-400"
+            className="block size-full overflow-hidden rounded-full outline-none ring-offset-2 ring-offset-eid-card transition hover:opacity-95 focus-visible:ring-2 focus-visible:ring-eid-primary-400"
             aria-label={`Abrir perfil de ${card.nome}`}
             title={`Perfil de ${card.nome}`}
           >
             {avatarInner}
           </Link>
-          <div className="absolute -bottom-1 left-0 z-[2] sm:left-0.5">
+          <span
+            className={`pointer-events-none absolute inset-0 z-[1] rounded-full border-2 motion-safe:animate-pulse ${
+              card.disponivelAmistoso
+                ? "border-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.45),0_0_12px_rgba(16,185,129,0.75)]"
+                : "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.45),0_0_12px_rgba(239,68,68,0.72)]"
+            }`}
+            aria-hidden
+          />
+          <div className="absolute -bottom-1 left-1/2 z-[2] -translate-x-1/2">
             {eidStatsHref ? (
               <Link
                 href={eidStatsHref}
@@ -81,17 +97,12 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
               <span className="inline-flex opacity-90">{eidSeal}</span>
             )}
           </div>
-          <span
-            className={`pointer-events-none absolute -bottom-0.5 -right-0.5 z-[1] h-2.5 w-2.5 rounded-full border-2 border-eid-card shadow-sm sm:h-3 sm:w-3 ${
-              card.disponivelAmistoso ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.85)]" : "bg-red-500"
-            }`}
-            title={card.disponivelAmistoso ? "Disponível para amistoso" : "Indisponível para amistoso"}
-            aria-hidden
-          />
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col pt-0.5">
-          <h3 className="truncate text-[13px] font-black leading-tight tracking-tight text-eid-fg sm:text-sm">{card.nome}</h3>
+          <h3 className="truncate text-[13px] font-black leading-tight tracking-tight text-eid-fg sm:text-sm" title={card.nome}>
+            {displayName}
+          </h3>
           <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] leading-tight text-eid-primary-400 sm:text-[11px]">
             <span className="inline-flex min-w-0 max-w-full items-center gap-0.5 font-semibold">
               <span className="shrink-0 text-[11px] leading-none sm:text-xs" aria-hidden>
@@ -118,9 +129,9 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
             href={desafioHref}
             title={matchCtaTitle}
             aria-label={matchCtaTitle}
-            className="eid-btn-match-cta mt-2 inline-flex w-full max-w-full items-center justify-center rounded-lg px-2.5 py-2 text-[9px] font-black uppercase leading-tight tracking-wide sm:mt-2.5 sm:rounded-xl sm:px-3 sm:py-2 sm:text-[10px]"
+            className="eid-btn-match-cta eid-match-cta-pulse eid-shimmer-btn relative mt-2 inline-flex w-full max-w-full items-center justify-center overflow-hidden rounded-lg px-2.5 py-2 text-[10px] font-black uppercase leading-tight tracking-[0.12em] sm:mt-2.5 sm:rounded-xl sm:px-3 sm:py-2 sm:text-[11px]"
           >
-            {matchCtaShort}
+            Match
           </Link>
         </div>
       </div>
