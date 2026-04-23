@@ -57,7 +57,7 @@ type Props = {
 const RAII = [10, 30, 50, 100] as const;
 
 const MATCH_RADAR_FILTROS_PANEL_ID = "match-radar-filtros-esporte-raio-ord";
-const MATCH_AMISTOSO_ENTRY_PROMPT_KEY = "eid_match_amistoso_entry_prompt_v1";
+const MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY = "eid_match_amistoso_entry_info_seen_v1";
 
 function sortByLabelShort(sortBy: SortBy) {
   return sortBy === "eid_score" ? "Nota EID" : "Pontos rank";
@@ -90,6 +90,8 @@ export function MatchRadarApp({
   const [radarFiltrosAbertos, setRadarFiltrosAbertos] = useState(false);
   const [amistosoLigado, setAmistosoLigado] = useState(viewerDisponivelAmistoso);
   const [showEntryPrompt, setShowEntryPrompt] = useState(false);
+  const [showEntryInfo, setShowEntryInfo] = useState(false);
+  const [entryError, setEntryError] = useState<string | null>(null);
 
   const syncUrl = useCallback(
     (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
@@ -170,11 +172,14 @@ export function MatchRadarApp({
 
   useEffect(() => {
     try {
-      const seen = window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_PROMPT_KEY) === "1";
-      setShowEntryPrompt(!seen);
+      const seenInfo = window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY) === "1";
+      setShowEntryInfo(!seenInfo);
     } catch {
-      setShowEntryPrompt(false);
+      setShowEntryInfo(false);
     }
+    setShowEntryPrompt(true);
+    setEntryError(null);
+    setViewMode("full");
   }, []);
 
   useEffect(() => {
@@ -202,20 +207,30 @@ export function MatchRadarApp({
     window.history.replaceState(null, "", `/match?${q.toString()}`);
   }
 
-  function handleEntryChoice(wantsAmistoso: boolean) {
+  async function handleEntryChoice(wantsAmistoso: boolean) {
+    setEntryError(null);
     try {
-      window.localStorage.setItem(MATCH_AMISTOSO_ENTRY_PROMPT_KEY, "1");
+      window.localStorage.setItem(MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY, "1");
     } catch {
       /* ignore */
     }
-    setShowEntryPrompt(false);
+    setShowEntryInfo(false);
     switchViewMode("full");
-    if (!wantsAmistoso) return;
+    if (!wantsAmistoso) {
+      setShowEntryPrompt(false);
+      return;
+    }
 
     setEntryPending(true);
+    const res = await setViewerDisponivelAmistoso(true);
+    setEntryPending(false);
+    if (!res.ok) {
+      setEntryError("Não foi possível ativar o modo amistoso agora. Tente novamente.");
+      return;
+    }
     setAmistosoLigado(true);
-    void setViewerDisponivelAmistoso(true).finally(() => setEntryPending(false));
     applyFilters({ tipo: "atleta", finalidade: "amistoso" });
+    setShowEntryPrompt(false);
   }
 
   return (
@@ -224,14 +239,17 @@ export function MatchRadarApp({
         <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/55 px-2.5 pb-[calc(var(--eid-shell-footer-offset)+2.25rem)] pt-2.5 sm:items-center sm:p-4">
           <div className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_20px_40px_-22px_rgba(2,6,23,0.7)] sm:p-4">
             <p className="text-sm font-black text-eid-fg">Você quer jogar um amistoso hoje?</p>
-            <p className="mt-1.5 text-[11px] leading-snug text-eid-text-secondary">
-              Amistoso são jogos amigáveis que não somam pontos no ranking. Se quiser ficar disponível para jogos rápidos
-              com pessoas próximas, toque em <span className="font-semibold text-eid-primary-300">Sim</span>.
-            </p>
+            {showEntryInfo ? (
+              <p className="mt-1.5 text-[11px] leading-snug text-eid-text-secondary">
+                Amistoso são jogos amigáveis que não somam pontos no ranking. Se quiser ficar disponível para jogos rápidos
+                com pessoas próximas, toque em <span className="font-semibold text-eid-primary-300">Sim</span>.
+              </p>
+            ) : null}
+            {entryError ? <p className="mt-1.5 text-[11px] text-red-300">{entryError}</p> : null}
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleEntryChoice(true)}
+                onClick={() => void handleEntryChoice(true)}
                 disabled={entryPending}
                 className="eid-btn-match-cta inline-flex min-h-[38px] items-center justify-center rounded-xl px-3 text-[11px] font-black uppercase tracking-[0.08em] disabled:opacity-55"
               >
@@ -239,7 +257,7 @@ export function MatchRadarApp({
               </button>
               <button
                 type="button"
-                onClick={() => handleEntryChoice(false)}
+                onClick={() => void handleEntryChoice(false)}
                 disabled={entryPending}
                 className="inline-flex min-h-[38px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-3 text-[11px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35"
               >
