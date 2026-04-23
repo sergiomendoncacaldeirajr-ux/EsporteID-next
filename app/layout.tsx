@@ -118,10 +118,8 @@ export default async function RootLayout({
       className={`${barlow.variable} ${barlowCondensed.variable} ${barlowSemiCondensed.variable} h-full antialiased`}
     >
       <body
-        className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${
-          showAppChrome
-            ? " eid-app-shell max-md:h-[100dvh] max-md:max-h-[100dvh] max-md:overflow-hidden"
-            : ""
+        className={`flex flex-col bg-eid-bg text-eid-fg${
+          showAppChrome ? " eid-app-shell md:min-h-svh" : " min-h-svh"
         }`}
       >
         <EidThemeHydration />
