@@ -319,11 +319,10 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               </>
             )}
 
-            {isSelf ? (
-              <div className="absolute right-2 top-2 z-[3] flex items-center gap-1.5">
-                <ProfileCoverControl hasCover={Boolean(perfil.foto_capa)} />
-              </div>
-            ) : null}
+            <div className="absolute right-2 top-2 z-[3] flex items-center gap-1.5">
+              {isSelf ? <ProfileCoverControl hasCover={Boolean(perfil.foto_capa)} /> : null}
+              {!isSelf ? <ProfileDenunciarButton alvoUsuarioId={id} compact /> : null}
+            </div>
 
             {isSelf ? (
               <ProfileEditDrawerTrigger
@@ -562,8 +561,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               </div>
             )}
           </section>
-
-          {!isSelf ? <ProfileDenunciarButton alvoUsuarioId={id} /> : null}
 
           {!isSelf && alvoSemFormacao ? (
             <ProfileSection title="Dupla ou time">

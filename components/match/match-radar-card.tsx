@@ -3,6 +3,7 @@
 import { Trophy } from "lucide-react";
 import Link from "next/link";
 import { matchCardEidStatsHref, type MatchRadarCard, type MatchRadarFinalidade } from "@/lib/match/radar-snapshot";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { PROFILE_CARD_BASE, PROFILE_PUBLIC_AVATAR_RING_CLASS } from "@/components/perfil/profile-ui-tokens";
@@ -29,6 +30,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
   const esporteIcon = sportIconEmoji(card.esporteNome);
   const matchCtaTitle =
     matchFinalidade === "amistoso" ? "Solicitar match amistoso" : "Solicitar match ranking";
+  const quickViewHref = eidStatsHref ?? card.href;
 
   const avatarInner = card.avatarUrl ? (
     <img
@@ -68,14 +70,15 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
       />
       <div className="relative z-[1] flex min-w-0 gap-2 max-[390px]:gap-1.5 sm:gap-3">
         <div className={`relative shrink-0 self-start ${avatarSize}`}>
-          <Link
-            href={card.href}
+          <ProfileEditDrawerTrigger
+            href={quickViewHref}
+            title={`Estatísticas EID de ${card.nome}`}
+            fullscreen
+            topMode="backOnly"
             className="block size-full overflow-hidden rounded-full outline-none ring-offset-2 ring-offset-eid-card transition hover:opacity-95 focus-visible:ring-2 focus-visible:ring-eid-primary-400"
-            aria-label={`Abrir perfil de ${card.nome}`}
-            title={`Perfil de ${card.nome}`}
           >
             {avatarInner}
-          </Link>
+          </ProfileEditDrawerTrigger>
           <span
             className={`pointer-events-none absolute inset-0 z-[1] rounded-full border-2 motion-safe:animate-pulse ${
               card.disponivelAmistoso
@@ -86,13 +89,15 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
           />
           <div className="absolute -bottom-1 left-1/2 z-[2] -translate-x-1/2">
             {eidStatsHref ? (
-              <Link
+              <ProfileEditDrawerTrigger
                 href={eidStatsHref}
+                title={`Estatísticas EID de ${card.esporteNome} — ${card.nome}`}
+                fullscreen
+                topMode="backOnly"
                 className="inline-flex rounded-full outline-none ring-offset-1 ring-offset-eid-card focus-visible:ring-2 focus-visible:ring-eid-primary-400"
-                aria-label={`Estatísticas EID de ${card.esporteNome} — ${card.nome}`}
               >
                 {eidSeal}
-              </Link>
+              </ProfileEditDrawerTrigger>
             ) : (
               <span className="inline-flex opacity-90">{eidSeal}</span>
             )}

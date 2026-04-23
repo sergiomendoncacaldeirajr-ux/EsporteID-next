@@ -23,7 +23,10 @@ type Search = {
   sort_by?: string;
   status?: string;
   finalidade?: string;
+  view?: string;
 };
+
+type RadarViewMode = "full" | "grid";
 
 function toTipo(v: string | undefined): RadarTipo {
   return v === "dupla" || v === "time" ? v : "atleta";
@@ -45,10 +48,15 @@ function toMatchFinalidade(v: string | undefined): MatchRadarFinalidade {
   return String(v ?? "").trim().toLowerCase() === "amistoso" ? "amistoso" : "ranking";
 }
 
+function toViewMode(v: string | undefined): RadarViewMode {
+  return String(v ?? "").trim().toLowerCase() === "grid" ? "grid" : "full";
+}
+
 export default async function MatchPage({ searchParams }: { searchParams?: Promise<Search> }) {
   const sp = (await searchParams) ?? {};
   const tipo = toTipo(sp.tipo);
   const matchFinalidade = toMatchFinalidade(sp.finalidade);
+  const initialView = toViewMode(sp.view);
   if (matchFinalidade === "amistoso" && tipo !== "atleta") {
     const q = new URLSearchParams();
     for (const [k, v] of Object.entries(sp)) {
@@ -160,6 +168,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         initialSortBy={sortBy}
         initialRaio={raio}
         initialFinalidade={matchFinalidade}
+        initialView={initialView}
         viewerDisponivelAmistoso={viewerAmistosoOn}
         viewerAmistosoExpiresAt={viewerAmistosoExpiresAt}
         showSentBanner={sp.status === "enviado"}

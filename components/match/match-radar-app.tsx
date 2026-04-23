@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { Handshake, Shield, Trophy, User, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, Grid2x2, Handshake, Maximize2, Shield, Trophy, User, Users } from "lucide-react";
 import Link from "next/link";
-import { refreshMatchRadarAction } from "@/app/match/actions";
+import { refreshMatchRadarAction, setViewerDisponivelAmistoso } from "@/app/match/actions";
 import type { EsporteConfrontoRow } from "@/lib/match/esportes-confronto";
 import type { MatchRadarCard, MatchRadarFinalidade, RadarTipo, SortBy } from "@/lib/match/radar-snapshot";
 import { MatchFriendlyToggle } from "@/components/match/match-friendly-toggle";
@@ -47,6 +47,7 @@ type Props = {
   initialSortBy: SortBy;
   initialRaio: number;
   initialFinalidade: MatchRadarFinalidade;
+  initialView: "full" | "grid";
   viewerDisponivelAmistoso: boolean;
   /** ISO da janela de 4h quando o modo amistoso está ligado */
   viewerAmistosoExpiresAt: string | null;
@@ -56,6 +57,7 @@ type Props = {
 const RAII = [10, 30, 50, 100] as const;
 
 const MATCH_RADAR_FILTROS_PANEL_ID = "match-radar-filtros-esporte-raio-ord";
+const MATCH_AMISTOSO_ENTRY_PROMPT_KEY = "eid_match_amistoso_entry_prompt_v1";
 
 function sortByLabelShort(sortBy: SortBy) {
   return sortBy === "eid_score" ? "Nota EID" : "Pontos rank";
@@ -70,6 +72,7 @@ export function MatchRadarApp({
   initialSortBy,
   initialRaio,
   initialFinalidade,
+  initialView,
   viewerDisponivelAmistoso,
   viewerAmistosoExpiresAt,
   showSentBanner,
@@ -80,8 +83,13 @@ export function MatchRadarApp({
   const [esporte, setEsporte] = useState(esporteSelecionado);
   const [finalidade, setFinalidade] = useState<MatchRadarFinalidade>(initialFinalidade);
   const [cards, setCards] = useState<MatchRadarCard[]>(initialCards);
+  const [viewMode, setViewMode] = useState<"full" | "grid">(initialView);
+  const [activeCardIdx, setActiveCardIdx] = useState(0);
   const [isPending, startTransition] = useTransition();
+  const [entryPending, startEntryTransition] = useTransition();
   const [radarFiltrosAbertos, setRadarFiltrosAbertos] = useState(false);
+  const [amistosoLigado, setAmistosoLigado] = useState(viewerDisponivelAmistoso);
+  const [showEntryPrompt, setShowEntryPrompt] = useState(false);
 
   const syncUrl = useCallback(
     (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
@@ -91,9 +99,10 @@ export function MatchRadarApp({
       q.set("raio", String(next.raio));
       q.set("sort_by", next.sortBy);
       q.set("finalidade", next.finalidade);
+      q.set("view", viewMode);
       window.history.replaceState(null, "", `/match?${q.toString()}`);
     },
-    []
+    [viewMode]
   );
 
   const runRefresh = useCallback(
@@ -155,7 +164,22 @@ export function MatchRadarApp({
     setEsporte(esporteSelecionado);
     setFinalidade(initialFinalidade);
     setCards(initialCards);
-  }, [initialTipo, initialSortBy, initialRaio, esporteSelecionado, initialFinalidade, initialCards]);
+    setAmistosoLigado(viewerDisponivelAmistoso);
+    setViewMode(initialView);
+  }, [initialTipo, initialSortBy, initialRaio, esporteSelecionado, initialFinalidade, initialCards, viewerDisponivelAmistoso, initialView]);
+
+  useEffect(() => {
+    try {
+      const seen = window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_PROMPT_KEY) === "1";
+      setShowEntryPrompt(!seen);
+    } catch {
+      setShowEntryPrompt(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setActiveCardIdx(0);
+  }, [cards, finalidade, tipo, esporte, sortBy, raio]);
 
   const esporteOptions = useMemo(() => [{ id: "all", nome: "Todos" }, ...esportes.map((e) => ({ id: String(e.id), nome: e.nome ?? "" }))], [esportes]);
 
@@ -164,8 +188,78 @@ export function MatchRadarApp({
     return row?.nome?.trim() || "Todos";
   }, [esporteOptions, esporte]);
 
+  const activeCard = cards[activeCardIdx] ?? null;
+
+  function switchViewMode(next: "full" | "grid") {
+    setViewMode(next);
+    const q = new URLSearchParams();
+    q.set("tipo", tipo);
+    q.set("esporte", /^\d+$/.test(esporte) ? esporte : "all");
+    q.set("raio", String(raio));
+    q.set("sort_by", sortBy);
+    q.set("finalidade", finalidade);
+    q.set("view", next);
+    window.history.replaceState(null, "", `/match?${q.toString()}`);
+  }
+
+  function handleEntryChoice(wantsAmistoso: boolean) {
+    try {
+      window.localStorage.setItem(MATCH_AMISTOSO_ENTRY_PROMPT_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setShowEntryPrompt(false);
+    switchViewMode("full");
+    if (!wantsAmistoso) return;
+
+    setAmistosoLigado(true);
+    const next = {
+      tipo: "atleta" as RadarTipo,
+      sortBy,
+      raio,
+      esporte,
+      finalidade: "amistoso" as MatchRadarFinalidade,
+    };
+    setTipo("atleta");
+    setFinalidade("amistoso");
+    syncUrl(next);
+    runRefresh(next);
+    startEntryTransition(async () => {
+      await setViewerDisponivelAmistoso(true);
+    });
+  }
+
   return (
     <div className="w-full min-w-0">
+      {showEntryPrompt ? (
+        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/55 p-2.5 sm:items-center">
+          <div className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_20px_40px_-22px_rgba(2,6,23,0.7)] sm:p-4">
+            <p className="text-sm font-black text-eid-fg">Voce quer jogar um amistoso hoje?</p>
+            <p className="mt-1.5 text-[11px] leading-snug text-eid-text-secondary">
+              Amistoso sao jogos amigaveis que nao somam pontos no ranking. Se quiser ficar disponivel para jogos rapidos
+              com pessoas proximas, toque em <span className="font-semibold text-eid-primary-300">Sim</span>.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleEntryChoice(true)}
+                disabled={entryPending}
+                className="eid-btn-match-cta inline-flex min-h-[38px] items-center justify-center rounded-xl px-3 text-[11px] font-black uppercase tracking-[0.08em] disabled:opacity-55"
+              >
+                Sim
+              </button>
+              <button
+                type="button"
+                onClick={() => handleEntryChoice(false)}
+                disabled={entryPending}
+                className="inline-flex min-h-[38px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-3 text-[11px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35"
+              >
+                Nao
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <header className="mb-2 mt-0">
         <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-0.5 sm:gap-x-3">
           <div className="col-start-1 row-start-1 inline-flex min-w-0 max-w-full items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)_86%)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-primary-500)_72%,var(--eid-fg)_28%)]">
@@ -177,11 +271,14 @@ export function MatchRadarApp({
           </div>
           <div className="col-start-2 row-start-1 row-span-2 flex shrink-0 flex-col items-end gap-1 justify-self-end">
             <MatchLocationPrompt hasLocation />
-            <MatchFriendlyToggle
-              initialOn={viewerDisponivelAmistoso}
-              initialExpiresAt={viewerAmistosoExpiresAt}
-              userId={viewerId}
-            />
+            {finalidade !== "amistoso" ? (
+              <MatchFriendlyToggle
+                initialOn={viewerDisponivelAmistoso}
+                initialExpiresAt={viewerAmistosoExpiresAt}
+                userId={viewerId}
+                onStateChange={setAmistosoLigado}
+              />
+            ) : null}
           </div>
           <h1 className="col-start-1 row-start-2 pt-0.5 text-[1.35rem] font-black leading-none tracking-[0.01em] text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_78%,var(--eid-fg)_22%))] bg-clip-text drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_34%,transparent)] sm:text-[1.6rem]">
             Match
@@ -382,20 +479,35 @@ export function MatchRadarApp({
       ) : null}
 
       <section className="mt-3" aria-busy={isPending}>
-        <h2 className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Resultados</h2>
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          <h2 className="text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Resultados</h2>
+          {viewMode === "grid" ? (
+            <button
+              type="button"
+              onClick={() => switchViewMode("full")}
+              className="inline-flex items-center gap-1 rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/75"
+            >
+              <Maximize2 className="h-3 w-3" strokeWidth={2.25} aria-hidden />
+              Modo tela toda
+            </button>
+          ) : null}
+        </div>
         {finalidade === "amistoso" ? (
           <div className="mb-2 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2 shadow-[0_6px_16px_-12px_rgba(15,23,42,0.26)] sm:p-2.5">
-            <p className="text-[10px] leading-snug text-eid-fg sm:text-[11px]">
-              Para funcionar no <span className="font-semibold text-eid-primary-300">modo amistoso</span>, ligue sua
-              disponibilidade abaixo. Sempre que quiser um jogo rapido e amigavel, basta ativar para que usuarios
-              proximos possam te encontrar.
-            </p>
-            <div className="mt-2">
+            {!amistosoLigado ? (
+              <p className="text-[10px] leading-snug text-eid-fg sm:text-[11px]">
+                Para funcionar no <span className="font-semibold text-eid-primary-300">modo amistoso</span>, ligue sua
+                disponibilidade abaixo. Sempre que quiser um jogo rapido e amigavel, basta ativar para que usuarios
+                proximos possam te encontrar.
+              </p>
+            ) : null}
+            <div className={amistosoLigado ? "" : "mt-2"}>
               <MatchFriendlyToggle
                 initialOn={viewerDisponivelAmistoso}
                 initialExpiresAt={viewerAmistosoExpiresAt}
                 userId={viewerId}
                 className="!max-w-full"
+                onStateChange={setAmistosoLigado}
               />
             </div>
           </div>
@@ -404,6 +516,48 @@ export function MatchRadarApp({
           <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-4 text-center text-xs text-eid-text-secondary shadow-[0_6px_16px_-12px_rgba(15,23,42,0.22)] backdrop-blur-sm">
             Nenhum oponente com esses filtros.
           </p>
+        ) : viewMode === "full" ? (
+          <div className="space-y-2">
+            {activeCard ? (
+              <MatchRadarCardView
+                key={`${activeCard.modalidade}-${activeCard.id}-${activeCard.esporteId}-full`}
+                card={activeCard}
+                esporteContextId={esporte}
+                matchFinalidade={finalidade}
+              />
+            ) : null}
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveCardIdx((prev) => Math.max(prev - 1, 0))}
+                disabled={activeCardIdx <= 0}
+                className="inline-flex min-h-[34px] items-center gap-1 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2.5 text-[10px] font-bold uppercase tracking-[0.06em] text-eid-fg transition disabled:opacity-45"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
+                Anterior
+              </button>
+              <span className="text-[10px] font-semibold text-eid-text-secondary">
+                {activeCardIdx + 1} / {cards.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveCardIdx((prev) => Math.min(prev + 1, Math.max(cards.length - 1, 0)))}
+                disabled={activeCardIdx >= cards.length - 1}
+                className="inline-flex min-h-[34px] items-center gap-1 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2.5 text-[10px] font-bold uppercase tracking-[0.06em] text-eid-fg transition disabled:opacity-45"
+              >
+                Próximo
+                <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => switchViewMode("grid")}
+              className="inline-flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/75"
+            >
+              <Grid2x2 className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
+              Alterar filtros
+            </button>
+          </div>
         ) : (
           <div className="grid min-w-0 grid-cols-2 gap-1.5 max-[340px]:grid-cols-1 sm:gap-3">
             {cards.map((c) => (

@@ -12,7 +12,13 @@ const MOTIVOS: { codigo: string; label: string; desc: string }[] = [
   { codigo: "outro", label: "Outro", desc: "Descreva no campo abaixo." },
 ];
 
-export function ProfileDenunciarButton({ alvoUsuarioId }: { alvoUsuarioId: string }) {
+type Props = {
+  alvoUsuarioId: string;
+  compact?: boolean;
+  className?: string;
+};
+
+export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, className }: Props) {
   const [aberto, setAberto] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [codigo, setCodigo] = useState(MOTIVOS[0]!.codigo);
@@ -39,9 +45,11 @@ export function ProfileDenunciarButton({ alvoUsuarioId }: { alvoUsuarioId: strin
 
   return (
     <div
-      className={`mx-auto w-full rounded-xl border border-red-500/25 bg-red-500/5 p-2 ${
-        aberto ? "max-w-md" : "max-w-[min(100%,15.5rem)]"
-      }`}
+      className={
+        compact
+          ? `relative ${className ?? ""}`
+          : `mx-auto w-full rounded-xl border border-red-500/25 bg-red-500/5 p-2 ${aberto ? "max-w-md" : "max-w-[min(100%,15.5rem)]"} ${className ?? ""}`
+      }
     >
       <button
         type="button"
@@ -51,7 +59,11 @@ export function ProfileDenunciarButton({ alvoUsuarioId }: { alvoUsuarioId: strin
           setAberto((v) => !v);
           setMsg(null);
         }}
-        className="flex w-full min-h-[2.25rem] touch-manipulation items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/10 px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-red-300/95 transition hover:border-red-500/35 hover:bg-red-500/15 active:bg-red-500/20"
+        className={
+          compact
+            ? "inline-flex h-7 min-w-[6.75rem] touch-manipulation items-center justify-center gap-1 rounded-xl border border-red-500/35 bg-black/40 px-2 text-[8px] font-black uppercase tracking-[0.08em] text-red-200 transition hover:border-red-400/60 hover:bg-red-500/18"
+            : "flex w-full min-h-[2.25rem] touch-manipulation items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/10 px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-red-300/95 transition hover:border-red-500/35 hover:bg-red-500/15 active:bg-red-500/20"
+        }
       >
         <svg viewBox="0 0 12 14" className="h-3 w-2.5 shrink-0 opacity-90" fill="currentColor" aria-hidden>
           <path d="M0 0h2v14H0zM2 2l9 3.5L2 9z" />
@@ -60,7 +72,14 @@ export function ProfileDenunciarButton({ alvoUsuarioId }: { alvoUsuarioId: strin
       </button>
 
       {aberto ? (
-        <div id="eid-denuncia-painel" className="mt-2.5 space-y-3 border-t border-red-500/20 pt-2.5">
+        <div
+          id="eid-denuncia-painel"
+          className={
+            compact
+              ? "absolute right-0 top-full z-20 mt-1.5 w-[min(92vw,21rem)] space-y-3 rounded-xl border border-red-500/35 bg-[linear-gradient(180deg,rgba(33,8,12,0.98),rgba(20,9,11,0.98))] p-2.5 shadow-[0_18px_40px_-20px_rgba(239,68,68,0.5)]"
+              : "mt-2.5 space-y-3 border-t border-red-500/20 pt-2.5"
+          }
+        >
           <p className="text-[11px] text-eid-text-secondary">Motivo da denúncia</p>
           <div className="grid gap-2">
             {MOTIVOS.map((m) => (

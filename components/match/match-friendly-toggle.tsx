@@ -16,6 +16,7 @@ type Props = {
   initialExpiresAt: string | null;
   userId: string;
   className?: string;
+  onStateChange?: (nextOn: boolean) => void;
 };
 
 function formatoRestante(ms: number): string {
@@ -29,7 +30,7 @@ function formatoRestante(ms: number): string {
 }
 
 /** Modo amistoso: liga por até 4 h; desliga sozinho se não renovar. Controle compacto (mesma escala do botão de localização). */
-export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, className }: Props) {
+export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, className, onStateChange }: Props) {
   const [on, setOn] = useState(initialOn);
   const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt);
   const [tick, setTick] = useState(0);
@@ -38,7 +39,8 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
   useEffect(() => {
     setOn(initialOn);
     setExpiresAt(initialExpiresAt);
-  }, [initialOn, initialExpiresAt]);
+    onStateChange?.(initialOn);
+  }, [initialOn, initialExpiresAt, onStateChange]);
 
   useEffect(() => {
     const sb = createClient();
@@ -55,13 +57,14 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
           const eff = computeDisponivelAmistosoEffective(row.disponivel_amistoso, row.disponivel_amistoso_ate);
           setOn(eff);
           setExpiresAt(eff ? (row.disponivel_amistoso_ate ?? null) : null);
+          onStateChange?.(eff);
         }
       )
       .subscribe();
     return () => {
       void sb.removeChannel(channel);
     };
-  }, [userId]);
+  }, [userId, onStateChange]);
 
   useEffect(() => {
     if (!on || !expiresAt) return;
@@ -75,8 +78,9 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
     if (Number.isNaN(end) || end <= Date.now()) {
       setOn(false);
       setExpiresAt(null);
+      onStateChange?.(false);
     }
-  }, [on, expiresAt, tick]);
+  }, [on, expiresAt, tick, onStateChange]);
 
   function toggle(next: boolean) {
     if (next && !amistoso4hFirstUseWarningJaAceito()) {
@@ -86,11 +90,13 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
     }
     setOn(next);
     setExpiresAt(next ? new Date(Date.now() + AMISTOSO_DURACAO_MS).toISOString() : null);
+    onStateChange?.(next);
     startTransition(async () => {
       const res = await setViewerDisponivelAmistoso(next);
       if (!res.ok) {
         setOn(!next);
         setExpiresAt(null);
+        onStateChange?.(!next);
       }
     });
   }
