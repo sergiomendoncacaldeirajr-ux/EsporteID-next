@@ -124,7 +124,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
 
   if (!hasLocation) {
     return (
-      <MatchPageShell>
+      <MatchPageShell fullBleed={initialView === "full"}>
         <header className="mb-2 mt-0">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)_86%)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-primary-500)_72%,var(--eid-fg)_28%)]">
@@ -171,7 +171,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   });
 
   return (
-    <MatchPageShell>
+    <MatchPageShell fullBleed={initialView === "full"}>
       <MatchRadarApp
         viewerId={user.id}
         initialCards={initialCards}

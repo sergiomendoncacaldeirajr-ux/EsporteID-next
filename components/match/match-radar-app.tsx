@@ -273,6 +273,7 @@ export function MatchRadarApp({
       return g !== "" && g !== "masculino" && g !== "feminino";
     });
   }, [cards, generoFiltro]);
+  const isFullView = viewMode === "full";
 
   return (
     <div className="w-full min-w-0">
@@ -308,6 +309,7 @@ export function MatchRadarApp({
           </div>
         </div>
       ) : null}
+      {!isFullView ? (
       <header className="mb-2 mt-0">
         <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-0.5 sm:gap-x-3">
           <div className="col-start-1 row-start-1 inline-flex min-w-0 max-w-full items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)_86%)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-primary-500)_72%,var(--eid-fg)_28%)]">
@@ -338,8 +340,9 @@ export function MatchRadarApp({
           </p>
         </div>
       </header>
+      ) : null}
 
-      {showSentBanner ? (
+      {!isFullView && showSentBanner ? (
         <p className="mb-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 py-2 text-xs leading-snug text-eid-fg shadow-[0_6px_16px_-12px_rgba(15,23,42,0.22)] backdrop-blur-sm">
           Pedido de desafio enviado. O adversário será notificado.
         </p>
@@ -554,13 +557,14 @@ export function MatchRadarApp({
       </div>
       ) : null}
 
-      {isPending ? (
+      {!isFullView && isPending ? (
         <p className="mt-2 text-center text-[10px] font-medium text-eid-primary-400/90" aria-live="polite">
           Atualizando radar…
         </p>
       ) : null}
 
-      <section className="mt-3" aria-busy={isPending}>
+      <section className={cn("mt-3", isFullView && "mt-0 flex min-h-[calc(100dvh-1.75rem)] flex-col")} aria-busy={isPending}>
+        {!isFullView ? (
         <div className="mb-1.5 flex items-center justify-between gap-2">
           <h2 className="text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Resultados</h2>
           {viewMode === "grid" ? (
@@ -574,7 +578,8 @@ export function MatchRadarApp({
             </button>
           ) : null}
         </div>
-        {finalidade === "amistoso" ? (
+        ) : null}
+        {!isFullView && finalidade === "amistoso" ? (
           <div className="mb-2 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2 shadow-[0_6px_16px_-12px_rgba(15,23,42,0.26)] sm:p-2.5">
             {!amistosoLigado ? (
               <p className="text-[10px] leading-snug text-eid-fg sm:text-[11px]">
@@ -599,7 +604,7 @@ export function MatchRadarApp({
             Nenhum oponente com esses filtros.
           </p>
         ) : viewMode === "full" ? (
-          <div className="space-y-2">
+          <div className="flex min-h-0 flex-1 flex-col gap-2">
             <div className="grid min-w-0 grid-cols-2 gap-1.5 max-[340px]:grid-cols-1 sm:gap-2.5">
               {cardsFiltradosGenero.map((c) => {
                 const esporteParam = c.esporteId > 0 ? String(c.esporteId) : esporte;
@@ -634,10 +639,10 @@ export function MatchRadarApp({
             <button
               type="button"
               onClick={() => switchViewMode("grid")}
-              className="inline-flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/75"
+              className="mt-auto inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/75"
             >
               <Grid2x2 className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
-              Alterar filtros
+              Alterar configurações
             </button>
           </div>
         ) : (
@@ -654,6 +659,7 @@ export function MatchRadarApp({
         )}
       </section>
 
+      {!isFullView ? (
       <p className="mt-4 text-center text-[10px] leading-relaxed text-eid-text-secondary">
         O esporte do confronto é o selecionado acima em <span className="font-semibold text-eid-fg/90">Esporte</span> (se
         você tem mais de um EID, troque o chip antes de solicitar). Preferência de jogo e privacidade no{" "}
@@ -665,6 +671,7 @@ export function MatchRadarApp({
         </Link>
         .
       </p>
+      ) : null}
     </div>
   );
 }
