@@ -12,6 +12,8 @@ import {
 } from "@/lib/torneios/catalog";
 import { TORNEIO_CATEGORIAS_PUBLICO } from "@/lib/torneios/categorias";
 import { usuarioPodeCriarTorneio } from "@/lib/torneios/organizador";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
+import { getSportCapabilityByName } from "@/lib/sport-capabilities";
 
 export const metadata = {
   title: "Criar torneio",
@@ -30,6 +32,10 @@ export default async function CriarTorneioPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/torneios/criar");
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  if (!canAccessSystemFeature(featureCfg, "torneios", user.id)) {
+    redirect("/dashboard");
+  }
   if (contextState.papeis.includes("organizador") && contextState.activeContext !== "organizador") {
     redirect("/dashboard?erro=modo_organizador");
   }
@@ -64,7 +70,8 @@ export default async function CriarTorneioPage({
             ? "Sem permissão para criar torneio."
             : null;
 
-  const { data: esportes } = await supabase.from("esportes").select("id, nome").order("nome", { ascending: true });
+  const { data: esportesRaw } = await supabase.from("esportes").select("id, nome").order("nome", { ascending: true });
+  const esportes = (esportesRaw ?? []).filter((e) => getSportCapabilityByName(e.nome).torneio);
 
   const { data: locais } = await supabase
     .from("espacos_genericos")

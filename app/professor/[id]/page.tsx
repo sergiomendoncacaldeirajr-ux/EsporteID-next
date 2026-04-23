@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import {
   PROFILE_CARD_BASE,
@@ -11,6 +11,7 @@ import {
 } from "@/components/perfil/profile-ui-tokens";
 import { ProfessorRequestLessonCard } from "@/components/professor/request-lesson-card";
 import { descreverPoliticaCancelamentoProfessor } from "@/lib/professor/cancellation";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { podeExibirWhatsappProfessor } from "@/lib/perfil/whatsapp-visibility";
 import { createClient } from "@/lib/supabase/server";
 
@@ -29,6 +30,12 @@ export default async function ProfessorPublicPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (user) {
+    const featureCfg = await getSystemFeatureConfig(supabase);
+    if (!canAccessSystemFeature(featureCfg, "professores", user.id)) {
+      redirect("/dashboard");
+    }
+  }
 
   const [{ data: profile }, { data: professor }, { data: esportes }, { data: metricas }, { data: locais }] =
     await Promise.all([

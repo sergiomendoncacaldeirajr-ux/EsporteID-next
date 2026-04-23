@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -7,6 +9,14 @@ export const metadata = {
 
 export default async function ProfessoresPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/professores");
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  if (!canAccessSystemFeature(featureCfg, "professores", user.id)) {
+    redirect("/dashboard");
+  }
 
   const { data: perfis } = await supabase
     .from("professor_perfil")

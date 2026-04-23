@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getProfessorModulesBySportName } from "@/lib/professor/sport-admin-modules";
 import { requireProfessorUser } from "@/lib/professor/server";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 function moeda(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value / 100);
@@ -7,6 +10,10 @@ function moeda(value: number) {
 
 export default async function ProfessorHomePage() {
   const { supabase, user } = await requireProfessorUser("/professor");
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  if (!canAccessSystemFeature(featureCfg, "professores", user.id)) {
+    redirect("/dashboard");
+  }
 
   const [{ data: perfil }, { data: esportes }, { data: aulas }, { data: pagamentos }, { data: metricas }, { count: solicitacoesPendentes }] =
     await Promise.all([
@@ -46,6 +53,10 @@ export default async function ProfessorHomePage() {
   const totalReceber = (pagamentos ?? [])
     .filter((item) => item.status === "approved" || item.status === "received")
     .reduce((sum, item) => sum + Number(item.valor_liquido_professor_centavos ?? 0), 0);
+  const esportesAtivos = (esportes ?? []).map((item) => {
+    const esporte = Array.isArray(item.esportes) ? item.esportes[0] : item.esportes;
+    return String(esporte?.nome ?? "").trim();
+  }).filter(Boolean);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
@@ -84,6 +95,31 @@ export default async function ProfessorHomePage() {
           <Link href={`/professor/${user.id}`} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-3 py-3 text-xs font-semibold text-eid-fg">
             Ver perfil público
           </Link>
+        </div>
+
+        <div className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-eid-text-secondary">
+            Módulos por esporte
+          </p>
+          <div className="mt-3 space-y-3">
+            {(esportesAtivos.length ? esportesAtivos : ["Geral"]).map((esporteNome) => (
+              <div key={esporteNome} className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3">
+                <p className="text-xs font-semibold text-eid-fg">{esporteNome}</p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {getProfessorModulesBySportName(esporteNome).map((module) => (
+                    <Link
+                      key={`${esporteNome}-${module.key}`}
+                      href={module.href}
+                      className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card/70 px-3 py-2"
+                    >
+                      <p className="text-xs font-semibold text-eid-fg">{module.title}</p>
+                      <p className="mt-1 text-[11px] text-eid-text-secondary">{module.description}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="mt-5 rounded-xl border border-eid-action-500/20 bg-eid-action-500/10 p-4">

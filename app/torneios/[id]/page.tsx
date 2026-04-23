@@ -9,6 +9,7 @@ import { labelStatusTorneio } from "@/lib/torneios/catalog";
 import { linhasResumoRegras, parseRegrasPlacarJson } from "@/lib/torneios/regras";
 import { contaEditarTorneioHref } from "@/lib/routes/conta";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -34,6 +35,10 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect(`/login?next=/torneios/${id}`);
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  if (!canAccessSystemFeature(featureCfg, "torneios", user.id)) {
+    redirect("/dashboard");
+  }
 
   const { data: t } = await supabase
     .from("torneios")

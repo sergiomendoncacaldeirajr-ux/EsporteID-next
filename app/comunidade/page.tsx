@@ -277,7 +277,7 @@ export default async function ComunidadePage() {
               </li>
               <li className="flex gap-2">
                 <span className="text-eid-primary-500">◆</span>
-                Pedidos para entrar no seu time quando você for líder
+                Pedidos de vagas de time/dupla agora aparecem em Vagas
               </li>
             </ul>
           </section>
@@ -288,6 +288,12 @@ export default async function ComunidadePage() {
               className="eid-btn-soft rounded-2xl border-eid-primary-500/40 bg-eid-primary-500/10 px-5 py-2.5 text-xs font-bold"
             >
               Times
+            </Link>
+            <Link
+              href="/vagas"
+              className="eid-btn-soft rounded-2xl border-eid-primary-500/40 bg-eid-primary-500/10 px-5 py-2.5 text-xs font-bold"
+            >
+              Vagas
             </Link>
             <Link
               href="/torneios"

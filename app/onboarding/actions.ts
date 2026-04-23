@@ -22,6 +22,7 @@ import {
 import { serializarEspacoReservaConfig } from "@/lib/espacos/config";
 import { findDuplicateEspaco } from "@/lib/espacos/duplicate";
 import { slugifyEspaco } from "@/lib/espacos/slug";
+import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 
 const ESTRUTURAS_VALIDAS = ["quadra", "campo", "piscina", "sala", "estadio"] as const;
@@ -312,6 +313,13 @@ export async function salvarEsportesOnboarding(
 
     if (esporteModoTemAtleta(modoEsporte) && allowed.length === 0) {
       return { ok: false, message: `O esporte ${meta.nome} não permite modalidades de confronto.` };
+    }
+
+    if (esporteModoTemAtleta(modoEsporte) && !isSportMatchEnabled(meta.nome)) {
+      return {
+        ok: false,
+        message: `O esporte ${meta.nome} está disponível sem ranking/desafio. Use no modo professor para gestão e treinos.`,
+      };
     }
 
     if (!esporteModoTemAtleta(modoEsporte)) continue;

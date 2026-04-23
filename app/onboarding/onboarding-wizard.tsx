@@ -539,6 +539,7 @@ type Props = {
     permiteIndividual: boolean;
     permiteDupla: boolean;
     permiteTime: boolean;
+    suportaConfronto: boolean;
   }[];
   locais: { id: number; nome: string; localizacao: string; donoUsuarioId: string | null }[];
   selectedPapeis: string[];
@@ -1317,7 +1318,7 @@ export function OnboardingWizard({
             : "time";
         setEsportesModalidades((old) => ({
           ...old,
-          [id]: old[id]?.length ? old[id]! : [defaultModalidade],
+          [id]: esp?.suportaConfronto ? (old[id]?.length ? old[id]! : [defaultModalidade]) : [],
         }));
       }
       return n;
@@ -1687,7 +1688,7 @@ export function OnboardingWizard({
                   {esportes.filter((e) => esportesSel.has(e.id)).map((e) => {
                     const modoEsporte =
                       hasProfessor && hasAtleta
-                        ? (esporteModes[e.id] ?? "atleta")
+                        ? (esporteModes[e.id] ?? (e.suportaConfronto ? "atleta" : "professor"))
                         : hasProfessor
                           ? "professor"
                           : "atleta";
@@ -1719,11 +1720,14 @@ export function OnboardingWizard({
                             Como você atua neste esporte
                           </p>
                           <div className="mt-1.5 inline-flex flex-wrap gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1">
-                            {([
-                              { value: "atleta", label: "Atleta" },
-                              { value: "professor", label: "Professor" },
-                              { value: "ambos", label: "Ambos" },
-                            ] as const).map((opt) => {
+                            {(e.suportaConfronto
+                              ? ([
+                                  { value: "atleta", label: "Atleta" },
+                                  { value: "professor", label: "Professor" },
+                                  { value: "ambos", label: "Ambos" },
+                                ] as const)
+                              : ([{ value: "professor", label: "Professor" }] as const)
+                            ).map((opt) => {
                               const active = modoEsporte === opt.value;
                               return (
                                 <button
@@ -1818,7 +1822,7 @@ export function OnboardingWizard({
                       {temAtletaNoEsporte ? (
                         <>
                       {/* Modalidades */}
-                      {(e.permiteIndividual || e.permiteDupla || e.permiteTime) && (
+                      {e.suportaConfronto && (e.permiteIndividual || e.permiteDupla || e.permiteTime) && (
                         <>
                           <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
                             Como deseja jogar

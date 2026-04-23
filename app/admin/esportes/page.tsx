@@ -1,4 +1,5 @@
 import { adminSetEsporteAtivo } from "@/app/admin/actions";
+import { getSportCapabilityByName } from "@/lib/sport-capabilities";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 export default async function AdminEsportesPage() {
@@ -17,6 +18,9 @@ export default async function AdminEsportesPage() {
       <p className="mt-1 text-sm text-eid-text-secondary">Ativar ou desativar modalidades no catálogo.</p>
       <div className="mt-4 space-y-2">
         {(data ?? []).map((e) => (
+          (() => {
+            const caps = getSportCapabilityByName(e.nome);
+            return (
           <div
             key={e.id}
             className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2"
@@ -25,6 +29,10 @@ export default async function AdminEsportesPage() {
               <p className="text-sm font-semibold text-eid-fg">{e.nome}</p>
               <p className="text-[11px] text-eid-text-secondary">
                 slug {e.slug ?? "—"} · confronto {e.categoria_processamento ?? "—"}
+              </p>
+              <p className="mt-1 text-[11px] text-eid-text-secondary">
+                rank/desafio: {caps.match && caps.ranking ? "ativo" : "bloqueado"} · torneio: {caps.torneio ? "ativo" : "bloqueado"} · professor:{" "}
+                {caps.professor ? "ativo" : "bloqueado"}
               </p>
             </div>
             <div className="flex gap-2">
@@ -47,6 +55,8 @@ export default async function AdminEsportesPage() {
               )}
             </div>
           </div>
+            );
+          })()
         ))}
       </div>
     </div>

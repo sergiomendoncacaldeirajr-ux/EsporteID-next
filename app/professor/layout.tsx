@@ -1,9 +1,19 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { requireProfessorUser } from "@/lib/professor/server";
+import { isMusculacaoSportName } from "@/lib/sport-capabilities";
 
 export default async function ProfessorLayout({ children }: { children: ReactNode }) {
-  const { profile } = await requireProfessorUser("/professor");
+  const { profile, supabase, user } = await requireProfessorUser("/professor");
+  const { data: esportesRows } = await supabase
+    .from("professor_esportes")
+    .select("esportes(nome)")
+    .eq("professor_id", user.id)
+    .eq("ativo", true);
+  const hasMusculacao = (esportesRows ?? []).some((row) => {
+    const esporte = Array.isArray(row.esportes) ? row.esportes[0] : row.esportes;
+    return isMusculacaoSportName(esporte?.nome);
+  });
 
   const navItems = [
     { href: "/professor", label: "Resumo" },
@@ -13,6 +23,7 @@ export default async function ProfessorLayout({ children }: { children: ReactNod
     { href: "/professor/recebimentos", label: "Recebimentos" },
     { href: "/professor/avaliacoes", label: "Avaliações" },
     { href: "/professor/locais", label: "Locais" },
+    ...(hasMusculacao ? [{ href: "/professor/musculacao", label: "Musculação" }] : []),
   ];
 
   return (

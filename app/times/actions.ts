@@ -118,7 +118,8 @@ export async function criarEquipe(
     interesse_rank_match: true,
     disponivel_amistoso: false,
     disponivel_amistoso_ate: null,
-    vagas_abertas: true,
+    vagas_abertas: checkboxOn(formData, "vagas_abertas"),
+    aceita_pedidos: checkboxOn(formData, "aceita_pedidos"),
     })
     .select("id")
     .single();

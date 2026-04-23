@@ -10,6 +10,7 @@ import {
   type PodiumSlot,
 } from "@/components/ranking/ranking-compact";
 import { parseRankingSearch, rankingHref, type RankingSearchState } from "@/lib/ranking/ranking-href";
+import { isSportRankingEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -156,6 +157,7 @@ export default async function RankingPage({ searchParams }: Props) {
 
   const todosEsportes = (esportesCatalogoRaw ?? [])
     .filter((e): e is { id: number; nome: string | null } => typeof (e as { id?: number }).id === "number" && Number.isFinite((e as { id: number }).id))
+    .filter((e) => isSportRankingEnabled(e.nome))
     .map((e) => ({
       id: e.id,
       nome: String(e.nome ?? "").trim() || "Esporte",

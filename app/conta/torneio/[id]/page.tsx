@@ -6,6 +6,7 @@ import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { parseTorneioCategorias } from "@/lib/torneios/categorias";
 import { parseRegrasPlacarJson } from "@/lib/torneios/regras";
 import { contaNextPath, requireContaPerfilPronto } from "@/lib/conta/require-perfil-pronto";
+import { getSportCapabilityByName } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = { params: Promise<{ id: string }>; searchParams?: Promise<{ from?: string }> };
@@ -69,10 +70,11 @@ export default async function ContaEditarTorneioPage({ params, searchParams }: P
     ...(sede != null ? [`id.eq.${sede}`] : []),
   ].join(",");
 
-  const [{ data: esportes }, { data: locais }] = await Promise.all([
+  const [{ data: esportesRaw }, { data: locais }] = await Promise.all([
     supabase.from("esportes").select("id, nome").order("nome", { ascending: true }),
     supabase.from("espacos_genericos").select("id, nome_publico, localizacao").or(orClause).order("nome_publico", { ascending: true }).limit(400),
   ]);
+  const esportes = (esportesRaw ?? []).filter((e) => getSportCapabilityByName(e.nome).torneio);
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">

@@ -12,12 +12,26 @@ import { generateTorneioDraw, type DrawStrategy } from "@/lib/torneios/draw-engi
 import { usuarioPodeCriarTorneio } from "@/lib/torneios/organizador";
 import { parseRegrasPlacarJson } from "@/lib/torneios/regras";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
+import { getSportCapabilityByName } from "@/lib/sport-capabilities";
 
 function numOrNull(v: FormDataEntryValue | null): number | null {
   const s = String(v ?? "").trim();
   if (!s) return null;
   const n = Number(s);
   return Number.isFinite(n) ? n : null;
+}
+
+async function isSportAllowedForTorneio(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  esporteId: number
+): Promise<boolean> {
+  const { data: esporte, error } = await supabase
+    .from("esportes")
+    .select("nome")
+    .eq("id", esporteId)
+    .maybeSingle();
+  if (error || !esporte) return false;
+  return getSportCapabilityByName(esporte.nome).torneio;
 }
 
 export async function criarTorneo(formData: FormData): Promise<void> {
@@ -59,6 +73,9 @@ export async function criarTorneo(formData: FormData): Promise<void> {
 
   if (nome.length < 3) redirect("/torneios/criar?erro=nome");
   if (!esporteId || esporteId < 1) redirect("/torneios/criar?erro=esporte");
+  if (!(await isSportAllowedForTorneio(supabase, esporteId))) {
+    redirect("/torneios/criar?erro=esporte");
+  }
 
   const regrasPlacarJson = JSON.stringify({
     modalidade_participacao: modalidadeParticipacao,
@@ -162,6 +179,9 @@ export async function atualizarMeuTorneio(
 
   if (nome.length < 3) return { ok: false, message: "Nome do torneio inválido." };
   if (!esporteId || esporteId < 1) return { ok: false, message: "Selecione um esporte válido." };
+  if (!(await isSportAllowedForTorneio(supabase, esporteId))) {
+    return { ok: false, message: "Esse esporte não está habilitado para torneios." };
+  }
 
   const regrasPlacarJson = JSON.stringify({
     modalidade_participacao: modalidadeParticipacao,

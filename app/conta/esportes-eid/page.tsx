@@ -12,6 +12,7 @@ import { listarPapeis, precisaEsportesPratica } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { parseTempoExperienciaParaChaveAprox } from "@/lib/perfil/parse-tempo-experiencia-eid";
 import { ContaEsportesForm } from "./conta-esportes-form";
+import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 
 export const metadata = {
   title: "Esportes e EID · EsporteID",
@@ -174,6 +175,7 @@ export default async function ContaEsportesEidPage() {
                 permiteIndividual: Boolean(e.permite_individual),
                 permiteDupla: Boolean(e.permite_dupla),
                 permiteTime: Boolean(e.permite_time),
+                suportaConfronto: isSportMatchEnabled(e.nome),
               }))}
               selectedEsportes={[...selectedSet]}
               selectedEsportesModalidades={selectedEsportesModalidades}

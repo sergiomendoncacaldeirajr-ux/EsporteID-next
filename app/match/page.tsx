@@ -160,6 +160,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   }
 
   const esportes = await getEsportesConfrontoCached();
+  const esporteIdsDisponiveis = new Set(esportes.map((e) => String(e.id)));
 
   const { data: meusEids } = await supabase
     .from("usuario_eid")
@@ -167,8 +168,17 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
     .eq("usuario_id", user.id)
     .order("id", { ascending: true })
     .limit(1);
-  const esporteDefault = String(meusEids?.[0]?.esporte_id ?? "all");
-  const esporteSelecionado = esporteParam === "all" ? esporteDefault : esporteParam;
+  const esporteDefaultRaw = String(meusEids?.[0]?.esporte_id ?? "all");
+  const esporteDefault =
+    esporteDefaultRaw !== "all" && esporteIdsDisponiveis.has(esporteDefaultRaw)
+      ? esporteDefaultRaw
+      : String(esportes[0]?.id ?? "all");
+  const esporteSelecionado =
+    esporteParam === "all"
+      ? esporteDefault
+      : esporteIdsDisponiveis.has(esporteParam)
+        ? esporteParam
+        : esporteDefault;
   const initialGeneroFiltro = toGeneroFiltro(sp.genero, (me as { genero?: string | null })?.genero ?? null);
 
   const initialCards =

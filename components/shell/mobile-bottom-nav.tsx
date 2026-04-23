@@ -202,6 +202,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     pathname.startsWith("/match") ||
     pathname.startsWith("/desafio") ||
     pathname.startsWith("/perfil-time") ||
+    pathname.startsWith("/vagas") ||
     pathname.startsWith("/times") ||
     pathname.startsWith("/registrar-placar");
   const isRank = pathname === "/ranking" || pathname.startsWith("/ranking/");

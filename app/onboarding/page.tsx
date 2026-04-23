@@ -12,6 +12,7 @@ import {
 } from "@/lib/roles";
 import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { createClient } from "@/lib/supabase/server";
+import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { OnboardingWizard } from "./onboarding-wizard";
 
 type Step = "papeis" | "esportes" | "extras" | "perfil";
@@ -162,6 +163,7 @@ export default async function OnboardingPage() {
         permiteIndividual: Boolean(e.permite_individual),
         permiteDupla: Boolean(e.permite_dupla),
         permiteTime: Boolean(e.permite_time),
+        suportaConfronto: isSportMatchEnabled(e.nome),
       }))}
       locais={(locais ?? []).map((l) => ({
         id: l.id,

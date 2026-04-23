@@ -67,6 +67,12 @@ export default async function TimesPage({ searchParams }: Props) {
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
+            <Link
+              href="/vagas"
+              className="rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-4 py-2 text-center text-xs font-bold text-eid-primary-300 transition hover:border-eid-primary-500/55 sm:text-sm"
+            >
+              Ver vagas
+            </Link>
             {sp.from?.trim() ? (
               <Link
                 href={voltarHref}

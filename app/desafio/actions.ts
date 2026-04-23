@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 
 export type SolicitarDesafioState =
@@ -31,6 +32,16 @@ export async function solicitarDesafioMatch(
   } = await supabase.auth.getUser();
   if (!user) {
     return { ok: false, message: "Sessão expirada. Faça login novamente." };
+  }
+
+  const { data: esporteRow, error: esporteErr } = await supabase
+    .from("esportes")
+    .select("nome")
+    .eq("id", p_esporte_id)
+    .maybeSingle();
+  if (esporteErr) return { ok: false, message: esporteErr.message };
+  if (!esporteRow || !isSportMatchEnabled(esporteRow.nome)) {
+    return { ok: false, message: "Este esporte não permite desafio/ranking no momento." };
   }
 
   let p_alvo_usuario_id: string | null = null;

@@ -14,6 +14,7 @@ import {
 import type { MatchModality } from "@/lib/onboarding/modalidades-match";
 import { sortModalidadesMatch } from "@/lib/onboarding/modalidades-match";
 import { CONTA_PERFIL_HREF } from "@/lib/routes/conta";
+import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 
 type EsporteOpt = {
   id: number;
@@ -21,6 +22,7 @@ type EsporteOpt = {
   permiteIndividual: boolean;
   permiteDupla: boolean;
   permiteTime: boolean;
+  suportaConfronto: boolean;
 };
 
 type Props = {
@@ -93,9 +95,18 @@ export function ContaEsportesForm({
         });
       } else {
         n.add(id);
+        const esp = esportes.find((e) => e.id === id);
         setSportModes((old) => ({
           ...old,
-          [id]: old[id] ?? (hasProfessor ? (hasAtleta ? "ambos" : "professor") : "atleta"),
+          [id]:
+            old[id] ??
+            (esp?.suportaConfronto
+              ? hasProfessor
+                ? hasAtleta
+                  ? "ambos"
+                  : "professor"
+                : "atleta"
+              : "professor"),
         }));
         setProfessorObjetivos((old) => ({
           ...old,
@@ -109,7 +120,6 @@ export function ContaEsportesForm({
           ...old,
           [id]: old[id] ?? "menos_1",
         }));
-        const esp = esportes.find((e) => e.id === id);
         const defaultModalidade: MatchModality = esp?.permiteIndividual
           ? "individual"
           : esp?.permiteDupla
@@ -117,7 +127,7 @@ export function ContaEsportesForm({
             : "time";
         setEsportesModalidades((old) => ({
           ...old,
-          [id]: old[id]?.length ? old[id]! : [defaultModalidade],
+          [id]: esp?.suportaConfronto ? (old[id]?.length ? old[id]! : [defaultModalidade]) : [],
         }));
       }
       return n;
@@ -215,17 +225,23 @@ export function ContaEsportesForm({
                   <div className="mb-2">
                     <p className="text-[11px] text-eid-text-secondary">Atuação neste esporte</p>
                     <div className="mt-1 flex flex-wrap gap-2">
-                      {([
-                        { value: "atleta", label: "Atleta" },
-                        { value: "professor", label: "Professor" },
-                        { value: "ambos", label: "Ambos" },
-                      ] as const).map((opt) => (
+                      {(e.suportaConfronto
+                        ? ([
+                            { value: "atleta", label: "Atleta" },
+                            { value: "professor", label: "Professor" },
+                            { value: "ambos", label: "Ambos" },
+                          ] as const)
+                        : ([{ value: "professor", label: "Professor" }] as const)
+                      ).map((opt) => (
                         <label key={opt.value} className="inline-flex items-center gap-1 text-xs text-eid-fg">
                           <input
                             type="radio"
                             name={`esporte_modo_${e.id}`}
                             value={opt.value}
-                            checked={(sportModes[e.id] ?? "ambos") === opt.value}
+                            checked={
+                              (sportModes[e.id] ??
+                                (e.suportaConfronto ? "ambos" : "professor")) === opt.value
+                            }
                             onChange={() => setSportMode(e.id, opt.value)}
                           />
                           {opt.label}
@@ -274,7 +290,8 @@ export function ContaEsportesForm({
                     ))}
                   </>
                 ) : null}
-                {esporteModoTemAtleta(sportModes[e.id] ?? (hasProfessor ? (hasAtleta ? "ambos" : "professor") : "atleta")) ? (
+                {esporteModoTemAtleta(sportModes[e.id] ?? (hasProfessor ? (hasAtleta ? "ambos" : "professor") : "atleta")) &&
+                e.suportaConfronto ? (
                   <>
                     <p className="mt-2 text-[11px] text-eid-text-secondary">Modalidades no match (marque as que quiser):</p>
                     {e.permiteIndividual ? (
@@ -319,7 +336,9 @@ export function ContaEsportesForm({
                   </>
                 ) : (
                   <p className="mt-2 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1 text-[11px] text-eid-action-400">
-                    Este esporte ficará apenas no fluxo de professor.
+                    {isSportMatchEnabled(e.nome)
+                      ? "Este esporte ficará apenas no fluxo de professor."
+                      : "Este esporte não entra em ranking/desafio. Use no fluxo de professor e treinos."}
                   </p>
                 )}
                 <p className="mt-2 text-[11px] text-eid-text-secondary">Experiência neste esporte</p>

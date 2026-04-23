@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 import { usuarioPodeCriarTorneio } from "@/lib/torneios/organizador";
 
@@ -32,6 +33,10 @@ export default async function TorneiosPage({ searchParams }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/torneios");
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  if (!canAccessSystemFeature(featureCfg, "torneios", user.id)) {
+    redirect("/dashboard");
+  }
 
   const podeCriar = await usuarioPodeCriarTorneio(supabase, user.id);
   const { data: esportesLista } = await supabase.from("esportes").select("id, nome").order("nome", { ascending: true });

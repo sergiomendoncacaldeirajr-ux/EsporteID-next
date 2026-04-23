@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
+import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 
 export type EsporteConfrontoRow = { id: number; nome: string | null };
 
@@ -12,5 +13,7 @@ export const getEsportesConfrontoCached = cache(async (): Promise<EsporteConfron
     .eq("ativo", true)
     .eq("categoria_processamento", "confronto")
     .order("ordem", { ascending: true });
-  return (data ?? []).map((e) => ({ id: e.id, nome: e.nome }));
+  return (data ?? [])
+    .filter((e) => isSportMatchEnabled(e.nome))
+    .map((e) => ({ id: e.id, nome: e.nome }));
 });

@@ -6,6 +6,7 @@ import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { resolveBackHref } from "@/lib/perfil/back-href";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 import { contaEditarLocalHref } from "@/lib/routes/conta";
 
@@ -26,6 +27,12 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (user) {
+    const featureCfg = await getSystemFeatureConfig(supabase);
+    if (!canAccessSystemFeature(featureCfg, "locais", user.id)) {
+      redirect("/dashboard");
+    }
+  }
 
   const { data: loc } = await supabase
     .from("espacos_genericos")

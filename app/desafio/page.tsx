@@ -4,6 +4,7 @@ import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
+import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 
 type Params = {
@@ -51,7 +52,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           esporteId: Number(e.esporte_id),
           esporteNome: (Array.isArray(e.esportes) ? e.esportes[0] : e.esportes)?.nome ?? "Esporte",
         }))
-        .filter((e) => Number.isFinite(e.esporteId) && e.esporteId > 0);
+        .filter((e) => Number.isFinite(e.esporteId) && e.esporteId > 0 && isSportMatchEnabled(e.esporteNome));
 
       if (perfilAlvo && perfilAlvo.id !== user.id && opcoes.length > 0) {
         return (
@@ -99,6 +100,17 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   }
 
   const { data: esporteRow } = await supabase.from("esportes").select("id, nome").eq("id", esporteId).maybeSingle();
+  if (!esporteRow || !isSportMatchEnabled(esporteRow.nome)) {
+    return (
+      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+        <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+        <p className="mt-2 text-sm text-eid-text-secondary">Este esporte não aceita desafio/ranking no momento.</p>
+        <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
+          Voltar ao radar
+        </Link>
+      </main>
+    );
+  }
   const esporteNome = esporteRow?.nome ?? `Esporte #${esporteId}`;
 
   if (modalidade === "individual") {

@@ -7,6 +7,7 @@ import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 export const metadata = {
   title: "Painel",
@@ -177,6 +178,12 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (activeContext === "organizador" && contextState.papeis.includes("organizador")) {
     redirect("/organizador");
   }
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  const canSeeLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
+  const canSeeTorneios = canAccessSystemFeature(featureCfg, "torneios", user.id);
+  const canSeeProfessores = canAccessSystemFeature(featureCfg, "professores", user.id);
+  const canSeeOrganizador = canAccessSystemFeature(featureCfg, "organizador_torneios", user.id);
+  const canSeeMarketplace = canAccessSystemFeature(featureCfg, "marketplace", user.id);
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -270,7 +277,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (esportePrincipalId != null) {
     torneiosQuery = torneiosQuery.eq("esporte_id", esportePrincipalId);
   }
-  const { data: torneios } = await torneiosQuery;
+  const { data: torneios } = canSeeTorneios ? await torneiosQuery : { data: [] };
   const torneiosFiltrados = (torneios ?? []).filter((t) => {
     if (!q) return true;
     return String(t.nome ?? "").toLowerCase().includes(q);
@@ -307,12 +314,14 @@ export default async function DashboardPage({ searchParams }: Props) {
   const esporteCardNome = meusEsportesResumo[0]?.esporteNome ?? "Esporte";
   const esporteCardIcon = sportIconEmoji(esporteCardNome);
 
-  const { data: locaisScroll } = await supabase
-    .from("espacos_genericos")
-    .select("id, nome_publico, logo_arquivo, localizacao")
-    .eq("ativo_listagem", true)
-    .order("id", { ascending: false })
-    .limit(12);
+  const { data: locaisScroll } = canSeeLocais
+    ? await supabase
+        .from("espacos_genericos")
+        .select("id, nome_publico, logo_arquivo, localizacao")
+        .eq("ativo_listagem", true)
+        .order("id", { ascending: false })
+        .limit(12)
+    : { data: [] };
 
   const { data: partidasAgendadasResumo } = await supabase
     .from("partidas")
@@ -368,10 +377,10 @@ export default async function DashboardPage({ searchParams }: Props) {
   const matchIdadeGate = String(profile.match_idade_gate ?? "ok");
 
   const navItems = [
-    { label: "Vagas", shortLabel: "Vagas", href: "/times", icon: IconUsers, soon: false },
-    { label: "MarketPlace", shortLabel: "Market", icon: IconMarketplace, soon: true },
-    { label: "Locais", shortLabel: "Locais", icon: IconLocationCard, soon: true },
-    { label: "Torneios", shortLabel: "Torneios", icon: IconTorneioCard, soon: true },
+    { label: "Vagas", shortLabel: "Vagas", href: "/vagas", icon: IconUsers, soon: false },
+    { label: "MarketPlace", shortLabel: "Market", href: canSeeMarketplace ? "/marketplace" : undefined, icon: IconMarketplace, soon: !canSeeMarketplace },
+    { label: "Locais", shortLabel: "Locais", href: canSeeLocais ? "/locais" : undefined, icon: IconLocationCard, soon: !canSeeLocais },
+    { label: "Torneios", shortLabel: "Torneios", href: canSeeTorneios ? "/torneios" : undefined, icon: IconTorneioCard, soon: !canSeeTorneios },
   ];
   const quickNavMain = navItems;
 
@@ -471,19 +480,21 @@ export default async function DashboardPage({ searchParams }: Props) {
           </a>
         </div>
 
-        <div className="mt-4 grid grid-cols-4 gap-1.5 sm:mt-5 sm:gap-2">
+        <div className={`mt-4 grid gap-1.5 sm:mt-5 sm:gap-2 ${navItems.length >= 4 ? "grid-cols-4" : navItems.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
           {quickNavMain.map((item) => {
             const Icon = item.icon;
             const cardContent = (
               <>
                 {item.soon ? (
-                  <span className="absolute right-1 top-0.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-[1px] text-[6px] font-bold uppercase tracking-[0.06em] text-eid-text-secondary sm:right-1 sm:top-1">
+                  <span className="absolute right-1 top-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-[color:color-mix(in_srgb,var(--eid-surface)_88%,var(--eid-card)_12%)] px-1.5 py-[1px] text-[6px] font-black uppercase tracking-[0.08em] text-eid-text-secondary sm:right-1.5 sm:top-1.5">
                     Em breve
                   </span>
                 ) : null}
                 <span
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl sm:h-11 sm:w-11 sm:rounded-2xl ${
-                    item.soon ? "bg-eid-surface/65 text-eid-text-secondary" : "bg-eid-primary-500/14 text-eid-primary-300"
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl border sm:h-11 sm:w-11 sm:rounded-2xl ${
+                    item.soon
+                      ? "border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-text-secondary"
+                      : "border-eid-primary-500/30 bg-eid-primary-500/14 text-eid-primary-300"
                   }`}
                 >
                   <Icon className="h-[22px] w-[22px] sm:h-6 sm:w-6" />
@@ -491,6 +502,9 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <span className={`text-[8px] font-extrabold uppercase leading-tight tracking-wide sm:text-[9px] ${item.soon ? "text-eid-text-secondary" : "text-eid-fg"}`}>
                   <span className="sm:hidden">{item.shortLabel}</span>
                   <span className="hidden sm:inline">{item.label}</span>
+                </span>
+                <span className={`text-[7px] font-semibold leading-none sm:text-[8px] ${item.soon ? "text-eid-text-secondary/85" : "text-eid-primary-300/95"}`}>
+                  {item.soon ? "indisponível" : "abrir"}
                 </span>
               </>
             );
@@ -500,7 +514,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="eid-list-item relative flex min-h-[4.15rem] flex-col items-center justify-center gap-0.5 rounded-xl border-[color:var(--eid-border-subtle)] bg-gradient-to-b from-eid-surface/85 to-eid-card/85 px-1 py-1.5 text-center transition hover:border-eid-primary-500/40 hover:shadow-[0_10px_26px_-14px_rgba(37,99,235,0.5)] sm:min-h-[4.45rem] sm:rounded-2xl sm:py-2"
+                  className="eid-list-item relative flex min-h-[4.2rem] flex-col items-center justify-center gap-0.5 rounded-xl border-[color:var(--eid-border-subtle)] bg-gradient-to-b from-eid-surface/90 to-eid-card/85 px-1 py-1.5 text-center transition hover:-translate-y-[1px] hover:border-eid-primary-500/40 hover:shadow-[0_10px_26px_-14px_rgba(37,99,235,0.5)] sm:min-h-[4.5rem] sm:rounded-2xl sm:py-2"
                 >
                   {cardContent}
                 </Link>
@@ -510,7 +524,7 @@ export default async function DashboardPage({ searchParams }: Props) {
               <div
                 key={item.label}
                 aria-disabled
-                className="eid-list-item relative flex min-h-[4.15rem] flex-col items-center justify-center gap-0.5 rounded-xl border-[color:var(--eid-border-subtle)] bg-gradient-to-b from-eid-surface/75 to-eid-card/75 px-1 py-1.5 text-center opacity-75 sm:min-h-[4.45rem] sm:rounded-2xl sm:py-2"
+                className="eid-list-item relative flex min-h-[4.2rem] flex-col items-center justify-center gap-0.5 rounded-xl border-[color:var(--eid-border-subtle)] bg-gradient-to-b from-eid-surface/75 to-eid-card/75 px-1 py-1.5 text-center opacity-80 sm:min-h-[4.5rem] sm:rounded-2xl sm:py-2"
               >
                 {cardContent}
               </div>
@@ -518,7 +532,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           })}
         </div>
 
-        {hasProfessor ? (
+        {hasProfessor && canSeeProfessores ? (
           <Link
             href="/professor"
             className="eid-btn-soft mt-2 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl border-eid-action-500/35 bg-eid-action-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-action-400 sm:text-[11px]"
@@ -527,7 +541,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             Painel do professor
           </Link>
         ) : null}
-        {hasEspaco ? (
+        {hasEspaco && canSeeLocais ? (
           <Link
             href="/espaco"
             className="eid-btn-soft mt-2 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl border-eid-primary-500/35 bg-eid-primary-500/12 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-primary-300 sm:text-[11px]"
@@ -542,6 +556,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           </p>
         ) : null}
 
+        {canSeeTorneios ? (
         <section className={`mt-7 sm:mt-9 ${dashboardBlockClass}`}>
           <div className="mb-3.5 flex items-center justify-between gap-3">
             <h2 className={sectionTitleClass}>Atletas próximos</h2>
@@ -673,7 +688,9 @@ export default async function DashboardPage({ searchParams }: Props) {
             </p>
           )}
         </section>
+        ) : null}
 
+        {canSeeLocais ? (
         <section className={`mt-7 sm:mt-9 ${dashboardBlockClass}`}>
           <div className="mb-3.5 flex items-center justify-between gap-3">
             <h2 className={sectionTitleClass}>Torneios em aberto</h2>
@@ -706,6 +723,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             </p>
           )}
         </section>
+        ) : null}
 
         <section className={`mt-7 sm:mt-9 ${dashboardBlockClass}`}>
           <div className="mb-3.5 flex items-center justify-between gap-3">

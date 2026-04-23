@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 export const metadata = {
   title: "Locais",
@@ -20,6 +21,10 @@ export default async function LocaisPage({ searchParams }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/locais");
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  if (!canAccessSystemFeature(featureCfg, "locais", user.id)) {
+    redirect("/dashboard");
+  }
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;

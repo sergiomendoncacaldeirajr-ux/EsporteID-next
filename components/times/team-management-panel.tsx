@@ -198,6 +198,17 @@ export function TeamManagementPanel({
             </p>
             {gpsError ? <p className="mt-1 text-[10px] text-red-300">{gpsError}</p> : null}
           </div>
+          <div className="sm:col-span-2 grid gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Configuração de vagas</p>
+            <label className="flex items-center gap-2 text-[11px] text-eid-fg">
+              <input type="checkbox" name="vagas_abertas" defaultChecked className="rounded border-[color:var(--eid-border-subtle)]" />
+              Deixar vagas abertas para candidatura
+            </label>
+            <label className="flex items-center gap-2 text-[11px] text-eid-fg">
+              <input type="checkbox" name="aceita_pedidos" defaultChecked className="rounded border-[color:var(--eid-border-subtle)]" />
+              Permitir pedidos de entrada
+            </label>
+          </div>
 
           <button
             type="submit"
