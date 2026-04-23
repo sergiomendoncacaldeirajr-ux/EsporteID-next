@@ -25,7 +25,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
     .join("") || "?";
   const displayName = card.nome.trim().split(/\s+/u)[0] || card.nome;
 
-  const avatarSize = "h-[4.5rem] w-[4.5rem] sm:h-[4.85rem] sm:w-[4.85rem]";
+  const avatarSize = "h-14 w-14 min-[390px]:h-[4.5rem] min-[390px]:w-[4.5rem] sm:h-[4.85rem] sm:w-[4.85rem]";
   const esporteIcon = sportIconEmoji(card.esporteNome);
   const matchCtaTitle =
     matchFinalidade === "amistoso" ? "Solicitar match amistoso" : "Solicitar match ranking";
@@ -56,7 +56,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
 
   return (
     <article
-      className={`${PROFILE_CARD_BASE} relative isolate overflow-hidden flex min-w-0 flex-col p-2.5 [content-visibility:auto] motion-safe:transition-[box-shadow] motion-safe:hover:shadow-[0_12px_28px_-16px_rgba(15,23,42,0.38),0_0_16px_-14px_rgba(37,99,235,0.35)] sm:p-3`}
+      className={`${PROFILE_CARD_BASE} relative isolate overflow-hidden flex min-w-0 flex-col p-2 max-[390px]:p-1.5 [content-visibility:auto] motion-safe:transition-[box-shadow] motion-safe:hover:shadow-[0_12px_28px_-16px_rgba(15,23,42,0.38),0_0_16px_-14px_rgba(37,99,235,0.35)] sm:p-3`}
     >
       <span
         className="pointer-events-none absolute inset-0 z-0 opacity-80"
@@ -66,7 +66,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
             "radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--eid-primary-500) 16%, transparent) 0%, transparent 62%), radial-gradient(110% 70% at 100% 100%, color-mix(in srgb, var(--eid-action-500) 14%, transparent) 0%, transparent 66%)",
         }}
       />
-      <div className="relative z-[1] flex min-w-0 gap-2.5 sm:gap-3">
+      <div className="relative z-[1] flex min-w-0 gap-2 max-[390px]:gap-1.5 sm:gap-3">
         <div className={`relative shrink-0 self-start ${avatarSize}`}>
           <Link
             href={card.href}
@@ -100,10 +100,10 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col pt-0.5">
-          <h3 className="truncate text-[13px] font-black leading-tight tracking-tight text-eid-fg sm:text-sm" title={card.nome}>
+          <h3 className="truncate text-[12px] font-black leading-tight tracking-tight text-eid-fg min-[390px]:text-[13px] sm:text-sm" title={card.nome}>
             {displayName}
           </h3>
-          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] leading-tight text-eid-primary-400 sm:text-[11px]">
+          <div className="mt-0.5 min-[390px]:mt-1 flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 min-[390px]:gap-x-1.5 text-[9px] min-[390px]:text-[10px] leading-tight text-eid-primary-400 sm:text-[11px]">
             <span className="inline-flex min-w-0 max-w-full items-center gap-0.5 font-semibold">
               <span className="shrink-0 text-[11px] leading-none sm:text-xs" aria-hidden>
                 {esporteIcon}
@@ -129,7 +129,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
             href={desafioHref}
             title={matchCtaTitle}
             aria-label={matchCtaTitle}
-            className="eid-btn-match-cta eid-match-cta-pulse eid-shimmer-btn relative mt-2 inline-flex w-full max-w-full items-center justify-center overflow-hidden rounded-lg px-2.5 py-2 text-[10px] font-black uppercase leading-tight tracking-[0.12em] sm:mt-2.5 sm:rounded-xl sm:px-3 sm:py-2 sm:text-[11px]"
+            className="eid-btn-match-cta eid-match-cta-pulse eid-shimmer-btn relative mt-1.5 min-[390px]:mt-2 inline-flex w-full max-w-full items-center justify-center overflow-hidden rounded-lg px-2 py-1.5 min-[390px]:px-2.5 min-[390px]:py-2 text-[9px] min-[390px]:text-[10px] font-black uppercase leading-tight tracking-[0.12em] sm:mt-2.5 sm:rounded-xl sm:px-3 sm:py-2 sm:text-[11px]"
           >
             Match
           </Link>

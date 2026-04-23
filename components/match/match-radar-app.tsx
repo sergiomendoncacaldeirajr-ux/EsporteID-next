@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { Handshake, Shield, Trophy, User, Users } from "lucide-react";
 import Link from "next/link";
 import { refreshMatchRadarAction } from "@/app/match/actions";
 import type { EsporteConfrontoRow } from "@/lib/match/esportes-confronto";
@@ -15,7 +16,7 @@ function cn(...xs: (string | false | undefined)[]) {
 
 function segmentTab(active: boolean) {
   return cn(
-    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center gap-0.5 whitespace-nowrap rounded-sm px-0.5 py-0.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985] disabled:opacity-50 sm:px-1 sm:py-0.5 sm:text-[9px]",
+    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center gap-0.5 whitespace-nowrap rounded-sm px-0.5 py-0.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985] disabled:opacity-50 sm:gap-1 sm:px-1 sm:py-0.5 sm:text-[9px]",
     active
       ? "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35"
@@ -199,12 +200,12 @@ export function MatchRadarApp({
         </p>
       ) : null}
 
-      <div className={cn(FILTER_CARD_CLASS, "mb-2 space-y-2 [&_button]:[-webkit-tap-highlight-color:transparent]")}>
+      <div className={cn(FILTER_CARD_CLASS, "mb-2 space-y-1.5 [&_button]:[-webkit-tap-highlight-color:transparent]")}>
         <div>
           <p className={FILTER_LABEL}>Tipo de match</p>
-          <div className="mt-1 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
+          <div className="mt-0.5 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
             <nav
-              className="flex min-h-[2rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:min-h-[1.5rem]"
+              className="flex min-h-[1.85rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:min-h-[1.45rem]"
               aria-label="Tipo de match"
             >
               {(
@@ -222,7 +223,12 @@ export function MatchRadarApp({
                     onClick={() => applyFilters({ finalidade: value })}
                     className={segmentTab(active)}
                   >
-                    {label}
+                    {value === "ranking" ? (
+                      <Trophy className="h-2.5 w-2.5 shrink-0" strokeWidth={2.4} aria-hidden />
+                    ) : (
+                      <Handshake className="h-2.5 w-2.5 shrink-0" strokeWidth={2.4} aria-hidden />
+                    )}
+                    <span className="truncate">{label}</span>
                   </button>
                 );
               })}
@@ -234,7 +240,7 @@ export function MatchRadarApp({
           <p className={FILTER_LABEL}>Modalidade</p>
           <div className="mt-0.5 rounded-md bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-0.5 backdrop-blur-sm sm:rounded-lg sm:p-1">
             <nav
-              className="flex min-h-[1.65rem] overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:min-h-[1.4rem] sm:rounded-md"
+              className="flex min-h-[1.55rem] overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:min-h-[1.35rem] sm:rounded-md"
               aria-label="Modalidade"
             >
               {(
@@ -255,7 +261,14 @@ export function MatchRadarApp({
                     onClick={() => applyFilters({ tipo: value })}
                     className={segmentTab(active)}
                   >
-                    {label}
+                    {value === "atleta" ? (
+                      <User className="h-2.5 w-2.5 shrink-0" strokeWidth={2.4} aria-hidden />
+                    ) : value === "dupla" ? (
+                      <Users className="h-2.5 w-2.5 shrink-0" strokeWidth={2.4} aria-hidden />
+                    ) : (
+                      <Shield className="h-2.5 w-2.5 shrink-0" strokeWidth={2.4} aria-hidden />
+                    )}
+                    <span className="truncate">{label}</span>
                   </button>
                 );
               })}
@@ -370,12 +383,29 @@ export function MatchRadarApp({
 
       <section className="mt-3" aria-busy={isPending}>
         <h2 className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Resultados</h2>
+        {finalidade === "amistoso" ? (
+          <div className="mb-2 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2 shadow-[0_6px_16px_-12px_rgba(15,23,42,0.26)] sm:p-2.5">
+            <p className="text-[10px] leading-snug text-eid-fg sm:text-[11px]">
+              Para funcionar no <span className="font-semibold text-eid-primary-300">modo amistoso</span>, ligue sua
+              disponibilidade abaixo. Sempre que quiser um jogo rapido e amigavel, basta ativar para que usuarios
+              proximos possam te encontrar.
+            </p>
+            <div className="mt-2">
+              <MatchFriendlyToggle
+                initialOn={viewerDisponivelAmistoso}
+                initialExpiresAt={viewerAmistosoExpiresAt}
+                userId={viewerId}
+                className="!max-w-full"
+              />
+            </div>
+          </div>
+        ) : null}
         {cards.length === 0 ? (
           <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-4 text-center text-xs text-eid-text-secondary shadow-[0_6px_16px_-12px_rgba(15,23,42,0.22)] backdrop-blur-sm">
             Nenhum oponente com esses filtros.
           </p>
         ) : (
-          <div className="grid min-w-0 grid-cols-2 gap-2 max-[360px]:grid-cols-1 sm:gap-3">
+          <div className="grid min-w-0 grid-cols-2 gap-1.5 max-[340px]:grid-cols-1 sm:gap-3">
             {cards.map((c) => (
               <MatchRadarCardView
                 key={`${c.modalidade}-${c.id}-${c.esporteId}`}
