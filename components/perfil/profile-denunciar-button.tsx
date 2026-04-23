@@ -61,7 +61,7 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
         }}
         className={
           compact
-            ? "inline-flex h-7 min-w-[6.75rem] touch-manipulation items-center justify-center gap-1 rounded-xl border border-red-500/35 bg-black/40 px-2 text-[8px] font-black uppercase tracking-[0.08em] text-red-200 transition hover:border-red-400/60 hover:bg-red-500/18"
+            ? "inline-flex h-6 min-w-[5.75rem] touch-manipulation items-center justify-center gap-1 rounded-lg border border-red-500/35 bg-black/40 px-1.5 text-[7px] font-black uppercase tracking-[0.08em] text-red-200 transition hover:border-red-400/60 hover:bg-red-500/18"
             : "flex w-full min-h-[2.25rem] touch-manipulation items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/10 px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-red-300/95 transition hover:border-red-500/35 hover:bg-red-500/15 active:bg-red-500/20"
         }
       >
@@ -76,7 +76,7 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
           id="eid-denuncia-painel"
           className={
             compact
-              ? "absolute right-0 top-full z-20 mt-1.5 w-[min(92vw,21rem)] space-y-3 rounded-xl border border-red-500/35 bg-[linear-gradient(180deg,rgba(33,8,12,0.98),rgba(20,9,11,0.98))] p-2.5 shadow-[0_18px_40px_-20px_rgba(239,68,68,0.5)]"
+              ? "fixed right-2 top-[calc(var(--eid-shell-header-offset)+0.75rem)] z-[220] w-[min(92vw,21rem)] space-y-3 rounded-xl border border-red-500/35 bg-[linear-gradient(180deg,rgba(33,8,12,0.99),rgba(20,9,11,0.99))] p-2.5 shadow-[0_18px_40px_-20px_rgba(239,68,68,0.5)]"
               : "mt-2.5 space-y-3 border-t border-red-500/20 pt-2.5"
           }
         >

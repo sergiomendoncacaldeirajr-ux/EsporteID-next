@@ -232,7 +232,7 @@ export function MatchRadarApp({
   return (
     <div className="w-full min-w-0">
       {showEntryPrompt ? (
-        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/55 p-2.5 sm:items-center">
+        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/55 px-2.5 pb-[calc(var(--eid-shell-footer-offset)+0.75rem)] pt-2.5 sm:items-center sm:p-4">
           <div className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_20px_40px_-22px_rgba(2,6,23,0.7)] sm:p-4">
             <p className="text-sm font-black text-eid-fg">Voce quer jogar um amistoso hoje?</p>
             <p className="mt-1.5 text-[11px] leading-snug text-eid-text-secondary">
