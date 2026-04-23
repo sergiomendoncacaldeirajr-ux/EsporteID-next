@@ -112,14 +112,14 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
       aria-label={
         on ? "Modo amistoso ativado. Toque para desligar." : "Modo amistoso desligado. Toque para ativar."
       }
-      className={`inline-flex max-w-[min(100%,11.5rem)] touch-manipulation items-center gap-1 rounded-lg border-2 px-1.5 py-1 text-left text-[6px] font-black uppercase leading-tight tracking-[0.05em] shadow-[0_2px_8px_-4px_rgba(15,23,42,0.35)] transition active:scale-[0.99] disabled:opacity-50 sm:max-w-[13.5rem] sm:gap-1.5 sm:px-2 sm:py-1.5 sm:text-[7px] sm:tracking-[0.06em] ${
+      className={`inline-flex max-w-[min(100%,11.5rem)] touch-manipulation items-center gap-1 rounded-lg border px-1.5 py-1 text-left text-[6px] font-black uppercase leading-tight tracking-[0.05em] transition active:scale-[0.99] disabled:opacity-50 sm:max-w-[13.5rem] sm:gap-1.5 sm:px-2 sm:py-1.5 sm:text-[7px] sm:tracking-[0.06em] dark:border-2 ${
         on
-          ? "border-emerald-600 bg-emerald-100 text-emerald-900 ring-1 ring-emerald-500/25 hover:bg-emerald-200/90 dark:border-emerald-400/70 dark:bg-emerald-950/55 dark:text-emerald-100 dark:ring-emerald-400/20 dark:hover:bg-emerald-900/50"
-          : "border-red-500 bg-red-50 text-red-800 ring-1 ring-red-500/20 hover:bg-red-100 dark:border-red-400/55 dark:bg-red-950/45 dark:text-red-100 dark:ring-red-400/15 dark:hover:bg-red-950/70"
+          ? "border-emerald-600/55 bg-emerald-50 text-emerald-950 shadow-[0_1px_2px_rgba(6,95,70,0.12)] hover:border-emerald-600/70 hover:bg-emerald-100 dark:border-emerald-400/65 dark:bg-emerald-950/55 dark:text-emerald-100 dark:shadow-[0_2px_8px_-4px_rgba(15,23,42,0.35)] dark:ring-1 dark:ring-emerald-400/20 dark:hover:bg-emerald-900/50"
+          : "border-rose-600/45 bg-rose-50 text-rose-950 shadow-[0_1px_2px_rgba(190,18,60,0.1)] hover:border-rose-600/65 hover:bg-rose-100/95 dark:border-red-400/55 dark:bg-red-950/45 dark:text-red-100 dark:shadow-[0_2px_8px_-4px_rgba(15,23,42,0.35)] dark:ring-1 dark:ring-red-400/15 dark:hover:bg-red-950/70"
       } ${className ?? ""}`}
     >
       <Handshake
-        className={`h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5 ${on ? "text-emerald-700 dark:text-emerald-300" : "text-red-600 dark:text-red-300"}`}
+        className={`h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5 ${on ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-red-300"}`}
         strokeWidth={2.35}
         aria-hidden
       />
