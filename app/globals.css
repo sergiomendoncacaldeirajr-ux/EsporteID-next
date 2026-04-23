@@ -94,26 +94,6 @@ body.eid-app-shell {
   padding-bottom: var(--eid-shell-footer-offset);
 }
 
-/* Mobile + shell: altura estável no iOS (evita barra fixa “flutuando” acima da base no primeiro paint). */
-@media (max-width: 767px) {
-  html:has(body.eid-app-shell) {
-    height: 100%;
-    min-height: 100%;
-    height: -webkit-fill-available;
-    min-height: -webkit-fill-available;
-  }
-
-  body.eid-app-shell {
-    overflow: hidden;
-    height: 100%;
-    min-height: 100%;
-    max-height: 100%;
-    height: -webkit-fill-available;
-    min-height: -webkit-fill-available;
-    max-height: -webkit-fill-available;
-  }
-}
-
 /* Tema claro — mesma marca, maior contraste em fundos claros */
 [data-eid-theme="light"] {
   --eid-bg: #f3f6fb;
@@ -195,6 +175,8 @@ html {
   touch-action: manipulation;
   /* PWA / mobile: reduz bounce e pull-to-refresh “de site” no topo */
   overscroll-behavior-y: none;
+  /* Evita “faixa branca” quando o viewport iOS e a altura do body não batem. */
+  background-color: var(--eid-bg);
 }
 
 @media (display-mode: standalone) {

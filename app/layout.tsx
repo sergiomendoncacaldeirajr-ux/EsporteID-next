@@ -118,9 +118,7 @@ export default async function RootLayout({
       className={`${barlow.variable} ${barlowCondensed.variable} ${barlowSemiCondensed.variable} h-full antialiased`}
     >
       <body
-        className={`flex flex-col bg-eid-bg text-eid-fg${
-          showAppChrome ? " eid-app-shell md:min-h-svh" : " min-h-svh"
-        }`}
+        className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}
       >
         <EidThemeHydration />
         <PwaBootstrap />
