@@ -856,21 +856,15 @@ export function MatchRadarApp({
                   >
                     <div className="flex items-center gap-2">
                       <div className="relative h-14 w-14 shrink-0">
-                        {eidStatsHref ? (
-                          <ProfileEditDrawerTrigger
-                            href={eidStatsHref}
-                            title={`Estatísticas EID de ${c.nome}`}
-                            fullscreen
-                            topMode="backOnly"
-                            className="block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
-                          >
-                            {avatarBlock}
-                          </ProfileEditDrawerTrigger>
-                        ) : (
-                          <span className="block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65">
-                            {avatarBlock}
-                          </span>
-                        )}
+                        <ProfileEditDrawerTrigger
+                          href={eidStatsHref ?? c.href}
+                          title={`Estatísticas EID de ${c.nome}`}
+                          fullscreen
+                          topMode="backOnly"
+                          className="block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
+                        >
+                          {avatarBlock}
+                        </ProfileEditDrawerTrigger>
                         <span
                           className={`pointer-events-none absolute inset-0 rounded-full border-2 motion-safe:animate-pulse ${
                             c.disponivelAmistoso
