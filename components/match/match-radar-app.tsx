@@ -228,9 +228,14 @@ export function MatchRadarApp({
       setEntryError("Não foi possível ativar o modo amistoso agora. Tente novamente.");
       return;
     }
-    setAmistosoLigado(true);
-    applyFilters({ tipo: "atleta", finalidade: "amistoso" });
-    setShowEntryPrompt(false);
+    const q = new URLSearchParams();
+    q.set("tipo", "atleta");
+    q.set("esporte", /^\d+$/.test(esporte) ? esporte : "all");
+    q.set("raio", String(raio));
+    q.set("sort_by", sortBy);
+    q.set("finalidade", "amistoso");
+    q.set("view", "full");
+    window.location.href = `/match?${q.toString()}`;
   }
 
   return (

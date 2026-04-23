@@ -27,11 +27,12 @@ export function ProfileEditDrawerTrigger({
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [openNonce, setOpenNonce] = useState(0);
 
   const frameSrc = useMemo(() => {
     const sep = href.includes("?") ? "&" : "?";
-    return `${href}${sep}embed=1&theme=${theme}`;
-  }, [href, theme]);
+    return `${href}${sep}embed=1&theme=${theme}&open_nonce=${openNonce}`;
+  }, [href, theme, openNonce]);
 
   useEffect(() => {
     setMounted(true);
@@ -58,6 +59,7 @@ export function ProfileEditDrawerTrigger({
   }
 
   function openDrawer() {
+    setOpenNonce((v) => v + 1);
     setOpen(true);
     window.setTimeout(() => setVisible(true), 10);
   }
