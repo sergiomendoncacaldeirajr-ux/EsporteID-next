@@ -69,6 +69,7 @@ const RAII = [10, 30, 50, 100] as const;
 const MATCH_RADAR_FILTROS_PANEL_ID = "match-radar-filtros-esporte-raio-ord";
 const MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY = "eid_match_amistoso_entry_info_seen_v1";
 const MATCH_AMISTOSO_ENTRY_DECLINED_DAY_KEY = "eid_match_amistoso_entry_declined_day_v1";
+const MATCH_RANK_RULES_SEEN_KEY = "eid_match_rank_rules_seen_v1";
 
 function todayYmd() {
   const d = new Date();
@@ -116,6 +117,7 @@ export function MatchRadarApp({
   const [showEntryInfo, setShowEntryInfo] = useState(false);
   const [entryError, setEntryError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [showRankRulesPrompt, setShowRankRulesPrompt] = useState(false);
 
   const syncUrl = useCallback(
     (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
@@ -230,6 +232,16 @@ export function MatchRadarApp({
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!mounted) return;
+    try {
+      const seenRules = window.localStorage.getItem(MATCH_RANK_RULES_SEEN_KEY) === "1";
+      setShowRankRulesPrompt(!seenRules);
+    } catch {
+      setShowRankRulesPrompt(false);
+    }
+  }, [mounted]);
+
   const esporteOptions = useMemo(() => [{ id: "all", nome: "Todos" }, ...esportes.map((e) => ({ id: String(e.id), nome: e.nome ?? "" }))], [esportes]);
 
   const esporteNomeResumo = useMemo(() => {
@@ -297,6 +309,15 @@ export function MatchRadarApp({
     q.set("genero", generoFiltro);
     q.set("entry_done", "1");
     window.location.href = `/match?${q.toString()}`;
+  }
+
+  function handleCloseRankRulesPrompt() {
+    try {
+      window.localStorage.setItem(MATCH_RANK_RULES_SEEN_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setShowRankRulesPrompt(false);
   }
 
   const cardsFiltradosGenero = useMemo(() => {
@@ -392,38 +413,75 @@ export function MatchRadarApp({
 
   return (
     <div className="w-full min-w-0">
-      {showEntryPrompt ? (
-        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/55 px-2.5 pb-[calc(var(--eid-shell-footer-offset)+2.25rem)] pt-2.5 sm:items-center sm:p-4">
-          <div className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_20px_40px_-22px_rgba(2,6,23,0.7)] sm:p-4">
-            <p className="text-sm font-black text-eid-fg">Você quer jogar um amistoso hoje?</p>
-            {showEntryInfo ? (
-              <p className="mt-1.5 text-[11px] leading-snug text-eid-text-secondary">
-                Amistoso são jogos amigáveis que não somam pontos no ranking. Se quiser ficar disponível para jogos rápidos
-                com pessoas próximas, toque em <span className="font-semibold text-eid-primary-300">Sim</span>.
-              </p>
-            ) : null}
-            {entryError ? <p className="mt-1.5 text-[11px] text-red-300">{entryError}</p> : null}
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => void handleEntryChoice(true)}
-                disabled={entryPending}
-                className="eid-btn-match-cta inline-flex min-h-[38px] items-center justify-center rounded-xl px-3 text-[11px] font-black uppercase tracking-[0.08em] disabled:opacity-55"
-              >
-                Sim
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleEntryChoice(false)}
-                disabled={entryPending}
-                className="inline-flex min-h-[38px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-3 text-[11px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35"
-              >
-                Não
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {mounted && showEntryPrompt
+        ? createPortal(
+            <div
+              className="fixed inset-0 flex items-end justify-center bg-black/55 px-2.5 pb-[calc(var(--eid-shell-footer-offset)+2.25rem)] pt-2.5 sm:items-center sm:p-4"
+              style={{ zIndex: 2147483600 }}
+            >
+              <div className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_20px_40px_-22px_rgba(2,6,23,0.7)] sm:p-4">
+                <p className="text-sm font-black text-eid-fg">Você quer jogar um amistoso hoje?</p>
+                {showEntryInfo ? (
+                  <p className="mt-1.5 text-[11px] leading-snug text-eid-text-secondary">
+                    Amistoso são jogos amigáveis que não somam pontos no ranking. Se quiser ficar disponível para jogos rápidos
+                    com pessoas próximas, toque em <span className="font-semibold text-eid-primary-300">Sim</span>.
+                  </p>
+                ) : null}
+                {entryError ? <p className="mt-1.5 text-[11px] text-red-300">{entryError}</p> : null}
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleEntryChoice(true)}
+                    disabled={entryPending}
+                    className="eid-btn-match-cta inline-flex min-h-[38px] items-center justify-center rounded-xl px-3 text-[11px] font-black uppercase tracking-[0.08em] disabled:opacity-55"
+                  >
+                    Sim
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleEntryChoice(false)}
+                    disabled={entryPending}
+                    className="inline-flex min-h-[38px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-3 text-[11px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35"
+                  >
+                    Não
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+      {mounted && showRankRulesPrompt && !showEntryPrompt
+        ? createPortal(
+            <div className="fixed inset-0 z-[2147482800] flex items-center justify-center bg-black/60 px-3">
+              <div className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_18px_44px_-24px_rgba(2,6,23,0.78)] sm:p-4">
+                <p className="text-sm font-black text-eid-fg">Como funciona o Desafio de ranking</p>
+                <ul className="mt-2 space-y-1.5 text-[11px] leading-snug text-eid-text-secondary sm:text-xs">
+                  <li>
+                    - O ranking considera confrontos validos na janela de <span className="font-semibold text-eid-fg">12 meses</span>.
+                  </li>
+                  <li>
+                    - Cada jogador pode manter ate <span className="font-semibold text-eid-fg">2 jogos pendentes</span> de resultado.
+                  </li>
+                  <li>
+                    - Resultado pendente pode ser autoaprovado em <span className="font-semibold text-eid-fg">24h</span> sem contestacao.
+                  </li>
+                </ul>
+                <p className="mt-2 text-[10px] text-eid-text-secondary">
+                  Dica: se não houver acordo de data após o aceite, você pode cancelar e solicitar de novo depois.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleCloseRankRulesPrompt}
+                  className="eid-btn-match-cta mt-3 inline-flex min-h-[38px] w-full items-center justify-center rounded-xl px-3 text-[11px] font-black uppercase tracking-[0.08em]"
+                >
+                  Entendi
+                </button>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
       {!isFullView ? (
       <header className="mb-2 mt-0">
         <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-0.5 sm:gap-x-3">
@@ -769,7 +827,15 @@ export function MatchRadarApp({
                       : c.interesseMatch === "ranking_e_amistoso" && c.disponivelAmistoso
                         ? "Ranking + Amistoso"
                         : "Ranking";
-                const eidStatsHref = matchCardEidStatsHref(c);
+                const esporteIdStats = /^\d+$/.test(esporteParam) ? Number(esporteParam) : c.esporteId;
+                const eidStatsHref =
+                  esporteIdStats > 0
+                    ? c.modalidade === "individual"
+                      ? `/perfil/${encodeURIComponent(c.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
+                      : c.modalidade === "dupla"
+                        ? `/perfil-dupla/${encodeURIComponent(c.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
+                        : `/perfil-time/${encodeURIComponent(c.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
+                    : matchCardEidStatsHref(c);
                 const avatarBlock = c.avatarUrl ? (
                   <img src={c.avatarUrl} alt="" className={`h-full w-full ${PROFILE_PUBLIC_AVATAR_RING_CLASS}`} loading="lazy" />
                 ) : (
@@ -784,15 +850,21 @@ export function MatchRadarApp({
                   >
                     <div className="flex items-center gap-2">
                       <div className="relative h-14 w-14 shrink-0">
-                        <ProfileEditDrawerTrigger
-                          href={eidStatsHref ?? c.href}
-                          title={`Estatísticas EID de ${c.nome}`}
-                          fullscreen
-                          topMode="backOnly"
-                          className="block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
-                        >
-                          {avatarBlock}
-                        </ProfileEditDrawerTrigger>
+                        {eidStatsHref ? (
+                          <ProfileEditDrawerTrigger
+                            href={eidStatsHref}
+                            title={`Estatísticas EID de ${c.nome}`}
+                            fullscreen
+                            topMode="backOnly"
+                            className="block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
+                          >
+                            {avatarBlock}
+                          </ProfileEditDrawerTrigger>
+                        ) : (
+                          <span className="block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65">
+                            {avatarBlock}
+                          </span>
+                        )}
                         <span
                           className={`pointer-events-none absolute inset-0 rounded-full border-2 motion-safe:animate-pulse ${
                             c.disponivelAmistoso
