@@ -232,9 +232,9 @@ export function MatchRadarApp({
 
         <div>
           <p className={FILTER_LABEL}>Modalidade</p>
-          <div className="mt-1 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
+          <div className="mt-0.5 rounded-md bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-0.5 backdrop-blur-sm sm:rounded-lg sm:p-1">
             <nav
-              className="flex min-h-[2rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:min-h-[1.5rem]"
+              className="flex min-h-[1.65rem] overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:min-h-[1.4rem] sm:rounded-md"
               aria-label="Modalidade"
             >
               {(
@@ -263,14 +263,14 @@ export function MatchRadarApp({
           </div>
         </div>
 
-        <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_14%,transparent)] p-1">
+        <div className="rounded-md border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_14%,transparent)] p-0.5 sm:rounded-lg sm:p-1">
           <button
             type="button"
             aria-expanded={radarFiltrosAbertos}
             aria-controls={MATCH_RADAR_FILTROS_PANEL_ID}
             disabled={isPending}
             onClick={() => setRadarFiltrosAbertos((v) => !v)}
-            className="flex w-full min-w-0 touch-manipulation items-center gap-2 rounded-md px-1.5 py-1.5 text-left transition hover:bg-eid-surface/30 disabled:opacity-50"
+            className="flex w-full min-w-0 touch-manipulation items-center gap-1.5 rounded-sm px-1 py-1 text-left transition hover:bg-eid-surface/30 disabled:opacity-50 sm:gap-2 sm:rounded-md sm:px-1.5 sm:py-1"
           >
             <span className="shrink-0 text-[8px] font-black uppercase tracking-[0.12em] text-eid-primary-400">(Filtro)</span>
             <span className="min-w-0 flex-1 truncate text-[9px] font-bold uppercase leading-tight tracking-[0.04em] text-eid-fg/95">
@@ -291,13 +291,13 @@ export function MatchRadarApp({
           {radarFiltrosAbertos ? (
             <div
               id={MATCH_RADAR_FILTROS_PANEL_ID}
-              className="mt-1.5 space-y-2 border-t border-[color:var(--eid-border-subtle)]/55 pt-2"
+              className="mt-1 space-y-1.5 border-t border-[color:var(--eid-border-subtle)]/55 pt-1.5"
             >
-              <div className="grid gap-2 sm:grid-cols-3">
+              <div className="grid gap-1.5 sm:grid-cols-3 sm:gap-2">
                 <div className="min-w-0">
                   <p className={FILTER_LABEL}>Esporte</p>
-                  <div className="mt-1 overflow-x-auto overflow-y-hidden rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] py-1 pl-1 pr-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
-                    <div className="flex w-max flex-nowrap gap-1 pr-1">
+                  <div className="mt-0.5 overflow-x-auto overflow-y-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] py-0.5 pl-0.5 pr-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] sm:rounded-lg sm:py-1 sm:pl-1">
+                    <div className="flex w-max flex-nowrap gap-0.5 pr-0.5 sm:gap-1 sm:pr-1">
                       {esporteOptions.map((e) => {
                         const active = String(esporte) === String(e.id);
                         return (
@@ -317,7 +317,7 @@ export function MatchRadarApp({
                 </div>
                 <div className="min-w-0">
                   <p className={FILTER_LABEL}>Raio</p>
-                  <div className="mt-1 flex flex-wrap gap-1 rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-1">
+                  <div className="mt-0.5 flex flex-wrap gap-0.5 rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-0.5 sm:gap-1 sm:rounded-lg sm:p-1">
                     {RAII.map((r) => (
                       <button
                         key={r}
@@ -333,12 +333,11 @@ export function MatchRadarApp({
                 </div>
                 <div className="min-w-0">
                   <p className={FILTER_LABEL}>Ordenação</p>
-                  <p className="mb-1 text-[8px] leading-snug text-eid-text-secondary">
-                    Lista ordenada por <span className="font-semibold text-eid-fg/85">{sortByLabelShort(sortBy)}</span>. O
-                    padrão do radar é <span className="font-semibold text-eid-fg/80">pontos do rank</span>; para média{" "}
-                    <span className="font-semibold text-eid-fg/80">nota EID</span>, escolha o chip correspondente.
+                  <p className="mb-0.5 text-[7px] leading-tight text-eid-text-secondary sm:mb-1 sm:text-[8px] sm:leading-snug">
+                    Ordem: <span className="font-semibold text-eid-fg/85">{sortByLabelShort(sortBy)}</span>. Padrão{" "}
+                    <span className="font-semibold text-eid-fg/80">pontos do rank</span>; chip <span className="font-semibold text-eid-fg/80">Nota EID</span> para a média.
                   </p>
-                  <div className="mt-0 flex flex-wrap gap-1 rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-1">
+                  <div className="flex flex-wrap gap-0.5 rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-0.5 sm:gap-1 sm:rounded-lg sm:p-1">
                     {(
                       [
                         ["eid_score", "Nota EID"],
