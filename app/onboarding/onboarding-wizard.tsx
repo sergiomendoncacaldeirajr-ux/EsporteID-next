@@ -1506,7 +1506,7 @@ export function OnboardingWizard({
           <Link
             href="/"
             data-eid-skeleton="true"
-            className="inline-block text-[13px] text-eid-text-muted no-underline transition hover:text-eid-fg"
+            className="hidden text-[13px] text-eid-text-muted no-underline transition hover:text-eid-fg sm:inline-block"
           >
             ← Voltar ao início
           </Link>

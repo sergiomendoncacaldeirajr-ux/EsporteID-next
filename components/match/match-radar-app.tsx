@@ -232,12 +232,12 @@ export function MatchRadarApp({
   return (
     <div className="w-full min-w-0">
       {showEntryPrompt ? (
-        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/55 px-2.5 pb-[calc(var(--eid-shell-footer-offset)+0.75rem)] pt-2.5 sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/55 px-2.5 pb-[calc(var(--eid-shell-footer-offset)+2.25rem)] pt-2.5 sm:items-center sm:p-4">
           <div className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_20px_40px_-22px_rgba(2,6,23,0.7)] sm:p-4">
-            <p className="text-sm font-black text-eid-fg">Voce quer jogar um amistoso hoje?</p>
+            <p className="text-sm font-black text-eid-fg">Você quer jogar um amistoso hoje?</p>
             <p className="mt-1.5 text-[11px] leading-snug text-eid-text-secondary">
-              Amistoso sao jogos amigaveis que nao somam pontos no ranking. Se quiser ficar disponivel para jogos rapidos
-              com pessoas proximas, toque em <span className="font-semibold text-eid-primary-300">Sim</span>.
+              Amistoso são jogos amigáveis que não somam pontos no ranking. Se quiser ficar disponível para jogos rápidos
+              com pessoas próximas, toque em <span className="font-semibold text-eid-primary-300">Sim</span>.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
@@ -254,7 +254,7 @@ export function MatchRadarApp({
                 disabled={entryPending}
                 className="inline-flex min-h-[38px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-3 text-[11px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35"
               >
-                Nao
+                Não
               </button>
             </div>
           </div>

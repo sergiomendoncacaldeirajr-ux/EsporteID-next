@@ -304,11 +304,6 @@ export function CadastroForm() {
           <h2 className="mb-[15px] mt-0 text-center text-[14px] font-extrabold uppercase tracking-[1px] text-eid-primary-500">
             Criar Conta
           </h2>
-          <p className="-mt-2 mb-4 text-center text-[12px] leading-snug text-eid-text-muted">
-            Cadastro único. Depois, no onboarding, você escolhe se é atleta, espaço, organizador etc. Para usar{" "}
-            <strong className="text-eid-fg">Match</strong>, será solicitada confirmação de maioridade (18+) com registro para
-            auditoria.
-          </p>
 
           <form onSubmit={handleSubmit} className="m-0">
             {error && (
