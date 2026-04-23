@@ -29,7 +29,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
   const avatarSize = "h-14 w-14 min-[390px]:h-[4.5rem] min-[390px]:w-[4.5rem] sm:h-[4.85rem] sm:w-[4.85rem]";
   const esporteIcon = sportIconEmoji(card.esporteNome);
   const matchCtaTitle =
-    matchFinalidade === "amistoso" ? "Solicitar match amistoso" : "Solicitar match ranking";
+    matchFinalidade === "amistoso" ? "Solicitar desafio amistoso" : "Solicitar desafio ranking";
   const quickViewHref = eidStatsHref ?? card.href;
 
   const avatarInner = card.avatarUrl ? (
@@ -122,7 +122,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
             </span>
             <span
               className="inline-flex shrink-0 items-center gap-0.5 font-semibold tabular-nums text-eid-action-500"
-              title="Pontos no ranking de match"
+              title="Pontos no ranking de desafio"
             >
               <Trophy className="h-2.5 w-2.5 shrink-0 text-eid-action-400 sm:h-3 sm:w-3" strokeWidth={2.25} aria-hidden />
               <span>{card.rank}</span>
@@ -136,7 +136,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
             aria-label={matchCtaTitle}
             className="eid-btn-match-cta eid-match-cta-pulse eid-shimmer-btn relative mt-1.5 min-[390px]:mt-2 inline-flex w-full max-w-full items-center justify-center overflow-hidden rounded-lg px-2 py-1.5 min-[390px]:px-2.5 min-[390px]:py-2 text-[9px] min-[390px]:text-[10px] font-black uppercase leading-tight tracking-[0.12em] sm:mt-2.5 sm:rounded-xl sm:px-3 sm:py-2 sm:text-[11px]"
           >
-            Match
+            Desafio
           </Link>
         </div>
       </div>

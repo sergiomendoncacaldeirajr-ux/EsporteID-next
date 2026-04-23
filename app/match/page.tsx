@@ -135,7 +135,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
               Radar de oponentes
             </div>
             <h1 className="text-[1.35rem] font-black tracking-[0.01em] text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_78%,var(--eid-fg)_22%))] bg-clip-text drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_34%,transparent)] sm:text-[1.6rem]">
-              Match
+              Desafio
             </h1>
             <p className="max-w-prose text-[10px] leading-snug text-eid-text-secondary sm:text-[11px]">
               Ative a localização para ver atletas e formações perto de você. Depois você filtra esporte, raio e modalidade sem sair da tela.

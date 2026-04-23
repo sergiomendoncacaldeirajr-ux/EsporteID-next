@@ -177,13 +177,20 @@ export function MatchRadarApp({
   }, [initialTipo, initialSortBy, initialRaio, esporteSelecionado, initialFinalidade, initialCards, viewerDisponivelAmistoso, initialView, initialGeneroFiltro]);
 
   useEffect(() => {
+    let skipPromptThisLoad = false;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      skipPromptThisLoad = params.get("entry_done") === "1";
+    } catch {
+      skipPromptThisLoad = false;
+    }
     try {
       const seenInfo = window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY) === "1";
       setShowEntryInfo(!seenInfo);
     } catch {
       setShowEntryInfo(false);
     }
-    setShowEntryPrompt(true);
+    setShowEntryPrompt(!skipPromptThisLoad);
     setEntryError(null);
     setViewMode("full");
   }, []);
@@ -224,7 +231,16 @@ export function MatchRadarApp({
     setShowEntryInfo(false);
     switchViewMode("full");
     if (!wantsAmistoso) {
-      setShowEntryPrompt(false);
+      const q = new URLSearchParams();
+      q.set("tipo", tipo);
+      q.set("esporte", /^\d+$/.test(esporte) ? esporte : "all");
+      q.set("raio", String(raio));
+      q.set("sort_by", sortBy);
+      q.set("finalidade", finalidade);
+      q.set("view", "full");
+      q.set("genero", generoFiltro);
+      q.set("entry_done", "1");
+      window.location.href = `/match?${q.toString()}`;
       return;
     }
 
@@ -243,6 +259,7 @@ export function MatchRadarApp({
     q.set("finalidade", "amistoso");
     q.set("view", "full");
     q.set("genero", generoFiltro);
+    q.set("entry_done", "1");
     window.location.href = `/match?${q.toString()}`;
   }
 
@@ -312,11 +329,11 @@ export function MatchRadarApp({
             ) : null}
           </div>
           <h1 className="col-start-1 row-start-2 pt-0.5 text-[1.35rem] font-black leading-none tracking-[0.01em] text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_78%,var(--eid-fg)_22%))] bg-clip-text drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_34%,transparent)] sm:text-[1.6rem]">
-            Match
+            Desafio
           </h1>
           <p className="col-span-2 row-start-3 max-w-none pt-0.5 text-[10px] leading-snug text-eid-text-secondary text-balance sm:text-[11px]">
             {finalidade === "amistoso"
-              ? "Atletas com modo amistoso ativo e interesse em jogo casual. O botão Solicitar match já envia pedido amistoso (sem carência de meses)."
+              ? "Atletas com modo amistoso ativo e interesse em jogo casual. O botão Solicitar desafio já envia pedido amistoso (sem carência de meses)."
               : "Oponentes por proximidade; ordene por nota EID ou pontos do ranking. Troque modalidade e filtros sem recarregar."}
           </p>
         </div>
@@ -324,23 +341,23 @@ export function MatchRadarApp({
 
       {showSentBanner ? (
         <p className="mb-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 py-2 text-xs leading-snug text-eid-fg shadow-[0_6px_16px_-12px_rgba(15,23,42,0.22)] backdrop-blur-sm">
-          Pedido de match enviado. O adversário será notificado.
+          Pedido de desafio enviado. O adversário será notificado.
         </p>
       ) : null}
 
       {viewMode === "grid" ? (
       <div className={cn(FILTER_CARD_CLASS, "mb-2 space-y-1.5 [&_button]:[-webkit-tap-highlight-color:transparent]")}>
         <div>
-          <p className={FILTER_LABEL}>Tipo de match</p>
+          <p className={FILTER_LABEL}>Tipo de desafio</p>
           <div className="mt-0.5 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
             <nav
               className="flex min-h-[1.85rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:min-h-[1.45rem]"
-              aria-label="Tipo de match"
+              aria-label="Tipo de desafio"
             >
               {(
                 [
-                  ["ranking", "Match ranking"],
-                  ["amistoso", "Match amistoso"],
+                  ["ranking", "Desafio ranking"],
+                  ["amistoso", "Desafio amistoso"],
                 ] as const
               ).map(([value, label]) => {
                 const active = finalidade === value;
@@ -386,7 +403,7 @@ export function MatchRadarApp({
                     key={value}
                     type="button"
                     disabled={isPending || bloqueadoAmistoso}
-                    title={bloqueadoAmistoso ? "Match amistoso no radar é só no individual." : undefined}
+                    title={bloqueadoAmistoso ? "Desafio amistoso no radar é só no individual." : undefined}
                     onClick={() => applyFilters({ tipo: value })}
                     className={segmentTab(active)}
                   >
@@ -608,7 +625,7 @@ export function MatchRadarApp({
                       href={desafioHref}
                       className="eid-btn-match-cta mt-1.5 inline-flex min-h-[30px] w-full items-center justify-center rounded-lg px-2 text-[9px] font-black uppercase tracking-[0.08em]"
                     >
-                      Match
+                      Desafio
                     </Link>
                   </article>
                 );

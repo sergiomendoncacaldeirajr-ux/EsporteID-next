@@ -98,7 +98,7 @@ export function DashboardTopbar({
   const baseAthleteNavItems = [
     { href: "/dashboard", label: "Painel" },
     { href: "/agenda", label: "Agenda" },
-    { href: "/match", label: "Match" },
+    { href: "/match", label: "Desafio" },
     { href: "/comunidade", label: "Social" },
     { href: "/torneios", label: "Torneios" },
     { href: "/times", label: "Times" },

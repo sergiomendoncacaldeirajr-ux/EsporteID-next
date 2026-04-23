@@ -294,7 +294,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             className="eid-btn-dashboard-cta relative mt-5 flex w-full items-center justify-center gap-2.5 sm:mt-6"
           >
             <IconBolt className="h-5 w-5 shrink-0 text-white drop-shadow-sm" />
-            Encontrar match
+            Encontrar desafio
           </Link>
         </div>
 

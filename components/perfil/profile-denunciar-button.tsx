@@ -148,7 +148,7 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
                     onChange={(e) => setTexto(e.target.value)}
                     rows={3}
                     maxLength={2000}
-                    className="eid-input-dark mt-1 w-full resize-none rounded-lg px-2 py-1.5 text-xs"
+                    className="mt-1 w-full resize-none rounded-lg border border-red-300 bg-white px-2 py-1.5 text-xs text-slate-800 placeholder:text-slate-500 outline-none focus:border-red-500/60 focus:ring-2 focus:ring-red-400/25 dark:border-[color:var(--eid-border-subtle)] dark:bg-eid-field-bg dark:text-eid-fg dark:placeholder:text-eid-text-secondary"
                     placeholder="Informações que ajudem a moderação..."
                   />
                 </div>
