@@ -86,7 +86,7 @@ export function MatchRadarApp({
   const [viewMode, setViewMode] = useState<"full" | "grid">(initialView);
   const [activeCardIdx, setActiveCardIdx] = useState(0);
   const [isPending, startTransition] = useTransition();
-  const [entryPending, startEntryTransition] = useTransition();
+  const [entryPending, setEntryPending] = useState(false);
   const [radarFiltrosAbertos, setRadarFiltrosAbertos] = useState(false);
   const [amistosoLigado, setAmistosoLigado] = useState(viewerDisponivelAmistoso);
   const [showEntryPrompt, setShowEntryPrompt] = useState(false);
@@ -212,21 +212,10 @@ export function MatchRadarApp({
     switchViewMode("full");
     if (!wantsAmistoso) return;
 
+    setEntryPending(true);
     setAmistosoLigado(true);
-    const next = {
-      tipo: "atleta" as RadarTipo,
-      sortBy,
-      raio,
-      esporte,
-      finalidade: "amistoso" as MatchRadarFinalidade,
-    };
-    setTipo("atleta");
-    setFinalidade("amistoso");
-    syncUrl(next);
-    runRefresh(next);
-    startEntryTransition(async () => {
-      await setViewerDisponivelAmistoso(true);
-    });
+    void setViewerDisponivelAmistoso(true).finally(() => setEntryPending(false));
+    applyFilters({ tipo: "atleta", finalidade: "amistoso" });
   }
 
   return (
