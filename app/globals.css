@@ -99,6 +99,14 @@ body.eid-app-shell {
   body.eid-app-shell {
     --eid-shell-footer-offset: max(14px, env(safe-area-inset-bottom, 0px));
     padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    /*
+     * Altura travada na janela visível: sem isso o flex soma altura de todo o conteúdo
+     * e a nav no fluxo some “abaixo da dobra”. overflow no body: scroll só em #app-main-column.
+     */
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
   }
 }
 
@@ -187,11 +195,11 @@ html {
   background-color: var(--eid-bg);
 }
 
-/* iPhone/iPad WebKit: leve aumento da base rem (Tailwind escala com o root). */
+/* iPhone/iPad WebKit: base rem maior (Tailwind escala com o root). ~+22% vs 16px. */
 @media (max-width: 767px) {
   @supports (-webkit-touch-callout: none) {
     html {
-      font-size: 17px;
+      font-size: 19.5px;
     }
   }
 }
