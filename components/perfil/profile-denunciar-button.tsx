@@ -38,20 +38,29 @@ export function ProfileDenunciarButton({ alvoUsuarioId }: { alvoUsuarioId: strin
   }, [alvoUsuarioId, codigo, texto]);
 
   return (
-    <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-3">
+    <div
+      className={`mx-auto w-full rounded-xl border border-red-500/25 bg-red-500/5 p-2 ${
+        aberto ? "max-w-md" : "max-w-[min(100%,15.5rem)]"
+      }`}
+    >
       <button
         type="button"
+        aria-expanded={aberto}
+        aria-controls="eid-denuncia-painel"
         onClick={() => {
           setAberto((v) => !v);
           setMsg(null);
         }}
-        className="text-[11px] font-bold uppercase tracking-wide text-red-300/95 underline-offset-2 hover:text-red-200 hover:underline"
+        className="flex w-full min-h-[2.25rem] touch-manipulation items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/10 px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-red-300/95 transition hover:border-red-500/35 hover:bg-red-500/15 active:bg-red-500/20"
       >
-        Denunciar perfil
+        <svg viewBox="0 0 12 14" className="h-3 w-2.5 shrink-0 opacity-90" fill="currentColor" aria-hidden>
+          <path d="M0 0h2v14H0zM2 2l9 3.5L2 9z" />
+        </svg>
+        <span>Denunciar perfil</span>
       </button>
 
       {aberto ? (
-        <div className="mt-3 space-y-3 border-t border-red-500/20 pt-3">
+        <div id="eid-denuncia-painel" className="mt-2.5 space-y-3 border-t border-red-500/20 pt-2.5">
           <p className="text-[11px] text-eid-text-secondary">Motivo da denúncia</p>
           <div className="grid gap-2">
             {MOTIVOS.map((m) => (
