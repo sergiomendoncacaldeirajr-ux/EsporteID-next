@@ -375,7 +375,7 @@ export function MatchRadarApp({
             Nenhum oponente com esses filtros.
           </p>
         ) : (
-          <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-2 min-[480px]:gap-2.5 sm:gap-3">
+          <div className="grid min-w-0 grid-cols-2 gap-2 max-[360px]:grid-cols-1 sm:gap-3">
             {cards.map((c) => (
               <MatchRadarCardView
                 key={`${c.modalidade}-${c.id}-${c.esporteId}`}
