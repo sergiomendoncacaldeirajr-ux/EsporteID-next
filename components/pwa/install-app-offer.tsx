@@ -91,16 +91,17 @@ export function InstallAppOffer() {
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     window.addEventListener("appinstalled", onAppInstalled);
 
-    /* iOS não dispara beforeinstallprompt: oferecemos instruções após um breve delay */
-    let t: ReturnType<typeof window.setTimeout> | undefined;
+    /* iOS não dispara beforeinstallprompt: oferecemos instruções após um breve delay.
+     * Em browser o id do timer é `number`; com @types/node, `setTimeout` vira `NodeJS.Timeout` — evitamos o conflito. */
+    let iosOpenTimer: number | undefined;
     if (isIOSLike() && !dismissed) {
-      t = window.setTimeout(() => setIosOpen(true), 900);
+      iosOpenTimer = window.setTimeout(() => setIosOpen(true), 900);
     }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
       window.removeEventListener("appinstalled", onAppInstalled);
-      if (t !== undefined) window.clearTimeout(t);
+      if (iosOpenTimer !== undefined) window.clearTimeout(iosOpenTimer);
     };
   }, []);
 
