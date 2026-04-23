@@ -10,7 +10,11 @@ import { MatchFriendlyToggle } from "@/components/match/match-friendly-toggle";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import { MatchRadarCardView } from "@/components/match/match-radar-card";
 import { MatchChallengeAction } from "@/components/match/match-challenge-action";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+import { PROFILE_PUBLIC_AVATAR_RING_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
+import { matchCardEidStatsHref } from "@/lib/match/radar-snapshot";
 
 function cn(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(" ");
@@ -223,11 +227,7 @@ export function MatchRadarApp({
     q.set("finalidade", finalidade);
     q.set("view", next);
     q.set("genero", generoFiltro);
-    if (next === "full") {
-      window.location.href = `/match?${q.toString()}`;
-      return;
-    }
-    window.history.replaceState(null, "", `/match?${q.toString()}`);
+    window.location.href = `/match?${q.toString()}`;
   }
 
   async function handleEntryChoice(wantsAmistoso: boolean) {
@@ -334,7 +334,25 @@ export function MatchRadarApp({
 
     return ordered;
   }, [cards, amistosoLigado]);
-  const visibleCards = isFullView ? fullOrderedCards : cardsFiltradosGenero;
+  const challengeableCards = useMemo(
+    () => cards.filter((c) => c.modalidade === "individual" || c.canChallenge),
+    [cards]
+  );
+  const cardsFiltradosGeneroChallengeable = useMemo(() => {
+    if (generoFiltro === "all") return challengeableCards;
+    return challengeableCards.filter((c) => {
+      if (c.modalidade !== "individual") return true;
+      const g = String(c.genero ?? "").trim().toLowerCase();
+      if (generoFiltro === "masculino") return g === "masculino";
+      if (generoFiltro === "feminino") return g === "feminino";
+      return g !== "" && g !== "masculino" && g !== "feminino";
+    });
+  }, [challengeableCards, generoFiltro]);
+  const fullOrderedChallengeableCards = useMemo(() => {
+    const allowed = new Set(challengeableCards.map((c) => `${c.modalidade}:${c.id}:${c.esporteId}`));
+    return fullOrderedCards.filter((c) => allowed.has(`${c.modalidade}:${c.id}:${c.esporteId}`));
+  }, [challengeableCards, fullOrderedCards]);
+  const visibleCards = isFullView ? fullOrderedChallengeableCards : cardsFiltradosGeneroChallengeable;
 
   return (
     <div className="w-full min-w-0">
@@ -679,7 +697,7 @@ export function MatchRadarApp({
           </p>
         ) : viewMode === "full" ? (
           <div className="flex min-h-0 flex-1 flex-col gap-2">
-            <div className="grid min-w-0 flex-1 grid-cols-2 content-start gap-1.5 overflow-y-auto pb-2 max-[340px]:grid-cols-1 sm:gap-2.5">
+            <div className="grid min-w-0 flex-1 grid-cols-2 content-start gap-1.5 overflow-y-auto pb-2 max-[360px]:grid-cols-1 sm:gap-2.5">
               {visibleCards.map((c) => {
                 const esporteParam = c.esporteId > 0 ? String(c.esporteId) : esporte;
                 const cardFinalidade =
@@ -697,27 +715,68 @@ export function MatchRadarApp({
                       : c.interesseMatch === "ranking_e_amistoso" && c.disponivelAmistoso
                         ? "Ranking + Amistoso"
                         : "Ranking";
+                const eidStatsHref = matchCardEidStatsHref(c);
+                const avatarBlock = c.avatarUrl ? (
+                  <img src={c.avatarUrl} alt="" className={`h-full w-full ${PROFILE_PUBLIC_AVATAR_RING_CLASS}`} loading="lazy" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                    EID
+                  </div>
+                );
                 return (
                   <article
                     key={`${c.modalidade}-${c.id}-${c.esporteId}-mini`}
-                    className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2"
+                    className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2.5"
                   >
                     <div className="flex items-center gap-2">
-                      <Link href={c.href} className="block h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65">
-                        {c.avatarUrl ? <img src={c.avatarUrl} alt="" className="h-full w-full object-cover" /> : null}
-                      </Link>
+                      <div className="relative h-14 w-14 shrink-0">
+                        <ProfileEditDrawerTrigger
+                          href={eidStatsHref ?? c.href}
+                          title={`Estatísticas EID de ${c.nome}`}
+                          fullscreen
+                          topMode="backOnly"
+                          className="block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
+                        >
+                          {avatarBlock}
+                        </ProfileEditDrawerTrigger>
+                        <span
+                          className={`pointer-events-none absolute inset-0 rounded-full border-2 motion-safe:animate-pulse ${
+                            c.disponivelAmistoso
+                              ? "border-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.45),0_0_12px_rgba(16,185,129,0.75)]"
+                              : "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.45),0_0_12px_rgba(239,68,68,0.72)]"
+                          }`}
+                          aria-hidden
+                        />
+                        <div className="absolute -bottom-1 left-1/2 z-[2] -translate-x-1/2">
+                          {eidStatsHref ? (
+                            <ProfileEditDrawerTrigger
+                              href={eidStatsHref}
+                              title={`Estatísticas EID de ${c.esporteNome} — ${c.nome}`}
+                              fullscreen
+                              topMode="backOnly"
+                              className="inline-flex rounded-full"
+                            >
+                              <ProfileEidPerformanceSeal notaEid={c.eid} compact className="scale-105" />
+                            </ProfileEditDrawerTrigger>
+                          ) : (
+                            <ProfileEidPerformanceSeal notaEid={c.eid} compact className="scale-105" />
+                          )}
+                        </div>
+                      </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[11px] font-black text-eid-fg" title={c.nome}>{nomeCurto}</p>
                         <p className="truncate text-[9px] text-eid-primary-300">{esporteIcon} {c.esporteNome}</p>
                         <div className="mt-0.5 flex flex-wrap gap-1">
-                          <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-0.5 text-[8px] font-bold leading-none text-eid-fg/90">
+                          <span className="inline-flex items-center gap-0.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-0.5 text-[8px] font-bold leading-none text-eid-fg/90">
+                            {c.modalidade === "individual" ? <User className="h-2.5 w-2.5" strokeWidth={2.3} aria-hidden /> : c.modalidade === "dupla" ? <Users className="h-2.5 w-2.5" strokeWidth={2.3} aria-hidden /> : <Shield className="h-2.5 w-2.5" strokeWidth={2.3} aria-hidden />}
                             {modalidadeLabel}
                           </span>
-                          <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-0.5 text-[8px] font-bold leading-none text-eid-fg/90">
+                          <span className="inline-flex items-center gap-0.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-0.5 text-[8px] font-bold leading-none text-eid-fg/90">
+                            {tipoLabel.toLowerCase().includes("amistoso") ? <Handshake className="h-2.5 w-2.5" strokeWidth={2.3} aria-hidden /> : <Trophy className="h-2.5 w-2.5" strokeWidth={2.3} aria-hidden />}
                             {tipoLabel}
                           </span>
                         </div>
-                        <p className="text-[9px] font-semibold text-eid-action-400">{c.rank} pts</p>
+                        <p className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-eid-action-400"><Trophy className="h-2.5 w-2.5" strokeWidth={2.3} aria-hidden />{c.rank} pts</p>
                       </div>
                     </div>
                     <MatchChallengeAction
@@ -744,7 +803,7 @@ export function MatchRadarApp({
             </div>
           </div>
         ) : (
-          <div className="grid min-w-0 grid-cols-2 gap-1.5 max-[340px]:grid-cols-1 sm:gap-3">
+          <div className="grid min-w-0 grid-cols-2 gap-1.5 max-[360px]:grid-cols-1 sm:gap-3">
             {visibleCards.map((c) => (
               <MatchRadarCardView
                 key={`${c.modalidade}-${c.id}-${c.esporteId}`}
