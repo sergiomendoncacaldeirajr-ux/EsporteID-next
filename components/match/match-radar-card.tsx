@@ -1,7 +1,6 @@
 "use client";
 
 import { Trophy } from "lucide-react";
-import Link from "next/link";
 import { matchCardEidStatsHref, type MatchRadarCard, type MatchRadarFinalidade } from "@/lib/match/radar-snapshot";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
@@ -17,6 +16,16 @@ type Props = {
   viewerHasTime: boolean;
 };
 
+function compactCardName(fullName: string) {
+  const parts = fullName.trim().split(/\s+/u).filter(Boolean);
+  if (parts.length === 0) return fullName;
+  if (parts.length === 1) return parts[0];
+  const first = parts[0];
+  const last = parts[parts.length - 1];
+  const firstAndLast = `${first} ${last}`.trim();
+  return firstAndLast.length <= 18 ? firstAndLast : first;
+}
+
 export function MatchRadarCardView({ card, esporteContextId, matchFinalidade, viewerHasDupla, viewerHasTime }: Props) {
   const esporteParam = card.esporteId > 0 ? String(card.esporteId) : esporteContextId;
   const desafioHref = `/desafio?id=${encodeURIComponent(card.id)}&tipo=${encodeURIComponent(card.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(matchFinalidade)}`;
@@ -27,7 +36,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade, vi
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase() ?? "")
     .join("") || "?";
-  const displayName = card.nome.trim().split(/\s+/u)[0] || card.nome;
+  const displayName = compactCardName(card.nome);
 
   const avatarSize = "h-14 w-14 min-[390px]:h-[4.5rem] min-[390px]:w-[4.5rem] sm:h-[4.85rem] sm:w-[4.85rem]";
   const esporteIcon = sportIconEmoji(card.esporteNome);
@@ -111,36 +120,30 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade, vi
           <h3 className="truncate text-[12px] font-black leading-tight tracking-tight text-eid-fg min-[390px]:text-[13px] sm:text-sm" title={card.nome}>
             {displayName}
           </h3>
-          <div className="mt-0.5 min-[390px]:mt-1 flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 min-[390px]:gap-x-1.5 text-[9px] min-[390px]:text-[10px] leading-tight text-eid-primary-400 sm:text-[11px]">
-            <span className="inline-flex min-w-0 max-w-full items-center gap-0.5 font-semibold">
-              <span className="shrink-0 text-[11px] leading-none sm:text-xs" aria-hidden>
-                {esporteIcon}
-              </span>
-              <span className="truncate" title={card.esporteNome}>
-                {card.esporteNome}
-              </span>
-            </span>
-            <span className="shrink-0 text-eid-text-secondary/75" aria-hidden>
-              ·
-            </span>
-            <span
-              className="inline-flex shrink-0 items-center gap-0.5 font-semibold tabular-nums text-eid-action-500"
-              title="Pontos no ranking de desafio"
-            >
-              <Trophy className="h-2.5 w-2.5 shrink-0 text-eid-action-400 sm:h-3 sm:w-3" strokeWidth={2.25} aria-hidden />
-              <span>{card.rank}</span>
-              <span className="font-medium text-eid-text-secondary">pts</span>
-            </span>
-          </div>
 
           <MatchChallengeAction
             modalidade={card.modalidade}
             desafioHref={desafioHref}
-            className="eid-btn-match-cta eid-match-cta-pulse eid-shimmer-btn relative mt-1.5 min-[390px]:mt-2 inline-flex w-full max-w-full items-center justify-center overflow-hidden rounded-lg px-2 py-1.5 min-[390px]:px-2.5 min-[390px]:py-2 text-[9px] min-[390px]:text-[10px] font-black uppercase leading-tight tracking-[0.12em] sm:mt-2.5 sm:rounded-xl sm:px-3 sm:py-2 sm:text-[11px]"
+            className="eid-btn-match-cta eid-match-cta-pulse eid-shimmer-btn relative mt-1.5 min-[390px]:mt-2 inline-flex w-full max-w-full items-center justify-center overflow-hidden rounded-lg px-2 py-1.5 min-[390px]:px-2.5 min-[390px]:py-2 text-[9px] min-[390px]:text-[10px] font-black uppercase leading-tight tracking-[0.12em] sm:rounded-xl sm:px-3 sm:py-2 sm:text-[11px]"
             title={matchCtaTitle}
             viewerHasDupla={viewerHasDupla}
             viewerHasTime={viewerHasTime}
           />
+        </div>
+      </div>
+
+      <div className="relative z-[1] mt-2">
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-[color:var(--eid-border-subtle)]/75 bg-eid-surface/45 px-2 py-1">
+          <p className="min-w-0 truncate text-[9px] font-semibold text-eid-primary-300" title={card.esporteNome}>
+            {esporteIcon} {card.esporteNome}
+          </p>
+          <span
+            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1.5 py-0.5 text-[8px] font-bold text-eid-fg/90"
+            title="Pontos no ranking de desafio"
+          >
+            <Trophy className="h-2.5 w-2.5 shrink-0 text-eid-action-400" strokeWidth={2.25} aria-hidden />
+            {card.rank} pts
+          </span>
         </div>
       </div>
 
