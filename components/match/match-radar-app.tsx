@@ -54,6 +54,12 @@ type Props = {
 
 const RAII = [10, 30, 50, 100] as const;
 
+const MATCH_RADAR_FILTROS_PANEL_ID = "match-radar-filtros-esporte-raio-ord";
+
+function sortByLabelShort(sortBy: SortBy) {
+  return sortBy === "eid_score" ? "Nota EID" : "Pontos rank";
+}
+
 export function MatchRadarApp({
   viewerId,
   initialCards,
@@ -74,6 +80,7 @@ export function MatchRadarApp({
   const [finalidade, setFinalidade] = useState<MatchRadarFinalidade>(initialFinalidade);
   const [cards, setCards] = useState<MatchRadarCard[]>(initialCards);
   const [isPending, startTransition] = useTransition();
+  const [radarFiltrosAbertos, setRadarFiltrosAbertos] = useState(false);
 
   const syncUrl = useCallback(
     (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
@@ -150,6 +157,11 @@ export function MatchRadarApp({
   }, [initialTipo, initialSortBy, initialRaio, esporteSelecionado, initialFinalidade, initialCards]);
 
   const esporteOptions = useMemo(() => [{ id: "all", nome: "Todos" }, ...esportes.map((e) => ({ id: String(e.id), nome: e.nome ?? "" }))], [esportes]);
+
+  const esporteNomeResumo = useMemo(() => {
+    const row = esporteOptions.find((e) => String(e.id) === String(esporte));
+    return row?.nome?.trim() || "Todos";
+  }, [esporteOptions, esporte]);
 
   return (
     <div className="w-full min-w-0">
@@ -253,63 +265,103 @@ export function MatchRadarApp({
           </div>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          <div className="min-w-0">
-            <p className={FILTER_LABEL}>Esporte</p>
-            <div className="mt-1 flex max-h-[4.25rem] flex-wrap gap-1 overflow-y-auto rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-1">
-              {esporteOptions.map((e) => {
-                const active = String(esporte) === String(e.id);
-                return (
-                  <button
-                    key={e.id}
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => applyFilters({ esporte: e.id === "all" ? "all" : e.id })}
-                    className={filterChip(active)}
-                  >
-                    {e.nome}
-                  </button>
-                );
-              })}
+        <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_14%,transparent)] p-1">
+          <button
+            type="button"
+            aria-expanded={radarFiltrosAbertos}
+            aria-controls={MATCH_RADAR_FILTROS_PANEL_ID}
+            disabled={isPending}
+            onClick={() => setRadarFiltrosAbertos((v) => !v)}
+            className="flex w-full min-w-0 touch-manipulation items-center gap-2 rounded-md px-1.5 py-1.5 text-left transition hover:bg-eid-surface/30 disabled:opacity-50"
+          >
+            <span className="shrink-0 text-[8px] font-black uppercase tracking-[0.12em] text-eid-primary-400">(Filtro)</span>
+            <span className="min-w-0 flex-1 truncate text-[9px] font-bold uppercase leading-tight tracking-[0.04em] text-eid-fg/95">
+              <span className="text-eid-text-secondary">Esporte</span>{" "}
+              <span className="text-eid-fg/90">{esporteNomeResumo}</span>
+              <span className="mx-1 font-normal text-eid-text-secondary">—</span>
+              <span className="text-eid-text-secondary">Raio</span>{" "}
+              <span className="text-eid-fg/90">{raio} km</span>
+              <span className="mx-1 font-normal text-eid-text-secondary">—</span>
+              <span className="text-eid-text-secondary">Ord.</span>{" "}
+              <span className="text-eid-fg/90">{sortByLabelShort(sortBy)}</span>
+            </span>
+            <span className="shrink-0 text-[10px] text-eid-text-secondary" aria-hidden>
+              {radarFiltrosAbertos ? "▾" : "▸"}
+            </span>
+          </button>
+
+          {radarFiltrosAbertos ? (
+            <div
+              id={MATCH_RADAR_FILTROS_PANEL_ID}
+              className="mt-1.5 space-y-2 border-t border-[color:var(--eid-border-subtle)]/55 pt-2"
+            >
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className="min-w-0">
+                  <p className={FILTER_LABEL}>Esporte</p>
+                  <div className="mt-1 overflow-x-auto overflow-y-hidden rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] py-1 pl-1 pr-0.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]">
+                    <div className="flex w-max flex-nowrap gap-1 pr-1">
+                      {esporteOptions.map((e) => {
+                        const active = String(esporte) === String(e.id);
+                        return (
+                          <button
+                            key={e.id}
+                            type="button"
+                            disabled={isPending}
+                            onClick={() => applyFilters({ esporte: e.id === "all" ? "all" : e.id })}
+                            className={cn(filterChip(active), "shrink-0")}
+                          >
+                            {e.nome}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className={FILTER_LABEL}>Raio</p>
+                  <div className="mt-1 flex flex-wrap gap-1 rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-1">
+                    {RAII.map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => applyFilters({ raio: r })}
+                        className={filterChip(r === raio)}
+                      >
+                        {r} km
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className={FILTER_LABEL}>Ordenação</p>
+                  <p className="mb-1 text-[8px] leading-snug text-eid-text-secondary">
+                    Lista ordenada por <span className="font-semibold text-eid-fg/85">{sortByLabelShort(sortBy)}</span>. O
+                    padrão do radar é <span className="font-semibold text-eid-fg/80">pontos do rank</span>; para média{" "}
+                    <span className="font-semibold text-eid-fg/80">nota EID</span>, escolha o chip correspondente.
+                  </p>
+                  <div className="mt-0 flex flex-wrap gap-1 rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-1">
+                    {(
+                      [
+                        ["eid_score", "Nota EID"],
+                        ["match_ranking_points", "Pontos rank"],
+                      ] as const
+                    ).map(([k, label]) => (
+                      <button
+                        key={k}
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => applyFilters({ sortBy: k })}
+                        className={filterChip(sortBy === k)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="min-w-0">
-            <p className={FILTER_LABEL}>Raio</p>
-            <div className="mt-1 flex flex-wrap gap-1 rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-1">
-              {RAII.map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => applyFilters({ raio: r })}
-                  className={filterChip(r === raio)}
-                >
-                  {r} km
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="min-w-0">
-            <p className={FILTER_LABEL}>Ordenação</p>
-            <div className="mt-1 flex flex-wrap gap-1 rounded-lg bg-[color-mix(in_srgb,var(--eid-bg)_18%,transparent)] p-1">
-              {(
-                [
-                  ["eid_score", "Nota EID"],
-                  ["match_ranking_points", "Pontos rank"],
-                ] as const
-              ).map(([k, label]) => (
-                <button
-                  key={k}
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => applyFilters({ sortBy: k })}
-                  className={filterChip(sortBy === k)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
+          ) : null}
         </div>
       </div>
 

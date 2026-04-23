@@ -30,7 +30,9 @@ function toTipo(v: string | undefined): RadarTipo {
 }
 
 function toSortBy(v: string | undefined): SortBy {
-  return v === "match_ranking_points" ? "match_ranking_points" : "eid_score";
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s === "eid_score") return "eid_score";
+  return "match_ranking_points";
 }
 
 function toRaio(v: string | undefined): number {
