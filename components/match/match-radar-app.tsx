@@ -417,7 +417,7 @@ export function MatchRadarApp({
         ? createPortal(
             <div
               className="fixed inset-0 flex items-end justify-center bg-black/55 px-2.5 pb-[calc(var(--eid-shell-footer-offset)+2.25rem)] pt-2.5 sm:items-center sm:p-4"
-              style={{ zIndex: 2147483600 }}
+              style={{ zIndex: 800 }}
             >
               <div className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_20px_40px_-22px_rgba(2,6,23,0.7)] sm:p-4">
                 <p className="text-sm font-black text-eid-fg">Você quer jogar um amistoso hoje?</p>
@@ -453,7 +453,7 @@ export function MatchRadarApp({
         : null}
       {mounted && showRankRulesPrompt && !showEntryPrompt
         ? createPortal(
-            <div className="fixed inset-0 z-[2147483700] flex items-center justify-center bg-black/60 px-3">
+            <div className="fixed inset-0 z-[810] flex items-center justify-center bg-black/60 px-3">
               <div className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_18px_44px_-24px_rgba(2,6,23,0.78)] sm:p-4">
                 <p className="text-sm font-black text-eid-fg">Como funciona o Desafio de ranking</p>
                 <ul className="mt-2 space-y-1.5 text-[11px] leading-snug text-eid-text-secondary sm:text-xs">
@@ -771,7 +771,7 @@ export function MatchRadarApp({
         ) : null}
         {finalidade === "amistoso" && !amistosoLigado && mounted
           ? createPortal(
-              <div className="fixed inset-0 z-[2147483650] flex items-center justify-center bg-black/55 px-3">
+              <div className="fixed inset-0 z-[805] flex items-center justify-center bg-black/55 px-3">
                 <div className="w-full max-w-md rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 shadow-[0_16px_40px_-20px_rgba(2,6,23,0.78)] sm:p-4">
                   <p className="text-[11px] leading-snug text-eid-fg sm:text-xs">
                     Para funcionar no <span className="font-semibold text-eid-primary-300">modo amistoso</span>, ligue
@@ -799,7 +799,7 @@ export function MatchRadarApp({
         ) : viewMode === "full" ? (
           mounted ? createPortal(<div
             className="fixed inset-0 isolate flex flex-col bg-eid-bg px-2.5 pb-[max(10px,env(safe-area-inset-bottom))] pt-[max(8px,env(safe-area-inset-top))] sm:px-4"
-            style={{ zIndex: 2147483000 }}
+            style={{ zIndex: 300 }}
             role="dialog"
             aria-modal="true"
             aria-label="Modo tela cheia de desafio"
