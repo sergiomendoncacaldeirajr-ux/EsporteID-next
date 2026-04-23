@@ -69,7 +69,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   const tipo = toTipo(sp.tipo);
   const matchFinalidade = toMatchFinalidade(sp.finalidade);
   const initialView = toViewMode(sp.view);
-  if (matchFinalidade === "amistoso" && tipo !== "atleta") {
+  if (initialView !== "full" && matchFinalidade === "amistoso" && tipo !== "atleta") {
     const q = new URLSearchParams();
     for (const [k, v] of Object.entries(sp)) {
       if (typeof v === "string" && v.length > 0) q.set(k, v);
@@ -121,6 +121,18 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
       ? String(meAm?.disponivel_amistoso_ate ?? me.disponivel_amistoso_ate)
       : null;
   const hasLocation = Number.isFinite(Number(me.lat)) && Number.isFinite(Number(me.lng));
+  const [{ data: meusTimesCriados }, { data: minhasMembRows }] = await Promise.all([
+    supabase.from("times").select("id, tipo").eq("criador_id", user.id),
+    supabase.from("membros_time").select("time_id").eq("usuario_id", user.id).eq("status", "ativo"),
+  ]);
+  const meusTimesMembroIds = (minhasMembRows ?? []).map((r) => Number((r as { time_id: number }).time_id)).filter((n) => Number.isFinite(n) && n > 0);
+  const { data: meusTimesMembro } =
+    meusTimesMembroIds.length > 0
+      ? await supabase.from("times").select("id, tipo").in("id", meusTimesMembroIds)
+      : { data: [] as Array<{ id: number; tipo: string | null }> };
+  const allViewerTimes = [...(meusTimesCriados ?? []), ...(meusTimesMembro ?? [])];
+  const viewerHasDupla = allViewerTimes.some((t) => String((t as { tipo?: string | null }).tipo ?? "").trim().toLowerCase() === "dupla");
+  const viewerHasTime = allViewerTimes.some((t) => String((t as { tipo?: string | null }).tipo ?? "").trim().toLowerCase() === "time");
 
   if (!hasLocation) {
     return (
@@ -159,16 +171,77 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   const esporteSelecionado = esporteParam === "all" ? esporteDefault : esporteParam;
   const initialGeneroFiltro = toGeneroFiltro(sp.genero, (me as { genero?: string | null })?.genero ?? null);
 
-  const initialCards = await fetchMatchRadarCards(supabase, {
-    viewerId: user.id,
-    tipo,
-    sortBy,
-    raio,
-    esporteSelecionado,
-    lat: Number(me.lat),
-    lng: Number(me.lng),
-    finalidade: matchFinalidade,
-  });
+  const initialCards =
+    initialView === "full"
+      ? await (async () => {
+          const merged = (
+            await Promise.all([
+            fetchMatchRadarCards(supabase, {
+              viewerId: user.id,
+              tipo: "atleta",
+              sortBy,
+              raio,
+              esporteSelecionado,
+              lat: Number(me.lat),
+              lng: Number(me.lng),
+              finalidade: "ranking",
+            }),
+            fetchMatchRadarCards(supabase, {
+              viewerId: user.id,
+              tipo: "atleta",
+              sortBy,
+              raio,
+              esporteSelecionado,
+              lat: Number(me.lat),
+              lng: Number(me.lng),
+              finalidade: "amistoso",
+            }),
+            fetchMatchRadarCards(supabase, {
+              viewerId: user.id,
+              tipo: "dupla",
+              sortBy,
+              raio,
+              esporteSelecionado,
+              lat: Number(me.lat),
+              lng: Number(me.lng),
+              finalidade: "ranking",
+            }),
+            fetchMatchRadarCards(supabase, {
+              viewerId: user.id,
+              tipo: "time",
+              sortBy,
+              raio,
+              esporteSelecionado,
+              lat: Number(me.lat),
+              lng: Number(me.lng),
+              finalidade: "ranking",
+            }),
+            ])
+          ).flat();
+          const byKey = new Map<string, (typeof merged)[number]>();
+          for (const card of merged) {
+            const key = `${card.modalidade}:${card.id}:${card.esporteId}`;
+            const prev = byKey.get(key);
+            if (!prev) {
+              byKey.set(key, card);
+              continue;
+            }
+            if (prev.interesseMatch !== "ranking_e_amistoso" && card.interesseMatch === "ranking_e_amistoso") {
+              byKey.set(key, card);
+            }
+          }
+          return Array.from(byKey.values());
+        })()
+      : await fetchMatchRadarCards(supabase, {
+          viewerId: user.id,
+          tipo,
+          sortBy,
+          raio,
+          esporteSelecionado,
+          lat: Number(me.lat),
+          lng: Number(me.lng),
+          finalidade: matchFinalidade,
+        });
 
   return (
     <MatchPageShell fullBleed={initialView === "full"}>
@@ -186,6 +259,8 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         viewerDisponivelAmistoso={viewerAmistosoOn}
         viewerAmistosoExpiresAt={viewerAmistosoExpiresAt}
         showSentBanner={sp.status === "enviado"}
+        viewerHasDupla={viewerHasDupla}
+        viewerHasTime={viewerHasTime}
       />
     </MatchPageShell>
   );

@@ -7,14 +7,17 @@ import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawe
 import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { PROFILE_CARD_BASE, PROFILE_PUBLIC_AVATAR_RING_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { MatchChallengeAction } from "@/components/match/match-challenge-action";
 
 type Props = {
   card: MatchRadarCard;
   esporteContextId: string;
   matchFinalidade: MatchRadarFinalidade;
+  viewerHasDupla: boolean;
+  viewerHasTime: boolean;
 };
 
-export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: Props) {
+export function MatchRadarCardView({ card, esporteContextId, matchFinalidade, viewerHasDupla, viewerHasTime }: Props) {
   const esporteParam = card.esporteId > 0 ? String(card.esporteId) : esporteContextId;
   const desafioHref = `/desafio?id=${encodeURIComponent(card.id)}&tipo=${encodeURIComponent(card.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(matchFinalidade)}`;
   const eidStatsHref = matchCardEidStatsHref(card);
@@ -130,14 +133,14 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
             </span>
           </div>
 
-          <Link
-            href={desafioHref}
-            title={matchCtaTitle}
-            aria-label={matchCtaTitle}
+          <MatchChallengeAction
+            modalidade={card.modalidade}
+            desafioHref={desafioHref}
             className="eid-btn-match-cta eid-match-cta-pulse eid-shimmer-btn relative mt-1.5 min-[390px]:mt-2 inline-flex w-full max-w-full items-center justify-center overflow-hidden rounded-lg px-2 py-1.5 min-[390px]:px-2.5 min-[390px]:py-2 text-[9px] min-[390px]:text-[10px] font-black uppercase leading-tight tracking-[0.12em] sm:mt-2.5 sm:rounded-xl sm:px-3 sm:py-2 sm:text-[11px]"
-          >
-            Desafio
-          </Link>
+            title={matchCtaTitle}
+            viewerHasDupla={viewerHasDupla}
+            viewerHasTime={viewerHasTime}
+          />
         </div>
       </div>
 

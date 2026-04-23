@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { ChevronLeft, ChevronRight, Grid2x2, Handshake, Maximize2, Shield, Trophy, User, Users } from "lucide-react";
+import { Grid2x2, Handshake, Maximize2, Shield, Trophy, User, Users, X } from "lucide-react";
 import Link from "next/link";
 import { refreshMatchRadarAction, setViewerDisponivelAmistoso } from "@/app/match/actions";
 import type { EsporteConfrontoRow } from "@/lib/match/esportes-confronto";
@@ -9,6 +9,7 @@ import type { MatchRadarCard, MatchRadarFinalidade, RadarTipo, SortBy } from "@/
 import { MatchFriendlyToggle } from "@/components/match/match-friendly-toggle";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import { MatchRadarCardView } from "@/components/match/match-radar-card";
+import { MatchChallengeAction } from "@/components/match/match-challenge-action";
 import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 
 function cn(...xs: (string | false | undefined)[]) {
@@ -54,6 +55,8 @@ type Props = {
   /** ISO da janela de 4h quando o modo amistoso está ligado */
   viewerAmistosoExpiresAt: string | null;
   showSentBanner: boolean;
+  viewerHasDupla: boolean;
+  viewerHasTime: boolean;
 };
 
 const RAII = [10, 30, 50, 100] as const;
@@ -79,6 +82,8 @@ export function MatchRadarApp({
   viewerDisponivelAmistoso,
   viewerAmistosoExpiresAt,
   showSentBanner,
+  viewerHasDupla,
+  viewerHasTime,
 }: Props) {
   const [tipo, setTipo] = useState<RadarTipo>(initialTipo);
   const [sortBy, setSortBy] = useState<SortBy>(initialSortBy);
@@ -218,6 +223,10 @@ export function MatchRadarApp({
     q.set("finalidade", finalidade);
     q.set("view", next);
     q.set("genero", generoFiltro);
+    if (next === "full") {
+      window.location.href = `/match?${q.toString()}`;
+      return;
+    }
     window.history.replaceState(null, "", `/match?${q.toString()}`);
   }
 
@@ -274,6 +283,58 @@ export function MatchRadarApp({
     });
   }, [cards, generoFiltro]);
   const isFullView = viewMode === "full";
+  const fullOrderedCards = useMemo(() => {
+    type Bucket = "amistoso" | "ranking" | "dupla" | "time";
+    const buckets: Record<Bucket, MatchRadarCard[]> = {
+      amistoso: [],
+      ranking: [],
+      dupla: [],
+      time: [],
+    };
+
+    for (const c of cards) {
+      if (c.modalidade === "dupla") {
+        buckets.dupla.push(c);
+        continue;
+      }
+      if (c.modalidade === "time") {
+        buckets.time.push(c);
+        continue;
+      }
+      const isAmistosoCandidate = c.disponivelAmistoso && c.interesseMatch !== "ranking";
+      if (isAmistosoCandidate) buckets.amistoso.push(c);
+      else buckets.ranking.push(c);
+    }
+
+    const cycleOrder: Bucket[] = amistosoLigado
+      ? ["amistoso", "ranking", "dupla", "time"]
+      : ["ranking", "dupla", "time", "amistoso"];
+
+    const pointers: Record<Bucket, number> = {
+      amistoso: 0,
+      ranking: 0,
+      dupla: 0,
+      time: 0,
+    };
+    const ordered: MatchRadarCard[] = [];
+
+    while (true) {
+      let addedThisRound = 0;
+      for (const key of cycleOrder) {
+        const start = pointers[key];
+        const next = buckets[key].slice(start, start + 4);
+        if (next.length > 0) {
+          ordered.push(...next);
+          pointers[key] = start + next.length;
+          addedThisRound += next.length;
+        }
+      }
+      if (addedThisRound === 0) break;
+    }
+
+    return ordered;
+  }, [cards, amistosoLigado]);
+  const visibleCards = isFullView ? fullOrderedCards : cardsFiltradosGenero;
 
   return (
     <div className="w-full min-w-0">
@@ -564,6 +625,19 @@ export function MatchRadarApp({
       ) : null}
 
       <section className={cn("mt-3", isFullView && "mt-0 flex min-h-[calc(100dvh-1.75rem)] flex-col")} aria-busy={isPending}>
+        {isFullView ? (
+          <div className="mb-1 flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => switchViewMode("grid")}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface"
+              aria-label="Fechar modo tela cheia"
+              title="Fechar"
+            >
+              <X className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+            </button>
+          </div>
+        ) : null}
         {!isFullView ? (
         <div className="mb-1.5 flex items-center justify-between gap-2">
           <h2 className="text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Resultados</h2>
@@ -599,18 +673,30 @@ export function MatchRadarApp({
             </div>
           </div>
         ) : null}
-        {cardsFiltradosGenero.length === 0 ? (
+        {visibleCards.length === 0 ? (
           <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-4 text-center text-xs text-eid-text-secondary shadow-[0_6px_16px_-12px_rgba(15,23,42,0.22)] backdrop-blur-sm">
             Nenhum oponente com esses filtros.
           </p>
         ) : viewMode === "full" ? (
           <div className="flex min-h-0 flex-1 flex-col gap-2">
-            <div className="grid min-w-0 grid-cols-2 gap-1.5 max-[340px]:grid-cols-1 sm:gap-2.5">
-              {cardsFiltradosGenero.map((c) => {
+            <div className="grid min-w-0 flex-1 grid-cols-2 content-start gap-1.5 overflow-y-auto pb-2 max-[340px]:grid-cols-1 sm:gap-2.5">
+              {visibleCards.map((c) => {
                 const esporteParam = c.esporteId > 0 ? String(c.esporteId) : esporte;
-                const desafioHref = `/desafio?id=${encodeURIComponent(c.id)}&tipo=${encodeURIComponent(c.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(finalidade)}`;
+                const cardFinalidade =
+                  c.modalidade !== "individual" ? "ranking" : c.interesseMatch === "amistoso" ? "amistoso" : "ranking";
+                const desafioHref = `/desafio?id=${encodeURIComponent(c.id)}&tipo=${encodeURIComponent(c.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(cardFinalidade)}`;
                 const esporteIcon = sportIconEmoji(c.esporteNome);
                 const nomeCurto = c.nome.trim().split(/\s+/u)[0] || c.nome;
+                const modalidadeLabel =
+                  c.modalidade === "individual" ? "Individual" : c.modalidade === "dupla" ? "Dupla" : "Time";
+                const tipoLabel =
+                  c.modalidade !== "individual"
+                    ? "Ranking"
+                    : c.interesseMatch === "amistoso"
+                      ? "Amistoso"
+                      : c.interesseMatch === "ranking_e_amistoso" && c.disponivelAmistoso
+                        ? "Ranking + Amistoso"
+                        : "Ranking";
                 return (
                   <article
                     key={`${c.modalidade}-${c.id}-${c.esporteId}-mini`}
@@ -623,36 +709,50 @@ export function MatchRadarApp({
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[11px] font-black text-eid-fg" title={c.nome}>{nomeCurto}</p>
                         <p className="truncate text-[9px] text-eid-primary-300">{esporteIcon} {c.esporteNome}</p>
+                        <div className="mt-0.5 flex flex-wrap gap-1">
+                          <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-0.5 text-[8px] font-bold leading-none text-eid-fg/90">
+                            {modalidadeLabel}
+                          </span>
+                          <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-0.5 text-[8px] font-bold leading-none text-eid-fg/90">
+                            {tipoLabel}
+                          </span>
+                        </div>
                         <p className="text-[9px] font-semibold text-eid-action-400">{c.rank} pts</p>
                       </div>
                     </div>
-                    <Link
-                      href={desafioHref}
+                    <MatchChallengeAction
+                      modalidade={c.modalidade}
+                      desafioHref={desafioHref}
                       className="eid-btn-match-cta mt-1.5 inline-flex min-h-[30px] w-full items-center justify-center rounded-lg px-2 text-[9px] font-black uppercase tracking-[0.08em]"
-                    >
-                      Desafio
-                    </Link>
+                      title="Solicitar desafio"
+                      viewerHasDupla={viewerHasDupla}
+                      viewerHasTime={viewerHasTime}
+                    />
                   </article>
                 );
               })}
             </div>
-            <button
-              type="button"
-              onClick={() => switchViewMode("grid")}
-              className="mt-auto inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/75"
-            >
-              <Grid2x2 className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
-              Alterar configurações
-            </button>
+            <div className="sticky bottom-0 z-[2] bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--eid-bg)_88%,transparent)_35%)] pb-1 pt-1">
+              <button
+                type="button"
+                onClick={() => switchViewMode("grid")}
+                className="inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/80 px-3 text-[10px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface"
+              >
+                <Grid2x2 className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
+                Alterar configurações
+              </button>
+            </div>
           </div>
         ) : (
           <div className="grid min-w-0 grid-cols-2 gap-1.5 max-[340px]:grid-cols-1 sm:gap-3">
-            {cardsFiltradosGenero.map((c) => (
+            {visibleCards.map((c) => (
               <MatchRadarCardView
                 key={`${c.modalidade}-${c.id}-${c.esporteId}`}
                 card={c}
                 esporteContextId={esporte}
                 matchFinalidade={finalidade}
+                viewerHasDupla={viewerHasDupla}
+                viewerHasTime={viewerHasTime}
               />
             ))}
           </div>
