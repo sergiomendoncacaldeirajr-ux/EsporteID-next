@@ -7,6 +7,7 @@ import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-l
 import { ProfileSolicitarMatchMenu } from "@/components/perfil/profile-solicitar-match-menu";
 import { ProfileDenunciarButton } from "@/components/perfil/profile-denunciar-button";
 import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { ProfileConviteFormacaoCta } from "@/components/perfil/profile-convite-formacao-cta";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
@@ -673,12 +674,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                           topMode="backOnly"
                           className="relative flex min-h-[42px] min-w-[108px] snap-start touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl bg-eid-surface/45 px-1 py-1 transition-all duration-200 ease-out motion-safe:transform-gpu hover:-translate-y-[1px] hover:bg-eid-surface/60 active:translate-y-0 active:scale-[0.98]"
                         >
-                          <div className="inline-flex items-center rounded-full border border-eid-primary-500/45 text-[10px] font-black uppercase leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]">
-                            <span className="rounded-l-full bg-black px-[7px] py-px">EID</span>
-                            <span className="rounded-r-full bg-eid-primary-500 px-[7px] py-px tabular-nums">
-                              {eid.toFixed(1)}
-                            </span>
-                          </div>
+                          <ProfileEidPerformanceSeal notaEid={eid} title={`EID ${eid.toFixed(1)} · ${esp?.nome ?? "esporte"}`} />
                           <span className="line-clamp-1 text-center text-[8px] font-black uppercase tracking-[0.09em] text-eid-fg">
                             {esp?.nome ?? "—"}
                           </span>

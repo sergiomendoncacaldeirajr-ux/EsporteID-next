@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import type { MatchRadarCard, MatchRadarFinalidade } from "@/lib/match/radar-snapshot";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD, PROFILE_PUBLIC_AVATAR_RING_CLASS } from "@/components/perfil/profile-ui-tokens";
-import { EidNotaMetric, EidRankingPtsMetric } from "@/components/ui/eid-metrics";
+import { EidRankingPtsMetric } from "@/components/ui/eid-metrics";
 
 type Props = {
   card: MatchRadarCard;
@@ -66,8 +67,8 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
             </div>
           </div>
 
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <EidNotaMetric value={card.eid} size="sm" />
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <ProfileEidPerformanceSeal notaEid={card.eid} />
             <EidRankingPtsMetric value={card.rank} size="sm" />
           </div>
 
