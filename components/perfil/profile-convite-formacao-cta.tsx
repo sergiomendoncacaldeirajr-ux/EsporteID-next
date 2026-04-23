@@ -58,9 +58,9 @@ export function ProfileConviteFormacaoCta({
   }
 
   return (
-    <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} space-y-3`}>
+    <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} space-y-2.5`}>
       {eligibleTeams.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <p className="text-center text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">Convidar · seu esporte</p>
           <ul className="grid gap-2">
             {eligibleTeams.map((t) => (
@@ -98,20 +98,19 @@ export function ProfileConviteFormacaoCta({
         <p className="text-center text-[11px] text-eid-text-secondary">Crie uma formação como líder para convidar {primeiro}.</p>
       ) : null}
 
-      <div className="border-t border-[color:var(--eid-border-subtle)] pt-3">
+      {state.message ? (
+        <p className={`text-center text-xs leading-snug ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
+      ) : null}
+
+      <div className="border-t border-[color:var(--eid-border-subtle)] pt-2.5">
         <ProfileEditDrawerTrigger
           href={cadastrarHref}
           title="Nova formação"
-          className="flex min-h-10 w-full items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-3 text-center text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18"
+          className="mx-auto flex min-h-10 w-full max-w-sm items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-3 text-center text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18"
         >
           Criar dupla ou time e convidar {primeiro}
         </ProfileEditDrawerTrigger>
-        <p className="mt-2 text-center text-[10px] text-eid-text-secondary">Painel ao lado · convite em Social</p>
       </div>
-
-      {state.message ? (
-        <p className={`text-center text-xs ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
-      ) : null}
     </div>
   );
 }
