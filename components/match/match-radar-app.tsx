@@ -15,7 +15,7 @@ function cn(...xs: (string | false | undefined)[]) {
 
 function segmentTab(active: boolean) {
   return cn(
-    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-sm px-1 py-1 text-[9px] font-semibold uppercase leading-none tracking-[0.035em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985] disabled:opacity-50 sm:py-0 sm:text-[9px]",
+    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center gap-0.5 whitespace-nowrap rounded-sm px-0.5 py-0.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985] disabled:opacity-50 sm:px-1 sm:py-0.5 sm:text-[9px]",
     active
       ? "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35"
@@ -24,7 +24,7 @@ function segmentTab(active: boolean) {
 
 function filterChip(active: boolean) {
   return cn(
-    "inline-flex touch-manipulation items-center justify-center whitespace-nowrap rounded-md px-2 py-1 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.985] disabled:opacity-50",
+    "inline-flex touch-manipulation items-center justify-center whitespace-nowrap rounded-md px-1.5 py-0.5 text-[7px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.985] disabled:opacity-50 sm:px-2 sm:text-[8px]",
     active
       ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_7px_16px_-11px_rgba(37,99,235,0.4)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55"
@@ -32,9 +32,9 @@ function filterChip(active: boolean) {
 }
 
 const FILTER_CARD_CLASS =
-  "rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2 backdrop-blur-sm shadow-[0_8px_20px_-14px_rgba(15,23,42,0.24)]";
+  "rounded-lg border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-1.5 backdrop-blur-sm shadow-[0_6px_16px_-12px_rgba(15,23,42,0.22)] sm:rounded-xl sm:p-2";
 
-const FILTER_LABEL = "mb-1 text-[8px] font-black uppercase tracking-[0.14em] text-eid-primary-400";
+const FILTER_LABEL = "mb-0.5 text-[7px] font-black uppercase tracking-[0.12em] text-eid-primary-400 sm:text-[8px] sm:tracking-[0.14em]";
 
 type Props = {
   viewerId: string;

@@ -20,6 +20,7 @@ import {
   type PartidaColetivaRow,
 } from "@/lib/perfil/formacao-eid-stats";
 import { labelModalidadesMatchPt, modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
+import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 import { resolverTimeIdParaDuplaRegistrada } from "@/lib/perfil/whatsapp-visibility";
 import { createClient } from "@/lib/supabase/server";
 
@@ -39,18 +40,6 @@ function parseEsporteId(raw: string): number | null {
 function parseEidView(raw: string | undefined): EidView {
   if (raw === "individual" || raw === "dupla" || raw === "time") return raw;
   return "all";
-}
-
-function sportIcon(nomeEsporte: string): string {
-  const n = nomeEsporte.toLowerCase();
-  if (n.includes("tênis") || n.includes("tenis")) return "🎾";
-  if (n.includes("fut")) return "⚽";
-  if (n.includes("basquete")) return "🏀";
-  if (n.includes("vôlei") || n.includes("volei")) return "🏐";
-  if (n.includes("hand")) return "🤾";
-  if (n.includes("beach")) return "🏖️";
-  if (n.includes("natação") || n.includes("natacao")) return "🏊";
-  return "🏅";
 }
 
 function tempoDesdePrimeiraPartida(iso: string | null): string | null {
@@ -463,7 +452,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
   const showIndividual = view === "all" || view === "individual";
   const showDupla = view === "all" || view === "dupla";
   const showTime = view === "all" || view === "time";
-  const esporteIcon = sportIcon(nomeEsporte);
+  const esporteIcon = sportIconEmoji(nomeEsporte);
   const filteredFormationList = formationList.filter((f) => {
     const tipo = String(f.tipo ?? "time").toLowerCase();
     if (tipo === "dupla") return showDupla;
