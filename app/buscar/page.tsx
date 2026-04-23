@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { getContextHomeHref } from "@/lib/auth/active-context";
+import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 
 export const metadata = {
   title: "Buscar",
@@ -53,7 +54,15 @@ export default async function BuscarPage({ searchParams }: Props) {
   const pat = qLower ? `%${qLower}%` : "";
 
   const empty = {
-    atletas: [] as Array<{ id: string; nome: string | null; username: string | null; avatar_url: string | null; localizacao: string | null }>,
+    atletas: [] as Array<{
+      id: string;
+      nome: string | null;
+      username: string | null;
+      avatar_url: string | null;
+      localizacao: string | null;
+      disponivel_amistoso: boolean | null;
+      disponivel_amistoso_ate: string | null;
+    }>,
     locais: [] as Array<{ id: number; nome_publico: string | null; localizacao: string | null; logo_arquivo: string | null }>,
     times: [] as Array<{ id: number; nome: string | null; localizacao: string | null; escudo: string | null; tipo: string | null }>,
     torneios: [] as Array<{ id: number; nome: string | null; banner: string | null }>,
@@ -64,7 +73,7 @@ export default async function BuscarPage({ searchParams }: Props) {
     const [atletasRes, locaisRes, timesRes, torneiosRes] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, nome, username, avatar_url, localizacao")
+        .select("id, nome, username, avatar_url, localizacao, disponivel_amistoso, disponivel_amistoso_ate")
         .neq("id", user.id)
         .or(`nome.ilike.${pat},username.ilike.${pat}`)
         .limit(28),
@@ -161,16 +170,28 @@ export default async function BuscarPage({ searchParams }: Props) {
             <section>
               <h2 className={sectionTitle}>Atletas ({resultados.atletas.length})</h2>
               <ul className="mt-3 divide-y divide-[color:var(--eid-border-subtle)] rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80">
-                {resultados.atletas.map((a) => (
+                {resultados.atletas.map((a) => {
+                  const amistosoOn = computeDisponivelAmistosoEffective(a.disponivel_amistoso, a.disponivel_amistoso_ate);
+                  return (
                   <li key={a.id}>
                     <Link
                       href={`/perfil/${encodeURIComponent(a.id)}?from=/buscar`}
                       className="flex items-center gap-3 px-3 py-3 transition hover:bg-eid-surface/50"
                     >
                       {a.avatar_url ? (
-                        <img src={a.avatar_url} alt="" className="h-11 w-11 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
+                        <img
+                          src={a.avatar_url}
+                          alt=""
+                          className={`h-11 w-11 shrink-0 rounded-full border object-cover ${
+                            amistosoOn ? "border-emerald-400/75" : "border-red-500/75"
+                          }`}
+                        />
                       ) : (
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-xs font-black text-eid-primary-300">
+                        <div
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border bg-eid-surface text-xs font-black text-eid-primary-300 ${
+                            amistosoOn ? "border-emerald-400/70" : "border-red-500/70"
+                          }`}
+                        >
                           {primeiroNome(a.nome).slice(0, 1).toUpperCase()}
                         </div>
                       )}
@@ -184,7 +205,8 @@ export default async function BuscarPage({ searchParams }: Props) {
                       <span className="shrink-0 text-[10px] font-bold uppercase text-eid-primary-400">Ver perfil</span>
                     </Link>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             </section>
           ) : null}

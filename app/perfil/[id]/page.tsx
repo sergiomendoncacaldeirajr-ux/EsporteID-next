@@ -359,10 +359,20 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                   <img
                     src={perfil.avatar_url}
                     alt=""
-                    className="h-[68px] w-[68px] rounded-full border-[3px] border-eid-card object-cover shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]"
+                    className={`h-[68px] w-[68px] rounded-full border-[3px] object-cover ${
+                      amistosoPerfilOn
+                        ? "border-emerald-400 shadow-[0_0_0_2px_rgba(16,185,129,0.55),0_6px_20px_rgba(0,0,0,0.5)]"
+                        : "border-red-500 shadow-[0_0_0_2px_rgba(239,68,68,0.55),0_6px_20px_rgba(0,0,0,0.5)]"
+                    }`}
                   />
                 ) : (
-                  <div className="flex h-[68px] w-[68px] items-center justify-center rounded-full border-[3px] border-eid-card bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-sm font-black tracking-widest text-eid-primary-200 shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]">
+                  <div
+                    className={`flex h-[68px] w-[68px] items-center justify-center rounded-full border-[3px] bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-sm font-black tracking-widest text-eid-primary-200 ${
+                      amistosoPerfilOn
+                        ? "border-emerald-400 shadow-[0_0_0_2px_rgba(16,185,129,0.55),0_6px_20px_rgba(0,0,0,0.5)]"
+                        : "border-red-500 shadow-[0_0_0_2px_rgba(239,68,68,0.55),0_6px_20px_rgba(0,0,0,0.5)]"
+                    }`}
+                  >
                     EID
                   </div>
                 )}

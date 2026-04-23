@@ -60,12 +60,17 @@ export default async function AgendaPage() {
   }
   const peerList = [...peerIds];
   const { data: peerProfiles } = peerList.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", peerList)
+    ? await supabase
+        .from("profiles")
+        .select("id, nome, avatar_url, disponivel_amistoso, disponivel_amistoso_ate")
+        .in("id", peerList)
     : { data: [] };
   const conexoes: ConexaoPeer[] = (peerProfiles ?? []).map((p) => ({
     id: p.id,
     nome: p.nome,
     avatar_url: p.avatar_url,
+    disponivel_amistoso: p.disponivel_amistoso,
+    disponivel_amistoso_ate: p.disponivel_amistoso_ate,
   }));
 
   const { data: partidasAgendadas } = await supabase

@@ -1,6 +1,13 @@
 import Link from "next/link";
+import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 
-export type ConexaoPeer = { id: string; nome: string | null; avatar_url: string | null };
+export type ConexaoPeer = {
+  id: string;
+  nome: string | null;
+  avatar_url: string | null;
+  disponivel_amistoso?: boolean | null;
+  disponivel_amistoso_ate?: string | null;
+};
 
 function primeiroNome(n: string | null) {
   if (!n?.trim()) return "Atleta";
@@ -19,13 +26,21 @@ export function ConexoesStrip({ peers }: { peers: ConexaoPeer[] }) {
             <span className="mt-2 max-w-[72px] truncate text-center text-[10px] font-bold text-eid-text-secondary">Match</span>
           </div>
         ) : (
-          peers.map((p) => (
+          peers.map((p) => {
+            const amistosoOn = computeDisponivelAmistosoEffective(p.disponivel_amistoso, p.disponivel_amistoso_ate);
+            return (
             <Link
               key={p.id}
               href={`/perfil/${p.id}?from=/agenda`}
               className="group flex min-w-[76px] flex-col items-center text-center"
             >
-              <div className="rounded-full bg-gradient-to-br from-eid-primary-500 to-eid-action-500 p-[3px] shadow-md shadow-eid-primary-500/20">
+              <div
+                className={`rounded-full p-[3px] ${
+                  amistosoOn
+                    ? "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-md shadow-emerald-500/25"
+                    : "bg-gradient-to-br from-red-500 to-rose-700 shadow-md shadow-red-500/25"
+                }`}
+              >
                 <div className="overflow-hidden rounded-full border-[3px] border-eid-bg bg-eid-bg">
                   {p.avatar_url ? (
                     <img src={p.avatar_url} alt="" className="h-14 w-14 object-cover" />
@@ -40,7 +55,8 @@ export function ConexoesStrip({ peers }: { peers: ConexaoPeer[] }) {
                 {primeiroNome(p.nome)}
               </span>
             </Link>
-          ))
+            );
+          })
         )}
       </div>
     </section>
