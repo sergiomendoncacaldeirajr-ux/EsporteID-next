@@ -299,11 +299,11 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                 {canChallengeDupla && !hasAceitoRankDupla && timeResolvidoId ? (
                   <ProfilePrimaryCta
                     href={`/desafio?id=${timeResolvidoId}&tipo=dupla&esporte=${d.esporte_id}`}
-                    label={linkWpp ? "⚡ Match no ranking" : undefined}
+                    label={linkWpp ? "⚡ Desafio no ranking" : undefined}
                   />
                 ) : hasAceitoRankDupla && timeResolvidoId ? (
                   <p className="text-xs text-eid-text-secondary">
-                    Match aceito nesta dupla. Registre o resultado na agenda quando jogarem.
+                    Desafio aceito nesta dupla. Registre o resultado na agenda quando jogarem.
                   </p>
                 ) : (
                   <ProfilePrimaryCta
@@ -440,7 +440,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             <p className="mt-3 text-[10px] text-eid-text-secondary">
               Para desafiar outra dupla no radar:{" "}
               <Link href="/match?tipo=dupla" className="font-semibold text-eid-primary-300 underline">
-                Match → Duplas
+                Desafio → Duplas
               </Link>
               .
             </p>

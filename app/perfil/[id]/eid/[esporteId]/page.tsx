@@ -574,7 +574,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
               </p>
             </div>
             <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-              <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Interesse em match</p>
+              <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Interesse em desafio</p>
               <p className="mt-1 text-[12px] font-semibold text-eid-fg">{interesseLabel}</p>
               <p className="mt-0.5 text-[10px] text-eid-text-secondary">Modalidade: {modalidadeLabel}</p>
             </div>

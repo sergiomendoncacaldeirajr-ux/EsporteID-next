@@ -248,7 +248,7 @@ export function RankingRankToggle({
               : "text-eid-text-secondary hover:bg-white/[0.03]"
           )}
         >
-          Match
+          Desafio
         </Link>
         <Link
           href={href({ rank: "eid", page: 1 })}

@@ -348,7 +348,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               → com só 1 linha de texto (~20px), o topo do nome cai em ~108px,
                 abaixo do fim da capa (96px) ✓
             · Badges, localização e interesses ficam em linhas próprias abaixo
-            · WhatsApp NÃO fica aqui — aparece no lugar do botão Match após aceito
+            · WhatsApp NÃO fica aqui — aparece no lugar do botão Desafio após aceito
           */}
           <div className="px-3 pb-3 pt-0">
 

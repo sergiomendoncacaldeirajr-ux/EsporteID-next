@@ -25,11 +25,11 @@ export function SugerirMatchLiderForm({
 
   return (
     <div className="rounded-xl border border-eid-action-500/30 bg-eid-action-500/5 p-3 text-left">
-      <p className="text-[11px] font-bold uppercase tracking-wide text-eid-action-400">Sugerir match ao líder</p>
+      <p className="text-[11px] font-bold uppercase tracking-wide text-eid-action-400">Sugerir desafio ao líder</p>
       <p className="mt-1.5 text-[10px] leading-relaxed text-eid-text-secondary">
         Você não é líder de uma {modalidadeLabel} neste esporte, mas faz parte de uma
         formação. Envie uma sugestão ao líder de <strong className="text-eid-fg">{alvoNome}</strong>. Se ele aprovar, o
-        match é confirmado e <strong className="text-eid-fg">todos os integrantes das duas formações</strong> recebem
+        desafio é confirmado e <strong className="text-eid-fg">todos os integrantes das duas formações</strong> recebem
         aviso.
       </p>
       <form action={formAction} className="mt-3 grid gap-2">

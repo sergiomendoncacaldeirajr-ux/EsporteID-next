@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 
@@ -28,6 +28,7 @@ export function ProfileEditDrawerTrigger({
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [openNonce, setOpenNonce] = useState(0);
+  const frameRef = useRef<HTMLIFrameElement | null>(null);
 
   const frameSrc = useMemo(() => {
     const sep = href.includes("?") ? "&" : "?";
@@ -62,6 +63,17 @@ export function ProfileEditDrawerTrigger({
     setOpenNonce((v) => v + 1);
     setOpen(true);
     window.setTimeout(() => setVisible(true), 10);
+  }
+
+  function handleFrameLoad() {
+    try {
+      const win = frameRef.current?.contentWindow;
+      win?.scrollTo(0, 0);
+      if (win?.document?.documentElement) win.document.documentElement.scrollTop = 0;
+      if (win?.document?.body) win.document.body.scrollTop = 0;
+    } catch {
+      /* ignore */
+    }
   }
 
   return (
@@ -114,7 +126,7 @@ export function ProfileEditDrawerTrigger({
                     </button>
                   </div>
                 )}
-                <iframe title={title} src={frameSrc} className="h-[calc(100%-44px)] w-full border-0 bg-eid-bg" />
+                <iframe ref={frameRef} onLoad={handleFrameLoad} title={title} src={frameSrc} className="h-[calc(100%-44px)] w-full border-0 bg-eid-bg" />
               </aside>
             </div>,
             document.body

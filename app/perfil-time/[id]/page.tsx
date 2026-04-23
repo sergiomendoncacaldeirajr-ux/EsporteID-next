@@ -288,13 +288,13 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 {canChallenge && !hasAceitoRank && t.esporte_id ? (
                   <ProfilePrimaryCta
                     href={`/desafio?id=${id}&tipo=${encodeURIComponent(modalidade)}&esporte=${t.esporte_id}`}
-                    label={linkWpp ? "⚡ Match no ranking" : undefined}
+                    label={linkWpp ? "⚡ Desafio no ranking" : undefined}
                   />
                 ) : null}
               </div>
             ) : !isLeader && canChallenge && hasAceitoRank ? (
               <p className="text-xs text-eid-text-secondary">
-                Match aceito nesta modalidade. Registre o resultado na agenda quando jogarem.
+                Desafio aceito nesta modalidade. Registre o resultado na agenda quando jogarem.
               </p>
             ) : t.criador_id === user.id ? (
               <p className="text-xs text-eid-text-secondary">Esta é a sua formação.</p>

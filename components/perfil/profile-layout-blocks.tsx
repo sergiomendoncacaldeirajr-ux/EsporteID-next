@@ -21,7 +21,7 @@ export function ProfileSection({
 
 export function ProfilePrimaryCta({
   href,
-  label = "⚡ Solicitar Match",
+  label = "⚡ Pedir Desafio",
   className,
 }: {
   href: string;

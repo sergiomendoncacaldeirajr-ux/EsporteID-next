@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-/** Banner quando o próprio usuário está com verificação de idade pendente (match bloqueado). */
+/** Banner quando o próprio usuário está com verificação de idade pendente (desafio bloqueado). */
 export function MatchIdadeGateBanner({ gate }: { gate: string }) {
   if (gate === "ok" || gate === "aprovado") return null;
 
   const copy: Record<string, { title: string; body: string }> = {
     pendente_documento: {
       title: "Verificação de idade necessária",
-      body: "Há uma pendência na sua conta. Envie documento oficial com foto e uma selfie para liberar pedidos e aceites de match.",
+      body: "Há uma pendência na sua conta. Envie documento oficial com foto e uma selfie para liberar pedidos e aceites de desafio.",
     },
     em_analise: {
       title: "Verificação em processamento",
@@ -21,7 +21,7 @@ export function MatchIdadeGateBanner({ gate }: { gate: string }) {
 
   const c = copy[gate] ?? {
     title: "Status de verificação",
-    body: "Sua conta pode ter restrições no match até concluir a verificação.",
+    body: "Sua conta pode ter restrições no desafio até concluir a verificação.",
   };
 
   return (

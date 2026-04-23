@@ -22,6 +22,7 @@ type Props = {
 export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, className }: Props) {
   const [aberto, setAberto] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [msg, setMsg] = useState<string | null>(null);
   const [codigo, setCodigo] = useState(MOTIVOS[0]!.codigo);
   const [texto, setTexto] = useState("");
@@ -31,6 +32,18 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const readTheme = () => {
+      const t = document.documentElement.getAttribute("data-eid-theme");
+      setTheme(t === "light" ? "light" : "dark");
+    };
+    readTheme();
+    const observer = new MutationObserver(readTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-eid-theme"] });
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -112,18 +125,26 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
               />
               <div
                 id="eid-denuncia-painel"
-                className="fixed z-[220] w-[min(92vw,21rem)] space-y-3 rounded-xl border border-red-500/45 bg-[linear-gradient(180deg,#fff6f6,#ffe9e9)] p-2.5 text-slate-800 shadow-[0_18px_40px_-20px_rgba(239,68,68,0.45)] dark:border-red-500/35 dark:bg-[linear-gradient(180deg,rgba(33,8,12,0.99),rgba(20,9,11,0.99))] dark:text-eid-fg dark:shadow-[0_18px_40px_-20px_rgba(239,68,68,0.5)]"
+                className={`fixed z-[220] w-[min(92vw,21rem)] space-y-3 rounded-xl p-2.5 shadow-[0_18px_40px_-20px_rgba(239,68,68,0.5)] ${
+                  theme === "light"
+                    ? "border border-red-500/45 bg-[linear-gradient(180deg,#fff6f6,#ffe9e9)] text-slate-800"
+                    : "border border-red-500/35 bg-[linear-gradient(180deg,rgba(33,8,12,0.99),rgba(20,9,11,0.99))] text-eid-fg"
+                }`}
                 style={{ top: popoverPos.top, left: popoverPos.left }}
               >
-                <p className="text-[11px] text-slate-600 dark:text-eid-text-secondary">Motivo da denúncia</p>
+                <p className={`text-[11px] ${theme === "light" ? "text-slate-600" : "text-eid-text-secondary"}`}>Motivo da denúncia</p>
                 <div className="grid gap-2">
                   {MOTIVOS.map((m) => (
                     <label
                       key={m.codigo}
                       className={`flex cursor-pointer gap-2 rounded-lg border px-2.5 py-2 text-left text-[11px] transition ${
                         codigo === m.codigo
-                          ? "border-red-500/55 bg-red-500/12 text-slate-900 dark:border-red-500/45 dark:bg-red-500/10 dark:text-eid-fg"
-                          : "border-red-200 text-slate-700 hover:border-red-400/55 dark:border-[color:var(--eid-border-subtle)] dark:text-eid-text-secondary dark:hover:border-red-500/25"
+                          ? theme === "light"
+                            ? "border-red-500/55 bg-red-500/12 text-slate-900"
+                            : "border-red-500/45 bg-red-500/10 text-eid-fg"
+                          : theme === "light"
+                            ? "border-red-200 text-slate-700 hover:border-red-400/55"
+                            : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:border-red-500/25"
                       }`}
                     >
                       <input
@@ -135,20 +156,24 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
                         className="mt-0.5"
                       />
                       <span>
-                        <span className="font-semibold text-slate-900 dark:text-eid-fg">{m.label}</span>
-                        <span className="mt-0.5 block text-[10px] text-slate-600 dark:text-eid-text-secondary">{m.desc}</span>
+                        <span className={`font-semibold ${theme === "light" ? "text-slate-900" : "text-eid-fg"}`}>{m.label}</span>
+                        <span className={`mt-0.5 block text-[10px] ${theme === "light" ? "text-slate-600" : "text-eid-text-secondary"}`}>{m.desc}</span>
                       </span>
                     </label>
                   ))}
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-eid-text-secondary">Detalhes (opcional)</label>
+                  <label className={`text-[10px] font-bold uppercase tracking-wide ${theme === "light" ? "text-slate-600" : "text-eid-text-secondary"}`}>Detalhes (opcional)</label>
                   <textarea
                     value={texto}
                     onChange={(e) => setTexto(e.target.value)}
                     rows={3}
                     maxLength={2000}
-                    className="mt-1 w-full resize-none rounded-lg border border-red-300 bg-white px-2 py-1.5 text-xs text-slate-800 placeholder:text-slate-500 outline-none focus:border-red-500/60 focus:ring-2 focus:ring-red-400/25 dark:border-[color:var(--eid-border-subtle)] dark:bg-eid-field-bg dark:text-eid-fg dark:placeholder:text-eid-text-secondary"
+                    className={`mt-1 w-full resize-none rounded-lg border px-2 py-1.5 text-xs outline-none focus:ring-2 ${
+                      theme === "light"
+                        ? "border-red-300 bg-white text-slate-800 placeholder:text-slate-500 focus:border-red-500/60 focus:ring-red-400/25"
+                        : "border-[color:var(--eid-border-subtle)] bg-eid-field-bg text-eid-fg placeholder:text-eid-text-secondary focus:border-red-500/45 focus:ring-red-500/20"
+                    }`}
                     placeholder="Informações que ajudem a moderação..."
                   />
                 </div>
@@ -160,14 +185,22 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
                     type="button"
                     disabled={pending}
                     onClick={enviar}
-                    className="rounded-lg border border-red-600/55 bg-red-600/15 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-red-700 disabled:opacity-50 dark:border-red-500/50 dark:bg-red-500/15 dark:text-red-200"
+                    className={`rounded-lg border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide disabled:opacity-50 ${
+                      theme === "light"
+                        ? "border-red-600/55 bg-red-600/15 text-red-700"
+                        : "border-red-500/50 bg-red-500/15 text-red-200"
+                    }`}
                   >
                     {pending ? "Enviando…" : "Enviar denúncia"}
                   </button>
                   <button
                     type="button"
                     onClick={() => setAberto(false)}
-                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-[11px] font-semibold text-slate-700 dark:border-[color:var(--eid-border-subtle)] dark:text-eid-text-secondary"
+                    className={`rounded-lg border px-3 py-1.5 text-[11px] font-semibold ${
+                      theme === "light"
+                        ? "border-slate-300 text-slate-700"
+                        : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
+                    }`}
                   >
                     Cancelar
                   </button>

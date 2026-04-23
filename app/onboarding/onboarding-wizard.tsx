@@ -447,7 +447,7 @@ const ROLES = [
   {
     id: "atleta",
     titulo: "Atleta / Usuário",
-    desc: "Perfil com painel esportivo, ranking, match e desafios.",
+    desc: "Perfil com painel esportivo, ranking e desafios.",
     enabled: true,
   },
   {
@@ -1565,7 +1565,7 @@ export function OnboardingWizard({
             {step === "esportes" &&
               (hasProfessor
                 ? "Selecione os esportes que você ensina e informe sua experiência em cada um."
-                : "Selecione os esportes da sua conta Atleta / Usuário e configure como deseja jogar no match.")}
+                : "Selecione os esportes da sua conta Atleta / Usuário e configure como deseja jogar no desafio.")}
             {step === "extras" &&
               "Só mais alguns detalhes para montar seu perfil profissional, operacional e público dentro da plataforma."}
             {step === "perfil" &&
@@ -1872,7 +1872,7 @@ export function OnboardingWizard({
                         </>
                       ) : (
                         <p className="mt-3 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1.5 text-[11px] text-eid-action-400">
-                          Neste esporte você entrará apenas no fluxo de professor, sem match ou ranking competitivo.
+                          Neste esporte você entrará apenas no fluxo de professor, sem desafio ou ranking competitivo.
                         </p>
                       )}
 

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export type ProfileSolicitarMatchEsporte = { esporteId: number; nome: string };
 
-/** Um único botão “Solicitar match” que abre ranking vs amistoso (e escolha de esporte se necessário). */
+/** Um único botão “Pedir desafio” que abre ranking vs amistoso (e escolha de esporte se necessário). */
 export function ProfileSolicitarMatchMenu({
   alvoId,
   esportes,
@@ -55,12 +55,12 @@ export function ProfileSolicitarMatchMenu({
         aria-expanded={aberto}
         aria-haspopup="true"
       >
-        Solicitar match
+        Pedir desafio
       </button>
       {mostrarDicaWppRanking ? (
         <p className="text-[10px] leading-relaxed text-eid-text-secondary">
           Vocês já podem falar no WhatsApp. Para valer pontos no ranking, use o botão acima e escolha{" "}
-          <span className="font-semibold text-eid-fg">match de ranking</span>.
+          <span className="font-semibold text-eid-fg">desafio de ranking</span>.
         </p>
       ) : null}
 
@@ -104,7 +104,7 @@ export function ProfileSolicitarMatchMenu({
               className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 text-center text-xs font-bold uppercase tracking-wide text-eid-primary-200 transition hover:bg-eid-primary-500/20"
               onClick={() => setAberto(false)}
             >
-              Match de ranking
+              Desafio de ranking
             </Link>
             {amistosoOk ? (
               <Link
@@ -113,11 +113,11 @@ export function ProfileSolicitarMatchMenu({
                 className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/12 text-center text-xs font-bold uppercase tracking-wide text-emerald-200 transition hover:bg-emerald-500/20"
                 onClick={() => setAberto(false)}
               >
-                Match amistoso
+                Desafio amistoso
               </Link>
             ) : (
               <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 text-center">
-                <p className="text-[11px] font-semibold text-eid-text-secondary">Match amistoso</p>
+                <p className="text-[11px] font-semibold text-eid-text-secondary">Desafio amistoso</p>
                 <p className="mt-0.5 text-[10px] leading-snug text-eid-text-secondary/90">
                   Indisponível: ative o modo amistoso no seu perfil e peça para o oponente também deixar ativo.
                 </p>
