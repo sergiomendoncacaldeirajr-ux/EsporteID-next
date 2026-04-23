@@ -87,6 +87,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (path.startsWith("/buscar") && !user && !authCode) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(url);
+  }
+
   if (path.startsWith("/organizador") && !user && !authCode) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -108,7 +115,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && (path.startsWith("/dashboard") || path.startsWith("/organizador"))) {
+  if (user && (path.startsWith("/dashboard") || path.startsWith("/organizador") || path.startsWith("/buscar"))) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("termos_aceitos_em, perfil_completo")

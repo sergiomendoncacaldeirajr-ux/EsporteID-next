@@ -196,7 +196,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         ? pathname === "/professor"
         : activeContext === "espaco"
           ? pathname === "/espaco"
-          : pathname === "/dashboard";
+          : pathname === "/dashboard" || pathname === "/buscar";
   const isAgenda =
     pathname === "/agenda" ||
     pathname.startsWith("/match") ||

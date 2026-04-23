@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { ActiveContextSwitch } from "@/components/dashboard/active-context-switch";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LogoWordmark } from "@/components/brand/logo-wordmark";
@@ -23,6 +23,17 @@ type Props = {
   initialPapeis?: string[];
   initialActiveContext?: ActiveAppContext;
 };
+
+/** Sincroniza o input com `?q=` em `/buscar` (useSearchParams precisa de Suspense no pai). */
+function BuscarQuerySync({ setQ }: { setQ: (v: string) => void }) {
+  const pathname = usePathname();
+  const sp = useSearchParams();
+  useEffect(() => {
+    if (pathname !== "/buscar") return;
+    setQ(sp.get("q") ?? "");
+  }, [pathname, sp, setQ]);
+  return null;
+}
 
 export function DashboardTopbar({
   persistent = false,
@@ -127,7 +138,7 @@ export function DashboardTopbar({
   const navItems = meId ? [...baseNavItems, { href: `/perfil/${meId}`, label: "Perfil" }] : baseNavItems;
 
   function navActive(href: string) {
-    if (href === "/dashboard") return pathname === "/dashboard";
+    if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/buscar";
     if (href === "/professor") return pathname === "/professor";
     if (href === "/organizador") return pathname === "/organizador";
     if (href === "/espaco") return pathname === "/espaco";
@@ -145,10 +156,14 @@ export function DashboardTopbar({
     e.preventDefault();
     const term = q.trim();
     if (!term) return;
-    router.push(`${getContextHomeHref(activeContext)}?q=${encodeURIComponent(term)}`);
+    router.push(`/buscar?q=${encodeURIComponent(term)}`);
   }
 
   return (
+    <>
+      <Suspense fallback={null}>
+        <BuscarQuerySync setQ={setQ} />
+      </Suspense>
     <header
       id={persistent ? "eid-persistent-topbar" : undefined}
       className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_6px_18px_-12px_rgba(0,0,0,0.34)] backdrop-blur-xl md:mb-3`}
@@ -213,5 +228,6 @@ export function DashboardTopbar({
         })}
       </nav>
     </header>
+    </>
   );
 }

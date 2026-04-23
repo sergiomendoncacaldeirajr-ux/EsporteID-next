@@ -20,7 +20,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade }: 
     .join("") || "?";
 
   return (
-    <article className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] backdrop-blur-sm [content-visibility:auto]">
+    <article className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2.5 shadow-[0_6px_16px_-12px_rgba(15,23,42,0.22)] backdrop-blur-sm [content-visibility:auto]">
       <div className="flex gap-3">
         <div className="relative shrink-0">
           {card.avatarUrl ? (

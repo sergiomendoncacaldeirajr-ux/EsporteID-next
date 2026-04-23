@@ -14,6 +14,8 @@ type Props = {
   initialOn: boolean;
   initialExpiresAt: string | null;
   userId: string;
+  /** Classes extras no container (ex.: margens no layout compacto do Match). */
+  className?: string;
 };
 
 function formatoRestante(ms: number): string {
@@ -27,7 +29,7 @@ function formatoRestante(ms: number): string {
 }
 
 /** Modo amistoso: liga por até 4 h; desliga sozinho se não renovar. */
-export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId }: Props) {
+export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, className }: Props) {
   const [on, setOn] = useState(initialOn);
   const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt);
   const [tick, setTick] = useState(0);
@@ -96,10 +98,12 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId }: Pro
   const restanteMs = on && expiresAt ? new Date(expiresAt).getTime() - Date.now() : 0;
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-3 py-2.5 shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)] backdrop-blur-sm">
+    <div
+      className={`flex items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-2.5 py-2 shadow-[0_10px_22px_-14px_rgba(15,23,42,0.26)] backdrop-blur-sm ${className ?? ""}`}
+    >
       <div className="min-w-0">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-eid-primary-300">Modo amistoso</p>
-        <p className="text-[10px] text-eid-text-secondary">
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-primary-300">Modo amistoso</p>
+        <p className="text-[9px] leading-snug text-eid-text-secondary">
           {on && expiresAt
             ? `Desliga sozinho ${formatoRestante(restanteMs)}. Você pode desligar antes.`
             : "Ligue quando quiser jogos casuais; fica até 4 horas ou até você desligar."}
