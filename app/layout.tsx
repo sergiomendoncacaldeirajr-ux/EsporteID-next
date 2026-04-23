@@ -13,6 +13,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
 import { InstallAppOffer } from "@/components/pwa/install-app-offer";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
+import { VisualViewportBottomNavSync } from "@/components/pwa/visual-viewport-bottom-nav-sync";
 import {
   ACTIVE_CONTEXT_COOKIE,
   resolveActiveAppContext,
@@ -151,12 +152,15 @@ export default async function RootLayout({
           {children}
         </div>
         {showAppChrome && user ? (
-          <div
-            id="eid-mobile-bottom-nav"
-            className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] md:hidden"
-          >
-            <MobileBottomNav userId={user.id} activeContext={activeContext} />
-          </div>
+          <>
+            <VisualViewportBottomNavSync />
+            <div
+              id="eid-mobile-bottom-nav"
+              className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] md:hidden"
+            >
+              <MobileBottomNav userId={user.id} activeContext={activeContext} />
+            </div>
+          </>
         ) : null}
         {hideAppShell ? null : (
           <div id="eid-site-footer">

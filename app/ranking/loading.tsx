@@ -2,14 +2,14 @@ import { SkBlock } from "@/components/loading/skeleton-primitives";
 
 export default function LoadingRanking() {
   return (
-    <div className="relative flex min-h-full flex-1 flex-col">
+    <div className="relative flex w-full min-w-0 flex-col">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg" aria-hidden />
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[min(52vh,28rem)] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-56 max-h-[28rem] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)] sm:h-72"
         aria-hidden
       />
 
-      <main className="relative mx-auto flex w-full max-w-2xl flex-1 flex-col px-4 pb-3 pt-1.5 sm:px-5">
+      <main className="relative mx-auto flex w-full max-w-2xl flex-col px-4 pb-3 pt-1.5 sm:px-5">
         <header className="mb-1.5">
           <SkBlock className="h-7 w-28 rounded-lg" />
         </header>
