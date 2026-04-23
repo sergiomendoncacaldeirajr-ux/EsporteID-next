@@ -84,14 +84,22 @@
 }
 
 /*
- * Shell logado: topbar e bottom nav são position:fixed (fora do fluxo).
- * Sem recuo no body, o primeiro bloco em fluxo (#app-main-column) começa em y=0 e fica POR BAIXO do header.
- * Padding aqui empurra main + footer para a faixa visível entre as barras fixas.
+ * Shell logado: topbar fixa (fora do fluxo).
+ * No mobile, a nav inferior fica no fluxo (irmã do #app-main-column) — evita bugs do WebKit com
+ * position:fixed + viewport em PWA. O padding-bottom do body só cobre safe-area; a altura da nav
+ * entra no layout. Em ≥md a nav some e o rodapé do site volta a precisar do offset clássico.
  */
 body.eid-app-shell {
   box-sizing: border-box;
   padding-top: var(--eid-shell-header-offset);
   padding-bottom: var(--eid-shell-footer-offset);
+}
+
+@media (max-width: 767px) {
+  body.eid-app-shell {
+    --eid-shell-footer-offset: max(14px, env(safe-area-inset-bottom, 0px));
+    padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* Tema claro — mesma marca, maior contraste em fundos claros */
@@ -177,6 +185,15 @@ html {
   overscroll-behavior-y: none;
   /* Evita “faixa branca” quando o viewport iOS e a altura do body não batem. */
   background-color: var(--eid-bg);
+}
+
+/* iPhone/iPad WebKit: leve aumento da base rem (Tailwind escala com o root). */
+@media (max-width: 767px) {
+  @supports (-webkit-touch-callout: none) {
+    html {
+      font-size: 17px;
+    }
+  }
 }
 
 @media (display-mode: standalone) {

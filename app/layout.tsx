@@ -13,7 +13,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
 import { InstallAppOffer } from "@/components/pwa/install-app-offer";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
-import { VisualViewportBottomNavSync } from "@/components/pwa/visual-viewport-bottom-nav-sync";
 import {
   ACTIVE_CONTEXT_COOKIE,
   resolveActiveAppContext,
@@ -77,8 +76,9 @@ export const viewport: Viewport = {
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  /* iOS: bloquear zoom deixava tudo “miúdo”; permitir pinch melhora leitura e acessibilidade. */
+  maximumScale: 5,
+  userScalable: true,
   viewportFit: "cover",
 };
 
@@ -136,32 +136,36 @@ export default async function RootLayout({
             initialActiveContext={activeContext}
           />
         ) : null}
-        <div
-          id="app-main-column"
-          data-eid-app-scroll-root={showAppChrome ? "1" : undefined}
-          className={
-            showAppChrome
-              ? "flex min-h-0 flex-1 flex-col max-md:min-h-0 max-md:overflow-y-auto max-md:overscroll-y-contain"
-              : onboardingMinimalChrome
+        {showAppChrome ? (
+          <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col max-md:min-h-0">
+            <div
+              id="app-main-column"
+              data-eid-app-scroll-root="1"
+              className="flex min-h-0 flex-1 flex-col max-md:overflow-y-auto max-md:overscroll-y-contain"
+            >
+              {children}
+            </div>
+            <div
+              id="eid-mobile-bottom-nav"
+              className="pointer-events-none z-[55] w-full shrink-0 md:hidden"
+            >
+              <MobileBottomNav userId={user!.id} activeContext={activeContext} />
+            </div>
+          </div>
+        ) : (
+          <div
+            id="app-main-column"
+            className={
+              onboardingMinimalChrome
                 ? "flex min-h-0 flex-1 flex-col pt-[calc(3.25rem+env(safe-area-inset-top))]"
                 : hideAppShell
                   ? "flex min-h-0 flex-1 flex-col"
                   : "flex flex-1 flex-col pb-8 md:pb-28"
-          }
-        >
-          {children}
-        </div>
-        {showAppChrome && user ? (
-          <>
-            <VisualViewportBottomNavSync />
-            <div
-              id="eid-mobile-bottom-nav"
-              className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] md:hidden"
-            >
-              <MobileBottomNav userId={user.id} activeContext={activeContext} />
-            </div>
-          </>
-        ) : null}
+            }
+          >
+            {children}
+          </div>
+        )}
         {hideAppShell ? null : (
           <div id="eid-site-footer">
             <SiteFooter user={user} isPlatformAdmin={isPlatformAdmin} />

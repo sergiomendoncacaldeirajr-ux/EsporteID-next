@@ -29,7 +29,7 @@ export function LegalGate({ show }: { show: boolean }) {
     <div
       role="region"
       aria-label="Aceite de termos obrigatório"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-eid-primary-500/25 bg-eid-surface px-4 py-3 text-center text-sm text-eid-fg shadow-[0_-8px_32px_rgba(0,0,0,0.35)]"
+      className="fixed bottom-0 left-0 right-0 z-[60] border-t border-eid-primary-500/25 bg-eid-surface px-4 py-3 text-center text-sm text-eid-fg shadow-[0_-8px_32px_rgba(0,0,0,0.35)]"
     >
       <p className="inline-block max-w-3xl text-eid-fg">
         Para continuar usando o EsporteID, aceite os{" "}
