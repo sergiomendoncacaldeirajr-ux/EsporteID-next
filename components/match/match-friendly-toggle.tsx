@@ -1,7 +1,7 @@
 "use client";
 
+import { Handshake } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { setViewerDisponivelAmistoso } from "@/app/match/actions";
 import {
   AMISTOSO_4H_AVISO_TEXTO,
@@ -9,12 +9,12 @@ import {
   marcarAmistoso4hFirstUseWarningAceito,
 } from "@/lib/perfil/amistoso-4h-first-warning";
 import { AMISTOSO_DURACAO_MS, computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
+import { createClient } from "@/lib/supabase/client";
 
 type Props = {
   initialOn: boolean;
   initialExpiresAt: string | null;
   userId: string;
-  /** Classes extras no container (ex.: margens no layout compacto do Match). */
   className?: string;
 };
 
@@ -28,7 +28,7 @@ function formatoRestante(ms: number): string {
   return `em ${s}s`;
 }
 
-/** Modo amistoso: liga por até 4 h; desliga sozinho se não renovar. */
+/** Modo amistoso: liga por até 4 h; desliga sozinho se não renovar. Controle compacto (mesma escala do botão de localização). */
 export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, className }: Props) {
   const [on, setOn] = useState(initialOn);
   const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt);
@@ -96,33 +96,32 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
   }
 
   const restanteMs = on && expiresAt ? new Date(expiresAt).getTime() - Date.now() : 0;
+  const titleHint = on
+    ? expiresAt
+      ? `Disponível para amistoso. Desliga sozinho ${formatoRestante(restanteMs)}. Toque para desligar.`
+      : "Disponível para amistoso. Toque para desligar."
+    : "Indisponível. Toque para ligar (até 4 horas ou até desligar).";
 
   return (
-    <div
-      className={`flex items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-2.5 py-2 shadow-[0_10px_22px_-14px_rgba(15,23,42,0.26)] backdrop-blur-sm ${className ?? ""}`}
+    <button
+      type="button"
+      disabled={pending}
+      onClick={() => toggle(!on)}
+      title={titleHint}
+      aria-pressed={on}
+      aria-label={on ? "Modo amistoso ligado. Toque para desligar." : "Modo amistoso desligado. Toque para ligar."}
+      className={`inline-flex touch-manipulation items-center gap-0.5 rounded-md border px-1 py-0.5 text-[7px] font-bold uppercase leading-none tracking-[0.04em] shadow-[0_2px_6px_-4px_rgba(15,23,42,0.3)] transition disabled:opacity-50 sm:gap-1 sm:px-1.5 sm:text-[8px] ${
+        on
+          ? "border-emerald-700/40 bg-emerald-600/10 text-emerald-900 hover:bg-emerald-600/18 dark:border-emerald-400/45 dark:bg-emerald-500/15 dark:text-emerald-100 dark:hover:bg-emerald-500/22"
+          : "border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-surface)_40%,transparent)] text-eid-text-secondary hover:bg-eid-surface/50 dark:hover:bg-eid-surface/35"
+      } ${className ?? ""}`}
     >
-      <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-primary-300">Modo amistoso</p>
-        <p className="text-[9px] leading-snug text-eid-text-secondary">
-          {on && expiresAt
-            ? `Desliga sozinho ${formatoRestante(restanteMs)}. Você pode desligar antes.`
-            : "Ligue quando quiser jogos casuais; fica até 4 horas ou até você desligar."}
-        </p>
-      </div>
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => toggle(!on)}
-        className={`relative flex h-8 shrink-0 items-center gap-2 rounded-full px-3 text-[11px] font-bold uppercase tracking-wide transition ${
-          on
-            ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-400/50"
-            : "bg-red-500/15 text-red-300 ring-1 ring-red-400/40"
-        } ${pending ? "opacity-70" : ""}`}
-        aria-pressed={on}
-      >
-        <span className={`h-2 w-2 rounded-full ${on ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.9)]" : "bg-red-400"}`} />
-        {on ? "Disponível" : "Indisponível"}
-      </button>
-    </div>
+      <Handshake
+        className={`h-2.5 w-2.5 shrink-0 sm:h-3 sm:w-3 ${on ? "text-emerald-800 dark:text-emerald-200" : "text-eid-text-secondary opacity-90"}`}
+        strokeWidth={2.25}
+        aria-hidden
+      />
+      <span className="whitespace-nowrap">{pending ? "…" : on ? "Amistoso ON" : "Amistoso OFF"}</span>
+    </button>
   );
 }
