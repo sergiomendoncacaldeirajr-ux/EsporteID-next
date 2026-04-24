@@ -367,6 +367,31 @@ header#eid-persistent-topbar textarea {
       padding-right: calc(0.8rem * var(--eid-android-content-scale));
     }
 
+    /* CTA do perfil no Android: mesmo visual da dashboard, porém alto e com folga lateral. */
+    #perfil-public-main .eid-profile-match-cta {
+      width: calc(100% - 1.25rem);
+      margin-left: auto;
+      margin-right: auto;
+      min-height: 88px;
+      border-radius: 1rem;
+      padding-top: 0.95rem;
+      padding-bottom: 0.95rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      font-size: 0.84rem;
+      letter-spacing: 0.1em;
+      gap: 0.6rem;
+      white-space: nowrap;
+    }
+
+    #perfil-public-main .eid-profile-match-cta svg {
+      width: 1.15rem;
+      height: 1.15rem;
+      color: #fff;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
     #app-main-column .eid-input-dark {
       min-height: calc(2.28rem * var(--eid-android-content-scale));
       font-size: calc(0.82rem * var(--eid-android-content-scale));
@@ -402,9 +427,6 @@ header#eid-persistent-topbar textarea {
     }
 
     #perfil-public-main .eid-profile-match-cta {
-      width: 100%;
-      margin-left: 0;
-      margin-right: 0;
       white-space: nowrap;
     }
 
