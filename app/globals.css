@@ -234,8 +234,8 @@ header#eid-persistent-topbar textarea {
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 767px) {
     :root {
-      /* iOS: escala próxima do Android sem esconder conteúdo sob o chrome fixo. */
-      --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 6.65rem);
+      /* iOS: folga extra sob status bar/notch — “Voltar” e primeiro bloco não colam no relógio. */
+      --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 7.15rem);
       --eid-shell-footer-offset: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 2.85rem);
       /* Escala proporcional geral (ajuste fino centralizado). */
       --eid-ios-ui-scale: 1.22;

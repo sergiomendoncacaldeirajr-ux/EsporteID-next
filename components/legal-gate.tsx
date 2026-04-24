@@ -1,6 +1,7 @@
 import { cache } from "react";
 import Link from "next/link";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 
 /** React.cache: no máximo uma leitura de `profiles` por request (via `LegalGateDeferred`). */
 export const getCachedShowLegalGate = cache(async (): Promise<boolean> => {
@@ -9,10 +10,10 @@ export const getCachedShowLegalGate = cache(async (): Promise<boolean> => {
     if (!user) return false;
     const { data: profile } = await supabase
       .from("profiles")
-      .select("termos_aceitos_em")
+      .select(PROFILE_LEGAL_ACCEPTANCE_COLUMNS)
       .eq("id", user.id)
       .maybeSingle();
-    return !profile?.termos_aceitos_em;
+    return !legalAcceptanceIsCurrent(profile);
   } catch {
     return false;
   }

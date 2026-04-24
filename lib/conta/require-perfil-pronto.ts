@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 
 /** Monta URL de retorno pós-termos, preservando `from` quando seguro (path relativo). */
 export function contaNextPath(pathname: string, sp?: { from?: string } | null): string {
@@ -21,11 +22,11 @@ export async function requireContaPerfilPronto(
 ): Promise<void> {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("perfil_completo, termos_aceitos_em")
+    .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
     .eq("id", userId)
     .maybeSingle();
 
-  if (!profile?.termos_aceitos_em) {
+  if (!profile || !legalAcceptanceIsCurrent(profile)) {
     redirect(`/conta/aceitar-termos?next=${encodeURIComponent(nextPath)}`);
   }
   if (!profile.perfil_completo) {

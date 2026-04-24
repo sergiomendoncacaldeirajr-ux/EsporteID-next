@@ -1,6 +1,7 @@
 "use server";
 
 import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 import type { LoginActionState } from "./login-state";
 
@@ -75,13 +76,13 @@ export async function entrarComSenha(formData: FormData): Promise<LoginActionSta
     if (u) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("termos_aceitos_em, perfil_completo")
+        .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
         .eq("id", u.id)
         .maybeSingle();
 
       dest = getPostAuthRedirect(
         {
-          termosAceitos: !!profile?.termos_aceitos_em,
+          termosAceitos: legalAcceptanceIsCurrent(profile),
           perfilCompleto: !!profile?.perfil_completo,
         },
         next

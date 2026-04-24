@@ -20,3 +20,7 @@ export const DESAFIO_CHOICE_AMISTOSO =
 
 export const DESAFIO_CHOICE_ACTION =
   "inline-flex min-h-[42px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/12 px-4 text-center text-xs font-bold uppercase tracking-wide text-eid-action-200 transition hover:bg-eid-action-500/20";
+
+/** Container do fluxo /desafio no app logado: folga extra acima do footer + nav inferior. */
+export const DESAFIO_PAGE_MAIN_CLASS =
+  "mx-auto w-full max-w-3xl px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+2.5rem)] sm:px-6 sm:py-4 sm:pb-12";

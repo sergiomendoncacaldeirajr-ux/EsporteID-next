@@ -11,6 +11,7 @@ import {
   type SortBy,
 } from "@/lib/match/radar-snapshot";
 import { safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import {
   computeDisponivelAmistosoEffective,
   expireDisponivelAmistosoProfileIfNeeded,
@@ -88,11 +89,11 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   const { data: me } = await supabase
     .from("profiles")
     .select(
-      "id, lat, lng, genero, termos_aceitos_em, perfil_completo, disponivel_amistoso, disponivel_amistoso_ate, match_maioridade_confirmada"
+      `id, lat, lng, genero, perfil_completo, disponivel_amistoso, disponivel_amistoso_ate, match_maioridade_confirmada, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
     )
     .eq("id", user.id)
     .maybeSingle();
-  if (!me?.termos_aceitos_em) redirect("/conta/aceitar-termos");
+  if (!me || !legalAcceptanceIsCurrent(me)) redirect("/conta/aceitar-termos");
   if (!me.perfil_completo) redirect("/onboarding");
 
   const qs = new URLSearchParams();

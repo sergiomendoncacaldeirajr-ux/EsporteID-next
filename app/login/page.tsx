@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
+import {
+  legalAcceptanceIsCurrent,
+  PROFILE_LEGAL_ACCEPTANCE_COLUMNS,
+  type ProfileLegalAcceptance,
+} from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { LoginForm } from "./login-form";
 
@@ -61,14 +66,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   if (user && supabase) {
-    let profile: {
-      termos_aceitos_em: string | null;
-      perfil_completo: boolean | null;
-    } | null = null;
+    let profile: (ProfileLegalAcceptance & { perfil_completo: boolean | null }) | null = null;
     try {
       const { data } = await supabase
         .from("profiles")
-        .select("termos_aceitos_em, perfil_completo")
+        .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
         .eq("id", user.id)
         .maybeSingle();
       profile = data;
@@ -87,7 +89,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     redirect(
       getPostAuthRedirect(
         {
-          termosAceitos: !!profile?.termos_aceitos_em,
+          termosAceitos: legalAcceptanceIsCurrent(profile),
           perfilCompleto: !!profile?.perfil_completo,
         },
         firstQuery(sp.next) ?? null

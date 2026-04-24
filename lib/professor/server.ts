@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 
 export async function requireProfessorUser(nextHref = "/professor") {
@@ -13,11 +14,11 @@ export async function requireProfessorUser(nextHref = "/professor") {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("perfil_completo, termos_aceitos_em, nome")
+    .select(`perfil_completo, nome, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile?.termos_aceitos_em) {
+  if (!profile || !legalAcceptanceIsCurrent(profile)) {
     redirect(`/conta/aceitar-termos?next=${encodeURIComponent(nextHref)}`);
   }
   if (!profile.perfil_completo) {

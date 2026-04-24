@@ -7,6 +7,7 @@ import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 export const metadata = {
@@ -194,12 +195,12 @@ export default async function DashboardPage({ searchParams }: Props) {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "nome, avatar_url, localizacao, lat, lng, termos_aceitos_em, perfil_completo, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate"
+      `nome, avatar_url, localizacao, lat, lng, perfil_completo, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
     )
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile?.termos_aceitos_em) {
+  if (!profile || !legalAcceptanceIsCurrent(profile)) {
     redirect("/conta/aceitar-termos");
   }
   if (!profile.perfil_completo) {

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CONTA_ESPORTES_EID_HREF } from "@/lib/routes/conta";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { listarPapeis } from "@/lib/roles";
 import { ContaPerfilForm } from "./conta-perfil-form";
@@ -19,12 +20,12 @@ export default async function ContaPerfilPage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, termos_aceitos_em"
+      `nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
     )
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile?.termos_aceitos_em) {
+  if (!profile || !legalAcceptanceIsCurrent(profile)) {
     redirect(`/conta/aceitar-termos?next=${encodeURIComponent("/conta/perfil")}`);
   }
   if (!profile.perfil_completo) redirect("/onboarding");

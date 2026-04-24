@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LogoFull } from "@/components/brand/logo-full";
 import { EidThemeToggle } from "@/components/eid-theme-toggle";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
@@ -47,7 +48,7 @@ export default async function Home() {
       ? (
           await supabase
             .from("profiles")
-            .select("termos_aceitos_em, perfil_completo")
+            .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
             .eq("id", user.id)
             .maybeSingle()
         ).data
@@ -118,6 +119,53 @@ export default async function Home() {
             </li>
           ))}
         </ul>
+
+        <section
+          className="mt-10 hidden md:mt-12 md:block"
+          aria-labelledby="areas-plataforma-desktop"
+        >
+          <h2 id="areas-plataforma-desktop" className="text-lg font-bold text-eid-fg">
+            Tudo o que o EsporteID oferece
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-eid-text-secondary">
+            No computador você usa o mesmo login do celular: painel com busca, radar de desafios, agenda de
+            partidas, comunidade, torneios, times, locais, ranking EID, performance e área de conta — além de
+            modos <span className="text-eid-fg">Professor</span>, <span className="text-eid-fg">Organizador</span> e{" "}
+            <span className="text-eid-fg">Espaço</span> após o onboarding.
+          </p>
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {(
+              [
+                { href: "/dashboard", title: "Painel", body: "Resumo, atalhos e busca integrada." },
+                { href: "/agenda", title: "Agenda", body: "Partidas aceitas, horários e confirmações." },
+                { href: "/match", title: "Desafio (radar)", body: "Pedidos ranking ou amistoso por esporte e raio." },
+                { href: "/comunidade", title: "Social", body: "Notificações, convites e pedidos em um lugar." },
+                { href: "/torneios", title: "Torneios", body: "Eventos, inscrições e chaves." },
+                { href: "/times", title: "Times e duplas", body: "Formação, convites e EID coletivo." },
+                { href: "/locais", title: "Locais", body: "Quadras, academias e espaços parceiros." },
+                { href: "/ranking", title: "Ranking EID", body: "Posições e regras por esporte." },
+                { href: "/performance", title: "Performance", body: "Indicadores e histórico de jogo." },
+                { href: "/buscar", title: "Buscar", body: "Atletas, locais, times e torneios." },
+                { href: "/conta/perfil", title: "Conta e perfil", body: "Dados, esportes, EID e privacidade." },
+                { href: "/conta/dados-lgpd", title: "Seus dados (LGPD)", body: "Exportação, correção e consentimentos." },
+              ] as const
+            ).map((item) => {
+              const href = user ? item.href : `/login?next=${encodeURIComponent(item.href)}`;
+              return (
+                <li key={item.href}>
+                  <Link href={href} className={`${linkCard} flex h-full min-h-[5.5rem] flex-col justify-center`}>
+                    <span className="font-semibold text-eid-fg">{item.title}</span>
+                    <span className="mt-1 text-xs leading-snug text-eid-text-secondary">{item.body}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-4 text-xs text-eid-text-muted">
+            Papéis de professor, organizador e gestão de espaço aparecem no app após você marcar no cadastro
+            (onboarding) — os atalhos do painel mudam conforme o contexto ativo.
+          </p>
+        </section>
 
         {!user ? (
           <section
@@ -233,7 +281,7 @@ export default async function Home() {
                   <span className="font-semibold text-eid-fg">{user.email}</span>
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
-                  {!profile?.termos_aceitos_em ? (
+                  {!profile || !legalAcceptanceIsCurrent(profile) ? (
                     <Link
                       href="/conta/aceitar-termos"
                       className="eid-btn-primary inline-flex min-h-[44px] items-center px-5 text-sm active:scale-[0.98]"

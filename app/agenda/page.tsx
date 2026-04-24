@@ -9,6 +9,7 @@ import {
   firstOfRelation,
   getAgendaTeamContext,
 } from "@/lib/agenda/partidas-usuario";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -25,10 +26,10 @@ export default async function AgendaPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("termos_aceitos_em, perfil_completo")
+    .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
     .eq("id", user.id)
     .maybeSingle();
-  if (!profile?.termos_aceitos_em) redirect("/conta/aceitar-termos");
+  if (!profile || !legalAcceptanceIsCurrent(profile)) redirect("/conta/aceitar-termos");
   if (!profile.perfil_completo) redirect("/onboarding");
 
   await supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id });

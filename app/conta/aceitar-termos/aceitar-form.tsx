@@ -43,8 +43,9 @@ export function AceitarForm() {
       <div>
         <h1 className="text-xl font-semibold text-eid-fg">Termos e privacidade</h1>
         <p className="mt-2 text-sm leading-relaxed text-eid-text-secondary">
-          Para usar o EsporteID, confirme que leu e concorda com os documentos
-          abaixo. O tratamento de dados pessoais segue a LGPD (Lei 13.709/2018).
+          Para usar o EsporteID, confirme que leu e concorda com a versão vigente dos documentos
+          abaixo. Quando publicarmos uma nova versão, será necessário aceitar de novo para continuar.
+          O tratamento de dados pessoais segue a LGPD (Lei 13.709/2018).
         </p>
       </div>
 

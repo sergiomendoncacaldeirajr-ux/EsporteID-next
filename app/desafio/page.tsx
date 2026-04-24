@@ -11,6 +11,7 @@ import {
   DESAFIO_CHOICE_AMISTOSO,
   DESAFIO_CHOICE_RANKING,
   DESAFIO_FLOW_SECONDARY_CLASS,
+  DESAFIO_PAGE_MAIN_CLASS,
 } from "@/lib/desafio/flow-ui";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
@@ -75,7 +76,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
       if (perfilAlvo && perfilAlvo.id !== user.id && opcoes.length > 0) {
         return (
-            <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+            <main className={DESAFIO_PAGE_MAIN_CLASS}>
               <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
               <p className="mt-2 text-sm text-eid-text-secondary">
                 Escolha o esporte para desafiar <span className="text-eid-fg">{perfilAlvo.nome ?? "Atleta"}</span>.
@@ -107,7 +108,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     }
 
     return (
-      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+      <main className={DESAFIO_PAGE_MAIN_CLASS}>
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">
             Escolha um esporte no radar (não use &quot;Todos&quot;) para enviar um desafio com o esporte correto.
@@ -122,7 +123,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   const { data: esporteRow } = await supabase.from("esportes").select("id, nome").eq("id", esporteId).maybeSingle();
   if (!esporteRow || !isSportMatchEnabled(esporteRow.nome)) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+      <main className={DESAFIO_PAGE_MAIN_CLASS}>
         <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
         <p className="mt-2 text-sm text-eid-text-secondary">Este esporte não aceita desafio/ranking no momento.</p>
         <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
@@ -136,7 +137,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   if (modalidade === "individual") {
     if (!UUID_RE.test(alvoKey)) {
       return (
-        <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+        <main className={DESAFIO_PAGE_MAIN_CLASS}>
             <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
             <p className="mt-2 text-sm text-red-200">Identificador do atleta inválido.</p>
             <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
@@ -153,7 +154,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       .maybeSingle();
     if (!perfil || perfil.id === user.id) {
       return (
-        <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+        <main className={DESAFIO_PAGE_MAIN_CLASS}>
             <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
             <p className="mt-2 text-sm text-eid-text-secondary">Atleta não encontrado ou inválido para desafio.</p>
             <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
@@ -181,7 +182,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       const baseQs = `id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${esporteId}`;
 
       return (
-        <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+        <main className={DESAFIO_PAGE_MAIN_CLASS}>
             <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
             <p className="mt-2 text-sm text-eid-text-secondary">
               <span className="text-eid-fg">{perfil.nome ?? "Atleta"}</span> · {esporteNome} (individual). Escolha o tipo de confronto.
@@ -244,7 +245,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         : null;
 
     return (
-      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+      <main className={DESAFIO_PAGE_MAIN_CLASS}>
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">
             Confirme o pedido no esporte <span className="text-eid-fg">{esporteNome}</span> (individual) ·{" "}
@@ -301,7 +302,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   const timeId = Number(alvoKey);
   if (!Number.isFinite(timeId) || timeId < 1) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+      <main className={DESAFIO_PAGE_MAIN_CLASS}>
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-red-200">Identificador da formação inválido.</p>
           <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
@@ -322,7 +323,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     .toLowerCase();
   if (!timeRow || (tipoFormacao !== "dupla" && tipoFormacao !== "time") || tipoFormacao !== modalidade) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+      <main className={DESAFIO_PAGE_MAIN_CLASS}>
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">Formação não encontrada ou modalidade diferente do link.</p>
           <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
@@ -334,7 +335,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
   if (Number(timeRow.esporte_id) !== esporteId) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+      <main className={DESAFIO_PAGE_MAIN_CLASS}>
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">O esporte selecionado não confere com esta formação. Ajuste o filtro no radar.</p>
           <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
@@ -352,7 +353,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   });
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
+    <main className={DESAFIO_PAGE_MAIN_CLASS}>
         <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
         <p className="mt-2 text-sm text-eid-text-secondary">
           Confirme o pedido no esporte <span className="text-eid-fg">{esporteNome}</span> ({modalidade === "dupla" ? "dupla" : "time"}).

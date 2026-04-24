@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { getContextHomeHref } from "@/lib/auth/active-context";
@@ -40,10 +41,10 @@ export default async function BuscarPage({ searchParams }: Props) {
   const supabase = await createClient();
   const { data: gate } = await supabase
     .from("profiles")
-    .select("termos_aceitos_em, perfil_completo")
+    .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
     .eq("id", user.id)
     .maybeSingle();
-  if (!gate?.termos_aceitos_em) {
+  if (!gate || !legalAcceptanceIsCurrent(gate)) {
     redirect(`/conta/aceitar-termos?next=${encodeURIComponent(`/buscar${rawDisplay ? `?q=${encodeURIComponent(rawDisplay)}` : ""}`)}`);
   }
   if (!gate.perfil_completo) {

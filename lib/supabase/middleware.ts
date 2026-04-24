@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
+import {
+  legalAcceptanceIsCurrent,
+  type ProfileLegalAcceptance,
+  PROFILE_LEGAL_ACCEPTANCE_COLUMNS,
+} from "@/lib/legal/acceptance";
 
 /**
  * Requisições de transição / prefetch do App Router. Rodar `getSession` + `setAll`
@@ -116,13 +121,16 @@ export async function updateSession(request: NextRequest) {
   const user = session?.user ?? null;
 
   const authCode = request.nextUrl.searchParams.has("code");
-  let cachedProfile: { termos_aceitos_em: string | null; perfil_completo: boolean | null } | null | undefined;
+  let cachedProfile:
+    | (ProfileLegalAcceptance & { perfil_completo: boolean | null })
+    | null
+    | undefined;
   const getProfile = async () => {
     if (!user) return null;
     if (cachedProfile !== undefined) return cachedProfile;
     const { data } = await supabase
       .from("profiles")
-      .select("termos_aceitos_em, perfil_completo")
+      .select(`${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}, perfil_completo`)
       .eq("id", user.id)
       .maybeSingle();
     cachedProfile = data;
@@ -183,7 +191,7 @@ export async function updateSession(request: NextRequest) {
   if (user && (path.startsWith("/dashboard") || path.startsWith("/organizador") || path.startsWith("/buscar"))) {
     const profile = await getProfile();
 
-    if (!profile?.termos_aceitos_em) {
+    if (!profile || !legalAcceptanceIsCurrent(profile)) {
       const url = request.nextUrl.clone();
       url.pathname = "/conta/aceitar-termos";
       url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
@@ -200,7 +208,7 @@ export async function updateSession(request: NextRequest) {
   if (user && path.startsWith("/onboarding")) {
     const profile = await getProfile();
 
-    if (!profile?.termos_aceitos_em) {
+    if (!profile || !legalAcceptanceIsCurrent(profile)) {
       const url = request.nextUrl.clone();
       url.pathname = "/conta/aceitar-termos";
       url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
@@ -224,7 +232,7 @@ export async function updateSession(request: NextRequest) {
     if (user) {
       const profile = await getProfile();
 
-      if (profile?.termos_aceitos_em && profile.perfil_completo) {
+      if (profile && legalAcceptanceIsCurrent(profile) && profile.perfil_completo) {
         const url = request.nextUrl.clone();
         url.pathname = "/dashboard";
         url.search = "";

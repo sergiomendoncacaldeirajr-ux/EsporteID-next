@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { AceitarForm } from "./aceitar-form";
 
@@ -34,11 +35,11 @@ export default async function AceitarTermosPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("termos_aceitos_em")
+    .select(PROFILE_LEGAL_ACCEPTANCE_COLUMNS)
     .eq("id", user.id)
     .maybeSingle();
 
-  if (profile?.termos_aceitos_em) {
+  if (legalAcceptanceIsCurrent(profile)) {
     redirect("/");
   }
 

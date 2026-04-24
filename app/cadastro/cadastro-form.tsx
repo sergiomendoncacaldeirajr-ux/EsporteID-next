@@ -11,6 +11,7 @@ import { EID_PHONE_LABELS } from "@/lib/eid-phone-labels";
 import { createClient } from "@/lib/supabase/client";
 import { getSignupEmailRedirectTo } from "@/lib/auth/email-redirects";
 import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import "react-phone-number-input/style.css";
 import "./cadastro-register.css";
 
@@ -232,12 +233,12 @@ export function CadastroForm() {
       if (u) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("termos_aceitos_em, perfil_completo")
+          .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
           .eq("id", u.id)
           .maybeSingle();
         dest = getPostAuthRedirect(
           {
-            termosAceitos: !!profile?.termos_aceitos_em,
+            termosAceitos: legalAcceptanceIsCurrent(profile),
             perfilCompleto: !!profile?.perfil_completo,
           },
           next

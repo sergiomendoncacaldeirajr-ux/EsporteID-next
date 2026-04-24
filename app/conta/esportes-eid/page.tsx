@@ -9,6 +9,7 @@ import type {
 import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { CONTA_PERFIL_HREF } from "@/lib/routes/conta";
 import { listarPapeis, precisaEsportesPratica } from "@/lib/roles";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { parseTempoExperienciaParaChaveAprox } from "@/lib/perfil/parse-tempo-experiencia-eid";
 import { ContaEsportesForm } from "./conta-esportes-form";
@@ -27,11 +28,11 @@ export default async function ContaEsportesEidPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("perfil_completo, termos_aceitos_em")
+    .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile?.termos_aceitos_em) {
+  if (!profile || !legalAcceptanceIsCurrent(profile)) {
     redirect(`/conta/aceitar-termos?next=${encodeURIComponent("/conta/esportes-eid")}`);
   }
   if (!profile.perfil_completo) redirect("/onboarding");

@@ -7,6 +7,7 @@ import { LogoFull } from "@/components/brand/logo-full";
 import { createClient } from "@/lib/supabase/client";
 import { getRecoveryEmailRedirectTo, getSignupEmailRedirectTo } from "@/lib/auth/email-redirects";
 import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 
 const inputClass =
   "eid-input-dark w-full rounded-xl px-3 py-3 text-eid-fg placeholder:text-eid-text-secondary/85";
@@ -148,12 +149,12 @@ function VerificarCodigoPageInner() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("termos_aceitos_em, perfil_completo")
+      .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
       .eq("id", user.id)
       .maybeSingle();
     const dest = getPostAuthRedirect(
       {
-        termosAceitos: !!profile?.termos_aceitos_em,
+        termosAceitos: legalAcceptanceIsCurrent(profile),
         perfilCompleto: !!profile?.perfil_completo,
       },
       next

@@ -11,6 +11,7 @@ import {
   precisaEsportesPratica,
 } from "@/lib/roles";
 import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { OnboardingWizard } from "./onboarding-wizard";
@@ -35,12 +36,12 @@ export default async function OnboardingPage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "id, nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, termos_aceitos_em, perfil_completo, onboarding_etapa"
+      `id, nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, onboarding_etapa, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
     )
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile?.termos_aceitos_em) {
+  if (!profile || !legalAcceptanceIsCurrent(profile)) {
     redirect(`/conta/aceitar-termos?next=${encodeURIComponent("/onboarding")}`);
   }
   if (profile.id !== user.id) redirect("/dashboard");

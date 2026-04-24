@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-fullscreen-shell";
 import { ProfileMainEditor } from "@/components/perfil/edit/profile-main-editor";
 import { ProfileMediaEditor } from "@/components/perfil/edit/profile-media-editor";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -19,12 +20,12 @@ export default async function EditarPerfilFullscreenPage({ searchParams }: Props
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "nome, username, localizacao, avatar_url, foto_capa, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, termos_aceitos_em"
+      `nome, username, localizacao, avatar_url, foto_capa, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
     )
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile?.termos_aceitos_em) {
+  if (!profile || !legalAcceptanceIsCurrent(profile)) {
     redirect(`/conta/aceitar-termos?next=${encodeURIComponent("/editar/perfil")}`);
   }
   if (!profile.perfil_completo) redirect("/onboarding");

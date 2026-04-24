@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { listarPapeis, precisaEsportesPratica } from "@/lib/roles";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-fullscreen-shell";
 import { ProfilePerformanceEditor } from "@/components/perfil/edit/profile-performance-editor";
@@ -24,10 +25,10 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("perfil_completo, termos_aceitos_em")
+    .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
     .eq("id", user.id)
     .maybeSingle();
-  if (!profile?.termos_aceitos_em) {
+  if (!profile || !legalAcceptanceIsCurrent(profile)) {
     redirect(`/conta/aceitar-termos?next=${encodeURIComponent("/editar/performance-eid")}`);
   }
   if (!profile.perfil_completo) redirect("/onboarding");
