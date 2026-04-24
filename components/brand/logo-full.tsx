@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  EID_LOGO_FULL_HEIGHT,
-  EID_LOGO_FULL_SRC,
-  EID_LOGO_FULL_WIDTH,
+  EID_LOGO_AUTH_MARK_HEIGHT,
+  EID_LOGO_AUTH_MARK_SRC,
+  EID_LOGO_AUTH_MARK_WIDTH,
 } from "@/lib/branding";
 
 type Props = {
@@ -13,17 +13,17 @@ type Props = {
 };
 
 /**
- * Logo completa (E multiesportes + ESPORTEID) — pré-dashboard, auth, onboarding.
+ * Marca pré-login (E multiesportes, PNG com alpha) — login, cadastro, onboarding, recuperar senha, etc.
  */
 export function LogoFull({ className, priority }: Props) {
   return (
     <div className={className}>
       <img
-        src={EID_LOGO_FULL_SRC}
+        src={EID_LOGO_AUTH_MARK_SRC}
         alt="EsporteID"
-        width={EID_LOGO_FULL_WIDTH}
-        height={EID_LOGO_FULL_HEIGHT}
-        className="mx-auto block h-auto w-full max-h-[min(22vw,104px)] max-w-[min(78vw,200px)] sm:max-h-[120px] sm:max-w-[220px] object-contain object-center"
+        width={EID_LOGO_AUTH_MARK_WIDTH}
+        height={EID_LOGO_AUTH_MARK_HEIGHT}
+        className="mx-auto block h-auto w-full max-h-[min(30vw,132px)] max-w-[min(30vw,132px)] sm:max-h-[150px] sm:max-w-[150px] object-contain object-center"
         decoding="async"
         fetchPriority={priority ? "high" : "auto"}
       />

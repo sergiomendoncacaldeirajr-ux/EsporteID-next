@@ -1,9 +1,14 @@
 /** Caminhos públicos das variações oficiais da marca (artes exportadas). */
 
-/** Pré-dashboard: ícone E + palavra ESPORTEID (logo completa). */
+/** Pré-dashboard: ícone E + palavra ESPORTEID (logo completa — legado / outros usos). */
 export const EID_LOGO_FULL_SRC = "/brand/logo-full.png";
 export const EID_LOGO_FULL_WIDTH = 1024;
 export const EID_LOGO_FULL_HEIGHT = 1024;
+
+/** Marca E multiesportes com fundo transparente — auth, onboarding, landing. */
+export const EID_LOGO_AUTH_MARK_SRC = "/brand/logo-auth-mark.png";
+export const EID_LOGO_AUTH_MARK_WIDTH = 1024;
+export const EID_LOGO_AUTH_MARK_HEIGHT = 1024;
 
 /** Header / telas internas: somente texto ESPORTEID (sem ícone E). */
 export const EID_LOGO_WORDMARK_SRC = "/brand/logo-wordmark.png";
