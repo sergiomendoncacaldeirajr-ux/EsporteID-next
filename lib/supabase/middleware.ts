@@ -19,6 +19,20 @@ function isMobileUserAgent(ua: string | null): boolean {
   return /Mobile|Android|iPhone|iPod|webOS|BlackBerry|IEMobile|Opera Mini|CriOS|FxiOS/i.test(ua);
 }
 
+function needsSessionWork(path: string): boolean {
+  return (
+    path === "/" ||
+    path.startsWith("/auth/callback") ||
+    path.startsWith("/conta") ||
+    path.startsWith("/editar") ||
+    path.startsWith("/dashboard") ||
+    path.startsWith("/buscar") ||
+    path.startsWith("/organizador") ||
+    path.startsWith("/onboarding") ||
+    path.startsWith("/admin")
+  );
+}
+
 export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -30,6 +44,11 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isNextjsRouterDataRequest(request)) {
+    return NextResponse.next({ request });
+  }
+  const path = request.nextUrl.pathname;
+  if (!needsSessionWork(path)) {
+    // Rotas públicas não precisam de leitura de sessão no middleware.
     return NextResponse.next({ request });
   }
   let supabaseResponse = NextResponse.next({ request });
@@ -62,8 +81,19 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getSession();
   const user = session?.user ?? null;
 
-  const path = request.nextUrl.pathname;
   const authCode = request.nextUrl.searchParams.has("code");
+  let cachedProfile: { termos_aceitos_em: string | null; perfil_completo: boolean | null } | null | undefined;
+  const getProfile = async () => {
+    if (!user) return null;
+    if (cachedProfile !== undefined) return cachedProfile;
+    const { data } = await supabase
+      .from("profiles")
+      .select("termos_aceitos_em, perfil_completo")
+      .eq("id", user.id)
+      .maybeSingle();
+    cachedProfile = data;
+    return cachedProfile;
+  };
 
   if (path.startsWith("/auth/callback")) {
     return supabaseResponse;
@@ -115,11 +145,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && (path.startsWith("/dashboard") || path.startsWith("/organizador") || path.startsWith("/buscar"))) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("termos_aceitos_em, perfil_completo")
-      .eq("id", user.id)
-      .maybeSingle();
+    const profile = await getProfile();
 
     if (!profile?.termos_aceitos_em) {
       const url = request.nextUrl.clone();
@@ -136,11 +162,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && path.startsWith("/onboarding")) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("termos_aceitos_em, perfil_completo")
-      .eq("id", user.id)
-      .maybeSingle();
+    const profile = await getProfile();
 
     if (!profile?.termos_aceitos_em) {
       const url = request.nextUrl.clone();
@@ -164,11 +186,7 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.searchParams.get("home") === "1" || request.nextUrl.searchParams.get("site") === "1";
 
     if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("termos_aceitos_em, perfil_completo")
-        .eq("id", user.id)
-        .maybeSingle();
+      const profile = await getProfile();
 
       if (profile?.termos_aceitos_em && profile.perfil_completo) {
         const url = request.nextUrl.clone();
