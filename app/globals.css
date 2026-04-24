@@ -237,7 +237,7 @@ header#eid-persistent-topbar textarea {
       --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 5.85rem);
       --eid-shell-footer-offset: calc(max(10px, env(safe-area-inset-bottom, 0px)) + 2.45rem);
       /* Escala proporcional geral (ajuste fino centralizado). */
-      --eid-ios-ui-scale: 1.1;
+      --eid-ios-ui-scale: 1.15;
     }
 
     html {
