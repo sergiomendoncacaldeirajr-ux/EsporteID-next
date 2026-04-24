@@ -295,16 +295,6 @@ header#eid-persistent-topbar textarea {
       padding: calc(14px * var(--eid-ios-ui-scale));
     }
 
-    /* Largura: no iOS mobile, libera containers "max-w-*" do conteúdo principal. */
-    #app-main-column [class*="max-w-"] {
-      max-width: 100% !important;
-    }
-
-    #app-main-column [class*="mx-auto"] {
-      margin-left: 0 !important;
-      margin-right: 0 !important;
-    }
-
   }
 }
 
