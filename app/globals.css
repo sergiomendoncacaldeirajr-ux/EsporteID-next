@@ -260,6 +260,37 @@ header#eid-persistent-topbar textarea {
       padding-top: 0.45rem;
       padding-bottom: 0.55rem;
     }
+
+    /* iOS: aumentar altura/área útil dos componentes (sem mexer em header/footer). */
+    button:not(#eid-persistent-topbar button):not(#eid-mobile-bottom-nav button),
+    [role="button"]:not(#eid-persistent-topbar [role="button"]):not(#eid-mobile-bottom-nav [role="button"]),
+    a[class*="eid-btn-"] {
+      min-height: 52px;
+    }
+
+    input.eid-input-dark,
+    select.eid-input-dark,
+    textarea.eid-input-dark {
+      min-height: 52px;
+      padding-top: 0.72rem;
+      padding-bottom: 0.72rem;
+      line-height: 1.45;
+    }
+
+    .eid-card,
+    .eid-surface-panel {
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+    }
+
+    /* Ícones gerais no conteúdo (preserva topbar/footer). */
+    main svg,
+    section svg,
+    article svg,
+    form svg {
+      min-width: 1.18em;
+      min-height: 1.18em;
+    }
   }
 }
 
