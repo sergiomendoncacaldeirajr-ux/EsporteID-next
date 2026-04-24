@@ -229,6 +229,31 @@ header#eid-persistent-topbar textarea {
   user-select: none;
 }
 
+/* iOS Safari (mobile): pequeno ganho de escala visual sem afetar Android. */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 767px) {
+    html {
+      font-size: 17px;
+      -webkit-text-size-adjust: 115%;
+    }
+
+    #eid-persistent-topbar svg {
+      width: 1.15rem;
+      height: 1.15rem;
+    }
+
+    #eid-mobile-bottom-nav svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    #eid-mobile-bottom-nav [aria-label] {
+      padding-top: 0.45rem;
+      padding-bottom: 0.55rem;
+    }
+  }
+}
+
 button,
 input[type="button"],
 input[type="submit"],
