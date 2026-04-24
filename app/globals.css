@@ -199,7 +199,7 @@ html {
 @media (max-width: 767px) {
   @supports (-webkit-touch-callout: none) {
     html {
-      font-size: 50px;
+      font-size: 80px;
     }
   }
 }
