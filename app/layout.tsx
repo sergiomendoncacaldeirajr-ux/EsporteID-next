@@ -14,7 +14,6 @@ import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
 import { InstallAppOffer } from "@/components/pwa/install-app-offer";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
-import { ViewportZoomLock } from "@/components/system/viewport-zoom-lock";
 import {
   ACTIVE_CONTEXT_COOKIE,
   resolveActiveAppContext,
@@ -80,10 +79,6 @@ export const viewport: Viewport = {
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
-  minimumScale: 1,
-  /* App-like: sem zoom (trade-off de acessibilidade). Reforçado em `ViewportZoomLock`. */
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: "cover",
 };
 
@@ -126,7 +121,6 @@ export default async function RootLayout({
         className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}
       >
         <EidThemeHydration />
-        <ViewportZoomLock />
         <PwaBootstrap />
         <ThemeColorSync />
         <InstallAppOffer />
