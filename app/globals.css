@@ -225,7 +225,7 @@ header#eid-persistent-topbar textarea {
 #eid-mobile-bottom-nav {
   box-sizing: border-box;
   width: 100%;
-  background: var(--eid-card);
+  background: transparent;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -235,10 +235,14 @@ header#eid-persistent-topbar textarea {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -1px;
-  height: calc(env(safe-area-inset-bottom, 0px) + 6px);
+  top: 100%;
+  height: calc(env(safe-area-inset-bottom, 0px) + 8px);
   background: var(--eid-card);
   pointer-events: none;
+}
+
+#eid-mobile-bottom-nav .eid-surface-panel {
+  border-top-color: transparent;
 }
 
 /* iOS Safari (mobile): pequeno ganho de escala visual sem afetar Android. */
