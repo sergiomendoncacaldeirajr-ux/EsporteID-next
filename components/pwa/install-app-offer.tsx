@@ -8,6 +8,27 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 const IOS_DISMISS_SESSION_KEY = "eid-ios-add-home-dismissed";
+const INSTALL_OFFER_LAST_SHOWN_DAY_KEY = "eid-install-offer-last-shown-day";
+
+function dayStampNow() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function canShowInstallOfferToday() {
+  try {
+    return localStorage.getItem(INSTALL_OFFER_LAST_SHOWN_DAY_KEY) !== dayStampNow();
+  } catch {
+    return true;
+  }
+}
+
+function markInstallOfferShownToday() {
+  try {
+    localStorage.setItem(INSTALL_OFFER_LAST_SHOWN_DAY_KEY, dayStampNow());
+  } catch {
+    /* ignore */
+  }
+}
 
 function isStandaloneMode() {
   if (typeof window === "undefined") return false;
@@ -49,9 +70,23 @@ export function InstallAppOffer() {
   const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(null);
   const [androidOpen, setAndroidOpen] = useState(false);
   const [iosOpen, setIosOpen] = useState(false);
-  const [iosDismissed, setIosDismissed] = useState(false);
+  const [iosDismissed, setIosDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return sessionStorage.getItem(IOS_DISMISS_SESSION_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [canShowToday, setCanShowToday] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return canShowInstallOfferToday();
+  });
 
   const openIosPanel = useCallback(() => {
+    if (!canShowInstallOfferToday()) return;
+    markInstallOfferShownToday();
+    setCanShowToday(false);
     setIosOpen(true);
   }, []);
 
@@ -69,17 +104,14 @@ export function InstallAppOffer() {
     if (typeof window === "undefined") return;
     if (isStandaloneMode()) return;
 
-    let dismissed = false;
-    try {
-      dismissed = sessionStorage.getItem(IOS_DISMISS_SESSION_KEY) === "1";
-    } catch {
-      dismissed = false;
-    }
-    if (dismissed) setIosDismissed(true);
+    const dismissed = iosDismissed;
 
     const onBeforeInstallPrompt = (ev: Event) => {
       ev.preventDefault();
       setInstallEvt(ev as BeforeInstallPromptEvent);
+      if (!canShowInstallOfferToday()) return;
+      markInstallOfferShownToday();
+      setCanShowToday(false);
       setAndroidOpen(true);
     };
 
@@ -94,8 +126,12 @@ export function InstallAppOffer() {
     /* iOS não dispara beforeinstallprompt: oferecemos instruções após um breve delay.
      * Em browser o id do timer é `number`; com @types/node, `setTimeout` vira `NodeJS.Timeout` — evitamos o conflito. */
     let iosOpenTimer: number | undefined;
-    if (isIOSLike() && !dismissed) {
-      iosOpenTimer = window.setTimeout(() => setIosOpen(true), 900);
+    if (isIOSLike() && !dismissed && canShowInstallOfferToday()) {
+      iosOpenTimer = window.setTimeout(() => {
+        markInstallOfferShownToday();
+        setCanShowToday(false);
+        setIosOpen(true);
+      }, 900);
     }
 
     return () => {
@@ -103,7 +139,7 @@ export function InstallAppOffer() {
       window.removeEventListener("appinstalled", onAppInstalled);
       if (iosOpenTimer !== undefined) window.clearTimeout(iosOpenTimer);
     };
-  }, []);
+  }, [iosDismissed]);
 
   async function onInstallNow() {
     if (!installEvt) return;
@@ -207,7 +243,7 @@ export function InstallAppOffer() {
       ) : null}
 
       {/* Atalho flutuante no iOS após fechar o painel (nova sessão = painel de novo) */}
-      {isIOSLike() && !isStandaloneMode() && iosDismissed && !showIosModal && !showAndroidModal ? (
+      {isIOSLike() && !isStandaloneMode() && iosDismissed && canShowToday && !showIosModal && !showAndroidModal ? (
         <button
           type="button"
           onClick={openIosPanel}
