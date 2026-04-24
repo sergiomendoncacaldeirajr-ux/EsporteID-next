@@ -11,7 +11,7 @@ export default function RedefinirSenhaPage() {
   return (
     <main className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7">
       <div className="w-full max-w-[340px] pb-6">
-        <LogoFull priority className="mb-5 mt-1 flex justify-center" />
+        <LogoFull className="mb-5 mt-1 flex justify-center" />
         <Link
           href="/login"
           className="mb-4 inline-block text-[13px] text-eid-text-muted no-underline transition hover:text-eid-fg"

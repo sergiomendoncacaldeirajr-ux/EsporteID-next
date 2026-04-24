@@ -217,7 +217,7 @@ function VerificarCodigoPageInner() {
         >
           {mode === "recovery" ? "← Voltar para recuperação" : "← Voltar ao cadastro"}
         </Link>
-        <LogoFull priority className="mb-5 mt-1" />
+        <LogoFull className="mb-5 mt-1" />
 
         <div className="eid-auth-card p-5">
           <h1 className="text-center text-[14px] font-extrabold uppercase tracking-[1px] text-eid-primary-500">

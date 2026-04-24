@@ -1514,7 +1514,7 @@ export function OnboardingWizard({
         </div>
 
         <div data-eid-skeleton="true">
-          <LogoFull priority className="mb-5 mt-1" />
+          <LogoFull className="mb-5 mt-1" />
         </div>
 
         <div className="eid-auth-card p-6 sm:p-8">

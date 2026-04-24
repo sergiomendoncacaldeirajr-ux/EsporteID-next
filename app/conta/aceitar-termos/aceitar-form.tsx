@@ -39,7 +39,7 @@ export function AceitarForm() {
       onSubmit={onSubmit}
       className="eid-auth-card mx-auto flex max-w-lg flex-col gap-6 p-8"
     >
-      <LogoFull priority className="mb-1 flex justify-center" />
+      <LogoFull className="mb-1 flex justify-center" />
       <div>
         <h1 className="text-xl font-semibold text-eid-fg">Termos e privacidade</h1>
         <p className="mt-2 text-sm leading-relaxed text-eid-text-secondary">

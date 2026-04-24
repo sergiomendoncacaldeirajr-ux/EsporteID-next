@@ -121,7 +121,7 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
           ← Página institucional (melhor no computador)
         </Link>
 
-        <LogoFull priority className="mb-5 mt-1" />
+        <LogoFull className="mb-5 mt-1" />
 
         <div className="eid-auth-card p-5">
           <h2 className="mb-[15px] mt-0 text-center text-[14px] font-extrabold uppercase tracking-[1px] text-eid-primary-500">

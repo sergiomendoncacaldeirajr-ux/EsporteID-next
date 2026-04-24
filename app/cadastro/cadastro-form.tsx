@@ -298,7 +298,7 @@ export function CadastroForm() {
   return (
     <main className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7">
       <div className="w-full max-w-[340px] pb-6">
-        <LogoFull priority className="mb-5 mt-1" />
+        <LogoFull className="mb-5 mt-1" />
 
         <div className="eid-auth-card p-5">
           <h2 className="mb-[15px] mt-0 text-center text-[14px] font-extrabold uppercase tracking-[1px] text-eid-primary-500">

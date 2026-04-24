@@ -8,14 +8,12 @@ import {
 
 type Props = {
   className?: string;
-  /** Destaque na primeira dobra (LCP). */
-  priority?: boolean;
 };
 
 /**
  * Marca pré-login (E multiesportes, PNG com alpha) — login, cadastro, onboarding, recuperar senha, etc.
  */
-export function LogoFull({ className, priority }: Props) {
+export function LogoFull({ className }: Props) {
   return (
     <div className={className}>
       <img
@@ -25,7 +23,6 @@ export function LogoFull({ className, priority }: Props) {
         height={EID_LOGO_AUTH_MARK_HEIGHT}
         className="mx-auto block h-auto w-full max-h-[min(30vw,132px)] max-w-[min(30vw,132px)] object-contain object-center sm:max-h-[150px] sm:max-w-[150px]"
         decoding="async"
-        fetchPriority={priority ? "high" : "auto"}
       />
     </div>
   );

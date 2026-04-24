@@ -94,7 +94,7 @@ export default async function Home() {
             <EidThemeToggle variant="toolbar" />
           </div>
         ) : null}
-        <LogoFull priority className="mb-6 flex justify-center sm:mb-8" />
+        <LogoFull className="mb-6 flex justify-center sm:mb-8" />
 
         <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-eid-primary-500 sm:text-left">
           Plataforma esportiva
