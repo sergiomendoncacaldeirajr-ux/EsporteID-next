@@ -236,61 +236,65 @@ header#eid-persistent-topbar textarea {
       /* iOS: libera mais área útil para conteúdo (menos sensação de app “apertado”). */
       --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 5.85rem);
       --eid-shell-footer-offset: calc(max(10px, env(safe-area-inset-bottom, 0px)) + 2.45rem);
-      /* Escala global da UI iOS (ajuste fino depois do teste). */
+      /* Escala proporcional geral (ajuste fino centralizado). */
       --eid-ios-ui-scale: 1.1;
     }
 
     html {
-      font-size: 70px;
-      -webkit-text-size-adjust: 115%;
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
       overflow-x: hidden;
     }
 
     #eid-persistent-topbar svg {
-      width: 1.15rem;
-      height: 1.15rem;
+      width: calc(1.15rem * var(--eid-ios-ui-scale));
+      height: calc(1.15rem * var(--eid-ios-ui-scale));
     }
 
+    /* Footer/nav inferior proporcional */
     #eid-mobile-bottom-nav svg {
-      width: 20px;
-      height: 20px;
+      width: calc(20px * var(--eid-ios-ui-scale));
+      height: calc(20px * var(--eid-ios-ui-scale));
     }
 
     #eid-mobile-bottom-nav [aria-label] {
-      padding-top: 0.45rem;
-      padding-bottom: 0.55rem;
+      padding-top: calc(0.45rem * var(--eid-ios-ui-scale));
+      padding-bottom: calc(0.55rem * var(--eid-ios-ui-scale));
+      min-height: calc(42px * var(--eid-ios-ui-scale));
     }
 
-    /* iOS: aumentar altura/área útil dos componentes (sem mexer em header/footer). */
-    button:not(#eid-persistent-topbar button):not(#eid-mobile-bottom-nav button),
-    [role="button"]:not(#eid-persistent-topbar [role="button"]):not(#eid-mobile-bottom-nav [role="button"]),
-    a[class*="eid-btn-"] {
-      min-height: 52px;
+    #eid-mobile-bottom-nav [aria-label] > span:last-child {
+      font-size: calc(8px * var(--eid-ios-ui-scale));
+      line-height: 1.1;
     }
 
-    input.eid-input-dark,
-    select.eid-input-dark,
-    textarea.eid-input-dark {
-      min-height: 52px;
-      padding-top: 0.72rem;
-      padding-bottom: 0.72rem;
-      line-height: 1.45;
+    /* Componentes principais proporcionais (sem mexer no posicionamento do header/footer). */
+    .eid-btn-primary,
+    .eid-btn-dashboard-cta,
+    .eid-btn-match-cta {
+      min-height: calc(44px * var(--eid-ios-ui-scale));
+      font-size: calc(0.875rem * var(--eid-ios-ui-scale));
+      padding-left: calc(0.875rem * var(--eid-ios-ui-scale));
+      padding-right: calc(0.875rem * var(--eid-ios-ui-scale));
+    }
+
+    .eid-chip {
+      min-height: calc(1.75rem * var(--eid-ios-ui-scale));
+      font-size: calc(0.68rem * var(--eid-ios-ui-scale));
+      padding: calc(0.22rem * var(--eid-ios-ui-scale)) calc(0.62rem * var(--eid-ios-ui-scale));
+    }
+
+    .eid-input-dark {
+      min-height: calc(2.5rem * var(--eid-ios-ui-scale));
+      font-size: calc(0.875rem * var(--eid-ios-ui-scale));
+      padding: calc(0.5rem * var(--eid-ios-ui-scale)) calc(0.65rem * var(--eid-ios-ui-scale));
     }
 
     .eid-card,
     .eid-surface-panel {
-      padding-top: 1rem;
-      padding-bottom: 1rem;
+      padding: calc(14px * var(--eid-ios-ui-scale));
     }
 
-    /* Ícones gerais no conteúdo (preserva topbar/footer). */
-    main svg,
-    section svg,
-    article svg,
-    form svg {
-      min-width: 1.18em;
-      min-height: 1.18em;
-    }
   }
 }
 
