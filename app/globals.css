@@ -336,7 +336,7 @@ header#eid-persistent-topbar textarea {
 @supports not (-webkit-touch-callout: none) {
   @media (max-width: 767px) {
     :root {
-      --eid-android-content-scale: 0.9;
+      --eid-android-content-scale: 0.63;
     }
 
     html {
