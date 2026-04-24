@@ -369,10 +369,10 @@ header#eid-persistent-topbar textarea {
 
     /* CTA do perfil no Android: mesmo visual da dashboard, porém alto e com folga lateral. */
     #perfil-public-main .eid-profile-match-cta {
-      width: calc(100% - 1.25rem);
+      width: 46%;
       margin-left: auto;
       margin-right: auto;
-      min-height: 88px;
+      min-height: 200px;
       border-radius: 1rem;
       padding-top: 0.95rem;
       padding-bottom: 0.95rem;
