@@ -394,7 +394,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       {/* Padding do conteúdo: #app-main-column (--eid-shell-footer-offset). Espaçador removido para não duplicar folga. */}
       <nav className="pointer-events-auto w-full bg-transparent" aria-label="Navegação principal">
         <div
-          className="eid-surface-panel relative overflow-visible rounded-t-[16px] border-t"
+          className="eid-surface-panel relative overflow-visible rounded-t-[16px] rounded-b-none"
           style={{
             minHeight: "calc(4rem + max(12px, env(safe-area-inset-bottom, 0px)))",
             paddingBottom: "calc(max(12px, env(safe-area-inset-bottom, 0px)) + 0.5rem)",

@@ -230,21 +230,6 @@ header#eid-persistent-topbar textarea {
   user-select: none;
 }
 
-#eid-mobile-bottom-nav::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  height: calc(env(safe-area-inset-bottom, 0px) + 8px);
-  background: var(--eid-card);
-  pointer-events: none;
-}
-
-#eid-mobile-bottom-nav .eid-surface-panel {
-  border-top-color: transparent;
-}
-
 /* iOS Safari (mobile): pequeno ganho de escala visual sem afetar Android. */
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 767px) {
