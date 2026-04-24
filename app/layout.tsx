@@ -6,9 +6,12 @@ import { Barlow, Barlow_Condensed, Barlow_Semi_Condensed } from "next/font/googl
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { OnboardingTopbar } from "@/components/onboarding/onboarding-topbar";
+import { InteractionFeedback } from "@/components/ui/interaction-feedback";
 import { LegalGateDeferred } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
+import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
+import { NavigationDebugProbe } from "@/components/system/navigation-debug-probe";
 import { InstallAppOffer } from "@/components/pwa/install-app-offer";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
@@ -128,6 +131,9 @@ export default async function RootLayout({
         <PwaBootstrap />
         <ThemeColorSync />
         <InstallAppOffer />
+        <NavigationDebugProbe />
+        <GlobalScrollReset />
+        <InteractionFeedback />
         {!user ? <VisitorThemeToggleFloat /> : null}
         {onboardingMinimalChrome ? <OnboardingTopbar /> : null}
         {showAppChrome ? (
