@@ -259,7 +259,7 @@ header#eid-persistent-topbar textarea {
     #eid-mobile-bottom-nav .eid-surface-panel {
       min-height: calc(3.55rem + max(10px, env(safe-area-inset-bottom, 0px))) !important;
       padding-top: 0 !important;
-      padding-bottom: calc(max(10px, env(safe-area-inset-bottom, 0px)) + 0.38rem) !important;
+      padding-bottom: calc(max(8px, env(safe-area-inset-bottom, 0px)) + 0.22rem) !important;
     }
 
     #eid-mobile-bottom-nav .eid-surface-panel > div {
@@ -268,7 +268,9 @@ header#eid-persistent-topbar textarea {
 
     /* Centraliza o recorte da borda superior no meio do botão Rank. */
     #eid-mobile-bottom-nav [aria-label="Rank"] > span:nth-child(2) {
-      top: -1.45rem !important;
+      top: -1.52rem !important;
+      width: 49px !important;
+      height: 49px !important;
     }
 
     html {
