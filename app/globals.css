@@ -463,6 +463,25 @@ header#eid-persistent-topbar textarea {
       object-position: center;
     }
 
+    /* Android: cola o header no topo sem linha/divisão com a barra do sistema. */
+    #eid-persistent-topbar {
+      background: var(--eid-card) !important;
+      background-image: none !important;
+      border-bottom-color: transparent !important;
+      box-shadow: none !important;
+    }
+
+    #eid-persistent-topbar::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -2px;
+      height: 2px;
+      background: var(--eid-card);
+      pointer-events: none;
+    }
+
     #eid-mobile-bottom-nav [aria-label] {
       min-height: 38px;
       padding-top: 0.3rem;
