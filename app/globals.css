@@ -91,7 +91,8 @@
  */
 body.eid-app-shell {
   box-sizing: border-box;
-  padding-top: var(--eid-shell-header-offset);
+  /* Medição em px no cliente quando existir — evita subestimar altura real no iOS (notch + busca). */
+  padding-top: var(--eid-measured-topbar-height, var(--eid-shell-header-offset));
   padding-bottom: var(--eid-shell-footer-offset);
 }
 

@@ -8,6 +8,7 @@ import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { OnboardingTopbar } from "@/components/onboarding/onboarding-topbar";
 import { InteractionFeedback } from "@/components/ui/interaction-feedback";
 import { LegalGateDeferred } from "@/components/legal-gate";
+import { MeasuredTopbarOffset } from "@/components/shell/measured-topbar-offset";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
@@ -136,6 +137,7 @@ export default async function RootLayout({
             initialActiveContext={activeContext}
           />
         ) : null}
+        {showAppChrome ? <MeasuredTopbarOffset /> : null}
         {showAppChrome ? (
           <>
             <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
