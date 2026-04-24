@@ -22,21 +22,12 @@ export function ViewportZoomLock() {
     const onWheel = (e: WheelEvent) => {
       if (e.ctrlKey) e.preventDefault();
     };
-    const blockGesture = (e: Event) => {
-      e.preventDefault();
-    };
 
     document.addEventListener("wheel", onWheel, { passive: false });
-    /* Safari (WebKit): pinch no documento */
-    document.addEventListener("gesturestart", blockGesture, { passive: false });
-    document.addEventListener("gesturechange", blockGesture, { passive: false });
-    document.addEventListener("gestureend", blockGesture, { passive: false });
+    /* Não usar gesture* + preventDefault no documento: no iOS o 1º toque em links/botões falha. */
 
     return () => {
       document.removeEventListener("wheel", onWheel);
-      document.removeEventListener("gesturestart", blockGesture);
-      document.removeEventListener("gesturechange", blockGesture);
-      document.removeEventListener("gestureend", blockGesture);
     };
   }, []);
 

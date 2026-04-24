@@ -195,15 +195,6 @@ html {
   background-color: var(--eid-bg);
 }
 
-/* iPhone/iPad WebKit: base rem maior (Tailwind escala com o root). */
-@media (max-width: 767px) {
-  @supports (-webkit-touch-callout: none) {
-    html {
-      font-size: 80px;
-    }
-  }
-}
-
 @media (display-mode: standalone) {
   html {
     overscroll-behavior-y: none;
@@ -457,8 +448,8 @@ label:has(input.sr-only):not(.eid-no-press):active {
 }
 
 
+/* Sem pointer-events:none: no capture isso quebrava o 1º clique em <Link> / botões antes da navegação. */
 .eid-is-locked {
-  pointer-events: none !important;
   opacity: 0.88;
   filter: brightness(0.96);
   animation: eid-btn-pulse 1100ms ease-in-out infinite;

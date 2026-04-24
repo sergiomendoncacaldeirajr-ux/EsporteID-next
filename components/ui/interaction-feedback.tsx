@@ -70,8 +70,11 @@ function lockElement(el: HTMLElement, opts?: { disableNative?: boolean }) {
     (el instanceof HTMLButtonElement || el instanceof HTMLInputElement) &&
     !isFormSubmitControl(el);
 
+  /* disabled no mesmo tick do capture pode cancelar o clique atual no WebKit. */
   if (canDisableNative) {
-    el.disabled = true;
+    queueMicrotask(() => {
+      if (el.dataset.eidLocked === "1") el.disabled = true;
+    });
   } else if (!(el instanceof HTMLButtonElement || el instanceof HTMLInputElement)) {
     el.setAttribute("aria-disabled", "true");
   }
