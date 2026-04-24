@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useState } from "react";
 import { ActiveContextSwitch } from "@/components/dashboard/active-context-switch";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LogoWordmark } from "@/components/brand/logo-wordmark";
@@ -75,6 +75,56 @@ export function DashboardTopbar({
       subscription.unsubscribe();
     };
   }, []);
+
+  /**
+   * iOS (ex.: 14 Pro Max + PWA): sincroniza o padding do wrapper do conteúdo com a altura real do header.
+   * Deve rodar depois que `meId` existe e o `<header>` está no DOM — por isso fica aqui, não em um irmão.
+   */
+  useLayoutEffect(() => {
+    const wrap = document.getElementById("eid-app-shell-main-wrap");
+    if (!persistent || !meId) {
+      wrap?.style.removeProperty("padding-top");
+      return;
+    }
+
+    const el = document.getElementById("eid-persistent-topbar");
+    if (!el || !wrap) return;
+
+    const apply = () => {
+      const raw = el.getBoundingClientRect().height;
+      const h = Math.ceil(raw);
+      if (h > 0) {
+        /* Piso leve: evita medição prematura (0/1 frame) colar conteúdo sob o status bar. */
+        wrap.style.paddingTop = `${Math.max(h, 112)}px`;
+      }
+    };
+
+    apply();
+    let nestedRaf = 0;
+    const outerRaf = requestAnimationFrame(() => {
+      nestedRaf = requestAnimationFrame(apply);
+    });
+    const t0 = window.setTimeout(apply, 0);
+    const t1 = window.setTimeout(apply, 100);
+    const t2 = window.setTimeout(apply, 320);
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    const onOri = () => apply();
+    window.addEventListener("orientationchange", onOri);
+    window.visualViewport?.addEventListener("resize", apply);
+
+    return () => {
+      cancelAnimationFrame(outerRaf);
+      cancelAnimationFrame(nestedRaf);
+      window.clearTimeout(t0);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      ro.disconnect();
+      window.removeEventListener("orientationchange", onOri);
+      window.visualViewport?.removeEventListener("resize", apply);
+      wrap.style.removeProperty("padding-top");
+    };
+  }, [persistent, meId, pathname]);
 
   const hideBecausePersistent =
     !persistent &&

@@ -91,9 +91,16 @@
  */
 body.eid-app-shell {
   box-sizing: border-box;
-  /* Medição em px no cliente quando existir — evita subestimar altura real no iOS (notch + busca). */
-  padding-top: var(--eid-measured-topbar-height, var(--eid-shell-header-offset));
+  /* Recuo do header fica no wrapper `#eid-app-shell-main-wrap` — `padding-top` no `body` + flex no iOS
+   * (Safari / PWA) costuma ignorar ou combinar mal com o conteúdo sob o Dynamic Island. */
+  padding-top: 0;
   padding-bottom: var(--eid-shell-footer-offset);
+}
+
+/* Área rolável principal abaixo do topbar fixo (fallback SSR até o cliente medir em px). */
+#eid-app-shell-main-wrap {
+  box-sizing: border-box;
+  padding-top: var(--eid-shell-header-offset);
 }
 
 @media (max-width: 767px) {
