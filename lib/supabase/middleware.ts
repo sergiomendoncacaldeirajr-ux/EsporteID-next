@@ -1,6 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
 
 /**
  * Requisições de transição / prefetch do App Router. Rodar `getSession` + `setAll`
@@ -12,27 +11,6 @@ function isNextjsRouterDataRequest(request: NextRequest): boolean {
     request.headers.has("RSC") ||
     request.headers.get("Next-Router-Prefetch") === "1"
   );
-}
-
-function buildRequestHeadersForPath(request: NextRequest): Headers {
-  const h = new Headers(request.headers);
-  h.delete(EID_HIDE_APP_SHELL_HEADER);
-  h.delete(EID_SHOW_ONBOARDING_CHROME_HEADER);
-  const pathname = request.nextUrl.pathname;
-  const isPerfilHistoricoRoute = /^\/perfil\/[^/]+\/historico(?:\/.*)?$/.test(pathname);
-  const isPerfilEidRoute = /^\/perfil\/[^/]+\/eid\/[^/]+(?:\/.*)?$/.test(pathname);
-  if (
-    pathname.startsWith("/onboarding") ||
-    pathname.startsWith("/editar") ||
-    isPerfilHistoricoRoute ||
-    isPerfilEidRoute
-  ) {
-    h.set(EID_HIDE_APP_SHELL_HEADER, "1");
-  }
-  if (pathname.startsWith("/onboarding")) {
-    h.set(EID_SHOW_ONBOARDING_CHROME_HEADER, "1");
-  }
-  return h;
 }
 
 /** Celular / navegadores móveis — landing institucional fica para desktop (como o PHP: index → login). */
@@ -52,17 +30,9 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isNextjsRouterDataRequest(request)) {
-    const requestHeaders = buildRequestHeadersForPath(request);
-    return NextResponse.next({
-      request: { headers: requestHeaders },
-    });
+    return NextResponse.next({ request });
   }
-
-  const requestHeaders = buildRequestHeadersForPath(request);
-
-  let supabaseResponse = NextResponse.next({
-    request: { headers: requestHeaders },
-  });
+  let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
     url,
@@ -74,9 +44,7 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           // Next.js 15+: cookies do request são imutáveis no middleware — só Set-Cookie na resposta.
-          supabaseResponse = NextResponse.next({
-            request: { headers: requestHeaders },
-          });
+          supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
