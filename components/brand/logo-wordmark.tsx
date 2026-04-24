@@ -6,19 +6,22 @@ import {
 
 type Props = {
   className?: string;
+  /** `left` no header; `center` em login / landing. */
+  objectPosition?: "left" | "center";
 };
 
 /**
  * Somente texto ESPORTEID (sem ícone) — header e barras internas.
  */
-export function LogoWordmark({ className }: Props) {
+export function LogoWordmark({ className, objectPosition = "left" }: Props) {
+  const pos = objectPosition === "center" ? "object-center" : "object-left";
   return (
     <img
       src={EID_LOGO_WORDMARK_SRC}
       alt="EsporteID"
       width={EID_LOGO_WORDMARK_WIDTH}
       height={EID_LOGO_WORDMARK_HEIGHT}
-      className={`h-7 w-auto max-w-[min(55vw,220px)] object-contain object-left md:h-8 ${className ?? ""}`}
+      className={`h-7 w-auto max-w-[min(55vw,220px)] object-contain md:h-8 ${pos} ${className ?? ""}`}
       decoding="async"
     />
   );
