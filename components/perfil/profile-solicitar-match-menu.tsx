@@ -51,11 +51,14 @@ export function ProfileSolicitarMatchMenu({
       <button
         type="button"
         onClick={toggle}
-        className="eid-btn-match-cta eid-match-cta-pulse eid-shimmer-btn relative inline-flex min-h-[44px] w-full items-center justify-center overflow-hidden rounded-xl px-4 text-[13px] font-black uppercase tracking-[0.1em]"
+        className="eid-btn-dashboard-cta eid-profile-match-cta relative inline-flex w-full items-center justify-center gap-2.5"
         aria-expanded={aberto}
         aria-haspopup="true"
       >
-        Pedir desafio
+        <svg className="h-5 w-5 shrink-0 text-white drop-shadow-sm" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <path d="M13 2L5 13h5l-1 9 10-13h-6l0-7z" />
+        </svg>
+        <span>Pedir desafio</span>
       </button>
       {mostrarDicaWppRanking ? (
         <p className="text-[10px] leading-relaxed text-eid-text-secondary">
