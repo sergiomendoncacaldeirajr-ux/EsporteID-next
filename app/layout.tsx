@@ -69,7 +69,9 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "EsporteID",
-    statusBarStyle: "black-translucent",
+    /* `black-translucent` no modo standalone (adicionar à Home) faz o conteúdo nascer sob o relógio/Dynamic Island
+     * quando o WebKit ignora ou atrasa safe-area; `black` mantém barra opaca e o layout alinhado ao Safari. */
+    statusBarStyle: "black",
   },
 };
 

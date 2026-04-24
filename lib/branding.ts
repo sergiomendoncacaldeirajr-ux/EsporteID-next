@@ -34,7 +34,7 @@ export const EID_LOGO_ICON_E_HEIGHT = 1024;
  * - splash / `background_color` do manifest PWA
  * - `theme_color` do manifest (Chrome/Android, tela de instalação)
  * - `theme-color` do viewport (aba + PWA)
- * - harmonia visual com iOS em `black-translucent` (área atrás da status bar)
+ * - iOS PWA: `appleWebApp.statusBarStyle` usa `black` (barra opaca) para alinhar layout ao Safari
  *
  * Alinhado a `--eid-brand-ink` em `globals.css`.
  */

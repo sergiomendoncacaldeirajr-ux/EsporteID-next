@@ -17,6 +17,13 @@ import {
 import { listarPapeis } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 
+/** PWA “Adicionar à Tela de Início” no iOS — não é o Safari com barra de URL; layout e safe-area diferem. */
+function isStandaloneDisplayMode(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia("(display-mode: standalone)").matches) return true;
+  return (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+}
+
 type Props = {
   persistent?: boolean;
   initialMeId?: string | null;
@@ -92,10 +99,19 @@ export function DashboardTopbar({
 
     const apply = () => {
       const raw = el.getBoundingClientRect().height;
-      const h = Math.ceil(raw);
-      if (h > 0) {
-        /* Piso leve: evita medição prematura (0/1 frame) colar conteúdo sob o status bar. */
-        wrap.style.paddingTop = `${Math.max(h, 112)}px`;
+      let pad = Math.max(Math.ceil(raw), 112);
+      /*
+       * iOS WKWebView em standalone: medição e env(safe-area) costumam ficar aquém da área real do topo;
+       * força um piso maior em telefones (14 Pro Max incluído).
+       */
+      if (isStandaloneDisplayMode()) {
+        const shortSide = Math.min(window.screen.width, window.screen.height);
+        if (shortSide > 0 && shortSide <= 480) {
+          pad = Math.max(pad, 168);
+        }
+      }
+      if (pad > 0) {
+        wrap.style.setProperty("padding-top", `${pad}px`, "important");
       }
     };
 
