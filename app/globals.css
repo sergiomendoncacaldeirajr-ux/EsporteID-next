@@ -255,6 +255,7 @@ header#eid-persistent-topbar textarea {
        * proporção do Android (sem inflar ícones, labels e altura).
        */
       --eid-ios-ui-scale: 1;
+      transform: translateY(10px);
     }
 
     #eid-mobile-bottom-nav .eid-surface-panel {
@@ -264,7 +265,7 @@ header#eid-persistent-topbar textarea {
     }
 
     #eid-mobile-bottom-nav .eid-surface-panel > div {
-      padding-top: 0.62rem !important;
+      padding-top: 0.3rem !important;
     }
 
     /* Centraliza o recorte da borda superior no meio do botão Rank. */
