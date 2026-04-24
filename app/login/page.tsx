@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
 import { createClient } from "@/lib/supabase/server";
@@ -8,17 +7,13 @@ export const metadata = {
   title: "Entrar",
 };
 
-function LoginFormFallback() {
-  return (
-    <div
-      className="eid-auth-bg mx-auto flex min-h-[280px] w-full max-w-[340px] animate-pulse rounded-2xl px-4 pt-6"
-      aria-hidden
-    />
-  );
+function firstQuery(v: string | string[] | undefined): string | undefined {
+  if (v == null) return undefined;
+  return Array.isArray(v) ? v[0] : v;
 }
 
 type LoginPageProps = {
-  searchParams?: Promise<{ next?: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -41,14 +36,16 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           termosAceitos: !!profile?.termos_aceitos_em,
           perfilCompleto: !!profile?.perfil_completo,
         },
-        sp.next ?? null
+        firstQuery(sp.next) ?? null
       )
     );
   }
 
   return (
-    <Suspense fallback={<LoginFormFallback />}>
-      <LoginForm />
-    </Suspense>
+    <LoginForm
+      nextPath={firstQuery(sp.next) ?? "/"}
+      cadastroOk={firstQuery(sp.cadastro) === "ok"}
+      codigoOk={firstQuery(sp.codigo) === "ok"}
+    />
   );
 }

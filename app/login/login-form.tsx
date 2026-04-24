@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { LogoFull } from "@/components/brand/logo-full";
 import { createClient } from "@/lib/supabase/client";
@@ -32,12 +32,17 @@ function IconLock({ className }: { className?: string }) {
   );
 }
 
-export function LoginForm() {
+type LoginFormProps = {
+  nextPath: string;
+  cadastroOk: boolean;
+  codigoOk: boolean;
+};
+
+export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/";
-  const registered = searchParams.get("cadastro") === "ok";
-  const codeConfirmed = searchParams.get("codigo") === "ok";
+  const next = nextPath || "/";
+  const registered = cadastroOk;
+  const codeConfirmed = codigoOk;
 
   const [state, formAction, isPending] = useActionState(entrarComSenha, loginInitial);
 
