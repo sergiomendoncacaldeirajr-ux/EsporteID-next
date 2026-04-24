@@ -1,10 +1,10 @@
 /** Container dos perfis públicos (atleta, professor, time, dupla, local) + footer do app. */
 export const PROFILE_PUBLIC_MAIN_CLASS =
-  "mx-auto w-full max-w-lg px-2.5 pb-[calc(var(--eid-shell-footer-offset)+2.5rem)] pt-3 sm:max-w-2xl sm:px-5 sm:pb-10 sm:pt-3";
+  "mx-auto w-full max-w-lg px-2.5 pb-[calc(var(--eid-shell-footer-offset)+2.5rem)] pt-0 sm:max-w-2xl sm:px-5 sm:pb-10 sm:pt-2.5";
 
 /** Landing de espaço: mesma base + largura maior no desktop. */
 export const PROFILE_PUBLIC_MAIN_WIDE_CLASS =
-  "mx-auto w-full max-w-lg px-2.5 pb-[calc(var(--eid-shell-footer-offset)+2.5rem)] pt-3 sm:max-w-2xl sm:px-5 sm:pb-10 sm:pt-3 lg:max-w-6xl";
+  "mx-auto w-full max-w-lg px-2.5 pb-[calc(var(--eid-shell-footer-offset)+2.5rem)] pt-0 sm:max-w-2xl sm:px-5 sm:pb-10 sm:pt-2.5 lg:max-w-6xl";
 
 /** Card-hero premium (capa + conteúdo) — mesmo gradiente/sombra do perfil do atleta. */
 export const PROFILE_HERO_PANEL_CLASS =

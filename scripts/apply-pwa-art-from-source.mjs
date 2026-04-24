@@ -17,7 +17,7 @@ const OUT192 = path.join(root, "public", "pwa-icon-192.png");
 const OUT512 = path.join(root, "public", "pwa-icon-512.png");
 const OUT_SPLASH_MARK = path.join(root, "public", "pwa-splash-open-mark.png");
 
-const BG = { r: 11, g: 29, b: 46, alpha: 1 }; /* EID_PWA_BACKGROUND #0b1d2e */
+const BG = { r: 11, g: 15, b: 20, alpha: 1 }; /* EID_PWA_BACKGROUND #0b0f14 — alinhado a --eid-bg */
 
 /** Fundo escuro do ícone “squircle” → alpha (mantém o E colorido). */
 const SPLASH_BG_MAX_CHANNEL = 46;

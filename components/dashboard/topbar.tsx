@@ -17,12 +17,6 @@ import {
 import { listarPapeis } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 
-/** Só iOS “Adicionar à Tela de Início” — `navigator.standalone`. Android PWA usa `display-mode: standalone` e não deve levar o mesmo reforço de padding. */
-function isIosHomeScreenWebApp(): boolean {
-  if (typeof window === "undefined") return false;
-  return (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
-}
-
 type Props = {
   persistent?: boolean;
   initialMeId?: string | null;
@@ -83,8 +77,8 @@ export function DashboardTopbar({
   }, []);
 
   /**
-   * iOS (ex.: 14 Pro Max + PWA): sincroniza o padding do wrapper do conteúdo com a altura real do header.
-   * Deve rodar depois que `meId` existe e o `<header>` está no DOM — por isso fica aqui, não em um irmão.
+   * Sincroniza o padding de `#eid-app-shell-main-wrap` com a altura do header fixo (mobile/desktop).
+   * Roda com `meId` e o `<header>` no DOM; um pequeno desconto evita faixa de fundo entre busca e conteúdo.
    */
   useLayoutEffect(() => {
     const wrap = document.getElementById("eid-app-shell-main-wrap");
@@ -98,14 +92,12 @@ export function DashboardTopbar({
 
     const apply = () => {
       const raw = el.getBoundingClientRect().height;
-      let pad = Math.max(Math.ceil(raw), 112);
       /*
-       * Só Web App no iOS: medição às vezes vem curta vs. área útil real; Android standalone não entra aqui
-       * (evita faixa enorme no topo em Chrome/Samsung).
+       * A medida costuma ficar 2–8px acima do “encaixe” visual (borda/sombra/subpixel),
+       * gerando faixa de `--eid-bg` entre a busca e o conteúdo. Compensamos sem encostar no mínimo real.
        */
-      if (isIosHomeScreenWebApp() && pad < 132) {
-        pad = Math.max(pad, 132);
-      }
+      let pad = Math.ceil(raw) - 5;
+      if (pad < 82) pad = 82;
       if (pad > 0) {
         wrap.style.paddingTop = `${pad}px`;
       }
@@ -226,7 +218,7 @@ export function DashboardTopbar({
       }}
     >
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
-        <div className="flex items-center justify-between gap-2 py-1.5 sm:py-2">
+        <div className="flex items-center justify-between gap-2 py-1 sm:py-2">
           <Link href={getContextHomeHref(activeContext)} className="min-w-0 shrink transition hover:opacity-90">
             <LogoWordmark className="h-8 max-w-[min(52vw,230px)] object-left sm:h-10 sm:max-w-[min(58vw,300px)]" />
           </Link>
@@ -239,7 +231,7 @@ export function DashboardTopbar({
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="pb-2.5">
+        <form onSubmit={onSubmit} className="mb-0 pb-1.5 sm:pb-2.5">
           <label htmlFor="eid-topbar-search" className="sr-only">
             Buscar no painel
           </label>

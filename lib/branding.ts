@@ -30,15 +30,24 @@ export const EID_LOGO_ICON_E_WIDTH = 1024;
 export const EID_LOGO_ICON_E_HEIGHT = 1024;
 
 /**
- * Cor “ink” da marca — única fonte para:
- * - splash / `background_color` do manifest PWA
- * - `theme_color` do manifest (Chrome/Android, tela de instalação)
- * - `theme-color` do viewport (aba + PWA)
- * - iOS PWA: `black-translucent` + fundo `html`/`--eid-bg` alinham a área do relógio à cor do app
+ * Fundo do canvas do app no tema escuro — **igual** a `--eid-bg` em `globals.css` (:root).
+ * `background_color` do manifest / overscroll; a barra do sistema usa `--eid-system-ui-chrome` / `EID_APP_CHROME_THEME_COLOR`.
  *
- * Alinhado a `--eid-brand-ink` em `globals.css`.
+ * `--eid-brand-ink` (#0b1d2e) continua só para gradientes/marca, não para o fundo principal.
  */
-export const EID_PWA_BACKGROUND = "#0b1d2e";
+export const EID_APP_CANVAS_BG_DARK = "#0b0f14";
 
-/** Alias explícito: mesma cor do manifest `theme_color` e da meta `theme-color` do layout. */
-export const EID_APP_CHROME_THEME_COLOR = EID_PWA_BACKGROUND;
+/**
+ * Tom do header no escuro (~`color-mix` 58% card / 42% bg em `globals.css`) — mesmo eixo visual do topbar.
+ * Manifest / viewport SSR usam isso para a barra do sistema bater com o chrome, não com o canvas da página.
+ */
+export const EID_SYSTEM_UI_THEME_COLOR_DARK = "#121821";
+
+/** Splash / `background_color` do manifest = canvas real do app. */
+export const EID_PWA_BACKGROUND = EID_APP_CANVAS_BG_DARK;
+
+/** Meta `theme-color` inicial (layout) + `theme_color` do manifest — alinhado a `--eid-system-ui-chrome`. */
+export const EID_APP_CHROME_THEME_COLOR = EID_SYSTEM_UI_THEME_COLOR_DARK;
+
+/** Tema claro: topo do shell costuma ser branco (`--eid-system-ui-chrome`). */
+export const EID_SYSTEM_UI_THEME_COLOR_LIGHT = "#ffffff";

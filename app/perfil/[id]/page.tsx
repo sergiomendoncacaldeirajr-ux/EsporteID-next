@@ -300,7 +300,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
              O avatar fica na frente da capa via z-10 (elementos com z-index > 0
              sobrepõem elementos sem z-index dentro do mesmo contexto).
         */}
-        <div id="perfil-hero-panel" className={`${PROFILE_HERO_PANEL_CLASS} mt-2`}>
+        <div id="perfil-hero-panel" className={`${PROFILE_HERO_PANEL_CLASS} mt-0 sm:mt-1`}>
 
           {/* Capa — banner generoso, claramente atrás de tudo */}
           <div id="perfil-hero-cover" className="relative h-24 w-full sm:h-28">

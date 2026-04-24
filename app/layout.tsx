@@ -69,7 +69,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "EsporteID",
-    /* Translúcida: a cor atrás do relógio vem do `html`/`header` (`--eid-bg`), não faixa preta do sistema. */
+    /* SSR escuro; tema claro: `ThemeColorSync` troca para `default` (header branco). */
     statusBarStyle: "black-translucent",
   },
 };
@@ -77,7 +77,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   /* Padrão escuro; `ThemeColorSync` ajusta no cliente se o tema claro estiver ativo. */
   themeColor: EID_APP_CHROME_THEME_COLOR,
-  colorScheme: "dark",
+  /* Evita travar o chrome do sistema só em escuro quando o usuário usa tema claro no app. */
+  colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

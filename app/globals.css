@@ -5,7 +5,7 @@
  * ---------------------------------------------------------------------------
  * • Azul estrutural (#2563eb e escala): navegação, foco, links informativos
  * • Laranja ação (#f97316 e escala): CTAs, destaques de conversão
- * • Base ink (#0b1d2e): fundo profundo / PWA (coerente com marca)
+ * • Base ink (#0b1d2e): marca / gradientes — não confundir com `--eid-bg` (#0b0f14) e theme-color PWA
  * • Verde #25D366: apenas ícone WhatsApp (terceiro), nunca cor primária da marca
  *
  * Temas: padrão escuro (:root). Tema claro: [data-eid-theme="light"] no <html>.
@@ -44,6 +44,12 @@
   --eid-card: #161d28;
   --eid-field-bg: #1a222e;
 
+  /*
+   * Cor para `theme-color` / barra de status: próxima ao topo do header (gradiente card↔surface),
+   * não ao fundo da página — evita faixa mais escura que o app no iOS (translúcido) e no Android.
+   */
+  --eid-system-ui-chrome: color-mix(in srgb, var(--eid-card) 58%, var(--eid-bg) 42%);
+
   /* Texto — escuro */
   --eid-fg: #eef2f7;
   --eid-text-primary: #eef2f7;
@@ -69,8 +75,8 @@
    * Shell logado: compensa header (logo + busca no mobile) e nav inferior (barra + botão central).
    * Valores entre “cortado” e “folga demais”.
    */
-  /* Topo: −4px em relação a 6.5rem (só um “milímetro” a mais de conteúdo visível) */
-  --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 6.5rem - 4px);
+  /* Fallback até o JS medir o topbar; levemente menor que 6.5rem para não sobrar faixa sob a busca. */
+  --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 6.2rem - 4px);
   /* Rodapé mobile: pouca folga além do safe-area (evita faixa vazia enorme acima da nav) */
   --eid-shell-footer-offset: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 2.7rem);
 }
@@ -120,6 +126,8 @@ body.eid-app-shell {
   --eid-surface: #ffffff;
   --eid-card: #ffffff;
   --eid-field-bg: #f1f5f9;
+  /* Header claro: superfície branca — status bar alinhada ao topo do topbar */
+  --eid-system-ui-chrome: #ffffff;
 
   --eid-fg: #0f172a;
   --eid-text-primary: #0f172a;
@@ -242,8 +250,8 @@ header#eid-persistent-topbar textarea {
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 767px) {
     :root {
-      /* iOS: folga extra sob status bar/notch — “Voltar” e primeiro bloco não colam no relógio. */
-      --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 7.15rem);
+      /* iOS: mesmo eixo que o mobile padrão; o topbar mede em px e define o recuo real (evita sobra vs. header). */
+      --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 6.2rem - 4px);
       --eid-shell-footer-offset: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 2.85rem);
       /* Escala proporcional geral (ajuste fino centralizado). */
       --eid-ios-ui-scale: 1.22;
