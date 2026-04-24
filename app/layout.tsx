@@ -11,7 +11,6 @@ import { LegalGateDeferred } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
-import { InstallAppOffer } from "@/components/pwa/install-app-offer";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
 import {
@@ -123,7 +122,6 @@ export default async function RootLayout({
         <EidThemeHydration />
         <PwaBootstrap />
         <ThemeColorSync />
-        <InstallAppOffer />
         <GlobalScrollReset />
         <InteractionFeedback />
         {!user ? <VisitorThemeToggleFloat /> : null}
