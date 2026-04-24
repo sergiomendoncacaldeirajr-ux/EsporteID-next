@@ -18,19 +18,16 @@ function firstQuery(v: string | string[] | undefined): string | undefined {
 type SearchParamsRecord = Record<string, string | string[] | undefined>;
 
 type LoginPageProps = {
-  searchParams?: SearchParamsRecord | Promise<SearchParamsRecord>;
+  /** Next.js 15+ / 16: `searchParams` é uma Promise no servidor. */
+  searchParams?: Promise<SearchParamsRecord>;
 };
 
 async function normalizeSearchParams(
   raw: LoginPageProps["searchParams"]
 ): Promise<SearchParamsRecord> {
   if (raw == null) return {};
-  if (typeof raw !== "object") return {};
-  if ("then" in raw && typeof (raw as Promise<SearchParamsRecord>).then === "function") {
-    const v = await (raw as Promise<SearchParamsRecord>);
-    return v && typeof v === "object" ? v : {};
-  }
-  return raw as SearchParamsRecord;
+  const v = await raw;
+  return v && typeof v === "object" ? v : {};
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {

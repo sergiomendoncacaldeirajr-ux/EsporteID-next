@@ -44,7 +44,8 @@ export function GlobalScrollReset() {
 
     let cancelled = false;
     let rafInner = 0;
-    let timeoutId: ReturnType<typeof window.setTimeout> | undefined;
+    /* No browser `window.setTimeout` retorna `number`; com @types/node vira conflito com `NodeJS.Timeout`. */
+    let timeoutId: number | undefined;
 
     const rafOuter = window.requestAnimationFrame(() => {
       rafInner = window.requestAnimationFrame(() => {
