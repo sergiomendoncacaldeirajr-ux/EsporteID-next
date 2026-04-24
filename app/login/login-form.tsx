@@ -6,9 +6,7 @@ import { useActionState, useEffect, useState } from "react";
 import { LogoFull } from "@/components/brand/logo-full";
 import { createClient } from "@/lib/supabase/client";
 import { getSignupEmailRedirectTo } from "@/lib/auth/email-redirects";
-import { entrarComSenha, type LoginActionState } from "@/app/login/actions";
-
-const loginInitial: LoginActionState = { error: null, pendingConfirmationEmail: null };
+import { entrarComSenha, loginActionInitial } from "@/app/login/actions";
 
 function IconEnvelope({ className }: { className?: string }) {
   return (
@@ -44,7 +42,7 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
   const registered = cadastroOk;
   const codeConfirmed = codigoOk;
 
-  const [state, formAction, isPending] = useActionState(entrarComSenha, loginInitial);
+  const [state, formAction, isPending] = useActionState(entrarComSenha, loginActionInitial);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,8 +50,14 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
   const [info, setInfo] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
 
-  const displayError = state.error ?? localError;
-  const pendingConfirmationEmail = state.pendingConfirmationEmail;
+  const displayError = state?.error ?? localError;
+  const pendingConfirmationEmail = state?.pendingConfirmationEmail ?? null;
+
+  useEffect(() => {
+    const dest = state?.redirectTo;
+    if (!dest) return;
+    window.location.assign(dest);
+  }, [state?.redirectTo]);
 
   useEffect(() => {
     if (isPending) setLocalError(null);

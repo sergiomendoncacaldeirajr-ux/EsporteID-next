@@ -1,12 +1,19 @@
 "use server";
 
-import { redirect } from "next/navigation";
 import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 
 export type LoginActionState = {
   error: string | null;
   pendingConfirmationEmail: string | null;
+  /** Quando definido, o cliente deve navegar (evita `redirect` + `useActionState` quebrando estado / spinner). */
+  redirectTo: string | null;
+};
+
+export const loginActionInitial: LoginActionState = {
+  error: null,
+  pendingConfirmationEmail: null,
+  redirectTo: null,
 };
 
 function safeNext(raw: string): string {
@@ -27,7 +34,7 @@ export async function entrarComSenha(
   const password = String(formData.get("password") ?? "");
   const next = safeNext(String(formData.get("next") ?? "/"));
 
-  const empty: LoginActionState = { error: null, pendingConfirmationEmail: null };
+  const empty: LoginActionState = { error: null, pendingConfirmationEmail: null, redirectTo: null };
 
   if (!email) {
     return { ...empty, error: "Informe seu e-mail." };
@@ -46,6 +53,7 @@ export async function entrarComSenha(
     return {
       error: "Configuração do servidor incompleta (Supabase). Verifique as variáveis na hospedagem.",
       pendingConfirmationEmail: null,
+      redirectTo: null,
     };
   }
 
@@ -56,6 +64,7 @@ export async function entrarComSenha(
       return {
         error: "Seu e-mail ainda não foi confirmado.",
         pendingConfirmationEmail: email,
+        redirectTo: null,
       };
     }
     return {
@@ -64,6 +73,7 @@ export async function entrarComSenha(
           ? "E-mail ou senha incorretos."
           : err.message,
       pendingConfirmationEmail: null,
+      redirectTo: null,
     };
   }
 
@@ -88,5 +98,5 @@ export async function entrarComSenha(
     );
   }
 
-  redirect(dest);
+  return { error: null, pendingConfirmationEmail: null, redirectTo: dest };
 }
