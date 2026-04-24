@@ -1,16 +1,18 @@
 import type { Metadata, Viewport } from "next";
 import type { User } from "@supabase/supabase-js";
+import { Suspense } from "react";
 import { cookies, headers } from "next/headers";
 import { Barlow, Barlow_Condensed, Barlow_Semi_Condensed } from "next/font/google";
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { OnboardingTopbar } from "@/components/onboarding/onboarding-topbar";
-import { InteractionFeedback } from "@/components/ui/interaction-feedback";
+import { LegalGateDeferred } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
-import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
+import { InstallAppOffer } from "@/components/pwa/install-app-offer";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
+import { ViewportZoomLock } from "@/components/system/viewport-zoom-lock";
 import {
   ACTIVE_CONTEXT_COOKIE,
   resolveActiveAppContext,
@@ -18,6 +20,7 @@ import {
 } from "@/lib/auth/active-context";
 import { EID_APP_CHROME_THEME_COLOR, EID_LOGO_ICON_E_SRC } from "@/lib/branding";
 import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
+import { SiteFooterLoader } from "@/components/site-footer-loader";
 import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
 import "./globals.css";
 
@@ -75,6 +78,10 @@ export const viewport: Viewport = {
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
+  minimumScale: 1,
+  /* App-like: sem zoom (trade-off de acessibilidade). Reforçado em `ViewportZoomLock`. */
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 };
 
@@ -117,10 +124,10 @@ export default async function RootLayout({
         className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}
       >
         <EidThemeHydration />
+        <ViewportZoomLock />
         <PwaBootstrap />
         <ThemeColorSync />
-        <GlobalScrollReset />
-        <InteractionFeedback />
+        <InstallAppOffer />
         {!user ? <VisitorThemeToggleFloat /> : null}
         {onboardingMinimalChrome ? <OnboardingTopbar /> : null}
         {showAppChrome ? (
@@ -159,7 +166,18 @@ export default async function RootLayout({
             {children}
           </div>
         )}
-        {/* Isolamento de navegação: remover blocos assíncronos do layout raiz. */}
+        {hideAppShell ? null : (
+          <div id="eid-site-footer">
+            <Suspense
+              fallback={<div className="mt-auto hidden min-h-[52px] md:block" aria-hidden />}
+            >
+              <SiteFooterLoader user={user} />
+            </Suspense>
+          </div>
+        )}
+        <Suspense fallback={null}>
+          <LegalGateDeferred />
+        </Suspense>
       </body>
     </html>
   );
