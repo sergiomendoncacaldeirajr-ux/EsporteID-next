@@ -396,13 +396,13 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         <div
           className="eid-surface-panel relative overflow-visible rounded-t-[16px] border-t"
           style={{
-            minHeight: "calc(3.32rem + max(8px, env(safe-area-inset-bottom, 0px)))",
-            paddingBottom: "calc(max(8px, env(safe-area-inset-bottom, 0px)) + 0.2rem)",
+            minHeight: "calc(4rem + max(12px, env(safe-area-inset-bottom, 0px)))",
+            paddingBottom: "calc(max(12px, env(safe-area-inset-bottom, 0px)) + 0.5rem)",
             paddingLeft: "max(0px, env(safe-area-inset-left))",
             paddingRight: "max(0px, env(safe-area-inset-right))",
           }}
         >
-          <div className="flex items-end justify-around px-1 pt-0.5">
+          <div className="flex items-end justify-around px-1 pt-1.5">
             {items.map((item) => {
               if (item.rank) {
                 return (
@@ -414,7 +414,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                     aria-label={item.label}
                   >
                     <span
-                      className="pointer-events-none absolute -top-4.5 left-1/2 h-10 w-10 -translate-x-1/2 rounded-full blur-xl"
+                      className="pointer-events-none absolute -top-6 left-1/2 h-12 w-12 -translate-x-1/2 rounded-full blur-xl"
                       style={{
                         background: item.active
                           ? "radial-gradient(circle, color-mix(in srgb, var(--eid-action-400) 70%, transparent), transparent 72%)"
@@ -422,7 +422,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                       }}
                     />
                     <span
-                      className={`absolute -top-[1.38rem] flex h-[42px] w-[42px] items-center justify-center rounded-full transition-all ${
+                      className={`absolute -top-[1.62rem] flex h-[46px] w-[46px] items-center justify-center rounded-full transition-all ${
                         item.active
                           ? "bg-eid-action-400 ring-[2.5px] ring-eid-card shadow-[0_8px_20px_-6px_color-mix(in_srgb,var(--eid-action-500)_80%,transparent)]"
                           : "bg-eid-action-500/85 ring-[2.5px] ring-eid-card shadow-[0_6px_14px_-7px_color-mix(in_srgb,var(--eid-action-500)_70%,transparent)]"
@@ -430,9 +430,9 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                     >
                       <IconTrophy active={item.active} />
                     </span>
-                    <span className="h-[18px] w-[30px]" aria-hidden />
+                    <span className="h-[22px] w-[36px]" aria-hidden />
                     <span
-                      className="text-[6.5px] font-medium leading-none"
+                      className="text-[8px] font-medium leading-none"
                       style={{ color: item.active ? "var(--eid-fg)" : "var(--eid-text-secondary)" }}
                     >
                       {item.label}
@@ -450,7 +450,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   aria-label={item.label}
                 >
                   <span
-                    className={`relative flex h-[21px] w-[30px] items-center justify-center rounded-xl transition-all ${
+                    className={`relative flex h-[25px] w-[36px] items-center justify-center rounded-xl transition-all ${
                       item.active ? "bg-eid-primary-500/12" : "bg-transparent"
                     }`}
                     style={{ color: item.active ? "var(--eid-primary-500)" : "var(--eid-text-secondary)" }}
@@ -460,7 +460,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   </span>
 
                   <span
-                    className="text-[6.5px] font-medium leading-none transition"
+                    className="text-[8px] font-medium leading-none transition"
                     style={{ color: item.active ? "var(--eid-fg)" : "var(--eid-text-secondary)" }}
                   >
                     {item.label}
