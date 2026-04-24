@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getContextHomeHref, type ActiveAppContext } from "@/lib/auth/active-context";
 import { createClient } from "@/lib/supabase/client";
 import type { ReactNode } from "react";
@@ -103,6 +103,36 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(userId);
   const [agendaBadge, setAgendaBadge] = useState(0);
   const [socialBadge, setSocialBadge] = useState(0);
+  const pendingHrefRef = useRef<string | null>(null);
+  const releaseTimerRef = useRef<number | undefined>(undefined);
+
+  function onNavLinkClickCapture(ev: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    if (pendingHrefRef.current === href) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      return;
+    }
+    pendingHrefRef.current = href;
+    if (releaseTimerRef.current !== undefined) window.clearTimeout(releaseTimerRef.current);
+    releaseTimerRef.current = window.setTimeout(() => {
+      pendingHrefRef.current = null;
+      releaseTimerRef.current = undefined;
+    }, 1500);
+  }
+
+  useEffect(() => {
+    pendingHrefRef.current = null;
+    if (releaseTimerRef.current !== undefined) {
+      window.clearTimeout(releaseTimerRef.current);
+      releaseTimerRef.current = undefined;
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    return () => {
+      if (releaseTimerRef.current !== undefined) window.clearTimeout(releaseTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -379,6 +409,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClickCapture={(ev) => onNavLinkClickCapture(ev, item.href)}
                     className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 pt-1.5 transition-opacity active:opacity-80"
                     aria-label={item.label}
                   >
@@ -414,6 +445,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClickCapture={(ev) => onNavLinkClickCapture(ev, item.href)}
                   className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 transition-opacity active:opacity-80"
                   aria-label={item.label}
                 >
