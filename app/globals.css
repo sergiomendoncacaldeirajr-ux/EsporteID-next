@@ -85,8 +85,9 @@
 
 /*
  * Shell logado: topbar fixa; nav inferior mobile também fixa (bottom:0 do viewport).
- * Body no mobile: altura travada + overflow hidden → scroll só em #app-main-column (evita “pulo”
- * do iOS). `100lvh` costuma alinhar melhor à borda física que `100dvh` (que pode ficar curto).
+ * Mobile: rolagem no documento (como no desktop), não em #app-main-column — scroll aninhado
+ * (body overflow:hidden + filho overflow-y:auto) no iOS/WebKit costuma exigir 2 toques em
+ * links dentro do painel, enquanto o header/nav (fora do scroller) respondem no 1º toque.
  */
 body.eid-app-shell {
   box-sizing: border-box;
@@ -100,13 +101,8 @@ body.eid-app-shell {
     --eid-shell-footer-offset: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 2.7rem);
     /* Reserva a faixa da nav fixa para o flex não “subir” por baixo dela. */
     padding-bottom: var(--eid-shell-footer-offset);
-    height: 100dvh;
-    max-height: 100dvh;
-    min-height: 100dvh;
-    height: 100lvh;
-    max-height: 100lvh;
     min-height: 100lvh;
-    overflow: hidden;
+    overflow-x: clip;
   }
 }
 
