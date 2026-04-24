@@ -10,11 +10,15 @@ function themeColorForHtml() {
 
 function applyThemeColorMeta() {
   const color = themeColorForHtml();
-  document.querySelectorAll('meta[name="theme-color"]').forEach((n) => n.remove());
-  const m = document.createElement("meta");
-  m.name = "theme-color";
+  const ownSelector = 'meta[name="theme-color"][data-eid-theme-color="1"]';
+  let m = document.querySelector(ownSelector) as HTMLMetaElement | null;
+  if (!m) {
+    m = document.createElement("meta");
+    m.name = "theme-color";
+    m.setAttribute("data-eid-theme-color", "1");
+    document.head.appendChild(m);
+  }
   m.content = color;
-  document.head.appendChild(m);
 }
 
 /**
