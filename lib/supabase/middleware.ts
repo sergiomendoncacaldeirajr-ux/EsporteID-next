@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
 
 /**
  * Requisições de transição / prefetch do App Router. Rodar `getSession` + `setAll`
@@ -52,6 +53,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
   let supabaseResponse = NextResponse.next({ request });
+  const requestHeaders = new Headers(request.headers);
+  const hideAppShell = path.startsWith("/editar");
+  const showOnboardingChrome = path.startsWith("/onboarding");
+  if (hideAppShell) requestHeaders.set(EID_HIDE_APP_SHELL_HEADER, "1");
+  if (showOnboardingChrome) requestHeaders.set(EID_SHOW_ONBOARDING_CHROME_HEADER, "1");
+
+  const makeNextResponse = () => NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(
     url,
@@ -63,7 +71,7 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           // Next.js 15+: cookies do request são imutáveis no middleware — só Set-Cookie na resposta.
-          supabaseResponse = NextResponse.next({ request });
+          supabaseResponse = makeNextResponse();
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
@@ -96,6 +104,8 @@ export async function updateSession(request: NextRequest) {
   };
 
   if (path.startsWith("/auth/callback")) {
+    if (hideAppShell) supabaseResponse.headers.set(EID_HIDE_APP_SHELL_HEADER, "1");
+    if (showOnboardingChrome) supabaseResponse.headers.set(EID_SHOW_ONBOARDING_CHROME_HEADER, "1");
     return supabaseResponse;
   }
 
@@ -205,5 +215,7 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  if (hideAppShell) supabaseResponse.headers.set(EID_HIDE_APP_SHELL_HEADER, "1");
+  if (showOnboardingChrome) supabaseResponse.headers.set(EID_SHOW_ONBOARDING_CHROME_HEADER, "1");
   return supabaseResponse;
 }
