@@ -348,7 +348,8 @@ export default async function DashboardPage({ searchParams }: Props) {
     .order("data_registro", { ascending: false })
     .limit(20);
 
-  const agoraMs = Date.now();
+  const agora = new Date();
+  const agoraMs = agora.getTime();
   const proximasPartidas = (partidasAgendadasResumo ?? [])
     .map((p) => ({ raw: p as PartidaResumo, atMs: p.data_partida ? new Date(p.data_partida).getTime() : Number.NaN }))
     .filter((x) => Number.isFinite(x.atMs))
