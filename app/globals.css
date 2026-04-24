@@ -237,21 +237,13 @@ header#eid-persistent-topbar textarea {
       --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 5.85rem);
       --eid-shell-footer-offset: calc(max(10px, env(safe-area-inset-bottom, 0px)) + 2.45rem);
       /* Escala global da UI iOS (ajuste fino depois do teste). */
-      --eid-ios-ui-scale: 0.81;
+      --eid-ios-ui-scale: 1;
     }
 
     html {
       font-size: 70px;
       -webkit-text-size-adjust: 115%;
-      transform: scale(var(--eid-ios-ui-scale));
-      transform-origin: top left;
-      width: calc(100% / var(--eid-ios-ui-scale));
-      min-height: calc(100% / var(--eid-ios-ui-scale));
       overflow-x: hidden;
-    }
-
-    body {
-      min-height: calc(100dvh / var(--eid-ios-ui-scale));
     }
 
     #eid-persistent-topbar svg {
