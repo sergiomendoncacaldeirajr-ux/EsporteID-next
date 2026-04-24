@@ -14,7 +14,6 @@ import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
 import { InstallAppOffer } from "@/components/pwa/install-app-offer";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
-import { ViewportZoomLock } from "@/components/system/viewport-zoom-lock";
 import {
   ACTIVE_CONTEXT_COOKIE,
   resolveActiveAppContext,
@@ -75,15 +74,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  /* Padrão escuro; `ThemeColorSync` ajusta no cliente se o tema claro estiver ativo. */
+  /* Escala consistente entre iOS/Android. */
   themeColor: EID_APP_CHROME_THEME_COLOR,
   colorScheme: "dark",
   width: "device-width",
-  initialScale: 1,
-  minimumScale: 1,
-  /* App-like: sem zoom (trade-off de acessibilidade). Reforçado em `ViewportZoomLock`. */
-  maximumScale: 1,
-  userScalable: false,
+  initialScale: 1.0,
   viewportFit: "cover",
 };
 
@@ -126,7 +121,6 @@ export default async function RootLayout({
         className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}
       >
         <EidThemeHydration />
-        <ViewportZoomLock />
         <PwaBootstrap />
         <ThemeColorSync />
         <InstallAppOffer />
@@ -146,7 +140,7 @@ export default async function RootLayout({
           <>
             <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
               <div id="app-main-column" className="flex min-h-0 flex-1 flex-col">
-                {children}
+                <div className="app">{children}</div>
               </div>
             </div>
             <div
@@ -167,7 +161,7 @@ export default async function RootLayout({
                   : "flex flex-1 flex-col pb-8 md:pb-28"
             }
           >
-            {children}
+            <div className="app">{children}</div>
           </div>
         )}
         {hideAppShell ? null : (
