@@ -51,17 +51,8 @@ export function DashboardTopbar({
     const sb = createClient();
     let disposed = false;
 
-    async function load() {
-      const {
-        data: { user },
-      } = await sb.auth.getUser();
-      if (disposed) return;
-      setMeId(user?.id ?? null);
-      if (!user) {
-        setPapeis([]);
-        return;
-      }
-      const { data: papeisRows } = await sb.from("usuario_papeis").select("papel").eq("usuario_id", user.id);
+    async function loadPapeis(uid: string) {
+      const { data: papeisRows } = await sb.from("usuario_papeis").select("papel").eq("usuario_id", uid);
       if (disposed) return;
       setPapeis(listarPapeis(papeisRows));
     }
@@ -75,11 +66,10 @@ export function DashboardTopbar({
       if (!uid) {
         setPapeis([]);
       } else {
-        void load();
+        void loadPapeis(uid);
       }
     });
 
-    void load();
     return () => {
       disposed = true;
       subscription.unsubscribe();
