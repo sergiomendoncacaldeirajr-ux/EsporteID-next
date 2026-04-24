@@ -6,7 +6,8 @@ import { useCallback, useState } from "react";
 import { LogoFull } from "@/components/brand/logo-full";
 import { createClient } from "@/lib/supabase/client";
 import { getSignupEmailRedirectTo } from "@/lib/auth/email-redirects";
-import { entrarComSenha, loginActionInitial } from "@/app/login/actions";
+import { entrarComSenha } from "@/app/login/actions";
+import { loginActionInitial } from "@/app/login/login-state";
 
 function IconEnvelope({ className }: { className?: string }) {
   return (
@@ -34,9 +35,23 @@ type LoginFormProps = {
   nextPath: string;
   cadastroOk: boolean;
   codigoOk: boolean;
+  /** Falha ao criar cliente Supabase / ler sessão no servidor (RSC). */
+  bootstrapError?: string | null;
 };
 
-export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
+function friendlyActionError(raw: string): string {
+  const m = raw.trim();
+  if (
+    m.includes("Server Components") ||
+    m.includes("An error occurred") ||
+    m.toLowerCase().includes("digest")
+  ) {
+    return "Falha ao comunicar com o servidor. Atualize a página e tente novamente.";
+  }
+  return m;
+}
+
+export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = null }: LoginFormProps) {
   const router = useRouter();
   const next = nextPath || "/";
   const registered = cadastroOk;
@@ -51,7 +66,7 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
   const [info, setInfo] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
 
-  const displayError = actionState.error ?? localError;
+  const displayError = bootstrapError ?? actionState.error ?? localError;
   const pendingConfirmationEmail = actionState.pendingConfirmationEmail;
 
   const handleLoginSubmit = useCallback(
@@ -68,7 +83,8 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
         }
         setActionState(result);
       } catch (err) {
-        setLocalError(err instanceof Error ? err.message : "Não foi possível entrar. Tente de novo.");
+        const raw = err instanceof Error ? err.message : "Não foi possível entrar. Tente de novo.";
+        setLocalError(friendlyActionError(raw));
       } finally {
         setIsSubmitting(false);
       }
@@ -233,7 +249,7 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || Boolean(bootstrapError)}
               className="mt-2 flex h-[50px] w-full cursor-pointer items-center justify-center rounded-xl border-0 bg-eid-action-500 text-[14px] font-extrabold uppercase text-white transition hover:bg-eid-action-400 active:scale-[0.97] active:bg-eid-action-600 active:opacity-95 disabled:opacity-60"
             >
               {isSubmitting ? (
