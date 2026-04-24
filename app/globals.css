@@ -335,21 +335,6 @@ label:has(input.sr-only):not(.eid-no-press):active {
   }
 }
 
-@keyframes eid-btn-pulse {
-  0% {
-    opacity: 0.78;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.92;
-    transform: scale(0.992);
-  }
-  100% {
-    opacity: 0.78;
-    transform: scale(1);
-  }
-}
-
 /* Botão Match — glow pulsante */
 @keyframes eid-match-glow {
   0%, 100% {
@@ -447,20 +432,6 @@ label:has(input.sr-only):not(.eid-no-press):active {
   animation: eid-skeleton-shimmer 1.7s ease-in-out infinite;
 }
 
-
-/* Sem pointer-events:none: no capture isso quebrava o 1º clique em <Link> / botões antes da navegação. */
-.eid-is-locked {
-  opacity: 0.88;
-  filter: brightness(0.96);
-  animation: eid-btn-pulse 1100ms ease-in-out infinite;
-}
-
-button.eid-is-locked,
-input.eid-is-locked,
-a.eid-is-locked {
-  cursor: progress !important;
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -479,10 +450,6 @@ a.eid-is-locked {
   label.cursor-pointer:not(.eid-no-press):active,
   label:has(input.sr-only):not(.eid-no-press):active {
     transform: none;
-  }
-
-  .eid-is-locked {
-    animation: none;
   }
 
   .eid-loading-skeleton-block::after {
