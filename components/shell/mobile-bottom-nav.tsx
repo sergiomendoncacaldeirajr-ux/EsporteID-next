@@ -392,12 +392,19 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   return (
     <>
       {/* Padding do conteúdo: #app-main-column (--eid-shell-footer-offset). Espaçador removido para não duplicar folga. */}
-      <nav className="pointer-events-auto w-full bg-transparent" aria-label="Navegação principal">
+      <nav
+        className="pointer-events-auto w-full bg-eid-card"
+        style={{
+          paddingBottom: "max(0px, env(safe-area-inset-bottom, 0px))",
+          marginBottom: "calc(-1 * max(0px, env(safe-area-inset-bottom, 0px)))",
+        }}
+        aria-label="Navegação principal"
+      >
         <div
-          className="eid-surface-panel relative overflow-visible rounded-t-[16px] rounded-b-none"
+          className="relative overflow-visible rounded-t-[16px] rounded-b-none bg-eid-card"
           style={{
-            minHeight: "calc(4rem + max(12px, env(safe-area-inset-bottom, 0px)))",
-            paddingBottom: "calc(max(12px, env(safe-area-inset-bottom, 0px)) + 0.5rem)",
+            minHeight: "calc(4rem + max(0px, env(safe-area-inset-bottom, 0px)))",
+            paddingBottom: "0.35rem",
             paddingLeft: "max(0px, env(safe-area-inset-left))",
             paddingRight: "max(0px, env(safe-area-inset-right))",
           }}
