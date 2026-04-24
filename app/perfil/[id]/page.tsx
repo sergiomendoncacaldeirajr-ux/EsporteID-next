@@ -293,7 +293,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   if ((principalEid?.nota_eid ?? 0) >= 7) conquistas.push("EID Elite");
 
   return (
-    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main id="perfil-public-main" className={PROFILE_PUBLIC_MAIN_CLASS}>
         {/* ── Hero Card ─────────────────────────────────────────────── */}
         {/* ── Hero Card ──
              overflow-hidden no container clipa tudo dentro dos cantos arredondados.

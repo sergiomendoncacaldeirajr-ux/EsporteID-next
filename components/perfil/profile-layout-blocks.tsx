@@ -31,7 +31,7 @@ export function ProfilePrimaryCta({
   return (
     <Link
       href={href}
-      className={`eid-btn-match-cta eid-match-cta-pulse eid-shimmer-btn relative overflow-hidden inline-flex min-h-[44px] w-full items-center justify-center rounded-xl px-4 text-[13px] font-black uppercase tracking-[0.1em] ${className ?? ""}`}
+      className={`eid-btn-match-cta eid-profile-match-cta eid-match-cta-pulse eid-shimmer-btn relative overflow-hidden inline-flex min-h-[44px] w-full items-center justify-center rounded-xl px-4 text-[13px] font-black uppercase tracking-[0.1em] ${className ?? ""}`}
     >
       {label}
     </Link>
