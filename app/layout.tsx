@@ -14,6 +14,7 @@ import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
 import { InstallAppOffer } from "@/components/pwa/install-app-offer";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { PwaSplashOverlay } from "@/components/pwa/pwa-splash-overlay";
+import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
 import {
   ACTIVE_CONTEXT_COOKIE,
   resolveActiveAppContext,
@@ -73,6 +74,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  /* Padrão escuro; `ThemeColorSync` ajusta no cliente se o tema claro estiver ativo. */
   themeColor: EID_APP_CHROME_THEME_COLOR,
   colorScheme: "dark",
   width: "device-width",
@@ -124,6 +126,7 @@ export default async function RootLayout({
       >
         <EidThemeHydration />
         <PwaBootstrap />
+        <ThemeColorSync />
         <PwaSplashOverlay />
         <InstallAppOffer />
         <GlobalScrollReset />

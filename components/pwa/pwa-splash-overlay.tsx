@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { EID_PWA_SPLASH_LOGO_SRC, EID_PWA_BACKGROUND } from "@/lib/branding";
+import { EID_PWA_SPLASH_MARK_SRC, EID_PWA_BACKGROUND } from "@/lib/branding";
 
 function isPwaDisplayMode() {
   if (typeof window === "undefined") return false;
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: minimal-ui)").matches ||
     (window.navigator as Navigator & { standalone?: boolean }).standalone === true
   );
 }
 
-/** Logo com alpha sobre fundo marca — abertura PWA (além da imagem nativa iOS, quando aplicável). */
+/** Marca do ícone (transparente) sobre fundo marca — abertura PWA iOS/Android. */
 export function PwaSplashOverlay() {
   const [phase, setPhase] = useState<"gone" | "in" | "out">("gone");
 
@@ -38,9 +39,9 @@ export function PwaSplashOverlay() {
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- splash imediata; evita flash do optimizer */}
       <img
-        src={EID_PWA_SPLASH_LOGO_SRC}
+        src={EID_PWA_SPLASH_MARK_SRC}
         alt=""
-        className="max-h-[min(52vh,28rem)] w-[min(92vw,36rem)] object-contain"
+        className="h-28 w-28 max-h-[7.5rem] max-w-[7.5rem] object-contain"
         decoding="async"
         fetchPriority="high"
       />
