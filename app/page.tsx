@@ -102,7 +102,7 @@ export default async function Home() {
 
         <h1 className="mt-3 text-center text-2xl font-bold leading-tight tracking-tight text-eid-fg sm:text-left sm:text-3xl">
           EsporteID —{" "}
-          <span className="text-eid-action-500">A Plataforma de Match dos Esportes</span>
+          <span className="text-eid-action-500">A plataforma de desafios dos esportes</span>
         </h1>
 
         <p className="mt-4 max-w-2xl text-center text-base leading-relaxed text-eid-text-secondary sm:text-left sm:text-lg">
@@ -128,7 +128,7 @@ export default async function Home() {
               Entre na sua conta ou cadastre-se — leva poucos minutos.
             </p>
             <p className="mx-auto mt-2 max-w-xl text-center text-sm text-eid-text-secondary sm:text-base">
-              Acesso com e-mail; depois você completa o perfil e já usa Match, agenda e ranking no mesmo lugar.
+              Acesso com e-mail; depois você completa o perfil e já usa desafios, agenda e ranking no mesmo lugar.
             </p>
             <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
               <Link href="/login" className={heroCtaPrimaryClass}>
@@ -150,12 +150,12 @@ export default async function Home() {
               {
                 step: "1",
                 title: "Conta e onboarding",
-                body: "Cadastro com e-mail e senha; depois você aceita os termos e passa pelo onboarding: papéis (atleta, professor, organizador, espaço), esportes que pratica e como entra no Match — individual, dupla ou time.",
+                body: "Cadastro com e-mail e senha; depois você aceita os termos e passa pelo onboarding: papéis (atleta, professor, organizador, espaço), esportes que pratica e como entra nos desafios — individual, dupla ou time.",
               },
               {
                 step: "2",
-                title: "Match, agenda e comunidade",
-                body: "No Match você manda e recebe desafios; na agenda e na comunidade acompanha o que rola perto de você. Times, duplas, locais e torneios ficam conectados ao seu perfil.",
+                title: "Desafios, agenda e comunidade",
+                body: "Nos desafios você manda e recebe pedidos; na agenda e na comunidade acompanha o que rola perto de você. Times, duplas, locais e torneios ficam conectados ao seu perfil.",
               },
               {
                 step: "3",
@@ -182,7 +182,7 @@ export default async function Home() {
             <li className={`flex gap-3 ${sectionCard}`}>
               <IconSpark />
               <div>
-                <p className="font-semibold text-eid-fg">Match esportivo</p>
+                <p className="font-semibold text-eid-fg">Desafios esportivos</p>
                 <p className="mt-1 text-sm leading-relaxed text-eid-text-secondary">
                   Conecte interesses, nível e local — menos grupo de WhatsApp perdido, mais quadra e campo.
                 </p>
@@ -222,7 +222,7 @@ export default async function Home() {
           <h2 className="text-base font-bold text-eid-fg">Pronto para o próximo jogo?</h2>
           <p className="mt-2 text-sm leading-relaxed text-eid-text-secondary">
             {user
-              ? "Continue de onde parou ou abra o painel para ver agenda, Match e torneios."
+              ? "Continue de onde parou ou abra o painel para ver agenda, desafios e torneios."
               : "Use os botões acima ou estes abaixo para entrar ou criar conta em poucos passos. Comunicações importantes podem usar e-mail e WhatsApp conforme os termos."}
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">

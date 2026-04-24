@@ -170,7 +170,7 @@ export function ContaEsportesForm({
       setMessage(r.message);
       return;
     }
-    setMessage("Esportes e preferências de match salvos.");
+    setMessage("Esportes e preferências de desafio salvos.");
     router.refresh();
   }
 
@@ -293,7 +293,7 @@ export function ContaEsportesForm({
                 {esporteModoTemAtleta(sportModes[e.id] ?? (hasProfessor ? (hasAtleta ? "ambos" : "professor") : "atleta")) &&
                 e.suportaConfronto ? (
                   <>
-                    <p className="mt-2 text-[11px] text-eid-text-secondary">Modalidades no match (marque as que quiser):</p>
+                    <p className="mt-2 text-[11px] text-eid-text-secondary">Modalidades no desafio (marque as que quiser):</p>
                     {e.permiteIndividual ? (
                       <label className="mt-1 block text-xs text-eid-fg">
                         <input

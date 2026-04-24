@@ -65,25 +65,25 @@ export function PwaQuickActions() {
         type="button"
         onClick={onInstall}
         disabled={!installReady}
-        className={`rounded-xl px-4 py-2 text-xs font-bold ${
+        className={`rounded-lg px-3 py-1.5 text-[11px] font-bold ${
           installReady
             ? "border border-eid-primary-500/35 bg-eid-primary-500/10 text-eid-primary-300"
             : "cursor-not-allowed border border-[color:var(--eid-border-subtle)] text-eid-text-secondary/70"
         }`}
       >
-        Instalar app
+        Instalar
       </button>
       <button
         type="button"
         onClick={onEnablePush}
         disabled={pushStatus === "enabling" || pushStatus === "enabled"}
-        className={`rounded-xl px-4 py-2 text-xs font-bold ${
+        className={`rounded-lg px-3 py-1.5 text-[11px] font-bold ${
           pushStatus === "enabled"
             ? "border border-eid-action-500/35 bg-eid-action-500/10 text-eid-action-300"
             : "border border-[color:var(--eid-border-subtle)] text-eid-fg"
         }`}
       >
-        {pushStatus === "enabling" ? "Ativando push..." : pushStatus === "enabled" ? "Push ativo" : "Ativar push"}
+        {pushStatus === "enabling" ? "Ativando..." : pushStatus === "enabled" ? "Push ativo" : "Ativar push"}
       </button>
       {pushMsg ? <p className={`basis-full text-[11px] ${pushStatus === "error" ? "text-red-300" : "text-eid-primary-300"}`}>{pushMsg}</p> : null}
     </div>

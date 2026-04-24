@@ -70,7 +70,7 @@ export function MatchLocationPrompt({ hasLocation, className }: Props) {
 
   return (
     <div className="mb-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-4 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] backdrop-blur-sm">
-      <p className="text-sm font-semibold text-eid-fg">Localização necessária para o Match</p>
+      <p className="text-sm font-semibold text-eid-fg">Localização necessária para o radar de desafios</p>
       <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
         O radar usa sua posição atual para mostrar atletas e formações próximas. Toque no botão e permita o acesso à localização.
       </p>

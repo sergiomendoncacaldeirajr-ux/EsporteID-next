@@ -18,6 +18,9 @@ type PartidaRow = {
   esporte_id: number | null;
   jogador1_id: string | null;
   jogador2_id: string | null;
+  time1_id: number | null;
+  time2_id: number | null;
+  modalidade: string | null;
   data_registro: string | null;
   data_partida: string | null;
   local_str: string | null;
@@ -47,6 +50,21 @@ export default async function AgendaPage() {
   if (!profile.perfil_completo) redirect("/onboarding");
 
   await supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id });
+  const [{ data: ownedTeams }, { data: memberTeams }] = await Promise.all([
+    supabase.from("times").select("id").eq("criador_id", user.id),
+    supabase
+      .from("membros_time")
+      .select("time_id")
+      .eq("usuario_id", user.id)
+      .in("status", ["ativo", "aceito", "aprovado"]),
+  ]);
+  const teamIds = [
+    ...new Set([
+      ...(ownedTeams ?? []).map((t) => Number(t.id)),
+      ...(memberTeams ?? []).map((m) => Number(m.time_id)),
+    ].filter((v) => Number.isFinite(v) && v > 0)),
+  ];
+  const teamClause = teamIds.length ? `,time1_id.in.(${teamIds.join(",")}),time2_id.in.(${teamIds.join(",")})` : "";
 
   const { data: aceitos } = await supabase
     .from("matches")
@@ -78,9 +96,9 @@ export default async function AgendaPage() {
   const { data: partidasAgendadas } = await supabase
     .from("partidas")
     .select(
-      "id, esporte_id, jogador1_id, jogador2_id, data_registro, data_partida, local_str, local_espaco_id, status, esportes(nome)"
+      "id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, modalidade, data_registro, data_partida, local_str, local_espaco_id, status, esportes(nome)"
     )
-    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}`)
+    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}${teamClause}`)
     .eq("status", "agendada")
     .order("data_partida", { ascending: true, nullsFirst: false })
     .order("data_registro", { ascending: true })
@@ -89,9 +107,9 @@ export default async function AgendaPage() {
   const { data: placarPendente } = await supabase
     .from("partidas")
     .select(
-      "id, esporte_id, jogador1_id, jogador2_id, data_registro, data_partida, local_str, local_espaco_id, status, esportes(nome)"
+      "id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, modalidade, data_registro, data_partida, local_str, local_espaco_id, status, esportes(nome)"
     )
-    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id}`)
+    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id}${teamClause}`)
     .eq("status", "aguardando_confirmacao")
     .neq("lancado_por", user.id)
     .order("data_registro", { ascending: false })
@@ -205,7 +223,7 @@ export default async function AgendaPage() {
         ]}
         actions={
           <>
-            <FlowHeaderLink href="/match" label="Abrir radar Match" tone="primary" />
+            <FlowHeaderLink href="/match" label="Abrir radar Desafio" tone="primary" />
             <FlowHeaderLink href="/comunidade#notificacoes" label="Ver notificações" />
             <PwaQuickActions />
           </>
@@ -247,7 +265,7 @@ export default async function AgendaPage() {
           {(partidasAgendadas ?? []).length === 0 ? (
             <div className="eid-list-item mt-4 rounded-[22px] border-2 border-dashed bg-eid-card/40 py-10 text-center">
               <p className="text-sm font-bold text-eid-fg">Nenhuma pendência</p>
-              <p className="mt-1 text-xs text-eid-text-secondary">Sua agenda está em dia. Combine um match no radar.</p>
+              <p className="mt-1 text-xs text-eid-text-secondary">Sua agenda está em dia. Combine um desafio no radar.</p>
             </div>
           ) : (
             <div className="mt-4 space-y-4">
@@ -317,7 +335,7 @@ export default async function AgendaPage() {
         <p className="mt-6 text-center text-xs text-eid-text-secondary md:mt-10">
           Pedidos recebidos para aceitar estão em{" "}
           <Link href="/comunidade" className="font-bold text-eid-primary-300 hover:underline">
-            Social
+            Painel de controle
           </Link>
           .
         </p>

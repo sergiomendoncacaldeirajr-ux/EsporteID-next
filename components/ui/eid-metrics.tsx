@@ -1,5 +1,5 @@
 /**
- * Métricas EsporteID — Nota EID (avaliação técnica) vs pontos de ranking (match).
+ * Métricas EsporteID — Nota EID (avaliação técnica) vs pontos de ranking (desafios).
  * Visual minimalista: azul estrutural vs laranja ação (marca).
  */
 
@@ -51,13 +51,13 @@ type PtsProps = {
   size?: "sm" | "md";
 };
 
-/** Pontos de ranking match — progressão competitiva (laranja marca). */
+/** Pontos de ranking por desafios — progressão competitiva (laranja marca). */
 export function EidRankingPtsMetric({ value, label = "Pts ranking", size = "md" }: PtsProps) {
   const numCls = size === "sm" ? "text-sm font-semibold tabular-nums" : "text-base font-semibold tabular-nums sm:text-lg";
   return (
     <div
       className="flex items-center gap-2 rounded-[10px] border border-eid-action-500/35 bg-eid-action-500/[0.08] px-2.5 py-1.5"
-      title="Pontos acumulados no ranking de match"
+      title="Pontos acumulados no ranking por desafios"
     >
       <IconTrophy className="h-4 w-4 shrink-0 text-eid-action-400" />
       <div className="min-w-0 text-left">

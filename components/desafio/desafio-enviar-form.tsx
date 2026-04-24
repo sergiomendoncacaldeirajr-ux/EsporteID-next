@@ -54,7 +54,7 @@ export function DesafioEnviarForm({
         disabled={pending}
         className="eid-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50 sm:w-auto sm:px-8"
       >
-        {pending ? "Enviando…" : finalidade === "amistoso" ? "Confirmar match amistoso" : "Confirmar match de ranking"}
+        {pending ? "Enviando…" : finalidade === "amistoso" ? "Confirmar desafio amistoso" : "Confirmar desafio de ranking"}
       </button>
     </form>
   );

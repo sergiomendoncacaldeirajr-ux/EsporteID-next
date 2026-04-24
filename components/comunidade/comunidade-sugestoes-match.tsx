@@ -31,7 +31,7 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
   if (items.length === 0) {
     return (
       <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
-        Nenhuma sugestão de match da equipe. Atletas que não são líderes podem sugerir pelo perfil da formação adversária.
+        Nenhuma sugestão de desafio da equipe. Atletas que não são líderes podem sugerir pelo perfil da formação adversária.
       </p>
     );
   }
@@ -83,7 +83,7 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
                   disabled={pending}
                   className="rounded-lg border border-eid-action-500/50 bg-eid-action-500/15 px-4 py-2 text-xs font-bold text-eid-action-500 transition hover:bg-eid-action-500/25 disabled:opacity-50"
                 >
-                  {pending ? "Salvando…" : "Aprovar e confirmar match"}
+                  {pending ? "Salvando…" : "Aprovar e confirmar desafio"}
                 </button>
               </form>
               <form action={formAction}>
@@ -99,7 +99,7 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
               </form>
             </div>
             <p className="mt-2 text-[10px] text-eid-text-secondary">
-              Ao aprovar, o sistema registra o match como <strong className="text-eid-fg">confirmado</strong> e notifica
+              Ao aprovar, o sistema registra o desafio como <strong className="text-eid-fg">confirmado</strong> e notifica
               todos os membros ativos das duas formações.
             </p>
           </li>

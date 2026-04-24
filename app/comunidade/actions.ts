@@ -9,6 +9,114 @@ export type SugestaoMatchState = { ok: true; message?: string } | { ok: false; m
 export type ResponderSugestaoMatchState = { ok: true } | { ok: false; message: string };
 export type CancelarMatchState = { ok: true } | { ok: false; message: string };
 
+function normStatus(v: string | null | undefined): string {
+  return String(v ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+async function notify(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  usuarioId: string | null | undefined,
+  mensagem: string,
+  referenciaId: number,
+  remetenteId: string | null | undefined
+) {
+  if (!usuarioId) return;
+  await supabase.from("notificacoes").insert({
+    usuario_id: usuarioId,
+    mensagem,
+    tipo: "desafio",
+    referencia_id: referenciaId,
+    lida: false,
+    remetente_id: remetenteId ?? null,
+    data_criacao: new Date().toISOString(),
+  });
+}
+
+async function ensurePartidaAgendadaFromMatch(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  matchId: number,
+  actorUserId: string
+) {
+  const { data: matchRow } = await supabase
+    .from("matches")
+    .select("id, usuario_id, adversario_id, esporte_id, modalidade_confronto, tipo, finalidade, status, adversario_time_id")
+    .eq("id", matchId)
+    .maybeSingle();
+  if (!matchRow) return;
+  if (normStatus(matchRow.status) !== "aceito") return;
+  if (String(matchRow.finalidade ?? "ranking").trim().toLowerCase() !== "ranking") return;
+  if (!matchRow.usuario_id || !matchRow.adversario_id || !matchRow.esporte_id) return;
+
+  const { data: aberta } = await supabase
+    .from("partidas")
+    .select("id")
+    .eq("esporte_id", Number(matchRow.esporte_id))
+    .is("torneio_id", null)
+    .or(
+      `and(jogador1_id.eq.${matchRow.usuario_id},jogador2_id.eq.${matchRow.adversario_id}),and(jogador1_id.eq.${matchRow.adversario_id},jogador2_id.eq.${matchRow.usuario_id})`
+    )
+    .in("status", ["agendada", "aguardando_confirmacao"])
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (aberta?.id) return;
+
+  const modalidade = String(matchRow.modalidade_confronto ?? matchRow.tipo ?? "individual")
+    .trim()
+    .toLowerCase();
+  const isColetivo = modalidade === "dupla" || modalidade === "time";
+
+  let time1Id: number | null = null;
+  let time2Id: number | null = isColetivo && matchRow.adversario_time_id ? Number(matchRow.adversario_time_id) : null;
+  if (isColetivo) {
+    const { data: challengerTeam } = await supabase
+      .from("times")
+      .select("id")
+      .eq("criador_id", matchRow.usuario_id)
+      .eq("esporte_id", Number(matchRow.esporte_id))
+      .eq("tipo", modalidade)
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    time1Id = challengerTeam?.id ? Number(challengerTeam.id) : null;
+    if (!time2Id || !time1Id) {
+      time1Id = null;
+      time2Id = null;
+    }
+  }
+
+  const { data: novaPartida, error: insErr } = await supabase
+    .from("partidas")
+    .insert({
+      esporte_id: Number(matchRow.esporte_id),
+      modalidade,
+      jogador1_id: matchRow.usuario_id,
+      jogador2_id: matchRow.adversario_id,
+      time1_id: time1Id,
+      time2_id: time2Id,
+      usuario_id: matchRow.usuario_id,
+      desafiante_id: matchRow.usuario_id,
+      desafiado_id: matchRow.adversario_id,
+      tipo: "desafio",
+      tipo_partida: "ranking",
+      status: "agendada",
+      status_ranking: "pendente",
+      data_registro: new Date().toISOString(),
+      data_aceito: new Date().toISOString(),
+    })
+    .select("id")
+    .maybeSingle();
+  if (insErr || !novaPartida?.id) return;
+
+  const msg = "Desafio aceito e partida criada na Agenda. Combine data/local e depois registre o resultado.";
+  await Promise.all([
+    notify(supabase, matchRow.usuario_id, msg, Number(novaPartida.id), actorUserId),
+    notify(supabase, matchRow.adversario_id, msg, Number(novaPartida.id), actorUserId),
+  ]);
+}
+
 export async function responderPedidoMatch(
   _prev: ResponderMatchState | undefined,
   formData: FormData
@@ -39,6 +147,10 @@ export async function responderPedidoMatch(
     return { ok: false, message: error.message };
   }
 
+  if (aceitar) {
+    await ensurePartidaAgendadaFromMatch(supabase, matchId, user.id);
+  }
+
   revalidatePath("/comunidade");
   revalidatePath("/agenda");
   revalidatePath("/match");
@@ -54,7 +166,7 @@ export async function cancelarMatchAceito(
   const motivo = String(formData.get("motivo") ?? "").trim();
 
   if (!Number.isFinite(matchId) || matchId < 1) {
-    return { ok: false, message: "Match inválido." };
+    return { ok: false, message: "Desafio inválido." };
   }
 
   const supabase = await createClient();
@@ -137,6 +249,14 @@ export async function responderSugestaoMatch(
   });
 
   if (error) return { ok: false, message: error.message };
+
+  if (aceitar) {
+    const { data: sug } = await supabase.from("match_sugestoes").select("match_id").eq("id", sugestaoId).maybeSingle();
+    const maybeMatchId = Number(sug?.match_id);
+    if (Number.isFinite(maybeMatchId) && maybeMatchId > 0) {
+      await ensurePartidaAgendadaFromMatch(supabase, maybeMatchId, user.id);
+    }
+  }
 
   revalidatePath("/comunidade");
   revalidatePath("/agenda");

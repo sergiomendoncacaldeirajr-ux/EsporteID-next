@@ -18,12 +18,12 @@ export function ConexoesStrip({ peers }: { peers: ConexaoPeer[] }) {
   return (
     <section className="mt-5 md:mt-8">
       <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-eid-text-secondary">Conexões ativas</h2>
-      <p className="mt-0.5 hidden text-xs text-eid-text-secondary md:mt-1 md:block">Atletas com match aceito — atalho para o perfil.</p>
+      <p className="mt-0.5 hidden text-xs text-eid-text-secondary md:mt-1 md:block">Atletas com desafio aceito — atalho para o perfil.</p>
       <div className="mt-4 flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {peers.length === 0 ? (
           <div className="flex min-w-[72px] flex-col items-center opacity-40">
             <div className="h-14 w-14 rounded-full border-2 border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface" />
-            <span className="mt-2 max-w-[72px] truncate text-center text-[10px] font-bold text-eid-text-secondary">Match</span>
+            <span className="mt-2 max-w-[72px] truncate text-center text-[10px] font-bold text-eid-text-secondary">Desafio</span>
           </div>
         ) : (
           peers.map((p) => {

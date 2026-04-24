@@ -92,7 +92,7 @@ export default async function AdminHomePage() {
     <div>
       <h2 className="text-base font-bold text-eid-fg">Visão geral</h2>
       <p className="mt-1 text-sm text-eid-text-secondary">
-        Gerencie usuários, esportes, locais, torneios, partidas, pedidos de match, denúncias, parâmetros financeiros e o motor EID.
+        Gerencie usuários, esportes, locais, torneios, partidas, pedidos de desafio, denúncias, parâmetros financeiros e o motor EID.
       </p>
 
       {counts.denuncias_abertas != null && counts.denuncias_abertas > 0 ? (

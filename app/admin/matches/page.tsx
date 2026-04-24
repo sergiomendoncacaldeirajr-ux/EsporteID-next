@@ -14,7 +14,7 @@ export default async function AdminMatchesPage() {
 
   return (
     <div>
-      <h2 className="text-base font-bold text-eid-fg">Pedidos de match</h2>
+      <h2 className="text-base font-bold text-eid-fg">Pedidos de desafio</h2>
       <p className="mt-1 text-sm text-eid-text-secondary">Tabela `matches` — últimos 200.</p>
       <div className="mt-4 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)]">
         <table className="w-full min-w-[800px] text-left text-xs">

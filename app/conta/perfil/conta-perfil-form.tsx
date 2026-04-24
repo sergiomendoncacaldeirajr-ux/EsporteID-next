@@ -343,7 +343,7 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
           href={CONTA_ESPORTES_EID_HREF}
           className="text-center text-sm font-medium text-eid-primary-300 hover:text-eid-fg sm:text-left"
         >
-          {hasProfessor ? "Esportes, atuacao e Match/EID ->" : "Esportes, EID e modalidades no match ->"}
+          {hasProfessor ? "Esportes, atuacao e Desafio/EID ->" : "Esportes, EID e modalidades no desafio ->"}
         </Link>
         <button
           type="submit"

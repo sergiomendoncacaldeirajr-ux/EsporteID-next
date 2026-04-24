@@ -29,7 +29,7 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
         <div>
           <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Notificações</h2>
           <p className="mt-1 text-sm text-eid-text-secondary">
-            Avisos de match, respostas e lembretes, tudo em um só lugar.
+            Avisos gerais, respostas e lembretes em um só lugar.
           </p>
         </div>
         {unread > 0 ? (
@@ -46,7 +46,7 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
 
       {items.length === 0 ? (
         <p className="mt-4 rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-6 text-center text-sm text-eid-text-secondary">
-          Nenhuma notificação ainda. Quando alguém te desafiar ou responder um pedido, aparece aqui.
+          Nenhuma notificação ainda. Novos avisos aparecem aqui automaticamente.
         </p>
       ) : (
         <ul className="mt-4 space-y-2">
@@ -91,7 +91,7 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
       )}
 
       <p className="mt-4 text-center text-[11px] text-eid-text-secondary">
-        Pedidos para aceitar estão na seção &quot;Pedidos de match&quot; abaixo.{" "}
+        Pedidos para aceitar estão na seção &quot;Desafio&quot; abaixo.{" "}
         <Link href="/agenda" className="font-semibold text-eid-primary-300 hover:underline">
           Agenda e placares
         </Link>

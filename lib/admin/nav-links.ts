@@ -6,7 +6,7 @@ export const ADMIN_NAV_LINKS: { href: string; label: string; hint: string }[] = 
   { href: "/admin/locais", label: "Locais", hint: "Espaços" },
   { href: "/admin/torneios", label: "Torneios", hint: "Eventos" },
   { href: "/admin/partidas", label: "Partidas", hint: "Confrontos" },
-  { href: "/admin/matches", label: "Pedidos match", hint: "Matches" },
+  { href: "/admin/matches", label: "Pedidos de desafio", hint: "matches (tabela)" },
   { href: "/admin/denuncias", label: "Denúncias", hint: "Moderação" },
   { href: "/admin/financeiro", label: "Financeiro", hint: "Taxas e promo" },
   { href: "/admin/eid", label: "EID", hint: "Motor e auditoria" },

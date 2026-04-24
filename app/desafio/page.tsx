@@ -57,7 +57,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       if (perfilAlvo && perfilAlvo.id !== user.id && opcoes.length > 0) {
         return (
             <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
-              <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+              <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
               <p className="mt-2 text-sm text-eid-text-secondary">
                 Escolha o esporte para desafiar <span className="text-eid-fg">{perfilAlvo.nome ?? "Atleta"}</span>.
               </p>
@@ -85,7 +85,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
     return (
       <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
-          <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+          <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">
             Escolha um esporte no radar (não use &quot;Todos&quot;) para enviar um desafio com o esporte correto.
           </p>
@@ -103,7 +103,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   if (!esporteRow || !isSportMatchEnabled(esporteRow.nome)) {
     return (
       <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
-        <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+        <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
         <p className="mt-2 text-sm text-eid-text-secondary">Este esporte não aceita desafio/ranking no momento.</p>
         <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
           Voltar ao radar
@@ -117,7 +117,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     if (!UUID_RE.test(alvoKey)) {
       return (
         <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
-            <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+            <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
             <p className="mt-2 text-sm text-red-200">Identificador do atleta inválido.</p>
             <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
               Voltar ao radar
@@ -134,7 +134,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     if (!perfil || perfil.id === user.id) {
       return (
         <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
-            <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+            <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
             <p className="mt-2 text-sm text-eid-text-secondary">Atleta não encontrado ou inválido para desafio.</p>
             <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
               Voltar ao radar
@@ -162,7 +162,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
       return (
         <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
-            <h1 className="text-lg font-bold text-eid-fg">Solicitar match</h1>
+            <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
             <p className="mt-2 text-sm text-eid-text-secondary">
               <span className="text-eid-fg">{perfil.nome ?? "Atleta"}</span> · {esporteNome} (individual). Escolha o tipo de confronto.
             </p>
@@ -172,10 +172,10 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
                 href={`/desafio?${baseQs}&finalidade=ranking`}
                 className="rounded-2xl border border-eid-primary-500/35 bg-eid-primary-500/10 p-4 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/15"
               >
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-eid-primary-300">Match de ranking</p>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-eid-primary-300">Desafio de ranking</p>
                 <p className="mt-2 text-sm font-semibold text-eid-fg">Vale pontos no ranking</p>
                 <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
-                  Após aceito, use a agenda para agendar e o lançador de resultado. Novo match de ranking com a mesma pessoa neste esporte só após{" "}
+                  Após aceito, use a agenda para agendar e o lançador de resultado. Novo desafio de ranking com a mesma pessoa neste esporte só após{" "}
                   <span className="font-semibold text-eid-fg">{cooldownMeses}</span> meses do último confronto válido.
                 </p>
               </Link>
@@ -185,16 +185,16 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
                   href={`/desafio?${baseQs}&finalidade=amistoso`}
                   className="rounded-2xl border border-emerald-500/35 bg-emerald-500/10 p-4 transition hover:border-emerald-500/55 hover:bg-emerald-500/15"
                 >
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-300">Match amistoso</p>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-300">Desafio amistoso</p>
                   <p className="mt-2 text-sm font-semibold text-eid-fg">Sem pontos · combinar no WhatsApp</p>
                   <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
                     Não há carência de meses entre pedidos amistosos com a mesma pessoa: você pode solicitar de novo quando quiser. Não abre fluxo de agenda nem placar de ranking. Para pontos e agendamento oficial, use{" "}
-                    <span className="font-semibold text-eid-fg">match de ranking</span>.
+                    <span className="font-semibold text-eid-fg">desafio de ranking</span>.
                   </p>
                 </Link>
               ) : (
                 <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4 opacity-70">
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-eid-text-secondary">Match amistoso</p>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-eid-text-secondary">Desafio amistoso</p>
                   <p className="mt-2 text-sm font-semibold text-eid-text-secondary">Indisponível</p>
                   <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
                     Você e o oponente precisam estar com o <span className="font-semibold">modo amistoso</span> ligado no perfil (janela ativa).
@@ -215,22 +215,22 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
     return (
       <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
-          <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+          <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">
             Confirme o pedido no esporte <span className="text-eid-fg">{esporteNome}</span> (individual) ·{" "}
             <span className="font-semibold text-eid-fg">
-              {finalidadeEscolhida === "amistoso" ? "Match amistoso" : "Match de ranking"}
+              {finalidadeEscolhida === "amistoso" ? "Desafio amistoso" : "Desafio de ranking"}
             </span>
             .
           </p>
           {finalidadeEscolhida === "amistoso" ? (
             <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
               Este pedido <span className="font-semibold text-emerald-200">não soma pontos</span> e não usa agenda de ranking. O WhatsApp será liberado após aceite, para vocês combinarem. Para confronto que valha ranking, agenda e resultado, volte ao perfil e escolha{" "}
-              <span className="font-semibold text-eid-fg">match de ranking</span>.
+              <span className="font-semibold text-eid-fg">desafio de ranking</span>.
             </div>
           ) : (
             <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
-              Match de ranking: após aceito, use a <span className="font-semibold text-eid-fg">agenda</span> e o lançamento de resultado para atualizar o ranking.
+              Desafio de ranking: após aceito, use a <span className="font-semibold text-eid-fg">agenda</span> e o lançamento de resultado para atualizar o ranking.
             </div>
           )}
           <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:p-4">
@@ -248,7 +248,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
               href={`/desafio?id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${esporteId}`}
               className="inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg"
             >
-              ← Trocar tipo de match
+              ← Trocar tipo de desafio
             </Link>
             <Link href="/match" className="inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
               Cancelar
@@ -262,7 +262,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   if (!Number.isFinite(timeId) || timeId < 1) {
     return (
       <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
-          <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+          <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-red-200">Identificador da formação inválido.</p>
           <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
             Voltar ao radar
@@ -283,7 +283,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   if (!timeRow || (tipoFormacao !== "dupla" && tipoFormacao !== "time") || tipoFormacao !== modalidade) {
     return (
       <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
-          <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+          <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">Formação não encontrada ou modalidade diferente do link.</p>
           <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
             Voltar ao radar
@@ -295,7 +295,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   if (Number(timeRow.esporte_id) !== esporteId) {
     return (
       <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
-          <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+          <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">O esporte selecionado não confere com esta formação. Ajuste o filtro no radar.</p>
           <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
             Voltar ao radar
@@ -306,7 +306,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
   return (
     <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
-        <h1 className="text-lg font-bold text-eid-fg">Solicitar Match</h1>
+        <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
         <p className="mt-2 text-sm text-eid-text-secondary">
           Confirme o pedido no esporte <span className="text-eid-fg">{esporteNome}</span> ({modalidade === "dupla" ? "dupla" : "time"}).
         </p>

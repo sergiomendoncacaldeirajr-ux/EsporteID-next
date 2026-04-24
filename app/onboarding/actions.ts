@@ -340,7 +340,7 @@ export async function salvarEsportesOnboarding(
     if (finalMods.length === 0) {
       return {
         ok: false,
-        message: `Em “${meta.nome}”, marque ao menos uma forma de jogar no match (individual, dupla ou time).`,
+        message: `Em “${meta.nome}”, marque ao menos uma forma de jogar nos desafios (individual, dupla ou time).`,
       };
     }
     modalidadesMap.set(esporteId, finalMods);

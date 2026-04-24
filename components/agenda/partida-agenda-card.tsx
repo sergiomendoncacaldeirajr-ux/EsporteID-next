@@ -63,7 +63,7 @@ export function PartidaAgendaCard({ id, esporteNome, j1Nome, j2Nome, dataRef, lo
 
       {isPlacar ? (
         <p className="mt-2 hidden text-center text-xs text-eid-text-secondary md:mt-3 md:block">
-          O oponente registrou um placar. Confirme ou conteste quando o fluxo estiver disponível.
+          O oponente registrou um placar. Toque em &quot;Revisar placar&quot; para confirmar ou contestar.
         </p>
       ) : null}
 
@@ -75,7 +75,7 @@ export function PartidaAgendaCard({ id, esporteNome, j1Nome, j2Nome, dataRef, lo
             : "eid-btn-primary mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl text-center text-[11px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs md:font-black"
         }
       >
-        {isPlacar ? "Revisar placar" : "Registrar placar"}
+        {isPlacar ? "Revisar resultado" : "Agendar ou lançar resultado"}
       </Link>
     </article>
   );

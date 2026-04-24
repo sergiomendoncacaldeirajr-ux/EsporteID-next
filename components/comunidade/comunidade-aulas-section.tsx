@@ -50,6 +50,12 @@ export type ComunidadeVinculoAulaItem = {
     | null;
 };
 
+type ProfessorNotifItem = {
+  id: number;
+  mensagem: string;
+  lida: boolean;
+};
+
 function waHref(raw: string | null | undefined) {
   const digits = String(raw ?? "").replace(/\D/g, "");
   return digits ? `https://wa.me/${digits}` : null;
@@ -59,25 +65,26 @@ export function ComunidadeAulasSection({
   solicitacoes,
   vinculos,
   professorMap,
+  professorNotifs,
 }: {
   solicitacoes: ComunidadeSolicitacaoAulaItem[];
   vinculos: ComunidadeVinculoAulaItem[];
   professorMap: Map<string, ComunidadeProfessorProfileRow>;
+  professorNotifs: ProfessorNotifItem[];
 }) {
   return (
-    <section className="space-y-6">
-      <div>
-        <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-action-400">
-          Aulas e professores
-        </h2>
-        <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
-          Acompanhe solicitações enviadas, aulas confirmadas, pagamentos e o contato liberado pelo professor.
-        </p>
-      </div>
+    <section className="eid-list-item rounded-2xl bg-eid-card/90 p-4 md:p-5">
+      <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Minhas aulas</h2>
+      <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
+        Acompanhe pedidos, aulas confirmadas e avisos do seu atendimento em um único quadro.
+      </p>
 
-      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-        <h3 className="text-lg font-bold text-eid-fg">Solicitações enviadas</h3>
-        <div className="mt-4 space-y-3">
+      <div className="mt-3 space-y-4">
+        <div>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
+            Pedidos de aula
+          </h3>
+          <div className="mt-2 space-y-3">
           {solicitacoes.length ? (
             solicitacoes.map((solicitacao) => {
               const esporte = Array.isArray(solicitacao.esportes)
@@ -146,12 +153,14 @@ export function ComunidadeAulasSection({
               Você ainda não enviou solicitações de aula.
             </p>
           )}
+          </div>
         </div>
-      </div>
 
-      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-        <h3 className="text-lg font-bold text-eid-fg">Aulas vinculadas</h3>
-        <div className="mt-4 space-y-3">
+        <div>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-400">
+            Aulas confirmadas e em andamento
+          </h3>
+          <div className="mt-2 space-y-3">
           {vinculos.length ? (
             vinculos.map((vinculo) => {
               const aula = Array.isArray(vinculo.professor_aulas)
@@ -240,6 +249,24 @@ export function ComunidadeAulasSection({
             <p className="text-sm text-eid-text-secondary">
               Nenhuma aula vinculada ainda.
             </p>
+          )}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-300">
+            Avisos das suas aulas
+          </h3>
+          {professorNotifs.length === 0 ? (
+            <p className="mt-2 text-xs text-eid-text-secondary">Sem avisos de aula no momento.</p>
+          ) : (
+            <ul className="mt-2 space-y-2">
+              {professorNotifs.slice(0, 6).map((n) => (
+                <li key={n.id} className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                  <p className={`text-xs leading-relaxed ${n.lida ? "text-eid-text-secondary" : "text-eid-fg"}`}>{n.mensagem}</p>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>

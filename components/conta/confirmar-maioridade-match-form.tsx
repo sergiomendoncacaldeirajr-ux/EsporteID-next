@@ -46,14 +46,14 @@ export function ConfirmarMaioridadeMatchForm({ nextPath, nome: _nome }: { nextPa
           max={maxDataNascimentoMaior18()}
           className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
         />
-        <p className="mt-1 text-[10px] text-eid-text-secondary">É necessário ter 18 anos completos. Menores não podem usar o Match.</p>
+        <p className="mt-1 text-[10px] text-eid-text-secondary">É necessário ter 18 anos completos. Menores não podem usar o Desafio.</p>
       </div>
 
       <label className="flex cursor-pointer gap-2 text-xs leading-snug text-eid-fg">
         <input type="checkbox" name="aceito" required className="mt-0.5 rounded border-eid-border-subtle" />
         <span>
           Declaro, sob as penas da lei, que as informações são verdadeiras, que tenho{" "}
-          <strong>18 anos ou mais</strong> e que desejo acessar a funcionalidade Match nestes termos.
+          <strong>18 anos ou mais</strong> e que desejo acessar a funcionalidade Desafio nestes termos.
         </span>
       </label>
 

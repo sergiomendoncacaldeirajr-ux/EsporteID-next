@@ -53,10 +53,10 @@ export default async function AdminUsuarioDetalhePage({ params }: { params: Prom
       <p className="mt-1 font-mono text-xs text-eid-text-secondary">{p.id}</p>
 
       <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4">
-        <h3 className="text-sm font-bold text-eid-fg">Maioridade — uso do Match</h3>
+        <h3 className="text-sm font-bold text-eid-fg">Maioridade — uso do Desafio</h3>
         <dl className="mt-2 grid gap-2 text-xs text-eid-text-secondary sm:grid-cols-2">
           <div>
-            <dt className="font-bold uppercase tracking-wide text-[10px] text-eid-text-secondary">Confirmado para Match</dt>
+            <dt className="font-bold uppercase tracking-wide text-[10px] text-eid-text-secondary">Confirmado para o Desafio</dt>
             <dd className="text-eid-fg">{p.match_maioridade_confirmada ? "Sim" : "Não"}</dd>
           </div>
           <div>

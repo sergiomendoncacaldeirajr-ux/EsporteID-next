@@ -2,8 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  disablePushNotifications,
+  enablePushNotifications,
+  hasActivePushSubscription,
+} from "@/lib/pwa/push-client";
 
 type Preview = { id: number; mensagem: string; lida: boolean; data_criacao: string | null; criada_em: string | null };
 
@@ -34,6 +39,9 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   const [agendaN, setAgendaN] = useState(0);
   const [matchN, setMatchN] = useState(0);
   const [placarN, setPlacarN] = useState(0);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const vapidPublicKey = useMemo(() => String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim(), []);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -115,6 +123,40 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const active = await hasActivePushSubscription();
+        if (!cancelled) setPushEnabled(active);
+      } catch {
+        if (!cancelled) setPushEnabled(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  const onTogglePush = useCallback(async () => {
+    if (pushBusy) return;
+    setPushBusy(true);
+    try {
+      if (pushEnabled) {
+        await disablePushNotifications();
+        setPushEnabled(false);
+      } else {
+        await enablePushNotifications(vapidPublicKey);
+        setPushEnabled(true);
+      }
+    } catch {
+      // Falhas de permissão/chave são exibidas em outros pontos do app; aqui mantemos o CTA compacto.
+    } finally {
+      setPushBusy(false);
+    }
+  }, [pushBusy, pushEnabled, vapidPublicKey]);
+
   if (!userId) return null;
 
   const bellCount = total;
@@ -138,6 +180,23 @@ export function NotificationBell({ userId }: { userId: string | null }) {
 
       {open ? (
         <div className="eid-surface-panel fixed left-1/2 top-[var(--eid-shell-header-offset)] z-[70] w-[min(94vw,340px)] -translate-x-1/2 p-3 md:absolute md:left-auto md:right-0 md:top-[calc(100%+8px)] md:w-[min(100vw-2rem,340px)] md:translate-x-0">
+          <div className="mb-2.5 flex items-center justify-between gap-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">
+              Push
+            </span>
+            <button
+              type="button"
+              onClick={onTogglePush}
+              disabled={pushBusy}
+              className={`inline-flex min-h-[26px] items-center justify-center rounded-md border px-2.5 text-[10px] font-bold uppercase tracking-wide transition ${
+                pushEnabled
+                  ? "border-emerald-500/35 bg-emerald-500/15 text-emerald-300"
+                  : "border-eid-primary-500/30 bg-eid-primary-500/10 text-eid-primary-300"
+              } ${pushBusy ? "opacity-60" : "hover:brightness-110"}`}
+            >
+              {pushBusy ? "..." : pushEnabled ? "Ativo" : "Ativar"}
+            </button>
+          </div>
           <p className="border-b border-[color:var(--eid-border-subtle)] pb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">
             Resumo rápido
           </p>

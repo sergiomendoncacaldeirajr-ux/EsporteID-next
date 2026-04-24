@@ -105,9 +105,9 @@ export default async function AdminRegrasPage() {
       </section>
 
       <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
-        <h2 className="text-base font-bold text-eid-fg">Match de ranking · carência entre oponentes</h2>
+        <h2 className="text-base font-bold text-eid-fg">Desafio de ranking · carência entre oponentes</h2>
         <p className="mt-1 text-sm text-eid-text-secondary">
-          Período mínimo (em meses) após um confronto individual válido para ranking no mesmo esporte, antes que o mesmo par possa solicitar outro match de ranking. Não se aplica a match amistoso.
+          Período mínimo (em meses) após um confronto individual válido para ranking no mesmo esporte, antes que o mesmo par possa solicitar outro desafio de ranking. Não se aplica a desafio amistoso.
         </p>
         <form action={adminSetMatchRankCooldownMeses} className="mt-4 flex flex-wrap items-end gap-3">
           <label className="grid gap-1">
@@ -131,7 +131,7 @@ export default async function AdminRegrasPage() {
       </section>
 
       <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
-        <h2 className="text-base font-bold text-eid-fg">Match de ranking · limite de pendências</h2>
+        <h2 className="text-base font-bold text-eid-fg">Desafio de ranking · limite de pendências</h2>
         <p className="mt-1 text-sm text-eid-text-secondary">
           Quantos jogos de ranking cada jogador pode manter pendentes de lançamento/validação de resultado antes de
           abrir um novo desafio.
@@ -215,7 +215,7 @@ export default async function AdminRegrasPage() {
       </section>
 
       <section>
-        <h2 className="text-base font-bold text-eid-fg">Regras ranking match (EID)</h2>
+        <h2 className="text-base font-bold text-eid-fg">Regras de ranking no desafio (EID)</h2>
         {rrm.error ? <p className="text-red-300">{rrm.error.message}</p> : null}
         <div className="mt-3 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)]">
           <table className="w-full min-w-[720px] text-left text-xs">

@@ -2,13 +2,23 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
+import { confirmarPlacarAction, contestarPlacarAction, salvarAgendamentoAction, submitPlacarAction } from "./actions";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = { params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> };
 
-export default async function RegistrarPlacarPage({ params }: Props) {
+function normStatus(v: string | null | undefined): string {
+  return String(v ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+export default async function RegistrarPlacarPage({ params, searchParams }: Props) {
   const raw = (await params).id;
   const id = Number(raw);
   if (!Number.isFinite(id) || id < 1) notFound();
+  const sp = (await searchParams) ?? {};
+  const okMsg = typeof sp.ok === "string" ? sp.ok : null;
+  const errMsg = typeof sp.erro === "string" ? sp.erro : null;
 
   const supabase = await createClient();
   const {
@@ -18,20 +28,48 @@ export default async function RegistrarPlacarPage({ params }: Props) {
 
   const { data: p } = await supabase
     .from("partidas")
-    .select("id, jogador1_id, jogador2_id, status, esporte_id, torneio_id, esportes(nome)")
+    .select(
+      "id, jogador1_id, jogador2_id, status, status_ranking, esporte_id, torneio_id, esportes(nome), placar_1, placar_2, lancado_por, mensagem, data_resultado, data_validacao, modalidade, time1_id, time2_id, data_partida, local_str"
+    )
     .eq("id", id)
     .maybeSingle();
 
   if (!p) notFound();
 
   const participant = p.jogador1_id === user.id || p.jogador2_id === user.id;
+  const modalidade = String(p.modalidade ?? "").trim().toLowerCase();
+  const isColetivo = modalidade === "dupla" || modalidade === "time" || Boolean(p.time1_id || p.time2_id);
+  const timeIds = [p.time1_id, p.time2_id].filter((v): v is number => typeof v === "number" && v > 0);
+  const [{ data: ownerRows }, { data: memberRows }] = timeIds.length
+    ? await Promise.all([
+        supabase.from("times").select("id, criador_id, nome").in("id", timeIds),
+        supabase
+          .from("membros_time")
+          .select("time_id, usuario_id, status")
+          .in("time_id", timeIds)
+          .eq("usuario_id", user.id)
+          .in("status", ["ativo", "aceito", "aprovado"]),
+      ])
+    : [{ data: [] as Array<{ id: number; criador_id: string | null; nome: string | null }> }, { data: [] as Array<{ time_id: number }> }];
+  const isTeamOwner = (ownerRows ?? []).some((t) => t.criador_id === user.id);
+  const isTeamMember = (memberRows ?? []).length > 0;
   const torneioAccess = p.torneio_id ? await getTorneioStaffAccess(supabase, Number(p.torneio_id), user.id) : null;
   const podeRegistrarTorneio = torneioAccess ? canLaunchTorneioScore(torneioAccess) : false;
   if (p.torneio_id) {
     if (!podeRegistrarTorneio) notFound();
-  } else if (!participant) {
+  } else if (isColetivo ? !(isTeamOwner || isTeamMember) : !participant) {
     notFound();
   }
+  const status = normStatus(p.status);
+  const aguardandoConfirmacao = status === "aguardando_confirmacao";
+  const concluida =
+    status === "concluida" || status === "concluída" || status === "concluido" || status === "validada" || status === "finalizada";
+  const podeLancar = p.torneio_id
+    ? podeRegistrarTorneio
+    : isColetivo
+      ? isTeamOwner && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id))
+      : participant && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id));
+  const podeConfirmarOuContestar = !p.torneio_id && (isColetivo ? isTeamOwner : participant) && aguardandoConfirmacao && p.lancado_por !== user.id;
 
   const esp = Array.isArray(p.esportes) ? p.esportes[0] : p.esportes;
 
@@ -52,7 +90,7 @@ export default async function RegistrarPlacarPage({ params }: Props) {
         </Link>
 
         <div className="mt-4 overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-action-500)_32%,var(--eid-border-subtle)_68%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)_90%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-4 shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)] backdrop-blur-sm sm:mt-6 sm:p-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-action-400">Registrar placar</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-action-400">Registrar resultado</p>
           <h1 className="mt-2 text-lg font-black tracking-tight text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-action-500)_72%,var(--eid-fg)_28%))] bg-clip-text md:text-xl">
             Partida #{id}
           </h1>
@@ -61,6 +99,11 @@ export default async function RegistrarPlacarPage({ params }: Props) {
           {p.torneio_id ? (
             <p className="mt-2 text-xs text-eid-action-400">
               Partida de torneio: o lançamento é restrito ao organizador e aos lançadores autorizados.
+            </p>
+          ) : null}
+          {isColetivo && !isTeamOwner ? (
+            <p className="mt-2 text-xs text-eid-text-secondary">
+              Você é membro da formação: visualização liberada. Somente o dono da dupla/time pode agendar, lançar, confirmar ou contestar resultado.
             </p>
           ) : null}
 
@@ -74,14 +117,149 @@ export default async function RegistrarPlacarPage({ params }: Props) {
             </div>
           </div>
 
-          <p className="mt-6 text-sm leading-relaxed text-eid-text-secondary">
-            Em breve você poderá informar sets ou games, enviar para o oponente confirmar e acompanhar o histórico da disputa
-            nesta tela.
-          </p>
+          {errMsg ? (
+            <p className="mt-4 rounded-xl border border-red-500/35 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200">{errMsg}</p>
+          ) : null}
+          {okMsg ? (
+            <p className="mt-4 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200">{okMsg}</p>
+          ) : null}
 
-          <div className="mt-6 rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--eid-primary-500)_40%,var(--eid-border-subtle)_60%)] bg-eid-primary-500/5 p-4 text-center text-xs text-eid-text-secondary">
-            Registro de placar, anexos e histórico de disputas serão habilitados em uma atualização futura.
-          </div>
+          {(p.placar_1 != null || p.placar_2 != null) && (
+            <div className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Placar atual</p>
+              <p className="mt-1 text-lg font-black text-eid-fg">
+                {p.placar_1 ?? "—"} x {p.placar_2 ?? "—"}
+              </p>
+              {p.mensagem ? <p className="mt-1 text-xs text-eid-text-secondary">{p.mensagem}</p> : null}
+            </div>
+          )}
+
+          {podeLancar ? (
+            <form action={salvarAgendamentoAction} className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3 sm:p-4">
+              <input type="hidden" name="partida_id" value={id} />
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Agendamento (opcional)</p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <label className="grid gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Data e hora</span>
+                  <input
+                    type="datetime-local"
+                    name="data_partida"
+                    defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
+                    className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg"
+                  />
+                </label>
+                <label className="grid gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Local</span>
+                  <input
+                    type="text"
+                    name="local_str"
+                    defaultValue={p.local_str ?? ""}
+                    placeholder="Quadra, clube, endereço..."
+                    className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg"
+                  />
+                </label>
+              </div>
+              <button type="submit" className="mt-3 min-h-[42px] w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg">
+                Salvar agendamento
+              </button>
+              <p className="mt-2 text-[11px] text-eid-text-secondary">Se já combinaram fora do app, você pode pular o agendamento e lançar o resultado direto abaixo.</p>
+            </form>
+          ) : null}
+
+          {podeLancar ? (
+            <form action={submitPlacarAction} className="mt-5 space-y-4">
+              <input type="hidden" name="partida_id" value={id} />
+              <div className="grid grid-cols-2 gap-3">
+                <label className="grid gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">
+                    {j1?.nome ?? "Jogador 1"}
+                  </span>
+                  <input
+                    type="number"
+                    name="placar_1"
+                    min={0}
+                    defaultValue={p.placar_1 ?? ""}
+                    required
+                    className="eid-input-dark h-11 rounded-xl px-3 text-sm font-bold text-eid-fg"
+                  />
+                </label>
+                <label className="grid gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">
+                    {j2?.nome ?? "Jogador 2"}
+                  </span>
+                  <input
+                    type="number"
+                    name="placar_2"
+                    min={0}
+                    defaultValue={p.placar_2 ?? ""}
+                    required
+                    className="eid-input-dark h-11 rounded-xl px-3 text-sm font-bold text-eid-fg"
+                  />
+                </label>
+              </div>
+              <label className="grid gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Observação (opcional)</span>
+                <textarea
+                  name="observacao"
+                  rows={3}
+                  defaultValue={p.mensagem ?? ""}
+                  placeholder="Ex.: 6/4 4/6 10/8 no tiebreak."
+                  className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
+                />
+              </label>
+              <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-3">
+                <label className="flex items-center gap-2 text-xs font-semibold text-eid-fg">
+                  <input type="checkbox" name="wo_ativo" value="1" className="h-4 w-4 accent-eid-action-500" />
+                  Marcar vitória por W.O. (adversário não compareceu)
+                </label>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <label className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-2 py-1.5 text-[11px] text-eid-fg">
+                    <input type="radio" name="wo_vencedor" value="j1" className="mr-1.5 accent-eid-action-500" defaultChecked />
+                    {j1?.nome ?? "Jogador 1"} venceu por W.O.
+                  </label>
+                  <label className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-2 py-1.5 text-[11px] text-eid-fg">
+                    <input type="radio" name="wo_vencedor" value="j2" className="mr-1.5 accent-eid-action-500" />
+                    {j2?.nome ?? "Jogador 2"} venceu por W.O.
+                  </label>
+                </div>
+              </div>
+              <button type="submit" className="eid-btn-match-cta min-h-[44px] w-full rounded-xl text-xs font-black uppercase tracking-wide">
+                {p.torneio_id ? "Salvar e validar resultado" : "Enviar resultado para confirmação"}
+              </button>
+            </form>
+          ) : null}
+
+          {aguardandoConfirmacao && p.lancado_por === user.id ? (
+            <p className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65 px-3 py-2 text-xs text-eid-text-secondary">
+              Resultado enviado. Aguardando confirmação do oponente.
+            </p>
+          ) : null}
+
+          {podeConfirmarOuContestar ? (
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              <form action={confirmarPlacarAction}>
+                <input type="hidden" name="partida_id" value={id} />
+                <button type="submit" className="eid-btn-match-cta min-h-[44px] w-full rounded-xl text-xs font-black uppercase tracking-wide">
+                  Confirmar resultado
+                </button>
+              </form>
+              <form action={contestarPlacarAction}>
+                <input type="hidden" name="partida_id" value={id} />
+                <button
+                  type="submit"
+                  className="min-h-[44px] w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 text-xs font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-warning-400/45 hover:text-eid-warning-200"
+                >
+                  Contestar resultado
+                </button>
+              </form>
+            </div>
+          ) : null}
+
+          {concluida ? (
+            <p className="mt-5 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200">
+              Partida concluída e resultado validado.
+            </p>
+          ) : null}
         </div>
       </main>
   );

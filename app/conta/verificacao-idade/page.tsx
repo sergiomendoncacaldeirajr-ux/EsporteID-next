@@ -7,7 +7,7 @@ const NEED_GATE = new Set(["pendente_documento", "em_analise", "reprovado"]);
 
 export const metadata = {
   title: "Verificação de idade",
-  description: "Envio de documento e selfie para liberar o match.",
+  description: "Envio de documento e selfie para liberar desafios.",
 };
 
 export default async function VerificacaoIdadePage() {
@@ -44,7 +44,7 @@ export default async function VerificacaoIdadePage() {
       ) : (
         <>
           <p className="mt-4 text-xs text-amber-200/90">
-            Status atual: <span className="font-mono">{gate}</span>. Enquanto não for aprovado, você não pode usar match (pedidos e
+            Status atual: <span className="font-mono">{gate}</span>. Enquanto não for aprovado, você não pode usar desafios (pedidos e
             aceites).
           </p>
           <VerificacaoIdadeForm nome={profile?.nome ?? "Atleta"} />
