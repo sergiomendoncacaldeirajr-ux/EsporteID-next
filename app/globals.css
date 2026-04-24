@@ -237,7 +237,7 @@ header#eid-persistent-topbar textarea {
       --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 6.65rem);
       --eid-shell-footer-offset: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 2.85rem);
       /* Escala proporcional geral (ajuste fino centralizado). */
-      --eid-ios-ui-scale: 1;
+      --eid-ios-ui-scale: 1.22;
     }
 
     body.eid-app-shell {
@@ -274,8 +274,8 @@ header#eid-persistent-topbar textarea {
     }
 
     html {
-      /* iOS alinhado ao baseline visual atual do Android. */
-      font-size: 13px !important;
+      /* Restaura tamanho-base do iOS como estava antes dos últimos ajustes. */
+      font-size: 16px !important;
       -webkit-text-size-adjust: 100%;
       overflow-x: hidden;
     }
