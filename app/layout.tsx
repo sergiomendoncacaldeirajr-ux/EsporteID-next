@@ -11,7 +11,6 @@ import { LegalGateDeferred } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
-import { NavigationDebugProbe } from "@/components/system/navigation-debug-probe";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
 import { ViewportZoomLock } from "@/components/system/viewport-zoom-lock";
@@ -129,7 +128,6 @@ export default async function RootLayout({
         <ViewportZoomLock />
         <PwaBootstrap />
         <ThemeColorSync />
-        <NavigationDebugProbe />
         <GlobalScrollReset />
         <InteractionFeedback />
         {!user ? <VisitorThemeToggleFloat /> : null}
