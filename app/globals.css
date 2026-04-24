@@ -195,11 +195,11 @@ html {
   background-color: var(--eid-bg);
 }
 
-/* iPhone/iPad WebKit: base rem maior (Tailwind escala com o root). Teste visual ~30px. */
+/* iPhone/iPad WebKit: base rem maior (Tailwind escala com o root). */
 @media (max-width: 767px) {
   @supports (-webkit-touch-callout: none) {
     html {
-      font-size: 30px;
+      font-size: 50px;
     }
   }
 }
