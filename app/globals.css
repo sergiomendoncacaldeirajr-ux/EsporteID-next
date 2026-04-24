@@ -204,15 +204,6 @@ html {
   html {
     overscroll-behavior-y: none;
   }
-  /*
-   * iOS PWA: até o JS medir o topbar, evita primeiro paint com conteúdo sob o relógio.
-   * O cliente pode sobrescrever com padding inline `!important` (DashboardTopbar).
-   */
-  @media (max-width: 767px) {
-    #eid-app-shell-main-wrap {
-      padding-top: max(var(--eid-shell-header-offset), 148px) !important;
-    }
-  }
 }
 
 body {

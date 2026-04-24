@@ -17,10 +17,9 @@ import {
 import { listarPapeis } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/client";
 
-/** PWA “Adicionar à Tela de Início” no iOS — não é o Safari com barra de URL; layout e safe-area diferem. */
-function isStandaloneDisplayMode(): boolean {
+/** Só iOS “Adicionar à Tela de Início” — `navigator.standalone`. Android PWA usa `display-mode: standalone` e não deve levar o mesmo reforço de padding. */
+function isIosHomeScreenWebApp(): boolean {
   if (typeof window === "undefined") return false;
-  if (window.matchMedia("(display-mode: standalone)").matches) return true;
   return (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 }
 
@@ -101,17 +100,14 @@ export function DashboardTopbar({
       const raw = el.getBoundingClientRect().height;
       let pad = Math.max(Math.ceil(raw), 112);
       /*
-       * iOS WKWebView em standalone: medição e env(safe-area) costumam ficar aquém da área real do topo;
-       * força um piso maior em telefones (14 Pro Max incluído).
+       * Só Web App no iOS: medição às vezes vem curta vs. área útil real; Android standalone não entra aqui
+       * (evita faixa enorme no topo em Chrome/Samsung).
        */
-      if (isStandaloneDisplayMode()) {
-        const shortSide = Math.min(window.screen.width, window.screen.height);
-        if (shortSide > 0 && shortSide <= 480) {
-          pad = Math.max(pad, 168);
-        }
+      if (isIosHomeScreenWebApp() && pad < 132) {
+        pad = Math.max(pad, 132);
       }
       if (pad > 0) {
-        wrap.style.setProperty("padding-top", `${pad}px`, "important");
+        wrap.style.paddingTop = `${pad}px`;
       }
     };
 
@@ -222,7 +218,7 @@ export function DashboardTopbar({
       </Suspense>
     <header
       id={persistent ? "eid-persistent-topbar" : undefined}
-      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_6px_18px_-12px_rgba(0,0,0,0.34)] backdrop-blur-xl md:mb-3`}
+      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-eid-bg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_6px_18px_-12px_rgba(0,0,0,0.34)] backdrop-blur-xl md:mb-3`}
       style={{
         paddingTop: "max(0px, env(safe-area-inset-top, 0px))",
         paddingLeft: "max(0px, env(safe-area-inset-left, 0px))",
