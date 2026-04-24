@@ -11,7 +11,7 @@ import { LegalGateDeferred } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
-import { InstallAppOffer } from "@/components/pwa/install-app-offer";
+import { InstallAppOfferDynamic } from "@/components/pwa/install-app-offer-dynamic";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
 import {
@@ -93,20 +93,21 @@ export default async function RootLayout({
   let papeis: string[] = [];
   let activeContext: ActiveAppContext = "atleta";
   let hdrs: Awaited<ReturnType<typeof headers>>;
+  let cookieStore: Awaited<ReturnType<typeof cookies>>;
   try {
-    const [auth, h] = await Promise.all([getServerAuth(), headers()]);
+    const [auth, h, ck] = await Promise.all([getServerAuth(), headers(), cookies()]);
     hdrs = h;
+    cookieStore = ck;
     user = auth.user;
     if (user) {
       papeis = await getCachedUsuarioPapeis(user.id);
     }
   } catch {
     hdrs = await headers();
+    cookieStore = await cookies();
     user = null;
     papeis = [];
   }
-
-  const cookieStore = await cookies();
   const hideAppShell = hdrs.get(EID_HIDE_APP_SHELL_HEADER) === "1";
   const showOnboardingChrome = hdrs.get(EID_SHOW_ONBOARDING_CHROME_HEADER) === "1";
   const showAppChrome = Boolean(user) && !hideAppShell;
@@ -125,7 +126,7 @@ export default async function RootLayout({
         <EidThemeHydration />
         <PwaBootstrap />
         <ThemeColorSync />
-        <InstallAppOffer />
+        <InstallAppOfferDynamic />
         <GlobalScrollReset />
         <InteractionFeedback />
         {!user ? <VisitorThemeToggleFloat /> : null}
