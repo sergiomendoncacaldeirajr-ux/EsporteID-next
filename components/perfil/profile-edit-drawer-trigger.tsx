@@ -11,7 +11,8 @@ type Props = {
   title: string;
   children: ReactNode;
   fullscreen?: boolean;
-  topMode?: "default" | "backOnly";
+  /** default = título + Fechar · backOnly = só Voltar · backAndClose = Voltar (histórico do iframe) + Fechar */
+  topMode?: "default" | "backOnly" | "backAndClose";
 };
 
 export function ProfileEditDrawerTrigger({
@@ -59,6 +60,19 @@ export function ProfileEditDrawerTrigger({
     }, 180);
   }
 
+  function frameBackOrClose() {
+    try {
+      const w = frameRef.current?.contentWindow;
+      if (w && w.history.length > 1) {
+        w.history.back();
+        return;
+      }
+    } catch {
+      /* ignore */
+    }
+    close();
+  }
+
   function openDrawer() {
     setOpenNonce((v) => v + 1);
     setOpen(true);
@@ -83,19 +97,23 @@ export function ProfileEditDrawerTrigger({
       </button>
       {open && mounted
         ? createPortal(
-            <div className="fixed inset-0 z-[999]">
+            <div className="fixed inset-0 z-[999] isolate">
               {!fullscreen ? (
                 <button
                   type="button"
                   aria-label="Fechar painel de edição"
-                  className={`absolute inset-0 backdrop-blur-[1px] transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"} ${
+                  className={`absolute inset-0 z-0 backdrop-blur-[1px] transition-opacity duration-200 ${visible ? "opacity-100" : "opacity-0"} ${
                     theme === "light" ? "bg-slate-900/28" : "bg-black/45"
                   }`}
                   onClick={close}
                 />
               ) : null}
+              {/*
+                iOS: safe-area em filho `absolute` dentro de `fixed` costuma virar 0; `fixed` na própria
+                folha + piso (~44px) garante o Voltar abaixo do relógio/notch mesmo quando env() falha.
+              */}
               <aside
-                className={`absolute inset-y-0 right-0 flex h-full w-full flex-col ${
+                className={`fixed bottom-0 right-0 top-0 z-[1] flex min-h-0 w-full flex-col ${
                   fullscreen ? "max-w-none border-0" : "max-w-[min(100vw,460px)] border-l"
                 } border-[color:var(--eid-border-subtle)] bg-eid-bg ${
                   fullscreen ? "" : "shadow-[0_0_0_1px_rgba(148,163,184,0.12),-20px_0_40px_-20px_rgba(2,6,23,0.8)]"
@@ -104,7 +122,7 @@ export function ProfileEditDrawerTrigger({
                 }`}
                 style={{
                   paddingTop:
-                    "max(0.75rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px))",
+                    "calc(0.5rem + max(2.75rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
                 }}
               >
                 {topMode === "backOnly" ? (
@@ -116,6 +134,24 @@ export function ProfileEditDrawerTrigger({
                     >
                       <span aria-hidden>←</span>
                       Voltar
+                    </button>
+                  </div>
+                ) : topMode === "backAndClose" ? (
+                  <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] px-3 pb-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={frameBackOrClose}
+                      className="inline-flex min-h-[40px] items-center justify-center gap-1 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-3 text-[10px] font-bold uppercase tracking-[0.07em] text-eid-fg transition-colors hover:border-eid-primary-500/35"
+                    >
+                      <span aria-hidden>←</span>
+                      Voltar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={close}
+                      className="inline-flex min-h-[40px] items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] px-3 text-[10px] font-bold uppercase tracking-[0.06em] text-eid-text-secondary transition-colors hover:text-eid-fg"
+                    >
+                      Fechar
                     </button>
                   </div>
                 ) : (

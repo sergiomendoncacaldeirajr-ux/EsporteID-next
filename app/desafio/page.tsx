@@ -6,6 +6,12 @@ import { fetchColetivoRankingPreview, fetchIndividualRankingPreview } from "@/li
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
+import {
+  DESAFIO_CHOICE_ACTION,
+  DESAFIO_CHOICE_AMISTOSO,
+  DESAFIO_CHOICE_RANKING,
+  DESAFIO_FLOW_SECONDARY_CLASS,
+} from "@/lib/desafio/flow-ui";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,12 +20,23 @@ type Params = {
   tipo?: string;
   esporte?: string;
   finalidade?: string;
+  embed?: string;
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function withDesafioEmbed(href: string, isEmbed: boolean): string {
+  if (!isEmbed || href.includes("embed=1")) return href;
+  return `${href}${href.includes("?") ? "&" : "?"}embed=1`;
+}
+
+function exitEmbedProps(isEmbed: boolean): { target?: "_parent" } {
+  return isEmbed ? { target: "_parent" } : {};
+}
+
 export default async function DesafioPage({ searchParams }: { searchParams?: Promise<Params> }) {
   const sp = (await searchParams) ?? {};
+  const isEmbed = sp.embed === "1";
   const supabase = await createClient();
   const desafioQs = new URLSearchParams();
   for (const [k, v] of Object.entries(sp)) {
@@ -67,8 +84,11 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
                 {opcoes.map((op) => (
                   <Link
                     key={op.esporteId}
-                    href={`/desafio?id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${op.esporteId}`}
-                    className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-action-500/35 bg-eid-action-500/10 px-4 text-xs font-semibold text-eid-action-400"
+                    href={withDesafioEmbed(
+                      `/desafio?id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${op.esporteId}`,
+                      isEmbed
+                    )}
+                    className={DESAFIO_CHOICE_ACTION}
                   >
                     {op.esporteNome}
                   </Link>
@@ -76,7 +96,8 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
               </div>
               <Link
                 href={`/perfil/${encodeURIComponent(alvoKey)}?from=/match`}
-                className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg"
+                {...exitEmbedProps(isEmbed)}
+                className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}
               >
                 Voltar ao perfil
               </Link>
@@ -91,10 +112,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           <p className="mt-2 text-sm text-eid-text-secondary">
             Escolha um esporte no radar (não use &quot;Todos&quot;) para enviar um desafio com o esporte correto.
           </p>
-          <Link
-            href="/match"
-            className="mt-4 inline-flex rounded-xl border border-eid-primary-500/40 px-4 py-2 text-xs font-semibold text-eid-fg"
-          >
+          <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
             Voltar ao radar
           </Link>
         </main>
@@ -107,7 +125,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
         <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
         <p className="mt-2 text-sm text-eid-text-secondary">Este esporte não aceita desafio/ranking no momento.</p>
-        <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
+        <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
           Voltar ao radar
         </Link>
       </main>
@@ -121,7 +139,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
             <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
             <p className="mt-2 text-sm text-red-200">Identificador do atleta inválido.</p>
-            <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
+            <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
               Voltar ao radar
             </Link>
           </main>
@@ -138,7 +156,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
             <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
             <p className="mt-2 text-sm text-eid-text-secondary">Atleta não encontrado ou inválido para desafio.</p>
-            <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
+            <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
               Voltar ao radar
             </Link>
           </main>
@@ -171,10 +189,10 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <Link
-                href={`/desafio?${baseQs}&finalidade=ranking`}
-                className="rounded-2xl border border-eid-primary-500/35 bg-eid-primary-500/10 p-4 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/15"
+                href={withDesafioEmbed(`/desafio?${baseQs}&finalidade=ranking`, isEmbed)}
+                className={`${DESAFIO_CHOICE_RANKING} block text-left`}
               >
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-eid-primary-300">Desafio de ranking</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-eid-primary-200">Desafio de ranking</p>
                 <p className="mt-2 text-sm font-semibold text-eid-fg">Vale pontos no ranking</p>
                 <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
                   Após aceito, use a agenda para agendar e o lançador de resultado. Novo desafio de ranking com a mesma pessoa neste esporte só após{" "}
@@ -184,10 +202,10 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
               {amistosoPermitido ? (
                 <Link
-                  href={`/desafio?${baseQs}&finalidade=amistoso`}
-                  className="rounded-2xl border border-emerald-500/35 bg-emerald-500/10 p-4 transition hover:border-emerald-500/55 hover:bg-emerald-500/15"
+                  href={withDesafioEmbed(`/desafio?${baseQs}&finalidade=amistoso`, isEmbed)}
+                  className={`${DESAFIO_CHOICE_AMISTOSO} block text-left`}
                 >
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-emerald-300">Desafio amistoso</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-200">Desafio amistoso</p>
                   <p className="mt-2 text-sm font-semibold text-eid-fg">Sem pontos · combinar no WhatsApp</p>
                   <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
                     Não há carência de meses entre pedidos amistosos com a mesma pessoa: você pode solicitar de novo quando quiser. Não abre fluxo de agenda nem placar de ranking. Para pontos e agendamento oficial, use{" "}
@@ -195,8 +213,8 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
                   </p>
                 </Link>
               ) : (
-                <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4 opacity-70">
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-eid-text-secondary">Desafio amistoso</p>
+                <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4 opacity-70">
+                  <p className="text-xs font-bold uppercase tracking-wide text-eid-text-secondary">Desafio amistoso</p>
                   <p className="mt-2 text-sm font-semibold text-eid-text-secondary">Indisponível</p>
                   <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
                     Você e o oponente precisam estar com o <span className="font-semibold">modo amistoso</span> ligado no perfil (janela ativa).
@@ -207,7 +225,8 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
             <Link
               href={`/perfil/${encodeURIComponent(alvoKey)}`}
-              className="mt-6 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg"
+              {...exitEmbedProps(isEmbed)}
+              className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-6`}
             >
               Voltar ao perfil
             </Link>
@@ -263,12 +282,15 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           />
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
-              href={`/desafio?id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${esporteId}`}
-              className="inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg"
+              href={withDesafioEmbed(
+                `/desafio?id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${esporteId}`,
+                isEmbed
+              )}
+              className={DESAFIO_FLOW_SECONDARY_CLASS}
             >
               ← Trocar tipo de desafio
             </Link>
-            <Link href="/match" className="inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
+            <Link href="/match" {...exitEmbedProps(isEmbed)} className={DESAFIO_FLOW_SECONDARY_CLASS}>
               Cancelar
             </Link>
           </div>
@@ -282,7 +304,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-red-200">Identificador da formação inválido.</p>
-          <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
+          <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
             Voltar ao radar
           </Link>
         </main>
@@ -303,7 +325,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">Formação não encontrada ou modalidade diferente do link.</p>
-          <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
+          <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
             Voltar ao radar
           </Link>
         </main>
@@ -315,7 +337,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">O esporte selecionado não confere com esta formação. Ajuste o filtro no radar.</p>
-          <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
+          <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
             Voltar ao radar
           </Link>
         </main>
@@ -347,7 +369,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           </p>
         )}
         <DesafioEnviarForm modalidade={modalidade} esporteId={esporteId} alvoTimeId={timeRow.id} finalidade="ranking" />
-        <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
+        <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
           Cancelar
         </Link>
       </main>

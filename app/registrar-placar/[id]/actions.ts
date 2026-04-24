@@ -15,6 +15,13 @@ function go(partidaId: number, kind: "ok" | "erro", message: string): never {
   redirect(`/registrar-placar/${partidaId}?${kind}=${encodeURIComponent(message)}`);
 }
 
+function salvarAgendaRedirect(partidaId: number, kind: "ok" | "erro", message: string, modoAgenda: boolean): never {
+  const q = new URLSearchParams();
+  q.set(kind, message);
+  if (modoAgenda) q.set("modo", "agenda");
+  redirect(`/registrar-placar/${partidaId}?${q.toString()}`);
+}
+
 function normStatus(v: string | null | undefined): string {
   return String(v ?? "")
     .trim()
@@ -319,6 +326,7 @@ export async function contestarPlacarAction(formData: FormData) {
 export async function salvarAgendamentoAction(formData: FormData) {
   const partidaId = Number(formData.get("partida_id"));
   if (!Number.isFinite(partidaId) || partidaId < 1) redirect("/agenda");
+  const modoAgenda = String(formData.get("modo_agenda") ?? "") === "1";
   const dataPartida = String(formData.get("data_partida") ?? "").trim();
   const localStr = String(formData.get("local_str") ?? "").trim();
 
@@ -326,31 +334,42 @@ export async function salvarAgendamentoAction(formData: FormData) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect(`/login?next=/registrar-placar/${partidaId}`);
+  if (!user) {
+    const next = `/registrar-placar/${partidaId}${modoAgenda ? "?modo=agenda" : ""}`;
+    redirect(`/login?next=${encodeURIComponent(next)}`);
+  }
 
   const ctx = await loadPartidaContext(partidaId, user.id);
-  if (!ctx.partida) go(partidaId, "erro", "Partida não encontrada.");
+  if (!ctx.partida) salvarAgendaRedirect(partidaId, "erro", "Partida não encontrada.", modoAgenda);
   const p = ctx.partida;
   const canSchedule = p.torneio_id
     ? ctx.podeRegistrarTorneio
     : ctx.scope.isColetivo
       ? ctx.scope.isTeamOwner
       : ctx.scope.isParticipant;
-  if (!canSchedule) go(partidaId, "erro", "Sem permissão para editar o agendamento desta partida.");
+  if (!canSchedule) {
+    salvarAgendaRedirect(partidaId, "erro", "Sem permissão para editar o agendamento desta partida.", modoAgenda);
+  }
 
   const payload: { data_partida?: string | null; local_str?: string | null } = {
     local_str: localStr || null,
   };
   if (dataPartida) {
     const dt = new Date(dataPartida);
-    if (Number.isNaN(dt.getTime())) go(partidaId, "erro", "Data/hora de agendamento inválida.");
+    if (Number.isNaN(dt.getTime())) {
+      salvarAgendaRedirect(partidaId, "erro", "Data/hora de agendamento inválida.", modoAgenda);
+    }
     payload.data_partida = dt.toISOString();
   }
 
   const { error } = await ctx.supabase.from("partidas").update(payload).eq("id", partidaId);
-  if (error) go(partidaId, "erro", "Não foi possível salvar o agendamento.");
+  if (error) salvarAgendaRedirect(partidaId, "erro", "Não foi possível salvar o agendamento.", modoAgenda);
 
   revalidatePath(`/registrar-placar/${partidaId}`);
   revalidatePath("/agenda");
-  go(partidaId, "ok", "Agendamento salvo. Você pode lançar o resultado quando quiser.");
+  revalidatePath("/comunidade");
+  const okMsg = modoAgenda
+    ? "Agendamento salvo. Lançamento do resultado: Painel de controle."
+    : "Agendamento salvo. Você pode lançar o resultado quando quiser.";
+  salvarAgendaRedirect(partidaId, "ok", okMsg, modoAgenda);
 }

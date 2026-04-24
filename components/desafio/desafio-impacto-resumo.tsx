@@ -29,7 +29,7 @@ export function DesafioImpactoResumo({ esporteNome, regras, individual, coletivo
       className="mt-4 rounded-2xl border border-eid-action-500/30 bg-eid-action-500/[0.07] p-4 text-sm"
       aria-label="Estimativa de impacto no ranking e EID"
     >
-      <p className="text-[11px] font-black uppercase tracking-[0.14em] text-eid-action-400">Impacto estimado · {esporteNome}</p>
+      <p className="eid-desafio-impact-heading text-[11px] font-black uppercase tracking-[0.14em]">Impacto estimado · {esporteNome}</p>
       <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
         Valores para placar normal (sem W.O. e sem bônus de goleada). Vitória no ranking: base{" "}
         <span className="font-semibold text-eid-fg">{regras.pontos_vitoria} pts</span>
@@ -45,7 +45,7 @@ export function DesafioImpactoResumo({ esporteNome, regras, individual, coletivo
       {individual ? (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-200/90">Se você vencer</p>
+            <p className="eid-desafio-impact-win-title text-[10px] font-bold uppercase tracking-wide">Se você vencer</p>
             <ul className="mt-2 space-y-1.5 text-xs text-eid-text-secondary">
               <li>
                 Ranking: <span className="font-bold text-eid-fg">{fmtDeltaPts(individual.ifWin.rankingDelta)} pts</span>
@@ -83,7 +83,7 @@ export function DesafioImpactoResumo({ esporteNome, regras, individual, coletivo
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3">
-              <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-200/90">Se sua formação vencer</p>
+              <p className="eid-desafio-impact-win-title text-[10px] font-bold uppercase tracking-wide">Se sua formação vencer</p>
               <ul className="mt-2 space-y-1.5 text-xs text-eid-text-secondary">
                 <li>
                   Ranking da equipe: <span className="font-bold text-eid-fg">{fmtDeltaPts(coletivo.teamIfWin.rankingDelta)} pts</span>

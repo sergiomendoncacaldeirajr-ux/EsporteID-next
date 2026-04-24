@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
 import { solicitarDesafioMatch, type SolicitarDesafioState } from "@/app/desafio/actions";
+import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
+import { DESAFIO_FLOW_CTA_BLOCK_CLASS } from "@/lib/desafio/flow-ui";
 
 type Props = {
   modalidade: "individual" | "dupla" | "time";
@@ -26,9 +28,19 @@ export function DesafioEnviarForm({
   const [state, formAction, pending] = useActionState(solicitarDesafioMatch, initial);
 
   useEffect(() => {
-    if (state.ok) {
-      router.push(state.redirectTo);
+    if (!state.ok) return;
+    try {
+      if (typeof window !== "undefined" && window.parent !== window.self) {
+        const next = new URL(state.redirectTo, window.location.origin);
+        if (next.origin === window.location.origin) {
+          window.parent.location.assign(next.pathname + next.search + next.hash);
+          return;
+        }
+      }
+    } catch {
+      /* parent inacessível (cross-origin) */
     }
+    router.push(state.redirectTo);
   }, [state, router]);
 
   const err = !state.ok && state.message ? state.message : null;
@@ -49,12 +61,15 @@ export function DesafioEnviarForm({
         <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{err}</p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="eid-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50 sm:w-auto sm:px-8"
-      >
-        {pending ? "Enviando…" : finalidade === "amistoso" ? "Confirmar desafio amistoso" : "Confirmar desafio de ranking"}
+      <button type="submit" disabled={pending} className={DESAFIO_FLOW_CTA_BLOCK_CLASS}>
+        <DesafioFlowCtaIcon />
+        <span>
+          {pending
+            ? "Enviando…"
+            : finalidade === "amistoso"
+              ? "Confirmar desafio amistoso"
+              : "Confirmar desafio de ranking"}
+        </span>
       </button>
     </form>
   );

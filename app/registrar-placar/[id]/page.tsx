@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
+import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 import { createClient } from "@/lib/supabase/server";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
 import { confirmarPlacarAction, contestarPlacarAction, salvarAgendamentoAction, submitPlacarAction } from "./actions";
@@ -19,12 +21,21 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const sp = (await searchParams) ?? {};
   const okMsg = typeof sp.ok === "string" ? sp.ok : null;
   const errMsg = typeof sp.erro === "string" ? sp.erro : null;
+  const modoRaw = typeof sp.modo === "string" ? sp.modo.trim() : "";
+  const fromRaw = typeof sp.from === "string" ? sp.from.trim() : "";
+  const fromSafe = fromRaw.startsWith("/") && !fromRaw.startsWith("//") ? fromRaw : null;
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect(`/login?next=/registrar-placar/${id}`);
+  if (!user) {
+    const nextQs = new URLSearchParams();
+    if (modoRaw === "agenda") nextQs.set("modo", "agenda");
+    if (fromSafe) nextQs.set("from", fromSafe);
+    const nextPath = nextQs.toString() ? `/registrar-placar/${id}?${nextQs}` : `/registrar-placar/${id}`;
+    redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+  }
 
   const { data: p } = await supabase
     .from("partidas")
@@ -64,6 +75,11 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const aguardandoConfirmacao = status === "aguardando_confirmacao";
   const concluida =
     status === "concluida" || status === "concluída" || status === "concluido" || status === "validada" || status === "finalizada";
+  /** Fluxo só-agenda (data/local): na Agenda. Resultado fica no Painel (comunidade). */
+  const agendaSomente = modoRaw === "agenda" && !p.torneio_id;
+  if (agendaSomente && status !== "agendada") {
+    redirect("/comunidade#resultados-partida");
+  }
   const podeLancar = p.torneio_id
     ? podeRegistrarTorneio
     : isColetivo
@@ -72,6 +88,9 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const podeConfirmarOuContestar = !p.torneio_id && (isColetivo ? isTeamOwner : participant) && aguardandoConfirmacao && p.lancado_por !== user.id;
 
   const esp = Array.isArray(p.esportes) ? p.esportes[0] : p.esportes;
+
+  const voltarHref = agendaSomente ? "/agenda" : fromSafe ?? "/agenda";
+  const voltarLabel = agendaSomente ? "← Voltar à agenda" : fromSafe === "/comunidade" ? "← Voltar ao painel" : "← Voltar à agenda";
 
   const { data: j1 } = p.jogador1_id
     ? await supabase.from("profiles").select("nome").eq("id", p.jogador1_id).maybeSingle()
@@ -82,15 +101,14 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
 
   return (
     <main className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-4 sm:py-6">
-        <Link
-          href="/agenda"
-          className="inline-flex text-xs font-semibold text-eid-primary-400 underline-offset-2 transition hover:text-eid-primary-300 hover:underline"
-        >
-          ← Voltar à agenda
+        <Link href={voltarHref} className={`${DESAFIO_FLOW_SECONDARY_CLASS} max-w-fit normal-case`}>
+          {voltarLabel}
         </Link>
 
         <div className="mt-4 overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-action-500)_32%,var(--eid-border-subtle)_68%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)_90%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-4 shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)] backdrop-blur-sm sm:mt-6 sm:p-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-action-400">Registrar resultado</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-action-400">
+            {agendaSomente ? "Agendar partida" : "Registrar resultado"}
+          </p>
           <h1 className="mt-2 text-lg font-black tracking-tight text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-action-500)_72%,var(--eid-fg)_28%))] bg-clip-text md:text-xl">
             Partida #{id}
           </h1>
@@ -124,7 +142,17 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             <p className="mt-4 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200">{okMsg}</p>
           ) : null}
 
-          {(p.placar_1 != null || p.placar_2 != null) && (
+          {agendaSomente ? (
+            <p className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-xs text-eid-text-secondary">
+              O <strong className="text-eid-fg">lançamento e a confirmação do placar</strong> são feitos no{" "}
+              <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
+                Painel de controle
+              </Link>
+              .
+            </p>
+          ) : null}
+
+          {!agendaSomente && (p.placar_1 != null || p.placar_2 != null) && (
             <div className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Placar atual</p>
               <p className="mt-1 text-lg font-black text-eid-fg">
@@ -137,6 +165,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           {podeLancar ? (
             <form action={salvarAgendamentoAction} className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3 sm:p-4">
               <input type="hidden" name="partida_id" value={id} />
+              {agendaSomente ? <input type="hidden" name="modo_agenda" value="1" /> : null}
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Agendamento (opcional)</p>
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 <label className="grid gap-1.5">
@@ -159,14 +188,22 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   />
                 </label>
               </div>
-              <button type="submit" className="mt-3 min-h-[42px] w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg">
+              <button type="submit" className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full`}>
                 Salvar agendamento
               </button>
-              <p className="mt-2 text-[11px] text-eid-text-secondary">Se já combinaram fora do app, você pode pular o agendamento e lançar o resultado direto abaixo.</p>
+              {agendaSomente ? (
+                <p className="mt-2 text-[11px] text-eid-text-secondary">
+                  Defina data e local aqui. Para registrar o placar após o jogo, use o Painel de controle.
+                </p>
+              ) : (
+                <p className="mt-2 text-[11px] text-eid-text-secondary">
+                  Se já combinaram fora do app, você pode pular o agendamento e lançar o resultado direto abaixo.
+                </p>
+              )}
             </form>
           ) : null}
 
-          {podeLancar ? (
+          {podeLancar && !agendaSomente ? (
             <form action={submitPlacarAction} className="mt-5 space-y-4">
               <input type="hidden" name="partida_id" value={id} />
               <div className="grid grid-cols-2 gap-3">
@@ -223,31 +260,33 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   </label>
                 </div>
               </div>
-              <button type="submit" className="eid-btn-match-cta min-h-[44px] w-full rounded-xl text-xs font-black uppercase tracking-wide">
-                {p.torneio_id ? "Salvar e validar resultado" : "Enviar resultado para confirmação"}
+              <button type="submit" className={DESAFIO_FLOW_CTA_BLOCK_CLASS}>
+                <DesafioFlowCtaIcon />
+                <span>{p.torneio_id ? "Salvar e validar resultado" : "Enviar resultado para confirmação"}</span>
               </button>
             </form>
           ) : null}
 
-          {aguardandoConfirmacao && p.lancado_por === user.id ? (
+          {aguardandoConfirmacao && p.lancado_por === user.id && !agendaSomente ? (
             <p className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65 px-3 py-2 text-xs text-eid-text-secondary">
               Resultado enviado. Aguardando confirmação do oponente.
             </p>
           ) : null}
 
-          {podeConfirmarOuContestar ? (
+          {podeConfirmarOuContestar && !agendaSomente ? (
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               <form action={confirmarPlacarAction}>
                 <input type="hidden" name="partida_id" value={id} />
-                <button type="submit" className="eid-btn-match-cta min-h-[44px] w-full rounded-xl text-xs font-black uppercase tracking-wide">
-                  Confirmar resultado
+                <button type="submit" className={DESAFIO_FLOW_CTA_BLOCK_CLASS}>
+                  <DesafioFlowCtaIcon />
+                  <span>Confirmar resultado</span>
                 </button>
               </form>
               <form action={contestarPlacarAction}>
                 <input type="hidden" name="partida_id" value={id} />
                 <button
                   type="submit"
-                  className="min-h-[44px] w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 text-xs font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-warning-400/45 hover:text-eid-warning-200"
+                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full hover:border-amber-500/45 hover:text-amber-200`}
                 >
                   Contestar resultado
                 </button>

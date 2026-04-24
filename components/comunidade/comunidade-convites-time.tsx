@@ -3,6 +3,8 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { responderConviteEquipe, type ResponderConviteState } from "@/app/comunidade/actions";
+import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
+import { DESAFIO_FLOW_CTA_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 
 export type ConviteTimeItem = {
   id: number;
@@ -42,21 +44,18 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
               {(c.equipeTipo ?? "time").toUpperCase()} · {c.esporteNome} · convite de {c.convidadoPor}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <form action={formAction}>
+              <form action={formAction} className="min-w-0 flex-1 sm:flex-none">
                 <input type="hidden" name="convite_id" value={String(c.id)} />
                 <input type="hidden" name="aceitar" value="true" />
-                <button type="submit" disabled={pending} className="eid-btn-primary rounded-xl px-3 py-1.5 text-xs font-semibold">
-                  {pending ? "Salvando..." : "Aceitar"}
+                <button type="submit" disabled={pending} className={`${DESAFIO_FLOW_CTA_CLASS} w-full sm:w-auto`}>
+                  <DesafioFlowCtaIcon />
+                  <span>{pending ? "Salvando…" : "Aceitar"}</span>
                 </button>
               </form>
-              <form action={formAction}>
+              <form action={formAction} className="min-w-0 flex-1 sm:flex-none sm:min-w-[9rem]">
                 <input type="hidden" name="convite_id" value={String(c.id)} />
                 <input type="hidden" name="aceitar" value="false" />
-                <button
-                  type="submit"
-                  disabled={pending}
-                  className="rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-text-secondary"
-                >
+                <button type="submit" disabled={pending} className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full`}>
                   Recusar
                 </button>
               </form>

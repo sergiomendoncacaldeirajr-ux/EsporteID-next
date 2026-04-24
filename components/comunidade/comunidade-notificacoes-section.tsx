@@ -93,7 +93,11 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
       <p className="mt-4 text-center text-[11px] text-eid-text-secondary">
         Pedidos para aceitar estão na seção &quot;Desafio&quot; abaixo.{" "}
         <Link href="/agenda" className="font-semibold text-eid-primary-300 hover:underline">
-          Agenda e placares
+          Agenda
+        </Link>{" "}
+        (data e local) ·{" "}
+        <Link href="/comunidade#resultados-partida" className="font-semibold text-eid-primary-300 hover:underline">
+          Partidas e resultados
         </Link>
         .
       </p>

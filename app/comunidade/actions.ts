@@ -110,7 +110,8 @@ async function ensurePartidaAgendadaFromMatch(
     .maybeSingle();
   if (insErr || !novaPartida?.id) return;
 
-  const msg = "Desafio aceito e partida criada na Agenda. Combine data/local e depois registre o resultado.";
+  const msg =
+    "Desafio aceito e partida criada. Combine data e local na Agenda; lançamento do resultado no Painel (Partidas e resultados).";
   await Promise.all([
     notify(supabase, matchRow.usuario_id, msg, Number(novaPartida.id), actorUserId),
     notify(supabase, matchRow.adversario_id, msg, Number(novaPartida.id), actorUserId),

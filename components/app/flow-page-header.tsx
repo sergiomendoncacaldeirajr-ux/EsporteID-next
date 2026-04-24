@@ -25,7 +25,7 @@ export function FlowPageHeader({
       <div className="pointer-events-none absolute -left-10 -bottom-10 hidden h-36 w-36 rounded-full bg-eid-action-500/15 blur-3xl md:block" />
       <h1 className="text-lg font-bold tracking-tight text-eid-fg md:text-2xl md:font-black">{title}</h1>
       <p className="mt-0.5 text-xs leading-relaxed text-eid-text-secondary md:mt-2 md:text-sm">{subtitle}</p>
-      <div className="mt-2 -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-0.5 whitespace-nowrap md:mt-5 md:flex-wrap md:overflow-visible md:pb-0 md:gap-2">
+      <div className="mt-2 -mx-1 flex w-full min-w-0 gap-1.5 overflow-x-auto overflow-y-hidden overscroll-x-contain px-1 pb-0.5 whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] touch-pan-x md:mt-5 md:flex-wrap md:overflow-visible md:overscroll-x-auto md:pb-0 md:gap-2 md:touch-auto [&::-webkit-scrollbar]:hidden">
         {stats.map((item) => (
           <span
             key={item.label}

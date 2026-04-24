@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 
@@ -34,9 +33,15 @@ export function MatchChallengeAction({
 
   if (!blockedByMissingFormation) {
     return (
-      <Link href={desafioHref} title={title} aria-label={title} className={className}>
+      <ProfileEditDrawerTrigger
+        href={desafioHref}
+        title={title}
+        fullscreen
+        topMode="backAndClose"
+        className={className}
+      >
         Desafio
-      </Link>
+      </ProfileEditDrawerTrigger>
     );
   }
 

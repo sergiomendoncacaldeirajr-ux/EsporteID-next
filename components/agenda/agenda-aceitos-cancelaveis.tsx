@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { cancelarMatchAceito, type CancelarMatchState } from "@/app/comunidade/actions";
+import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 
 type Item = {
   id: number;
@@ -46,9 +47,9 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
               <button
                 type="submit"
                 disabled={pending}
-                className="rounded-lg border border-red-400/35 bg-red-500/10 px-3 py-1.5 text-[11px] font-bold text-red-200 transition hover:bg-red-500/20 disabled:opacity-50"
+                className={`${DESAFIO_FLOW_SECONDARY_CLASS} shrink-0 border-red-400/35 bg-red-500/10 text-red-200 hover:border-red-400/55 hover:bg-red-500/18 disabled:opacity-50`}
               >
-                {pending ? "Cancelando..." : "Cancelar desafio"}
+                {pending ? "Cancelando…" : "Cancelar desafio"}
               </button>
             </form>
           </article>

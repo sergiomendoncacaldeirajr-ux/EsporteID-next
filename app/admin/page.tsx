@@ -19,6 +19,7 @@ export default async function AdminHomePage() {
     espacos: null,
     partidas: null,
     matches: null,
+    social_ops: null,
     denuncias: null,
     denuncias_abertas: null,
     eids: null,
@@ -36,6 +37,7 @@ export default async function AdminHomePage() {
         e,
         pa,
         m,
+        nNotif,
         d,
         dAbertas,
         eid,
@@ -47,6 +49,7 @@ export default async function AdminHomePage() {
         db.from("espacos_genericos").select("id", { count: "exact", head: true }),
         db.from("partidas").select("id", { count: "exact", head: true }),
         db.from("matches").select("id", { count: "exact", head: true }),
+        db.from("notificacoes").select("id", { count: "exact", head: true }),
         db.from("denuncias").select("id", { count: "exact", head: true }),
         db
           .from("denuncias")
@@ -67,6 +70,7 @@ export default async function AdminHomePage() {
         espacos: e.count ?? 0,
         partidas: pa.count ?? 0,
         matches: m.count ?? 0,
+        social_ops: nNotif.count ?? 0,
         denuncias: d.count ?? 0,
         denuncias_abertas: dAbertas.count ?? 0,
         eids: eid.count ?? 0,
@@ -84,6 +88,7 @@ export default async function AdminHomePage() {
     { k: "espacos", label: "Locais", href: "/admin/locais" },
     { k: "partidas", label: "Partidas", href: "/admin/partidas" },
     { k: "matches", label: "Pedidos", href: "/admin/matches" },
+    { k: "social_ops", label: "Notif.", href: "/admin/operacoes-sociais" },
     { k: "denuncias", label: "Denúncias", href: "/admin/denuncias" },
     { k: "eids", label: "EID", href: "/admin/eid" },
   ] as const;
@@ -92,7 +97,7 @@ export default async function AdminHomePage() {
     <div>
       <h2 className="text-base font-bold text-eid-fg">Visão geral</h2>
       <p className="mt-1 text-sm text-eid-text-secondary">
-        Gerencie usuários, esportes, locais, torneios, partidas, pedidos de desafio, denúncias, parâmetros financeiros e o motor EID.
+        Gerencie usuários, esportes, locais, torneios, partidas, pedidos de desafio, notificações e fluxos sociais, denúncias, parâmetros financeiros e o motor EID.
       </p>
 
       {counts.denuncias_abertas != null && counts.denuncias_abertas > 0 ? (
@@ -155,7 +160,7 @@ export default async function AdminHomePage() {
         </div>
       ) : null}
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
         {pills.map(({ k, label, href }) => (
           <a
             key={k}

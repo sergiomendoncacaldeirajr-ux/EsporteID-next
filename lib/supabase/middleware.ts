@@ -43,6 +43,10 @@ function isEmbedEidStatsPath(path: string): boolean {
   );
 }
 
+function isEmbedDesafioPath(path: string): boolean {
+  return path === "/desafio" || path === "/desafio/";
+}
+
 function nextWithHideAppShell(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(EID_HIDE_APP_SHELL_HEADER, "1");
@@ -61,15 +65,16 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const embedShell = request.nextUrl.searchParams.get("embed") === "1";
-  const hideEmbedEidChrome = embedShell && isEmbedEidStatsPath(path);
+  const hideEmbedMinimalChrome =
+    embedShell && (isEmbedEidStatsPath(path) || isEmbedDesafioPath(path));
 
   if (isNextjsRouterDataRequest(request)) {
-    if (hideEmbedEidChrome) return nextWithHideAppShell(request);
+    if (hideEmbedMinimalChrome) return nextWithHideAppShell(request);
     return NextResponse.next({ request });
   }
 
   if (!needsSessionWork(path)) {
-    if (hideEmbedEidChrome) return nextWithHideAppShell(request);
+    if (hideEmbedMinimalChrome) return nextWithHideAppShell(request);
     // Rotas públicas não precisam de leitura de sessão no middleware.
     return NextResponse.next({ request });
   }

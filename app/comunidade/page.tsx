@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FlowPageHeader } from "@/components/app/flow-page-header";
+import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
 import {
   type ComunidadeProfessorProfileRow,
 } from "@/components/comunidade/comunidade-aulas-section";
@@ -8,6 +10,13 @@ import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedid
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
 import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
+import {
+  type AgendaPartidaCardRow,
+  fetchPartidasAgendadasUsuario,
+  fetchPlacarAguardandoConfirmacao,
+  firstOfRelation,
+  getAgendaTeamContext,
+} from "@/lib/agenda/partidas-usuario";
 import { getSystemFeatureConfig, SYSTEM_FEATURE_LABEL, type SystemFeatureKey } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 
@@ -252,6 +261,38 @@ export default async function ComunidadePage() {
     return "Em desenvolvimento";
   }
 
+  const { teamClause: teamClausePainel } = await getAgendaTeamContext(supabase, user.id);
+  const [{ data: painelAgendadas }, { data: painelPlacarPendente }] = await Promise.all([
+    fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel),
+    fetchPlacarAguardandoConfirmacao(supabase, user.id, teamClausePainel),
+  ]);
+  const painelPartidasAll = [...(painelAgendadas ?? []), ...(painelPlacarPendente ?? [])];
+  const painelLocalIds = [
+    ...new Set(
+      painelPartidasAll.map((p) => p.local_espaco_id).filter((x): x is number => typeof x === "number" && x > 0)
+    ),
+  ];
+  const { data: painelLocaisRows } = painelLocalIds.length
+    ? await supabase.from("espacos_genericos").select("id, nome_publico").in("id", painelLocalIds)
+    : { data: [] };
+  const painelLocMap = new Map((painelLocaisRows ?? []).map((l) => [l.id, l.nome_publico]));
+  const painelPlayerIds = new Set<string>();
+  for (const p of painelPartidasAll) {
+    if (p.jogador1_id) painelPlayerIds.add(p.jogador1_id);
+    if (p.jogador2_id) painelPlayerIds.add(p.jogador2_id);
+  }
+  const painelPlayerList = [...painelPlayerIds];
+  const { data: painelNomeRows } = painelPlayerList.length
+    ? await supabase.from("profiles").select("id, nome").in("id", painelPlayerList)
+    : { data: [] };
+  const painelNomeMap = new Map((painelNomeRows ?? []).map((r) => [r.id, r.nome]));
+
+  function localLabelPainel(p: AgendaPartidaCardRow) {
+    if (p.local_str?.trim()) return p.local_str.trim();
+    if (p.local_espaco_id) return painelLocMap.get(p.local_espaco_id) ?? null;
+    return null;
+  }
+
   return (
     <main className="mx-auto w-full max-w-lg px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]">
       <FlowPageHeader
@@ -268,6 +309,82 @@ export default async function ComunidadePage() {
 
         <div className="mt-5 space-y-6 md:mt-8 md:space-y-10">
           <PushToggleCard defaultEnabled />
+
+          <section id="resultados-partida" className="eid-list-item rounded-2xl bg-eid-card/90 p-4 md:p-5">
+            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-action-500">Partidas e resultados</h2>
+            <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
+              Lançamento de placar, revisão e confirmação. Na{" "}
+              <Link href="/agenda" className="font-semibold text-eid-primary-300 hover:underline">
+                Agenda
+              </Link>{" "}
+              você combina <strong className="text-eid-fg">data e local</strong>.
+            </p>
+
+            <div className="mt-4 space-y-6">
+              <div>
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-400">Placar aguardando você</h3>
+                {(painelPlacarPendente ?? []).length === 0 ? (
+                  <p className="eid-list-item mt-3 rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4 text-center text-sm text-eid-text-secondary">
+                    Nenhum placar pendente de confirmação.
+                  </p>
+                ) : (
+                  <div className="mt-4 space-y-4">
+                    {(painelPlacarPendente ?? []).map((row) => {
+                      const esp = firstOfRelation(row.esportes);
+                      const pr = row as AgendaPartidaCardRow;
+                      return (
+                        <PartidaAgendaCard
+                          key={pr.id}
+                          id={pr.id}
+                          esporteNome={esp?.nome ?? "Esporte"}
+                          j1Nome={pr.jogador1_id ? painelNomeMap.get(pr.jogador1_id) ?? null : null}
+                          j2Nome={pr.jogador2_id ? painelNomeMap.get(pr.jogador2_id) ?? null : null}
+                          dataRef={pr.data_partida ?? pr.data_registro}
+                          localLabel={localLabelPainel(pr)}
+                          variant="placar"
+                          href={`/registrar-placar/${pr.id}?from=/comunidade`}
+                          ctaLabel="Revisar resultado"
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-400">Lançar resultado</h3>
+                <p className="mt-1 text-xs text-eid-text-secondary">
+                  Partidas agendadas em que você pode enviar o placar após o jogo.
+                </p>
+                {(painelAgendadas ?? []).length === 0 ? (
+                  <p className="eid-list-item mt-3 rounded-2xl bg-eid-card/60 p-4 text-center text-sm text-eid-text-secondary">
+                    Nenhuma partida agendada para lançar resultado.
+                  </p>
+                ) : (
+                  <div className="mt-4 space-y-4">
+                    {(painelAgendadas ?? []).map((row) => {
+                      const esp = firstOfRelation(row.esportes);
+                      const pr = row as AgendaPartidaCardRow;
+                      return (
+                        <PartidaAgendaCard
+                          key={pr.id}
+                          id={pr.id}
+                          esporteNome={esp?.nome ?? "Esporte"}
+                          j1Nome={pr.jogador1_id ? painelNomeMap.get(pr.jogador1_id) ?? null : null}
+                          j2Nome={pr.jogador2_id ? painelNomeMap.get(pr.jogador2_id) ?? null : null}
+                          dataRef={pr.data_partida ?? pr.data_registro}
+                          localLabel={localLabelPainel(pr)}
+                          variant="agendada"
+                          href={`/registrar-placar/${pr.id}?from=/comunidade`}
+                          ctaLabel="Lançar resultado"
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
 
           <section className="eid-list-item rounded-2xl bg-eid-card/90 p-4 md:p-5">
             <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Desafio</h2>

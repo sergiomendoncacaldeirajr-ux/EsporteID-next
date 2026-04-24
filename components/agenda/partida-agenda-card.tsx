@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
+import { DESAFIO_FLOW_CTA_BLOCK_CLASS } from "@/lib/desafio/flow-ui";
 
 type Props = {
   id: number;
@@ -8,6 +10,9 @@ type Props = {
   dataRef: string | null;
   localLabel: string | null;
   variant: "agendada" | "placar";
+  /** Se omitido: agendada → `?modo=agenda`; placar → página completa. */
+  href?: string;
+  ctaLabel?: string;
 };
 
 function primeiroNome(n: string | null) {
@@ -27,8 +32,12 @@ function formatWhen(iso: string | null) {
 const cardBase =
   "rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] backdrop-blur-sm transition md:p-4";
 
-export function PartidaAgendaCard({ id, esporteNome, j1Nome, j2Nome, dataRef, localLabel, variant }: Props) {
+export function PartidaAgendaCard({ id, esporteNome, j1Nome, j2Nome, dataRef, localLabel, variant, href, ctaLabel }: Props) {
   const isPlacar = variant === "placar";
+  const ctaHref =
+    href ??
+    (isPlacar ? `/registrar-placar/${id}?from=/comunidade` : `/registrar-placar/${id}?modo=agenda`);
+  const ctaText = ctaLabel ?? (isPlacar ? "Revisar resultado" : "Agendar data e local");
   return (
     <article
       className={
@@ -68,14 +77,11 @@ export function PartidaAgendaCard({ id, esporteNome, j1Nome, j2Nome, dataRef, lo
       ) : null}
 
       <Link
-        href={`/registrar-placar/${id}`}
-        className={
-          isPlacar
-            ? "eid-btn-match-cta mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl text-center text-[11px] font-black uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs"
-            : "eid-btn-primary mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl text-center text-[11px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs md:font-black"
-        }
+        href={ctaHref}
+        className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-3 text-center text-[11px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs`}
       >
-        {isPlacar ? "Revisar resultado" : "Agendar ou lançar resultado"}
+        <DesafioFlowCtaIcon />
+        <span>{ctaText}</span>
       </Link>
     </article>
   );

@@ -670,6 +670,21 @@ label:has(input.sr-only):not(.eid-no-press):active {
   color: rgba(255, 255, 255, 0.75);
 }
 
+/* Desafio — “Impacto estimado”: leitura no tema claro (evita verde claro sobre fundo menta) */
+.eid-desafio-impact-heading {
+  color: var(--eid-action-400);
+}
+[data-eid-theme="light"] .eid-desafio-impact-heading {
+  color: var(--eid-action-600);
+}
+
+.eid-desafio-impact-win-title {
+  color: var(--eid-success-400);
+}
+[data-eid-theme="light"] .eid-desafio-impact-win-title {
+  color: #047857;
+}
+
 .eid-loading-skeleton-screen {
   position: absolute;
   inset: 0;

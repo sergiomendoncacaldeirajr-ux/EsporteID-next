@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
 import { responderPedidoMatch, type ResponderMatchState } from "@/app/comunidade/actions";
+import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
 import type { PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
+import { DESAFIO_FLOW_CTA_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 
 export type PedidoMatchItem = {
   id: number;
@@ -66,7 +68,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 </p>
                 <Link
                   href={`/perfil/${m.desafianteId}?from=/comunidade`}
-                  className="mt-2 inline-flex text-xs font-bold text-eid-primary-300 hover:underline"
+                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-2 min-h-[36px] max-w-fit px-3 py-1.5 normal-case no-underline hover:underline`}
                 >
                   Ver perfil →
                 </Link>
@@ -95,24 +97,21 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
               />
             ) : null}
             <div className="relative mt-4 flex flex-wrap gap-2">
-              <form action={formAction}>
+              <form action={formAction} className="min-w-0 flex-1 sm:flex-none sm:min-w-[11rem]">
                 <input type="hidden" name="match_id" value={String(m.id)} />
                 <input type="hidden" name="aceitar" value="true" />
-                <button
-                  type="submit"
-                  disabled={pending}
-                  className="rounded-lg border border-eid-action-500/50 bg-eid-action-500/15 px-4 py-2 text-xs font-bold text-eid-action-500 transition hover:bg-eid-action-500/25 disabled:opacity-50"
-                >
-                  {pending ? "Salvando…" : "Aceitar"}
+                <button type="submit" disabled={pending} className={`${DESAFIO_FLOW_CTA_CLASS} w-full`}>
+                  <DesafioFlowCtaIcon />
+                  <span>{pending ? "Salvando…" : "Aceitar"}</span>
                 </button>
               </form>
-              <form action={formAction}>
+              <form action={formAction} className="min-w-0 flex-1 sm:flex-none sm:min-w-[9rem]">
                 <input type="hidden" name="match_id" value={String(m.id)} />
                 <input type="hidden" name="aceitar" value="false" />
                 <button
                   type="submit"
                   disabled={pending}
-                  className="rounded-lg border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-text-secondary transition hover:border-red-400/40 hover:text-red-200 disabled:opacity-50"
+                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full hover:border-red-400/45 hover:text-red-200`}
                 >
                   Recusar
                 </button>
