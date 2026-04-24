@@ -30,7 +30,8 @@ import "./globals.css";
 const barlow = Barlow({
   variable: "--font-barlow",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  /* Menos pesos = menos CSS/font baixados por navegação inicial */
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 
@@ -94,19 +95,20 @@ export default async function RootLayout({
   let user: User | null = null;
   let papeis: string[] = [];
   let activeContext: ActiveAppContext = "atleta";
+  let hdrs: Awaited<ReturnType<typeof headers>>;
   try {
-    const auth = await getServerAuth();
+    const [auth, h] = await Promise.all([getServerAuth(), headers()]);
+    hdrs = h;
     user = auth.user;
     if (user) {
       papeis = await getCachedUsuarioPapeis(user.id);
     }
   } catch {
-    // Env ausente, restrição de cookies em RSC ou rede — evita 500 na página inteira.
+    hdrs = await headers();
     user = null;
     papeis = [];
   }
 
-  const hdrs = await headers();
   const cookieStore = await cookies();
   const hideAppShell = hdrs.get(EID_HIDE_APP_SHELL_HEADER) === "1";
   const showOnboardingChrome = hdrs.get(EID_SHOW_ONBOARDING_CHROME_HEADER) === "1";

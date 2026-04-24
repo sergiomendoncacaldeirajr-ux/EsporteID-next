@@ -66,9 +66,14 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  /**
+   * `getSession` lê o JWT do cookie (sem round-trip ao Auth) — bem mais rápido em cada navegação.
+   * O refresh/validação forte continua no RSC via `getServerAuth` → `getUser`.
+   */
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
 
   const path = request.nextUrl.pathname;
   const authCode = request.nextUrl.searchParams.has("code");
