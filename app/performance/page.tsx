@@ -6,8 +6,6 @@ export const metadata = {
   description: "Performance esportiva no EsporteID",
 };
 
-export const unstable_instant = true;
-
 type Props = {
   searchParams?: Promise<{ esporte?: string; tipo?: string; page?: string }>;
 };

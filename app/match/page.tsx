@@ -16,8 +16,6 @@ import {
   expireDisponivelAmistosoProfileIfNeeded,
 } from "@/lib/perfil/disponivel-amistoso";
 
-export const unstable_instant = true;
-
 type Search = {
   tipo?: string;
   esporte?: string;

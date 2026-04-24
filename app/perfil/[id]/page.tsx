@@ -29,8 +29,6 @@ type Props = {
   searchParams?: Promise<{ from?: string }>;
 };
 
-export const unstable_instant = true;
-
 const HISTORICO_STATUS_CONCLUIDO = new Set(["concluida", "concluído", "finalizada", "encerrada"]);
 
 export default async function PerfilPublicoPage({ params, searchParams }: Props) {

@@ -7,8 +7,6 @@ export const metadata = {
   description: "Locais esportivos da comunidade EsporteID",
 };
 
-export const unstable_instant = true;
-
 type Props = {
   searchParams?: Promise<{ q?: string; page?: string }>;
 };
