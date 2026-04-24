@@ -10,6 +10,9 @@ export const EID_LOGO_WORDMARK_SRC = "/brand/logo-wordmark.png";
 export const EID_LOGO_WORDMARK_WIDTH = 1024;
 export const EID_LOGO_WORDMARK_HEIGHT = 512;
 
+/** Logo completo (transparente) — splash PWA / overlay de abertura. */
+export const EID_PWA_SPLASH_LOGO_SRC = "/pwa-splash-logo.png";
+
 /** Favicon e ícones compactos: somente letra E. */
 export const EID_LOGO_ICON_E_SRC = "/brand/logo-icon-e.png";
 export const EID_LOGO_ICON_E_WIDTH = 1024;

@@ -13,6 +13,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
 import { InstallAppOffer } from "@/components/pwa/install-app-offer";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
+import { PwaSplashOverlay } from "@/components/pwa/pwa-splash-overlay";
 import {
   ACTIVE_CONTEXT_COOKIE,
   resolveActiveAppContext,
@@ -123,6 +124,7 @@ export default async function RootLayout({
       >
         <EidThemeHydration />
         <PwaBootstrap />
+        <PwaSplashOverlay />
         <InstallAppOffer />
         <GlobalScrollReset />
         <InteractionFeedback />

@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "migrate:mysql": "node scripts/migrate-from-mysql.mjs",
-    "icons:pwa": "node scripts/generate-pwa-icons.mjs"
+    "icons:pwa": "node scripts/generate-pwa-icons.mjs",
+    "pwa:apply-art": "node scripts/apply-pwa-art-from-source.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-rekognition": "^3.1035.0",
