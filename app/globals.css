@@ -255,7 +255,7 @@ header#eid-persistent-topbar textarea {
        * proporção do Android (sem inflar ícones, labels e altura).
        */
       --eid-ios-ui-scale: 1;
-      transform: translateY(10px);
+      transform: translateY(16px);
     }
 
     #eid-mobile-bottom-nav .eid-surface-panel {
@@ -265,7 +265,7 @@ header#eid-persistent-topbar textarea {
     }
 
     #eid-mobile-bottom-nav .eid-surface-panel > div {
-      padding-top: 0.3rem !important;
+      padding-top: 0.12rem !important;
     }
 
     /* Centraliza o recorte da borda superior no meio do botão Rank. */
@@ -294,7 +294,7 @@ header#eid-persistent-topbar textarea {
     }
 
     #eid-mobile-bottom-nav [aria-label] {
-      padding-top: calc(0.58rem * var(--eid-ios-ui-scale));
+      padding-top: calc(0.42rem * var(--eid-ios-ui-scale));
       padding-bottom: calc(0.42rem * var(--eid-ios-ui-scale));
       min-height: calc(42px * var(--eid-ios-ui-scale));
     }
