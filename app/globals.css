@@ -237,7 +237,7 @@ header#eid-persistent-topbar textarea {
       --eid-shell-header-offset: calc(env(safe-area-inset-top, 0px) + 6.65rem);
       --eid-shell-footer-offset: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 2.85rem);
       /* Escala proporcional geral (ajuste fino centralizado). */
-      --eid-ios-ui-scale: 1.22;
+      --eid-ios-ui-scale: 1;
     }
 
     body.eid-app-shell {
@@ -274,10 +274,14 @@ header#eid-persistent-topbar textarea {
     }
 
     html {
-      /* Garante escala maior no iPhone mesmo com o baseline mobile global (14px). */
-      font-size: 16px !important;
+      /* iOS alinhado ao baseline visual atual do Android. */
+      font-size: 13px !important;
       -webkit-text-size-adjust: 100%;
       overflow-x: hidden;
+    }
+
+    body {
+      font-family: var(--font-geist-sans), system-ui, sans-serif;
     }
 
     #eid-persistent-topbar svg {
@@ -329,6 +333,46 @@ header#eid-persistent-topbar textarea {
       padding: calc(14px * var(--eid-ios-ui-scale));
     }
 
+    /* iOS: CTA principal no mesmo padrão da dashboard Android. */
+    #app-main-column .eid-btn-dashboard-cta,
+    #app-main-column .eid-profile-match-cta {
+      min-height: 44px;
+      padding: 0.5rem 1.1rem;
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
+      gap: 0.6rem;
+      white-space: nowrap;
+    }
+
+    #perfil-public-main .eid-profile-match-cta {
+      width: calc(100% - 1.2rem);
+      margin-left: auto;
+      margin-right: auto;
+      min-height: 38px;
+      padding-top: 0.35rem;
+      padding-bottom: 0.35rem;
+    }
+
+    /* iOS: capa do perfil ocupando toda a área do hero, sem sobras. */
+    #perfil-public-main #perfil-hero-panel {
+      padding: 0 !important;
+      overflow: hidden;
+    }
+
+    #perfil-public-main #perfil-hero-cover {
+      width: 100%;
+      height: 6.2rem;
+      margin: 0;
+    }
+
+    #perfil-public-main #perfil-hero-cover > img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+
   }
 }
 
@@ -378,9 +422,13 @@ header#eid-persistent-topbar textarea {
     }
 
     #perfil-public-main .eid-profile-match-cta {
-      width: calc(100% - 0.9rem);
+      display: flex;
+      width: calc(100% - 1.2rem);
       margin-left: auto;
       margin-right: auto;
+      min-height: 38px;
+      padding-top: 0.35rem;
+      padding-bottom: 0.35rem;
     }
 
     #app-main-column .eid-input-dark {

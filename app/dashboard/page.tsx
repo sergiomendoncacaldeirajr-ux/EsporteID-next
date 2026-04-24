@@ -480,7 +480,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 
           <a
             href={matchHref}
-            className="eid-btn-dashboard-cta relative mt-3 flex w-full items-center justify-center gap-2.5 sm:mt-3"
+            className="eid-btn-dashboard-cta relative mt-1 mb-2 flex w-full items-center justify-center gap-2.5 sm:mt-1.5 sm:mb-2.5"
           >
             <IconBolt className="h-5 w-5 shrink-0 text-white drop-shadow-sm" />
             Encontrar desafio
