@@ -7,6 +7,7 @@ import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comun
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
+import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { getSystemFeatureConfig, SYSTEM_FEATURE_LABEL, type SystemFeatureKey } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 
@@ -66,15 +67,33 @@ export default async function ComunidadePage() {
     : { data: [] };
   const timeMap = new Map((timesRows ?? []).map((t) => [t.id, t.nome]));
 
-  const pedidosItems = (recebidos ?? []).map((m) => ({
+  const pedidosItemsBase = (recebidos ?? []).map((m) => ({
     id: Number(m.id),
     desafianteNome: (m.usuario_id ? uMap.get(m.usuario_id)?.nome : null) ?? "Atleta",
     desafianteId: String(m.usuario_id ?? ""),
     esporte: (m.esporte_id ? espMap.get(m.esporte_id) : null) ?? "Esporte",
+    esporteId: Number(m.esporte_id ?? 0),
     modalidade: m.modalidade_confronto ?? "individual",
     timeNome: m.adversario_time_id ? timeMap.get(m.adversario_time_id) ?? null : null,
+    adversarioTimeId: m.adversario_time_id != null ? Number(m.adversario_time_id) : null,
     finalidade: (String(m.finalidade ?? "ranking") === "amistoso" ? "amistoso" : "ranking") as "ranking" | "amistoso",
   }));
+
+  const pedidosItems = await Promise.all(
+    pedidosItemsBase.map(async (m) => ({
+      ...m,
+      rankingPreview:
+        m.finalidade === "ranking" && m.esporteId > 0
+          ? await fetchPedidoRankingPreview(supabase, {
+              accepterId: user.id,
+              challengerId: m.desafianteId,
+              esporteId: m.esporteId,
+              modalidade: m.modalidade,
+              adversarioTimeId: m.adversarioTimeId,
+            })
+          : null,
+    }))
+  );
 
   const nPedidos = pedidosItems.length;
 

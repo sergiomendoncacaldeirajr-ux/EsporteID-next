@@ -12,7 +12,7 @@ type Props = {
 
 export function ProfileEditFullscreenShell({ title, subtitle, backHref, children, topAction, showBack = true }: Props) {
   return (
-    <main className="mx-auto w-full max-w-3xl px-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-5">
+    <main className="mx-auto w-full max-w-3xl px-3 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] pt-[calc(0.75rem+env(safe-area-inset-top,0px))] sm:px-5">
       <section className="mb-3 flex items-start justify-between gap-3">
         <div>
           {showBack ? <PerfilBackLink href={backHref} label="Voltar" /> : null}

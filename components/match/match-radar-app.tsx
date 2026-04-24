@@ -310,11 +310,11 @@ export function MatchRadarApp({
       return;
     }
     const q = new URLSearchParams();
-    q.set("tipo", "atleta");
+    q.set("tipo", tipo);
     q.set("esporte", /^\d+$/.test(esporte) ? esporte : "all");
     q.set("raio", String(raio));
     q.set("sort_by", sortBy);
-    q.set("finalidade", "amistoso");
+    q.set("finalidade", "ranking");
     q.set("view", "full");
     q.set("genero", generoFiltro);
     q.set("entry_done", "1");

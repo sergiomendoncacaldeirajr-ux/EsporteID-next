@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
+import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
+import { fetchColetivoRankingPreview, fetchIndividualRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
@@ -213,6 +215,15 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       );
     }
 
+    const rankPrevInd =
+      finalidadeEscolhida === "ranking"
+        ? await fetchIndividualRankingPreview(supabase, {
+            viewerId: user.id,
+            opponentId: perfil.id,
+            esporteId,
+          })
+        : null;
+
     return (
       <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
@@ -237,6 +248,13 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             <p className="text-sm font-semibold text-eid-fg">{perfil.nome ?? "Atleta"}</p>
             <p className="mt-1 text-xs text-eid-text-secondary">Modalidade: individual</p>
           </div>
+          {finalidadeEscolhida === "ranking" && rankPrevInd ? (
+            <DesafioImpactoResumo
+              esporteNome={esporteNome}
+              regras={rankPrevInd.regras}
+              individual={rankPrevInd.perspective}
+            />
+          ) : null}
           <DesafioEnviarForm
             modalidade="individual"
             esporteId={esporteId}
@@ -304,6 +322,13 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     );
   }
 
+  const rankPrevCo = await fetchColetivoRankingPreview(supabase, {
+    viewerUserId: user.id,
+    opponentTeamId: timeRow.id,
+    esporteId,
+    modalidade: modalidade as "dupla" | "time",
+  });
+
   return (
     <main className="mx-auto w-full max-w-3xl px-3 py-3 sm:px-6 sm:py-4">
         <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
@@ -314,6 +339,13 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           <p className="text-sm font-semibold text-eid-fg">{timeRow.nome ?? "Formação"}</p>
           <p className="mt-1 text-xs text-eid-text-secondary">Modalidade: {modalidade}</p>
         </div>
+        {rankPrevCo ? (
+          <DesafioImpactoResumo esporteNome={esporteNome} regras={rankPrevCo.regras} coletivo={rankPrevCo.coletivo} />
+        ) : (
+          <p className="mt-3 text-[11px] text-amber-200/90">
+            Não foi possível carregar a estimativa: confira se você é líder de uma {modalidade} neste esporte (mesmo critério do envio do pedido).
+          </p>
+        )}
         <DesafioEnviarForm modalidade={modalidade} esporteId={esporteId} alvoTimeId={timeRow.id} finalidade="ranking" />
         <Link href="/match" className="mt-4 inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-xs font-semibold text-eid-fg">
           Cancelar

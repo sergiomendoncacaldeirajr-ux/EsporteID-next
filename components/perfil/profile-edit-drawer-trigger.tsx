@@ -95,27 +95,31 @@ export function ProfileEditDrawerTrigger({
                 />
               ) : null}
               <aside
-                className={`absolute inset-y-0 right-0 w-full ${
+                className={`absolute inset-y-0 right-0 flex h-full w-full flex-col ${
                   fullscreen ? "max-w-none border-0" : "max-w-[min(100vw,460px)] border-l"
                 } border-[color:var(--eid-border-subtle)] bg-eid-bg ${
                   fullscreen ? "" : "shadow-[0_0_0_1px_rgba(148,163,184,0.12),-20px_0_40px_-20px_rgba(2,6,23,0.8)]"
                 } transition-transform duration-200 ease-out ${
                   visible ? "translate-x-0" : "translate-x-[102%]"
                 }`}
+                style={{
+                  paddingTop:
+                    "max(0.75rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px))",
+                }}
               >
                 {topMode === "backOnly" ? (
-                  <div className="flex items-center border-b border-[color:var(--eid-border-subtle)] px-3 py-2">
+                  <div className="flex shrink-0 items-center border-b border-[color:var(--eid-border-subtle)] px-3 pb-2 pt-2">
                     <button
                       type="button"
                       onClick={close}
-                      className="inline-flex h-8 items-center justify-center gap-1 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-3 text-[10px] font-bold uppercase tracking-[0.07em] text-eid-fg transition-colors hover:border-eid-primary-500/35"
+                      className="inline-flex min-h-[40px] items-center justify-center gap-1 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-3 text-[10px] font-bold uppercase tracking-[0.07em] text-eid-fg transition-colors hover:border-eid-primary-500/35"
                     >
                       <span aria-hidden>←</span>
                       Voltar
                     </button>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] px-3 py-2">
+                  <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--eid-border-subtle)] px-3 pb-2 pt-2">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">{title}</p>
                     <button
                       type="button"
@@ -126,7 +130,13 @@ export function ProfileEditDrawerTrigger({
                     </button>
                   </div>
                 )}
-                <iframe ref={frameRef} onLoad={handleFrameLoad} title={title} src={frameSrc} className="h-[calc(100%-44px)] w-full border-0 bg-eid-bg" />
+                <iframe
+                  ref={frameRef}
+                  onLoad={handleFrameLoad}
+                  title={title}
+                  src={frameSrc}
+                  className="min-h-0 w-full flex-1 border-0 bg-eid-bg"
+                />
               </aside>
             </div>,
             document.body

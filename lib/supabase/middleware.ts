@@ -34,6 +34,21 @@ function needsSessionWork(path: string): boolean {
   );
 }
 
+/** Páginas de estatísticas EID carregadas em iframe (`embed=1`) — sem header/footer do app. */
+function isEmbedEidStatsPath(path: string): boolean {
+  return (
+    /^\/perfil\/[^/]+\/eid\/\d+(\/historico)?\/?$/.test(path) ||
+    /^\/perfil-dupla\/[^/]+\/eid\/\d+\/?$/.test(path) ||
+    /^\/perfil-time\/[^/]+\/eid\/\d+\/?$/.test(path)
+  );
+}
+
+function nextWithHideAppShell(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(EID_HIDE_APP_SHELL_HEADER, "1");
+  return NextResponse.next({ request: { headers: requestHeaders } });
+}
+
 export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -44,11 +59,17 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  const path = request.nextUrl.pathname;
+  const embedShell = request.nextUrl.searchParams.get("embed") === "1";
+  const hideEmbedEidChrome = embedShell && isEmbedEidStatsPath(path);
+
   if (isNextjsRouterDataRequest(request)) {
+    if (hideEmbedEidChrome) return nextWithHideAppShell(request);
     return NextResponse.next({ request });
   }
-  const path = request.nextUrl.pathname;
+
   if (!needsSessionWork(path)) {
+    if (hideEmbedEidChrome) return nextWithHideAppShell(request);
     // Rotas públicas não precisam de leitura de sessão no middleware.
     return NextResponse.next({ request });
   }

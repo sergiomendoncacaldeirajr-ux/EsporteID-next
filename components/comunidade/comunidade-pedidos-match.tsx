@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
 import { responderPedidoMatch, type ResponderMatchState } from "@/app/comunidade/actions";
+import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
+import type { PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 
 export type PedidoMatchItem = {
   id: number;
@@ -13,6 +15,7 @@ export type PedidoMatchItem = {
   modalidade: string;
   timeNome?: string | null;
   finalidade?: "ranking" | "amistoso";
+  rankingPreview?: PedidoRankingPreview | null;
 };
 
 const initial: ResponderMatchState = { ok: false, message: "" };
@@ -83,6 +86,14 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 )}
               </div>
             </div>
+            {m.finalidade === "ranking" && m.rankingPreview ? (
+              <DesafioImpactoResumo
+                esporteNome={m.esporte}
+                regras={m.rankingPreview.regras}
+                individual={m.rankingPreview.kind === "individual" ? m.rankingPreview.perspective : null}
+                coletivo={m.rankingPreview.kind === "coletivo" ? m.rankingPreview.coletivo : null}
+              />
+            ) : null}
             <div className="relative mt-4 flex flex-wrap gap-2">
               <form action={formAction}>
                 <input type="hidden" name="match_id" value={String(m.id)} />
