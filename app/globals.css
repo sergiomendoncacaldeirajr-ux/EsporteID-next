@@ -268,9 +268,9 @@ header#eid-persistent-topbar textarea {
 
     /* Centraliza o recorte da borda superior no meio do botão Rank. */
     #eid-mobile-bottom-nav [aria-label="Rank"] > span:nth-child(2) {
-      top: -1.86rem !important;
-      width: 58px !important;
-      height: 58px !important;
+      top: -1.62rem !important;
+      width: 50px !important;
+      height: 50px !important;
     }
 
     html {
