@@ -392,7 +392,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   return (
     <>
       {/* Padding do conteúdo: #app-main-column (--eid-shell-footer-offset). Espaçador removido para não duplicar folga. */}
-      <nav className="pointer-events-auto w-full bg-eid-card" aria-label="Navegação principal">
+      <nav className="pointer-events-auto w-full bg-transparent" aria-label="Navegação principal">
         <div
           className="eid-surface-panel relative overflow-visible rounded-t-[16px] border-t"
           style={{
