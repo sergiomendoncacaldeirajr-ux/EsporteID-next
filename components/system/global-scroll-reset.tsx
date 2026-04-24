@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 function forceTop() {
   const main = document.getElementById("app-main-column");
@@ -23,9 +23,12 @@ function forceTop() {
   if (document.body) document.body.scrollTop = 0;
 }
 
+/**
+ * Só `usePathname` aqui — `useSearchParams` no layout raiz **sem** `<Suspense>` quebra
+ * navegação client (URL muda, conteúdo só no 2º clique). Ver Next.js: static rendering bailout.
+ */
 export function GlobalScrollReset() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     try {
@@ -43,7 +46,7 @@ export function GlobalScrollReset() {
       window.cancelAnimationFrame(raf);
       window.clearTimeout(timer);
     };
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   useEffect(() => {
     const onPageShow = () => forceTop();
@@ -53,4 +56,3 @@ export function GlobalScrollReset() {
 
   return null;
 }
-
