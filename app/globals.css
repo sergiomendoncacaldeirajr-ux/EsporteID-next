@@ -335,6 +335,52 @@ header#eid-persistent-topbar textarea {
 /* Android/mobile: mantém footer como está e ajusta só conteúdo interno da nav. */
 @supports not (-webkit-touch-callout: none) {
   @media (max-width: 767px) {
+    :root {
+      --eid-android-content-scale: 0.9;
+    }
+
+    html {
+      /*
+       * Android/Chrome pode ampliar tipografia automaticamente em alguns blocos.
+       * Travamos o ajuste e reduzimos a base para aproximar do visual do iOS.
+       */
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      font-size: 13px;
+    }
+
+    #app-main-column {
+      font-size: calc(1rem * var(--eid-android-content-scale));
+    }
+
+    #app-main-column .eid-card,
+    #app-main-column .eid-surface-panel {
+      padding: calc(12px * var(--eid-android-content-scale));
+    }
+
+    #app-main-column .eid-btn-primary,
+    #app-main-column .eid-btn-dashboard-cta,
+    #app-main-column .eid-btn-match-cta {
+      min-height: calc(40px * var(--eid-android-content-scale));
+      font-size: calc(0.83rem * var(--eid-android-content-scale));
+      padding-left: calc(0.8rem * var(--eid-android-content-scale));
+      padding-right: calc(0.8rem * var(--eid-android-content-scale));
+    }
+
+    #app-main-column .eid-input-dark {
+      min-height: calc(2.28rem * var(--eid-android-content-scale));
+      font-size: calc(0.82rem * var(--eid-android-content-scale));
+      padding: calc(0.44rem * var(--eid-android-content-scale))
+        calc(0.58rem * var(--eid-android-content-scale));
+    }
+
+    #app-main-column .eid-chip {
+      min-height: calc(1.6rem * var(--eid-android-content-scale));
+      font-size: calc(0.62rem * var(--eid-android-content-scale));
+      padding: calc(0.18rem * var(--eid-android-content-scale))
+        calc(0.56rem * var(--eid-android-content-scale));
+    }
+
     #eid-mobile-bottom-nav [aria-label] {
       min-height: 38px;
       padding-top: 0.3rem;
