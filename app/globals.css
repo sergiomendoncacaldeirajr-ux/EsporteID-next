@@ -225,8 +225,20 @@ header#eid-persistent-topbar textarea {
 #eid-mobile-bottom-nav {
   box-sizing: border-box;
   width: 100%;
+  background: var(--eid-card);
   -webkit-user-select: none;
   user-select: none;
+}
+
+#eid-mobile-bottom-nav::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: calc(env(safe-area-inset-bottom, 0px) + 6px);
+  background: var(--eid-card);
+  pointer-events: none;
 }
 
 /* iOS Safari (mobile): pequeno ganho de escala visual sem afetar Android. */
@@ -278,10 +290,6 @@ header#eid-persistent-topbar textarea {
       font-size: 16px !important;
       -webkit-text-size-adjust: 100%;
       overflow-x: hidden;
-    }
-
-    body {
-      font-family: var(--font-geist-sans), system-ui, sans-serif;
     }
 
     #eid-persistent-topbar svg {
