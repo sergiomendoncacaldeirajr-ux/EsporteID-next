@@ -7,17 +7,33 @@ export const metadata = {
   title: "Entrar",
 };
 
+/** Sempre dinâmico: sessão + query string; evita payload RSC “preso” em cache. */
+export const dynamic = "force-dynamic";
+
 function firstQuery(v: string | string[] | undefined): string | undefined {
   if (v == null) return undefined;
   return Array.isArray(v) ? v[0] : v;
 }
 
+type SearchParamsRecord = Record<string, string | string[] | undefined>;
+
 type LoginPageProps = {
-  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  /** Next pode entregar objeto síncrono ou `Promise` — evita `await` preso em versões híbridas. */
+  searchParams?: SearchParamsRecord | Promise<SearchParamsRecord>;
 };
 
+async function resolveSearchParams(
+  raw: LoginPageProps["searchParams"]
+): Promise<SearchParamsRecord> {
+  if (raw == null) return {};
+  if (typeof (raw as Promise<SearchParamsRecord>).then === "function") {
+    return (await raw) ?? {};
+  }
+  return raw as SearchParamsRecord;
+}
+
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const sp = (await searchParams) ?? {};
+  const sp = await resolveSearchParams(searchParams);
   const supabase = await createClient();
   const {
     data: { user },

@@ -25,11 +25,10 @@ function safeNext(raw: string): string {
 /**
  * Login no servidor grava cookies de sessão via `cookies().set` (sem o try/catch
  * silencioso de `createClient()` usado em RSC). Fluxo mais confiável que só o browser.
+ *
+ * Assinatura só com `FormData` para chamada direta do cliente (sem `useActionState`).
  */
-export async function entrarComSenha(
-  _prev: LoginActionState,
-  formData: FormData
-): Promise<LoginActionState> {
+export async function entrarComSenha(formData: FormData): Promise<LoginActionState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const next = safeNext(String(formData.get("next") ?? "/"));

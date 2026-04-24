@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { LogoFull } from "@/components/brand/logo-full";
 import { createClient } from "@/lib/supabase/client";
 import { getSignupEmailRedirectTo } from "@/lib/auth/email-redirects";
@@ -42,7 +42,8 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
   const registered = cadastroOk;
   const codeConfirmed = codigoOk;
 
-  const [state, formAction, isPending] = useActionState(entrarComSenha, loginActionInitial);
+  const [actionState, setActionState] = useState(loginActionInitial);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,18 +51,30 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
   const [info, setInfo] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
 
-  const displayError = state?.error ?? localError;
-  const pendingConfirmationEmail = state?.pendingConfirmationEmail ?? null;
+  const displayError = actionState.error ?? localError;
+  const pendingConfirmationEmail = actionState.pendingConfirmationEmail;
 
-  useEffect(() => {
-    const dest = state?.redirectTo;
-    if (!dest) return;
-    window.location.assign(dest);
-  }, [state?.redirectTo]);
-
-  useEffect(() => {
-    if (isPending) setLocalError(null);
-  }, [isPending]);
+  const handleLoginSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      setLocalError(null);
+      setIsSubmitting(true);
+      try {
+        const fd = new FormData(e.currentTarget);
+        const result = await entrarComSenha(fd);
+        if (result.redirectTo) {
+          window.location.assign(result.redirectTo);
+          return;
+        }
+        setActionState(result);
+      } catch (err) {
+        setLocalError(err instanceof Error ? err.message : "Não foi possível entrar. Tente de novo.");
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    []
+  );
 
   const focusWithinBg = "focus-within:bg-eid-card";
 
@@ -131,7 +144,7 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
             Use o mesmo e-mail e senha do seu cadastro.
           </p>
 
-          <form action={formAction} noValidate className="m-0 flex flex-col gap-0">
+          <form onSubmit={handleLoginSubmit} noValidate className="m-0 flex flex-col gap-0">
             <input type="hidden" name="next" value={next} />
             {registered && (
               <p
@@ -220,10 +233,10 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk }: LoginFormProps) {
 
             <button
               type="submit"
-              disabled={isPending}
+              disabled={isSubmitting}
               className="mt-2 flex h-[50px] w-full cursor-pointer items-center justify-center rounded-xl border-0 bg-eid-action-500 text-[14px] font-extrabold uppercase text-white transition hover:bg-eid-action-400 active:scale-[0.97] active:bg-eid-action-600 active:opacity-95 disabled:opacity-60"
             >
-              {isPending ? (
+              {isSubmitting ? (
                 <span
                   className="inline-block h-5 w-5 animate-spin rounded-full border-[3px] border-white border-t-transparent"
                   aria-hidden
