@@ -359,7 +359,6 @@ header#eid-persistent-topbar textarea {
     }
 
     #app-main-column .eid-btn-primary,
-    #app-main-column .eid-btn-dashboard-cta,
     #app-main-column .eid-btn-match-cta {
       min-height: calc(40px * var(--eid-android-content-scale));
       font-size: calc(0.83rem * var(--eid-android-content-scale));
@@ -367,29 +366,21 @@ header#eid-persistent-topbar textarea {
       padding-right: calc(0.8rem * var(--eid-android-content-scale));
     }
 
-    /* CTA do perfil no Android: mesmo visual da dashboard, porém alto e com folga lateral. */
-    #perfil-public-main .eid-profile-match-cta {
-      width: 46%;
-      margin-left: auto;
-      margin-right: auto;
-      min-height: 200px;
-      border-radius: 1rem;
-      padding-top: 0.95rem;
-      padding-bottom: 0.95rem;
-      padding-left: 1rem;
-      padding-right: 1rem;
-      font-size: 0.84rem;
-      letter-spacing: 0.1em;
+    /* Padrão global de CTA laranja (dashboard/perfil): mesma proporção visual. */
+    #app-main-column .eid-btn-dashboard-cta,
+    #app-main-column .eid-profile-match-cta {
+      min-height: 44px;
+      padding: 0.5rem 1.1rem;
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
       gap: 0.6rem;
       white-space: nowrap;
     }
 
-    #perfil-public-main .eid-profile-match-cta svg {
-      width: 1.15rem;
-      height: 1.15rem;
-      color: #fff;
-      display: inline-block;
-      flex-shrink: 0;
+    #perfil-public-main .eid-profile-match-cta {
+      width: calc(100% - 0.9rem);
+      margin-left: auto;
+      margin-right: auto;
     }
 
     #app-main-column .eid-input-dark {
@@ -424,10 +415,6 @@ header#eid-persistent-topbar textarea {
       height: 100%;
       object-fit: cover;
       object-position: center;
-    }
-
-    #perfil-public-main .eid-profile-match-cta {
-      white-space: nowrap;
     }
 
     #eid-mobile-bottom-nav [aria-label] {
