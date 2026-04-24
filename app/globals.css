@@ -186,7 +186,8 @@ html[data-eid-theme="light"] select option {
 }
 
 html {
-  scroll-behavior: smooth;
+  /* `smooth` no root pode atrasar/conflitar com scroll programático após navegação App Router. */
+  scroll-behavior: auto;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   /* PWA / mobile: reduz bounce e pull-to-refresh “de site” no topo */

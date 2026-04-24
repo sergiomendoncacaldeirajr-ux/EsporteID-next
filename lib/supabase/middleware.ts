@@ -2,6 +2,18 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
 
+/**
+ * Requisições de transição / prefetch do App Router. Rodar `getSession` + `setAll`
+ * no middleware em toda flight pode emitir Set-Cookie e confundir o cliente (URL muda,
+ * UI só atualiza no próximo gesto / destino “atrasado”).
+ */
+function isNextjsRouterDataRequest(request: NextRequest): boolean {
+  return (
+    request.headers.has("RSC") ||
+    request.headers.get("Next-Router-Prefetch") === "1"
+  );
+}
+
 function buildRequestHeadersForPath(request: NextRequest): Headers {
   const h = new Headers(request.headers);
   h.delete(EID_HIDE_APP_SHELL_HEADER);
@@ -37,6 +49,13 @@ export async function updateSession(request: NextRequest) {
       "[middleware] Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY na Vercel (Production)."
     );
     return NextResponse.next({ request });
+  }
+
+  if (isNextjsRouterDataRequest(request)) {
+    const requestHeaders = buildRequestHeadersForPath(request);
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
   }
 
   const requestHeaders = buildRequestHeadersForPath(request);

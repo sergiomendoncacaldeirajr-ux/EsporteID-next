@@ -26,6 +26,9 @@ function forceTop() {
 /**
  * Só `usePathname` aqui — `useSearchParams` no layout raiz **sem** `<Suspense>` quebra
  * navegação client (URL muda, conteúdo só no 2º clique). Ver Next.js: static rendering bailout.
+ *
+ * O scroll para o topo roda só após o próximo paint (duplo rAF + timeout), para não
+ * competir com o commit da nova rota no App Router.
  */
 export function GlobalScrollReset() {
   const pathname = usePathname();
@@ -39,12 +42,25 @@ export function GlobalScrollReset() {
       /* ignore */
     }
 
-    forceTop();
-    const raf = window.requestAnimationFrame(() => forceTop());
-    const timer = window.setTimeout(() => forceTop(), 80);
+    let cancelled = false;
+    let rafInner = 0;
+    let timeoutId: ReturnType<typeof window.setTimeout> | undefined;
+
+    const rafOuter = window.requestAnimationFrame(() => {
+      rafInner = window.requestAnimationFrame(() => {
+        if (cancelled) return;
+        forceTop();
+        timeoutId = window.setTimeout(() => {
+          if (!cancelled) forceTop();
+        }, 80);
+      });
+    });
+
     return () => {
-      window.cancelAnimationFrame(raf);
-      window.clearTimeout(timer);
+      cancelled = true;
+      window.cancelAnimationFrame(rafOuter);
+      window.cancelAnimationFrame(rafInner);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
   }, [pathname]);
 
