@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import type { User } from "@supabase/supabase-js";
+import { Suspense } from "react";
 import { cookies, headers } from "next/headers";
 import { Barlow, Barlow_Condensed, Barlow_Semi_Condensed } from "next/font/google";
 import { EidThemeHydration } from "@/components/eid-theme-hydration";
 import { DashboardTopbar } from "@/components/dashboard/topbar";
 import { OnboardingTopbar } from "@/components/onboarding/onboarding-topbar";
 import { InteractionFeedback } from "@/components/ui/interaction-feedback";
-import { getCachedShowLegalGate, LegalGate } from "@/components/legal-gate";
+import { LegalGateDeferred } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
-import { SiteFooter } from "@/components/site-footer";
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
 import { InstallAppOffer } from "@/components/pwa/install-app-offer";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
@@ -22,7 +22,7 @@ import {
 } from "@/lib/auth/active-context";
 import { EID_APP_CHROME_THEME_COLOR, EID_LOGO_ICON_E_SRC } from "@/lib/branding";
 import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
-import { getCachedIsPlatformAdmin } from "@/lib/auth/platform-admin";
+import { SiteFooterLoader } from "@/components/site-footer-loader";
 import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
 import "./globals.css";
 
@@ -113,8 +113,6 @@ export default async function RootLayout({
   const showAppChrome = Boolean(user) && !hideAppShell;
   const onboardingMinimalChrome = Boolean(user) && hideAppShell && showOnboardingChrome;
   activeContext = resolveActiveAppContext(cookieStore.get(ACTIVE_CONTEXT_COOKIE)?.value ?? null, papeis);
-  const isPlatformAdmin = user ? await getCachedIsPlatformAdmin() : false;
-  const showLegalGate = await getCachedShowLegalGate();
 
   return (
     <html
@@ -176,10 +174,16 @@ export default async function RootLayout({
         )}
         {hideAppShell ? null : (
           <div id="eid-site-footer">
-            <SiteFooter user={user} isPlatformAdmin={isPlatformAdmin} />
+            <Suspense
+              fallback={<div className="mt-auto hidden min-h-[52px] md:block" aria-hidden />}
+            >
+              <SiteFooterLoader user={user} />
+            </Suspense>
           </div>
         )}
-        <LegalGate show={showLegalGate} />
+        <Suspense fallback={null}>
+          <LegalGateDeferred />
+        </Suspense>
       </body>
     </html>
   );

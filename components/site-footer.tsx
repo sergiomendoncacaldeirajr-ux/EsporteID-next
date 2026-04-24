@@ -7,7 +7,7 @@ type Props = {
   isPlatformAdmin: boolean;
 };
 
-/** Rodapé síncrono: `user` e `isPlatformAdmin` vêm do layout (sem suspender em cada navegação). */
+/** Rodapé síncrono: `user` vem do layout; `isPlatformAdmin` é resolvido em `SiteFooterLoader`. */
 export function SiteFooter({ user, isPlatformAdmin }: Props) {
   return (
     <footer className="mt-auto hidden md:block">

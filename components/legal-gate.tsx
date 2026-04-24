@@ -2,10 +2,7 @@ import { cache } from "react";
 import Link from "next/link";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 
-/**
- * Resolve no layout (com React.cache): evita `LegalGate` assíncrono atrasar o streaming
- * do shell (rodapé / chrome) na navegação client.
- */
+/** React.cache: no máximo uma leitura de `profiles` por request (via `LegalGateDeferred`). */
 export const getCachedShowLegalGate = cache(async (): Promise<boolean> => {
   try {
     const { supabase, user } = await getServerAuth();
@@ -20,6 +17,12 @@ export const getCachedShowLegalGate = cache(async (): Promise<boolean> => {
     return false;
   }
 });
+
+/** Carrega a faixa LGPD fora do caminho crítico do layout (streaming mais rápido). */
+export async function LegalGateDeferred() {
+  const show = await getCachedShowLegalGate();
+  return <LegalGate show={show} />;
+}
 
 /** Faixa fixa se o usuário está logado e ainda não aceitou termos/privacidade (LGPD). */
 export function LegalGate({ show }: { show: boolean }) {
