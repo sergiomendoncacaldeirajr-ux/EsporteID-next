@@ -402,18 +402,10 @@ header#eid-persistent-topbar textarea {
     }
 
     #perfil-public-main .eid-profile-match-cta {
-      width: 43%;
-      margin-left: auto;
-      margin-right: auto;
-      min-height: 97px;
-      padding-top: 1.2rem;
-      padding-bottom: 1.2rem;
-      padding-left: 0.9rem;
-      padding-right: 0.9rem;
-      font-size: 0.64rem;
-      letter-spacing: 0.08em;
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
       white-space: nowrap;
-      border-radius: 0.9rem;
     }
 
     #eid-mobile-bottom-nav [aria-label] {
