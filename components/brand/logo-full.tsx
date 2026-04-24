@@ -23,7 +23,7 @@ export function LogoFull({ className, priority }: Props) {
         alt="EsporteID"
         width={EID_LOGO_AUTH_MARK_WIDTH}
         height={EID_LOGO_AUTH_MARK_HEIGHT}
-        className="mx-auto block h-auto w-full max-h-[min(30vw,132px)] max-w-[min(30vw,132px)] sm:max-h-[150px] sm:max-w-[150px] object-contain object-center"
+        className="mx-auto block h-auto w-full max-h-[min(30vw,132px)] max-w-[min(30vw,132px)] object-contain object-center mix-blend-screen sm:max-h-[150px] sm:max-w-[150px]"
         decoding="async"
         fetchPriority={priority ? "high" : "auto"}
       />

@@ -79,9 +79,9 @@ export const viewport: Viewport = {
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
-  /* iOS: bloquear zoom deixava tudo “miúdo”; permitir pinch melhora leitura e acessibilidade. */
-  maximumScale: 5,
-  userScalable: true,
+  /* App-like: sem pinch zoom (trade-off de acessibilidade). */
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 };
 

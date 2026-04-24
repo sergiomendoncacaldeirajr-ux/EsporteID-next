@@ -19,7 +19,7 @@ export function SiteHeader() {
             alt="EsporteID"
             width={EID_LOGO_AUTH_MARK_WIDTH}
             height={EID_LOGO_AUTH_MARK_HEIGHT}
-            className="h-9 w-auto max-h-10 max-w-[min(44vw,200px)] object-contain object-left sm:h-10"
+            className="h-9 w-auto max-h-10 max-w-[min(44vw,200px)] object-contain object-left mix-blend-screen sm:h-10"
             decoding="async"
           />
         </Link>
