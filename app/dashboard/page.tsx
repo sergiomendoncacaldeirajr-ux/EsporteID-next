@@ -14,6 +14,8 @@ export const metadata = {
   description: "Área logada do EsporteID",
 };
 
+export const unstable_instant = true;
+
 function primeiroNome(nome?: string | null) {
   const n = (nome ?? "").trim();
   return n ? n.split(/\s+/u)[0] : "Atleta";

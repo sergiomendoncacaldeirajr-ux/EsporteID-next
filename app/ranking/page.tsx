@@ -18,6 +18,8 @@ export const metadata = {
   description: "Ranking EsporteID",
 };
 
+export const unstable_instant = true;
+
 type Props = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };

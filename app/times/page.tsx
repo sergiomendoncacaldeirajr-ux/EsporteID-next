@@ -9,6 +9,8 @@ export const metadata = {
   description: "Times e recrutamento no EsporteID",
 };
 
+export const unstable_instant = true;
+
 type Props = {
   searchParams?: Promise<{ q?: string; page?: string; create?: string; from?: string; convidar?: string }>;
 };

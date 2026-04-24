@@ -20,6 +20,8 @@ export const metadata = {
   description: "Pedidos, convites e novidades da sua rede no EsporteID",
 };
 
+export const unstable_instant = true;
+
 export default async function ComunidadePage() {
   const supabase = await createClient();
   const {

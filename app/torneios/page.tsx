@@ -9,6 +9,8 @@ export const metadata = {
   description: "Torneios disponíveis no EsporteID",
 };
 
+export const unstable_instant = true;
+
 type Props = {
   searchParams?: Promise<{ q?: string; page?: string; esporte_id?: string }>;
 };

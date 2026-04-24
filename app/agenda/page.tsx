@@ -12,6 +12,8 @@ export const metadata = {
   description: "Jogos agendados e lembretes no EsporteID",
 };
 
+export const unstable_instant = true;
+
 type EspNome = { nome?: string | null };
 type PartidaRow = {
   id: number;
