@@ -223,23 +223,14 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Home `/`: como index.php do legado — logado com perfil ok vai ao painel; visitante no celular vai ao login.
+  // Home `/`: institucional sempre acessível (inclusive logado, no desktop).
+  // Mantemos apenas o comportamento legado de mandar visitante mobile para login.
   if (path === "/") {
     const ua = request.headers.get("user-agent");
     const allowInstitutional =
       request.nextUrl.searchParams.get("home") === "1" || request.nextUrl.searchParams.get("site") === "1";
 
-    if (user) {
-      const profile = await getProfile();
-
-      if (profile && legalAcceptanceIsCurrent(profile) && profile.perfil_completo) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/dashboard";
-        url.search = "";
-        return NextResponse.redirect(url);
-      }
-      return supabaseResponse;
-    }
+    if (user) return supabaseResponse;
 
     if (!authCode && isMobileUserAgent(ua) && !allowInstitutional) {
       const url = request.nextUrl.clone();

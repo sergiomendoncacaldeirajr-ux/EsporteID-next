@@ -8,6 +8,8 @@ import { getRecoveryEmailRedirectTo } from "@/lib/auth/email-redirects";
 
 const inputClass =
   "eid-input-dark w-full rounded-xl px-3 py-3 text-eid-fg placeholder:text-eid-text-secondary/85";
+const primaryBtnClass =
+  "eid-btn-primary flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-3 text-[14px] font-bold transition hover:shadow-[0_8px_18px_-10px_rgba(249,115,22,0.7)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function RecuperarSenhaPage() {
   const [email, setEmail] = useState("");
@@ -80,8 +82,15 @@ export default function RecuperarSenhaPage() {
                 className={inputClass}
               />
             </div>
-            <button type="submit" disabled={loading} className="eid-btn-primary w-full disabled:opacity-60">
-              {loading ? "Enviando…" : "Enviar link e código"}
+            <button type="submit" disabled={loading} className={primaryBtnClass}>
+              {loading ? (
+                <>
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
+                  <span>Enviando código...</span>
+                </>
+              ) : (
+                "Enviar link e código"
+              )}
             </button>
           </form>
         </div>

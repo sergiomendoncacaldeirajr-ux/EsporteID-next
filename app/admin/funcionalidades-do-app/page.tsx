@@ -25,10 +25,27 @@ export const metadata = {
   title: "Funcionalidades do app",
 };
 
-export default async function AdminFuncionalidadesDoAppPage() {
+type PageProps = { searchParams?: Promise<{ adm_flash?: string; feature?: string }> };
+
+const FLASH_MSG: Record<string, { tone: "ok" | "warn" | "err"; text: string }> = {
+  feature_mode_salvo: { tone: "ok", text: "Modo salvo com sucesso." },
+  feature_mode_erro_save: { tone: "err", text: "Não foi possível salvar. Verifique a service role e tente novamente." },
+  feature_mode_param_invalido: { tone: "warn", text: "Parâmetros inválidos no envio do formulário." },
+};
+
+function normalizeMode(v: unknown): "ativo" | "em_breve" | "desenvolvimento" | "teste" {
+  const mode = String(v ?? "").trim();
+  if (mode === "ativo" || mode === "em_breve" || mode === "teste") return mode;
+  return "desenvolvimento";
+}
+
+export default async function AdminFuncionalidadesDoAppPage({ searchParams }: PageProps) {
   if (!hasServiceRoleConfig()) {
     return <p className="text-sm text-eid-text-secondary">Configure a service role.</p>;
   }
+  const sp = (await searchParams) ?? {};
+  const flash = FLASH_MSG[String(sp.adm_flash ?? "").trim()] ?? null;
+  const featureHighlight = String(sp.feature ?? "").trim();
   const db = createServiceRoleClient();
   const { data: featureModesRow } = await db
     .from("app_config")
@@ -52,6 +69,21 @@ export default async function AdminFuncionalidadesDoAppPage() {
 
   return (
     <div className="space-y-6">
+      {flash ? (
+        <div
+          role="status"
+          className={
+            flash.tone === "ok"
+              ? "rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100"
+              : flash.tone === "warn"
+                ? "rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+                : "rounded-xl border border-red-500/35 bg-red-500/10 px-4 py-3 text-sm text-red-100"
+          }
+        >
+          {flash.text}
+        </div>
+      ) : null}
+
       <div>
         <h1 className="text-lg font-bold text-eid-fg">Funcionalidades do app</h1>
         <p className="mt-2 max-w-3xl text-sm text-eid-text-secondary">
@@ -89,13 +121,16 @@ export default async function AdminFuncionalidadesDoAppPage() {
         <div className="mt-6 space-y-4">
           {featureKeys.map((key) => {
             const row = rawFeatures[key] as { mode?: string; testers?: string[] } | undefined;
-            const mode = row?.mode ?? "desenvolvimento";
+            const mode = normalizeMode(row?.mode);
             const testers = Array.isArray(row?.testers) ? row!.testers.join(", ") : "";
+            const highlight = featureHighlight === key;
             return (
               <form
                 key={key}
                 action={adminSetSystemFeatureMode}
-                className="grid gap-3 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-bg/35 p-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto]"
+                className={`grid gap-3 rounded-lg border bg-eid-bg/35 p-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto] ${
+                  highlight ? "border-eid-primary-500/50 ring-1 ring-eid-primary-500/35" : "border-[color:var(--eid-border-subtle)]"
+                }`}
               >
                 <input type="hidden" name="feature" value={key} />
                 <div className="min-w-0">
@@ -103,6 +138,14 @@ export default async function AdminFuncionalidadesDoAppPage() {
                   <p className="mt-1 text-[11px] text-eid-text-secondary">
                     {MODE_HELP[mode]?.desc ?? "Ajuste o modo conforme a fase do produto."}
                   </p>
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-eid-primary-300">
+                    Status atual: {MODE_HELP[mode]?.label ?? "Oculto / em construção"}
+                  </p>
+                  {mode === "teste" && !testers.trim() ? (
+                    <p className="mt-1 text-[10px] text-amber-200/95">
+                      Atenção: modo teste sem IDs de pilotos. Ninguém (fora admins) verá essa funcionalidade.
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">

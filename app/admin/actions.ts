@@ -893,60 +893,61 @@ export async function adminSetMatchResultadoAutoAprovacaoHoras(formData: FormDat
 }
 
 export async function adminSetSystemFeatureMode(formData: FormData) {
-  try {
-    await guard();
-    const feature = String(formData.get("feature") ?? "").trim() as SystemFeatureKey;
-    const mode = String(formData.get("mode") ?? "").trim() as SystemFeatureMode;
-    const testersRaw = String(formData.get("testers") ?? "");
-    const validFeature = new Set<SystemFeatureKey>([
-      "marketplace",
-      "locais",
-      "torneios",
-      "professores",
-      "organizador_torneios",
-    ]);
-    const validMode = new Set<SystemFeatureMode>(["ativo", "em_breve", "desenvolvimento", "teste"]);
-    if (!validFeature.has(feature) || !validMode.has(mode)) return;
-    const testers = [...new Set(testersRaw.split(/[,\n;\s]+/).map((v) => v.trim()).filter(Boolean))];
-
-    const db = svc();
-    const { data: prev } = await db.from("app_config").select("value_json").eq("key", "system_feature_modes_v1").maybeSingle();
-    const prevObj =
-      prev?.value_json && typeof prev.value_json === "object" && !Array.isArray(prev.value_json)
-        ? (prev.value_json as { features?: Record<string, unknown> })
-        : {};
-    const prevFeatures =
-      prevObj.features && typeof prevObj.features === "object" && !Array.isArray(prevObj.features)
-        ? prevObj.features
-        : {};
-    const nextValue = {
-      ...prevObj,
-      features: {
-        ...prevFeatures,
-        [feature]: { mode, testers },
-      },
-    };
-    const { error } = await db
-      .from("app_config")
-      .upsert(
-        {
-          key: "system_feature_modes_v1",
-          value_json: nextValue,
-          atualizado_em: new Date().toISOString(),
-        },
-        { onConflict: "key" }
-      );
-    if (error) return;
-    revalidatePath("/admin/regras");
-    revalidatePath("/admin/funcionalidades-do-app");
-    revalidatePath("/dashboard");
-    revalidatePath("/locais");
-    revalidatePath("/torneios");
-    revalidatePath("/professores");
-    revalidatePath("/organizador");
-  } catch {
-    return;
+  await guard();
+  const feature = String(formData.get("feature") ?? "").trim() as SystemFeatureKey;
+  const mode = String(formData.get("mode") ?? "").trim() as SystemFeatureMode;
+  const testersRaw = String(formData.get("testers") ?? "");
+  const validFeature = new Set<SystemFeatureKey>([
+    "marketplace",
+    "locais",
+    "torneios",
+    "professores",
+    "organizador_torneios",
+  ]);
+  const validMode = new Set<SystemFeatureMode>(["ativo", "em_breve", "desenvolvimento", "teste"]);
+  if (!validFeature.has(feature) || !validMode.has(mode)) {
+    redirect(`/admin/funcionalidades-do-app?adm_flash=feature_mode_param_invalido&feature=${encodeURIComponent(feature)}`);
   }
+  const testers = [...new Set(testersRaw.split(/[,\n;\s]+/).map((v) => v.trim()).filter(Boolean))];
+
+  const db = svc();
+  const { data: prev } = await db.from("app_config").select("value_json").eq("key", "system_feature_modes_v1").maybeSingle();
+  const prevObj =
+    prev?.value_json && typeof prev.value_json === "object" && !Array.isArray(prev.value_json)
+      ? (prev.value_json as { features?: Record<string, unknown> })
+      : {};
+  const prevFeatures =
+    prevObj.features && typeof prevObj.features === "object" && !Array.isArray(prevObj.features)
+      ? prevObj.features
+      : {};
+  const nextValue = {
+    ...prevObj,
+    features: {
+      ...prevFeatures,
+      [feature]: { mode, testers },
+    },
+  };
+  const { error } = await db
+    .from("app_config")
+    .upsert(
+      {
+        key: "system_feature_modes_v1",
+        value_json: nextValue,
+        atualizado_em: new Date().toISOString(),
+      },
+      { onConflict: "key" }
+    );
+  if (error) {
+    redirect(`/admin/funcionalidades-do-app?adm_flash=feature_mode_erro_save&feature=${encodeURIComponent(feature)}`);
+  }
+  revalidatePath("/admin/regras");
+  revalidatePath("/admin/funcionalidades-do-app");
+  revalidatePath("/dashboard");
+  revalidatePath("/locais");
+  revalidatePath("/torneios");
+  revalidatePath("/professores");
+  revalidatePath("/organizador");
+  redirect(`/admin/funcionalidades-do-app?adm_flash=feature_mode_salvo&feature=${encodeURIComponent(feature)}`);
 }
 
 // --- Regras de ranking (tabelas regras_ranking / regras_ranking_match) ---

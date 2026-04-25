@@ -384,11 +384,39 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   const matchIdadeGate = String(profile.match_idade_gate ?? "ok");
 
+  const statusFromFeature = (
+    canSee: boolean,
+    mode: "ativo" | "em_breve" | "desenvolvimento" | "teste"
+  ): "active" | "coming" | "testing" | "blocked" => {
+    if (canSee) return "active";
+    if (mode === "em_breve") return "coming";
+    if (mode === "teste") return "testing";
+    return "blocked";
+  };
   const navItems = [
-    { label: "Vagas", shortLabel: "Vagas", href: "/vagas", icon: IconUsers, soon: false },
-    { label: "MarketPlace", shortLabel: "Market", href: canSeeMarketplace ? "/marketplace" : undefined, icon: IconMarketplace, soon: !canSeeMarketplace },
-    { label: "Locais", shortLabel: "Locais", href: canSeeLocais ? "/locais" : undefined, icon: IconLocationCard, soon: !canSeeLocais },
-    { label: "Torneios", shortLabel: "Torneios", href: canSeeTorneios ? "/torneios" : undefined, icon: IconTorneioCard, soon: !canSeeTorneios },
+    { label: "Vagas", shortLabel: "Vagas", href: "/vagas", icon: IconUsers, status: "active" as const },
+    {
+      label: "MarketPlace",
+      shortLabel: "Market",
+      // Ainda não há rota dedicada de marketplace; quando liberado abre a comunidade.
+      href: canSeeMarketplace ? "/comunidade" : undefined,
+      icon: IconMarketplace,
+      status: statusFromFeature(canSeeMarketplace, featureCfg.marketplace.mode),
+    },
+    {
+      label: "Locais",
+      shortLabel: "Locais",
+      href: canSeeLocais ? "/locais" : undefined,
+      icon: IconLocationCard,
+      status: statusFromFeature(canSeeLocais, featureCfg.locais.mode),
+    },
+    {
+      label: "Torneios",
+      shortLabel: "Torneios",
+      href: canSeeTorneios ? "/torneios" : undefined,
+      icon: IconTorneioCard,
+      status: statusFromFeature(canSeeTorneios, featureCfg.torneios.mode),
+    },
   ];
   const quickNavMain = navItems;
 
@@ -493,31 +521,39 @@ export default async function DashboardPage({ searchParams }: Props) {
             const Icon = item.icon;
             const cardContent = (
               <>
-                {item.soon ? (
+                {item.status === "coming" ? (
                   <span className="absolute right-1 top-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-[color:color-mix(in_srgb,var(--eid-surface)_88%,var(--eid-card)_12%)] px-1.5 py-[1px] text-[6px] font-black uppercase tracking-[0.08em] text-eid-text-secondary sm:right-1.5 sm:top-1.5">
                     Em breve
+                  </span>
+                ) : item.status === "testing" ? (
+                  <span className="absolute right-1 top-1 rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-[1px] text-[6px] font-black uppercase tracking-[0.08em] text-eid-action-400 sm:right-1.5 sm:top-1.5">
+                    Em teste
                   </span>
                 ) : null}
                 <span
                   className={`flex h-10 w-10 items-center justify-center rounded-xl border sm:h-11 sm:w-11 sm:rounded-2xl ${
-                    item.soon
+                    item.status !== "active"
                       ? "border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-text-secondary"
                       : "border-eid-primary-500/30 bg-eid-primary-500/14 text-eid-primary-300"
                   }`}
                 >
                   <Icon className="h-[22px] w-[22px] sm:h-6 sm:w-6" />
                 </span>
-                <span className={`text-[8px] font-extrabold uppercase leading-tight tracking-wide sm:text-[9px] ${item.soon ? "text-eid-text-secondary" : "text-eid-fg"}`}>
+                <span className={`text-[8px] font-extrabold uppercase leading-tight tracking-wide sm:text-[9px] ${item.status !== "active" ? "text-eid-text-secondary" : "text-eid-fg"}`}>
                   <span className="sm:hidden">{item.shortLabel}</span>
                   <span className="hidden sm:inline">{item.label}</span>
                 </span>
-                <span className={`text-[7px] font-semibold leading-none sm:text-[8px] ${item.soon ? "text-eid-text-secondary/85" : "text-eid-primary-300/95"}`}>
-                  {item.soon ? "indisponível" : "abrir"}
-                </span>
+                {item.status === "coming" ? (
+                  <span className="text-[7px] font-semibold leading-none text-eid-text-secondary/85 sm:text-[8px]">em breve</span>
+                ) : item.status === "testing" ? (
+                  <span className="text-[7px] font-semibold leading-none text-eid-action-400/90 sm:text-[8px]">pilotos</span>
+                ) : item.status === "blocked" ? (
+                  <span className="text-[7px] font-semibold leading-none text-eid-text-secondary/85 sm:text-[8px]">indisponível</span>
+                ) : null}
               </>
             );
 
-            if (!item.soon && item.href) {
+            if (item.status === "active" && item.href) {
               return (
                 <Link
                   key={item.label}

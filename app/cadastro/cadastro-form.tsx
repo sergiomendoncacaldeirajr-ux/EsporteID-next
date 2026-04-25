@@ -142,6 +142,7 @@ export function CadastroForm() {
   const [lng, setLng] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   /** Cores via tokens CSS (`globals.css`) — azul estrutura, laranja ação. */
   const focusWithinBg = "focus-within:bg-eid-card";
@@ -256,12 +257,14 @@ export function CadastroForm() {
   }
 
   function useCurrentLocation() {
+    setLocating(true);
     const locInput = document.getElementById("cad-localizacao") as HTMLInputElement | null;
     if (locInput) {
       locInput.placeholder = "Buscando...";
     }
     if (!navigator.geolocation) {
       if (locInput) locInput.placeholder = "Cidade - Estado";
+      setLocating(false);
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -288,10 +291,12 @@ export function CadastroForm() {
           /* ignore */
         } finally {
           if (locInput) locInput.placeholder = "Cidade - Estado";
+          setLocating(false);
         }
       },
       () => {
         if (locInput) locInput.placeholder = "Cidade - Estado";
+        setLocating(false);
       }
     );
   }
@@ -481,24 +486,33 @@ export function CadastroForm() {
 
             <button
               type="button"
-              className="mb-3 w-full cursor-pointer rounded-xl border-[1.5px] border-dashed border-eid-primary-500/35 bg-eid-primary-500/10 py-2.5 text-[11px] font-bold text-eid-primary-500 transition hover:bg-eid-primary-500/15 active:scale-[0.98]"
+              disabled={locating}
+              className="mb-3 flex min-h-[46px] w-full cursor-pointer items-center justify-center rounded-xl border-[1.5px] border-dashed border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2.5 text-[12px] font-bold text-eid-primary-500 transition hover:bg-eid-primary-500/15 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-65"
               onClick={useCurrentLocation}
             >
-              <span className="inline-flex items-center justify-center gap-1">
-                <IconLocationArrow /> Usar localização atual
+              <span className="inline-flex items-center justify-center gap-2">
+                {locating ? (
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-eid-primary-500 border-t-transparent" aria-hidden />
+                ) : (
+                  <IconLocationArrow />
+                )}
+                {locating ? "Buscando localização..." : "Usar localização atual"}
               </span>
             </button>
 
             <button
               type="submit"
               disabled={loading}
-              className="flex h-[50px] w-full cursor-pointer items-center justify-center rounded-xl border-0 bg-eid-action-500 text-[14px] font-extrabold uppercase text-white transition hover:bg-eid-action-400 active:scale-[0.97] active:bg-eid-action-600 active:opacity-95 disabled:opacity-60"
+              className="flex min-h-[50px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-0 bg-eid-action-500 px-3 text-[14px] font-extrabold uppercase text-white transition hover:bg-eid-action-400 hover:shadow-[0_8px_18px_-10px_rgba(249,115,22,0.7)] active:scale-[0.97] active:bg-eid-action-600 active:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (
-                <span
-                  className="inline-block h-5 w-5 animate-spin rounded-full border-[3px] border-white border-t-transparent"
-                  aria-hidden
-                />
+                <>
+                  <span
+                    className="inline-block h-5 w-5 animate-spin rounded-full border-[3px] border-white border-t-transparent"
+                    aria-hidden
+                  />
+                  <span>Cadastrando...</span>
+                </>
               ) : (
                 <span>Cadastrar Agora</span>
               )}

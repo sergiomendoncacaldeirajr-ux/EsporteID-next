@@ -479,10 +479,10 @@ export default async function ComunidadePage() {
           </section>
 
           <section className="eid-list-item rounded-2xl bg-eid-card/90 p-5">
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Em breve</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Status dos módulos do app</h2>
             {emBreveItems.length === 0 ? (
               <p className="mt-3 text-sm text-eid-text-secondary">
-                Nenhum item em desenvolvimento no momento. Novas entregas aparecem aqui automaticamente.
+                Tudo que é controlado pelo painel de funcionalidades está liberado para você no momento.
               </p>
             ) : (
               <ul className="mt-3 space-y-2 text-sm text-eid-text-secondary">

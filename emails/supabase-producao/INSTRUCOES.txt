@@ -10,11 +10,11 @@ Para cada tipo de e-mail, copie TODO o conteúdo do arquivo .html correspondente
 comentário no topo de cada HTML).
 
 Domínio e logo:
-  • Site público: https://esporteid.com.br
-  • Logo nos e-mails: https://esporteid.com.br/brand/logo-full.png
+  • Site público: https://www.esporteid.com.br
+  • Logo nos e-mails: https://www.esporteid.com.br/brand/logo-wordmark.png
 
   É obrigatório que o arquivo exista em produção (pasta public/brand no Next).
-  Se usar apenas www, troque no HTML para https://www.esporteid.com.br/brand/...
+  Use sempre o domínio com www nos links e na logo: https://www.esporteid.com.br/...
 
 Remetente (SMTP customizado):
   • Você configurou contato@esporteid.com.br — o "From" costuma ser definido

@@ -11,6 +11,10 @@ import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/li
 
 const inputClass =
   "eid-input-dark w-full rounded-xl px-3 py-3 text-eid-fg placeholder:text-eid-text-secondary/85";
+const primaryBtnClass =
+  "eid-btn-primary flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-3 text-[14px] font-bold transition hover:shadow-[0_8px_18px_-10px_rgba(249,115,22,0.7)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60";
+const secondaryBtnClass =
+  "flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 px-3 text-[13px] font-semibold text-eid-action-500 transition hover:border-eid-action-500/35 hover:bg-eid-card active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60";
 const OTP_LENGTH = (() => {
   const raw = Number(process.env.NEXT_PUBLIC_EMAIL_OTP_LENGTH ?? "6");
   return Number.isInteger(raw) && raw >= 4 && raw <= 8 ? raw : 6;
@@ -273,9 +277,16 @@ function VerificarCodigoPageInner() {
             <button
               type="submit"
               disabled={loading}
-              className="eid-btn-primary rounded-xl text-sm disabled:opacity-60"
+              className={primaryBtnClass}
             >
-              {loading ? "Confirmando..." : "Confirmar código"}
+              {loading ? (
+                <>
+                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
+                  <span>Confirmando código...</span>
+                </>
+              ) : (
+                "Confirmar código"
+              )}
             </button>
           </form>
 
@@ -283,9 +294,16 @@ function VerificarCodigoPageInner() {
             type="button"
             onClick={handleResend}
             disabled={resending}
-            className="mt-3 w-full text-center text-[12px] font-semibold text-eid-action-500 transition hover:text-eid-action-400 disabled:opacity-60"
+            className={`mt-3 ${secondaryBtnClass}`}
           >
-            {resending ? "Reenviando..." : "Não recebeu? Reenviar código"}
+            {resending ? (
+              <>
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-eid-action-500 border-t-transparent" aria-hidden />
+                <span>Reenviando código...</span>
+              </>
+            ) : (
+              "Não recebeu? Reenviar código"
+            )}
           </button>
 
           <p className="mt-3 text-center text-[11px] text-eid-text-secondary">
