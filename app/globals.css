@@ -322,13 +322,17 @@ header#eid-persistent-topbar textarea {
 
     /* Componentes principais proporcionais (sem mexer no posicionamento do header/footer). */
     .eid-btn-primary,
-    .eid-btn-dashboard-cta,
-    .eid-btn-match-cta {
+    .eid-btn-dashboard-cta {
       min-height: calc(44px * var(--eid-ios-ui-scale));
       font-size: calc(0.875rem * var(--eid-ios-ui-scale));
       padding-left: calc(0.875rem * var(--eid-ios-ui-scale));
       padding-right: calc(0.875rem * var(--eid-ios-ui-scale));
     }
+
+    /*
+     * Não incluir `eid-btn-match-cta` aqui: 44×1.22 vencia o `min-h-[28px]` / `min-h-[38px]` do radar
+     * (`/match`) e deixava o botão de desafio enorme no iPhone. Cada botão fixa a altura nas classes.
+     */
 
     .eid-chip {
       min-height: calc(1.75rem * var(--eid-ios-ui-scale));
