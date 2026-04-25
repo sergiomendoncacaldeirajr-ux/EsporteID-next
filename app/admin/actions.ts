@@ -1225,6 +1225,65 @@ export async function adminApplyDesafioScorePresets() {
   }
 }
 
+export async function adminUpsertDesafioScoreVariant(formData: FormData) {
+  try {
+    await guard();
+    const esporteId = Number(formData.get("esporte_id"));
+    if (!Number.isFinite(esporteId) || esporteId < 1) return;
+    const originalKey = String(formData.get("original_key") ?? "").trim().toLowerCase();
+    const key = String(formData.get("key") ?? "").trim().toLowerCase();
+    const label = String(formData.get("label") ?? "").trim();
+    const minPlacar = Math.max(0, Math.floor(Number(formData.get("minPlacar") ?? 0)));
+    const maxPlacar = Math.max(0, Math.floor(Number(formData.get("maxPlacar") ?? 30)));
+    const permitirEmpate = String(formData.get("permitirEmpate") ?? "false") === "true";
+    const permitirWO = String(formData.get("permitirWO") ?? "true") === "true";
+    if (!key || !label) return;
+
+    const db = svc();
+    const { data: esporte } = await db
+      .from("esportes")
+      .select("desafio_regras_placar_json")
+      .eq("id", esporteId)
+      .maybeSingle();
+    const regras = sanitizeDesafioRules((esporte?.desafio_regras_placar_json as Record<string, unknown>) ?? {});
+    const atuais = Array.isArray(regras.variantes) ? [...regras.variantes] : [];
+    const idx = atuais.findIndex((v) => String((v as { key?: unknown }).key ?? "") === (originalKey || key));
+    const nextVariant = { key, label, minPlacar, maxPlacar, permitirEmpate, permitirWO };
+    if (idx >= 0) atuais[idx] = nextVariant;
+    else atuais.push(nextVariant);
+    const merged = sanitizeDesafioRules({ ...regras, variantes: atuais });
+    const { error } = await db.from("esportes").update({ desafio_regras_placar_json: merged }).eq("id", esporteId);
+    if (error) return;
+    revalidatePath("/admin/regras");
+  } catch {
+    return;
+  }
+}
+
+export async function adminDeleteDesafioScoreVariant(formData: FormData) {
+  try {
+    await guard();
+    const esporteId = Number(formData.get("esporte_id"));
+    const key = String(formData.get("key") ?? "").trim().toLowerCase();
+    if (!Number.isFinite(esporteId) || esporteId < 1 || !key) return;
+    const db = svc();
+    const { data: esporte } = await db
+      .from("esportes")
+      .select("desafio_regras_placar_json")
+      .eq("id", esporteId)
+      .maybeSingle();
+    const regras = sanitizeDesafioRules((esporte?.desafio_regras_placar_json as Record<string, unknown>) ?? {});
+    const atuais = Array.isArray(regras.variantes) ? regras.variantes : [];
+    const variantes = atuais.filter((v) => String((v as { key?: unknown }).key ?? "") !== key);
+    const merged = sanitizeDesafioRules({ ...regras, variantes });
+    const { error } = await db.from("esportes").update({ desafio_regras_placar_json: merged }).eq("id", esporteId);
+    if (error) return;
+    revalidatePath("/admin/regras");
+  } catch {
+    return;
+  }
+}
+
 // --- Perfil e EID (admin) ---
 
 export async function adminUpdateProfileById(formData: FormData) {

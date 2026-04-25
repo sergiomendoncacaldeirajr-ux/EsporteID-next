@@ -138,6 +138,7 @@ export function ProfileEditDrawerTrigger({
                   visible ? "translate-x-0" : "translate-x-[102%]"
                 }`}
                 style={{
+                  top: "max(0px, env(safe-area-inset-top, 0px))",
                   paddingTop:
                     "calc(1rem + max(5.2rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
                   overscrollBehavior: "contain",

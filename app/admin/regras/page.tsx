@@ -1,5 +1,7 @@
 import {
   adminApplyDesafioScorePresets,
+  adminDeleteDesafioScoreVariant,
+  adminUpsertDesafioScoreVariant,
   adminUpdateEsporteDesafioConfig,
   adminSetMatchRankCooldownMeses,
   adminSetMatchRankPendingLimit,
@@ -199,6 +201,96 @@ export default async function AdminRegrasPage() {
                         Salvar
                       </button>
                     </form>
+                    <div className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)]/60 p-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Variantes guiadas</p>
+                      {Array.isArray((e as { desafio_regras_placar_json?: { variantes?: unknown[] } }).desafio_regras_placar_json?.variantes) &&
+                      ((e as { desafio_regras_placar_json?: { variantes?: unknown[] } }).desafio_regras_placar_json?.variantes?.length ?? 0) > 0 ? (
+                        <div className="mt-2 space-y-2">
+                          {((e as { desafio_regras_placar_json?: { variantes?: unknown[] } }).desafio_regras_placar_json?.variantes ?? []).map((v, i) => (
+                            <div key={`var-${String(e.id ?? "")}-${i}`} className="rounded border border-[color:var(--eid-border-subtle)]/60 p-2">
+                              <form action={adminUpsertDesafioScoreVariant} className="grid gap-2 sm:grid-cols-6">
+                                <input type="hidden" name="esporte_id" value={String(e.id ?? "")} />
+                                <input type="hidden" name="original_key" value={String((v as { key?: unknown }).key ?? "")} />
+                                <input
+                                  name="key"
+                                  defaultValue={String((v as { key?: unknown }).key ?? "")}
+                                  className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg sm:col-span-1"
+                                  placeholder="chave"
+                                />
+                                <input
+                                  name="label"
+                                  defaultValue={String((v as { label?: unknown }).label ?? "")}
+                                  className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg sm:col-span-2"
+                                  placeholder="nome da variante"
+                                />
+                                <input
+                                  type="number"
+                                  name="minPlacar"
+                                  defaultValue={String((v as { minPlacar?: unknown }).minPlacar ?? 0)}
+                                  className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg"
+                                  placeholder="min"
+                                />
+                                <input
+                                  type="number"
+                                  name="maxPlacar"
+                                  defaultValue={String((v as { maxPlacar?: unknown }).maxPlacar ?? 30)}
+                                  className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg"
+                                  placeholder="max"
+                                />
+                                <select
+                                  name="permitirEmpate"
+                                  defaultValue={String(Boolean((v as { permitirEmpate?: unknown }).permitirEmpate))}
+                                  className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg"
+                                >
+                                  <option value="false">Sem empate</option>
+                                  <option value="true">Permite empate</option>
+                                </select>
+                                <select
+                                  name="permitirWO"
+                                  defaultValue={String((v as { permitirWO?: unknown }).permitirWO !== false)}
+                                  className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg"
+                                >
+                                  <option value="true">Permite W.O.</option>
+                                  <option value="false">Sem W.O.</option>
+                                </select>
+                                <div className="flex gap-2 sm:col-span-6">
+                                  <button type="submit" className="rounded border border-eid-primary-500/40 px-2 py-1 text-[10px] font-bold text-eid-primary-300">
+                                    Salvar variante
+                                  </button>
+                                </div>
+                              </form>
+                              <form action={adminDeleteDesafioScoreVariant} className="mt-2">
+                                <input type="hidden" name="esporte_id" value={String(e.id ?? "")} />
+                                <input type="hidden" name="key" value={String((v as { key?: unknown }).key ?? "")} />
+                                <button type="submit" className="rounded border border-red-400/40 px-2 py-1 text-[10px] font-bold text-red-200">
+                                  Remover variante
+                                </button>
+                              </form>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                      <form action={adminUpsertDesafioScoreVariant} className="mt-2 grid gap-2 sm:grid-cols-6">
+                        <input type="hidden" name="esporte_id" value={String(e.id ?? "")} />
+                        <input name="key" className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg sm:col-span-1" placeholder="nova_chave" />
+                        <input name="label" className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg sm:col-span-2" placeholder="Nova variante" />
+                        <input type="number" name="minPlacar" defaultValue={0} className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg" />
+                        <input type="number" name="maxPlacar" defaultValue={30} className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg" />
+                        <select name="permitirEmpate" defaultValue="false" className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg">
+                          <option value="false">Sem empate</option>
+                          <option value="true">Permite empate</option>
+                        </select>
+                        <select name="permitirWO" defaultValue="true" className="eid-input-dark h-8 rounded px-2 text-[11px] text-eid-fg">
+                          <option value="true">Permite W.O.</option>
+                          <option value="false">Sem W.O.</option>
+                        </select>
+                        <div className="sm:col-span-6">
+                          <button type="submit" className="rounded border border-emerald-400/40 px-2 py-1 text-[10px] font-bold text-emerald-200">
+                            Adicionar variante
+                          </button>
+                        </div>
+                      </form>
+                    </div>
                   </td>
                   <td className="px-2 py-1.5 text-[11px] text-eid-text-secondary">Aplicado no fluxo de `registrar placar`.</td>
                   <td />
