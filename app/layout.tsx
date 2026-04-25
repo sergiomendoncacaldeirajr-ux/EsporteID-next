@@ -23,6 +23,7 @@ import { EID_APP_CHROME_THEME_COLOR, EID_LOGO_ICON_E_SRC } from "@/lib/branding"
 import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
 import { SiteFooterLoader } from "@/components/site-footer-loader";
 import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
+import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import "./globals.css";
 
 /* Barlow — família atlética, muito usada em apps esportivos premium */
@@ -92,6 +93,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   let user: User | null = null;
+  let canShowAuthenticatedChrome = false;
   let papeis: string[] = [];
   let activeContext: ActiveAppContext = "atleta";
   let hdrs: Awaited<ReturnType<typeof headers>>;
@@ -103,16 +105,24 @@ export default async function RootLayout({
     user = auth.user;
     if (user) {
       papeis = await getCachedUsuarioPapeis(user.id);
+      const { supabase } = auth;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select(PROFILE_LEGAL_ACCEPTANCE_COLUMNS)
+        .eq("id", user.id)
+        .maybeSingle();
+      canShowAuthenticatedChrome = legalAcceptanceIsCurrent(profile);
     }
   } catch {
     hdrs = await headers();
     cookieStore = await cookies();
     user = null;
+    canShowAuthenticatedChrome = false;
     papeis = [];
   }
   const hideAppShell = hdrs.get(EID_HIDE_APP_SHELL_HEADER) === "1";
   const showOnboardingChrome = hdrs.get(EID_SHOW_ONBOARDING_CHROME_HEADER) === "1";
-  const showAppChrome = Boolean(user) && !hideAppShell;
+  const showAppChrome = Boolean(user) && canShowAuthenticatedChrome && !hideAppShell;
   const onboardingMinimalChrome = Boolean(user) && hideAppShell && showOnboardingChrome;
   activeContext = resolveActiveAppContext(cookieStore.get(ACTIVE_CONTEXT_COOKIE)?.value ?? null, papeis);
 

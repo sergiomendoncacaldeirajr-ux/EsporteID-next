@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LogoFull } from "@/components/brand/logo-full";
+import { EidThemeToggle } from "@/components/eid-theme-toggle";
 import { aceitarTermosEprivacidade } from "./actions";
 
 function safeNextPath(raw: string | null): string {
@@ -35,10 +37,16 @@ export function AceitarForm() {
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="eid-auth-card mx-auto flex max-w-lg flex-col gap-6 p-8"
-    >
+    <>
+      <div className="mx-auto mb-3 flex w-full max-w-lg items-center justify-end gap-2">
+        <EidThemeToggle variant="toolbar" />
+        <SignOutButton variant="icon" />
+      </div>
+
+      <form
+        onSubmit={onSubmit}
+        className="eid-auth-card mx-auto flex max-w-lg flex-col gap-6 p-8"
+      >
       <LogoFull className="mb-1 flex justify-center" />
       <div>
         <h1 className="text-xl font-semibold text-eid-fg">Termos e privacidade</h1>
@@ -106,10 +114,21 @@ export function AceitarForm() {
       <button
         type="submit"
         disabled={pending}
-        className="eid-btn-primary rounded-xl text-sm disabled:opacity-60"
+        className="eid-btn-primary flex min-h-[58px] w-full items-center justify-center gap-2 rounded-xl px-5 !text-[15px] font-extrabold tracking-[0.01em] transition hover:shadow-[0_10px_22px_-10px_rgba(249,115,22,0.7)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {pending ? "Salvando…" : "Confirmar e continuar"}
+        {pending ? (
+          <>
+            <span
+              className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+              aria-hidden
+            />
+            <span>Salvando...</span>
+          </>
+        ) : (
+          "Confirmar e continuar"
+        )}
       </button>
-    </form>
+      </form>
+    </>
   );
 }

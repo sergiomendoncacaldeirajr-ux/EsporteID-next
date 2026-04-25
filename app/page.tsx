@@ -63,14 +63,14 @@ export default async function Home() {
   const linkCard =
     "rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 py-2.5 text-sm font-medium text-eid-fg transition hover:border-eid-primary-500/40 hover:text-eid-primary-500";
 
-  const secondaryCtaClass =
-    "inline-flex min-h-[48px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-6 text-base font-semibold text-eid-fg shadow-sm transition hover:border-eid-primary-500/35 hover:bg-eid-surface active:scale-[0.98]";
+  const ctaPairBaseClass =
+    "inline-flex h-14 w-full items-center justify-center rounded-2xl px-8 text-lg font-bold transition active:scale-[0.98] sm:max-w-md sm:text-xl";
 
   const heroCtaPrimaryClass =
-    "eid-btn-primary inline-flex min-h-[56px] w-full flex-1 items-center justify-center rounded-2xl px-8 text-lg font-bold shadow-lg shadow-eid-primary-500/20 transition active:scale-[0.98] sm:min-h-[60px] sm:max-w-md sm:text-xl";
+    `eid-btn-primary ${ctaPairBaseClass} border-2 border-transparent shadow-lg shadow-eid-primary-500/20`;
 
   const heroCtaSecondaryClass =
-    "inline-flex min-h-[56px] w-full flex-1 items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-card px-8 text-lg font-bold text-eid-fg shadow-sm transition hover:border-eid-primary-500/60 hover:bg-eid-surface active:scale-[0.98] sm:min-h-[60px] sm:max-w-md sm:text-xl";
+    `${ctaPairBaseClass} border-2 border-eid-primary-500/40 bg-eid-card text-eid-fg shadow-sm hover:border-eid-primary-500/60 hover:bg-eid-surface`;
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
@@ -95,7 +95,7 @@ export default async function Home() {
             <EidThemeToggle variant="toolbar" />
           </div>
         ) : null}
-        <LogoFull className="mb-6 flex justify-center sm:mb-8" />
+        <LogoFull size="hero" className="mb-6 flex justify-center sm:mb-8" />
 
         <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-eid-primary-500 sm:text-left">
           Plataforma esportiva
@@ -308,10 +308,16 @@ export default async function Home() {
               </>
             ) : (
               <>
-                <Link href="/login" className="eid-btn-primary inline-flex min-h-[48px] px-6 text-base active:scale-[0.98]">
+                <Link
+                  href="/login"
+                  className="eid-btn-primary inline-flex h-12 items-center justify-center rounded-xl border-2 border-transparent px-6 text-base font-semibold active:scale-[0.98]"
+                >
                   Entrar
                 </Link>
-                <Link href="/cadastro" className={secondaryCtaClass}>
+                <Link
+                  href="/cadastro"
+                  className="inline-flex h-12 items-center justify-center rounded-xl border-2 border-[color:var(--eid-border-subtle)] bg-eid-card px-6 text-base font-semibold text-eid-fg shadow-sm transition hover:border-eid-primary-500/35 hover:bg-eid-surface active:scale-[0.98]"
+                >
                   Criar conta
                 </Link>
               </>
