@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,6 +29,9 @@ export async function solicitarDesafioMatch(
 
   if (!Number.isFinite(p_esporte_id) || p_esporte_id < 1) {
     return { ok: false, message: "Esporte inválido." };
+  }
+  if (hasMaliciousPayload(`${String(alvoUsuario ?? "")} ${String(alvoTime ?? "")} ${p_modalidade} ${p_finalidade}`)) {
+    return { ok: false, message: "Dados inválidos." };
   }
 
   const supabase = await createClient();

@@ -139,12 +139,12 @@ export function ProfileEditDrawerTrigger({
                 }`}
                 style={{
                   paddingTop:
-                    "calc(0.8rem + max(4.2rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
+                    "calc(1rem + max(5.2rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
                   overscrollBehavior: "contain",
                 }}
               >
                 {topMode === "backOnly" ? (
-                  <div className="flex shrink-0 items-center border-b border-[color:var(--eid-border-subtle)] px-3 pb-2 pt-2">
+                  <div className="flex shrink-0 items-center border-b border-[color:var(--eid-border-subtle)] px-3 pb-2 pt-3">
                     <button
                       type="button"
                       onClick={close}
@@ -155,7 +155,7 @@ export function ProfileEditDrawerTrigger({
                     </button>
                   </div>
                 ) : topMode === "backAndClose" ? (
-                  <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] px-3 pb-2 pt-2">
+                  <div className="flex shrink-0 items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] px-3 pb-2 pt-3">
                     <button
                       type="button"
                       onClick={frameBackOrClose}
@@ -173,7 +173,7 @@ export function ProfileEditDrawerTrigger({
                     </button>
                   </div>
                 ) : (
-                  <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--eid-border-subtle)] px-3 pb-2 pt-2">
+                  <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--eid-border-subtle)] px-3 pb-2 pt-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">{title}</p>
                     <button
                       type="button"

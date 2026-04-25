@@ -6,6 +6,7 @@ import {
   type ProfileLegalAcceptance,
   PROFILE_LEGAL_ACCEPTANCE_COLUMNS,
 } from "@/lib/legal/acceptance";
+import { hasMaliciousPayload } from "@/lib/security/request-guards";
 
 /**
  * Requisições de transição / prefetch do App Router. Rodar `getSession` + `setAll`
@@ -73,6 +74,10 @@ export async function updateSession(request: NextRequest) {
   }
 
   const path = request.nextUrl.pathname;
+  const pathAndQuery = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+  if (hasMaliciousPayload(pathAndQuery)) {
+    return NextResponse.json({ error: "Requisição inválida." }, { status: 400 });
+  }
   const embedShell = request.nextUrl.searchParams.get("embed") === "1";
   const hideEmbedMinimalChrome =
     embedShell && (isEmbedEidStatsPath(path) || isEmbedDesafioPath(path));

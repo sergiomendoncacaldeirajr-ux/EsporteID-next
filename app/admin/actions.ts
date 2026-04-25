@@ -6,6 +6,7 @@ import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import type { SystemFeatureKey, SystemFeatureMode } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
+import { getPresetForSport } from "@/lib/desafio/score-rules";
 
 function svc() {
   if (!hasServiceRoleConfig()) throw new Error("Service role não configurada.");
@@ -1056,6 +1057,62 @@ function normalizeDesafioModoLancamento(raw: string): "simples" | "sets" | "game
   return "simples";
 }
 
+function normalizeBooleanLike(v: unknown): boolean | undefined {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "string") {
+    const n = v.trim().toLowerCase();
+    if (n === "true") return true;
+    if (n === "false") return false;
+  }
+  return undefined;
+}
+
+function sanitizeDesafioRules(input: Record<string, unknown>): Record<string, unknown> {
+  type SafeVariant = {
+    key: string;
+    label: string;
+    minPlacar: number;
+    maxPlacar: number;
+    permitirEmpate: boolean;
+    permitirWO: boolean;
+  };
+  const minPlacar = Number(input.minPlacar);
+  const maxPlacar = Number(input.maxPlacar);
+  const permitirEmpate = normalizeBooleanLike(input.permitirEmpate);
+  const permitirWO = normalizeBooleanLike(input.permitirWO);
+  const variantsRaw = Array.isArray(input.variantes) ? input.variantes : [];
+  const variantes: SafeVariant[] = variantsRaw
+    .map((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+      const row = item as Record<string, unknown>;
+      const key = String(row.key ?? "").trim().toLowerCase();
+      const label = String(row.label ?? "").trim();
+      const min = Number(row.minPlacar);
+      const max = Number(row.maxPlacar);
+      const emp = normalizeBooleanLike(row.permitirEmpate);
+      const wo = normalizeBooleanLike(row.permitirWO);
+      if (!key || !label || !Number.isFinite(min) || !Number.isFinite(max)) return null;
+      const safe: SafeVariant = {
+        key,
+        label,
+        minPlacar: Math.max(0, Math.floor(min)),
+        maxPlacar: Math.max(0, Math.floor(max)),
+        permitirEmpate: emp ?? false,
+        permitirWO: wo ?? true,
+      };
+      return safe;
+    })
+    .filter((v): v is SafeVariant => v !== null)
+    .slice(0, 12);
+  return {
+    minPlacar: Number.isFinite(minPlacar) ? Math.max(0, Math.floor(minPlacar)) : 0,
+    maxPlacar: Number.isFinite(maxPlacar) ? Math.max(0, Math.floor(maxPlacar)) : 30,
+    permitirEmpate: permitirEmpate ?? false,
+    permitirWO: permitirWO ?? true,
+    variantes,
+  };
+}
+
 export async function adminCreateEsporte(formData: FormData) {
   try {
     await guard();
@@ -1128,7 +1185,7 @@ export async function adminUpdateEsporteDesafioConfig(formData: FormData) {
       try {
         const parsed = JSON.parse(regrasRaw) as unknown;
         if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-          desafio_regras_placar_json = parsed as Record<string, unknown>;
+          desafio_regras_placar_json = sanitizeDesafioRules(parsed as Record<string, unknown>);
         } else {
           return;
         }
@@ -1138,6 +1195,29 @@ export async function adminUpdateEsporteDesafioConfig(formData: FormData) {
     }
     const { error } = await svc().from("esportes").update({ desafio_modo_lancamento, desafio_regras_placar_json }).eq("id", id);
     if (error) return;
+    revalidatePath("/admin/regras");
+    revalidatePath("/admin/esportes");
+  } catch {
+    return;
+  }
+}
+
+export async function adminApplyDesafioScorePresets() {
+  try {
+    await guard();
+    const db = svc();
+    const { data: esportes } = await db.from("esportes").select("id, nome, slug");
+    for (const esp of esportes ?? []) {
+      const preset = getPresetForSport(String(esp.nome ?? ""), String(esp.slug ?? ""));
+      if (!preset) continue;
+      await db
+        .from("esportes")
+        .update({
+          desafio_modo_lancamento: preset.modo,
+          desafio_regras_placar_json: preset.regras,
+        })
+        .eq("id", Number(esp.id));
+    }
     revalidatePath("/admin/regras");
     revalidatePath("/admin/esportes");
   } catch {

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
+import { type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 import { createClient } from "@/lib/supabase/server";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
@@ -14,6 +15,11 @@ function normStatus(v: string | null | undefined): string {
   return String(v ?? "")
     .trim()
     .toLowerCase();
+}
+
+function toRulesConfig(v: unknown): ScoreRulesConfig {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
+  return v as ScoreRulesConfig;
 }
 
 export default async function RegistrarPlacarPage({ params, searchParams }: Props) {
@@ -43,7 +49,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const { data: p } = await supabase
     .from("partidas")
     .select(
-      "id, jogador1_id, jogador2_id, status, status_ranking, esporte_id, torneio_id, esportes(nome,desafio_modo_lancamento), placar_1, placar_2, lancado_por, mensagem, data_resultado, data_validacao, modalidade, time1_id, time2_id, data_partida, local_str"
+      "id, jogador1_id, jogador2_id, status, status_ranking, esporte_id, torneio_id, esportes(nome,desafio_modo_lancamento,desafio_regras_placar_json), placar_1, placar_2, lancado_por, mensagem, data_resultado, data_validacao, modalidade, time1_id, time2_id, data_partida, local_str"
     )
     .eq("id", id)
     .maybeSingle();
@@ -91,6 +97,8 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const podeConfirmarOuContestar = !p.torneio_id && (isColetivo ? isTeamOwner : participant) && aguardandoConfirmacao && p.lancado_por !== user.id;
 
   const esp = Array.isArray(p.esportes) ? p.esportes[0] : p.esportes;
+  const regrasPlacar = toRulesConfig((esp as { desafio_regras_placar_json?: unknown } | null)?.desafio_regras_placar_json);
+  const variantes = Array.isArray(regrasPlacar.variantes) ? regrasPlacar.variantes : [];
 
   const voltarHref = agendaSomente ? "/agenda" : fromSafe ?? "/agenda";
   const voltarLabel = agendaSomente ? "← Voltar à agenda" : fromSafe === "/comunidade" ? "← Voltar ao painel" : "← Voltar à agenda";
@@ -261,6 +269,22 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   />
                 </label>
               </div>
+              {variantes.length > 0 ? (
+                <label className="grid gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Placar alternativo</span>
+                  <select
+                    name="placar_variante"
+                    defaultValue={String(variantes[0]?.key ?? "")}
+                    className="eid-input-dark h-[46px] rounded-xl px-3.5 text-sm text-eid-fg"
+                  >
+                    {variantes.map((v) => (
+                      <option key={String((v as { key?: unknown }).key ?? "")} value={String((v as { key?: unknown }).key ?? "")}>
+                        {String((v as { label?: unknown }).label ?? (v as { key?: unknown }).key ?? "Alternativa")}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               <label className="grid gap-1.5">
                 <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Observação (opcional)</span>
                 <textarea

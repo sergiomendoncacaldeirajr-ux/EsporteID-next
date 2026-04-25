@@ -1,4 +1,5 @@
 import {
+  adminApplyDesafioScorePresets,
   adminUpdateEsporteDesafioConfig,
   adminSetMatchRankCooldownMeses,
   adminSetMatchRankPendingLimit,
@@ -138,7 +139,23 @@ export default async function AdminRegrasPage() {
         <h2 className="text-base font-bold text-eid-fg">Desafio por esporte · modo de lançamento e regras de placar</h2>
         <p className="mt-1 text-sm text-eid-text-secondary">
           Configure como o placar deve ser lançado em cada esporte e valide limites no backend usando JSON.
-          Exemplo: <code>{'{"minPlacar":0,"maxPlacar":21,"permitirEmpate":false,"permitirWO":true}'}</code>.
+          Você também pode definir <strong className="text-eid-fg">variantes alternativas</strong> em `variantes`.
+        </p>
+        <form action={adminApplyDesafioScorePresets} className="mt-3">
+          <button
+            type="submit"
+            className="rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg"
+          >
+            Aplicar presets automáticos por esporte
+          </button>
+        </form>
+        <p className="mt-2 text-[11px] text-eid-text-secondary">
+          Exemplo de JSON com placares alternativos:
+          <code className="ml-1">
+            {
+              '{"minPlacar":0,"maxPlacar":7,"permitirEmpate":false,"permitirWO":true,"variantes":[{"key":"padrao","label":"Padrão","minPlacar":0,"maxPlacar":7,"permitirEmpate":false,"permitirWO":true},{"key":"set_unico_8_games","label":"Set único de 8 games","minPlacar":0,"maxPlacar":8,"permitirEmpate":false,"permitirWO":true}]}'
+            }
+          </code>
         </p>
         {esportesCfg.error ? <p className="text-red-300">{esportesCfg.error.message}</p> : null}
         <div className="mt-3 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)]">

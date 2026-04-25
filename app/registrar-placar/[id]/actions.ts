@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { resolveVariantFromRules, type ScoreRulesConfig } from "@/lib/desafio/score-rules";
+import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { sanitizeOptionalUserText, sanitizeUserText } from "@/lib/security/sanitize-input";
 import { createClient } from "@/lib/supabase/server";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
@@ -144,6 +146,11 @@ function toOptionalBoolean(v: unknown): boolean | null {
   return null;
 }
 
+function toRulesConfig(v: unknown): ScoreRulesConfig {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
+  return v as ScoreRulesConfig;
+}
+
 export async function submitPlacarAction(formData: FormData) {
   const partidaId = Number(formData.get("partida_id"));
   if (!Number.isFinite(partidaId) || partidaId < 1) redirect("/agenda");
@@ -157,9 +164,11 @@ export async function submitPlacarAction(formData: FormData) {
   const placar1 = toInt(formData.get("placar_1"));
   const placar2 = toInt(formData.get("placar_2"));
   const observacao = sanitizeUserText(formData.get("observacao"), 500);
+  const placarVariante = String(formData.get("placar_variante") ?? "").trim();
   const woAtivo = String(formData.get("wo_ativo") ?? "") === "1";
   const woVencedor = String(formData.get("wo_vencedor") ?? "").trim();
   if (!woAtivo && (placar1 == null || placar2 == null)) go(partidaId, "erro", "Informe placares válidos.");
+  if (hasMaliciousPayload(observacao)) go(partidaId, "erro", "Observação inválida.");
 
   const ctx = await loadPartidaContext(partidaId, user.id);
   if (!ctx.partida) go(partidaId, "erro", "Partida não encontrada.");
@@ -171,16 +180,12 @@ export async function submitPlacarAction(formData: FormData) {
         .eq("id", p.esporte_id)
         .maybeSingle()
     : null;
-  const regrasPlacar =
-    esporteRegrasRaw?.data?.desafio_regras_placar_json &&
-    typeof esporteRegrasRaw.data.desafio_regras_placar_json === "object" &&
-    !Array.isArray(esporteRegrasRaw.data.desafio_regras_placar_json)
-      ? (esporteRegrasRaw.data.desafio_regras_placar_json as Record<string, unknown>)
-      : {};
-  const minPlacar = toOptionalFiniteNumber(regrasPlacar.minPlacar);
-  const maxPlacar = toOptionalFiniteNumber(regrasPlacar.maxPlacar);
-  const permitirEmpate = toOptionalBoolean(regrasPlacar.permitirEmpate);
-  const permitirWO = toOptionalBoolean(regrasPlacar.permitirWO);
+  const regrasPlacar = toRulesConfig(esporteRegrasRaw?.data?.desafio_regras_placar_json);
+  const selectedVariant = resolveVariantFromRules(regrasPlacar, placarVariante);
+  const minPlacar = toOptionalFiniteNumber(selectedVariant?.minPlacar ?? regrasPlacar.minPlacar);
+  const maxPlacar = toOptionalFiniteNumber(selectedVariant?.maxPlacar ?? regrasPlacar.maxPlacar);
+  const permitirEmpate = toOptionalBoolean(selectedVariant?.permitirEmpate ?? regrasPlacar.permitirEmpate);
+  const permitirWO = toOptionalBoolean(selectedVariant?.permitirWO ?? regrasPlacar.permitirWO);
   const status = normStatus(p.status);
   const canActRegular = p.torneio_id
     ? ctx.podeRegistrarTorneio
@@ -372,6 +377,7 @@ export async function salvarAgendamentoAction(formData: FormData) {
   const modoAgenda = String(formData.get("modo_agenda") ?? "") === "1";
   const dataPartida = String(formData.get("data_partida") ?? "").trim();
   const localStr = sanitizeUserText(formData.get("local_str"), 180);
+  if (hasMaliciousPayload(localStr)) salvarAgendaRedirect(partidaId, "erro", "Local inválido.", modoAgenda);
 
   const supabase = await createClient();
   const {
