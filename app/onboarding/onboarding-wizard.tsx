@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/brand/logo-full";
+import { OnboardingTopbar } from "@/components/onboarding/onboarding-topbar";
 import {
   esporteModoTemAtleta,
   esporteModoTemProfessor,
@@ -359,30 +360,26 @@ import { LocalSelectAutocomplete } from "@/components/locais/local-select-autoco
 
 const ONBOARDING_DRAFT_KEY_PREFIX = "eid_onboarding_draft_v1";
 
-const ROLES = [
+const ROLE_OPTIONS = [
   {
     id: "atleta",
     titulo: "Atleta / Usuário",
     desc: "Perfil com painel esportivo, ranking e desafios.",
-    enabled: true,
   },
   {
     id: "professor",
     titulo: "Professor / Técnico",
     desc: "Acompanha alunos e pode aparecer no ecossistema como referência.",
-    enabled: false,
   },
   {
     id: "organizador",
     titulo: "Organizador de torneios",
     desc: "Cria e gerencia eventos (liberado conforme as regras do app).",
-    enabled: false,
   },
   {
     id: "espaco",
-    titulo: "Dono de espaço / arena",
+    titulo: "Clubes / Arenas / Espaços",
     desc: "Quadra, campo, piscina, clube — cadastra o local e os esportes atendidos.",
-    enabled: false,
   },
 ] as const;
 
@@ -459,6 +456,16 @@ type Props = {
   }[];
   locais: { id: number; nome: string; localizacao: string; donoUsuarioId: string | null }[];
   selectedPapeis: string[];
+  roleModes: {
+    professor: boolean;
+    organizador: boolean;
+    espaco: boolean;
+  };
+  roleFeatureModes: {
+    professor: "ativo" | "em_breve" | "desenvolvimento" | "teste";
+    organizador: "ativo" | "em_breve" | "desenvolvimento" | "teste";
+    espaco: "ativo" | "em_breve" | "desenvolvimento" | "teste";
+  };
   selectedEsportes: number[];
   selectedEsportesModalidades: Record<number, MatchModality[]>;
   selectedSportModes: Record<number, ProfessorModoEsportivo>;
@@ -517,6 +524,8 @@ export function OnboardingWizard({
   esportes,
   locais,
   selectedPapeis,
+  roleModes,
+  roleFeatureModes,
   selectedEsportes,
   selectedEsportesModalidades,
   selectedSportModes,
@@ -526,6 +535,31 @@ export function OnboardingWizard({
   extrasInitial,
   profileInitial,
 }: Props) {
+  const continueButtonClass =
+    "eid-btn-primary w-full !min-h-[3.5rem] rounded-2xl !px-5 !py-3.5 !text-base !font-extrabold tracking-wide disabled:opacity-50";
+  const roles = useMemo(
+    () =>
+      ROLE_OPTIONS.map((role) => ({
+        ...role,
+        enabled:
+          role.id === "atleta"
+            ? true
+            : role.id === "professor"
+              ? roleModes.professor
+              : role.id === "organizador"
+                ? roleModes.organizador
+                : roleModes.espaco,
+        featureMode:
+          role.id === "atleta"
+            ? "ativo"
+            : role.id === "professor"
+              ? roleFeatureModes.professor
+              : role.id === "organizador"
+                ? roleFeatureModes.organizador
+                : roleFeatureModes.espaco,
+      })),
+    [roleModes, roleFeatureModes]
+  );
   const draftKey = `${ONBOARDING_DRAFT_KEY_PREFIX}:${userId}`;
   const router = useRouter();
   const [step, setStep] = useState<Step>(initialStep);
@@ -1181,7 +1215,7 @@ export function OnboardingWizard({
   }
 
   function togglePapel(id: string) {
-    const role = ROLES.find((r) => r.id === id);
+    const role = roles.find((r) => r.id === id);
     if (!role?.enabled) return;
     setPapeis(new Set<string>([id]));
   }
@@ -1417,6 +1451,7 @@ export function OnboardingWizard({
       data-eid-onboarding-step={step}
       className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7"
     >
+      <OnboardingTopbar />
       <div ref={topAnchorRef} />
       <div className="w-full max-w-2xl pb-6">
         <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -1498,7 +1533,7 @@ export function OnboardingWizard({
           {step === "papeis" ? (
             <form onSubmit={submitPapeis} className="mt-6 space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
-                {ROLES.map((r) => {
+                {roles.map((r) => {
                   const sel = papeis.has(r.id);
                   const disabled = !r.enabled;
                   return (
@@ -1528,8 +1563,20 @@ export function OnboardingWizard({
                         <span className="mt-1 block text-xs leading-relaxed text-eid-text-secondary">{r.desc}</span>
                       </div>
                       {disabled ? (
-                        <span className="shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-bg/60 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-eid-text-secondary">
-                          Em breve
+                        <span
+                          className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
+                            r.featureMode === "teste"
+                              ? "border-eid-action-500/35 bg-eid-action-500/10 text-eid-action-400"
+                              : r.featureMode === "em_breve"
+                                ? "border-[color:var(--eid-border-subtle)] bg-eid-bg/60 text-eid-text-secondary"
+                                : "border-red-500/30 bg-red-500/10 text-red-300"
+                          }`}
+                        >
+                          {r.featureMode === "teste"
+                            ? "Em teste"
+                            : r.featureMode === "em_breve"
+                              ? "Em breve"
+                              : "Indisponível"}
                         </span>
                       ) : (
                         <span
@@ -1556,7 +1603,7 @@ export function OnboardingWizard({
               <button
                 type="submit"
                 disabled={pending || papeis.size === 0}
-                className="eid-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50"
+                className={continueButtonClass}
               >
                 {pending ? "Salvando…" : "Continuar"}
               </button>
@@ -1893,7 +1940,7 @@ export function OnboardingWizard({
               <button
                 type="submit"
                 disabled={pending || esportesSel.size === 0 || !esportesExpValid}
-                className="eid-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50"
+                className={continueButtonClass}
               >
                 {pending ? "Salvando…" : "Continuar"}
               </button>
@@ -2280,7 +2327,7 @@ export function OnboardingWizard({
               <button
                 type="submit"
                 disabled={pending || !extrasValid}
-                className="eid-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50"
+                className={continueButtonClass}
               >
                 {pending ? "Salvando…" : "Continuar"}
               </button>
@@ -2300,8 +2347,8 @@ export function OnboardingWizard({
                     Quem você é na plataforma
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {ROLES.filter((r) => papeis.has(r.id)).length > 0
-                      ? ROLES.filter((r) => papeis.has(r.id)).map((r) => (
+                    {roles.filter((r) => papeis.has(r.id)).length > 0
+                      ? roles.filter((r) => papeis.has(r.id)).map((r) => (
                           <span
                             key={r.id}
                             className="inline-flex items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/8 px-2.5 py-0.5 text-xs font-semibold text-eid-primary-400"

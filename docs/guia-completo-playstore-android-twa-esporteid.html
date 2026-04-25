@@ -1,0 +1,268 @@
+<h1>Guia Completo: Publicar EsporteID na Play Store (Android via TWA)</h1>
+<p>Este guia foi feito para você seguir <strong>passo a passo</strong>, mesmo sendo leigo.</p>
+<p>Objetivo: publicar o <code>EsporteID</code> como app Android usando seu projeto web atual (Next.js/PWA), sem reescrever em React Native/Flutter.</p>
+<hr>
+<h2>1) O que você já tem pronto no projeto</h2>
+<p>No seu projeto, já existe base para app Android via PWA/TWA:</p>
+<ul>
+<li>Manifest PWA: <code>app/manifest.ts</code></li>
+<li>Service Worker: <code>public/sw.js</code></li>
+<li>Asset Links (para Android verificar domínio): <code>app/.well-known/assetlinks.json/route.ts</code></li>
+<li>Config de viewport mobile: <code>app/layout.tsx</code></li>
+</ul>
+<p>Isso reduz muito o esforço.</p>
+<hr>
+<h2>2) Visão geral do processo (resumo)</h2>
+<ol>
+<li>Publicar app web em produção (HTTPS).</li>
+<li>Criar conta de desenvolvedor no Google Play Console.</li>
+<li>Gerar app Android TWA com Bubblewrap.</li>
+<li>Assinar app (keystore) e gerar <code>.aab</code>.</li>
+<li>Subir no Play Console (teste interno).</li>
+<li>Ajustar se necessário e publicar em produção.</li>
+</ol>
+<hr>
+<h2>3) Pré-requisitos (instalar 1 vez)</h2>
+<p>No seu Windows:</p>
+<ol>
+<li><strong>Node.js LTS</strong> (recomendado v20+)</li>
+<li><strong>Java JDK 17</strong> (ou 21)</li>
+<li><strong>Android Studio</strong> (com SDK e Build Tools)</li>
+<li><strong>Git</strong> (opcional, mas recomendado)</li>
+</ol>
+<h3>Verificação rápida (PowerShell)</h3>
+<pre><code class="language-powershell">node -v
+npm -v
+java -version
+</code></pre>
+<p>Se algum comando falhar, instale antes de continuar.</p>
+<hr>
+<h2>4) Preparar produção web (obrigatório)</h2>
+<p>Seu domínio de produção precisa estar com HTTPS e app funcionando.</p>
+<p>Exemplo:</p>
+<ul>
+<li><code>https://seu-dominio.com</code></li>
+</ul>
+<h3>Testes obrigatórios no navegador</h3>
+<p>Abra e confira:</p>
+<ul>
+<li><code>https://seu-dominio.com/manifest.webmanifest</code></li>
+<li><code>https://seu-dominio.com/sw.js</code></li>
+<li><code>https://seu-dominio.com/.well-known/assetlinks.json</code></li>
+</ul>
+<p>Se qualquer URL não abrir, <strong>não avance</strong>.</p>
+<hr>
+<h2>5) Variáveis de ambiente para Asset Links (produção)</h2>
+<p>No ambiente de produção (Vercel/servidor), configure:</p>
+<ul>
+<li><code>TWA_ANDROID_PACKAGE_NAME</code></li>
+<li><code>TWA_SHA256_CERT_FINGERPRINTS</code></li>
+</ul>
+<p>Exemplo:</p>
+<pre><code class="language-env">TWA_ANDROID_PACKAGE_NAME=com.esporteid.app
+TWA_SHA256_CERT_FINGERPRINTS=AA:BB:CC:...:99
+</code></pre>
+<p>Observação:</p>
+<ul>
+<li>Se tiver mais de 1 fingerprint, separar por vírgula.</li>
+<li>O projeto também aceita <code>ANDROID_ASSET_LINKS_JSON</code> completo (avançado).</li>
+</ul>
+<hr>
+<h2>6) Criar chave de assinatura (keystore) — MUITO IMPORTANTE</h2>
+<p>Faça isso uma vez e guarde com backup.</p>
+<h3>6.1 Criar pasta de segurança local</h3>
+<pre><code class="language-powershell">mkdir C:\secure\esporteid-keystore -Force
+</code></pre>
+<h3>6.2 Gerar keystore</h3>
+<pre><code class="language-powershell">keytool -genkeypair `
+  -v `
+  -storetype JKS `
+  -keystore C:\secure\esporteid-keystore\esporteid-upload.jks `
+  -alias esporteid-upload `
+  -keyalg RSA `
+  -keysize 2048 `
+  -validity 10000
+</code></pre>
+<p>Anote e guarde:</p>
+<ul>
+<li>caminho do <code>.jks</code></li>
+<li>alias</li>
+<li>senha da keystore</li>
+<li>senha da chave</li>
+</ul>
+<h3>6.3 Obter fingerprint SHA-256</h3>
+<pre><code class="language-powershell">keytool -list -v `
+  -keystore C:\secure\esporteid-keystore\esporteid-upload.jks `
+  -alias esporteid-upload
+</code></pre>
+<p>Copie o valor <code>SHA256:</code> e use em <code>TWA_SHA256_CERT_FINGERPRINTS</code>.</p>
+<hr>
+<h2>7) Gerar app Android com Bubblewrap</h2>
+<h3>7.1 Instalar Bubblewrap</h3>
+<pre><code class="language-powershell">npm i -g @bubblewrap/cli
+</code></pre>
+<h3>7.2 Criar pasta de build Android</h3>
+<pre><code class="language-powershell">mkdir C:\apps\esporteid-twa -Force
+cd C:\apps\esporteid-twa
+</code></pre>
+<h3>7.3 Inicializar projeto TWA</h3>
+<pre><code class="language-powershell">bubblewrap init --manifest https://seu-dominio.com/manifest.webmanifest
+</code></pre>
+<p>Quando pedir os dados, use este padrão:</p>
+<ul>
+<li>Application name: <code>EsporteID</code></li>
+<li>Package ID: <code>com.esporteid.app</code></li>
+<li>Host: <code>seu-dominio.com</code></li>
+<li>Launcher name: <code>EsporteID</code></li>
+<li>Display mode: <code>standalone</code></li>
+<li>Theme color: mesma do app</li>
+<li>Navigation color: mesma do app</li>
+<li>Enable notifications: <code>yes</code></li>
+</ul>
+<h3>7.4 Configurar assinatura no projeto TWA</h3>
+<pre><code class="language-powershell">bubblewrap update
+</code></pre>
+<p>No arquivo de config do bubblewrap (gerado na pasta), informe:</p>
+<ul>
+<li>caminho do keystore</li>
+<li>alias</li>
+<li>senhas</li>
+</ul>
+<h3>7.5 Gerar Android App Bundle</h3>
+<pre><code class="language-powershell">bubblewrap build
+</code></pre>
+<p>Resultado esperado: arquivo <code>.aab</code>.</p>
+<hr>
+<h2>8) Publicar no Google Play Console (passo a passo)</h2>
+<h2>8.1 Criar aplicativo</h2>
+<p>No <a href="https://play.google.com/console">Google Play Console</a>:</p>
+<ol>
+<li>Criar app</li>
+<li>Nome: <code>EsporteID</code></li>
+<li>Idioma padrão: Português (Brasil)</li>
+<li>Tipo: App</li>
+<li>Gratuito/Pago: conforme sua estratégia</li>
+</ol>
+<h2>8.2 Completar ficha da loja</h2>
+<p>Preencher:</p>
+<ul>
+<li>Título do app</li>
+<li>Descrição curta</li>
+<li>Descrição completa</li>
+<li>Categoria</li>
+<li>E-mail de suporte</li>
+<li>Política de privacidade (URL pública)</li>
+</ul>
+<h2>8.3 Upload da versão</h2>
+<ol>
+<li>Vá em <strong>Testes &gt; Teste interno</strong></li>
+<li>Criar nova versão</li>
+<li>Upload do <code>.aab</code></li>
+<li>Salvar e enviar para revisão interna</li>
+</ol>
+<h2>8.4 Configurações obrigatórias antes de produção</h2>
+<ul>
+<li>Segurança de dados</li>
+<li>Classificação etária</li>
+<li>Público-alvo</li>
+<li>Permissões declaradas</li>
+<li>Países de distribuição</li>
+</ul>
+<hr>
+<h2>9) Checklist pronto para você seguir</h2>
+<p>Use esta ordem:</p>
+<ul>
+<li><input disabled="" type="checkbox"> Domínio de produção online (HTTPS)</li>
+<li><input disabled="" type="checkbox"> <code>manifest.webmanifest</code> acessível</li>
+<li><input disabled="" type="checkbox"> <code>sw.js</code> acessível</li>
+<li><input disabled="" type="checkbox"> <code>/.well-known/assetlinks.json</code> acessível</li>
+<li><input disabled="" type="checkbox"> Keystore criada e salva com backup</li>
+<li><input disabled="" type="checkbox"> SHA-256 configurado nas variáveis de produção</li>
+<li><input disabled="" type="checkbox"> <code>bubblewrap init</code> concluído</li>
+<li><input disabled="" type="checkbox"> <code>bubblewrap build</code> gerou <code>.aab</code></li>
+<li><input disabled="" type="checkbox"> App criado no Play Console</li>
+<li><input disabled="" type="checkbox"> Upload no teste interno</li>
+<li><input disabled="" type="checkbox"> Testado em Android real</li>
+<li><input disabled="" type="checkbox"> Só então liberar produção</li>
+</ul>
+<hr>
+<h2>10) Teste interno obrigatório (não pule)</h2>
+<p>Antes de publicar geral, valide no celular Android:</p>
+<ul>
+<li>Login e cadastro</li>
+<li>Fluxo desafio</li>
+<li>Fluxo locais/reserva</li>
+<li>Push notifications</li>
+<li>Navegação em telas fullscreen</li>
+<li>Performance no 4G</li>
+</ul>
+<p>Se algo quebrar, corrija e gere novo <code>.aab</code>.</p>
+<hr>
+<h2>11) Problemas comuns e solução</h2>
+<h2>A) <code>assetlinks.json</code> vazio</h2>
+<p>Causa:</p>
+<ul>
+<li>variáveis <code>TWA_ANDROID_PACKAGE_NAME</code> e <code>TWA_SHA256_CERT_FINGERPRINTS</code> não configuradas.</li>
+</ul>
+<p>Solução:</p>
+<ul>
+<li>configurar variáveis em produção e redeploy.</li>
+</ul>
+<h2>B) Play Console rejeita por “domínio não verificado”</h2>
+<p>Causa:</p>
+<ul>
+<li>fingerprint errada ou package diferente.</li>
+</ul>
+<p>Solução:</p>
+<ul>
+<li>confirmar package id e SHA-256 da keystore usada no build.</li>
+</ul>
+<h2>C) App abre no navegador e não fullscreen</h2>
+<p>Causa:</p>
+<ul>
+<li>TWA sem verificação correta.</li>
+</ul>
+<p>Solução:</p>
+<ul>
+<li>corrigir asset links e gerar novo build.</li>
+</ul>
+<hr>
+<h2>12) Segurança e versionamento (recomendação oficial para você)</h2>
+<p>Publicar sempre por pacote:</p>
+<ol>
+<li>pacote pequeno de mudança</li>
+<li><code>npm run lint</code> + <code>npm run build</code></li>
+<li>tag de base estável</li>
+<li>release em teste interno</li>
+<li>produção</li>
+</ol>
+<p>Se quebrar:</p>
+<ul>
+<li>reverte para última base estável.</li>
+</ul>
+<p>Você já tem um documento interno disso em:</p>
+<ul>
+<li><code>docs/release-pacotes-seguros.md</code></li>
+</ul>
+<hr>
+<h2>13) Como transformar este guia em PDF</h2>
+<p>Método mais simples:</p>
+<ol>
+<li>Abra este arquivo no VS Code/Cursor.</li>
+<li>Use preview Markdown.</li>
+<li><code>Ctrl + P</code> &gt; Imprimir.</li>
+<li>Escolha <strong>Salvar como PDF</strong>.</li>
+</ol>
+<p>Nome sugerido:</p>
+<ul>
+<li><code>Guia-PlayStore-EsporteID-v1.pdf</code></li>
+</ul>
+<hr>
+<h2>14) Próxima ação imediata (agora)</h2>
+<p>Comece por aqui, nesta ordem exata:</p>
+<ol>
+<li>Me diga seu domínio final de produção.</li>
+<li>Eu te devolvo os comandos já com esse domínio preenchido.</li>
+<li>Você roda os comandos e me manda qualquer erro.</li>
+<li>Eu vou te guiando até subir o teste interno com sucesso.</li>
+</ol>

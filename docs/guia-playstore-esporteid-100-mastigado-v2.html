@@ -1,0 +1,165 @@
+<h1>Guia 100% Mastigado: EsporteID na Play Store (Android)</h1>
+<p>Este guia já está preenchido com seus dados:</p>
+<ul>
+<li>Domínio: <code>https://esporteid.com.br</code></li>
+<li>Package ID Android: <code>com.esporteid.app</code></li>
+<li>Nome do app: <code>EsporteID</code></li>
+</ul>
+<hr>
+<h2>Dados oficiais que você vai usar em tudo</h2>
+<ul>
+<li><strong>App Name (loja e Android):</strong> <code>EsporteID</code></li>
+<li><strong>Package ID:</strong> <code>com.esporteid.app</code></li>
+<li><strong>Website:</strong> <code>https://esporteid.com.br</code></li>
+<li><strong>Manifest URL:</strong> <code>https://esporteid.com.br/manifest.webmanifest</code></li>
+<li><strong>Service Worker URL:</strong> <code>https://esporteid.com.br/sw.js</code></li>
+<li><strong>Asset Links URL:</strong> <code>https://esporteid.com.br/.well-known/assetlinks.json</code></li>
+</ul>
+<hr>
+<h2>PASSO 1 — Instalar pré-requisitos no seu Windows (uma vez)</h2>
+<ol>
+<li>Node.js LTS  </li>
+<li>Java JDK 17+  </li>
+<li>Android Studio (SDK + Build Tools)</li>
+</ol>
+<p>Validar no PowerShell:</p>
+<pre><code class="language-powershell">node -v
+npm -v
+java -version
+</code></pre>
+<p>Se os 3 comandos responderem, siga.</p>
+<hr>
+<h2>PASSO 2 — Criar sua chave de assinatura (keystore)</h2>
+<h3>2.1 Criar pasta da chave</h3>
+<pre><code class="language-powershell">mkdir C:\secure\esporteid-keystore -Force
+</code></pre>
+<h3>2.2 Gerar a chave</h3>
+<pre><code class="language-powershell">keytool -genkeypair -v -storetype JKS -keystore C:\secure\esporteid-keystore\esporteid-upload.jks -alias esporteid-upload -keyalg RSA -keysize 2048 -validity 10000
+</code></pre>
+<blockquote>
+<p>Guarde bem:</p>
+<ul>
+<li>caminho do arquivo <code>.jks</code></li>
+<li>alias <code>esporteid-upload</code></li>
+<li>senha da keystore</li>
+<li>senha da chave</li>
+</ul>
+</blockquote>
+<h3>2.3 Pegar SHA-256 (necessário para Asset Links)</h3>
+<pre><code class="language-powershell">keytool -list -v -keystore C:\secure\esporteid-keystore\esporteid-upload.jks -alias esporteid-upload
+</code></pre>
+<p>Copie o valor completo de <code>SHA256:</code>.</p>
+<hr>
+<h2>PASSO 3 — Configurar variáveis de produção (Vercel/servidor)</h2>
+<p>No ambiente de produção do <code>esporteid.com.br</code>, criar:</p>
+<pre><code class="language-env">TWA_ANDROID_PACKAGE_NAME=com.esporteid.app
+TWA_SHA256_CERT_FINGERPRINTS=COLE_AQUI_A_SHA256_DA_SUA_KEYSTORE
+</code></pre>
+<p>Depois de salvar as variáveis, faça deploy/redeploy.</p>
+<hr>
+<h2>PASSO 4 — Testar URLs obrigatórias no navegador</h2>
+<p>Abra e confirme:</p>
+<ol>
+<li><code>https://esporteid.com.br/manifest.webmanifest</code></li>
+<li><code>https://esporteid.com.br/sw.js</code></li>
+<li><code>https://esporteid.com.br/.well-known/assetlinks.json</code></li>
+</ol>
+<p>Se qualquer uma não abrir corretamente, pare e corrija antes de continuar.</p>
+<hr>
+<h2>PASSO 5 — Gerar app Android com Bubblewrap</h2>
+<h3>5.1 Instalar Bubblewrap</h3>
+<pre><code class="language-powershell">npm i -g @bubblewrap/cli
+</code></pre>
+<h3>5.2 Criar pasta do projeto Android</h3>
+<pre><code class="language-powershell">mkdir C:\apps\esporteid-twa -Force
+cd C:\apps\esporteid-twa
+</code></pre>
+<h3>5.3 Inicializar TWA com seu manifest</h3>
+<pre><code class="language-powershell">bubblewrap init --manifest https://esporteid.com.br/manifest.webmanifest
+</code></pre>
+<p>Use estes valores quando pedir:</p>
+<ul>
+<li>Application Name: <code>EsporteID</code></li>
+<li>Package ID: <code>com.esporteid.app</code></li>
+<li>Host: <code>esporteid.com.br</code></li>
+<li>Launcher Name: <code>EsporteID</code></li>
+<li>Display: <code>standalone</code></li>
+<li>Notifications: <code>yes</code></li>
+</ul>
+<h3>5.4 Configurar assinatura</h3>
+<pre><code class="language-powershell">bubblewrap update
+</code></pre>
+<p>Informe:</p>
+<ul>
+<li>keystore: <code>C:\secure\esporteid-keystore\esporteid-upload.jks</code></li>
+<li>alias: <code>esporteid-upload</code></li>
+<li>senha keystore</li>
+<li>senha chave</li>
+</ul>
+<h3>5.5 Gerar arquivo para Play Store (.aab)</h3>
+<pre><code class="language-powershell">bubblewrap build
+</code></pre>
+<p>No fim, você terá o <code>.aab</code> para upload.</p>
+<hr>
+<h2>PASSO 6 — Publicar no Play Console (sem erro)</h2>
+<p>No <a href="https://play.google.com/console">Google Play Console</a>:</p>
+<ol>
+<li>Criar app: <code>EsporteID</code></li>
+<li>Tipo: App</li>
+<li>Idioma: Português (Brasil)</li>
+<li>Gratuito/Pago conforme sua estratégia</li>
+</ol>
+<h3>6.1 Enviar versão de teste interno</h3>
+<ol>
+<li>Ir em <strong>Testes &gt; Teste interno</strong></li>
+<li>Criar release</li>
+<li>Subir o <code>.aab</code></li>
+<li>Salvar e enviar</li>
+</ol>
+<h3>6.2 Completar formulários obrigatórios</h3>
+<ul>
+<li>Política de privacidade (URL)</li>
+<li>Segurança de dados</li>
+<li>Classificação etária</li>
+<li>Público-alvo</li>
+<li>Conteúdo do app</li>
+</ul>
+<hr>
+<h2>PASSO 7 — Checklist final (copiar e marcar)</h2>
+<ul>
+<li><input disabled="" type="checkbox"> Keystore criada e salva com backup</li>
+<li><input disabled="" type="checkbox"> SHA-256 coletada</li>
+<li><input disabled="" type="checkbox"> Variáveis de produção configuradas</li>
+<li><input disabled="" type="checkbox"> Deploy atualizado</li>
+<li><input disabled="" type="checkbox"> URLs manifest/sw/assetlinks abrindo no domínio</li>
+<li><input disabled="" type="checkbox"> Bubblewrap init concluído</li>
+<li><input disabled="" type="checkbox"> Bubblewrap build gerou <code>.aab</code></li>
+<li><input disabled="" type="checkbox"> App criado no Play Console</li>
+<li><input disabled="" type="checkbox"> Upload no teste interno</li>
+<li><input disabled="" type="checkbox"> Testado em Android real</li>
+<li><input disabled="" type="checkbox"> Só depois publicar produção</li>
+</ul>
+<hr>
+<h2>PASSO 8 — Se der erro, o que fazer</h2>
+<h2>Erro: domínio não verificado</h2>
+<ul>
+<li>conferir <code>TWA_ANDROID_PACKAGE_NAME</code> = <code>com.esporteid.app</code></li>
+<li>conferir SHA-256 da keystore usada no build</li>
+<li>redeploy e testar <code>/.well-known/assetlinks.json</code></li>
+</ul>
+<h2>Erro: abre no navegador ao invés de app fullscreen</h2>
+<ul>
+<li>asset links ainda inválido ou desatualizado</li>
+<li>corrigir variáveis + novo build</li>
+</ul>
+<hr>
+<h2>Padrão que você vai seguir daqui para frente</h2>
+<p>Para cada atualização:</p>
+<ol>
+<li>pacote pequeno</li>
+<li>lint + build</li>
+<li>tag base estável</li>
+<li>teste interno</li>
+<li>produção</li>
+</ol>
+<p>Se quebrar: volta para a base estável.</p>

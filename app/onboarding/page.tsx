@@ -14,6 +14,7 @@ import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { OnboardingWizard } from "./onboarding-wizard";
 
 type Step = "papeis" | "esportes" | "extras" | "perfil";
@@ -153,6 +154,18 @@ export default async function OnboardingPage() {
     .order("id", { ascending: false })
     .limit(80);
 
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  const roleModes = {
+    professor: canAccessSystemFeature(featureCfg, "professores", user.id),
+    organizador: canAccessSystemFeature(featureCfg, "organizador_torneios", user.id),
+    espaco: canAccessSystemFeature(featureCfg, "locais", user.id),
+  };
+  const roleFeatureModes = {
+    professor: featureCfg.professores.mode,
+    organizador: featureCfg.organizador_torneios.mode,
+    espaco: featureCfg.locais.mode,
+  };
+
   return (
     <OnboardingWizard
       userId={user.id}
@@ -173,6 +186,8 @@ export default async function OnboardingPage() {
         donoUsuarioId: l.responsavel_usuario_id ?? l.criado_por_usuario_id ?? null,
       }))}
       selectedPapeis={papeis}
+      roleModes={roleModes}
+      roleFeatureModes={roleFeatureModes}
       selectedEsportes={selectedEsportesAll}
       selectedEsportesModalidades={selectedEsportesModalidades}
       selectedSportModes={selectedSportModes}
