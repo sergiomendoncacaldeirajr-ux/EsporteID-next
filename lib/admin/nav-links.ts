@@ -4,6 +4,8 @@ export const ADMIN_NAV_LINKS: { href: string; label: string; hint: string }[] = 
   { href: "/admin/esportes", label: "Esportes", hint: "Catálogo" },
   { href: "/admin/equipes", label: "Equipes", hint: "Times e duplas" },
   { href: "/admin/locais", label: "Locais", hint: "Espaços" },
+  { href: "/admin/locais/planos-mensalidade", label: "Planos locais (PaaS)", hint: "Mensalidade" },
+  { href: "/admin/locais/suspeitas-mista", label: "Suspeita mista (fraude?)", hint: "Reservas" },
   { href: "/admin/torneios", label: "Torneios", hint: "Eventos" },
   { href: "/admin/partidas", label: "Partidas", hint: "Confrontos" },
   { href: "/admin/matches", label: "Pedidos de desafio", hint: "matches (tabela)" },
@@ -11,7 +13,8 @@ export const ADMIN_NAV_LINKS: { href: string; label: string; hint: string }[] = 
   { href: "/admin/denuncias", label: "Denúncias", hint: "Moderação" },
   { href: "/admin/professor", label: "Professor", hint: "Aulas e solicitações" },
   { href: "/admin/financeiro", label: "Financeiro", hint: "Taxas e promo" },
+  { href: "/admin/integracoes-pagamento", label: "Pagamentos", hint: "Asaas" },
   { href: "/admin/eid", label: "EID", hint: "Motor e auditoria" },
   { href: "/admin/regras", label: "Ranking", hint: "Regras EID" },
-  { href: "/admin/admins", label: "Admins", hint: "Acesso" },
+  { href: "/admin/admins", label: "Admins", hint: "Acesso e testes" },
 ];

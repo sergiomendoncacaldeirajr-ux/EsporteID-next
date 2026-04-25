@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { usuarioJaGerenciaEspaco } from "@/lib/espacos/server";
 import { createClient } from "@/lib/supabase/server";
 import { cadastrarLocalGenerico } from "./actions";
 
@@ -30,6 +31,9 @@ export default async function CadastrarLocalPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/locais/cadastrar");
+  if (await usuarioJaGerenciaEspaco(user.id)) {
+    redirect("/espaco");
+  }
 
   const duplicateId = Number(sp.erro === "duplicado" ? sp.id : "");
   const [{ data: locaisOpcoes }, { data: localDuplicado }] = await Promise.all([

@@ -113,6 +113,82 @@ export default async function AdminFinanceiroPage() {
               Promoção válida até
               <input type="datetime-local" name="espaco_promocao_ate" defaultValue={toDateTimeLocal(data.espaco_promocao_ate)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
             </label>
+            <h4 className="pt-2 text-xs font-bold uppercase tracking-wide text-eid-primary-300">Mensalidade plataforma (por categoria de local)</h4>
+            <p className="text-[11px] text-eid-text-secondary">
+              Valor de referência em reais. Cada categoria aplica a um local em Admin → Locais. Aviso e bloqueio após atraso no painel do dono.
+            </p>
+            <label className="block text-xs font-semibold text-eid-text-secondary">
+              Clube (R$)
+              <input
+                type="number"
+                step="0.01"
+                name="espaco_mensalidade_valor_clube_brl"
+                defaultValue={Number((data as Record<string, unknown>).espaco_mensalidade_valor_clube_brl ?? 99.9)}
+                className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-xs font-semibold text-eid-text-secondary">
+              Condomínio (R$)
+              <input
+                type="number"
+                step="0.01"
+                name="espaco_mensalidade_valor_condominio_brl"
+                defaultValue={Number((data as Record<string, unknown>).espaco_mensalidade_valor_condominio_brl ?? 49.9)}
+                className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-xs font-semibold text-eid-text-secondary">
+              Centro esportivo (R$)
+              <input
+                type="number"
+                step="0.01"
+                name="espaco_mensalidade_valor_centro_brl"
+                defaultValue={Number((data as Record<string, unknown>).espaco_mensalidade_valor_centro_brl ?? 149.9)}
+                className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-xs font-semibold text-eid-text-secondary">
+              Quadra (R$)
+              <input
+                type="number"
+                step="0.01"
+                name="espaco_mensalidade_valor_quadra_brl"
+                defaultValue={Number((data as Record<string, unknown>).espaco_mensalidade_valor_quadra_brl ?? 79.9)}
+                className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-xs font-semibold text-eid-text-secondary">
+              Outro (R$)
+              <input
+                type="number"
+                step="0.01"
+                name="espaco_mensalidade_valor_outro_brl"
+                defaultValue={Number((data as Record<string, unknown>).espaco_mensalidade_valor_outro_brl ?? 99.9)}
+                className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-xs font-semibold text-eid-text-secondary">
+              Dias de aviso antes do vencimento
+              <input
+                type="number"
+                name="espaco_mensalidade_dias_aviso_antes"
+                min={0}
+                max={60}
+                defaultValue={Number((data as Record<string, unknown>).espaco_mensalidade_dias_aviso_antes ?? 7)}
+                className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-xs font-semibold text-eid-text-secondary">
+              Dias após o vencimento para bloquear o painel
+              <input
+                type="number"
+                name="espaco_mensalidade_dias_bloqueio_apos"
+                min={0}
+                max={90}
+                defaultValue={Number((data as Record<string, unknown>).espaco_mensalidade_dias_bloqueio_apos ?? 10)}
+                className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+              />
+            </label>
           </section>
 
           <section className="space-y-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4">

@@ -5,8 +5,13 @@ import { redirect } from "next/navigation";
 import { createAsaasCustomer, createAsaasPayment } from "@/lib/asaas/client";
 import { slugifyEspaco } from "@/lib/espacos/slug";
 import { serializarEspacoReservaConfig } from "@/lib/espacos/config";
+import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
+import { forcarReservasGratisLiberadasFalsas, podeCriarAgendaEUnidades } from "@/lib/espacos/operacao-gate";
 import { avaliarBeneficiosSocioEspaco } from "@/lib/espacos/eligibility";
-import { calcularFinanceiroEspaco } from "@/lib/espacos/financeiro";
+import {
+  calcularCobrancaMensalidadePlataformaEspaco,
+  calcularFinanceiroEspaco,
+} from "@/lib/espacos/financeiro";
 import {
   checkEspacoConflict,
   fetchAutomaticHolidaysForYear,
@@ -31,7 +36,7 @@ async function requireEspacoManager(espacoId: number) {
   const { supabase, user } = await requireUser();
   const { data: espaco, error } = await supabase
     .from("espacos_genericos")
-    .select("id, nome_publico, responsavel_usuario_id, criado_por_usuario_id")
+    .select("id, nome_publico, responsavel_usuario_id, criado_por_usuario_id, slug")
     .eq("id", espacoId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -68,6 +73,25 @@ async function uploadDocumentoEspaco(file: File, userId: string) {
     });
   if (error) throw new Error(error.message);
   return path;
+}
+
+async function uploadLogoUnidadeEspaco(file: File, userId: string) {
+  const supabase = await createClient();
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Envie uma imagem (PNG, JPG ou WEBP).");
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("Imagem acima de 5MB.");
+  }
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const safeExt = ext.replace(/[^a-z0-9]/g, "") || "jpg";
+  const path = `${userId}/unidade_${Date.now()}_${Math.random().toString(16).slice(2, 8)}.${safeExt}`;
+  const { error } = await supabase.storage.from("espaco-logos").upload(path, file, {
+    upsert: true,
+    contentType: file.type || "image/jpeg",
+  });
+  if (error) throw new Error(error.message);
+  return supabase.storage.from("espaco-logos").getPublicUrl(path).data.publicUrl;
 }
 
 async function ensureProfileAsaasCustomer(userId: string) {
@@ -123,6 +147,16 @@ export async function salvarConfiguracoesEspacoAction(
     const slugBase = slugifyEspaco(
       text(formData, "slug") || nomePublico || `espaco-${espacoId}`
     );
+    const { data: espacoModo } = await supabase
+      .from("espacos_genericos")
+      .select("modo_reserva")
+      .eq("id", espacoId)
+      .maybeSingle();
+    const modoR = (espacoModo as { modo_reserva?: string } | null)?.modo_reserva;
+    const reservasGratisLiberadas = forcarReservasGratisLiberadasFalsas(
+      modoR ?? null,
+      checkbox(formData, "reservas_gratis_liberadas")
+    );
     const configuracaoReservas = serializarEspacoReservaConfig({
       limiteReservasDia: Number(formData.get("limite_reservas_dia") ?? 1),
       limiteReservasSemana: Number(formData.get("limite_reservas_semana") ?? 3),
@@ -133,7 +167,7 @@ export async function salvarConfiguracoesEspacoAction(
         formData.get("waitlist_expiracao_minutos") ?? 60
       ),
       bloqueiaInadimplente: checkbox(formData, "bloqueia_inadimplente"),
-      reservasGratisLiberadas: checkbox(formData, "reservas_gratis_liberadas"),
+      reservasGratisLiberadas,
       politicaCancelamento: text(formData, "politica_cancelamento"),
       observacoesPublicas: text(formData, "observacoes_publicas"),
     });
@@ -193,6 +227,7 @@ export async function salvarConfiguracoesEspacoAction(
     });
 
     revalidatePath("/espaco");
+    revalidatePath("/espaco/configuracao");
     revalidatePath("/espaco/agenda");
     revalidatePath("/espaco/socios");
     revalidatePath(`/espaco/${slugBase}`);
@@ -210,8 +245,17 @@ export async function salvarConfiguracoesEspacoAction(
 export async function criarUnidadeEspacoAction(formData: FormData) {
   const espacoId = Number(formData.get("espaco_id") ?? 0);
   const { supabase, user } = await requireEspacoManager(espacoId);
+  const gate = await getPaaSUnidadeGateInfo(supabase, espacoId);
+  if (!gate.podeCriarUnidade) {
+    throw new Error(gate.motivoBloqueio ?? "Não é possível criar unidade no momento.");
+  }
   const nome = text(formData, "nome");
   if (nome.length < 2) throw new Error("Informe o nome da quadra/unidade.");
+  const logoFile = formData.get("logo_file");
+  let logoArquivo: string | null = null;
+  if (logoFile instanceof File && logoFile.size > 0) {
+    logoArquivo = await uploadLogoUnidadeEspaco(logoFile, user.id);
+  }
   const payload = {
     espaco_generico_id: espacoId,
     nome,
@@ -227,6 +271,7 @@ export async function criarUnidadeEspacoAction(formData: FormData) {
     aceita_aulas: checkbox(formData, "aceita_aulas"),
     aceita_torneios: checkbox(formData, "aceita_torneios"),
     observacoes: text(formData, "observacoes") || null,
+    logo_arquivo: logoArquivo,
   };
   const { data, error } = await supabase
     .from("espaco_unidades")
@@ -246,11 +291,31 @@ export async function criarUnidadeEspacoAction(formData: FormData) {
 
   revalidatePath("/espaco");
   revalidatePath("/espaco/agenda");
+  revalidatePath("/espaco/configuracao");
 }
 
 export async function criarHorarioSemanalEspacoAction(formData: FormData) {
   const espacoId = Number(formData.get("espaco_id") ?? 0);
   const { supabase, user } = await requireEspacoManager(espacoId);
+  const { data: egFlags2 } = await supabase
+    .from("espacos_genericos")
+    .select(
+      "id, modo_reserva, modo_monetizacao, paas_aprovado_operacao_sem_gateway, paas_primeiro_pagamento_mensal_recebido_em"
+    )
+    .eq("id", espacoId)
+    .maybeSingle();
+  const hGate = podeCriarAgendaEUnidades(
+    (egFlags2 ?? { id: espacoId, modo_reserva: "mista", modo_monetizacao: "misto" }) as {
+      id: number;
+      modo_reserva: string | null;
+      modo_monetizacao?: string | null;
+      paas_aprovado_operacao_sem_gateway?: boolean | null;
+      paas_primeiro_pagamento_mensal_recebido_em?: string | null;
+    }
+  );
+  if (!hGate.ok) {
+    throw new Error(hGate.motivo);
+  }
   const diaSemana = Number(formData.get("dia_semana") ?? -1);
   const horaInicio = text(formData, "hora_inicio");
   const horaFim = text(formData, "hora_fim");
@@ -282,6 +347,31 @@ export async function criarHorarioSemanalEspacoAction(formData: FormData) {
 
   revalidatePath("/espaco/agenda");
   revalidatePath("/espaco");
+  revalidatePath("/espaco/configuracao");
+}
+
+export async function removerHorarioSemanalEspacoAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const horarioId = Number(formData.get("horario_id") ?? 0);
+  if (!espacoId || !horarioId) throw new Error("Identificador inválido.");
+  const { supabase, user } = await requireEspacoManager(espacoId);
+  const { error } = await supabase
+    .from("espaco_horarios_semanais")
+    .delete()
+    .eq("id", horarioId)
+    .eq("espaco_generico_id", espacoId);
+  if (error) throw new Error(error.message);
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco_horario",
+    p_entidade_id: horarioId,
+    p_acao: "grade_removida",
+    p_payload: {},
+    p_autor_usuario_id: user.id,
+  });
+  revalidatePath("/espaco/agenda");
+  revalidatePath("/espaco");
+  revalidatePath("/espaco/configuracao");
 }
 
 export async function criarBloqueioEspacoAction(formData: FormData) {
@@ -317,6 +407,211 @@ export async function criarBloqueioEspacoAction(formData: FormData) {
 
   revalidatePath("/espaco/agenda");
   revalidatePath("/espaco");
+  revalidatePath("/espaco/configuracao");
+}
+
+export async function removerBloqueioEspacoAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const bloqueioId = Number(formData.get("bloqueio_id") ?? 0);
+  if (!espacoId || !bloqueioId) throw new Error("Identificador inválido.");
+  const { supabase, user } = await requireEspacoManager(espacoId);
+  const { error } = await supabase
+    .from("espaco_bloqueios")
+    .delete()
+    .eq("id", bloqueioId)
+    .eq("espaco_generico_id", espacoId);
+  if (error) throw new Error(error.message);
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco_bloqueio",
+    p_entidade_id: bloqueioId,
+    p_acao: "bloqueio_removido",
+    p_payload: {},
+    p_autor_usuario_id: user.id,
+  });
+  revalidatePath("/espaco/agenda");
+  revalidatePath("/espaco");
+  revalidatePath("/espaco/configuracao");
+}
+
+export async function alternarAtivoUnidadeEspacoAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const unidadeId = Number(formData.get("unidade_id") ?? 0);
+  if (!espacoId || !unidadeId) throw new Error("Identificador inválido.");
+  const { supabase, user } = await requireEspacoManager(espacoId);
+  const { data: row, error: selErr } = await supabase
+    .from("espaco_unidades")
+    .select("id, ativo")
+    .eq("id", unidadeId)
+    .eq("espaco_generico_id", espacoId)
+    .maybeSingle();
+  if (selErr) throw new Error(selErr.message);
+  if (!row) throw new Error("Unidade não encontrada.");
+  const { error } = await supabase
+    .from("espaco_unidades")
+    .update({ ativo: !row.ativo, atualizado_em: new Date().toISOString() })
+    .eq("id", unidadeId)
+    .eq("espaco_generico_id", espacoId);
+  if (error) throw new Error(error.message);
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco_unidade",
+    p_entidade_id: unidadeId,
+    p_acao: "unidade_ativo_alternado",
+    p_payload: { ativo: !row.ativo },
+    p_autor_usuario_id: user.id,
+  });
+  revalidatePath("/espaco/agenda");
+  revalidatePath("/espaco");
+  revalidatePath("/espaco/configuracao");
+}
+
+export async function escolherPlanoMensalidadePaaSAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const planoMensalId = Number(formData.get("plano_mensal_id") ?? 0);
+  if (!espacoId || !planoMensalId) {
+    throw new Error("Selecione um plano válido.");
+  }
+  const { supabase, user, espaco } = await requireEspacoManager(espacoId);
+  const { data: eg, error: egErr } = await supabase
+    .from("espacos_genericos")
+    .select("categoria_mensalidade, modo_monetizacao")
+    .eq("id", espacoId)
+    .maybeSingle();
+  if (egErr || !eg) throw new Error(egErr?.message ?? "Espaço não encontrado.");
+  if (String((eg as { modo_monetizacao?: string }).modo_monetizacao) !== "mensalidade_plataforma") {
+    throw new Error("Este espaço não está no modo de mensalidade com a plataforma.");
+  }
+  const categoria = String((eg as { categoria_mensalidade?: string | null }).categoria_mensalidade ?? "outro");
+  const { data: plano, error: pErr } = await supabase
+    .from("espaco_plano_mensal_plataforma")
+    .select("id, nome, valor_mensal_centavos, categoria_espaco, liberacao")
+    .eq("id", planoMensalId)
+    .maybeSingle();
+  if (pErr || !plano) throw new Error(pErr?.message ?? "Plano não encontrado.");
+  const p = plano as {
+    nome: string;
+    valor_mensal_centavos: number;
+    categoria_espaco: string;
+    liberacao: string;
+  };
+  if (p.categoria_espaco !== categoria) {
+    throw new Error("Este plano não corresponde à categoria do seu espaço.");
+  }
+  if (p.liberacao !== "publico") {
+    throw new Error("Este plano não está disponível para contratação.");
+  }
+  const responsavel = espaco.responsavel_usuario_id ?? espaco.criado_por_usuario_id;
+  if (!responsavel) {
+    throw new Error("Defina um responsável pelo espaço antes de contratar o plano.");
+  }
+  const { error: upErr } = await supabase.from("espaco_assinaturas_plataforma").upsert(
+    {
+      espaco_generico_id: espacoId,
+      responsavel_usuario_id: responsavel,
+      plano_mensal_id: planoMensalId,
+      plano_nome: p.nome,
+      valor_mensal_centavos: p.valor_mensal_centavos,
+      atualizado_em: new Date().toISOString(),
+      status: "pending",
+    },
+    { onConflict: "espaco_generico_id" }
+  );
+  if (upErr) throw new Error(upErr.message);
+
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco",
+    p_entidade_id: espacoId,
+    p_acao: "plano_paaS_escolhido",
+    p_payload: { plano_mensal_id: planoMensalId, plano_nome: p.nome, valor_mensal_centavos: p.valor_mensal_centavos },
+    p_autor_usuario_id: user.id,
+  });
+
+  revalidatePath("/espaco/financeiro");
+  revalidatePath("/espaco/configuracao");
+  revalidatePath("/espaco");
+  revalidatePath("/espaco/agenda");
+}
+
+function simNaoOuManter(formData: FormData, field: string, atual: boolean) {
+  const v = text(formData, field);
+  if (v === "sim") return true;
+  if (v === "nao") return false;
+  return atual;
+}
+
+export async function atualizarUnidadeEspacoAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const unidadeId = Number(formData.get("unidade_id") ?? 0);
+  if (!espacoId || !unidadeId) throw new Error("Identificador inválido.");
+  const { supabase, user } = await requireEspacoManager(espacoId);
+  const { data: cur, error: curErr } = await supabase
+    .from("espaco_unidades")
+    .select(
+      "id, nome, tipo_unidade, superficie, modalidade, coberta, indoor, iluminacao, capacidade, status_operacao, aceita_aulas, aceita_torneios, observacoes, logo_arquivo"
+    )
+    .eq("id", unidadeId)
+    .eq("espaco_generico_id", espacoId)
+    .maybeSingle();
+  if (curErr) throw new Error(curErr.message);
+  if (!cur) throw new Error("Unidade não encontrada.");
+
+  const nome = text(formData, "nome");
+  if (nome.length < 2) throw new Error("Informe o nome da quadra/unidade.");
+  const logoFile = formData.get("logo_file");
+  let logoArquivo: string | null | undefined;
+  if (logoFile instanceof File && logoFile.size > 0) {
+    logoArquivo = await uploadLogoUnidadeEspaco(logoFile, user.id);
+  } else if (text(formData, "remover_logo") === "1") {
+    logoArquivo = null;
+  }
+
+  const curRow = cur as {
+    coberta: boolean;
+    indoor: boolean;
+    iluminacao: boolean;
+    aceita_aulas: boolean;
+    aceita_torneios: boolean;
+  };
+
+  const updatePayload: Record<string, unknown> = {
+    nome,
+    tipo_unidade: text(formData, "tipo_unidade") || "quadra",
+    superficie: text(formData, "superficie") || null,
+    modalidade: text(formData, "modalidade") || null,
+    coberta: simNaoOuManter(formData, "coberta", curRow.coberta),
+    indoor: simNaoOuManter(formData, "indoor", curRow.indoor),
+    iluminacao: simNaoOuManter(formData, "iluminacao", curRow.iluminacao),
+    capacidade: Math.max(1, Number(formData.get("capacidade") ?? 2) || 2),
+    status_operacao: text(formData, "status_operacao") || "ativa",
+    aceita_aulas: simNaoOuManter(formData, "aceita_aulas", curRow.aceita_aulas),
+    aceita_torneios: simNaoOuManter(formData, "aceita_torneios", curRow.aceita_torneios),
+    observacoes: text(formData, "observacoes") || null,
+    atualizado_em: new Date().toISOString(),
+  };
+  if (logoArquivo !== undefined) {
+    updatePayload.logo_arquivo = logoArquivo;
+  }
+
+  const { error } = await supabase
+    .from("espaco_unidades")
+    .update(updatePayload)
+    .eq("id", unidadeId)
+    .eq("espaco_generico_id", espacoId);
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco_unidade",
+    p_entidade_id: unidadeId,
+    p_acao: "unidade_atualizada",
+    p_payload: { nome },
+    p_autor_usuario_id: user.id,
+  });
+  revalidatePath("/espaco/agenda");
+  revalidatePath("/espaco");
+  revalidatePath("/espaco/configuracao");
 }
 
 export async function criarPlanoSocioEspacoAction(formData: FormData) {
@@ -379,6 +674,7 @@ export async function criarPlanoSocioEspacoAction(formData: FormData) {
 
   revalidatePath("/espaco/socios");
   revalidatePath("/espaco");
+  revalidatePath("/espaco/configuracao");
 }
 
 export async function solicitarSocioEspacoAction(
@@ -662,7 +958,7 @@ export async function criarReservaEspacoAction(
         supabase
           .from("espacos_genericos")
           .select(
-            "id, slug, nome_publico, configuracao_reservas_json, uf, codigo_ibge, responsavel_usuario_id, criado_por_usuario_id"
+            "id, slug, nome_publico, configuracao_reservas_json, uf, codigo_ibge, responsavel_usuario_id, criado_por_usuario_id, modo_reserva, modo_monetizacao, taxa_reserva_plataforma_centavos"
           )
           .eq("id", espacoId)
           .maybeSingle(),
@@ -716,6 +1012,29 @@ export async function criarReservaEspacoAction(
       0,
       Math.round(Number(formData.get("valor_centavos") ?? 0) || 0)
     );
+    const espacoM = espaco as {
+      modo_reserva?: string | null;
+      modo_monetizacao?: string | null;
+      taxa_reserva_plataforma_centavos?: number | null;
+    };
+    const modoReserva = (espacoM.modo_reserva ?? "mista") as "gratuita" | "paga" | "mista";
+    const modoMonet = (espacoM.modo_monetizacao ?? "misto") as
+      | "mensalidade_plataforma"
+      | "apenas_reservas"
+      | "misto";
+    const isGratuitoTipo = tipoReserva === "torneio" || tipoReserva === "professor";
+    if (modoReserva === "paga" && !isGratuitoTipo && !checkbox(formData, "usar_beneficio_gratis") && valorCentavos < 1) {
+      return {
+        ok: false,
+        message: "Este local está configurado apenas para reservas pagas. Informe o valor (centavos) do horário ou use o benefício de sócio, se aplicável.",
+      };
+    }
+    if (modoReserva === "gratuita" && !isGratuitoTipo && valorCentavos > 0) {
+      return {
+        ok: false,
+        message: "Este local está com reservas gratuitas. O valor do horário deve ser zero (exceto usos de professor/torneio, se o espaço permitir).",
+      };
+    }
     const antecedenciaHoras =
       (inicioDate.getTime() - Date.now()) / (1000 * 60 * 60);
     if (antecedenciaHoras < benefit.antecedenciaMinHoras) {
@@ -847,6 +1166,15 @@ export async function criarReservaEspacoAction(
       checkbox(formData, "usar_beneficio_gratis") &&
       benefit.ok &&
       benefit.reservasGratisSemana > 0;
+    const taxaReservaPlataformaDb = Math.max(0, Math.round(Number(espacoM.taxa_reserva_plataforma_centavos ?? 0)));
+    const soMensalidadePaaS = modoMonet === "mensalidade_plataforma";
+    const taxaReservaAplicar =
+      !usarBeneficioGratis &&
+      !soMensalidadePaaS &&
+      valorCentavos > 0 &&
+      taxaReservaPlataformaDb > 0
+        ? taxaReservaPlataformaDb
+        : 0;
     if (benefit.limiteReservasSemana > 0 && (reservasSemana ?? 0) >= benefit.limiteReservasSemana) {
       return {
         ok: false,
@@ -868,6 +1196,7 @@ export async function criarReservaEspacoAction(
     const calculo = calcularFinanceiroEspaco({
       valorCentavos: usarBeneficioGratis ? 0 : valorCentavos,
       config: cfg,
+      taxaReservaPlataformaCentavos: usarBeneficioGratis ? 0 : taxaReservaAplicar,
     });
 
     const { data: reserva, error } = await admin
@@ -912,6 +1241,7 @@ export async function criarReservaEspacoAction(
       p_autor_usuario_id: user.id,
     });
 
+    let checkoutUrl: string | null = null;
     if (calculo.brutoCentavos > 0) {
       const customerId = await ensureProfileAsaasCustomer(user.id);
       const payment = await createAsaasPayment({
@@ -922,6 +1252,7 @@ export async function criarReservaEspacoAction(
         description: `Reserva EsporteID · ${espaco.nome_publico}`,
         externalReference: `espaco_reserva:${reserva.id}`,
       });
+      checkoutUrl = payment.invoiceUrl ?? payment.bankSlipUrl ?? null;
 
       await admin.from("espaco_transacoes").insert({
         espaco_generico_id: espacoId,
@@ -937,7 +1268,7 @@ export async function criarReservaEspacoAction(
         valor_liquido_espaco_centavos: calculo.liquidoEspacoCentavos,
         asaas_customer_id: customerId,
         asaas_payment_id: payment.id,
-        asaas_charge_url: payment.invoiceUrl ?? payment.bankSlipUrl ?? null,
+        asaas_charge_url: checkoutUrl,
         external_reference: `espaco_reserva:${reserva.id}`,
         vencimento_em: new Date().toISOString().slice(0, 10),
       });
@@ -972,11 +1303,14 @@ export async function criarReservaEspacoAction(
     revalidatePath(`/espaco/${espaco.slug ?? ""}`);
     revalidatePath("/comunidade");
     revalidatePath("/agenda");
+    if (checkoutUrl) {
+      redirect(checkoutUrl);
+    }
     return {
       ok: true,
       message:
         calculo.brutoCentavos > 0
-          ? "Reserva criada. Gere o PIX no painel do espaço/comunidade."
+          ? "Reserva registrada, mas o link de pagamento não retornou do Asaas. Abra Financeiro do espaço ou tente de novo."
           : "Reserva criada com benefício de sócio.",
     };
   } catch (error) {
@@ -1117,12 +1451,94 @@ export async function gerarCobrancaSocioEspacoAction(formData: FormData) {
   revalidatePath("/espaco/socios");
 }
 
-export async function abrirPainelEspacoAction(formData: FormData) {
+/** Checkout rápido: dono paga a mensalidade PaaS (cobrança no Asaas e redirecionamento). */
+export async function gerarCobrancaMensalidadePlataformaEspacoAction(
+  _prev: { ok: boolean; message: string } | null,
+  formData: FormData
+): Promise<{ ok: boolean; message: string }> {
   const espacoId = Number(formData.get("espaco_id") ?? 0);
-  if (!espacoId) {
-    redirect("/espaco");
+  if (!Number.isFinite(espacoId) || espacoId < 1) {
+    return { ok: false, message: "Espaço inválido." };
   }
-  redirect(`/espaco?espaco=${espacoId}`);
+  let chargeUrl: string | null = null;
+  let slug: string | null = null;
+  try {
+    const { supabase, user, espaco } = await requireEspacoManager(espacoId);
+    slug = espaco.slug ?? null;
+    const admin = createServiceRoleClient();
+
+    const { data: assin, error: aErr } = await admin
+      .from("espaco_assinaturas_plataforma")
+      .select("id, valor_mensal_centavos, plano_nome, status")
+      .eq("espaco_generico_id", espacoId)
+      .maybeSingle();
+    if (aErr) return { ok: false, message: aErr.message };
+    if (!assin || (assin.valor_mensal_centavos ?? 0) < 1) {
+      return { ok: false, message: "Assinatura da plataforma não encontrada ou valor zerado." };
+    }
+
+    const { data: cfg } = await admin
+      .from("ei_financeiro_config")
+      .select(
+        "asaas_taxa_percentual, espaco_taxa_fixa, espaco_taxa_fixa_promo, espaco_plataforma_sobre_taxa_gateway, espaco_plataforma_sobre_taxa_gateway_promo, espaco_promocao_ativa, espaco_promocao_ate"
+      )
+      .eq("id", 1)
+      .maybeSingle();
+    const calculo = calcularCobrancaMensalidadePlataformaEspaco({
+      valorMensalCentavos: assin.valor_mensal_centavos,
+      config: cfg,
+    });
+    if (calculo.brutoCentavos < 1) {
+      return { ok: false, message: "Valor inválido para cobrança." };
+    }
+
+    const customerId = await ensureProfileAsaasCustomer(user.id);
+    const payment = await createAsaasPayment({
+      customer: customerId,
+      billingType: "PIX",
+      value: calculo.brutoCentavos / 100,
+      dueDate: new Date().toISOString().slice(0, 10),
+      description: `Mensalidade PaaS EsporteID — ${String(espaco.nome_publico ?? "Espaço")} · ${String(assin.plano_nome ?? "Plano")}`,
+      externalReference: `espaco_paaS_mensalidade:${assin.id}:${Date.now()}`,
+    });
+    chargeUrl = payment.invoiceUrl ?? payment.bankSlipUrl ?? null;
+
+    await admin.from("espaco_transacoes").insert({
+      espaco_generico_id: espacoId,
+      usuario_id: user.id,
+      assinatura_plataforma_id: assin.id,
+      tipo: "mensalidade_plataforma_espaco",
+      billing_type: "PIX",
+      status: "pending",
+      valor_bruto_centavos: calculo.brutoCentavos,
+      taxa_gateway_centavos: calculo.taxaGatewayCentavos,
+      comissao_plataforma_centavos: calculo.comissaoPlataformaCentavos,
+      valor_liquido_espaco_centavos: calculo.liquidoEspacoCentavos,
+      asaas_customer_id: customerId,
+      asaas_payment_id: payment.id,
+      asaas_charge_url: chargeUrl,
+      external_reference: `espaco_paaS_mensalidade:${assin.id}`,
+      vencimento_em: new Date().toISOString().slice(0, 10),
+    });
+
+    await supabase.rpc("espaco_criar_auditoria", {
+      p_espaco_id: espacoId,
+      p_entidade_tipo: "espaco_assinaturas_plataforma",
+      p_entidade_id: assin.id,
+      p_acao: "cobranca_paaS_gerada",
+      p_autor_usuario_id: user.id,
+    });
+
+    revalidatePath("/espaco/financeiro");
+    revalidatePath("/espaco");
+    revalidatePath(`/espaco/${slug ?? ""}`);
+  } catch (error) {
+    return { ok: false, message: error instanceof Error ? error.message : "Falha na cobrança." };
+  }
+  if (chargeUrl) {
+    redirect(chargeUrl);
+  }
+  return { ok: true, message: "Cobrança criada; abra em Transações se precisar do boleto/PIX." };
 }
 
 export async function sincronizarFeriadosEspacoAction(formData: FormData) {
@@ -1164,4 +1580,57 @@ export async function sincronizarFeriadosEspacoAction(formData: FormData) {
   });
 
   revalidatePath("/espaco/agenda");
+}
+
+/**
+ * Dados básicos para o cadastro Asaas (recebimento) — a subconta/API
+ * no servidor segue a configuração global; aqui o dono guarda CPF/CNPJ e acessa o Asaas.
+ */
+export async function salvarDadosContaAsaasParceiroAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    const espacoId = Number(formData.get("espaco_id") ?? 0);
+    if (!Number.isFinite(espacoId) || espacoId < 1) {
+      return { ok: false, message: "Espaço inválido." };
+    }
+    const { supabase, user } = await requireEspacoManager(espacoId);
+    const nomeRazao = text(formData, "nome_razao_social");
+    const cpfCnpj = text(formData, "cpf_cnpj").replace(/\D/g, "");
+    const email = text(formData, "email");
+    if (nomeRazao.length < 3) {
+      return { ok: false, message: "Informe a razão social (ou seu nome) como constará no Asaas." };
+    }
+    if (cpfCnpj.length < 11) {
+      return { ok: false, message: "CPF/CNPJ inválido (apenas números)." };
+    }
+    if (!email.includes("@")) {
+      return { ok: false, message: "Informe o e-mail que usará no Asaas." };
+    }
+    const admin = createServiceRoleClient();
+    const { error } = await admin.from("parceiro_conta_asaas").upsert(
+      {
+        usuario_id: user.id,
+        nome_razao_social: nomeRazao,
+        cpf_cnpj: cpfCnpj,
+        email,
+        onboarding_status: "dados_salvos",
+        atualizado_em: new Date().toISOString(),
+      } as Record<string, unknown>,
+      { onConflict: "usuario_id" }
+    );
+    if (error) {
+      return { ok: false, message: error.message };
+    }
+    revalidatePath("/espaco/integracao-asaas");
+    revalidatePath("/espaco");
+    return {
+      ok: true,
+      message:
+        "Dados guardados. Abra a conta no Asaas ou o painel pelos links abaixo. Quando a integração (API/subconta) for necessária, o suporte orienta a chave de ambiente.",
+    };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Falha ao salvar." };
+  }
 }

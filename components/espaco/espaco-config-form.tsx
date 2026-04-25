@@ -6,9 +6,17 @@ import { normalizeEspacoReservaConfig } from "@/lib/espacos/config";
 
 const initialState = { ok: false, message: "" };
 
+const modoReservaLabels: Record<string, string> = {
+  paga: "Modo só reserva paga (definido no contrato/plano). Benefícios gratuitos ficam desativados e não podem ser ligados aqui.",
+  gratuita: "Modo com foco em reservas gratuitas. Ajuste as regras abaixo conforme a política do seu espaço.",
+  mista: "Modo misto: você pode combinar regras de reserva paga e benefícios gratuitos para sócios, dentro do permitido.",
+};
+
 export function EspacoConfigForm({
   espaco,
+  modoReserva = "mista",
 }: {
+  modoReserva?: string | null;
   espaco: {
     id: number;
     nome_publico: string;
@@ -33,6 +41,8 @@ export function EspacoConfigForm({
     initialState
   );
   const cfg = normalizeEspacoReservaConfig(espaco.configuracao_reservas_json);
+  const modo = (modoReserva ?? "mista").toLowerCase();
+  const bloqueiaGratis = modo === "paga";
 
   return (
     <form action={formAction} className="grid gap-3 sm:grid-cols-2">
@@ -159,6 +169,12 @@ export function EspacoConfigForm({
           className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm"
         />
       </div>
+      <div className="sm:col-span-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/30 p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">Modo de reserva</p>
+        <p className="mt-2 text-xs leading-relaxed text-eid-fg">
+          {modoReservaLabels[modo] ?? modoReservaLabels.mista}
+        </p>
+      </div>
       <div className="sm:col-span-2 grid gap-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4 sm:grid-cols-2">
         <label className="flex items-center gap-2 text-xs text-eid-fg">
           <input
@@ -184,11 +200,16 @@ export function EspacoConfigForm({
           />
           Bloquear inadimplente
         </label>
-        <label className="flex items-center gap-2 text-xs text-eid-fg">
+        <label
+          className={`flex items-center gap-2 text-xs ${
+            bloqueiaGratis ? "cursor-not-allowed text-eid-text-secondary" : "text-eid-fg"
+          }`}
+        >
           <input
             type="checkbox"
             name="reservas_gratis_liberadas"
-            defaultChecked={cfg.reservasGratisLiberadas}
+            defaultChecked={bloqueiaGratis ? false : cfg.reservasGratisLiberadas}
+            disabled={bloqueiaGratis}
           />
           Liberar benefícios gratuitos
         </label>

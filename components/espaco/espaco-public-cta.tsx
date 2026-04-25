@@ -139,6 +139,9 @@ export function EspacoPublicReservaForm({
           {state.message}
         </p>
       ) : null}
+      <p className="text-[11px] text-eid-text-secondary">
+        Com valor de reserva paga, você será direcionado ao checkout do Asaas (PIX) para concluir o pagamento na hora.
+      </p>
     </form>
   );
 }

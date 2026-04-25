@@ -1,4 +1,15 @@
+import { EspacoMensalidadePaasCheckout } from "@/components/espaco/espaco-mensalidade-paas-checkout";
+import { EspacoPlanosPaaSFinanceiro } from "@/components/espaco/espaco-planos-paas-financeiro";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
+
+type PlanoPaaSFinanceiroRow = {
+  id: number;
+  nome: string;
+  min_unidades: number;
+  max_unidades: number | null;
+  valor_mensal_centavos: number;
+  socios_mensal_modo: string | null;
+};
 
 type Props = {
   searchParams?: Promise<{ espaco?: string }>;
@@ -19,7 +30,16 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
     espacoId,
   });
 
-  const [{ data: transacoes }, { data: assinatura }, { data: extrato }, { data: auditoria }] =
+  const categoria = selectedSpace.categoria_mensalidade ?? "outro";
+  const categoriaLabel: Record<string, string> = {
+    condominio: "Condomínio",
+    clube: "Clube",
+    centro_esportivo: "Centro esportivo",
+    quadra: "Quadra / espaço aberto",
+    outro: "Outro",
+  };
+
+  const [{ data: transacoes }, { data: assinatura }, { data: extrato }, { data: auditoria }, { data: planosPaaS }] =
     await Promise.all([
       supabase
         .from("espaco_transacoes")
@@ -29,7 +49,9 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
         .limit(30),
       supabase
         .from("espaco_assinaturas_plataforma")
-        .select("id, status, plano_nome, valor_mensal_centavos, desconto_progressivo_percentual, proxima_cobranca")
+        .select(
+          "id, status, plano_nome, valor_mensal_centavos, desconto_progressivo_percentual, proxima_cobranca, plano_mensal_id"
+        )
         .eq("espaco_generico_id", selectedSpace.id)
         .maybeSingle(),
       supabase
@@ -47,6 +69,16 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
         .eq("espaco_generico_id", selectedSpace.id)
         .order("id", { ascending: false })
         .limit(20),
+      selectedSpace.modo_monetizacao === "mensalidade_plataforma"
+        ? supabase
+            .from("espaco_plano_mensal_plataforma")
+            .select("id, nome, min_unidades, max_unidades, valor_mensal_centavos, socios_mensal_modo")
+            .is("espaco_generico_id", null)
+            .eq("categoria_espaco", categoria)
+            .eq("ativo", true)
+            .eq("liberacao", "publico")
+            .order("ordem", { ascending: true })
+        : Promise.resolve({ data: [] as never[] }),
     ]);
 
   const totalRecebido = (transacoes ?? [])
@@ -107,6 +139,21 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
       <section className="space-y-4">
         <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
           <h2 className="text-lg font-bold text-eid-fg">Assinatura da plataforma</h2>
+          {selectedSpace.modo_monetizacao === "mensalidade_plataforma" ? (
+            <div className="mt-4 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/5 p-4">
+              <h3 className="text-sm font-bold text-eid-fg">Planos (faixa de quadras)</h3>
+              <p className="mt-1 text-xs text-eid-text-secondary">
+                Categoria do espaço: <span className="font-semibold text-eid-fg">{categoriaLabel[categoria] ?? categoria}</span>.
+                Compare os direitos e selecione o plano antes de gerar o pagamento.
+              </p>
+              <EspacoPlanosPaaSFinanceiro
+                espacoId={selectedSpace.id}
+                categoriaLabel={categoriaLabel[categoria] ?? categoria}
+                planos={(planosPaaS ?? []) as PlanoPaaSFinanceiroRow[]}
+                planoAtualId={(assinatura as { plano_mensal_id?: number | null } | null)?.plano_mensal_id ?? null}
+              />
+            </div>
+          ) : null}
           {assinatura ? (
             <div className="mt-3 space-y-2 text-sm text-eid-text-secondary">
               <p>
@@ -119,6 +166,7 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
                 {Number(assinatura.desconto_progressivo_percentual ?? 0) * 100}%
               </p>
               <p>Próxima cobrança {assinatura.proxima_cobranca ?? "-"}</p>
+              <EspacoMensalidadePaasCheckout espacoId={selectedSpace.id} />
             </div>
           ) : (
             <p className="mt-3 text-sm text-eid-text-secondary">

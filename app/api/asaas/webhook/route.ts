@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
   const { data: espacoPagamento } = await admin
     .from("espaco_transacoes")
-    .select("id, espaco_generico_id, usuario_id, espaco_socio_id, reserva_quadra_id, tipo")
+    .select("id, espaco_generico_id, usuario_id, espaco_socio_id, reserva_quadra_id, assinatura_plataforma_id, tipo")
     .eq("asaas_payment_id", paymentId)
     .maybeSingle();
 
@@ -122,6 +122,32 @@ export async function POST(request: Request) {
       })
       .eq("id", espacoPagamento.id);
 
+    if (espacoPagamento.assinatura_plataforma_id && espacoPagamento.tipo === "mensalidade_plataforma_espaco" && mapped.pagamento === "received") {
+      const proxima = new Date();
+      proxima.setMonth(proxima.getMonth() + 1);
+      await admin
+        .from("espaco_assinaturas_plataforma")
+        .update({
+          status: "active",
+          proxima_cobranca: proxima.toISOString().slice(0, 10),
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq("id", espacoPagamento.assinatura_plataforma_id);
+      if (espacoPagamento.espaco_generico_id) {
+        const { data: eg0 } = await admin
+          .from("espacos_genericos")
+          .select("paas_primeiro_pagamento_mensal_recebido_em")
+          .eq("id", espacoPagamento.espaco_generico_id)
+          .maybeSingle();
+        if (eg0 && (eg0 as { paas_primeiro_pagamento_mensal_recebido_em?: string | null }).paas_primeiro_pagamento_mensal_recebido_em == null) {
+          await admin
+            .from("espacos_genericos")
+            .update({ paas_primeiro_pagamento_mensal_recebido_em: new Date().toISOString() })
+            .eq("id", espacoPagamento.espaco_generico_id);
+        }
+      }
+    }
+
     if (espacoPagamento.reserva_quadra_id) {
       await admin
         .from("reservas_quadra")
@@ -168,7 +194,7 @@ export async function POST(request: Request) {
         )
         .eq("id", espacoPagamento.id)
         .maybeSingle();
-      if (transacao) {
+      if (transacao && transacao.tipo !== "mensalidade_plataforma_espaco") {
         await admin.from("extrato_lancamentos").insert({
           parceiro_usuario_id: parceiroUsuarioId,
           tipo: transacao.tipo,

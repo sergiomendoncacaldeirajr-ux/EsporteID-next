@@ -1,6 +1,18 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+/** Um login = um espaço gerido: criador ou responsável de qualquer `espacos_genericos`. */
+export async function usuarioJaGerenciaEspaco(userId: string): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("espacos_genericos")
+    .select("id")
+    .or(`criado_por_usuario_id.eq.${userId},responsavel_usuario_id.eq.${userId}`)
+    .limit(1)
+    .maybeSingle();
+  return Boolean(data);
+}
+
 type ManagedSpace = {
   id: number;
   slug: string | null;
@@ -22,6 +34,9 @@ type ManagedSpace = {
   ativo_listagem: boolean | null;
   operacao_status: string | null;
   configuracao_reservas_json: unknown;
+  categoria_mensalidade: string | null;
+  modo_reserva: string | null;
+  modo_monetizacao: string | null;
 };
 
 export async function requireEspacoManagerUser(nextPath: string) {
@@ -36,10 +51,11 @@ export async function requireEspacoManagerUser(nextPath: string) {
   const { data: managedSpaces, error } = await supabase
     .from("espacos_genericos")
     .select(
-      "id, slug, nome_publico, localizacao, cidade, uf, criado_por_usuario_id, responsavel_usuario_id, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, descricao_curta, descricao_longa, aceita_socios, permite_professores_aprovados, ativo_listagem, operacao_status, configuracao_reservas_json"
+      "id, slug, nome_publico, localizacao, cidade, uf, criado_por_usuario_id, responsavel_usuario_id, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, descricao_curta, descricao_longa, aceita_socios, permite_professores_aprovados, ativo_listagem, operacao_status, configuracao_reservas_json, categoria_mensalidade, modo_reserva, modo_monetizacao"
     )
     .or(`criado_por_usuario_id.eq.${user.id},responsavel_usuario_id.eq.${user.id}`)
-    .order("id", { ascending: false });
+    .order("id", { ascending: false })
+    .limit(1);
   if (error) throw new Error(error.message);
 
   if (!(managedSpaces ?? []).length) {
@@ -55,16 +71,14 @@ export async function requireEspacoManagerUser(nextPath: string) {
 
 export async function getEspacoSelecionado({
   nextPath,
-  espacoId,
+  espacoId: _espacoId,
 }: {
   nextPath: string;
+  /** Ignorado: cada conta gerencia no máximo um espaço. */
   espacoId?: number | null;
 }) {
   const ctx = await requireEspacoManagerUser(nextPath);
-  const selected =
-    ctx.managedSpaces.find((item) => item.id === espacoId) ??
-    ctx.managedSpaces[0] ??
-    null;
+  const selected = ctx.managedSpaces[0] ?? null;
   if (!selected) {
     redirect("/locais/cadastrar?modo=espaco");
   }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { findDuplicateEspaco, isEspacoDuplicateError } from "@/lib/espacos/duplicate";
+import { usuarioJaGerenciaEspaco } from "@/lib/espacos/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function cadastrarLocalGenerico(formData: FormData): Promise<void> {
@@ -12,6 +13,9 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
   } = await supabase.auth.getUser();
   if (!user) {
     redirect("/login?next=/locais/cadastrar");
+  }
+  if (await usuarioJaGerenciaEspaco(user.id)) {
+    redirect("/espaco");
   }
 
   const nome = String(formData.get("nome_publico") ?? "").trim();

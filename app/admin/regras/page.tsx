@@ -3,6 +3,8 @@ import {
   adminSetMatchRankCooldownMeses,
   adminSetMatchRankPendingLimit,
   adminSetMatchResultadoAutoAprovacaoHoras,
+  adminUpdateRegrasRankingRow,
+  adminUpdateRegrasRankingMatchRow,
 } from "@/app/admin/actions";
 import { SYSTEM_FEATURE_LABEL, type SystemFeatureKey } from "@/lib/system-features";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
@@ -185,27 +187,67 @@ export default async function AdminRegrasPage() {
 
       <section>
         <h2 className="text-base font-bold text-eid-fg">Regras de ranking (modalidade)</h2>
-        <p className="mt-1 text-sm text-eid-text-secondary">Leitura via service role — ajustes finos podem ser feitos por migração SQL.</p>
+        <p className="mt-1 text-sm text-eid-text-secondary">
+          Pontos de torneio/geral por esporte e modalidade. Edite e salve cada linha.
+        </p>
         {rr.error ? <p className="text-red-300">{rr.error.message}</p> : null}
         <div className="mt-3 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)]">
-          <table className="w-full min-w-[640px] text-left text-xs">
+          <table className="w-full min-w-[800px] text-left text-xs">
             <thead className="border-b border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-bold uppercase text-eid-text-secondary">
               <tr>
                 <th className="px-2 py-2">Esporte</th>
                 <th className="px-2 py-2">Modalidade</th>
-                <th className="px-2 py-2">Vitória</th>
-                <th className="px-2 py-2">Derrota</th>
+                <th className="px-2 py-2">Vitória / derrota / empate</th>
               </tr>
             </thead>
             <tbody>
               {(rr.data ?? []).map((r: Record<string, unknown>, i: number) => {
                 const esp = r.esportes as { nome?: string } | null;
+                const eid = Number(r.esporte_id);
+                const modalidade = String(r.modalidade ?? "");
                 return (
-                  <tr key={`rr-${i}`} className="border-b border-[color:var(--eid-border-subtle)]/50">
-                    <td className="px-2 py-1.5">{String(esp?.nome ?? r.esporte_id ?? "")}</td>
-                    <td className="px-2 py-1.5">{String(r.modalidade ?? "")}</td>
-                    <td className="px-2 py-1.5">{String(r.pontos_vitoria ?? "")}</td>
-                    <td className="px-2 py-1.5">{String(r.pontos_derrota ?? "")}</td>
+                  <tr key={`rr-${i}`} className="border-b border-[color:var(--eid-border-subtle)]/50 align-top">
+                    <td className="px-2 py-1.5 font-medium text-eid-fg">{String(esp?.nome ?? r.esporte_id ?? "")}</td>
+                    <td className="px-2 py-1.5">{modalidade}</td>
+                    <td className="p-1">
+                      <form action={adminUpdateRegrasRankingRow} className="flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="esporte_id" value={eid} />
+                        <input type="hidden" name="modalidade" value={modalidade} />
+                        <label className="flex items-center gap-1 text-[10px] text-eid-text-secondary">
+                          V
+                          <input
+                            name="pontos_vitoria"
+                            type="number"
+                            defaultValue={String(r.pontos_vitoria ?? 0)}
+                            className="eid-input-dark h-8 w-16 rounded px-1 text-eid-fg"
+                          />
+                        </label>
+                        <label className="flex items-center gap-1 text-[10px] text-eid-text-secondary">
+                          D
+                          <input
+                            name="pontos_derrota"
+                            type="number"
+                            defaultValue={String(r.pontos_derrota ?? 0)}
+                            className="eid-input-dark h-8 w-16 rounded px-1 text-eid-fg"
+                          />
+                        </label>
+                        <label className="flex items-center gap-1 text-[10px] text-eid-text-secondary">
+                          E
+                          <input
+                            name="pontos_empate"
+                            type="number"
+                            defaultValue={String(r.pontos_empate ?? 0)}
+                            className="eid-input-dark h-8 w-16 rounded px-1 text-eid-fg"
+                          />
+                        </label>
+                        <button
+                          type="submit"
+                          className="rounded border border-eid-primary-500/40 px-2 py-1 text-[10px] font-bold text-eid-primary-300"
+                        >
+                          Salvar
+                        </button>
+                      </form>
+                    </td>
                   </tr>
                 );
               })}
@@ -218,24 +260,73 @@ export default async function AdminRegrasPage() {
         <h2 className="text-base font-bold text-eid-fg">Regras de ranking no desafio (EID)</h2>
         {rrm.error ? <p className="text-red-300">{rrm.error.message}</p> : null}
         <div className="mt-3 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)]">
-          <table className="w-full min-w-[720px] text-left text-xs">
+          <table className="w-full min-w-[900px] text-left text-xs">
             <thead className="border-b border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-bold uppercase text-eid-text-secondary">
               <tr>
                 <th className="px-2 py-2">Esporte</th>
-                <th className="px-2 py-2">K</th>
-                <th className="px-2 py-2">Vitória</th>
-                <th className="px-2 py-2">Derrota</th>
+                <th className="px-1 py-2">Vitória</th>
+                <th className="px-1 py-2">Derrota</th>
+                <th className="px-1 py-2">/set</th>
+                <th className="px-1 py-2">K</th>
+                <th className="px-1 py-2">Gol</th>
+                <th className="px-1 py-2">Game</th>
+                <th className="px-2 py-2" />
               </tr>
             </thead>
             <tbody>
               {(rrm.data ?? []).map((r: Record<string, unknown>, i: number) => {
                 const esp = r.esportes as { nome?: string } | null;
+                const eid = Number(r.esporte_id);
                 return (
-                  <tr key={`rrm-${i}`} className="border-b border-[color:var(--eid-border-subtle)]/50">
-                    <td className="px-2 py-1.5">{String(esp?.nome ?? r.esporte_id ?? "")}</td>
-                    <td className="px-2 py-1.5">{String(r.k_factor ?? "")}</td>
-                    <td className="px-2 py-1.5">{String(r.pontos_vitoria ?? "")}</td>
-                    <td className="px-2 py-1.5">{String(r.pontos_derrota ?? "")}</td>
+                  <tr key={`rrm-${i}`} className="border-b border-[color:var(--eid-border-subtle)]/50 align-top">
+                    <td className="px-2 py-1.5 font-medium text-eid-fg">{String(esp?.nome ?? r.esporte_id ?? "")}</td>
+                    <td colSpan={7} className="p-1">
+                      <form action={adminUpdateRegrasRankingMatchRow} className="flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="esporte_id" value={eid} />
+                        <input
+                          name="pontos_vitoria"
+                          type="number"
+                          defaultValue={String(r.pontos_vitoria ?? 0)}
+                          className="eid-input-dark h-8 w-14 rounded px-1 text-eid-fg"
+                        />
+                        <input
+                          name="pontos_derrota"
+                          type="number"
+                          defaultValue={String(r.pontos_derrota ?? 0)}
+                          className="eid-input-dark h-8 w-14 rounded px-1 text-eid-fg"
+                        />
+                        <input
+                          name="pontos_por_set"
+                          type="number"
+                          defaultValue={String(r.pontos_por_set ?? 0)}
+                          className="eid-input-dark h-8 w-14 rounded px-1 text-eid-fg"
+                        />
+                        <input
+                          name="k_factor"
+                          type="number"
+                          defaultValue={String(r.k_factor ?? 32)}
+                          className="eid-input-dark h-8 w-14 rounded px-1 text-eid-fg"
+                        />
+                        <input
+                          name="bonus_por_gol"
+                          type="number"
+                          defaultValue={String(r.bonus_por_gol ?? 0)}
+                          className="eid-input-dark h-8 w-14 rounded px-1 text-eid-fg"
+                        />
+                        <input
+                          name="bonus_por_game"
+                          type="number"
+                          defaultValue={String(r.bonus_por_game ?? 0)}
+                          className="eid-input-dark h-8 w-14 rounded px-1 text-eid-fg"
+                        />
+                        <button
+                          type="submit"
+                          className="ml-auto rounded border border-eid-primary-500/40 px-2 py-1 text-[10px] font-bold text-eid-primary-300"
+                        >
+                          Salvar
+                        </button>
+                      </form>
+                    </td>
                   </tr>
                 );
               })}

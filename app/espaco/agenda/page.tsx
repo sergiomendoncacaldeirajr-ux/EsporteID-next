@@ -1,10 +1,14 @@
 import {
   criarBloqueioEspacoAction,
   criarHorarioSemanalEspacoAction,
+  removerBloqueioEspacoAction,
+  removerHorarioSemanalEspacoAction,
   sincronizarFeriadosEspacoAction,
 } from "@/app/espaco/actions";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
 import { resumoDisponibilidadeDia } from "@/lib/espacos/calendar";
+
+const DIAS_SEMANA_CURTO = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"] as const;
 
 type Props = {
   searchParams?: Promise<{ espaco?: string }>;
@@ -127,15 +131,36 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
             </button>
           </form>
           <div className="mt-4 space-y-2">
-            {(grade ?? []).map((item) => (
-              <div
-                key={item.id}
-                className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-3 text-xs text-eid-text-secondary"
-              >
-                Dia {item.dia_semana} · {String(item.hora_inicio).slice(0, 5)} às{" "}
-                {String(item.hora_fim).slice(0, 5)}
-              </div>
-            ))}
+            {(grade ?? []).map((item) => {
+              const diaIdx = Math.min(6, Math.max(0, Number(item.dia_semana)));
+              const unidade = (unidades ?? []).find((u) => u.id === item.espaco_unidade_id);
+              return (
+                <div
+                  key={item.id}
+                  className="flex flex-col gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-3 text-xs sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <p className="text-eid-text-secondary">
+                    <span className="font-semibold text-eid-fg">
+                      {DIAS_SEMANA_CURTO[diaIdx] ?? `Dia ${item.dia_semana}`}
+                    </span>
+                    {" · "}
+                    {String(item.hora_inicio).slice(0, 5)} às {String(item.hora_fim).slice(0, 5)}
+                    {unidade ? ` · ${unidade.nome}` : ""}
+                    {!item.ativo ? " · inativo" : ""}
+                  </p>
+                  <form action={removerHorarioSemanalEspacoAction} className="shrink-0">
+                    <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+                    <input type="hidden" name="horario_id" value={item.id} />
+                    <button
+                      type="submit"
+                      className="w-full rounded-lg border border-red-500/35 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold text-red-300 sm:w-auto"
+                    >
+                      Remover
+                    </button>
+                  </form>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -165,6 +190,42 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
               Criar bloqueio
             </button>
           </form>
+          <div className="mt-4 space-y-2">
+            {(bloqueios ?? []).length ? (
+              (bloqueios ?? []).map((b) => {
+                const unidade = (unidades ?? []).find((u) => u.id === b.espaco_unidade_id);
+                return (
+                  <div
+                    key={b.id}
+                    className="flex flex-col gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-3 text-xs sm:flex-row sm:items-start sm:justify-between"
+                  >
+                    <div>
+                      <p className="font-semibold text-eid-fg">{b.titulo}</p>
+                      <p className="mt-1 text-eid-text-secondary">
+                        {b.inicio ? new Date(b.inicio).toLocaleString("pt-BR") : "-"} →{" "}
+                        {b.fim ? new Date(b.fim).toLocaleString("pt-BR") : "-"}
+                      </p>
+                      <p className="mt-1 text-eid-text-secondary">
+                        {unidade?.nome ?? "Todas"} · {b.tipo_bloqueio}
+                      </p>
+                    </div>
+                    <form action={removerBloqueioEspacoAction} className="shrink-0">
+                      <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+                      <input type="hidden" name="bloqueio_id" value={b.id} />
+                      <button
+                        type="submit"
+                        className="w-full rounded-lg border border-red-500/35 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold text-red-300 sm:w-auto"
+                      >
+                        Remover
+                      </button>
+                    </form>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-eid-text-secondary">Nenhum bloqueio cadastrado.</p>
+            )}
+          </div>
         </div>
       </section>
 
