@@ -187,8 +187,8 @@ export default async function AdminAdminsPage({ searchParams }: PageProps) {
           Quem você adicionar aqui passa a constar na lista de testadores de <strong>todas</strong> as funcionalidades
           (Marketplace, Locais, Torneios, Professores, Organizador). Use a <strong>busca no topo</strong> ou o e-mail abaixo. A
           pessoa só <strong>vê</strong> esses recursos no app quando a função estiver em modo <strong>teste</strong> em{" "}
-          <a className="font-semibold text-eid-primary-300 underline hover:text-eid-fg" href="/admin/regras">
-            Admin → Ranking → Modos de funcionalidades
+          <a className="font-semibold text-eid-primary-300 underline hover:text-eid-fg" href="/admin/funcionalidades-do-app">
+            Admin → Funcionalidades do app
           </a>
           .
         </p>

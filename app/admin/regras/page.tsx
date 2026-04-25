@@ -1,12 +1,10 @@
 import {
-  adminSetSystemFeatureMode,
   adminSetMatchRankCooldownMeses,
   adminSetMatchRankPendingLimit,
   adminSetMatchResultadoAutoAprovacaoHoras,
   adminUpdateRegrasRankingRow,
   adminUpdateRegrasRankingMatchRow,
 } from "@/app/admin/actions";
-import { SYSTEM_FEATURE_LABEL, type SystemFeatureKey } from "@/lib/system-features";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 export default async function AdminRegrasPage() {
@@ -14,13 +12,12 @@ export default async function AdminRegrasPage() {
     return <p className="text-sm text-eid-text-secondary">Configure a service role.</p>;
   }
   const db = createServiceRoleClient();
-  const [rr, rrm, cooldownRow, pendingLimitRow, autoApproveRow, featureModesRow] = await Promise.all([
+  const [rr, rrm, cooldownRow, pendingLimitRow, autoApproveRow] = await Promise.all([
     db.from("regras_ranking").select("*, esportes(nome)").order("esporte_id", { ascending: true }).limit(100),
     db.from("regras_ranking_match").select("*, esportes(nome)").order("esporte_id", { ascending: true }).limit(100),
     db.from("app_config").select("value_json").eq("key", "match_rank_cooldown_meses").maybeSingle(),
     db.from("app_config").select("value_json").eq("key", "match_rank_pending_result_limit").maybeSingle(),
     db.from("app_config").select("value_json").eq("key", "match_resultado_autoaprovacao_horas").maybeSingle(),
-    db.from("app_config").select("value_json").eq("key", "system_feature_modes_v1").maybeSingle(),
   ]);
 
   let cooldownMeses = 12;
@@ -42,69 +39,15 @@ export default async function AdminRegrasPage() {
     if (Number.isFinite(n) && n >= 1) autoApproveHoras = Math.min(168, Math.floor(n));
   }
 
-  const featureKeys: SystemFeatureKey[] = [
-    "marketplace",
-    "locais",
-    "torneios",
-    "professores",
-    "organizador_torneios",
-  ];
-  const rawFeatures =
-    featureModesRow.data?.value_json &&
-    typeof featureModesRow.data.value_json === "object" &&
-    !Array.isArray(featureModesRow.data.value_json)
-      ? ((featureModesRow.data.value_json as { features?: Record<string, unknown> }).features ?? {})
-      : {};
-
   return (
     <div className="space-y-10">
-      <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
-        <h2 className="text-base font-bold text-eid-fg">Modos de funcionalidades do sistema</h2>
-        <p className="mt-1 text-sm text-eid-text-secondary">
-          Estados: <strong>ativo</strong> (todos), <strong>em_breve</strong>, <strong>desenvolvimento</strong>, <strong>teste</strong> (somente IDs selecionados).
-        </p>
-        <div className="mt-4 space-y-3">
-          {featureKeys.map((key) => {
-            const row = rawFeatures[key] as { mode?: string; testers?: string[] } | undefined;
-            const mode = row?.mode ?? "desenvolvimento";
-            const testers = Array.isArray(row?.testers) ? row!.testers.join(", ") : "";
-            return (
-              <form
-                key={key}
-                action={adminSetSystemFeatureMode}
-                className="grid gap-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-bg/35 p-3 sm:grid-cols-[1fr_auto_auto]"
-              >
-                <input type="hidden" name="feature" value={key} />
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-eid-fg">{SYSTEM_FEATURE_LABEL[key]}</p>
-                  <input
-                    name="testers"
-                    defaultValue={testers}
-                    placeholder="IDs de teste (quando modo=teste), separados por vírgula"
-                    className="eid-input-dark mt-1 h-9 w-full rounded-lg px-2 text-xs text-eid-fg"
-                  />
-                </div>
-                <select
-                  name="mode"
-                  defaultValue={mode}
-                  className="eid-input-dark h-9 rounded-lg px-2 text-xs font-semibold text-eid-fg"
-                >
-                  <option value="ativo">ativo</option>
-                  <option value="em_breve">em_breve</option>
-                  <option value="desenvolvimento">desenvolvimento</option>
-                  <option value="teste">teste</option>
-                </select>
-                <button
-                  type="submit"
-                  className="rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/15 px-3 py-2 text-[11px] font-bold text-eid-fg"
-                >
-                  Salvar
-                </button>
-              </form>
-            );
-          })}
-        </div>
-      </section>
+      <p className="text-xs text-eid-text-secondary">
+        Para ligar ou ocultar módulos do app (Marketplace, Torneios, etc.), use{" "}
+        <a className="font-semibold text-eid-primary-300 underline" href="/admin/funcionalidades-do-app">
+          Funcionalidades do app
+        </a>{" "}
+        no menu do admin — esta página trata só de <strong className="text-eid-fg">pontos de ranking e desafio</strong>.
+      </p>
 
       <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
         <h2 className="text-base font-bold text-eid-fg">Desafio de ranking · carência entre oponentes</h2>

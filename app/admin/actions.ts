@@ -630,6 +630,7 @@ function removeUserFromAllFeatureTestersJson(prevValue: unknown, userId: string)
 function revalidateAfterFeatureTesters() {
   revalidatePath("/admin/admins");
   revalidatePath("/admin/regras");
+  revalidatePath("/admin/funcionalidades-do-app");
   revalidatePath("/dashboard");
   revalidatePath("/locais");
   revalidatePath("/torneios");
@@ -637,7 +638,7 @@ function revalidateAfterFeatureTesters() {
   revalidatePath("/organizador");
 }
 
-/** Inclui o usuário (por e-mail) em `testers` de todas as funcionalidades — visível quando o modo for `teste` em Admin → Ranking. */
+/** Inclui o usuário (por e-mail) em `testers` de todas as funcionalidades — visível quando o modo for `teste` em Admin → Funcionalidades do app. */
 export async function adminAddUserToFeatureTesters(formData: FormData) {
   try {
     await guard();
@@ -902,6 +903,7 @@ export async function adminSetSystemFeatureMode(formData: FormData) {
       );
     if (error) return;
     revalidatePath("/admin/regras");
+    revalidatePath("/admin/funcionalidades-do-app");
     revalidatePath("/dashboard");
     revalidatePath("/locais");
     revalidatePath("/torneios");

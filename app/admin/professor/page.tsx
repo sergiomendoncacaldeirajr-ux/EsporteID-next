@@ -29,7 +29,7 @@ export default async function AdminProfessorPage() {
         </a>
         ; regras de produto em{" "}
         <a href="/admin/regras" className="font-semibold text-eid-primary-300 underline">
-          Ranking
+          Ranking &amp; desafio
         </a>
         .
       </p>

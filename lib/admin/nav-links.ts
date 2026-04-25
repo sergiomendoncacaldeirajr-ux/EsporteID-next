@@ -15,6 +15,11 @@ export const ADMIN_NAV_LINKS: { href: string; label: string; hint: string }[] = 
   { href: "/admin/financeiro", label: "Financeiro", hint: "Taxas e promo" },
   { href: "/admin/integracoes-pagamento", label: "Pagamentos", hint: "Asaas" },
   { href: "/admin/eid", label: "EID", hint: "Motor e auditoria" },
-  { href: "/admin/regras", label: "Ranking", hint: "Regras EID" },
+  {
+    href: "/admin/funcionalidades-do-app",
+    label: "Funcionalidades do app",
+    hint: "Quem vê cada módulo (produção / teste)",
+  },
+  { href: "/admin/regras", label: "Ranking & desafio", hint: "Pontos, carência e pendências" },
   { href: "/admin/admins", label: "Admins", hint: "Acesso e testes" },
 ];

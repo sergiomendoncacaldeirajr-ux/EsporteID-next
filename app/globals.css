@@ -203,23 +203,15 @@ html {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   /*
-   * overscroll-behavior-y: auto — deixa o “elástico” nativo ao puxar além do fim da rolagem
-   * (rubber band no iOS / leve compressão no Chrome Android), sensação mais de app nativo.
-   * Se quiser reduzir pull-to-refresh do navegador no topo, volte para `none` só em páginas específicas.
+   * `none` no documento: reduz/evita pull-to-refresh do navegador ao puxar no topo (especialmente Android).
    */
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: none;
   /* Evita “faixa branca” quando o viewport iOS e a altura do body não batem. */
   background-color: var(--eid-bg);
 }
 
-@media (display-mode: standalone) {
-  html {
-    overscroll-behavior-y: auto;
-  }
-}
-
 body {
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: none;
 }
 
 /* Fonte padrão: Barlow — atlética, compacta, premium */
