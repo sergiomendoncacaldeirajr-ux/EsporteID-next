@@ -11,6 +11,7 @@ export function MatchPageShell({ children, fullBleed = false }: { children: Reac
         aria-hidden
       />
       <main
+        data-eid-touch-ui
         className={
           fullBleed
             ? "relative z-[1] w-full min-w-0 px-2.5 pb-4 pt-2 sm:px-4 sm:pt-2.5"

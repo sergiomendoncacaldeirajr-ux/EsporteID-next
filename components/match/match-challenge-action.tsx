@@ -68,14 +68,14 @@ export function MatchChallengeAction({
               title={`Criar ${alvoLabel}`}
               fullscreen
               topMode="backOnly"
-              className="inline-flex min-h-[28px] items-center justify-center rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-card px-2 text-[9px] font-black uppercase tracking-[0.06em] text-eid-fg transition hover:border-eid-primary-500/35"
+              className="inline-flex min-h-[40px] items-center justify-center rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 text-[11px] font-black uppercase tracking-[0.06em] text-eid-fg transition hover:border-eid-primary-500/35"
             >
               Criar agora
             </ProfileEditDrawerTrigger>
             <button
               type="button"
               onClick={() => setShowCreatePrompt(false)}
-              className="inline-flex min-h-[28px] items-center justify-center rounded-md border border-[color:var(--eid-border-subtle)] bg-transparent px-2 text-[9px] font-black uppercase tracking-[0.06em] text-eid-text-secondary transition hover:text-eid-fg"
+              className="inline-flex min-h-[40px] items-center justify-center rounded-md border border-[color:var(--eid-border-subtle)] bg-transparent px-3 text-[11px] font-black uppercase tracking-[0.06em] text-eid-text-secondary transition hover:text-eid-fg"
             >
               Agora não
             </button>

@@ -903,6 +903,39 @@ select,
     padding: 0.45rem 0.72rem;
     font-size: 0.8125rem;
   }
+
+  /*
+   * Padrão touch para telas de fluxo fora de perfil/dashboard.
+   * Aplicado somente em escopos marcados com `data-eid-touch-ui` ou `.eid-touch-ui-scope`.
+   */
+  :where([data-eid-touch-ui], .eid-touch-ui-scope)
+    :where(button, [role="button"], a[class*="eid-btn-"]) {
+    min-height: 44px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  :where([data-eid-touch-ui], .eid-touch-ui-scope)
+    :where(input.eid-input-dark, select.eid-input-dark) {
+    min-height: 46px;
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+  }
+
+  :where([data-eid-touch-ui], .eid-touch-ui-scope) textarea.eid-input-dark {
+    padding: 0.625rem 0.875rem;
+  }
+
+  /* Admin: mantém densidade um pouco menor, mas evita botões/campos minúsculos. */
+  [data-eid-admin] :where(button, [role="button"], a[class*="eid-btn-"]) {
+    min-height: 40px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  [data-eid-admin] :where(input.eid-input-dark, select.eid-input-dark) {
+    min-height: 44px;
+  }
 }
 
 [data-eid-theme="light"] body {

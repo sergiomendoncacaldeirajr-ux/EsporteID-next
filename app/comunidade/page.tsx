@@ -295,7 +295,10 @@ export default async function ComunidadePage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-lg px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]">
+    <main
+      data-eid-touch-ui
+      className="mx-auto w-full max-w-lg px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+    >
       <FlowPageHeader
         title="Painel de controle"
         subtitle="Acompanhe sua rede em um só lugar: notificações, convites e pedidos organizados para você decidir e agir com rapidez."

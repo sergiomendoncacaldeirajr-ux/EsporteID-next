@@ -174,7 +174,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                     type="datetime-local"
                     name="data_partida"
                     defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
-                    className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg"
+                    className="eid-input-dark h-[46px] rounded-xl px-3.5 text-sm text-eid-fg"
                   />
                 </label>
                 <label className="grid gap-1.5">
@@ -184,7 +184,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                     name="local_str"
                     defaultValue={p.local_str ?? ""}
                     placeholder="Quadra, clube, endereço..."
-                    className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg"
+                    className="eid-input-dark h-[46px] rounded-xl px-3.5 text-sm text-eid-fg"
                   />
                 </label>
               </div>
@@ -217,7 +217,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                     min={0}
                     defaultValue={p.placar_1 ?? ""}
                     required
-                    className="eid-input-dark h-11 rounded-xl px-3 text-sm font-bold text-eid-fg"
+                    className="eid-input-dark h-[46px] rounded-xl px-3.5 text-sm font-bold text-eid-fg"
                   />
                 </label>
                 <label className="grid gap-1.5">
@@ -230,7 +230,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                     min={0}
                     defaultValue={p.placar_2 ?? ""}
                     required
-                    className="eid-input-dark h-11 rounded-xl px-3 text-sm font-bold text-eid-fg"
+                    className="eid-input-dark h-[46px] rounded-xl px-3.5 text-sm font-bold text-eid-fg"
                   />
                 </label>
               </div>
@@ -241,7 +241,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   rows={3}
                   defaultValue={p.mensagem ?? ""}
                   placeholder="Ex.: 6/4 4/6 10/8 no tiebreak."
-                  className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
+                  className="eid-input-dark rounded-xl px-3.5 py-2.5 text-sm text-eid-fg"
                 />
               </label>
               <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-3">

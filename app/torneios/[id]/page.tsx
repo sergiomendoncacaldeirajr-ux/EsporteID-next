@@ -113,7 +113,7 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
     !isOrganizadorTorneio && t.status === "aberto" && !minhaInscricao && !(parsedRegras?.vagas_max && totalInscritos != null && totalInscritos >= (parsedRegras.vagas_max ?? 0));
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-3 pb-10 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
+    <main data-eid-touch-ui className="mx-auto w-full max-w-5xl px-3 pb-10 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
         <PerfilBackLink href={backHref} label="Voltar aos torneios" />
 
         {flashOk ? (

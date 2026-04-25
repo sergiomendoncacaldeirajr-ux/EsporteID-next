@@ -11,7 +11,7 @@ export function getPostAuthRedirect(
 ): string {
   const n = next?.trim();
   const safeNext =
-    n && n.startsWith("/") && !n.startsWith("//") ? n : null;
+    n && n !== "/" && n.startsWith("/") && !n.startsWith("//") ? n : null;
 
   if (!profile.termosAceitos) {
     if (safeNext) {

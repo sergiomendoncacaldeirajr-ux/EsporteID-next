@@ -7,9 +7,9 @@ import { createClient } from "@/lib/supabase/client";
 import { getRecoveryEmailRedirectTo } from "@/lib/auth/email-redirects";
 
 const inputClass =
-  "eid-input-dark w-full rounded-xl px-3 py-3 text-eid-fg placeholder:text-eid-text-secondary/85";
+  "eid-input-dark h-[32px] w-full rounded-xl px-3 py-1.5 text-eid-fg placeholder:text-eid-text-secondary/85";
 const primaryBtnClass =
-  "eid-btn-primary flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-3 text-[14px] font-bold transition hover:shadow-[0_8px_18px_-10px_rgba(249,115,22,0.7)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60";
+  "mt-2 flex h-[46px] w-full cursor-pointer items-center justify-center rounded-xl border-0 bg-eid-action-500 !text-[12px] font-extrabold uppercase tracking-[0.02em] text-white transition hover:bg-eid-action-400 active:scale-[0.97] active:bg-eid-action-600 active:opacity-95 disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function RecuperarSenhaPage() {
   const [email, setEmail] = useState("");
@@ -50,7 +50,7 @@ export default function RecuperarSenhaPage() {
           Informe o e-mail da conta. Você receberá um link e também poderá usar código de 6 dígitos.
         </p>
 
-        <div className="eid-auth-card mt-6 p-5">
+        <div className="eid-auth-card mt-6 p-2.5">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {error && (
               <p className="rounded-xl border border-red-400/25 bg-red-500/10 px-3 py-2 text-sm text-red-200">
@@ -62,7 +62,7 @@ export default function RecuperarSenhaPage() {
                 <p>{msg}</p>
                 <Link
                   href={`/verificar-codigo?tipo=recovery&email=${encodeURIComponent(email.trim().toLowerCase())}`}
-                  className="mt-2 inline-block font-semibold text-eid-action-500 hover:text-eid-action-400"
+                  className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border-2 border-eid-primary-500/40 bg-eid-card px-4 text-[13px] font-bold uppercase tracking-[0.02em] text-eid-fg transition hover:border-eid-primary-500/60 hover:bg-eid-surface"
                 >
                   Já tenho o código
                 </Link>
@@ -86,10 +86,10 @@ export default function RecuperarSenhaPage() {
               {loading ? (
                 <>
                   <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
-                  <span>Enviando código...</span>
+                  <span className="!text-[12px] font-extrabold uppercase tracking-[0.02em]">Enviando código...</span>
                 </>
               ) : (
-                "Enviar link e código"
+                <span className="!text-[12px] font-extrabold uppercase tracking-[0.02em]">Enviar link e código</span>
               )}
             </button>
           </form>

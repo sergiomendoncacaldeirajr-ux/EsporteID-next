@@ -6,8 +6,8 @@ import { createRouteHandlerClient } from "@/lib/supabase/server";
 import type { LoginActionState } from "./login-state";
 
 function safeNext(raw: string): string {
-  const n = raw.trim() || "/";
-  if (!n.startsWith("/") || n.startsWith("//")) return "/";
+  const n = raw.trim() || "/dashboard";
+  if (!n.startsWith("/") || n.startsWith("//")) return "/dashboard";
   return n;
 }
 

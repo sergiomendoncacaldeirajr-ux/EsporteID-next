@@ -68,7 +68,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 </p>
                 <Link
                   href={`/perfil/${m.desafianteId}?from=/comunidade`}
-                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-2 min-h-[36px] max-w-fit px-3 py-1.5 normal-case no-underline hover:underline`}
+                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-2 max-w-fit px-3 normal-case no-underline hover:underline`}
                 >
                   Ver perfil →
                 </Link>

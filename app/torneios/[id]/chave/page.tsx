@@ -101,7 +101,7 @@ export default async function TorneioChavePage({ params, searchParams }: Props) 
   const showDraw = isPublished || canSeeDraft;
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-3 pb-10 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
+    <main data-eid-touch-ui className="mx-auto w-full max-w-5xl px-3 pb-10 pt-3 sm:px-6 sm:pb-12 sm:pt-4">
         <PerfilBackLink href={backHref} label="Voltar ao torneio" />
 
         <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 md:rounded-3xl md:p-8">

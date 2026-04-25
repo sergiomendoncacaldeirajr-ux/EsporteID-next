@@ -43,7 +43,7 @@ export default async function CriarTorneioPage({
   const pode = await usuarioPodeCriarTorneio(supabase, user.id);
   if (!pode) {
     return (
-        <main className="mx-auto w-full max-w-lg px-3 py-6 sm:max-w-2xl sm:px-6">
+        <main data-eid-touch-ui className="mx-auto w-full max-w-lg px-3 py-6 sm:max-w-2xl sm:px-6">
           <Link href="/torneios" className="text-xs font-semibold text-eid-primary-300 hover:underline">
             ← Voltar aos torneios
           </Link>

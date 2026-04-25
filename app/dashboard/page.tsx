@@ -394,15 +394,6 @@ export default async function DashboardPage({ searchParams }: Props) {
     return "blocked";
   };
   const navItems = [
-    { label: "Vagas", shortLabel: "Vagas", href: "/vagas", icon: IconUsers, status: "active" as const },
-    {
-      label: "MarketPlace",
-      shortLabel: "Market",
-      // Ainda não há rota dedicada de marketplace; quando liberado abre a comunidade.
-      href: canSeeMarketplace ? "/comunidade" : undefined,
-      icon: IconMarketplace,
-      status: statusFromFeature(canSeeMarketplace, featureCfg.marketplace.mode),
-    },
     {
       label: "Locais",
       shortLabel: "Locais",
@@ -410,12 +401,21 @@ export default async function DashboardPage({ searchParams }: Props) {
       icon: IconLocationCard,
       status: statusFromFeature(canSeeLocais, featureCfg.locais.mode),
     },
+    { label: "Vagas", shortLabel: "Vagas", href: "/vagas", icon: IconUsers, status: "active" as const },
     {
       label: "Torneios",
       shortLabel: "Torneios",
       href: canSeeTorneios ? "/torneios" : undefined,
       icon: IconTorneioCard,
       status: statusFromFeature(canSeeTorneios, featureCfg.torneios.mode),
+    },
+    {
+      label: "MarketPlace",
+      shortLabel: "Market",
+      // Ainda não há rota dedicada de marketplace; quando liberado abre a comunidade.
+      href: canSeeMarketplace ? "/comunidade" : undefined,
+      icon: IconMarketplace,
+      status: statusFromFeature(canSeeMarketplace, featureCfg.marketplace.mode),
     },
   ];
   const quickNavMain = navItems;

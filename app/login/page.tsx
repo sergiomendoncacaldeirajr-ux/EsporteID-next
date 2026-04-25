@@ -57,7 +57,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   if (bootstrapError) {
     return (
       <LoginForm
-        nextPath={firstQuery(sp.next) ?? "/"}
+        nextPath={firstQuery(sp.next) ?? "/dashboard"}
         cadastroOk={firstQuery(sp.cadastro) === "ok"}
         codigoOk={firstQuery(sp.codigo) === "ok"}
         bootstrapError={bootstrapError}
@@ -78,7 +78,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       console.error("[login/page] profiles", e);
       return (
         <LoginForm
-          nextPath={firstQuery(sp.next) ?? "/"}
+          nextPath={firstQuery(sp.next) ?? "/dashboard"}
           cadastroOk={firstQuery(sp.cadastro) === "ok"}
           codigoOk={firstQuery(sp.codigo) === "ok"}
           bootstrapError="Não foi possível verificar seu perfil. Tente de novo em instantes."
@@ -99,7 +99,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <LoginForm
-      nextPath={firstQuery(sp.next) ?? "/"}
+      nextPath={firstQuery(sp.next) ?? "/dashboard"}
       cadastroOk={firstQuery(sp.cadastro) === "ok"}
       codigoOk={firstQuery(sp.codigo) === "ok"}
       bootstrapError={null}
