@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { getContextHomeHref, type ActiveAppContext } from "@/lib/auth/active-context";
 import { createClient } from "@/lib/supabase/client";
@@ -99,6 +99,7 @@ function NavBadge({ n }: { n: number }) {
 }
 
 export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
+  const router = useRouter();
   const pathname = usePathname() ?? "";
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(userId);
   const [agendaBadge, setAgendaBadge] = useState(0);
@@ -117,7 +118,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     releaseTimerRef.current = window.setTimeout(() => {
       pendingHrefRef.current = null;
       releaseTimerRef.current = undefined;
-    }, 1500);
+    }, 450);
   }
 
   useEffect(() => {
@@ -208,6 +209,29 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       window.clearInterval(t);
     };
   }, [resolvedUserId]);
+
+  /* Prefetch das abas principais: ao tocar, o RSC + payload costumam já estar no cache do router. */
+  useEffect(() => {
+    if (!resolvedUserId) return;
+    const p = pathname ?? "";
+    const onAuth = AUTH_PATH_PREFIXES.some((x) =>
+      x.endsWith("/") ? p.startsWith(x) : p === x || p.startsWith(x + "/")
+    );
+    if (onAuth || p.startsWith("/admin")) return;
+
+    const home = getContextHomeHref(activeContext);
+    const hrefs: string[] =
+      activeContext === "organizador"
+        ? [home, "/torneios", "/torneios/criar", "/locais", `/perfil/${resolvedUserId}`]
+        : activeContext === "professor"
+          ? [home, "/professor/agenda", "/professor/alunos", "/professor/avaliacoes", `/perfil/${resolvedUserId}`]
+          : activeContext === "espaco"
+            ? [home, "/espaco/agenda", "/espaco/socios", "/espaco/financeiro", `/perfil/${resolvedUserId}`]
+            : [home, "/agenda", "/ranking", "/comunidade", `/perfil/${resolvedUserId}`];
+    for (const href of hrefs) {
+      void router.prefetch(href);
+    }
+  }, [resolvedUserId, activeContext, router]);
 
   if (!resolvedUserId) return null;
 
@@ -416,6 +440,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch
                     onClickCapture={(ev) => onNavLinkClickCapture(ev, item.href)}
                     className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 pt-1.5 transition-opacity active:opacity-80"
                     aria-label={item.label}
@@ -452,6 +477,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch
                   onClickCapture={(ev) => onNavLinkClickCapture(ev, item.href)}
                   className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 transition-opacity active:opacity-80"
                   aria-label={item.label}

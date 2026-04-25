@@ -39,7 +39,7 @@ export default function LoadingDashboard() {
         ))}
       </div>
 
-      {Array.from({ length: 4 }).map((_, sectionIdx) => (
+      {Array.from({ length: 2 }).map((_, sectionIdx) => (
         <section
           key={sectionIdx}
           className="mt-7 rounded-[1.2rem] border border-eid-primary-500/25 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-primary-950)_24%,var(--eid-card)_76%))] px-3 py-2.5 sm:mt-9 sm:rounded-2xl sm:px-4 sm:py-3"
@@ -69,12 +69,6 @@ export default function LoadingDashboard() {
               ))}
             </div>
           )}
-          {sectionIdx === 3 ? (
-            <>
-              <SkBlock className="mt-3 h-12 w-full rounded-2xl" />
-              <SkBlock className="mt-2 h-4 w-full rounded-md" />
-            </>
-          ) : null}
         </section>
       ))}
       <div className="h-1" />
