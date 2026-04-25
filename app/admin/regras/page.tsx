@@ -1,4 +1,5 @@
 import {
+  adminUpdateEsporteDesafioConfig,
   adminSetMatchRankCooldownMeses,
   adminSetMatchRankPendingLimit,
   adminSetMatchResultadoAutoAprovacaoHoras,
@@ -12,9 +13,14 @@ export default async function AdminRegrasPage() {
     return <p className="text-sm text-eid-text-secondary">Configure a service role.</p>;
   }
   const db = createServiceRoleClient();
-  const [rr, rrm, cooldownRow, pendingLimitRow, autoApproveRow] = await Promise.all([
+  const [rr, rrm, esportesCfg, cooldownRow, pendingLimitRow, autoApproveRow] = await Promise.all([
     db.from("regras_ranking").select("*, esportes(nome)").order("esporte_id", { ascending: true }).limit(100),
     db.from("regras_ranking_match").select("*, esportes(nome)").order("esporte_id", { ascending: true }).limit(100),
+    db
+      .from("esportes")
+      .select("id, nome, desafio_modo_lancamento, desafio_regras_placar_json")
+      .order("ordem", { ascending: true })
+      .limit(100),
     db.from("app_config").select("value_json").eq("key", "match_rank_cooldown_meses").maybeSingle(),
     db.from("app_config").select("value_json").eq("key", "match_rank_pending_result_limit").maybeSingle(),
     db.from("app_config").select("value_json").eq("key", "match_resultado_autoaprovacao_horas").maybeSingle(),
@@ -126,6 +132,64 @@ export default async function AdminRegrasPage() {
             Salvar
           </button>
         </form>
+      </section>
+
+      <section>
+        <h2 className="text-base font-bold text-eid-fg">Desafio por esporte · modo de lançamento e regras de placar</h2>
+        <p className="mt-1 text-sm text-eid-text-secondary">
+          Configure como o placar deve ser lançado em cada esporte e valide limites no backend usando JSON.
+          Exemplo: <code>{'{"minPlacar":0,"maxPlacar":21,"permitirEmpate":false,"permitirWO":true}'}</code>.
+        </p>
+        {esportesCfg.error ? <p className="text-red-300">{esportesCfg.error.message}</p> : null}
+        <div className="mt-3 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)]">
+          <table className="w-full min-w-[980px] text-left text-xs">
+            <thead className="border-b border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-bold uppercase text-eid-text-secondary">
+              <tr>
+                <th className="px-2 py-2">Esporte</th>
+                <th className="px-2 py-2">Modo</th>
+                <th className="px-2 py-2">Regras (JSON)</th>
+                <th className="px-2 py-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {(esportesCfg.data ?? []).map((e: Record<string, unknown>) => (
+                <tr key={`esp-desafio-${String(e.id ?? "")}`} className="border-b border-[color:var(--eid-border-subtle)]/50 align-top">
+                  <td className="px-2 py-1.5 font-medium text-eid-fg">{String(e.nome ?? `#${String(e.id ?? "")}`)}</td>
+                  <td className="p-1">
+                    <form action={adminUpdateEsporteDesafioConfig} className="flex flex-wrap items-start gap-2">
+                      <input type="hidden" name="id" value={String(e.id ?? "")} />
+                      <select
+                        name="desafio_modo_lancamento"
+                        defaultValue={String(e.desafio_modo_lancamento ?? "simples")}
+                        className="eid-input-dark h-8 min-w-[180px] rounded px-2 text-[11px] text-eid-fg"
+                      >
+                        <option value="simples">simples</option>
+                        <option value="sets">sets</option>
+                        <option value="games">games</option>
+                        <option value="pontos_corridos">pontos_corridos</option>
+                      </select>
+                      <textarea
+                        name="desafio_regras_placar_json"
+                        rows={3}
+                        defaultValue={JSON.stringify(e.desafio_regras_placar_json ?? {}, null, 0)}
+                        className="eid-input-dark min-h-[70px] min-w-[460px] rounded px-2 py-1.5 text-[11px] text-eid-fg"
+                        placeholder='{"minPlacar":0,"maxPlacar":21,"permitirEmpate":false,"permitirWO":true}'
+                      />
+                      <button
+                        type="submit"
+                        className="rounded border border-eid-primary-500/40 px-2 py-1 text-[10px] font-bold text-eid-primary-300"
+                      >
+                        Salvar
+                      </button>
+                    </form>
+                  </td>
+                  <td className="px-2 py-1.5 text-[11px] text-eid-text-secondary">Aplicado no fluxo de `registrar placar`.</td>
+                  <td />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section>

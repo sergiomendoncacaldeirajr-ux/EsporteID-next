@@ -8,6 +8,8 @@ export type SolicitarDesafioState =
   | { ok: true; redirectTo: string }
   | { ok: false; message: string };
 
+const UUID_V4_OR_GENERIC_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function solicitarDesafioMatch(
   _prev: SolicitarDesafioState,
   formData: FormData
@@ -18,7 +20,9 @@ export async function solicitarDesafioMatch(
   const alvoTime = formData.get("alvo_time_id");
 
   const p_esporte_id = Number(esporteRaw);
-  const p_modalidade = String(modalidadeRaw ?? "").trim();
+  const p_modalidade = String(modalidadeRaw ?? "")
+    .trim()
+    .toLowerCase();
   const finRaw = String(formData.get("finalidade") ?? "ranking").trim().toLowerCase();
   const p_finalidade = finRaw === "amistoso" ? "amistoso" : "ranking";
 
@@ -51,6 +55,7 @@ export async function solicitarDesafioMatch(
   if (mod === "individual") {
     const u = String(alvoUsuario ?? "").trim();
     if (!u) return { ok: false, message: "Alvo inválido." };
+    if (!UUID_V4_OR_GENERIC_RE.test(u)) return { ok: false, message: "Usuário alvo inválido." };
     p_alvo_usuario_id = u;
   } else if (mod === "dupla" || mod === "time") {
     const tid = Number(alvoTime);

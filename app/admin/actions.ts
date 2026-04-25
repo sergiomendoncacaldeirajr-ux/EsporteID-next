@@ -1048,6 +1048,14 @@ function slugifyEsporte(nome: string) {
     .replace(/^_+|_+$/g, "");
 }
 
+function normalizeDesafioModoLancamento(raw: string): "simples" | "sets" | "games" | "pontos_corridos" {
+  const v = String(raw ?? "")
+    .trim()
+    .toLowerCase();
+  if (v === "sets" || v === "games" || v === "pontos_corridos") return v;
+  return "simples";
+}
+
 export async function adminCreateEsporte(formData: FormData) {
   try {
     await guard();
@@ -1102,6 +1110,35 @@ export async function adminUpdateEsporteCatalogo(formData: FormData) {
     if (!Number.isFinite(row.ordem)) return;
     const { error } = await svc().from("esportes").update(row).eq("id", id);
     if (error) return;
+    revalidatePath("/admin/esportes");
+  } catch {
+    return;
+  }
+}
+
+export async function adminUpdateEsporteDesafioConfig(formData: FormData) {
+  try {
+    await guard();
+    const id = Number(formData.get("id"));
+    if (!Number.isFinite(id)) return;
+    const desafio_modo_lancamento = normalizeDesafioModoLancamento(String(formData.get("desafio_modo_lancamento") ?? ""));
+    const regrasRaw = String(formData.get("desafio_regras_placar_json") ?? "").trim();
+    let desafio_regras_placar_json: Record<string, unknown> = {};
+    if (regrasRaw) {
+      try {
+        const parsed = JSON.parse(regrasRaw) as unknown;
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          desafio_regras_placar_json = parsed as Record<string, unknown>;
+        } else {
+          return;
+        }
+      } catch {
+        return;
+      }
+    }
+    const { error } = await svc().from("esportes").update({ desafio_modo_lancamento, desafio_regras_placar_json }).eq("id", id);
+    if (error) return;
+    revalidatePath("/admin/regras");
     revalidatePath("/admin/esportes");
   } catch {
     return;

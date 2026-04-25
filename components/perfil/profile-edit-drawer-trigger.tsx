@@ -139,7 +139,7 @@ export function ProfileEditDrawerTrigger({
                 }`}
                 style={{
                   paddingTop:
-                    "calc(0.65rem + max(3.4rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
+                    "calc(0.8rem + max(4.2rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
                   overscrollBehavior: "contain",
                 }}
               >

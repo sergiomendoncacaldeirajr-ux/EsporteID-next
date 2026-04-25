@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { sanitizeOptionalUserText, sanitizeUserText } from "@/lib/security/sanitize-input";
 import { createClient } from "@/lib/supabase/server";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
 
@@ -30,6 +31,7 @@ function normStatus(v: string | null | undefined): string {
 
 type PartidaCtx = {
   id: number;
+  match_id: number | null;
   esporte_id: number | null;
   torneio_id: number | null;
   jogador1_id: string | null;
@@ -88,7 +90,7 @@ async function loadPartidaContext(partidaId: number, userId: string) {
   const { data: partida } = await supabase
     .from("partidas")
     .select(
-      "id, esporte_id, torneio_id, jogador1_id, jogador2_id, usuario_id, desafiante_id, desafiado_id, status, status_ranking, lancado_por, placar_1, placar_2, time1_id, time2_id, modalidade"
+      "id, match_id, esporte_id, torneio_id, jogador1_id, jogador2_id, usuario_id, desafiante_id, desafiado_id, status, status_ranking, lancado_por, placar_1, placar_2, time1_id, time2_id, modalidade"
     )
     .eq("id", partidaId)
     .maybeSingle();
@@ -127,6 +129,21 @@ async function notifyUser(
   });
 }
 
+function toOptionalFiniteNumber(v: unknown): number | null {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function toOptionalBoolean(v: unknown): boolean | null {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "string") {
+    const n = v.trim().toLowerCase();
+    if (n === "true") return true;
+    if (n === "false") return false;
+  }
+  return null;
+}
+
 export async function submitPlacarAction(formData: FormData) {
   const partidaId = Number(formData.get("partida_id"));
   if (!Number.isFinite(partidaId) || partidaId < 1) redirect("/agenda");
@@ -139,15 +156,31 @@ export async function submitPlacarAction(formData: FormData) {
 
   const placar1 = toInt(formData.get("placar_1"));
   const placar2 = toInt(formData.get("placar_2"));
-  const observacao = String(formData.get("observacao") ?? "").trim();
+  const observacao = sanitizeUserText(formData.get("observacao"), 500);
   const woAtivo = String(formData.get("wo_ativo") ?? "") === "1";
   const woVencedor = String(formData.get("wo_vencedor") ?? "").trim();
   if (!woAtivo && (placar1 == null || placar2 == null)) go(partidaId, "erro", "Informe placares válidos.");
-  if (!woAtivo && placar1 === placar2) go(partidaId, "erro", "Empate não é permitido neste fluxo.");
 
   const ctx = await loadPartidaContext(partidaId, user.id);
   if (!ctx.partida) go(partidaId, "erro", "Partida não encontrada.");
   const p = ctx.partida;
+  const esporteRegrasRaw = p.esporte_id
+    ? await ctx.supabase
+        .from("esportes")
+        .select("desafio_modo_lancamento, desafio_regras_placar_json")
+        .eq("id", p.esporte_id)
+        .maybeSingle()
+    : null;
+  const regrasPlacar =
+    esporteRegrasRaw?.data?.desafio_regras_placar_json &&
+    typeof esporteRegrasRaw.data.desafio_regras_placar_json === "object" &&
+    !Array.isArray(esporteRegrasRaw.data.desafio_regras_placar_json)
+      ? (esporteRegrasRaw.data.desafio_regras_placar_json as Record<string, unknown>)
+      : {};
+  const minPlacar = toOptionalFiniteNumber(regrasPlacar.minPlacar);
+  const maxPlacar = toOptionalFiniteNumber(regrasPlacar.maxPlacar);
+  const permitirEmpate = toOptionalBoolean(regrasPlacar.permitirEmpate);
+  const permitirWO = toOptionalBoolean(regrasPlacar.permitirWO);
   const status = normStatus(p.status);
   const canActRegular = p.torneio_id
     ? ctx.podeRegistrarTorneio
@@ -155,6 +188,14 @@ export async function submitPlacarAction(formData: FormData) {
       ? ctx.scope.isTeamOwner && (status === "agendada" || (status === "aguardando_confirmacao" && p.lancado_por === user.id))
       : ctx.scope.isParticipant && (status === "agendada" || (status === "aguardando_confirmacao" && p.lancado_por === user.id));
   if (!canActRegular) go(partidaId, "erro", "Sem permissão para lançar resultado nesta partida.");
+  if (woAtivo && permitirWO === false) go(partidaId, "erro", "Este esporte não permite W.O. por configuração.");
+  if (!woAtivo && permitirEmpate === false && placar1 === placar2) go(partidaId, "erro", "Empate não é permitido neste esporte.");
+  if (!woAtivo && minPlacar != null && ((placar1 as number) < minPlacar || (placar2 as number) < minPlacar)) {
+    go(partidaId, "erro", `Placar mínimo permitido: ${minPlacar}.`);
+  }
+  if (!woAtivo && maxPlacar != null && ((placar1 as number) > maxPlacar || (placar2 as number) > maxPlacar)) {
+    go(partidaId, "erro", `Placar máximo permitido: ${maxPlacar}.`);
+  }
 
   const finalPlacar1 = woAtivo ? (woVencedor === "j2" ? 0 : 1) : (placar1 as number);
   const finalPlacar2 = woAtivo ? (woVencedor === "j2" ? 1 : 0) : (placar2 as number);
@@ -244,7 +285,9 @@ export async function confirmarPlacarAction(formData: FormData) {
 
   const p1 = p.desafiante_id ?? p.jogador1_id ?? p.usuario_id;
   const p2 = p.desafiado_id ?? p.jogador2_id;
-  if (p.esporte_id && p1 && p2) {
+  if (p.match_id) {
+    await ctx.supabase.from("matches").update({ status: "Concluido", data_confirmacao: now }).eq("id", p.match_id);
+  } else if (p.esporte_id && p1 && p2) {
     const { data: matchRow } = await ctx.supabase
       .from("matches")
       .select("id")
@@ -328,7 +371,7 @@ export async function salvarAgendamentoAction(formData: FormData) {
   if (!Number.isFinite(partidaId) || partidaId < 1) redirect("/agenda");
   const modoAgenda = String(formData.get("modo_agenda") ?? "") === "1";
   const dataPartida = String(formData.get("data_partida") ?? "").trim();
-  const localStr = String(formData.get("local_str") ?? "").trim();
+  const localStr = sanitizeUserText(formData.get("local_str"), 180);
 
   const supabase = await createClient();
   const {
@@ -352,7 +395,7 @@ export async function salvarAgendamentoAction(formData: FormData) {
   }
 
   const payload: { data_partida?: string | null; local_str?: string | null } = {
-    local_str: localStr || null,
+    local_str: sanitizeOptionalUserText(localStr, 180),
   };
   if (dataPartida) {
     const dt = new Date(dataPartida);

@@ -43,7 +43,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const { data: p } = await supabase
     .from("partidas")
     .select(
-      "id, jogador1_id, jogador2_id, status, status_ranking, esporte_id, torneio_id, esportes(nome), placar_1, placar_2, lancado_por, mensagem, data_resultado, data_validacao, modalidade, time1_id, time2_id, data_partida, local_str"
+      "id, jogador1_id, jogador2_id, status, status_ranking, esporte_id, torneio_id, esportes(nome,desafio_modo_lancamento), placar_1, placar_2, lancado_por, mensagem, data_resultado, data_validacao, modalidade, time1_id, time2_id, data_partida, local_str"
     )
     .eq("id", id)
     .maybeSingle();
@@ -131,6 +131,9 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             Partida #{id}
           </h1>
           <p className="mt-1 text-sm font-semibold text-eid-primary-300">{esp?.nome ?? "Esporte"}</p>
+          <p className="mt-1 text-[11px] text-eid-text-secondary">
+            Modo de placar deste esporte: {String((esp as { desafio_modo_lancamento?: string } | null)?.desafio_modo_lancamento ?? "simples")}
+          </p>
           <p className="mt-2 text-xs text-eid-text-secondary">Status atual: {p.status ?? "—"}</p>
           {p.torneio_id ? (
             <p className="mt-2 text-xs text-eid-action-400">
