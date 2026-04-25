@@ -8,6 +8,7 @@ export type ResponderConviteState = { ok: true } | { ok: false; message: string 
 export type SugestaoMatchState = { ok: true; message?: string } | { ok: false; message: string };
 export type ResponderSugestaoMatchState = { ok: true } | { ok: false; message: string };
 export type CancelarMatchState = { ok: true } | { ok: false; message: string };
+export type GerenciarCancelamentoState = { ok: true; message: string } | { ok: false; message: string };
 
 function normStatus(v: string | null | undefined): string {
   return String(v ?? "")
@@ -71,6 +72,32 @@ async function ensurePartidaAgendadaFromMatch(
   let time1Id: number | null = null;
   let time2Id: number | null = isColetivo && matchRow.adversario_time_id ? Number(matchRow.adversario_time_id) : null;
   if (isColetivo) {
+    // Quando o match veio de sugestão para líder, priorizamos a formação sugerida.
+    const { data: sugestaoLigada } = await supabase
+      .from("match_sugestoes")
+      .select("sugeridor_time_id")
+      .eq("match_id", matchId)
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const suggestedTeamId = Number(sugestaoLigada?.sugeridor_time_id ?? 0);
+    if (Number.isFinite(suggestedTeamId) && suggestedTeamId > 0) {
+      const { data: suggestedTeam } = await supabase
+        .from("times")
+        .select("id, tipo, esporte_id, criador_id")
+        .eq("id", suggestedTeamId)
+        .maybeSingle();
+      if (
+        suggestedTeam?.id &&
+        String(suggestedTeam.tipo ?? "").trim().toLowerCase() === modalidade &&
+        Number(suggestedTeam.esporte_id) === Number(matchRow.esporte_id) &&
+        suggestedTeam.criador_id === matchRow.usuario_id
+      ) {
+        time1Id = Number(suggestedTeam.id);
+      }
+    }
+
+    if (!time1Id) {
     const { data: challengerTeam } = await supabase
       .from("times")
       .select("id")
@@ -80,7 +107,9 @@ async function ensurePartidaAgendadaFromMatch(
       .order("id", { ascending: false })
       .limit(1)
       .maybeSingle();
-    time1Id = challengerTeam?.id ? Number(challengerTeam.id) : null;
+      time1Id = challengerTeam?.id ? Number(challengerTeam.id) : null;
+    }
+
     if (!time2Id || !time1Id) {
       time1Id = null;
       time2Id = null;
@@ -118,6 +147,44 @@ async function ensurePartidaAgendadaFromMatch(
   ]);
 }
 
+async function getRankPendingLimit(
+  supabase: Awaited<ReturnType<typeof createClient>>
+): Promise<number> {
+  const { data: cfg } = await supabase
+    .from("app_config")
+    .select("value_json")
+    .eq("key", "match_rank_pending_result_limit")
+    .maybeSingle();
+  const raw = cfg?.value_json as unknown;
+  if (typeof raw === "number" && Number.isFinite(raw)) return Math.max(1, Math.min(20, Math.trunc(raw)));
+  if (raw && typeof raw === "object") {
+    const v = Number((raw as { limite?: unknown }).limite);
+    if (Number.isFinite(v)) return Math.max(1, Math.min(20, Math.trunc(v)));
+  }
+  return 2;
+}
+
+async function countRankingPendencias(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<number> {
+  const [{ count: mCount }, { count: pCount }] = await Promise.all([
+    supabase
+      .from("matches")
+      .select("id", { count: "exact", head: true })
+      .eq("finalidade", "ranking")
+      .eq("status", "Aceito")
+      .or(`usuario_id.eq.${userId},adversario_id.eq.${userId}`),
+    supabase
+      .from("partidas")
+      .select("id", { count: "exact", head: true })
+      .is("torneio_id", null)
+      .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId},usuario_id.eq.${userId},desafiante_id.eq.${userId},desafiado_id.eq.${userId}`)
+      .in("status", ["agendada", "aguardando_confirmacao"]),
+  ]);
+  return Number(mCount ?? 0) + Number(pCount ?? 0);
+}
+
 export async function responderPedidoMatch(
   _prev: ResponderMatchState | undefined,
   formData: FormData
@@ -137,6 +204,28 @@ export async function responderPedidoMatch(
   } = await supabase.auth.getUser();
   if (!user) {
     return { ok: false, message: "Sessão expirada. Faça login novamente." };
+  }
+
+  if (aceitar) {
+    const { data: matchRow } = await supabase
+      .from("matches")
+      .select("id, usuario_id, adversario_id, finalidade, status")
+      .eq("id", matchId)
+      .maybeSingle();
+    const fin = String(matchRow?.finalidade ?? "ranking").trim().toLowerCase();
+    if (matchRow && fin === "ranking" && String(matchRow.status ?? "").trim() === "Pendente") {
+      const limite = await getRankPendingLimit(supabase);
+      const [minhas, doDesafiante] = await Promise.all([
+        countRankingPendencias(supabase, user.id),
+        countRankingPendencias(supabase, String(matchRow.usuario_id ?? "")),
+      ]);
+      if (minhas >= limite) {
+        return { ok: false, message: `Você atingiu o limite de ${limite} pendências de desafio/ranking.` };
+      }
+      if (doDesafiante >= limite) {
+        return { ok: false, message: "O desafiante atingiu o limite de pendências de desafio/ranking." };
+      }
+    }
   }
 
   const { error } = await supabase.rpc("responder_pedido_match", {
@@ -178,7 +267,7 @@ export async function cancelarMatchAceito(
     return { ok: false, message: "Sessão expirada. Faça login novamente." };
   }
 
-  const { error } = await supabase.rpc("cancelar_match_aceito", {
+  const { error } = await supabase.rpc("solicitar_cancelamento_match_aceito", {
     p_match_id: matchId,
     p_motivo: motivo.length > 0 ? motivo.slice(0, 240) : null,
   });
@@ -191,6 +280,112 @@ export async function cancelarMatchAceito(
   revalidatePath("/match");
   revalidatePath("/dashboard");
   return { ok: true };
+}
+
+function parseFutureIsoFromDatetimeLocal(raw: string): string | null {
+  const v = raw.trim();
+  if (!v) return null;
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+export async function gerenciarCancelamentoMatch(
+  _prev: GerenciarCancelamentoState | undefined,
+  formData: FormData
+): Promise<GerenciarCancelamentoState> {
+  const intent = String(formData.get("intent") ?? "").trim();
+  const matchId = Number(formData.get("match_id"));
+
+  if (!Number.isFinite(matchId) || matchId < 1) {
+    return { ok: false, message: "Desafio inválido." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada. Faça login novamente." };
+
+  if (intent === "request_cancel") {
+    const motivo = String(formData.get("motivo") ?? "").trim();
+    const { error } = await supabase.rpc("solicitar_cancelamento_match_aceito", {
+      p_match_id: matchId,
+      p_motivo: motivo ? motivo.slice(0, 240) : null,
+    });
+    if (error) return { ok: false, message: error.message };
+    revalidatePath("/agenda");
+    revalidatePath("/comunidade");
+    revalidatePath("/dashboard");
+    return { ok: true, message: "Solicitação de cancelamento enviada. O oponente tem 24h para responder." };
+  }
+
+  if (intent === "respond_cancel") {
+    const aceitar = String(formData.get("aceitar_cancelamento") ?? "") === "1";
+    const op1 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_1") ?? ""));
+    const op2 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_2") ?? ""));
+    const op3 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_3") ?? ""));
+    const local = String(formData.get("local_reagendamento") ?? "").trim();
+    const { error } = await supabase.rpc("responder_cancelamento_match", {
+      p_match_id: matchId,
+      p_aceitar_cancelamento: aceitar,
+      p_opcao_1: aceitar ? null : op1,
+      p_opcao_2: aceitar ? null : op2,
+      p_opcao_3: aceitar ? null : op3,
+      p_local: aceitar ? null : (local || null),
+    });
+    if (error) return { ok: false, message: error.message };
+    revalidatePath("/agenda");
+    revalidatePath("/comunidade");
+    revalidatePath("/dashboard");
+    return {
+      ok: true,
+      message: aceitar
+        ? "Cancelamento aceito. O desafio foi cancelado."
+        : "Cancelamento recusado com opções de data/hora. A outra parte deve escolher em até 72h.",
+    };
+  }
+
+  if (intent === "respond_option") {
+    const optionIdx = Number(formData.get("option_idx"));
+    const aceitar = String(formData.get("aceitar_opcao") ?? "") === "1";
+    if (!Number.isInteger(optionIdx) || optionIdx < 1 || optionIdx > 3) {
+      return { ok: false, message: "Opção inválida." };
+    }
+    const { error } = await supabase.rpc("responder_opcao_reagendamento_match", {
+      p_match_id: matchId,
+      p_option_idx: optionIdx,
+      p_aceitar: aceitar,
+    });
+    if (error) return { ok: false, message: error.message };
+    revalidatePath("/agenda");
+    revalidatePath("/comunidade");
+    revalidatePath("/dashboard");
+    return {
+      ok: true,
+      message: aceitar
+        ? "Opção aceita. O confronto segue agendado no sistema."
+        : "Opção recusada.",
+    };
+  }
+
+  if (intent === "denunciar_cancelamento") {
+    const alvoId = String(formData.get("alvo_usuario_id") ?? "").trim();
+    if (!alvoId) return { ok: false, message: "Não foi possível identificar o oponente para denúncia." };
+    const detalhe = String(formData.get("detalhe") ?? "").trim();
+    const texto = `Tentativa indevida de cancelamento de desafio para evitar derrota. Desafio #${matchId}.${detalhe ? ` Detalhe: ${detalhe.slice(0, 300)}` : ""}`;
+    const { error } = await supabase.rpc("registrar_denuncia_usuario", {
+      p_alvo_usuario_id: alvoId,
+      p_codigo_motivo: "abuso",
+      p_texto: texto,
+    });
+    if (error) return { ok: false, message: error.message };
+    revalidatePath("/agenda");
+    revalidatePath("/admin/denuncias");
+    return { ok: true, message: "Denúncia registrada para análise da moderação." };
+  }
+
+  return { ok: false, message: "Ação de cancelamento inválida." };
 }
 
 export async function sugerirMatchParaLider(

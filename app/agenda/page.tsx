@@ -33,6 +33,7 @@ export default async function AgendaPage() {
   if (!profile.perfil_completo) redirect("/onboarding");
 
   await supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id });
+  await supabase.rpc("processar_pendencias_cancelamento_match", { p_only_user: user.id });
   const { teamClause } = await getAgendaTeamContext(supabase, user.id);
 
   const { data: aceitos } = await supabase
@@ -111,8 +112,10 @@ export default async function AgendaPage() {
 
   const { data: aceitosCancelaveis } = await supabase
     .from("matches")
-    .select("id, usuario_id, adversario_id, modalidade_confronto, esporte_id")
-    .eq("status", "Aceito")
+    .select(
+      "id, usuario_id, adversario_id, modalidade_confronto, esporte_id, status, cancel_requested_by, cancel_requested_at, cancel_response_deadline_at, reschedule_deadline_at"
+    )
+    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
     .eq("finalidade", "ranking")
     .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
     .order("data_confirmacao", { ascending: false, nullsFirst: false })
@@ -147,13 +150,43 @@ export default async function AgendaPage() {
     ? await supabase.from("profiles").select("id, nome").in("id", oponenteIdsAceitos)
     : { data: [] };
   const oponenteMapAceitos = new Map((oponentesAceitos ?? []).map((p) => [p.id, p.nome ?? "Oponente"]));
+  const matchIdsCancel = (aceitosCancelaveis ?? []).map((m) => Number(m.id)).filter((v) => Number.isFinite(v) && v > 0);
+  const { data: opcoesCancelRows } = matchIdsCancel.length
+    ? await supabase
+        .from("match_cancelamento_opcoes")
+        .select("match_id, option_idx, scheduled_for, location, status")
+        .in("match_id", matchIdsCancel)
+        .order("option_idx", { ascending: true })
+    : { data: [] };
+  const opcoesByMatch = new Map<number, Array<{ optionIdx: number; scheduledFor: string; location: string | null; status: string }>>();
+  for (const row of opcoesCancelRows ?? []) {
+    const key = Number(row.match_id);
+    if (!Number.isFinite(key) || !row.scheduled_for) continue;
+    const list = opcoesByMatch.get(key) ?? [];
+    list.push({
+      optionIdx: Number(row.option_idx),
+      scheduledFor: String(row.scheduled_for),
+      location: row.location ? String(row.location) : null,
+      status: String(row.status ?? "pendente"),
+    });
+    opcoesByMatch.set(key, list);
+  }
+
   const aceitosItems = (aceitosCancelaveis ?? []).map((m) => {
     const opp = m.usuario_id === user.id ? m.adversario_id : m.usuario_id;
+    const status = String(m.status ?? "Aceito");
+    const isRequester = String(m.cancel_requested_by ?? "") === user.id;
     return {
       id: Number(m.id),
       nomeOponente: (opp ? oponenteMapAceitos.get(opp) : null) ?? "Oponente",
+      oponenteId: opp ?? "",
       esporte: (m.esporte_id ? espMapAceitos.get(m.esporte_id) : null) ?? "Esporte",
       modalidade: m.modalidade_confronto ?? "individual",
+      status,
+      isRequester,
+      cancelResponseDeadlineAt: m.cancel_response_deadline_at ? String(m.cancel_response_deadline_at) : null,
+      rescheduleDeadlineAt: m.reschedule_deadline_at ? String(m.reschedule_deadline_at) : null,
+      options: opcoesByMatch.get(Number(m.id)) ?? [],
     };
   });
 

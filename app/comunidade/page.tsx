@@ -42,6 +42,7 @@ export default async function ComunidadePage() {
   if (!profile.perfil_completo) redirect("/onboarding");
 
   await supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id });
+  await supabase.rpc("processar_pendencias_cancelamento_match", { p_only_user: user.id });
   const featureCfg = await getSystemFeatureConfig(supabase);
 
   const { data: notificacoes } = await supabase
