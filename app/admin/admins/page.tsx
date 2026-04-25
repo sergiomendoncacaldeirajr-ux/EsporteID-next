@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SearchSuggestGetForm } from "@/components/search/search-suggest-get-form";
 import {
   adminAddPlatformAdmin,
   adminAddPlatformAdminByUserId,
@@ -163,29 +164,18 @@ export default async function AdminAdminsPage({ searchParams }: PageProps) {
           <strong> testador</strong>.
         </p>
         {buscaErr ? <p className="mt-2 text-sm text-red-300">{buscaErr.message}</p> : null}
-        <form method="get" className="mt-4 flex max-w-2xl flex-wrap items-end gap-2" action="/admin/admins">
-          <label className="min-w-0 flex-1 text-xs font-semibold text-eid-text-secondary">
-            Termo
-            <input
-              name="q"
-              type="search"
-              defaultValue={rawSearch}
-              placeholder="ex.: João, @joao, email@... ou colar o UUID"
-              className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
-            />
-          </label>
-          <button type="submit" className="eid-btn-primary min-h-[44px] shrink-0 rounded-xl px-4 text-sm font-bold">
-            Buscar
-          </button>
-          {rawSearch ? (
-            <Link
-              href="/admin/admins"
-              className="min-h-[44px] self-end rounded-xl border border-eid-text-secondary/30 px-4 py-2.5 text-sm font-bold text-eid-text-secondary"
-            >
-              Limpar
-            </Link>
-          ) : null}
-        </form>
+        <SearchSuggestGetForm
+          action="/admin/admins"
+          defaultValue={rawSearch}
+          placeholder="ex.: João, @joao, email@... ou colar o UUID"
+          scope="global"
+          label="Termo"
+          clearHref="/admin/admins"
+          className="mt-4 flex max-w-2xl flex-wrap items-end gap-2"
+          inputClassName="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+          submitClassName="eid-btn-primary min-h-[44px] shrink-0 rounded-xl px-4 text-sm font-bold"
+          clearClassName="min-h-[44px] self-end rounded-xl border border-eid-text-secondary/30 px-4 py-2.5 text-sm font-bold text-eid-text-secondary"
+        />
         {rawSearch && sanitizeAdminUserSearch(rawSearch) && (busca?.length ?? 0) === 0 && !buscaErr ? (
           <p className="mt-4 text-sm text-eid-text-secondary">Nenhum perfil encontrado.</p>
         ) : null}

@@ -70,6 +70,23 @@ function firstOf<T>(v: T | T[] | null | undefined): T | null {
   return Array.isArray(v) ? v[0] ?? null : v;
 }
 
+function parseNumericList(value: unknown): number[] {
+  if (Array.isArray(value)) {
+    return value.map((v) => Number(v)).filter((n) => Number.isFinite(n) && n > 0);
+  }
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.map((v) => Number(v)).filter((n) => Number.isFinite(n) && n > 0);
+      }
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 function isSameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
@@ -246,6 +263,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       };
     })
     .filter((item) => Number.isFinite(item.esporteId) && item.esporteId > 0);
+  const meusEsportesSet = new Set(meusEsportesResumo.map((item) => item.esporteId));
   const esportePrincipalId = meusEsportes?.[0]?.esporte_id ?? null;
 
   let atletasQuery = supabase
@@ -292,27 +310,37 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   let torneiosQuery = supabase
     .from("torneios")
-    .select("id, nome, status, data_inicio, banner")
+    .select("id, nome, status, data_inicio, banner, esporte_id, lat, lng")
     .eq("status", "aberto")
     .order("criado_em", { ascending: false })
-    .limit(24);
-  if (esportePrincipalId != null) {
-    torneiosQuery = torneiosQuery.eq("esporte_id", esportePrincipalId);
+    .limit(36);
+  const esportesParaFiltro = Array.from(meusEsportesSet);
+  if (esportesParaFiltro.length) {
+    torneiosQuery = torneiosQuery.in("esporte_id", esportesParaFiltro);
   }
   const { data: torneios } = canSeeTorneios ? await torneiosQuery : { data: [] };
-  const torneiosFiltrados = (torneios ?? []).filter((t) => {
-    if (!q) return true;
-    return String(t.nome ?? "").toLowerCase().includes(q);
-  });
+  const torneiosFiltrados = (torneios ?? [])
+    .map((t) => {
+      const dist = hasMyCoords ? distanciaKm(myLat, myLng, Number(t.lat ?? NaN), Number(t.lng ?? NaN)) : 99999;
+      return { ...t, dist };
+    })
+    .filter((t) => {
+      if (!q) return true;
+      return String(t.nome ?? "").toLowerCase().includes(q);
+    })
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, 12);
 
   let timesQuery = supabase
     .from("times")
-    .select("id, nome, tipo, localizacao, escudo, esporte_id, vagas_abertas, lat, lng, criador_id, pontos_ranking, eid_time")
+    .select("id, nome, tipo, localizacao, escudo, esporte_id, vagas_abertas, aceita_pedidos, lat, lng, criador_id, pontos_ranking, eid_time")
     .neq("criador_id", user.id)
+    .eq("vagas_abertas", true)
+    .eq("aceita_pedidos", true)
     .order("pontos_ranking", { ascending: false })
-    .limit(40);
-  if (esportePrincipalId != null) {
-    timesQuery = timesQuery.eq("esporte_id", esportePrincipalId);
+    .limit(50);
+  if (esportesParaFiltro.length) {
+    timesQuery = timesQuery.in("esporte_id", esportesParaFiltro);
   }
   const { data: timesRaw } = await timesQuery;
   const timesComDist = (timesRaw ?? []).map((t) => {
@@ -329,6 +357,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         String(t.nome ?? "").toLowerCase().includes(q) || String(t.localizacao ?? "").toLowerCase().includes(q)
       );
     })
+    .filter(({ t }) => meusEsportesSet.size === 0 || meusEsportesSet.has(Number(t.esporte_id ?? 0)))
     .slice(0, 12);
   const duplaMaisProxima = timesComDist.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "dupla");
   const timeMaisProximo = timesComDist.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "time");
@@ -336,14 +365,38 @@ export default async function DashboardPage({ searchParams }: Props) {
   const esporteCardNome = meusEsportesResumo[0]?.esporteNome ?? "Esporte";
   const esporteCardIcon = sportIconEmoji(esporteCardNome);
 
-  const { data: locaisScroll } = canSeeLocais
+  const { data: locaisScrollRaw } = canSeeLocais
     ? await supabase
         .from("espacos_genericos")
-        .select("id, nome_publico, logo_arquivo, localizacao")
+        .select("id, slug, nome_publico, logo_arquivo, localizacao, lat, lng, esportes_ids, aceita_socios, modo_monetizacao, modo_reserva")
         .eq("ativo_listagem", true)
-        .order("id", { ascending: false })
-        .limit(12)
+        .limit(80)
     : { data: [] };
+  const locaisScroll = (locaisScrollRaw ?? [])
+    .map((loc) => {
+      const esporteIds = parseNumericList(loc.esportes_ids);
+      const sportMatch = meusEsportesSet.size === 0 || esporteIds.some((id) => meusEsportesSet.has(id));
+      const aceitaSocios = Boolean(loc.aceita_socios);
+      const mensalidadePlataforma = String(loc.modo_monetizacao ?? "").toLowerCase() === "mensalidade_plataforma";
+      const reservaPaga = ["paga", "mista"].includes(String(loc.modo_reserva ?? "").toLowerCase());
+      const dist = hasMyCoords ? distanciaKm(myLat, myLng, Number(loc.lat ?? NaN), Number(loc.lng ?? NaN)) : 99999;
+      const score =
+        (sportMatch ? 4 : 0) +
+        (aceitaSocios ? 2 : 0) +
+        (mensalidadePlataforma ? 2 : 0) +
+        (reservaPaga ? 2 : 0);
+      return { ...loc, sportMatch, aceitaSocios, mensalidadePlataforma, reservaPaga, score, dist };
+    })
+    .filter((loc) => loc.score > 0)
+    .filter((loc) => {
+      if (!q) return true;
+      return (
+        String(loc.nome_publico ?? "").toLowerCase().includes(q) ||
+        String(loc.localizacao ?? "").toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => a.dist - b.dist || b.score - a.score)
+    .slice(0, 12);
 
   const [{ data: sociosAtivosRows }, { data: atalhosRows }] = await Promise.all([
     supabase
@@ -789,11 +842,14 @@ export default async function DashboardPage({ searchParams }: Props) {
         {canSeeTorneios ? (
         <section className={`mt-7 sm:mt-9 ${dashboardBlockClass}`}>
           <div className="mb-3.5 flex items-center justify-between gap-3">
-            <h2 className={sectionTitleClass}>Torneios em aberto</h2>
+            <h2 className={sectionTitleClass}>Sugestões de torneios</h2>
             <Link href="/torneios" className={sectionActionClass}>
               Explorar
             </Link>
           </div>
+          <p className="mb-2 text-[11px] text-eid-text-secondary">
+            Inscrições abertas, priorizando esporte do seu perfil e proximidade da sua localização.
+          </p>
           {torneiosFiltrados.length > 0 ? (
             <div className={scrollRow}>
               {torneiosFiltrados.map((t) => (
@@ -815,7 +871,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             </div>
           ) : (
             <p className="eid-list-item rounded-2xl border-dashed bg-eid-surface/50 p-5 text-center text-sm leading-relaxed text-eid-text-secondary">
-              {q ? "Nenhum torneio encontrado para essa busca." : "Sem torneios no momento."}
+              {q ? "Nenhum torneio encontrado para essa busca." : "Sem torneios próximos com inscrição em aberto no seu esporte."}
             </p>
           )}
         </section>
@@ -823,11 +879,14 @@ export default async function DashboardPage({ searchParams }: Props) {
 
         <section className={`mt-7 sm:mt-9 ${dashboardBlockClass}`}>
           <div className="mb-3.5 flex items-center justify-between gap-3">
-            <h2 className={sectionTitleClass}>Times &amp; recrutamento</h2>
+            <h2 className={sectionTitleClass}>Vagas para equipes</h2>
             <Link href="/times" className={sectionActionClass}>
               Ver todos
             </Link>
           </div>
+          <p className="mb-2 text-[11px] text-eid-text-secondary">
+            Duplas e times com vagas abertas, próximos e compatíveis com seus esportes.
+          </p>
           {timesFiltrados.length > 0 ? (
             <div className={scrollRow}>
               {timesFiltrados.map(({ t, dist }) => (
@@ -854,7 +913,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             </div>
           ) : (
             <p className="eid-list-item rounded-2xl border-dashed bg-eid-surface/45 p-4 text-sm text-eid-text-secondary">
-              {q ? "Nenhum time encontrado para essa busca." : "Nenhum time por perto."}
+              {q ? "Nenhuma vaga para equipes encontrada para essa busca." : "Sem vagas de duplas/times próximos no seu esporte."}
             </p>
           )}
         </section>
@@ -866,12 +925,15 @@ export default async function DashboardPage({ searchParams }: Props) {
               Ver lista
             </Link>
           </div>
+          <p className="mb-2 text-[11px] text-eid-text-secondary">
+            Sugestões próximas do seu esporte, priorizando locais que aceitam sócios, mensalidade com a plataforma e reservas pagas.
+          </p>
           {locaisScroll && locaisScroll.length > 0 ? (
             <div className={scrollRow}>
               {locaisScroll.map((loc) => (
                 <Link
                   key={loc.id}
-                  href={`/local/${loc.id}?from=/dashboard`}
+                  href={loc.slug ? `/espaco/${loc.slug}` : `/local/${loc.id}?from=/dashboard`}
                   className="min-w-[140px] max-w-[140px] shrink-0 snap-start rounded-3xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_12px_28px_-16px_rgba(15,23,42,0.38)] transition hover:border-eid-primary-500/40 hover:shadow-[0_16px_32px_-16px_rgba(37,99,235,0.34)]"
                 >
                   <div className="flex h-12 items-center justify-center overflow-hidden rounded-xl bg-eid-surface">
@@ -883,12 +945,15 @@ export default async function DashboardPage({ searchParams }: Props) {
                   </div>
                   <p className="mt-2 line-clamp-2 text-[11px] font-extrabold leading-tight text-eid-fg">{loc.nome_publico}</p>
                   <p className="mt-0.5 line-clamp-2 text-[10px] text-eid-text-secondary">{loc.localizacao}</p>
+                  <p className="mt-1 text-[10px] font-bold text-eid-primary-300">
+                    {hasMyCoords && loc.dist < 9000 ? `${loc.dist.toFixed(1).replace(".", ",")} km` : "—"}
+                  </p>
                 </Link>
               ))}
             </div>
           ) : (
             <p className="eid-list-item rounded-2xl border-dashed bg-eid-surface/45 p-4 text-sm text-eid-text-secondary">
-              Nenhum local em destaque ainda.
+              Nenhum local próximo compatível com seus critérios no momento.
             </p>
           )}
 

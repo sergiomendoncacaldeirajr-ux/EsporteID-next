@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SearchSuggestGetForm } from "@/components/search/search-suggest-get-form";
 import { searchProfilesForAdmin, sanitizeAdminUserSearch } from "@/lib/admin/search-profiles";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
@@ -31,32 +32,17 @@ export default async function AdminUsuariosPage({ searchParams }: Props) {
           ? "Resultados da busca (até 200)."
           : "Últimos 200 perfis (ordem de cadastro). Use a busca por nome, @username, e-mail ou UUID."}
       </p>
-      <form method="get" className="mt-4 flex max-w-lg flex-wrap items-end gap-2" action="/admin/usuarios">
-        <label className="grid min-w-[200px] flex-1 gap-1">
-          <span className="text-[10px] font-bold uppercase text-eid-text-secondary">Buscar</span>
-          <input
-            name="q"
-            type="search"
-            defaultValue={rawQ}
-            placeholder="Nome, @arrobado, e-mail ou ID"
-            className="eid-input-dark h-10 w-full rounded-lg px-3 text-sm text-eid-fg"
-          />
-        </label>
-        <button
-          type="submit"
-          className="h-10 rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/15 px-4 text-xs font-bold text-eid-fg"
-        >
-          Buscar
-        </button>
-        {rawQ ? (
-          <Link
-            href="/admin/usuarios"
-            className="h-10 self-end rounded-lg border border-eid-text-secondary/30 px-3 py-2 text-xs font-bold text-eid-text-secondary"
-          >
-            Limpar
-          </Link>
-        ) : null}
-      </form>
+      <SearchSuggestGetForm
+        action="/admin/usuarios"
+        defaultValue={rawQ}
+        placeholder="Nome, @arrobado, e-mail ou ID"
+        scope="global"
+        clearHref="/admin/usuarios"
+        className="mt-4 flex max-w-lg flex-wrap items-end gap-2"
+        inputClassName="eid-input-dark h-10 w-full rounded-lg px-3 text-sm text-eid-fg"
+        submitClassName="h-10 rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/15 px-4 text-xs font-bold text-eid-fg"
+        clearClassName="h-10 self-end rounded-lg border border-eid-text-secondary/30 px-3 py-2 text-xs font-bold text-eid-text-secondary"
+      />
 
       <div className="mt-4 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)]">
         <table className="w-full min-w-[720px] text-left text-xs">

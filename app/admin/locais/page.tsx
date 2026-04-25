@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SearchSuggestGetForm } from "@/components/search/search-suggest-get-form";
 import {
   adminAplicarPlanoMensalAutomatico,
   adminReviewEspacoClaim,
@@ -164,32 +165,18 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
         <p className="mt-1 text-sm text-eid-text-secondary">
           Busque por ID, UUID, nome, slug ou endereço. Cada local pode ter assinatura, categoria, valor e override (isento / forçar bloqueio).
         </p>
-        <form method="get" className="mt-3 flex max-w-2xl flex-wrap items-end gap-2" action="/admin/locais">
-          <label className="min-w-0 flex-1 text-xs font-semibold text-eid-text-secondary">
-            Busca
-            <input
-              name="q"
-              type="search"
-              defaultValue={rawQ}
-              placeholder="ID, nome, slug, local…"
-              className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
-            />
-          </label>
-          <button
-            type="submit"
-            className="eid-btn-primary min-h-[40px] shrink-0 rounded-xl px-4 text-sm font-bold"
-          >
-            Buscar
-          </button>
-          {rawQ ? (
-            <Link
-              href="/admin/locais"
-              className="min-h-[40px] self-end rounded-xl border border-eid-text-secondary/30 px-3 py-2 text-sm font-bold text-eid-text-secondary"
-            >
-              Limpar
-            </Link>
-          ) : null}
-        </form>
+        <SearchSuggestGetForm
+          action="/admin/locais"
+          defaultValue={rawQ}
+          placeholder="ID, nome, slug, local…"
+          scope="locais"
+          label="Busca"
+          clearHref="/admin/locais"
+          className="mt-3 flex max-w-2xl flex-wrap items-end gap-2"
+          inputClassName="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+          submitClassName="eid-btn-primary min-h-[40px] shrink-0 rounded-xl px-4 text-sm font-bold"
+          clearClassName="min-h-[40px] self-end rounded-xl border border-eid-text-secondary/30 px-3 py-2 text-sm font-bold text-eid-text-secondary"
+        />
         <p className="mt-1 text-xs text-eid-text-muted">
           Até 200 resultados.{" "}
           <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/locais/suspeitas-mista">

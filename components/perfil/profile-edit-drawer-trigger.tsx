@@ -29,8 +29,10 @@ export function ProfileEditDrawerTrigger({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof document === "undefined") return "dark";
+    return document.documentElement.getAttribute("data-eid-theme") === "light" ? "light" : "dark";
+  });
   const [openNonce, setOpenNonce] = useState(0);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
 
@@ -40,13 +42,6 @@ export function ProfileEditDrawerTrigger({
   }, [href, theme, openNonce]);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const rootTheme = document.documentElement.getAttribute("data-eid-theme");
-    setTheme(rootTheme === "light" ? "light" : "dark");
-
     const observer = new MutationObserver(() => {
       const t = document.documentElement.getAttribute("data-eid-theme");
       setTheme(t === "light" ? "light" : "dark");
@@ -117,7 +112,7 @@ export function ProfileEditDrawerTrigger({
       <button type="button" onClick={openDrawer} className={className} aria-label={title} title={title}>
         {children}
       </button>
-      {open && mounted
+      {open && typeof document !== "undefined"
         ? createPortal(
             <div className="fixed inset-0 z-[999] isolate">
               {!fullscreen ? (
@@ -144,7 +139,7 @@ export function ProfileEditDrawerTrigger({
                 }`}
                 style={{
                   paddingTop:
-                    "calc(0.5rem + max(2.75rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
+                    "calc(0.65rem + max(3.4rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
                   overscrollBehavior: "contain",
                 }}
               >
