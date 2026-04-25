@@ -145,6 +145,83 @@ body.eid-app-shell {
   --eid-hist-status-off-bg: color-mix(in srgb, var(--eid-danger-500) 14%, var(--eid-surface));
 }
 
+/*
+ * Admin (`data-eid-admin` em `AdminShell`): páginas usam `text-red/amber/emerald-*` pensados
+ * para fundo escuro. No tema claro, força contraste legível sem reescrever cada página.
+ */
+[data-eid-theme="light"] [data-eid-admin] .eid-admin-header {
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+}
+
+[data-eid-theme="light"] [data-eid-admin] .eid-admin-logo-mark {
+  color: var(--eid-primary-700);
+}
+
+[data-eid-theme="light"] [data-eid-admin] .eid-admin-service-role-banner {
+  color: #92400e;
+}
+
+[data-eid-theme="light"] [data-eid-admin] .eid-admin-inline-code {
+  background-color: color-mix(in srgb, var(--eid-field-bg) 88%, var(--eid-text-secondary) 12%);
+  color: var(--eid-fg);
+}
+
+[data-eid-theme="light"] [data-eid-admin] :where(
+  .text-red-50,
+  .text-red-100,
+  .text-red-200,
+  .text-red-300,
+  .text-red-400
+) {
+  color: #b91c1c !important;
+}
+
+[data-eid-theme="light"] [data-eid-admin] :where(
+  .text-red-200\/90,
+  .text-red-200\/80,
+  .text-red-200\/95,
+  .text-red-300\/90
+) {
+  color: #b91c1c !important;
+}
+
+[data-eid-theme="light"] [data-eid-admin] :where(
+  .text-amber-50,
+  .text-amber-100,
+  .text-amber-200,
+  .text-amber-300
+) {
+  color: #b45309 !important;
+}
+
+[data-eid-theme="light"] [data-eid-admin] :where(.text-amber-200\/90) {
+  color: #b45309 !important;
+}
+
+[data-eid-theme="light"] [data-eid-admin] :where(
+  .text-emerald-100,
+  .text-emerald-200,
+  .text-emerald-300
+) {
+  color: #047857 !important;
+}
+
+[data-eid-theme="light"] [data-eid-admin] :where(.text-emerald-200\/90) {
+  color: #047857 !important;
+}
+
+[data-eid-theme="light"] [data-eid-admin] :where(.text-emerald-400) {
+  color: #047857 !important;
+}
+
+[data-eid-theme="light"] [data-eid-admin] :where(.text-rose-400) {
+  color: #be123c !important;
+}
+
+[data-eid-theme="light"] [data-eid-admin] :where(.text-eid-primary-300) {
+  color: var(--eid-primary-700);
+}
+
 @theme inline {
   --color-background: var(--eid-bg);
   --color-foreground: var(--eid-fg);
@@ -203,15 +280,17 @@ html {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   /*
-   * `none` no documento: reduz/evita pull-to-refresh do navegador ao puxar no topo (especialmente Android).
+   * `auto`: mantém o comportamento nativo ao chegar no fim da rolagem (elástico / “rubber band” no iOS
+   * e overscroll visual no Android), sensação mais de app. Em alguns navegadores Android isso pode
+   * voltar a permitir pull-to-refresh ao puxar do topo — trade-off aceito para recuperar o efeito.
    */
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: auto;
   /* Evita “faixa branca” quando o viewport iOS e a altura do body não batem. */
   background-color: var(--eid-bg);
 }
 
 body {
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: auto;
 }
 
 /* Fonte padrão: Barlow — atlética, compacta, premium */

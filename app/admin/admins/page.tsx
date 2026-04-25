@@ -37,7 +37,60 @@ function collectUniqueTesterIds(raw: unknown): string[] {
   return [...ids];
 }
 
-type PageProps = { searchParams?: Promise<{ q?: string }> };
+const ADM_FLASH_MESSAGES: Record<string, { kind: "ok" | "warn" | "err"; title: string; body?: string }> = {
+  testador_ok: {
+    kind: "ok",
+    title: "Testador incluído",
+    body: "O perfil foi adicionado às listas de pilotos de todas as funcionalidades. Ele só passa a ver módulos em modo “teste” quando isso estiver assim em Funcionalidades do app.",
+  },
+  testador_ja: {
+    kind: "warn",
+    title: "Já estava como testador",
+    body: "Esse usuário já figurava nas listas de pilotos de todas as funcionalidades. Nada mudou no cadastro.",
+  },
+  testador_remov_ok: {
+    kind: "ok",
+    title: "Removido dos testes",
+    body: "O perfil saiu das listas de pilotos em todas as funcionalidades.",
+  },
+  testador_erro_param: {
+    kind: "err",
+    title: "Não foi possível incluir",
+    body: "Faltou identificar o usuário. Tente de novo pela busca.",
+  },
+  testador_remov_erro_param: {
+    kind: "err",
+    title: "Não foi possível remover",
+    body: "Faltou identificar o usuário.",
+  },
+  testador_erro_auth: {
+    kind: "err",
+    title: "Usuário não encontrado no Auth",
+    body: "O ID não corresponde a uma conta válida no Supabase Auth, ou a API falhou. Confira o UUID e tente de novo.",
+  },
+  testador_erro_save: {
+    kind: "err",
+    title: "Erro ao gravar",
+    body: "Não foi possível salvar em app_config (system_feature_modes_v1). Verifique permissões da service role e o banco.",
+  },
+  testador_erro_email_invalido: {
+    kind: "err",
+    title: "E-mail inválido",
+    body: "Informe um e-mail de login completo.",
+  },
+  testador_erro_email_nao_encontrado: {
+    kind: "err",
+    title: "E-mail não encontrado",
+    body: "Nenhum usuário do Auth com esse e-mail apareceu na busca (até 4000 contas listadas). Confira o endereço.",
+  },
+  testador_erro: {
+    kind: "err",
+    title: "Algo deu errado",
+    body: "Tente de novo. Se persistir, veja os logs do servidor.",
+  },
+};
+
+type PageProps = { searchParams?: Promise<{ q?: string; adm_flash?: string }> };
 
 export default async function AdminAdminsPage({ searchParams }: PageProps) {
   if (!hasServiceRoleConfig()) {
@@ -45,6 +98,9 @@ export default async function AdminAdminsPage({ searchParams }: PageProps) {
   }
   const sp = (await searchParams) ?? {};
   const rawSearch = (sp.q ?? "").trim();
+  const admFlash = (sp.adm_flash ?? "").trim();
+  const flashInfo = admFlash ? ADM_FLASH_MESSAGES[admFlash] : undefined;
+  const flashClearHref = rawSearch ? `/admin/admins?q=${encodeURIComponent(rawSearch)}` : "/admin/admins";
 
   const db = createServiceRoleClient();
 
@@ -61,6 +117,45 @@ export default async function AdminAdminsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-10">
+      {flashInfo ? (
+        <div
+          id="adm-flash"
+          role="status"
+          className={
+            flashInfo.kind === "ok"
+              ? "rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-4 py-3 sm:px-5"
+              : flashInfo.kind === "warn"
+                ? "rounded-xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 sm:px-5"
+                : "rounded-xl border border-red-400/35 bg-red-500/10 px-4 py-3 sm:px-5"
+          }
+        >
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p
+                className={
+                  flashInfo.kind === "ok"
+                    ? "text-sm font-bold text-emerald-100"
+                    : flashInfo.kind === "warn"
+                      ? "text-sm font-bold text-amber-100"
+                      : "text-sm font-bold text-red-100"
+                }
+              >
+                {flashInfo.title}
+              </p>
+              {flashInfo.body ? (
+                <p className="mt-1 text-sm text-eid-text-secondary">{flashInfo.body}</p>
+              ) : null}
+            </div>
+            <Link
+              href={flashClearHref}
+              className="shrink-0 text-xs font-bold text-eid-primary-300 underline hover:text-eid-fg"
+            >
+              Fechar aviso
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
       <section className="rounded-xl border border-eid-text-secondary/15 bg-eid-bg/20 p-4 sm:p-5">
         <h2 className="text-base font-bold text-eid-fg">Buscar pessoa cadastrada</h2>
         <p className="mt-1 text-sm text-eid-text-secondary">
@@ -237,7 +332,13 @@ export default async function AdminAdminsPage({ searchParams }: PageProps) {
             ))}
           </ul>
         ) : (
-          <p className="mt-4 text-sm text-eid-text-muted">Nenhum testador extra cadastrado ainda (além do que você colar manualmente em cada função em Ranking).</p>
+          <p className="mt-4 text-sm text-eid-text-muted">
+            Nenhum testador extra cadastrado ainda (além dos IDs colados manualmente em{" "}
+            <a className="font-semibold text-eid-primary-300 underline" href="/admin/funcionalidades-do-app">
+              Funcionalidades do app
+            </a>
+            ).
+          </p>
         )}
       </section>
     </div>

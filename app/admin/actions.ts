@@ -604,6 +604,34 @@ function mergeUserIntoAllFeatureTestersJson(prevValue: unknown, userId: string):
   return { ...prevObj, features: nextFeatures };
 }
 
+function isUserInAllFeatureTesters(prevValue: unknown, userId: string): boolean {
+  if (!userId) return false;
+  const prevObj =
+    prevValue && typeof prevValue === "object" && !Array.isArray(prevValue) ? (prevValue as Record<string, unknown>) : {};
+  const prevFeatures =
+    prevObj.features && typeof prevObj.features === "object" && !Array.isArray(prevObj.features)
+      ? (prevObj.features as Record<string, unknown>)
+      : {};
+  for (const key of ALL_SYSTEM_FEATURE_KEYS) {
+    const row = prevFeatures[key];
+    let testers: string[] = [];
+    if (row && typeof row === "object" && !Array.isArray(row)) {
+      testers = normalizeTestersArray((row as { testers?: unknown }).testers);
+    }
+    if (!testers.includes(userId)) return false;
+  }
+  return true;
+}
+
+/** Volta ao painel Admins com mensagem (toast via query). */
+function redirectAdminsWithFlash(q: string, flash: string): never {
+  const p = new URLSearchParams();
+  const trimmedQ = q.trim();
+  if (trimmedQ) p.set("q", trimmedQ);
+  p.set("adm_flash", flash);
+  redirect(`/admin/admins?${p.toString()}`);
+}
+
 function removeUserFromAllFeatureTestersJson(prevValue: unknown, userId: string): Record<string, unknown> {
   const prevObj =
     prevValue && typeof prevValue === "object" && !Array.isArray(prevValue) ? (prevValue as Record<string, unknown>) : {};
@@ -640,99 +668,106 @@ function revalidateAfterFeatureTesters() {
 
 /** Inclui o usuário (por e-mail) em `testers` de todas as funcionalidades — visível quando o modo for `teste` em Admin → Funcionalidades do app. */
 export async function adminAddUserToFeatureTesters(formData: FormData) {
-  try {
-    await guard();
-    const email = String(formData.get("email") ?? "")
-      .trim()
-      .toLowerCase();
-    if (!email.includes("@")) return;
-    const db = svc();
-    let found: { id: string } | null = null;
-    for (let page = 1; page <= 20; page++) {
-      const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
-      if (error) return;
-      const u = data.users.find((x) => (x.email ?? "").toLowerCase() === email);
-      if (u) {
-        found = { id: u.id };
-        break;
-      }
-      if (!data.users.length) break;
-    }
-    if (!found) return;
-    const { data: prev } = await db.from("app_config").select("value_json").eq("key", "system_feature_modes_v1").maybeSingle();
-    const nextValue = mergeUserIntoAllFeatureTestersJson(prev?.value_json ?? null, found.id);
-    const { error } = await db
-      .from("app_config")
-      .upsert(
-        {
-          key: "system_feature_modes_v1",
-          value_json: nextValue,
-          atualizado_em: new Date().toISOString(),
-        },
-        { onConflict: "key" }
-      );
-    if (error) return;
-    revalidateAfterFeatureTesters();
-  } catch {
-    return;
+  await guard();
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  if (!email.includes("@")) {
+    redirectAdminsWithFlash("", "testador_erro_email_invalido");
   }
+  const db = svc();
+  let found: { id: string } | null = null;
+  for (let page = 1; page <= 20; page++) {
+    const { data, error } = await db.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) {
+      redirectAdminsWithFlash("", "testador_erro_auth");
+    }
+    const u = data.users.find((x) => (x.email ?? "").toLowerCase() === email);
+    if (u) {
+      found = { id: u.id };
+      break;
+    }
+    if (!data.users.length) break;
+  }
+  if (!found) {
+    redirectAdminsWithFlash("", "testador_erro_email_nao_encontrado");
+  }
+  const { data: prev } = await db.from("app_config").select("value_json").eq("key", "system_feature_modes_v1").maybeSingle();
+  const already = isUserInAllFeatureTesters(prev?.value_json, found.id);
+  const nextValue = mergeUserIntoAllFeatureTestersJson(prev?.value_json ?? null, found.id);
+  const { error } = await db
+    .from("app_config")
+    .upsert(
+      {
+        key: "system_feature_modes_v1",
+        value_json: nextValue,
+        atualizado_em: new Date().toISOString(),
+      },
+      { onConflict: "key" }
+    );
+  if (error) {
+    redirectAdminsWithFlash("", "testador_erro_save");
+  }
+  revalidateAfterFeatureTesters();
+  redirectAdminsWithFlash("", already ? "testador_ja" : "testador_ok");
 }
 
 export async function adminAddUserToFeatureTestersByUserId(formData: FormData) {
-  let returnQuery = "";
-  try {
-    await guard();
-    returnQuery = String(formData.get("q") ?? "").trim();
-    const userId = String(formData.get("user_id") ?? "").trim();
-    if (!userId) return;
-    const { data: got, error: gErr } = await svc().auth.admin.getUserById(userId);
-    if (gErr || !got.user) return;
-    const db = svc();
-    const { data: prev } = await db.from("app_config").select("value_json").eq("key", "system_feature_modes_v1").maybeSingle();
-    const nextValue = mergeUserIntoAllFeatureTestersJson(prev?.value_json ?? null, userId);
-    const { error } = await db
-      .from("app_config")
-      .upsert(
-        {
-          key: "system_feature_modes_v1",
-          value_json: nextValue,
-          atualizado_em: new Date().toISOString(),
-        },
-        { onConflict: "key" }
-      );
-    if (error) return;
-    revalidateAfterFeatureTesters();
-  } catch {
-    return;
+  await guard();
+  const returnQuery = String(formData.get("q") ?? "").trim();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  if (!userId) {
+    redirectAdminsWithFlash(returnQuery, "testador_erro_param");
   }
-  if (returnQuery) {
-    redirect(`/admin/admins?q=${encodeURIComponent(returnQuery)}`);
+  const { data: got, error: gErr } = await svc().auth.admin.getUserById(userId);
+  if (gErr || !got.user) {
+    redirectAdminsWithFlash(returnQuery, "testador_erro_auth");
   }
+  const db = svc();
+  const { data: prev } = await db.from("app_config").select("value_json").eq("key", "system_feature_modes_v1").maybeSingle();
+  const already = isUserInAllFeatureTesters(prev?.value_json, userId);
+  const nextValue = mergeUserIntoAllFeatureTestersJson(prev?.value_json ?? null, userId);
+  const { error } = await db
+    .from("app_config")
+    .upsert(
+      {
+        key: "system_feature_modes_v1",
+        value_json: nextValue,
+        atualizado_em: new Date().toISOString(),
+      },
+      { onConflict: "key" }
+    );
+  if (error) {
+    redirectAdminsWithFlash(returnQuery, "testador_erro_save");
+  }
+  revalidateAfterFeatureTesters();
+  redirectAdminsWithFlash(returnQuery, already ? "testador_ja" : "testador_ok");
 }
 
 export async function adminRemoveUserFromFeatureTesters(formData: FormData) {
-  try {
-    await guard();
-    const userId = String(formData.get("user_id") ?? "").trim();
-    if (!userId) return;
-    const db = svc();
-    const { data: prev } = await db.from("app_config").select("value_json").eq("key", "system_feature_modes_v1").maybeSingle();
-    const nextValue = removeUserFromAllFeatureTestersJson(prev?.value_json ?? null, userId);
-    const { error } = await db
-      .from("app_config")
-      .upsert(
-        {
-          key: "system_feature_modes_v1",
-          value_json: nextValue,
-          atualizado_em: new Date().toISOString(),
-        },
-        { onConflict: "key" }
-      );
-    if (error) return;
-    revalidateAfterFeatureTesters();
-  } catch {
-    return;
+  await guard();
+  const userId = String(formData.get("user_id") ?? "").trim();
+  if (!userId) {
+    redirectAdminsWithFlash("", "testador_remov_erro_param");
   }
+  const db = svc();
+  const { data: prev } = await db.from("app_config").select("value_json").eq("key", "system_feature_modes_v1").maybeSingle();
+  const nextValue = removeUserFromAllFeatureTestersJson(prev?.value_json ?? null, userId);
+  const { error } = await db
+    .from("app_config")
+    .upsert(
+      {
+        key: "system_feature_modes_v1",
+        value_json: nextValue,
+        atualizado_em: new Date().toISOString(),
+      },
+      { onConflict: "key" }
+    );
+  if (error) {
+    redirectAdminsWithFlash("", "testador_erro_save");
+  }
+  revalidateAfterFeatureTesters();
+  redirectAdminsWithFlash("", "testador_remov_ok");
 }
 
 export async function adminUpdateEidConfig(formData: FormData) {
