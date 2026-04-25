@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  EspacoPublicAddReservaAtalhoForm,
   EspacoPublicJoinForm,
   EspacoPublicReservaForm,
   EspacoPublicWaitlistForm,
@@ -9,6 +10,7 @@ import {
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_WIDE_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeEspacoAssociacaoConfig } from "@/lib/espacos/associacao-config";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -24,12 +26,23 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
   const { data: espaco } = await supabase
     .from("espacos_genericos")
     .select(
-      "id, slug, nome_publico, descricao_curta, descricao_longa, localizacao, cidade, uf, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, aceita_socios, ativo_listagem, tipo_quadra, aceita_reserva, esportes_ids, configuracao_reservas_json"
+      "id, slug, nome_publico, descricao_curta, descricao_longa, localizacao, cidade, uf, cover_arquivo, whatsapp_contato, email_contato, website_url, instagram_url, aceita_socios, ativo_listagem, tipo_quadra, aceita_reserva, esportes_ids, configuracao_reservas_json, associacao_regra_json, modo_reserva, lat, lng"
     )
     .eq("slug", slug)
     .eq("ativo_listagem", true)
     .maybeSingle();
   if (!espaco) notFound();
+  const regraAssociacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);
+  const acessoPublicoPago = String(espaco.modo_reserva ?? "").toLowerCase() === "paga";
+  const { data: membership } = user
+    ? await supabase
+        .from("espaco_socios")
+        .select("id, status")
+        .eq("espaco_generico_id", espaco.id)
+        .eq("usuario_id", user.id)
+        .maybeSingle()
+    : { data: null };
+  const isMembroAtivo = String(membership?.status ?? "") === "ativo";
 
   const [
     { data: unidades },
@@ -251,7 +264,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
           </div>
         </section>
 
-        <ProfileSection title="Quem vai jogar aqui" className="mt-4">
+        {isMembroAtivo || acessoPublicoPago ? <ProfileSection title="Quem vai jogar aqui" className="mt-4">
           <div className={`${PROFILE_CARD_BASE} p-4 sm:p-5`}>
             <div className="grid gap-3 lg:grid-cols-2">
             {(reservas ?? []).length ? (
@@ -323,7 +336,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
             )}
             </div>
           </div>
-        </ProfileSection>
+        </ProfileSection> : null}
 
         <section className="mt-4 grid gap-4 lg:grid-cols-2">
           <div className={`${PROFILE_CARD_BASE} p-4 sm:p-5`}>
@@ -399,32 +412,62 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
         </section>
 
         <section className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
-          {!user ? (
+          {!user || (!isMembroAtivo && !acessoPublicoPago) ? (
             <div className="lg:col-span-3 rounded-2xl border border-eid-action-500/25 bg-eid-action-500/10 p-4 sm:p-5">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-action-400">Entrar para continuar</h2>
+              <h2 className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-action-400">Resumo público do espaço</h2>
               <p className="mt-2 text-sm text-eid-text-secondary">
-                Faça login ou cadastro para solicitar associação, reservar horários
-                e entrar na fila de espera do espaço.
+                Endereço: {espaco.localizacao ?? "não informado"} · Horários publicados: {(horarios ?? []).length} · Estruturas: {(unidades ?? []).length}.
+                {acessoPublicoPago
+                  ? " Este espaço opera em modo pago com acesso público: entre e reserve direto."
+                  : " Para ver a área completa e reservar, solicite entrada como sócio/membro."}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
-                <Link
-                  href={`/login?next=${encodeURIComponent(`/espaco/${slug}`)}`}
-                  className="eid-btn-primary rounded-xl px-4 py-3 text-sm font-bold"
-                >
-                  Entrar
-                </Link>
-                <Link
-                  href={`/cadastro?next=${encodeURIComponent(`/espaco/${slug}`)}`}
-                  className="rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-3 text-sm font-bold text-eid-fg"
-                >
-                  Criar conta
-                </Link>
+                {!user ? (
+                  <>
+                    <Link
+                      href={`/login?next=${encodeURIComponent(`/espaco/${slug}`)}`}
+                      className="eid-btn-primary rounded-xl px-4 py-3 text-sm font-bold"
+                    >
+                      Entrar
+                    </Link>
+                    <Link
+                      href={`/cadastro?next=${encodeURIComponent(`/espaco/${slug}`)}`}
+                      className="rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-3 text-sm font-bold text-eid-fg"
+                    >
+                      Criar conta
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    {acessoPublicoPago ? (
+                      <>
+                        <EspacoPublicAddReservaAtalhoForm espacoId={espaco.id} />
+                        <EspacoPublicReservaForm
+                          espacoId={espaco.id}
+                          unidadeId={unidadePrincipal?.id ?? null}
+                          esporteId={unidadePrincipal?.esporte_id ?? null}
+                          latitude={Number(espaco.lat ?? NaN)}
+                          longitude={Number(espaco.lng ?? NaN)}
+                        />
+                        <EspacoPublicWaitlistForm
+                          espacoId={espaco.id}
+                          unidadeId={unidadePrincipal?.id ?? null}
+                          esporteId={unidadePrincipal?.esporte_id ?? null}
+                          latitude={Number(espaco.lat ?? NaN)}
+                          longitude={Number(espaco.lng ?? NaN)}
+                        />
+                      </>
+                    ) : (
+                      <EspacoPublicJoinForm espacoId={espaco.id} planos={planos ?? []} regraEntrada={regraAssociacao} />
+                    )}
+                  </>
+                )}
               </div>
             </div>
           ) : (
             <>
               {espaco.aceita_socios ? (
-                <EspacoPublicJoinForm espacoId={espaco.id} planos={planos ?? []} />
+                <EspacoPublicJoinForm espacoId={espaco.id} planos={planos ?? []} regraEntrada={regraAssociacao} />
               ) : (
                 <div className={`${PROFILE_CARD_BASE} p-4 text-sm text-eid-text-secondary`}>
                   Este espaço não está com adesão de sócios aberta agora.
@@ -434,11 +477,16 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                 espacoId={espaco.id}
                 unidadeId={unidadePrincipal?.id ?? null}
                 esporteId={unidadePrincipal?.esporte_id ?? null}
+                latitude={Number(espaco.lat ?? NaN)}
+                longitude={Number(espaco.lng ?? NaN)}
               />
+              {acessoPublicoPago ? <EspacoPublicAddReservaAtalhoForm espacoId={espaco.id} /> : null}
               <EspacoPublicWaitlistForm
                 espacoId={espaco.id}
                 unidadeId={unidadePrincipal?.id ?? null}
                 esporteId={unidadePrincipal?.esporte_id ?? null}
+                latitude={Number(espaco.lat ?? NaN)}
+                longitude={Number(espaco.lng ?? NaN)}
               />
             </>
           )}

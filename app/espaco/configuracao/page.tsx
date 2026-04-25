@@ -87,6 +87,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               aceita_socios: selectedSpace.aceita_socios ?? false,
               permite_professores_aprovados: selectedSpace.permite_professores_aprovados ?? true,
               configuracao_reservas_json: selectedSpace.configuracao_reservas_json,
+              associacao_regra_json: selectedSpace.associacao_regra_json,
             }}
           />
         </div>
@@ -342,6 +343,11 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
         <p className="mt-2 text-sm text-eid-text-secondary">
           Valores e benefícios dos planos. Edição avançada de planos existentes pode ser feita pelo time ou em telas
           futuras; aqui você cria novos planos rapidamente.
+        </p>
+        <p className="mt-2 text-xs text-eid-text-secondary">
+          Clube de assinaturas entre sócios:{" "}
+          <span className="font-semibold text-eid-fg">{selectedSpace.clube_assinaturas_socios ?? "em_breve"}</span>.
+          Esse módulo está em preparação e será liberado gradualmente.
         </p>
         <form action={criarPlanoSocioEspacoAction} className="mt-4 grid gap-3">
           <input type="hidden" name="espaco_id" value={selectedSpace.id} />

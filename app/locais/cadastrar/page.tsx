@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { NomeLocalInputSuggestions } from "@/components/locais/nome-local-input-suggestions";
+import { distanciaKm } from "@/lib/geo/distance-km";
 import { usuarioJaGerenciaEspaco } from "@/lib/espacos/server";
+import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
 import { cadastrarLocalGenerico } from "./actions";
 
@@ -12,9 +15,10 @@ export const metadata = {
 export default async function CadastrarLocalPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ erro?: string; id?: string }>;
+  searchParams?: Promise<{ erro?: string; id?: string; return_to?: string }>;
 }) {
   const sp = (await searchParams) ?? {};
+  const returnTo = resolveBackHref(sp.return_to, "/locais/cadastrar");
   const erroMsg =
     sp.erro === "nome"
       ? "Informe um nome com pelo menos 2 caracteres."
@@ -36,13 +40,14 @@ export default async function CadastrarLocalPage({
   }
 
   const duplicateId = Number(sp.erro === "duplicado" ? sp.id : "");
-  const [{ data: locaisOpcoes }, { data: localDuplicado }] = await Promise.all([
+  const [{ data: profile }, { data: locaisRaw }, { data: localDuplicado }] = await Promise.all([
+    supabase.from("profiles").select("lat, lng").eq("id", user.id).maybeSingle(),
     supabase
       .from("espacos_genericos")
-      .select("id, nome_publico, localizacao, logo_arquivo")
+      .select("id, nome_publico, localizacao, logo_arquivo, lat, lng")
       .eq("ativo_listagem", true)
       .order("id", { ascending: false })
-      .limit(6),
+      .limit(200),
     Number.isFinite(duplicateId) && duplicateId > 0
       ? supabase
           .from("espacos_genericos")
@@ -51,6 +56,21 @@ export default async function CadastrarLocalPage({
           .maybeSingle()
       : Promise.resolve({ data: null as { id: number; nome_publico: string | null; localizacao: string | null; logo_arquivo: string | null } | null }),
   ]);
+  const myLat = Number(profile?.lat ?? NaN);
+  const myLng = Number(profile?.lng ?? NaN);
+  const hasCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
+  const locaisOrdenados = (locaisRaw ?? [])
+    .map((local) => ({
+      ...local,
+      dist: hasCoords ? distanciaKm(myLat, myLng, Number(local.lat ?? NaN), Number(local.lng ?? NaN)) : 99999,
+    }))
+    .sort((a, b) => a.dist - b.dist);
+  const locaisOpcoes = locaisOrdenados.slice(0, 6);
+  const locaisHints = locaisOrdenados.slice(0, 80).map((local) => ({
+    id: Number(local.id),
+    nome_publico: local.nome_publico ?? null,
+    localizacao: local.localizacao ?? null,
+  }));
 
   return (
     <main className="mx-auto w-full max-w-4xl px-3 py-3 sm:px-6 sm:py-4">
@@ -98,19 +118,8 @@ export default async function CadastrarLocalPage({
           ) : null}
 
           <form action={cadastrarLocalGenerico} className="space-y-4">
-            <div>
-              <label htmlFor="nome_publico" className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
-                Nome do local
-              </label>
-              <input
-                id="nome_publico"
-                name="nome_publico"
-                required
-                minLength={2}
-                placeholder="Ex.: Arena Central"
-                className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm text-eid-fg"
-              />
-            </div>
+            <input type="hidden" name="return_to" value={returnTo} />
+            <NomeLocalInputSuggestions locais={locaisHints} />
             <div>
               <label htmlFor="localizacao" className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
                 Cidade / região ou endereço
@@ -137,7 +146,11 @@ export default async function CadastrarLocalPage({
               />
               <p className="mt-1 text-[11px] text-eid-text-secondary">PNG, JPG ou WEBP até 5MB.</p>
             </div>
-            <button type="submit" className="eid-btn-primary w-full min-h-[48px] rounded-xl text-sm font-bold">
+            <button
+              type="submit"
+              className="eid-btn-primary w-full rounded-xl font-extrabold"
+              style={{ minHeight: "44px", fontSize: "12px", letterSpacing: "0.02em" }}
+            >
               Cadastrar sugestão
             </button>
           </form>
@@ -150,7 +163,11 @@ export default async function CadastrarLocalPage({
 
         <aside className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 sm:p-5 md:rounded-3xl">
           <h2 className="text-sm font-bold text-eid-fg">Opções já cadastradas</h2>
-          <p className="mt-1 text-xs text-eid-text-secondary">Confira os locais mais recentes antes de criar um novo.</p>
+          <p className="mt-1 text-xs text-eid-text-secondary">
+            {hasCoords
+              ? "Mostrando os locais mais próximos da sua localização."
+              : "Defina sua localização no perfil para ver os locais mais próximos."}
+          </p>
           <div className="mt-3 space-y-2">
             {(locaisOpcoes ?? []).length ? (
               (locaisOpcoes ?? []).map((local) => (
@@ -169,6 +186,11 @@ export default async function CadastrarLocalPage({
                   <div className="min-w-0">
                     <p className="truncate text-xs font-semibold text-eid-fg">{local.nome_publico ?? "Local"}</p>
                     <p className="truncate text-[11px] text-eid-text-secondary">{local.localizacao ?? "Sem localização"}</p>
+                    {Number.isFinite(local.dist) && local.dist < 9000 ? (
+                      <p className="truncate text-[10px] text-eid-primary-300">
+                        {local.dist.toFixed(1).replace(".", ",")} km
+                      </p>
+                    ) : null}
                   </div>
                 </Link>
               ))

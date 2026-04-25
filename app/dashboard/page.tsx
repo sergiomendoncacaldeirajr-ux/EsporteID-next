@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { createClient } from "@/lib/supabase/server";
 import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
@@ -143,6 +144,20 @@ function IconLocationCard({ className }: { className?: string }) {
       <path d="M12 20.8s5.8-5.2 5.8-9.5A5.8 5.8 0 0 0 6.2 11.3c0 4.3 5.8 9.5 5.8 9.5Z" />
       <circle cx="12" cy="11.2" r="2.1" />
       <path d="M4 19.5c2.3-1.2 4.8-1.8 8-1.8s5.7.6 8 1.8" />
+    </svg>
+  );
+}
+
+function IconReservaRapida({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <rect x="3.4" y="4.2" width="17.2" height="16.2" rx="2.8" />
+      <path d="M7.2 2.8v2.8" />
+      <path d="M16.8 2.8v2.8" />
+      <path d="M3.4 9.2h17.2" />
+      <path d="M8 13.2h3.2v3.2H8z" />
+      <path d="M15.8 12.2v5.2" />
+      <path d="M13.2 14.8h5.2" />
     </svg>
   );
 }
@@ -330,6 +345,37 @@ export default async function DashboardPage({ searchParams }: Props) {
         .limit(12)
     : { data: [] };
 
+  const [{ data: sociosAtivosRows }, { data: atalhosRows }] = await Promise.all([
+    supabase
+      .from("espaco_socios")
+      .select("espaco_generico_id, espacos_genericos!inner(id, slug, nome_publico, ativo_listagem)")
+      .eq("usuario_id", user.id)
+      .eq("status", "ativo"),
+    supabase
+      .from("espaco_reserva_atalhos")
+      .select("espaco_generico_id, espacos_genericos!inner(id, slug, nome_publico, ativo_listagem)")
+      .eq("usuario_id", user.id),
+  ]);
+  const reservaRapidaMap = new Map<number, { id: number; slug: string | null; nome_publico: string | null }>();
+  for (const row of [...(sociosAtivosRows ?? []), ...(atalhosRows ?? [])]) {
+    const espacoRaw = Array.isArray(row.espacos_genericos) ? row.espacos_genericos[0] : row.espacos_genericos;
+    const espacoId = Number(espacoRaw?.id ?? row.espaco_generico_id ?? 0);
+    if (!Number.isFinite(espacoId) || espacoId < 1) continue;
+    if (!espacoRaw?.ativo_listagem) continue;
+    if (reservaRapidaMap.has(espacoId)) continue;
+    reservaRapidaMap.set(espacoId, {
+      id: espacoId,
+      slug: String(espacoRaw?.slug ?? "") || null,
+      nome_publico: espacoRaw?.nome_publico ?? "Espaço",
+    });
+  }
+  const espacosReservaRapida = Array.from(reservaRapidaMap.values());
+  const reservaHref =
+    espacosReservaRapida.length <= 1 && espacosReservaRapida[0]?.slug
+      ? `/reservar/${encodeURIComponent(String(espacosReservaRapida[0].slug))}`
+      : "/reservar";
+  const mostrarReservarRapido = espacosReservaRapida.length > 0;
+
   const { data: partidasAgendadasResumo } = await supabase
     .from("partidas")
     .select("id, data_partida, data_registro, torneio_id, esportes(nome)")
@@ -401,7 +447,15 @@ export default async function DashboardPage({ searchParams }: Props) {
       icon: IconLocationCard,
       status: statusFromFeature(canSeeLocais, featureCfg.locais.mode),
     },
-    { label: "Vagas", shortLabel: "Vagas", href: "/vagas", icon: IconUsers, status: "active" as const },
+    mostrarReservarRapido
+      ? {
+          label: "Reservar",
+          shortLabel: "Reservar",
+          href: reservaHref,
+          icon: IconReservaRapida,
+          status: "active" as const,
+        }
+      : { label: "Vagas", shortLabel: "Vagas", href: undefined, icon: IconUsers, status: "coming" as const },
     {
       label: "Torneios",
       shortLabel: "Torneios",
@@ -838,13 +892,13 @@ export default async function DashboardPage({ searchParams }: Props) {
             </p>
           )}
 
-          <Link
-            href="/locais/cadastrar"
+          <CadastrarLocalOverlayTrigger
+            href="/locais/cadastrar?from=/dashboard"
             className="eid-btn-primary mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl text-xs font-extrabold uppercase tracking-wide active:scale-[0.98] sm:text-sm"
           >
             <IconMapPin className="h-5 w-5 shrink-0 text-[var(--eid-brand-ink)]" />
             Cadastrar local genérico
-          </Link>
+          </CadastrarLocalOverlayTrigger>
           <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary sm:text-[11px]">
             Qualquer pessoa pode sugerir um espaço. Para ser o responsável oficial, envie documentação pela página do local após criá-lo.
           </p>

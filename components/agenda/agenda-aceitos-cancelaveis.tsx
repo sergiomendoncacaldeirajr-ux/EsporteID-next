@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useActionState } from "react";
+import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
+import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import { gerenciarCancelamentoMatch, type GerenciarCancelamentoState } from "@/app/comunidade/actions";
 import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 
@@ -135,12 +137,18 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                       <input name="opcao_1" type="datetime-local" required className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg" />
                       <input name="opcao_2" type="datetime-local" required className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg" />
                       <input name="opcao_3" type="datetime-local" required className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg" />
-                      <input
+                      <LocalAutocompleteInput
                         name="local_reagendamento"
-                        type="text"
                         placeholder="Local sugerido (opcional)"
+                        minChars={3}
                         className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg"
                       />
+                      <CadastrarLocalOverlayTrigger
+                        href="/locais/cadastrar?return_to=/agenda"
+                        className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full text-center`}
+                      >
+                        + Cadastrar local genérico
+                      </CadastrarLocalOverlayTrigger>
                       <button
                         type="submit"
                         disabled={pending}

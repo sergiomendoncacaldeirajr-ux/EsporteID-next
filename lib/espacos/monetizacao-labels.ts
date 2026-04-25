@@ -1,4 +1,9 @@
-import type { ModoReserva, ModoMonetizacaoEspaco, SociosMensalidadeEspacoFlag } from "@/lib/espacos/espaco-constants";
+import type {
+  ClubeAssinaturaSociosFlag,
+  ModoReserva,
+  ModoMonetizacaoEspaco,
+  SociosMensalidadeEspacoFlag,
+} from "@/lib/espacos/espaco-constants";
 
 export const MODO_RESERVA_LABEL: Record<ModoReserva, string> = {
   gratuita: "Gratuita",
@@ -16,4 +21,10 @@ export const SOCIOS_MENSAL_ESPACO_LABEL: Record<SociosMensalidadeEspacoFlag, str
   off: "Sem gestão de mensalidade de sócios neste local",
   em_breve: "Mensalidade de sócios: em breve (catálogo pode existir, fluxo ainda desligado)",
   on: "Mensalidade de sócios ativa (quando o módulo estiver liberado)",
+};
+
+export const CLUBE_ASSINATURA_SOCIOS_LABEL: Record<ClubeAssinaturaSociosFlag, string> = {
+  off: "Clube de assinaturas entre sócios desativado",
+  em_breve: "Clube de assinaturas: em breve (configuração preparada)",
+  on: "Clube de assinaturas ativo (quando o módulo estiver liberado)",
 };

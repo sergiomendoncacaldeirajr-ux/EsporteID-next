@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { SearchFilterForm } from "@/components/search/search-filter-form";
 import { createClient } from "@/lib/supabase/server";
 import { TeamManagementPanel } from "@/components/times/team-management-panel";
 import { resolveBackHref } from "@/lib/perfil/back-href";
@@ -100,17 +101,14 @@ export default async function TimesPage({ searchParams }: Props) {
           convidarUsuarioIdAposCriar={convidarOk ? convidar : undefined}
           defaultTipoFormacao={convidarOk ? "dupla" : undefined}
         />
-        <form className="mb-4 flex gap-2">
-          <input
-            name="q"
-            defaultValue={sp.q ?? ""}
-            placeholder="Buscar time ou cidade..."
-            className="eid-input-dark h-10 flex-1 rounded-xl px-3 text-sm text-eid-fg placeholder:text-eid-text-secondary/85"
-          />
-          <button type="submit" className="eid-btn-primary rounded-xl px-4 text-sm font-bold">
-            Filtrar
-          </button>
-        </form>
+        <SearchFilterForm
+          defaultValue={sp.q ?? ""}
+          placeholder="Buscar time ou cidade..."
+          scope="times"
+          className="mb-4 flex gap-2"
+          inputClassName="eid-input-dark h-10 flex-1 rounded-xl px-3 text-sm text-eid-fg placeholder:text-eid-text-secondary/85"
+          buttonClassName="eid-btn-primary rounded-xl px-4 text-sm font-bold"
+        />
         {q ? (
           <p className="mb-4 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-xs text-eid-text-secondary">
             Busca ativa por: <span className="font-semibold text-eid-fg">{sp.q}</span>

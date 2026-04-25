@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { findDuplicateEspaco, isEspacoDuplicateError } from "@/lib/espacos/duplicate";
 import { usuarioJaGerenciaEspaco } from "@/lib/espacos/server";
+import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
 
 export async function cadastrarLocalGenerico(formData: FormData): Promise<void> {
@@ -20,6 +21,7 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
 
   const nome = String(formData.get("nome_publico") ?? "").trim();
   const localizacao = String(formData.get("localizacao") ?? "").trim();
+  const returnTo = resolveBackHref(String(formData.get("return_to") ?? "").trim(), "/locais/cadastrar");
   const logoFile = formData.get("logo_file");
 
   if (nome.length < 2) {
@@ -84,5 +86,9 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
 
   revalidatePath("/locais");
   revalidatePath("/dashboard");
+  if (returnTo !== "/locais/cadastrar") {
+    const sep = returnTo.includes("?") ? "&" : "?";
+    redirect(`${returnTo}${sep}novo_local_id=${data.id}`);
+  }
   redirect(`/local/${data.id}?from=/locais/cadastrar`);
 }

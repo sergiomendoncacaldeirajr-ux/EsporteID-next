@@ -936,6 +936,39 @@ select,
   [data-eid-admin] :where(input.eid-input-dark, select.eid-input-dark) {
     min-height: 44px;
   }
+
+  /*
+   * Locais (painel do espaço) — padrão mobile Android/iOS
+   * Mantém consistência de toque, leitura e espaçamento sem depender de classes por tela.
+   */
+  :where([data-eid-touch-ui]) :where(h1, h2) {
+    letter-spacing: -0.01em;
+  }
+
+  :where([data-eid-touch-ui]) :where(.eid-mobile-section) {
+    border-radius: 16px;
+    padding: 14px;
+  }
+
+  :where([data-eid-touch-ui]) :where(.eid-mobile-subsection) {
+    border-radius: 14px;
+    padding: 12px;
+  }
+
+  :where([data-eid-touch-ui]) :where(input.eid-input-dark, select.eid-input-dark, textarea.eid-input-dark) {
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  :where([data-eid-touch-ui]) :where(button, [role="button"], a[class*="eid-btn-"]) {
+    border-radius: 12px;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+
+  :where([data-eid-touch-ui]) :where(form) {
+    gap: 0.6rem;
+  }
 }
 
 [data-eid-theme="light"] body {

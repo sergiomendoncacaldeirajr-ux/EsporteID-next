@@ -6,6 +6,10 @@ export type EspacoReservaConfig = {
   cooldownHoras: number;
   antecedenciaMinHoras: number;
   antecedenciaMaxDias: number;
+  gratisLimiteReservasDiaMembro: number;
+  gratisLimiteReservasSemanaMembro: number;
+  gratisIntervaloHorasEntreReservasMembro: number;
+  gratisAntecedenciaMaxDiasMembro: number;
   waitlistExpiracaoMinutos: number;
   bloqueiaInadimplente: boolean;
   reservasGratisLiberadas: boolean;
@@ -46,6 +50,22 @@ export function normalizeEspacoReservaConfig(input: unknown): EspacoReservaConfi
     cooldownHoras: Math.max(0, Math.round(num(data.cooldownHoras, 2))),
     antecedenciaMinHoras: Math.max(0, Math.round(num(data.antecedenciaMinHoras, 1))),
     antecedenciaMaxDias: Math.max(1, Math.round(num(data.antecedenciaMaxDias, 30))),
+    gratisLimiteReservasDiaMembro: Math.max(
+      0,
+      Math.round(num(data.gratisLimiteReservasDiaMembro, num(data.limiteReservasDia, 1)))
+    ),
+    gratisLimiteReservasSemanaMembro: Math.max(
+      0,
+      Math.round(num(data.gratisLimiteReservasSemanaMembro, num(data.limiteReservasSemana, 3)))
+    ),
+    gratisIntervaloHorasEntreReservasMembro: Math.max(
+      0,
+      Math.round(num(data.gratisIntervaloHorasEntreReservasMembro, num(data.cooldownHoras, 2)))
+    ),
+    gratisAntecedenciaMaxDiasMembro: Math.max(
+      1,
+      Math.round(num(data.gratisAntecedenciaMaxDiasMembro, num(data.antecedenciaMaxDias, 30)))
+    ),
     waitlistExpiracaoMinutos: Math.max(5, Math.round(num(data.waitlistExpiracaoMinutos, 60))),
     bloqueiaInadimplente: bool(data.bloqueiaInadimplente, true),
     reservasGratisLiberadas: bool(data.reservasGratisLiberadas, true),

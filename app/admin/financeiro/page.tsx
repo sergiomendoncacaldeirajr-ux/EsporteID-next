@@ -189,6 +189,37 @@ export default async function AdminFinanceiroPage() {
                 className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
               />
             </label>
+            <label className="block text-xs font-semibold text-eid-text-secondary">
+              Dias padrão de mês grátis (novos espaços)
+              <input
+                type="number"
+                name="espaco_trial_dias_default"
+                min={0}
+                max={90}
+                defaultValue={Number((data as Record<string, unknown>).espaco_trial_dias_default ?? 30)}
+                className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-xs font-semibold text-eid-text-secondary">
+              Comissão da plataforma sobre mensalidade de sócio (% em decimal)
+              <input
+                type="number"
+                step="0.000001"
+                name="espaco_socio_comissao_percentual"
+                defaultValue={Number((data as Record<string, unknown>).espaco_socio_comissao_percentual ?? 0.05)}
+                className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+              />
+            </label>
+            <label className="block text-xs font-semibold text-eid-text-secondary">
+              Comissão da plataforma no clube de assinaturas (% em decimal)
+              <input
+                type="number"
+                step="0.000001"
+                name="espaco_clube_assinatura_comissao_percentual"
+                defaultValue={Number((data as Record<string, unknown>).espaco_clube_assinatura_comissao_percentual ?? 0.05)}
+                className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm"
+              />
+            </label>
           </section>
 
           <section className="space-y-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4">

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
+import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 import { createClient } from "@/lib/supabase/server";
@@ -21,6 +23,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const sp = (await searchParams) ?? {};
   const okMsg = typeof sp.ok === "string" ? sp.ok : null;
   const errMsg = typeof sp.erro === "string" ? sp.erro : null;
+  const novoLocalId = typeof sp.novo_local_id === "string" ? Number(sp.novo_local_id) : 0;
   const modoRaw = typeof sp.modo === "string" ? sp.modo.trim() : "";
   const fromRaw = typeof sp.from === "string" ? sp.from.trim() : "";
   const fromSafe = fromRaw.startsWith("/") && !fromRaw.startsWith("//") ? fromRaw : null;
@@ -98,6 +101,21 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const { data: j2 } = p.jogador2_id
     ? await supabase.from("profiles").select("nome").eq("id", p.jogador2_id).maybeSingle()
     : { data: null };
+  const { data: novoLocal } =
+    Number.isFinite(novoLocalId) && novoLocalId > 0
+      ? await supabase
+          .from("espacos_genericos")
+          .select("id, nome_publico, localizacao")
+          .eq("id", novoLocalId)
+          .maybeSingle()
+      : { data: null };
+  const defaultLocalStr = novoLocal
+    ? `${novoLocal.nome_publico ?? "Local"}${novoLocal.localizacao ? ` — ${novoLocal.localizacao}` : ""}`
+    : p.local_str ?? "";
+  const returnToPath = `/registrar-placar/${id}${modoRaw === "agenda" || fromSafe ? "?" : ""}${
+    modoRaw === "agenda" ? `modo=agenda${fromSafe ? `&from=${encodeURIComponent(fromSafe)}` : ""}` : fromSafe ? `from=${encodeURIComponent(fromSafe)}` : ""
+  }`;
+  const cadastrarLocalHref = `/locais/cadastrar?return_to=${encodeURIComponent(returnToPath)}`;
 
   return (
     <main className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-4 sm:py-6">
@@ -179,15 +197,21 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                 </label>
                 <label className="grid gap-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Local</span>
-                  <input
-                    type="text"
+                  <LocalAutocompleteInput
                     name="local_str"
-                    defaultValue={p.local_str ?? ""}
+                    defaultValue={defaultLocalStr}
                     placeholder="Quadra, clube, endereço..."
+                    minChars={3}
                     className="eid-input-dark h-[46px] rounded-xl px-3.5 text-sm text-eid-fg"
                   />
                 </label>
               </div>
+              <CadastrarLocalOverlayTrigger
+                href={cadastrarLocalHref}
+                className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full text-center`}
+              >
+                + Cadastrar local genérico
+              </CadastrarLocalOverlayTrigger>
               <button type="submit" className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full`}>
                 Salvar agendamento
               </button>

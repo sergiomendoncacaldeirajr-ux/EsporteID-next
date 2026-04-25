@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { TorneiosSearchForm } from "@/components/search/torneios-search-form";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 import { usuarioPodeCriarTorneio } from "@/lib/torneios/organizador";
@@ -91,29 +92,11 @@ export default async function TorneiosPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <form className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-          <input
-            name="q"
-            defaultValue={sp.q ?? ""}
-            placeholder="Buscar torneio..."
-            className="eid-input-dark h-11 min-w-0 flex-1 rounded-2xl px-4 text-sm text-eid-fg placeholder:text-eid-text-secondary/85"
-          />
-          <select
-            name="esporte_id"
-            defaultValue={sp.esporte_id ?? ""}
-            className="eid-input-dark h-11 min-w-[160px] rounded-2xl px-4 text-sm text-eid-fg"
-          >
-            <option value="">Todos os esportes</option>
-            {(esportesLista ?? []).map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.nome}
-              </option>
-            ))}
-          </select>
-          <button type="submit" className="eid-btn-primary h-11 shrink-0 rounded-2xl px-6 text-sm font-black uppercase tracking-wide">
-            Filtrar
-          </button>
-        </form>
+        <TorneiosSearchForm
+          defaultQ={sp.q ?? ""}
+          defaultEsporteId={sp.esporte_id ?? ""}
+          esportes={(esportesLista ?? []).map((e) => ({ id: e.id, nome: e.nome }))}
+        />
 
         {q || sp.esporte_id ? (
           <p className="mb-6 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/10 px-4 py-3 text-xs text-eid-text-secondary">

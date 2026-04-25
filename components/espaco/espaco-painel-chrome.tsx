@@ -16,6 +16,7 @@ export type EspacoPainelSpace = {
   id: number;
   nome_publico: string;
   slug: string | null;
+  mostrarFinanceiro?: boolean;
 };
 
 function isActivePath(pathname: string, hrefPath: string) {
@@ -25,12 +26,13 @@ function isActivePath(pathname: string, hrefPath: string) {
 
 function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
   const pathname = usePathname() ?? "";
+  const mostrarFinanceiro = space.mostrarFinanceiro !== false;
 
   const items = [
     { href: "/espaco", label: "Início", Icon: Home },
     { href: "/espaco/agenda", label: "Agenda", Icon: CalendarDays },
     { href: "/espaco/socios", label: "Sócios", Icon: Users },
-    { href: "/espaco/financeiro", label: "Financ.", Icon: Wallet },
+    ...(mostrarFinanceiro ? [{ href: "/espaco/financeiro", label: "Financ.", Icon: Wallet }] : []),
     { href: "/espaco/configuracao", label: "Ajustes", Icon: Settings },
     { href: "/espaco/integracao-asaas", label: "Asaas", Icon: Landmark },
   ] as const;

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { requireOrganizerContext } from "@/lib/auth/active-context-server";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
@@ -201,9 +202,12 @@ export default async function OrganizadorPage({
               <h2 className="text-sm font-bold text-eid-fg">Locais do organizador</h2>
               <p className="mt-1 text-xs text-eid-text-secondary">Sedes próprias, sugeridas ou já verificadas.</p>
             </div>
-            <Link href="/locais/cadastrar" className="text-xs font-semibold text-eid-primary-300 hover:underline">
+            <CadastrarLocalOverlayTrigger
+              href="/locais/cadastrar?from=/organizador"
+              className="text-xs font-semibold text-eid-primary-300 hover:underline"
+            >
               Novo local
-            </Link>
+            </CadastrarLocalOverlayTrigger>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {(meusLocais ?? []).map((local) => (

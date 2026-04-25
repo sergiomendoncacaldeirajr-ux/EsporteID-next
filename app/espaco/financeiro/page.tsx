@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { EspacoMensalidadePaasCheckout } from "@/components/espaco/espaco-mensalidade-paas-checkout";
 import { EspacoPlanosPaaSFinanceiro } from "@/components/espaco/espaco-planos-paas-financeiro";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
@@ -12,7 +13,7 @@ type PlanoPaaSFinanceiroRow = {
 };
 
 type Props = {
-  searchParams?: Promise<{ espaco?: string }>;
+  searchParams?: Promise<{ espaco?: string; onboarding?: string }>;
 };
 
 function moeda(value: number | null | undefined) {
@@ -31,6 +32,7 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
   });
 
   const categoria = selectedSpace.categoria_mensalidade ?? "outro";
+  const onboardingPagamento = String(sp.onboarding ?? "") === "pagamento";
   const categoriaLabel: Record<string, string> = {
     condominio: "Condomínio",
     clube: "Clube",
@@ -50,7 +52,7 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
       supabase
         .from("espaco_assinaturas_plataforma")
         .select(
-          "id, status, plano_nome, valor_mensal_centavos, desconto_progressivo_percentual, proxima_cobranca, plano_mensal_id"
+          "id, status, plano_nome, valor_mensal_centavos, desconto_progressivo_percentual, proxima_cobranca, plano_mensal_id, trial_inicio, trial_ate, recorrencia_cartao_confirmada_em, cancelamento_bloqueado_ate, isento_total"
         )
         .eq("espaco_generico_id", selectedSpace.id)
         .maybeSingle(),
@@ -80,6 +82,7 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
             .order("ordem", { ascending: true })
         : Promise.resolve({ data: [] as never[] }),
     ]);
+  const ocultarMensalidadePlataforma = Boolean(assinatura?.isento_total);
 
   const totalRecebido = (transacoes ?? [])
     .filter((item) => item.status === "received")
@@ -90,7 +93,46 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-      <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
+      {onboardingPagamento ? (
+        <section className="xl:col-span-2 rounded-2xl border border-eid-action-500/30 bg-eid-action-500/10 p-4">
+          <h2 className="text-base font-bold text-eid-fg">Primeiro passo: ativar pagamento para ganhar o mês grátis</h2>
+          <p className="mt-1 text-sm text-eid-text-secondary">
+            Para concluir o onboarding do espaço, confirme agora o cartão e ative a recorrência.
+            O primeiro mês fica gratuito e a primeira cobrança ocorre no mês seguinte.
+          </p>
+        </section>
+      ) : null}
+      <section className="eid-mobile-section xl:col-span-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
+        <h2 className="text-base font-bold text-eid-fg">Conta Asaas e integração</h2>
+        <p className="mt-1 text-sm text-eid-text-secondary">
+          Para receber pagamentos no fluxo do espaço, você pode criar sua conta no Asaas agora ou abrir sua conta já existente para integrar.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a
+            href="https://www.asaas.com"
+            target="_blank"
+            rel="noreferrer"
+            className="eid-btn-primary rounded-xl px-4 py-2.5 text-sm font-bold"
+          >
+            Criar conta no Asaas
+          </a>
+          <a
+            href="https://www.asaas.com/painel"
+            target="_blank"
+            rel="noreferrer"
+            className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-4 py-2.5 text-sm font-bold text-eid-primary-200"
+          >
+            Já tenho — entrar no Asaas
+          </a>
+          <Link
+            href="/espaco/integracao-asaas"
+            className="rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2.5 text-sm font-bold text-eid-fg"
+          >
+            Configurar integração no painel
+          </Link>
+        </div>
+      </section>
+      <section className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
         <h2 className="text-lg font-bold text-eid-fg">Transações</h2>
         <p className="mt-2 text-sm text-eid-text-secondary">
           {selectedSpace.nome_publico} · total líquido recebido {moeda(totalRecebido)}
@@ -137,7 +179,8 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
       </section>
 
       <section className="space-y-4">
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
+        {!ocultarMensalidadePlataforma ? (
+        <div className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
           <h2 className="text-lg font-bold text-eid-fg">Assinatura da plataforma</h2>
           {selectedSpace.modo_monetizacao === "mensalidade_plataforma" ? (
             <div className="mt-4 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/5 p-4">
@@ -162,6 +205,19 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
               <p>Status {assinatura.status}</p>
               <p>Mensalidade {moeda(assinatura.valor_mensal_centavos)}</p>
               <p>
+                Mês grátis {assinatura.trial_inicio ?? "-"} até {assinatura.trial_ate ?? "-"}
+              </p>
+              <p>
+                Recorrência no cartão{" "}
+                {assinatura.recorrencia_cartao_confirmada_em
+                  ? `confirmada em ${new Date(assinatura.recorrencia_cartao_confirmada_em).toLocaleString("pt-BR")}`
+                  : "ainda não confirmada"}
+              </p>
+              <p>
+                Cancelamento liberado a partir de{" "}
+                {assinatura.cancelamento_bloqueado_ate ?? "-"}
+              </p>
+              <p>
                 Desconto progressivo{" "}
                 {Number(assinatura.desconto_progressivo_percentual ?? 0) * 100}%
               </p>
@@ -174,8 +230,9 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
             </p>
           )}
         </div>
+        ) : null}
 
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
+        <div className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
           <h2 className="text-lg font-bold text-eid-fg">Extrato legado</h2>
           <div className="mt-3 space-y-2">
             {(extrato ?? []).length ? (
@@ -201,7 +258,7 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
+        <div className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
           <h2 className="text-lg font-bold text-eid-fg">Auditoria</h2>
           <div className="mt-3 space-y-2">
             {(auditoria ?? []).length ? (

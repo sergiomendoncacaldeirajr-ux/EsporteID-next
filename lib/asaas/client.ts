@@ -60,6 +60,25 @@ export async function createAsaasPayment(payload: Record<string, unknown>) {
   });
 }
 
+export async function createAsaasSubscription(payload: Record<string, unknown>) {
+  return asaasFetch<{
+    id: string;
+    nextDueDate?: string | null;
+    status?: string;
+  }>("/subscriptions", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function cancelAsaasSubscription(subscriptionId: string) {
+  const safeId = String(subscriptionId ?? "").trim();
+  if (!safeId) throw new Error("Assinatura Asaas inválida para cancelamento.");
+  return asaasFetch<{ id?: string; deleted?: boolean }>(`/subscriptions/${safeId}`, {
+    method: "DELETE",
+  });
+}
+
 export async function refundAsaasPayment(paymentId: string) {
   const safeId = String(paymentId ?? "").trim();
   if (!safeId) throw new Error("Pagamento Asaas inválido para estorno.");

@@ -96,6 +96,7 @@ export async function adminReviewEspacoClaim(formData: FormData) {
     const claimId = Number(formData.get("claim_id"));
     const decision = String(formData.get("decision") ?? "").trim().toLowerCase();
     const observacoesAdmin = String(formData.get("observacoes_admin") ?? "").trim() || null;
+    const cobraMensalidadePlataforma = String(formData.get("cobra_mensalidade_plataforma") ?? "sim").trim().toLowerCase() !== "nao";
     if (!Number.isFinite(claimId) || !["aprovar", "rejeitar"].includes(decision)) return;
 
     const supabase = await createClient();
@@ -143,7 +144,30 @@ export async function adminReviewEspacoClaim(formData: FormData) {
           status: "publico",
         })
         .eq("id", claim.espaco_generico_id);
-      if (String(egMeta?.modo_reserva ?? "") === "mista") {
+      if (!cobraMensalidadePlataforma) {
+        await db.from("espaco_assinaturas_plataforma").upsert(
+          {
+            espaco_generico_id: claim.espaco_generico_id,
+            responsavel_usuario_id: claim.solicitante_id,
+            plano_nome: "Isento de mensalidade da plataforma",
+            valor_mensal_centavos: 0,
+            status: "active",
+            situacao_override: "isento",
+            isento_total: true,
+            atualizado_em: reviewedAt,
+          } as Record<string, unknown>,
+          { onConflict: "espaco_generico_id" }
+        );
+      } else {
+        await db
+          .from("espaco_assinaturas_plataforma")
+          .update({
+            isento_total: false,
+            atualizado_em: reviewedAt,
+          })
+          .eq("espaco_generico_id", claim.espaco_generico_id);
+      }
+      if (cobraMensalidadePlataforma && String(egMeta?.modo_reserva ?? "") === "mista") {
         await db.from("espaco_assinaturas_plataforma").upsert(
           {
             espaco_generico_id: claim.espaco_generico_id,
@@ -152,6 +176,7 @@ export async function adminReviewEspacoClaim(formData: FormData) {
             valor_mensal_centavos: 0,
             status: "active",
             situacao_override: "isento",
+            isento_total: false,
             atualizado_em: reviewedAt,
           } as Record<string, unknown>,
           { onConflict: "espaco_generico_id" }
@@ -233,6 +258,9 @@ export async function adminUpdateFinanceiro(formData: FormData) {
       espaco_mensalidade_valor_outro_brl: Number(formData.get("espaco_mensalidade_valor_outro_brl")),
       espaco_mensalidade_dias_aviso_antes: Math.round(Number(formData.get("espaco_mensalidade_dias_aviso_antes"))),
       espaco_mensalidade_dias_bloqueio_apos: Math.round(Number(formData.get("espaco_mensalidade_dias_bloqueio_apos"))),
+      espaco_trial_dias_default: Math.round(Number(formData.get("espaco_trial_dias_default"))),
+      espaco_socio_comissao_percentual: Number(formData.get("espaco_socio_comissao_percentual")),
+      espaco_clube_assinatura_comissao_percentual: Number(formData.get("espaco_clube_assinatura_comissao_percentual")),
     };
     const numericKeys = [
       "torneio_taxa_fixa",
@@ -257,6 +285,9 @@ export async function adminUpdateFinanceiro(formData: FormData) {
       "espaco_mensalidade_valor_outro_brl",
       "espaco_mensalidade_dias_aviso_antes",
       "espaco_mensalidade_dias_bloqueio_apos",
+      "espaco_trial_dias_default",
+      "espaco_socio_comissao_percentual",
+      "espaco_clube_assinatura_comissao_percentual",
     ] as const;
     if (numericKeys.some((key) => Number.isNaN(row[key]))) return;
     const { error } = await svc().from("ei_financeiro_config").update(row).eq("id", 1);
@@ -297,9 +328,12 @@ export async function adminUpdateEspacoMensalidadePlataforma(formData: FormData)
     const proximaRaw = String(formData.get("proxima_cobranca") ?? "").trim();
     const proxima_cobranca = /^\d{4}-\d{2}-\d{2}$/.test(proximaRaw) ? proximaRaw : null;
     const status = String(formData.get("status") ?? "active").trim() || "active";
+    const trialDiasRaw = Number(formData.get("trial_dias_override") ?? 0);
+    const trial_dias_override = Number.isFinite(trialDiasRaw) && trialDiasRaw > 0 ? Math.min(90, Math.round(trialDiasRaw)) : null;
+    const isento_total = formData.get("isento_total") === "on";
     const overrideIn = String(formData.get("situacao_override") ?? "").trim();
     const situacao_override =
-      overrideIn === "isento" || overrideIn === "forcar_bloqueio" ? overrideIn : null;
+      isento_total ? "isento" : overrideIn === "isento" || overrideIn === "forcar_bloqueio" ? overrideIn : null;
     const observacoes_admin = String(formData.get("observacoes_admin") ?? "").trim() || null;
     const { data: esp } = await db
       .from("espacos_genericos")
@@ -322,6 +356,8 @@ export async function adminUpdateEspacoMensalidadePlataforma(formData: FormData)
       observacoes_admin,
       atualizado_em: new Date().toISOString(),
       plano_mensal_id: plano_mensal_id,
+      trial_dias_override,
+      isento_total,
     };
     const { error: e2 } = await db.from("espaco_assinaturas_plataforma").upsert(payload, { onConflict: "espaco_generico_id" });
     if (e2) return;
@@ -341,9 +377,11 @@ export async function adminUpdateEspacoModoCobranca(formData: FormData) {
     const modo_monetizacao = String(formData.get("modo_monetizacao") ?? "").trim();
     const taxaBrl = Number(formData.get("taxa_reserva_plataforma_brl"));
     const socios_esp = String(formData.get("socios_mensalidade_espaco") ?? "em_breve").trim();
+    const clube_ass = String(formData.get("clube_assinaturas_socios") ?? "em_breve").trim();
     if (!new Set(["gratuita", "paga", "mista"]).has(modo_reserva)) return;
     if (!new Set(["mensalidade_plataforma", "apenas_reservas", "misto"]).has(modo_monetizacao)) return;
     if (!new Set(["off", "em_breve", "on"]).has(socios_esp)) return;
+    if (!new Set(["off", "em_breve", "on"]).has(clube_ass)) return;
     if (!Number.isFinite(taxaBrl) || taxaBrl < 0) return;
     const taxa_reserva_plataforma_centavos = Math.round(taxaBrl * 100);
     const { error } = await svc()
@@ -353,6 +391,7 @@ export async function adminUpdateEspacoModoCobranca(formData: FormData) {
         modo_monetizacao,
         taxa_reserva_plataforma_centavos,
         socios_mensalidade_espaco: socios_esp,
+        clube_assinaturas_socios: clube_ass,
       })
       .eq("id", id);
     if (error) return;

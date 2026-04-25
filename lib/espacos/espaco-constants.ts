@@ -6,3 +6,6 @@ export type ModoMonetizacaoEspaco = "mensalidade_plataforma" | "apenas_reservas"
 
 /** Alinhado a `eg_socios_men_espaco_ck`. */
 export type SociosMensalidadeEspacoFlag = "off" | "em_breve" | "on";
+
+/** Alinhado a `espacos_genericos_clube_assinaturas_socios_ck`. */
+export type ClubeAssinaturaSociosFlag = "off" | "em_breve" | "on";

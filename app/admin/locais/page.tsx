@@ -11,6 +11,7 @@ import {
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { computeMensalidadePainelState } from "@/lib/espacos/mensalidade-acesso";
 import {
+  CLUBE_ASSINATURA_SOCIOS_LABEL,
   MODO_MONETIZACAO_LABEL,
   MODO_RESERVA_LABEL,
   SOCIOS_MENSAL_ESPACO_LABEL,
@@ -75,7 +76,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
   let locaisQ = db
     .from("espacos_genericos")
     .select(
-      "id, slug, nome_publico, localizacao, status, operacao_status, aceita_socios, ativo_listagem, ownership_status, criado_em, categoria_mensalidade, modo_reserva, modo_monetizacao, taxa_reserva_plataforma_centavos, socios_mensalidade_espaco, paas_aprovado_operacao_sem_gateway, paas_primeiro_pagamento_mensal_recebido_em, operacao_suspeita_somente_reservas_gratis, operacao_suspeita_observacao"
+      "id, slug, nome_publico, localizacao, status, operacao_status, aceita_socios, ativo_listagem, ownership_status, criado_em, categoria_mensalidade, modo_reserva, modo_monetizacao, taxa_reserva_plataforma_centavos, socios_mensalidade_espaco, clube_assinaturas_socios, paas_aprovado_operacao_sem_gateway, paas_primeiro_pagamento_mensal_recebido_em, operacao_suspeita_somente_reservas_gratis, operacao_suspeita_observacao"
     )
     .order("id", { ascending: false });
 
@@ -98,7 +99,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
   const { data: assinRows } = locaisIds.length
     ? await db
         .from("espaco_assinaturas_plataforma")
-        .select("id, espaco_generico_id, status, valor_mensal_centavos, proxima_cobranca, trial_ate, situacao_override, plano_nome, observacoes_admin, plano_mensal_id")
+        .select("id, espaco_generico_id, status, valor_mensal_centavos, proxima_cobranca, trial_ate, situacao_override, plano_nome, observacoes_admin, plano_mensal_id, trial_dias_override, isento_total")
         .in("espaco_generico_id", locaisIds)
     : { data: [] as unknown[] };
   const assinMap = new Map(
@@ -208,6 +209,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
               modo_monetizacao?: string;
               taxa_reserva_plataforma_centavos?: number | null;
               socios_mensalidade_espaco?: string;
+              clube_assinaturas_socios?: string;
               paas_aprovado_operacao_sem_gateway?: boolean | null;
               paas_primeiro_pagamento_mensal_recebido_em?: string | null;
               operacao_suspeita_somente_reservas_gratis?: boolean | null;
@@ -217,6 +219,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
             const modoM = (localRow.modo_monetizacao ?? "misto") as keyof typeof MODO_MONETIZACAO_LABEL;
             const taxaReservaBrl = Number(localRow.taxa_reserva_plataforma_centavos ?? 0) / 100;
             const sociosFl = (localRow.socios_mensalidade_espaco ?? "em_breve") as keyof typeof SOCIOS_MENSAL_ESPACO_LABEL;
+            const clubeFl = (localRow.clube_assinaturas_socios ?? "em_breve") as keyof typeof CLUBE_ASSINATURA_SOCIOS_LABEL;
             const a = assinMap.get(l.id) as
               | {
                   id: number;
@@ -228,6 +231,8 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                   plano_nome: string | null;
                   observacoes_admin: string | null;
                   plano_mensal_id: number | null;
+                  trial_dias_override: number | null;
+                  isento_total: boolean | null;
                 }
               | undefined;
             const situ = computeMensalidadePainelState(
@@ -276,7 +281,8 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                     <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary">
                       Reservas: {MODO_RESERVA_LABEL[modoR] ?? modoR} · {MODO_MONETIZACAO_LABEL[modoM] ?? modoM} · taxa plataforma
                       (reserva): {brlDeCentavos(Math.round(taxaReservaBrl * 100))} / reserva (líquido desejado, antes do split Asaas). Sócios:{" "}
-                      {SOCIOS_MENSAL_ESPACO_LABEL[sociosFl] ?? sociosFl}.
+                      {SOCIOS_MENSAL_ESPACO_LABEL[sociosFl] ?? sociosFl}. Clube de assinaturas:{" "}
+                      {CLUBE_ASSINATURA_SOCIOS_LABEL[clubeFl] ?? clubeFl}.
                     </p>
                     {localRow.operacao_suspeita_somente_reservas_gratis ? (
                       <p className="mt-1 text-[11px] text-red-300">
@@ -395,6 +401,18 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                         <option value="on">{SOCIOS_MENSAL_ESPACO_LABEL.on}</option>
                       </select>
                     </label>
+                    <label className="text-[10px] text-eid-text-secondary sm:col-span-2 sm:max-w-2xl">
+                      Clube de assinaturas entre sócios (opcional)
+                      <select
+                        name="clube_assinaturas_socios"
+                        defaultValue={localRow.clube_assinaturas_socios ?? "em_breve"}
+                        className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm"
+                      >
+                        <option value="off">{CLUBE_ASSINATURA_SOCIOS_LABEL.off}</option>
+                        <option value="em_breve">{CLUBE_ASSINATURA_SOCIOS_LABEL.em_breve}</option>
+                        <option value="on">{CLUBE_ASSINATURA_SOCIOS_LABEL.on}</option>
+                      </select>
+                    </label>
                     <div className="sm:col-span-2">
                       <button
                         type="submit"
@@ -424,15 +442,13 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                       </select>
                     </label>
                     <div className="sm:col-span-2">
-                      <form action={adminAplicarPlanoMensalAutomatico} className="inline">
-                        <input type="hidden" name="espaco_generico_id" value={l.id} />
-                        <button
-                          type="submit"
-                          className="rounded-lg border border-eid-text-secondary/25 px-3 py-1.5 text-[11px] font-bold text-eid-primary-200 hover:bg-white/5"
-                        >
-                          Aplicar plano do catálogo (faixa por categoria e unidades ativas)
-                        </button>
-                      </form>
+                      <button
+                        type="submit"
+                        formAction={adminAplicarPlanoMensalAutomatico}
+                        className="rounded-lg border border-eid-text-secondary/25 px-3 py-1.5 text-[11px] font-bold text-eid-primary-200 hover:bg-white/5"
+                      >
+                        Aplicar plano do catálogo (faixa por categoria e unidades ativas)
+                      </button>
                     </div>
                     <label className="text-[10px] text-eid-text-secondary sm:col-span-2">
                       Plano (catálogo) — vincular assinatura
@@ -477,6 +493,17 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                       />
                     </label>
                     <label className="text-[10px] text-eid-text-secondary">
+                      Mês grátis (dias, override por espaço)
+                      <input
+                        name="trial_dias_override"
+                        type="number"
+                        min={0}
+                        max={90}
+                        defaultValue={a?.trial_dias_override ?? 30}
+                        className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm"
+                      />
+                    </label>
+                    <label className="text-[10px] text-eid-text-secondary">
                       Nome do plano
                       <input
                         name="plano_nome"
@@ -504,6 +531,10 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                         <option value="isento">Isento (não cobra / não bloqueia)</option>
                         <option value="forcar_bloqueio">Forçar bloqueio (manual)</option>
                       </select>
+                    </label>
+                    <label className="flex items-center gap-2 text-[11px] text-eid-text-secondary sm:col-span-2">
+                      <input type="checkbox" name="isento_total" defaultChecked={Boolean(a?.isento_total)} />
+                      Espaço sem cobrança da plataforma (isento total)
                     </label>
                     <label className="text-[10px] text-eid-text-secondary sm:col-span-2">
                       Obs. internas
@@ -586,6 +617,20 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                     <td className="px-3 py-2">
                       <form action={adminReviewEspacoClaim} className="space-y-2">
                         <input type="hidden" name="claim_id" value={claim.id} />
+                        <label className="block text-[11px] text-eid-text-secondary">
+                          Cobrar mensalidade da plataforma após aprovação?
+                          <select
+                            name="cobra_mensalidade_plataforma"
+                            defaultValue="sim"
+                            className="eid-input-dark mt-1 w-64 rounded px-2 py-1 text-[11px]"
+                          >
+                            <option value="sim">Sim, cobra mensalidade</option>
+                            <option value="nao">Não, espaço isento (não exibir mensalidade no painel)</option>
+                          </select>
+                          <span className="mt-1 block text-[10px] text-eid-text-muted">
+                            Você poderá alterar depois em &quot;Editar assinatura / categoria (plataforma)&quot; deste espaço.
+                          </span>
+                        </label>
                         <textarea
                           name="observacoes_admin"
                           rows={3}

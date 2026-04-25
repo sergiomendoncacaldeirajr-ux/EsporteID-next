@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { salvarConfiguracoesEspacoAction } from "@/app/espaco/actions";
+import { normalizeEspacoAssociacaoConfig } from "@/lib/espacos/associacao-config";
 import { normalizeEspacoReservaConfig } from "@/lib/espacos/config";
 
 const initialState = { ok: false, message: "" };
@@ -34,6 +35,7 @@ export function EspacoConfigForm({
     aceita_socios: boolean | null;
     permite_professores_aprovados: boolean | null;
     configuracao_reservas_json: unknown;
+    associacao_regra_json?: unknown;
   };
 }) {
   const [state, formAction, pending] = useActionState(
@@ -41,6 +43,7 @@ export function EspacoConfigForm({
     initialState
   );
   const cfg = normalizeEspacoReservaConfig(espaco.configuracao_reservas_json);
+  const associacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);
   const modo = (modoReserva ?? "mista").toLowerCase();
   const bloqueiaGratis = modo === "paga";
 
@@ -175,6 +178,37 @@ export function EspacoConfigForm({
           {modoReservaLabels[modo] ?? modoReservaLabels.mista}
         </p>
       </div>
+      <div className="sm:col-span-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/30 p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+          Regra de entrada de sócio/membro
+        </p>
+        <p className="mt-2 text-xs text-eid-text-secondary">
+          Defina o que a pessoa precisa informar para solicitar entrada no espaço.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <select
+            name="associacao_modo_entrada"
+            defaultValue={associacao.modoEntrada}
+            className="eid-input-dark rounded-xl px-3 py-2 text-sm"
+          >
+            <option value="somente_perfil">Somente perfil (sem código)</option>
+            <option value="matricula">Exigir matrícula/código</option>
+            <option value="cpf">Exigir CPF</option>
+          </select>
+          <input
+            name="associacao_rotulo_campo"
+            defaultValue={associacao.rotuloCampo}
+            placeholder="Rótulo do campo"
+            className="eid-input-dark rounded-xl px-3 py-2 text-sm"
+          />
+          <input
+            name="associacao_instrucoes"
+            defaultValue={associacao.instrucoes}
+            placeholder="Instruções para o visitante"
+            className="eid-input-dark rounded-xl px-3 py-2 text-sm"
+          />
+        </div>
+      </div>
       <div className="sm:col-span-2 grid gap-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4 sm:grid-cols-2">
         <label className="flex items-center gap-2 text-xs text-eid-fg">
           <input
@@ -278,6 +312,60 @@ export function EspacoConfigForm({
             defaultValue={cfg.antecedenciaMaxDias}
             className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
           />
+        </div>
+        <div className="sm:col-span-2 mt-1 rounded-xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-eid-primary-300">
+            Regras para reservas gratuitas de sócio
+          </p>
+          <p className="mt-1 text-[11px] text-eid-text-secondary">
+            Defina o comportamento específico quando o membro usar benefício gratuito.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+                Limite grátis por dia (membro)
+              </label>
+              <input
+                name="gratis_limite_reservas_dia_membro"
+                type="number"
+                defaultValue={cfg.gratisLimiteReservasDiaMembro}
+                className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+                Limite grátis por semana (membro)
+              </label>
+              <input
+                name="gratis_limite_reservas_semana_membro"
+                type="number"
+                defaultValue={cfg.gratisLimiteReservasSemanaMembro}
+                className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+                Intervalo entre reservas grátis (h)
+              </label>
+              <input
+                name="gratis_intervalo_horas_entre_reservas_membro"
+                type="number"
+                defaultValue={cfg.gratisIntervaloHorasEntreReservasMembro}
+                className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+                Antecedência máxima grátis (dias)
+              </label>
+              <input
+                name="gratis_antecedencia_max_dias_membro"
+                type="number"
+                defaultValue={cfg.gratisAntecedenciaMaxDiasMembro}
+                className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
         </div>
       </div>
       <div className="sm:col-span-2">

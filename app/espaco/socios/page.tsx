@@ -1,4 +1,9 @@
-import { gerarCobrancaSocioEspacoAction, revisarDocumentoSocioEspacoAction, revisarSocioEspacoAction } from "@/app/espaco/actions";
+import {
+  gerarCobrancaSocioEspacoAction,
+  responderSolicitacaoEntradaEspacoAction,
+  revisarDocumentoSocioEspacoAction,
+  revisarSocioEspacoAction,
+} from "@/app/espaco/actions";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
 
 type Props = {
@@ -13,7 +18,7 @@ export default async function EspacoSociosPage({ searchParams }: Props) {
     espacoId,
   });
 
-  const [{ data: socios }, { data: planos }, { data: documentos }] = await Promise.all([
+  const [{ data: socios }, { data: planos }, { data: documentos }, { data: solicitacoes }] = await Promise.all([
     supabase
       .from("espaco_socios")
       .select("id, usuario_id, matricula, status, documentos_status, financeiro_status, motivo_rejeicao, motivo_bloqueio, profiles(nome), plano_socio_id")
@@ -30,6 +35,12 @@ export default async function EspacoSociosPage({ searchParams }: Props) {
       .select("id, espaco_socio_id, tipo_documento, status, motivo_rejeicao, arquivo_path")
       .eq("espaco_generico_id", selectedSpace.id)
       .order("id", { ascending: false }),
+    supabase
+      .from("membership_requests")
+      .select("id, usuario_id, status, criado_em, matricula, identificador_tipo, identificador_valor, mensagem, profiles(nome)")
+      .eq("espaco_generico_id", selectedSpace.id)
+      .eq("status", "pendente")
+      .order("id", { ascending: false }),
   ]);
 
   const docsBySocio = new Map<number, typeof documentos>();
@@ -41,8 +52,57 @@ export default async function EspacoSociosPage({ searchParams }: Props) {
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-      <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
+      <section className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
         <h2 className="text-lg font-bold text-eid-fg">Sócios e análise documental</h2>
+        <div className="eid-mobile-subsection mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3">
+          <h3 className="text-sm font-bold text-eid-fg">Solicitações pendentes de entrada</h3>
+          <div className="mt-3 space-y-2">
+            {(solicitacoes ?? []).length ? (
+              (solicitacoes ?? []).map((sol) => {
+                const profile = Array.isArray(sol.profiles) ? sol.profiles[0] : sol.profiles;
+                return (
+                  <div key={sol.id} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-3">
+                    <p className="text-sm font-semibold text-eid-fg">{profile?.nome ?? "Usuário"}</p>
+                    <p className="mt-1 text-xs text-eid-text-secondary">
+                      Enviado em {sol.criado_em ? new Date(sol.criado_em).toLocaleString("pt-BR") : "-"} · matrícula {sol.matricula}
+                    </p>
+                    {sol.identificador_tipo ? (
+                      <p className="mt-1 text-xs text-eid-text-secondary">
+                        {sol.identificador_tipo}: {sol.identificador_valor ?? "-"}
+                      </p>
+                    ) : null}
+                    {sol.mensagem ? <p className="mt-1 text-xs text-eid-text-secondary">{sol.mensagem}</p> : null}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <form action={responderSolicitacaoEntradaEspacoAction}>
+                        <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+                        <input type="hidden" name="request_id" value={sol.id} />
+                        <input type="hidden" name="decisao" value="aprovar" />
+                        <button className="rounded-lg border border-eid-primary-500/35 px-3 py-1.5 text-[11px] font-semibold text-eid-primary-300">
+                          Aprovar entrada
+                        </button>
+                      </form>
+                      <form action={responderSolicitacaoEntradaEspacoAction} className="flex flex-wrap gap-2">
+                        <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+                        <input type="hidden" name="request_id" value={sol.id} />
+                        <input type="hidden" name="decisao" value="recusar" />
+                        <input
+                          name="motivo"
+                          placeholder="Motivo da recusa"
+                          className="eid-input-dark rounded-lg px-2 py-1 text-[11px]"
+                        />
+                        <button className="rounded-lg border border-red-400/35 px-3 py-1.5 text-[11px] font-semibold text-red-300">
+                          Recusar
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-eid-text-secondary">Nenhuma solicitação pendente no momento.</p>
+            )}
+          </div>
+        </div>
         <div className="mt-4 space-y-4">
           {(socios ?? []).length ? (
             (socios ?? []).map((socio) => {
@@ -185,7 +245,7 @@ export default async function EspacoSociosPage({ searchParams }: Props) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
+      <section className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
         <h2 className="text-lg font-bold text-eid-fg">Status geral</h2>
         <div className="mt-4 space-y-2 text-sm text-eid-text-secondary">
           <p>Espaço: {selectedSpace.nome_publico}</p>

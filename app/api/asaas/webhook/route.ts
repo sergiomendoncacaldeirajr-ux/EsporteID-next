@@ -24,7 +24,15 @@ export async function POST(request: Request) {
 
   const payload = (await request.json().catch(() => null)) as {
     event?: string;
-    payment?: { id?: string; status?: string; value?: number; invoiceUrl?: string | null; bankSlipUrl?: string | null };
+    payment?: {
+      id?: string;
+      status?: string;
+      value?: number;
+      invoiceUrl?: string | null;
+      bankSlipUrl?: string | null;
+      subscription?: string | null;
+      dueDate?: string | null;
+    };
   } | null;
   const paymentId = payload?.payment?.id;
   if (!paymentId) {
@@ -44,7 +52,17 @@ export async function POST(request: Request) {
     .eq("asaas_payment_id", paymentId)
     .maybeSingle();
 
-  if (!pagamento && !espacoPagamento) {
+  const paymentSubscriptionId = String(payload?.payment?.subscription ?? "").trim();
+  const { data: assinaturaBySubscription } =
+    !espacoPagamento && paymentSubscriptionId
+      ? await admin
+          .from("espaco_assinaturas_plataforma")
+          .select("id, espaco_generico_id")
+          .eq("asaas_subscription_id", paymentSubscriptionId)
+          .maybeSingle()
+      : { data: null };
+
+  if (!pagamento && !espacoPagamento && !assinaturaBySubscription) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
@@ -241,6 +259,24 @@ export async function POST(request: Request) {
         data_criacao: new Date().toISOString(),
       });
     }
+  }
+
+  if (assinaturaBySubscription && mapped.pagamento === "received") {
+    const proxima = new Date();
+    proxima.setMonth(proxima.getMonth() + 1);
+    await admin
+      .from("espaco_assinaturas_plataforma")
+      .update({
+        status: "active",
+        proxima_cobranca: payload?.payment?.dueDate ?? proxima.toISOString().slice(0, 10),
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq("id", assinaturaBySubscription.id);
+    await admin
+      .from("espacos_genericos")
+      .update({ paas_primeiro_pagamento_mensal_recebido_em: new Date().toISOString() })
+      .eq("id", assinaturaBySubscription.espaco_generico_id)
+      .is("paas_primeiro_pagamento_mensal_recebido_em", null);
   }
 
   return NextResponse.json({ ok: true });

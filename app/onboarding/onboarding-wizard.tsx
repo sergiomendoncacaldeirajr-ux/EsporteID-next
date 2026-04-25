@@ -348,91 +348,6 @@ function EidFilePicker({
   );
 }
 
-/* ── Dropdown customizado estilo nativo ─────────────────────────────── */
-function EidSelect({
-  value,
-  onChange,
-  options,
-  placeholder = "Selecione…",
-  name,
-  className = "",
-}: {
-  value: string | number;
-  onChange: (v: string) => void;
-  options: { value: string | number; label: string }[];
-  placeholder?: string;
-  name?: string;
-  className?: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const selected = options.find((o) => String(o.value) === String(value));
-
-  useEffect(() => {
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <div ref={ref} className={`relative ${className}`}>
-      {name && <input type="hidden" name={name} value={value} />}
-      {/* Trigger */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-sm font-medium transition-all ${
-          open
-            ? "border-eid-primary-500/60 bg-eid-card shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
-            : "border-[color:var(--eid-border-subtle)] bg-eid-card hover:border-eid-primary-500/40"
-        }`}
-      >
-        <span className={selected ? "text-eid-fg" : "text-eid-text-secondary"}>
-          {selected ? selected.label : placeholder}
-        </span>
-        <svg
-          viewBox="0 0 16 16"
-          className={`h-4 w-4 shrink-0 text-eid-text-secondary transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-          fill="none"
-        >
-          <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-
-      {/* Dropdown */}
-      {open && (
-        <div className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-[0_8px_32px_rgba(0,0,0,0.25)]">
-          <div className="max-h-52 overflow-y-auto py-1">
-            {options.map((opt) => {
-              const active = String(opt.value) === String(value);
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => { onChange(String(opt.value)); setOpen(false); }}
-                  className={`flex w-full items-center justify-between px-3 py-2.5 text-sm transition-colors ${
-                    active
-                      ? "bg-eid-primary-500/10 text-eid-primary-400 font-semibold"
-                      : "text-eid-fg hover:bg-eid-primary-500/6"
-                  }`}
-                >
-                  {opt.label}
-                  {active && (
-                    <svg viewBox="0 0 12 12" className="h-3.5 w-3.5 shrink-0" fill="none">
-                      <path d="M2 6l3 3 5-5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 import {
   salvarPapeisOnboarding,
   salvarEsportesOnboarding,
@@ -440,6 +355,7 @@ import {
   salvarPerfilOnboarding,
   type OnboardingActionResult,
 } from "./actions";
+import { LocalSelectAutocomplete } from "@/components/locais/local-select-autocomplete";
 
 const ONBOARDING_DRAFT_KEY_PREFIX = "eid_onboarding_draft_v1";
 
@@ -2120,19 +2036,17 @@ export function OnboardingWizard({
 
                   {orgLocalModo === "existente" ? (
                     <>
-                      <EidSelect
+                      <LocalSelectAutocomplete
                         name="org_local_id"
                         value={orgLocalId}
                         onChange={setOrgLocalId}
-                        placeholder="Selecione o local…"
-                        className="mt-3"
-                        options={[
-                          ...locais.map((l) => ({
-                            value: l.id,
-                            label: `${l.nome}${l.localizacao ? ` — ${l.localizacao}` : ""}`,
-                          })),
-                        ]}
+                        placeholder="Digite o nome do local (mín. 3 letras)…"
+                        minChars={3}
+                        className="eid-input-dark mt-3 w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                       />
+                      <p className="mt-1 text-[11px] text-eid-text-secondary">
+                        Busca por sugestão (3+ letras), priorizando locais mais próximos de você. Base atual: {locais.length} locais.
+                      </p>
                       <input
                         name="org_local_msg"
                         value={orgLocalMsg}

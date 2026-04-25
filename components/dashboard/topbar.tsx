@@ -8,6 +8,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LogoWordmark } from "@/components/brand/logo-wordmark";
 import { NotificationBell } from "@/components/dashboard/notification-bell";
 import { EidThemeToggle } from "@/components/eid-theme-toggle";
+import { SearchSuggestInput } from "@/components/search/search-suggest-input";
 import {
   getContextHomeHref,
   listAvailableAppContexts,
@@ -235,10 +236,13 @@ export function DashboardTopbar({
           <label htmlFor="eid-topbar-search" className="sr-only">
             Buscar no painel
           </label>
-          <input
+          <SearchSuggestInput
             id="eid-topbar-search"
+            name="q"
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={setQ}
+            scope="global"
+            minChars={3}
             placeholder={
               activeContext === "organizador"
                 ? "Buscar torneios, locais…"

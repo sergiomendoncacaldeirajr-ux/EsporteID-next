@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
 import {
   CalendarDays,
@@ -19,6 +20,17 @@ export default async function EspacoHomePage() {
   const { supabase, selectedSpace } = await getEspacoSelecionado({
     nextPath: "/espaco",
   });
+  const { data: assinatura } = await supabase
+    .from("espaco_assinaturas_plataforma")
+    .select("id, isento_total, recorrencia_cartao_confirmada_em")
+    .eq("espaco_generico_id", selectedSpace.id)
+    .maybeSingle();
+  const onboardingPagamentoConcluido =
+    Boolean(assinatura?.isento_total) ||
+    Boolean(assinatura?.recorrencia_cartao_confirmada_em);
+  if (!onboardingPagamentoConcluido) {
+    redirect("/espaco/financeiro?onboarding=pagamento");
+  }
 
   const [{ data: unidades }, { data: socios }, { data: waitlist }, { data: transacoes }] =
     await Promise.all([

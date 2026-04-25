@@ -52,6 +52,10 @@ function isEmbedDesafioPath(path: string): boolean {
   return path === "/desafio" || path === "/desafio/";
 }
 
+function isFullscreenCadastrarLocalPath(path: string): boolean {
+  return path === "/locais/cadastrar" || path === "/locais/cadastrar/";
+}
+
 function nextWithHideAppShell(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(EID_HIDE_APP_SHELL_HEADER, "1");
@@ -79,13 +83,13 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (!needsSessionWork(path)) {
-    if (hideEmbedMinimalChrome) return nextWithHideAppShell(request);
+    if (hideEmbedMinimalChrome || isFullscreenCadastrarLocalPath(path)) return nextWithHideAppShell(request);
     // Rotas públicas não precisam de leitura de sessão no middleware.
     return NextResponse.next({ request });
   }
   let supabaseResponse = NextResponse.next({ request });
   const requestHeaders = new Headers(request.headers);
-  const hideAppShell = path.startsWith("/editar");
+  const hideAppShell = path.startsWith("/editar") || isFullscreenCadastrarLocalPath(path);
   const showOnboardingChrome = path.startsWith("/onboarding");
   if (hideAppShell) requestHeaders.set(EID_HIDE_APP_SHELL_HEADER, "1");
   if (showOnboardingChrome) requestHeaders.set(EID_SHOW_ONBOARDING_CHROME_HEADER, "1");
@@ -223,21 +227,25 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Home `/`: institucional sempre acessível (inclusive logado, no desktop).
-  // Mantemos apenas o comportamento legado de mandar visitante mobile para login.
+  // Home `/`: institucional acessível no desktop.
+  // No mobile (iOS/Android), nunca exibe institucional: sempre segue para login/dashboard.
   if (path === "/") {
     const ua = request.headers.get("user-agent");
-    const allowInstitutional =
-      request.nextUrl.searchParams.get("home") === "1" || request.nextUrl.searchParams.get("site") === "1";
+    const isMobile = isMobileUserAgent(ua);
 
-    if (user) return supabaseResponse;
-
-    if (!authCode && isMobileUserAgent(ua) && !allowInstitutional) {
+    if (isMobile && user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    if (isMobile && !user && !authCode) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       url.searchParams.set("next", "/dashboard");
       return NextResponse.redirect(url);
     }
+    if (user) return supabaseResponse;
   }
 
   if (hideAppShell) supabaseResponse.headers.set(EID_HIDE_APP_SHELL_HEADER, "1");
