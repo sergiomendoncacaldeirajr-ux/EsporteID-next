@@ -103,34 +103,51 @@ export function buildSetFormatOptions(params: {
   if (baseConfig.type !== "sets") return [];
   const options: SetFormatOption[] = [];
   const nameNorm = normalizeName(String(sportName ?? ""));
-  const isTennisLike = nameNorm.includes("tenis") || nameNorm.includes("beach tennis");
-  if (isTennisLike) {
-    options.push({
-      key: "bo3_super_tb10",
-      name: "Melhor de 3 (último set super tiebreak 10)",
-      config: {
-        ...baseConfig,
-        setsToWin: 2,
-        sets: 3,
-        gamesPerSet: 6,
-        tiebreak: true,
-        tiebreakPoints: 7,
-        finalSetSuperTiebreak: true,
-      },
-    });
-    options.push({
-      key: "proset8_tb",
-      name: "Pro set (8 games, TB decisivo 7 pts em 8×8)",
-      config: {
-        ...baseConfig,
-        setsToWin: 1,
-        sets: 1,
-        gamesPerSet: 8,
-        tiebreak: true,
-        tiebreakPoints: 7,
-        finalSetSuperTiebreak: false,
-      },
-    });
+  const isPadel = nameNorm.includes("padel");
+  const isBeachTennis =
+    nameNorm.includes("beach tennis") ||
+    nameNorm.includes("beach tenis") ||
+    nameNorm.includes("beachtenis") ||
+    (nameNorm.includes("beach") && (nameNorm.includes("tenis") || nameNorm.includes("tennis"))) ||
+    nameNorm.includes("tenis de praia");
+  const isTennisLike =
+    !isPadel &&
+    (nameNorm.includes("tenis") ||
+      nameNorm.includes("tennis") ||
+      isBeachTennis);
+
+  const bo3SuperTbOption: SetFormatOption = {
+    key: "bo3_super_tb10",
+    name: "Melhor de 3 (último set super tiebreak 10)",
+    config: {
+      ...baseConfig,
+      setsToWin: 2,
+      sets: 3,
+      gamesPerSet: 6,
+      tiebreak: true,
+      tiebreakPoints: 7,
+      finalSetSuperTiebreak: true,
+    },
+  };
+  const proSet8Option: SetFormatOption = {
+    key: "proset8_tb",
+    name: "Pro set (8 games, TB decisivo 7 pts em 8×8)",
+    config: {
+      ...baseConfig,
+      setsToWin: 1,
+      sets: 1,
+      gamesPerSet: 8,
+      tiebreak: true,
+      tiebreakPoints: 7,
+      finalSetSuperTiebreak: false,
+    },
+  };
+
+  if (isPadel) {
+    options.push(bo3SuperTbOption);
+  } else if (isTennisLike) {
+    options.push(bo3SuperTbOption);
+    options.push(proSet8Option);
   }
   const obj = rules && typeof rules === "object" && !Array.isArray(rules) ? (rules as { variantes?: unknown }) : null;
   const variants = Array.isArray(obj?.variantes) ? obj?.variantes : [];

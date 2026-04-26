@@ -53,7 +53,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const { data: p } = await supabase
     .from("partidas")
     .select(
-      "id, jogador1_id, jogador2_id, status, status_ranking, esporte_id, torneio_id, esportes(nome,desafio_modo_lancamento,desafio_regras_placar_json), placar_1, placar_2, lancado_por, mensagem, data_resultado, data_validacao, modalidade, time1_id, time2_id, data_partida, local_str"
+      "id, match_id, jogador1_id, jogador2_id, status, status_ranking, esporte_id, torneio_id, esportes(nome,desafio_modo_lancamento,desafio_regras_placar_json), placar_1, placar_2, lancado_por, mensagem, data_resultado, data_validacao, modalidade, time1_id, time2_id, data_partida, local_str"
     )
     .eq("id", id)
     .maybeSingle();
