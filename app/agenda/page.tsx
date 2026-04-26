@@ -98,9 +98,28 @@ export default async function AgendaPage() {
   }
   const playerList = [...allPlayerIds];
   const { data: nomeRows } = playerList.length
-    ? await supabase.from("profiles").select("id, nome").in("id", playerList)
+    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", playerList)
     : { data: [] };
+  const perfilMap = new Map((nomeRows ?? []).map((r) => [r.id, r]));
   const nomeMap = new Map((nomeRows ?? []).map((r) => [r.id, r.nome]));
+
+  const esporteIdsPartidas = [
+    ...new Set(
+      (partidasAgendadas ?? [])
+        .map((p) => Number((p as { esporte_id?: number | null }).esporte_id ?? 0))
+        .filter((v) => Number.isFinite(v) && v > 0)
+    ),
+  ];
+  const { data: ueRows } = playerList.length && esporteIdsPartidas.length
+    ? await supabase
+        .from("usuario_eid")
+        .select("usuario_id, esporte_id, nota_eid")
+        .in("usuario_id", playerList)
+        .in("esporte_id", esporteIdsPartidas)
+    : { data: [] };
+  const notaEidByUserSport = new Map(
+    (ueRows ?? []).map((r) => [`${String(r.usuario_id)}:${Number(r.esporte_id)}`, Number(r.nota_eid ?? 0)])
+  );
 
   const { data: pendentesEnvio } = await supabase
     .from("matches")
@@ -148,9 +167,11 @@ export default async function AgendaPage() {
     ),
   ];
   const { data: oponentesAceitos } = oponenteIdsAceitos.length
-    ? await supabase.from("profiles").select("id, nome").in("id", oponenteIdsAceitos)
+    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", oponenteIdsAceitos)
     : { data: [] };
-  const oponenteMapAceitos = new Map((oponentesAceitos ?? []).map((p) => [p.id, p.nome ?? "Oponente"]));
+  const oponenteMapAceitos = new Map(
+    (oponentesAceitos ?? []).map((p) => [p.id, { nome: p.nome ?? "Oponente", avatarUrl: p.avatar_url ?? null }])
+  );
   const matchIdsCancel = (aceitosCancelaveis ?? []).map((m) => Number(m.id)).filter((v) => Number.isFinite(v) && v > 0);
   const { data: opcoesCancelRows } = matchIdsCancel.length
     ? await supabase
@@ -179,7 +200,8 @@ export default async function AgendaPage() {
     const isRequester = String(m.cancel_requested_by ?? "") === user.id;
     return {
       id: Number(m.id),
-      nomeOponente: (opp ? oponenteMapAceitos.get(opp) : null) ?? "Oponente",
+      nomeOponente: (opp ? oponenteMapAceitos.get(opp)?.nome : null) ?? "Oponente",
+      avatarOponente: (opp ? oponenteMapAceitos.get(opp)?.avatarUrl : null) ?? null,
       oponenteId: opp ?? "",
       esporte: (m.esporte_id ? espMapAceitos.get(m.esporte_id) : null) ?? "Esporte",
       modalidade: m.modalidade_confronto ?? "individual",
@@ -190,6 +212,20 @@ export default async function AgendaPage() {
       options: opcoesByMatch.get(Number(m.id)) ?? [],
     };
   });
+
+  function dueloKey(a: string | null | undefined, b: string | null | undefined, esporteId: number | null | undefined): string | null {
+    if (!a || !b || !Number.isFinite(Number(esporteId)) || Number(esporteId) <= 0) return null;
+    const [x, y] = [String(a), String(b)].sort();
+    return `${Number(esporteId)}:${x}:${y}`;
+  }
+
+  const cancelMatchIdByDuelo = new Map<string, number>();
+  for (const m of aceitosCancelaveis ?? []) {
+    if (String(m.status ?? "") !== "Aceito") continue;
+    const key = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
+    if (!key) continue;
+    cancelMatchIdByDuelo.set(key, Number(m.id));
+  }
 
   function localLabel(p: AgendaPartidaCardRow) {
     if (p.local_str?.trim()) return p.local_str.trim();
@@ -205,7 +241,7 @@ export default async function AgendaPage() {
       <ConexoesStrip peers={conexoes} />
 
       <section className="mt-6 md:mt-10">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-500">Jogos agendados</h2>
+        <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-500">Confrontos</h2>
         <p className="mt-1 hidden text-xs text-eid-text-secondary md:block">
           Ajuste <strong className="text-eid-fg">data e local</strong> aqui. Lançamento e confirmação de placar ficam no{" "}
           <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
@@ -223,6 +259,7 @@ export default async function AgendaPage() {
             {(partidasAgendadas ?? []).map((row) => {
               const esp = firstOfRelation(row.esportes);
               const pr = row as AgendaPartidaCardRow;
+              const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
               return (
                 <PartidaAgendaCard
                   key={pr.id}
@@ -230,9 +267,22 @@ export default async function AgendaPage() {
                   esporteNome={esp?.nome ?? "Esporte"}
                   j1Nome={pr.jogador1_id ? nomeMap.get(pr.jogador1_id) ?? null : null}
                   j2Nome={pr.jogador2_id ? nomeMap.get(pr.jogador2_id) ?? null : null}
+                  j1Id={pr.jogador1_id}
+                  j2Id={pr.jogador2_id}
+                  j1AvatarUrl={pr.jogador1_id ? perfilMap.get(pr.jogador1_id)?.avatar_url ?? null : null}
+                  j2AvatarUrl={pr.jogador2_id ? perfilMap.get(pr.jogador2_id)?.avatar_url ?? null : null}
+                  j1NotaEid={pr.jogador1_id ? notaEidByUserSport.get(`${pr.jogador1_id}:${esporteIdCard}`) ?? 0 : 0}
+                  j2NotaEid={pr.jogador2_id ? notaEidByUserSport.get(`${pr.jogador2_id}:${esporteIdCard}`) ?? 0 : 0}
+                  esporteId={esporteIdCard}
                   dataRef={pr.data_partida ?? pr.data_registro}
                   localLabel={localLabel(pr)}
                   variant="agendada"
+                  ctaFullscreen
+                  cancelMatchId={
+                    cancelMatchIdByDuelo.get(
+                      dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard) ?? "__"
+                    ) ?? null
+                  }
                 />
               );
             })}

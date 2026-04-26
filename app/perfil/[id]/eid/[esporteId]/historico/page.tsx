@@ -91,11 +91,27 @@ export default async function PerfilEidEsporteHistoricoIndividualPage({ params, 
       lista.map((p) => (p.jogador1_id === profileId ? p.jogador2_id : p.jogador1_id)).filter((x): x is string => !!x)
     ),
   ];
-  const oponenteInfo = new Map<string, { nome: string; avatar_url: string | null }>();
+  const oponenteInfo = new Map<string, { nome: string; avatar_url: string | null; nota_eid: number | null }>();
   if (opponentIds.length > 0) {
     const { data: opRows } = await supabase.from("profiles").select("id, nome, avatar_url").in("id", opponentIds);
+    const { data: opEidRows } = await supabase
+      .from("usuario_eid")
+      .select("usuario_id, nota_eid")
+      .eq("esporte_id", esporteId)
+      .in("usuario_id", opponentIds);
+    const opEidMap = new Map<string, number | null>();
+    for (const eidRow of opEidRows ?? []) {
+      if (!eidRow.usuario_id) continue;
+      opEidMap.set(eidRow.usuario_id, eidRow.nota_eid != null ? Number(eidRow.nota_eid) : null);
+    }
     for (const r of opRows ?? []) {
-      if (r.id) oponenteInfo.set(r.id, { nome: r.nome ?? "Atleta", avatar_url: r.avatar_url ?? null });
+      if (r.id) {
+        oponenteInfo.set(r.id, {
+          nome: r.nome ?? "Atleta",
+          avatar_url: r.avatar_url ?? null,
+          nota_eid: opEidMap.get(r.id) ?? null,
+        });
+      }
     }
   }
 
@@ -132,9 +148,12 @@ export default async function PerfilEidEsporteHistoricoIndividualPage({ params, 
                 opponentId={oid}
                 opponentNome={op?.nome ?? "Atleta"}
                 opponentAvatarUrl={op?.avatar_url ?? null}
+                opponentNotaEid={op?.nota_eid ?? null}
                 res={res}
                 profileLinkFrom={historicoPageHref}
                 torneioLabel={torLabel}
+                esporteLabel={nomeEsporte}
+                modalidadeLabel={String(p.modalidade ?? "individual")}
               />
             );
           })}

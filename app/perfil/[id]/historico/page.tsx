@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { EidIndividualPartidaRow } from "@/components/perfil/eid-individual-partida-row";
 import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { createClient } from "@/lib/supabase/server";
@@ -51,7 +51,7 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
   const oponenteIds = [
     ...new Set(partidas.map((p) => (p.jogador1_id === id ? p.jogador2_id : p.jogador1_id)).filter((x): x is string => !!x)),
   ];
-  const oponenteMap = new Map<string, { nome: string; avatarUrl: string | null; username: string | null }>();
+  const oponenteMap = new Map<string, { nome: string; avatarUrl: string | null }>();
   if (oponenteIds.length > 0) {
     const { data: oponentes } = await supabase.from("profiles").select("id, nome, avatar_url, username").in("id", oponenteIds);
     for (const op of oponentes ?? []) {
@@ -59,7 +59,6 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
       oponenteMap.set(op.id, {
         nome: op.nome ?? "Atleta",
         avatarUrl: op.avatar_url ?? null,
-        username: op.username ?? null,
       });
     }
   }
@@ -70,6 +69,19 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
     const { data: esportesRows } = await supabase.from("esportes").select("id, nome").in("id", esporteIds);
     for (const e of esportesRows ?? []) {
       if (e.id != null) esporteNomeMap.set(Number(e.id), e.nome ?? "Esporte");
+    }
+  }
+
+  const oponenteNotaMap = new Map<string, number>();
+  if (oponenteIds.length > 0 && esporteIds.length > 0) {
+    const { data: notasRows } = await supabase
+      .from("usuario_eid")
+      .select("usuario_id, esporte_id, nota_eid")
+      .in("usuario_id", oponenteIds)
+      .in("esporte_id", esporteIds);
+    for (const row of notasRows ?? []) {
+      if (!row.usuario_id || row.esporte_id == null || row.nota_eid == null) continue;
+      oponenteNotaMap.set(`${row.usuario_id}:${Number(row.esporte_id)}`, Number(row.nota_eid));
     }
   }
 
@@ -155,60 +167,26 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
                   (String(p.local_str ?? "").trim() ||
                     String(p.local_cidade ?? "").trim() ||
                     "Local não informado");
+                const res = {
+                  label: resultado as "V" | "D" | "E",
+                  tone: resultado === "V" ? "text-emerald-300" : resultado === "D" ? "text-rose-300" : "text-eid-primary-300",
+                };
+                const oponenteNota =
+                  oponenteId && p.esporte_id != null ? oponenteNotaMap.get(`${oponenteId}:${Number(p.esporte_id)}`) ?? null : null;
                 return (
-                  <li
+                  <EidIndividualPartidaRow
                     key={p.id}
-                    className={`eid-list-item flex items-center gap-2 rounded-xl bg-eid-surface/45 px-2 py-2 text-[10px] ${
-                      resultado === "V"
-                        ? "border-emerald-400/30"
-                        : resultado === "D"
-                          ? "border-red-400/30"
-                          : "border-[color:var(--eid-border-subtle)]"
-                    }`}
-                  >
-                    {oponenteId ? (
-                      <Link href={`/perfil/${oponenteId}?from=${encodeURIComponent(`/perfil/${id}/historico`)}`} className="shrink-0">
-                        {oponente?.avatarUrl ? (
-                          <img
-                            src={oponente.avatarUrl}
-                            alt={oponenteNome}
-                            className="h-10 w-10 rounded-full border border-[color:var(--eid-border-subtle)] object-cover"
-                          />
-                        ) : (
-                          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300">
-                            {oponenteNome.trim().slice(0, 1).toUpperCase() || "A"}
-                          </span>
-                        )}
-                      </Link>
-                    ) : (
-                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300">
-                        A
-                      </span>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <p className="truncate text-[10px] font-semibold text-eid-fg">vs {oponenteNome}</p>
-                        <span className="text-[8px] text-eid-text-secondary">@{oponente?.username ?? "atleta"}</span>
-                      </div>
-                      <p className="mt-0.5 text-[9px] font-semibold text-eid-fg">
-                        {p.torneio_id ? "Torneio" : "Rank"} · {s1}x{s2}
-                      </p>
-                      <p className="mt-0.5 line-clamp-2 text-[9px] text-eid-text-secondary">
-                        {data ? new Date(data).toLocaleDateString("pt-BR") : "—"} · {esporteNome} · {modalidadeFmt} · {localNome}
-                      </p>
-                    </div>
-                    <span
-                      className={`ml-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black ${
-                        resultado === "V"
-                          ? "bg-emerald-500/18 text-emerald-300"
-                          : resultado === "D"
-                            ? "bg-red-500/18 text-red-300"
-                            : "bg-eid-primary-500/18 text-eid-primary-300"
-                      }`}
-                    >
-                      {resultado}
-                    </span>
-                  </li>
+                    partida={p}
+                    opponentId={oponenteId ?? id}
+                    opponentNome={oponenteNome}
+                    opponentAvatarUrl={oponente?.avatarUrl ?? null}
+                    opponentNotaEid={oponenteNota}
+                    res={res}
+                    profileLinkFrom={`/perfil/${id}/historico`}
+                    torneioLabel={p.torneio_id ? "Torneio" : "Rank"}
+                    esporteLabel={esporteNome}
+                    modalidadeLabel={modalidadeFmt}
+                  />
                 );
               })}
             </ul>

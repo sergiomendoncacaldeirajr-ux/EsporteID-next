@@ -358,11 +358,27 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
       lista.map((p) => (p.jogador1_id === profileId ? p.jogador2_id : p.jogador1_id)).filter((x): x is string => !!x)
     ),
   ];
-  const oponenteInfo = new Map<string, { nome: string; avatar_url: string | null }>();
+  const oponenteInfo = new Map<string, { nome: string; avatar_url: string | null; nota_eid: number | null }>();
   if (opponentIds.length > 0) {
     const { data: opRows } = await supabase.from("profiles").select("id, nome, avatar_url").in("id", opponentIds);
+    const { data: opEidRows } = await supabase
+      .from("usuario_eid")
+      .select("usuario_id, nota_eid")
+      .eq("esporte_id", esporteId)
+      .in("usuario_id", opponentIds);
+    const opEidMap = new Map<string, number | null>();
+    for (const eidRow of opEidRows ?? []) {
+      if (!eidRow.usuario_id) continue;
+      opEidMap.set(eidRow.usuario_id, eidRow.nota_eid != null ? Number(eidRow.nota_eid) : null);
+    }
     for (const r of opRows ?? []) {
-      if (r.id) oponenteInfo.set(r.id, { nome: r.nome ?? "Atleta", avatar_url: r.avatar_url ?? null });
+      if (r.id) {
+        oponenteInfo.set(r.id, {
+          nome: r.nome ?? "Atleta",
+          avatar_url: r.avatar_url ?? null,
+          nota_eid: opEidMap.get(r.id) ?? null,
+        });
+      }
     }
   }
 
@@ -805,15 +821,16 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                           return (
                             <li
                               key={`c-${f.id}-${p.id}`}
-                              className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} flex flex-wrap items-center gap-2`}
+                              className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} relative flex items-center gap-2`}
                             >
-                              <span
-                                className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-black ${res.tone} bg-eid-surface/80`}
-                              >
+                              <span className={`absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black ${res.tone} bg-eid-surface/90`}>
                                 {res.label}
                               </span>
+                              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300">
+                                {onome.trim().slice(0, 1).toUpperCase() || "E"}
+                              </span>
                               <div className="min-w-0 flex-1">
-                                <p className="text-[11px] font-bold text-eid-fg">
+                                <p className="truncate pr-7 text-[11px] font-bold text-eid-fg">
                                   vs{" "}
                                   {oppId != null ? (
                                     <Link
@@ -827,8 +844,8 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                                   )}
                                 </p>
                                 <p className="text-[10px] text-eid-text-secondary">
+                                  {p.modalidade ? `${p.modalidade} · ` : ""}
                                   {when}
-                                  {p.modalidade ? ` · ${p.modalidade}` : ""}
                                   {torNome ? (
                                     <span className="text-eid-action-400"> · {torNome}</span>
                                   ) : p.torneio_id ? (
@@ -837,7 +854,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                                   {p.tipo_partida ? ` · ${p.tipo_partida}` : ""}
                                 </p>
                               </div>
-                              <div className="text-right">
+                              <div className="text-right pr-7">
                                 <p className="text-sm font-black tabular-nums text-eid-fg">
                                   {Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2))
                                     ? `${p.placar_1} × ${p.placar_2}`
@@ -884,9 +901,12 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                       opponentId={oid}
                       opponentNome={op?.nome ?? "Atleta"}
                       opponentAvatarUrl={op?.avatar_url ?? null}
+                      opponentNotaEid={op?.nota_eid ?? null}
                       res={res}
                       profileLinkFrom={eidPageHref}
                       torneioLabel={torLabel}
+                      esporteLabel={nomeEsporte}
+                      modalidadeLabel={String(p.modalidade ?? "individual")}
                     />
                   );
                 })}

@@ -53,6 +53,10 @@ function isEmbedDesafioPath(path: string): boolean {
   return path === "/desafio" || path === "/desafio/";
 }
 
+function isEmbedConfrontoPath(path: string): boolean {
+  return /^\/registrar-placar\/[^/]+\/?$/.test(path);
+}
+
 function isFullscreenCadastrarLocalPath(path: string): boolean {
   return path === "/locais/cadastrar" || path === "/locais/cadastrar/";
 }
@@ -80,7 +84,7 @@ export async function updateSession(request: NextRequest) {
   }
   const embedShell = request.nextUrl.searchParams.get("embed") === "1";
   const hideEmbedMinimalChrome =
-    embedShell && (isEmbedEidStatsPath(path) || isEmbedDesafioPath(path));
+    embedShell && (isEmbedEidStatsPath(path) || isEmbedDesafioPath(path) || isEmbedConfrontoPath(path));
 
   if (isNextjsRouterDataRequest(request)) {
     if (hideEmbedMinimalChrome) return nextWithHideAppShell(request);

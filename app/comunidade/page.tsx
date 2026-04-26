@@ -170,6 +170,12 @@ export default async function ComunidadePage() {
     modalidade: String(m.modalidade_confronto ?? "individual"),
   }));
 
+  const { data: aceitosCancelaveisPainel } = await supabase
+    .from("matches")
+    .select("id, usuario_id, adversario_id, esporte_id, status")
+    .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+    .eq("status", "Aceito");
+
   const { data: sugestoesRaw } = await supabase
     .from("match_sugestoes")
     .select("id, sugeridor_id, sugeridor_time_id, alvo_time_id, esporte_id, modalidade, mensagem")
@@ -347,14 +353,45 @@ export default async function ComunidadePage() {
   }
   const painelPlayerList = [...painelPlayerIds];
   const { data: painelNomeRows } = painelPlayerList.length
-    ? await supabase.from("profiles").select("id, nome").in("id", painelPlayerList)
+    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", painelPlayerList)
     : { data: [] };
+  const painelPerfilMap = new Map((painelNomeRows ?? []).map((r) => [r.id, r]));
   const painelNomeMap = new Map((painelNomeRows ?? []).map((r) => [r.id, r.nome]));
+  const painelEsporteIds = [
+    ...new Set(
+      painelPartidasAll
+        .map((p) => Number((p as { esporte_id?: number | null }).esporte_id ?? 0))
+        .filter((v) => Number.isFinite(v) && v > 0)
+    ),
+  ];
+  const { data: painelUeRows } = painelPlayerList.length && painelEsporteIds.length
+    ? await supabase
+        .from("usuario_eid")
+        .select("usuario_id, esporte_id, nota_eid")
+        .in("usuario_id", painelPlayerList)
+        .in("esporte_id", painelEsporteIds)
+    : { data: [] };
+  const painelNotaEidByUserSport = new Map(
+    (painelUeRows ?? []).map((r) => [`${String(r.usuario_id)}:${Number(r.esporte_id)}`, Number(r.nota_eid ?? 0)])
+  );
 
   function localLabelPainel(p: AgendaPartidaCardRow) {
     if (p.local_str?.trim()) return p.local_str.trim();
     if (p.local_espaco_id) return painelLocMap.get(p.local_espaco_id) ?? null;
     return null;
+  }
+
+  function dueloKey(a: string | null | undefined, b: string | null | undefined, esporteId: number | null | undefined): string | null {
+    if (!a || !b || !Number.isFinite(Number(esporteId)) || Number(esporteId) <= 0) return null;
+    const [x, y] = [String(a), String(b)].sort();
+    return `${Number(esporteId)}:${x}:${y}`;
+  }
+
+  const cancelMatchIdByDueloPainel = new Map<string, number>();
+  for (const m of aceitosCancelaveisPainel ?? []) {
+    const key = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
+    if (!key) continue;
+    cancelMatchIdByDueloPainel.set(key, Number(m.id));
   }
 
   return (
@@ -427,6 +464,7 @@ export default async function ComunidadePage() {
                     {(painelPlacarPendente ?? []).map((row) => {
                       const esp = firstOfRelation(row.esportes);
                       const pr = row as AgendaPartidaCardRow;
+                      const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
                       return (
                         <PartidaAgendaCard
                           key={pr.id}
@@ -434,6 +472,13 @@ export default async function ComunidadePage() {
                           esporteNome={esp?.nome ?? "Esporte"}
                           j1Nome={pr.jogador1_id ? painelNomeMap.get(pr.jogador1_id) ?? null : null}
                           j2Nome={pr.jogador2_id ? painelNomeMap.get(pr.jogador2_id) ?? null : null}
+                          j1Id={pr.jogador1_id}
+                          j2Id={pr.jogador2_id}
+                          j1AvatarUrl={pr.jogador1_id ? painelPerfilMap.get(pr.jogador1_id)?.avatar_url ?? null : null}
+                          j2AvatarUrl={pr.jogador2_id ? painelPerfilMap.get(pr.jogador2_id)?.avatar_url ?? null : null}
+                          j1NotaEid={pr.jogador1_id ? painelNotaEidByUserSport.get(`${pr.jogador1_id}:${esporteIdCard}`) ?? 0 : 0}
+                          j2NotaEid={pr.jogador2_id ? painelNotaEidByUserSport.get(`${pr.jogador2_id}:${esporteIdCard}`) ?? 0 : 0}
+                          esporteId={esporteIdCard}
                           dataRef={pr.data_partida ?? pr.data_registro}
                           localLabel={localLabelPainel(pr)}
                           variant="placar"
@@ -460,6 +505,7 @@ export default async function ComunidadePage() {
                     {(painelAgendadas ?? []).map((row) => {
                       const esp = firstOfRelation(row.esportes);
                       const pr = row as AgendaPartidaCardRow;
+                      const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
                       return (
                         <PartidaAgendaCard
                           key={pr.id}
@@ -467,9 +513,22 @@ export default async function ComunidadePage() {
                           esporteNome={esp?.nome ?? "Esporte"}
                           j1Nome={pr.jogador1_id ? painelNomeMap.get(pr.jogador1_id) ?? null : null}
                           j2Nome={pr.jogador2_id ? painelNomeMap.get(pr.jogador2_id) ?? null : null}
+                          j1Id={pr.jogador1_id}
+                          j2Id={pr.jogador2_id}
+                          j1AvatarUrl={pr.jogador1_id ? painelPerfilMap.get(pr.jogador1_id)?.avatar_url ?? null : null}
+                          j2AvatarUrl={pr.jogador2_id ? painelPerfilMap.get(pr.jogador2_id)?.avatar_url ?? null : null}
+                          j1NotaEid={pr.jogador1_id ? painelNotaEidByUserSport.get(`${pr.jogador1_id}:${esporteIdCard}`) ?? 0 : 0}
+                          j2NotaEid={pr.jogador2_id ? painelNotaEidByUserSport.get(`${pr.jogador2_id}:${esporteIdCard}`) ?? 0 : 0}
+                          esporteId={esporteIdCard}
                           dataRef={pr.data_partida ?? pr.data_registro}
                           localLabel={localLabelPainel(pr)}
                           variant="agendada"
+                          ctaFullscreen
+                          cancelMatchId={
+                            cancelMatchIdByDueloPainel.get(
+                              dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard) ?? "__"
+                            ) ?? null
+                          }
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
                           ctaLabel="Lançar resultado"
                         />

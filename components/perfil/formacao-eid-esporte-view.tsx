@@ -198,15 +198,16 @@ export function FormacaoEidEsporteView({
                 return (
                   <li
                     key={p.id}
-                    className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} flex flex-wrap items-center gap-2`}
+                    className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} relative flex items-center gap-2`}
                   >
-                    <span
-                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-black ${res.tone} bg-eid-surface/80`}
-                    >
+                    <span className={`absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black ${res.tone} bg-eid-surface/90`}>
                       {res.label}
                     </span>
+                    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300">
+                      {onome.trim().slice(0, 1).toUpperCase() || "E"}
+                    </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-bold text-eid-fg">
+                      <p className="truncate pr-7 text-[11px] font-bold text-eid-fg">
                         vs{" "}
                         {oppId != null ? (
                           <Link
@@ -220,8 +221,8 @@ export function FormacaoEidEsporteView({
                         )}
                       </p>
                       <p className="text-[10px] text-eid-text-secondary">
+                        {p.modalidade ? `${p.modalidade} · ` : ""}
                         {when}
-                        {p.modalidade ? ` · ${p.modalidade}` : ""}
                         {torNome ? (
                           <span className="text-eid-action-400"> · {torNome}</span>
                         ) : p.torneio_id ? (
@@ -230,7 +231,7 @@ export function FormacaoEidEsporteView({
                         {p.tipo_partida ? ` · ${p.tipo_partida}` : ""}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right pr-7">
                       <p className="text-sm font-black tabular-nums text-eid-fg">
                         {Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2))
                           ? `${p.placar_1} × ${p.placar_2}`

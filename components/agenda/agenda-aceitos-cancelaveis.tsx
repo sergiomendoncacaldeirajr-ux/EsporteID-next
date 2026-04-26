@@ -10,6 +10,7 @@ import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 type Item = {
   id: number;
   nomeOponente: string;
+  avatarOponente: string | null;
   oponenteId: string;
   esporte: string;
   modalidade: string;
@@ -54,7 +55,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
       <p className="mt-1 text-xs text-eid-text-secondary">
         {hasSpecialStatuses
           ? "Cancelamento com confirmação e reagendamento: responda dentro dos prazos para evitar cancelamento automático."
-          : "Sem acordo de data? Você pode solicitar cancelamento com confirmação do oponente."}
+          : "Acompanhe o status dos desafios aceitos abaixo."}
       </p>
       <div className="mt-3 space-y-2">
         {okMsg ? (
@@ -66,13 +67,31 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
         {items.map((m) => (
           <article
             key={m.id}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2"
+            className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-3"
           >
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-eid-fg">{m.nomeOponente}</p>
-              <p className="text-xs text-eid-text-secondary">
-                {m.esporte} · {m.modalidade}
-              </p>
+            <div className="flex items-center gap-2.5">
+              {m.avatarOponente ? (
+                <img
+                  src={m.avatarOponente}
+                  alt=""
+                  className="h-10 w-10 rounded-full border border-[color:var(--eid-border-subtle)] object-cover"
+                />
+              ) : (
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-xs font-black text-eid-primary-300">
+                  {m.nomeOponente.trim().slice(0, 1).toUpperCase() || "O"}
+                </span>
+              )}
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-eid-fg">{m.nomeOponente}</p>
+                <p className="text-xs text-eid-text-secondary">
+                  {m.esporte} · {m.modalidade}
+                </p>
+              </div>
+              <span className="ml-auto rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                {m.status}
+              </span>
+            </div>
+            <div className="mt-2 min-w-0">
               {m.status === "CancelamentoPendente" ? (
                 <p className="mt-1 text-[11px] text-amber-200">
                   Aguardando resposta ao cancelamento até: <span className="font-semibold">{when(m.cancelResponseDeadlineAt)}</span>
@@ -84,25 +103,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                 </p>
               ) : null}
             </div>
-            <div className="flex w-full flex-col gap-2 sm:w-auto">
-              {m.status === "Aceito" ? (
-                <form action={formAction} className="flex flex-col gap-2 sm:flex-row">
-                  <input type="hidden" name="intent" value="request_cancel" />
-                  <input type="hidden" name="match_id" value={String(m.id)} />
-                  <input
-                    name="motivo"
-                    placeholder="Motivo (opcional)"
-                    className="eid-input-dark h-10 min-w-[13rem] rounded-xl px-3 text-xs text-eid-fg"
-                  />
-                  <button
-                    type="submit"
-                    disabled={pending}
-                    className={`${DESAFIO_FLOW_SECONDARY_CLASS} shrink-0 border-red-400/35 bg-red-500/10 text-red-200 hover:border-red-400/55 hover:bg-red-500/18 disabled:opacity-50`}
-                  >
-                    {pending ? "Enviando…" : "Solicitar cancelamento"}
-                  </button>
-                </form>
-              ) : null}
+            <div className="mt-2 flex w-full flex-col gap-2 sm:w-auto">
 
               {m.status === "CancelamentoPendente" && !m.isRequester ? (
                 <>

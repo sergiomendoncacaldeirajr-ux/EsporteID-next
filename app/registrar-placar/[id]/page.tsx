@@ -31,6 +31,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const errMsg = typeof sp.erro === "string" ? sp.erro : null;
   const novoLocalId = typeof sp.novo_local_id === "string" ? Number(sp.novo_local_id) : 0;
   const modoRaw = typeof sp.modo === "string" ? sp.modo.trim() : "";
+  const isEmbed = typeof sp.embed === "string" && sp.embed === "1";
   const fromRaw = typeof sp.from === "string" ? sp.from.trim() : "";
   const fromSafe = fromRaw.startsWith("/") && !fromRaw.startsWith("//") ? fromRaw : null;
 
@@ -127,9 +128,11 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
 
   return (
     <main data-eid-desafio-ui className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-4 sm:py-6">
-        <Link href={voltarHref} className={`${DESAFIO_FLOW_SECONDARY_CLASS} max-w-fit normal-case`}>
-          {voltarLabel}
-        </Link>
+        {!isEmbed ? (
+          <Link href={voltarHref} className={`${DESAFIO_FLOW_SECONDARY_CLASS} max-w-fit normal-case`}>
+            {voltarLabel}
+          </Link>
+        ) : null}
 
         <div className="mt-4 overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-action-500)_32%,var(--eid-border-subtle)_68%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)_90%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-4 shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)] backdrop-blur-sm sm:mt-6 sm:p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-action-400">
@@ -158,7 +161,19 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             <div className="min-w-0 flex-1 text-center">
               <p className="truncate text-sm font-bold text-eid-fg md:font-black">{j1?.nome ?? "Jogador 1"}</p>
             </div>
-            <span className="text-[10px] font-black text-eid-text-secondary">VS</span>
+            <div className="flex shrink-0 flex-col items-center justify-end self-end pb-0.5">
+              <span className="block">
+                <svg viewBox="0 0 36 36" aria-hidden className="h-[22px] w-[22px]">
+                  <text x="7" y="22" fontSize="14" fontWeight="900" fill="currentColor" className="text-eid-fg">
+                    V
+                  </text>
+                  <text x="21" y="26" fontSize="14" fontWeight="900" fill="currentColor" className="text-eid-fg">
+                    S
+                  </text>
+                  <path d="M22 3 16 16h4l-5 17 13-17h-4l5-13Z" fill="currentColor" className="text-eid-action-400" />
+                </svg>
+              </span>
+            </div>
             <div className="min-w-0 flex-1 text-center">
               <p className="truncate text-sm font-bold text-eid-fg md:font-black">{j2?.nome ?? "Jogador 2"}</p>
             </div>

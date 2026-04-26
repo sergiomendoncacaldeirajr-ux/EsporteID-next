@@ -105,7 +105,7 @@ export function ProfileFormacaoResultados({
         {visiveis.map((item) => (
           <li
             key={item.id}
-            className={`flex flex-col gap-0.5 rounded-lg border bg-eid-surface/45 px-2 py-1.5 text-[10px] sm:flex-row sm:items-center sm:justify-between ${
+            className={`relative flex items-center gap-2 rounded-lg border bg-eid-surface/45 px-2 py-1.5 text-[10px] ${
               item.tone === "positive"
                 ? "border-emerald-400/30"
                 : item.tone === "negative"
@@ -113,17 +113,26 @@ export function ProfileFormacaoResultados({
                   : "border-[color:var(--eid-border-subtle)]"
             }`}
           >
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-black text-eid-fg tabular-nums">{item.resultado}</span>
-              <span className="font-semibold text-eid-text-secondary">{item.origem}</span>
-              <span className="font-bold text-eid-fg">{item.placar}</span>
-              <span className="text-[9px] text-eid-text-secondary">vs {item.adversarioLabel}</span>
-            </div>
-            <div className="flex flex-col items-start gap-0.5 sm:items-end">
-              <span className="text-[9px] text-eid-text-secondary">{item.dataFmt}</span>
-              {item.torneioLabel ? (
-                <span className="text-[8px] font-semibold text-eid-action-400">{item.torneioLabel}</span>
-              ) : null}
+            <span
+              className={`absolute right-2 top-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[9px] font-black ${
+                item.tone === "positive"
+                  ? "bg-emerald-500/18 text-emerald-300"
+                  : item.tone === "negative"
+                    ? "bg-red-500/18 text-red-300"
+                    : "bg-eid-primary-500/18 text-eid-primary-300"
+              }`}
+            >
+              {item.resultado}
+            </span>
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300">
+              {item.adversarioLabel.trim().slice(0, 1).toUpperCase() || "E"}
+            </span>
+            <div className="min-w-0 flex-1 pr-6">
+              <p className="truncate text-[10px] font-bold text-eid-fg">vs {item.adversarioLabel}</p>
+              <p className="mt-0.5 text-[9px] text-eid-text-secondary">
+                <span className="font-semibold text-eid-fg">{item.origem}</span> · {item.placar} · {item.dataFmt}
+              </p>
+              {item.torneioLabel ? <p className="mt-0.5 text-[8px] font-semibold text-eid-action-400">{item.torneioLabel}</p> : null}
             </div>
           </li>
         ))}
