@@ -454,10 +454,6 @@ export async function sugerirMatchParaLider(
   });
 
   if (error) return { ok: false, message: error.message };
-  await marcarNotificacoesPorAcao(supabase, user.id, {
-    referenciaId: sugestaoId,
-    tipos: ["time", "convite", "match", "desafio"],
-  });
 
   revalidatePath("/comunidade");
   revalidatePath(`/perfil-time/${alvo}`);
@@ -491,8 +487,8 @@ export async function responderSugestaoMatch(
 
   if (error) return { ok: false, message: error.message };
   await marcarNotificacoesPorAcao(supabase, user.id, {
-    referenciaId: conviteId,
-    tipos: ["time", "convite"],
+    referenciaId: sugestaoId,
+    tipos: ["match", "desafio", "time", "convite"],
   });
 
   if (aceitar) {
@@ -563,6 +559,10 @@ export async function responderConviteEquipe(
     p_aceitar: aceitar,
   });
   if (error) return { ok: false, message: error.message };
+  await marcarNotificacoesPorAcao(supabase, user.id, {
+    referenciaId: conviteId,
+    tipos: ["time", "convite"],
+  });
 
   revalidatePath("/comunidade");
   revalidatePath(`/perfil/${user.id}`);
