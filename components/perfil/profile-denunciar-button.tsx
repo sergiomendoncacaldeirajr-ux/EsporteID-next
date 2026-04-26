@@ -21,7 +21,7 @@ type Props = {
 
 export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, className }: Props) {
   const [aberto, setAberto] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [mounted] = useState(() => typeof window !== "undefined");
   const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [msg, setMsg] = useState<string | null>(null);
   const [codigo, setCodigo] = useState(MOTIVOS[0]!.codigo);
@@ -29,10 +29,6 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
   const [popoverPos, setPopoverPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [pending, startTransition] = useTransition();
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (typeof document === "undefined") return;

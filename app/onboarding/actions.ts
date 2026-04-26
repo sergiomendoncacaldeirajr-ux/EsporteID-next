@@ -33,7 +33,7 @@ type Estrutura = (typeof ESTRUTURAS_VALIDAS)[number];
 type NextStep = "papeis" | "esportes" | "extras" | "perfil" | "dashboard";
 
 export type OnboardingActionResult =
-  | { ok: true; nextStep?: NextStep }
+  | { ok: true; nextStep?: NextStep; message?: string }
   | { ok: false; message: string };
 
 function parseDetalhesJson(raw: unknown): Record<string, unknown> {
@@ -118,13 +118,6 @@ export async function salvarPapeisOnboarding(
 
   if (papeis.length === 0) return { ok: false, message: "Selecione um perfil para continuar." };
   if (papeis.length > 1) return { ok: false, message: "Escolha apenas um perfil principal." };
-  if (papeis[0] !== "atleta") {
-    return {
-      ok: false,
-      message: "No momento, o onboarding está disponível somente para Atleta / Usuário. Perfis de professor, organizador e espaço serão liberados em breve.",
-    };
-  }
-
   const { error: delErr } = await supabase
     .from("usuario_papeis")
     .delete()
@@ -522,6 +515,7 @@ export async function salvarExtrasOnboarding(
   const hasProfessor = papeis.includes("professor");
   const hasOrganizador = papeis.includes("organizador");
   const hasEspaco = papeis.includes("espaco");
+  const infoMessages: string[] = [];
 
   if (hasAtletaProfessor) {
     // Experiência agora é salva por esporte em usuario_eid (etapa "esportes").
@@ -686,6 +680,7 @@ export async function salvarExtrasOnboarding(
           if (reqErr) return { ok: false, message: reqErr.message };
         }
         solicitacaoStatus = "pendente";
+        infoMessages.push("Solicitação para uso do local enviada e em análise pelo responsável.");
       }
     } else {
       const localNome = String(formData.get("org_novo_local_nome") ?? "").trim();
@@ -747,6 +742,9 @@ export async function salvarExtrasOnboarding(
               status: "pendente",
             });
             if (revErr) return { ok: false, message: revErr.message };
+            infoMessages.push("Documento enviado com sucesso. Solicitação de propriedade em análise.");
+          } else {
+            infoMessages.push("Sua solicitação de propriedade já está em análise.");
           }
           solicitacaoStatus = "pendente";
         } else {
@@ -1006,6 +1004,9 @@ export async function salvarExtrasOnboarding(
           status: "pendente",
         });
         if (revErr) return { ok: false, message: revErr.message };
+        infoMessages.push("Documento enviado com sucesso. Cadastro do espaço em análise.");
+      } else {
+        infoMessages.push("Seu cadastro de espaço já está em análise.");
       }
 
       const e = await salvarDetalhesPapel(user.id, "espaco", {
@@ -1042,7 +1043,11 @@ export async function salvarExtrasOnboarding(
     revalidatePath("/professores");
     revalidatePath(`/professor/${user.id}`);
   }
-  return { ok: true, nextStep: "perfil" };
+  return {
+    ok: true,
+    nextStep: "perfil",
+    message: infoMessages.length > 0 ? infoMessages.join(" ") : undefined,
+  };
 }
 
 function tempoExperienciaResumoFromDetalhes(d: Record<string, unknown>): string | null {

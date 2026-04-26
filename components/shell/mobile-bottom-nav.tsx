@@ -231,7 +231,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     for (const href of hrefs) {
       void router.prefetch(href);
     }
-  }, [resolvedUserId, activeContext, router]);
+  }, [resolvedUserId, activeContext, pathname, router]);
 
   if (!resolvedUserId) return null;
 

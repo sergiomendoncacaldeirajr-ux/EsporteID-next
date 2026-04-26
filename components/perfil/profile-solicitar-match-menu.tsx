@@ -24,10 +24,6 @@ export function ProfileSolicitarMatchMenu({
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setEsporteSel(esportes[0]?.esporteId ?? 0);
-  }, [esportes]);
-
-  useEffect(() => {
     if (!aberto) return;
     function onDocClick(e: MouseEvent) {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setAberto(false);
@@ -37,7 +33,10 @@ export function ProfileSolicitarMatchMenu({
   }, [aberto]);
 
   const amistosoOk = viewerAmistosoOn && alvoAmistosoOn;
-  const base = `/desafio?id=${encodeURIComponent(alvoId)}&tipo=individual&esporte=${esporteSel}`;
+  const esporteSelSafe = esportes.some((e) => e.esporteId === esporteSel)
+    ? esporteSel
+    : (esportes[0]?.esporteId ?? 0);
+  const base = `/desafio?id=${encodeURIComponent(alvoId)}&tipo=individual&esporte=${esporteSelSafe}`;
 
   const toggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -78,7 +77,7 @@ export function ProfileSolicitarMatchMenu({
               <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Esporte</p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {esportes.map((e) => {
-                  const ativo = esporteSel === e.esporteId;
+                  const ativo = esporteSelSafe === e.esporteId;
                   return (
                     <button
                       key={e.esporteId}

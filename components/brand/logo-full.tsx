@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   EID_LOGO_AUTH_MARK_HEIGHT,
   EID_LOGO_AUTH_MARK_SRC,
@@ -24,13 +25,12 @@ export function LogoFull({ className, size = "default" }: Props) {
         : "h-20 max-h-24 w-auto max-w-[min(84vw,300px)] sm:h-24 sm:max-h-28 sm:max-w-[min(84vw,340px)]";
   return (
     <div className={`flex w-full justify-center ${className ?? ""}`}>
-      <img
+      <Image
         src={EID_LOGO_AUTH_MARK_SRC}
         alt="EsporteID"
         width={EID_LOGO_AUTH_MARK_WIDTH}
         height={EID_LOGO_AUTH_MARK_HEIGHT}
         className={`object-contain ${markClass}`}
-        decoding="async"
       />
     </div>
   );

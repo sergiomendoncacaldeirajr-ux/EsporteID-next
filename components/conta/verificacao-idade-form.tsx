@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { submeterVerificacaoIdade } from "@/app/conta/verificacao-idade/actions";
 
 export function VerificacaoIdadeForm({ nome: _nome }: { nome: string }) {
+  void _nome;
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 

@@ -73,12 +73,13 @@ export async function requireEspacoManagerUser(nextPath: string) {
 
 export async function getEspacoSelecionado({
   nextPath,
-  espacoId: _espacoId,
+  espacoId,
 }: {
   nextPath: string;
   /** Ignorado: cada conta gerencia no máximo um espaço. */
   espacoId?: number | null;
 }) {
+  void espacoId;
   const ctx = await requireEspacoManagerUser(nextPath);
   const selected = ctx.managedSpaces[0] ?? null;
   if (!selected) {

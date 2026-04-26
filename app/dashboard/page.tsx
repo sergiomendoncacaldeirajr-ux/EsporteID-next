@@ -1,9 +1,11 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { createClient } from "@/lib/supabase/server";
 import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
+import { AmistosoDailyHint } from "@/components/dashboard/amistoso-daily-hint";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
@@ -134,14 +136,6 @@ function IconMapPin({ className }: { className?: string }) {
   );
 }
 
-function IconTrophy({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" />
-    </svg>
-  );
-}
-
 function IconMarketplace({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
@@ -221,7 +215,6 @@ export default async function DashboardPage({ searchParams }: Props) {
   const canSeeLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
   const canSeeTorneios = canAccessSystemFeature(featureCfg, "torneios", user.id);
   const canSeeProfessores = canAccessSystemFeature(featureCfg, "professores", user.id);
-  const canSeeOrganizador = canAccessSystemFeature(featureCfg, "organizador_torneios", user.id);
   const canSeeMarketplace = canAccessSystemFeature(featureCfg, "marketplace", user.id);
 
   const { data: profile } = await supabase
@@ -539,11 +532,14 @@ export default async function DashboardPage({ searchParams }: Props) {
             aria-hidden
           />
           <div className="relative flex flex-wrap items-center gap-4">
-            <div className="flex shrink-0 flex-col items-center gap-1.5">
+            <div className="relative flex shrink-0 flex-col items-center gap-1.5">
               {profile.avatar_url ? (
-                <img
+                <Image
                   src={profile.avatar_url}
                   alt="Seu avatar"
+                  width={72}
+                  height={72}
+                  unoptimized
                   className={`h-[4.25rem] w-[4.25rem] rounded-full border-[3px] object-cover ring-2 ring-offset-2 ring-offset-eid-card sm:h-[4.5rem] sm:w-[4.5rem] ${
                     amistosoLigado
                       ? "border-emerald-400/80 shadow-[0_8px_24px_-6px_rgba(16,185,129,0.5)] ring-emerald-400/35"
@@ -567,6 +563,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                 initialExpiresAt={profile.disponivel_amistoso_ate ? String(profile.disponivel_amistoso_ate) : null}
                 canToggle
               />
+              <AmistosoDailyHint />
             </div>
             <div className="min-w-0 flex-1">
               <h1 className="text-[1.35rem] font-extrabold leading-tight tracking-tight text-eid-fg sm:text-2xl">
@@ -718,7 +715,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             <div className="grid grid-cols-3 gap-1.5">
               {atletaMaisProximo
                 ? (() => {
-                    const { row, p, dist } = atletaMaisProximo;
+                    const { row, p } = atletaMaisProximo;
                 const atletaAmistosoOn = computeDisponivelAmistosoEffective(
                   p?.disponivel_amistoso,
                   p?.disponivel_amistoso_ate
@@ -732,9 +729,11 @@ export default async function DashboardPage({ searchParams }: Props) {
                   <p className="mb-px truncate text-[9px] font-extrabold text-eid-fg">{primeiroNome(p?.nome)}</p>
                   <div className="relative mx-auto h-11 w-11">
                     {p?.avatar_url ? (
-                      <img
+                      <Image
                         src={p.avatar_url}
                         alt=""
+                        fill
+                        unoptimized
                         className={`h-full w-full rounded-full border-2 object-cover ${
                           atletaAmistosoOn ? "border-emerald-400/80" : "border-red-500/80"
                         }`}
@@ -755,7 +754,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                       </span>
                     </div>
                   </div>
-                  <p className="mt-px inline-flex max-w-full items-center gap-0.5 truncate text-[7px] font-semibold text-eid-primary-300 leading-none">
+                  <p className="mt-1 inline-flex max-w-full items-center gap-0.5 truncate text-[7px] font-semibold text-eid-primary-300 leading-none">
                     <span aria-hidden>{esporteCardIcon}</span>
                     <span className="truncate">{esporteCardNome}</span>
                   </p>
@@ -780,7 +779,14 @@ export default async function DashboardPage({ searchParams }: Props) {
                   <p className="mb-px truncate text-[9px] font-extrabold text-eid-fg">{duplaMaisProxima.t.nome}</p>
                   <div className="mx-auto h-11 w-11">
                     {duplaMaisProxima.t.escudo ? (
-                      <img src={duplaMaisProxima.t.escudo} alt="" className="h-full w-full rounded-[14px] border-2 border-eid-primary-500/50 object-cover" />
+                      <Image
+                        src={duplaMaisProxima.t.escudo}
+                        alt=""
+                        width={44}
+                        height={44}
+                        unoptimized
+                        className="h-full w-full rounded-[14px] border-2 border-eid-primary-500/50 object-cover"
+                      />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-xs font-bold text-eid-primary-300">
                         D
@@ -810,7 +816,14 @@ export default async function DashboardPage({ searchParams }: Props) {
                   <p className="mb-px truncate text-[9px] font-extrabold text-eid-fg">{timeMaisProximo.t.nome}</p>
                   <div className="mx-auto h-11 w-11">
                     {timeMaisProximo.t.escudo ? (
-                      <img src={timeMaisProximo.t.escudo} alt="" className="h-full w-full rounded-[14px] border-2 border-eid-primary-500/50 object-cover" />
+                      <Image
+                        src={timeMaisProximo.t.escudo}
+                        alt=""
+                        width={44}
+                        height={44}
+                        unoptimized
+                        className="h-full w-full rounded-[14px] border-2 border-eid-primary-500/50 object-cover"
+                      />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-xs font-bold text-eid-primary-300">
                         T
@@ -860,7 +873,9 @@ export default async function DashboardPage({ searchParams }: Props) {
                 >
                   <div className="h-[95px] w-full bg-eid-surface">
                     {t.banner ? (
-                      <img src={t.banner} alt="" className="h-full w-full object-cover" />
+                      <div className="relative h-full w-full">
+                        <Image src={t.banner} alt="" fill unoptimized className="object-cover" />
+                      </div>
                     ) : (
                       <div className="flex h-full items-center justify-center text-[10px] font-bold text-eid-text-secondary">Torneio</div>
                     )}
@@ -897,7 +912,14 @@ export default async function DashboardPage({ searchParams }: Props) {
                 >
                   <div className="mx-auto h-14 w-14">
                     {t.escudo ? (
-                      <img src={t.escudo} alt="" className="h-full w-full rounded-[14px] border-2 border-eid-primary-500/50 object-cover" />
+                      <Image
+                        src={t.escudo}
+                        alt=""
+                        width={56}
+                        height={56}
+                        unoptimized
+                        className="h-full w-full rounded-[14px] border-2 border-eid-primary-500/50 object-cover"
+                      />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-xs font-bold text-eid-primary-300">
                         T
@@ -938,7 +960,9 @@ export default async function DashboardPage({ searchParams }: Props) {
                 >
                   <div className="flex h-12 items-center justify-center overflow-hidden rounded-xl bg-eid-surface">
                     {loc.logo_arquivo ? (
-                      <img src={loc.logo_arquivo} alt="" className="max-h-10 max-w-full object-contain" />
+                      <div className="relative h-10 w-full">
+                        <Image src={loc.logo_arquivo} alt="" fill unoptimized className="object-contain" />
+                      </div>
                     ) : (
                       <IconMapPin className="h-6 w-6 text-eid-primary-500/50" />
                     )}

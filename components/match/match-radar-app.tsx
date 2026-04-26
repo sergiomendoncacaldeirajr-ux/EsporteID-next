@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { createPortal } from "react-dom";
 import { Grid2x2, Handshake, Maximize2, Shield, Trophy, User, Users, X } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { refreshMatchRadarAction, setViewerDisponivelAmistoso } from "@/app/match/actions";
 import type { EsporteConfrontoRow } from "@/lib/match/esportes-confronto";
 import type { MatchRadarCard, MatchRadarFinalidade, RadarTipo, SortBy } from "@/lib/match/radar-snapshot";
@@ -118,16 +119,45 @@ export function MatchRadarApp({
   const [cards, setCards] = useState<MatchRadarCard[]>(initialCards);
   const [viewMode, setViewMode] = useState<"full" | "grid">(initialView);
   const [generoFiltro, setGeneroFiltro] = useState<"all" | "masculino" | "feminino" | "outro">(initialGeneroFiltro);
-  const [activeCardIdx, setActiveCardIdx] = useState(0);
   const [isPending, startTransition] = useTransition();
   const [entryPending, setEntryPending] = useState(false);
   const [radarFiltrosAbertos, setRadarFiltrosAbertos] = useState(false);
   const [amistosoLigado, setAmistosoLigado] = useState(viewerDisponivelAmistoso);
-  const [showEntryPrompt, setShowEntryPrompt] = useState(false);
-  const [showEntryInfo, setShowEntryInfo] = useState(false);
+  const [showEntryPrompt] = useState(() => {
+    if (typeof window === "undefined") return false;
+    let skipPromptThisLoad = false;
+    let declinedToday = false;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      skipPromptThisLoad = params.get("entry_done") === "1";
+    } catch {
+      skipPromptThisLoad = false;
+    }
+    try {
+      declinedToday = window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_DECLINED_DAY_KEY) === todayYmd();
+    } catch {
+      declinedToday = false;
+    }
+    return !skipPromptThisLoad && !viewerDisponivelAmistoso && !declinedToday;
+  });
+  const [showEntryInfo, setShowEntryInfo] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY) !== "1";
+    } catch {
+      return false;
+    }
+  });
   const [entryError, setEntryError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const [showRankRulesPrompt, setShowRankRulesPrompt] = useState(false);
+  const [mounted] = useState(() => typeof window !== "undefined");
+  const [showRankRulesPrompt, setShowRankRulesPrompt] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(MATCH_RANK_RULES_SEEN_KEY) !== "1";
+    } catch {
+      return false;
+    }
+  });
 
   const syncUrl = useCallback(
     (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
@@ -196,61 +226,6 @@ export function MatchRadarApp({
     [tipo, sortBy, raio, esporte, finalidade, runRefresh, syncUrl]
   );
 
-  useEffect(() => {
-    setTipo(initialTipo);
-    setSortBy(initialSortBy);
-    setRaio(initialRaio);
-    setEsporte(esporteSelecionado);
-    setFinalidade(initialFinalidade);
-    setCards(initialCards);
-    setAmistosoLigado(viewerDisponivelAmistoso);
-    setViewMode(initialView);
-    setGeneroFiltro(initialGeneroFiltro);
-  }, [initialTipo, initialSortBy, initialRaio, esporteSelecionado, initialFinalidade, initialCards, viewerDisponivelAmistoso, initialView, initialGeneroFiltro]);
-
-  useEffect(() => {
-    let skipPromptThisLoad = false;
-    let declinedToday = false;
-    try {
-      const params = new URLSearchParams(window.location.search);
-      skipPromptThisLoad = params.get("entry_done") === "1";
-    } catch {
-      skipPromptThisLoad = false;
-    }
-    try {
-      const seenInfo = window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY) === "1";
-      setShowEntryInfo(!seenInfo);
-    } catch {
-      setShowEntryInfo(false);
-    }
-    try {
-      declinedToday = window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_DECLINED_DAY_KEY) === todayYmd();
-    } catch {
-      declinedToday = false;
-    }
-    const shouldAskEntry = !skipPromptThisLoad && !viewerDisponivelAmistoso && !declinedToday;
-    setShowEntryPrompt(shouldAskEntry);
-    setEntryError(null);
-    setViewMode("full");
-  }, [viewerDisponivelAmistoso]);
-
-  useEffect(() => {
-    setActiveCardIdx(0);
-  }, [cards, finalidade, tipo, esporte, sortBy, raio]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    try {
-      const seenRules = window.localStorage.getItem(MATCH_RANK_RULES_SEEN_KEY) === "1";
-      setShowRankRulesPrompt(!seenRules);
-    } catch {
-      setShowRankRulesPrompt(false);
-    }
-  }, [mounted]);
 
   const esporteOptions = useMemo(() => [{ id: "all", nome: "Todos" }, ...esportes.map((e) => ({ id: String(e.id), nome: e.nome ?? "" }))], [esportes]);
 
@@ -258,8 +233,6 @@ export function MatchRadarApp({
     const row = esporteOptions.find((e) => String(e.id) === String(esporte));
     return row?.nome?.trim() || "Todos";
   }, [esporteOptions, esporte]);
-
-  const activeCard = cards[activeCardIdx] ?? null;
 
   function switchViewMode(next: "full" | "grid") {
     setViewMode(next);
@@ -330,16 +303,6 @@ export function MatchRadarApp({
     setShowRankRulesPrompt(false);
   }
 
-  const cardsFiltradosGenero = useMemo(() => {
-    if (generoFiltro === "all") return cards;
-    return cards.filter((c) => {
-      if (c.modalidade !== "individual") return true;
-      const g = String(c.genero ?? "").trim().toLowerCase();
-      if (generoFiltro === "masculino") return g === "masculino";
-      if (generoFiltro === "feminino") return g === "feminino";
-      return g !== "" && g !== "masculino" && g !== "feminino";
-    });
-  }, [cards, generoFiltro]);
   const isFullView = viewMode === "full";
   const fullOrderedCards = useMemo(() => {
     type Bucket = "amistoso" | "ranking" | "dupla" | "time";
@@ -883,7 +846,13 @@ export function MatchRadarApp({
                         : `/perfil-time/${encodeURIComponent(c.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
                     : matchCardEidStatsHref(c);
                 const avatarBlock = c.avatarUrl ? (
-                  <img src={c.avatarUrl} alt="" className={`h-full w-full ${PROFILE_PUBLIC_AVATAR_RING_CLASS}`} loading="lazy" />
+                  <Image
+                    src={c.avatarUrl}
+                    alt=""
+                    fill
+                    unoptimized
+                    className={`h-full w-full ${PROFILE_PUBLIC_AVATAR_RING_CLASS}`}
+                  />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
                     EID

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useState } from "react";
+import { useState } from "react";
 import { applyEidTheme } from "@/components/eid-theme-hydration";
 
 function IconMoon({ className }: { className?: string }) {
@@ -35,16 +35,10 @@ type Props = {
  * Alterna tema claro/escuro em todo o site (`data-eid-theme` + localStorage).
  */
 export function EidThemeToggle({ className, variant = "default" }: Props) {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-
-  const syncFromDom = useCallback(() => {
-    const d = document.documentElement.dataset.eidTheme;
-    setTheme(d === "light" ? "light" : "dark");
-  }, []);
-
-  useLayoutEffect(() => {
-    syncFromDom();
-  }, [syncFromDom]);
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof document === "undefined") return "dark";
+    return document.documentElement.dataset.eidTheme === "light" ? "light" : "dark";
+  });
 
   function toggle() {
     const next = theme === "light" ? "dark" : "light";

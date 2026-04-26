@@ -10,7 +10,7 @@ self.addEventListener("push", (event) => {
   let payload = {};
   try {
     payload = event.data ? event.data.json() : {};
-  } catch (_e) {
+  } catch {
     payload = { title: "EsporteID", body: event.data ? event.data.text() : "Você tem uma nova notificação." };
   }
 

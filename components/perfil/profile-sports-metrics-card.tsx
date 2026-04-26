@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { EidNotaMetric, EidRankingPtsMetric } from "@/components/ui/eid-metrics";
-import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
 
 type ProfileSportsMetricsCardProps = {
   sportName: string;
@@ -38,7 +37,9 @@ export function ProfileSportsMetricsCard({
         </div>
       ) : null}
       <div className={`rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 p-2 ${showScoreTiles ? "mt-2" : ""}`}>
-        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">{trendLabel}</p>
+        <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">
+          {trendLabel} · {sportName}
+        </p>
         <svg viewBox="0 0 120 34" className="mt-1 h-7 w-full" aria-hidden>
           <defs>
             <linearGradient id="eid-trend-grad" x1="0" y1="0" x2="1" y2="0">

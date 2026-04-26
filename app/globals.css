@@ -1025,6 +1025,15 @@ select,
   backdrop-filter: blur(16px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
 }
+
+/* Onboarding: campos um pouco maiores para leitura/toque em mobile. */
+:where([data-eid-onboarding-step]) :where(input.eid-input-dark, select.eid-input-dark, textarea.eid-input-dark) {
+  min-height: 2.45rem;
+  font-size: 13px;
+  line-height: 1.35;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
 [data-eid-theme="light"] .eid-native-auth-enter {
   filter: saturate(1.02);
 }

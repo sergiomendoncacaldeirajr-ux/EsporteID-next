@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { EID_PWA_BACKGROUND, EID_PWA_SPLASH_MARK_SRC } from "@/lib/branding";
 
@@ -12,22 +13,21 @@ function isStandalone(): boolean {
 }
 
 export function PwaLaunchSplash() {
-  const [visible, setVisible] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const isStandaloneMode = isStandalone();
+  const [visible, setVisible] = useState(isStandaloneMode);
+  const [mounted, setMounted] = useState(!isStandaloneMode);
 
   useEffect(() => {
-    if (!isStandalone()) {
-      setMounted(true);
+    if (!isStandaloneMode) {
       return;
     }
-    setVisible(true);
     const hideTimer = window.setTimeout(() => setVisible(false), 900);
     const unmountTimer = window.setTimeout(() => setMounted(true), 1200);
     return () => {
       window.clearTimeout(hideTimer);
       window.clearTimeout(unmountTimer);
     };
-  }, []);
+  }, [isStandaloneMode]);
 
   if (mounted || !visible) return null;
 
@@ -39,12 +39,15 @@ export function PwaLaunchSplash() {
       }`}
       style={{ backgroundColor: EID_PWA_BACKGROUND }}
     >
-      <img
-        src={EID_PWA_SPLASH_MARK_SRC}
-        alt=""
-        className="h-auto w-[56vw] max-w-[300px] object-contain drop-shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
-        decoding="async"
-      />
+      <div className="relative aspect-square w-[56vw] max-w-[300px]">
+        <Image
+          src={EID_PWA_SPLASH_MARK_SRC}
+          alt=""
+          fill
+          unoptimized
+          className="object-contain drop-shadow-[0_8px_32px_rgba(0,0,0,0.35)]"
+        />
+      </div>
     </div>
   );
 }

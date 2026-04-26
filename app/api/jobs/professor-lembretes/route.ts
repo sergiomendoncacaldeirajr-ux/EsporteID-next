@@ -9,7 +9,6 @@ async function run(request: Request) {
 
     const now = new Date();
     const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
-    const in2h = new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString();
 
     const { data: aulas } = await admin
       .from("professor_aulas")

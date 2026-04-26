@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   EID_LOGO_WORDMARK_HEIGHT,
   EID_LOGO_WORDMARK_SRC,
@@ -16,13 +17,12 @@ type Props = {
 export function LogoWordmark({ className, objectPosition = "left" }: Props) {
   const pos = objectPosition === "center" ? "object-center" : "object-left";
   return (
-    <img
+    <Image
       src={EID_LOGO_WORDMARK_SRC}
       alt="EsporteID"
       width={EID_LOGO_WORDMARK_WIDTH}
       height={EID_LOGO_WORDMARK_HEIGHT}
       className={`h-7 w-auto max-w-[min(55vw,220px)] object-contain md:h-8 ${pos} ${className ?? ""}`}
-      decoding="async"
     />
   );
 }

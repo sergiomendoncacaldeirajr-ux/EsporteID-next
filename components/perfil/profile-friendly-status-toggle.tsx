@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { setViewerDisponivelAmistoso } from "@/app/match/actions";
 import {
@@ -20,13 +20,8 @@ type Props = {
 export function ProfileFriendlyStatusToggle({ userId, initialOn, initialExpiresAt, canToggle }: Props) {
   const [on, setOn] = useState(initialOn);
   const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt);
-  const [tick, setTick] = useState(0);
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const [pending, startTransition] = useTransition();
-
-  useEffect(() => {
-    setOn(initialOn);
-    setExpiresAt(initialExpiresAt);
-  }, [initialOn, initialExpiresAt]);
 
   useEffect(() => {
     const sb = createClient();
@@ -53,18 +48,18 @@ export function ProfileFriendlyStatusToggle({ userId, initialOn, initialExpiresA
 
   useEffect(() => {
     if (!on || !expiresAt) return;
-    const id = window.setInterval(() => setTick((x) => x + 1), 15_000);
+    const id = window.setInterval(() => setNowMs(Date.now()), 15_000);
     return () => window.clearInterval(id);
   }, [on, expiresAt]);
 
-  useEffect(() => {
-    if (!on || !expiresAt) return;
+  const isExpired = useMemo(() => {
+    if (!on || !expiresAt) return false;
     const end = new Date(expiresAt).getTime();
-    if (Number.isNaN(end) || end <= Date.now()) {
-      setOn(false);
-      setExpiresAt(null);
-    }
-  }, [on, expiresAt, tick]);
+    if (Number.isNaN(end)) return true;
+    return end <= nowMs;
+  }, [on, expiresAt, nowMs]);
+  const effectiveOn = on && !isExpired;
+  const effectiveExpiresAt = effectiveOn ? expiresAt : null;
 
   function toggle() {
     if (!canToggle || pending) return;
@@ -85,25 +80,29 @@ export function ProfileFriendlyStatusToggle({ userId, initialOn, initialExpiresA
     });
   }
 
-  const tone = on
+  const tone = effectiveOn
     ? "border-[color:color-mix(in_srgb,var(--eid-success-500)_44%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-success-500)_14%,transparent)] text-[color:color-mix(in_srgb,var(--eid-success-400)_82%,var(--eid-fg)_18%)]"
     : "border-[color:color-mix(in_srgb,var(--eid-danger-500)_44%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-danger-500)_14%,transparent)] text-[color:color-mix(in_srgb,var(--eid-danger-400)_82%,var(--eid-fg)_18%)]";
 
-  const dotTone = on ? "bg-eid-success-500" : "bg-eid-danger-500";
+  const dotTone = effectiveOn ? "bg-eid-success-500" : "bg-eid-danger-500";
 
   const titleExtra =
-    on && expiresAt
-      ? ` · até ${new Date(expiresAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
+    effectiveOn && effectiveExpiresAt
+      ? ` · até ${new Date(effectiveExpiresAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
       : "";
 
   if (!canToggle) {
     return (
       <span
         className={`inline-flex min-h-[22px] items-center gap-1 rounded-full border px-2 py-px text-[10px] font-semibold ${tone}`}
-        title={on && expiresAt ? `Expira às ${new Date(expiresAt).toLocaleString("pt-BR")}` : undefined}
+        title={
+          effectiveOn && effectiveExpiresAt
+            ? `Expira às ${new Date(effectiveExpiresAt).toLocaleString("pt-BR")}`
+            : undefined
+        }
       >
         <span className={`h-1.5 w-1.5 rounded-full ${dotTone}`} />
-        {on ? "ON" : "OFF"}
+        {effectiveOn ? "ON" : "OFF"}
       </span>
     );
   }
@@ -114,12 +113,12 @@ export function ProfileFriendlyStatusToggle({ userId, initialOn, initialExpiresA
       onClick={toggle}
       disabled={pending}
       className={`inline-flex min-h-[22px] items-center gap-1 rounded-full border px-2 py-px text-[10px] font-semibold transition-all duration-200 ${tone} ${pending ? "opacity-70" : ""}`}
-      aria-pressed={on}
-      aria-label={`Amistoso ${on ? "ligado" : "desligado"}${titleExtra}`}
+      aria-pressed={effectiveOn}
+      aria-label={`Amistoso ${effectiveOn ? "ligado" : "desligado"}${titleExtra}`}
       title={`Alternar disponibilidade para amistoso (até 4 h ligado)${titleExtra}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${dotTone}`} />
-      {on ? "ON" : "OFF"}
+      {effectiveOn ? "ON" : "OFF"}
     </button>
   );
 }

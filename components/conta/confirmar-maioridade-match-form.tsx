@@ -7,6 +7,7 @@ import { confirmarMaioridadeMatchAction } from "@/app/conta/confirmar-maioridade
 import { maxDataNascimentoMaior18 } from "@/lib/match/idade-maioridade";
 
 export function ConfirmarMaioridadeMatchForm({ nextPath, nome: _nome }: { nextPath: string; nome: string }) {
+  void _nome;
   const router = useRouter();
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();

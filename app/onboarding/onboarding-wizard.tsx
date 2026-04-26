@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/brand/logo-full";
@@ -1126,7 +1127,7 @@ export function OnboardingWizard({
       setMessage(r.message);
       return;
     }
-    setMessage(null);
+    setMessage(r.message ?? null);
     if (r.nextStep === "esportes") setStep("esportes");
     else if (r.nextStep === "extras") setStep("extras");
     else if (r.nextStep === "perfil") setStep("perfil");
@@ -1348,6 +1349,42 @@ export function OnboardingWizard({
 
   function submitExtras(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (hasOrganizador && orgEsportes.size === 0) {
+      setMessage("Selecione ao menos um esporte para organização.");
+      return;
+    }
+    if (hasOrganizador && orgLocalModo === "existente" && Number(orgLocalId) <= 0) {
+      setMessage("Selecione um local existente para organizar eventos.");
+      return;
+    }
+    if (hasOrganizador && orgLocalModo === "novo") {
+      if (orgNovoLocalNome.trim().length < 3) {
+        setMessage("Informe o nome do novo local (mínimo 3 caracteres).");
+        return;
+      }
+      if (orgNovoLocalCidade.trim().length < 2 || orgNovoLocalEstado.trim().length < 2) {
+        setMessage("Preencha cidade e UF do novo local para continuar.");
+        return;
+      }
+    }
+    if (hasEspaco) {
+      if (espacoNome.trim().length < 3) {
+        setMessage("Informe o nome do espaço (mínimo 3 caracteres).");
+        return;
+      }
+      if (espacoEsportes.size === 0) {
+        setMessage("Selecione ao menos um esporte atendido no espaço.");
+        return;
+      }
+      if (espacoEndereco.trim().length < 3) {
+        setMessage("Informe o endereço do espaço.");
+        return;
+      }
+      if (espacoCidade.trim().length < 2 || espacoEstado.trim().length < 2) {
+        setMessage("Preencha cidade e UF do espaço para continuar.");
+        return;
+      }
+    }
     if (!extrasValid) {
       setMessage("Revise os campos desta etapa antes de continuar.");
       return;
@@ -2326,7 +2363,7 @@ export function OnboardingWizard({
 
               <button
                 type="submit"
-                disabled={pending || !extrasValid}
+                disabled={pending}
                 className={continueButtonClass}
               >
                 {pending ? "Salvando…" : "Continuar"}
@@ -2430,10 +2467,12 @@ export function OnboardingWizard({
               <div className="flex items-center gap-3">
                 {hasFotoSelecionada ? (
                   <div className="relative h-16 w-16 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)]">
-                    <img
+                    <Image
                       src={fotoPreviewUrl ?? ""}
                       alt="Prévia da foto"
-                      className="h-full w-full object-cover"
+                      fill
+                      unoptimized
+                      className="object-cover"
                       style={{
                         objectPosition: `${fotoPosX}% ${fotoPosY}%`,
                         transform: `scale(${fotoZoom})`,
@@ -2441,9 +2480,12 @@ export function OnboardingWizard({
                     />
                   </div>
                 ) : profileInitial.avatarUrl ? (
-                  <img
+                  <Image
                     src={profileInitial.avatarUrl}
                     alt="Avatar atual"
+                    width={64}
+                    height={64}
+                    unoptimized
                     className="h-16 w-16 rounded-full border border-[color:var(--eid-border-subtle)] object-cover"
                   />
                 ) : (
