@@ -115,30 +115,24 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
       aria-label={
         effectiveOn ? "Modo amistoso ativado. Toque para desligar." : "Modo amistoso desligado. Toque para ativar."
       }
-      className={`inline-flex max-w-[min(100%,11.5rem)] touch-manipulation items-center gap-1 rounded-lg border px-1.5 py-1 text-left text-[6px] font-black uppercase leading-tight tracking-[0.05em] transition active:scale-[0.99] disabled:opacity-50 sm:max-w-[13.5rem] sm:gap-1.5 sm:px-2 sm:py-1.5 sm:text-[7px] sm:tracking-[0.06em] dark:border-2 ${
+      className={`inline-flex max-w-[min(100%,9.8rem)] touch-manipulation items-center gap-0.5 rounded-lg border px-1.25 py-0.75 text-left text-[5.5px] font-black uppercase leading-none tracking-[0.045em] transition active:scale-[0.99] disabled:opacity-50 sm:max-w-[11rem] sm:gap-1 sm:px-1.75 sm:py-1 sm:text-[6.5px] sm:tracking-[0.055em] dark:border-2 ${
         effectiveOn
           ? "border-emerald-700/80 bg-emerald-200 text-emerald-950 shadow-[0_1px_2px_rgba(6,95,70,0.2)] ring-1 ring-emerald-700/25 hover:border-emerald-800 hover:bg-emerald-300 dark:border-emerald-400/65 dark:bg-emerald-950/55 dark:text-emerald-100 dark:shadow-[0_2px_8px_-4px_rgba(15,23,42,0.35)] dark:ring-1 dark:ring-emerald-400/20 dark:hover:bg-emerald-900/50"
           : "border-rose-700/75 bg-rose-200 text-rose-950 shadow-[0_1px_2px_rgba(190,18,60,0.18)] ring-1 ring-rose-700/20 hover:border-rose-800 hover:bg-rose-300 dark:border-red-400/55 dark:bg-red-950/45 dark:text-red-100 dark:shadow-[0_2px_8px_-4px_rgba(15,23,42,0.35)] dark:ring-1 dark:ring-red-400/15 dark:hover:bg-red-950/70"
       } ${className ?? ""}`}
     >
       <Handshake
-        className={`h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5 ${effectiveOn ? "text-emerald-900 dark:text-emerald-300" : "text-rose-900 dark:text-red-300"}`}
+        className={`h-2.5 w-2.5 shrink-0 sm:h-3 sm:w-3 ${effectiveOn ? "text-emerald-900 dark:text-emerald-300" : "text-rose-900 dark:text-red-300"}`}
         strokeWidth={2.35}
         aria-hidden
       />
-      <span className="min-w-0 flex-1 text-balance">
+      <span className="min-w-0 flex-1 whitespace-nowrap">
         {pending ? (
-          <span className="whitespace-nowrap">Aguarde…</span>
+          <span>Aguarde…</span>
         ) : effectiveOn ? (
-          <>
-            Modo amistoso
-            <span className="block text-[1.05em] sm:inline sm:pl-0.5">ativado</span>
-          </>
+          <span>Amistoso ativo</span>
         ) : (
-          <>
-            Modo amistoso
-            <span className="block text-[1.05em] sm:inline sm:pl-0.5">desligado</span>
-          </>
+          <span>Amistoso off</span>
         )}
       </span>
     </button>

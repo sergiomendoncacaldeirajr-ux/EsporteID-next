@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Trophy } from "lucide-react";
 import { matchCardEidStatsHref, type MatchRadarCard, type MatchRadarFinalidade } from "@/lib/match/radar-snapshot";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
@@ -45,11 +46,12 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade, vi
   const quickViewHref = eidStatsHref ?? card.href;
 
   const avatarInner = card.avatarUrl ? (
-    <img
+    <Image
       src={card.avatarUrl}
       alt=""
-      className={`h-full w-full ${PROFILE_PUBLIC_AVATAR_RING_CLASS}`}
-      loading="lazy"
+      fill
+      unoptimized
+      className={`h-full w-full ${PROFILE_PUBLIC_AVATAR_RING_CLASS} !object-cover object-center`}
     />
   ) : (
     <div
@@ -124,7 +126,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade, vi
           <MatchChallengeAction
             modalidade={card.modalidade}
             desafioHref={desafioHref}
-            className="eid-btn-match-cta eid-match-cta-pulse eid-shimmer-btn relative mt-1.5 min-[390px]:mt-2 inline-flex w-full max-w-full items-center justify-center overflow-hidden rounded-lg px-2 py-1.5 min-[390px]:px-2.5 min-[390px]:py-2 text-[9px] min-[390px]:text-[10px] font-black uppercase leading-tight tracking-[0.12em] sm:rounded-xl sm:px-3 sm:py-2 sm:text-[11px]"
+            className="eid-btn-match-cta relative mt-1 inline-flex min-h-[26px] w-full max-w-full items-center justify-center overflow-hidden rounded-md px-2 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.05em]"
             title={matchCtaTitle}
             viewerHasDupla={viewerHasDupla}
             viewerHasTime={viewerHasTime}

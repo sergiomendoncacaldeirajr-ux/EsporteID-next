@@ -12,10 +12,12 @@ export function MatchPageShell({ children, fullBleed = false }: { children: Reac
       />
       <main
         data-eid-touch-ui
+        data-eid-touch-ui-compact
+        data-eid-desafio-ui
         className={
           fullBleed
-            ? "relative z-[1] w-full min-w-0 px-2.5 pb-4 pt-2 sm:px-4 sm:pt-2.5"
-            : `relative z-[1] ${PROFILE_PUBLIC_MAIN_CLASS} !pt-0.5 sm:!pt-1.5`
+            ? "relative z-[1] w-full min-w-0 px-2.5 pb-4 pt-3 sm:px-4 sm:pt-3.5"
+            : `relative z-[1] ${PROFILE_PUBLIC_MAIN_CLASS} !pt-2 sm:!pt-3`
         }
       >
         {children}

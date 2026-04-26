@@ -100,8 +100,6 @@ export async function fetchMatchRadarCards(
     });
 
     const baseCards: MatchRadarCard[] = ((data ?? []) as AtletaRow[]).map((row) => {
-      const modalidade: MatchRadarCard["modalidade"] =
-        row.modalidade_match === "dupla" || row.modalidade_match === "time" ? row.modalidade_match : "individual";
       return {
         id: String(row.usuario_id),
         nome: String(row.nome ?? "Atleta"),
@@ -111,7 +109,7 @@ export async function fetchMatchRadarCards(
         dist: Number(row.dist_km ?? 99999),
         eid: Number(row.nota_eid ?? 0),
         rank: Number(row.pontos_ranking ?? 0),
-        modalidade,
+        modalidade: "individual",
         interesseMatch:
           row.interesse_match === "ranking"
             ? "ranking"

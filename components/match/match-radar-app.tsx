@@ -34,7 +34,7 @@ function compactCardName(fullName: string) {
 
 function segmentTab(active: boolean) {
   return cn(
-    "inline-flex min-w-0 flex-1 min-h-[40px] touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-extrabold uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985] disabled:opacity-50 sm:text-[12px]",
+    "inline-flex min-w-0 flex-1 min-h-[1.5rem] touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985] disabled:opacity-50",
     active
       ? "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35"
@@ -43,7 +43,7 @@ function segmentTab(active: boolean) {
 
 function filterChip(active: boolean) {
   return cn(
-    "inline-flex min-h-[36px] touch-manipulation items-center justify-center whitespace-nowrap rounded-md px-2 py-1 text-[11px] font-bold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.985] disabled:opacity-50 sm:text-[12px]",
+    "inline-flex h-[1.38rem] touch-manipulation items-center justify-center whitespace-nowrap rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ease-out motion-safe:transform-gpu active:scale-[0.985] disabled:opacity-50",
     active
       ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_7px_16px_-11px_rgba(37,99,235,0.4)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55"
@@ -51,9 +51,9 @@ function filterChip(active: boolean) {
 }
 
 const FILTER_CARD_CLASS =
-  "rounded-lg border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-1.5 backdrop-blur-sm shadow-[0_6px_16px_-12px_rgba(15,23,42,0.22)] sm:rounded-xl sm:p-2";
+  "rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2 backdrop-blur-sm shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)]";
 
-const FILTER_LABEL = "mb-0.5 text-[7px] font-black uppercase tracking-[0.12em] text-eid-primary-400 sm:text-[8px] sm:tracking-[0.14em]";
+const FILTER_LABEL = "mb-0.5 text-[7px] font-semibold uppercase tracking-[0.12em] text-eid-primary-400";
 
 type Props = {
   viewerId: string;
@@ -355,9 +355,20 @@ export function MatchRadarApp({
 
     return ordered;
   }, [cards, amistosoLigado]);
+  const cardsByGridFilters = useMemo(() => {
+    return cards.filter((c) => {
+      if (tipo === "atleta" && c.modalidade !== "individual") return false;
+      if (tipo === "dupla" && c.modalidade !== "dupla") return false;
+      if (tipo === "time" && c.modalidade !== "time") return false;
+      if (finalidade === "amistoso" && c.modalidade !== "individual") return false;
+      if (finalidade === "amistoso" && (!c.disponivelAmistoso || c.interesseMatch === "ranking")) return false;
+      if (finalidade === "ranking" && c.interesseMatch === "amistoso") return false;
+      return true;
+    });
+  }, [cards, tipo, finalidade]);
   const challengeableCards = useMemo(
-    () => cards.filter((c) => c.modalidade === "individual" || c.canChallenge),
-    [cards]
+    () => cardsByGridFilters.filter((c) => c.modalidade === "individual" || c.canChallenge),
+    [cardsByGridFilters]
   );
   const cardsFiltradosGeneroChallengeable = useMemo(() => {
     if (generoFiltro === "all") return challengeableCards;
@@ -373,7 +384,15 @@ export function MatchRadarApp({
     const allowed = new Set(challengeableCards.map((c) => `${c.modalidade}:${c.id}:${c.esporteId}`));
     return fullOrderedCards.filter((c) => allowed.has(`${c.modalidade}:${c.id}:${c.esporteId}`));
   }, [challengeableCards, fullOrderedCards]);
-  const visibleCards = isFullView ? fullOrderedChallengeableCards : cardsFiltradosGeneroChallengeable;
+  const gridCardsWithoutDuplicates = useMemo(() => {
+    const byKey = new Map<string, MatchRadarCard>();
+    for (const card of cardsFiltradosGeneroChallengeable) {
+      const key = `${card.modalidade}:${card.id}:${card.esporteId}`;
+      if (!byKey.has(key)) byKey.set(key, card);
+    }
+    return Array.from(byKey.values());
+  }, [cardsFiltradosGeneroChallengeable]);
+  const visibleCards = isFullView ? fullOrderedChallengeableCards : gridCardsWithoutDuplicates;
   const fullCardGroups = useMemo(() => {
     if (!isFullView) return [];
     const map = new Map<
@@ -393,14 +412,20 @@ export function MatchRadarApp({
         map.set(key, { key, base: card, entries: [card] });
       }
     }
-    return Array.from(map.values()).map((group) => ({
-      ...group,
-      entries: [...group.entries].sort((a, b) => {
-        if (b.rank !== a.rank) return b.rank - a.rank;
-        if (b.eid !== a.eid) return b.eid - a.eid;
-        return a.esporteNome.localeCompare(b.esporteNome, "pt-BR");
-      }),
-    }));
+    return Array.from(map.values()).map((group) => {
+      const uniqueBySport = new Map<number, MatchRadarCard>();
+      for (const entry of group.entries) {
+        if (!uniqueBySport.has(entry.esporteId)) uniqueBySport.set(entry.esporteId, entry);
+      }
+      return {
+        ...group,
+        entries: Array.from(uniqueBySport.values()).sort((a, b) => {
+          if (b.rank !== a.rank) return b.rank - a.rank;
+          if (b.eid !== a.eid) return b.eid - a.eid;
+          return a.esporteNome.localeCompare(b.esporteNome, "pt-BR");
+        }),
+      };
+    });
   }, [isFullView, visibleCards]);
 
   useEffect(() => {
@@ -490,16 +515,16 @@ export function MatchRadarApp({
           )
         : null}
       {!isFullView ? (
-      <header className="mb-2 mt-0">
-        <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-2 gap-y-0.5 sm:gap-x-3">
-          <div className="col-start-1 row-start-1 inline-flex min-w-0 max-w-full items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)_86%)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-primary-500)_72%,var(--eid-fg)_28%)]">
+      <header className="mb-3 mt-0">
+        <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-1.5 gap-y-0.5 sm:gap-x-2">
+          <div className="col-start-1 row-start-1 inline-flex min-w-0 max-w-full items-center gap-0.75 rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)_86%)] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.12em] text-[color:color-mix(in_srgb,var(--eid-primary-500)_72%,var(--eid-fg)_28%)]">
             <span
               className="h-1.5 w-1.5 shrink-0 rounded-full bg-[color:color-mix(in_srgb,var(--eid-primary-500)_78%,white_22%)] shadow-[0_0_10px_color-mix(in_srgb,var(--eid-primary-500)_52%,transparent)]"
               aria-hidden
             />
             <span className="truncate">Radar de oponentes</span>
           </div>
-          <div className="col-start-2 row-start-1 row-span-2 flex shrink-0 flex-col items-end gap-1 justify-self-end">
+          <div className="col-start-2 row-start-1 row-span-2 flex shrink-0 flex-col items-end gap-1.5 justify-self-end">
             <MatchLocationPrompt hasLocation />
             {finalidade !== "amistoso" ? (
               <MatchFriendlyToggle
@@ -510,10 +535,10 @@ export function MatchRadarApp({
               />
             ) : null}
           </div>
-          <h1 className="col-start-1 row-start-2 pt-0.5 text-[1.35rem] font-black leading-none tracking-[0.01em] text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_78%,var(--eid-fg)_22%))] bg-clip-text drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_34%,transparent)] sm:text-[1.6rem]">
+          <h1 className="col-start-1 row-start-2 pt-1 text-[1.08rem] font-black leading-none tracking-[0.005em] text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_78%,var(--eid-fg)_22%))] bg-clip-text drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_34%,transparent)] sm:pt-1.5 sm:text-[1.28rem]">
             Desafio
           </h1>
-          <p className="col-span-2 row-start-3 max-w-none pt-0.5 text-[10px] leading-snug text-eid-text-secondary text-balance sm:text-[11px]">
+          <p className="col-span-2 row-start-3 max-w-none pt-0.5 text-[9px] leading-snug text-eid-text-secondary text-balance sm:text-[10px]">
             {finalidade === "amistoso"
               ? "Atletas com modo amistoso ativo e interesse em jogo casual. O botão Solicitar desafio já envia pedido amistoso (sem carência de meses)."
               : "Oponentes por proximidade; ordene por nota EID ou pontos do ranking. Troque modalidade e filtros sem recarregar."}
@@ -529,12 +554,12 @@ export function MatchRadarApp({
       ) : null}
 
       {viewMode === "grid" ? (
-      <div className={cn(FILTER_CARD_CLASS, "mb-2 space-y-1.5 [&_button]:[-webkit-tap-highlight-color:transparent]")}>
+      <div className={cn(FILTER_CARD_CLASS, "mt-1.5 mb-2 space-y-2 [&_button]:[-webkit-tap-highlight-color:transparent]")}>
         <div>
           <p className={FILTER_LABEL}>Tipo de desafio</p>
           <div className="mt-0.5 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
             <nav
-              className="flex min-h-[1.85rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:min-h-[1.45rem]"
+              className="flex h-[1.5rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)]"
               aria-label="Tipo de desafio"
             >
               {(
@@ -569,7 +594,7 @@ export function MatchRadarApp({
           <p className={FILTER_LABEL}>Modalidade</p>
           <div className="mt-0.5 rounded-md bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-0.5 backdrop-blur-sm sm:rounded-lg sm:p-1">
             <nav
-              className="flex min-h-[1.55rem] overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:min-h-[1.35rem] sm:rounded-md"
+              className="flex h-[1.5rem] overflow-hidden rounded-sm bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] sm:rounded-md"
               aria-label="Modalidade"
             >
               {(
@@ -751,7 +776,7 @@ export function MatchRadarApp({
             <button
               type="button"
               onClick={() => switchViewMode("full")}
-              className="inline-flex items-center gap-1 rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/75"
+              className="inline-flex h-[1.5rem] items-center gap-1 rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2 text-[8px] font-semibold uppercase tracking-[0.03em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/75"
             >
               <Maximize2 className="h-3 w-3" strokeWidth={2.25} aria-hidden />
               Modo tela toda
@@ -807,13 +832,13 @@ export function MatchRadarApp({
           >
             <div className="mb-2.5 flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <span className="inline-flex items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em] text-eid-primary-300 shadow-[0_8px_18px_-14px_rgba(37,99,235,0.58)]">
+                <span className="inline-flex items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-eid-primary-300 shadow-[0_8px_18px_-14px_rgba(37,99,235,0.58)]">
                   Modo tela cheia
                 </span>
-                <h2 className="mt-1 truncate bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_76%,var(--eid-fg)_24%))] bg-clip-text text-base font-black tracking-[0.01em] text-transparent drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_26%,transparent)] sm:text-lg">
+                <h2 className="mt-0.5 truncate bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_76%,var(--eid-fg)_24%))] bg-clip-text text-sm font-black tracking-[0.005em] text-transparent drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_26%,transparent)] sm:text-base">
                   Sugestões de desafios
                 </h2>
-                <p className="mt-0.5 truncate text-[10px] font-medium text-eid-text-secondary sm:text-[11px]">
+                <p className="mt-0.5 truncate text-[9px] font-medium text-eid-text-secondary sm:text-[10px]">
                   Escolha um adversário e envie seu desafio em segundos.
                 </p>
               </div>
@@ -851,7 +876,7 @@ export function MatchRadarApp({
                     alt=""
                     fill
                     unoptimized
-                    className={`h-full w-full ${PROFILE_PUBLIC_AVATAR_RING_CLASS}`}
+                    className={`h-full w-full ${PROFILE_PUBLIC_AVATAR_RING_CLASS} !object-cover object-center`}
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
@@ -905,7 +930,7 @@ export function MatchRadarApp({
                         <MatchChallengeAction
                           modalidade={c.modalidade}
                           desafioHref={desafioHref}
-                          className="eid-btn-match-cta mt-1 inline-flex min-h-[40px] w-full items-center justify-center rounded-lg px-3 text-[11px] font-black uppercase tracking-[0.08em]"
+                          className="eid-btn-match-cta mt-1 inline-flex min-h-[20px] w-full items-center justify-center rounded-md px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.03em]"
                           title="Solicitar desafio"
                           viewerHasDupla={viewerHasDupla}
                           viewerHasTime={viewerHasTime}
@@ -948,14 +973,14 @@ export function MatchRadarApp({
                 );
               })}
             </div>
-            <div className="sticky bottom-0 z-[2] bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--eid-bg)_88%,transparent)_35%)] pb-1 pt-1">
+            <div className="sticky bottom-0 z-[2] flex justify-center bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--eid-bg)_88%,transparent)_35%)] pb-1 pt-1">
               <button
                 type="button"
                 onClick={() => switchViewMode("grid")}
-                className="inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/80 px-3 text-[12px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface"
+                className="inline-flex h-[1.05rem] items-center gap-0.5 rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-1.25 text-[6px] font-semibold uppercase tracking-[0.02em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/75"
               >
-                <Grid2x2 className="h-3.5 w-3.5" strokeWidth={2.25} aria-hidden />
-                Alterar configurações
+                <Grid2x2 className="h-2.5 w-2.5" strokeWidth={2.25} aria-hidden />
+                Modo grade
               </button>
             </div>
           </div>, document.body) : null

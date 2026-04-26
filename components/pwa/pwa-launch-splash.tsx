@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { EID_PWA_BACKGROUND, EID_PWA_SPLASH_MARK_SRC } from "@/lib/branding";
 
+const PWA_SPLASH_SEEN_SESSION_KEY = "eid_pwa_splash_seen_v1";
+
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
   return (
@@ -14,12 +16,27 @@ function isStandalone(): boolean {
 
 export function PwaLaunchSplash() {
   const isStandaloneMode = isStandalone();
-  const [visible, setVisible] = useState(isStandaloneMode);
-  const [mounted, setMounted] = useState(!isStandaloneMode);
+  const shouldShow =
+    isStandaloneMode &&
+    (() => {
+      if (typeof window === "undefined") return false;
+      try {
+        return window.sessionStorage.getItem(PWA_SPLASH_SEEN_SESSION_KEY) !== "1";
+      } catch {
+        return true;
+      }
+    })();
+  const [visible, setVisible] = useState(shouldShow);
+  const [mounted, setMounted] = useState(!shouldShow);
 
   useEffect(() => {
-    if (!isStandaloneMode) {
+    if (!shouldShow) {
       return;
+    }
+    try {
+      window.sessionStorage.setItem(PWA_SPLASH_SEEN_SESSION_KEY, "1");
+    } catch {
+      // ignore sessionStorage failures
     }
     const hideTimer = window.setTimeout(() => setVisible(false), 900);
     const unmountTimer = window.setTimeout(() => setMounted(true), 1200);
@@ -27,7 +44,7 @@ export function PwaLaunchSplash() {
       window.clearTimeout(hideTimer);
       window.clearTimeout(unmountTimer);
     };
-  }, [isStandaloneMode]);
+  }, [shouldShow]);
 
   if (mounted || !visible) return null;
 

@@ -32,7 +32,7 @@ export default async function ConfirmarMaioridadeMatchPage({ searchParams }: Pro
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-10">
+    <div data-eid-desafio-ui className="mx-auto max-w-lg px-4 py-10">
       <h1 className="text-xl font-bold text-eid-fg">Uso do Desafio — maioridade</h1>
       <p className="mt-3 text-sm leading-relaxed text-eid-text-secondary">
         A função <strong className="text-eid-fg">Desafio</strong> é destinada exclusivamente a pessoas{" "}

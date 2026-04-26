@@ -54,9 +54,9 @@ export function MatchLocationPrompt({ hasLocation, className }: Props) {
           disabled={pending}
           title="Grava sua posição atual no perfil e atualiza o radar"
           aria-label={pending ? "Atualizando localização" : "Atualizar localização"}
-          className="inline-flex touch-manipulation items-center gap-0.5 rounded-md border border-eid-primary-500/40 bg-[color-mix(in_srgb,var(--eid-surface)_40%,transparent)] px-1 py-0.5 text-[7px] font-bold uppercase leading-none tracking-[0.04em] text-eid-fg shadow-[0_2px_6px_-4px_rgba(15,23,42,0.3)] transition hover:bg-eid-primary-500/10 disabled:opacity-50 sm:gap-1 sm:px-1.5 sm:text-[8px]"
+          className="inline-flex touch-manipulation items-center gap-0.5 rounded-md border border-eid-primary-500/40 bg-[color-mix(in_srgb,var(--eid-surface)_40%,transparent)] px-0.75 py-0.5 text-[6px] font-bold uppercase leading-none tracking-[0.035em] text-eid-fg shadow-[0_2px_6px_-4px_rgba(15,23,42,0.3)] transition hover:bg-eid-primary-500/10 disabled:opacity-50 sm:gap-0.75 sm:px-1.25 sm:text-[7px]"
         >
-          <MapPin className="h-2.5 w-2.5 shrink-0 text-eid-primary-400 sm:h-3 sm:w-3" strokeWidth={2.25} aria-hidden />
+          <MapPin className="h-2.25 w-2.25 shrink-0 text-eid-primary-400 sm:h-2.75 sm:w-2.75" strokeWidth={2.25} aria-hidden />
           <span className="whitespace-nowrap">{pending ? "Atualizando…" : "Atualizar localização"}</span>
         </button>
         {error ? (

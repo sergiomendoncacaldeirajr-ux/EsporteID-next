@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { ConexoesStrip, type ConexaoPeer } from "@/components/agenda/conexoes-strip";
 import { AgendaAceitosCancelaveis } from "@/components/agenda/agenda-aceitos-cancelaveis";
@@ -259,7 +260,14 @@ export default async function AgendaPage() {
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     {adv?.avatar_url ? (
-                      <img src={adv.avatar_url} alt="" className="h-11 w-11 shrink-0 rounded-xl object-cover" />
+                      <Image
+                        src={adv.avatar_url}
+                        alt=""
+                        width={44}
+                        height={44}
+                        unoptimized
+                        className="h-11 w-11 shrink-0 rounded-xl object-cover"
+                      />
                     ) : (
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-eid-surface text-[10px] font-black text-eid-primary-300">
                         EID

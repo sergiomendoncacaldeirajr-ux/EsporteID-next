@@ -126,7 +126,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const cadastrarLocalHref = `/locais/cadastrar?return_to=${encodeURIComponent(returnToPath)}`;
 
   return (
-    <main className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-4 sm:py-6">
+    <main data-eid-desafio-ui className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-4 sm:py-6">
         <Link href={voltarHref} className={`${DESAFIO_FLOW_SECONDARY_CLASS} max-w-fit normal-case`}>
           {voltarLabel}
         </Link>

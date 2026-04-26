@@ -758,7 +758,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                     <span aria-hidden>{esporteCardIcon}</span>
                     <span className="truncate">{esporteCardNome}</span>
                   </p>
-                  <p className="mt-0 inline-flex items-center gap-0.5 text-[7px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary leading-none">
+                  <p className="mt-0.5 inline-flex items-center gap-0.5 text-[7px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary leading-none">
                     <span aria-hidden>👤</span> Individual
                   </p>
                 </Link>
@@ -797,7 +797,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                     <span aria-hidden>{esporteCardIcon}</span>
                     <span className="truncate">{esporteCardNome}</span>
                   </p>
-                  <p className="mt-0 inline-flex items-center gap-0.5 text-[7px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary leading-none">
+                  <p className="mt-0.5 inline-flex items-center gap-0.5 text-[7px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary leading-none">
                     <span aria-hidden>👥</span> Dupla
                   </p>
                 </Link>
@@ -834,7 +834,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                     <span aria-hidden>{esporteCardIcon}</span>
                     <span className="truncate">{esporteCardNome}</span>
                   </p>
-                  <p className="mt-0 inline-flex items-center gap-0.5 text-[7px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary leading-none">
+                  <p className="mt-0.5 inline-flex items-center gap-0.5 text-[7px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary leading-none">
                     <span aria-hidden>🛡️</span> Time
                   </p>
                 </Link>
