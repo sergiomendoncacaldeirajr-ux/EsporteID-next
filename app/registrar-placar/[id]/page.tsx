@@ -7,7 +7,7 @@ import { MatchScoreForm } from "@/components/placar/match-score-form";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
-import { buildSetFormatOptions, getMatchUIConfig } from "@/lib/match-scoring";
+import { buildSetFormatOptions, getDesafioRankLockedSetFormat, getMatchUIConfig } from "@/lib/match-scoring";
 import { createClient } from "@/lib/supabase/server";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
 import { confirmarPlacarAction, contestarPlacarAction, salvarAgendamentoAction } from "./actions";
@@ -161,14 +161,26 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
       max_rounds: 3,
     },
   });
-  const setFormatOptions =
+  const sportNameForFormats = (esp as { nome?: string } | null)?.nome ?? (sportObj as { name?: string } | null)?.name ?? null;
+  const allSetFormatOptions =
     matchUiConfig.type === "sets"
       ? buildSetFormatOptions({
-          sportName: (esp as { nome?: string } | null)?.nome ?? (sportObj as { name?: string } | null)?.name ?? null,
+          sportName: sportNameForFormats,
           baseConfig: matchUiConfig,
           rules: regrasPlacar,
         })
       : [];
+  const desafioRankLock =
+    !p.torneio_id && matchUiConfig.type === "sets" && allSetFormatOptions.length > 0
+      ? getDesafioRankLockedSetFormat({
+          baseConfig: matchUiConfig,
+          sportName: sportNameForFormats,
+          rules: regrasPlacar,
+        })
+      : null;
+  const setFormatOptions = desafioRankLock ? [] : allSetFormatOptions;
+  const matchScoreFormConfig = desafioRankLock?.config ?? matchUiConfig;
+  const matchScoreInitialSetFormatKey = desafioRankLock?.formatKey ?? null;
   const defaultLocalStr = novoLocal
     ? `${novoLocal.nome_publico ?? "Local"}${novoLocal.localizacao ? ` — ${novoLocal.localizacao}` : ""}`
     : p.local_str ?? "";
@@ -322,9 +334,9 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
               ) : null}
               <MatchScoreForm
                 partidaId={id}
-                config={matchUiConfig}
+                config={matchScoreFormConfig}
                 setFormatOptions={setFormatOptions}
-                initialSetFormatKey={null}
+                initialSetFormatKey={matchScoreInitialSetFormatKey}
                 sideALabel={j1?.nome ?? "Jogador 1"}
                 sideBLabel={j2?.nome ?? "Jogador 2"}
                 sideAAvatarUrl={j1?.avatar_url ?? null}

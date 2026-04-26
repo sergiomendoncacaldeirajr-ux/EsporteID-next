@@ -57,6 +57,18 @@ const PRESETS: Record<string, SportPreset> = {
       ],
     },
   },
+  pickleball: {
+    modo: "sets",
+    regras: {
+      minPlacar: 0,
+      maxPlacar: 2,
+      permitirEmpate: false,
+      permitirWO: true,
+      variantes: [
+        { key: "bo3_set11", label: "Melhor de 3 sets (set até 11, vence por 2)", minPlacar: 0, maxPlacar: 2, permitirEmpate: false, permitirWO: true },
+      ],
+    },
+  },
   tenis_de_mesa: {
     modo: "pontos_corridos",
     regras: {

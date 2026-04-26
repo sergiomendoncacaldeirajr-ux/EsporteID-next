@@ -1,13 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { resolveVariantFromRules, type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { buildSetFormatOptions, getMatchUIConfig, validateMatchScorePayload, type MatchScorePayload } from "@/lib/match-scoring";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { sanitizeOptionalUserText, sanitizeUserText } from "@/lib/security/sanitize-input";
 import { createClient } from "@/lib/supabase/server";
-import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
+import { loadPartidaContext, revalidateAfterPartidaPlacarChange } from "@/lib/torneios/lancar-resultado-partida";
 
 function toInt(v: FormDataEntryValue | null): number | null {
   const n = Number(v);
@@ -30,87 +29,6 @@ function normStatus(v: string | null | undefined): string {
   return String(v ?? "")
     .trim()
     .toLowerCase();
-}
-
-type PartidaCtx = {
-  id: number;
-  match_id: number | null;
-  esporte_id: number | null;
-  torneio_id: number | null;
-  jogador1_id: string | null;
-  jogador2_id: string | null;
-  usuario_id: string | null;
-  desafiante_id: string | null;
-  desafiado_id: string | null;
-  status: string | null;
-  status_ranking: string | null;
-  lancado_por: string | null;
-  placar_1: number | null;
-  placar_2: number | null;
-  time1_id: number | null;
-  time2_id: number | null;
-  modalidade: string | null;
-};
-
-type ActorScope = {
-  isColetivo: boolean;
-  isParticipant: boolean;
-  isTeamOwner: boolean;
-  isTeamMember: boolean;
-};
-
-async function getActorScope(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  partida: PartidaCtx,
-  userId: string
-): Promise<ActorScope> {
-  const modalidade = String(partida.modalidade ?? "")
-    .trim()
-    .toLowerCase();
-  const isColetivo = modalidade === "dupla" || modalidade === "time" || Boolean(partida.time1_id || partida.time2_id);
-  const isParticipant = partida.jogador1_id === userId || partida.jogador2_id === userId;
-  if (!isColetivo) return { isColetivo, isParticipant, isTeamOwner: false, isTeamMember: false };
-
-  const timeIds = [partida.time1_id, partida.time2_id].filter((v): v is number => typeof v === "number" && v > 0);
-  if (!timeIds.length) return { isColetivo, isParticipant, isTeamOwner: false, isTeamMember: false };
-
-  const [{ data: ownerRows }, { data: memberRows }] = await Promise.all([
-    supabase.from("times").select("id, criador_id").in("id", timeIds),
-    supabase
-      .from("membros_time")
-      .select("time_id, usuario_id, status")
-      .in("time_id", timeIds)
-      .eq("usuario_id", userId)
-      .in("status", ["ativo", "aceito", "aprovado"]),
-  ]);
-  const isTeamOwner = (ownerRows ?? []).some((t) => t.criador_id === userId);
-  const isTeamMember = (memberRows ?? []).length > 0;
-  return { isColetivo, isParticipant, isTeamOwner, isTeamMember };
-}
-
-async function loadPartidaContext(partidaId: number, userId: string) {
-  const supabase = await createClient();
-  const { data: partida } = await supabase
-    .from("partidas")
-    .select(
-      "id, match_id, esporte_id, torneio_id, jogador1_id, jogador2_id, usuario_id, desafiante_id, desafiado_id, status, status_ranking, lancado_por, placar_1, placar_2, time1_id, time2_id, modalidade"
-    )
-    .eq("id", partidaId)
-    .maybeSingle();
-  if (!partida) {
-    return {
-      supabase,
-      partida: null,
-      podeRegistrarTorneio: false,
-      scope: { isColetivo: false, isParticipant: false, isTeamOwner: false, isTeamMember: false } as ActorScope,
-    };
-  }
-  const scope = await getActorScope(supabase, partida as PartidaCtx, userId);
-  const torneioAccess = partida.torneio_id
-    ? await getTorneioStaffAccess(supabase, Number(partida.torneio_id), userId)
-    : null;
-  const podeRegistrarTorneio = torneioAccess ? canLaunchTorneioScore(torneioAccess) : false;
-  return { supabase, partida: partida as PartidaCtx, scope, podeRegistrarTorneio };
 }
 
 async function notifyUser(
@@ -311,10 +229,7 @@ export async function submitPlacarAction(formData: FormData) {
     );
   }
 
-  revalidatePath(`/registrar-placar/${partidaId}`);
-  revalidatePath("/agenda");
-  revalidatePath("/dashboard");
-  revalidatePath("/comunidade");
+  revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
   go(partidaId, "ok", isTorneio ? "Resultado lançado e validado." : "Resultado enviado para confirmação do oponente.");
 }
 
@@ -374,10 +289,7 @@ export async function confirmarPlacarAction(formData: FormData) {
 
   await notifyUser(ctx.supabase, p.lancado_por, user.id, partidaId, "Seu resultado foi confirmado e a partida foi concluída.");
 
-  revalidatePath(`/registrar-placar/${partidaId}`);
-  revalidatePath("/agenda");
-  revalidatePath("/dashboard");
-  revalidatePath("/comunidade");
+  revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
   go(partidaId, "ok", "Resultado confirmado com sucesso.");
 }
 
@@ -424,10 +336,7 @@ export async function contestarPlacarAction(formData: FormData) {
     "O resultado informado foi contestado pelo oponente. Registre novamente o resultado."
   );
 
-  revalidatePath(`/registrar-placar/${partidaId}`);
-  revalidatePath("/agenda");
-  revalidatePath("/dashboard");
-  revalidatePath("/comunidade");
+  revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
   go(partidaId, "ok", "Resultado contestado. A partida voltou para agendada.");
 }
 
@@ -474,9 +383,7 @@ export async function salvarAgendamentoAction(formData: FormData) {
   const { error } = await ctx.supabase.from("partidas").update(payload).eq("id", partidaId);
   if (error) salvarAgendaRedirect(partidaId, "erro", "Não foi possível salvar o agendamento.", modoAgenda);
 
-  revalidatePath(`/registrar-placar/${partidaId}`);
-  revalidatePath("/agenda");
-  revalidatePath("/comunidade");
+  revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
   const okMsg = modoAgenda
     ? "Agendamento salvo. Lançamento do resultado: Painel de controle."
     : "Agendamento salvo. Você pode lançar o resultado quando quiser.";

@@ -8,6 +8,7 @@ export type MatchUIConfig = {
   tiebreakPoints: number;
   tiebreak: boolean;
   finalSetSuperTiebreak: boolean;
+  finalSetTargetPoints: number;
   winByTwo: boolean;
   pointsLimit: number | null;
   hasOvertime: boolean;
@@ -29,6 +30,7 @@ type BaseMatchCtx = {
     tiebreak?: boolean | null;
     tiebreak_points?: number | null;
     final_set_super_tiebreak?: boolean | null;
+    final_set_target_points?: number | null;
     points_limit?: number | null;
     win_by_two?: boolean | null;
     has_overtime?: boolean | null;
@@ -60,30 +62,144 @@ function toBool(value: unknown, fallback = false): boolean {
   return fallback;
 }
 
+function getSportDefaultsByName(sportName?: string | null): Partial<MatchUIConfig> | null {
+  const name = normalizeName(String(sportName ?? ""));
+  if (!name) return null;
+
+  // Pedido explícito do usuário: não mexer nas regras de tênis/beach/padel já definidas.
+  if (
+    name.includes("tenis") ||
+    name.includes("tennis") ||
+    name.includes("padel") ||
+    name.includes("beach tennis") ||
+    name.includes("beach tenis") ||
+    (name.includes("beach") && (name.includes("tenis") || name.includes("tennis")))
+  ) {
+    return null;
+  }
+
+  if (name.includes("volei")) {
+    return {
+      type: "sets",
+      setsToWin: 3,
+      sets: 5,
+      gamesPerSet: 25,
+      tiebreak: false,
+      tiebreakPoints: 7,
+      finalSetSuperTiebreak: true,
+      finalSetTargetPoints: 15,
+      winByTwo: true,
+    };
+  }
+  if (name.includes("futevolei")) {
+    return {
+      type: "sets",
+      setsToWin: 2,
+      sets: 3,
+      gamesPerSet: 15,
+      tiebreak: false,
+      tiebreakPoints: 7,
+      finalSetSuperTiebreak: false,
+      finalSetTargetPoints: 10,
+      winByTwo: true,
+    };
+  }
+  if (name.includes("tenis de mesa")) {
+    return {
+      type: "sets",
+      setsToWin: 3,
+      sets: 5,
+      gamesPerSet: 11,
+      tiebreak: false,
+      tiebreakPoints: 7,
+      finalSetSuperTiebreak: false,
+      finalSetTargetPoints: 10,
+      winByTwo: true,
+    };
+  }
+  if (name.includes("badminton")) {
+    return {
+      type: "sets",
+      setsToWin: 2,
+      sets: 3,
+      gamesPerSet: 21,
+      tiebreak: false,
+      tiebreakPoints: 7,
+      finalSetSuperTiebreak: false,
+      finalSetTargetPoints: 10,
+      winByTwo: true,
+      pointsLimit: 30,
+    };
+  }
+  if (name.includes("basquete")) {
+    return {
+      type: "pontos",
+      hasOvertime: true,
+      hasPenalties: false,
+      pointsLimit: null,
+    };
+  }
+  if (name.includes("futebol") || name.includes("handebol")) {
+    return {
+      type: "gols",
+      hasOvertime: true,
+      hasPenalties: true,
+      pointsLimit: null,
+    };
+  }
+  if (name.includes("jiu")) {
+    return {
+      type: "pontos",
+      hasOvertime: false,
+      hasPenalties: false,
+      pointsLimit: null,
+    };
+  }
+  if (name.includes("pickleball") || name.includes("pickeball")) {
+    return {
+      type: "sets",
+      setsToWin: 2,
+      sets: 3,
+      gamesPerSet: 11,
+      tiebreak: false,
+      tiebreakPoints: 7,
+      finalSetSuperTiebreak: false,
+      finalSetTargetPoints: 11,
+      winByTwo: true,
+      pointsLimit: null,
+    };
+  }
+  return null;
+}
+
 export function getMatchUIConfig(match: BaseMatchCtx): MatchUIConfig {
   const format = match.format ?? {};
+  const sportDefaults = getSportDefaultsByName(match.sport?.name);
   const rawType = String(match.sport?.scoring_type ?? "")
     .trim()
     .toLowerCase();
-  const type: ScoringType = rawType === "gols" || rawType === "pontos" || rawType === "rounds" ? rawType : "sets";
-  const setsToWin = toInt(format.sets_to_win, 1) || 1;
-  const gamesPerSet = toInt(format.games_per_set, 6) || 6;
+  const typeFromSport = rawType === "gols" || rawType === "pontos" || rawType === "rounds" ? rawType : null;
+  const type: ScoringType = typeFromSport ?? sportDefaults?.type ?? "sets";
+  const setsToWin = toInt(format.sets_to_win, sportDefaults?.setsToWin ?? 1) || 1;
+  const gamesPerSet = toInt(format.games_per_set, sportDefaults?.gamesPerSet ?? 6) || 6;
   const pointsLimitRaw = Number(format.points_limit);
-  const pointsLimit = Number.isFinite(pointsLimitRaw) && pointsLimitRaw > 0 ? Math.floor(pointsLimitRaw) : null;
+  const pointsLimit =
+    Number.isFinite(pointsLimitRaw) && pointsLimitRaw > 0 ? Math.floor(pointsLimitRaw) : (sportDefaults?.pointsLimit ?? null);
   const sets = Math.max(setsToWin * 2 - 1, 1);
   return {
     type,
     sets,
     setsToWin,
     gamesPerSet,
-    tiebreakPoints: toInt(format.tiebreak_points, 7) || 7,
-    tiebreak: toBool(format.tiebreak, false),
-    finalSetSuperTiebreak: toBool(format.final_set_super_tiebreak, false),
-    winByTwo: toBool(format.win_by_two, false),
+    tiebreakPoints: toInt(format.tiebreak_points, sportDefaults?.tiebreakPoints ?? 7) || 7,
+    tiebreak: toBool(format.tiebreak, sportDefaults?.tiebreak ?? false),
+    finalSetSuperTiebreak: toBool(format.final_set_super_tiebreak, sportDefaults?.finalSetSuperTiebreak ?? false),
+    finalSetTargetPoints: toInt(format.final_set_target_points, sportDefaults?.finalSetTargetPoints ?? 10) || 10,
+    winByTwo: toBool(format.win_by_two, sportDefaults?.winByTwo ?? false),
     pointsLimit,
-    hasOvertime: toBool(format.has_overtime, false),
-    hasPenalties: toBool(format.has_penalties, false),
-    maxRounds: toInt(format.max_rounds, 3) || 3,
+    hasOvertime: toBool(format.has_overtime, sportDefaults?.hasOvertime ?? false),
+    hasPenalties: toBool(format.has_penalties, sportDefaults?.hasPenalties ?? false),
+    maxRounds: toInt(format.max_rounds, sportDefaults?.maxRounds ?? 3) || 3,
   };
 }
 
@@ -127,6 +243,7 @@ export function buildSetFormatOptions(params: {
       tiebreak: true,
       tiebreakPoints: 7,
       finalSetSuperTiebreak: true,
+      finalSetTargetPoints: 10,
     },
   };
   const proSet8Option: SetFormatOption = {
@@ -140,6 +257,7 @@ export function buildSetFormatOptions(params: {
       tiebreak: true,
       tiebreakPoints: 7,
       finalSetSuperTiebreak: false,
+      finalSetTargetPoints: 10,
     },
   };
 
@@ -167,6 +285,7 @@ export function buildSetFormatOptions(params: {
       tiebreak: toBool(v.tiebreak, baseConfig.tiebreak),
       tiebreakPoints: toInt(v.tiebreak_points, baseConfig.tiebreakPoints),
       finalSetSuperTiebreak: toBool(v.final_set_super_tiebreak, baseConfig.finalSetSuperTiebreak),
+      finalSetTargetPoints: toInt(v.final_set_target_points, baseConfig.finalSetTargetPoints),
       winByTwo: toBool(v.win_by_two, baseConfig.winByTwo),
       pointsLimit: Number.isFinite(Number(v.points_limit)) ? Math.floor(Number(v.points_limit)) : baseConfig.pointsLimit,
     };
@@ -185,6 +304,24 @@ export function buildSetFormatOptions(params: {
     return [{ key: "default", name: "Formato padrão da partida", config: baseConfig }];
   }
   return list;
+}
+
+/**
+ * Desafio / ranking (partida sem torneio): uma única config de sets, sem UI de escolha.
+ * Prefere melhor de 3 + super TB 10 (`bo3_super_tb10`) quando existir; senão a única opção retornada por `buildSetFormatOptions`.
+ */
+export function getDesafioRankLockedSetFormat(params: {
+  baseConfig: MatchUIConfig;
+  sportName?: string | null;
+  rules?: unknown;
+}): { config: MatchUIConfig; formatKey: string } | null {
+  if (params.baseConfig.type !== "sets") return null;
+  const options = buildSetFormatOptions(params);
+  if (!options.length) return null;
+  const bo3 = options.find((o) => o.key === "bo3_super_tb10");
+  if (bo3) return { config: bo3.config, formatKey: bo3.key };
+  if (options.length === 1) return { config: options[0].config, formatKey: options[0].key };
+  return { config: options[0].config, formatKey: options[0].key };
 }
 
 /** Set único pró: 8 games, vantagem mínima de 2; 7×7 segue até 9 games; 8×8 → super tiebreak a 7 pts (9×8). */
@@ -241,7 +378,9 @@ function validateSet(
   if (a === b) return { ok: false, winner: null, requiresTb: false };
 
   if (config.finalSetSuperTiebreak && isLastPossibleSet) {
-    if (winnerScore < 10 || winnerScore - loserScore < 2) return { ok: false, winner: null, requiresTb: false };
+    if (winnerScore < config.finalSetTargetPoints || winnerScore - loserScore < 2) {
+      return { ok: false, winner: null, requiresTb: false };
+    }
     return { ok: true, winner, requiresTb: false };
   }
 

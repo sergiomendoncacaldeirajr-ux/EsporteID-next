@@ -1547,6 +1547,19 @@ input.eid-input-dark[type="datetime-local"] {
   transform: translateY(0.5px) scale(0.985);
 }
 
+/* Edição/gerenciamento de perfil: campos maiores para leitura e toque no mobile. */
+.eid-profile-edit-screen :where(input, select, textarea).eid-input-dark {
+  min-height: 2.55rem !important;
+  font-size: 0.9rem !important;
+  line-height: 1.2rem !important;
+  padding-top: 0.52rem !important;
+  padding-bottom: 0.52rem !important;
+}
+
+.eid-profile-edit-screen :where(input, select, textarea).eid-input-dark::placeholder {
+  font-size: 0.85rem;
+}
+
 /* Item de lista reutilizável para blocos de cards. */
 .eid-list-item {
   border-radius: var(--eid-radius-lg);
