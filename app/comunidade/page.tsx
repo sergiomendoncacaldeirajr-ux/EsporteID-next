@@ -6,6 +6,7 @@ import {
   type ComunidadeProfessorProfileRow,
 } from "@/components/comunidade/comunidade-aulas-section";
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
+import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pedidos-enviados";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
@@ -82,7 +83,17 @@ export default async function ComunidadePage() {
     : { data: [] };
   const uMap = new Map((desafiantes ?? []).map((p) => [p.id, p]));
 
-  const eids = [...new Set((recebidos ?? []).map((m) => m.esporte_id).filter(Boolean))] as number[];
+  const { data: enviadosPendentes } = await supabase
+    .from("matches")
+    .select("id, adversario_id, esporte_id, modalidade_confronto, data_solicitacao")
+    .eq("usuario_id", user.id)
+    .eq("status", "Pendente")
+    .order("data_solicitacao", { ascending: false })
+    .limit(20);
+
+  const eidsRecebidos = (recebidos ?? []).map((m) => m.esporte_id).filter(Boolean) as number[];
+  const eidsEnviados = (enviadosPendentes ?? []).map((m) => m.esporte_id).filter(Boolean) as number[];
+  const eids = [...new Set([...eidsRecebidos, ...eidsEnviados])] as number[];
   const { data: esportes } = eids.length
     ? await supabase.from("esportes").select("id, nome").in("id", eids)
     : { data: [] };
@@ -143,6 +154,21 @@ export default async function ComunidadePage() {
   );
 
   const nPedidos = pedidosItems.length;
+
+  const enviadosAdversarioIds = [
+    ...new Set((enviadosPendentes ?? []).map((m) => String(m.adversario_id ?? "")).filter(Boolean)),
+  ];
+  const { data: enviadosPerfis } = enviadosAdversarioIds.length
+    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", enviadosAdversarioIds)
+    : { data: [] };
+  const enviadosPerfisMap = new Map((enviadosPerfis ?? []).map((p) => [p.id, p]));
+  const pedidosEnviadosItems = (enviadosPendentes ?? []).map((m) => ({
+    id: Number(m.id),
+    adversarioNome: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.nome ?? "Oponente",
+    adversarioAvatarUrl: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.avatar_url ?? null,
+    esporte: (m.esporte_id ? espMap.get(m.esporte_id) : null) ?? "Esporte",
+    modalidade: String(m.modalidade_confronto ?? "individual"),
+  }));
 
   const { data: sugestoesRaw } = await supabase
     .from("match_sugestoes")
@@ -466,6 +492,12 @@ export default async function ComunidadePage() {
                   Pedidos recebidos
                 </h3>
                 <ComunidadePedidosMatch items={pedidosItems} />
+              </div>
+              <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-400">
+                  Pedidos enviados (aguardando resposta)
+                </h3>
+                <ComunidadePedidosEnviados items={pedidosEnviadosItems} />
               </div>
               <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-300">

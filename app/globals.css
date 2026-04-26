@@ -831,6 +831,21 @@ label:has(input.sr-only):not(.eid-no-press):active {
   background-color: color-mix(in srgb, var(--eid-danger-500) 60%, white 40%) !important;
 }
 
+[data-eid-theme="light"] [data-eid-cancel-pendente-btn="true"] {
+  border-color: #7f1d1d !important;
+  background-color: #7f1d1d !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  opacity: 1 !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.65) !important;
+}
+
+[data-eid-theme="light"] [data-eid-cancel-pendente-btn="true"]:hover {
+  border-color: #5f1414 !important;
+  background-color: #5f1414 !important;
+  color: #ffffff !important;
+}
+
 .eid-loading-skeleton-screen {
   position: absolute;
   inset: 0;

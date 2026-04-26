@@ -9,6 +9,7 @@ export type SugestaoMatchState = { ok: true; message?: string } | { ok: false; m
 export type ResponderSugestaoMatchState = { ok: true } | { ok: false; message: string };
 export type CancelarMatchState = { ok: true } | { ok: false; message: string };
 export type GerenciarCancelamentoState = { ok: true; message: string } | { ok: false; message: string };
+export type CancelarPedidoPendenteState = { ok: true } | { ok: false; message: string };
 
 function normStatus(v: string | null | undefined): string {
   return String(v ?? "")
@@ -189,21 +190,13 @@ async function countRankingPendencias(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
 ): Promise<number> {
-  const [{ count: mCount }, { count: pCount }] = await Promise.all([
-    supabase
-      .from("matches")
-      .select("id", { count: "exact", head: true })
-      .eq("finalidade", "ranking")
-      .eq("status", "Aceito")
-      .or(`usuario_id.eq.${userId},adversario_id.eq.${userId}`),
-    supabase
-      .from("partidas")
-      .select("id", { count: "exact", head: true })
-      .is("torneio_id", null)
-      .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId},usuario_id.eq.${userId},desafiante_id.eq.${userId},desafiado_id.eq.${userId}`)
-      .in("status", ["agendada", "aguardando_confirmacao"]),
-  ]);
-  return Number(mCount ?? 0) + Number(pCount ?? 0);
+  const { count } = await supabase
+    .from("matches")
+    .select("id", { count: "exact", head: true })
+    .eq("finalidade", "ranking")
+    .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
+    .or(`usuario_id.eq.${userId},adversario_id.eq.${userId}`);
+  return Number(count ?? 0);
 }
 
 export async function responderPedidoMatch(
@@ -240,10 +233,12 @@ export async function responderPedidoMatch(
         countRankingPendencias(supabase, user.id),
         countRankingPendencias(supabase, String(matchRow.usuario_id ?? "")),
       ]);
-      if (minhas >= limite) {
+      // No aceite, este pedido já está na contagem como "Pendente" e continuará na contagem como "Aceito".
+      // Portanto, só bloqueamos quando já estiver acima do limite.
+      if (minhas > limite) {
         return { ok: false, message: `Você atingiu o limite de ${limite} pendências de desafio/ranking.` };
       }
-      if (doDesafiante >= limite) {
+      if (doDesafiante > limite) {
         return { ok: false, message: "O desafiante atingiu o limite de pendências de desafio/ranking." };
       }
     }
@@ -308,6 +303,37 @@ export async function cancelarMatchAceito(
   revalidatePath("/comunidade");
   revalidatePath("/match");
   revalidatePath("/dashboard");
+  return { ok: true };
+}
+
+export async function cancelarPedidoMatchPendente(
+  _prev: CancelarPedidoPendenteState | undefined,
+  formData: FormData
+): Promise<CancelarPedidoPendenteState> {
+  const matchId = Number(formData.get("match_id"));
+  if (!Number.isFinite(matchId) || matchId < 1) {
+    return { ok: false, message: "Pedido inválido." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada. Faça login novamente." };
+
+  const { error } = await supabase.rpc("cancelar_pedido_match_pendente", {
+    p_match_id: matchId,
+  });
+  if (error) return { ok: false, message: error.message };
+
+  await marcarNotificacoesPorAcao(supabase, user.id, {
+    referenciaId: matchId,
+    tipos: ["match", "desafio"],
+  });
+
+  revalidatePath("/comunidade");
+  revalidatePath("/dashboard");
+  revalidatePath("/match");
   return { ok: true };
 }
 
