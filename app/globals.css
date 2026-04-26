@@ -1025,6 +1025,41 @@ select,
   backdrop-filter: blur(16px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
 }
+[data-eid-theme="light"] .eid-native-auth-enter {
+  filter: saturate(1.02);
+}
+[data-eid-theme="dark"] .eid-native-auth-enter {
+  filter: saturate(1.06);
+}
+.eid-native-auth-enter {
+  animation: eid-native-auth-enter 0.42s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+  transform-origin: center top;
+  will-change: transform, opacity, filter;
+}
+@keyframes eid-native-auth-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+    filter: blur(3px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0) scale(1.005);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .eid-native-auth-enter {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
 [data-eid-theme="light"] .eid-auth-card {
   background: var(--eid-card);
   backdrop-filter: none;

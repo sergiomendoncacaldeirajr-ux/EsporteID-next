@@ -163,8 +163,8 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
   }
 
   return (
-    <main className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-[max(3.25rem,env(safe-area-inset-top,0px)+1.75rem)] text-eid-fg sm:px-6 sm:pb-32 sm:pt-16 md:pt-20">
-      <div className="w-full max-w-[340px] pb-6">
+    <main className="eid-auth-bg flex min-h-[100svh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.25rem,env(safe-area-inset-top,0px)+0.75rem)] text-eid-fg sm:px-6 sm:py-8">
+      <div className="eid-native-auth-enter w-full max-w-[340px] pb-6">
         <Link
           href="/?home=1"
           className="mb-4 hidden max-w-none text-[13px] leading-snug text-eid-text-muted no-underline transition hover:text-eid-fg sm:inline-block"

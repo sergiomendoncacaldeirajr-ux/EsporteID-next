@@ -9,8 +9,8 @@ export const metadata = {
 
 export default function RedefinirSenhaPage() {
   return (
-    <main className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7">
-      <div className="w-full max-w-[340px] pb-6">
+    <main className="eid-auth-bg flex min-h-[100svh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.25rem,env(safe-area-inset-top,0px)+0.75rem)] text-eid-fg sm:px-6 sm:py-8">
+      <div className="eid-native-auth-enter w-full max-w-[340px] pb-6">
         <LogoFull className="mb-5 mt-1 flex justify-center" />
         <Link
           href="/login"

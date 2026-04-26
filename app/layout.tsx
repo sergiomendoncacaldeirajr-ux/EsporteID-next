@@ -13,6 +13,7 @@ import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
 import { InstallAppOfferDynamic } from "@/components/pwa/install-app-offer-dynamic";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
+import { PwaLaunchSplash } from "@/components/pwa/pwa-launch-splash";
 import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
 import {
   ACTIVE_CONTEXT_COOKIE,
@@ -137,6 +138,7 @@ export default async function RootLayout({
       >
         <EidThemeHydration />
         <PwaBootstrap />
+        <PwaLaunchSplash />
         <ThemeColorSync />
         <InstallAppOfferDynamic />
         <GlobalScrollReset />
