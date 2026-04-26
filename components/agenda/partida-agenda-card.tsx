@@ -81,6 +81,9 @@ export function PartidaAgendaCard({
     window.addEventListener("pointerdown", hideHint, { once: true });
     return () => window.removeEventListener("pointerdown", hideHint);
   }, [showCancelHint]);
+  useEffect(() => {
+    if (state.ok) setOpenCancel(false);
+  }, [state.ok]);
   const ctaHref =
     href ??
     (isPlacar ? `/registrar-placar/${id}?from=/comunidade` : `/registrar-placar/${id}?modo=agenda`);
@@ -277,7 +280,6 @@ export function PartidaAgendaCard({
                       type="submit"
                       disabled={pending}
                       className="inline-flex min-h-[32px] flex-1 items-center justify-center rounded-lg border border-red-700 bg-red-700 px-3 text-xs font-black text-white"
-                      onClick={() => setOpenCancel(false)}
                     >
                       {pending ? "Enviando..." : "Confirmar"}
                     </button>

@@ -20,6 +20,7 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
 
   useEffect(() => {
     if (state.ok) {
+      setConfirmId(null);
       window.location.reload();
     }
   }, [state.ok]);
@@ -103,7 +104,6 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
                 <button
                   type="submit"
                   className="inline-flex min-h-[32px] w-full items-center justify-center rounded-lg border border-red-700 bg-red-700 px-3 text-xs font-black text-white"
-                  onClick={() => setConfirmId(null)}
                 >
                   Confirmar cancelamento
                 </button>
