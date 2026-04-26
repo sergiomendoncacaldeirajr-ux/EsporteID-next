@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { resolveVariantFromRules, type ScoreRulesConfig } from "@/lib/desafio/score-rules";
+import { buildSetFormatOptions, getMatchUIConfig, validateMatchScorePayload, type MatchScorePayload } from "@/lib/match-scoring";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { sanitizeOptionalUserText, sanitizeUserText } from "@/lib/security/sanitize-input";
 import { createClient } from "@/lib/supabase/server";
@@ -163,6 +164,8 @@ export async function submitPlacarAction(formData: FormData) {
 
   const placar1 = toInt(formData.get("placar_1"));
   const placar2 = toInt(formData.get("placar_2"));
+  const scoreFormatKey = String(formData.get("score_format_key") ?? "").trim();
+  const scorePayloadRaw = String(formData.get("score_payload") ?? "").trim();
   const observacao = sanitizeUserText(formData.get("observacao"), 500);
   const placarVariante = String(formData.get("placar_variante") ?? "").trim();
   const woAtivo = String(formData.get("wo_ativo") ?? "") === "1";
@@ -173,6 +176,14 @@ export async function submitPlacarAction(formData: FormData) {
   const ctx = await loadPartidaContext(partidaId, user.id);
   if (!ctx.partida) go(partidaId, "erro", "Partida não encontrada.");
   const p = ctx.partida;
+  let payloadFromUI: MatchScorePayload | null = null;
+  if (scorePayloadRaw) {
+    try {
+      payloadFromUI = JSON.parse(scorePayloadRaw) as MatchScorePayload;
+    } catch {
+      go(partidaId, "erro", "Formato de placar inválido.");
+    }
+  }
   const esporteRegrasRaw = p.esporte_id
     ? await ctx.supabase
         .from("esportes")
@@ -181,6 +192,46 @@ export async function submitPlacarAction(formData: FormData) {
         .maybeSingle()
     : null;
   const regrasPlacar = toRulesConfig(esporteRegrasRaw?.data?.desafio_regras_placar_json);
+  const [{ data: sportConfigRow }, { data: formatConfigRow }] = p.match_id
+    ? await Promise.all([
+        ctx.supabase.from("matches").select("sport_id, sports(name, scoring_type)").eq("id", p.match_id).maybeSingle(),
+        ctx.supabase
+          .from("matches")
+          .select(
+            "format_id, sport_formats(sets_to_win,games_per_set,tiebreak,tiebreak_points,final_set_super_tiebreak,points_limit,win_by_two,has_overtime,has_penalties,max_rounds)"
+          )
+          .eq("id", p.match_id)
+          .maybeSingle(),
+      ])
+    : [{ data: null }, { data: null }];
+  const sportObj = Array.isArray((sportConfigRow as { sports?: unknown[] } | null)?.sports)
+    ? (sportConfigRow as { sports?: unknown[] }).sports?.[0]
+    : (sportConfigRow as { sports?: unknown } | null)?.sports;
+  const formatObj = Array.isArray((formatConfigRow as { sport_formats?: unknown[] } | null)?.sport_formats)
+    ? (formatConfigRow as { sport_formats?: unknown[] }).sport_formats?.[0]
+    : (formatConfigRow as { sport_formats?: unknown } | null)?.sport_formats;
+  let dynamicConfig = getMatchUIConfig({
+    sport: {
+      name: (sportObj as { name?: string } | null)?.name ?? null,
+      scoring_type: (sportObj as { scoring_type?: string } | null)?.scoring_type ?? "sets",
+    },
+    format: (formatObj as Record<string, unknown> | null) ?? {},
+  });
+  if (dynamicConfig.type === "sets") {
+    if (!scoreFormatKey) {
+      go(partidaId, "erro", "Selecione o formato disputado antes de salvar o resultado.");
+    }
+    const setFormatOptions = buildSetFormatOptions({
+      sportName: (sportObj as { name?: string } | null)?.name ?? null,
+      baseConfig: dynamicConfig,
+      rules: regrasPlacar,
+    });
+    const selected = setFormatOptions.find((opt) => opt.key === scoreFormatKey);
+    if (!selected) {
+      go(partidaId, "erro", "Formato disputado inválido para este esporte.");
+    }
+    dynamicConfig = selected.config;
+  }
   const selectedVariant = resolveVariantFromRules(regrasPlacar, placarVariante);
   const minPlacar = toOptionalFiniteNumber(selectedVariant?.minPlacar ?? regrasPlacar.minPlacar);
   const maxPlacar = toOptionalFiniteNumber(selectedVariant?.maxPlacar ?? regrasPlacar.maxPlacar);
@@ -202,11 +253,20 @@ export async function submitPlacarAction(formData: FormData) {
     go(partidaId, "erro", `Placar máximo permitido: ${maxPlacar}.`);
   }
 
-  const finalPlacar1 = woAtivo ? (woVencedor === "j2" ? 0 : 1) : (placar1 as number);
-  const finalPlacar2 = woAtivo ? (woVencedor === "j2" ? 1 : 0) : (placar2 as number);
+  let finalPlacar1 = woAtivo ? (woVencedor === "j2" ? 0 : 1) : (placar1 as number);
+  let finalPlacar2 = woAtivo ? (woVencedor === "j2" ? 1 : 0) : (placar2 as number);
+  if (!woAtivo && payloadFromUI) {
+    const dynamicValidation = validateMatchScorePayload(dynamicConfig, payloadFromUI);
+    if (!dynamicValidation.valid || dynamicValidation.placar1 == null || dynamicValidation.placar2 == null) {
+      go(partidaId, "erro", dynamicValidation.message ?? "Placar inválido para este formato.");
+    }
+    finalPlacar1 = dynamicValidation.placar1;
+    finalPlacar2 = dynamicValidation.placar2;
+  }
   if (woAtivo && woVencedor !== "j1" && woVencedor !== "j2") go(partidaId, "erro", "Selecione o vencedor por W.O.");
   const woMsg = woAtivo ? "Vitória por W.O. (adversário não compareceu)." : "";
-  const mensagemFinal = [woMsg, observacao].filter(Boolean).join(" ").trim();
+  const payloadMsg = payloadFromUI ? `| score_payload:${JSON.stringify(payloadFromUI)}` : "";
+  const mensagemFinal = [woMsg, observacao, payloadMsg].filter(Boolean).join(" ").trim();
 
   const placarDesafiante =
     p.desafiante_id && p.desafiante_id === p.jogador1_id

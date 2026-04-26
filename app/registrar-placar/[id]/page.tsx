@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { DismissibleTapAwayHint } from "@/components/agenda/dismissible-tapaway-hint";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
+import { MatchScoreForm } from "@/components/placar/match-score-form";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
+import { buildSetFormatOptions, getMatchUIConfig } from "@/lib/match-scoring";
 import { createClient } from "@/lib/supabase/server";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
-import { confirmarPlacarAction, contestarPlacarAction, salvarAgendamentoAction, submitPlacarAction } from "./actions";
+import { confirmarPlacarAction, contestarPlacarAction, salvarAgendamentoAction } from "./actions";
 
 type Props = { params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> };
 
@@ -103,12 +106,13 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
 
   const voltarHref = agendaSomente ? "/agenda" : fromSafe ?? "/agenda";
   const voltarLabel = agendaSomente ? "← Voltar à agenda" : fromSafe === "/comunidade" ? "← Voltar ao painel" : "← Voltar à agenda";
+  const abrirAgendamentoPorPadrao = agendaSomente || fromSafe === "/agenda";
 
   const { data: j1 } = p.jogador1_id
-    ? await supabase.from("profiles").select("nome").eq("id", p.jogador1_id).maybeSingle()
+    ? await supabase.from("profiles").select("nome, avatar_url").eq("id", p.jogador1_id).maybeSingle()
     : { data: null };
   const { data: j2 } = p.jogador2_id
-    ? await supabase.from("profiles").select("nome").eq("id", p.jogador2_id).maybeSingle()
+    ? await supabase.from("profiles").select("nome, avatar_url").eq("id", p.jogador2_id).maybeSingle()
     : { data: null };
   const { data: novoLocal } =
     Number.isFinite(novoLocalId) && novoLocalId > 0
@@ -118,6 +122,53 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           .eq("id", novoLocalId)
           .maybeSingle()
       : { data: null };
+
+  const [{ data: sportFormatRow }, { data: sportRow }] = await Promise.all([
+    p.match_id
+      ? supabase
+          .from("matches")
+          .select(
+            "format_id, sport_formats(sets_to_win,games_per_set,tiebreak,tiebreak_points,final_set_super_tiebreak,points_limit,win_by_two,has_overtime,has_penalties,max_rounds)"
+          )
+          .eq("id", p.match_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null } as { data: null }),
+    p.match_id
+      ? supabase.from("matches").select("sport_id, sports(name, scoring_type)").eq("id", p.match_id).maybeSingle()
+      : Promise.resolve({ data: null } as { data: null }),
+  ]);
+  const formatObj = Array.isArray((sportFormatRow as { sport_formats?: unknown[] } | null)?.sport_formats)
+    ? (sportFormatRow as { sport_formats?: unknown[] }).sport_formats?.[0]
+    : (sportFormatRow as { sport_formats?: unknown } | null)?.sport_formats;
+  const sportObj = Array.isArray((sportRow as { sports?: unknown[] } | null)?.sports)
+    ? (sportRow as { sports?: unknown[] }).sports?.[0]
+    : (sportRow as { sports?: unknown } | null)?.sports;
+  const matchUiConfig = getMatchUIConfig({
+    sport: {
+      name: (sportObj as { name?: string } | null)?.name ?? (esp as { nome?: string } | null)?.nome ?? null,
+      scoring_type: (sportObj as { scoring_type?: string } | null)?.scoring_type ?? "sets",
+    },
+    format: (formatObj as Record<string, unknown> | null) ?? {
+      sets_to_win: 1,
+      games_per_set: 6,
+      tiebreak: false,
+      tiebreak_points: 7,
+      final_set_super_tiebreak: false,
+      points_limit: null,
+      win_by_two: false,
+      has_overtime: false,
+      has_penalties: false,
+      max_rounds: 3,
+    },
+  });
+  const setFormatOptions =
+    matchUiConfig.type === "sets"
+      ? buildSetFormatOptions({
+          sportName: (esp as { nome?: string } | null)?.nome ?? (sportObj as { name?: string } | null)?.name ?? null,
+          baseConfig: matchUiConfig,
+          rules: regrasPlacar,
+        })
+      : [];
   const defaultLocalStr = novoLocal
     ? `${novoLocal.nome_publico ?? "Local"}${novoLocal.localizacao ? ` — ${novoLocal.localizacao}` : ""}`
     : p.local_str ?? "";
@@ -142,10 +193,6 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             Partida #{id}
           </h1>
           <p className="mt-1 text-sm font-semibold text-eid-primary-300">{esp?.nome ?? "Esporte"}</p>
-          <p className="mt-1 text-[11px] text-eid-text-secondary">
-            Modo de placar deste esporte: {String((esp as { desafio_modo_lancamento?: string } | null)?.desafio_modo_lancamento ?? "simples")}
-          </p>
-          <p className="mt-2 text-xs text-eid-text-secondary">Status atual: {p.status ?? "—"}</p>
           {p.torneio_id ? (
             <p className="mt-2 text-xs text-eid-action-400">
               Partida de torneio: o lançamento é restrito ao organizador e aos lançadores autorizados.
@@ -207,130 +254,84 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           )}
 
           {podeLancar ? (
-            <form action={salvarAgendamentoAction} className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3 sm:p-4">
-              <input type="hidden" name="partida_id" value={id} />
-              {agendaSomente ? <input type="hidden" name="modo_agenda" value="1" /> : null}
-              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Agendamento (opcional)</p>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                <label className="grid gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Data e hora</span>
-                  <input
-                    type="datetime-local"
-                    name="data_partida"
-                    defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
-                    className="eid-input-dark h-[46px] rounded-xl px-3.5 text-sm text-eid-fg"
-                  />
-                </label>
-                <label className="grid gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Local</span>
-                  <LocalAutocompleteInput
-                    name="local_str"
-                    defaultValue={defaultLocalStr}
-                    placeholder="Quadra, clube, endereço..."
-                    minChars={3}
-                    className="eid-input-dark h-[46px] rounded-xl px-3.5 text-sm text-eid-fg"
-                  />
-                </label>
+            <details
+              open={abrirAgendamentoPorPadrao}
+              className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 open:shadow-[0_10px_18px_-14px_rgba(15,23,42,0.5)]"
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 sm:px-4">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Agendamento (opcional)</span>
+                <span className="text-xs text-eid-text-secondary">▾</span>
+              </summary>
+              <div className="border-t border-[color:var(--eid-border-subtle)] px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4">
+                <form action={salvarAgendamentoAction}>
+                  <input type="hidden" name="partida_id" value={id} />
+                  {agendaSomente ? <input type="hidden" name="modo_agenda" value="1" /> : null}
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <label className="grid gap-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Data e hora</span>
+                      <input
+                        type="datetime-local"
+                        name="data_partida"
+                        defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
+                        className="eid-input-dark h-10 rounded-xl px-3 !text-[14px] text-eid-fg placeholder:!text-[12px]"
+                        style={{ fontSize: "14px" }}
+                      />
+                    </label>
+                    <label className="grid gap-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Local</span>
+                      <LocalAutocompleteInput
+                        name="local_str"
+                        defaultValue={defaultLocalStr}
+                        placeholder="Quadra, clube, endereço..."
+                        minChars={3}
+                        className="eid-input-dark h-10 rounded-xl px-3 !text-[14px] text-eid-fg placeholder:!text-[12px]"
+                        inputStyle={{ fontSize: "14px" }}
+                      />
+                    </label>
+                  </div>
+                  <CadastrarLocalOverlayTrigger
+                    href={cadastrarLocalHref}
+                    className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full text-center`}
+                  >
+                    + Cadastrar local genérico
+                  </CadastrarLocalOverlayTrigger>
+                  <button type="submit" className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full`}>
+                    Salvar agendamento
+                  </button>
+                  {agendaSomente ? (
+                    <p className="mt-2 text-[11px] text-eid-text-secondary">
+                      Defina data e local aqui. Para registrar o placar após o jogo, use o Painel de controle.
+                    </p>
+                  ) : null}
+                </form>
               </div>
-              <CadastrarLocalOverlayTrigger
-                href={cadastrarLocalHref}
-                className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full text-center`}
-              >
-                + Cadastrar local genérico
-              </CadastrarLocalOverlayTrigger>
-              <button type="submit" className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full`}>
-                Salvar agendamento
-              </button>
-              {agendaSomente ? (
-                <p className="mt-2 text-[11px] text-eid-text-secondary">
-                  Defina data e local aqui. Para registrar o placar após o jogo, use o Painel de controle.
-                </p>
-              ) : (
-                <p className="mt-2 text-[11px] text-eid-text-secondary">
-                  Se já combinaram fora do app, você pode pular o agendamento e lançar o resultado direto abaixo.
-                </p>
-              )}
-            </form>
+            </details>
+          ) : null}
+          {podeLancar && !agendaSomente ? (
+            <DismissibleTapAwayHint className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] text-eid-text-secondary">
+              Se já combinaram fora do app, você pode pular o agendamento e lançar o resultado direto abaixo.
+            </DismissibleTapAwayHint>
           ) : null}
 
           {podeLancar && !agendaSomente ? (
-            <form action={submitPlacarAction} className="mt-5 space-y-4">
-              <input type="hidden" name="partida_id" value={id} />
-              <div className="grid grid-cols-2 gap-3">
-                <label className="grid gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">
-                    {j1?.nome ?? "Jogador 1"}
-                  </span>
-                  <input
-                    type="number"
-                    name="placar_1"
-                    min={0}
-                    defaultValue={p.placar_1 ?? ""}
-                    required
-                    className="eid-input-dark h-[46px] rounded-xl px-3.5 text-sm font-bold text-eid-fg"
-                  />
-                </label>
-                <label className="grid gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">
-                    {j2?.nome ?? "Jogador 2"}
-                  </span>
-                  <input
-                    type="number"
-                    name="placar_2"
-                    min={0}
-                    defaultValue={p.placar_2 ?? ""}
-                    required
-                    className="eid-input-dark h-[46px] rounded-xl px-3.5 text-sm font-bold text-eid-fg"
-                  />
-                </label>
-              </div>
+            <div className="mt-5">
               {variantes.length > 0 ? (
-                <label className="grid gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Placar alternativo</span>
-                  <select
-                    name="placar_variante"
-                    defaultValue={String(variantes[0]?.key ?? "")}
-                    className="eid-input-dark h-[46px] rounded-xl px-3.5 text-sm text-eid-fg"
-                  >
-                    {variantes.map((v) => (
-                      <option key={String((v as { key?: unknown }).key ?? "")} value={String((v as { key?: unknown }).key ?? "")}>
-                        {String((v as { label?: unknown }).label ?? (v as { key?: unknown }).key ?? "Alternativa")}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <p className="mb-2 text-[11px] text-eid-text-secondary">
+                  Variante ativa deste esporte: {String((variantes[0] as { label?: unknown }).label ?? (variantes[0] as { key?: unknown }).key ?? "padrão")}
+                </p>
               ) : null}
-              <label className="grid gap-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Observação (opcional)</span>
-                <textarea
-                  name="observacao"
-                  rows={3}
-                  defaultValue={p.mensagem ?? ""}
-                  placeholder="Ex.: 6/4 4/6 10/8 no tiebreak."
-                  className="eid-input-dark rounded-xl px-3.5 py-2.5 text-sm text-eid-fg"
-                />
-              </label>
-              <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-3">
-                <label className="flex items-center gap-2 text-xs font-semibold text-eid-fg">
-                  <input type="checkbox" name="wo_ativo" value="1" className="h-4 w-4 accent-eid-action-500" />
-                  Marcar vitória por W.O. (adversário não compareceu)
-                </label>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <label className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-2 py-1.5 text-[11px] text-eid-fg">
-                    <input type="radio" name="wo_vencedor" value="j1" className="mr-1.5 accent-eid-action-500" defaultChecked />
-                    {j1?.nome ?? "Jogador 1"} venceu por W.O.
-                  </label>
-                  <label className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-2 py-1.5 text-[11px] text-eid-fg">
-                    <input type="radio" name="wo_vencedor" value="j2" className="mr-1.5 accent-eid-action-500" />
-                    {j2?.nome ?? "Jogador 2"} venceu por W.O.
-                  </label>
-                </div>
-              </div>
-              <button type="submit" className={DESAFIO_FLOW_CTA_BLOCK_CLASS}>
-                <DesafioFlowCtaIcon />
-                <span>{p.torneio_id ? "Salvar e validar resultado" : "Enviar resultado para confirmação"}</span>
-              </button>
-            </form>
+              <MatchScoreForm
+                partidaId={id}
+                config={matchUiConfig}
+                setFormatOptions={setFormatOptions}
+                initialSetFormatKey={null}
+                sideALabel={j1?.nome ?? "Jogador 1"}
+                sideBLabel={j2?.nome ?? "Jogador 2"}
+                sideAAvatarUrl={j1?.avatar_url ?? null}
+                sideBAvatarUrl={j2?.avatar_url ?? null}
+                isTorneio={Boolean(p.torneio_id)}
+              />
+            </div>
           ) : null}
 
           {aguardandoConfirmacao && p.lancado_por === user.id && !agendaSomente ? (

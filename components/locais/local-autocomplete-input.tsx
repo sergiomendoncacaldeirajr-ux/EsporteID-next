@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 type SuggestItem = {
   id: number;
@@ -15,6 +15,7 @@ type Props = {
   defaultValue?: string;
   placeholder?: string;
   className?: string;
+  inputStyle?: CSSProperties;
   minChars?: number;
 };
 
@@ -23,6 +24,7 @@ export function LocalAutocompleteInput({
   defaultValue = "",
   placeholder = "Digite o nome do local...",
   className,
+  inputStyle,
   minChars = 3,
 }: Props) {
   const [value, setValue] = useState(defaultValue);
@@ -79,6 +81,7 @@ export function LocalAutocompleteInput({
         placeholder={placeholder}
         autoComplete="off"
         className={className}
+        style={inputStyle}
       />
       {value.trim().length > 0 && value.trim().length < minChars ? (
         <p className="mt-1 text-[11px] text-eid-text-secondary">Digite pelo menos {minChars} letras para sugerir locais.</p>
