@@ -120,7 +120,7 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
           <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">{title}</p>
         )}
         {!isSuperTb && setEvalNormal.ok && setEvalNormal.winner ? (
-          <p className="mt-0.5 text-[11px] font-semibold text-eid-primary-300">
+          <p className="mt-0.5 text-[11px] font-semibold text-eid-primary-700">
             Vencedor ({title}): {setEvalNormal.winner === "a" ? sideALabel : sideBLabel}
           </p>
         ) : null}
@@ -207,7 +207,7 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
           {s1Eval.ok ? renderSetCard(1, "Set 2", s2) : null}
           {precisaSuperTb ? renderSetCard(2, "Super tiebreak", s3, true) : null}
           {finalizadoEm2Sets ? (
-            <p className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-300">
+            <p className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-800">
               Vitória definida em 2 sets. Não é necessário super tiebreak.
             </p>
           ) : null}

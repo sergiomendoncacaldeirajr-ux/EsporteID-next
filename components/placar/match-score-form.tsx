@@ -167,16 +167,6 @@ export function MatchScoreForm({
         />
       ) : null}
 
-      <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2">
-        <p className={`text-xs font-semibold ${validation.valid ? "text-emerald-300" : "text-amber-200"}`}>
-          {requiredSetFormatMissing
-            ? "Selecione o formato disputado para validar o placar."
-            : validation.valid
-              ? "Placar válido para salvar."
-              : validation.message ?? "Preencha o placar para continuar."}
-        </p>
-      </div>
-
       {matchWinner ? (
         <div
           className="relative overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-action-500)_55%,var(--eid-border-subtle)_45%)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_18%,var(--eid-card)_82%),color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-surface)_88%))] p-4 shadow-[0_0_0_1px_color-mix(in_srgb,var(--eid-action-500)_25%,transparent),0_16px_40px_-20px_color-mix(in_srgb,var(--eid-action-500)_45%,transparent)]"
@@ -202,7 +192,7 @@ export function MatchScoreForm({
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-base font-black tracking-tight text-eid-fg md:text-lg">{matchWinner.label}</p>
-              <p className="mt-0.5 text-[11px] font-semibold text-eid-primary-300">Parabéns pela vitória neste confronto</p>
+              <p className="mt-0.5 text-[11px] font-semibold text-eid-primary-700">Parabéns pela vitória neste confronto</p>
             </div>
           </div>
         </div>
