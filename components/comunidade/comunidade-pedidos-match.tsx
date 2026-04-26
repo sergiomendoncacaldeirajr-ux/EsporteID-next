@@ -1,19 +1,25 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { responderPedidoMatch, type ResponderMatchState } from "@/app/comunidade/actions";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import type { PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { DESAFIO_FLOW_CTA_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
+import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 
 export type PedidoMatchItem = {
   id: number;
   desafianteNome: string;
   desafianteId: string;
+  desafianteAvatarUrl?: string | null;
   esporte: string;
+  esporteId: number;
+  rankingPosicao?: number | null;
   modalidade: string;
   timeNome?: string | null;
   finalidade?: "ranking" | "amistoso";
@@ -25,6 +31,7 @@ const initial: ResponderMatchState = { ok: false, message: "" };
 export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(responderPedidoMatch, initial);
+  const [showStatsHint, setShowStatsHint] = useState(true);
   const err = !state.ok && state.message ? state.message : null;
   const okMsg = state.ok ? "Resposta registrada." : null;
 
@@ -43,7 +50,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
   }
 
   return (
-    <div className="mt-3 space-y-3">
+    <div className="mt-3 space-y-3" onClick={() => setShowStatsHint(false)}>
       {okMsg ? (
         <p className="rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2 text-xs text-eid-fg">{okMsg}</p>
       ) : null}
@@ -58,36 +65,81 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
             className="relative overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm md:rounded-2xl md:border-eid-primary-500/25 md:bg-gradient-to-br md:from-eid-card md:to-eid-primary-500/[0.06] md:p-4 md:shadow-md md:shadow-black/15"
           >
             <div className="pointer-events-none absolute -right-6 -top-6 hidden h-20 w-20 rounded-full bg-eid-primary-500/10 blur-2xl md:block" />
-            <div className="relative flex flex-wrap items-start justify-between gap-2">
-              <div>
-                <p className="text-sm font-bold tracking-tight text-eid-fg md:text-base md:font-black">{m.desafianteNome}</p>
-                <p className="mt-1 text-xs text-eid-text-secondary">
-                  {m.esporte} · {m.modalidade}
-                  {m.timeNome ? ` · ${m.timeNome}` : ""}
-                  {m.finalidade === "amistoso" ? " · amistoso (sem ranking)" : ""}
-                </p>
-                <Link
-                  href={`/perfil/${m.desafianteId}?from=/comunidade`}
-                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-2 max-w-fit px-3 normal-case no-underline hover:underline`}
-                >
-                  Ver perfil →
-                </Link>
+            <div className="relative mt-1.5 flex min-w-0 items-start gap-2.5 pr-24">
+              <div className="flex min-w-0 items-start gap-2.5">
+                <div className="relative mt-1 h-14 w-14 shrink-0">
+                  {m.rankingPosicao && m.rankingPosicao > 0 ? (
+                    <span className="absolute -top-4 left-1/2 z-[3] -translate-x-1/2 rounded-full border border-eid-primary-400/55 bg-eid-primary-500/20 px-1.5 py-[1px] text-[8px] font-black uppercase text-eid-primary-100 shadow-[0_4px_10px_-8px_color-mix(in_srgb,var(--eid-primary-500)_85%,transparent)]">
+                      #{m.rankingPosicao}
+                    </span>
+                  ) : null}
+                  <ProfileEditDrawerTrigger
+                    href={`/perfil/${m.desafianteId}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`}
+                    title={`Estatísticas EID de ${m.desafianteNome}`}
+                    fullscreen
+                    topMode="backOnly"
+                    className="block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
+                  >
+                    {m.desafianteAvatarUrl ? (
+                      <Image
+                        src={m.desafianteAvatarUrl}
+                        alt=""
+                        fill
+                        unoptimized
+                        className="h-full w-full rounded-full object-cover object-center"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                        EID
+                      </div>
+                    )}
+                  </ProfileEditDrawerTrigger>
+                  <div className="absolute -bottom-1 left-1/2 z-[2] -translate-x-1/2">
+                    <ProfileEidPerformanceSeal
+                      notaEid={m.rankingPreview?.kind === "individual" ? m.rankingPreview.perspective.notaEidNow : 0}
+                      compact
+                      className="scale-105"
+                    />
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold tracking-tight text-eid-fg md:text-base md:font-black">{m.desafianteNome}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    <p className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
+                      <span aria-hidden>{sportIconEmoji(m.esporte)}</span>
+                      <span>{m.esporte}</span>
+                    </p>
+                    {m.timeNome ? (
+                      <p className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
+                        <span>{m.timeNome}</span>
+                      </p>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
+                    {m.modalidade === "individual" ? "Desafio individual" : `Desafio ${m.modalidade}`}
+                  </p>
               </div>
-              <div className="flex flex-col items-end gap-1">
-                <span className="rounded-full border border-amber-400/35 bg-amber-500/15 px-2.5 py-1 text-[10px] font-extrabold uppercase text-amber-200">
-                  Pendente
-                </span>
+              </div>
+              <div className="absolute right-0 top-0 flex flex-col items-end gap-1">
                 {m.finalidade === "amistoso" ? (
                   <span className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-200">
                     Amistoso
                   </span>
                 ) : (
-                  <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-primary-200">
+                  <span className="rounded-full border border-eid-primary-400/55 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_30%,transparent),color-mix(in_srgb,var(--eid-primary-700)_26%,transparent))] px-2 py-0.5 text-[9px] font-bold uppercase text-eid-primary-100 shadow-[0_0_0_1px_color-mix(in_srgb,var(--eid-primary-500)_25%,transparent),0_6px_14px_-10px_color-mix(in_srgb,var(--eid-primary-500)_75%,transparent)]">
                     Ranking
                   </span>
                 )}
+                <span className="rounded-full border border-amber-400/35 bg-amber-500/15 px-2 py-0.5 text-[9px] font-extrabold uppercase text-[color:color-mix(in_srgb,var(--eid-warning-500)_82%,var(--eid-fg)_18%)]">
+                  Pendente
+                </span>
               </div>
             </div>
+            {showStatsHint ? (
+              <p className="mt-2 text-[10px] text-eid-text-secondary">
+                Toque na foto para abrir as estatísticas EID em tela cheia.
+              </p>
+            ) : null}
             {m.finalidade === "ranking" && m.rankingPreview ? (
               <DesafioImpactoResumo
                 esporteNome={m.esporte}
@@ -97,10 +149,10 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
               />
             ) : null}
             <div className="relative mt-4 flex flex-wrap gap-2">
-              <form action={formAction} className="min-w-0 flex-1 sm:flex-none sm:min-w-[11rem]">
+              <form action={formAction} className="min-w-0 flex-1 sm:flex-none sm:min-w-[9rem]">
                 <input type="hidden" name="match_id" value={String(m.id)} />
                 <input type="hidden" name="aceitar" value="true" />
-                <button type="submit" disabled={pending} className={`${DESAFIO_FLOW_CTA_CLASS} w-full`}>
+                <button type="submit" disabled={pending} className={`${DESAFIO_FLOW_CTA_CLASS} !h-[30px] !min-h-[30px] !py-0 w-full`}>
                   <DesafioFlowCtaIcon />
                   <span>{pending ? "Salvando…" : "Aceitar"}</span>
                 </button>
@@ -111,7 +163,8 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 <button
                   type="submit"
                   disabled={pending}
-                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full hover:border-red-400/45 hover:text-red-200`}
+                  data-eid-recusar-btn="true"
+                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full !border-red-400/45 !text-red-300 hover:!border-red-400/65 hover:!text-red-200`}
                 >
                   Recusar
                 </button>

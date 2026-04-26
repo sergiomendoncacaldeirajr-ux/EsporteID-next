@@ -89,6 +89,13 @@ type Props = {
   activeContext?: ActiveAppContext;
 };
 
+type UnreadNotif = {
+  id: number;
+  tipo: string | null;
+  referencia_id: number | null;
+  remetente_id: string | null;
+};
+
 function NavBadge({ n }: { n: number }) {
   if (n < 1) return null;
   return (
@@ -172,17 +179,12 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     let cancelled = false;
     async function load() {
       const supabase = createClient();
-      const [agRes, mRes, pRes, nRes] = await Promise.all([
+      const [agRes, pRes, nRes] = await Promise.all([
         supabase
           .from("partidas")
           .select("id", { count: "exact", head: true })
           .or(`jogador1_id.eq.${resolvedUserId},jogador2_id.eq.${resolvedUserId}`)
           .eq("status", "agendada"),
-        supabase
-          .from("matches")
-          .select("id", { count: "exact", head: true })
-          .eq("adversario_id", resolvedUserId)
-          .eq("status", "Pendente"),
         supabase
           .from("partidas")
           .select("id", { count: "exact", head: true })
@@ -191,16 +193,28 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
           .neq("lancado_por", resolvedUserId),
         supabase
           .from("notificacoes")
-          .select("id", { count: "exact", head: true })
+          .select("id, tipo, referencia_id, remetente_id")
           .eq("usuario_id", resolvedUserId)
-          .eq("lida", false),
+          .eq("lida", false)
+          .limit(300),
       ]);
       if (cancelled) return;
       setAgendaBadge(agRes.count ?? 0);
-      const incoming = mRes.count ?? 0;
       const placar = pRes.count ?? 0;
-      const unread = nRes.count ?? 0;
-      setSocialBadge(incoming + placar + unread);
+      const unreadRows = (nRes.data ?? []) as UnreadNotif[];
+      const seen = new Set<string>();
+      let unread = 0;
+      for (const n of unreadRows) {
+        const tipo = String(n.tipo ?? "").trim().toLowerCase();
+        const isDesafio = tipo === "match" || tipo === "desafio";
+        const key = isDesafio
+          ? `${tipo}:${String(n.referencia_id ?? "null")}:${String(n.remetente_id ?? "null")}`
+          : `id:${n.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        unread += 1;
+      }
+      setSocialBadge(placar + unread);
     }
     void load();
     const t = window.setInterval(load, 60000);

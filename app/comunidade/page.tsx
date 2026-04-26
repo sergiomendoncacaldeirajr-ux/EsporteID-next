@@ -20,6 +20,7 @@ import {
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { getSystemFeatureConfig, SYSTEM_FEATURE_LABEL, type SystemFeatureKey } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
+import { marcarTodasNotificacoesLidas } from "./actions";
 
 export const metadata = {
   title: "Painel de controle",
@@ -47,10 +48,25 @@ export default async function ComunidadePage() {
 
   const { data: notificacoes } = await supabase
     .from("notificacoes")
-    .select("id, mensagem, tipo, lida, criada_em, data_criacao")
+    .select("id, mensagem, tipo, lida, criada_em, data_criacao, referencia_id, remetente_id")
     .eq("usuario_id", user.id)
     .order("id", { ascending: false })
     .limit(50);
+  const uniqueNotificacoes = (() => {
+    const seen = new Set<string>();
+    const out: NonNullable<typeof notificacoes> = [];
+    for (const n of notificacoes ?? []) {
+      const tipo = String(n.tipo ?? "").trim().toLowerCase();
+      const isDedupeTipo = tipo === "match" || tipo === "desafio" || tipo === "time" || tipo === "convite";
+      const key = isDedupeTipo
+        ? `${tipo}:${String((n as { referencia_id?: number | null }).referencia_id ?? "null")}:${String((n as { remetente_id?: string | null }).remetente_id ?? "null")}`
+        : `id:${n.id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(n);
+    }
+    return out;
+  })();
 
   const { data: recebidos } = await supabase
     .from("matches")
@@ -82,6 +98,7 @@ export default async function ComunidadePage() {
     id: Number(m.id),
     desafianteNome: (m.usuario_id ? uMap.get(m.usuario_id)?.nome : null) ?? "Atleta",
     desafianteId: String(m.usuario_id ?? ""),
+    desafianteAvatarUrl: (m.usuario_id ? uMap.get(m.usuario_id)?.avatar_url : null) ?? null,
     esporte: (m.esporte_id ? espMap.get(m.esporte_id) : null) ?? "Esporte",
     esporteId: Number(m.esporte_id ?? 0),
     modalidade: m.modalidade_confronto ?? "individual",
@@ -93,6 +110,25 @@ export default async function ComunidadePage() {
   const pedidosItems = await Promise.all(
     pedidosItemsBase.map(async (m) => ({
       ...m,
+      rankingPosicao:
+        m.finalidade === "ranking" && m.esporteId > 0
+          ? await (async () => {
+              const { data: chEid } = await supabase
+                .from("usuario_eid")
+                .select("pontos_ranking")
+                .eq("usuario_id", m.desafianteId)
+                .eq("esporte_id", m.esporteId)
+                .maybeSingle();
+              const pontos = Number(chEid?.pontos_ranking ?? NaN);
+              if (!Number.isFinite(pontos)) return null;
+              const { count } = await supabase
+                .from("usuario_eid")
+                .select("id", { count: "exact", head: true })
+                .eq("esporte_id", m.esporteId)
+                .gt("pontos_ranking", pontos);
+              return Number(count ?? 0) + 1;
+            })()
+          : null,
       rankingPreview:
         m.finalidade === "ranking" && m.esporteId > 0
           ? await fetchPedidoRankingPreview(supabase, {
@@ -171,13 +207,13 @@ export default async function ComunidadePage() {
       convidadoPor: inviteUserMap.get(c.convidado_por_usuario_id) ?? "Líder",
     };
   });
-  const nNotifUnread = (notificacoes ?? []).filter((n) => n.lida !== true).length;
-  const desafioNotifs = (notificacoes ?? []).filter((n) => {
+  const nNotifUnread = uniqueNotificacoes.filter((n) => n.lida !== true).length;
+  const desafioNotifs = uniqueNotificacoes.filter((n) => {
     const tipo = String(n.tipo ?? "").toLowerCase();
     const msg = String(n.mensagem ?? "").toLowerCase();
     return tipo.includes("match") || tipo.includes("desafio") || msg.includes("desafio");
   });
-  const equipeNotifs = (notificacoes ?? []).filter((n) => {
+  const equipeNotifs = uniqueNotificacoes.filter((n) => {
     const tipo = String(n.tipo ?? "").toLowerCase();
     return tipo.includes("time") || tipo.includes("convite");
   });
@@ -297,6 +333,7 @@ export default async function ComunidadePage() {
 
   return (
     <main
+      data-eid-comunidade-panel
       data-eid-touch-ui
       className="mx-auto w-full max-w-lg px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
@@ -310,6 +347,33 @@ export default async function ComunidadePage() {
           { label: "convite(s) de equipe", value: conviteItems.length, tone: "primary" },
           { label: "item(ns) de aula", value: nAulas, tone: "default" },
         ]}
+        actionsTopRight
+        actions={
+          <form action={marcarTodasNotificacoesLidas}>
+            <button
+              type="submit"
+              data-eid-marcar-lidos-btn="true"
+              className={`inline-flex h-[16px] items-center justify-center rounded-md border px-1 py-0 font-bold uppercase leading-none transition ${
+                nNotifUnread > 0
+                  ? "border-emerald-400/60 bg-emerald-500/25 text-emerald-100 hover:bg-emerald-500/35"
+                  : "border-emerald-400/45 bg-emerald-500/18 text-emerald-100/95"
+              }`}
+              style={{
+                minHeight: "16px",
+                height: "16px",
+                padding: "0 4px",
+                lineHeight: "1",
+                whiteSpace: "nowrap",
+                fontSize: "8px",
+                letterSpacing: "0.02em",
+                transform: "scale(0.9)",
+                transformOrigin: "top right",
+              }}
+            >
+              {nNotifUnread > 0 ? "✓ Marcar como lidos" : "✓ Lido"}
+            </button>
+          </form>
+        }
       />
 
         <div className="mt-5 space-y-6 md:mt-8 md:space-y-10">

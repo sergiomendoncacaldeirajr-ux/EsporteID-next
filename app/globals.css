@@ -222,6 +222,45 @@ body.eid-app-shell {
   color: var(--eid-primary-700);
 }
 
+[data-eid-theme="light"] .eid-surface-panel {
+  border-color: color-mix(in srgb, var(--eid-border-subtle) 70%, var(--eid-primary-500) 30%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--eid-card) 95%, white 5%),
+    color-mix(in srgb, var(--eid-surface) 93%, var(--eid-primary-500) 7%)
+  );
+}
+
+[data-eid-theme="light"] .eid-list-item {
+  border-color: color-mix(in srgb, var(--eid-border-subtle) 78%, black 22%);
+  background-color: color-mix(in srgb, var(--eid-surface) 97%, var(--eid-primary-500) 3%);
+}
+
+[data-eid-theme="light"] .text-eid-text-secondary {
+  color: #334155;
+}
+
+[data-eid-comunidade-panel] h2,
+[data-eid-comunidade-panel] h3 {
+  color: var(--eid-primary-500) !important;
+}
+
+[data-eid-comunidade-panel] .text-eid-text-secondary {
+  color: var(--eid-fg) !important;
+}
+
+[data-eid-theme="light"] [data-eid-marcar-lidos-btn="true"] {
+  border-color: color-mix(in srgb, #059669 45%, white 55%) !important;
+  background-color: color-mix(in srgb, #10b981 22%, white 78%) !important;
+  color: #065f46 !important;
+}
+
+[data-eid-theme="light"] [data-eid-marcar-lidos-btn="true"]:hover {
+  border-color: color-mix(in srgb, #059669 58%, white 42%) !important;
+  background-color: color-mix(in srgb, #10b981 30%, white 70%) !important;
+  color: #064e3b !important;
+}
+
 @theme inline {
   --color-background: var(--eid-bg);
   --color-foreground: var(--eid-fg);
@@ -778,6 +817,18 @@ label:has(input.sr-only):not(.eid-no-press):active {
 }
 [data-eid-theme="light"] .eid-desafio-impact-win-title {
   color: #047857;
+}
+
+[data-eid-theme="light"] [data-eid-recusar-btn="true"] {
+  border-color: color-mix(in srgb, var(--eid-danger-500) 42%, white 58%) !important;
+  color: color-mix(in srgb, var(--eid-danger-500) 82%, #111827 18%) !important;
+  background-color: color-mix(in srgb, var(--eid-danger-500) 50%, white 50%) !important;
+}
+
+[data-eid-theme="light"] [data-eid-recusar-btn="true"]:hover {
+  border-color: color-mix(in srgb, var(--eid-danger-500) 56%, white 44%) !important;
+  color: color-mix(in srgb, var(--eid-danger-500) 90%, #111827 10%) !important;
+  background-color: color-mix(in srgb, var(--eid-danger-500) 60%, white 40%) !important;
 }
 
 .eid-loading-skeleton-screen {

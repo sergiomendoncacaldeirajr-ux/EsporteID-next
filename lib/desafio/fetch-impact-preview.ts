@@ -4,6 +4,7 @@ import {
   type DesafioImpactPerspective,
   type EidConfigPreview,
   type RegrasRankingMatchPreview,
+  RANKING_LOSS_POINTS,
   buildColetivoPerspective,
   buildIndividualViewerPerspective,
 } from "@/lib/desafio/impact-preview";
@@ -27,7 +28,7 @@ function mapRegras(row: Record<string, unknown> | null): RegrasRankingMatchPrevi
   const r = row ?? {};
   return {
     pontos_vitoria: Math.floor(Number(r.pontos_vitoria ?? 10)),
-    pontos_derrota: Math.floor(Number(r.pontos_derrota ?? 2)),
+    pontos_derrota: RANKING_LOSS_POINTS,
   };
 }
 

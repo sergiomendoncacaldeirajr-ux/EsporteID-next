@@ -253,9 +253,11 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
           lng: Number(me.lng),
           finalidade: matchFinalidade,
         });
+  const initialViewResolved: RadarViewMode =
+    initialView === "full" && initialCards.length === 0 ? "grid" : initialView;
 
   return (
-    <MatchPageShell fullBleed={initialView === "full"}>
+    <MatchPageShell fullBleed={initialViewResolved === "full"}>
       <MatchRadarApp
         viewerId={user.id}
         initialCards={initialCards}
@@ -265,7 +267,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         initialSortBy={sortBy}
         initialRaio={raio}
         initialFinalidade={matchFinalidade}
-        initialView={initialView}
+        initialView={initialViewResolved}
         initialGeneroFiltro={initialGeneroFiltro}
         viewerDisponivelAmistoso={viewerAmistosoOn}
         viewerAmistosoExpiresAt={viewerAmistosoExpiresAt}

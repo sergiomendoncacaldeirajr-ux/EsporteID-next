@@ -16,17 +16,19 @@ export type RegrasRankingMatchPreview = {
   pontos_derrota: number;
 };
 
-/** Bônus ao vencer oponente com mais pontos no ranking (1 pt a cada 5 de diferença, teto 40). */
-export const RANKING_UPSET_STEP = 5;
-export const RANKING_UPSET_CAP = 40;
+/** Bônus ao vencer oponente com mais pontos no ranking (20% fixo da vitória base). */
+export const RANKING_UPSET_CAP_PCT = 0.2;
+/** Derrota no ranking de desafio: regra fixa para todos os esportes. */
+export const RANKING_LOSS_POINTS = 4;
 
 export function eidClampScore(score: number): number {
   return Math.min(10, Math.max(0, Math.round(score * 100) / 100));
 }
 
-export function computeRankingUpsetBonus(opponentRankPts: number, selfRankPts: number): number {
-  const diff = Math.max(0, Math.floor(opponentRankPts) - Math.floor(selfRankPts));
-  return Math.min(RANKING_UPSET_CAP, Math.floor(diff / RANKING_UPSET_STEP));
+export function computeRankingUpsetBonus(opponentRankPts: number, selfRankPts: number, baseWinPts: number): number {
+  const opponentAbove = Math.floor(opponentRankPts) > Math.floor(selfRankPts);
+  const maxBonus = Math.max(0, Math.floor(Math.max(0, Math.floor(baseWinPts)) * RANKING_UPSET_CAP_PCT));
+  return opponentAbove ? maxBonus : 0;
 }
 
 /** Pontos de ranking se `self` vencer: base + bônus por vencer quem tem mais pontos. */
@@ -35,14 +37,14 @@ export function computeRankingPointsIfWin(
   opponentRankPts: number,
   regras: RegrasRankingMatchPreview
 ): { total: number; upsetBonus: number } {
-  const upsetBonus = computeRankingUpsetBonus(opponentRankPts, selfRankPts);
   const baseW = Math.floor(Number(regras.pontos_vitoria) || 0);
+  const upsetBonus = computeRankingUpsetBonus(opponentRankPts, selfRankPts, baseW);
   return { total: baseW + upsetBonus, upsetBonus };
 }
 
-/** Pontos somados ao perdedor (regra `pontos_derrota`; em geral consolação, pode ser 0). */
-export function computeRankingPointsIfLose(regras: RegrasRankingMatchPreview): number {
-  return Math.floor(Number(regras.pontos_derrota) || 0);
+/** Pontos somados ao perdedor: regra fixa global de 4 pontos. */
+export function computeRankingPointsIfLose(_regras: RegrasRankingMatchPreview): number {
+  return RANKING_LOSS_POINTS;
 }
 
 export function computeIndividualEidDeltaWin(winnerNota: number, loserNota: number, cfg: EidConfigPreview): number {

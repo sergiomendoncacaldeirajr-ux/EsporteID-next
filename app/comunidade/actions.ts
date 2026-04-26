@@ -16,6 +16,27 @@ function normStatus(v: string | null | undefined): string {
     .toLowerCase();
 }
 
+async function marcarNotificacoesPorAcao(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  opts: {
+    referenciaId?: number | null;
+    tipos?: string[];
+  }
+) {
+  let q = supabase.from("notificacoes").update({ lida: true }).eq("usuario_id", userId).eq("lida", false);
+  if (Number.isFinite(opts.referenciaId ?? NaN) && Number(opts.referenciaId) > 0) {
+    q = q.eq("referencia_id", Number(opts.referenciaId));
+  }
+  const tipos = (opts.tipos ?? [])
+    .map((t) => String(t).trim().toLowerCase())
+    .filter(Boolean);
+  if (tipos.length > 0) {
+    q = q.in("tipo", tipos);
+  }
+  await q;
+}
+
 async function notify(
   supabase: Awaited<ReturnType<typeof createClient>>,
   usuarioId: string | null | undefined,
@@ -240,6 +261,10 @@ export async function responderPedidoMatch(
   if (aceitar) {
     await ensurePartidaAgendadaFromMatch(supabase, matchId, user.id);
   }
+  await marcarNotificacoesPorAcao(supabase, user.id, {
+    referenciaId: matchId,
+    tipos: ["match", "desafio"],
+  });
 
   revalidatePath("/comunidade");
   revalidatePath("/agenda");
@@ -274,6 +299,10 @@ export async function cancelarMatchAceito(
   if (error) {
     return { ok: false, message: error.message };
   }
+  await marcarNotificacoesPorAcao(supabase, user.id, {
+    referenciaId: matchId,
+    tipos: ["match", "desafio"],
+  });
 
   revalidatePath("/agenda");
   revalidatePath("/comunidade");
@@ -314,6 +343,10 @@ export async function gerenciarCancelamentoMatch(
       p_motivo: motivo ? motivo.slice(0, 240) : null,
     });
     if (error) return { ok: false, message: error.message };
+    await marcarNotificacoesPorAcao(supabase, user.id, {
+      referenciaId: matchId,
+      tipos: ["match", "desafio"],
+    });
     revalidatePath("/agenda");
     revalidatePath("/comunidade");
     revalidatePath("/dashboard");
@@ -335,6 +368,10 @@ export async function gerenciarCancelamentoMatch(
       p_local: aceitar ? null : (local || null),
     });
     if (error) return { ok: false, message: error.message };
+    await marcarNotificacoesPorAcao(supabase, user.id, {
+      referenciaId: matchId,
+      tipos: ["match", "desafio"],
+    });
     revalidatePath("/agenda");
     revalidatePath("/comunidade");
     revalidatePath("/dashboard");
@@ -358,6 +395,10 @@ export async function gerenciarCancelamentoMatch(
       p_aceitar: aceitar,
     });
     if (error) return { ok: false, message: error.message };
+    await marcarNotificacoesPorAcao(supabase, user.id, {
+      referenciaId: matchId,
+      tipos: ["match", "desafio"],
+    });
     revalidatePath("/agenda");
     revalidatePath("/comunidade");
     revalidatePath("/dashboard");
@@ -413,6 +454,10 @@ export async function sugerirMatchParaLider(
   });
 
   if (error) return { ok: false, message: error.message };
+  await marcarNotificacoesPorAcao(supabase, user.id, {
+    referenciaId: sugestaoId,
+    tipos: ["time", "convite", "match", "desafio"],
+  });
 
   revalidatePath("/comunidade");
   revalidatePath(`/perfil-time/${alvo}`);
@@ -445,6 +490,10 @@ export async function responderSugestaoMatch(
   });
 
   if (error) return { ok: false, message: error.message };
+  await marcarNotificacoesPorAcao(supabase, user.id, {
+    referenciaId: conviteId,
+    tipos: ["time", "convite"],
+  });
 
   if (aceitar) {
     const { data: sug } = await supabase.from("match_sugestoes").select("match_id").eq("id", sugestaoId).maybeSingle();

@@ -31,7 +31,7 @@ export function DesafioImpactoResumo({ esporteNome, regras, individual, coletivo
     >
       <p className="eid-desafio-impact-heading text-[11px] font-black uppercase tracking-[0.14em]">Impacto estimado · {esporteNome}</p>
       <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
-        Valores para placar normal (sem W.O. e sem bônus de goleada). Vitória no ranking: base{" "}
+        Valores para partida de ranking. Vitória no ranking: base{" "}
         <span className="font-semibold text-eid-fg">{regras.pontos_vitoria} pts</span>
         {regras.pontos_derrota !== 0 ? (
           <>
@@ -39,7 +39,7 @@ export function DesafioImpactoResumo({ esporteNome, regras, individual, coletivo
             · derrota: <span className="font-semibold text-eid-fg">{fmtDeltaPts(regras.pontos_derrota)} pts</span> no ranking
           </>
         ) : null}
-        . Bônus extra se você vencer quem tem mais pontos no ranking (até +40 pts, +1 a cada 5 de diferença).
+        . Bônus extra se você vencer quem tem mais pontos no ranking (20% fixo dos pontos de vitória base).
       </p>
 
       {individual ? (

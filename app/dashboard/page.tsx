@@ -46,6 +46,7 @@ type ProfileMini = {
   lng?: string | number | null;
   disponivel_amistoso?: boolean | null;
   disponivel_amistoso_ate?: string | null;
+  match_maioridade_confirmada?: boolean | null;
 };
 
 type AtletaRow = {
@@ -240,6 +241,19 @@ export default async function DashboardPage({ searchParams }: Props) {
   const myLng = Number(profile.lng ?? NaN);
   const hasMyCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
+  const { data: activeMatches } = await supabase
+    .from("matches")
+    .select("usuario_id, adversario_id, status")
+    .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+    .in("status", ["Pendente", "Aceito"]);
+  const activeOpponentIds = new Set<string>();
+  for (const m of activeMatches ?? []) {
+    const usuarioId = String((m as { usuario_id?: string | null }).usuario_id ?? "");
+    const adversarioId = String((m as { adversario_id?: string | null }).adversario_id ?? "");
+    if (usuarioId === user.id && adversarioId) activeOpponentIds.add(adversarioId);
+    else if (adversarioId === user.id && usuarioId) activeOpponentIds.add(usuarioId);
+  }
+
   const { data: meusEsportes } = await supabase
     .from("usuario_eid")
     .select("esporte_id, esportes(nome)")
@@ -262,7 +276,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   let atletasQuery = supabase
     .from("usuario_eid")
     .select(
-      "nota_eid, usuario_id, profiles!inner(id, nome, avatar_url, localizacao, lat, lng, disponivel_amistoso, disponivel_amistoso_ate)"
+      "nota_eid, usuario_id, profiles!inner(id, nome, avatar_url, localizacao, lat, lng, disponivel_amistoso, disponivel_amistoso_ate, match_maioridade_confirmada)"
     )
     .neq("usuario_id", user.id)
     .order("nota_eid", { ascending: false })
@@ -273,7 +287,13 @@ export default async function DashboardPage({ searchParams }: Props) {
   const { data: atletasRaw } = await atletasQuery;
 
   const atletasRows = (atletasRaw ?? []) as AtletaRow[];
-  let atletasComDist: Array<{ row: AtletaRow; p: ProfileMini | null; dist: number }> = atletasRows.map((row) => {
+  const atletasRowsFiltered = atletasRows.filter((row) => {
+    const p = firstProfile(row.profiles);
+    const id = String(p?.id ?? row.usuario_id ?? "");
+    const maioridadeOk = p?.match_maioridade_confirmada === true;
+    return id ? !activeOpponentIds.has(id) && maioridadeOk : false;
+  });
+  let atletasComDist: Array<{ row: AtletaRow; p: ProfileMini | null; dist: number }> = atletasRowsFiltered.map((row) => {
     const p = firstProfile(row.profiles);
     const lat = Number(p?.lat ?? NaN);
     const lng = Number(p?.lng ?? NaN);
@@ -336,7 +356,25 @@ export default async function DashboardPage({ searchParams }: Props) {
     timesQuery = timesQuery.in("esporte_id", esportesParaFiltro);
   }
   const { data: timesRaw } = await timesQuery;
-  const timesComDist = (timesRaw ?? []).map((t) => {
+  const timeCriadorIds = [...new Set((timesRaw ?? []).map((t) => String(t.criador_id ?? "")).filter(Boolean))];
+  const { data: timeCriadoresProfiles } =
+    timeCriadorIds.length > 0
+      ? await supabase
+          .from("profiles")
+          .select("id, match_maioridade_confirmada")
+          .in("id", timeCriadorIds)
+      : { data: [] as Array<{ id: string; match_maioridade_confirmada: boolean | null }> };
+  const criadoresComMaioridade = new Set(
+    (timeCriadoresProfiles ?? [])
+      .filter((p) => p.match_maioridade_confirmada === true)
+      .map((p) => String(p.id))
+  );
+  const timesSemAtivos = (timesRaw ?? []).filter(
+    (t) =>
+      !activeOpponentIds.has(String(t.criador_id ?? "")) &&
+      criadoresComMaioridade.has(String(t.criador_id ?? ""))
+  );
+  const timesComDist = timesSemAtivos.map((t) => {
     const lat = Number(t.lat ?? NaN);
     const lng = Number(t.lng ?? NaN);
     const dist = hasMyCoords && Number.isFinite(lat) && Number.isFinite(lng) ? distanciaKm(myLat, myLng, lat, lng) : 99999;

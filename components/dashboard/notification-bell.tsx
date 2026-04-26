@@ -11,6 +11,12 @@ import {
 } from "@/lib/pwa/push-client";
 
 type Preview = { id: number; mensagem: string; lida: boolean; data_criacao: string | null; criada_em: string | null };
+type UnreadNotif = {
+  id: number;
+  tipo: string | null;
+  referencia_id: number | null;
+  remetente_id: string | null;
+};
 
 function IconBell({ className }: { className?: string }) {
   return (
@@ -47,7 +53,12 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     if (!userId) return;
     const supabase = createClient();
     const [notifRes, listRes, agRes, mRes, pRes] = await Promise.all([
-      supabase.from("notificacoes").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("lida", false),
+      supabase
+        .from("notificacoes")
+        .select("id, tipo, referencia_id, remetente_id")
+        .eq("usuario_id", userId)
+        .eq("lida", false)
+        .limit(300),
       supabase
         .from("notificacoes")
         .select("id, mensagem, lida, data_criacao, criada_em")
@@ -67,14 +78,26 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         .eq("status", "aguardando_confirmacao")
         .neq("lancado_por", userId),
     ]);
-    const unread = notifRes.count ?? 0;
+    const unreadRows = (notifRes.data ?? []) as UnreadNotif[];
+    const seen = new Set<string>();
+    let unread = 0;
+    for (const n of unreadRows) {
+      const tipo = String(n.tipo ?? "").trim().toLowerCase();
+      const isDesafio = tipo === "match" || tipo === "desafio";
+      const key = isDesafio
+        ? `${tipo}:${String(n.referencia_id ?? "null")}:${String(n.remetente_id ?? "null")}`
+        : `id:${n.id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unread += 1;
+    }
     const ag = agRes.count ?? 0;
     const m = mRes.count ?? 0;
     const p = pRes.count ?? 0;
     setAgendaN(ag);
     setMatchN(m);
     setPlacarN(p);
-    setTotal(unread + m + p + ag);
+    setTotal(unread + p + ag);
     setPreview((listRes.data ?? []) as Preview[]);
   }, [userId]);
 

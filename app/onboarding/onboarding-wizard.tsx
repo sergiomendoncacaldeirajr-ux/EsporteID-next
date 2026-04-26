@@ -190,118 +190,6 @@ function LocationPicker({
   );
 }
 
-/* ── Seletor de disponibilidade semanal ─────────────────────────────── */
-const DIAS = [
-  { key: "seg", label: "Seg" },
-  { key: "ter", label: "Ter" },
-  { key: "qua", label: "Qua" },
-  { key: "qui", label: "Qui" },
-  { key: "sex", label: "Sex" },
-  { key: "sab", label: "Sáb" },
-  { key: "dom", label: "Dom" },
-] as const;
-
-const TURNOS = [
-  { key: "manhã",    label: "Manhã" },
-  { key: "tarde",    label: "Tarde" },
-  { key: "noite",    label: "Noite" },
-  { key: "qualquer", label: "Qualquer" },
-] as const;
-
-type DiaKey  = (typeof DIAS)[number]["key"];
-type TurnoKey = (typeof TURNOS)[number]["key"];
-
-function DisponibilidadePicker({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (json: string) => void;
-}) {
-  const parsed = useMemo<Partial<Record<DiaKey, TurnoKey>>>(() => {
-    try { return JSON.parse(value || "{}"); } catch { return {}; }
-  }, [value]);
-
-  function toggleDia(dia: DiaKey) {
-    const next = { ...parsed };
-    if (next[dia]) {
-      delete next[dia];
-    } else {
-      next[dia] = "qualquer";
-    }
-    onChange(JSON.stringify(next));
-  }
-
-  function setTurno(dia: DiaKey, turno: TurnoKey) {
-    const next = { ...parsed, [dia]: turno };
-    onChange(JSON.stringify(next));
-  }
-
-  const selecionados = DIAS.filter((d) => parsed[d.key]);
-
-  return (
-    <div className="space-y-3">
-      {/* Dias da semana */}
-      <div className="flex flex-wrap gap-1.5">
-        {DIAS.map(({ key, label }) => {
-          const active = !!parsed[key];
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => toggleDia(key)}
-              className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all select-none ${
-                active
-                  ? "bg-eid-primary-500 text-white shadow-sm"
-                  : "border border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:border-eid-primary-500/40 hover:text-eid-fg"
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Turnos para cada dia selecionado */}
-      {selecionados.length > 0 && (
-        <div className="space-y-1.5">
-          {selecionados.map(({ key, label }) => (
-            <div key={key} className="flex items-center gap-2">
-              <span className="w-7 text-[11px] font-bold text-eid-fg">{label}</span>
-              <div className="inline-flex gap-1">
-                {TURNOS.map(({ key: tKey, label: tLabel }) => {
-                  const active = parsed[key] === tKey;
-                  return (
-                    <button
-                      key={tKey}
-                      type="button"
-                      onClick={() => setTurno(key, tKey)}
-                      className={`rounded-md px-2 py-0.5 text-[10px] font-semibold transition-all select-none ${
-                        active
-                          ? "bg-eid-action-500 text-white"
-                          : "border border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:text-eid-fg"
-                      }`}
-                    >
-                      {tLabel}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {selecionados.length === 0 && (
-        <p className="text-[11px] text-eid-text-secondary">
-          Selecione os dias em que você costuma estar disponível.
-        </p>
-      )}
-    </div>
-  );
-}
-
-
 function EidFilePicker({
   name,
   accept,
@@ -645,9 +533,6 @@ export function OnboardingWizard({
   const [lado, setLado] = useState<string>(profileInitial.lado ?? "");
   const [bio, setBio] = useState<string>(profileInitial.bio);
   const [estiloJogo, setEstiloJogo] = useState<string>(profileInitial.estiloJogo);
-  const [disponibilidadeSemanaJson, setDisponibilidadeSemanaJson] = useState<string>(
-    profileInitial.disponibilidadeSemanaJson || "{}"
-  );
   const fotoInputRef = useRef<HTMLInputElement | null>(null);
   const fotoCameraInputRef = useRef<HTMLInputElement | null>(null);
   const fotoGaleriaInputRef = useRef<HTMLInputElement | null>(null);
@@ -796,7 +681,6 @@ export function OnboardingWizard({
         lado: string;
         bio: string;
         estiloJogo: string;
-        disponibilidadeSemanaJson: string;
       }>;
       if (
         draft.step &&
@@ -888,7 +772,6 @@ export function OnboardingWizard({
       if (typeof draft.lado === "string") setLado(draft.lado);
       if (typeof draft.bio === "string") setBio(draft.bio);
       if (typeof draft.estiloJogo === "string") setEstiloJogo(draft.estiloJogo);
-      if (typeof draft.disponibilidadeSemanaJson === "string") setDisponibilidadeSemanaJson(draft.disponibilidadeSemanaJson);
       setRestoredDraftAt(new Date().toLocaleTimeString("pt-BR"));
     } catch {
       window.localStorage.removeItem(draftKey);
@@ -951,7 +834,6 @@ export function OnboardingWizard({
       lado,
       bio,
       estiloJogo,
-      disponibilidadeSemanaJson,
     };
     window.localStorage.setItem(draftKey, JSON.stringify(payload));
   }, [
@@ -982,7 +864,6 @@ export function OnboardingWizard({
     username,
     bio,
     estiloJogo,
-    disponibilidadeSemanaJson,
     orgEsporteId,
     orgEsportes,
     orgLocalModo,
@@ -1211,7 +1092,6 @@ export function OnboardingWizard({
     setLado(profileInitial.lado ?? "");
     setBio(profileInitial.bio ?? "");
     setEstiloJogo(profileInitial.estiloJogo ?? "");
-    setDisponibilidadeSemanaJson(profileInitial.disponibilidadeSemanaJson ?? "{}");
     setMessage("Rascunho local limpo. O onboarding foi reiniciado na primeira etapa.");
   }
 
@@ -2631,16 +2511,7 @@ export function OnboardingWizard({
                 rows={3}
                 className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
               />
-              <div>
-                <p className="mb-2 text-xs font-semibold text-eid-text-secondary uppercase tracking-wider">
-                  Disponibilidade semanal (opcional)
-                </p>
-                <DisponibilidadePicker
-                  value={disponibilidadeSemanaJson}
-                  onChange={setDisponibilidadeSemanaJson}
-                />
-                <input type="hidden" name="disponibilidade_semana_json" value={disponibilidadeSemanaJson} />
-              </div>
+              <input type="hidden" name="disponibilidade_semana_json" value="{}" />
 
               {hasAnyAthleteSport ? (
                 <>

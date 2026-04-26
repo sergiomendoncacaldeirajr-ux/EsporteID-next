@@ -88,6 +88,18 @@ export async function fetchMatchRadarCards(
   const esporteId = /^\d+$/.test(esporteSelecionado) ? Number(esporteSelecionado) : null;
 
   let cards: MatchRadarCard[] = [];
+  const { data: activeMatches } = await supabase
+    .from("matches")
+    .select("usuario_id, adversario_id, status")
+    .or(`usuario_id.eq.${viewerId},adversario_id.eq.${viewerId}`)
+    .in("status", ["Pendente", "Aceito"]);
+  const activeOpponentIds = new Set<string>();
+  for (const m of activeMatches ?? []) {
+    const usuarioId = String((m as { usuario_id?: string | null }).usuario_id ?? "");
+    const adversarioId = String((m as { adversario_id?: string | null }).adversario_id ?? "");
+    if (usuarioId === viewerId && adversarioId) activeOpponentIds.add(adversarioId);
+    else if (adversarioId === viewerId && usuarioId) activeOpponentIds.add(usuarioId);
+  }
 
   if (tipo === "atleta") {
     const { data } = await supabase.rpc("buscar_match_atletas", {
@@ -99,7 +111,9 @@ export async function fetchMatchRadarCards(
       p_limit: 500,
     });
 
-    const baseCards: MatchRadarCard[] = ((data ?? []) as AtletaRow[]).map((row) => {
+    const baseCards: MatchRadarCard[] = ((data ?? []) as AtletaRow[])
+      .filter((row) => !activeOpponentIds.has(String(row.usuario_id ?? "")))
+      .map((row) => {
       return {
         id: String(row.usuario_id),
         nome: String(row.nome ?? "Atleta"),
@@ -126,16 +140,26 @@ export async function fetchMatchRadarCards(
 
     const ids = [...new Set(baseCards.map((c) => c.id))];
     if (ids.length > 0) {
-      const { data: profRows } = await supabase.from("profiles").select("id, genero").in("id", ids);
+      const { data: profRows } = await supabase
+        .from("profiles")
+        .select("id, genero, match_maioridade_confirmada")
+        .in("id", ids);
       const generoByUser = new Map<string, "Masculino" | "Feminino" | "Outro" | null>();
+      const eligibleByUser = new Set<string>();
       for (const row of profRows ?? []) {
+        const id = String((row as { id: string }).id);
+        if ((row as { match_maioridade_confirmada?: boolean | null }).match_maioridade_confirmada === true) {
+          eligibleByUser.add(id);
+        }
         const g = String((row as { genero?: string | null }).genero ?? "").trim().toLowerCase();
-        if (g === "masculino") generoByUser.set(String((row as { id: string }).id), "Masculino");
-        else if (g === "feminino") generoByUser.set(String((row as { id: string }).id), "Feminino");
-        else if (g) generoByUser.set(String((row as { id: string }).id), "Outro");
-        else generoByUser.set(String((row as { id: string }).id), null);
+        if (g === "masculino") generoByUser.set(id, "Masculino");
+        else if (g === "feminino") generoByUser.set(id, "Feminino");
+        else if (g) generoByUser.set(id, "Outro");
+        else generoByUser.set(id, null);
       }
-      cards = baseCards.map((c) => ({ ...c, genero: generoByUser.get(c.id) ?? null }));
+      cards = baseCards
+        .filter((c) => eligibleByUser.has(c.id))
+        .map((c) => ({ ...c, genero: generoByUser.get(c.id) ?? null }));
     } else {
       cards = baseCards;
     }
@@ -150,7 +174,55 @@ export async function fetchMatchRadarCards(
       p_limit: 300,
     });
 
-    cards = ((formacoes ?? []) as FormacaoRow[]).map((t) => ({
+    const timeRows = ((formacoes ?? []) as FormacaoRow[]).filter((t) => Number.isFinite(Number(t.id)) && Number(t.id) > 0);
+    let blockedTeamIds = new Set<number>();
+    if (timeRows.length > 0 && activeOpponentIds.size > 0) {
+      const { data: timesOwners } = await supabase
+        .from("times")
+        .select("id, criador_id")
+        .in(
+          "id",
+          timeRows.map((t) => Number(t.id))
+        );
+      blockedTeamIds = new Set(
+        (timesOwners ?? [])
+          .filter((row) => activeOpponentIds.has(String((row as { criador_id?: string | null }).criador_id ?? "")))
+          .map((row) => Number((row as { id?: number | null }).id ?? 0))
+          .filter((id) => Number.isFinite(id) && id > 0)
+      );
+    }
+    const teamRowsVisible = timeRows.filter((t) => !blockedTeamIds.has(Number(t.id)));
+    let eligibleTeamIds = new Set<number>(teamRowsVisible.map((t) => Number(t.id)));
+    if (teamRowsVisible.length > 0) {
+      const { data: owners } = await supabase
+        .from("times")
+        .select("id, criador_id")
+        .in(
+          "id",
+          teamRowsVisible.map((t) => Number(t.id))
+        );
+      const ownerIds = [...new Set((owners ?? []).map((r) => String((r as { criador_id?: string | null }).criador_id ?? "")).filter(Boolean))];
+      if (ownerIds.length > 0) {
+        const { data: ownerProfiles } = await supabase
+          .from("profiles")
+          .select("id, match_maioridade_confirmada")
+          .in("id", ownerIds);
+        const ownerEligible = new Set(
+          (ownerProfiles ?? [])
+            .filter((p) => (p as { match_maioridade_confirmada?: boolean | null }).match_maioridade_confirmada === true)
+            .map((p) => String((p as { id: string }).id))
+        );
+        eligibleTeamIds = new Set(
+          (owners ?? [])
+            .filter((r) => ownerEligible.has(String((r as { criador_id?: string | null }).criador_id ?? "")))
+            .map((r) => Number((r as { id?: number | null }).id ?? 0))
+            .filter((id) => Number.isFinite(id) && id > 0)
+        );
+      } else {
+        eligibleTeamIds = new Set<number>();
+      }
+    }
+    cards = teamRowsVisible.filter((t) => eligibleTeamIds.has(Number(t.id))).map((t) => ({
       id: String(t.id),
       nome: String(t.nome ?? "Time"),
       localizacao: String(t.localizacao ?? "Localização não informada"),
