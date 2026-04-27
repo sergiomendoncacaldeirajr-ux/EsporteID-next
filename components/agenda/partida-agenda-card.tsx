@@ -32,6 +32,7 @@ type Props = {
   ctaFullscreen?: boolean;
   ctaHidden?: boolean;
   desistMatchId?: number | null;
+  topActionShiftXPx?: number;
 };
 
 const cancelInitial: GerenciarCancelamentoState = { ok: false, message: "" };
@@ -74,6 +75,7 @@ export function PartidaAgendaCard({
   ctaFullscreen = false,
   ctaHidden = false,
   desistMatchId = null,
+  topActionShiftXPx = 0,
 }: Props) {
   const isPlacar = variant === "placar";
   const [openCancel, setOpenCancel] = useState(false);
@@ -115,8 +117,9 @@ export function PartidaAgendaCard({
               setShowCancelHint(false);
               setOpenCancel(true);
             }}
-            className="absolute left-1/2 top-2 z-[3] inline-flex -translate-x-1/2 items-center justify-center rounded-md border border-red-600 bg-red-600 text-white"
+          className="absolute left-1/2 top-2 z-[3] inline-flex items-center justify-center rounded-md border border-red-600 bg-red-600 text-white"
             style={{
+            transform: `translateX(calc(-50% + ${topActionShiftXPx}px))`,
               minHeight: "14px",
               height: "14px",
               padding: "0 7px",
@@ -135,8 +138,9 @@ export function PartidaAgendaCard({
         <button
           type="button"
           onClick={() => setOpenDesist(true)}
-          className="absolute left-1/2 top-2 z-[3] inline-flex -translate-x-1/2 items-center justify-center rounded-md border border-amber-700 bg-amber-700 text-white"
+          className="absolute left-1/2 top-2 z-[3] inline-flex items-center justify-center rounded-md border border-amber-700 bg-amber-700 text-white"
           style={{
+            transform: `translateX(calc(-50% + ${topActionShiftXPx}px))`,
             minHeight: "14px",
             height: "14px",
             padding: "0 7px",

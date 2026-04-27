@@ -547,7 +547,6 @@ export default async function ComunidadePage() {
                               dueloCardKey
                             ) ?? null
                           }
-                          ctaHidden={rescheduleAcceptedByDueloPainel.has(dueloCardKey)}
                           desistMatchId={
                             rescheduleAcceptedByDueloPainel.has(dueloCardKey)
                               ? cancelMatchIdByDueloPainel.get(dueloCardKey) ?? null
@@ -555,6 +554,7 @@ export default async function ComunidadePage() {
                           }
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
                           ctaLabel="Lançar resultado"
+                          topActionShiftXPx={18}
                         />
                       );
                     })}
