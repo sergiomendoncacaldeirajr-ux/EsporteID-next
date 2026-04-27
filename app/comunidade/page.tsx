@@ -173,7 +173,7 @@ export default async function ComunidadePage() {
 
   const { data: aceitosCancelaveisPainel } = await supabase
     .from("matches")
-    .select("id, usuario_id, adversario_id, esporte_id, status")
+    .select("id, usuario_id, adversario_id, esporte_id, status, reschedule_selected_option")
     .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
     .eq("finalidade", "ranking")
     .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
@@ -390,12 +390,15 @@ export default async function ComunidadePage() {
   }
 
   const cancelMatchIdByDueloPainel = new Map<string, number>();
+  const rescheduleAcceptedByDueloPainel = new Set<string>();
   const blockedDueloByCancelFlowPainel = new Set<string>();
   for (const m of aceitosCancelaveisPainel ?? []) {
     const key = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
     if (!key) continue;
     if (String(m.status ?? "") === "Aceito") {
       cancelMatchIdByDueloPainel.set(key, Number(m.id));
+      const selected = Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? 0);
+      if (Number.isFinite(selected) && selected > 0) rescheduleAcceptedByDueloPainel.add(key);
     } else if (String(m.status ?? "") === "CancelamentoPendente" || String(m.status ?? "") === "ReagendamentoPendente") {
       blockedDueloByCancelFlowPainel.add(key);
     }
@@ -520,6 +523,7 @@ export default async function ComunidadePage() {
                       const esp = firstOfRelation(row.esportes);
                       const pr = row as AgendaPartidaCardRow;
                       const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
+                      const dueloCardKey = dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard) ?? "__";
                       return (
                         <PartidaAgendaCard
                           key={pr.id}
@@ -540,8 +544,14 @@ export default async function ComunidadePage() {
                           ctaFullscreen
                           cancelMatchId={
                             cancelMatchIdByDueloPainel.get(
-                              dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard) ?? "__"
+                              dueloCardKey
                             ) ?? null
+                          }
+                          ctaHidden={rescheduleAcceptedByDueloPainel.has(dueloCardKey)}
+                          desistMatchId={
+                            rescheduleAcceptedByDueloPainel.has(dueloCardKey)
+                              ? cancelMatchIdByDueloPainel.get(dueloCardKey) ?? null
+                              : null
                           }
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
                           ctaLabel="Lançar resultado"

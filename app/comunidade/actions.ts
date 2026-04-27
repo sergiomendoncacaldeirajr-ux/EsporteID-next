@@ -360,6 +360,14 @@ function isBeyond72hDateTime(iso: string | null): boolean {
   return t > max;
 }
 
+function hasDuplicateDateTimeOptions(values: Array<string | null>): boolean {
+  const normalized = values
+    .map((v) => String(v ?? "").trim())
+    .filter(Boolean);
+  if (normalized.length !== values.length) return true;
+  return new Set(normalized).size !== normalized.length;
+}
+
 export async function gerenciarCancelamentoMatch(
   _prev: GerenciarCancelamentoState | undefined,
   formData: FormData
@@ -406,6 +414,9 @@ export async function gerenciarCancelamentoMatch(
       }
       if (isBeyond72hDateTime(op1) || isBeyond72hDateTime(op2) || isBeyond72hDateTime(op3)) {
         return { ok: false, message: "As opções de data e hora devem estar dentro de 72 horas." };
+      }
+      if (hasDuplicateDateTimeOptions([op1, op2, op3])) {
+        return { ok: false, message: "As 3 opções precisam ser diferentes entre si." };
       }
     }
     const { error } = await supabase.rpc("responder_cancelamento_match", {
@@ -473,6 +484,98 @@ export async function gerenciarCancelamentoMatch(
     revalidatePath("/agenda");
     revalidatePath("/admin/denuncias");
     return { ok: true, message: "Denúncia registrada para análise da moderação." };
+  }
+
+  if (intent === "desist_match") {
+    const { data: matchRow } = await supabase
+      .from("matches")
+      .select("id, usuario_id, adversario_id, esporte_id, status, reschedule_selected_option")
+      .eq("id", matchId)
+      .maybeSingle();
+    if (!matchRow) return { ok: false, message: "Desafio não encontrado." };
+    if (user.id !== matchRow.usuario_id && user.id !== matchRow.adversario_id) {
+      return { ok: false, message: "Sem permissão para desistir deste desafio." };
+    }
+    if (String(matchRow.status ?? "") !== "Aceito") {
+      return { ok: false, message: "Este desafio não está ativo para desistência." };
+    }
+    if (!Number.isFinite(Number(matchRow.reschedule_selected_option ?? NaN)) || Number(matchRow.reschedule_selected_option) < 1) {
+      return { ok: false, message: "Desistência disponível apenas após reagendamento aceito." };
+    }
+    const winnerId = user.id === matchRow.usuario_id ? matchRow.adversario_id : matchRow.usuario_id;
+    if (!winnerId) return { ok: false, message: "Não foi possível identificar o vencedor." };
+
+    const { data: partidaRow } = await supabase
+      .from("partidas")
+      .select("id, jogador1_id, jogador2_id")
+      .eq("torneio_id", null)
+      .eq("esporte_id", Number(matchRow.esporte_id ?? 0))
+      .or(
+        `and(jogador1_id.eq.${matchRow.usuario_id},jogador2_id.eq.${matchRow.adversario_id}),and(jogador1_id.eq.${matchRow.adversario_id},jogador2_id.eq.${matchRow.usuario_id})`
+      )
+      .in("status", ["agendada", "aguardando_confirmacao"])
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (partidaRow?.id) {
+      const p1Winner = partidaRow.jogador1_id === winnerId;
+      const p2Winner = partidaRow.jogador2_id === winnerId;
+      await supabase
+        .from("partidas")
+        .update({
+          status: "concluida",
+          status_ranking: "validado",
+          placar_1: p1Winner ? 1 : p2Winner ? 0 : 0,
+          placar_2: p2Winner ? 1 : p1Winner ? 0 : 0,
+          mensagem: "Encerrado por desistência informada após reagendamento aceito.",
+          data_resultado: new Date().toISOString(),
+          data_validacao: new Date().toISOString(),
+        })
+        .eq("id", Number(partidaRow.id));
+    }
+
+    const { error: mErr } = await supabase
+      .from("matches")
+      .update({
+        status: "Concluido",
+        data_confirmacao: new Date().toISOString(),
+        wo_auto_if_no_result: false,
+        cancel_requested_by: null,
+      })
+      .eq("id", matchId);
+    if (mErr) return { ok: false, message: mErr.message };
+
+    await Promise.all([
+      notify(
+        supabase,
+        matchRow.usuario_id,
+        user.id === matchRow.usuario_id
+          ? "Você desistiu do desafio. Resultado encerrado com vitória do oponente."
+          : "O oponente desistiu do desafio. Vitória atribuída para você.",
+        matchId,
+        user.id
+      ),
+      notify(
+        supabase,
+        matchRow.adversario_id,
+        user.id === matchRow.adversario_id
+          ? "Você desistiu do desafio. Resultado encerrado com vitória do oponente."
+          : "O oponente desistiu do desafio. Vitória atribuída para você.",
+        matchId,
+        user.id
+      ),
+    ]);
+
+    await marcarNotificacoesPorAcao(supabase, user.id, {
+      referenciaId: matchId,
+      tipos: ["match", "desafio"],
+    });
+    revalidatePath("/agenda");
+    revalidatePath("/comunidade");
+    revalidatePath("/dashboard");
+    revalidatePath("/match");
+    return { ok: true, message: "Desistência registrada. Vitória do oponente confirmada." };
   }
 
   return { ok: false, message: "Ação de cancelamento inválida." };

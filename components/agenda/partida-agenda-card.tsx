@@ -30,6 +30,8 @@ type Props = {
   ctaLabel?: string;
   cancelMatchId?: number | null;
   ctaFullscreen?: boolean;
+  ctaHidden?: boolean;
+  desistMatchId?: number | null;
 };
 
 const cancelInitial: GerenciarCancelamentoState = { ok: false, message: "" };
@@ -70,9 +72,12 @@ export function PartidaAgendaCard({
   ctaLabel,
   cancelMatchId,
   ctaFullscreen = false,
+  ctaHidden = false,
+  desistMatchId = null,
 }: Props) {
   const isPlacar = variant === "placar";
   const [openCancel, setOpenCancel] = useState(false);
+  const [openDesist, setOpenDesist] = useState(false);
   const [showCancelHint, setShowCancelHint] = useState(Boolean(cancelMatchId) && !isPlacar);
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, cancelInitial);
   useEffect(() => {
@@ -83,6 +88,7 @@ export function PartidaAgendaCard({
   }, [showCancelHint]);
   useEffect(() => {
     if (state.ok) setOpenCancel(false);
+    if (state.ok) setOpenDesist(false);
   }, [state.ok]);
   const ctaHref =
     href ??
@@ -96,7 +102,7 @@ export function PartidaAgendaCard({
           : cardBase
       }
     >
-      {cancelMatchId && !isPlacar ? (
+      {cancelMatchId && !isPlacar && !desistMatchId ? (
         <>
           {showCancelHint ? (
             <p className="absolute left-1/2 -top-5 z-[3] w-[88%] -translate-x-1/2 rounded-md border border-eid-primary-500/40 bg-eid-card/95 px-2 py-1 text-center text-[9px] font-semibold leading-tight text-eid-text-secondary">
@@ -124,6 +130,25 @@ export function PartidaAgendaCard({
             Cancelar
           </button>
         </>
+      ) : null}
+      {desistMatchId && !isPlacar ? (
+        <button
+          type="button"
+          onClick={() => setOpenDesist(true)}
+          className="absolute left-1/2 top-2 z-[3] inline-flex -translate-x-1/2 items-center justify-center rounded-md border border-amber-700 bg-amber-700 text-white"
+          style={{
+            minHeight: "14px",
+            height: "14px",
+            padding: "0 7px",
+            fontSize: "9px",
+            lineHeight: "1",
+            letterSpacing: "0.02em",
+            fontWeight: 900,
+            textTransform: "uppercase",
+          }}
+        >
+          Cancelar e desistir
+        </button>
       ) : null}
       <div className="flex flex-wrap items-center gap-2 text-[9px] font-semibold uppercase tracking-wide text-eid-primary-400 md:text-[10px] md:font-black">
         <span className="inline-flex items-center gap-1">
@@ -227,27 +252,33 @@ export function PartidaAgendaCard({
         </p>
       ) : null}
 
-      {ctaFullscreen ? (
-        <ProfileEditDrawerTrigger
-          href={ctaHref}
-          title={ctaText}
-          fullscreen
-          topMode="backOnly"
-          className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-3 w-full text-center text-[11px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs`}
-        >
-          <>
+      {!ctaHidden ? (
+        ctaFullscreen ? (
+          <ProfileEditDrawerTrigger
+            href={ctaHref}
+            title={ctaText}
+            fullscreen
+            topMode="backOnly"
+            className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-3 w-full text-center text-[11px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs`}
+          >
+            <>
+              <DesafioFlowCtaIcon />
+              <span>{ctaText}</span>
+            </>
+          </ProfileEditDrawerTrigger>
+        ) : (
+          <Link
+            href={ctaHref}
+            className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-3 text-center text-[11px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs`}
+          >
             <DesafioFlowCtaIcon />
             <span>{ctaText}</span>
-          </>
-        </ProfileEditDrawerTrigger>
+          </Link>
+        )
       ) : (
-        <Link
-          href={ctaHref}
-          className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-3 text-center text-[11px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs`}
-        >
-          <DesafioFlowCtaIcon />
-          <span>{ctaText}</span>
-        </Link>
+        <p className="mt-3 text-center text-[11px] font-semibold text-eid-primary-300 md:mt-4 md:text-xs">
+          Data, horário e local já definidos pelo reagendamento aceito.
+        </p>
       )}
 
       {openCancel && cancelMatchId && typeof document !== "undefined"
@@ -280,6 +311,41 @@ export function PartidaAgendaCard({
                       type="submit"
                       disabled={pending}
                       className="inline-flex min-h-[32px] flex-1 items-center justify-center rounded-lg border border-red-700 bg-red-700 px-3 text-xs font-black text-white"
+                    >
+                      {pending ? "Enviando..." : "Confirmar"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
+      {openDesist && desistMatchId && typeof document !== "undefined"
+        ? createPortal(
+            <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[1.5px] sm:items-center">
+              <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-4 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
+                <p className="text-sm font-black uppercase tracking-[0.08em] text-amber-400">Solicitar desistência</p>
+                <p className="mt-2 text-sm text-eid-text-secondary">
+                  Tem certeza que quer cancelar este desafio e passar a vitória para o oponente?
+                </p>
+                {state.ok ? <p className="mt-2 text-xs text-emerald-300">{state.message}</p> : null}
+                {!state.ok && state.message ? <p className="mt-2 text-xs text-red-300">{state.message}</p> : null}
+                <form action={formAction} className="mt-3 grid gap-2">
+                  <input type="hidden" name="intent" value="desist_match" />
+                  <input type="hidden" name="match_id" value={String(desistMatchId)} />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="inline-flex min-h-[32px] flex-1 items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-3 text-xs font-bold text-eid-fg"
+                      onClick={() => setOpenDesist(false)}
+                    >
+                      Voltar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={pending}
+                      className="inline-flex min-h-[32px] flex-1 items-center justify-center rounded-lg border border-amber-700 bg-amber-700 px-3 text-xs font-black text-white"
                     >
                       {pending ? "Enviando..." : "Confirmar"}
                     </button>

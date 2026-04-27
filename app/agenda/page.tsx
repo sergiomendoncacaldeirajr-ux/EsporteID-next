@@ -134,7 +134,7 @@ export default async function AgendaPage() {
   const { data: aceitosCancelaveis } = await supabase
     .from("matches")
     .select(
-      "id, usuario_id, adversario_id, modalidade_confronto, esporte_id, status, cancel_requested_by, cancel_requested_at, cancel_response_deadline_at, reschedule_deadline_at"
+      "id, usuario_id, adversario_id, modalidade_confronto, esporte_id, status, cancel_requested_by, cancel_requested_at, cancel_response_deadline_at, reschedule_deadline_at, reschedule_selected_option, scheduled_for, scheduled_location"
     )
     .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
     .eq("finalidade", "ranking")
@@ -221,12 +221,26 @@ export default async function AgendaPage() {
   }
 
   const cancelMatchIdByDuelo = new Map<string, number>();
+  const acceptedScheduleByDuelo = new Map<string, { scheduledFor: string | null; scheduledLocation: string | null }>();
+  const rescheduleAcceptedByDuelo = new Set<string>();
   const blockedDueloByCancelFlow = new Set<string>();
   for (const m of aceitosCancelaveis ?? []) {
     const key = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
     if (!key) continue;
     if (String(m.status ?? "") === "Aceito") {
       cancelMatchIdByDuelo.set(key, Number(m.id));
+      if (Number.isFinite(Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? NaN))) {
+        const selected = Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? 0);
+        if (selected > 0) {
+          rescheduleAcceptedByDuelo.add(key);
+          acceptedScheduleByDuelo.set(key, {
+            scheduledFor: (m as { scheduled_for?: string | null }).scheduled_for ? String((m as { scheduled_for?: string | null }).scheduled_for) : null,
+            scheduledLocation: (m as { scheduled_location?: string | null }).scheduled_location
+              ? String((m as { scheduled_location?: string | null }).scheduled_location)
+              : null,
+          });
+        }
+      }
     } else if (String(m.status ?? "") === "CancelamentoPendente" || String(m.status ?? "") === "ReagendamentoPendente") {
       blockedDueloByCancelFlow.add(key);
     }
@@ -272,6 +286,8 @@ export default async function AgendaPage() {
               const esp = firstOfRelation(row.esportes);
               const pr = row as AgendaPartidaCardRow;
               const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
+              const dueloCardKey = dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard) ?? "__";
+              const acceptedSchedule = acceptedScheduleByDuelo.get(dueloCardKey) ?? null;
               return (
                 <PartidaAgendaCard
                   key={pr.id}
@@ -286,14 +302,24 @@ export default async function AgendaPage() {
                   j1NotaEid={pr.jogador1_id ? notaEidByUserSport.get(`${pr.jogador1_id}:${esporteIdCard}`) ?? 0 : 0}
                   j2NotaEid={pr.jogador2_id ? notaEidByUserSport.get(`${pr.jogador2_id}:${esporteIdCard}`) ?? 0 : 0}
                   esporteId={esporteIdCard}
-                  dataRef={pr.data_partida ?? pr.data_registro}
-                  localLabel={localLabel(pr)}
+                  dataRef={acceptedSchedule?.scheduledFor ?? pr.data_partida ?? pr.data_registro}
+                  localLabel={acceptedSchedule?.scheduledLocation ?? localLabel(pr)}
                   variant="agendada"
                   ctaFullscreen
                   cancelMatchId={
                     cancelMatchIdByDuelo.get(
-                      dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard) ?? "__"
+                      dueloCardKey
                     ) ?? null
+                  }
+                  ctaHidden={
+                    rescheduleAcceptedByDuelo.has(dueloCardKey)
+                  }
+                  desistMatchId={
+                    rescheduleAcceptedByDuelo.has(dueloCardKey)
+                      ? cancelMatchIdByDuelo.get(
+                          dueloCardKey
+                        ) ?? null
+                      : null
                   }
                 />
               );

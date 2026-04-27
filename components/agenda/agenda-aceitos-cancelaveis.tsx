@@ -68,6 +68,19 @@ function maxDatetimeLocal72h(): string {
   return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
 }
 
+function addMinutesToDatetimeLocal(base: string, minutes: number): string {
+  const t = new Date(base).getTime();
+  if (Number.isNaN(t)) return base;
+  const dt = new Date(t + minutes * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const yyyy = dt.getFullYear();
+  const mm = pad(dt.getMonth() + 1);
+  const dd = pad(dt.getDate());
+  const hh = pad(dt.getHours());
+  const mi = pad(dt.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
 export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, initial);
   const [openRefuseByMatch, setOpenRefuseByMatch] = useState<Record<number, boolean>>({});
@@ -125,6 +138,21 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
       event.target.setCustomValidity("");
     }
     setDatetimeValueByField((prev) => ({ ...prev, [k]: clamped }));
+  }
+
+  function ensureInitialDateOptions(matchId: number) {
+    const k1 = `${matchId}_1`;
+    const k2 = `${matchId}_2`;
+    const k3 = `${matchId}_3`;
+    setDatetimeValueByField((prev) => {
+      if (prev[k1] || prev[k2] || prev[k3]) return prev;
+      return {
+        ...prev,
+        [k1]: minDateTimeLocal,
+        [k2]: addMinutesToDatetimeLocal(minDateTimeLocal, 60),
+        [k3]: addMinutesToDatetimeLocal(minDateTimeLocal, 120),
+      };
+    });
   }
 
   if (items.length === 0) return null;
@@ -209,7 +237,13 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                     <button
                       type="button"
                       disabled={pending}
-                      onClick={() => setOpenRefuseByMatch((s) => ({ ...s, [m.id]: !s[m.id] }))}
+                      onClick={() => {
+                        setOpenRefuseByMatch((s) => {
+                          const nextOpen = !s[m.id];
+                          if (nextOpen) ensureInitialDateOptions(m.id);
+                          return { ...s, [m.id]: nextOpen };
+                        });
+                      }}
                       className="inline-flex h-5 w-full appearance-none items-center justify-center whitespace-nowrap rounded-md border border-rose-700 bg-rose-600 px-1 py-0 align-middle text-[6px] font-black uppercase leading-none tracking-[0.01em] text-white transition hover:bg-rose-700 disabled:opacity-50"
                       style={{ height: "22px", minHeight: "22px", fontSize: "9px", padding: "0 6px", lineHeight: "1" }}
                     >
@@ -228,42 +262,33 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                         required
                         min={minDateTimeLocal}
                         max={maxDateTimeLocal}
-                        value={datetimeValueByField[`${m.id}_1`] ?? ""}
+                        value={datetimeValueByField[`${m.id}_1`] ?? minDateTimeLocal}
                         onChange={(event) => handleDatetimeChange(m.id, 1, event)}
                         className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
-                      {!datetimeValueByField[`${m.id}_1`] ? (
-                        <p className="-mt-1 text-[10px] text-eid-text-secondary">Opção 1: selecione data e hora (até 72h).</p>
-                      ) : null}
                       <input
                         name="opcao_2"
                         type="datetime-local"
                         required
                         min={minDateTimeLocal}
                         max={maxDateTimeLocal}
-                        value={datetimeValueByField[`${m.id}_2`] ?? ""}
+                        value={datetimeValueByField[`${m.id}_2`] ?? addMinutesToDatetimeLocal(minDateTimeLocal, 60)}
                         onChange={(event) => handleDatetimeChange(m.id, 2, event)}
                         className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
-                      {!datetimeValueByField[`${m.id}_2`] ? (
-                        <p className="-mt-1 text-[10px] text-eid-text-secondary">Opção 2: selecione data e hora (até 72h).</p>
-                      ) : null}
                       <input
                         name="opcao_3"
                         type="datetime-local"
                         required
                         min={minDateTimeLocal}
                         max={maxDateTimeLocal}
-                        value={datetimeValueByField[`${m.id}_3`] ?? ""}
+                        value={datetimeValueByField[`${m.id}_3`] ?? addMinutesToDatetimeLocal(minDateTimeLocal, 120)}
                         onChange={(event) => handleDatetimeChange(m.id, 3, event)}
                         className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
-                      {!datetimeValueByField[`${m.id}_3`] ? (
-                        <p className="-mt-1 text-[10px] text-eid-text-secondary">Opção 3: selecione data e hora (até 72h).</p>
-                      ) : null}
                       <LocalAutocompleteInput
                         name="local_reagendamento"
                         placeholder="Local sugerido (opcional)"
