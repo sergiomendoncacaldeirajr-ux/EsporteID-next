@@ -1,4 +1,5 @@
-import { adminSetDenunciaStatus } from "@/app/admin/actions";
+import { adminMediarResultadoDaDenuncia, adminSetDenunciaStatus } from "@/app/admin/actions";
+import { AdminDenunciaStatusSubmitButton } from "@/app/admin/denuncias/status-submit-button";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 const ST = ["aberta", "em_analise", "resolvida", "arquivada"];
@@ -22,7 +23,21 @@ function whatsappHref(raw: string | null | undefined): string | null {
   return `https://wa.me/${digits}`;
 }
 
-export default async function AdminDenunciasPage() {
+function inferPartidaIdFromDenuncia(d: DenunciaRow): number | null {
+  const txt = `${String(d.texto ?? "")} ${String(d.motivo ?? "")}`;
+  const m = txt.match(/partida\s*#\s*(\d+)/i);
+  if (!m?.[1]) return null;
+  const id = Number(m[1]);
+  return Number.isFinite(id) && id > 0 ? id : null;
+}
+
+type Props = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function AdminDenunciasPage({ searchParams }: Props) {
+  const sp = (await searchParams) ?? {};
+  const flash = typeof sp.adm_flash === "string" ? sp.adm_flash : "";
   if (!hasServiceRoleConfig()) {
     return <p className="text-sm text-eid-text-secondary">Configure a service role.</p>;
   }
@@ -64,8 +79,29 @@ export default async function AdminDenunciasPage() {
     <div>
       <h2 className="text-base font-bold text-eid-fg">Denúncias</h2>
       <p className="mt-1 text-sm text-eid-text-secondary">Últimas 200. Novas denúncias também geram alertas na visão geral do admin.</p>
+      {flash === "mediacao_ok" ? (
+        <p className="mt-3 rounded-lg border border-emerald-500/35 bg-emerald-500/12 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-success-600)_80%,var(--eid-fg)_20%)]">
+          Mediação aplicada com sucesso e denúncia marcada como resolvida.
+        </p>
+      ) : null}
+      {flash === "mediacao_invalida" || flash === "mediacao_erro" ? (
+        <p className="mt-3 rounded-lg border border-rose-500/35 bg-rose-500/12 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-danger-600)_82%,var(--eid-fg)_18%)]">
+          Não foi possível aplicar a mediação nesta denúncia.
+        </p>
+      ) : null}
+      {flash === "denuncia_status_ok" ? (
+        <p className="mt-3 rounded-lg border border-emerald-500/35 bg-emerald-500/12 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-success-600)_80%,var(--eid-fg)_20%)]">
+          Status da denúncia salvo com sucesso.
+        </p>
+      ) : null}
+      {flash === "denuncia_status_invalido" || flash === "denuncia_status_erro" ? (
+        <p className="mt-3 rounded-lg border border-rose-500/35 bg-rose-500/12 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-danger-600)_82%,var(--eid-fg)_18%)]">
+          Não foi possível salvar o status da denúncia. Tente novamente.
+        </p>
+      ) : null}
       <div className="mt-4 space-y-3">
         {rows.map((d) => {
+          const partidaIdMediacao = inferPartidaIdFromDenuncia(d);
           const alvoNome = d.alvo_usuario_id ? nomePorId.get(d.alvo_usuario_id) : null;
           const denNome = nomePorId.get(d.denunciante_id);
           const alvoWa = d.alvo_usuario_id ? whatsappHref(whatsappPorId.get(d.alvo_usuario_id)) : null;
@@ -83,9 +119,7 @@ export default async function AdminDenunciasPage() {
                       </option>
                     ))}
                   </select>
-                  <button type="submit" className="rounded border border-eid-primary-500/40 px-2 py-1 text-[10px] font-bold text-eid-primary-300">
-                    Salvar
-                  </button>
+                  <AdminDenunciaStatusSubmitButton />
                 </form>
               </div>
               {d.codigo_motivo ? (
@@ -116,6 +150,43 @@ export default async function AdminDenunciasPage() {
                 <span className="font-mono"> · {d.denunciante_id}</span>
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
+                {partidaIdMediacao ? (
+                  <>
+                    <form action={adminMediarResultadoDaDenuncia}>
+                      <input type="hidden" name="denuncia_id" value={d.id} />
+                      <input type="hidden" name="partida_id" value={partidaIdMediacao} />
+                      <input type="hidden" name="decision" value="winner_1" />
+                      <button
+                        type="submit"
+                        className="inline-flex items-center gap-1 rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-eid-primary-200"
+                      >
+                        Definir vencedor: lado 1
+                      </button>
+                    </form>
+                    <form action={adminMediarResultadoDaDenuncia}>
+                      <input type="hidden" name="denuncia_id" value={d.id} />
+                      <input type="hidden" name="partida_id" value={partidaIdMediacao} />
+                      <input type="hidden" name="decision" value="winner_2" />
+                      <button
+                        type="submit"
+                        className="inline-flex items-center gap-1 rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-eid-primary-200"
+                      >
+                        Definir vencedor: lado 2
+                      </button>
+                    </form>
+                    <form action={adminMediarResultadoDaDenuncia}>
+                      <input type="hidden" name="denuncia_id" value={d.id} />
+                      <input type="hidden" name="partida_id" value={partidaIdMediacao} />
+                      <input type="hidden" name="decision" value="cancel" />
+                      <button
+                        type="submit"
+                        className="inline-flex items-center gap-1 rounded-lg border border-rose-500/45 bg-rose-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-rose-200"
+                      >
+                        Cancelar partida na mediação
+                      </button>
+                    </form>
+                  </>
+                ) : null}
                 {alvoWa ? (
                   <a
                     href={alvoWa}

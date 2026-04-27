@@ -61,3 +61,18 @@ export async function hasActivePushSubscription() {
   const sub = await reg.pushManager.getSubscription();
   return Boolean(sub);
 }
+
+export async function syncExistingPushSubscription() {
+  if (!("serviceWorker" in navigator)) return false;
+  if (!("Notification" in window)) return false;
+  if (Notification.permission !== "granted") return false;
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  if (!sub) return false;
+  const resp = await fetch("/api/push/subscribe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ subscription: sub.toJSON() }),
+  });
+  return resp.ok;
+}

@@ -4,6 +4,7 @@ import { DismissibleTapAwayHint } from "@/components/agenda/dismissible-tapaway-
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import { MatchScoreForm } from "@/components/placar/match-score-form";
+import { StatusSubmitButton } from "@/components/placar/status-submit-button";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
@@ -155,7 +156,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
     aguardandoConfirmacao &&
     p.lancado_por !== user.id &&
     resultadoContestado;
-  const resultadoEnviadoAguardando = aguardandoConfirmacao && p.lancado_por === user.id && !agendaSomente;
+  const resultadoEnviadoAguardando = status === "aguardando_confirmacao" && p.lancado_por === user.id && !agendaSomente;
 
   const esp = Array.isArray(p.esportes) ? p.esportes[0] : p.esportes;
   const regrasPlacar = toRulesConfig((esp as { desafio_regras_placar_json?: unknown } | null)?.desafio_regras_placar_json);
@@ -318,17 +319,20 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           ) : null}
 
           {!agendaSomente && (p.placar_1 != null || p.placar_2 != null) && (
-            <div className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-3">
+            <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2.5 py-2.5">
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Placar atual</p>
               {placarSets.length > 0 ? (
-                <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_38%,var(--eid-surface)_62%)]">
-                  <div className="grid grid-cols-[1.2fr_repeat(5,minmax(0,1fr))] items-stretch">
-                    <div className="border-b border-r border-[color:var(--eid-border-subtle)] px-2 py-1.5">
+                <div className="mt-2 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_38%,var(--eid-surface)_62%)]">
+                  <div
+                    className="grid min-w-max items-stretch"
+                    style={{ gridTemplateColumns: `minmax(128px,1fr) repeat(${Math.max(1, placarSets.length)}, minmax(30px,34px))` }}
+                  >
+                    <div className="border-b border-r border-[color:var(--eid-border-subtle)] px-1.5 py-1">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[9px] font-bold text-eid-fg">
+                        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg">
                           {j1?.avatar_url ? <img src={j1.avatar_url} alt="" className="h-full w-full object-cover" /> : (j1?.nome ?? "J1").slice(0, 2)}
                         </span>
-                        <span className="truncate text-[11px] font-black uppercase tracking-[0.02em] text-eid-fg">{j1?.nome ?? "Jogador 1"}</span>
+                        <span className="truncate text-[10px] font-black uppercase tracking-[0.02em] text-eid-fg">{j1?.nome ?? "Jogador 1"}</span>
                       </div>
                     </div>
                     {placarSets.map((set, idx) => {
@@ -337,23 +341,20 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                       const tbB = Number(set.tiebreakB ?? 0);
                       const hasTb = tbA > 0 || tbB > 0;
                       return (
-                        <div key={`a-${idx}`} className="border-b border-r border-[color:var(--eid-border-subtle)] px-1 py-1.5 text-center">
-                          <span className="inline-flex items-start justify-center text-[21px] font-black leading-none text-eid-fg">
+                        <div key={`a-${idx}`} className="border-b border-r border-[color:var(--eid-border-subtle)] px-0.5 py-1 text-center">
+                          <span className="inline-flex items-start justify-center text-[18px] font-black leading-none text-eid-fg">
                             <span>{a}</span>
-                            {hasTb ? <sup className="ml-0.5 text-[10px] font-bold leading-none text-eid-text-secondary">{tbA}</sup> : null}
+                            {hasTb ? <sup className="ml-0.5 text-[9px] font-bold leading-none text-eid-text-secondary">{tbA}</sup> : null}
                           </span>
                         </div>
                       );
                     })}
-                    {Array.from({ length: Math.max(0, 5 - placarSets.length) }).map((_, idx) => (
-                      <div key={`a-empty-${idx}`} className="border-b border-r border-[color:var(--eid-border-subtle)]" />
-                    ))}
-                    <div className="border-r border-[color:var(--eid-border-subtle)] px-2 py-1.5">
+                    <div className="border-r border-[color:var(--eid-border-subtle)] px-1.5 py-1">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[9px] font-bold text-eid-fg">
+                        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg">
                           {j2?.avatar_url ? <img src={j2.avatar_url} alt="" className="h-full w-full object-cover" /> : (j2?.nome ?? "J2").slice(0, 2)}
                         </span>
-                        <span className="truncate text-[11px] font-black uppercase tracking-[0.02em] text-eid-fg">{j2?.nome ?? "Jogador 2"}</span>
+                        <span className="truncate text-[10px] font-black uppercase tracking-[0.02em] text-eid-fg">{j2?.nome ?? "Jogador 2"}</span>
                       </div>
                     </div>
                     {placarSets.map((set, idx) => {
@@ -362,17 +363,14 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                       const tbB = Number(set.tiebreakB ?? 0);
                       const hasTb = tbA > 0 || tbB > 0;
                       return (
-                        <div key={`b-${idx}`} className="border-r border-[color:var(--eid-border-subtle)] px-1 py-1.5 text-center">
-                          <span className="inline-flex items-start justify-center text-[21px] font-black leading-none text-eid-fg">
+                        <div key={`b-${idx}`} className="border-r border-[color:var(--eid-border-subtle)] px-0.5 py-1 text-center">
+                          <span className="inline-flex items-start justify-center text-[18px] font-black leading-none text-eid-fg">
                             <span>{b}</span>
-                            {hasTb ? <sup className="ml-0.5 text-[10px] font-bold leading-none text-eid-text-secondary">{tbB}</sup> : null}
+                            {hasTb ? <sup className="ml-0.5 text-[9px] font-bold leading-none text-eid-text-secondary">{tbB}</sup> : null}
                           </span>
                         </div>
                       );
                     })}
-                    {Array.from({ length: Math.max(0, 5 - placarSets.length) }).map((_, idx) => (
-                      <div key={`b-empty-${idx}`} className="border-r border-[color:var(--eid-border-subtle)]" />
-                    ))}
                   </div>
                 </div>
               ) : (
@@ -465,7 +463,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             </div>
           ) : null}
 
-          {aguardandoConfirmacao && p.lancado_por === user.id && !agendaSomente ? (
+          {resultadoEnviadoAguardando ? (
             <p className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65 px-3 py-2 text-xs text-eid-text-secondary">
               Resultado enviado. Aguardando confirmação do oponente.
             </p>
@@ -482,12 +480,11 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
               </form>
               <form action={contestarPlacarAction}>
                 <input type="hidden" name="partida_id" value={id} />
-                <button
-                  type="submit"
-                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full hover:border-amber-500/45 hover:text-amber-200`}
-                >
-                  Contestar resultado
-                </button>
+                <StatusSubmitButton
+                  idleLabel="Contestar resultado"
+                  pendingLabel="Contestando..."
+                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full hover:border-amber-500/45 hover:text-amber-200 disabled:opacity-60`}
+                />
               </form>
             </div>
           ) : null}
@@ -495,12 +492,11 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             <div className="mt-5">
               <form action={abrirMediacaoAdminAction}>
                 <input type="hidden" name="partida_id" value={id} />
-                <button
-                  type="submit"
-                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full border-amber-500/45 bg-amber-500/14 text-amber-200 hover:bg-amber-500/20`}
-                >
-                  Abrir mediação com o admin
-                </button>
+                <StatusSubmitButton
+                  idleLabel="Abrir mediação com o admin"
+                  pendingLabel="Enviando..."
+                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full border-amber-500/45 bg-amber-500/14 text-amber-200 hover:bg-amber-500/20 disabled:opacity-60`}
+                />
               </form>
             </div>
           ) : null}

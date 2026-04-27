@@ -10,6 +10,13 @@ export type NotifRow = {
   data_criacao: string | null;
 };
 
+function isFlowActionNotif(tipoRaw: string | null | undefined): boolean {
+  const tipo = String(tipoRaw ?? "")
+    .trim()
+    .toLowerCase();
+  return tipo === "match" || tipo === "desafio";
+}
+
 function notifDate(n: NotifRow) {
   const raw = n.data_criacao ?? n.criada_em;
   if (!raw) return "";
@@ -21,7 +28,7 @@ function notifDate(n: NotifRow) {
 }
 
 export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) {
-  const unread = items.filter((n) => n.lida !== true).length;
+  const unread = items.filter((n) => n.lida !== true && !isFlowActionNotif(n.tipo)).length;
 
   return (
     <section id="notificacoes" className="scroll-mt-24">

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import type { SystemFeatureKey, SystemFeatureMode } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
@@ -15,6 +16,19 @@ function svc() {
 
 async function guard() {
   if (!(await getIsPlatformAdmin())) throw new Error("Acesso negado.");
+}
+
+function revalidateAdminPartidaPaths(partidaId: number, torneioId: number, includeDenuncias = false) {
+  revalidatePath("/admin/partidas");
+  if (includeDenuncias) revalidatePath("/admin/denuncias");
+  revalidatePath("/agenda");
+  revalidatePath("/comunidade");
+  revalidatePath("/dashboard");
+  revalidatePath(`/registrar-placar/${partidaId}`);
+  if (Number.isFinite(torneioId) && torneioId > 0) {
+    revalidatePath(`/torneios/${torneioId}`);
+    revalidatePath(`/torneios/${torneioId}/operacao`);
+  }
 }
 
 export async function adminCancelarLimparPartida(formData: FormData) {
@@ -61,19 +75,162 @@ export async function adminCancelarLimparPartida(formData: FormData) {
         .eq("id", matchId);
     }
 
-    revalidatePath("/admin/partidas");
-    revalidatePath("/agenda");
-    revalidatePath("/comunidade");
-    revalidatePath("/dashboard");
-    revalidatePath(`/registrar-placar/${partidaId}`);
     const torneioId = Number(partida.torneio_id ?? 0);
-    if (Number.isFinite(torneioId) && torneioId > 0) {
-      revalidatePath(`/torneios/${torneioId}`);
-      revalidatePath(`/torneios/${torneioId}/operacao`);
-    }
+    revalidateAdminPartidaPaths(partidaId, torneioId);
     redirect("/admin/partidas?adm_flash=partida_limpar_ok");
-  } catch {
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirect("/admin/partidas?adm_flash=partida_limpar_erro");
+  }
+}
+
+export async function adminDefinirResultadoPartida(formData: FormData) {
+  try {
+    await guard();
+    const partidaId = Number(formData.get("partida_id"));
+    const winnerSide = String(formData.get("winner_side") ?? "").trim();
+    const placar1 = Number(formData.get("placar_1"));
+    const placar2 = Number(formData.get("placar_2"));
+    if (!Number.isFinite(partidaId) || partidaId < 1) {
+      redirect("/admin/partidas?adm_flash=partida_resultado_invalido");
+    }
+    if (!(winnerSide === "1" || winnerSide === "2")) {
+      redirect("/admin/partidas?adm_flash=partida_resultado_invalido");
+    }
+    if (!Number.isFinite(placar1) || !Number.isFinite(placar2) || placar1 < 0 || placar2 < 0 || placar1 === placar2) {
+      redirect("/admin/partidas?adm_flash=partida_resultado_invalido");
+    }
+    const db = svc();
+    const { data: partida } = await db
+      .from("partidas")
+      .select("id, match_id, torneio_id, jogador1_id, jogador2_id, time1_id, time2_id")
+      .eq("id", partidaId)
+      .maybeSingle();
+    if (!partida) {
+      redirect("/admin/partidas?adm_flash=partida_resultado_invalido");
+    }
+
+    const vencedorId =
+      winnerSide === "1"
+        ? partida.time1_id ?? partida.jogador1_id ?? null
+        : partida.time2_id ?? partida.jogador2_id ?? null;
+
+    const { error } = await db
+      .from("partidas")
+      .update({
+        status: "concluida",
+        status_ranking: "validado",
+        placar_1: Math.trunc(placar1),
+        placar_2: Math.trunc(placar2),
+        placar_desafiante: null,
+        placar_desafiado: null,
+        placar: `${Math.trunc(placar1)}x${Math.trunc(placar2)}`,
+        vencedor_id: vencedorId,
+        lancado_por: null,
+        mensagem: "Resultado definido por mediação administrativa.",
+        data_resultado: new Date().toISOString(),
+        data_validacao: new Date().toISOString(),
+      })
+      .eq("id", partidaId);
+    if (error) {
+      redirect("/admin/partidas?adm_flash=partida_resultado_erro");
+    }
+
+    const matchId = Number(partida.match_id ?? 0);
+    if (Number.isFinite(matchId) && matchId > 0) {
+      await db
+        .from("matches")
+        .update({
+          status: "Concluido",
+          data_confirmacao: new Date().toISOString(),
+          cancel_requested_by: null,
+          wo_auto_if_no_result: false,
+        })
+        .eq("id", matchId);
+    }
+    revalidateAdminPartidaPaths(partidaId, Number(partida.torneio_id ?? 0));
+    redirect("/admin/partidas?adm_flash=partida_resultado_ok");
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirect("/admin/partidas?adm_flash=partida_resultado_erro");
+  }
+}
+
+export async function adminMediarResultadoDaDenuncia(formData: FormData) {
+  try {
+    await guard();
+    const partidaId = Number(formData.get("partida_id"));
+    const denunciaId = Number(formData.get("denuncia_id"));
+    const decision = String(formData.get("decision") ?? "").trim();
+    const db = svc();
+    if (!Number.isFinite(partidaId) || partidaId < 1 || !["winner_1", "winner_2", "cancel"].includes(decision)) {
+      redirect("/admin/denuncias?adm_flash=mediacao_invalida");
+    }
+    const { data: partida } = await db
+      .from("partidas")
+      .select("id, match_id, torneio_id, jogador1_id, jogador2_id, time1_id, time2_id")
+      .eq("id", partidaId)
+      .maybeSingle();
+    if (!partida) redirect("/admin/denuncias?adm_flash=mediacao_invalida");
+
+    if (decision === "cancel") {
+      await db
+        .from("partidas")
+        .update({
+          status: "cancelada",
+          status_ranking: "cancelado_admin",
+          lancado_por: null,
+          mensagem: "Partida cancelada por mediação administrativa.",
+          data_validacao: new Date().toISOString(),
+        })
+        .eq("id", partidaId);
+      const matchId = Number(partida.match_id ?? 0);
+      if (Number.isFinite(matchId) && matchId > 0) {
+        await db.from("matches").update({ status: "Cancelado", cancel_requested_by: null }).eq("id", matchId);
+      }
+    } else {
+      const winnerSide = decision === "winner_1" ? "1" : "2";
+      const vencedorId =
+        winnerSide === "1"
+          ? partida.time1_id ?? partida.jogador1_id ?? null
+          : partida.time2_id ?? partida.jogador2_id ?? null;
+      await db
+        .from("partidas")
+        .update({
+          status: "concluida",
+          status_ranking: "validado",
+          placar_1: winnerSide === "1" ? 1 : 0,
+          placar_2: winnerSide === "2" ? 1 : 0,
+          placar: winnerSide === "1" ? "1x0" : "0x1",
+          vencedor_id: vencedorId,
+          mensagem: "Resultado definido por mediação administrativa.",
+          data_resultado: new Date().toISOString(),
+          data_validacao: new Date().toISOString(),
+          lancado_por: null,
+        })
+        .eq("id", partidaId);
+      const matchId = Number(partida.match_id ?? 0);
+      if (Number.isFinite(matchId) && matchId > 0) {
+        await db
+          .from("matches")
+          .update({
+            status: "Concluido",
+            data_confirmacao: new Date().toISOString(),
+            cancel_requested_by: null,
+            wo_auto_if_no_result: false,
+          })
+          .eq("id", matchId);
+      }
+    }
+
+    if (Number.isFinite(denunciaId) && denunciaId > 0) {
+      await db.from("denuncias").update({ status: "resolvida" }).eq("id", denunciaId);
+    }
+    revalidateAdminPartidaPaths(partidaId, Number(partida.torneio_id ?? 0), true);
+    redirect("/admin/denuncias?adm_flash=mediacao_ok");
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirect("/admin/denuncias?adm_flash=mediacao_erro");
   }
 }
 
@@ -265,12 +422,17 @@ export async function adminSetDenunciaStatus(formData: FormData) {
     await guard();
     const id = Number(formData.get("id"));
     const status = String(formData.get("status") ?? "").trim();
-    if (!Number.isFinite(id) || !status) return;
+    if (!Number.isFinite(id) || !status) {
+      redirect("/admin/denuncias?adm_flash=denuncia_status_invalido");
+    }
     const { error } = await svc().from("denuncias").update({ status }).eq("id", id);
-    if (error) return;
+    if (error) {
+      redirect("/admin/denuncias?adm_flash=denuncia_status_erro");
+    }
     revalidatePath("/admin/denuncias");
+    redirect("/admin/denuncias?adm_flash=denuncia_status_ok");
   } catch {
-    return;
+    redirect("/admin/denuncias?adm_flash=denuncia_status_erro");
   }
 }
 
