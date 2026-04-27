@@ -189,11 +189,16 @@ export async function submitPlacarAction(formData: FormData) {
   const permitirWO = toOptionalBoolean(selectedVariant?.permitirWO ?? regrasPlacar.permitirWO);
   const status = normStatus(p.status);
   const emAnaliseAdmin = isRankingStatus(p.status_ranking, "em_analise_admin");
+  const emFluxoContestado =
+    isRankingStatus(p.status_ranking, "resultado_contestado") || isRankingStatus(p.status_ranking, "pendente_confirmacao_revisao");
+  const actorCanRegular = ctx.scope.isColetivo ? ctx.scope.isTeamOwner : ctx.scope.isParticipant;
   const canActRegular = p.torneio_id
     ? ctx.podeRegistrarTorneio
-    : ctx.scope.isColetivo
-      ? ctx.scope.isTeamOwner && (status === "agendada" || (status === "aguardando_confirmacao" && p.lancado_por === user.id))
-      : ctx.scope.isParticipant && (status === "agendada" || (status === "aguardando_confirmacao" && p.lancado_por === user.id));
+    : emFluxoContestado
+      ? actorCanRegular &&
+        p.lancado_por === user.id &&
+        (status === "aguardando_confirmacao" || status === "agendada")
+      : actorCanRegular && (status === "agendada" || (status === "aguardando_confirmacao" && p.lancado_por === user.id));
   if (emAnaliseAdmin) go(partidaId, "erro", "Esta partida está em análise do admin.");
   if (!canActRegular) go(partidaId, "erro", "Sem permissão para lançar resultado nesta partida.");
   if (woAtivo && permitirWO === false) go(partidaId, "erro", "Este esporte não permite W.O. por configuração.");

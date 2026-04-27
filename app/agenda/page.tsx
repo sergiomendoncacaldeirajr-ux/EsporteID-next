@@ -249,14 +249,14 @@ export default async function AgendaPage() {
     const partidaStatus = String(partidaRecente?.status ?? "").trim().toLowerCase();
     const partidaStatusRanking = String(partidaRecente?.status_ranking ?? "").trim().toLowerCase();
     let statusLabel: string | null = null;
-    if (status === "Aceito" && partidaStatus === "aguardando_confirmacao") {
+    if (status === "Aceito") {
       if (partidaStatusRanking === "resultado_contestado") {
         statusLabel = "Resultado contestado";
       } else if (partidaStatusRanking === "pendente_confirmacao_revisao") {
         statusLabel = "Aguardando aprovação (revisão)";
       } else if (partidaStatusRanking === "em_analise_admin") {
         statusLabel = "Em análise do admin";
-      } else {
+      } else if (partidaStatus === "aguardando_confirmacao") {
         statusLabel = "Aguardando aprovação";
       }
     }

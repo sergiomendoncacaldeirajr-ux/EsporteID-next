@@ -138,9 +138,13 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   }
   const podeLancar = !emAnaliseAdmin && (p.torneio_id
     ? podeRegistrarTorneio
-    : isColetivo
-      ? isTeamOwner && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id))
-      : participant && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id)));
+    : resultadoContestado
+      ? (isColetivo ? isTeamOwner : participant) &&
+        p.lancado_por === user.id &&
+        (status === "aguardando_confirmacao" || status === "agendada")
+      : isColetivo
+        ? isTeamOwner && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id))
+        : participant && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id)));
   const podeConfirmarOuContestar =
     !emAnaliseAdmin && !p.torneio_id && (isColetivo ? isTeamOwner : participant) && aguardandoConfirmacao && p.lancado_por !== user.id;
   const podeAbrirMediacao =
