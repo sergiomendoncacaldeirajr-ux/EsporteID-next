@@ -105,7 +105,7 @@ export async function submitPlacarAction(formData: FormData) {
   const esporteRegrasRaw = p.esporte_id
     ? await ctx.supabase
         .from("esportes")
-        .select("desafio_modo_lancamento, desafio_regras_placar_json")
+        .select("nome, desafio_modo_lancamento, desafio_regras_placar_json")
         .eq("id", p.esporte_id)
         .maybeSingle()
     : null;
@@ -128,7 +128,11 @@ export async function submitPlacarAction(formData: FormData) {
   const partidaSportObj = Array.isArray((p as { esportes?: unknown[] } | null)?.esportes)
     ? ((p as { esportes?: unknown[] }).esportes?.[0] as { nome?: string } | undefined)
     : ((p as { esportes?: unknown } | null)?.esportes as { nome?: string } | null | undefined);
-  const sportName = (sportObj as { name?: string } | null)?.name ?? partidaSportObj?.nome ?? null;
+  const sportName =
+    (sportObj as { name?: string } | null)?.name ??
+    partidaSportObj?.nome ??
+    (esporteRegrasRaw?.data as { nome?: string } | null)?.nome ??
+    null;
   const formatObj = Array.isArray((formatConfigRow as { sport_formats?: unknown[] } | null)?.sport_formats)
     ? (formatConfigRow as { sport_formats?: unknown[] }).sport_formats?.[0]
     : (formatConfigRow as { sport_formats?: unknown } | null)?.sport_formats;

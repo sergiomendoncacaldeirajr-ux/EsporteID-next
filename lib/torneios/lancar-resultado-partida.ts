@@ -21,6 +21,7 @@ export type PartidaCtx = {
   time1_id: number | null;
   time2_id: number | null;
   modalidade: string | null;
+  esportes?: { nome?: string | null } | Array<{ nome?: string | null }> | null;
 };
 
 export type ActorScope = {
@@ -64,7 +65,7 @@ export async function loadPartidaContext(partidaId: number, userId: string) {
   const { data: partida } = await supabase
     .from("partidas")
     .select(
-      "id, match_id, esporte_id, torneio_id, jogador1_id, jogador2_id, usuario_id, desafiante_id, desafiado_id, status, status_ranking, lancado_por, placar_1, placar_2, time1_id, time2_id, modalidade"
+      "id, match_id, esporte_id, torneio_id, jogador1_id, jogador2_id, usuario_id, desafiante_id, desafiado_id, status, status_ranking, lancado_por, placar_1, placar_2, time1_id, time2_id, modalidade, esportes(nome)"
     )
     .eq("id", partidaId)
     .maybeSingle();

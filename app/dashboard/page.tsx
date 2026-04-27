@@ -496,7 +496,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     if (proximaPartida.torneio_id) {
       mensagemTopo = `Prioridade: partida de torneio ${when}. Confira na agenda.`;
     } else {
-      mensagemTopo = `Próxima ação: jogo ${when} em ${esporteProximaPartida}.`;
+      mensagemTopo = `Jogo ${when} em ${esporteProximaPartida}.`;
     }
     mensagemTopoHref = "/agenda";
     mensagemTopoTom = "aviso";
