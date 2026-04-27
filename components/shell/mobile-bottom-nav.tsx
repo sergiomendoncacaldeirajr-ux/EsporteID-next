@@ -177,8 +177,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   useEffect(() => {
     if (!resolvedUserId) return;
     let cancelled = false;
+    const supabase = createClient();
     async function load() {
-      const supabase = createClient();
       const [agRes, pRes, nRes] = await Promise.all([
         supabase
           .from("partidas")
@@ -218,9 +218,46 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     }
     void load();
     const t = window.setInterval(load, 60000);
+    const channel = supabase
+      .channel(`eid-mobile-nav-${resolvedUserId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notificacoes", filter: `usuario_id=eq.${resolvedUserId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "matches", filter: `usuario_id=eq.${resolvedUserId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "matches", filter: `adversario_id=eq.${resolvedUserId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "partidas", filter: `jogador1_id=eq.${resolvedUserId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "partidas", filter: `jogador2_id=eq.${resolvedUserId}` },
+        () => void load()
+      )
+      .subscribe();
+    const onFocus = () => void load();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
       window.clearInterval(t);
+      void supabase.removeChannel(channel);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [resolvedUserId]);
 

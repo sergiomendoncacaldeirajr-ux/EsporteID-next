@@ -143,6 +143,26 @@ export default async function AgendaPage() {
     .order("id", { ascending: false })
     .limit(20);
 
+  const matchIdsAceitos = (aceitosCancelaveis ?? [])
+    .map((m) => Number(m.id))
+    .filter((v) => Number.isFinite(v) && v > 0);
+  const { data: partidasPorMatchRows } = matchIdsAceitos.length
+    ? await supabase
+        .from("partidas")
+        .select("id, match_id, status, status_ranking")
+        .in("match_id", matchIdsAceitos)
+        .order("id", { ascending: false })
+    : { data: [] };
+  const partidaMaisRecentePorMatch = new Map<number, { status: string | null; status_ranking: string | null }>();
+  for (const row of partidasPorMatchRows ?? []) {
+    const mid = Number((row as { match_id?: number | null }).match_id ?? 0);
+    if (!Number.isFinite(mid) || mid <= 0 || partidaMaisRecentePorMatch.has(mid)) continue;
+    partidaMaisRecentePorMatch.set(mid, {
+      status: (row as { status?: string | null }).status ?? null,
+      status_ranking: (row as { status_ranking?: string | null }).status_ranking ?? null,
+    });
+  }
+
   const advIds = [...new Set((pendentesEnvio ?? []).map((m) => m.adversario_id).filter(Boolean))] as string[];
   const { data: adversarios } = advIds.length
     ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", advIds)
@@ -198,6 +218,21 @@ export default async function AgendaPage() {
   const aceitosItems = (aceitosCancelaveis ?? []).map((m) => {
     const opp = m.usuario_id === user.id ? m.adversario_id : m.usuario_id;
     const status = String(m.status ?? "Aceito");
+    const partidaRecente = partidaMaisRecentePorMatch.get(Number(m.id)) ?? null;
+    const partidaStatus = String(partidaRecente?.status ?? "").trim().toLowerCase();
+    const partidaStatusRanking = String(partidaRecente?.status_ranking ?? "").trim().toLowerCase();
+    let statusLabel: string | null = null;
+    if (status === "Aceito" && partidaStatus === "aguardando_confirmacao") {
+      if (partidaStatusRanking === "resultado_contestado") {
+        statusLabel = "Resultado contestado";
+      } else if (partidaStatusRanking === "pendente_confirmacao_revisao") {
+        statusLabel = "Aguardando aprovação (revisão)";
+      } else if (partidaStatusRanking === "em_analise_admin") {
+        statusLabel = "Em análise do admin";
+      } else {
+        statusLabel = "Aguardando aprovação";
+      }
+    }
     const isRequester = String(m.cancel_requested_by ?? "") === user.id;
     return {
       id: Number(m.id),
@@ -207,6 +242,7 @@ export default async function AgendaPage() {
       esporte: (m.esporte_id ? espMapAceitos.get(m.esporte_id) : null) ?? "Esporte",
       modalidade: m.modalidade_confronto ?? "individual",
       status,
+      statusLabel,
       isRequester,
       cancelResponseDeadlineAt: m.cancel_response_deadline_at ? String(m.cancel_response_deadline_at) : null,
       rescheduleDeadlineAt: m.reschedule_deadline_at ? String(m.reschedule_deadline_at) : null,
@@ -321,6 +357,7 @@ export default async function AgendaPage() {
                         ) ?? null
                       : null
                   }
+                  topActionShiftXPx={24}
                 />
               );
             })}

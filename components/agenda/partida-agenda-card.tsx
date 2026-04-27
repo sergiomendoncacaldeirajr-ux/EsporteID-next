@@ -117,7 +117,7 @@ export function PartidaAgendaCard({
               setShowCancelHint(false);
               setOpenCancel(true);
             }}
-          className="absolute left-1/2 top-2 z-[3] inline-flex items-center justify-center rounded-md border border-red-600 bg-red-600 text-white"
+          className="absolute left-1/2 top-3 z-[3] inline-flex items-center justify-center rounded-md border border-red-600 bg-red-600 text-white"
             style={{
             transform: `translateX(calc(-50% + ${topActionShiftXPx}px))`,
               minHeight: "14px",
@@ -138,7 +138,7 @@ export function PartidaAgendaCard({
         <button
           type="button"
           onClick={() => setOpenDesist(true)}
-          className="absolute left-1/2 top-2 z-[3] inline-flex items-center justify-center rounded-md border border-amber-700 bg-amber-700 text-white"
+          className="absolute left-1/2 top-3 z-[3] inline-flex items-center justify-center rounded-md border border-amber-700 bg-amber-700 text-white"
           style={{
             transform: `translateX(calc(-50% + ${topActionShiftXPx}px))`,
             minHeight: "14px",

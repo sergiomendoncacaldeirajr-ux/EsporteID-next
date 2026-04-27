@@ -7,6 +7,7 @@ import { MatchScoreForm } from "@/components/placar/match-score-form";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
+import { type MatchScorePayload } from "@/lib/match-scoring";
 import { buildSetFormatOptions, getDesafioRankLockedSetFormat, getMatchUIConfig } from "@/lib/match-scoring";
 import { createClient } from "@/lib/supabase/server";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
@@ -23,6 +24,45 @@ function normStatus(v: string | null | undefined): string {
 function toRulesConfig(v: unknown): ScoreRulesConfig {
   if (!v || typeof v !== "object" || Array.isArray(v)) return {};
   return v as ScoreRulesConfig;
+}
+
+function parseScorePayloadFromMessage(message: string | null | undefined): MatchScorePayload | null {
+  const raw = String(message ?? "").trim();
+  if (!raw) return null;
+  const marker = "score_payload:";
+  const idx = raw.indexOf(marker);
+  if (idx < 0) return null;
+  const jsonRaw = raw.slice(idx + marker.length).trim();
+  if (!jsonRaw) return null;
+  try {
+    const parsed = JSON.parse(jsonRaw) as MatchScorePayload;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function stripScorePayloadFromMessage(message: string | null | undefined): string {
+  const raw = String(message ?? "").trim();
+  if (!raw) return "";
+  const marker = "| score_payload:";
+  const idx = raw.indexOf(marker);
+  if (idx >= 0) return raw.slice(0, idx).trim();
+  return raw;
+}
+
+function meaningfulSets(sets: Array<{ a?: number; b?: number; tiebreakA?: number; tiebreakB?: number }> | undefined) {
+  const list = Array.isArray(sets) ? sets : [];
+  let lastIndex = -1;
+  for (let i = 0; i < list.length; i += 1) {
+    const s = list[i] ?? {};
+    const a = Number(s.a ?? 0);
+    const b = Number(s.b ?? 0);
+    const ta = Number(s.tiebreakA ?? 0);
+    const tb = Number(s.tiebreakB ?? 0);
+    if (a !== 0 || b !== 0 || ta !== 0 || tb !== 0) lastIndex = i;
+  }
+  return lastIndex >= 0 ? list.slice(0, lastIndex + 1) : [];
 }
 
 export default async function RegistrarPlacarPage({ params, searchParams }: Props) {
@@ -85,7 +125,9 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
     notFound();
   }
   const status = normStatus(p.status);
+  const statusRanking = normStatus(p.status_ranking);
   const aguardandoConfirmacao = status === "aguardando_confirmacao";
+  const emAnaliseAdmin = statusRanking === "em_analise_admin";
   const concluida =
     status === "concluida" || status === "concluída" || status === "concluido" || status === "validada" || status === "finalizada";
   /** Fluxo só-agenda (data/local): na Agenda. Resultado fica no Painel (comunidade). */
@@ -93,12 +135,14 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   if (agendaSomente && status !== "agendada") {
     redirect("/comunidade#resultados-partida");
   }
-  const podeLancar = p.torneio_id
+  const podeLancar = !emAnaliseAdmin && (p.torneio_id
     ? podeRegistrarTorneio
     : isColetivo
       ? isTeamOwner && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id))
-      : participant && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id));
-  const podeConfirmarOuContestar = !p.torneio_id && (isColetivo ? isTeamOwner : participant) && aguardandoConfirmacao && p.lancado_por !== user.id;
+      : participant && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id)));
+  const podeConfirmarOuContestar =
+    !emAnaliseAdmin && !p.torneio_id && (isColetivo ? isTeamOwner : participant) && aguardandoConfirmacao && p.lancado_por !== user.id;
+  const resultadoEnviadoAguardando = aguardandoConfirmacao && p.lancado_por === user.id && !agendaSomente;
 
   const esp = Array.isArray(p.esportes) ? p.esportes[0] : p.esportes;
   const regrasPlacar = toRulesConfig((esp as { desafio_regras_placar_json?: unknown } | null)?.desafio_regras_placar_json);
@@ -188,6 +232,9 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
     modoRaw === "agenda" ? `modo=agenda${fromSafe ? `&from=${encodeURIComponent(fromSafe)}` : ""}` : fromSafe ? `from=${encodeURIComponent(fromSafe)}` : ""
   }`;
   const cadastrarLocalHref = `/locais/cadastrar?return_to=${encodeURIComponent(returnToPath)}`;
+  const scorePayload = parseScorePayloadFromMessage(p.mensagem);
+  const cleanMensagem = stripScorePayloadFromMessage(p.mensagem);
+  const placarSets = scorePayload?.type === "sets" ? meaningfulSets(scorePayload.sets) : [];
 
   return (
     <main data-eid-desafio-ui className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-4 sm:py-6">
@@ -258,14 +305,71 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           {!agendaSomente && (p.placar_1 != null || p.placar_2 != null) && (
             <div className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Placar atual</p>
-              <p className="mt-1 text-lg font-black text-eid-fg">
-                {p.placar_1 ?? "—"} x {p.placar_2 ?? "—"}
-              </p>
-              {p.mensagem ? <p className="mt-1 text-xs text-eid-text-secondary">{p.mensagem}</p> : null}
+              {placarSets.length > 0 ? (
+                <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_38%,var(--eid-surface)_62%)]">
+                  <div className="grid grid-cols-[1.2fr_repeat(5,minmax(0,1fr))] items-stretch">
+                    <div className="border-b border-r border-[color:var(--eid-border-subtle)] px-2 py-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[9px] font-bold text-eid-fg">
+                          {j1?.avatar_url ? <img src={j1.avatar_url} alt="" className="h-full w-full object-cover" /> : (j1?.nome ?? "J1").slice(0, 2)}
+                        </span>
+                        <span className="truncate text-[11px] font-black uppercase tracking-[0.02em] text-eid-fg">{j1?.nome ?? "Jogador 1"}</span>
+                      </div>
+                    </div>
+                    {placarSets.map((set, idx) => {
+                      const a = Number(set.a ?? 0);
+                      const tbA = Number(set.tiebreakA ?? 0);
+                      const tbB = Number(set.tiebreakB ?? 0);
+                      const hasTb = tbA > 0 || tbB > 0;
+                      return (
+                        <div key={`a-${idx}`} className="border-b border-r border-[color:var(--eid-border-subtle)] px-1 py-1.5 text-center">
+                          <span className="inline-flex items-start justify-center text-[21px] font-black leading-none text-eid-fg">
+                            <span>{a}</span>
+                            {hasTb ? <sup className="ml-0.5 text-[10px] font-bold leading-none text-eid-text-secondary">{tbA}</sup> : null}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {Array.from({ length: Math.max(0, 5 - placarSets.length) }).map((_, idx) => (
+                      <div key={`a-empty-${idx}`} className="border-b border-r border-[color:var(--eid-border-subtle)]" />
+                    ))}
+                    <div className="border-r border-[color:var(--eid-border-subtle)] px-2 py-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[9px] font-bold text-eid-fg">
+                          {j2?.avatar_url ? <img src={j2.avatar_url} alt="" className="h-full w-full object-cover" /> : (j2?.nome ?? "J2").slice(0, 2)}
+                        </span>
+                        <span className="truncate text-[11px] font-black uppercase tracking-[0.02em] text-eid-fg">{j2?.nome ?? "Jogador 2"}</span>
+                      </div>
+                    </div>
+                    {placarSets.map((set, idx) => {
+                      const b = Number(set.b ?? 0);
+                      const tbA = Number(set.tiebreakA ?? 0);
+                      const tbB = Number(set.tiebreakB ?? 0);
+                      const hasTb = tbA > 0 || tbB > 0;
+                      return (
+                        <div key={`b-${idx}`} className="border-r border-[color:var(--eid-border-subtle)] px-1 py-1.5 text-center">
+                          <span className="inline-flex items-start justify-center text-[21px] font-black leading-none text-eid-fg">
+                            <span>{b}</span>
+                            {hasTb ? <sup className="ml-0.5 text-[10px] font-bold leading-none text-eid-text-secondary">{tbB}</sup> : null}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {Array.from({ length: Math.max(0, 5 - placarSets.length) }).map((_, idx) => (
+                      <div key={`b-empty-${idx}`} className="border-r border-[color:var(--eid-border-subtle)]" />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-1 text-lg font-black text-eid-fg">
+                  {p.placar_1 ?? "—"} x {p.placar_2 ?? "—"}
+                </p>
+              )}
+              {cleanMensagem ? <p className="mt-1 text-xs text-eid-text-secondary">{cleanMensagem}</p> : null}
             </div>
           )}
 
-          {podeLancar ? (
+          {podeLancar && !resultadoEnviadoAguardando ? (
             <details
               open={abrirAgendamentoPorPadrao}
               className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 open:shadow-[0_10px_18px_-14px_rgba(15,23,42,0.5)]"
@@ -319,13 +423,13 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
               </div>
             </details>
           ) : null}
-          {podeLancar && !agendaSomente ? (
+          {podeLancar && !agendaSomente && !resultadoEnviadoAguardando ? (
             <DismissibleTapAwayHint className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] text-eid-text-secondary">
               Se já combinaram fora do app, você pode pular o agendamento e lançar o resultado direto abaixo.
             </DismissibleTapAwayHint>
           ) : null}
 
-          {podeLancar && !agendaSomente ? (
+          {podeLancar && !agendaSomente && !resultadoEnviadoAguardando ? (
             <div className="mt-5">
               {variantes.length > 0 ? (
                 <p className="mb-2 text-[11px] text-eid-text-secondary">
@@ -376,6 +480,11 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           {concluida ? (
             <p className="mt-5 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200">
               Partida concluída e resultado validado.
+            </p>
+          ) : null}
+          {emAnaliseAdmin ? (
+            <p className="mt-5 rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200">
+              Resultado em análise administrativa após contestação de ambos. O admin fará a mediação por WhatsApp.
             </p>
           ) : null}
         </div>

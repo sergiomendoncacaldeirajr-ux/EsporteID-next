@@ -70,6 +70,12 @@ function toRulesConfig(v: unknown): ScoreRulesConfig {
   return v as ScoreRulesConfig;
 }
 
+function isRankingStatus(value: string | null | undefined, expected: string): boolean {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase() === expected;
+}
+
 export async function submitPlacarAction(formData: FormData) {
   const partidaId = Number(formData.get("partida_id"));
   if (!Number.isFinite(partidaId) || partidaId < 1) redirect("/agenda");
@@ -173,11 +179,13 @@ export async function submitPlacarAction(formData: FormData) {
   const permitirEmpate = toOptionalBoolean(selectedVariant?.permitirEmpate ?? regrasPlacar.permitirEmpate);
   const permitirWO = toOptionalBoolean(selectedVariant?.permitirWO ?? regrasPlacar.permitirWO);
   const status = normStatus(p.status);
+  const emAnaliseAdmin = isRankingStatus(p.status_ranking, "em_analise_admin");
   const canActRegular = p.torneio_id
     ? ctx.podeRegistrarTorneio
     : ctx.scope.isColetivo
       ? ctx.scope.isTeamOwner && (status === "agendada" || (status === "aguardando_confirmacao" && p.lancado_por === user.id))
       : ctx.scope.isParticipant && (status === "agendada" || (status === "aguardando_confirmacao" && p.lancado_por === user.id));
+  if (emAnaliseAdmin) go(partidaId, "erro", "Esta partida está em análise do admin.");
   if (!canActRegular) go(partidaId, "erro", "Sem permissão para lançar resultado nesta partida.");
   if (woAtivo && permitirWO === false) go(partidaId, "erro", "Este esporte não permite W.O. por configuração.");
   if (!woAtivo && permitirEmpate === false && placar1 === placar2) go(partidaId, "erro", "Empate não é permitido neste esporte.");
@@ -218,6 +226,7 @@ export async function submitPlacarAction(formData: FormData) {
 
   const now = new Date().toISOString();
   const isTorneio = Boolean(p.torneio_id);
+  const revisaoAposContestacao = isRankingStatus(p.status_ranking, "resultado_contestado");
   const updatePayload = {
     placar_1: finalPlacar1,
     placar_2: finalPlacar2,
@@ -229,7 +238,7 @@ export async function submitPlacarAction(formData: FormData) {
     data_resultado: now,
     lancado_por: user.id,
     status: isTorneio ? "concluida" : "aguardando_confirmacao",
-    status_ranking: isTorneio ? "validado" : "pendente_confirmacao",
+    status_ranking: isTorneio ? "validado" : revisaoAposContestacao ? "pendente_confirmacao_revisao" : "pendente_confirmacao",
     data_validacao: isTorneio ? now : null,
   };
   const { error } = await ctx.supabase.from("partidas").update(updatePayload).eq("id", partidaId);
@@ -328,11 +337,54 @@ export async function contestarPlacarAction(formData: FormData) {
     go(partidaId, "erro", "Esta partida não está disponível para contestação por este usuário.");
   }
 
+  const segundaContestacaoSemAcordo = isRankingStatus(p.status_ranking, "pendente_confirmacao_revisao");
+
+  if (segundaContestacaoSemAcordo) {
+    const alvoUsuarioId = p.lancado_por;
+    if (alvoUsuarioId) {
+      const texto = `Sem acordo no placar da partida #${partidaId}. O segundo resultado reenviado também foi contestado. Solicita-se mediação administrativa para decisão (W.O. ou cancelamento).`;
+      await ctx.supabase.rpc("registrar_denuncia_usuario", {
+        p_alvo_usuario_id: alvoUsuarioId,
+        p_codigo_motivo: "outro",
+        p_texto: texto,
+      });
+    }
+
+    const { error: reviewError } = await ctx.supabase
+      .from("partidas")
+      .update({
+        status: "aguardando_confirmacao",
+        status_ranking: "em_analise_admin",
+        data_validacao: null,
+      })
+      .eq("id", partidaId);
+    if (reviewError) go(partidaId, "erro", "Não foi possível enviar o caso para análise administrativa.");
+
+    const oponenteId = p.lancado_por;
+    await notifyUser(
+      ctx.supabase,
+      oponenteId,
+      user.id,
+      partidaId,
+      "Seu resultado foi novamente contestado e o caso foi enviado ao admin para mediação."
+    );
+    await notifyUser(
+      ctx.supabase,
+      user.id,
+      user.id,
+      partidaId,
+      "Resultado novamente contestado. Caso enviado ao admin para mediação via contato no WhatsApp."
+    );
+
+    revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
+    go(partidaId, "ok", "Resultado contestado novamente. Caso enviado ao admin para mediação.");
+  }
+
   const { error } = await ctx.supabase
     .from("partidas")
     .update({
-      status: "agendada",
-      status_ranking: "contestado",
+      status: "aguardando_confirmacao",
+      status_ranking: "resultado_contestado",
       data_validacao: null,
       data_resultado: null,
       placar_1: null,
@@ -340,7 +392,7 @@ export async function contestarPlacarAction(formData: FormData) {
       placar_desafiante: null,
       placar_desafiado: null,
       placar: null,
-      lancado_por: null,
+      mensagem: "Resultado contestado. O mesmo lançador deve enviar novo resultado para aprovação.",
     })
     .eq("id", partidaId);
   if (error) go(partidaId, "erro", "Não foi possível contestar o placar.");
@@ -350,11 +402,11 @@ export async function contestarPlacarAction(formData: FormData) {
     p.lancado_por,
     user.id,
     partidaId,
-    "O resultado informado foi contestado pelo oponente. Registre novamente o resultado."
+    "O resultado informado foi contestado. Envie um novo resultado para o oponente revisar."
   );
 
   revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
-  go(partidaId, "ok", "Resultado contestado. A partida voltou para agendada.");
+  go(partidaId, "ok", "Resultado contestado. Envie um novo resultado para aprovação do oponente.");
 }
 
 export async function salvarAgendamentoAction(formData: FormData) {

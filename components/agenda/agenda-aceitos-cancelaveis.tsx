@@ -15,6 +15,7 @@ type Item = {
   esporte: string;
   modalidade: string;
   status: string;
+  statusLabel?: string | null;
   isRequester: boolean;
   cancelResponseDeadlineAt: string | null;
   rescheduleDeadlineAt: string | null;
@@ -198,7 +199,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                 </p>
               </div>
               <span className="ml-auto rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
-                {formatStatusLabel(m.status)}
+                {formatStatusLabel(m.statusLabel ?? m.status)}
               </span>
             </div>
             <div className="mt-2 min-w-0">

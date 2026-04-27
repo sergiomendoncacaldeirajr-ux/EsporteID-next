@@ -499,6 +499,7 @@ export default async function ComunidadePage() {
                           dataRef={pr.data_partida ?? pr.data_registro}
                           localLabel={localLabelPainel(pr)}
                           variant="placar"
+                          ctaFullscreen
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
                           ctaLabel="Revisar resultado"
                         />
@@ -554,7 +555,7 @@ export default async function ComunidadePage() {
                           }
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
                           ctaLabel="Lançar resultado"
-                          topActionShiftXPx={18}
+                          topActionShiftXPx={24}
                         />
                       );
                     })}

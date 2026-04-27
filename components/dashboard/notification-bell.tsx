@@ -111,7 +111,17 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   useEffect(() => {
     if (!userId) return;
     const t = window.setInterval(() => void load(), 90000);
-    return () => window.clearInterval(t);
+    const onFocus = () => void load();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(t);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [userId, load]);
 
   useEffect(() => {
