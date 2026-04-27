@@ -105,7 +105,8 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     setAgendaN(ag);
     setMatchN(m);
     setPlacarN(p);
-    setTotal(unreadGeneral + p + ag);
+    // Inclui pedidos pendentes (matches) como ação social real.
+    setTotal(unreadGeneral + p + ag + m);
     setPreview((listRes.data ?? []) as Preview[]);
   }, [userId]);
 

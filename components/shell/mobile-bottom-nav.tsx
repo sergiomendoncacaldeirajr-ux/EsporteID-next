@@ -186,7 +186,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     let cancelled = false;
     const supabase = createClient();
     async function load() {
-      const [agRes, pRes, nRes] = await Promise.all([
+      const [agRes, pRes, mRes, nRes] = await Promise.all([
         supabase
           .from("partidas")
           .select("id", { count: "exact", head: true })
@@ -198,6 +198,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
           .or(`jogador1_id.eq.${resolvedUserId},jogador2_id.eq.${resolvedUserId}`)
           .eq("status", "aguardando_confirmacao")
           .neq("lancado_por", resolvedUserId),
+        supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", resolvedUserId).eq("status", "Pendente"),
         supabase
           .from("notificacoes")
           .select("id, tipo, referencia_id, remetente_id")
@@ -208,6 +209,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       if (cancelled) return;
       setAgendaBadge(agRes.count ?? 0);
       const placar = pRes.count ?? 0;
+      const pedidos = mRes.count ?? 0;
       const unreadRows = (nRes.data ?? []) as UnreadNotif[];
       const seen = new Set<string>();
       let unreadGeneral = 0;
@@ -222,7 +224,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         // (placar/pedidos). Não somar novamente para evitar badge duplicado.
         if (!isFlowAction) unreadGeneral += 1;
       }
-      setSocialBadge(placar + unreadGeneral);
+      // Social = ações pendentes + notificações gerais (sem duplicar match/desafio).
+      setSocialBadge(placar + pedidos + unreadGeneral);
     }
     void load();
     const t = window.setInterval(load, 60000);

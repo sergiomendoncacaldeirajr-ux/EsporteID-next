@@ -93,49 +93,56 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
                 </td>
                 <td className="px-2 py-1.5">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <form action={adminDefinirResultadoPartida} className="flex flex-wrap items-center gap-1">
-                      <input type="hidden" name="partida_id" value={p.id} />
-                      <select
-                        name="winner_side"
-                        defaultValue="1"
-                        className="eid-input-dark rounded-md border border-[color:var(--eid-border-subtle)] px-1.5 py-1 text-[10px]"
-                      >
-                        <option value="1">Venceu lado 1</option>
-                        <option value="2">Venceu lado 2</option>
-                      </select>
-                      <input
-                        type="number"
-                        name="placar_1"
-                        min={0}
-                        defaultValue={1}
-                        className="eid-input-dark w-12 rounded-md border border-[color:var(--eid-border-subtle)] px-1 py-1 text-[10px]"
-                      />
-                      <span className="text-[10px] text-eid-text-secondary">x</span>
-                      <input
-                        type="number"
-                        name="placar_2"
-                        min={0}
-                        defaultValue={0}
-                        className="eid-input-dark w-12 rounded-md border border-[color:var(--eid-border-subtle)] px-1 py-1 text-[10px]"
-                      />
-                      <button
-                        type="submit"
-                        disabled={!podeDefinirResultado}
-                        className="rounded-md border border-emerald-600/55 bg-emerald-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-success-700)_82%,var(--eid-fg)_18%)] hover:bg-emerald-500/30"
-                      >
-                        Definir resultado
-                      </button>
-                    </form>
-                    <form action={adminCancelarLimparPartida}>
-                      <input type="hidden" name="partida_id" value={p.id} />
-                      <button
-                        type="submit"
-                        disabled={!podeLimpar}
-                        className="rounded-md border border-rose-600/55 bg-rose-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-danger-700)_82%,var(--eid-fg)_18%)] hover:bg-rose-500/30 disabled:cursor-not-allowed disabled:opacity-45"
-                      >
-                        Cancelar/Limpar
-                      </button>
-                    </form>
+                    {podeDefinirResultado ? (
+                      <form action={adminDefinirResultadoPartida} className="flex flex-wrap items-center gap-1">
+                        <input type="hidden" name="partida_id" value={p.id} />
+                        <select
+                          name="winner_side"
+                          defaultValue="1"
+                          className="eid-input-dark rounded-md border border-[color:var(--eid-border-subtle)] px-1.5 py-1 text-[10px]"
+                        >
+                          <option value="1">Venceu lado 1</option>
+                          <option value="2">Venceu lado 2</option>
+                        </select>
+                        <input
+                          type="number"
+                          name="placar_1"
+                          min={0}
+                          defaultValue={1}
+                          className="eid-input-dark w-12 rounded-md border border-[color:var(--eid-border-subtle)] px-1 py-1 text-[10px]"
+                        />
+                        <span className="text-[10px] text-eid-text-secondary">x</span>
+                        <input
+                          type="number"
+                          name="placar_2"
+                          min={0}
+                          defaultValue={0}
+                          className="eid-input-dark w-12 rounded-md border border-[color:var(--eid-border-subtle)] px-1 py-1 text-[10px]"
+                        />
+                        <button
+                          type="submit"
+                          className="rounded-md border border-emerald-600/55 bg-emerald-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-success-700)_82%,var(--eid-fg)_18%)] hover:bg-emerald-500/30"
+                        >
+                          Definir resultado
+                        </button>
+                      </form>
+                    ) : null}
+                    {podeLimpar ? (
+                      <form action={adminCancelarLimparPartida}>
+                        <input type="hidden" name="partida_id" value={p.id} />
+                        <button
+                          type="submit"
+                          className="rounded-md border border-rose-600/55 bg-rose-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-danger-700)_82%,var(--eid-fg)_18%)] hover:bg-rose-500/30"
+                        >
+                          Cancelar/Limpar
+                        </button>
+                      </form>
+                    ) : null}
+                    {!podeLimpar && !podeDefinirResultado ? (
+                      <span className="rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary">
+                        Sem ação pendente
+                      </span>
+                    ) : null}
                   </div>
                 </td>
                     </>
