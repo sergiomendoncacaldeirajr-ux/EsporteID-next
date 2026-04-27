@@ -92,7 +92,7 @@ export async function fetchMatchRadarCards(
     .from("matches")
     .select("usuario_id, adversario_id, status")
     .or(`usuario_id.eq.${viewerId},adversario_id.eq.${viewerId}`)
-    .in("status", ["Pendente", "Aceito"]);
+    .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
   const activeOpponentIds = new Set<string>();
   for (const m of activeMatches ?? []) {
     const usuarioId = String((m as { usuario_id?: string | null }).usuario_id ?? "");

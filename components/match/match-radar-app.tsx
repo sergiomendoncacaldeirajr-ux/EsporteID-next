@@ -775,8 +775,10 @@ export function MatchRadarApp({
           {viewMode === "grid" ? (
             <button
               type="button"
+              disabled={visibleCards.length === 0}
               onClick={() => switchViewMode("full")}
-              className="inline-flex h-[1.5rem] items-center gap-1 rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2 text-[8px] font-semibold uppercase tracking-[0.03em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/75"
+              title={visibleCards.length === 0 ? "Sem sugestões para abrir em tela cheia" : "Abrir modo tela cheia"}
+              className="inline-flex h-[1.5rem] items-center gap-1 rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2 text-[8px] font-semibold uppercase tracking-[0.03em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/75 disabled:cursor-not-allowed disabled:opacity-45"
             >
               <Maximize2 className="h-3 w-3" strokeWidth={2.25} aria-hidden />
               Modo tela toda

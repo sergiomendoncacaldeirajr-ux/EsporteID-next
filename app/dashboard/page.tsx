@@ -245,7 +245,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     .from("matches")
     .select("usuario_id, adversario_id, status")
     .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
-    .in("status", ["Pendente", "Aceito"]);
+    .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
   const activeOpponentIds = new Set<string>();
   for (const m of activeMatches ?? []) {
     const usuarioId = String((m as { usuario_id?: string | null }).usuario_id ?? "");

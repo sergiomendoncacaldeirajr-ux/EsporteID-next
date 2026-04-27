@@ -119,15 +119,15 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                   <p className="text-[10px] font-semibold text-eid-text-secondary">
                     <span className="text-eid-fg">{m.nomeOponente}</span> solicitou cancelar este desafio. Você aceita?
                   </p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <form action={formAction}>
+                  <div className="grid grid-cols-2 items-stretch gap-2">
+                    <form action={formAction} className="flex">
                       <input type="hidden" name="intent" value="respond_cancel" />
                       <input type="hidden" name="match_id" value={String(m.id)} />
                       <input type="hidden" name="aceitar_cancelamento" value="1" />
                       <button
                         type="submit"
                         disabled={pending}
-                        className="inline-flex h-5 w-full items-center justify-center whitespace-nowrap rounded-md border border-emerald-700 bg-emerald-600 px-1 py-0 text-[6px] font-black uppercase leading-none tracking-[0.01em] text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                        className="inline-flex h-5 w-full appearance-none items-center justify-center whitespace-nowrap rounded-md border border-emerald-700 bg-emerald-600 px-1 py-0 align-middle text-[6px] font-black uppercase leading-none tracking-[0.01em] text-white transition hover:bg-emerald-700 disabled:opacity-50"
                         style={{ height: "22px", minHeight: "22px", fontSize: "9px", padding: "0 6px", lineHeight: "1" }}
                       >
                         Aceitar
@@ -137,7 +137,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                       type="button"
                       disabled={pending}
                       onClick={() => setOpenRefuseByMatch((s) => ({ ...s, [m.id]: !s[m.id] }))}
-                      className="inline-flex h-5 w-full items-center justify-center whitespace-nowrap rounded-md border border-rose-700 bg-rose-600 px-1 py-0 text-[6px] font-black uppercase leading-none tracking-[0.01em] text-white transition hover:bg-rose-700 disabled:opacity-50"
+                      className="inline-flex h-5 w-full appearance-none items-center justify-center whitespace-nowrap rounded-md border border-rose-700 bg-rose-600 px-1 py-0 align-middle text-[6px] font-black uppercase leading-none tracking-[0.01em] text-white transition hover:bg-rose-700 disabled:opacity-50"
                       style={{ height: "22px", minHeight: "22px", fontSize: "9px", padding: "0 6px", lineHeight: "1" }}
                     >
                       Não aceitar

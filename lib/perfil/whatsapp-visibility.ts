@@ -115,7 +115,7 @@ export async function esporteIdsComMatchAceitoEntre(
   const { data: aParaB } = await supabase
     .from("matches")
     .select("esporte_id")
-    .eq("status", "Aceito")
+    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
     .eq("finalidade", "ranking")
     .eq("usuario_id", visitanteId)
     .eq("adversario_id", perfilId);
@@ -123,7 +123,7 @@ export async function esporteIdsComMatchAceitoEntre(
   const { data: bParaA } = await supabase
     .from("matches")
     .select("esporte_id")
-    .eq("status", "Aceito")
+    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
     .eq("finalidade", "ranking")
     .eq("usuario_id", perfilId)
     .eq("adversario_id", visitanteId);
@@ -201,7 +201,7 @@ export async function formacaoTemMatchAceitoEntre(
   const { data: comoDesafiante } = await supabase
     .from("matches")
     .select("id")
-    .eq("status", "Aceito")
+    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
     .eq("finalidade", "ranking")
     .eq("usuario_id", visitanteId)
     .eq("adversario_time_id", alvoTimeId)
@@ -213,7 +213,7 @@ export async function formacaoTemMatchAceitoEntre(
     const { data: comoDesafiado } = await supabase
       .from("matches")
       .select("id")
-      .eq("status", "Aceito")
+      .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
       .eq("finalidade", "ranking")
       .eq("usuario_id", alvoCriadorId)
       .eq("adversario_id", visitanteId)
