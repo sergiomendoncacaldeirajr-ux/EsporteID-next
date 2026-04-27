@@ -148,6 +148,11 @@ export default async function AgendaPage() {
     const [x, y] = [String(a), String(b)].sort();
     return `${Number(esporteId)}:${x}:${y}`;
   }
+  function dueloKeyNoSport(a: string | null | undefined, b: string | null | undefined): string | null {
+    if (!a || !b) return null;
+    const [x, y] = [String(a), String(b)].sort();
+    return `${x}:${y}`;
+  }
 
   const matchIdsAceitos = (aceitosCancelaveis ?? [])
     .map((m) => Number(m.id))
@@ -176,6 +181,7 @@ export default async function AgendaPage() {
     .order("id", { ascending: false })
     .limit(80);
   const partidaMaisRecentePorDuelo = new Map<string, { status: string | null; status_ranking: string | null }>();
+  const partidaMaisRecentePorDueloNoSport = new Map<string, { status: string | null; status_ranking: string | null }>();
   for (const row of partidasStatusRows ?? []) {
     const key = dueloKey(
       (row as { jogador1_id?: string | null }).jogador1_id ?? null,
@@ -187,6 +193,16 @@ export default async function AgendaPage() {
       status: (row as { status?: string | null }).status ?? null,
       status_ranking: (row as { status_ranking?: string | null }).status_ranking ?? null,
     });
+    const keyNoSport = dueloKeyNoSport(
+      (row as { jogador1_id?: string | null }).jogador1_id ?? null,
+      (row as { jogador2_id?: string | null }).jogador2_id ?? null
+    );
+    if (keyNoSport && !partidaMaisRecentePorDueloNoSport.has(keyNoSport)) {
+      partidaMaisRecentePorDueloNoSport.set(keyNoSport, {
+        status: (row as { status?: string | null }).status ?? null,
+        status_ranking: (row as { status_ranking?: string | null }).status_ranking ?? null,
+      });
+    }
   }
 
   const advIds = [...new Set((pendentesEnvio ?? []).map((m) => m.adversario_id).filter(Boolean))] as string[];
@@ -245,7 +261,11 @@ export default async function AgendaPage() {
     const opp = m.usuario_id === user.id ? m.adversario_id : m.usuario_id;
     const status = String(m.status ?? "Aceito");
     const keyDuelo = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
-    const partidaRecente = partidaMaisRecentePorMatch.get(Number(m.id)) ?? (keyDuelo ? partidaMaisRecentePorDuelo.get(keyDuelo) ?? null : null);
+    const keyDueloNoSport = dueloKeyNoSport(m.usuario_id, m.adversario_id);
+    const partidaRecente =
+      partidaMaisRecentePorMatch.get(Number(m.id)) ??
+      (keyDuelo ? partidaMaisRecentePorDuelo.get(keyDuelo) ?? null : null) ??
+      (keyDueloNoSport ? partidaMaisRecentePorDueloNoSport.get(keyDueloNoSport) ?? null : null);
     const partidaStatus = String(partidaRecente?.status ?? "").trim().toLowerCase();
     const partidaStatusRanking = String(partidaRecente?.status_ranking ?? "").trim().toLowerCase();
     let statusLabel: string | null = null;

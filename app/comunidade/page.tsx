@@ -404,6 +404,20 @@ export default async function ComunidadePage() {
     }
   }
   const painelAgendadasVisiveis = (painelAgendadas ?? []).filter((row) => {
+    const rowStatusRanking = String((row as { status_ranking?: string | null }).status_ranking ?? "").trim().toLowerCase();
+    const rowLancadoPor = String((row as { lancado_por?: string | null }).lancado_por ?? "").trim();
+    const isContestadoLegacy =
+      rowStatusRanking === "contestado" ||
+      rowStatusRanking === "resultado_contestado" ||
+      rowStatusRanking === "pendente_confirmacao_revisao" ||
+      rowStatusRanking === "em_analise_admin";
+    if (isContestadoLegacy) {
+      if (!rowLancadoPor) return false;
+      if (rowLancadoPor !== user.id) return false;
+    }
+    if (rowStatusRanking === "em_analise_admin") {
+      return false;
+    }
     const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
     const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
     if (!key) return true;

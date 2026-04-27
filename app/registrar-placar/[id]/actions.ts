@@ -440,11 +440,16 @@ export async function abrirMediacaoAdminAction(formData: FormData) {
   if (!ctx.partida) go(partidaId, "erro", "Partida não encontrada.");
   const p = ctx.partida;
   const canMediate = ctx.scope.isColetivo ? ctx.scope.isTeamOwner : ctx.scope.isParticipant;
-  const aguardando = normStatus(p.status) === "aguardando_confirmacao";
+  const status = normStatus(p.status);
+  const emFluxoContestado =
+    isRankingStatus(p.status_ranking, "contestado") ||
+    isRankingStatus(p.status_ranking, "resultado_contestado") ||
+    isRankingStatus(p.status_ranking, "pendente_confirmacao_revisao");
+  const aguardando = status === "aguardando_confirmacao" || (status === "agendada" && emFluxoContestado);
   if (!canMediate || !aguardando) {
     go(partidaId, "erro", "Esta partida não está disponível para mediação.");
   }
-  if (!isRankingStatus(p.status_ranking, "resultado_contestado") && !isRankingStatus(p.status_ranking, "pendente_confirmacao_revisao")) {
+  if (!emFluxoContestado) {
     go(partidaId, "erro", "A mediação só pode ser aberta em fluxo de resultado contestado.");
   }
   if (p.lancado_por === user.id) {

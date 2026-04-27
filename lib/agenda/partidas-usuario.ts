@@ -4,12 +4,16 @@ export type EspNome = { nome?: string | null };
 /** Linha retornada pelas queries de partidas da agenda / painel (cards). */
 export type AgendaPartidaCardRow = {
   id: number;
+  esporte_id?: number | null;
   jogador1_id: string | null;
   jogador2_id: string | null;
   data_registro: string | null;
   data_partida: string | null;
   local_str: string | null;
   local_espaco_id: number | null;
+  lancado_por?: string | null;
+  status?: string | null;
+  status_ranking?: string | null;
   esportes?: EspNome | EspNome[] | null;
 };
 
@@ -39,7 +43,7 @@ export async function getAgendaTeamContext(supabase: SupabaseClient, userId: str
 }
 
 const partidasSelect =
-  "id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, modalidade, data_registro, data_partida, local_str, local_espaco_id, status, esportes(nome)";
+  "id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, modalidade, data_registro, data_partida, local_str, local_espaco_id, status, status_ranking, lancado_por, esportes(nome)";
 
 export function fetchPartidasAgendadasUsuario(
   supabase: SupabaseClient,
