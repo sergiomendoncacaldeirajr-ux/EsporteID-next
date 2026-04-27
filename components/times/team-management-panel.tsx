@@ -32,10 +32,17 @@ export function TeamManagementPanel({
   const [createState, createAction, createPending] = useActionState(criarEquipe, initial);
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
   const [tipo, setTipo] = useState<"time" | "dupla">(defaultTipoFormacao ?? "time");
-  const [esporteId, setEsporteId] = useState<string>("");
+  const [esporteId, setEsporteId] = useState<string>(() =>
+    esportes.length === 1 ? String(esportes[0].id) : ""
+  );
   const [localizacao, setLocalizacao] = useState("");
   const [gpsStatus, setGpsStatus] = useState<"idle" | "loading" | "error">("idle");
   const [gpsError, setGpsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (esporteId !== "" || esportes.length === 0) return;
+    setEsporteId(String(esportes[0].id));
+  }, [esportes, esporteId]);
 
   useEffect(() => {
     if (!manageHrefTemplate) return;

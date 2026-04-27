@@ -95,13 +95,22 @@ export async function criarEquipe(
   const originalName = escudoFile.name || "escudo";
   const ext = originalName.includes(".") ? originalName.split(".").pop()?.toLowerCase() ?? "jpg" : "jpg";
   const safeExt = ext.replace(/[^a-z0-9]/g, "") || "jpg";
-  const path = `times/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
+  // RLS do bucket avatars: primeiro segmento do path deve ser auth.uid() (ver storage_avatars_insert_own).
+  const path = `${user.id}/time_escudo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
   const up = await supabase.storage.from("avatars").upload(path, escudoFile, {
     upsert: true,
     contentType: escudoFile.type || "image/jpeg",
     cacheControl: "3600",
   });
-  if (up.error) return { ok: false, message: "Não foi possível enviar a foto da equipe." };
+  if (up.error) {
+    const detail = up.error.message;
+    return {
+      ok: false,
+      message: detail
+        ? `Não foi possível enviar a foto da equipe. (${detail})`
+        : "Não foi possível enviar a foto da equipe.",
+    };
+  }
   const escudo = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
 
   const { data: created, error } = await supabase

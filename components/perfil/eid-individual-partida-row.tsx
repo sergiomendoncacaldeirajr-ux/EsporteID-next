@@ -82,6 +82,7 @@ export function EidIndividualPartidaRow({
     Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2));
   const placarTxt = placarOk ? `${p.placar_1} × ${p.placar_2}` : "—";
   const perfilHref = `/perfil/${encodeURIComponent(opponentId)}?from=${encodeURIComponent(profileLinkFrom)}`;
+  const origemLinha = origemLabel === "Ranking" ? "Rank" : origemLabel;
 
   const resultadoClass =
     res.label === "V"
@@ -164,10 +165,15 @@ export function EidIndividualPartidaRow({
                 : "font-bold text-eid-primary-300"
             }
           >
-            {origemLabel}
+            {origemLinha}
           </span>
           <span className="mx-1 text-eid-text-secondary">·</span>
-          <span className="font-semibold tabular-nums text-eid-fg">{placarTxt}</span>
+          <span
+            className="inline-flex items-center rounded-md border border-eid-primary-500/30 bg-eid-primary-500/[0.1] px-1.5 py-0.5 text-[11px] font-black tabular-nums tracking-tight text-eid-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ring-1 ring-inset ring-eid-primary-500/10"
+            title="Placar"
+          >
+            {placarTxt}
+          </span>
           <span className="mx-1 text-eid-text-secondary">·</span>
           {when}
           {torneioLabel ? (

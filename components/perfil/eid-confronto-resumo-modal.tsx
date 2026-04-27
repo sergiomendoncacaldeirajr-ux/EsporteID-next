@@ -71,6 +71,217 @@ function parseScorePayloadFromMessage(message: string | null | undefined): Score
   }
 }
 
+/** Primeira palavra do nome (ex.: placar por sets em linha compacta). */
+function primeiroNome(completo: string): string {
+  const t = completo.trim();
+  if (!t) return completo;
+  const first = t.split(/\s+/u)[0];
+  return first || t;
+}
+
+/** Placar tipo "1 × 2" com números alinhados e separador discreto. */
+function PlacarNumerosInline({
+  placar,
+  size = "md",
+}: {
+  placar: string;
+  size?: "md" | "sm";
+}) {
+  const trimmed = placar.trim();
+  const m = trimmed.match(/^(\d+)\s*[×x]\s*(\d+)$/i);
+  const numCls =
+    size === "md"
+      ? "text-xl font-black tabular-nums tracking-tight text-eid-fg sm:text-2xl"
+      : "text-base font-black tabular-nums tracking-tight text-eid-fg sm:text-lg";
+  const xCls =
+    size === "md"
+      ? "select-none text-xs font-extrabold text-eid-text-secondary/75 sm:text-sm"
+      : "select-none text-[10px] font-extrabold text-eid-text-secondary/75 sm:text-xs";
+  if (!m) {
+    return <p className={`text-center ${numCls}`}>{trimmed}</p>;
+  }
+  return (
+    <p className={`flex items-center justify-center gap-2.5 ${numCls}`}>
+      <span>{m[1]}</span>
+      <span className={xCls} aria-hidden>
+        ×
+      </span>
+      <span>{m[2]}</span>
+    </p>
+  );
+}
+
+/** Games de um lado no set; superscript = pontos desse jogador no tie-break (se houve). */
+function SetSingleGamesCell({
+  games,
+  tieBreakPoints,
+  hadTiebreak,
+}: {
+  games: number;
+  tieBreakPoints: number;
+  hadTiebreak: boolean;
+}) {
+  return (
+    <span className="inline-flex items-baseline justify-center font-black tabular-nums leading-none text-eid-fg">
+      {games}
+      {hadTiebreak ? (
+        <sup className="ml-px align-super text-[0.55em] font-black leading-none text-eid-primary-500 dark:text-eid-primary-300">
+          {tieBreakPoints}
+        </sup>
+      ) : null}
+    </span>
+  );
+}
+
+function SetsBroadcastPlayerCell({
+  nome,
+  nomeCompleto,
+  avatarUrl,
+  profileHref,
+}: {
+  nome: string;
+  /** Tooltip / acessível: nome completo quando `nome` for só o primeiro. */
+  nomeCompleto?: string | null;
+  avatarUrl: string | null | undefined;
+  profileHref: string | null | undefined;
+}) {
+  const tip = nomeCompleto?.trim() ? nomeCompleto.trim() : nome;
+  const face = avatarUrl ? (
+    <img
+      src={avatarUrl}
+      alt=""
+      className="h-6 w-6 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover"
+    />
+  ) : (
+    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-400">
+      {nome.trim().slice(0, 1).toUpperCase() || "?"}
+    </span>
+  );
+  const label = (
+    <span className="min-w-0 truncate text-[9px] font-bold uppercase tracking-wide text-eid-fg">{nome}</span>
+  );
+  const row = (
+    <div className="flex min-w-0 items-center gap-1.5">
+      {face}
+      {label}
+    </div>
+  );
+  if (profileHref) {
+    return (
+      <Link href={profileHref} data-no-modal="1" className="min-w-0 hover:opacity-90" title={tip}>
+        {row}
+      </Link>
+    );
+  }
+  return (
+    <span className="min-w-0" title={tip}>
+      {row}
+    </span>
+  );
+}
+
+function SetsScoreboardTable({
+  sets,
+  ladoA,
+  ladoB,
+  ladoAAvatarUrl,
+  ladoBAvatarUrl,
+  ladoAProfileHref,
+  ladoBProfileHref,
+}: {
+  sets: NonNullable<ScorePayload["sets"]>;
+  ladoA: string;
+  ladoB: string;
+  ladoAAvatarUrl?: string | null;
+  ladoBAvatarUrl?: string | null;
+  ladoAProfileHref?: string | null;
+  ladoBProfileHref?: string | null;
+}) {
+  const n = sets.length;
+  const scoreGridCols = `repeat(${n}, minmax(2rem, 1fr))`;
+  const borderCell = "border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)]";
+
+  return (
+    <div className={MODAL_CARD}>
+      <div className={`${MODAL_CARD_HEAD} !py-2`}>
+        <p className="text-[9px] font-black uppercase tracking-[0.1em] text-eid-primary-300">Placar por sets</p>
+        <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-1.5 py-px text-[8px] font-black uppercase tracking-[0.07em] text-eid-primary-200">
+          Sets
+        </span>
+      </div>
+      <div className="p-2 sm:p-2.5">
+        <div className="overflow-x-auto rounded-md border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-card)_22%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] dark:bg-[color:color-mix(in_srgb,var(--eid-bg)_55%,var(--eid-surface)_45%)]">
+          <div className="flex min-w-0 w-full border-b border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_55%,transparent)]">
+            <div className={`flex w-[7rem] shrink-0 items-center border-r ${borderCell} px-2 py-1 sm:w-[8rem]`} aria-hidden />
+            <div className="grid min-w-0 flex-1" style={{ gridTemplateColumns: scoreGridCols }}>
+              {sets.map((_, idx) => (
+                <div
+                  key={`set-h-${idx}`}
+                  className={`border-r py-1 text-center text-[8px] font-black tabular-nums text-eid-text-secondary last:border-r-0 sm:text-[9px] ${borderCell}`}
+                >
+                  S{idx + 1}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex border-b border-[color:var(--eid-border-subtle)]">
+            <div className={`flex w-[7rem] shrink-0 items-center border-r ${borderCell} px-2 py-1.5 sm:w-[8rem]`}>
+              <SetsBroadcastPlayerCell
+                nome={primeiroNome(ladoA)}
+                nomeCompleto={ladoA}
+                avatarUrl={ladoAAvatarUrl}
+                profileHref={ladoAProfileHref ?? null}
+              />
+            </div>
+            <div className="grid min-w-0 flex-1" style={{ gridTemplateColumns: scoreGridCols }}>
+              {sets.map((set, idx) => {
+                const a = Number(set.a ?? 0);
+                const tba = Number(set.tiebreakA ?? 0);
+                const tbb = Number(set.tiebreakB ?? 0);
+                const hadTb = tba > 0 || tbb > 0;
+                return (
+                  <div
+                    key={`set-a-${idx}`}
+                    className={`flex items-center justify-center border-r px-1 py-1.5 text-sm last:border-r-0 sm:text-base ${borderCell}`}
+                  >
+                    <SetSingleGamesCell games={a} tieBreakPoints={tba} hadTiebreak={hadTb} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex">
+            <div className={`flex w-[7rem] shrink-0 items-center border-r ${borderCell} px-2 py-1.5 sm:w-[8rem]`}>
+              <SetsBroadcastPlayerCell
+                nome={primeiroNome(ladoB)}
+                nomeCompleto={ladoB}
+                avatarUrl={ladoBAvatarUrl}
+                profileHref={ladoBProfileHref ?? null}
+              />
+            </div>
+            <div className="grid min-w-0 flex-1" style={{ gridTemplateColumns: scoreGridCols }}>
+              {sets.map((set, idx) => {
+                const b = Number(set.b ?? 0);
+                const tba = Number(set.tiebreakA ?? 0);
+                const tbb = Number(set.tiebreakB ?? 0);
+                const hadTb = tba > 0 || tbb > 0;
+                return (
+                  <div
+                    key={`set-b-${idx}`}
+                    className={`flex items-center justify-center border-r px-1 py-1.5 text-sm last:border-r-0 sm:text-base ${borderCell}`}
+                  >
+                    <SetSingleGamesCell games={b} tieBreakPoints={tbb} hadTiebreak={hadTb} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function EidConfrontoResumoModal({
   titulo,
   subtitulo,
@@ -274,105 +485,32 @@ export function EidConfrontoResumoModal({
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-2xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_24%,var(--eid-surface)_76%)_0%,color-mix(in_srgb,var(--eid-card)_92%,var(--eid-primary-500)_8%)_100%)] px-4 py-3.5 text-center ring-1 ring-[color:color-mix(in_srgb,var(--eid-primary-500)_35%,transparent)] sm:py-4">
-                  <p className="text-[9px] font-black uppercase tracking-[0.16em] text-eid-primary-200/95">Placar final</p>
-                  <p className="mt-1 text-[1.65rem] font-black tabular-nums leading-none tracking-tight text-eid-fg sm:text-[1.85rem]">
-                    {placarBase}
-                  </p>
+                <div className="relative mt-5 overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_32%,var(--eid-border-subtle)_68%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-surface)_88%)_0%,color-mix(in_srgb,var(--eid-card)_96%,transparent)_100%)] px-3 py-2.5 text-center shadow-[0_0_28px_-6px_color-mix(in_srgb,var(--eid-primary-500)_42%,transparent),0_6px_22px_-14px_rgba(37,99,235,0.28),inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-4 sm:py-3">
+                  <div
+                    className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_95%_70%_at_50%_-30%,color-mix(in_srgb,var(--eid-primary-400)_38%,transparent),transparent_62%)] opacity-90 dark:opacity-100"
+                    aria-hidden
+                  />
+                  <div className="pointer-events-none absolute -left-1/4 top-1/2 h-[140%] w-1/2 -translate-y-1/2 rotate-12 bg-[linear-gradient(105deg,transparent_40%,rgba(255,255,255,0.14)_50%,transparent_60%)] dark:bg-[linear-gradient(105deg,transparent_40%,rgba(255,255,255,0.08)_50%,transparent_60%)]" aria-hidden />
+                  <div className="relative z-[1]">
+                    <p className="text-[8px] font-black uppercase tracking-[0.14em] text-eid-primary-300">Placar final</p>
+                    <div className="mt-1">
+                      <PlacarNumerosInline placar={placarBase} size="md" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {payload?.type === "sets" && Array.isArray(payload.sets) && payload.sets.length > 0 ? (
-              <div className={MODAL_CARD}>
-                <div className={MODAL_CARD_HEAD}>
-                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-primary-300">Placar por sets</p>
-                  <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-eid-primary-200">
-                    Sets
-                  </span>
-                </div>
-                <div className="p-3 sm:p-4">
-                  <div className="mb-2.5 grid grid-cols-[minmax(0,1fr)_1.75rem_minmax(0,1fr)] items-end gap-x-0.5 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,var(--eid-primary-500)_12%)] pb-2">
-                    <p className="truncate text-center text-[9px] font-bold uppercase leading-tight tracking-[0.05em] text-eid-text-secondary" title={ladoA}>
-                      {ladoA}
-                    </p>
-                    <span className="pb-0.5 text-center text-[8px] font-black text-eid-text-secondary/50" aria-hidden>
-                      ·
-                    </span>
-                    <p className="truncate text-center text-[9px] font-bold uppercase leading-tight tracking-[0.05em] text-eid-text-secondary" title={ladoB}>
-                      {ladoB}
-                    </p>
-                  </div>
-                  <ul className="m-0 list-none space-y-2 p-0">
-                    {payload.sets.map((set, idx) => {
-                      const a = Number(set.a ?? 0);
-                      const b = Number(set.b ?? 0);
-                      const tba = Number(set.tiebreakA ?? 0);
-                      const tbb = Number(set.tiebreakB ?? 0);
-                      const hasTb = tba > 0 || tbb > 0;
-                      const winA = a > b;
-                      const winB = b > a;
-                      const boxWin =
-                        "rounded-lg border border-[color:color-mix(in_srgb,var(--eid-primary-400)_42%,var(--eid-border-subtle)_58%)] bg-[linear-gradient(165deg,color-mix(in_srgb,var(--eid-primary-500)_38%,var(--eid-surface)_62%)_0%,color-mix(in_srgb,var(--eid-card)_94%,var(--eid-primary-500)_6%)_100%)] px-1.5 py-1.5 shadow-[0_4px_14px_-12px_color-mix(in_srgb,var(--eid-primary-500)_55%,transparent),inset_0_1px_0_rgba(255,255,255,0.05)] sm:py-2";
-                      const boxNeutral =
-                        "rounded-lg border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)] bg-eid-surface/30 px-1.5 py-1.5 sm:py-2";
-                      return (
-                        <li
-                          key={`set-${idx}`}
-                          className="list-none rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,var(--eid-primary-500)_15%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_92%,transparent)_0%,color-mix(in_srgb,var(--eid-surface)_35%,transparent)_100%)] p-2 shadow-[0_3px_14px_-12px_rgba(15,23,42,0.32)] sm:p-2.5"
-                        >
-                          <div className="mb-2 flex flex-wrap items-center justify-between gap-1.5">
-                            <span className="inline-flex items-center gap-1 rounded-md bg-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-surface)_78%)] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-eid-primary-100 ring-1 ring-eid-primary-500/25">
-                              <span className="tabular-nums text-eid-primary-200/90">{idx + 1}</span>
-                              <span className="text-[8px] font-bold tracking-[0.08em] text-eid-primary-200/80">set</span>
-                            </span>
-                            {hasTb ? (
-                              <span className="rounded border border-eid-primary-500/25 bg-eid-primary-500/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-eid-primary-200">
-                                Tie-break
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-1.5 sm:gap-2">
-                            <div className={winA ? boxWin : boxNeutral}>
-                              <p className="text-center text-[8px] font-bold uppercase tracking-wide text-eid-text-secondary/85">Games</p>
-                              <p className="mt-0.5 text-center text-xl font-black tabular-nums leading-none tracking-tight text-eid-fg sm:text-[1.35rem]">
-                                {a}
-                              </p>
-                              {winA ? (
-                                <p className="mt-0.5 text-center text-[8px] font-bold uppercase tracking-wider text-eid-primary-200">Set</p>
-                              ) : null}
-                            </div>
-                            <div className="flex flex-col items-center justify-center self-center py-0.5">
-                              <span className="text-[9px] font-black text-eid-text-secondary/45" aria-hidden>
-                                :
-                              </span>
-                            </div>
-                            <div className={winB ? boxWin : boxNeutral}>
-                              <p className="text-center text-[8px] font-bold uppercase tracking-wide text-eid-text-secondary/85">Games</p>
-                              <p className="mt-0.5 text-center text-xl font-black tabular-nums leading-none tracking-tight text-eid-fg sm:text-[1.35rem]">
-                                {b}
-                              </p>
-                              {winB ? (
-                                <p className="mt-0.5 text-center text-[8px] font-bold uppercase tracking-wider text-eid-primary-200">Set</p>
-                              ) : null}
-                            </div>
-                          </div>
-                          {hasTb ? (
-                            <div className="mt-2 flex flex-col items-center gap-0.5 rounded-lg border border-dashed border-[color:color-mix(in_srgb,var(--eid-primary-500)_35%,var(--eid-border-subtle)_65%)] bg-eid-surface/25 px-2 py-1.5">
-                              <p className="text-[8px] font-black uppercase tracking-[0.1em] text-eid-text-secondary">Placar do tie-break</p>
-                              <p className="text-sm font-black tabular-nums tracking-tight text-eid-fg">
-                                <span className={tba > tbb ? "text-eid-primary-200" : ""}>{tba}</span>
-                                <span className="mx-1 text-eid-text-secondary/55">–</span>
-                                <span className={tbb > tba ? "text-eid-primary-200" : ""}>{tbb}</span>
-                              </p>
-                            </div>
-                          ) : null}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </div>
+              <SetsScoreboardTable
+                sets={payload.sets}
+                ladoA={ladoA}
+                ladoB={ladoB}
+                ladoAAvatarUrl={ladoAAvatarUrl}
+                ladoBAvatarUrl={ladoBAvatarUrl}
+                ladoAProfileHref={ladoAProfileHref}
+                ladoBProfileHref={ladoBProfileHref}
+              />
             ) : null}
 
             {payload?.type === "gols" && payload.goals ? (
@@ -485,67 +623,65 @@ export function EidConfrontoResumoModal({
                   {totalConfrontos}×
                 </span>
               </div>
-              <div className="p-4 sm:p-5">
-                <p className="text-sm font-semibold text-eid-fg">
-                  Já aconteceu <span className="font-black text-eid-primary-200">{totalConfrontos}</span>{" "}
-                  {totalConfrontos === 1 ? "vez" : "vezes"} neste duelo.
+              <div className="p-3 sm:p-4">
+                <p className="text-[11px] leading-snug text-eid-text-secondary">
+                  Neste duelo: <span className="font-black text-eid-primary-300">{totalConfrontos}</span>{" "}
+                  {totalConfrontos === 1 ? "partida registrada" : "partidas registradas"}.
                 </p>
                 {saldoResumo ? (
-                  <p className="mt-2 rounded-lg border border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2 text-[11px] font-semibold text-eid-primary-100">
+                  <p className="mt-2 rounded-lg border border-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-border-subtle)_78%)] bg-eid-primary-500/8 px-2.5 py-1.5 text-[10px] font-semibold leading-snug text-eid-fg">
                     {saldoResumo}
                   </p>
                 ) : null}
                 {ultimosConfrontos.length > 0 ? (
-                  <ul className="mt-4 space-y-2.5">
+                  <ul className="mt-3 space-y-2">
                     {ultimosConfrontos.map((item) => (
                       <li
                         key={`hist-${item.id}`}
-                        className="relative overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,var(--eid-primary-500)_15%)] bg-[linear-gradient(110deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-500)_4%)_0%,color-mix(in_srgb,var(--eid-surface)_40%,transparent)_100%)] pl-3.5 pr-3 py-3 shadow-sm before:absolute before:left-0 before:top-0 before:h-full before:w-1 before:rounded-l-xl before:bg-gradient-to-b before:from-eid-primary-400 before:to-eid-primary-600/80"
+                        className="rounded-lg border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,var(--eid-primary-500)_8%)] bg-[color:color-mix(in_srgb,var(--eid-surface)_45%,var(--eid-card)_55%)] px-2.5 py-2 sm:px-3 sm:py-2.5"
                       >
-                        {item.confronto ? (
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">{item.confronto}</p>
-                        ) : null}
-                        <p className="mt-1 text-lg font-black tabular-nums tracking-tight text-eid-fg">{item.placar}</p>
-                        <p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[10px] leading-relaxed text-eid-text-secondary">
+                        <div className="flex items-start justify-between gap-2">
                           <span
-                            className={`inline-flex rounded-md px-1.5 py-0.5 font-bold ${
+                            className={`shrink-0 rounded-md px-1.5 py-0.5 text-[8px] font-black uppercase tracking-wide ${
                               item.origem === "Torneio"
-                                ? "bg-eid-action-500/15 text-eid-action-300"
-                                : "bg-eid-primary-500/15 text-eid-primary-200"
+                                ? "border border-eid-action-500/30 bg-eid-action-500/12 text-eid-action-300"
+                                : "border border-eid-primary-500/30 bg-eid-primary-500/10 text-eid-primary-300"
                             }`}
                           >
                             {item.origem}
                           </span>
-                          <span className="text-eid-text-secondary/80" aria-hidden>
-                            ·
-                          </span>
-                          <span className="tabular-nums text-eid-fg/90">{item.dataHora}</span>
-                          <span className="text-eid-text-secondary/80" aria-hidden>
-                            ·
-                          </span>
-                          <span className="min-w-0">
-                            {item.local?.trim() ? (
-                              item.localHref ? (
-                                <Link
-                                  href={item.localHref}
-                                  data-no-modal="1"
-                                  className="font-semibold text-eid-primary-200 underline-offset-2 hover:underline"
-                                >
-                                  {item.local}
-                                </Link>
-                              ) : (
-                                item.local
-                              )
+                          <time className="text-right text-[9px] font-medium tabular-nums leading-tight text-eid-text-secondary">
+                            {item.dataHora}
+                          </time>
+                        </div>
+                        {item.confronto ? (
+                          <p className="mt-1.5 text-center text-[10px] font-semibold leading-tight text-eid-fg">{item.confronto}</p>
+                        ) : null}
+                        <div className="mt-2 border-t border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,transparent)] pt-2">
+                          <PlacarNumerosInline placar={item.placar} size="sm" />
+                        </div>
+                        <p className="mt-1.5 text-center text-[9px] leading-snug text-eid-text-secondary">
+                          {item.local?.trim() ? (
+                            item.localHref ? (
+                              <Link
+                                href={item.localHref}
+                                data-no-modal="1"
+                                className="font-medium text-eid-primary-400 underline-offset-2 hover:underline dark:text-eid-primary-300"
+                              >
+                                {item.local}
+                              </Link>
                             ) : (
-                              <span className="italic opacity-90">Local não informado</span>
-                            )}
-                          </span>
+                              item.local
+                            )
+                          ) : (
+                            <span className="italic opacity-90">Local não informado</span>
+                          )}
                         </p>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-3 rounded-lg border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/20 px-3 py-3 text-center text-[11px] text-eid-text-secondary">
+                  <p className="mt-3 rounded-lg border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2.5 py-2.5 text-center text-[10px] leading-relaxed text-eid-text-secondary">
                     Sem outros registros deste confronto além desta partida.
                   </p>
                 )}

@@ -213,7 +213,7 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
                     opponentNotaEid={oponenteNota}
                     res={res}
                     profileLinkFrom={`/perfil/${id}/historico`}
-                    torneioLabel={p.torneio_id ? "Torneio" : "Rank"}
+                    torneioLabel={p.torneio_id ? "Torneio" : null}
                     esporteLabel={esporteNome}
                     modalidadeLabel={modalidadeFmt}
                     totalConfrontos={confrontosMesmos.length}
