@@ -73,16 +73,19 @@ async function triggerPushForMatchNotifications(
   source: string
 ) {
   const uniqUsers = [...new Set(userIds.map((v) => String(v ?? "").trim()).filter(Boolean))];
-  if (!Number.isFinite(matchId) || matchId < 1 || uniqUsers.length === 0) return;
-  const { data } = await supabase
+  if (!Number.isFinite(matchId) || matchId < 1) return;
+  let q = supabase
     .from("notificacoes")
     .select("id")
     .eq("referencia_id", matchId)
     .eq("lida", false)
-    .in("usuario_id", uniqUsers)
     .in("tipo", ["match", "desafio"])
     .order("id", { ascending: false })
     .limit(30);
+  if (uniqUsers.length > 0) {
+    q = q.in("usuario_id", uniqUsers);
+  }
+  const { data } = await q;
   const ids = (data ?? [])
     .map((row) => Number((row as { id?: number } | null)?.id ?? 0))
     .filter((id) => Number.isFinite(id) && id > 0);
