@@ -22,7 +22,14 @@ export function RealtimePageRefresh({ userId }: Props) {
     if (!userId) return;
     const supabase = createClient();
 
+    const shouldPauseAutoRefresh = () => {
+      if (typeof window === "undefined") return false;
+      const path = String(window.location.pathname ?? "");
+      return path.startsWith("/registrar-placar/");
+    };
+
     const refresh = () => {
+      if (shouldPauseAutoRefresh()) return;
       const now = Date.now();
       if (now - lastRefreshAt.current < 1200) return;
       lastRefreshAt.current = now;
@@ -96,6 +103,7 @@ export function RealtimePageRefresh({ userId }: Props) {
     ];
     const intervalRefresh = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
+      if (shouldPauseAutoRefresh()) return;
       refresh();
     }, 10000);
 

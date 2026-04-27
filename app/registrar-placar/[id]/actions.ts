@@ -221,6 +221,18 @@ export async function submitPlacarAction(formData: FormData) {
     if (!dynamicValidation.valid || dynamicValidation.placar1 == null || dynamicValidation.placar2 == null) {
       go(partidaId, "erro", dynamicValidation.message ?? "Placar inválido para este formato.");
     }
+    if (
+      payloadFromUI.type === "sets" &&
+      (payloadFromUI.sets ?? []).every(
+        (s) =>
+          Number(s?.a ?? 0) === 0 &&
+          Number(s?.b ?? 0) === 0 &&
+          Number(s?.tiebreakA ?? 0) === 0 &&
+          Number(s?.tiebreakB ?? 0) === 0
+      )
+    ) {
+      go(partidaId, "erro", "Preencha o placar antes de enviar o resultado.");
+    }
     finalPlacar1 = dynamicValidation.placar1;
     finalPlacar2 = dynamicValidation.placar2;
   }
