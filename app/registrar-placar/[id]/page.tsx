@@ -5,12 +5,14 @@ import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-loca
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import { MatchScoreForm } from "@/components/placar/match-score-form";
 import { StatusSubmitButton } from "@/components/placar/status-submit-button";
+import { RealtimePageRefresh } from "@/components/pwa/realtime-page-refresh";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 import { type MatchScorePayload } from "@/lib/match-scoring";
 import { buildSetFormatOptions, getDesafioRankLockedSetFormat, getMatchUIConfig } from "@/lib/match-scoring";
 import { createClient } from "@/lib/supabase/server";
+import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
 import { abrirMediacaoAdminAction, confirmarPlacarAction, contestarPlacarAction, salvarAgendamentoAction } from "./actions";
 
@@ -75,6 +77,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const errMsg = typeof sp.erro === "string" ? sp.erro : null;
   const novoLocalId = typeof sp.novo_local_id === "string" ? Number(sp.novo_local_id) : 0;
   const modoRaw = typeof sp.modo === "string" ? sp.modo.trim() : "";
+  const adminMode = sp.admin === "1";
   const isEmbed = typeof sp.embed === "string" && sp.embed === "1";
   const fromRaw = typeof sp.from === "string" ? sp.from.trim() : "";
   const fromSafe = fromRaw.startsWith("/") && !fromRaw.startsWith("//") ? fromRaw : null;
@@ -90,6 +93,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
     const nextPath = nextQs.toString() ? `/registrar-placar/${id}?${nextQs}` : `/registrar-placar/${id}`;
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
+  const isPlatformAdmin = adminMode ? await getIsPlatformAdmin() : false;
 
   const { data: p } = await supabase
     .from("partidas")
@@ -121,8 +125,8 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const torneioAccess = p.torneio_id ? await getTorneioStaffAccess(supabase, Number(p.torneio_id), user.id) : null;
   const podeRegistrarTorneio = torneioAccess ? canLaunchTorneioScore(torneioAccess) : false;
   if (p.torneio_id) {
-    if (!podeRegistrarTorneio) notFound();
-  } else if (isColetivo ? !(isTeamOwner || isTeamMember) : !participant) {
+    if (!podeRegistrarTorneio && !isPlatformAdmin) notFound();
+  } else if (!(isPlatformAdmin || (isColetivo ? isTeamOwner || isTeamMember : participant))) {
     notFound();
   }
   const status = normStatus(p.status);
@@ -138,7 +142,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   if (agendaSomente && status !== "agendada") {
     redirect("/comunidade#resultados-partida");
   }
-  const podeLancar = !emAnaliseAdmin && (p.torneio_id
+  const podeLancar = !emAnaliseAdmin && (isPlatformAdmin || (p.torneio_id
     ? podeRegistrarTorneio
     : resultadoContestado
       ? (isColetivo ? isTeamOwner : participant) &&
@@ -146,7 +150,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
         (status === "aguardando_confirmacao" || status === "agendada")
       : isColetivo
         ? isTeamOwner && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id))
-        : participant && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id)));
+        : participant && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id))));
   const podeConfirmarOuContestar =
     !emAnaliseAdmin && !p.torneio_id && (isColetivo ? isTeamOwner : participant) && aguardandoConfirmacao && p.lancado_por !== user.id;
   const podeAbrirMediacao =
@@ -156,8 +160,6 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
     aguardandoConfirmacao &&
     p.lancado_por !== user.id &&
     resultadoContestado;
-  const resultadoEnviadoAguardando = status === "aguardando_confirmacao" && p.lancado_por === user.id && !agendaSomente;
-
   const esp = Array.isArray(p.esportes) ? p.esportes[0] : p.esportes;
   const regrasPlacar = toRulesConfig((esp as { desafio_regras_placar_json?: unknown } | null)?.desafio_regras_placar_json);
   const variantes = Array.isArray(regrasPlacar.variantes) ? regrasPlacar.variantes : [];
@@ -249,9 +251,17 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const scorePayload = parseScorePayloadFromMessage(p.mensagem);
   const cleanMensagem = stripScorePayloadFromMessage(p.mensagem);
   const placarSets = scorePayload?.type === "sets" ? meaningfulSets(scorePayload.sets) : [];
+  const resultadoTemPlacar =
+    p.data_resultado != null ||
+    p.placar_1 != null ||
+    p.placar_2 != null ||
+    (scorePayload?.type === "sets" && placarSets.length > 0);
+  const resultadoEnviadoAguardando =
+    status === "aguardando_confirmacao" && p.lancado_por === user.id && resultadoTemPlacar && !agendaSomente;
 
   return (
     <main data-eid-desafio-ui className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-4 sm:py-6">
+        <RealtimePageRefresh userId={user.id} />
         {!isEmbed ? (
           <Link href={voltarHref} className={`${DESAFIO_FLOW_SECONDARY_CLASS} max-w-fit normal-case`}>
             {voltarLabel}

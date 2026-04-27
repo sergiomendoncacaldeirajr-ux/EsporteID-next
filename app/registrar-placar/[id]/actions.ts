@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { resolveVariantFromRules, type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { buildSetFormatOptions, getMatchUIConfig, validateMatchScorePayload, type MatchScorePayload } from "@/lib/match-scoring";
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
+import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { sanitizeOptionalUserText, sanitizeUserText } from "@/lib/security/sanitize-input";
 import { createClient } from "@/lib/supabase/server";
@@ -94,6 +95,7 @@ export async function submitPlacarAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect(`/login?next=/registrar-placar/${partidaId}`);
+  const isPlatformAdmin = await getIsPlatformAdmin();
 
   const placar1 = toInt(formData.get("placar_1"));
   const placar2 = toInt(formData.get("placar_2"));
@@ -202,7 +204,7 @@ export async function submitPlacarAction(formData: FormData) {
         (status === "aguardando_confirmacao" || status === "agendada")
       : actorCanRegular && (status === "agendada" || (status === "aguardando_confirmacao" && p.lancado_por === user.id));
   if (emAnaliseAdmin) go(partidaId, "erro", "Esta partida está em análise do admin.");
-  if (!canActRegular) go(partidaId, "erro", "Sem permissão para lançar resultado nesta partida.");
+  if (!canActRegular && !isPlatformAdmin) go(partidaId, "erro", "Sem permissão para lançar resultado nesta partida.");
   if (woAtivo && permitirWO === false) go(partidaId, "erro", "Este esporte não permite W.O. por configuração.");
   if (!woAtivo && permitirEmpate === false && placar1 === placar2) go(partidaId, "erro", "Empate não é permitido neste esporte.");
   if (!woAtivo && minPlacar != null && ((placar1 as number) < minPlacar || (placar2 as number) < minPlacar)) {

@@ -14,6 +14,7 @@ import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
 import { InstallAppOfferDynamic } from "@/components/pwa/install-app-offer-dynamic";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { PwaLaunchSplash } from "@/components/pwa/pwa-launch-splash";
+import { RealtimePageRefresh } from "@/components/pwa/realtime-page-refresh";
 import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
 import {
   ACTIVE_CONTEXT_COOKIE,
@@ -155,6 +156,7 @@ export default async function RootLayout({
         ) : null}
         {showAppChrome ? (
           <>
+            <RealtimePageRefresh userId={user!.id} />
             <div
               id="eid-app-shell-main-wrap"
               className="flex min-h-0 w-full min-w-0 flex-1 flex-col"

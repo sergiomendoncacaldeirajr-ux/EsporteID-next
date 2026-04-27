@@ -19,6 +19,17 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
     .order("id", { ascending: false })
     .limit(200);
   if (error) return <p className="text-sm text-red-300">{error.message}</p>;
+  const rows = data ?? [];
+  const userIds = [...new Set(rows.flatMap((r) => [r.jogador1_id, r.jogador2_id]).filter(Boolean))] as string[];
+  const esporteIds = [...new Set(rows.map((r) => Number(r.esporte_id ?? 0)).filter((n) => Number.isFinite(n) && n > 0))];
+  const [{ data: profilesRows }, { data: esportesRows }] = await Promise.all([
+    userIds.length > 0 ? db.from("profiles").select("id, nome, avatar_url").in("id", userIds) : Promise.resolve({ data: [] }),
+    esporteIds.length > 0 ? db.from("esportes").select("id, nome").in("id", esporteIds) : Promise.resolve({ data: [] }),
+  ]);
+  const profileMap = new Map(
+    (profilesRows ?? []).map((p) => [String((p as { id?: string }).id ?? ""), p as { nome?: string | null; avatar_url?: string | null }])
+  );
+  const esporteMap = new Map((esportesRows ?? []).map((e) => [Number((e as { id?: number }).id ?? 0), String((e as { nome?: string }).nome ?? "")]));
 
   return (
     <div>
@@ -58,7 +69,7 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
             </tr>
           </thead>
           <tbody>
-            {(data ?? []).map((p) => (
+            {rows.map((p) => (
               <tr key={p.id} className="border-b border-[color:var(--eid-border-subtle)]/50">
                 {(() => {
                   const status = String(p.status ?? "").trim().toLowerCase();
@@ -78,7 +89,7 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
                 <td className="px-2 py-1.5 font-mono text-eid-text-secondary">{p.id}</td>
                 <td className="px-2 py-1.5 font-mono text-eid-text-secondary">{p.match_id ?? "—"}</td>
                 <td className="px-2 py-1.5">{p.status ?? "—"}</td>
-                <td className="px-2 py-1.5">{p.esporte_id ?? "—"}</td>
+                <td className="px-2 py-1.5">{esporteMap.get(Number(p.esporte_id ?? 0)) || p.esporte_id || "—"}</td>
                 <td className="px-2 py-1.5">
                   {p.torneio_id ? (
                     <Link href={`/torneios/${p.torneio_id}`} className="text-eid-primary-300 hover:underline" target="_blank" rel="noreferrer">
@@ -92,7 +103,27 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
                   {p.data_partida ? new Date(p.data_partida).toLocaleString("pt-BR") : p.criado_em ? new Date(p.criado_em).toLocaleString("pt-BR") : "—"}
                 </td>
                 <td className="px-2 py-1.5">
+                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                    {[p.jogador1_id, p.jogador2_id].map((uid, idx) => {
+                      if (!uid) return null;
+                      const pf = profileMap.get(uid);
+                      return (
+                        <span key={`${p.id}-${uid}`} className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-0.5 text-[10px] text-eid-text-secondary">
+                          <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg">
+                            {pf?.avatar_url ? <img src={pf.avatar_url} alt="" className="h-full w-full object-cover" /> : String(pf?.nome ?? `J${idx + 1}`).slice(0, 1)}
+                          </span>
+                          <span className="max-w-[110px] truncate text-eid-fg">{pf?.nome ?? uid}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
                   <div className="flex flex-wrap items-center gap-1.5">
+                    <Link
+                      href={`/registrar-placar/${p.id}?from=/admin/partidas&admin=1`}
+                      className="rounded-md border border-eid-primary-500/55 bg-eid-primary-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-eid-primary-200 hover:bg-eid-primary-500/30"
+                    >
+                      Abrir lançador completo
+                    </Link>
                     {podeDefinirResultado ? (
                       <form action={adminDefinirResultadoPartida} className="flex flex-wrap items-center gap-1">
                         <input type="hidden" name="partida_id" value={p.id} />
