@@ -291,35 +291,86 @@ export function EidConfrontoResumoModal({
                     Sets
                   </span>
                 </div>
-                <div className="overflow-x-auto p-3 sm:p-4">
-                  <table className="w-full min-w-[240px] text-left text-[11px]">
-                    <thead>
-                      <tr className="bg-eid-surface/40 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">
-                        <th className="rounded-l-lg py-2 pl-2 pr-2">Set</th>
-                        <th className="py-2 pr-2">{ladoA}</th>
-                        <th className="py-2 pr-2">{ladoB}</th>
-                        <th className="rounded-r-lg py-2 pr-2">TB</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {payload.sets.map((set, idx) => {
-                        const hasTb = Number(set.tiebreakA ?? 0) > 0 || Number(set.tiebreakB ?? 0) > 0;
-                        return (
-                          <tr
-                            key={`set-${idx}`}
-                            className="border-t border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)] text-eid-fg odd:bg-eid-surface/15"
-                          >
-                            <td className="py-2 pl-2 pr-2 font-semibold tabular-nums">{idx + 1}</td>
-                            <td className="py-2 pr-2 font-black tabular-nums">{Number(set.a ?? 0)}</td>
-                            <td className="py-2 pr-2 font-black tabular-nums">{Number(set.b ?? 0)}</td>
-                            <td className="py-2 pr-2 tabular-nums text-eid-text-secondary">
-                              {hasTb ? `${Number(set.tiebreakA ?? 0)}-${Number(set.tiebreakB ?? 0)}` : "—"}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                <div className="p-4 sm:p-5">
+                  <div className="mb-4 grid grid-cols-[minmax(0,1fr)_2.25rem_minmax(0,1fr)] items-end gap-x-1 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,var(--eid-primary-500)_12%)] pb-3">
+                    <p className="truncate text-center text-[10px] font-bold uppercase leading-tight tracking-[0.06em] text-eid-text-secondary" title={ladoA}>
+                      {ladoA}
+                    </p>
+                    <span className="pb-0.5 text-center text-[9px] font-black text-eid-text-secondary/50" aria-hidden>
+                      ·
+                    </span>
+                    <p className="truncate text-center text-[10px] font-bold uppercase leading-tight tracking-[0.06em] text-eid-text-secondary" title={ladoB}>
+                      {ladoB}
+                    </p>
+                  </div>
+                  <ul className="m-0 list-none space-y-3 p-0">
+                    {payload.sets.map((set, idx) => {
+                      const a = Number(set.a ?? 0);
+                      const b = Number(set.b ?? 0);
+                      const tba = Number(set.tiebreakA ?? 0);
+                      const tbb = Number(set.tiebreakB ?? 0);
+                      const hasTb = tba > 0 || tbb > 0;
+                      const winA = a > b;
+                      const winB = b > a;
+                      const boxWin =
+                        "rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-400)_42%,var(--eid-border-subtle)_58%)] bg-[linear-gradient(165deg,color-mix(in_srgb,var(--eid-primary-500)_38%,var(--eid-surface)_62%)_0%,color-mix(in_srgb,var(--eid-card)_94%,var(--eid-primary-500)_6%)_100%)] px-2 py-2.5 shadow-[0_6px_20px_-14px_color-mix(in_srgb,var(--eid-primary-500)_65%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] sm:py-3";
+                      const boxNeutral =
+                        "rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)] bg-eid-surface/30 px-2 py-2.5 sm:py-3";
+                      return (
+                        <li
+                          key={`set-${idx}`}
+                          className="list-none rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,var(--eid-primary-500)_15%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_92%,transparent)_0%,color-mix(in_srgb,var(--eid-surface)_35%,transparent)_100%)] p-3 shadow-[0_4px_18px_-14px_rgba(15,23,42,0.35)] sm:p-3.5"
+                        >
+                          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-surface)_78%)] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-eid-primary-100 ring-1 ring-eid-primary-500/25">
+                              <span className="tabular-nums text-eid-primary-200/90">{idx + 1}</span>
+                              <span className="text-[9px] font-bold tracking-[0.1em] text-eid-primary-200/80">set</span>
+                            </span>
+                            {hasTb ? (
+                              <span className="rounded-md border border-eid-primary-500/25 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-eid-primary-200">
+                                Tie-break
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2 sm:gap-3">
+                            <div className={winA ? boxWin : boxNeutral}>
+                              <p className="text-center text-[9px] font-bold uppercase tracking-wide text-eid-text-secondary/85">Games</p>
+                              <p className="mt-0.5 text-center text-[1.65rem] font-black tabular-nums leading-none tracking-tight text-eid-fg sm:text-[1.85rem]">
+                                {a}
+                              </p>
+                              {winA ? (
+                                <p className="mt-1 text-center text-[9px] font-bold uppercase tracking-wider text-eid-primary-200">Set</p>
+                              ) : null}
+                            </div>
+                            <div className="flex flex-col items-center justify-center gap-0.5 self-center py-1">
+                              <span className="text-[11px] font-black text-eid-text-secondary/45" aria-hidden>
+                                :
+                              </span>
+                            </div>
+                            <div className={winB ? boxWin : boxNeutral}>
+                              <p className="text-center text-[9px] font-bold uppercase tracking-wide text-eid-text-secondary/85">Games</p>
+                              <p className="mt-0.5 text-center text-[1.65rem] font-black tabular-nums leading-none tracking-tight text-eid-fg sm:text-[1.85rem]">
+                                {b}
+                              </p>
+                              {winB ? (
+                                <p className="mt-1 text-center text-[9px] font-bold uppercase tracking-wider text-eid-primary-200">Set</p>
+                              ) : null}
+                            </div>
+                          </div>
+                          {hasTb ? (
+                            <div className="mt-3 flex flex-col items-center gap-1 rounded-xl border border-dashed border-[color:color-mix(in_srgb,var(--eid-primary-500)_35%,var(--eid-border-subtle)_65%)] bg-eid-surface/25 px-3 py-2">
+                              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-eid-text-secondary">Placar do tie-break</p>
+                              <p className="text-base font-black tabular-nums tracking-tight text-eid-fg sm:text-lg">
+                                <span className={tba > tbb ? "text-eid-primary-200" : ""}>{tba}</span>
+                                <span className="mx-1 text-eid-text-secondary/55">–</span>
+                                <span className={tbb > tba ? "text-eid-primary-200" : ""}>{tbb}</span>
+                              </p>
+                            </div>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               </div>
             ) : null}

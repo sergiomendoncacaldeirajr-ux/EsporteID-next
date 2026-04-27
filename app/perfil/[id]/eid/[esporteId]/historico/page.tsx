@@ -60,7 +60,7 @@ export default async function PerfilEidEsporteHistoricoIndividualPage({ params, 
   const { data: partidas } = await supabase
     .from("partidas")
     .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro, tipo_partida"
+      "id, esporte_id, modalidade, jogador1_id, jogador2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro, tipo_partida, mensagem"
     )
     .eq("esporte_id", esporteId)
     .or(`jogador1_id.eq.${profileId},jogador2_id.eq.${profileId}`)

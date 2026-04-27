@@ -34,7 +34,7 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
   const { data: partidasRaw } = await supabase
     .from("partidas")
     .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, tipo_partida, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id"
+      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, tipo_partida, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id, mensagem"
     )
     .or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`)
     .order("data_registro", { ascending: false })
