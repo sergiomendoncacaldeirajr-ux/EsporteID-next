@@ -21,10 +21,14 @@ export async function adminCancelarLimparPartida(formData: FormData) {
   try {
     await guard();
     const partidaId = Number(formData.get("partida_id"));
-    if (!Number.isFinite(partidaId) || partidaId < 1) return;
+    if (!Number.isFinite(partidaId) || partidaId < 1) {
+      redirect("/admin/partidas?adm_flash=partida_limpar_invalida");
+    }
     const db = svc();
     const { data: partida } = await db.from("partidas").select("id, match_id, torneio_id").eq("id", partidaId).maybeSingle();
-    if (!partida) return;
+    if (!partida) {
+      redirect("/admin/partidas?adm_flash=partida_limpar_nao_encontrada");
+    }
 
     const { error } = await db
       .from("partidas")
@@ -42,7 +46,9 @@ export async function adminCancelarLimparPartida(formData: FormData) {
         data_validacao: null,
       })
       .eq("id", partidaId);
-    if (error) return;
+    if (error) {
+      redirect("/admin/partidas?adm_flash=partida_limpar_erro");
+    }
 
     const matchId = Number(partida.match_id ?? 0);
     if (Number.isFinite(matchId) && matchId > 0) {
@@ -65,8 +71,9 @@ export async function adminCancelarLimparPartida(formData: FormData) {
       revalidatePath(`/torneios/${torneioId}`);
       revalidatePath(`/torneios/${torneioId}/operacao`);
     }
+    redirect("/admin/partidas?adm_flash=partida_limpar_ok");
   } catch {
-    return;
+    redirect("/admin/partidas?adm_flash=partida_limpar_erro");
   }
 }
 

@@ -152,7 +152,11 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
               <form action={formAction} className="min-w-0 flex-1 sm:flex-none sm:min-w-[9rem]">
                 <input type="hidden" name="match_id" value={String(m.id)} />
                 <input type="hidden" name="aceitar" value="true" />
-                <button type="submit" disabled={pending} className={`${DESAFIO_FLOW_CTA_CLASS} !h-[30px] !min-h-[30px] !py-0 w-full`}>
+                <button
+                  type="submit"
+                  disabled={pending}
+                  className={`${DESAFIO_FLOW_CTA_CLASS} w-full !h-[30px] !min-h-[30px] !py-0`}
+                >
                   <DesafioFlowCtaIcon />
                   <span>{pending ? "Salvando…" : "Aceitar"}</span>
                 </button>
@@ -164,7 +168,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                   type="submit"
                   disabled={pending}
                   data-eid-recusar-btn="true"
-                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full !border-red-400/45 !text-red-300 hover:!border-red-400/65 hover:!text-red-200`}
+                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full !h-[30px] !min-h-[30px] !py-0 !border-red-400/45 !text-red-300 hover:!border-red-400/65 hover:!text-red-200`}
                 >
                   Recusar
                 </button>

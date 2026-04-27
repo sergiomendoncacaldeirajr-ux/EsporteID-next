@@ -66,6 +66,31 @@ async function notify(
   }
 }
 
+async function triggerPushForMatchNotifications(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  matchId: number,
+  userIds: Array<string | null | undefined>,
+  source: string
+) {
+  const uniqUsers = [...new Set(userIds.map((v) => String(v ?? "").trim()).filter(Boolean))];
+  if (!Number.isFinite(matchId) || matchId < 1 || uniqUsers.length === 0) return;
+  const { data } = await supabase
+    .from("notificacoes")
+    .select("id")
+    .eq("referencia_id", matchId)
+    .eq("lida", false)
+    .in("usuario_id", uniqUsers)
+    .in("tipo", ["match", "desafio"])
+    .order("id", { ascending: false })
+    .limit(30);
+  const ids = (data ?? [])
+    .map((row) => Number((row as { id?: number } | null)?.id ?? 0))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (ids.length) {
+    await triggerPushForNotificationIdsBestEffort(ids, { source });
+  }
+}
+
 async function ensurePartidaAgendadaFromMatch(
   supabase: Awaited<ReturnType<typeof createClient>>,
   matchId: number,
@@ -253,6 +278,12 @@ export async function responderPedidoMatch(
     }
   }
 
+  const { data: participantsRow } = await supabase
+    .from("matches")
+    .select("usuario_id, adversario_id")
+    .eq("id", matchId)
+    .maybeSingle();
+
   const { error } = await supabase.rpc("responder_pedido_match", {
     p_match_id: matchId,
     p_aceitar: aceitar,
@@ -269,6 +300,12 @@ export async function responderPedidoMatch(
     referenciaId: matchId,
     tipos: ["match", "desafio"],
   });
+  await triggerPushForMatchNotifications(
+    supabase,
+    matchId,
+    [participantsRow?.usuario_id, participantsRow?.adversario_id],
+    "comunidade/actions.responderPedidoMatch"
+  );
 
   revalidatePath("/comunidade");
   revalidatePath("/agenda");
