@@ -202,7 +202,7 @@ export async function solicitarDesafioMatch(
       }
     }
 
-    if (mod === "individual" && p_alvo_usuario_id) {
+    if (alvoOwnerId) {
       const cooldownMeses = await getMatchRankCooldownMeses(supabase);
       const cutoff = new Date();
       cutoff.setMonth(cutoff.getMonth() - cooldownMeses);
@@ -214,9 +214,10 @@ export async function solicitarDesafioMatch(
           .select("id")
           .eq("esporte_id", p_esporte_id)
           .eq("finalidade", "ranking")
+          .eq("modalidade_confronto", mod)
           .in("status", ["Concluido", "Concluído", "Finalizado", "Encerrado"])
           .or(
-            `and(usuario_id.eq.${user.id},adversario_id.eq.${p_alvo_usuario_id}),and(usuario_id.eq.${p_alvo_usuario_id},adversario_id.eq.${user.id})`
+            `and(usuario_id.eq.${user.id},adversario_id.eq.${alvoOwnerId}),and(usuario_id.eq.${alvoOwnerId},adversario_id.eq.${user.id})`
           )
           .gte("data_confirmacao", cutoffIso)
           .limit(1),
@@ -225,8 +226,9 @@ export async function solicitarDesafioMatch(
           .select("id, modalidade, status, status_ranking, data_resultado, data_registro, data_partida")
           .eq("esporte_id", p_esporte_id)
           .is("torneio_id", null)
+          .eq("modalidade", modalidadeLimit)
           .or(
-            `and(jogador1_id.eq.${user.id},jogador2_id.eq.${p_alvo_usuario_id}),and(jogador1_id.eq.${p_alvo_usuario_id},jogador2_id.eq.${user.id})`
+            `and(jogador1_id.eq.${user.id},jogador2_id.eq.${alvoOwnerId}),and(jogador1_id.eq.${alvoOwnerId},jogador2_id.eq.${user.id}),and(desafiante_id.eq.${user.id},desafiado_id.eq.${alvoOwnerId}),and(desafiante_id.eq.${alvoOwnerId},desafiado_id.eq.${user.id})`
           )
           .order("id", { ascending: false })
           .limit(40),
@@ -251,7 +253,7 @@ export async function solicitarDesafioMatch(
       if ((concludedMatches?.length ?? 0) > 0 || hasRecentPartidaValida) {
         return {
           ok: false,
-          message: `Neste esporte, só é possível um novo desafio de ranking com este oponente após ${cooldownMeses} meses do último confronto válido.`,
+          message: `Neste esporte (${modalidadeLimit}), só é possível um novo desafio de ranking com este oponente após ${cooldownMeses} meses do último confronto válido.`,
         };
       }
     }

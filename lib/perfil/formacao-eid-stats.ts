@@ -24,6 +24,10 @@ export type PartidaColetivaRow = {
   data_resultado: string | null;
   data_registro: string | null;
   tipo_partida: string | null;
+  local_str?: string | null;
+  local_espaco_id?: number | null;
+  data_partida?: string | null;
+  mensagem?: string | null;
 };
 
 function normLower(v: string | null | undefined): string {
@@ -194,7 +198,7 @@ export async function carregarPartidasColetivasDoTime(
   const { data: raw } = await supabase
     .from("partidas")
     .select(
-      "id, time1_id, time2_id, placar_1, placar_2, vencedor_id, status, status_ranking, torneio_id, modalidade, data_resultado, data_registro, tipo_partida"
+      "id, time1_id, time2_id, placar_1, placar_2, vencedor_id, status, status_ranking, torneio_id, modalidade, data_resultado, data_registro, tipo_partida, local_str, local_espaco_id, data_partida, mensagem"
     )
     .eq("esporte_id", esporteId)
     .or(`time1_id.eq.${timeId},time2_id.eq.${timeId}`)

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { EidIndividualPartidaRow } from "@/components/perfil/eid-individual-partida-row";
+import { EidConfrontoResumoModal } from "@/components/perfil/eid-confronto-resumo-modal";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
@@ -19,7 +20,6 @@ import {
   resultadoPartidaIndividual,
   type PartidaColetivaRow,
 } from "@/lib/perfil/formacao-eid-stats";
-import { labelModalidadesMatchPt, modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 import { resolverTimeIdParaDuplaRegistrada } from "@/lib/perfil/whatsapp-visibility";
 import { createClient } from "@/lib/supabase/server";
@@ -29,7 +29,7 @@ type Props = {
   searchParams?: Promise<{ from?: string; embed?: string; view?: string }>;
 };
 
-type EidView = "all" | "individual" | "dupla" | "time";
+type EidView = "individual" | "dupla" | "time";
 
 function parseEsporteId(raw: string): number | null {
   const n = Number(raw);
@@ -39,25 +39,7 @@ function parseEsporteId(raw: string): number | null {
 
 function parseEidView(raw: string | undefined): EidView {
   if (raw === "individual" || raw === "dupla" || raw === "time") return raw;
-  return "all";
-}
-
-function tempoDesdePrimeiraPartida(iso: string | null): string | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  if (diffMs < 0) return null;
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (days < 1) return "menos de 1 dia neste esporte (pelas partidas registradas)";
-  if (days < 30) return `há ${days} dia${days !== 1 ? "s" : ""} neste esporte (desde a 1ª partida registrada)`;
-  const months = Math.floor(days / 30);
-  if (months < 12) return `há cerca de ${months} mese${months !== 1 ? "s" : ""} neste esporte (desde a 1ª partida registrada)`;
-  const years = Math.floor(months / 12);
-  const restM = months % 12;
-  if (restM === 0) return `há ${years} ano${years !== 1 ? "s" : ""} neste esporte (desde a 1ª partida registrada)`;
-  return `há ${years}a ${restM}m neste esporte (desde a 1ª partida registrada)`;
+  return "individual";
 }
 
 function membroTimeAtivo(status: string | null | undefined): boolean {
@@ -79,7 +61,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
 
   const eidQuery = new URLSearchParams();
   if (typeof sp.from === "string" && sp.from) eidQuery.set("from", sp.from);
-  if (view !== "all") eidQuery.set("view", view);
+  eidQuery.set("view", view);
   if (isEmbed) eidQuery.set("embed", "1");
   const eidPageHref = `/perfil/${encodeURIComponent(profileId)}/eid/${esporteId}${eidQuery.toString() ? `?${eidQuery.toString()}` : ""}`;
 
@@ -108,6 +90,19 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
     .maybeSingle();
 
   if (!ue) notFound();
+  const { data: rankingRows } = await supabase
+    .from("usuario_eid")
+    .select("usuario_id, pontos_ranking, nota_eid")
+    .eq("esporte_id", esporteId)
+    .order("pontos_ranking", { ascending: false })
+    .order("nota_eid", { ascending: false });
+  const rankPosicaoCalculada = (() => {
+    const rows = rankingRows ?? [];
+    const idx = rows.findIndex((r) => String(r.usuario_id ?? "") === profileId);
+    return idx >= 0 ? idx + 1 : null;
+  })();
+  const rankPosicaoFinal =
+    rankPosicaoCalculada != null && rankPosicaoCalculada > 0 ? rankPosicaoCalculada : ue.posicao_rank != null ? Number(ue.posicao_rank) : null;
 
   const esp = Array.isArray(ue.esportes) ? ue.esportes[0] : ue.esportes;
   const nomeEsporte = esp?.nome ?? "Esporte";
@@ -235,7 +230,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
     const { data: pc } = await supabase
       .from("partidas")
       .select(
-        "id, time1_id, time2_id, placar_1, placar_2, vencedor_id, status, status_ranking, torneio_id, modalidade, data_resultado, data_registro, tipo_partida"
+        "id, time1_id, time2_id, placar_1, placar_2, vencedor_id, status, status_ranking, torneio_id, modalidade, data_resultado, data_registro, tipo_partida, local_str, local_espaco_id, data_partida, mensagem"
       )
       .eq("esporte_id", esporteId)
       .or(orClause)
@@ -294,17 +289,21 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
     }
   }
   const nomeOponenteTime = new Map<number, string>();
+  const escudoOponenteTime = new Map<number, string | null>();
   if (opponentTeamIds.size > 0) {
-    const { data: oppT } = await supabase.from("times").select("id, nome").in("id", [...opponentTeamIds]);
+    const { data: oppT } = await supabase.from("times").select("id, nome, escudo").in("id", [...opponentTeamIds]);
     for (const r of oppT ?? []) {
-      if (r.id != null) nomeOponenteTime.set(Number(r.id), String(r.nome ?? `Equipe #${r.id}`));
+      if (r.id != null) {
+        nomeOponenteTime.set(Number(r.id), String(r.nome ?? `Equipe #${r.id}`));
+        escudoOponenteTime.set(Number(r.id), r.escudo ?? null);
+      }
     }
   }
 
   const { data: partidas } = await supabase
     .from("partidas")
     .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro, tipo_partida"
+      "id, esporte_id, modalidade, jogador1_id, jogador2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro, tipo_partida, local_str, local_espaco_id, data_partida, mensagem"
     )
     .eq("esporte_id", esporteId)
     .or(`jogador1_id.eq.${profileId},jogador2_id.eq.${profileId}`)
@@ -328,9 +327,6 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
 
   const primeira = datasValidas.length
     ? new Date(Math.min(...datasValidas.map((d) => d.getTime()))).toISOString()
-    : null;
-  const ultima = datasValidas.length
-    ? new Date(Math.max(...datasValidas.map((d) => d.getTime()))).toISOString()
     : null;
 
   const torneioIds = [
@@ -402,15 +398,6 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
   const decisoes = vit + der;
   const winRate = decisoes > 0 ? Math.round((vit / decisoes) * 100) : null;
 
-  const interesseLabel = "Ranking";
-
-  const modalidadeLabel = labelModalidadesMatchPt(modalidadesFromUsuarioEidRow(ue));
-
-  const totalColetivoListados = formationList.reduce(
-    (acc, f) => acc + (listaColetivoPorTime.get(f.id)?.length ?? 0),
-    0
-  );
-
   const individualHeadRows = Array.from(
     lista.reduce((acc, p) => {
       const oid = p.jogador1_id === profileId ? p.jogador2_id : p.jogador1_id;
@@ -439,6 +426,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
         const key = `${f.id}:${oppId}`;
         const bucket = acc.get(key) ?? {
           key,
+          formacaoId: f.id,
           formacao: f.nome,
           modalidade: String(f.tipo ?? "equipe").toLowerCase() === "dupla" ? "dupla" : "time",
           oponenteId: oppId,
@@ -456,14 +444,14 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
         acc.set(key, bucket);
       }
       return acc;
-    }, new Map<string, { key: string; formacao: string; modalidade: "dupla" | "time"; oponenteId: number; oponenteNome: string; jogos: number; v: number; d: number; e: number }>())
+    }, new Map<string, { key: string; formacaoId: number; formacao: string; modalidade: "dupla" | "time"; oponenteId: number; oponenteNome: string; jogos: number; v: number; d: number; e: number }>())
   )
     .map(([, v]) => v)
     .sort((a, b) => b.jogos - a.jogos);
 
-  const showIndividual = view === "all" || view === "individual";
-  const showDupla = view === "all" || view === "dupla";
-  const showTime = view === "all" || view === "time";
+  const showIndividual = view === "individual";
+  const showDupla = view === "dupla";
+  const showTime = view === "time";
   const esporteIcon = sportIconEmoji(nomeEsporte);
   const filteredFormationList = formationList.filter((f) => {
     const tipo = String(f.tipo ?? "time").toLowerCase();
@@ -478,6 +466,94 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
   historicoIndividualQuery.set("from", eidPageHref);
   if (isEmbed) historicoIndividualQuery.set("embed", "1");
   const historicoIndividualHref = `/perfil/${encodeURIComponent(profileId)}/eid/${esporteId}/historico?${historicoIndividualQuery.toString()}`;
+
+  const selectedTipo: "dupla" | "time" | null = view === "dupla" ? "dupla" : view === "time" ? "time" : null;
+  const selectedFormations = selectedTipo
+    ? formationList.filter((f) => String(f.tipo ?? "").trim().toLowerCase() === selectedTipo)
+    : [];
+  const selectedFormationIds = new Set(selectedFormations.map((f) => Number(f.id)));
+  const coletivoPartidasMap = new Map<number, { partida: PartidaColetivaRow; formacaoId: number }>();
+  for (const f of selectedFormations) {
+    for (const p of listaColetivoPorTime.get(f.id) ?? []) {
+      const pid = Number(p.id);
+      if (!Number.isFinite(pid)) continue;
+      if (!coletivoPartidasMap.has(pid)) coletivoPartidasMap.set(pid, { partida: p, formacaoId: f.id });
+    }
+  }
+  const coletivoPartidasSelecionadas = [...coletivoPartidasMap.values()];
+  let coletivoVit = 0;
+  let coletivoDer = 0;
+  let coletivoEmp = 0;
+  for (const row of coletivoPartidasSelecionadas) {
+    const res = resultadoColetivo(row.formacaoId, row.partida);
+    if (res.label === "V") coletivoVit += 1;
+    else if (res.label === "D") coletivoDer += 1;
+    else if (res.label === "E") coletivoEmp += 1;
+  }
+  const coletivoDecisoes = coletivoVit + coletivoDer;
+  const coletivoWinRate = coletivoDecisoes > 0 ? Math.round((coletivoVit / coletivoDecisoes) * 100) : null;
+  const coletivoEidMedio =
+    selectedFormations.length > 0
+      ? selectedFormations.reduce((acc, f) => acc + Number(f.eid_time ?? 0), 0) / selectedFormations.length
+      : 0;
+  const historicoColetivoSelecionado = historicoColetivoRows
+    .filter((h) => selectedFormationIds.has(Number(h.time_id ?? 0)))
+    .map((h) => Number(h.nota_nova ?? NaN))
+    .filter((n) => Number.isFinite(n));
+  const trendPointsAtivos: [number, number, number] =
+    view === "individual"
+      ? trendPoints
+      : historicoColetivoSelecionado.length >= 3
+        ? [
+            historicoColetivoSelecionado[historicoColetivoSelecionado.length - 3]!,
+            historicoColetivoSelecionado[historicoColetivoSelecionado.length - 2]!,
+            historicoColetivoSelecionado[historicoColetivoSelecionado.length - 1]!,
+          ]
+        : historicoColetivoSelecionado.length === 2
+          ? [historicoColetivoSelecionado[0]!, historicoColetivoSelecionado[1]!, coletivoEidMedio]
+          : historicoColetivoSelecionado.length === 1
+            ? [historicoColetivoSelecionado[0]!, coletivoEidMedio, coletivoEidMedio]
+            : [coletivoEidMedio, coletivoEidMedio, coletivoEidMedio];
+  const datasAtivas = (
+    view === "individual"
+      ? lista.map((p) => p.data_resultado ?? p.data_registro)
+      : coletivoPartidasSelecionadas.map((r) => r.partida.data_resultado ?? r.partida.data_registro)
+  )
+    .filter((x): x is string => Boolean(x))
+    .map((x) => new Date(x))
+    .filter((d) => !Number.isNaN(d.getTime()));
+  const primeiraAtiva = datasAtivas.length
+    ? new Date(Math.min(...datasAtivas.map((d) => d.getTime()))).toISOString()
+    : null;
+  const resumoAtivo =
+    view === "individual"
+      ? {
+          eid: eidNum,
+          pontos: Number(ue.pontos_ranking ?? 0),
+          vit,
+          der,
+          jogos: Number(ue.partidas_jogadas ?? 0),
+          winRate,
+          posicao: rankPosicaoFinal,
+          pointsLabel: "Pontos",
+          trendFooterCount: Number(historicoEid?.length ?? 0),
+          experienceLabel: formatLinhaExperienciaEid(ue.tempo_experiencia, primeiraAtiva),
+        }
+      : {
+          eid: coletivoEidMedio,
+          pontos: null as number | null,
+          vit: coletivoVit,
+          der: coletivoDer,
+          jogos: coletivoPartidasSelecionadas.length,
+          winRate: coletivoWinRate,
+          posicao: null as number | null,
+          pointsLabel: "Pontos (equipe)",
+          trendFooterCount: historicoColetivoSelecionado.length,
+          experienceLabel:
+            selectedFormations.length > 0
+              ? `${selectedFormations.length} formação(ões) em ${view} neste esporte`
+              : `Sem formações de ${view} neste esporte`,
+        };
 
   const trendPointsColetivo = (timeId: number, eidAtual: number): [number, number, number] => {
     const nh = notasColetivoPorTime.get(timeId) ?? [];
@@ -494,61 +570,74 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
 
         <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS}`}>
           <div className="px-3 py-3 sm:px-4 sm:py-4">
-            <p className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-eid-action-400">
+            <p className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.16em] text-eid-action-400">
               <span aria-hidden>{esporteIcon}</span>
               {nomeEsporte}
             </p>
             <h1 className="mt-1 text-base font-black leading-tight text-eid-fg sm:text-lg">{perfil.nome ?? "Atleta"}</h1>
-            <p className="mt-1 text-[10px] text-eid-text-secondary">
-              {formatLinhaExperienciaEid(ue.tempo_experiencia, primeira)}
+            <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary">
+              {resumoAtivo.experienceLabel}
             </p>
 
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <div className="rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-2 text-center shadow-[0_8px_20px_-14px_rgba(37,99,235,0.55)]">
-                <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Nota EID</p>
-                <p className="mt-0.5 text-xl font-black tabular-nums text-eid-fg">{eidNum.toFixed(2)}</p>
+                <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Nota EID</p>
+                <p className="mt-0.5 text-xl font-black tabular-nums text-eid-fg">{resumoAtivo.eid.toFixed(2)}</p>
               </div>
-              <div className="rounded-xl border border-eid-primary-500/30 bg-eid-surface/55 px-2 py-2 text-center">
-                <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Pontos</p>
-                <p className="mt-0.5 text-xl font-black tabular-nums text-eid-fg">{Number(ue.pontos_ranking ?? 0)}</p>
+              <div className="rounded-xl border border-eid-action-500/30 bg-eid-surface/55 px-2 py-2 text-center">
+                <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">{resumoAtivo.pointsLabel}</p>
+                <p className="mt-0.5 text-xl font-black tabular-nums text-eid-fg">
+                  {resumoAtivo.pontos == null ? "—" : resumoAtivo.pontos}
+                </p>
               </div>
-              <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} text-center`}>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Vitórias</p>
-                <p className="mt-0.5 text-lg font-black tabular-nums text-emerald-400">{vit}</p>
+              <div className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-2 py-2 text-center">
+                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vitórias</p>
+                <p className="mt-0.5 text-lg font-black tabular-nums text-emerald-400">{resumoAtivo.vit}</p>
               </div>
-              <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} text-center`}>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Derrotas</p>
-                <p className="mt-0.5 text-lg font-black tabular-nums text-rose-400">{der}</p>
+              <div className="rounded-xl border border-rose-500/35 bg-rose-500/10 px-2 py-2 text-center">
+                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Derrotas</p>
+                <p className="mt-0.5 text-lg font-black tabular-nums text-rose-400">{resumoAtivo.der}</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className={`mt-3 overflow-hidden ${PROFILE_CARD_BASE}`}>
+          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Tendência EID</p>
+            <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-primary-300">
+              Histórico
+            </span>
+          </div>
           <ProfileSportsMetricsCard
             sportName={nomeEsporte}
-            eidValue={eidNum}
-            rankValue={Number(ue.pontos_ranking ?? 0)}
+            eidValue={resumoAtivo.eid}
+            rankValue={resumoAtivo.pontos ?? 0}
             eidLabel="Nota atual"
-            rankLabel="Pontos"
+            rankLabel={resumoAtivo.pointsLabel}
             showScoreTiles={false}
             trendLabel="Evolução da nota (histórico)"
-            trendPoints={trendPoints}
+            trendPoints={trendPointsAtivos}
             footer={
-              (historicoEid?.length ?? 0) === 0 ? (
+              (resumoAtivo.trendFooterCount ?? 0) === 0 ? (
                 <span>Sem registros em histórico de EID para este esporte — a linha reflete a nota atual.</span>
               ) : (
-                <span>{historicoEid?.length} alterações registradas no histórico.</span>
+                <span>{resumoAtivo.trendFooterCount} alterações registradas no histórico.</span>
               )
             }
           />
         </div>
 
-        <div className={`mt-3 p-2 ${PROFILE_CARD_BASE}`}>
-          <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Ver estatísticas</p>
+        <div className={`mt-3 overflow-hidden ${PROFILE_CARD_BASE}`}>
+          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Ver estatísticas</p>
+            <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
+              Modalidade
+            </span>
+          </div>
+          <div className="p-2">
           <div className="flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {([
-              { id: "all", label: "Tudo" },
               { id: "individual", label: "Individual" },
               { id: "dupla", label: "Dupla" },
               { id: "time", label: "Time" },
@@ -556,7 +645,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
               <Link
                 key={opt.id}
                 href={`/perfil/${encodeURIComponent(profileId)}/eid/${esporteId}?from=${encodeURIComponent(backHref)}${isEmbed ? "&embed=1" : ""}&view=${opt.id}`}
-                className={`inline-flex h-[1.5rem] shrink-0 items-center justify-center rounded-md px-2 text-[9px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-200 ${
+                className={`inline-flex h-[1.6rem] shrink-0 items-center justify-center rounded-md px-2.5 text-[9px] font-semibold uppercase leading-none tracking-[0.02em] transition-all duration-200 ${
                   view === opt.id
                     ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_7px_16px_-11px_rgba(37,99,235,0.4)]"
                     : "text-eid-text-secondary hover:bg-eid-surface/55"
@@ -566,86 +655,74 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
               </Link>
             ))}
           </div>
+          </div>
         </div>
 
         <ProfileSection title="Panorama" className="mt-4">
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-              <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Aproveitamento (V+D)</p>
-              <p className="mt-1 text-xl font-black text-eid-fg">
-                {winRate != null ? `${winRate}%` : "—"}
-                <span className="ml-1 text-[11px] font-semibold text-eid-text-secondary">
-                  ({vit}V {der}D · {Number(ue.partidas_jogadas ?? 0)} no ranking)
+            <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
+              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Aproveitamento (V+D)</p>
+                <span className="rounded-full border border-emerald-500/35 bg-emerald-500/12 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-emerald-400">
+                  Performance
                 </span>
-              </p>
+              </div>
+              <div className={PROFILE_CARD_PAD_MD}>
+                <p className="mt-1 text-2xl font-black text-eid-fg">
+                  {resumoAtivo.winRate != null ? `${resumoAtivo.winRate}%` : "—"}
+                </p>
+                <div className="mt-1 inline-flex items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[10px] font-bold">
+                  <span className="text-emerald-400">{resumoAtivo.vit}V</span>
+                  <span className="mx-1 text-eid-text-secondary">·</span>
+                  <span className="text-rose-400">{resumoAtivo.der}D</span>
+                  <span className="mx-1 text-eid-text-secondary">·</span>
+                  <span className="text-eid-text-secondary">{resumoAtivo.jogos} jogos</span>
+                </div>
+              </div>
             </div>
-            <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-              <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Posição no ranking</p>
-              <p className="mt-1 text-xl font-black text-eid-fg">
-                {ue.posicao_rank != null ? `#${ue.posicao_rank}` : "—"}
-              </p>
+            <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
+              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Posição no ranking</p>
+                <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
+                  Rank
+                </span>
+              </div>
+              <div className={PROFILE_CARD_PAD_MD}>
+                <p className="mt-1 text-2xl font-black text-eid-fg">
+                  {resumoAtivo.posicao != null ? `#${resumoAtivo.posicao}` : "—"}
+                </p>
+                <p className="mt-1 text-[10px] leading-relaxed font-semibold text-eid-text-secondary">
+                  {resumoAtivo.posicao != null ? "Posição atual no esporte" : "Sem posição disponível"}
+                </p>
+              </div>
             </div>
-            <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-              <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Interesse em desafio</p>
-              <p className="mt-1 text-[12px] font-semibold text-eid-fg">{interesseLabel}</p>
-              <p className="mt-0.5 text-[10px] text-eid-text-secondary">Modalidade: {modalidadeLabel}</p>
-            </div>
-            {ue.categoria ? (
-              <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Categoria</p>
-                <p className="mt-1 text-[12px] font-semibold text-eid-fg">{ue.categoria}</p>
+            {view === "individual" && ue.categoria ? (
+              <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
+                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Categoria</p>
+                  <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-primary-300">
+                    Nível
+                  </span>
+                </div>
+                <div className={PROFILE_CARD_PAD_MD}>
+                  <p className="text-[12px] font-semibold text-eid-fg">{ue.categoria}</p>
+                </div>
               </div>
             ) : null}
-          </div>
-        </ProfileSection>
-
-        <ProfileSection title="Experiência e linha do tempo" className="mt-4">
-          <div className="mt-2 space-y-2">
-            <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-              <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Partidas neste esporte</p>
-              <p className="mt-1 text-[12px] text-eid-fg">
-                {lista.length > 0 || totalColetivoListados > 0 ? (
-                  <>
-                    <span className="font-semibold">{lista.length}</span> confronto{lista.length !== 1 ? "s" : ""}{" "}
-                    1v1
-                    {totalColetivoListados > 0 ? (
-                      <>
-                        {" "}
-                        e <span className="font-semibold">{totalColetivoListados}</span> partida
-                        {totalColetivoListados !== 1 ? "s" : ""} em equipe/dupla neste esporte (listagens abaixo).
-                      </>
-                    ) : (
-                      " visíveis (concluídos ou seus próprios)."
-                    )}
-                  </>
-                ) : (
-                  "Nenhuma partida listada ainda no individual — os números de vitória/derrota vêm do ranking agregado. Equipes aparecem na seção seguinte quando houver."
-                )}
-              </p>
-              {primeira ? (
-                <p className="mt-2 text-[11px] text-eid-text-secondary">
-                  Primeira partida registrada: <span className="font-semibold text-eid-fg">{fmtDataPtBr(primeira)}</span>
-                  {tempoDesdePrimeiraPartida(primeira) ? (
-                    <>
-                      {" "}
-                      · <span className="text-eid-primary-300">{tempoDesdePrimeiraPartida(primeira)}</span>
-                    </>
-                  ) : null}
-                </p>
-              ) : null}
-              {ultima ? (
-                <p className="mt-1 text-[11px] text-eid-text-secondary">
-                  Última atividade (partida): <span className="font-semibold text-eid-fg">{fmtDataPtBr(ultima)}</span>
-                </p>
-              ) : null}
-            </div>
           </div>
         </ProfileSection>
 
         {filteredFormationList.length > 0 || showDuplasSemTime ? (
           <ProfileSection title="Equipes e duplas neste esporte" className="mt-4">
             {showDuplasSemTime ? (
-              <div className="mt-2 space-y-2">
+              <div className={`mt-2 overflow-hidden ${PROFILE_CARD_BASE}`}>
+                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Duplas sem time ativo</p>
+                  <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
+                    Atenção
+                  </span>
+                </div>
+                <div className="space-y-2 p-3">
                 <p className="text-[10px] text-eid-text-secondary">
                   Dupla registrada sem time ativo comum no ranking — abra o perfil da dupla para ver detalhes.
                 </p>
@@ -677,6 +754,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                       </div>
                     </div>
                   ))}
+                </div>
                 </div>
               </div>
             ) : null}
@@ -712,6 +790,12 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                     key={`form-${f.id}`}
                     className={`overflow-hidden ${PROFILE_CARD_BASE}`}
                   >
+                    <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Formação</span>
+                      <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
+                        {tipoLabel}
+                      </span>
+                    </div>
                     <div className={`flex flex-wrap items-start gap-3 ${PROFILE_CARD_PAD_MD}`}>
                       <Link
                         href={hrefPerfilFormacao}
@@ -732,9 +816,6 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                       </Link>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="rounded border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-eid-action-500">
-                            {tipoLabel}
-                          </span>
                           {f.duplaRegistroIds.length > 0 ? (
                             <span className="text-[9px] font-semibold text-eid-text-secondary">
                               Registro dupla:{" "}
@@ -814,23 +895,116 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                           const res = resultadoColetivo(f.id, p);
                           const when = fmtDataPtBr(p.data_resultado ?? p.data_registro);
                           const torNome = p.torneio_id ? torneioNome.get(Number(p.torneio_id)) : null;
+                          const origemLabel =
+                            p.torneio_id != null || String(p.tipo_partida ?? "").toLowerCase() === "torneio"
+                              ? "Torneio"
+                              : "Ranking";
+                          const confrontosMesmos = partidasForm.filter((h) => {
+                            const h1 = h.time1_id != null ? Number(h.time1_id) : null;
+                            const h2 = h.time2_id != null ? Number(h.time2_id) : null;
+                            if (oppId == null || h1 == null || h2 == null) return false;
+                            return (h1 === f.id && h2 === oppId) || (h2 === f.id && h1 === oppId);
+                          });
+                          let saldoV = 0;
+                          let saldoD = 0;
+                          let saldoE = 0;
+                          for (const h of confrontosMesmos) {
+                            const rr = resultadoColetivo(f.id, h).label;
+                            if (rr === "V") saldoV += 1;
+                            else if (rr === "D") saldoD += 1;
+                            else if (rr === "E") saldoE += 1;
+                          }
+                          const saldoResumo =
+                            `Saldo: ${f.nome} ${saldoV}V · ${onome} ${saldoD}V` +
+                            (saldoE > 0 ? ` · ${saldoE} empate${saldoE !== 1 ? "s" : ""}` : "");
+                          const ultimosConfrontos = confrontosMesmos.slice(0, 5).map((h) => {
+                            const hOrigem: "Ranking" | "Torneio" =
+                              h.torneio_id != null || String(h.tipo_partida ?? "").toLowerCase() === "torneio"
+                                ? "Torneio"
+                                : "Ranking";
+                            const dataHora = new Intl.DateTimeFormat("pt-BR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }).format(new Date(h.data_partida ?? h.data_resultado ?? h.data_registro ?? Date.now()));
+                            const placar = `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`;
+                            return {
+                              id: h.id,
+                              dataHora,
+                              local: h.local_str ?? null,
+                              localHref:
+                                h.local_espaco_id != null && Number(h.local_espaco_id) > 0
+                                  ? `/local/${Number(h.local_espaco_id)}`
+                                  : null,
+                              placar,
+                              origem: hOrigem,
+                              confronto: `${f.nome} vs ${onome}`,
+                            };
+                          });
+                          const dataHoraConfronto = new Intl.DateTimeFormat("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }).format(new Date(p.data_partida ?? p.data_resultado ?? p.data_registro ?? Date.now()));
                           return (
-                            <li
+                            <EidConfrontoResumoModal
                               key={`c-${f.id}-${p.id}`}
-                              className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} relative flex items-center gap-2`}
+                              titulo={`${f.nome} vs ${onome}`}
+                              subtitulo={p.modalidade ? `Modalidade: ${p.modalidade}` : undefined}
+                              ladoA={f.nome}
+                              ladoB={onome}
+                              ladoAAvatarUrl={f.escudo ?? null}
+                              ladoBAvatarUrl={oppId != null ? (escudoOponenteTime.get(oppId) ?? null) : null}
+                              ladoAProfileHref={
+                                f.duplaRegistroIds[0]
+                                  ? `/perfil-dupla/${f.duplaRegistroIds[0]}?from=${encodeURIComponent(nextPath)}`
+                                  : `/perfil-time/${f.id}?from=${encodeURIComponent(nextPath)}`
+                              }
+                              ladoBProfileHref={oppId != null ? `/perfil-time/${oppId}?from=${encodeURIComponent(nextPath)}` : null}
+                              origem={origemLabel}
+                              dataHora={dataHoraConfronto}
+                              local={p.local_str ?? null}
+                              localHref={
+                                p.local_espaco_id != null && Number(p.local_espaco_id) > 0
+                                  ? `/local/${Number(p.local_espaco_id)}`
+                                  : null
+                              }
+                              placarBase={`${Number(p.placar_1 ?? 0)} × ${Number(p.placar_2 ?? 0)}`}
+                              mensagem={p.mensagem ?? null}
+                              totalConfrontos={confrontosMesmos.length}
+                              saldoResumo={saldoResumo}
+                              ultimosConfrontos={ultimosConfrontos}
+                              asListItem
+                              rowClassName={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} relative flex items-center gap-2 cursor-pointer`}
                             >
                               <span className={`absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black ${res.tone} bg-eid-surface/90`}>
                                 {res.label}
                               </span>
-                              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300">
-                                {onome.trim().slice(0, 1).toUpperCase() || "E"}
-                              </span>
+                              {oppId != null ? (
+                                <Link
+                                  href={`/perfil-time/${oppId}?from=${encodeURIComponent(nextPath)}`}
+                                  data-no-modal="1"
+                                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:text-eid-primary-200"
+                                  aria-label={`Abrir perfil da equipe ${onome}`}
+                                >
+                                  {onome.trim().slice(0, 1).toUpperCase() || "E"}
+                                </Link>
+                              ) : (
+                                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300">
+                                  {onome.trim().slice(0, 1).toUpperCase() || "E"}
+                                </span>
+                              )}
                               <div className="min-w-0 flex-1">
                                 <p className="truncate pr-7 text-[11px] font-bold text-eid-fg">
                                   vs{" "}
                                   {oppId != null ? (
                                     <Link
                                       href={`/perfil-time/${oppId}?from=${encodeURIComponent(nextPath)}`}
+                                      data-no-modal="1"
                                       className="text-eid-primary-400 hover:underline"
                                     >
                                       {onome}
@@ -841,6 +1015,16 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                                 </p>
                                 <p className="text-[10px] text-eid-text-secondary">
                                   {p.modalidade ? `${p.modalidade} · ` : ""}
+                                  <span
+                                    className={
+                                      origemLabel === "Torneio"
+                                        ? "font-bold text-eid-action-400"
+                                        : "font-bold text-eid-primary-300"
+                                    }
+                                  >
+                                    {origemLabel}
+                                  </span>
+                                  {" · "}
                                   {when}
                                   {torNome ? (
                                     <span className="text-eid-action-400"> · {torNome}</span>
@@ -858,7 +1042,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                                 </p>
                                 <p className="text-[9px] uppercase text-eid-text-secondary">{p.status ?? "—"}</p>
                               </div>
-                            </li>
+                            </EidConfrontoResumoModal>
                           );
                         })}
                       </ul>
@@ -873,13 +1057,13 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
         {showIndividual ? (
         <ProfileSection title="Histórico de partidas (individual)" className="mt-4">
           {lista.length === 0 ? (
-            <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-[11px] text-eid-text-secondary">
+            <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-surface)_12%)] p-3 text-[11px] text-eid-text-secondary">
               Sem partidas individuais para exibir neste esporte. Quando houver jogos válidos no ranking, eles aparecem
               aqui com placar e adversário.
             </p>
           ) : (
             <>
-              <ul className="mt-2 space-y-2">
+              <ul className="mt-2 space-y-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-2">
                 {listaIndividualPreview
                   .filter((p) => {
                     const oid = p.jogador1_id === profileId ? p.jogador2_id : p.jogador1_id;
@@ -890,10 +1074,59 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                   const op = oponenteInfo.get(oid);
                   const res = resultadoPartidaIndividual(profileId, p);
                   const torLabel = p.torneio_id ? torneioNome.get(Number(p.torneio_id)) ?? `Torneio #${p.torneio_id}` : null;
+                  const origemLabel: "Ranking" | "Torneio" =
+                    p.torneio_id != null || String(p.tipo_partida ?? "").toLowerCase() === "torneio"
+                      ? "Torneio"
+                      : "Ranking";
+                  const confrontosMesmos = lista.filter((h) => {
+                    const hOid = h.jogador1_id === profileId ? h.jogador2_id : h.jogador1_id;
+                    return hOid === oid;
+                  });
+                  let saldoV = 0;
+                  let saldoD = 0;
+                  let saldoE = 0;
+                  for (const h of confrontosMesmos) {
+                    const rr = resultadoPartidaIndividual(profileId, h).label;
+                    if (rr === "V") saldoV += 1;
+                    else if (rr === "D") saldoD += 1;
+                    else if (rr === "E") saldoE += 1;
+                  }
+                  const saldoResumo =
+                    `Saldo: ${(perfil.nome ?? "Você")} ${saldoV}V · ${(op?.nome ?? "Oponente")} ${saldoD}V` +
+                    (saldoE > 0 ? ` · ${saldoE} empate${saldoE !== 1 ? "s" : ""}` : "");
+                  const ultimosConfrontos = confrontosMesmos.slice(0, 5).map((h) => {
+                    const hOrigem: "Ranking" | "Torneio" =
+                      h.torneio_id != null || String(h.tipo_partida ?? "").toLowerCase() === "torneio"
+                        ? "Torneio"
+                        : "Ranking";
+                    const dataHora = new Intl.DateTimeFormat("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(new Date(h.data_partida ?? h.data_resultado ?? h.data_registro ?? Date.now()));
+                    const placar = `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`;
+                    return {
+                      id: h.id,
+                      dataHora,
+                      local: h.local_str ?? null,
+                      localHref:
+                        h.local_espaco_id != null && Number(h.local_espaco_id) > 0
+                          ? `/local/${Number(h.local_espaco_id)}`
+                          : null,
+                      placar,
+                      origem: hOrigem,
+                      confronto: `${perfil.nome ?? "Atleta"} vs ${op?.nome ?? "Atleta"}`,
+                    };
+                  });
                   return (
                     <EidIndividualPartidaRow
                       key={p.id}
                       partida={p}
+                      selfNome={perfil.nome ?? "Atleta"}
+                      selfAvatarUrl={perfil.avatar_url ?? null}
+                      selfProfileHref={`/perfil/${encodeURIComponent(profileId)}?from=${encodeURIComponent(nextPath)}`}
                       opponentId={oid}
                       opponentNome={op?.nome ?? "Atleta"}
                       opponentAvatarUrl={op?.avatar_url ?? null}
@@ -901,8 +1134,12 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                       res={res}
                       profileLinkFrom={eidPageHref}
                       torneioLabel={torLabel}
+                      origemLabel={origemLabel}
                       esporteLabel={nomeEsporte}
                       modalidadeLabel={String(p.modalidade ?? "individual")}
+                      totalConfrontos={confrontosMesmos.length}
+                      saldoResumo={saldoResumo}
+                      ultimosConfrontos={ultimosConfrontos}
                     />
                   );
                 })}
@@ -911,7 +1148,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                 <div className="mt-3 flex justify-center">
                   <Link
                     href={historicoIndividualHref}
-                    className="inline-flex h-9 items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-4 text-[11px] font-bold uppercase tracking-[0.06em] text-eid-fg transition hover:bg-eid-primary-500/18"
+                    className="inline-flex h-9 items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-4 text-[11px] font-bold uppercase tracking-[0.06em] text-eid-fg transition hover:scale-[1.01] hover:bg-eid-primary-500/18"
                   >
                     Ver mais
                   </Link>
@@ -925,45 +1162,98 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
         <ProfileSection title="Head-to-head" className="mt-4">
           <div className="mt-2 space-y-3">
             {showIndividual ? (
-              <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Individual</p>
+              <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
+                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Individual</p>
+                  <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-primary-300">
+                    Top confrontos
+                  </span>
+                </div>
                 {individualHeadRows.length > 0 ? (
-                  <ul className="mt-2 space-y-1.5">
+                  <ul className="space-y-1.5 p-2.5">
                     {individualHeadRows.slice(0, 8).map((row) => (
-                      <li key={row.oid} className="flex items-center justify-between rounded-lg bg-eid-surface/45 px-2 py-1.5">
-                        <Link href={`/perfil/${encodeURIComponent(row.oid)}?from=${encodeURIComponent(nextPath)}`} className="truncate text-[11px] font-semibold text-eid-fg hover:text-eid-primary-300">
+                      <li
+                        key={row.oid}
+                        className="flex items-center justify-between rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-surface)_12%)] px-2.5 py-2"
+                      >
+                        <Link
+                          href={`/perfil/${encodeURIComponent(row.oid)}?from=${encodeURIComponent(nextPath)}`}
+                          className="min-w-0 truncate text-[11px] font-semibold text-eid-fg hover:text-eid-primary-300"
+                        >
                           {row.nome}
                         </Link>
-                        <span className="shrink-0 text-[10px] font-bold text-eid-text-secondary">{row.v}V · {row.d}D · {row.e}E ({row.jogos})</span>
+                        <span className="shrink-0 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold text-eid-fg">
+                          <span className="text-emerald-400">{row.v}V</span>
+                          <span className="mx-1 text-eid-text-secondary">·</span>
+                          <span className="text-rose-400">{row.d}D</span>
+                          <span className="mx-1 text-eid-text-secondary">·</span>
+                          <span className="text-eid-primary-300">{row.e}E</span>
+                          <span className="ml-1 text-eid-text-secondary">({row.jogos})</span>
+                        </span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-1 text-[11px] text-eid-text-secondary">Sem confrontos individuais suficientes para comparativo.</p>
+                  <p className={`${PROFILE_CARD_PAD_MD} text-[11px] text-eid-text-secondary`}>
+                    Sem confrontos individuais suficientes para comparativo.
+                  </p>
                 )}
               </div>
             ) : null}
 
             {(showDupla || showTime) ? (
-              <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Dupla/Time</p>
+              <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
+                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Dupla/Time</p>
+                  <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
+                    Histórico direto
+                  </span>
+                </div>
                 {coletivoHeadRows.filter((r) => (r.modalidade === "dupla" ? showDupla : showTime)).length > 0 ? (
-                  <ul className="mt-2 space-y-1.5">
+                  <ul className="space-y-1.5 p-2.5">
                     {coletivoHeadRows
                       .filter((r) => (r.modalidade === "dupla" ? showDupla : showTime))
                       .slice(0, 10)
                       .map((row) => (
-                        <li key={row.key} className="flex items-center justify-between rounded-lg bg-eid-surface/45 px-2 py-1.5">
+                        <li
+                          key={row.key}
+                          className="flex items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-surface)_12%)] px-2.5 py-2"
+                        >
                           <div className="min-w-0">
-                            <p className="truncate text-[11px] font-semibold text-eid-fg">{row.formacao} vs {row.oponenteNome}</p>
-                            <p className="text-[9px] uppercase text-eid-text-secondary">{row.modalidade}</p>
+                            <p className="truncate text-[11px] font-semibold text-eid-fg">
+                              <Link
+                                href={`/perfil-time/${row.formacaoId}?from=${encodeURIComponent(nextPath)}`}
+                                className="text-eid-fg hover:text-eid-primary-300 hover:underline"
+                              >
+                                {row.formacao}
+                              </Link>{" "}
+                              vs{" "}
+                              <Link
+                                href={`/perfil-time/${row.oponenteId}?from=${encodeURIComponent(nextPath)}`}
+                                className="text-eid-fg hover:text-eid-primary-300 hover:underline"
+                              >
+                                {row.oponenteNome}
+                              </Link>
+                            </p>
+                            <p className="mt-0.5 inline-flex rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-[1px] text-[8px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
+                              {row.modalidade}
+                            </p>
                           </div>
-                          <span className="shrink-0 text-[10px] font-bold text-eid-text-secondary">{row.v}V · {row.d}D · {row.e}E ({row.jogos})</span>
+                          <span className="shrink-0 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold text-eid-fg">
+                            <span className="text-emerald-400">{row.v}V</span>
+                            <span className="mx-1 text-eid-text-secondary">·</span>
+                            <span className="text-rose-400">{row.d}D</span>
+                            <span className="mx-1 text-eid-text-secondary">·</span>
+                            <span className="text-eid-primary-300">{row.e}E</span>
+                            <span className="ml-1 text-eid-text-secondary">({row.jogos})</span>
+                          </span>
                         </li>
                       ))}
                   </ul>
                 ) : (
-                  <p className="mt-1 text-[11px] text-eid-text-secondary">Sem confrontos coletivos suficientes para comparativo.</p>
+                  <p className={`${PROFILE_CARD_PAD_MD} text-[11px] text-eid-text-secondary`}>
+                    Sem confrontos coletivos suficientes para comparativo.
+                  </p>
                 )}
               </div>
             ) : null}

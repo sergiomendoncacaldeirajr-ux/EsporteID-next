@@ -399,6 +399,45 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     );
   }
 
+  const cooldownMesesColetivo = await getMatchRankCooldownMeses(supabase);
+  const cutoffColetivo = new Date();
+  cutoffColetivo.setMonth(cutoffColetivo.getMonth() - cooldownMesesColetivo);
+  const cutoffColetivoMs = cutoffColetivo.getTime();
+  let rankingBlockedUntilColetivo: string | null = null;
+  const { data: cooldownRowsColetivo } = await supabase
+    .from("partidas")
+    .select("status, status_ranking, data_resultado, data_partida, data_registro")
+    .eq("esporte_id", esporteId)
+    .is("torneio_id", null)
+    .eq("modalidade", modalidade)
+    .or(
+      `and(jogador1_id.eq.${user.id},jogador2_id.eq.${timeRow.criador_id}),and(jogador1_id.eq.${timeRow.criador_id},jogador2_id.eq.${user.id}),and(desafiante_id.eq.${user.id},desafiado_id.eq.${timeRow.criador_id}),and(desafiante_id.eq.${timeRow.criador_id},desafiado_id.eq.${user.id})`
+    )
+    .order("id", { ascending: false })
+    .limit(80);
+  for (const r of cooldownRowsColetivo ?? []) {
+    const st = String((r as { status?: string | null }).status ?? "").trim().toLowerCase();
+    const sr = String((r as { status_ranking?: string | null }).status_ranking ?? "").trim().toLowerCase();
+    const valido =
+      sr === "validado" ||
+      ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(st);
+    if (!valido) continue;
+    const dtRaw =
+      (r as { data_resultado?: string | null }).data_resultado ??
+      (r as { data_partida?: string | null }).data_partida ??
+      (r as { data_registro?: string | null }).data_registro ??
+      null;
+    if (!dtRaw) continue;
+    const base = new Date(dtRaw);
+    if (Number.isNaN(base.getTime()) || base.getTime() < cutoffColetivoMs) continue;
+    const until = new Date(base);
+    until.setMonth(until.getMonth() + cooldownMesesColetivo);
+    if (until.getTime() > Date.now()) {
+      rankingBlockedUntilColetivo = until.toISOString();
+      break;
+    }
+  }
+
   const rankPrevCo = await fetchColetivoRankingPreview(supabase, {
     viewerUserId: user.id,
     opponentTeamId: timeRow.id,
@@ -412,6 +451,15 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         <p className="mt-2 text-sm text-eid-text-secondary">
           Confirme o pedido no esporte <span className="text-eid-fg">{esporteNome}</span> ({modalidade === "dupla" ? "dupla" : "time"}).
         </p>
+        {rankingBlockedUntilColetivo ? (
+          <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+            Carência ativa para desafio de ranking neste esporte ({modalidade}) até{" "}
+            <span className="font-semibold text-eid-fg">
+              {new Date(rankingBlockedUntilColetivo).toLocaleDateString("pt-BR")}
+            </span>
+            .
+          </div>
+        ) : null}
         <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:p-4">
           <p className="text-sm font-semibold text-eid-fg">{timeRow.nome ?? "Formação"}</p>
           <p className="mt-1 text-xs text-eid-text-secondary">Modalidade: {modalidade}</p>
@@ -423,7 +471,9 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             Não foi possível carregar a estimativa: confira se você é líder de uma {modalidade} neste esporte (mesmo critério do envio do pedido).
           </p>
         )}
-        <DesafioEnviarForm modalidade={modalidade} esporteId={esporteId} alvoTimeId={timeRow.id} finalidade="ranking" />
+        {!rankingBlockedUntilColetivo ? (
+          <DesafioEnviarForm modalidade={modalidade} esporteId={esporteId} alvoTimeId={timeRow.id} finalidade="ranking" />
+        ) : null}
         <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
           Cancelar
         </Link>

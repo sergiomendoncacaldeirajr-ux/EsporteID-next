@@ -124,7 +124,7 @@ export function ProfileSolicitarMatchMenu({
                 topMode="backOnly"
                 className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 text-center text-xs font-bold uppercase tracking-wide text-eid-primary-200 transition hover:bg-eid-primary-500/20"
               >
-                <span onClick={() => setAberto(false)}>Desafio de ranking</span>
+                <span>Desafio de ranking</span>
               </ProfileEditDrawerTrigger>
             )}
             {rankingBloqueado ? (
@@ -144,7 +144,7 @@ export function ProfileSolicitarMatchMenu({
                 topMode="backOnly"
                 className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/12 text-center text-xs font-bold uppercase tracking-wide text-emerald-200 transition hover:bg-emerald-500/20"
               >
-                <span onClick={() => setAberto(false)}>Desafio amistoso</span>
+                <span>Desafio amistoso</span>
               </ProfileEditDrawerTrigger>
             ) : (
               <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 text-center">

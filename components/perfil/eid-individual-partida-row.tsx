@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { EidConfrontoResumoModal } from "@/components/perfil/eid-confronto-resumo-modal";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { fmtDataPtBr } from "@/lib/perfil/formacao-eid-stats";
 import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
@@ -10,6 +13,11 @@ export type EidPartidaIndividualRow = {
   placar_1: number | null;
   placar_2: number | null;
   torneio_id?: number | null;
+  local_espaco_id?: number | null;
+  local_str?: string | null;
+  data_partida?: string | null;
+  mensagem?: string | null;
+  tipo_partida?: string | null;
   data_resultado: string | null;
   data_registro: string | null;
   status?: string | null;
@@ -17,30 +25,59 @@ export type EidPartidaIndividualRow = {
 
 type Props = {
   partida: EidPartidaIndividualRow;
+  selfNome: string;
+  selfAvatarUrl?: string | null;
+  selfProfileHref?: string | null;
   opponentId: string;
   opponentNome: string;
   opponentAvatarUrl: string | null;
   res: { label: "V" | "D" | "E" | "—"; tone: string };
   profileLinkFrom: string;
   torneioLabel?: string | null;
+  origemLabel?: "Ranking" | "Torneio";
   esporteLabel?: string | null;
   modalidadeLabel?: string | null;
   opponentNotaEid?: number | null;
+  totalConfrontos: number;
+  saldoResumo?: string | null;
+  ultimosConfrontos: Array<{
+    id: number | string;
+    dataHora: string;
+    local: string | null;
+    localHref?: string | null;
+    placar: string;
+    origem: "Ranking" | "Torneio";
+    confronto?: string | null;
+  }>;
 };
 
 export function EidIndividualPartidaRow({
   partida: p,
+  selfNome,
+  selfAvatarUrl,
+  selfProfileHref,
   opponentId,
   opponentNome,
   opponentAvatarUrl,
   res,
   profileLinkFrom,
   torneioLabel,
+  origemLabel = "Ranking",
   esporteLabel,
   modalidadeLabel,
   opponentNotaEid,
+  totalConfrontos,
+  saldoResumo,
+  ultimosConfrontos,
 }: Props) {
   const when = fmtDataPtBr(p.data_resultado ?? p.data_registro);
+  const whenWithTime = new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(p.data_partida ?? p.data_resultado ?? p.data_registro ?? Date.now()));
   const placarOk =
     Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2));
   const placarTxt = placarOk ? `${p.placar_1} × ${p.placar_2}` : "—";
@@ -56,8 +93,26 @@ export function EidIndividualPartidaRow({
           : "bg-eid-surface/80 text-eid-text-secondary ring-[color:var(--eid-border-subtle)]";
 
   return (
-    <li
-      className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} relative flex items-center gap-3 border-[color:var(--eid-border-subtle)]`}
+    <EidConfrontoResumoModal
+      titulo={`${opponentNome} · ${esporteLabel ?? "Esporte"}`}
+      subtitulo={modalidadeLabel ? `Modalidade: ${modalidadeLabel}` : undefined}
+      ladoA={selfNome}
+      ladoB={opponentNome}
+      ladoAAvatarUrl={selfAvatarUrl ?? null}
+      ladoBAvatarUrl={opponentAvatarUrl ?? null}
+      ladoAProfileHref={selfProfileHref ?? null}
+      ladoBProfileHref={perfilHref}
+      origem={origemLabel}
+      dataHora={whenWithTime}
+      local={p.local_str ?? null}
+      localHref={p.local_espaco_id != null && Number(p.local_espaco_id) > 0 ? `/local/${Number(p.local_espaco_id)}` : null}
+      placarBase={placarTxt}
+      mensagem={p.mensagem ?? null}
+      totalConfrontos={totalConfrontos}
+      saldoResumo={saldoResumo}
+      ultimosConfrontos={ultimosConfrontos}
+      asListItem
+      rowClassName={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} relative flex items-center gap-3 border-[color:var(--eid-border-subtle)] cursor-pointer`}
     >
       <span
         className={`absolute right-2 top-2 inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-1.5 text-[10px] font-black ring-1 ${resultadoClass}`}
@@ -68,6 +123,7 @@ export function EidIndividualPartidaRow({
       <div className="flex shrink-0 flex-col items-center justify-center">
         <Link
           href={perfilHref}
+          data-no-modal="1"
           className="rounded-full ring-2 ring-transparent transition hover:ring-eid-primary-500/40"
           aria-label={`Perfil de ${opponentNome}`}
         >
@@ -89,13 +145,27 @@ export function EidIndividualPartidaRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pr-8">
-          <Link href={perfilHref} className="truncate text-[12px] font-bold text-eid-fg hover:text-eid-primary-300 hover:underline">
+          <Link
+            href={perfilHref}
+            data-no-modal="1"
+            className="truncate text-[12px] font-bold text-eid-fg hover:text-eid-primary-300 hover:underline"
+          >
             {opponentNome}
           </Link>
         </div>
         <p className="mt-0.5 text-[10px] text-eid-text-secondary">
           {esporteLabel ?? "Esporte"}
           {modalidadeLabel ? ` · ${modalidadeLabel}` : ""}
+          <span className="mx-1">·</span>
+          <span
+            className={
+              origemLabel === "Torneio"
+                ? "font-bold text-eid-action-400"
+                : "font-bold text-eid-primary-300"
+            }
+          >
+            {origemLabel}
+          </span>
           <span className="mx-1 text-eid-text-secondary">·</span>
           <span className="font-semibold tabular-nums text-eid-fg">{placarTxt}</span>
           <span className="mx-1 text-eid-text-secondary">·</span>
@@ -108,6 +178,6 @@ export function EidIndividualPartidaRow({
           ) : null}
         </p>
       </div>
-    </li>
+    </EidConfrontoResumoModal>
   );
 }

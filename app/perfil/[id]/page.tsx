@@ -482,19 +482,19 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             <div className="eid-list-item mt-3 grid grid-cols-4 divide-x divide-[color:var(--eid-border-subtle)] rounded-xl bg-eid-surface/45 text-center">
               <div className="py-2">
                 <p className="text-sm font-black text-eid-fg">{vitT}</p>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Vitórias</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vitórias</p>
               </div>
               <div className="py-2">
                 <p className="text-sm font-black text-eid-fg">{derT}</p>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Derrotas</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Derrotas</p>
               </div>
               <div className="py-2">
                 <p className="text-sm font-black text-eid-action-500">{winRate != null ? `${winRate}%` : "—"}</p>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Win Rate</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Win Rate</p>
               </div>
               <div className="py-2">
                 <p className="text-sm font-black text-eid-primary-400">{jogosT}</p>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Jogos</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Jogos</p>
               </div>
             </div>
 
@@ -575,9 +575,17 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           {/* ── Ação principal ──────────────────────────────────────── */}
           <section>
             <h2 className="sr-only">Ação principal</h2>
-            {!isSelf && primeiroEsporte ? (
-              linkWpp || esportesParaDesafio.length > 0 ? (
-                <div className="grid gap-3">
+            <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Ação principal</p>
+                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                  Desafio
+                </span>
+              </div>
+              <div className="p-3">
+              {!isSelf && primeiroEsporte ? (
+                linkWpp || esportesParaDesafio.length > 0 ? (
+                  <div className="grid gap-3">
                   {linkWpp ? (
                     <a
                       href={linkWpp}
@@ -598,10 +606,10 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       mostrarDicaWppRanking={Boolean(linkWpp)}
                     />
                   ) : null}
-                </div>
-              ) : null
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
+                  </div>
+                ) : null
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
                 {!isSelf ? <ProfilePrimaryCta href="/match" className="col-span-2" /> : null}
                 {hasProfessor ? (
                   <Link
@@ -611,27 +619,46 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                     Ver perfil profissional
                   </Link>
                 ) : null}
+                </div>
+              )}
               </div>
-            )}
+            </div>
           </section>
 
           {!isSelf && alvoSemFormacao ? (
             <ProfileSection title="Dupla ou time">
-              <ProfileConviteFormacaoCta
-                targetUserId={id}
-                targetNome={perfil.nome ?? "Atleta"}
-                targetHasEsportes={(eids ?? []).length > 0}
-                eligibleTeams={eligibleTeamsConvite}
-                viewerHasAnyLiderTeam={minhasFormacoesLider.length > 0}
-                perfilPath={`/perfil/${id}`}
-              />
+              <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Convite de formação</p>
+                  <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                    Dupla/Time
+                  </span>
+                </div>
+                <div className="p-2">
+                  <ProfileConviteFormacaoCta
+                    targetUserId={id}
+                    targetNome={perfil.nome ?? "Atleta"}
+                    targetHasEsportes={(eids ?? []).length > 0}
+                    eligibleTeams={eligibleTeamsConvite}
+                    viewerHasAnyLiderTeam={minhasFormacoesLider.length > 0}
+                    perfilPath={`/perfil/${id}`}
+                  />
+                </div>
+              </div>
             </ProfileSection>
           ) : null}
 
           {hasProfessor ? (
             <ProfileSection title="Professor">
               <div className="space-y-3">
-                <div className="eid-list-item rounded-xl border-eid-action-500/24 bg-eid-action-500/8 p-4">
+                <div className="overflow-hidden rounded-xl border border-eid-action-500/24 bg-eid-action-500/8">
+                  <div className="flex items-center justify-between border-b border-eid-action-500/20 bg-eid-action-500/10 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Perfil profissional</p>
+                    <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+                      Professor
+                    </span>
+                  </div>
+                  <div className="p-4">
                   <p className="text-sm font-semibold text-eid-fg">
                     {professorPerfil?.headline ?? "Professor ativo na plataforma"}
                   </p>
@@ -648,10 +675,18 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       </Link>
                     ) : null}
                   </div>
+                  </div>
                 </div>
 
                 {(professorEsportes ?? []).length ? (
-                  <div className="grid gap-2">
+                  <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+                    <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Modalidades</p>
+                      <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+                        Aulas
+                      </span>
+                    </div>
+                  <div className="grid gap-2 p-2">
                     {(professorEsportes ?? []).map((item, idx) => {
                       const esporte = Array.isArray(item.esportes) ? item.esportes[0] : item.esportes;
                       const metrica = (professorMetricas ?? []).find((m) => {
@@ -659,7 +694,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                         return esporteM?.nome === esporte?.nome;
                       });
                       return (
-                        <div key={`${esporte?.nome ?? "esp"}-${idx}`} className="eid-list-item rounded-xl bg-eid-surface/45 p-3">
+                        <div key={`${esporte?.nome ?? "esp"}-${idx}`} className="eid-list-item rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
                               <p className="text-sm font-semibold text-eid-fg">{esporte?.nome ?? "Esporte"}</p>
@@ -679,6 +714,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                         </div>
                       );
                     })}
+                  </div>
                   </div>
                 ) : null}
               </div>
@@ -704,7 +740,14 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             ) : null}
             <ProfileSection title="Performance EID">
               {/* Grid de cards compactos: 3 por linha, clicáveis para stats do esporte */}
-              <div className="eid-list-item mt-2 rounded-xl bg-eid-card/55 p-2">
+              <div className="eid-list-item mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Esportes</p>
+                  <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                    EID
+                  </span>
+                </div>
+                <div className="p-2">
                 {(eids ?? []).length === 0 ? (
                   <p className="w-full rounded-xl bg-eid-surface/45 p-3 text-[11px] text-eid-text-secondary">
                     Ainda sem EID registrado por esporte.
@@ -733,6 +776,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                     })}
                   </div>
                 )}
+                </div>
               </div>
             </ProfileSection>
           </div>
@@ -757,7 +801,14 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               ) : null}
               <ProfileSection title="Equipes">
                 {(timesLider ?? []).length > 0 || (duplasCadastro ?? []).length > 0 ? (
-                  <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+                    <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Formações cadastradas</p>
+                      <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                        Equipes
+                      </span>
+                    </div>
+                  <div className="grid grid-cols-2 gap-2 p-2">
                     {(timesLider ?? []).map((t) => {
                       const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
                       const initials = (t.nome?.trim().slice(0, 2) || "EQ").toUpperCase();
@@ -802,22 +853,33 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       );
                     })}
                   </div>
+                  </div>
                 ) : (
-                  <ProfileEditDrawerTrigger
-                    href={`/editar/equipes/cadastrar?from=${encodeURIComponent(`/perfil/${id}`)}`}
-                    title="Cadastrar equipe"
-                    fullscreen
-                    topMode="backOnly"
-                    className="eid-list-item mt-2 flex w-full min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
-                  >
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-surface/65 text-eid-primary-300">
-                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden>
-                        <path d="M10 2a.75.75 0 0 1 .75.75v6.5h6.5a.75.75 0 0 1 0 1.5h-6.5v6.5a.75.75 0 0 1-1.5 0v-6.5h-6.5a.75.75 0 0 1 0-1.5h6.5v-6.5A.75.75 0 0 1 10 2Z" />
-                      </svg>
-                    </span>
-                    <p className="text-[11px] font-bold text-eid-fg">Nenhuma equipe cadastrada</p>
-                    <p className="text-[9px] text-eid-text-secondary">Toque para cadastrar equipe</p>
-                  </ProfileEditDrawerTrigger>
+                  <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+                    <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Formações cadastradas</p>
+                      <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+                        Vazio
+                      </span>
+                    </div>
+                    <div className="p-2">
+                      <ProfileEditDrawerTrigger
+                        href={`/editar/equipes/cadastrar?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                        title="Cadastrar equipe"
+                        fullscreen
+                        topMode="backOnly"
+                        className="eid-list-item flex w-full min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
+                      >
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-surface/65 text-eid-primary-300">
+                          <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden>
+                            <path d="M10 2a.75.75 0 0 1 .75.75v6.5h6.5a.75.75 0 0 1 0 1.5h-6.5v6.5a.75.75 0 0 1-1.5 0v-6.5h-6.5a.75.75 0 0 1 0-1.5h6.5v-6.5A.75.75 0 0 1 10 2Z" />
+                          </svg>
+                        </span>
+                        <p className="text-[11px] font-bold text-eid-fg">Nenhuma equipe cadastrada</p>
+                        <p className="text-[9px] text-eid-text-secondary">Toque para cadastrar equipe</p>
+                      </ProfileEditDrawerTrigger>
+                    </div>
+                  </div>
                 )}
               </ProfileSection>
             </div>
@@ -827,8 +889,14 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           {(socioRows ?? []).length > 0 || (frequentesRows ?? []).length > 0 ? (
             <ProfileSection title="Locais">
               {(socioRows ?? []).length > 0 ? (
-                <div className="mt-2">
-                  <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Sócio</p>
+                <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+                  <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Sócio</p>
+                    <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+                      Clubes
+                    </span>
+                  </div>
+                  <div className="p-2">
                   <ul className="grid gap-1.5">
                     {(socioRows ?? []).map((s, idx) => {
                       const esp = Array.isArray(s.espacos_genericos) ? s.espacos_genericos[0] : s.espacos_genericos;
@@ -842,11 +910,18 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       );
                     })}
                   </ul>
+                  </div>
                 </div>
               ) : null}
               {(frequentesRows ?? []).length > 0 ? (
-                <div className="mt-3">
-                  <p className="mb-1.5 text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Onde jogo</p>
+                <div className="mt-3 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+                  <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Onde jogo</p>
+                    <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                      Frequência
+                    </span>
+                  </div>
+                  <div className="p-2">
                   <ul className="grid gap-1.5">
                     {(frequentesRows ?? []).map((f, idx) => {
                       const esp = Array.isArray(f.espacos_genericos) ? f.espacos_genericos[0] : f.espacos_genericos;
@@ -863,6 +938,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       );
                     })}
                   </ul>
+                  </div>
                 </div>
               ) : null}
             </ProfileSection>
@@ -889,7 +965,14 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               <ProfileSection title="Histórico">
                 {partidasHistorico.length > 0 ? (
                   <>
-                    <div className="mt-2 grid grid-cols-5 gap-1.5">
+                    <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+                      <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Resumo</p>
+                        <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                          Últimos jogos
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-5 gap-1.5 p-2">
                       <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1 text-center">
                         <p className="text-[11px] font-black text-emerald-300">{historicoTotais.vitorias}</p>
                         <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">V</p>
@@ -910,8 +993,16 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                         <p className="text-[11px] font-black text-eid-fg">{historicoTotais.torneio}</p>
                         <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">Torneio</p>
                       </div>
+                      </div>
                     </div>
-                    <ul className="mt-2 grid gap-1.5">
+                    <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+                      <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Prévia do histórico</p>
+                        <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+                          {resumoHistorico.length} itens
+                        </span>
+                      </div>
+                    <ul className="grid gap-1.5 p-2">
                       {resumoHistorico.map((item) => (
                         <li
                           key={item.id}
@@ -932,6 +1023,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                         </li>
                       ))}
                     </ul>
+                    </div>
                     <div className="mt-2 flex justify-end">
                       <ProfileEditDrawerTrigger
                         href={`/perfil/${id}/historico?from=${encodeURIComponent(`/perfil/${id}`)}`}
@@ -967,9 +1059,17 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               </ProfileSection>
             ) : (
               <ProfileSection title="Histórico">
-                <div className="eid-list-item mt-2 rounded-xl bg-eid-card/55 p-3 text-center">
+                <div className="eid-list-item mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 text-center">
+                  <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Privacidade</p>
+                    <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+                      Oculto
+                    </span>
+                  </div>
+                  <div className="p-3">
                   <p className="text-[11px] font-bold text-eid-fg">Histórico privado</p>
                   <p className="mt-0.5 text-[9px] text-eid-text-secondary">Este usuário optou por não exibir o histórico no perfil público.</p>
+                  </div>
                 </div>
               </ProfileSection>
             )}

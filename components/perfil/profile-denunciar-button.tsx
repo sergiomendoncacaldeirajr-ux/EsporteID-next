@@ -85,9 +85,18 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
       className={
         compact
           ? `relative ${className ?? ""}`
-          : `mx-auto w-full rounded-xl border border-red-500/25 bg-red-500/5 p-2 ${aberto ? "max-w-md" : "max-w-[min(100%,15.5rem)]"} ${className ?? ""}`
+          : `mx-auto w-full overflow-hidden rounded-xl border border-red-500/25 bg-red-500/5 ${aberto ? "max-w-md" : "max-w-[min(100%,15.5rem)]"} ${className ?? ""}`
       }
     >
+      {!compact ? (
+        <div className="flex items-center justify-between border-b border-red-500/20 bg-red-500/8 px-2.5 py-2">
+          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Segurança</p>
+          <span className="rounded-full border border-red-500/40 bg-red-500/14 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-red-200">
+            Denúncia
+          </span>
+        </div>
+      ) : null}
+      <div className={compact ? "" : "p-2"}>
       <button
         ref={triggerRef}
         type="button"
@@ -100,7 +109,7 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
         className={
           compact
             ? "inline-flex h-6 min-w-[5.75rem] touch-manipulation items-center justify-center gap-1 rounded-lg border border-red-500/35 bg-black/40 px-1.5 text-[7px] font-black uppercase tracking-[0.08em] text-red-200 transition hover:border-red-400/60 hover:bg-red-500/18"
-            : "flex w-full min-h-[2.25rem] touch-manipulation items-center justify-center gap-1.5 rounded-lg border border-red-500/20 bg-red-500/10 px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-wide text-red-300/95 transition hover:border-red-500/35 hover:bg-red-500/15 active:bg-red-500/20"
+            : "flex w-full min-h-[2.25rem] touch-manipulation items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/12 px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-[0.08em] text-red-300/95 transition hover:border-red-500/40 hover:bg-red-500/18 active:bg-red-500/22"
         }
       >
         <svg viewBox="0 0 12 14" className="h-3 w-2.5 shrink-0 opacity-90" fill="currentColor" aria-hidden>
@@ -121,14 +130,20 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
               />
               <div
                 id="eid-denuncia-painel"
-                className={`fixed z-[220] w-[min(92vw,21rem)] space-y-3 rounded-xl p-2.5 shadow-[0_18px_40px_-20px_rgba(239,68,68,0.5)] ${
+                className={`fixed z-[220] w-[min(92vw,21rem)] overflow-hidden rounded-2xl shadow-[0_18px_40px_-20px_rgba(239,68,68,0.5)] ${
                   theme === "light"
                     ? "border border-red-500/45 bg-[linear-gradient(180deg,#fff6f6,#ffe9e9)] text-slate-800"
                     : "border border-red-500/35 bg-[linear-gradient(180deg,rgba(33,8,12,0.99),rgba(20,9,11,0.99))] text-eid-fg"
                 }`}
                 style={{ top: popoverPos.top, left: popoverPos.left }}
               >
-                <p className={`text-[11px] ${theme === "light" ? "text-slate-600" : "text-eid-text-secondary"}`}>Motivo da denúncia</p>
+                <div className={`flex items-center justify-between border-b px-3 py-2 ${theme === "light" ? "border-red-300/55 bg-red-500/10" : "border-red-500/25 bg-red-500/10"}`}>
+                  <p className={`text-[10px] font-bold uppercase tracking-[0.08em] ${theme === "light" ? "text-slate-700" : "text-eid-text-secondary"}`}>Motivo da denúncia</p>
+                  <span className={`rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] ${theme === "light" ? "border-red-500/55 bg-red-500/15 text-red-700" : "border-red-500/45 bg-red-500/16 text-red-200"}`}>
+                    Moderação
+                  </span>
+                </div>
+                <div className="space-y-3 p-2.5">
                 <div className="grid gap-2">
                   {MOTIVOS.map((m) => (
                     <label
@@ -201,13 +216,20 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
                     Cancelar
                   </button>
                 </div>
+                </div>
               </div>
             </>,
             document.body
           )
         ) : (
-        <div id="eid-denuncia-painel" className="mt-2.5 space-y-3 border-t border-red-500/20 pt-2.5">
-          <p className="text-[11px] text-eid-text-secondary">Motivo da denúncia</p>
+        <div id="eid-denuncia-painel" className="mt-2.5 overflow-hidden rounded-xl border border-red-500/20 bg-red-500/6">
+          <div className="flex items-center justify-between border-b border-red-500/20 bg-red-500/10 px-2.5 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Motivo da denúncia</p>
+            <span className="rounded-full border border-red-500/40 bg-red-500/14 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-red-200">
+              Moderação
+            </span>
+          </div>
+          <div className="space-y-3 p-2.5">
           <div className="grid gap-2">
             {MOTIVOS.map((m) => (
               <label
@@ -264,9 +286,11 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
               Cancelar
             </button>
           </div>
+          </div>
         </div>
         )
       ) : null}
+      </div>
     </div>
   );
 }
