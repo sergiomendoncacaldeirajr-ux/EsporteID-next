@@ -139,10 +139,37 @@ export default async function PerfilEidEsporteHistoricoIndividualPage({ params, 
             const op = oponenteInfo.get(oid);
             const res = resultadoPartidaIndividual(profileId, p);
             const torLabel = p.torneio_id ? torneioNome.get(Number(p.torneio_id)) ?? `Torneio #${p.torneio_id}` : null;
+            const confrontosMesmos = lista.filter((h) => {
+              const hOid = h.jogador1_id === profileId ? h.jogador2_id : h.jogador1_id;
+              return hOid === oid;
+            });
+            const ultimosConfrontos = confrontosMesmos.slice(0, 5).map((h) => {
+              const origem: "Ranking" | "Torneio" =
+                h.torneio_id != null || String(h.tipo_partida ?? "").toLowerCase() === "torneio"
+                  ? "Torneio"
+                  : "Ranking";
+              const dataHora = new Intl.DateTimeFormat("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              }).format(new Date(h.data_resultado ?? h.data_registro ?? Date.now()));
+              return {
+                id: h.id,
+                dataHora,
+                local: null,
+                localHref: null,
+                placar: `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`,
+                origem,
+                confronto: `${perfil.nome ?? "Atleta"} vs ${op?.nome ?? "Atleta"}`,
+              };
+            });
             return (
               <EidIndividualPartidaRow
                 key={p.id}
                 partida={p}
+                selfNome={perfil.nome ?? "Atleta"}
                 opponentId={oid}
                 opponentNome={op?.nome ?? "Atleta"}
                 opponentAvatarUrl={op?.avatar_url ?? null}
@@ -152,6 +179,8 @@ export default async function PerfilEidEsporteHistoricoIndividualPage({ params, 
                 torneioLabel={torLabel}
                 esporteLabel={nomeEsporte}
                 modalidadeLabel={String(p.modalidade ?? "individual")}
+                totalConfrontos={confrontosMesmos.length}
+                ultimosConfrontos={ultimosConfrontos}
               />
             );
           })}

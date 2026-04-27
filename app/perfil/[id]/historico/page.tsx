@@ -34,7 +34,7 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
   const { data: partidasRaw } = await supabase
     .from("partidas")
     .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id"
+      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, tipo_partida, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id"
     )
     .or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`)
     .order("data_registro", { ascending: false })
@@ -171,10 +171,42 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
                 };
                 const oponenteNota =
                   oponenteId && p.esporte_id != null ? oponenteNotaMap.get(`${oponenteId}:${Number(p.esporte_id)}`) ?? null : null;
+                const confrontosMesmos = partidas.filter((h) => {
+                  const hOid = h.jogador1_id === id ? h.jogador2_id : h.jogador1_id;
+                  return hOid === oponenteId;
+                });
+                const ultimosConfrontos = confrontosMesmos.slice(0, 5).map((h) => {
+                  const origem: "Ranking" | "Torneio" =
+                    h.torneio_id != null || String(h.tipo_partida ?? "").toLowerCase() === "torneio"
+                      ? "Torneio"
+                      : "Ranking";
+                  const dataHora = new Intl.DateTimeFormat("pt-BR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(new Date(h.data_partida ?? h.data_resultado ?? h.data_registro ?? Date.now()));
+                  return {
+                    id: h.id,
+                    dataHora,
+                    local:
+                      (h.local_espaco_id != null ? localEspacoNomeMap.get(Number(h.local_espaco_id)) : null) ??
+                      (String(h.local_str ?? "").trim() || String(h.local_cidade ?? "").trim() || null),
+                    localHref:
+                      h.local_espaco_id != null && Number(h.local_espaco_id) > 0
+                        ? `/local/${Number(h.local_espaco_id)}`
+                        : null,
+                    placar: `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`,
+                    origem,
+                    confronto: `${perfil.nome ?? "Atleta"} vs ${oponenteNome}`,
+                  };
+                });
                 return (
                   <EidIndividualPartidaRow
                     key={p.id}
                     partida={p}
+                    selfNome={perfil.nome ?? "Atleta"}
                     opponentId={oponenteId ?? id}
                     opponentNome={oponenteNome}
                     opponentAvatarUrl={oponente?.avatarUrl ?? null}
@@ -184,6 +216,8 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
                     torneioLabel={p.torneio_id ? "Torneio" : "Rank"}
                     esporteLabel={esporteNome}
                     modalidadeLabel={modalidadeFmt}
+                    totalConfrontos={confrontosMesmos.length}
+                    ultimosConfrontos={ultimosConfrontos}
                   />
                 );
               })}
