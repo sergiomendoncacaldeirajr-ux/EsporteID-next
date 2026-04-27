@@ -119,7 +119,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
 
   useEffect(() => {
     if (!userId) return;
-    const t = window.setInterval(() => void load(), 90000);
+    const t = window.setInterval(() => void load(), 12000);
     const onFocus = () => void load();
     const onVisible = () => {
       if (document.visibilityState === "visible") void load();

@@ -228,7 +228,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       setSocialBadge(placar + pedidos + unreadGeneral);
     }
     void load();
-    const t = window.setInterval(load, 60000);
+    const t = window.setInterval(load, 12000);
     const channel = supabase
       .channel(`eid-mobile-nav-${resolvedUserId}`)
       .on(
