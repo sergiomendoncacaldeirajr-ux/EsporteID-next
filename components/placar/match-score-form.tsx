@@ -192,7 +192,7 @@ export function MatchScoreForm({
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-base font-black tracking-tight text-eid-fg md:text-lg">{matchWinner.label}</p>
-              <p className="mt-0.5 text-[11px] font-semibold text-eid-primary-700">Parabéns pela vitória neste confronto</p>
+              <p className="mt-0.5 text-[11px] font-semibold text-eid-primary-300">Parabéns pela vitória neste confronto</p>
             </div>
           </div>
         </div>

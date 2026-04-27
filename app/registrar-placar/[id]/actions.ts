@@ -125,30 +125,43 @@ export async function submitPlacarAction(formData: FormData) {
   const sportObj = Array.isArray((sportConfigRow as { sports?: unknown[] } | null)?.sports)
     ? (sportConfigRow as { sports?: unknown[] }).sports?.[0]
     : (sportConfigRow as { sports?: unknown } | null)?.sports;
+  const partidaSportObj = Array.isArray((p as { esportes?: unknown[] } | null)?.esportes)
+    ? ((p as { esportes?: unknown[] }).esportes?.[0] as { nome?: string } | undefined)
+    : ((p as { esportes?: unknown } | null)?.esportes as { nome?: string } | null | undefined);
+  const sportName = (sportObj as { name?: string } | null)?.name ?? partidaSportObj?.nome ?? null;
   const formatObj = Array.isArray((formatConfigRow as { sport_formats?: unknown[] } | null)?.sport_formats)
     ? (formatConfigRow as { sport_formats?: unknown[] }).sport_formats?.[0]
     : (formatConfigRow as { sport_formats?: unknown } | null)?.sport_formats;
   let dynamicConfig = getMatchUIConfig({
     sport: {
-      name: (sportObj as { name?: string } | null)?.name ?? null,
+      name: sportName,
       scoring_type: (sportObj as { scoring_type?: string } | null)?.scoring_type ?? "sets",
     },
     format: (formatObj as Record<string, unknown> | null) ?? {},
   });
   if (dynamicConfig.type === "sets") {
-    if (!scoreFormatKey) {
-      go(partidaId, "erro", "Selecione o formato disputado antes de salvar o resultado.");
-    }
     const setFormatOptions = buildSetFormatOptions({
-      sportName: (sportObj as { name?: string } | null)?.name ?? null,
+      sportName,
       baseConfig: dynamicConfig,
       rules: regrasPlacar,
     });
-    const selected = setFormatOptions.find((opt) => opt.key === scoreFormatKey);
-    if (!selected) {
-      go(partidaId, "erro", "Formato disputado inválido para este esporte.");
+    if (setFormatOptions.length === 1) {
+      const uniqueOption = setFormatOptions[0];
+      if (!scoreFormatKey || scoreFormatKey === uniqueOption.key) {
+        dynamicConfig = uniqueOption.config;
+      } else {
+        go(partidaId, "erro", "Formato disputado inválido para este esporte.");
+      }
+    } else if (setFormatOptions.length > 1) {
+      if (!scoreFormatKey) {
+        go(partidaId, "erro", "Selecione o formato disputado antes de salvar o resultado.");
+      }
+      const selected = setFormatOptions.find((opt) => opt.key === scoreFormatKey);
+      if (!selected) {
+        go(partidaId, "erro", "Formato disputado inválido para este esporte.");
+      }
+      dynamicConfig = selected.config;
     }
-    dynamicConfig = selected.config;
   }
   const selectedVariant = resolveVariantFromRules(regrasPlacar, placarVariante);
   const minPlacar = toOptionalFiniteNumber(selectedVariant?.minPlacar ?? regrasPlacar.minPlacar);

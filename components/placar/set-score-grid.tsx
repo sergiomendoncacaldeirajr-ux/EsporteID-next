@@ -207,7 +207,7 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
           {s1Eval.ok ? renderSetCard(1, "Set 2", s2) : null}
           {precisaSuperTb ? renderSetCard(2, "Super tiebreak", s3, true) : null}
           {finalizadoEm2Sets ? (
-            <p className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-800">
+            <p className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-[color:color-mix(in_srgb,var(--eid-success-400)_78%,var(--eid-fg)_22%)]">
               Vitória definida em 2 sets. Não é necessário super tiebreak.
             </p>
           ) : null}
