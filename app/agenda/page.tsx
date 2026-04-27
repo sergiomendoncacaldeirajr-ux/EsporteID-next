@@ -250,7 +250,7 @@ export default async function AgendaPage() {
     const partidaStatusRanking = String(partidaRecente?.status_ranking ?? "").trim().toLowerCase();
     let statusLabel: string | null = null;
     if (status === "Aceito") {
-      if (partidaStatusRanking === "resultado_contestado") {
+      if (partidaStatusRanking === "contestado" || partidaStatusRanking === "resultado_contestado") {
         statusLabel = "Resultado contestado";
       } else if (partidaStatusRanking === "pendente_confirmacao_revisao") {
         statusLabel = "Aguardando aprovação (revisão)";

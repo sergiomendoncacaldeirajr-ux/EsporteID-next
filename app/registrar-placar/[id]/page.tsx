@@ -128,7 +128,8 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const statusRanking = normStatus(p.status_ranking);
   const aguardandoConfirmacao = status === "aguardando_confirmacao";
   const emAnaliseAdmin = statusRanking === "em_analise_admin";
-  const resultadoContestado = statusRanking === "resultado_contestado" || statusRanking === "pendente_confirmacao_revisao";
+  const resultadoContestado =
+    statusRanking === "contestado" || statusRanking === "resultado_contestado" || statusRanking === "pendente_confirmacao_revisao";
   const concluida =
     status === "concluida" || status === "concluída" || status === "concluido" || status === "validada" || status === "finalizada";
   /** Fluxo só-agenda (data/local): na Agenda. Resultado fica no Painel (comunidade). */

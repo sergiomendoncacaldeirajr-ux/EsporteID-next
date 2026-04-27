@@ -190,7 +190,9 @@ export async function submitPlacarAction(formData: FormData) {
   const status = normStatus(p.status);
   const emAnaliseAdmin = isRankingStatus(p.status_ranking, "em_analise_admin");
   const emFluxoContestado =
-    isRankingStatus(p.status_ranking, "resultado_contestado") || isRankingStatus(p.status_ranking, "pendente_confirmacao_revisao");
+    isRankingStatus(p.status_ranking, "contestado") ||
+    isRankingStatus(p.status_ranking, "resultado_contestado") ||
+    isRankingStatus(p.status_ranking, "pendente_confirmacao_revisao");
   const actorCanRegular = ctx.scope.isColetivo ? ctx.scope.isTeamOwner : ctx.scope.isParticipant;
   const canActRegular = p.torneio_id
     ? ctx.podeRegistrarTorneio
