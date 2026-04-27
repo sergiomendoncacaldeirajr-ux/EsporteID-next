@@ -486,14 +486,16 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   <span>{resultadoContestado ? "Aceitar resultado contestado" : "Confirmar resultado"}</span>
                 </button>
               </form>
-              <form action={contestarPlacarAction}>
-                <input type="hidden" name="partida_id" value={id} />
-                <StatusSubmitButton
-                  idleLabel={resultadoContestado ? "Contestar novamente" : "Contestar resultado"}
-                  pendingLabel="Contestando..."
-                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full hover:border-amber-500/45 hover:text-amber-200 disabled:opacity-60`}
-                />
-              </form>
+              {!resultadoContestado ? (
+                <form action={contestarPlacarAction}>
+                  <input type="hidden" name="partida_id" value={id} />
+                  <StatusSubmitButton
+                    idleLabel="Contestar resultado"
+                    pendingLabel="Contestando..."
+                    className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full hover:border-amber-500/45 hover:text-amber-200 disabled:opacity-60`}
+                  />
+                </form>
+              ) : null}
             </div>
           ) : null}
           {podeAbrirMediacao && !agendaSomente ? (

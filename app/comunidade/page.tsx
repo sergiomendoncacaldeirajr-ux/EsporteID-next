@@ -484,11 +484,11 @@ export default async function ComunidadePage() {
         title="Painel de controle"
         subtitle="Acompanhe sua rede em um só lugar: notificações, convites e pedidos organizados para você decidir e agir com rapidez."
         stats={[
-          { label: "não lida(s)", value: nNotifUnread, tone: "primary" },
-          { label: "pedido(s) de desafio", value: nPedidos, tone: "action" },
-          { label: "sugestão(ões)", value: nSugestoes, tone: "default" },
-          { label: "convite(s) de equipe", value: conviteItems.length, tone: "primary" },
-          { label: "item(ns) de aula", value: nAulas, tone: "default" },
+          { label: "não lida(s)", value: nNotifUnread, tone: "primary", href: "/comunidade#notificacoes" },
+          { label: "pedido(s) de desafio", value: nPedidos, tone: "action", href: "/comunidade#desafio-pedidos" },
+          { label: "sugestão(ões)", value: nSugestoes, tone: "default", href: "/comunidade#equipe-sugestoes" },
+          { label: "convite(s) de equipe", value: conviteItems.length, tone: "primary", href: "/comunidade#equipe-convites" },
+          { label: "item(ns) de aula", value: nAulas, tone: "default", href: "/comunidade#minhas-aulas" },
         ]}
         actionsTopRight
         actions={
@@ -628,13 +628,13 @@ export default async function ComunidadePage() {
             </div>
           </section>
 
-          <section className="eid-list-item rounded-2xl bg-eid-card/90 p-4 md:p-5">
+          <section id="desafio-pedidos" className="eid-list-item rounded-2xl bg-eid-card/90 p-4 md:p-5">
             <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Desafio</h2>
             <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
               Central de desafios: pedidos recebidos e notificações do fluxo de desafio.
             </p>
             <div className="mt-3 space-y-4">
-              <div>
+              <div id="desafio-pedidos-recebidos">
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-400">
                   Pedidos recebidos
                 </h3>
@@ -671,13 +671,13 @@ export default async function ComunidadePage() {
               Convites, sugestões de liderança e avisos da sua dupla/time em um único quadro.
             </p>
             <div className="mt-3 space-y-4">
-              <div>
+              <div id="equipe-sugestoes">
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-[color:color-mix(in_srgb,var(--eid-warning-400)_78%,var(--eid-fg)_22%)]">
                   Sugestões da equipe (liderança)
                 </h3>
                 <ComunidadeSugestoesMatch items={sugestoesItems} />
               </div>
-              <div>
+              <div id="equipe-convites">
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
                   Convites recebidos
                 </h3>
@@ -702,7 +702,7 @@ export default async function ComunidadePage() {
             </div>
           </section>
 
-          <section className="eid-list-item rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-4 opacity-80 md:p-5">
+          <section id="minhas-aulas" className="eid-list-item rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-4 opacity-80 md:p-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Minhas aulas</h2>
               <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
