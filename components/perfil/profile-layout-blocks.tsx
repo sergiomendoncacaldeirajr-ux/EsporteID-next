@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_LG, PROFILE_SECTION_TITLE } from "@/components/perfil/profile-ui-tokens";
 
 export function ProfileSection({
@@ -23,11 +24,32 @@ export function ProfilePrimaryCta({
   href,
   label = "Pedir Desafio",
   className,
+  fullscreen = false,
 }: {
   href: string;
   label?: string;
   className?: string;
+  fullscreen?: boolean;
 }) {
+  const isFullscreenTarget = fullscreen || href.startsWith("/desafio");
+  if (isFullscreenTarget) {
+    return (
+      <ProfileEditDrawerTrigger
+        href={href}
+        title={label}
+        fullscreen
+        topMode="backOnly"
+        className={`eid-btn-dashboard-cta eid-profile-match-cta relative inline-flex w-full items-center justify-center gap-2.5 ${className ?? ""}`}
+      >
+        <>
+          <svg className="h-5 w-5 shrink-0 text-white drop-shadow-sm" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M13 2L5 13h5l-1 9 10-13h-6l0-7z" />
+          </svg>
+          <span>{label}</span>
+        </>
+      </ProfileEditDrawerTrigger>
+    );
+  }
   return (
     <Link
       href={href}

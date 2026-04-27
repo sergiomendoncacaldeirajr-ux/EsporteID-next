@@ -4,6 +4,7 @@ import {
   adminUpsertDesafioScoreVariant,
   adminUpdateEsporteDesafioConfig,
   adminSetMatchRankCooldownMeses,
+  adminSetMatchRankMonthlyLimitPerSport,
   adminSetMatchRankPendingLimit,
   adminSetMatchResultadoAutoAprovacaoHoras,
   adminUpdateRegrasRankingRow,
@@ -16,7 +17,7 @@ export default async function AdminRegrasPage() {
     return <p className="text-sm text-eid-text-secondary">Configure a service role.</p>;
   }
   const db = createServiceRoleClient();
-  const [rr, rrm, esportesCfg, cooldownRow, pendingLimitRow, autoApproveRow] = await Promise.all([
+  const [rr, rrm, esportesCfg, cooldownRow, pendingLimitRow, monthlyLimitRow, autoApproveRow] = await Promise.all([
     db.from("regras_ranking").select("*, esportes(nome)").order("esporte_id", { ascending: true }).limit(100),
     db.from("regras_ranking_match").select("*, esportes(nome)").order("esporte_id", { ascending: true }).limit(100),
     db
@@ -26,8 +27,21 @@ export default async function AdminRegrasPage() {
       .limit(100),
     db.from("app_config").select("value_json").eq("key", "match_rank_cooldown_meses").maybeSingle(),
     db.from("app_config").select("value_json").eq("key", "match_rank_pending_result_limit").maybeSingle(),
+    db.from("app_config").select("value_json").eq("key", "match_rank_monthly_limit_per_sport").maybeSingle(),
     db.from("app_config").select("value_json").eq("key", "match_resultado_autoaprovacao_horas").maybeSingle(),
   ]);
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0).toISOString();
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0).toISOString();
+  const { data: partidasMesRows } = await db
+    .from("partidas")
+    .select("id, esporte_id, modalidade, jogador1_id, jogador2_id, status, status_ranking, data_resultado, data_partida, data_registro")
+    .is("torneio_id", null)
+    .gte("data_registro", monthStart)
+    .lt("data_registro", nextMonthStart)
+    .order("id", { ascending: false })
+    .limit(4000);
 
   let cooldownMeses = 12;
   const cj = cooldownRow.data?.value_json;
@@ -41,6 +55,45 @@ export default async function AdminRegrasPage() {
     const n = Number((pj as { limite?: unknown }).limite);
     if (Number.isFinite(n) && n >= 1) pendingLimit = Math.min(20, Math.floor(n));
   }
+  let monthlyLimit = 4;
+  const mj = monthlyLimitRow.data?.value_json;
+  if (mj && typeof mj === "object" && !Array.isArray(mj) && "limite" in mj) {
+    const n = Number((mj as { limite?: unknown }).limite);
+    if (Number.isFinite(n) && n >= 1) monthlyLimit = Math.min(60, Math.floor(n));
+  }
+
+  const esportesById = new Map<number, string>(
+    (esportesCfg.data ?? [])
+      .map((e: Record<string, unknown>) => [Number(e.id ?? 0), String(e.nome ?? "Esporte")] as const)
+      .filter(([id]) => Number.isFinite(id) && id > 0)
+  );
+  const usageMap = new Map<string, { userId: string; esporteId: number; modalidade: "individual" | "dupla" | "time"; count: number }>();
+  for (const p of partidasMesRows ?? []) {
+    const status = String((p as { status?: string | null }).status ?? "").trim().toLowerCase();
+    const statusRanking = String((p as { status_ranking?: string | null }).status_ranking ?? "").trim().toLowerCase();
+    const isValid =
+      statusRanking === "validado" ||
+      ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
+    if (!isValid) continue;
+    const esporteId = Number((p as { esporte_id?: number | null }).esporte_id ?? 0);
+    if (!Number.isFinite(esporteId) || esporteId <= 0) continue;
+    const modRaw = String((p as { modalidade?: string | null }).modalidade ?? "").trim().toLowerCase();
+    const modalidade: "individual" | "dupla" | "time" = modRaw === "dupla" ? "dupla" : modRaw === "time" ? "time" : "individual";
+    const users = [String((p as { jogador1_id?: string | null }).jogador1_id ?? ""), String((p as { jogador2_id?: string | null }).jogador2_id ?? "")]
+      .filter(Boolean);
+    for (const userId of users) {
+      const key = `${userId}:${esporteId}:${modalidade}`;
+      const prev = usageMap.get(key);
+      if (prev) prev.count += 1;
+      else usageMap.set(key, { userId, esporteId, modalidade, count: 1 });
+    }
+  }
+  const usageRows = [...usageMap.values()].sort((a, b) => b.count - a.count).slice(0, 80);
+  const usageUserIds = [...new Set(usageRows.map((r) => r.userId))];
+  const { data: usageProfiles } = usageUserIds.length
+    ? await db.from("profiles").select("id, nome").in("id", usageUserIds)
+    : { data: [] };
+  const nomeByUserId = new Map((usageProfiles ?? []).map((p) => [String((p as { id?: string | null }).id ?? ""), String((p as { nome?: string | null }).nome ?? "Usuário")]));
   let autoApproveHoras = 24;
   const aj = autoApproveRow.data?.value_json;
   if (aj && typeof aj === "object" && !Array.isArray(aj) && "horas" in aj) {
@@ -109,6 +162,77 @@ export default async function AdminRegrasPage() {
             Salvar
           </button>
         </form>
+      </section>
+
+      <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
+        <h2 className="text-base font-bold text-eid-fg">Desafio de ranking · limite mensal por esporte</h2>
+        <p className="mt-1 text-sm text-eid-text-secondary">
+          Máximo de confrontos de ranking que cada usuário pode iniciar/concluir no mês em cada esporte e tipo de formação
+          (individual, dupla e time contam separadamente). Ao virar o mês, o contador reinicia.
+        </p>
+        <form action={adminSetMatchRankMonthlyLimitPerSport} className="mt-4 flex flex-wrap items-end gap-3">
+          <label className="grid gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">Limite mensal</span>
+            <input
+              type="number"
+              name="limite"
+              min={1}
+              max={60}
+              defaultValue={monthlyLimit}
+              className="eid-input-dark h-10 w-28 rounded-lg px-2 text-sm text-eid-fg"
+            />
+          </label>
+          <button
+            type="submit"
+            className="rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg"
+          >
+            Salvar
+          </button>
+        </form>
+      </section>
+
+      <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
+        <h2 className="text-base font-bold text-eid-fg">Resumo mensal de uso (ranking)</h2>
+        <p className="mt-1 text-sm text-eid-text-secondary">
+          Consumo por usuário em cada esporte e tipo de formação no mês atual. Referência do limite atual:{" "}
+          <strong className="text-eid-fg">{monthlyLimit}</strong>.
+        </p>
+        {usageRows.length === 0 ? (
+          <p className="mt-3 text-sm text-eid-text-secondary">Sem confrontos válidos neste mês até o momento.</p>
+        ) : (
+          <div className="mt-3 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)]">
+            <table className="w-full min-w-[720px] text-left text-xs">
+              <thead className="border-b border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-bold uppercase text-eid-text-secondary">
+                <tr>
+                  <th className="px-2 py-2">Usuário</th>
+                  <th className="px-2 py-2">Esporte</th>
+                  <th className="px-2 py-2">Modalidade</th>
+                  <th className="px-2 py-2">Uso no mês</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usageRows.map((r, i) => (
+                  <tr key={`${r.userId}:${r.esporteId}:${r.modalidade}:${i}`} className="border-b border-[color:var(--eid-border-subtle)]/50">
+                    <td className="px-2 py-1.5 text-eid-fg">{nomeByUserId.get(r.userId) ?? r.userId}</td>
+                    <td className="px-2 py-1.5 text-eid-text-secondary">{esportesById.get(r.esporteId) ?? `#${r.esporteId}`}</td>
+                    <td className="px-2 py-1.5 text-eid-text-secondary">{r.modalidade}</td>
+                    <td className="px-2 py-1.5">
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+                          r.count >= monthlyLimit
+                            ? "border-amber-400/40 bg-amber-500/15 text-amber-200"
+                            : "border-eid-primary-500/35 bg-eid-primary-500/10 text-eid-primary-200"
+                        }`}
+                      >
+                        {r.count}/{monthlyLimit}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">

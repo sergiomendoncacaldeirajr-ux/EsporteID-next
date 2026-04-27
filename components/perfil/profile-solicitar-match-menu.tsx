@@ -1,9 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 
-export type ProfileSolicitarMatchEsporte = { esporteId: number; nome: string };
+export type ProfileSolicitarMatchEsporte = {
+  esporteId: number;
+  nome: string;
+  rankingBlockedUntil?: string | null;
+};
 
 /** Um único botão “Pedir desafio” que abre ranking vs amistoso (e escolha de esporte se necessário). */
 export function ProfileSolicitarMatchMenu({
@@ -37,6 +41,9 @@ export function ProfileSolicitarMatchMenu({
     ? esporteSel
     : (esportes[0]?.esporteId ?? 0);
   const base = `/desafio?id=${encodeURIComponent(alvoId)}&tipo=individual&esporte=${esporteSelSafe}`;
+  const esporteAtual = esportes.find((e) => e.esporteId === esporteSelSafe) ?? null;
+  const rankingBlockedUntil = esporteAtual?.rankingBlockedUntil ?? null;
+  const rankingBloqueado = Boolean(rankingBlockedUntil);
 
   const toggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -100,23 +107,45 @@ export function ProfileSolicitarMatchMenu({
 
           <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Tipo de confronto</p>
           <div className="mt-2 grid gap-2">
-            <Link
-              href={`${base}&finalidade=ranking`}
-              role="menuitem"
-              className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 text-center text-xs font-bold uppercase tracking-wide text-eid-primary-200 transition hover:bg-eid-primary-500/20"
-              onClick={() => setAberto(false)}
-            >
-              Desafio de ranking
-            </Link>
-            {amistosoOk ? (
-              <Link
-                href={`${base}&finalidade=amistoso`}
+            {rankingBloqueado ? (
+              <button
+                type="button"
                 role="menuitem"
-                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/12 text-center text-xs font-bold uppercase tracking-wide text-emerald-200 transition hover:bg-emerald-500/20"
-                onClick={() => setAberto(false)}
+                className="inline-flex min-h-[42px] cursor-not-allowed items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 text-center text-xs font-bold uppercase tracking-wide text-eid-text-secondary"
+                aria-disabled
               >
-                Desafio amistoso
-              </Link>
+                Desafio de ranking
+              </button>
+            ) : (
+              <ProfileEditDrawerTrigger
+                href={`${base}&finalidade=ranking`}
+                title="Desafio de ranking"
+                fullscreen
+                topMode="backOnly"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 text-center text-xs font-bold uppercase tracking-wide text-eid-primary-200 transition hover:bg-eid-primary-500/20"
+              >
+                <span onClick={() => setAberto(false)}>Desafio de ranking</span>
+              </ProfileEditDrawerTrigger>
+            )}
+            {rankingBloqueado ? (
+              <p className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-center text-[10px] text-eid-text-secondary">
+                Ranking bloqueado neste esporte até{" "}
+                <span className="font-semibold text-eid-fg">
+                  {new Date(String(rankingBlockedUntil)).toLocaleDateString("pt-BR")}
+                </span>
+                .
+              </p>
+            ) : null}
+            {amistosoOk ? (
+              <ProfileEditDrawerTrigger
+                href={`${base}&finalidade=amistoso`}
+                title="Desafio amistoso"
+                fullscreen
+                topMode="backOnly"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/12 text-center text-xs font-bold uppercase tracking-wide text-emerald-200 transition hover:bg-emerald-500/20"
+              >
+                <span onClick={() => setAberto(false)}>Desafio amistoso</span>
+              </ProfileEditDrawerTrigger>
             ) : (
               <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 text-center">
                 <p className="text-[11px] font-semibold text-eid-text-secondary">Desafio amistoso</p>

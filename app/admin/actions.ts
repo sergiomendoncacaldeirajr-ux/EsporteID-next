@@ -1130,6 +1130,32 @@ export async function adminSetMatchRankPendingLimit(formData: FormData) {
   }
 }
 
+/** Limite mensal de confrontos de ranking por usuário, por esporte. */
+export async function adminSetMatchRankMonthlyLimitPerSport(formData: FormData) {
+  try {
+    await guard();
+    const raw = Number(formData.get("limite"));
+    const limite = Number.isFinite(raw) ? Math.max(1, Math.min(60, Math.floor(raw))) : 4;
+    const { error } = await svc()
+      .from("app_config")
+      .upsert(
+        {
+          key: "match_rank_monthly_limit_per_sport",
+          value_json: { limite },
+          atualizado_em: new Date().toISOString(),
+        },
+        { onConflict: "key" }
+      );
+    if (error) return;
+    revalidatePath("/admin/regras");
+    revalidatePath("/desafio");
+    revalidatePath("/match");
+    revalidatePath("/perfil");
+  } catch {
+    return;
+  }
+}
+
 /** Prazo (em horas) para autoaprovar resultado pendente sem contestação. */
 export async function adminSetMatchResultadoAutoAprovacaoHoras(formData: FormData) {
   try {

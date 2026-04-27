@@ -21,6 +21,7 @@ import {
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { getSystemFeatureConfig, SYSTEM_FEATURE_LABEL, type SystemFeatureKey } from "@/lib/system-features";
+import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { createClient } from "@/lib/supabase/server";
 import { marcarTodasNotificacoesLidas } from "./actions";
 
@@ -186,6 +187,8 @@ export default async function ComunidadePage() {
     .order("id", { ascending: false })
     .limit(25);
 
+  const cooldownMesesSug = await getMatchRankCooldownMeses(supabase);
+
   const sugSugIds = [...new Set((sugestoesRaw ?? []).map((s) => s.sugeridor_id).filter(Boolean))] as string[];
   const sugTimeIds = [
     ...new Set(
@@ -197,16 +200,86 @@ export default async function ComunidadePage() {
     : { data: [] };
   const sugPerfilMap = new Map((sugPerfis ?? []).map((p) => [p.id, p.nome]));
   const { data: sugTimes } = sugTimeIds.length
-    ? await supabase.from("times").select("id, nome").in("id", sugTimeIds)
+    ? await supabase.from("times").select("id, nome, criador_id").in("id", sugTimeIds)
     : { data: [] };
   const sugTimeMap = new Map((sugTimes ?? []).map((t) => [t.id, t.nome]));
+  const sugTimeOwnerMap = new Map((sugTimes ?? []).map((t) => [Number(t.id), String((t as { criador_id?: string | null }).criador_id ?? "")]));
   const sugEspIds = [...new Set((sugestoesRaw ?? []).map((s) => s.esporte_id).filter(Boolean))] as number[];
   const { data: sugEsportes } = sugEspIds.length
     ? await supabase.from("esportes").select("id, nome").in("id", sugEspIds)
     : { data: [] };
   const sugEspMap = new Map((sugEsportes ?? []).map((e) => [e.id, e.nome]));
 
-  const sugestoesItems: SugestaoMatchItem[] = (sugestoesRaw ?? []).map((s) => ({
+  const cutoffSug = new Date();
+  cutoffSug.setMonth(cutoffSug.getMonth() - cooldownMesesSug);
+  const cutoffSugMs = cutoffSug.getTime();
+  const candidateOwnerIds = [
+    ...new Set(
+      (sugestoesRaw ?? [])
+        .map((s) => {
+          const modalidade = String(s.modalidade ?? "").trim().toLowerCase();
+          if (modalidade === "individual") return String(s.sugeridor_id ?? "");
+          const teamId = Number(s.sugeridor_time_id ?? 0);
+          return sugTimeOwnerMap.get(teamId) ?? "";
+        })
+        .filter(Boolean)
+    ),
+  ];
+  const sugEsporteIdsSet = [...new Set((sugestoesRaw ?? []).map((s) => Number(s.esporte_id ?? 0)).filter((n) => Number.isFinite(n) && n > 0))];
+  const { data: partidasSugCooldown } = candidateOwnerIds.length && sugEsporteIdsSet.length
+    ? await supabase
+        .from("partidas")
+        .select("esporte_id, modalidade, jogador1_id, jogador2_id, status, status_ranking, data_resultado, data_partida, data_registro")
+        .is("torneio_id", null)
+        .in("esporte_id", sugEsporteIdsSet)
+        .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id}`)
+        .order("id", { ascending: false })
+        .limit(350)
+    : { data: [] as Array<Record<string, unknown>> };
+  const blockedSugByKey = new Set<string>();
+  const normTxt = (v: string | null | undefined) =>
+    String(v ?? "")
+      .trim()
+      .toLowerCase();
+  for (const p of partidasSugCooldown ?? []) {
+    const status = normTxt((p as { status?: string | null }).status);
+    const statusRanking = normTxt((p as { status_ranking?: string | null }).status_ranking);
+    const valid =
+      statusRanking === "validado" ||
+      ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
+    if (!valid) continue;
+    const dtRaw =
+      (p as { data_resultado?: string | null }).data_resultado ??
+      (p as { data_partida?: string | null }).data_partida ??
+      (p as { data_registro?: string | null }).data_registro ??
+      null;
+    if (!dtRaw) continue;
+    const ts = new Date(dtRaw).getTime();
+    if (!Number.isFinite(ts) || ts < cutoffSugMs) continue;
+    const j1 = String((p as { jogador1_id?: string | null }).jogador1_id ?? "");
+    const j2 = String((p as { jogador2_id?: string | null }).jogador2_id ?? "");
+    const otherId = j1 === user.id ? j2 : j2 === user.id ? j1 : "";
+    if (!otherId) continue;
+    const esporteId = Number((p as { esporte_id?: number | null }).esporte_id ?? 0);
+    if (!Number.isFinite(esporteId) || esporteId <= 0) continue;
+    const modRaw = normTxt((p as { modalidade?: string | null }).modalidade);
+    const modalidade = modRaw === "dupla" ? "dupla" : modRaw === "time" ? "time" : "individual";
+    blockedSugByKey.add(`${otherId}:${esporteId}:${modalidade}`);
+  }
+
+  const sugestoesItems: SugestaoMatchItem[] = (sugestoesRaw ?? [])
+    .filter((s) => {
+      const modalidadeRaw = String(s.modalidade ?? "").trim().toLowerCase();
+      const modalidade = modalidadeRaw === "dupla" ? "dupla" : modalidadeRaw === "time" ? "time" : "individual";
+      const esporteId = Number(s.esporte_id ?? 0);
+      const ownerId =
+        modalidade === "individual"
+          ? String(s.sugeridor_id ?? "")
+          : sugTimeOwnerMap.get(Number(s.sugeridor_time_id ?? 0)) ?? "";
+      if (!ownerId || !Number.isFinite(esporteId) || esporteId <= 0) return true;
+      return !blockedSugByKey.has(`${ownerId}:${esporteId}:${modalidade}`);
+    })
+    .map((s) => ({
     id: Number(s.id),
     sugeridorNome: sugPerfilMap.get(s.sugeridor_id) ?? "Atleta",
     sugeridorId: String(s.sugeridor_id),

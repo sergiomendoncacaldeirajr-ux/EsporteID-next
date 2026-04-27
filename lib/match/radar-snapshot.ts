@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 
 export type RadarTipo = "atleta" | "dupla" | "time";
 export type SortBy = "eid_score" | "match_ranking_points";
@@ -101,6 +102,48 @@ export async function fetchMatchRadarCards(
     else if (adversarioId === viewerId && usuarioId) activeOpponentIds.add(usuarioId);
   }
 
+  function norm(v: string | null | undefined): string {
+    return String(v ?? "")
+      .trim()
+      .toLowerCase();
+  }
+
+  const blockedOpponentUsersByCooldown = new Set<string>();
+  if (finalidade === "ranking" && Number.isFinite(esporteId) && Number(esporteId) > 0) {
+    const cooldownMeses = await getMatchRankCooldownMeses(supabase);
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - cooldownMeses);
+    const cutoffMs = cutoff.getTime();
+    const { data: partRows } = await supabase
+      .from("partidas")
+      .select("jogador1_id, jogador2_id, status, status_ranking, data_resultado, data_registro, data_partida")
+      .eq("esporte_id", Number(esporteId))
+      .is("torneio_id", null)
+      .or(`jogador1_id.eq.${viewerId},jogador2_id.eq.${viewerId}`)
+      .order("id", { ascending: false })
+      .limit(300);
+    for (const p of partRows ?? []) {
+      const status = norm((p as { status?: string | null }).status);
+      const statusRanking = norm((p as { status_ranking?: string | null }).status_ranking);
+      const valid =
+        statusRanking === "validado" ||
+        ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
+      if (!valid) continue;
+      const dtRaw =
+        (p as { data_resultado?: string | null }).data_resultado ??
+        (p as { data_partida?: string | null }).data_partida ??
+        (p as { data_registro?: string | null }).data_registro ??
+        null;
+      if (!dtRaw) continue;
+      const ts = new Date(dtRaw).getTime();
+      if (!Number.isFinite(ts) || ts < cutoffMs) continue;
+      const j1 = String((p as { jogador1_id?: string | null }).jogador1_id ?? "");
+      const j2 = String((p as { jogador2_id?: string | null }).jogador2_id ?? "");
+      if (j1 === viewerId && j2) blockedOpponentUsersByCooldown.add(j2);
+      else if (j2 === viewerId && j1) blockedOpponentUsersByCooldown.add(j1);
+    }
+  }
+
   if (tipo === "atleta") {
     const { data } = await supabase.rpc("buscar_match_atletas", {
       p_viewer_id: viewerId,
@@ -113,6 +156,7 @@ export async function fetchMatchRadarCards(
 
     const baseCards: MatchRadarCard[] = ((data ?? []) as AtletaRow[])
       .filter((row) => !activeOpponentIds.has(String(row.usuario_id ?? "")))
+      .filter((row) => !blockedOpponentUsersByCooldown.has(String(row.usuario_id ?? "")))
       .map((row) => {
       return {
         id: String(row.usuario_id),
@@ -222,7 +266,24 @@ export async function fetchMatchRadarCards(
         eligibleTeamIds = new Set<number>();
       }
     }
-    cards = teamRowsVisible.filter((t) => eligibleTeamIds.has(Number(t.id))).map((t) => ({
+    let teamRowsByCooldown = teamRowsVisible;
+    if (finalidade === "ranking" && blockedOpponentUsersByCooldown.size > 0) {
+      const { data: owners } = await supabase
+        .from("times")
+        .select("id, criador_id")
+        .in(
+          "id",
+          teamRowsVisible.map((t) => Number(t.id))
+        );
+      const blockedTeamIdsByCooldown = new Set(
+        (owners ?? [])
+          .filter((o) => blockedOpponentUsersByCooldown.has(String((o as { criador_id?: string | null }).criador_id ?? "")))
+          .map((o) => Number((o as { id?: number | null }).id ?? 0))
+          .filter((id) => Number.isFinite(id) && id > 0)
+      );
+      teamRowsByCooldown = teamRowsVisible.filter((t) => !blockedTeamIdsByCooldown.has(Number(t.id)));
+    }
+    cards = teamRowsByCooldown.filter((t) => eligibleTeamIds.has(Number(t.id))).map((t) => ({
       id: String(t.id),
       nome: String(t.nome ?? "Time"),
       localizacao: String(t.localizacao ?? "Localização não informada"),

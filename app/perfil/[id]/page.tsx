@@ -22,6 +22,7 @@ import {
   computeDisponivelAmistosoEffective,
   expireDisponivelAmistosoProfileIfNeeded,
 } from "@/lib/perfil/disponivel-amistoso";
+import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { partidaEncerradaParaHistorico } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
 
@@ -216,7 +217,51 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
       nome: (Array.isArray(e.esportes) ? e.esportes[0] : e.esportes)?.nome ?? "Esporte",
     }))
     .filter((e) => Number.isFinite(e.esporteId) && e.esporteId > 0);
-  const esportesParaDesafio = esportesDoPerfil.filter((e) => !esportesMatchAceito.has(e.esporteId));
+  const cooldownMeses = await getMatchRankCooldownMeses(supabase);
+  const esporteIdsPerfil = [...new Set(esportesDoPerfil.map((e) => Number(e.esporteId)).filter((n) => Number.isFinite(n) && n > 0))];
+  const { data: confrontosComAlvo } = !isSelf && esporteIdsPerfil.length > 0
+    ? await supabase
+        .from("partidas")
+        .select("esporte_id, status, status_ranking, data_resultado, data_registro, data_partida")
+        .is("torneio_id", null)
+        .in("esporte_id", esporteIdsPerfil)
+        .or(`and(jogador1_id.eq.${user.id},jogador2_id.eq.${id}),and(jogador1_id.eq.${id},jogador2_id.eq.${user.id})`)
+        .order("id", { ascending: false })
+        .limit(240)
+    : { data: [] as Array<Record<string, unknown>> };
+  const cooldownUntilBySport = new Map<number, string>();
+  for (const c of confrontosComAlvo ?? []) {
+    const esporteId = Number((c as { esporte_id?: number | null }).esporte_id ?? 0);
+    if (!Number.isFinite(esporteId) || esporteId <= 0) continue;
+    const status = String((c as { status?: string | null }).status ?? "").trim().toLowerCase();
+    const statusRanking = String((c as { status_ranking?: string | null }).status_ranking ?? "").trim().toLowerCase();
+    const valido =
+      statusRanking === "validado" ||
+      ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
+    if (!valido) continue;
+    const dtRaw =
+      (c as { data_resultado?: string | null }).data_resultado ??
+      (c as { data_partida?: string | null }).data_partida ??
+      (c as { data_registro?: string | null }).data_registro ??
+      null;
+    if (!dtRaw) continue;
+    const base = new Date(dtRaw);
+    if (Number.isNaN(base.getTime())) continue;
+    const until = new Date(base);
+    until.setMonth(until.getMonth() + cooldownMeses);
+    if (until.getTime() <= Date.now()) continue;
+    const prev = cooldownUntilBySport.get(esporteId);
+    if (!prev || new Date(prev).getTime() < until.getTime()) {
+      cooldownUntilBySport.set(esporteId, until.toISOString());
+    }
+  }
+  const esportesParaDesafio = esportesDoPerfil
+    .filter((e) => !esportesMatchAceito.has(e.esporteId))
+    .map((e) => ({
+      esporteId: e.esporteId,
+      nome: e.nome,
+      rankingBlockedUntil: cooldownUntilBySport.get(e.esporteId) ?? null,
+    }));
 
   const { data: socioRows } = await supabase
     .from("membership_requests")

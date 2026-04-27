@@ -167,12 +167,48 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     const finRaw = String(sp.finalidade ?? "").trim().toLowerCase();
     const finalidadeEscolhida: "ranking" | "amistoso" | null =
       finRaw === "amistoso" ? "amistoso" : finRaw === "ranking" ? "ranking" : null;
+    const cooldownMeses = await getMatchRankCooldownMeses(supabase);
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - cooldownMeses);
+    const cutoffMs = cutoff.getTime();
+    let rankingBlockedUntil: string | null = null;
+    const { data: cooldownRows } = await supabase
+      .from("partidas")
+      .select("status, status_ranking, data_resultado, data_partida, data_registro")
+      .eq("esporte_id", esporteId)
+      .is("torneio_id", null)
+      .or(`and(jogador1_id.eq.${user.id},jogador2_id.eq.${perfil.id}),and(jogador1_id.eq.${perfil.id},jogador2_id.eq.${user.id})`)
+      .order("id", { ascending: false })
+      .limit(80);
+    for (const r of cooldownRows ?? []) {
+      const st = String((r as { status?: string | null }).status ?? "").trim().toLowerCase();
+      const sr = String((r as { status_ranking?: string | null }).status_ranking ?? "").trim().toLowerCase();
+      const valido =
+        sr === "validado" ||
+        ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(st);
+      if (!valido) continue;
+      const dtRaw =
+        (r as { data_resultado?: string | null }).data_resultado ??
+        (r as { data_partida?: string | null }).data_partida ??
+        (r as { data_registro?: string | null }).data_registro ??
+        null;
+      if (!dtRaw) continue;
+      const base = new Date(dtRaw);
+      if (Number.isNaN(base.getTime()) || base.getTime() < cutoffMs) continue;
+      const until = new Date(base);
+      until.setMonth(until.getMonth() + cooldownMeses);
+      if (until.getTime() > Date.now()) {
+        rankingBlockedUntil = until.toISOString();
+        break;
+      }
+    }
 
     if (!finalidadeEscolhida) {
-      const [{ data: viewerProf }, cooldownMeses] = await Promise.all([
-        supabase.from("profiles").select("disponivel_amistoso, disponivel_amistoso_ate").eq("id", user.id).maybeSingle(),
-        getMatchRankCooldownMeses(supabase),
-      ]);
+      const { data: viewerProf } = await supabase
+        .from("profiles")
+        .select("disponivel_amistoso, disponivel_amistoso_ate")
+        .eq("id", user.id)
+        .maybeSingle();
       const viewerAm = computeDisponivelAmistosoEffective(
         viewerProf?.disponivel_amistoso,
         viewerProf?.disponivel_amistoso_ate
@@ -189,17 +225,28 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             </p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <Link
-                href={withDesafioEmbed(`/desafio?${baseQs}&finalidade=ranking`, isEmbed)}
-                className={`${DESAFIO_CHOICE_RANKING} block text-left`}
-              >
-                <p className="text-xs font-bold uppercase tracking-wide text-eid-primary-200">Desafio de ranking</p>
-                <p className="mt-2 text-sm font-semibold text-eid-fg">Vale pontos no ranking</p>
-                <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
-                  Após aceito, use a agenda para agendar e o lançador de resultado. Novo desafio de ranking com a mesma pessoa neste esporte só após{" "}
-                  <span className="font-semibold text-eid-fg">{cooldownMeses}</span> meses do último confronto válido.
-                </p>
-              </Link>
+              {!rankingBlockedUntil ? (
+                <Link
+                  href={withDesafioEmbed(`/desafio?${baseQs}&finalidade=ranking`, isEmbed)}
+                  className={`${DESAFIO_CHOICE_RANKING} block text-left`}
+                >
+                  <p className="text-xs font-bold uppercase tracking-wide text-eid-primary-200">Desafio de ranking</p>
+                  <p className="mt-2 text-sm font-semibold text-eid-fg">Vale pontos no ranking</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
+                    Após aceito, use a agenda para agendar e o lançador de resultado. Novo desafio de ranking com a mesma pessoa neste esporte só após{" "}
+                    <span className="font-semibold text-eid-fg">{cooldownMeses}</span> meses do último confronto válido.
+                  </p>
+                </Link>
+              ) : (
+                <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4 opacity-80">
+                  <p className="text-xs font-bold uppercase tracking-wide text-eid-text-secondary">Desafio de ranking</p>
+                  <p className="mt-2 text-sm font-semibold text-eid-text-secondary">Bloqueado por carência</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
+                    Este confronto volta a liberar em{" "}
+                    <span className="font-semibold text-eid-fg">{new Date(rankingBlockedUntil).toLocaleDateString("pt-BR")}</span>.
+                  </p>
+                </div>
+              )}
 
               {amistosoPermitido ? (
                 <Link
@@ -236,7 +283,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     }
 
     const rankPrevInd =
-      finalidadeEscolhida === "ranking"
+      finalidadeEscolhida === "ranking" && !rankingBlockedUntil
         ? await fetchIndividualRankingPreview(supabase, {
             viewerId: user.id,
             opponentId: perfil.id,
@@ -259,6 +306,11 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
               Este pedido <span className="font-semibold text-emerald-200">não soma pontos</span> e não usa agenda de ranking. O WhatsApp será liberado após aceite, para vocês combinarem. Para confronto que valha ranking, agenda e resultado, volte ao perfil e escolha{" "}
               <span className="font-semibold text-eid-fg">desafio de ranking</span>.
             </div>
+          ) : rankingBlockedUntil ? (
+            <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+              Carência ativa para desafio de ranking neste esporte até{" "}
+              <span className="font-semibold text-eid-fg">{new Date(rankingBlockedUntil).toLocaleDateString("pt-BR")}</span>.
+            </div>
           ) : (
             <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
               Desafio de ranking: após aceito, use a <span className="font-semibold text-eid-fg">agenda</span> e o lançamento de resultado para atualizar o ranking.
@@ -275,12 +327,14 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
               individual={rankPrevInd.perspective}
             />
           ) : null}
-          <DesafioEnviarForm
-            modalidade="individual"
-            esporteId={esporteId}
-            alvoUsuarioId={perfil.id}
-            finalidade={finalidadeEscolhida}
-          />
+          {!rankingBlockedUntil || finalidadeEscolhida !== "ranking" ? (
+            <DesafioEnviarForm
+              modalidade="individual"
+              esporteId={esporteId}
+              alvoUsuarioId={perfil.id}
+              finalidade={finalidadeEscolhida}
+            />
+          ) : null}
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
               href={withDesafioEmbed(

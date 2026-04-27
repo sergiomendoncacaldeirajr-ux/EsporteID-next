@@ -5,7 +5,6 @@ import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-loca
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import { MatchScoreForm } from "@/components/placar/match-score-form";
 import { StatusSubmitButton } from "@/components/placar/status-submit-button";
-import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 import { type MatchScorePayload } from "@/lib/match-scoring";
@@ -481,10 +480,11 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               <form action={confirmarPlacarAction}>
                 <input type="hidden" name="partida_id" value={id} />
-                <button type="submit" className={DESAFIO_FLOW_CTA_BLOCK_CLASS}>
-                  <DesafioFlowCtaIcon />
-                  <span>{resultadoContestado ? "Aceitar resultado contestado" : "Confirmar resultado"}</span>
-                </button>
+                <StatusSubmitButton
+                  idleLabel={resultadoContestado ? "Aceitar resultado contestado" : "Confirmar resultado"}
+                  pendingLabel="Salvando..."
+                  className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} disabled:opacity-60`}
+                />
               </form>
               {!resultadoContestado ? (
                 <form action={contestarPlacarAction}>

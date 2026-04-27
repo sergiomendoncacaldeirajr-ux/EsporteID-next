@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
+import { getMatchRankMonthlyLimitPerSport } from "@/lib/app-config/match-rank-monthly-limit";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
@@ -39,6 +41,55 @@ async function countRankingPendencias(
     .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
     .or(`usuario_id.eq.${userId},adversario_id.eq.${userId}`);
   return Number(count ?? 0);
+}
+
+async function countRankingConfrontosNoMesPorEsporte(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  esporteId: number,
+  modalidade: "individual" | "dupla" | "time"
+): Promise<number> {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0).toISOString();
+  const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0).toISOString();
+
+  const { data } = await supabase
+    .from("partidas")
+    .select("id, modalidade, status, status_ranking, data_resultado, data_registro, data_partida")
+    .eq("esporte_id", esporteId)
+    .is("torneio_id", null)
+    .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId},desafiante_id.eq.${userId},desafiado_id.eq.${userId}`)
+    .order("id", { ascending: false })
+    .limit(240);
+
+  let count = 0;
+  for (const p of data ?? []) {
+    const mod = norm((p as { modalidade?: string | null }).modalidade);
+    const partidaModalidade: "individual" | "dupla" | "time" =
+      mod === "dupla" ? "dupla" : mod === "time" ? "time" : "individual";
+    if (partidaModalidade !== modalidade) continue;
+    const status = norm((p as { status?: string | null }).status);
+    const ranking = norm((p as { status_ranking?: string | null }).status_ranking);
+    const valido =
+      ranking === "validado" ||
+      ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
+    if (!valido) continue;
+    const dtRaw =
+      (p as { data_resultado?: string | null }).data_resultado ??
+      (p as { data_partida?: string | null }).data_partida ??
+      (p as { data_registro?: string | null }).data_registro ??
+      null;
+    if (!dtRaw) continue;
+    const ts = new Date(dtRaw).toISOString();
+    if (ts >= monthStart && ts < nextMonthStart) count += 1;
+  }
+  return count;
+}
+
+function norm(v: string | null | undefined): string {
+  return String(v ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 export async function solicitarDesafioMatch(
@@ -101,6 +152,7 @@ export async function solicitarDesafioMatch(
 
   if (p_finalidade === "ranking") {
     const limite = await getRankPendingLimit(supabase);
+    const limiteMensalPorEsporte = await getMatchRankMonthlyLimitPerSport(supabase);
     let alvoOwnerId: string | null = p_alvo_usuario_id;
     if (!alvoOwnerId && Number.isFinite(p_alvo_time_id ?? NaN) && Number(p_alvo_time_id) > 0) {
       const { data: timeRow } = await supabase
@@ -120,6 +172,88 @@ export async function solicitarDesafioMatch(
     }
     if (alvo >= limite) {
       return { ok: false, message: "O oponente atingiu o limite de pendências de desafio/ranking." };
+    }
+
+    const modalidadeLimit = mod === "individual" ? "individual" : mod === "dupla" ? "dupla" : "time";
+    const meusConfrontosNoMes = await countRankingConfrontosNoMesPorEsporte(
+      supabase,
+      user.id,
+      p_esporte_id,
+      modalidadeLimit
+    );
+    if (meusConfrontosNoMes >= limiteMensalPorEsporte) {
+      return {
+        ok: false,
+        message: `Você atingiu o limite mensal de ${limiteMensalPorEsporte} confrontos neste esporte para ${modalidadeLimit}. Tente novamente no próximo mês.`,
+      };
+    }
+    if (alvoOwnerId) {
+      const confrontosAlvoNoMes = await countRankingConfrontosNoMesPorEsporte(
+        supabase,
+        alvoOwnerId,
+        p_esporte_id,
+        modalidadeLimit
+      );
+      if (confrontosAlvoNoMes >= limiteMensalPorEsporte) {
+        return {
+          ok: false,
+          message: `O oponente atingiu o limite mensal de ${limiteMensalPorEsporte} confrontos neste esporte para ${modalidadeLimit}.`,
+        };
+      }
+    }
+
+    if (mod === "individual" && p_alvo_usuario_id) {
+      const cooldownMeses = await getMatchRankCooldownMeses(supabase);
+      const cutoff = new Date();
+      cutoff.setMonth(cutoff.getMonth() - cooldownMeses);
+      const cutoffIso = cutoff.toISOString();
+
+      const [{ data: concludedMatches }, { data: concludedPartidas }] = await Promise.all([
+        supabase
+          .from("matches")
+          .select("id")
+          .eq("esporte_id", p_esporte_id)
+          .eq("finalidade", "ranking")
+          .in("status", ["Concluido", "Concluído", "Finalizado", "Encerrado"])
+          .or(
+            `and(usuario_id.eq.${user.id},adversario_id.eq.${p_alvo_usuario_id}),and(usuario_id.eq.${p_alvo_usuario_id},adversario_id.eq.${user.id})`
+          )
+          .gte("data_confirmacao", cutoffIso)
+          .limit(1),
+        supabase
+          .from("partidas")
+          .select("id, modalidade, status, status_ranking, data_resultado, data_registro, data_partida")
+          .eq("esporte_id", p_esporte_id)
+          .is("torneio_id", null)
+          .or(
+            `and(jogador1_id.eq.${user.id},jogador2_id.eq.${p_alvo_usuario_id}),and(jogador1_id.eq.${p_alvo_usuario_id},jogador2_id.eq.${user.id})`
+          )
+          .order("id", { ascending: false })
+          .limit(40),
+      ]);
+
+      const hasRecentPartidaValida = (concludedPartidas ?? []).some((p) => {
+        const statusOk = ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(
+          norm((p as { status?: string | null }).status)
+        );
+        const rankingValidado = norm((p as { status_ranking?: string | null }).status_ranking) === "validado";
+        if (!statusOk && !rankingValidado) return false;
+        const dtRaw =
+          (p as { data_resultado?: string | null }).data_resultado ??
+          (p as { data_partida?: string | null }).data_partida ??
+          (p as { data_registro?: string | null }).data_registro ??
+          null;
+        if (!dtRaw) return false;
+        const ts = new Date(dtRaw).getTime();
+        return Number.isFinite(ts) && ts >= cutoff.getTime();
+      });
+
+      if ((concludedMatches?.length ?? 0) > 0 || hasRecentPartidaValida) {
+        return {
+          ok: false,
+          message: `Neste esporte, só é possível um novo desafio de ranking com este oponente após ${cooldownMeses} meses do último confronto válido.`,
+        };
+      }
     }
   }
 
