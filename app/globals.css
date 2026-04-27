@@ -1387,6 +1387,24 @@ input.eid-input-dark[type="datetime-local"] {
   min-height: 2.1rem;
 }
 
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"] {
+  color: var(--eid-fg) !important;
+  -webkit-text-fill-color: var(--eid-fg) !important;
+}
+
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]::-webkit-datetime-edit,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]::-webkit-datetime-edit-text,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]::-webkit-datetime-edit-month-field,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]::-webkit-datetime-edit-day-field,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]::-webkit-datetime-edit-year-field,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]::-webkit-datetime-edit-hour-field,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]::-webkit-datetime-edit-minute-field {
+  color: var(--eid-fg) !important;
+  -webkit-text-fill-color: var(--eid-fg) !important;
+  opacity: 1 !important;
+}
+
 /* Foco em grupos de input (auth) */
 .eid-focus-ring:focus-within {
   border-color: var(--eid-focus-ring) !important;

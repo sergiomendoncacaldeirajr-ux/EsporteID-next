@@ -87,8 +87,12 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
   revalidatePath("/locais");
   revalidatePath("/dashboard");
   if (returnTo !== "/locais/cadastrar") {
+    const qp = new URLSearchParams();
+    qp.set("novo_local_id", String(data.id));
+    qp.set("novo_local_nome", nome);
+    qp.set("novo_local_localizacao", localizacao);
     const sep = returnTo.includes("?") ? "&" : "?";
-    redirect(`${returnTo}${sep}novo_local_id=${data.id}`);
+    redirect(`${returnTo}${sep}${qp.toString()}`);
   }
   redirect(`/local/${data.id}?from=/locais/cadastrar`);
 }

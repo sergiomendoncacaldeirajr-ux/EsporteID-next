@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useActionState } from "react";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
@@ -49,12 +49,33 @@ function formatStatusLabel(status: string): string {
 export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, initial);
   const [openRefuseByMatch, setOpenRefuseByMatch] = useState<Record<number, boolean>>({});
+  const [localPrefillByMatch, setLocalPrefillByMatch] = useState<Record<number, string>>({});
   const err = !state.ok ? state.message : null;
   const okMsg = state.ok ? state.message : null;
   const hasSpecialStatuses = useMemo(
     () => items.some((x) => x.status !== "Aceito"),
     [items]
   );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const matchId = Number(params.get("reag_match") ?? "0");
+    const localNome = String(params.get("novo_local_nome") ?? "").trim();
+    const localizacao = String(params.get("novo_local_localizacao") ?? "").trim();
+    if (!Number.isFinite(matchId) || matchId < 1) return;
+    if (!localNome && !localizacao) return;
+    const prefill = localizacao ? `${localNome} — ${localizacao}` : localNome;
+    setOpenRefuseByMatch((prev) => ({ ...prev, [matchId]: true }));
+    setLocalPrefillByMatch((prev) => ({ ...prev, [matchId]: prefill }));
+    params.delete("novo_local_id");
+    params.delete("novo_local_nome");
+    params.delete("novo_local_localizacao");
+    params.delete("reag_match");
+    const nextQs = params.toString();
+    const nextUrl = `${window.location.pathname}${nextQs ? `?${nextQs}` : ""}${window.location.hash}`;
+    window.history.replaceState(null, "", nextUrl);
+  }, []);
 
   if (items.length === 0) return null;
 
@@ -153,31 +174,32 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                         name="opcao_1"
                         type="datetime-local"
                         required
-                        className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
+                        className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
                       <input
                         name="opcao_2"
                         type="datetime-local"
                         required
-                        className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
+                        className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
                       <input
                         name="opcao_3"
                         type="datetime-local"
                         required
-                        className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
+                        className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
                       <LocalAutocompleteInput
                         name="local_reagendamento"
                         placeholder="Local sugerido (opcional)"
+                        defaultValue={localPrefillByMatch[m.id] ?? ""}
                         minChars={3}
                         className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                       />
                       <CadastrarLocalOverlayTrigger
-                        href="/locais/cadastrar?return_to=/agenda"
+                        href={`/locais/cadastrar?return_to=${encodeURIComponent(`/agenda?reag_match=${m.id}`)}`}
                         className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full text-center !min-h-[28px] !px-2 !text-[8px]`}
                       >
                         + Cadastrar local genérico

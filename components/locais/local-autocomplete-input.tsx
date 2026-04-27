@@ -35,6 +35,10 @@ export function LocalAutocompleteInput({
   const canSearch = useMemo(() => value.trim().length >= minChars, [value, minChars]);
 
   useEffect(() => {
+    setValue(defaultValue);
+  }, [defaultValue]);
+
+  useEffect(() => {
     function onDocClick(event: MouseEvent) {
       if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
     }

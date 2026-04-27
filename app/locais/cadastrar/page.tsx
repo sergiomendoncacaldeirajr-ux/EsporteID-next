@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { NomeLocalInputSuggestions } from "@/components/locais/nome-local-input-suggestions";
+import { LocalSubmitButton } from "@/components/locais/local-submit-button";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { usuarioJaGerenciaEspaco } from "@/lib/espacos/server";
 import { resolveBackHref } from "@/lib/perfil/back-href";
@@ -146,13 +147,7 @@ export default async function CadastrarLocalPage({
               />
               <p className="mt-1 text-[11px] text-eid-text-secondary">PNG, JPG ou WEBP até 5MB.</p>
             </div>
-            <button
-              type="submit"
-              className="eid-btn-primary w-full rounded-xl font-extrabold"
-              style={{ minHeight: "44px", fontSize: "12px", letterSpacing: "0.02em" }}
-            >
-              Cadastrar sugestão
-            </button>
+            <LocalSubmitButton />
           </form>
 
           <p className="mt-4 text-[11px] leading-relaxed text-eid-text-secondary">
