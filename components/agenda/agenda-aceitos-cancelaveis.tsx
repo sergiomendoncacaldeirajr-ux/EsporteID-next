@@ -160,77 +160,84 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
 
   return (
     <section className="mt-6 md:mt-10">
-      <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Desafios aceitos</h2>
-      <p className="mt-1 text-xs text-eid-text-secondary">
+      <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+      <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+        <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Desafios aceitos</h2>
+        <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+          Gestão
+        </span>
+      </div>
+      <p className="px-3 pt-2 text-[11px] text-eid-text-secondary md:text-xs">
         {hasSpecialStatuses
           ? "Cancelamento com confirmação e reagendamento: responda dentro dos prazos para evitar cancelamento automático."
           : "Acompanhe o status dos desafios aceitos abaixo."}
       </p>
-      <div className="mt-3 space-y-2">
+      <div className="m-2.5 space-y-1.5 md:m-3 md:space-y-2">
         {okMsg ? (
-          <p className="rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2 text-xs text-eid-fg">{okMsg}</p>
+          <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-center text-[11px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#10b981_45%)] md:text-xs">
+            {okMsg}
+          </p>
         ) : null}
         {err ? (
-          <p className="rounded-lg border border-red-500/35 bg-red-500/12 px-3 py-2 text-xs text-[color:color-mix(in_srgb,var(--eid-danger-500)_78%,var(--eid-fg)_22%)]">
+          <p className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-center text-[11px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f43f5e_45%)] md:text-xs">
             {err}
           </p>
         ) : null}
         {items.map((m) => (
           <article
             key={m.id}
-            className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-3"
+            className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 py-2.5 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.18)] backdrop-blur-sm md:px-3 md:py-3"
           >
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               {m.avatarOponente ? (
                 <img
                   src={m.avatarOponente}
                   alt=""
-                  className="h-10 w-10 rounded-full border border-[color:var(--eid-border-subtle)] object-cover"
+                  className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
                 />
               ) : (
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-xs font-black text-eid-primary-300">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 md:h-10 md:w-10 md:text-xs">
                   {m.nomeOponente.trim().slice(0, 1).toUpperCase() || "O"}
                 </span>
               )}
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-eid-fg">{m.nomeOponente}</p>
-                <p className="text-xs text-eid-text-secondary">
+                <p className="truncate text-[13px] font-bold text-eid-fg md:text-sm">{m.nomeOponente}</p>
+                <p className="text-[11px] text-eid-text-secondary md:text-xs">
                   {m.esporte} · {m.modalidade}
                 </p>
               </div>
-              <span className="ml-auto rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+              <span className="ml-auto max-w-[48%] truncate rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-left text-[8px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] md:max-w-none md:text-[9px]">
                 {formatStatusLabel(m.statusLabel ?? m.status)}
               </span>
             </div>
-            <div className="mt-2 min-w-0">
+            <div className="mt-1.5 min-w-0 md:mt-2">
               {m.status === "CancelamentoPendente" ? (
-                <p className="mt-1 text-[11px] text-[color:color-mix(in_srgb,var(--eid-warning-500)_78%,var(--eid-fg)_22%)]">
+                <p className="mt-1 text-[10px] text-[color:color-mix(in_srgb,var(--eid-warning-500)_78%,var(--eid-fg)_22%)] md:text-[11px]">
                   Aguardando resposta ao cancelamento até: <span className="font-semibold">{when(m.cancelResponseDeadlineAt)}</span>
                 </p>
               ) : null}
               {m.status === "ReagendamentoPendente" ? (
-                <p className="mt-1 text-[11px] text-[color:color-mix(in_srgb,var(--eid-warning-500)_78%,var(--eid-fg)_22%)]">
+                <p className="mt-1 text-[10px] text-[color:color-mix(in_srgb,var(--eid-warning-500)_78%,var(--eid-fg)_22%)] md:text-[11px]">
                   Janela de escolha até: <span className="font-semibold">{when(m.rescheduleDeadlineAt)}</span>
                 </p>
               ) : null}
             </div>
-            <div className="mt-2 flex w-full flex-col gap-2 sm:w-auto">
+            <div className="mt-1.5 flex w-full flex-col gap-1.5 sm:w-auto md:mt-2 md:gap-2">
 
               {m.status === "CancelamentoPendente" && !m.isRequester ? (
                 <>
-                  <p className="text-[10px] font-semibold text-eid-text-secondary">
+                  <p className="text-[9px] font-semibold text-eid-text-secondary md:text-[10px]">
                     <span className="text-eid-fg">{m.nomeOponente}</span> solicitou cancelar este desafio. Você aceita?
                   </p>
                   <div className="grid grid-cols-2 items-stretch gap-2">
-                    <form action={formAction} className="flex">
+                    <form action={formAction} className="flex min-w-0">
                       <input type="hidden" name="intent" value="respond_cancel" />
                       <input type="hidden" name="match_id" value={String(m.id)} />
                       <input type="hidden" name="aceitar_cancelamento" value="1" />
                       <button
                         type="submit"
                         disabled={pending}
-                        className="inline-flex h-5 w-full appearance-none items-center justify-center whitespace-nowrap rounded-md border border-emerald-700 bg-emerald-600 px-1 py-0 align-middle text-[6px] font-black uppercase leading-none tracking-[0.01em] text-white transition hover:bg-emerald-700 disabled:opacity-50"
-                        style={{ height: "22px", minHeight: "22px", fontSize: "9px", padding: "0 6px", lineHeight: "1" }}
+                        className="inline-flex min-h-[34px] w-full items-center justify-center rounded-xl border border-emerald-600 bg-emerald-600 px-2 text-[9px] font-black uppercase tracking-wide text-white shadow-[0_4px_14px_-4px_rgba(16,185,129,0.35)] transition hover:bg-emerald-700 disabled:opacity-50 md:text-[10px]"
                       >
                         Aceitar
                       </button>
@@ -245,15 +252,17 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                           return { ...s, [m.id]: nextOpen };
                         });
                       }}
-                      className="inline-flex h-5 w-full appearance-none items-center justify-center whitespace-nowrap rounded-md border border-rose-700 bg-rose-600 px-1 py-0 align-middle text-[6px] font-black uppercase leading-none tracking-[0.01em] text-white transition hover:bg-rose-700 disabled:opacity-50"
-                      style={{ height: "22px", minHeight: "22px", fontSize: "9px", padding: "0 6px", lineHeight: "1" }}
+                      className="inline-flex min-h-[34px] w-full items-center justify-center rounded-xl border border-rose-600 bg-rose-600 px-2 text-[9px] font-black uppercase tracking-wide text-white shadow-[0_4px_14px_-4px_rgba(244,63,94,0.35)] transition hover:bg-rose-700 disabled:opacity-50 md:text-[10px]"
                     >
                       Não aceitar
                     </button>
                   </div>
 
                   {openRefuseByMatch[m.id] ? (
-                    <form action={formAction} className="grid gap-2 rounded-xl border border-amber-500/25 bg-amber-500/5 p-2.5">
+                    <form
+                      action={formAction}
+                      className="grid gap-1.5 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_35%,var(--eid-border-subtle)_65%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)_92%)] p-2 md:gap-2 md:p-2.5"
+                    >
                       <input type="hidden" name="intent" value="respond_cancel" />
                       <input type="hidden" name="match_id" value={String(m.id)} />
                       <input type="hidden" name="aceitar_cancelamento" value="0" />
@@ -299,14 +308,14 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                       />
                       <CadastrarLocalOverlayTrigger
                         href={`/locais/cadastrar?return_to=${encodeURIComponent(`/agenda?reag_match=${m.id}`)}`}
-                        className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full text-center !min-h-[28px] !px-2 !text-[8px]`}
+                        className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full rounded-xl text-center !min-h-[32px] !px-2 !text-[9px]`}
                       >
                         + Cadastrar local genérico
                       </CadastrarLocalOverlayTrigger>
                       <button
                         type="submit"
                         disabled={pending}
-                        className={`${DESAFIO_FLOW_SECONDARY_CLASS} !min-h-[28px] !px-2 !text-[8px] border-eid-primary-500/35 bg-eid-primary-500/12 text-eid-primary-200 disabled:opacity-50`}
+                        className="inline-flex min-h-[34px] w-full items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/15 px-3 text-[9px] font-black uppercase tracking-wide text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] shadow-[0_4px_14px_-6px_rgba(37,99,235,0.25)] transition hover:bg-eid-primary-500/22 disabled:opacity-50 md:text-[10px]"
                       >
                         Enviar 3 opções (janela 72h)
                       </button>
@@ -320,7 +329,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                     <button
                       type="submit"
                       disabled={pending}
-                      className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full border-red-700 bg-red-700/20 text-red-100 hover:bg-red-700/30 disabled:opacity-50`}
+                      className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full rounded-xl !min-h-[34px] border border-red-500/35 bg-red-500/12 text-[color:color-mix(in_srgb,var(--eid-fg)_62%,#f43f5e_38%)] hover:bg-red-500/18 disabled:opacity-50`}
                     >
                       <span aria-hidden>🚩</span>
                       <span>Denunciar tentativa indevida</span>
@@ -330,7 +339,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
               ) : null}
 
               {m.status === "CancelamentoPendente" && m.isRequester ? (
-                <p className="text-xs text-eid-text-secondary">Você solicitou o cancelamento. Aguardando resposta do oponente.</p>
+                <p className="text-[11px] text-eid-text-secondary md:text-xs">Você solicitou o cancelamento. Aguardando resposta do oponente.</p>
               ) : null}
 
               {m.status === "ReagendamentoPendente" && m.isRequester ? (
@@ -338,14 +347,14 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                   {m.options.map((op) => (
                     <div
                       key={`${m.id}-${op.optionIdx}`}
-                      className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/70 p-2.5"
+                    className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-2 md:p-2.5"
                     >
-                      <p className="text-xs font-semibold text-eid-fg">
+                      <p className="text-[11px] font-semibold text-eid-fg md:text-xs">
                         Opção {op.optionIdx}: {when(op.scheduledFor)}
                       </p>
-                      {op.location ? <p className="text-[11px] text-eid-text-secondary">Local: {op.location}</p> : null}
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <form action={formAction}>
+                      {op.location ? <p className="text-[10px] text-eid-text-secondary md:text-[11px]">Local: {op.location}</p> : null}
+                      <div className="mt-1.5 flex flex-wrap gap-1.5 md:mt-2 md:gap-2">
+                        <form action={formAction} className="min-w-0 flex-1 sm:flex-none">
                           <input type="hidden" name="intent" value="respond_option" />
                           <input type="hidden" name="match_id" value={String(m.id)} />
                           <input type="hidden" name="option_idx" value={String(op.optionIdx)} />
@@ -353,12 +362,12 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                           <button
                             type="submit"
                             disabled={pending || op.status !== "pendente"}
-                            className={`${DESAFIO_FLOW_SECONDARY_CLASS} border-emerald-500/35 bg-emerald-500/12 text-emerald-200 disabled:opacity-50`}
+                            className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full min-h-[32px] rounded-xl border-emerald-500/40 bg-emerald-500/15 text-[color:color-mix(in_srgb,var(--eid-fg)_60%,#10b981_40%)] hover:bg-emerald-500/22 disabled:opacity-50 sm:w-auto sm:min-w-[7rem]`}
                           >
                             Aceitar
                           </button>
                         </form>
-                        <form action={formAction}>
+                        <form action={formAction} className="min-w-0 flex-1 sm:flex-none">
                           <input type="hidden" name="intent" value="respond_option" />
                           <input type="hidden" name="match_id" value={String(m.id)} />
                           <input type="hidden" name="option_idx" value={String(op.optionIdx)} />
@@ -366,7 +375,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                           <button
                             type="submit"
                             disabled={pending || op.status !== "pendente"}
-                            className={`${DESAFIO_FLOW_SECONDARY_CLASS} border-red-500/35 bg-red-500/10 text-red-200 disabled:opacity-50`}
+                            className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full min-h-[32px] rounded-xl border-red-500/35 bg-red-500/12 text-[color:color-mix(in_srgb,var(--eid-fg)_60%,#f43f5e_40%)] hover:bg-red-500/18 disabled:opacity-50 sm:w-auto sm:min-w-[7rem]`}
                           >
                             Recusar
                           </button>
@@ -378,13 +387,14 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
               ) : null}
 
               {m.status === "ReagendamentoPendente" && !m.isRequester ? (
-                <p className="text-xs text-eid-text-secondary">
+                <p className="text-[11px] text-eid-text-secondary md:text-xs">
                   Você recusou o cancelamento e sugeriu horários. Aguardando escolha do oponente.
                 </p>
               ) : null}
             </div>
           </article>
         ))}
+      </div>
       </div>
     </section>
   );

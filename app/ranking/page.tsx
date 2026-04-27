@@ -9,6 +9,7 @@ import {
   ViewerRankCard,
   type PodiumSlot,
 } from "@/components/ranking/ranking-compact";
+import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { parseRankingSearch, rankingHref, type RankingSearchState } from "@/lib/ranking/ranking-href";
 import { isSportRankingEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
@@ -302,71 +303,105 @@ export default async function RankingPage({ searchParams }: Props) {
   const podiumThird = toPodiumSlot(podiumRows[2], "3º");
 
   const noCatalogHint = todosEsportes.length === 0;
+  const esporteNomeAtual =
+    selectedEsporteId != null ? todosEsportes.find((e) => e.id === selectedEsporteId)?.nome ?? null : null;
+  const rankBadgeLabel = state.rank === "eid" ? "EID" : "Desafio";
+  const periodoBadgeLabel = state.periodo === "mes" ? "Mês" : "Ano";
 
   return (
-    <div className="relative z-0 flex w-full min-w-0 flex-col">
+    <div className="relative z-0 flex w-full min-w-0 flex-col" data-eid-ranking-page>
       <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg" aria-hidden />
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-56 max-h-[28rem] bg-[radial-gradient(ellipse_95%_65%_at_50%_-5%,rgba(37,99,235,0.14),transparent_58%)] sm:h-72"
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-48 max-h-[24rem] bg-[radial-gradient(ellipse_95%_60%_at_50%_-8%,rgba(37,99,235,0.11),transparent_55%)] sm:h-64"
         aria-hidden
       />
-      <div className="relative z-[1] mx-auto flex w-full min-w-0 max-w-2xl flex-col px-4 pb-3 pt-1.5 sm:px-5">
-        <header className="mb-1.5">
-          <div className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)_86%)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-primary-500)_72%,var(--eid-fg)_28%)]">
-            <span
-              className="h-1.5 w-1.5 rounded-full bg-[color:color-mix(in_srgb,var(--eid-primary-500)_78%,white_22%)] shadow-[0_0_10px_color-mix(in_srgb,var(--eid-primary-500)_52%,transparent)]"
-              aria-hidden
-            />
-            Painel competitivo
-          </div>
-          <h1 className="mt-1 text-[1.45rem] font-black tracking-[0.01em] text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-primary-500)_78%,var(--eid-fg)_22%))] bg-clip-text drop-shadow-[0_1px_6px_color-mix(in_srgb,var(--eid-primary-500)_34%,transparent)] sm:text-[1.7rem]">
-            Ranking
-          </h1>
-        </header>
+      <main className="relative z-[1] mx-auto flex w-full min-w-0 max-w-lg flex-col px-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] pt-0 sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]">
+        <div className={`eid-ranking-hero mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-eid-action-400">Painel competitivo</p>
+          <h1 className="mt-1 text-base font-black leading-tight text-eid-fg sm:text-lg">Ranking EID</h1>
+          <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary sm:text-[11px]">
+            Posições por esporte, modalidade e período. Compare desafios (pontos) ou nota EID.
+          </p>
+        </div>
 
-        <RankingFilterBar
-          state={state}
-          principalEsporteId={esportePrincipalId}
-          selectedEsporteId={selectedEsporteId}
-          cidadeDisplay={cidadeDisplay}
-          needsCidadeFallback={needsCidadeFallback}
-          todosEsportes={todosEsportes}
-        />
+        <section className="mt-4 md:mt-6">
+          <div className="eid-ranking-card overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+            <div className="eid-ranking-card-head flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+              <h2 className="eid-ranking-section-title text-[10px] font-black uppercase tracking-[0.16em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]">
+                Filtros
+              </h2>
+              <span className="eid-ranking-badge rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
+                Busca
+              </span>
+            </div>
+            <div className="p-2.5 sm:p-3">
+              <RankingFilterBar
+                state={state}
+                principalEsporteId={esportePrincipalId}
+                selectedEsporteId={selectedEsporteId}
+                cidadeDisplay={cidadeDisplay}
+                needsCidadeFallback={needsCidadeFallback}
+                todosEsportes={todosEsportes}
+              />
+            </div>
+          </div>
+        </section>
 
         {noCatalogHint ? (
-          <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-5 text-center text-sm leading-relaxed text-eid-text-secondary backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
+          <p className="eid-ranking-empty mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-5 text-center text-sm leading-relaxed text-eid-text-secondary shadow-[0_10px_22px_-16px_rgba(15,23,42,0.2)]">
             Nenhum esporte disponível no momento.
           </p>
         ) : (
           <>
             {state.page === 1 ? (
-              <RankingPodium
-                second={podiumSecond}
-                first={podiumFirst}
-                third={podiumThird}
-                rankKind={state.rank}
-                rankToggle={<RankingRankToggle state={state} principalEsporteId={esportePrincipalId} />}
-                periodToggle={<RankingPeriodToggle state={state} principalEsporteId={esportePrincipalId} />}
-              />
+              <section className="mt-4 md:mt-6">
+                <RankingPodium
+                  second={podiumSecond}
+                  first={podiumFirst}
+                  third={podiumThird}
+                  rankKind={state.rank}
+                  rankToggle={<RankingRankToggle state={state} principalEsporteId={esportePrincipalId} />}
+                  periodToggle={<RankingPeriodToggle state={state} principalEsporteId={esportePrincipalId} />}
+                />
+              </section>
             ) : null}
 
-            {showViewerCard && viewerRank !== null ? <ViewerRankCard rank={viewerRank} /> : null}
+            {showViewerCard && viewerRank !== null ? (
+              <div className="mt-3 md:mt-4">
+                <ViewerRankCard rank={viewerRank} />
+              </div>
+            ) : null}
 
             {rankingAll.length === 0 ? (
-              <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-6 text-center text-sm text-eid-text-secondary backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)]">
+              <p className="eid-ranking-empty mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-6 text-center text-sm text-eid-text-secondary shadow-[0_10px_22px_-16px_rgba(15,23,42,0.2)]">
                 Nenhum resultado para estes filtros.
               </p>
             ) : null}
 
             {rankingAll.length > 0 ? (
               <>
-                <section className="relative z-[1] mt-2">
-                  <h2 className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Classificação geral</h2>
-                  <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 backdrop-blur-sm shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] sm:px-3">
+                <section className="relative z-[1] mt-4 md:mt-6">
+                  <div className="eid-ranking-card overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+                    <div className="eid-ranking-card-head flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                      <h2 className="eid-ranking-section-title text-[10px] font-black uppercase tracking-[0.16em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]">
+                        Classificação
+                      </h2>
+                      <div className="flex flex-wrap items-center justify-end gap-1.5">
+                        {esporteNomeAtual ? (
+                          <span className="eid-ranking-badge-action rounded-full border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-action-500)_38%)]">
+                            {esporteNomeAtual}
+                          </span>
+                        ) : null}
+                        <span className="eid-ranking-badge rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
+                          {rankBadgeLabel} · {periodoBadgeLabel}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="eid-ranking-list-inner px-2.5 sm:px-3">
                     {pageSlice.length === 0 ? (
                       <div className="flex flex-col items-center justify-center gap-1.5 py-5 text-center">
                         <span
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 text-eid-primary-300 shadow-[0_8px_16px_-12px_rgba(37,99,235,0.55)]"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] shadow-[0_8px_16px_-12px_rgba(37,99,235,0.55)]"
                           aria-hidden
                         >
                           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
@@ -392,14 +427,15 @@ export default async function RankingPage({ searchParams }: Props) {
                         );
                       })
                     )}
+                    </div>
                   </div>
                 </section>
 
                 {hasMore ? (
-                  <div className="mt-3 flex justify-center">
+                  <div className="mt-4 flex justify-center pb-1">
                     <Link
                       href={rankingHref({ page: state.page + 1 }, state, esportePrincipalId)}
-                      className="inline-flex min-h-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-5 text-xs font-medium text-eid-fg transition-all duration-200 ease-out motion-safe:transform-gpu hover:-translate-y-[1px] hover:border-[color:var(--eid-border)] hover:bg-eid-surface/85 active:translate-y-0 active:scale-[0.98]"
+                      className="eid-ranking-cta inline-flex min-h-10 items-center justify-center rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-6 text-[11px] font-black uppercase tracking-wide text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] shadow-[0_6px_18px_-12px_rgba(37,99,235,0.45)] transition-all duration-200 ease-out motion-safe:transform-gpu hover:-translate-y-px hover:bg-eid-primary-500/18 active:translate-y-0 active:scale-[0.98] md:text-xs"
                     >
                       Ver mais
                     </Link>
@@ -409,7 +445,7 @@ export default async function RankingPage({ searchParams }: Props) {
             ) : null}
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }

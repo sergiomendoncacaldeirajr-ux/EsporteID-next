@@ -69,7 +69,7 @@ function formatDeadline(iso: string | null | undefined) {
 }
 
 const cardBase =
-  "rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] backdrop-blur-sm transition md:p-4";
+  "rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2.5 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] backdrop-blur-sm transition md:p-4";
 
 export function PartidaAgendaCard({
   id,
@@ -119,11 +119,11 @@ export function PartidaAgendaCard({
   const ctaText = ctaLabel ?? (isPlacar ? "Revisar resultado" : "Agendar data e local");
   return (
     <article
-      className={
+      className={`relative ${
         isPlacar
           ? `${cardBase} border-[color:color-mix(in_srgb,var(--eid-action-500)_38%,var(--eid-border-subtle)_62%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-action-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_24px_-14px_color-mix(in_srgb,var(--eid-action-500)_28%,transparent)]`
           : cardBase
-      }
+      }`}
     >
       {cancelMatchId && !isPlacar && !desistMatchId ? (
         <>
@@ -138,18 +138,8 @@ export function PartidaAgendaCard({
               setShowCancelHint(false);
               setOpenCancel(true);
             }}
-          className="absolute left-1/2 top-3 z-[3] inline-flex items-center justify-center rounded-md border border-red-600 bg-red-600 text-white"
-            style={{
-            transform: `translateX(calc(-50% + ${topActionShiftXPx}px))`,
-              minHeight: "14px",
-              height: "14px",
-              padding: "0 7px",
-              fontSize: "9px",
-              lineHeight: "1",
-              letterSpacing: "0.02em",
-              fontWeight: 900,
-              textTransform: "uppercase",
-            }}
+            className="absolute left-1/2 top-2.5 z-[3] inline-flex min-h-[26px] items-center justify-center rounded-xl border border-red-600/90 bg-red-600 px-2.5 text-[9px] font-black uppercase tracking-[0.06em] text-white shadow-[0_4px_14px_-4px_rgba(220,38,38,0.45)] transition hover:bg-red-700 active:scale-[0.98]"
+            style={{ transform: `translateX(calc(-50% + ${topActionShiftXPx}px))` }}
           >
             Cancelar
           </button>
@@ -159,33 +149,25 @@ export function PartidaAgendaCard({
         <button
           type="button"
           onClick={() => setOpenDesist(true)}
-          className="absolute left-1/2 top-3 z-[3] inline-flex items-center justify-center rounded-md border border-amber-700 bg-amber-700 text-white"
-          style={{
-            transform: `translateX(calc(-50% + ${topActionShiftXPx}px))`,
-            minHeight: "14px",
-            height: "14px",
-            padding: "0 7px",
-            fontSize: "9px",
-            lineHeight: "1",
-            letterSpacing: "0.02em",
-            fontWeight: 900,
-            textTransform: "uppercase",
-          }}
+          className="absolute left-1/2 top-2.5 z-[3] inline-flex min-h-[26px] max-w-[min(100%,14rem)] items-center justify-center rounded-xl border border-amber-700/95 bg-amber-700 px-2 text-[8px] font-black uppercase leading-tight tracking-[0.05em] text-white shadow-[0_4px_14px_-4px_rgba(180,83,9,0.45)] transition hover:bg-amber-800 active:scale-[0.98] sm:text-[9px]"
+          style={{ transform: `translateX(calc(-50% + ${topActionShiftXPx}px))` }}
         >
           Cancelar e desistir
         </button>
       ) : null}
-      <div className="flex flex-wrap items-center gap-2 text-[9px] font-semibold uppercase tracking-wide text-eid-primary-400 md:text-[10px] md:font-black">
-        <span className="inline-flex items-center gap-1">
+      <div className="flex flex-wrap items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary md:text-[10px] md:font-black">
+        <span className="inline-flex items-center gap-1 text-eid-fg/90">
           <span aria-hidden>⏱</span>
           {formatWhen(dataRef)}
         </span>
-        <span className="ml-auto text-eid-primary-300">{esporteNome}</span>
+        <span className="ml-auto rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
+          {esporteNome}
+        </span>
       </div>
 
-      <div className="relative mt-3 flex items-start justify-between gap-2 md:mt-4">
-        <div className="min-w-0 flex-1 pt-5 text-center">
-          <p className="truncate text-sm font-bold tracking-tight text-eid-fg md:text-base md:font-black">{primeiroNome(j1Nome)}</p>
+      <div className="relative mt-2.5 flex items-start justify-between gap-2 md:mt-4">
+        <div className="min-w-0 flex-1 pt-4 text-center">
+          <p className="truncate text-sm font-black tracking-tight text-eid-fg md:text-base">{primeiroNome(j1Nome)}</p>
           <div className="mt-1 flex justify-center">
             {j1Id && esporteId ? (
               <div className="relative flex flex-col items-center">
@@ -194,7 +176,7 @@ export function PartidaAgendaCard({
                   title={`Estatísticas EID de ${primeiroNome(j1Nome)}`}
                   fullscreen
                   topMode="backOnly"
-                  className="relative block h-16 w-16 appearance-none overflow-hidden rounded-full border-0 bg-transparent p-0 shadow-none"
+                  className="relative block h-14 w-14 appearance-none overflow-hidden rounded-full border-0 bg-transparent p-0 shadow-none md:h-16 md:w-16"
                 >
                   {j1AvatarUrl ? (
                     <Image
@@ -217,21 +199,13 @@ export function PartidaAgendaCard({
             ) : null}
           </div>
         </div>
-        <div className="shrink-0 self-end pb-1 text-center">
-          <span className="block">
-            <svg viewBox="0 0 36 36" aria-hidden className="h-[22px] w-[22px]">
-              <text x="7" y="22" fontSize="14" fontWeight="900" fill="currentColor" className="text-eid-fg">
-                V
-              </text>
-              <text x="21" y="26" fontSize="14" fontWeight="900" fill="currentColor" className="text-eid-fg">
-                S
-              </text>
-              <path d="M22 3 16 16h4l-5 17 13-17h-4l5-13Z" fill="currentColor" className="text-eid-action-400" />
-            </svg>
+        <div className="shrink-0 self-end pb-0.5 text-center">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-eid-action-500/35 bg-eid-action-500/12 text-[9px] font-black uppercase tracking-[0.08em] text-eid-action-300 shadow-[0_6px_16px_-10px_rgba(249,115,22,0.6)] md:h-8 md:w-8 md:text-[10px]">
+            VS
           </span>
         </div>
-        <div className="min-w-0 flex-1 pt-5 text-center">
-          <p className="truncate text-sm font-bold tracking-tight text-eid-fg md:text-base md:font-black">{primeiroNome(j2Nome)}</p>
+        <div className="min-w-0 flex-1 pt-4 text-center">
+          <p className="truncate text-sm font-black tracking-tight text-eid-fg md:text-base">{primeiroNome(j2Nome)}</p>
           <div className="mt-1 flex justify-center">
             {j2Id && esporteId ? (
               <div className="relative flex flex-col items-center">
@@ -240,7 +214,7 @@ export function PartidaAgendaCard({
                   title={`Estatísticas EID de ${primeiroNome(j2Nome)}`}
                   fullscreen
                   topMode="backOnly"
-                  className="relative block h-16 w-16 appearance-none overflow-hidden rounded-full border-0 bg-transparent p-0 shadow-none"
+                  className="relative block h-14 w-14 appearance-none overflow-hidden rounded-full border-0 bg-transparent p-0 shadow-none md:h-16 md:w-16"
                 >
                   {j2AvatarUrl ? (
                     <Image
@@ -266,8 +240,8 @@ export function PartidaAgendaCard({
       </div>
 
       {localLabel ? (
-        <p className="mt-3 text-center text-[11px] text-eid-text-secondary">
-          📍 <span className="text-eid-fg/90">{localLabel}</span>
+        <p className="mt-2.5 text-center text-[10px] text-eid-text-secondary md:mt-3 md:text-[11px]">
+          📍 <span className="font-semibold text-eid-fg/90">{localLabel}</span>
         </p>
       ) : null}
 
@@ -278,51 +252,65 @@ export function PartidaAgendaCard({
       ) : null}
 
       {agendamentoPendente ? (
-        <div className="mt-3 overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_45%,var(--eid-border-subtle)_55%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-card)_86%)] p-0">
-          <div className="flex items-center justify-between gap-2 border-b border-[color:color-mix(in_srgb,var(--eid-primary-500)_35%,var(--eid-border-subtle)_65%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-surface)_90%)] px-3 py-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-primary-200">Agendamento pendente</p>
-            <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
-              Aceite
+        <div className="mt-3 overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_40%,var(--eid-border-subtle)_60%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)_88%)] p-0">
+          <div className="flex items-center justify-between gap-2 border-b border-[color:color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-border-subtle)_70%)] bg-eid-surface/45 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
+              Agendamento pendente
+            </p>
+            <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
+              Responder
             </span>
           </div>
-          <div className="p-3">
-          <p className="text-center text-[11px] font-semibold text-eid-primary-200">
-            {formatDeadline(agendamentoDeadline) ? ` (até ${formatDeadline(agendamentoDeadline)})` : ""}.
-          </p>
-          {agendamentoPodeResponder ? (
-            <div className="mt-2 flex items-center gap-2">
-              <form action={agendaAction} className="flex-1">
-                <input type="hidden" name="partida_id" value={String(id)} />
-                <input type="hidden" name="accept" value="1" />
-                <button
-                  type="submit"
-                  disabled={agendaPending}
-                  className="inline-flex min-h-[32px] w-full items-center justify-center rounded-lg border border-emerald-700 bg-emerald-700 px-3 text-[11px] font-black text-white"
-                >
-                  {agendaPending ? "Enviando..." : "Aceitar"}
-                </button>
-              </form>
-              <form action={agendaAction} className="flex-1">
-                <input type="hidden" name="partida_id" value={String(id)} />
-                <input type="hidden" name="accept" value="0" />
-                <button
-                  type="submit"
-                  disabled={agendaPending}
-                  className="inline-flex min-h-[32px] w-full items-center justify-center rounded-lg border border-rose-700 bg-rose-700 px-3 text-[11px] font-black text-white"
-                >
-                  {agendaPending ? "Enviando..." : "Recusar"}
-                </button>
-              </form>
-            </div>
-          ) : (
-            <p className="mt-2 text-center text-[11px] font-semibold text-eid-primary-300">
-              Aguardando resposta do oponente.
-            </p>
-          )}
-          {agendaState.ok ? <p className="mt-2 text-center text-[11px] text-emerald-300">{agendaState.message}</p> : null}
-          {!agendaState.ok && agendaState.message ? (
-            <p className="mt-2 text-center text-[11px] text-rose-300">{agendaState.message}</p>
-          ) : null}
+          <div className="p-2.5 md:p-3">
+            {agendamentoPodeResponder ? (
+              <>
+                <p className="text-center text-[11px] leading-snug text-eid-text-secondary">
+                  {formatDeadline(agendamentoDeadline)
+                    ? `Prazo para resposta: ${formatDeadline(agendamentoDeadline)}.`
+                    : "O oponente propôs data e horário. Aceite ou recuse."}
+                </p>
+                <div className="mt-2.5 flex items-stretch gap-2">
+                  <form action={agendaAction} className="min-w-0 flex-1">
+                    <input type="hidden" name="partida_id" value={String(id)} />
+                    <input type="hidden" name="accept" value="1" />
+                    <button
+                      type="submit"
+                      disabled={agendaPending}
+                      className="inline-flex min-h-[36px] w-full items-center justify-center rounded-xl border border-emerald-600 bg-emerald-600 px-2 text-[10px] font-black uppercase tracking-wide text-white shadow-[0_4px_14px_-4px_rgba(16,185,129,0.35)] transition hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {agendaPending ? "Enviando..." : "Aceitar"}
+                    </button>
+                  </form>
+                  <form action={agendaAction} className="min-w-0 flex-1">
+                    <input type="hidden" name="partida_id" value={String(id)} />
+                    <input type="hidden" name="accept" value="0" />
+                    <button
+                      type="submit"
+                      disabled={agendaPending}
+                      className="inline-flex min-h-[36px] w-full items-center justify-center rounded-xl border border-rose-600 bg-rose-600 px-2 text-[10px] font-black uppercase tracking-wide text-white shadow-[0_4px_14px_-4px_rgba(244,63,94,0.35)] transition hover:bg-rose-700 disabled:opacity-50"
+                    >
+                      {agendaPending ? "Enviando..." : "Recusar"}
+                    </button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <p className="text-center text-[11px] leading-snug text-eid-text-secondary">
+                {formatDeadline(agendamentoDeadline)
+                  ? `Proposta enviada. Aguardando o oponente até ${formatDeadline(agendamentoDeadline)}.`
+                  : "Proposta enviada. Aguardando resposta do oponente."}
+              </p>
+            )}
+            {agendaState.ok ? (
+              <p className="mt-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 py-1.5 text-center text-[10px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#10b981_45%)]">
+                {agendaState.message}
+              </p>
+            ) : null}
+            {!agendaState.ok && agendaState.message ? (
+              <p className="mt-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1.5 text-center text-[10px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f43f5e_45%)]">
+                {agendaState.message}
+              </p>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -334,7 +322,7 @@ export function PartidaAgendaCard({
             title={ctaText}
             fullscreen
             topMode="backOnly"
-            className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-3 w-full text-center text-[11px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs`}
+            className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-2.5 w-full text-center text-[10px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs`}
           >
             <>
               <DesafioFlowCtaIcon />
@@ -344,18 +332,20 @@ export function PartidaAgendaCard({
         ) : (
           <Link
             href={ctaHref}
-            className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-3 text-center text-[11px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs`}
+            className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-2.5 text-center text-[10px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs`}
           >
             <DesafioFlowCtaIcon />
             <span>{ctaText}</span>
           </Link>
         )
       ) : (
-        <p className="mt-3 text-center text-[11px] font-semibold text-eid-primary-300 md:mt-4 md:text-xs">
-          {agendamentoPendente
-            ? "Agendamento enviado. Aguardando aceite do oponente."
-            : "Data, horário e local já definidos pelo reagendamento aceito."}
-        </p>
+        <div className="mt-2.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2 text-center md:mt-4">
+          <p className="text-[10px] font-semibold leading-snug text-eid-text-secondary md:text-xs">
+            {agendamentoPendente
+              ? "Agendamento enviado. Aguardando aceite do oponente."
+              : "Data, horário e local já definidos pelo reagendamento aceito."}
+          </p>
+        </div>
       )}
 
       {openCancel && cancelMatchId && typeof document !== "undefined"
@@ -364,12 +354,14 @@ export function PartidaAgendaCard({
               <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-0 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
                 <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
                   <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Confirmação</p>
-                  <span className="rounded-full border border-red-400/35 bg-red-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-red-200">
+                  <span className="rounded-full border border-red-500/35 bg-red-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f87171_45%)]">
                     Cancelamento
                   </span>
                 </div>
                 <div className="p-4">
-                <p className="text-sm font-black uppercase tracking-[0.08em] text-eid-primary-300">Solicitar cancelamento</p>
+                <p className="text-sm font-black uppercase tracking-[0.08em] text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)]">
+                  Solicitar cancelamento
+                </p>
                 <p className="mt-2 text-sm text-eid-text-secondary">
                   Sem acordo de data/local? Envie a solicitação e o oponente terá prazo para responder.
                 </p>
@@ -386,7 +378,7 @@ export function PartidaAgendaCard({
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      className="inline-flex min-h-[32px] flex-1 items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-3 text-xs font-bold text-eid-fg"
+                      className="inline-flex min-h-[38px] flex-1 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 text-xs font-bold text-eid-fg transition hover:bg-eid-surface/75"
                       onClick={() => setOpenCancel(false)}
                     >
                       Voltar
@@ -394,7 +386,7 @@ export function PartidaAgendaCard({
                     <button
                       type="submit"
                       disabled={pending}
-                      className="inline-flex min-h-[32px] flex-1 items-center justify-center rounded-lg border border-red-700 bg-red-700 px-3 text-xs font-black text-white"
+                      className="inline-flex min-h-[38px] flex-1 items-center justify-center rounded-xl border border-red-600 bg-red-600 px-3 text-xs font-black text-white shadow-[0_4px_14px_-4px_rgba(220,38,38,0.35)] transition hover:bg-red-700 disabled:opacity-50"
                     >
                       {pending ? "Enviando..." : "Confirmar"}
                     </button>
@@ -412,12 +404,14 @@ export function PartidaAgendaCard({
               <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-0 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
                 <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
                   <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Confirmação</p>
-                  <span className="rounded-full border border-amber-400/40 bg-amber-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-amber-200">
+                  <span className="rounded-full border border-amber-500/35 bg-amber-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)]">
                     Desistência
                   </span>
                 </div>
                 <div className="p-4">
-                <p className="text-sm font-black uppercase tracking-[0.08em] text-amber-400">Solicitar desistência</p>
+                <p className="text-sm font-black uppercase tracking-[0.08em] text-[color:color-mix(in_srgb,var(--eid-fg)_60%,#f59e0b_40%)]">
+                  Solicitar desistência
+                </p>
                 <p className="mt-2 text-sm text-eid-text-secondary">
                   Tem certeza que quer cancelar este desafio e passar a vitória para o oponente?
                 </p>
@@ -429,7 +423,7 @@ export function PartidaAgendaCard({
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      className="inline-flex min-h-[32px] flex-1 items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-3 text-xs font-bold text-eid-fg"
+                      className="inline-flex min-h-[38px] flex-1 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 text-xs font-bold text-eid-fg transition hover:bg-eid-surface/75"
                       onClick={() => setOpenDesist(false)}
                     >
                       Voltar
@@ -437,7 +431,7 @@ export function PartidaAgendaCard({
                     <button
                       type="submit"
                       disabled={pending}
-                      className="inline-flex min-h-[32px] flex-1 items-center justify-center rounded-lg border border-amber-700 bg-amber-700 px-3 text-xs font-black text-white"
+                      className="inline-flex min-h-[38px] flex-1 items-center justify-center rounded-xl border border-amber-700 bg-amber-700 px-3 text-xs font-black text-white shadow-[0_4px_14px_-4px_rgba(180,83,9,0.35)] transition hover:bg-amber-800 disabled:opacity-50"
                     >
                       {pending ? "Enviando..." : "Confirmar"}
                     </button>

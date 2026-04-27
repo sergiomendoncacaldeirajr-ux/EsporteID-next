@@ -44,6 +44,7 @@ function needsSessionWork(path: string): boolean {
 function isEmbedEidStatsPath(path: string): boolean {
   return (
     /^\/perfil\/[^/]+\/eid\/\d+(\/historico)?\/?$/.test(path) ||
+    /^\/perfil\/[^/]+\/historico\/?$/.test(path) ||
     /^\/perfil-dupla\/[^/]+\/eid\/\d+\/?$/.test(path) ||
     /^\/perfil-time\/[^/]+\/eid\/\d+\/?$/.test(path)
   );

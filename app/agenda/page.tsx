@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ConexoesStrip, type ConexaoPeer } from "@/components/agenda/conexoes-strip";
 import { AgendaAceitosCancelaveis } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
+import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import {
   type AgendaPartidaCardRow,
   fetchPartidasAgendadasUsuario,
@@ -341,24 +342,38 @@ export default async function AgendaPage() {
       data-eid-touch-ui
       className="mx-auto w-full max-w-lg px-3 pt-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
+      <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}>
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-eid-action-400">Agenda</p>
+        <h1 className="mt-1 text-base font-black leading-tight text-eid-fg sm:text-lg">Seus confrontos e próximos passos</h1>
+        <p className="mt-1 text-[10px] text-eid-text-secondary">
+          Gerencie agendamentos, aceite/reagendamento e pedidos pendentes em um só lugar.
+        </p>
+      </div>
+
       <ConexoesStrip peers={conexoes} />
 
       <section className="mt-6 md:mt-10">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-500">Confrontos</h2>
-        <p className="mt-1 hidden text-xs text-eid-text-secondary md:block">
-          Ajuste <strong className="text-eid-fg">data e local</strong> aqui. Lançamento e confirmação de placar ficam no{" "}
-          <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
-            Painel de controle
-          </Link>
-          .
-        </p>
+        <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-500">Confrontos</h2>
+            <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+              Agenda
+            </span>
+          </div>
+          <p className="px-3 pt-2 text-[11px] text-eid-text-secondary md:text-xs">
+            Ajuste <strong className="text-eid-fg">data e local</strong> aqui. Lançamento e confirmação de placar ficam no{" "}
+            <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
+              Painel de controle
+            </Link>
+            .
+          </p>
         {partidasAgendadasVisiveis.length === 0 ? (
-          <div className="eid-list-item mt-4 rounded-[22px] border-2 border-dashed bg-eid-card/40 py-10 text-center">
+          <div className="eid-list-item m-3 rounded-[18px] border-2 border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/45 py-8 text-center shadow-[0_8px_18px_-14px_rgba(15,23,42,0.12)]">
             <p className="text-sm font-bold text-eid-fg">Nenhuma pendência</p>
-            <p className="mt-1 text-xs text-eid-text-secondary">Sua agenda está em dia. Combine um desafio no radar.</p>
+            <p className="mt-1 text-[11px] text-eid-text-secondary md:text-xs">Sua agenda está em dia. Combine um desafio no radar.</p>
           </div>
         ) : (
-          <div className="mt-4 space-y-4">
+          <div className="mt-3 space-y-4 px-2.5 pb-2.5">
             {partidasAgendadasVisiveis.map((row) => {
               const esp = firstOfRelation(row.esportes);
               const pr = row as AgendaPartidaCardRow;
@@ -412,27 +427,34 @@ export default async function AgendaPage() {
             })}
           </div>
         )}
+        </div>
       </section>
 
       <AgendaAceitosCancelaveis items={aceitosItems} />
 
       <section className="mt-6 md:mt-10">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Pedidos que você enviou</h2>
+        <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Pedidos que você enviou</h2>
+            <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+              Pendentes
+            </span>
+          </div>
         {(pendentesEnvio ?? []).length === 0 ? (
-          <p className="eid-list-item mt-3 rounded-2xl bg-eid-card/80 p-4 text-sm text-eid-text-secondary">
+          <p className="eid-list-item m-3 rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-4 text-center text-sm text-eid-text-secondary">
             Você não tem pedidos aguardando resposta.
           </p>
         ) : (
-          <ul className="mt-3 space-y-2">
+          <ul className="m-3 space-y-2">
             {(pendentesEnvio ?? []).map((m) => {
               const adv = m.adversario_id ? advMap.get(m.adversario_id) : null;
               const esp = m.esporte_id ? espMap.get(m.esporte_id) : null;
               return (
                 <li
                   key={m.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 py-3"
+                  className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-3 py-2.5 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.18)] backdrop-blur-sm md:gap-3 md:px-4 md:py-3"
                 >
-                  <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-2.5 md:gap-3">
                     {adv?.avatar_url ? (
                       <Image
                         src={adv.avatar_url}
@@ -440,21 +462,21 @@ export default async function AgendaPage() {
                         width={44}
                         height={44}
                         unoptimized
-                        className="h-11 w-11 shrink-0 rounded-xl object-cover"
+                        className="h-10 w-10 shrink-0 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover md:h-11 md:w-11"
                       />
                     ) : (
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300 md:h-11 md:w-11">
                         EID
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="truncate font-bold text-eid-fg">{adv?.nome ?? "Oponente"}</p>
-                      <p className="text-xs text-eid-text-secondary">
+                      <p className="truncate text-[13px] font-bold text-eid-fg md:text-sm">{adv?.nome ?? "Oponente"}</p>
+                      <p className="text-[11px] text-eid-text-secondary md:text-xs">
                         {esp ?? "Esporte"} · {m.modalidade_confronto ?? "individual"}
                       </p>
                     </div>
                   </div>
-                  <span className="eid-badge-warning rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase">
+                  <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-action-500)_28%)]">
                     Aguardando
                   </span>
                 </li>
@@ -462,19 +484,22 @@ export default async function AgendaPage() {
             })}
           </ul>
         )}
+        </div>
       </section>
 
-      <p className="mt-6 text-center text-xs text-eid-text-secondary md:mt-10">
-        Pedidos recebidos para aceitar estão no{" "}
-        <Link href="/comunidade" className="font-bold text-eid-primary-300 hover:underline">
-          Painel de controle
-        </Link>
-        . Resultados e placares:{" "}
-        <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
-          Partidas e resultados
-        </Link>
-        .
-      </p>
+      <div className="mt-6 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 px-3 py-3 text-center md:mt-10 md:px-4 md:py-3.5">
+        <p className="text-[11px] leading-relaxed text-eid-text-secondary md:text-xs">
+          Pedidos recebidos para aceitar estão no{" "}
+          <Link href="/comunidade" className="font-bold text-eid-primary-300 hover:underline">
+            Painel de controle
+          </Link>
+          . Resultados e placares:{" "}
+          <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
+            Partidas e resultados
+          </Link>
+          .
+        </p>
+      </div>
     </main>
   );
 }

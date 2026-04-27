@@ -12,6 +12,7 @@ import { buildSetFormatOptions, getDesafioRankLockedSetFormat, getMatchUIConfig 
 import { createClient } from "@/lib/supabase/server";
 import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
+import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { abrirMediacaoAdminAction, confirmarPlacarAction, contestarPlacarAction, salvarAgendamentoAction } from "./actions";
 
 type Props = { params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> };
@@ -258,21 +259,45 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
     status === "aguardando_confirmacao" && p.lancado_por === user.id && resultadoTemPlacar && !agendaSomente;
 
   return (
-    <main data-eid-desafio-ui className="mx-auto w-full max-w-lg px-3 py-3 sm:max-w-xl sm:px-4 sm:py-5">
+    <main
+      data-eid-desafio-ui
+      className={
+        agendaSomente
+          ? "mx-auto w-full max-w-lg px-3 pt-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+          : "mx-auto w-full max-w-lg px-3 py-3 sm:max-w-xl sm:px-4 sm:py-5"
+      }
+    >
         {!isEmbed ? (
-          <Link href={voltarHref} className={`${DESAFIO_FLOW_SECONDARY_CLASS} max-w-fit normal-case`}>
+          <Link
+            href={voltarHref}
+            className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-2 max-w-fit rounded-xl normal-case md:mt-1`}
+          >
             {voltarLabel}
           </Link>
         ) : null}
 
-        <div className="mt-4 overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-action-500)_32%,var(--eid-border-subtle)_68%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)_90%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-4 shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)] backdrop-blur-sm sm:mt-6 sm:p-6">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-action-400">
+        <div
+          className={
+            agendaSomente
+              ? `mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`
+              : "mt-4 overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-action-500)_32%,var(--eid-border-subtle)_68%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)_90%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-4 shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)] backdrop-blur-sm sm:mt-6 sm:p-6"
+          }
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-eid-action-400 md:font-black md:tracking-[0.16em]">
             {agendaSomente ? "Agendar partida" : "Registrar resultado"}
           </p>
-          <h1 className="mt-2 text-lg font-black tracking-tight text-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-action-500)_72%,var(--eid-fg)_28%))] bg-clip-text md:text-xl">
+          <h1
+            className={
+              agendaSomente
+                ? "mt-1 text-base font-black leading-tight tracking-tight text-eid-fg sm:text-lg"
+                : "mt-2 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-fg)_96%,white_4%),color-mix(in_srgb,var(--eid-action-500)_72%,var(--eid-fg)_28%))] bg-clip-text text-lg font-black tracking-tight text-transparent md:text-xl"
+            }
+          >
             Partida #{id}
           </h1>
-          <p className="mt-1 text-sm font-semibold text-eid-primary-300">{esp?.nome ?? "Esporte"}</p>
+          <p className="mt-1 text-sm font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)]">
+            {esp?.nome ?? "Esporte"}
+          </p>
           {p.torneio_id ? (
             <p className="mt-2 text-xs text-eid-action-400">
               Partida de torneio: o lançamento é restrito ao organizador e aos lançadores autorizados.
@@ -284,30 +309,62 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             </p>
           ) : null}
 
-          <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_35%,var(--eid-surface)_65%)] px-3 py-3 sm:mt-6 sm:rounded-2xl sm:px-4 sm:py-4">
+          <div
+            className={
+              agendaSomente
+                ? "mt-4 flex items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-3 sm:mt-6 sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-4"
+                : "mt-4 flex items-center justify-between gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_35%,var(--eid-surface)_65%)] px-3 py-3 sm:mt-6 sm:rounded-2xl sm:px-4 sm:py-4"
+            }
+          >
             <div className="min-w-0 flex-1 text-center">
-              <p className="truncate text-sm font-bold text-eid-fg md:font-black">{j1?.nome ?? "Jogador 1"}</p>
+              <p
+                className={
+                  agendaSomente
+                    ? "truncate text-sm font-black text-eid-fg"
+                    : "truncate text-sm font-bold text-eid-fg md:font-black"
+                }
+              >
+                {j1?.nome ?? "Jogador 1"}
+              </p>
             </div>
-            <div className="flex shrink-0 flex-col items-center justify-end self-end pb-0.5">
-              <span className="block">
-                <svg viewBox="0 0 36 36" aria-hidden className="h-[22px] w-[22px]">
-                  <text x="7" y="22" fontSize="14" fontWeight="900" fill="currentColor" className="text-eid-fg">
-                    V
-                  </text>
-                  <text x="21" y="26" fontSize="14" fontWeight="900" fill="currentColor" className="text-eid-fg">
-                    S
-                  </text>
-                  <path d="M22 3 16 16h4l-5 17 13-17h-4l5-13Z" fill="currentColor" className="text-eid-action-400" />
-                </svg>
-              </span>
-            </div>
+            {agendaSomente ? (
+              <div className="flex shrink-0 flex-col items-center justify-center self-center">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-eid-action-500/35 bg-eid-action-500/12 text-[9px] font-black uppercase tracking-[0.08em] text-eid-action-300 shadow-[0_6px_16px_-10px_rgba(249,115,22,0.6)] md:h-8 md:w-8 md:text-[10px]">
+                  VS
+                </span>
+              </div>
+            ) : (
+              <div className="flex shrink-0 flex-col items-center justify-end self-end pb-0.5">
+                <span className="block">
+                  <svg viewBox="0 0 36 36" aria-hidden className="h-[22px] w-[22px]">
+                    <text x="7" y="22" fontSize="14" fontWeight="900" fill="currentColor" className="text-eid-fg">
+                      V
+                    </text>
+                    <text x="21" y="26" fontSize="14" fontWeight="900" fill="currentColor" className="text-eid-fg">
+                      S
+                    </text>
+                    <path d="M22 3 16 16h4l-5 17 13-17h-4l5-13Z" fill="currentColor" className="text-eid-action-400" />
+                  </svg>
+                </span>
+              </div>
+            )}
             <div className="min-w-0 flex-1 text-center">
-              <p className="truncate text-sm font-bold text-eid-fg md:font-black">{j2?.nome ?? "Jogador 2"}</p>
+              <p
+                className={
+                  agendaSomente
+                    ? "truncate text-sm font-black text-eid-fg"
+                    : "truncate text-sm font-bold text-eid-fg md:font-black"
+                }
+              >
+                {j2?.nome ?? "Jogador 2"}
+              </p>
             </div>
           </div>
 
           {errMsg ? (
-            <p className="mt-4 rounded-xl border border-red-500/35 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200">{errMsg}</p>
+            <p className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-center text-[11px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f43f5e_45%)] md:text-xs">
+              {errMsg}
+            </p>
           ) : null}
           {okMsg ? (
             <p className="mt-4 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-success-500)_82%,var(--eid-fg)_18%)]">
@@ -316,9 +373,12 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           ) : null}
 
           {agendaSomente ? (
-            <p className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-xs text-eid-text-secondary">
+            <p className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary md:text-xs">
               O <strong className="text-eid-fg">lançamento e a confirmação do placar</strong> são feitos no{" "}
-              <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
+              <Link
+                href="/comunidade#resultados-partida"
+                className="font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)] hover:underline"
+              >
                 Painel de controle
               </Link>
               .
@@ -392,14 +452,18 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           {podeLancar && !resultadoEnviadoAguardando ? (
             <details
               open={abrirAgendamentoPorPadrao}
-              className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 open:shadow-[0_10px_18px_-14px_rgba(15,23,42,0.5)]"
+              className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 open:shadow-[0_10px_18px_-14px_rgba(15,23,42,0.35)]"
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 sm:px-4">
-                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Agendamento (opcional)</span>
-                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">Agenda</span>
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2.5 sm:px-4">
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">
+                  {agendaSomente ? "Data e local" : "Agendamento (opcional)"}
+                </span>
+                <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
+                  Agenda
+                </span>
               </summary>
               <div className="px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4">
-                <form action={salvarAgendamentoAction}>
+                <form action={salvarAgendamentoAction} className="grid gap-0">
                   <input type="hidden" name="partida_id" value={id} />
                   {agendaSomente ? <input type="hidden" name="modo_agenda" value="1" /> : null}
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -427,15 +491,22 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   </div>
                   <CadastrarLocalOverlayTrigger
                     href={cadastrarLocalHref}
-                    className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full text-center`}
+                    className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full rounded-xl text-center !min-h-[34px]`}
                   >
                     + Cadastrar local genérico
                   </CadastrarLocalOverlayTrigger>
-                  <button type="submit" className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full`}>
+                  <button
+                    type="submit"
+                    className={
+                      agendaSomente
+                        ? "mt-3 inline-flex min-h-[40px] w-full items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/15 px-3 text-[10px] font-black uppercase tracking-wide text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] shadow-[0_4px_14px_-6px_rgba(37,99,235,0.25)] transition hover:bg-eid-primary-500/22 md:text-[11px]"
+                        : `${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full rounded-xl !min-h-[36px]`
+                    }
+                  >
                     Salvar agendamento
                   </button>
                   {agendaSomente ? (
-                    <p className="mt-2 text-[11px] text-eid-text-secondary">
+                    <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary md:text-[11px]">
                       Defina data e local aqui. Para registrar o placar após o jogo, use o Painel de controle.
                     </p>
                   ) : null}
@@ -488,7 +559,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             <div className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
               <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Ação sobre resultado</p>
-                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
+                <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
                   Aprovação
                 </span>
               </div>
@@ -507,7 +578,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   <StatusSubmitButton
                     idleLabel="Contestar resultado"
                     pendingLabel="Contestando..."
-                    className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full hover:border-amber-500/45 hover:text-amber-200 disabled:opacity-60`}
+                    className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full rounded-xl hover:border-amber-500/45 hover:text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)] disabled:opacity-60`}
                   />
                 </form>
               ) : null}
@@ -521,7 +592,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                 <StatusSubmitButton
                   idleLabel="Abrir mediação com o admin"
                   pendingLabel="Enviando..."
-                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full border-amber-500/45 bg-amber-500/14 text-amber-200 hover:bg-amber-500/20 disabled:opacity-60`}
+                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full rounded-xl border-amber-500/45 bg-amber-500/14 text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)] hover:bg-amber-500/20 disabled:opacity-60`}
                 />
               </form>
             </div>
@@ -533,7 +604,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             </p>
           ) : null}
           {emAnaliseAdmin ? (
-            <p className="mt-5 rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200">
+            <p className="mt-5 rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[11px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,#f59e0b_42%)] md:text-xs">
               Resultado em análise administrativa após contestação de ambos. O admin fará a mediação por WhatsApp.
             </p>
           ) : null}

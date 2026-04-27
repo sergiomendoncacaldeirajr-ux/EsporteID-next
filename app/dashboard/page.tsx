@@ -12,6 +12,7 @@ import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amis
 import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
+import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 
 export const metadata = {
   title: "Painel",
@@ -189,16 +190,25 @@ function IconTorneioCard({ className }: { className?: string }) {
 }
 
 const scrollRow =
-  "-mx-3 flex gap-2.5 overflow-x-auto px-3 pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-6 sm:gap-3 sm:px-6 [&::-webkit-scrollbar]:hidden";
+  "-mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-4 sm:gap-3 sm:px-4 [&::-webkit-scrollbar]:hidden";
 
 const sectionActionClass =
-  "inline-flex shrink-0 items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2 py-0.5 text-[8px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary transition hover:border-eid-primary-500/30 hover:text-eid-fg sm:text-[9px]";
+  "inline-flex shrink-0 items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)] transition hover:bg-eid-primary-500/18";
 
 const sectionTitleClass =
-  "text-[9px] font-bold uppercase tracking-[0.12em] text-eid-primary-400/90 sm:text-[10px]";
+  "text-[10px] font-black uppercase tracking-[0.16em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]";
 
-const dashboardBlockClass =
-  "eid-surface-panel relative overflow-hidden rounded-[1.2rem] border-eid-primary-500/25 bg-gradient-to-br from-eid-card via-eid-card to-eid-primary-950/40 px-3 py-2.5 shadow-[0_18px_40px_-22px_rgba(37,99,235,0.35)] sm:rounded-2xl sm:px-4 sm:py-3";
+const dashboardSectionOuter =
+  "eid-dashboard-section overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]";
+
+const dashboardSectionHead =
+  "eid-dashboard-section-head flex items-center justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 sm:px-4";
+
+const dashboardSectionBody = "px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-3";
+
+/** Barra de atalhos tipo menu (não é card de seção como torneios/locais). */
+const dashboardAppNavClass =
+  "eid-dashboard-app-nav rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,var(--eid-primary-500)_18%)] bg-[color-mix(in_srgb,var(--eid-surface)_42%,var(--eid-bg)_58%)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_24px_-18px_rgba(15,23,42,0.35)] sm:rounded-[1.35rem] sm:p-1.5";
 
 export default async function DashboardPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
@@ -559,14 +569,18 @@ export default async function DashboardPage({ searchParams }: Props) {
   const quickNavMain = navItems;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 pb-[calc(var(--eid-shell-footer-offset)-0.75rem)] pt-3 sm:px-6 sm:pb-[calc(var(--eid-shell-footer-offset)-0.5rem)] sm:pt-4">
-        <div className="eid-surface-panel relative overflow-hidden rounded-[1.35rem] border-eid-primary-500/25 bg-gradient-to-br from-eid-card via-eid-card to-eid-primary-950/40 p-4 shadow-[0_24px_56px_-22px_rgba(37,99,235,0.4)] sm:rounded-2xl sm:p-6">
+    <div
+      className="relative z-0 mx-auto flex w-full min-w-0 max-w-lg flex-1 flex-col px-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] pt-0 sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+      data-eid-dashboard-page
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-44 bg-[radial-gradient(ellipse_95%_60%_at_50%_-10%,rgba(37,99,235,0.1),transparent_55%)] sm:h-52" aria-hidden />
+      <div className={`eid-dashboard-hero relative mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}>
           <div
-            className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-primary-500/15 blur-3xl"
+            className="eid-dashboard-hero-glow pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-primary-500/15 blur-3xl"
             aria-hidden
           />
           <div
-            className="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-eid-action-500/12 blur-3xl"
+            className="eid-dashboard-hero-glow pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-eid-action-500/12 blur-3xl"
             aria-hidden
           />
           <div className="relative flex flex-wrap items-center gap-4">
@@ -586,7 +600,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                 />
               ) : (
                 <div
-                  className={`flex h-[4.25rem] w-[4.25rem] items-center justify-center rounded-full border-[3px] bg-eid-surface text-lg font-bold text-eid-primary-300 ring-2 ring-offset-2 ring-offset-eid-card sm:h-[4.5rem] sm:w-[4.5rem] ${
+                  className={`flex h-[4.25rem] w-[4.25rem] items-center justify-center rounded-full border-[3px] bg-eid-surface text-lg font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] ring-2 ring-offset-2 ring-offset-eid-card sm:h-[4.5rem] sm:w-[4.5rem] ${
                     amistosoLigado
                       ? "border-emerald-400/80 shadow-[0_8px_24px_-6px_rgba(16,185,129,0.5)] ring-emerald-400/35"
                       : "border-red-500/80 shadow-[0_8px_24px_-6px_rgba(239,68,68,0.48)] ring-red-500/30"
@@ -604,22 +618,23 @@ export default async function DashboardPage({ searchParams }: Props) {
               <AmistosoDailyHint />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-[1.35rem] font-extrabold leading-tight tracking-tight text-eid-fg sm:text-2xl">
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-eid-action-400">Painel</p>
+              <h1 className="mt-0.5 text-base font-black leading-tight text-eid-fg sm:text-lg">
                 Olá, {primeiroNome(profile.nome)}!
               </h1>
               {mensagemTopoHref ? (
                 <Link
                   href={mensagemTopoHref}
-                  className={`mt-1 inline-flex max-w-full items-center rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.04em] transition hover:brightness-110 sm:text-[11px] ${
+                  className={`mt-1.5 inline-flex max-w-full items-center rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.04em] transition hover:brightness-110 sm:text-[11px] ${
                     mensagemTopoTom === "aviso"
-                      ? "border border-eid-action-500/35 bg-eid-action-500/10 text-eid-action-400"
-                      : "border border-eid-primary-500/30 bg-eid-primary-500/10 text-eid-primary-300"
+                      ? "border border-eid-action-500/35 bg-eid-action-500/10 text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-action-500)_42%)]"
+                      : "border border-eid-primary-500/35 bg-eid-primary-500/12 text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]"
                   }`}
                 >
                   <span className="truncate">{mensagemTopo}</span>
                 </Link>
               ) : (
-                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-eid-primary-400 sm:text-[11px]">
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-fg)_52%,var(--eid-primary-500)_48%)] sm:text-[11px]">
                   {mensagemTopo}
                 </p>
               )}
@@ -632,7 +647,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                     {meusEsportesResumo.map((item) => (
                       <span
                         key={item.esporteId}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-full border border-eid-primary-500/25 bg-eid-surface/55 px-2 py-1 text-[10px] font-semibold text-eid-primary-300"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-1 text-[10px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)]"
                         title={item.esporteNome}
                       >
                         <span aria-hidden>{sportIconEmoji(item.esporteNome)}</span>
@@ -651,14 +666,15 @@ export default async function DashboardPage({ searchParams }: Props) {
 
           <a
             href={matchHref}
-            className="eid-btn-dashboard-cta relative mt-1 mb-2 flex w-full items-center justify-center gap-2.5 sm:mt-1.5 sm:mb-2.5"
+            className="eid-btn-dashboard-cta relative mt-3 flex w-full items-center justify-center gap-2.5 rounded-xl sm:mt-4"
           >
             <IconBolt className="h-5 w-5 shrink-0 text-white drop-shadow-sm" />
             Encontrar desafio
           </a>
         </div>
 
-        <div className={`mt-4 grid gap-1.5 sm:mt-5 sm:gap-2 ${navItems.length >= 4 ? "grid-cols-4" : navItems.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+        <nav aria-label="Atalhos do app" className={`${dashboardAppNavClass} mt-4 sm:mt-5`}>
+        <div className={`grid gap-1 sm:gap-1.5 ${navItems.length >= 4 ? "grid-cols-4" : navItems.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
           {quickNavMain.map((item) => {
             const Icon = item.icon;
             const cardContent = (
@@ -676,7 +692,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                   className={`flex h-10 w-10 items-center justify-center rounded-xl border sm:h-11 sm:w-11 sm:rounded-2xl ${
                     item.status !== "active"
                       ? "border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-text-secondary"
-                      : "border-eid-primary-500/30 bg-eid-primary-500/14 text-eid-primary-300"
+                      : "border-eid-primary-500/35 bg-eid-primary-500/14 text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]"
                   }`}
                 >
                   <Icon className="h-[22px] w-[22px] sm:h-6 sm:w-6" />
@@ -700,7 +716,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="eid-list-item relative flex min-h-[4.2rem] flex-col items-center justify-center gap-0.5 rounded-xl border-[color:var(--eid-border-subtle)] bg-gradient-to-b from-eid-surface/90 to-eid-card/85 px-1 py-1.5 text-center transition hover:-translate-y-[1px] hover:border-eid-primary-500/40 hover:shadow-[0_10px_26px_-14px_rgba(37,99,235,0.5)] sm:min-h-[4.5rem] sm:rounded-2xl sm:py-2"
+                  className="eid-dashboard-app-nav-item eid-list-item relative flex min-h-[4rem] flex-col items-center justify-center gap-0.5 rounded-xl border border-transparent bg-transparent px-1 py-1.5 text-center transition hover:border-[color:color-mix(in_srgb,var(--eid-primary-500)_28%,transparent)] hover:bg-eid-primary-500/10 active:scale-[0.98] sm:min-h-[4.35rem] sm:rounded-xl sm:py-2"
                 >
                   {cardContent}
                 </Link>
@@ -710,18 +726,19 @@ export default async function DashboardPage({ searchParams }: Props) {
               <div
                 key={item.label}
                 aria-disabled
-                className="eid-list-item relative flex min-h-[4.2rem] flex-col items-center justify-center gap-0.5 rounded-xl border-[color:var(--eid-border-subtle)] bg-gradient-to-b from-eid-surface/75 to-eid-card/75 px-1 py-1.5 text-center opacity-80 sm:min-h-[4.5rem] sm:rounded-2xl sm:py-2"
+                className="eid-dashboard-app-nav-item eid-list-item relative flex min-h-[4rem] flex-col items-center justify-center gap-0.5 rounded-xl border border-transparent bg-transparent px-1 py-1.5 text-center opacity-75 sm:min-h-[4.35rem] sm:rounded-xl sm:py-2"
               >
                 {cardContent}
               </div>
             );
           })}
         </div>
+        </nav>
 
         {hasProfessor && canSeeProfessores ? (
           <Link
             href="/professor"
-            className="eid-btn-soft mt-2 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl border-eid-action-500/35 bg-eid-action-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-action-400 sm:text-[11px]"
+            className="eid-btn-soft mt-3 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-xl border-eid-action-500/35 bg-eid-action-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-action-500)_45%)] sm:mt-4 sm:text-[11px]"
           >
             <IconUsers className="h-5 w-5 shrink-0 text-eid-action-400" />
             Painel do professor
@@ -730,25 +747,26 @@ export default async function DashboardPage({ searchParams }: Props) {
         {hasEspaco && canSeeLocais ? (
           <Link
             href="/espaco"
-            className="eid-btn-soft mt-2 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-2xl border-eid-primary-500/35 bg-eid-primary-500/12 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-eid-primary-300 sm:text-[11px]"
+            className="eid-btn-soft mt-3 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-xl border-eid-primary-500/35 bg-eid-primary-500/12 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)] sm:mt-4 sm:text-[11px]"
           >
-            <IconMapPin className="h-5 w-5 shrink-0 text-eid-primary-300" />
+            <IconMapPin className="h-5 w-5 shrink-0 text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]" />
             Painel do espaço
           </Link>
         ) : null}
         {q ? (
-          <p className="mt-4 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-xs text-eid-text-secondary">
+          <p className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/70 px-3 py-2 text-xs text-eid-text-secondary shadow-[0_8px_20px_-14px_rgba(15,23,42,0.12)]">
             Busca ativa por: <span className="font-semibold text-eid-fg">{sp.q}</span>
           </p>
         ) : null}
 
-        <section className={`mt-7 sm:mt-9 ${dashboardBlockClass}`}>
-          <div className="mb-3.5 flex items-center justify-between gap-3">
+        <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>
+          <div className={dashboardSectionHead}>
             <h2 className={sectionTitleClass}>Atletas próximos</h2>
             <a href={matchHref} className={sectionActionClass}>
               Ver todos
             </a>
           </div>
+          <div className={dashboardSectionBody}>
           {atletaMaisProximo || duplaMaisProxima || timeMaisProximo ? (
             <div className="grid grid-cols-3 gap-1.5">
               {atletaMaisProximo
@@ -778,7 +796,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                       />
                     ) : (
                       <div
-                        className={`flex h-full w-full items-center justify-center rounded-full border-2 bg-eid-surface text-xs font-bold text-eid-primary-300 ${
+                        className={`flex h-full w-full items-center justify-center rounded-full border-2 bg-eid-surface text-xs font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] ${
                           atletaAmistosoOn ? "border-emerald-400/75" : "border-red-500/75"
                         }`}
                       >
@@ -792,7 +810,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                       </span>
                     </div>
                   </div>
-                  <p className="mt-1 inline-flex max-w-full items-center gap-0.5 truncate text-[7px] font-semibold text-eid-primary-300 leading-none">
+                  <p className="mt-1 inline-flex max-w-full items-center gap-0.5 truncate text-[7px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
                     <span aria-hidden>{esporteCardIcon}</span>
                     <span className="truncate">{esporteCardNome}</span>
                   </p>
@@ -826,12 +844,12 @@ export default async function DashboardPage({ searchParams }: Props) {
                         className="h-full w-full rounded-[14px] border-2 border-eid-primary-500/50 object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-xs font-bold text-eid-primary-300">
+                      <div className="flex h-full w-full items-center justify-center rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-xs font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
                         D
                       </div>
                     )}
                   </div>
-                  <p className="mt-px inline-flex max-w-full items-center gap-0.5 truncate text-[7px] font-semibold text-eid-primary-300 leading-none">
+                  <p className="mt-px inline-flex max-w-full items-center gap-0.5 truncate text-[7px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
                     <span aria-hidden>{esporteCardIcon}</span>
                     <span className="truncate">{esporteCardNome}</span>
                   </p>
@@ -863,12 +881,12 @@ export default async function DashboardPage({ searchParams }: Props) {
                         className="h-full w-full rounded-[14px] border-2 border-eid-primary-500/50 object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-xs font-bold text-eid-primary-300">
+                      <div className="flex h-full w-full items-center justify-center rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-xs font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
                         T
                       </div>
                     )}
                   </div>
-                  <p className="mt-px inline-flex max-w-full items-center gap-0.5 truncate text-[7px] font-semibold text-eid-primary-300 leading-none">
+                  <p className="mt-px inline-flex max-w-full items-center gap-0.5 truncate text-[7px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
                     <span aria-hidden>{esporteCardIcon}</span>
                     <span className="truncate">{esporteCardNome}</span>
                   </p>
@@ -888,17 +906,19 @@ export default async function DashboardPage({ searchParams }: Props) {
               {q ? "Nenhum atleta encontrado para essa busca." : "Ainda não há atletas sugeridos para seu esporte principal."}
             </p>
           )}
+          </div>
         </section>
 
         {canSeeTorneios ? (
-        <section className={`mt-7 sm:mt-9 ${dashboardBlockClass}`}>
-          <div className="mb-3.5 flex items-center justify-between gap-3">
+        <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>
+          <div className={dashboardSectionHead}>
             <h2 className={sectionTitleClass}>Sugestões de torneios</h2>
             <Link href="/torneios" className={sectionActionClass}>
               Explorar
             </Link>
           </div>
-          <p className="mb-2 text-[11px] text-eid-text-secondary">
+          <div className={dashboardSectionBody}>
+          <p className="mb-3 text-[11px] leading-relaxed text-eid-text-secondary">
             Inscrições abertas, priorizando esporte do seu perfil e proximidade da sua localização.
           </p>
           {torneiosFiltrados.length > 0 ? (
@@ -927,17 +947,19 @@ export default async function DashboardPage({ searchParams }: Props) {
               {q ? "Nenhum torneio encontrado para essa busca." : "Sem torneios próximos com inscrição em aberto no seu esporte."}
             </p>
           )}
+          </div>
         </section>
         ) : null}
 
-        <section className={`mt-7 sm:mt-9 ${dashboardBlockClass}`}>
-          <div className="mb-3.5 flex items-center justify-between gap-3">
+        <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>
+          <div className={dashboardSectionHead}>
             <h2 className={sectionTitleClass}>Vagas para equipes</h2>
             <Link href="/times" className={sectionActionClass}>
               Ver todos
             </Link>
           </div>
-          <p className="mb-2 text-[11px] text-eid-text-secondary">
+          <div className={dashboardSectionBody}>
+          <p className="mb-3 text-[11px] leading-relaxed text-eid-text-secondary">
             Duplas e times com vagas abertas, próximos e compatíveis com seus esportes.
           </p>
           {timesFiltrados.length > 0 ? (
@@ -959,13 +981,13 @@ export default async function DashboardPage({ searchParams }: Props) {
                         className="h-full w-full rounded-[14px] border-2 border-eid-primary-500/50 object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-xs font-bold text-eid-primary-300">
+                      <div className="flex h-full w-full items-center justify-center rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-xs font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
                         T
                       </div>
                     )}
                   </div>
                   <p className="mt-3 truncate text-[11px] font-extrabold text-eid-fg">{t.nome}</p>
-                  <p className="mt-0.5 text-[10px] font-bold text-eid-primary-400">
+                  <p className="mt-0.5 text-[10px] font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_45%,var(--eid-primary-500)_55%)]">
                     {hasMyCoords && dist < 9000 ? `${dist.toFixed(1).replace(".", ",")} km` : "—"}
                   </p>
                 </Link>
@@ -976,16 +998,18 @@ export default async function DashboardPage({ searchParams }: Props) {
               {q ? "Nenhuma vaga para equipes encontrada para essa busca." : "Sem vagas de duplas/times próximos no seu esporte."}
             </p>
           )}
+          </div>
         </section>
 
-        <section className={`mt-7 sm:mt-9 ${dashboardBlockClass}`}>
-          <div className="mb-3.5 flex items-center justify-between gap-3">
+        <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>
+          <div className={dashboardSectionHead}>
             <h2 className={sectionTitleClass}>Locais na comunidade</h2>
             <Link href="/locais" className={sectionActionClass}>
               Ver lista
             </Link>
           </div>
-          <p className="mb-2 text-[11px] text-eid-text-secondary">
+          <div className={dashboardSectionBody}>
+          <p className="mb-3 text-[11px] leading-relaxed text-eid-text-secondary">
             Sugestões próximas do seu esporte, priorizando locais que aceitam sócios, mensalidade com a plataforma e reservas pagas.
           </p>
           {locaisScroll && locaisScroll.length > 0 ? (
@@ -1007,7 +1031,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                   </div>
                   <p className="mt-2 line-clamp-2 text-[11px] font-extrabold leading-tight text-eid-fg">{loc.nome_publico}</p>
                   <p className="mt-0.5 line-clamp-2 text-[10px] text-eid-text-secondary">{loc.localizacao}</p>
-                  <p className="mt-1 text-[10px] font-bold text-eid-primary-300">
+                  <p className="mt-1 text-[10px] font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
                     {hasMyCoords && loc.dist < 9000 ? `${loc.dist.toFixed(1).replace(".", ",")} km` : "—"}
                   </p>
                 </Link>
@@ -1021,7 +1045,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 
           <CadastrarLocalOverlayTrigger
             href="/locais/cadastrar?from=/dashboard"
-            className="eid-btn-primary mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl text-xs font-extrabold uppercase tracking-wide active:scale-[0.98] sm:text-sm"
+            className="eid-btn-primary mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl text-xs font-extrabold uppercase tracking-wide active:scale-[0.98] sm:text-sm"
           >
             <IconMapPin className="h-5 w-5 shrink-0 text-[var(--eid-brand-ink)]" />
             Cadastrar local genérico
@@ -1029,6 +1053,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary sm:text-[11px]">
             Qualquer pessoa pode sugerir um espaço. Para ser o responsável oficial, envie documentação pela página do local após criá-lo.
           </p>
+          </div>
         </section>
     </div>
   );

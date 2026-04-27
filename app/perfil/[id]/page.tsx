@@ -11,6 +11,7 @@ import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-perfo
 import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { ProfileConviteFormacaoCta } from "@/components/perfil/profile-convite-formacao-cta";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
+import { EidIndividualPartidaRow } from "@/components/perfil/eid-individual-partida-row";
 import {
   esporteIdsComMatchAceitoEntre,
   podeExibirWhatsappProfessor,
@@ -23,7 +24,7 @@ import {
   expireDisponivelAmistosoProfileIfNeeded,
 } from "@/lib/perfil/disponivel-amistoso";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
-import { partidaEncerradaParaHistorico } from "@/lib/perfil/formacao-eid-stats";
+import { partidaEncerradaParaHistorico, resultadoPartidaIndividual } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -280,7 +281,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const { data: partidasHistoricoRaw } = await supabase
     .from("partidas")
     .select(
-      "id, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro"
+      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, tipo_partida, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id, mensagem"
     )
     .or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`)
     .order("data_registro", { ascending: false })
@@ -292,25 +293,65 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     return partidaEncerradaParaHistorico(p);
   });
 
-  const resumoHistorico = partidasHistorico.slice(0, 4).map((p) => {
-    const isP1 = p.jogador1_id === id;
-    const s1 = Number(p.placar_1 ?? 0);
-    const s2 = Number(p.placar_2 ?? 0);
-    const venceu = isP1 ? s1 > s2 : s2 > s1;
-    const empatou = s1 === s2;
-    const origem = p.torneio_id ? "Torneio" : "Rank";
-    const resultado = empatou ? "E" : venceu ? "V" : "D";
-    const dataIso = p.data_resultado ?? p.data_registro;
-    const dataFmt = dataIso ? new Date(dataIso).toLocaleDateString("pt-BR") : "—";
-    return {
-      id: String(p.id),
-      resultado,
-      origem,
-      placar: `${s1}x${s2}`,
-      dataFmt,
-      tone: empatou ? "neutral" : venceu ? "positive" : "negative",
-    };
-  });
+  const oponenteIdsHistorico = [
+    ...new Set(
+      partidasHistorico
+        .map((p) => (p.jogador1_id === id ? p.jogador2_id : p.jogador1_id))
+        .filter((x): x is string => !!x)
+    ),
+  ];
+  const oponenteHistoricoMap = new Map<string, { nome: string; avatarUrl: string | null }>();
+  if (oponenteIdsHistorico.length > 0) {
+    const { data: oponentesHistorico } = await supabase
+      .from("profiles")
+      .select("id, nome, avatar_url")
+      .in("id", oponenteIdsHistorico);
+    for (const op of oponentesHistorico ?? []) {
+      if (!op.id) continue;
+      oponenteHistoricoMap.set(op.id, {
+        nome: op.nome ?? "Atleta",
+        avatarUrl: op.avatar_url ?? null,
+      });
+    }
+  }
+  const esporteIdsHistorico = [
+    ...new Set(partidasHistorico.map((p) => Number(p.esporte_id)).filter((x) => Number.isFinite(x) && x > 0)),
+  ];
+  const esporteHistoricoMap = new Map<number, string>();
+  if (esporteIdsHistorico.length > 0) {
+    const { data: esportesHistoricoRows } = await supabase
+      .from("esportes")
+      .select("id, nome")
+      .in("id", esporteIdsHistorico);
+    for (const e of esportesHistoricoRows ?? []) {
+      if (e.id != null) esporteHistoricoMap.set(Number(e.id), e.nome ?? "Esporte");
+    }
+  }
+  const oponenteNotaHistoricoMap = new Map<string, number>();
+  if (oponenteIdsHistorico.length > 0 && esporteIdsHistorico.length > 0) {
+    const { data: notasHistoricoRows } = await supabase
+      .from("usuario_eid")
+      .select("usuario_id, esporte_id, nota_eid")
+      .in("usuario_id", oponenteIdsHistorico)
+      .in("esporte_id", esporteIdsHistorico);
+    for (const row of notasHistoricoRows ?? []) {
+      if (!row.usuario_id || row.esporte_id == null || row.nota_eid == null) continue;
+      oponenteNotaHistoricoMap.set(`${row.usuario_id}:${Number(row.esporte_id)}`, Number(row.nota_eid));
+    }
+  }
+  const localHistoricoMap = new Map<number, string>();
+  const localHistoricoIds = [
+    ...new Set(partidasHistorico.map((p) => Number(p.local_espaco_id)).filter((x) => Number.isFinite(x) && x > 0)),
+  ];
+  if (localHistoricoIds.length > 0) {
+    const { data: locaisHistoricoRows } = await supabase
+      .from("espacos_genericos")
+      .select("id, nome_publico")
+      .in("id", localHistoricoIds);
+    for (const loc of locaisHistoricoRows ?? []) {
+      if (loc.id != null) localHistoricoMap.set(Number(loc.id), loc.nome_publico ?? "Local");
+    }
+  }
 
   const historicoTotais = partidasHistorico.reduce(
     (acc, p) => {
@@ -396,7 +437,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           <div className="px-3 pb-3 pt-0">
 
             {/* Avatar + Nome/Selos lado a lado */}
-            <div className="relative z-[3] -mt-6 flex items-end gap-3 sm:-mt-7">
+            <div className="relative z-[3] -mt-3 flex items-end gap-3 sm:-mt-4">
               <div className="relative z-10 h-[68px] w-[68px] shrink-0">
                 {perfil.avatar_url ? (
                   <img
@@ -724,7 +765,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           {/* ── Performance EID ─────────────────────────────────────── */}
           <div className="-mt-3">
             {isSelf ? (
-              <div className="-mb-5 mt-0 flex justify-end">
+              <div className="relative z-10 mb-1 mt-0 flex justify-end">
                 <ProfileEditDrawerTrigger
                   href={`/editar/performance-eid?from=${encodeURIComponent(`/perfil/${id}`)}`}
                   title="Editar Performance EID"
@@ -785,7 +826,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
           {ocultarSecaoEquipesParaVisitante ? null : (
             <div className="mt-2">
               {isSelf ? (
-                <div className="-mb-5 mt-0 flex justify-end">
+                <div className="relative z-10 mb-1 mt-0 flex justify-end">
                   <ProfileEditDrawerTrigger
                     href={`/editar/equipes?from=${encodeURIComponent(`/perfil/${id}`)}`}
                     title="Editar equipes"
@@ -965,64 +1006,114 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
               <ProfileSection title="Histórico">
                 {partidasHistorico.length > 0 ? (
                   <>
-                    <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+                    <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
                       <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
                         <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Resumo</p>
-                        <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
-                          Últimos jogos
+                        <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-action-500)_28%)]">
+                          Geral
                         </span>
                       </div>
-                      <div className="grid grid-cols-5 gap-1.5 p-2">
-                      <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1 text-center">
-                        <p className="text-[11px] font-black text-emerald-300">{historicoTotais.vitorias}</p>
-                        <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">V</p>
-                      </div>
-                      <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1 text-center">
-                        <p className="text-[11px] font-black text-red-300">{historicoTotais.derrotas}</p>
-                        <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">D</p>
-                      </div>
-                      <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1 text-center">
-                        <p className="text-[11px] font-black text-eid-primary-300">{historicoTotais.empates}</p>
-                        <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">E</p>
-                      </div>
-                      <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1 text-center">
-                        <p className="text-[11px] font-black text-eid-fg">{historicoTotais.rank}</p>
-                        <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">Rank</p>
-                      </div>
-                      <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1 text-center">
-                        <p className="text-[11px] font-black text-eid-fg">{historicoTotais.torneio}</p>
-                        <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">Torneio</p>
-                      </div>
+                      <div className="grid grid-cols-5 gap-2 p-2">
+                        <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/12 px-1.5 py-1.5 text-center">
+                          <p className="text-[11px] font-black text-[color:color-mix(in_srgb,var(--eid-fg)_65%,#10b981_35%)]">{historicoTotais.vitorias}</p>
+                          <p className="text-[8px] font-semibold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_82%,#10b981_18%)]">V</p>
+                        </div>
+                        <div className="rounded-lg border border-rose-500/25 bg-rose-500/12 px-1.5 py-1.5 text-center">
+                          <p className="text-[11px] font-black text-[color:color-mix(in_srgb,var(--eid-fg)_65%,#f43f5e_35%)]">{historicoTotais.derrotas}</p>
+                          <p className="text-[8px] font-semibold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_82%,#f43f5e_18%)]">D</p>
+                        </div>
+                        <div className="rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/12 px-1.5 py-1.5 text-center">
+                          <p className="text-[11px] font-black text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)]">{historicoTotais.empates}</p>
+                          <p className="text-[8px] font-semibold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_82%,var(--eid-primary-500)_18%)]">E</p>
+                        </div>
+                        <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1.5 text-center">
+                          <p className="text-[11px] font-black text-eid-fg">{historicoTotais.rank}</p>
+                          <p className="text-[8px] font-semibold uppercase tracking-[0.06em] text-eid-text-secondary">Rank</p>
+                        </div>
+                        <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1.5 text-center">
+                          <p className="text-[11px] font-black text-eid-fg">{historicoTotais.torneio}</p>
+                          <p className="text-[8px] font-semibold uppercase tracking-[0.06em] text-eid-text-secondary">Torneio</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+                    <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
                       <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
                         <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Prévia do histórico</p>
-                        <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
-                          {resumoHistorico.length} itens
+                        <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
+                          Últimos 5
                         </span>
                       </div>
-                    <ul className="grid gap-1.5 p-2">
-                      {resumoHistorico.map((item) => (
-                        <li
-                          key={item.id}
-                            className={`flex items-center justify-between rounded-lg border bg-eid-surface/45 px-2 py-1.5 text-[10px] ${
-                            item.tone === "positive"
-                              ? "border-emerald-400/30"
-                              : item.tone === "negative"
-                                ? "border-red-400/30"
-                                : "border-[color:var(--eid-border-subtle)]"
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] font-black text-eid-fg">{item.resultado}</span>
-                            <span className="font-semibold text-eid-text-secondary">{item.origem}</span>
-                            <span className="font-bold text-eid-fg">{item.placar}</span>
-                          </div>
-                          <span className="text-[9px] text-eid-text-secondary">{item.dataFmt}</span>
-                        </li>
-                      ))}
-                    </ul>
+                      <ul className="grid gap-2 p-2">
+                        {partidasHistorico.slice(0, 5).map((p) => {
+                          const oponenteId = p.jogador1_id === id ? p.jogador2_id : p.jogador1_id;
+                          const op = oponenteId ? oponenteHistoricoMap.get(oponenteId) : null;
+                          const modalidade = String(p.modalidade ?? "individual").trim();
+                          const modalidadeFmt = modalidade ? modalidade.charAt(0).toUpperCase() + modalidade.slice(1) : "Individual";
+                          const esporteNome =
+                            p.esporte_id != null ? esporteHistoricoMap.get(Number(p.esporte_id)) ?? "Esporte" : "Esporte";
+                          const res = resultadoPartidaIndividual(id, p);
+                          const origemLabel: "Ranking" | "Torneio" =
+                            p.torneio_id != null || String(p.tipo_partida ?? "").toLowerCase() === "torneio"
+                              ? "Torneio"
+                              : "Ranking";
+                          const confrontosMesmos = partidasHistorico.filter((h) => {
+                            const hOid = h.jogador1_id === id ? h.jogador2_id : h.jogador1_id;
+                            return hOid === oponenteId;
+                          });
+                          const ultimosConfrontos = confrontosMesmos.slice(0, 5).map((h) => {
+                            const origem: "Ranking" | "Torneio" =
+                              h.torneio_id != null || String(h.tipo_partida ?? "").toLowerCase() === "torneio"
+                                ? "Torneio"
+                                : "Ranking";
+                            const dataHora = new Intl.DateTimeFormat("pt-BR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }).format(new Date(h.data_partida ?? h.data_resultado ?? h.data_registro ?? Date.now()));
+                            return {
+                              id: h.id,
+                              dataHora,
+                              local:
+                                (h.local_espaco_id != null ? localHistoricoMap.get(Number(h.local_espaco_id)) : null) ??
+                                (String(h.local_str ?? "").trim() || String(h.local_cidade ?? "").trim() || null),
+                              localHref:
+                                h.local_espaco_id != null && Number(h.local_espaco_id) > 0
+                                  ? `/local/${Number(h.local_espaco_id)}`
+                                  : null,
+                              placar: `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`,
+                              origem,
+                              confronto: `${perfil.nome ?? "Atleta"} vs ${op?.nome ?? "Atleta"}`,
+                            };
+                          });
+                          return (
+                            <EidIndividualPartidaRow
+                              key={p.id}
+                              partida={p}
+                              selfNome={perfil.nome ?? "Atleta"}
+                              selfAvatarUrl={perfil.avatar_url ?? null}
+                              selfProfileHref={`/perfil/${encodeURIComponent(id)}`}
+                              opponentId={oponenteId ?? id}
+                              opponentNome={op?.nome ?? "Atleta"}
+                              opponentAvatarUrl={op?.avatarUrl ?? null}
+                              opponentNotaEid={
+                                oponenteId && p.esporte_id != null
+                                  ? oponenteNotaHistoricoMap.get(`${oponenteId}:${Number(p.esporte_id)}`) ?? null
+                                  : null
+                              }
+                              res={res}
+                              profileLinkFrom={`/perfil/${id}`}
+                              torneioLabel={p.torneio_id ? "Torneio" : null}
+                              origemLabel={origemLabel}
+                              esporteLabel={esporteNome}
+                              modalidadeLabel={modalidadeFmt}
+                              totalConfrontos={confrontosMesmos.length}
+                              ultimosConfrontos={ultimosConfrontos}
+                            />
+                          );
+                        })}
+                      </ul>
                     </div>
                     <div className="mt-2 flex justify-end">
                       <ProfileEditDrawerTrigger
@@ -1030,9 +1121,9 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                         title="Histórico completo"
                         fullscreen
                         topMode="backOnly"
-                        className="inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.08em] text-eid-text-secondary transition-all hover:border-eid-primary-500/35 hover:bg-eid-primary-500/10 hover:text-eid-fg"
+                        className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.08em] text-eid-fg transition-all hover:border-eid-primary-500/50 hover:bg-eid-primary-500/18 hover:text-eid-fg"
                       >
-                        <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
+                        <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3" aria-hidden>
                           <path d="M8 1.5a.75.75 0 0 1 .75.75V8h4.5a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 7.25 8V2.25A.75.75 0 0 1 8 1.5Zm0 13a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Zm-8-6.5a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z" />
                         </svg>
                         VER HISTÓRICO COMPLETO
@@ -1040,21 +1131,37 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                     </div>
                   </>
                 ) : (
-                  <ProfileEditDrawerTrigger
-                    href={`/perfil/${id}/historico?from=${encodeURIComponent(`/perfil/${id}`)}`}
-                    title="Histórico completo"
-                    fullscreen
-                    topMode="backOnly"
-                    className="eid-list-item mt-2 flex w-full min-h-[84px] flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-eid-primary-500/35 bg-eid-primary-500/[0.06] p-3 text-center transition-all duration-200 ease-out hover:-translate-y-[1px] hover:bg-eid-primary-500/[0.1]"
-                  >
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-surface/65 text-eid-primary-300">
-                      <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden>
-                        <path d="M10 2.25a.75.75 0 0 1 .75.75V10h4.25a.75.75 0 0 1 0 1.5H10A.75.75 0 0 1 9.25 10V3a.75.75 0 0 1 .75-.75Zm0 15a7.25 7.25 0 1 0 0-14.5 7.25 7.25 0 0 0 0 14.5ZM1.25 10a8.75 8.75 0 1 1 17.5 0 8.75 8.75 0 0 1-17.5 0Z" />
-                      </svg>
-                    </span>
-                    <p className="text-[11px] font-bold text-eid-fg">Nenhum histórico registrado ainda</p>
-                    <p className="text-[9px] text-eid-text-secondary">Toque para ver o histórico completo.</p>
-                  </ProfileEditDrawerTrigger>
+                  <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+                    <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Prévia do histórico</p>
+                      <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-action-500)_28%)]">
+                        Sem jogos
+                      </span>
+                    </div>
+                    <div className="p-3 text-center">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-surface/65 text-eid-primary-300">
+                        <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden>
+                          <path d="M10 2.25a.75.75 0 0 1 .75.75V10h4.25a.75.75 0 0 1 0 1.5H10A.75.75 0 0 1 9.25 10V3a.75.75 0 0 1 .75-.75Zm0 15a7.25 7.25 0 1 0 0-14.5 7.25 7.25 0 0 0 0 14.5ZM1.25 10a8.75 8.75 0 1 1 17.5 0 8.75 8.75 0 0 1-17.5 0Z" />
+                        </svg>
+                      </span>
+                      <p className="mt-2 text-[11px] font-bold text-eid-fg">Nenhum histórico registrado ainda</p>
+                      <p className="mt-0.5 text-[9px] text-eid-text-secondary">Quando houver confrontos concluídos, eles aparecerão aqui.</p>
+                      <div className="mt-2 flex justify-center">
+                        <ProfileEditDrawerTrigger
+                          href={`/perfil/${id}/historico?from=${encodeURIComponent(`/perfil/${id}`)}`}
+                          title="Histórico completo"
+                          fullscreen
+                          topMode="backOnly"
+                          className="inline-flex min-h-[30px] items-center justify-center gap-1 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.08em] text-eid-fg transition-all hover:border-eid-primary-500/50 hover:bg-eid-primary-500/18 hover:text-eid-fg"
+                        >
+                          <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3" aria-hidden>
+                            <path d="M8 1.5a.75.75 0 0 1 .75.75V8h4.5a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 7.25 8V2.25A.75.75 0 0 1 8 1.5Zm0 13a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Zm-8-6.5a8 8 0 1 1 16 0 8 8 0 0 1-16 0Z" />
+                          </svg>
+                          VER HISTÓRICO COMPLETO
+                        </ProfileEditDrawerTrigger>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </ProfileSection>
             ) : (
@@ -1062,7 +1169,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 <div className="eid-list-item mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 text-center">
                   <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
                     <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Privacidade</p>
-                    <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+                    <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-action-500)_28%)]">
                       Oculto
                     </span>
                   </div>

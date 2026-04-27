@@ -101,10 +101,9 @@ export function RankingFilterBar({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, pe);
 
   return (
-    <div className="mb-3">
-      <div className="space-y-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2 backdrop-blur-sm shadow-[0_12px_24px_-16px_rgba(15,23,42,0.28)] [&_a]:[-webkit-tap-highlight-color:transparent]">
-        <div className="rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
-          <div className="flex h-[1.5rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)]">
+    <div className="space-y-2 [&_a]:[-webkit-tap-highlight-color:transparent]">
+        <div className="eid-ranking-filter-slab rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
+          <div className="eid-ranking-segment-track flex h-[1.5rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)]">
             <Link href={href({ tipo: "individual", page: 1 })} className={tipoSegmentButton(state.tipo === "individual")}>
               <IconSingle className="h-2.5 w-2.5 shrink-0" />
               <span>Individual</span>
@@ -120,7 +119,7 @@ export function RankingFilterBar({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm">
+        <div className="eid-ranking-filter-slab grid grid-cols-2 gap-1.5 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm">
           <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
             <IconPin className="h-2.5 w-2.5 shrink-0" />
             <span className="min-w-0 truncate">
@@ -135,14 +134,17 @@ export function RankingFilterBar({
         {needsCidadeFallback ? (
           <p className="px-0.5 text-xs leading-snug text-eid-text-secondary">
             Sem cidade —{" "}
-            <Link href="/conta/perfil" className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">
+            <Link
+              href="/conta/perfil"
+              className="font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)] underline-offset-2 hover:underline"
+            >
               perfil
             </Link>
           </p>
         ) : null}
 
         {todosEsportes.length > 0 ? (
-          <div className="rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm">
+          <div className="eid-ranking-filter-slab rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm">
             <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-0.5 pr-0.5 select-none [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
               <div className="flex min-w-max flex-nowrap items-center gap-1.5">
               {todosEsportes.map((opt) => {
@@ -156,7 +158,7 @@ export function RankingFilterBar({
                     className={cn(
                       "inline-flex h-[1.38rem] w-auto shrink-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
                       active
-                        ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
+                        ? "eid-ranking-sport-pill-active bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
                         : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55",
                       isPrincipal && !active && "bg-eid-primary-500/08 text-eid-fg/90"
                     )}
@@ -170,7 +172,6 @@ export function RankingFilterBar({
           </div>
         </div>
         ) : null}
-      </div>
     </div>
   );
 }
@@ -185,7 +186,7 @@ export function RankingPeriodToggle({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
   return (
     <div className="flex justify-end">
-      <div className="relative flex h-[1.3rem] min-w-[6rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[8px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="eid-ranking-toggle-shell relative flex h-[1.3rem] min-w-[6rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[8px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
         <span
           className={cn(
             "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
@@ -231,7 +232,7 @@ export function RankingRankToggle({
   const rankIsMatch = state.rank === "match";
   return (
     <div className="flex justify-start">
-      <div className="relative flex h-[1.3rem] min-w-[6rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[8px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="eid-ranking-toggle-shell relative flex h-[1.3rem] min-w-[6rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[8px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
         <span
           className={cn(
             "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
@@ -270,7 +271,7 @@ function tipoSegmentButton(active: boolean) {
   return cn(
     "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-sm px-1 text-[9px] font-semibold uppercase leading-none tracking-[0.035em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
     active
-      ? "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
+      ? "eid-ranking-chip-active bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35"
   );
 }
@@ -279,7 +280,7 @@ function blockButton(active: boolean) {
   return cn(
     "inline-flex h-[1.38rem] w-auto min-w-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
     active
-      ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_7px_16px_-11px_rgba(37,99,235,0.4)]"
+      ? "eid-ranking-chip-active bg-eid-primary-500/14 text-eid-fg shadow-[0_7px_16px_-11px_rgba(37,99,235,0.4)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55"
   );
 }
@@ -289,7 +290,7 @@ export function RankingEidSeal({ score }: { score: number }) {
   const safe = Number.isFinite(score) ? score : 0;
   return (
     <span
-      className="pointer-events-none absolute bottom-0 left-1/2 z-[3] flex -translate-x-1/2 translate-y-[40%] items-center rounded-full border border-eid-primary-500/45 text-[6px] font-black uppercase leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
+      className="eid-ranking-eid-seal pointer-events-none absolute bottom-0 left-1/2 z-[3] flex -translate-x-1/2 translate-y-[40%] items-center rounded-full border border-eid-primary-500/45 text-[6px] font-black uppercase leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
       aria-hidden
     >
       <span className="rounded-l-full bg-black px-[3px] py-px pl-[4px]">EID</span>
@@ -328,20 +329,24 @@ export function RankingPodium({
 
   return (
     <section className="relative z-[1] mb-0.5 isolate">
-      <div className="eid-podium-card overflow-visible rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_28%,transparent),color-mix(in_srgb,var(--eid-card)_95%,transparent)_44%,color-mix(in_srgb,var(--eid-surface)_96%,transparent)_100%)] px-2.5 py-3 backdrop-blur-sm shadow-[0_16px_30px_-20px_rgba(15,23,42,0.35),0_0_30px_-12px_rgba(37,99,235,0.55)] [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="eid-podium-card overflow-visible rounded-xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_22%,transparent),color-mix(in_srgb,var(--eid-card)_96%,transparent)_48%,color-mix(in_srgb,var(--eid-surface)_97%,transparent)_100%)] px-2.5 py-3 shadow-[0_12px_28px_-18px_rgba(15,23,42,0.38),0_0_24px_-14px_rgba(37,99,235,0.42)] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
         {rankToggle || periodToggle ? (
-          <div className="relative z-[3] mb-0.5 grid grid-cols-2 items-start gap-1.5">
+          <div className="relative z-[3] mb-1 grid grid-cols-2 items-start gap-2">
             <div className="min-w-0 w-fit flex flex-col items-start">
-              <p className="mb-0.5 w-full text-left text-[7px] font-semibold uppercase tracking-[0.1em] text-eid-text-secondary">Tipo de rank</p>
+              <p className="eid-ranking-podium-label mb-1 w-full text-left text-[10px] font-black uppercase tracking-[0.16em] text-[color:color-mix(in_srgb,var(--eid-fg)_52%,var(--eid-primary-500)_48%)]">
+                Tipo de rank
+              </p>
               {rankToggle}
             </div>
             <div className="ml-auto min-w-0 w-fit flex flex-col items-end">
-              <p className="mb-0.5 w-full text-right text-[7px] font-semibold uppercase tracking-[0.1em] text-eid-text-secondary">Período</p>
+              <p className="eid-ranking-podium-label mb-1 w-full text-right text-[10px] font-black uppercase tracking-[0.16em] text-[color:color-mix(in_srgb,var(--eid-fg)_52%,var(--eid-primary-500)_48%)]">
+                Período
+              </p>
               {periodToggle}
             </div>
           </div>
         ) : null}
-        <h2 className="pointer-events-none eid-podium-title -mt-5 mb-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-transparent bg-gradient-to-b from-white via-eid-primary-300 to-eid-primary-500 bg-clip-text drop-shadow-[0_1px_3px_rgba(37,99,235,0.45)]">
+        <h2 className="pointer-events-none eid-podium-title -mt-5 mb-2 text-center text-[10px] font-black uppercase tracking-[0.16em]">
           Pódio
         </h2>
         {hasAnyPodium ? (
@@ -382,11 +387,11 @@ function PodiumFace({ slot, highlight, rankKind }: { slot: PodiumSlot; highlight
   );
   return (
     <div className={cn("flex flex-col items-center text-center", highlight && "scale-[1.03]")}>
-      <span className="mb-0.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-px text-[8px] font-black tabular-nums text-eid-primary-300">
+      <span className="mb-0.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-px text-[8px] font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]">
         {slot.place}
       </span>
       {highlight ? (
-        <div className="mb-0.5 text-eid-primary-400/55" aria-hidden>
+        <div className="eid-ranking-crown mb-0.5 text-eid-primary-400/55" aria-hidden>
           <IconCrown className="mx-auto h-2.5 w-2.5" />
         </div>
       ) : (
@@ -402,7 +407,9 @@ function PodiumFace({ slot, highlight, rankKind }: { slot: PodiumSlot; highlight
             {slot.avatarUrl ? (
               <img src={slot.avatarUrl} alt="" className="h-full w-full object-cover transition group-hover:opacity-95" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[7px] font-bold text-eid-primary-300">{initial}</div>
+              <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[7px] font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]">
+                {initial}
+              </div>
             )}
           </div>
           {rankKind === "match" ? <RankingEidSeal score={slot.notaEid} /> : null}
@@ -411,7 +418,7 @@ function PodiumFace({ slot, highlight, rankKind }: { slot: PodiumSlot; highlight
       <p className="mt-1.5 line-clamp-2 max-w-[10rem] px-0.5 text-[10px] font-bold leading-tight text-eid-fg">
         {slot.nome}
       </p>
-      <p className="mt-0.5 text-[10px] font-black tabular-nums text-eid-primary-300">
+      <p className="mt-0.5 text-[10px] font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
         {rankKind === "eid" ? (
           <>
             {(Number.isFinite(slot.notaEid) ? slot.notaEid : 0).toFixed(1)}{" "}
@@ -448,8 +455,10 @@ export function RankingRow({
   const initial = (nome.trim().slice(0, 2) || "—").toUpperCase();
   const valueText = metricKind === "eid" ? metricValue.toFixed(1) : String(metricValue);
   return (
-    <div className="flex items-center gap-2 border-b border-[color:var(--eid-border-subtle)] py-1.5 last:border-b-0">
-      <span className="w-7 shrink-0 text-center text-sm font-black tabular-nums text-eid-primary-300">{rank}º</span>
+    <div className="eid-ranking-row flex items-center gap-2 border-b border-[color:var(--eid-border-subtle)] py-1.5 last:border-b-0">
+      <span className="eid-ranking-rank-num w-7 shrink-0 text-center text-sm font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
+        {rank}º
+      </span>
       <Link
         href={href}
         className="group relative h-9 w-9 shrink-0 transition-transform duration-200 ease-out motion-safe:transform-gpu hover:scale-[1.03] active:scale-[0.97] outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
@@ -460,14 +469,16 @@ export function RankingRow({
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[9px] font-bold text-eid-primary-300">{initial}</div>
+              <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[9px] font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]">
+                {initial}
+              </div>
             )}
           </div>
           <RankingEidSeal score={eidScore} />
         </div>
       </Link>
       <p className="min-w-0 flex-1 truncate text-xs font-bold text-eid-fg">{nome}</p>
-      <p className="shrink-0 text-base font-black tabular-nums text-eid-primary-300">
+      <p className="shrink-0 text-base font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
         {valueText}
         <span className="ml-1 text-[8px] font-bold uppercase tracking-wide text-eid-text-secondary">{metricKind === "eid" ? "EID" : "PTS"}</span>
       </p>
@@ -477,9 +488,12 @@ export function RankingRow({
 
 export function ViewerRankCard({ rank }: { rank: number }) {
   return (
-    <div className="mb-2 rounded-lg border border-eid-primary-500/25 bg-eid-primary-500/[0.06] px-2.5 py-1.5 text-center">
-      <p className="text-xs text-eid-text-secondary">
-        Sua posição: <span className="text-base font-black tabular-nums text-eid-primary-300">{rank}º</span>
+    <div className="eid-ranking-viewer-card mb-2 rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/[0.08] px-3 py-2 text-center shadow-[0_8px_20px_-14px_rgba(37,99,235,0.35)]">
+      <p className="text-[11px] text-eid-text-secondary md:text-xs">
+        Sua posição:{" "}
+        <span className="text-base font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
+          {rank}º
+        </span>
       </p>
     </div>
   );

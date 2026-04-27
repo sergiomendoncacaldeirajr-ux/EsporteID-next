@@ -1427,26 +1427,217 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
   border-color: var(--eid-focus-ring) !important;
 }
 
-/* Ranking — pódio com leitura melhor no tema claro */
-[data-eid-theme="light"] .eid-podium-card {
-  background-image: radial-gradient(
-    ellipse at top,
-    color-mix(in srgb, var(--eid-primary-500) 16%, transparent),
-    color-mix(in srgb, #ffffff 92%, transparent) 46%,
-    color-mix(in srgb, var(--eid-bg) 96%, transparent) 100%
+/* Ranking — título do pódio (gradiente + clip; não usar `color:` no elemento) */
+.eid-podium-title {
+  color: transparent !important;
+  -webkit-background-clip: text;
+  background-clip: text;
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--eid-fg) 88%, white),
+    color-mix(in srgb, var(--eid-primary-400) 72%, var(--eid-fg))
   );
-  box-shadow:
-    0 14px 28px -20px rgba(15, 23, 42, 0.18),
-    0 0 20px -14px rgba(37, 99, 235, 0.2);
 }
 
 [data-eid-theme="light"] .eid-podium-title {
   background-image: linear-gradient(
     to bottom,
-    color-mix(in srgb, var(--eid-primary-700) 92%, #0f172a),
+    color-mix(in srgb, var(--eid-primary-700) 42%, var(--eid-fg)),
     var(--eid-primary-500)
   );
-  filter: drop-shadow(0 1px 2px rgba(37, 99, 235, 0.22));
+  filter: drop-shadow(0 1px 1px rgba(37, 99, 235, 0.14));
+}
+
+/* Ranking — pódio no tema claro */
+[data-eid-theme="light"] .eid-podium-card {
+  border-color: color-mix(in srgb, var(--eid-border) 72%, var(--eid-primary-500) 28%) !important;
+  background-image: radial-gradient(
+    ellipse at top,
+    color-mix(in srgb, var(--eid-primary-500) 18%, transparent),
+    color-mix(in srgb, #ffffff 94%, transparent) 48%,
+    color-mix(in srgb, var(--eid-field-bg) 88%, #ffffff) 100%
+  ) !important;
+  box-shadow:
+    0 16px 32px -22px rgba(15, 23, 42, 0.14),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 9%, transparent);
+}
+
+/*
+ * Página /ranking no tema claro: cartões brancos ganham borda, sombra suave e “wells” nos filtros
+ * (evita tudo “lavado” quando --eid-card === --eid-surface).
+ */
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-hero.eid-surface-panel {
+  box-shadow:
+    0 16px 34px -22px rgba(15, 23, 42, 0.13),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 10%, transparent);
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-card {
+  border-color: color-mix(in srgb, var(--eid-border) 78%, var(--eid-primary-500) 22%) !important;
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    color-mix(in srgb, var(--eid-field-bg) 52%, #ffffff 48%) 100%
+  ) !important;
+  box-shadow:
+    0 12px 28px -20px rgba(15, 23, 42, 0.11),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 7%, transparent);
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-card-head {
+  background: color-mix(in srgb, var(--eid-field-bg) 90%, var(--eid-primary-500) 10%) !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border) 70%, var(--eid-primary-500) 30%) !important;
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-list-inner {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 96%, var(--eid-field-bg) 4%),
+    color-mix(in srgb, var(--eid-field-bg) 22%, #ffffff 78%)
+  );
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-filter-slab {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--eid-field-bg) 100%, white),
+    color-mix(in srgb, #ffffff 92%, var(--eid-primary-500) 8%)
+  ) !important;
+  border: 1px solid color-mix(in srgb, var(--eid-border) 88%, var(--eid-primary-500) 12%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-segment-track {
+  background: color-mix(in srgb, #ffffff 65%, var(--eid-field-bg) 35%) !important;
+  border: 1px solid color-mix(in srgb, var(--eid-border) 82%, transparent);
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-chip-active {
+  background: color-mix(in srgb, var(--eid-primary-500) 20%, #ffffff 80%) !important;
+  box-shadow: 0 4px 14px -8px rgba(37, 99, 235, 0.35);
+  outline: 1px solid color-mix(in srgb, var(--eid-primary-500) 28%, transparent);
+  outline-offset: -1px;
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-sport-pill-active {
+  background: color-mix(in srgb, var(--eid-primary-500) 18%, #ffffff 82%) !important;
+  box-shadow: 0 4px 12px -8px rgba(37, 99, 235, 0.3);
+  outline: 1px solid color-mix(in srgb, var(--eid-primary-500) 24%, transparent);
+  outline-offset: -1px;
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-toggle-shell {
+  border-color: color-mix(in srgb, var(--eid-border) 68%, var(--eid-primary-500) 32%) !important;
+  background: color-mix(in srgb, var(--eid-field-bg) 38%, #ffffff 62%) !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-podium-label {
+  color: var(--eid-primary-700) !important;
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-crown {
+  color: color-mix(in srgb, #2563eb 72%, var(--eid-warning-500) 28%) !important;
+  opacity: 1 !important;
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-section-title {
+  color: var(--eid-primary-700) !important;
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-badge {
+  border-color: color-mix(in srgb, var(--eid-primary-500) 34%, var(--eid-border) 66%) !important;
+  background: color-mix(in srgb, var(--eid-primary-500) 12%, #ffffff 88%) !important;
+  color: var(--eid-primary-700) !important;
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-badge-action {
+  border-color: color-mix(in srgb, var(--eid-action-500) 32%, var(--eid-border) 68%) !important;
+  background: color-mix(in srgb, var(--eid-action-500) 10%, #ffffff 90%) !important;
+  color: color-mix(in srgb, var(--eid-action-600) 85%, var(--eid-fg) 15%) !important;
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-empty {
+  border-color: color-mix(in srgb, var(--eid-border) 75%, var(--eid-primary-500) 25%) !important;
+  background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--eid-field-bg) 45%, white)) !important;
+  box-shadow: 0 10px 24px -18px rgba(15, 23, 42, 0.1);
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-cta {
+  border-color: color-mix(in srgb, var(--eid-primary-500) 32%, var(--eid-border) 68%) !important;
+  background: color-mix(in srgb, var(--eid-primary-500) 11%, #ffffff 89%) !important;
+  color: var(--eid-primary-700) !important;
+  box-shadow: 0 8px 20px -14px rgba(37, 99, 235, 0.28);
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-viewer-card {
+  border-color: color-mix(in srgb, var(--eid-primary-500) 30%, var(--eid-border) 70%) !important;
+  background: color-mix(in srgb, var(--eid-primary-500) 9%, #ffffff 91%) !important;
+  box-shadow: 0 10px 22px -16px rgba(37, 99, 235, 0.2);
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-rank-num {
+  color: var(--eid-primary-700) !important;
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-row {
+  border-bottom-color: color-mix(in srgb, var(--eid-border) 88%, var(--eid-primary-500) 12%) !important;
+}
+
+[data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-eid-seal {
+  border-color: color-mix(in srgb, #2563eb 35%, var(--eid-border) 65%);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+}
+
+/* Dashboard (/dashboard) — cartões e hero no tema claro */
+[data-eid-theme="light"] [data-eid-dashboard-page] .eid-dashboard-hero.eid-surface-panel {
+  box-shadow:
+    0 16px 34px -22px rgba(15, 23, 42, 0.13),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 10%, transparent);
+}
+
+[data-eid-theme="light"] [data-eid-dashboard-page] .eid-dashboard-hero-glow {
+  opacity: 0.42;
+}
+
+[data-eid-theme="light"] [data-eid-dashboard-page] .eid-dashboard-section {
+  border-color: color-mix(in srgb, var(--eid-border) 78%, var(--eid-primary-500) 22%) !important;
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    color-mix(in srgb, var(--eid-field-bg) 52%, #ffffff 48%) 100%
+  ) !important;
+  box-shadow:
+    0 12px 28px -20px rgba(15, 23, 42, 0.11),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 7%, transparent);
+}
+
+[data-eid-theme="light"] [data-eid-dashboard-page] .eid-dashboard-section-head {
+  background: color-mix(in srgb, var(--eid-field-bg) 90%, var(--eid-primary-500) 10%) !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border) 70%, var(--eid-primary-500) 30%) !important;
+}
+
+/* Menu de atalhos (Locais / Reservar / Torneios / …) — dock, não card de lista */
+[data-eid-theme="light"] [data-eid-dashboard-page] .eid-dashboard-app-nav {
+  border-color: color-mix(in srgb, var(--eid-border) 75%, var(--eid-primary-500) 25%) !important;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--eid-field-bg) 55%, #ffffff 45%),
+    color-mix(in srgb, #ffffff 88%, var(--eid-primary-500) 12%)
+  ) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 10px 26px -18px rgba(15, 23, 42, 0.12);
+}
+
+[data-eid-theme="light"] [data-eid-dashboard-page] .eid-dashboard-app-nav-item.eid-list-item {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+[data-eid-theme="light"] [data-eid-dashboard-page] .eid-dashboard-app-nav-item.eid-list-item:hover {
+  background: color-mix(in srgb, var(--eid-primary-500) 12%, #ffffff 88%) !important;
 }
 
 /* Superfície padrão tipo Ranking (glass card). */
