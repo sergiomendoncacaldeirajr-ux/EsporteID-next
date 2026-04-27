@@ -478,7 +478,6 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    prefetch={false}
                     onClickCapture={(ev) => onNavLinkClickCapture(ev, item.href)}
                     className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 pt-1.5 transition-opacity active:opacity-80"
                     aria-label={item.label}
@@ -515,7 +514,6 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  prefetch={false}
                   onClickCapture={(ev) => onNavLinkClickCapture(ev, item.href)}
                   className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 transition-opacity active:opacity-80"
                   aria-label={item.label}
