@@ -17,6 +17,59 @@ async function guard() {
   if (!(await getIsPlatformAdmin())) throw new Error("Acesso negado.");
 }
 
+export async function adminCancelarLimparPartida(formData: FormData) {
+  try {
+    await guard();
+    const partidaId = Number(formData.get("partida_id"));
+    if (!Number.isFinite(partidaId) || partidaId < 1) return;
+    const db = svc();
+    const { data: partida } = await db.from("partidas").select("id, match_id, torneio_id").eq("id", partidaId).maybeSingle();
+    if (!partida) return;
+
+    const { error } = await db
+      .from("partidas")
+      .update({
+        status: "cancelada",
+        status_ranking: "cancelado_admin",
+        placar_1: null,
+        placar_2: null,
+        placar_desafiante: null,
+        placar_desafiado: null,
+        placar: null,
+        lancado_por: null,
+        mensagem: "Partida cancelada pelo admin para limpeza de fluxo.",
+        data_resultado: null,
+        data_validacao: null,
+      })
+      .eq("id", partidaId);
+    if (error) return;
+
+    const matchId = Number(partida.match_id ?? 0);
+    if (Number.isFinite(matchId) && matchId > 0) {
+      await db
+        .from("matches")
+        .update({
+          status: "Cancelado",
+          cancel_requested_by: null,
+        })
+        .eq("id", matchId);
+    }
+
+    revalidatePath("/admin/partidas");
+    revalidatePath("/agenda");
+    revalidatePath("/comunidade");
+    revalidatePath("/dashboard");
+    revalidatePath(`/registrar-placar/${partidaId}`);
+    const torneioId = Number(partida.torneio_id ?? 0);
+    if (Number.isFinite(torneioId) && torneioId > 0) {
+      revalidatePath(`/torneios/${torneioId}`);
+      revalidatePath(`/torneios/${torneioId}/operacao`);
+    }
+  } catch {
+    return;
+  }
+}
+
 export async function adminSetEsporteAtivo(formData: FormData) {
   try {
     await guard();

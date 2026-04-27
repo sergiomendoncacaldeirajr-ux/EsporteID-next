@@ -338,6 +338,13 @@ export default async function ComunidadePage() {
     fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel),
     fetchPlacarAguardandoConfirmacao(supabase, user.id, teamClausePainel),
   ]);
+  const { data: painelPartidasStatusRows } = await supabase
+    .from("partidas")
+    .select("id, esporte_id, jogador1_id, jogador2_id, status, status_ranking, lancado_por")
+    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id}${teamClausePainel}`)
+    .in("status", ["agendada", "aguardando_confirmacao"])
+    .order("id", { ascending: false })
+    .limit(120);
   const painelPartidasAll = [...(painelAgendadas ?? []), ...(painelPlacarPendente ?? [])];
   const painelLocalIds = [
     ...new Set(
@@ -388,6 +395,42 @@ export default async function ComunidadePage() {
     const [x, y] = [String(a), String(b)].sort();
     return `${Number(esporteId)}:${x}:${y}`;
   }
+  function dueloKeyNoSport(a: string | null | undefined, b: string | null | undefined): string | null {
+    if (!a || !b) return null;
+    const [x, y] = [String(a), String(b)].sort();
+    return `${x}:${y}`;
+  }
+
+  const partidaMaisRecentePorDueloPainel = new Map<
+    string,
+    { status: string | null; status_ranking: string | null; lancado_por: string | null }
+  >();
+  const partidaMaisRecentePorDueloPainelNoSport = new Map<
+    string,
+    { status: string | null; status_ranking: string | null; lancado_por: string | null }
+  >();
+  for (const row of painelPartidasStatusRows ?? []) {
+    const key = dueloKey(
+      (row as { jogador1_id?: string | null }).jogador1_id ?? null,
+      (row as { jogador2_id?: string | null }).jogador2_id ?? null,
+      Number((row as { esporte_id?: number | null }).esporte_id ?? 0)
+    );
+    const meta = {
+      status: (row as { status?: string | null }).status ?? null,
+      status_ranking: (row as { status_ranking?: string | null }).status_ranking ?? null,
+      lancado_por: (row as { lancado_por?: string | null }).lancado_por ?? null,
+    };
+    if (key && !partidaMaisRecentePorDueloPainel.has(key)) {
+      partidaMaisRecentePorDueloPainel.set(key, meta);
+    }
+    const keyNoSport = dueloKeyNoSport(
+      (row as { jogador1_id?: string | null }).jogador1_id ?? null,
+      (row as { jogador2_id?: string | null }).jogador2_id ?? null
+    );
+    if (keyNoSport && !partidaMaisRecentePorDueloPainelNoSport.has(keyNoSport)) {
+      partidaMaisRecentePorDueloPainelNoSport.set(keyNoSport, meta);
+    }
+  }
 
   const cancelMatchIdByDueloPainel = new Map<string, number>();
   const rescheduleAcceptedByDueloPainel = new Set<string>();
@@ -404,8 +447,15 @@ export default async function ComunidadePage() {
     }
   }
   const painelAgendadasVisiveis = (painelAgendadas ?? []).filter((row) => {
-    const rowStatusRanking = String((row as { status_ranking?: string | null }).status_ranking ?? "").trim().toLowerCase();
-    const rowLancadoPor = String((row as { lancado_por?: string | null }).lancado_por ?? "").trim();
+    const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
+    const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
+    const keyNoSport = dueloKeyNoSport(row.jogador1_id, row.jogador2_id);
+    const meta = (key ? partidaMaisRecentePorDueloPainel.get(key) ?? null : null) ??
+      (keyNoSport ? partidaMaisRecentePorDueloPainelNoSport.get(keyNoSport) ?? null : null);
+    const rowStatusRanking = String(meta?.status_ranking ?? (row as { status_ranking?: string | null }).status_ranking ?? "")
+      .trim()
+      .toLowerCase();
+    const rowLancadoPor = String(meta?.lancado_por ?? (row as { lancado_por?: string | null }).lancado_por ?? "").trim();
     const isContestadoLegacy =
       rowStatusRanking === "contestado" ||
       rowStatusRanking === "resultado_contestado" ||
@@ -418,8 +468,6 @@ export default async function ComunidadePage() {
     if (rowStatusRanking === "em_analise_admin") {
       return false;
     }
-    const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
-    const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
     if (!key) return true;
     return !blockedDueloByCancelFlowPainel.has(key);
   });
