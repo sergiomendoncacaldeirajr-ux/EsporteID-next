@@ -10,6 +10,7 @@ import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pe
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
+import { RealtimePageRefresh } from "@/components/pwa/realtime-page-refresh";
 import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import {
   type AgendaPartidaCardRow,
@@ -174,7 +175,8 @@ export default async function ComunidadePage() {
     .from("matches")
     .select("id, usuario_id, adversario_id, esporte_id, status")
     .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
-    .eq("status", "Aceito");
+    .eq("finalidade", "ranking")
+    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
 
   const { data: sugestoesRaw } = await supabase
     .from("match_sugestoes")
@@ -388,11 +390,22 @@ export default async function ComunidadePage() {
   }
 
   const cancelMatchIdByDueloPainel = new Map<string, number>();
+  const blockedDueloByCancelFlowPainel = new Set<string>();
   for (const m of aceitosCancelaveisPainel ?? []) {
     const key = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
     if (!key) continue;
-    cancelMatchIdByDueloPainel.set(key, Number(m.id));
+    if (String(m.status ?? "") === "Aceito") {
+      cancelMatchIdByDueloPainel.set(key, Number(m.id));
+    } else if (String(m.status ?? "") === "CancelamentoPendente" || String(m.status ?? "") === "ReagendamentoPendente") {
+      blockedDueloByCancelFlowPainel.add(key);
+    }
   }
+  const painelAgendadasVisiveis = (painelAgendadas ?? []).filter((row) => {
+    const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
+    const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
+    if (!key) return true;
+    return !blockedDueloByCancelFlowPainel.has(key);
+  });
 
   return (
     <main
@@ -400,6 +413,7 @@ export default async function ComunidadePage() {
       data-eid-touch-ui
       className="mx-auto w-full max-w-lg px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
+      <RealtimePageRefresh userId={user.id} />
       <FlowPageHeader
         title="Painel de controle"
         subtitle="Acompanhe sua rede em um só lugar: notificações, convites e pedidos organizados para você decidir e agir com rapidez."
@@ -496,13 +510,13 @@ export default async function ComunidadePage() {
                 <p className="mt-1 text-xs text-eid-text-secondary">
                   Partidas agendadas em que você pode enviar o placar após o jogo.
                 </p>
-                {(painelAgendadas ?? []).length === 0 ? (
+                {painelAgendadasVisiveis.length === 0 ? (
                   <p className="eid-list-item mt-3 rounded-2xl bg-eid-card/60 p-4 text-center text-sm text-eid-text-secondary">
                     Nenhuma partida agendada para lançar resultado.
                   </p>
                 ) : (
                   <div className="mt-4 space-y-4">
-                    {(painelAgendadas ?? []).map((row) => {
+                    {painelAgendadasVisiveis.map((row) => {
                       const esp = firstOfRelation(row.esportes);
                       const pr = row as AgendaPartidaCardRow;
                       const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);

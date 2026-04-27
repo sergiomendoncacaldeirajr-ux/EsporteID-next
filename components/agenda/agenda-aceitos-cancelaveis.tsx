@@ -37,6 +37,15 @@ function when(iso: string | null): string {
   }
 }
 
+function formatStatusLabel(status: string): string {
+  return status
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
 export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, initial);
   const [openRefuseByMatch, setOpenRefuseByMatch] = useState<Record<number, boolean>>({});
@@ -88,17 +97,17 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                 </p>
               </div>
               <span className="ml-auto rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
-                {m.status}
+                {formatStatusLabel(m.status)}
               </span>
             </div>
             <div className="mt-2 min-w-0">
               {m.status === "CancelamentoPendente" ? (
-                <p className="mt-1 text-[11px] text-amber-200">
+                <p className="mt-1 text-[11px] text-[color:color-mix(in_srgb,var(--eid-warning-500)_78%,var(--eid-fg)_22%)]">
                   Aguardando resposta ao cancelamento até: <span className="font-semibold">{when(m.cancelResponseDeadlineAt)}</span>
                 </p>
               ) : null}
               {m.status === "ReagendamentoPendente" ? (
-                <p className="mt-1 text-[11px] text-amber-200">
+                <p className="mt-1 text-[11px] text-[color:color-mix(in_srgb,var(--eid-warning-500)_78%,var(--eid-fg)_22%)]">
                   Janela de escolha até: <span className="font-semibold">{when(m.rescheduleDeadlineAt)}</span>
                 </p>
               ) : null}
@@ -107,7 +116,10 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
 
               {m.status === "CancelamentoPendente" && !m.isRequester ? (
                 <>
-                  <div className="flex flex-wrap gap-2">
+                  <p className="text-[10px] font-semibold text-eid-text-secondary">
+                    <span className="text-eid-fg">{m.nomeOponente}</span> solicitou cancelar este desafio. Você aceita?
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
                     <form action={formAction}>
                       <input type="hidden" name="intent" value="respond_cancel" />
                       <input type="hidden" name="match_id" value={String(m.id)} />
@@ -115,18 +127,20 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                       <button
                         type="submit"
                         disabled={pending}
-                        className={`${DESAFIO_FLOW_SECONDARY_CLASS} border-emerald-500/35 bg-emerald-500/12 text-emerald-200 disabled:opacity-50`}
+                        className="inline-flex h-5 w-full items-center justify-center whitespace-nowrap rounded-md border border-emerald-700 bg-emerald-600 px-1 py-0 text-[6px] font-black uppercase leading-none tracking-[0.01em] text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                        style={{ height: "22px", minHeight: "22px", fontSize: "9px", padding: "0 6px", lineHeight: "1" }}
                       >
-                        Aceitar cancelamento
+                        Aceitar
                       </button>
                     </form>
                     <button
                       type="button"
                       disabled={pending}
                       onClick={() => setOpenRefuseByMatch((s) => ({ ...s, [m.id]: !s[m.id] }))}
-                      className={`${DESAFIO_FLOW_SECONDARY_CLASS} border-amber-500/35 bg-amber-500/10 text-amber-100 disabled:opacity-50`}
+                      className="inline-flex h-5 w-full items-center justify-center whitespace-nowrap rounded-md border border-rose-700 bg-rose-600 px-1 py-0 text-[6px] font-black uppercase leading-none tracking-[0.01em] text-white transition hover:bg-rose-700 disabled:opacity-50"
+                      style={{ height: "22px", minHeight: "22px", fontSize: "9px", padding: "0 6px", lineHeight: "1" }}
                     >
-                      Não aceitar (propor 3 horários)
+                      Não aceitar
                     </button>
                   </div>
 
@@ -135,46 +149,60 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                       <input type="hidden" name="intent" value="respond_cancel" />
                       <input type="hidden" name="match_id" value={String(m.id)} />
                       <input type="hidden" name="aceitar_cancelamento" value="0" />
-                      <input name="opcao_1" type="datetime-local" required className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg" />
-                      <input name="opcao_2" type="datetime-local" required className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg" />
-                      <input name="opcao_3" type="datetime-local" required className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg" />
+                      <input
+                        name="opcao_1"
+                        type="datetime-local"
+                        required
+                        className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
+                        style={{ fontSize: "15px" }}
+                      />
+                      <input
+                        name="opcao_2"
+                        type="datetime-local"
+                        required
+                        className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
+                        style={{ fontSize: "15px" }}
+                      />
+                      <input
+                        name="opcao_3"
+                        type="datetime-local"
+                        required
+                        className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
+                        style={{ fontSize: "15px" }}
+                      />
                       <LocalAutocompleteInput
                         name="local_reagendamento"
                         placeholder="Local sugerido (opcional)"
                         minChars={3}
-                        className="eid-input-dark h-11 rounded-xl px-3 text-sm text-eid-fg"
+                        className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                       />
                       <CadastrarLocalOverlayTrigger
                         href="/locais/cadastrar?return_to=/agenda"
-                        className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full text-center`}
+                        className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full text-center !min-h-[28px] !px-2 !text-[8px]`}
                       >
                         + Cadastrar local genérico
                       </CadastrarLocalOverlayTrigger>
                       <button
                         type="submit"
                         disabled={pending}
-                        className={`${DESAFIO_FLOW_SECONDARY_CLASS} border-eid-primary-500/35 bg-eid-primary-500/12 text-eid-primary-200 disabled:opacity-50`}
+                        className={`${DESAFIO_FLOW_SECONDARY_CLASS} !min-h-[28px] !px-2 !text-[8px] border-eid-primary-500/35 bg-eid-primary-500/12 text-eid-primary-200 disabled:opacity-50`}
                       >
                         Enviar 3 opções (janela 72h)
                       </button>
                     </form>
                   ) : null}
 
-                  <form action={formAction} className="flex flex-col gap-2">
+                  <form action={formAction} className="flex">
                     <input type="hidden" name="intent" value="denunciar_cancelamento" />
                     <input type="hidden" name="match_id" value={String(m.id)} />
                     <input type="hidden" name="alvo_usuario_id" value={m.oponenteId} />
-                    <input
-                      name="detalhe"
-                      placeholder="Detalhe da tentativa indevida (opcional)"
-                      className="eid-input-dark h-10 rounded-xl px-3 text-xs text-eid-fg"
-                    />
                     <button
                       type="submit"
                       disabled={pending}
-                      className={`${DESAFIO_FLOW_SECONDARY_CLASS} border-red-500/35 bg-red-500/10 text-red-200 disabled:opacity-50`}
+                      className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full border-red-700 bg-red-700/20 text-red-100 hover:bg-red-700/30 disabled:opacity-50`}
                     >
-                      Denunciar tentativa indevida
+                      <span aria-hidden>🚩</span>
+                      <span>Denunciar tentativa indevida</span>
                     </button>
                   </form>
                 </>

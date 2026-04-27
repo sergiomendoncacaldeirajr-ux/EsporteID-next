@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ConexoesStrip, type ConexaoPeer } from "@/components/agenda/conexoes-strip";
 import { AgendaAceitosCancelaveis } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
+import { RealtimePageRefresh } from "@/components/pwa/realtime-page-refresh";
 import {
   type AgendaPartidaCardRow,
   fetchPartidasAgendadasUsuario,
@@ -220,12 +221,22 @@ export default async function AgendaPage() {
   }
 
   const cancelMatchIdByDuelo = new Map<string, number>();
+  const blockedDueloByCancelFlow = new Set<string>();
   for (const m of aceitosCancelaveis ?? []) {
-    if (String(m.status ?? "") !== "Aceito") continue;
     const key = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
     if (!key) continue;
-    cancelMatchIdByDuelo.set(key, Number(m.id));
+    if (String(m.status ?? "") === "Aceito") {
+      cancelMatchIdByDuelo.set(key, Number(m.id));
+    } else if (String(m.status ?? "") === "CancelamentoPendente" || String(m.status ?? "") === "ReagendamentoPendente") {
+      blockedDueloByCancelFlow.add(key);
+    }
   }
+  const partidasAgendadasVisiveis = (partidasAgendadas ?? []).filter((row) => {
+    const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
+    const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
+    if (!key) return true;
+    return !blockedDueloByCancelFlow.has(key);
+  });
 
   function localLabel(p: AgendaPartidaCardRow) {
     if (p.local_str?.trim()) return p.local_str.trim();
@@ -238,6 +249,7 @@ export default async function AgendaPage() {
       data-eid-touch-ui
       className="mx-auto w-full max-w-lg px-3 pt-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
+      <RealtimePageRefresh userId={user.id} />
       <ConexoesStrip peers={conexoes} />
 
       <section className="mt-6 md:mt-10">
@@ -249,14 +261,14 @@ export default async function AgendaPage() {
           </Link>
           .
         </p>
-        {(partidasAgendadas ?? []).length === 0 ? (
+        {partidasAgendadasVisiveis.length === 0 ? (
           <div className="eid-list-item mt-4 rounded-[22px] border-2 border-dashed bg-eid-card/40 py-10 text-center">
             <p className="text-sm font-bold text-eid-fg">Nenhuma pendência</p>
             <p className="mt-1 text-xs text-eid-text-secondary">Sua agenda está em dia. Combine um desafio no radar.</p>
           </div>
         ) : (
           <div className="mt-4 space-y-4">
-            {(partidasAgendadas ?? []).map((row) => {
+            {partidasAgendadasVisiveis.map((row) => {
               const esp = firstOfRelation(row.esportes);
               const pr = row as AgendaPartidaCardRow;
               const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);

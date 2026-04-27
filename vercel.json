@@ -11,6 +11,10 @@
     {
       "path": "/api/jobs/professor-metricas",
       "schedule": "15 5 * * *"
+    },
+    {
+      "path": "/api/jobs/push-notifications",
+      "schedule": "*/2 * * * *"
     }
   ]
 }
