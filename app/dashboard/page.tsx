@@ -5,7 +5,6 @@ import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-loca
 import { createClient } from "@/lib/supabase/server";
 import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
-import { RealtimePageRefresh } from "@/components/pwa/realtime-page-refresh";
 import { AmistosoDailyHint } from "@/components/dashboard/amistoso-daily-hint";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { distanciaKm } from "@/lib/geo/distance-km";
@@ -561,7 +560,6 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 pb-[calc(var(--eid-shell-footer-offset)-0.75rem)] pt-3 sm:px-6 sm:pb-[calc(var(--eid-shell-footer-offset)-0.5rem)] sm:pt-4">
-        <RealtimePageRefresh userId={user.id} />
         <div className="eid-surface-panel relative overflow-hidden rounded-[1.35rem] border-eid-primary-500/25 bg-gradient-to-br from-eid-card via-eid-card to-eid-primary-950/40 p-4 shadow-[0_24px_56px_-22px_rgba(37,99,235,0.4)] sm:rounded-2xl sm:p-6">
           <div
             className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-primary-500/15 blur-3xl"

@@ -15,6 +15,7 @@ type Props = {
 export function RealtimePageRefresh({ userId }: Props) {
   const router = useRouter();
   const lastRefreshAt = useRef(0);
+  const instanceIdRef = useRef(`rpr-${Math.random().toString(36).slice(2, 10)}`);
 
   useEffect(() => {
     if (!userId) return;
@@ -26,10 +27,11 @@ export function RealtimePageRefresh({ userId }: Props) {
       lastRefreshAt.current = now;
       router.refresh();
     };
+    const channelTag = `${userId}-${instanceIdRef.current}`;
 
     const channels = [
       supabase
-        .channel(`eid-refresh-notif-${userId}`)
+        .channel(`eid-refresh-notif-${channelTag}`)
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "notificacoes", filter: `usuario_id=eq.${userId}` },
@@ -37,19 +39,19 @@ export function RealtimePageRefresh({ userId }: Props) {
         )
         .subscribe(),
       supabase
-        .channel(`eid-refresh-match-u-${userId}`)
+        .channel(`eid-refresh-match-u-${channelTag}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `usuario_id=eq.${userId}` }, refresh)
         .subscribe(),
       supabase
-        .channel(`eid-refresh-match-a-${userId}`)
+        .channel(`eid-refresh-match-a-${channelTag}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `adversario_id=eq.${userId}` }, refresh)
         .subscribe(),
       supabase
-        .channel(`eid-refresh-partida-j1-${userId}`)
+        .channel(`eid-refresh-partida-j1-${channelTag}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "partidas", filter: `jogador1_id=eq.${userId}` }, refresh)
         .subscribe(),
       supabase
-        .channel(`eid-refresh-partida-j2-${userId}`)
+        .channel(`eid-refresh-partida-j2-${channelTag}`)
         .on("postgres_changes", { event: "*", schema: "public", table: "partidas", filter: `jogador2_id=eq.${userId}` }, refresh)
         .subscribe(),
     ];

@@ -5,7 +5,6 @@ import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-loca
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import { MatchScoreForm } from "@/components/placar/match-score-form";
 import { StatusSubmitButton } from "@/components/placar/status-submit-button";
-import { RealtimePageRefresh } from "@/components/pwa/realtime-page-refresh";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
@@ -261,7 +260,6 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
 
   return (
     <main data-eid-desafio-ui className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-4 sm:py-6">
-        <RealtimePageRefresh userId={user.id} />
         {!isEmbed ? (
           <Link href={voltarHref} className={`${DESAFIO_FLOW_SECONDARY_CLASS} max-w-fit normal-case`}>
             {voltarLabel}

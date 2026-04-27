@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { ConexoesStrip, type ConexaoPeer } from "@/components/agenda/conexoes-strip";
 import { AgendaAceitosCancelaveis } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
-import { RealtimePageRefresh } from "@/components/pwa/realtime-page-refresh";
 import {
   type AgendaPartidaCardRow,
   fetchPartidasAgendadasUsuario,
@@ -340,7 +339,6 @@ export default async function AgendaPage() {
       data-eid-touch-ui
       className="mx-auto w-full max-w-lg px-3 pt-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
-      <RealtimePageRefresh userId={user.id} />
       <ConexoesStrip peers={conexoes} />
 
       <section className="mt-6 md:mt-10">

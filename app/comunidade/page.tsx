@@ -10,7 +10,6 @@ import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pe
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
-import { RealtimePageRefresh } from "@/components/pwa/realtime-page-refresh";
 import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import {
   type AgendaPartidaCardRow,
@@ -478,7 +477,6 @@ export default async function ComunidadePage() {
       data-eid-touch-ui
       className="mx-auto w-full max-w-lg px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
-      <RealtimePageRefresh userId={user.id} />
       <FlowPageHeader
         title="Painel de controle"
         subtitle="Acompanhe sua rede em um só lugar: notificações, convites e pedidos organizados para você decidir e agir com rapidez."

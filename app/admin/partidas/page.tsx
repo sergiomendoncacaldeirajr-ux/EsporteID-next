@@ -55,42 +55,40 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
           Não foi possível definir o resultado da partida.
         </p>
       ) : null}
-      <div className="mt-4 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)]">
-        <table className="w-full min-w-[900px] text-left text-xs">
-          <thead className="border-b border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-bold uppercase text-eid-text-secondary">
-            <tr>
-              <th className="px-2 py-2">ID</th>
-              <th className="px-2 py-2">Match</th>
-              <th className="px-2 py-2">Status</th>
-              <th className="px-2 py-2">Esp.</th>
-              <th className="px-2 py-2">Torneio</th>
-              <th className="px-2 py-2">Quando</th>
-              <th className="px-2 py-2">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((p) => (
-              <tr key={p.id} className="border-b border-[color:var(--eid-border-subtle)]/50">
-                {(() => {
-                  const status = String(p.status ?? "").trim().toLowerCase();
-                  const statusRanking = String(p.status_ranking ?? "").trim().toLowerCase();
-                  const jaCancelada = status === "cancelada" || statusRanking === "cancelado_admin";
-                  const jaConcluida =
-                    status === "concluida" ||
-                    status === "concluído" ||
-                    status === "concluido" ||
-                    status === "validada" ||
-                    status === "finalizada" ||
-                    statusRanking === "validado";
-                  const podeLimpar = !jaCancelada;
-                  const podeDefinirResultado = !jaCancelada && !jaConcluida;
-                  return (
-                    <>
-                <td className="px-2 py-1.5 font-mono text-eid-text-secondary">{p.id}</td>
-                <td className="px-2 py-1.5 font-mono text-eid-text-secondary">{p.match_id ?? "—"}</td>
-                <td className="px-2 py-1.5">{p.status ?? "—"}</td>
-                <td className="px-2 py-1.5">{esporteMap.get(Number(p.esporte_id ?? 0)) || p.esporte_id || "—"}</td>
-                <td className="px-2 py-1.5">
+      <div className="mt-4 grid gap-3">
+        {rows.map((p) => {
+          const status = String(p.status ?? "").trim().toLowerCase();
+          const statusRanking = String(p.status_ranking ?? "").trim().toLowerCase();
+          const jaCancelada = status === "cancelada" || statusRanking === "cancelado_admin";
+          const jaConcluida =
+            status === "concluida" ||
+            status === "concluído" ||
+            status === "concluido" ||
+            status === "validada" ||
+            status === "finalizada" ||
+            statusRanking === "validado";
+          const podeLimpar = !jaCancelada;
+          const podeDefinirResultado = !jaCancelada && !jaConcluida;
+          return (
+            <article key={p.id} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3">
+              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2 py-0.5 font-mono text-eid-text-secondary">
+                  Partida #{p.id}
+                </span>
+                <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2 py-0.5 font-mono text-eid-text-secondary">
+                  Match {p.match_id ?? "—"}
+                </span>
+                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 font-semibold text-eid-primary-300">
+                  {p.status ?? "—"}
+                </span>
+              </div>
+
+              <div className="mt-2 grid gap-1 text-[11px] text-eid-text-secondary sm:grid-cols-3">
+                <p>
+                  <span className="font-semibold text-eid-fg">Esporte:</span> {esporteMap.get(Number(p.esporte_id ?? 0)) || p.esporte_id || "—"}
+                </p>
+                <p>
+                  <span className="font-semibold text-eid-fg">Torneio:</span>{" "}
                   {p.torneio_id ? (
                     <Link href={`/torneios/${p.torneio_id}`} className="text-eid-primary-300 hover:underline" target="_blank" rel="noreferrer">
                       {p.torneio_id}
@@ -98,91 +96,93 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
                   ) : (
                     "—"
                   )}
-                </td>
-                <td className="px-2 py-1.5 text-eid-text-secondary">
-                  {p.data_partida ? new Date(p.data_partida).toLocaleString("pt-BR") : p.criado_em ? new Date(p.criado_em).toLocaleString("pt-BR") : "—"}
-                </td>
-                <td className="px-2 py-1.5">
-                  <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                    {[p.jogador1_id, p.jogador2_id].map((uid, idx) => {
-                      if (!uid) return null;
-                      const pf = profileMap.get(uid);
-                      return (
-                        <span key={`${p.id}-${uid}`} className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-0.5 text-[10px] text-eid-text-secondary">
-                          <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg">
-                            {pf?.avatar_url ? <img src={pf.avatar_url} alt="" className="h-full w-full object-cover" /> : String(pf?.nome ?? `J${idx + 1}`).slice(0, 1)}
-                          </span>
-                          <span className="max-w-[110px] truncate text-eid-fg">{pf?.nome ?? uid}</span>
-                        </span>
-                      );
-                    })}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <Link
-                      href={`/registrar-placar/${p.id}?from=/admin/partidas&admin=1`}
-                      className="rounded-md border border-eid-primary-500/55 bg-eid-primary-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-eid-primary-200 hover:bg-eid-primary-500/30"
-                    >
-                      Abrir lançador completo
-                    </Link>
-                    {podeDefinirResultado ? (
-                      <form action={adminDefinirResultadoPartida} className="flex flex-wrap items-center gap-1">
-                        <input type="hidden" name="partida_id" value={p.id} />
-                        <select
-                          name="winner_side"
-                          defaultValue="1"
-                          className="eid-input-dark rounded-md border border-[color:var(--eid-border-subtle)] px-1.5 py-1 text-[10px]"
-                        >
-                          <option value="1">Venceu lado 1</option>
-                          <option value="2">Venceu lado 2</option>
-                        </select>
-                        <input
-                          type="number"
-                          name="placar_1"
-                          min={0}
-                          defaultValue={1}
-                          className="eid-input-dark w-12 rounded-md border border-[color:var(--eid-border-subtle)] px-1 py-1 text-[10px]"
-                        />
-                        <span className="text-[10px] text-eid-text-secondary">x</span>
-                        <input
-                          type="number"
-                          name="placar_2"
-                          min={0}
-                          defaultValue={0}
-                          className="eid-input-dark w-12 rounded-md border border-[color:var(--eid-border-subtle)] px-1 py-1 text-[10px]"
-                        />
-                        <button
-                          type="submit"
-                          className="rounded-md border border-emerald-600/55 bg-emerald-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-success-700)_82%,var(--eid-fg)_18%)] hover:bg-emerald-500/30"
-                        >
-                          Definir resultado
-                        </button>
-                      </form>
-                    ) : null}
-                    {podeLimpar ? (
-                      <form action={adminCancelarLimparPartida}>
-                        <input type="hidden" name="partida_id" value={p.id} />
-                        <button
-                          type="submit"
-                          className="rounded-md border border-rose-600/55 bg-rose-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-danger-700)_82%,var(--eid-fg)_18%)] hover:bg-rose-500/30"
-                        >
-                          Cancelar/Limpar
-                        </button>
-                      </form>
-                    ) : null}
-                    {!podeLimpar && !podeDefinirResultado ? (
-                      <span className="rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary">
-                        Sem ação pendente
+                </p>
+                <p>
+                  <span className="font-semibold text-eid-fg">Quando:</span>{" "}
+                  {p.data_partida
+                    ? new Date(p.data_partida).toLocaleString("pt-BR")
+                    : p.criado_em
+                      ? new Date(p.criado_em).toLocaleString("pt-BR")
+                      : "—"}
+                </p>
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {[p.jogador1_id, p.jogador2_id].map((uid, idx) => {
+                  if (!uid) return null;
+                  const pf = profileMap.get(uid);
+                  return (
+                    <span key={`${p.id}-${uid}`} className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-0.5 text-[10px] text-eid-text-secondary">
+                      <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg">
+                        {pf?.avatar_url ? <img src={pf.avatar_url} alt="" className="h-full w-full object-cover" /> : String(pf?.nome ?? `J${idx + 1}`).slice(0, 1)}
                       </span>
-                    ) : null}
-                  </div>
-                </td>
-                    </>
+                      <span className="max-w-[150px] truncate text-eid-fg">{pf?.nome ?? uid}</span>
+                    </span>
                   );
-                })()}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                })}
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/registrar-placar/${p.id}?from=/admin/partidas&admin=1`}
+                  className="rounded-md border border-eid-primary-500/55 bg-eid-primary-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-eid-primary-200 hover:bg-eid-primary-500/30"
+                >
+                  Abrir lançador completo
+                </Link>
+                {podeDefinirResultado ? (
+                  <form action={adminDefinirResultadoPartida} className="flex flex-wrap items-center gap-1">
+                    <input type="hidden" name="partida_id" value={p.id} />
+                    <select
+                      name="winner_side"
+                      defaultValue="1"
+                      className="eid-input-dark rounded-md border border-[color:var(--eid-border-subtle)] px-1.5 py-1 text-[10px]"
+                    >
+                      <option value="1">Venceu lado 1</option>
+                      <option value="2">Venceu lado 2</option>
+                    </select>
+                    <input
+                      type="number"
+                      name="placar_1"
+                      min={0}
+                      defaultValue={1}
+                      className="eid-input-dark w-12 rounded-md border border-[color:var(--eid-border-subtle)] px-1 py-1 text-[10px]"
+                    />
+                    <span className="text-[10px] text-eid-text-secondary">x</span>
+                    <input
+                      type="number"
+                      name="placar_2"
+                      min={0}
+                      defaultValue={0}
+                      className="eid-input-dark w-12 rounded-md border border-[color:var(--eid-border-subtle)] px-1 py-1 text-[10px]"
+                    />
+                    <button
+                      type="submit"
+                      className="rounded-md border border-emerald-600/55 bg-emerald-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-success-700)_82%,var(--eid-fg)_18%)] hover:bg-emerald-500/30"
+                    >
+                      Definir resultado
+                    </button>
+                  </form>
+                ) : null}
+                {podeLimpar ? (
+                  <form action={adminCancelarLimparPartida}>
+                    <input type="hidden" name="partida_id" value={p.id} />
+                    <button
+                      type="submit"
+                      className="rounded-md border border-rose-600/55 bg-rose-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-danger-700)_82%,var(--eid-fg)_18%)] hover:bg-rose-500/30"
+                    >
+                      Cancelar/Limpar
+                    </button>
+                  </form>
+                ) : null}
+                {!podeLimpar && !podeDefinirResultado ? (
+                  <span className="rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary">
+                    Sem ação pendente
+                  </span>
+                ) : null}
+              </div>
+            </article>
+          );
+        })}
       </div>
     </div>
   );
