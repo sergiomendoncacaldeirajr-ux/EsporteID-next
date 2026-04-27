@@ -16,6 +16,7 @@ export function RealtimePageRefresh({ userId }: Props) {
   const router = useRouter();
   const lastRefreshAt = useRef(0);
   const instanceIdRef = useRef(`rpr-${Math.random().toString(36).slice(2, 10)}`);
+  const notifiedIdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     if (!userId) return;
@@ -27,6 +28,37 @@ export function RealtimePageRefresh({ userId }: Props) {
       lastRefreshAt.current = now;
       router.refresh();
     };
+
+    const notifyForeground = (notifId: number, mensagem: string) => {
+      if (!Number.isFinite(notifId) || notifId < 1) return;
+      if (notifiedIdsRef.current.has(notifId)) return;
+      notifiedIdsRef.current.add(notifId);
+      if (typeof window === "undefined") return;
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+      try {
+        new Notification("EsporteID", {
+          body: String(mensagem ?? "").trim() || "Você recebeu uma nova notificação.",
+          tag: `eid-foreground-${notifId}`,
+        });
+      } catch {
+        // best-effort: não bloquear refresh se o browser recusar.
+      }
+    };
+
+    const primeNotifiedCache = async () => {
+      const { data } = await supabase
+        .from("notificacoes")
+        .select("id")
+        .eq("usuario_id", userId)
+        .order("id", { ascending: false })
+        .limit(80);
+      for (const row of data ?? []) {
+        const id = Number((row as { id?: number } | null)?.id ?? 0);
+        if (Number.isFinite(id) && id > 0) notifiedIdsRef.current.add(id);
+      }
+    };
+    void primeNotifiedCache();
     const channelTag = `${userId}-${instanceIdRef.current}`;
 
     const channels = [
@@ -35,7 +67,14 @@ export function RealtimePageRefresh({ userId }: Props) {
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "notificacoes", filter: `usuario_id=eq.${userId}` },
-          refresh
+          (payload) => {
+            const ev = String((payload as { eventType?: string } | null)?.eventType ?? "").toUpperCase();
+            if (ev === "INSERT") {
+              const row = (payload as { new?: { id?: number; mensagem?: string | null } } | null)?.new;
+              notifyForeground(Number(row?.id ?? 0), String(row?.mensagem ?? ""));
+            }
+            refresh();
+          }
         )
         .subscribe(),
       supabase
@@ -55,8 +94,13 @@ export function RealtimePageRefresh({ userId }: Props) {
         .on("postgres_changes", { event: "*", schema: "public", table: "partidas", filter: `jogador2_id=eq.${userId}` }, refresh)
         .subscribe(),
     ];
+    const intervalRefresh = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      refresh();
+    }, 10000);
 
     return () => {
+      window.clearInterval(intervalRefresh);
       channels.forEach((c) => void supabase.removeChannel(c));
     };
   }, [router, userId]);
