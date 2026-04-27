@@ -527,7 +527,15 @@ export async function salvarAgendamentoAction(formData: FormData) {
     salvarAgendaRedirect(partidaId, "erro", "Sem permissão para editar o agendamento desta partida.", modoAgenda);
   }
 
-  const payload: { data_partida?: string | null; local_str?: string | null } = {
+  const payload: {
+    data_partida?: string | null;
+    local_str?: string | null;
+    status?: string;
+    agendamento_proposto_por?: string | null;
+    agendamento_aceite_deadline?: string | null;
+    agendamento_aceito_por?: string | null;
+    mensagem?: string | null;
+  } = {
     local_str: sanitizeOptionalUserText(localStr, 180),
   };
   if (dataPartida) {
@@ -538,12 +546,37 @@ export async function salvarAgendamentoAction(formData: FormData) {
     payload.data_partida = dt.toISOString();
   }
 
+  const agendamentoPendenteAceite = !p.torneio_id && Boolean(payload.data_partida && payload.local_str);
+  if (agendamentoPendenteAceite) {
+    const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    payload.status = "aguardando_aceite_agendamento";
+    payload.agendamento_proposto_por = user.id;
+    payload.agendamento_aceite_deadline = deadline;
+    payload.agendamento_aceito_por = null;
+    payload.mensagem = "Agendamento proposto. Aguardando aceite do oponente (24h).";
+  }
+
   const { error } = await ctx.supabase.from("partidas").update(payload).eq("id", partidaId);
   if (error) salvarAgendaRedirect(partidaId, "erro", "Não foi possível salvar o agendamento.", modoAgenda);
 
+  if (!p.torneio_id) {
+    const oponenteId = p.jogador1_id === user.id ? p.jogador2_id : p.jogador1_id;
+    const when = payload.data_partida ? new Date(payload.data_partida).toLocaleString("pt-BR") : "data a combinar";
+    const where = payload.local_str ? String(payload.local_str) : "local a combinar";
+    await notifyUser(
+      ctx.supabase,
+      oponenteId,
+      user.id,
+      partidaId,
+      `Seu oponente propôs agendamento: ${when} • ${where}. Acesse a Agenda para aceitar em até 24h.`
+    );
+  }
+
   revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
-  const okMsg = modoAgenda
-    ? "Agendamento salvo. Lançamento do resultado: Painel de controle."
-    : "Agendamento salvo. Você pode lançar o resultado quando quiser.";
+  const okMsg = agendamentoPendenteAceite
+    ? "Agendamento enviado para aceite do oponente (prazo de 24h)."
+    : modoAgenda
+      ? "Agendamento salvo. Lançamento do resultado: Painel de controle."
+      : "Agendamento salvo. Você pode lançar o resultado quando quiser.";
   salvarAgendaRedirect(partidaId, "ok", okMsg, modoAgenda);
 }

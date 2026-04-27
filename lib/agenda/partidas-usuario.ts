@@ -14,6 +14,8 @@ export type AgendaPartidaCardRow = {
   lancado_por?: string | null;
   status?: string | null;
   status_ranking?: string | null;
+  agendamento_proposto_por?: string | null;
+  agendamento_aceite_deadline?: string | null;
   esportes?: EspNome | EspNome[] | null;
 };
 
@@ -43,7 +45,7 @@ export async function getAgendaTeamContext(supabase: SupabaseClient, userId: str
 }
 
 const partidasSelect =
-  "id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, modalidade, data_registro, data_partida, local_str, local_espaco_id, status, status_ranking, lancado_por, esportes(nome)";
+  "id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, modalidade, data_registro, data_partida, local_str, local_espaco_id, status, status_ranking, lancado_por, agendamento_proposto_por, agendamento_aceite_deadline, esportes(nome)";
 
 export function fetchPartidasAgendadasUsuario(
   supabase: SupabaseClient,
@@ -54,7 +56,7 @@ export function fetchPartidasAgendadasUsuario(
     .from("partidas")
     .select(partidasSelect)
     .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId},usuario_id.eq.${userId}${teamClause}`)
-    .eq("status", "agendada")
+    .in("status", ["agendada", "aguardando_aceite_agendamento"])
     .order("data_partida", { ascending: true, nullsFirst: false })
     .order("data_registro", { ascending: true })
     .order("id", { ascending: true })

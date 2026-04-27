@@ -10,6 +10,7 @@ import {
   firstOfRelation,
   getAgendaTeamContext,
 } from "@/lib/agenda/partidas-usuario";
+import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 
@@ -36,6 +37,7 @@ export default async function AgendaPage() {
   await supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id });
   await supabase.rpc("processar_pendencias_cancelamento_match", { p_only_user: user.id });
   const { teamClause } = await getAgendaTeamContext(supabase, user.id);
+  await processarPendenciasAgendamentoAceite(supabase, user.id, teamClause);
 
   const { data: aceitos } = await supabase
     .from("matches")
@@ -363,6 +365,11 @@ export default async function AgendaPage() {
               const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
               const dueloCardKey = dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard) ?? "__";
               const acceptedSchedule = acceptedScheduleByDuelo.get(dueloCardKey) ?? null;
+              const effectiveDataRef = acceptedSchedule?.scheduledFor ?? pr.data_partida ?? pr.data_registro;
+              const effectiveLocalLabel = acceptedSchedule?.scheduledLocation ?? localLabel(pr);
+              const hasScheduleDefined = Boolean((acceptedSchedule?.scheduledFor ?? pr.data_partida) && effectiveLocalLabel);
+              const schedulePending = String(pr.status ?? "") === "aguardando_aceite_agendamento";
+              const scheduleCanRespond = schedulePending && pr.agendamento_proposto_por !== user.id;
               return (
                 <PartidaAgendaCard
                   key={pr.id}
@@ -377,8 +384,8 @@ export default async function AgendaPage() {
                   j1NotaEid={pr.jogador1_id ? notaEidByUserSport.get(`${pr.jogador1_id}:${esporteIdCard}`) ?? 0 : 0}
                   j2NotaEid={pr.jogador2_id ? notaEidByUserSport.get(`${pr.jogador2_id}:${esporteIdCard}`) ?? 0 : 0}
                   esporteId={esporteIdCard}
-                  dataRef={acceptedSchedule?.scheduledFor ?? pr.data_partida ?? pr.data_registro}
-                  localLabel={acceptedSchedule?.scheduledLocation ?? localLabel(pr)}
+                  dataRef={effectiveDataRef}
+                  localLabel={effectiveLocalLabel}
                   variant="agendada"
                   ctaFullscreen
                   cancelMatchId={
@@ -387,7 +394,7 @@ export default async function AgendaPage() {
                     ) ?? null
                   }
                   ctaHidden={
-                    rescheduleAcceptedByDuelo.has(dueloCardKey)
+                    schedulePending || hasScheduleDefined || rescheduleAcceptedByDuelo.has(dueloCardKey)
                   }
                   desistMatchId={
                     rescheduleAcceptedByDuelo.has(dueloCardKey)
@@ -397,6 +404,9 @@ export default async function AgendaPage() {
                       : null
                   }
                   topActionShiftXPx={24}
+                  agendamentoPendente={schedulePending}
+                  agendamentoPodeResponder={scheduleCanRespond}
+                  agendamentoDeadline={pr.agendamento_aceite_deadline ?? null}
                 />
               );
             })}

@@ -5,6 +5,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { gerenciarCancelamentoMatch, type GerenciarCancelamentoState } from "@/app/comunidade/actions";
+import {
+  responderAgendamentoPartidaAction,
+  type ResponderAgendamentoState,
+} from "@/app/agenda/actions";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS } from "@/lib/desafio/flow-ui";
@@ -33,9 +37,13 @@ type Props = {
   ctaHidden?: boolean;
   desistMatchId?: number | null;
   topActionShiftXPx?: number;
+  agendamentoPendente?: boolean;
+  agendamentoPodeResponder?: boolean;
+  agendamentoDeadline?: string | null;
 };
 
 const cancelInitial: GerenciarCancelamentoState = { ok: false, message: "" };
+const agendaInitial: ResponderAgendamentoState = { ok: false, message: "" };
 
 function primeiroNome(n: string | null) {
   if (!n?.trim()) return "—";
@@ -48,6 +56,15 @@ function formatWhen(iso: string | null) {
     return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
   } catch {
     return "Data a combinar";
+  }
+}
+
+function formatDeadline(iso: string | null | undefined) {
+  if (!iso) return null;
+  try {
+    return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  } catch {
+    return null;
   }
 }
 
@@ -76,12 +93,16 @@ export function PartidaAgendaCard({
   ctaHidden = false,
   desistMatchId = null,
   topActionShiftXPx = 0,
+  agendamentoPendente = false,
+  agendamentoPodeResponder = false,
+  agendamentoDeadline = null,
 }: Props) {
   const isPlacar = variant === "placar";
   const [openCancel, setOpenCancel] = useState(false);
   const [openDesist, setOpenDesist] = useState(false);
   const [showCancelHint, setShowCancelHint] = useState(Boolean(cancelMatchId) && !isPlacar);
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, cancelInitial);
+  const [agendaState, agendaAction, agendaPending] = useActionState(responderAgendamentoPartidaAction, agendaInitial);
   useEffect(() => {
     if (!showCancelHint) return;
     const hideHint = () => setShowCancelHint(false);
@@ -256,6 +277,49 @@ export function PartidaAgendaCard({
         </p>
       ) : null}
 
+      {agendamentoPendente ? (
+        <div className="mt-3 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_45%,var(--eid-border-subtle)_55%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-card)_86%)] p-3">
+          <p className="text-center text-[11px] font-semibold text-eid-primary-200">
+            Agendamento pendente de aceite
+            {formatDeadline(agendamentoDeadline) ? ` (até ${formatDeadline(agendamentoDeadline)})` : ""}.
+          </p>
+          {agendamentoPodeResponder ? (
+            <div className="mt-2 flex items-center gap-2">
+              <form action={agendaAction} className="flex-1">
+                <input type="hidden" name="partida_id" value={String(id)} />
+                <input type="hidden" name="accept" value="1" />
+                <button
+                  type="submit"
+                  disabled={agendaPending}
+                  className="inline-flex min-h-[32px] w-full items-center justify-center rounded-lg border border-emerald-700 bg-emerald-700 px-3 text-[11px] font-black text-white"
+                >
+                  {agendaPending ? "Enviando..." : "Aceitar"}
+                </button>
+              </form>
+              <form action={agendaAction} className="flex-1">
+                <input type="hidden" name="partida_id" value={String(id)} />
+                <input type="hidden" name="accept" value="0" />
+                <button
+                  type="submit"
+                  disabled={agendaPending}
+                  className="inline-flex min-h-[32px] w-full items-center justify-center rounded-lg border border-rose-700 bg-rose-700 px-3 text-[11px] font-black text-white"
+                >
+                  {agendaPending ? "Enviando..." : "Recusar"}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <p className="mt-2 text-center text-[11px] font-semibold text-eid-primary-300">
+              Aguardando resposta do oponente.
+            </p>
+          )}
+          {agendaState.ok ? <p className="mt-2 text-center text-[11px] text-emerald-300">{agendaState.message}</p> : null}
+          {!agendaState.ok && agendaState.message ? (
+            <p className="mt-2 text-center text-[11px] text-rose-300">{agendaState.message}</p>
+          ) : null}
+        </div>
+      ) : null}
+
       {!ctaHidden ? (
         ctaFullscreen ? (
           <ProfileEditDrawerTrigger
@@ -281,7 +345,9 @@ export function PartidaAgendaCard({
         )
       ) : (
         <p className="mt-3 text-center text-[11px] font-semibold text-eid-primary-300 md:mt-4 md:text-xs">
-          Data, horário e local já definidos pelo reagendamento aceito.
+          {agendamentoPendente
+            ? "Agendamento enviado. Aguardando aceite do oponente."
+            : "Data, horário e local já definidos pelo reagendamento aceito."}
         </p>
       )}
 

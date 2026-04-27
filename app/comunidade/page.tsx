@@ -18,6 +18,7 @@ import {
   firstOfRelation,
   getAgendaTeamContext,
 } from "@/lib/agenda/partidas-usuario";
+import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { getSystemFeatureConfig, SYSTEM_FEATURE_LABEL, type SystemFeatureKey } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
@@ -333,6 +334,7 @@ export default async function ComunidadePage() {
   }
 
   const { teamClause: teamClausePainel } = await getAgendaTeamContext(supabase, user.id);
+  await processarPendenciasAgendamentoAceite(supabase, user.id, teamClausePainel);
   const [{ data: painelAgendadas }, { data: painelPlacarPendente }] = await Promise.all([
     fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel),
     fetchPlacarAguardandoConfirmacao(supabase, user.id, teamClausePainel),
@@ -446,6 +448,7 @@ export default async function ComunidadePage() {
     }
   }
   const painelAgendadasVisiveis = (painelAgendadas ?? []).filter((row) => {
+    if (String((row as { status?: string | null }).status ?? "") !== "agendada") return false;
     const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
     const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
     const keyNoSport = dueloKeyNoSport(row.jogador1_id, row.jogador2_id);
