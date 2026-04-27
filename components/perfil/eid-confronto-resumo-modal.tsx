@@ -291,19 +291,19 @@ export function EidConfrontoResumoModal({
                     Sets
                   </span>
                 </div>
-                <div className="p-4 sm:p-5">
-                  <div className="mb-4 grid grid-cols-[minmax(0,1fr)_2.25rem_minmax(0,1fr)] items-end gap-x-1 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,var(--eid-primary-500)_12%)] pb-3">
-                    <p className="truncate text-center text-[10px] font-bold uppercase leading-tight tracking-[0.06em] text-eid-text-secondary" title={ladoA}>
+                <div className="p-3 sm:p-4">
+                  <div className="mb-2.5 grid grid-cols-[minmax(0,1fr)_1.75rem_minmax(0,1fr)] items-end gap-x-0.5 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,var(--eid-primary-500)_12%)] pb-2">
+                    <p className="truncate text-center text-[9px] font-bold uppercase leading-tight tracking-[0.05em] text-eid-text-secondary" title={ladoA}>
                       {ladoA}
                     </p>
-                    <span className="pb-0.5 text-center text-[9px] font-black text-eid-text-secondary/50" aria-hidden>
+                    <span className="pb-0.5 text-center text-[8px] font-black text-eid-text-secondary/50" aria-hidden>
                       ·
                     </span>
-                    <p className="truncate text-center text-[10px] font-bold uppercase leading-tight tracking-[0.06em] text-eid-text-secondary" title={ladoB}>
+                    <p className="truncate text-center text-[9px] font-bold uppercase leading-tight tracking-[0.05em] text-eid-text-secondary" title={ladoB}>
                       {ladoB}
                     </p>
                   </div>
-                  <ul className="m-0 list-none space-y-3 p-0">
+                  <ul className="m-0 list-none space-y-2 p-0">
                     {payload.sets.map((set, idx) => {
                       const a = Number(set.a ?? 0);
                       const b = Number(set.b ?? 0);
@@ -313,54 +313,54 @@ export function EidConfrontoResumoModal({
                       const winA = a > b;
                       const winB = b > a;
                       const boxWin =
-                        "rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-400)_42%,var(--eid-border-subtle)_58%)] bg-[linear-gradient(165deg,color-mix(in_srgb,var(--eid-primary-500)_38%,var(--eid-surface)_62%)_0%,color-mix(in_srgb,var(--eid-card)_94%,var(--eid-primary-500)_6%)_100%)] px-2 py-2.5 shadow-[0_6px_20px_-14px_color-mix(in_srgb,var(--eid-primary-500)_65%,transparent),inset_0_1px_0_rgba(255,255,255,0.06)] sm:py-3";
+                        "rounded-lg border border-[color:color-mix(in_srgb,var(--eid-primary-400)_42%,var(--eid-border-subtle)_58%)] bg-[linear-gradient(165deg,color-mix(in_srgb,var(--eid-primary-500)_38%,var(--eid-surface)_62%)_0%,color-mix(in_srgb,var(--eid-card)_94%,var(--eid-primary-500)_6%)_100%)] px-1.5 py-1.5 shadow-[0_4px_14px_-12px_color-mix(in_srgb,var(--eid-primary-500)_55%,transparent),inset_0_1px_0_rgba(255,255,255,0.05)] sm:py-2";
                       const boxNeutral =
-                        "rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)] bg-eid-surface/30 px-2 py-2.5 sm:py-3";
+                        "rounded-lg border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)] bg-eid-surface/30 px-1.5 py-1.5 sm:py-2";
                       return (
                         <li
                           key={`set-${idx}`}
-                          className="list-none rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,var(--eid-primary-500)_15%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_92%,transparent)_0%,color-mix(in_srgb,var(--eid-surface)_35%,transparent)_100%)] p-3 shadow-[0_4px_18px_-14px_rgba(15,23,42,0.35)] sm:p-3.5"
+                          className="list-none rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,var(--eid-primary-500)_15%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_92%,transparent)_0%,color-mix(in_srgb,var(--eid-surface)_35%,transparent)_100%)] p-2 shadow-[0_3px_14px_-12px_rgba(15,23,42,0.32)] sm:p-2.5"
                         >
-                          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-surface)_78%)] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-eid-primary-100 ring-1 ring-eid-primary-500/25">
+                          <div className="mb-2 flex flex-wrap items-center justify-between gap-1.5">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-surface)_78%)] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-eid-primary-100 ring-1 ring-eid-primary-500/25">
                               <span className="tabular-nums text-eid-primary-200/90">{idx + 1}</span>
-                              <span className="text-[9px] font-bold tracking-[0.1em] text-eid-primary-200/80">set</span>
+                              <span className="text-[8px] font-bold tracking-[0.08em] text-eid-primary-200/80">set</span>
                             </span>
                             {hasTb ? (
-                              <span className="rounded-md border border-eid-primary-500/25 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-eid-primary-200">
+                              <span className="rounded border border-eid-primary-500/25 bg-eid-primary-500/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-eid-primary-200">
                                 Tie-break
                               </span>
                             ) : null}
                           </div>
-                          <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2 sm:gap-3">
+                          <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-1.5 sm:gap-2">
                             <div className={winA ? boxWin : boxNeutral}>
-                              <p className="text-center text-[9px] font-bold uppercase tracking-wide text-eid-text-secondary/85">Games</p>
-                              <p className="mt-0.5 text-center text-[1.65rem] font-black tabular-nums leading-none tracking-tight text-eid-fg sm:text-[1.85rem]">
+                              <p className="text-center text-[8px] font-bold uppercase tracking-wide text-eid-text-secondary/85">Games</p>
+                              <p className="mt-0.5 text-center text-xl font-black tabular-nums leading-none tracking-tight text-eid-fg sm:text-[1.35rem]">
                                 {a}
                               </p>
                               {winA ? (
-                                <p className="mt-1 text-center text-[9px] font-bold uppercase tracking-wider text-eid-primary-200">Set</p>
+                                <p className="mt-0.5 text-center text-[8px] font-bold uppercase tracking-wider text-eid-primary-200">Set</p>
                               ) : null}
                             </div>
-                            <div className="flex flex-col items-center justify-center gap-0.5 self-center py-1">
-                              <span className="text-[11px] font-black text-eid-text-secondary/45" aria-hidden>
+                            <div className="flex flex-col items-center justify-center self-center py-0.5">
+                              <span className="text-[9px] font-black text-eid-text-secondary/45" aria-hidden>
                                 :
                               </span>
                             </div>
                             <div className={winB ? boxWin : boxNeutral}>
-                              <p className="text-center text-[9px] font-bold uppercase tracking-wide text-eid-text-secondary/85">Games</p>
-                              <p className="mt-0.5 text-center text-[1.65rem] font-black tabular-nums leading-none tracking-tight text-eid-fg sm:text-[1.85rem]">
+                              <p className="text-center text-[8px] font-bold uppercase tracking-wide text-eid-text-secondary/85">Games</p>
+                              <p className="mt-0.5 text-center text-xl font-black tabular-nums leading-none tracking-tight text-eid-fg sm:text-[1.35rem]">
                                 {b}
                               </p>
                               {winB ? (
-                                <p className="mt-1 text-center text-[9px] font-bold uppercase tracking-wider text-eid-primary-200">Set</p>
+                                <p className="mt-0.5 text-center text-[8px] font-bold uppercase tracking-wider text-eid-primary-200">Set</p>
                               ) : null}
                             </div>
                           </div>
                           {hasTb ? (
-                            <div className="mt-3 flex flex-col items-center gap-1 rounded-xl border border-dashed border-[color:color-mix(in_srgb,var(--eid-primary-500)_35%,var(--eid-border-subtle)_65%)] bg-eid-surface/25 px-3 py-2">
-                              <p className="text-[9px] font-black uppercase tracking-[0.12em] text-eid-text-secondary">Placar do tie-break</p>
-                              <p className="text-base font-black tabular-nums tracking-tight text-eid-fg sm:text-lg">
+                            <div className="mt-2 flex flex-col items-center gap-0.5 rounded-lg border border-dashed border-[color:color-mix(in_srgb,var(--eid-primary-500)_35%,var(--eid-border-subtle)_65%)] bg-eid-surface/25 px-2 py-1.5">
+                              <p className="text-[8px] font-black uppercase tracking-[0.1em] text-eid-text-secondary">Placar do tie-break</p>
+                              <p className="text-sm font-black tabular-nums tracking-tight text-eid-fg">
                                 <span className={tba > tbb ? "text-eid-primary-200" : ""}>{tba}</span>
                                 <span className="mx-1 text-eid-text-secondary/55">–</span>
                                 <span className={tbb > tba ? "text-eid-primary-200" : ""}>{tbb}</span>
