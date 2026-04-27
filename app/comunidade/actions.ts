@@ -345,6 +345,21 @@ function parseFutureIsoFromDatetimeLocal(raw: string): string | null {
   return d.toISOString();
 }
 
+function isPastDateTime(iso: string | null): boolean {
+  if (!iso) return true;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return true;
+  return t < Date.now();
+}
+
+function isBeyond72hDateTime(iso: string | null): boolean {
+  if (!iso) return true;
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return true;
+  const max = Date.now() + 72 * 60 * 60 * 1000;
+  return t > max;
+}
+
 export async function gerenciarCancelamentoMatch(
   _prev: GerenciarCancelamentoState | undefined,
   formData: FormData
@@ -385,6 +400,14 @@ export async function gerenciarCancelamentoMatch(
     const op2 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_2") ?? ""));
     const op3 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_3") ?? ""));
     const local = String(formData.get("local_reagendamento") ?? "").trim();
+    if (!aceitar) {
+      if (isPastDateTime(op1) || isPastDateTime(op2) || isPastDateTime(op3)) {
+        return { ok: false, message: "As opções de data e hora devem ser de agora em diante." };
+      }
+      if (isBeyond72hDateTime(op1) || isBeyond72hDateTime(op2) || isBeyond72hDateTime(op3)) {
+        return { ok: false, message: "As opções de data e hora devem estar dentro de 72 horas." };
+      }
+    }
     const { error } = await supabase.rpc("responder_cancelamento_match", {
       p_match_id: matchId,
       p_aceitar_cancelamento: aceitar,

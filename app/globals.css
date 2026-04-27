@@ -1405,6 +1405,21 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]::-webkit-date
   opacity: 1 !important;
 }
 
+/* iOS Safari: quando datetime-local está vazio (required + invalid), os guias podem sumir. */
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid::-webkit-datetime-edit,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid::-webkit-datetime-edit-fields-wrapper,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid::-webkit-datetime-edit-text,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid::-webkit-datetime-edit-month-field,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid::-webkit-datetime-edit-day-field,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid::-webkit-datetime-edit-year-field,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid::-webkit-datetime-edit-hour-field,
+input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid::-webkit-datetime-edit-minute-field {
+  color: var(--eid-text-secondary) !important;
+  -webkit-text-fill-color: var(--eid-text-secondary) !important;
+  opacity: 1 !important;
+}
+
 /* Foco em grupos de input (auth) */
 .eid-focus-ring:focus-within {
   border-color: var(--eid-focus-ring) !important;

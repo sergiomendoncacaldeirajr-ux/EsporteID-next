@@ -46,10 +46,34 @@ function formatStatusLabel(status: string): string {
     .toUpperCase();
 }
 
+function minDatetimeLocalNow(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  const mm = pad(now.getMonth() + 1);
+  const dd = pad(now.getDate());
+  const hh = pad(now.getHours());
+  const mi = pad(now.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
+function maxDatetimeLocal72h(): string {
+  const dt = new Date(Date.now() + 72 * 60 * 60 * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const yyyy = dt.getFullYear();
+  const mm = pad(dt.getMonth() + 1);
+  const dd = pad(dt.getDate());
+  const hh = pad(dt.getHours());
+  const mi = pad(dt.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
 export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, initial);
   const [openRefuseByMatch, setOpenRefuseByMatch] = useState<Record<number, boolean>>({});
   const [localPrefillByMatch, setLocalPrefillByMatch] = useState<Record<number, string>>({});
+  const [minDateTimeLocal] = useState<string>(() => minDatetimeLocalNow());
+  const [maxDateTimeLocal] = useState<string>(() => maxDatetimeLocal72h());
   const err = !state.ok ? state.message : null;
   const okMsg = state.ok ? state.message : null;
   const hasSpecialStatuses = useMemo(
@@ -92,7 +116,9 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
           <p className="rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2 text-xs text-eid-fg">{okMsg}</p>
         ) : null}
         {err ? (
-          <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{err}</p>
+          <p className="rounded-lg border border-red-500/35 bg-red-500/12 px-3 py-2 text-xs text-[color:color-mix(in_srgb,var(--eid-danger-500)_78%,var(--eid-fg)_22%)]">
+            {err}
+          </p>
         ) : null}
         {items.map((m) => (
           <article
@@ -174,6 +200,8 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                         name="opcao_1"
                         type="datetime-local"
                         required
+                        min={minDateTimeLocal}
+                        max={maxDateTimeLocal}
                         className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
@@ -181,6 +209,8 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                         name="opcao_2"
                         type="datetime-local"
                         required
+                        min={minDateTimeLocal}
+                        max={maxDateTimeLocal}
                         className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
@@ -188,6 +218,8 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                         name="opcao_3"
                         type="datetime-local"
                         required
+                        min={minDateTimeLocal}
+                        max={maxDateTimeLocal}
                         className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
