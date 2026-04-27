@@ -1642,6 +1642,77 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
   background: color-mix(in srgb, var(--eid-primary-500) 12%, #ffffff 88%) !important;
 }
 
+/* Desafio /match — hero e cartões no tema claro (alinhado à dashboard e ao ranking) */
+[data-eid-theme="light"] [data-eid-match-page] .eid-match-hero.eid-surface-panel {
+  box-shadow:
+    0 16px 34px -22px rgba(15, 23, 42, 0.13),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 10%, transparent);
+}
+
+[data-eid-theme="light"] [data-eid-match-page] .eid-match-filter-card {
+  border-color: color-mix(in srgb, var(--eid-border) 78%, var(--eid-primary-500) 22%) !important;
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    color-mix(in srgb, var(--eid-field-bg) 52%, #ffffff 48%) 100%
+  ) !important;
+  box-shadow:
+    0 12px 28px -20px rgba(15, 23, 42, 0.11),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 7%, transparent);
+}
+
+[data-eid-theme="light"] [data-eid-match-page] .eid-match-section-head {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border) 82%, var(--eid-primary-500) 18%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+[data-eid-theme="light"] [data-eid-match-page] .eid-match-surface-card {
+  border-color: color-mix(in srgb, var(--eid-border) 78%, var(--eid-primary-500) 22%) !important;
+  box-shadow:
+    0 10px 24px -18px rgba(15, 23, 42, 0.1),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 6%, transparent);
+}
+
+[data-eid-theme="light"] [data-eid-match-page] .eid-match-results-card {
+  border-color: color-mix(in srgb, var(--eid-border) 78%, var(--eid-primary-500) 22%) !important;
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    color-mix(in srgb, var(--eid-field-bg) 52%, #ffffff 48%) 100%
+  ) !important;
+  box-shadow:
+    0 12px 28px -20px rgba(15, 23, 42, 0.11),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 7%, transparent);
+}
+
+/* Locais (/locais) — hero e cartões no tema claro */
+[data-eid-theme="light"] [data-eid-locais-page] .eid-locais-hero.eid-surface-panel {
+  box-shadow:
+    0 16px 34px -22px rgba(15, 23, 42, 0.13),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 10%, transparent);
+}
+
+[data-eid-theme="light"] [data-eid-locais-page] .eid-locais-search-card,
+[data-eid-theme="light"] [data-eid-locais-page] .eid-locais-section,
+[data-eid-theme="light"] [data-eid-locais-page] .eid-locais-pagination {
+  border-color: color-mix(in srgb, var(--eid-border) 78%, var(--eid-primary-500) 22%) !important;
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    color-mix(in srgb, var(--eid-field-bg) 52%, #ffffff 48%) 100%
+  ) !important;
+  box-shadow:
+    0 12px 28px -20px rgba(15, 23, 42, 0.11),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 7%, transparent);
+}
+
+[data-eid-theme="light"] [data-eid-locais-page] .eid-locais-section-head {
+  background: transparent !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border) 82%, var(--eid-primary-500) 18%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
 /* Superfície padrão tipo Ranking (glass card). */
 .eid-surface-panel {
   border: 1px solid var(--eid-border-subtle);

@@ -13,6 +13,7 @@ import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens"
 import { parseRankingSearch, rankingHref, type RankingSearchState } from "@/lib/ranking/ranking-href";
 import { isSportRankingEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
+import { MatchRankingRulesModal } from "@/components/match/match-ranking-rules-modal";
 
 export const metadata = {
   title: "Ranking",
@@ -457,6 +458,7 @@ export default async function RankingPage({ searchParams }: Props) {
           </>
         )}
       </main>
+      <MatchRankingRulesModal />
     </div>
   );
 }

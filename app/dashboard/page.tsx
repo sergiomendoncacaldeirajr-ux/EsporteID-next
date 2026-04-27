@@ -13,6 +13,7 @@ import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { DismissibleSectionIntro } from "@/components/ui/dismissible-section-intro";
 
 export const metadata = {
   title: "Painel",
@@ -793,11 +794,11 @@ export default async function DashboardPage({ searchParams }: Props) {
             </a>
           </div>
           <div className={dashboardSectionBody}>
-          <p className={dashboardSectionBlurb}>
+          <DismissibleSectionIntro storageKey="dashboard:atletas-proximos" className={dashboardSectionBlurb}>
             Destaques em <span className="font-semibold text-eid-fg">individual</span>,{" "}
             <span className="font-semibold text-eid-fg">dupla</span> e <span className="font-semibold text-eid-fg">time</span>{" "}
             pelo seu esporte principal e proximidade.
-          </p>
+          </DismissibleSectionIntro>
           {atletaMaisProximo || duplaMaisProxima || timeMaisProximo ? (
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {atletaMaisProximo
@@ -963,10 +964,10 @@ export default async function DashboardPage({ searchParams }: Props) {
             </Link>
           </div>
           <div className={dashboardSectionBody}>
-          <p className={dashboardSectionBlurb}>
+          <DismissibleSectionIntro storageKey="dashboard:torneios" className={dashboardSectionBlurb}>
             Inscrições <span className="font-semibold text-eid-fg">abertas</span>, filtradas pelo seu esporte e pela{" "}
             <span className="font-semibold text-eid-fg">distância</span> da sua localização.
-          </p>
+          </DismissibleSectionIntro>
           {torneiosFiltrados.length > 0 ? (
             <div className={scrollRow}>
               {torneiosFiltrados.map((t) => (
@@ -1016,9 +1017,9 @@ export default async function DashboardPage({ searchParams }: Props) {
             </Link>
           </div>
           <div className={dashboardSectionBody}>
-          <p className={dashboardSectionBlurb}>
+          <DismissibleSectionIntro storageKey="dashboard:vagas-equipes" className={dashboardSectionBlurb}>
             <span className="font-semibold text-eid-fg">Duplas e times</span> com vagas abertas, ordenados por proximidade e pelos esportes do seu perfil.
-          </p>
+          </DismissibleSectionIntro>
           {timesFiltrados.length > 0 ? (
             <div className={scrollRow}>
               {timesFiltrados.map(({ t, dist }) => (
@@ -1071,12 +1072,12 @@ export default async function DashboardPage({ searchParams }: Props) {
             </Link>
           </div>
           <div className={dashboardSectionBody}>
-          <p className={dashboardSectionBlurb}>
+          <DismissibleSectionIntro storageKey="dashboard:locais-comunidade" className={dashboardSectionBlurb}>
             Locais alinhados ao seu esporte, com preferência para{" "}
             <span className="font-semibold text-eid-fg">sócios</span>,{" "}
             <span className="font-semibold text-eid-fg">mensalidade na plataforma</span> e{" "}
             <span className="font-semibold text-eid-fg">reserva paga</span>.
-          </p>
+          </DismissibleSectionIntro>
           {locaisScroll && locaisScroll.length > 0 ? (
             <div className={scrollRow}>
               {locaisScroll.map((loc) => (

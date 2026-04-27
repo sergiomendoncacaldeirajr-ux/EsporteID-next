@@ -72,7 +72,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade, vi
 
   return (
     <article
-      className={`${PROFILE_CARD_BASE} relative isolate overflow-hidden flex min-w-0 flex-col p-2 max-[390px]:p-1.5 [content-visibility:auto] motion-safe:transition-[box-shadow] motion-safe:hover:shadow-[0_12px_28px_-16px_rgba(15,23,42,0.38),0_0_16px_-14px_rgba(37,99,235,0.35)] sm:p-3`}
+      className={`${PROFILE_CARD_BASE} relative isolate flex min-w-0 flex-col overflow-hidden !rounded-2xl p-2 ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_5%,transparent)] max-[390px]:p-1.5 [content-visibility:auto] motion-safe:transition-[box-shadow] motion-safe:hover:shadow-[0_16px_36px_-18px_rgba(15,23,42,0.42),0_0_18px_-14px_rgba(37,99,235,0.38)] sm:p-3`}
     >
       <span
         className="pointer-events-none absolute inset-0 z-0 opacity-80"

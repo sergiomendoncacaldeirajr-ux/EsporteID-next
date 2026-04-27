@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
+import { DesafioEsporteRegrasModal } from "@/components/desafio/desafio-esporte-regras-modal";
 import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
 import { fetchColetivoRankingPreview, fetchIndividualRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
@@ -349,6 +350,15 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
               Cancelar
             </Link>
           </div>
+          {finalidadeEscolhida === "ranking" && rankPrevInd ? (
+            <DesafioEsporteRegrasModal
+              esporteId={esporteId}
+              esporteNome={esporteNome}
+              modalidade="individual"
+              pontosVitoria={rankPrevInd.regras.pontos_vitoria}
+              pontosDerrota={rankPrevInd.regras.pontos_derrota}
+            />
+          ) : null}
         </main>
     );
   }
@@ -477,6 +487,15 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
           Cancelar
         </Link>
+        {rankPrevCo ? (
+          <DesafioEsporteRegrasModal
+            esporteId={esporteId}
+            esporteNome={esporteNome}
+            modalidade={modalidade}
+            pontosVitoria={rankPrevCo.regras.pontos_vitoria}
+            pontosDerrota={rankPrevCo.regras.pontos_derrota}
+          />
+        ) : null}
       </main>
   );
 }

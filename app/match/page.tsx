@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import { MatchPageShell } from "@/components/match/match-page-shell";
 import { MatchRadarApp } from "@/components/match/match-radar-app";
+import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { getEsportesConfrontoCached } from "@/lib/match/esportes-confronto";
 import {
@@ -138,8 +139,18 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   if (!hasLocation) {
     return (
       <MatchPageShell fullBleed={initialView === "full"}>
-        <header className="mb-2 mt-0">
-          <div className="space-y-1">
+        <header
+          className={`eid-match-hero relative mb-3 mt-0 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}
+        >
+          <div
+            className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-primary-500/15 blur-3xl"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-eid-action-500/12 blur-3xl"
+            aria-hidden
+          />
+          <div className="relative z-[1] space-y-1">
             <div className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)_86%)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-[color:color-mix(in_srgb,var(--eid-primary-500)_72%,var(--eid-fg)_28%)]">
               <span
                 className="h-1.5 w-1.5 rounded-full bg-[color:color-mix(in_srgb,var(--eid-primary-500)_78%,white_22%)] shadow-[0_0_10px_color-mix(in_srgb,var(--eid-primary-500)_52%,transparent)]"
