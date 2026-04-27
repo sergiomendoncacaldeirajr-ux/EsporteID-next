@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useActionState } from "react";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
@@ -72,6 +72,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, initial);
   const [openRefuseByMatch, setOpenRefuseByMatch] = useState<Record<number, boolean>>({});
   const [localPrefillByMatch, setLocalPrefillByMatch] = useState<Record<number, string>>({});
+  const [datetimeValueByField, setDatetimeValueByField] = useState<Record<string, string>>({});
   const [minDateTimeLocal] = useState<string>(() => minDatetimeLocalNow());
   const [maxDateTimeLocal] = useState<string>(() => maxDatetimeLocal72h());
   const err = !state.ok ? state.message : null;
@@ -100,6 +101,31 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
     const nextUrl = `${window.location.pathname}${nextQs ? `?${nextQs}` : ""}${window.location.hash}`;
     window.history.replaceState(null, "", nextUrl);
   }, []);
+
+  const minMs = useMemo(() => new Date(minDateTimeLocal).getTime(), [minDateTimeLocal]);
+  const maxMs = useMemo(() => new Date(maxDateTimeLocal).getTime(), [maxDateTimeLocal]);
+
+  function clampDatetimeValue(raw: string): string {
+    const t = new Date(raw).getTime();
+    if (Number.isNaN(t)) return raw;
+    if (t < minMs) return minDateTimeLocal;
+    if (t > maxMs) return maxDateTimeLocal;
+    return raw;
+  }
+
+  function handleDatetimeChange(matchId: number, optionIdx: 1 | 2 | 3, event: ChangeEvent<HTMLInputElement>) {
+    const k = `${matchId}_${optionIdx}`;
+    const nextRaw = String(event.target.value ?? "");
+    const clamped = clampDatetimeValue(nextRaw);
+    if (clamped !== nextRaw) {
+      event.target.value = clamped;
+      event.target.setCustomValidity("Escolha um horário entre agora e 72 horas.");
+      event.target.reportValidity();
+    } else {
+      event.target.setCustomValidity("");
+    }
+    setDatetimeValueByField((prev) => ({ ...prev, [k]: clamped }));
+  }
 
   if (items.length === 0) return null;
 
@@ -202,27 +228,42 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                         required
                         min={minDateTimeLocal}
                         max={maxDateTimeLocal}
+                        value={datetimeValueByField[`${m.id}_1`] ?? ""}
+                        onChange={(event) => handleDatetimeChange(m.id, 1, event)}
                         className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
+                      {!datetimeValueByField[`${m.id}_1`] ? (
+                        <p className="-mt-1 text-[10px] text-eid-text-secondary">Opção 1: selecione data e hora (até 72h).</p>
+                      ) : null}
                       <input
                         name="opcao_2"
                         type="datetime-local"
                         required
                         min={minDateTimeLocal}
                         max={maxDateTimeLocal}
+                        value={datetimeValueByField[`${m.id}_2`] ?? ""}
+                        onChange={(event) => handleDatetimeChange(m.id, 2, event)}
                         className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
+                      {!datetimeValueByField[`${m.id}_2`] ? (
+                        <p className="-mt-1 text-[10px] text-eid-text-secondary">Opção 2: selecione data e hora (até 72h).</p>
+                      ) : null}
                       <input
                         name="opcao_3"
                         type="datetime-local"
                         required
                         min={minDateTimeLocal}
                         max={maxDateTimeLocal}
+                        value={datetimeValueByField[`${m.id}_3`] ?? ""}
+                        onChange={(event) => handleDatetimeChange(m.id, 3, event)}
                         className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                         style={{ fontSize: "15px" }}
                       />
+                      {!datetimeValueByField[`${m.id}_3`] ? (
+                        <p className="-mt-1 text-[10px] text-eid-text-secondary">Opção 3: selecione data e hora (até 72h).</p>
+                      ) : null}
                       <LocalAutocompleteInput
                         name="local_reagendamento"
                         placeholder="Local sugerido (opcional)"
