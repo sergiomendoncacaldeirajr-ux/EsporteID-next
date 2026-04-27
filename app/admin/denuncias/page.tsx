@@ -16,6 +16,12 @@ type DenunciaRow = {
   criado_em: string;
 };
 
+function whatsappHref(raw: string | null | undefined): string | null {
+  const digits = String(raw ?? "").replace(/\D+/g, "");
+  if (!digits) return null;
+  return `https://wa.me/${digits}`;
+}
+
 export default async function AdminDenunciasPage() {
   if (!hasServiceRoleConfig()) {
     return <p className="text-sm text-eid-text-secondary">Configure a service role.</p>;
@@ -33,17 +39,24 @@ export default async function AdminDenunciasPage() {
   const denIds = [...new Set(rows.map((r) => r.denunciante_id).filter(Boolean))];
 
   const nomePorId = new Map<string, string>();
+  const whatsappPorId = new Map<string, string | null>();
   if (alvoIds.length) {
-    const { data: perfisAlvo } = await db.from("profiles").select("id, nome").in("id", alvoIds);
+    const { data: perfisAlvo } = await db.from("profiles").select("id, nome, whatsapp").in("id", alvoIds);
     for (const p of perfisAlvo ?? []) {
-      if (p.id) nomePorId.set(String(p.id), String(p.nome ?? ""));
+      if (p.id) {
+        nomePorId.set(String(p.id), String(p.nome ?? ""));
+        whatsappPorId.set(String(p.id), p.whatsapp ?? null);
+      }
     }
   }
   const faltamDen = denIds.filter((id) => !nomePorId.has(id));
   if (faltamDen.length) {
-    const { data: perfisDen } = await db.from("profiles").select("id, nome").in("id", faltamDen);
+    const { data: perfisDen } = await db.from("profiles").select("id, nome, whatsapp").in("id", faltamDen);
     for (const p of perfisDen ?? []) {
-      if (p.id) nomePorId.set(String(p.id), String(p.nome ?? ""));
+      if (p.id) {
+        nomePorId.set(String(p.id), String(p.nome ?? ""));
+        whatsappPorId.set(String(p.id), p.whatsapp ?? null);
+      }
     }
   }
 
@@ -55,6 +68,8 @@ export default async function AdminDenunciasPage() {
         {rows.map((d) => {
           const alvoNome = d.alvo_usuario_id ? nomePorId.get(d.alvo_usuario_id) : null;
           const denNome = nomePorId.get(d.denunciante_id);
+          const alvoWa = d.alvo_usuario_id ? whatsappHref(whatsappPorId.get(d.alvo_usuario_id)) : null;
+          const denWa = whatsappHref(whatsappPorId.get(d.denunciante_id));
           return (
             <div key={d.id} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
@@ -100,6 +115,33 @@ export default async function AdminDenunciasPage() {
                 <span className="font-semibold text-eid-fg">{denNome ?? "—"}</span>
                 <span className="font-mono"> · {d.denunciante_id}</span>
               </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {alvoWa ? (
+                  <a
+                    href={alvoWa}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-500/45 bg-emerald-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-emerald-200"
+                  >
+                    <span aria-hidden>💬</span>
+                    WhatsApp do alvo
+                  </a>
+                ) : null}
+                {denWa ? (
+                  <a
+                    href={denWa}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-eid-primary-200"
+                  >
+                    <span aria-hidden>💬</span>
+                    WhatsApp do denunciante
+                  </a>
+                ) : null}
+                {!alvoWa && !denWa ? (
+                  <span className="text-[10px] text-eid-text-secondary">Nenhum WhatsApp disponível para contato rápido.</span>
+                ) : null}
+              </div>
             </div>
           );
         })}
