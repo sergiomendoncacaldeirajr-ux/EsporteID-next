@@ -143,6 +143,12 @@ export default async function AgendaPage() {
     .order("id", { ascending: false })
     .limit(20);
 
+  function dueloKey(a: string | null | undefined, b: string | null | undefined, esporteId: number | null | undefined): string | null {
+    if (!a || !b || !Number.isFinite(Number(esporteId)) || Number(esporteId) <= 0) return null;
+    const [x, y] = [String(a), String(b)].sort();
+    return `${Number(esporteId)}:${x}:${y}`;
+  }
+
   const matchIdsAceitos = (aceitosCancelaveis ?? [])
     .map((m) => Number(m.id))
     .filter((v) => Number.isFinite(v) && v > 0);
@@ -158,6 +164,26 @@ export default async function AgendaPage() {
     const mid = Number((row as { match_id?: number | null }).match_id ?? 0);
     if (!Number.isFinite(mid) || mid <= 0 || partidaMaisRecentePorMatch.has(mid)) continue;
     partidaMaisRecentePorMatch.set(mid, {
+      status: (row as { status?: string | null }).status ?? null,
+      status_ranking: (row as { status_ranking?: string | null }).status_ranking ?? null,
+    });
+  }
+  const { data: partidasStatusRows } = await supabase
+    .from("partidas")
+    .select("id, esporte_id, jogador1_id, jogador2_id, status, status_ranking")
+    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id}${teamClause}`)
+    .in("status", ["agendada", "aguardando_confirmacao"])
+    .order("id", { ascending: false })
+    .limit(80);
+  const partidaMaisRecentePorDuelo = new Map<string, { status: string | null; status_ranking: string | null }>();
+  for (const row of partidasStatusRows ?? []) {
+    const key = dueloKey(
+      (row as { jogador1_id?: string | null }).jogador1_id ?? null,
+      (row as { jogador2_id?: string | null }).jogador2_id ?? null,
+      Number((row as { esporte_id?: number | null }).esporte_id ?? 0)
+    );
+    if (!key || partidaMaisRecentePorDuelo.has(key)) continue;
+    partidaMaisRecentePorDuelo.set(key, {
       status: (row as { status?: string | null }).status ?? null,
       status_ranking: (row as { status_ranking?: string | null }).status_ranking ?? null,
     });
@@ -218,7 +244,8 @@ export default async function AgendaPage() {
   const aceitosItems = (aceitosCancelaveis ?? []).map((m) => {
     const opp = m.usuario_id === user.id ? m.adversario_id : m.usuario_id;
     const status = String(m.status ?? "Aceito");
-    const partidaRecente = partidaMaisRecentePorMatch.get(Number(m.id)) ?? null;
+    const keyDuelo = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
+    const partidaRecente = partidaMaisRecentePorMatch.get(Number(m.id)) ?? (keyDuelo ? partidaMaisRecentePorDuelo.get(keyDuelo) ?? null : null);
     const partidaStatus = String(partidaRecente?.status ?? "").trim().toLowerCase();
     const partidaStatusRanking = String(partidaRecente?.status_ranking ?? "").trim().toLowerCase();
     let statusLabel: string | null = null;
@@ -249,12 +276,6 @@ export default async function AgendaPage() {
       options: opcoesByMatch.get(Number(m.id)) ?? [],
     };
   });
-
-  function dueloKey(a: string | null | undefined, b: string | null | undefined, esporteId: number | null | undefined): string | null {
-    if (!a || !b || !Number.isFinite(Number(esporteId)) || Number(esporteId) <= 0) return null;
-    const [x, y] = [String(a), String(b)].sort();
-    return `${Number(esporteId)}:${x}:${y}`;
-  }
 
   const cancelMatchIdByDuelo = new Map<string, number>();
   const acceptedScheduleByDuelo = new Map<string, { scheduledFor: string | null; scheduledLocation: string | null }>();

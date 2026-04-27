@@ -199,7 +199,9 @@ async function notifyEspacoSociosAboutFeriado(
       }))
     )
     .select("id");
-  await triggerPushForNotificationIdsBestEffort((data ?? []).map((r) => Number((r as { id?: number }).id ?? 0)));
+  await triggerPushForNotificationIdsBestEffort((data ?? []).map((r) => Number((r as { id?: number }).id ?? 0)), {
+    source: "espaco/actions.feriado",
+  });
 }
 
 async function uploadDocumentoEspaco(file: File, userId: string) {
@@ -1287,7 +1289,9 @@ export async function solicitarSocioEspacoAction(
         })
         .select("id")
         .limit(1);
-      await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)]);
+      await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)], {
+        source: "espaco/actions.solicitacao-associacao",
+      });
     }
 
     await supabase.rpc("espaco_criar_auditoria", {
@@ -1490,7 +1494,9 @@ export async function responderSolicitacaoEntradaEspacoAction(formData: FormData
     })
     .select("id")
     .limit(1);
-  await triggerPushForNotificationIdsBestEffort([Number((notifSocio?.[0] as { id?: number } | undefined)?.id ?? 0)]);
+  await triggerPushForNotificationIdsBestEffort([Number((notifSocio?.[0] as { id?: number } | undefined)?.id ?? 0)], {
+    source: "espaco/actions.responder-solicitacao",
+  });
 
   revalidatePath("/espaco/socios");
   revalidatePath("/espaco");
@@ -2065,7 +2071,9 @@ export async function criarReservaEspacoAction(
         })
         .select("id")
         .limit(1);
-      await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)]);
+      await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)], {
+        source: "espaco/actions.criar-reserva",
+      });
     }
 
     revalidatePath(`/espaco/${espaco.slug ?? ""}`);

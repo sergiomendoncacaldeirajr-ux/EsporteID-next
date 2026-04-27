@@ -72,7 +72,9 @@ async function run(request: Request) {
         })
         .select("id")
         .limit(1);
-      await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)]);
+      await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)], {
+        source: "jobs/espaco-waitlist",
+      });
       notifications += 1;
     }
 

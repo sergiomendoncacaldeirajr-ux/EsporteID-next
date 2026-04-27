@@ -40,7 +40,9 @@ async function run(request: Request) {
           })
           .select("id")
           .limit(1);
-        await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)]);
+        await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)], {
+          source: "jobs/professor-lembretes.professor",
+        });
         notifications += 1;
       }
 
@@ -59,7 +61,9 @@ async function run(request: Request) {
           })
           .select("id")
           .limit(1);
-        await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)]);
+        await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)], {
+          source: "jobs/professor-lembretes.aluno",
+        });
         notifications += 1;
       }
     }

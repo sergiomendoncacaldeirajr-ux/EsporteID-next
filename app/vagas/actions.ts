@@ -74,7 +74,9 @@ export async function candidatarEmVagaAction(
     })
     .select("id")
     .limit(1);
-  await triggerPushForNotificationIdsBestEffort([Number((notifCandidatura?.[0] as { id?: number } | undefined)?.id ?? 0)]);
+  await triggerPushForNotificationIdsBestEffort([Number((notifCandidatura?.[0] as { id?: number } | undefined)?.id ?? 0)], {
+    source: "vagas/actions.candidatar",
+  });
 
   revalidatePath("/vagas");
   revalidatePath("/comunidade");
@@ -177,7 +179,9 @@ export async function responderCandidaturaAction(
     })
     .select("id")
     .limit(1);
-  await triggerPushForNotificationIdsBestEffort([Number((notifResposta?.[0] as { id?: number } | undefined)?.id ?? 0)]);
+  await triggerPushForNotificationIdsBestEffort([Number((notifResposta?.[0] as { id?: number } | undefined)?.id ?? 0)], {
+    source: "vagas/actions.responder",
+  });
 
   revalidatePath("/vagas");
   revalidatePath("/comunidade");

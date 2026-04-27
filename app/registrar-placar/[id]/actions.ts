@@ -55,7 +55,7 @@ async function notifyUser(
     .limit(1);
   const notifId = Number((data?.[0] as { id?: number } | undefined)?.id ?? 0);
   if (Number.isFinite(notifId) && notifId > 0) {
-    await triggerPushForNotificationIdsBestEffort([notifId]);
+    await triggerPushForNotificationIdsBestEffort([notifId], { source: "registrar-placar/actions.notifyUser" });
   }
 }
 
@@ -401,7 +401,8 @@ export async function contestarPlacarAction(formData: FormData) {
       placar_desafiante: null,
       placar_desafiado: null,
       placar: null,
-      mensagem: "Resultado contestado. O mesmo lançador deve enviar novo resultado para aprovação.",
+      lancado_por: user.id,
+      mensagem: "Resultado contestado. Quem contestou deve enviar o novo resultado para aprovação.",
     })
     .eq("id", partidaId);
   if (error) go(partidaId, "erro", "Não foi possível contestar o placar.");
@@ -416,6 +417,71 @@ export async function contestarPlacarAction(formData: FormData) {
 
   revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
   go(partidaId, "ok", "Resultado contestado. Envie um novo resultado para aprovação do oponente.");
+}
+
+export async function abrirMediacaoAdminAction(formData: FormData) {
+  const partidaId = Number(formData.get("partida_id"));
+  if (!Number.isFinite(partidaId) || partidaId < 1) redirect("/agenda");
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect(`/login?next=/registrar-placar/${partidaId}`);
+
+  const ctx = await loadPartidaContext(partidaId, user.id);
+  if (!ctx.partida) go(partidaId, "erro", "Partida não encontrada.");
+  const p = ctx.partida;
+  const canMediate = ctx.scope.isColetivo ? ctx.scope.isTeamOwner : ctx.scope.isParticipant;
+  const aguardando = normStatus(p.status) === "aguardando_confirmacao";
+  if (!canMediate || !aguardando) {
+    go(partidaId, "erro", "Esta partida não está disponível para mediação.");
+  }
+  if (!isRankingStatus(p.status_ranking, "resultado_contestado") && !isRankingStatus(p.status_ranking, "pendente_confirmacao_revisao")) {
+    go(partidaId, "erro", "A mediação só pode ser aberta em fluxo de resultado contestado.");
+  }
+  if (p.lancado_por === user.id) {
+    go(partidaId, "erro", "A mediação deve ser aberta pelo oponente que recebeu o resultado contestado.");
+  }
+
+  const alvoUsuarioId = p.lancado_por;
+  if (alvoUsuarioId) {
+    const texto = `Divergência de placar na partida #${partidaId}. O oponente abriu mediação administrativa para decisão (W.O. ou cancelamento).`;
+    await ctx.supabase.rpc("registrar_denuncia_usuario", {
+      p_alvo_usuario_id: alvoUsuarioId,
+      p_codigo_motivo: "outro",
+      p_texto: texto,
+    });
+  }
+
+  const { error } = await ctx.supabase
+    .from("partidas")
+    .update({
+      status: "aguardando_confirmacao",
+      status_ranking: "em_analise_admin",
+      data_validacao: null,
+      mensagem: "Divergência de resultado em mediação administrativa.",
+    })
+    .eq("id", partidaId);
+  if (error) go(partidaId, "erro", "Não foi possível abrir mediação com o admin.");
+
+  await notifyUser(
+    ctx.supabase,
+    p.lancado_por,
+    user.id,
+    partidaId,
+    "O oponente abriu mediação administrativa para resolver a divergência de placar."
+  );
+  await notifyUser(
+    ctx.supabase,
+    user.id,
+    user.id,
+    partidaId,
+    "Mediação administrativa aberta. O admin vai analisar e decidir o desfecho."
+  );
+
+  revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
+  go(partidaId, "ok", "Mediação com o admin aberta com sucesso.");
 }
 
 export async function salvarAgendamentoAction(formData: FormData) {

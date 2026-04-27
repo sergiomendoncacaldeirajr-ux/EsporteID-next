@@ -62,7 +62,7 @@ async function notify(
     .limit(1);
   const notifId = Number((data?.[0] as { id?: number } | undefined)?.id ?? 0);
   if (Number.isFinite(notifId) && notifId > 0) {
-    await triggerPushForNotificationIdsBestEffort([notifId]);
+    await triggerPushForNotificationIdsBestEffort([notifId], { source: "comunidade/actions.notify" });
   }
 }
 

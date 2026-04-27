@@ -11,7 +11,7 @@ import { type MatchScorePayload } from "@/lib/match-scoring";
 import { buildSetFormatOptions, getDesafioRankLockedSetFormat, getMatchUIConfig } from "@/lib/match-scoring";
 import { createClient } from "@/lib/supabase/server";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
-import { confirmarPlacarAction, contestarPlacarAction, salvarAgendamentoAction } from "./actions";
+import { abrirMediacaoAdminAction, confirmarPlacarAction, contestarPlacarAction, salvarAgendamentoAction } from "./actions";
 
 type Props = { params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> };
 
@@ -128,6 +128,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const statusRanking = normStatus(p.status_ranking);
   const aguardandoConfirmacao = status === "aguardando_confirmacao";
   const emAnaliseAdmin = statusRanking === "em_analise_admin";
+  const resultadoContestado = statusRanking === "resultado_contestado" || statusRanking === "pendente_confirmacao_revisao";
   const concluida =
     status === "concluida" || status === "concluída" || status === "concluido" || status === "validada" || status === "finalizada";
   /** Fluxo só-agenda (data/local): na Agenda. Resultado fica no Painel (comunidade). */
@@ -142,6 +143,13 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
       : participant && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id)));
   const podeConfirmarOuContestar =
     !emAnaliseAdmin && !p.torneio_id && (isColetivo ? isTeamOwner : participant) && aguardandoConfirmacao && p.lancado_por !== user.id;
+  const podeAbrirMediacao =
+    !p.torneio_id &&
+    !emAnaliseAdmin &&
+    (isColetivo ? isTeamOwner : participant) &&
+    aguardandoConfirmacao &&
+    p.lancado_por !== user.id &&
+    resultadoContestado;
   const resultadoEnviadoAguardando = aguardandoConfirmacao && p.lancado_por === user.id && !agendaSomente;
 
   const esp = Array.isArray(p.esportes) ? p.esportes[0] : p.esportes;
@@ -456,7 +464,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             </p>
           ) : null}
 
-          {podeConfirmarOuContestar && !agendaSomente ? (
+          {podeConfirmarOuContestar && !agendaSomente && !resultadoContestado ? (
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               <form action={confirmarPlacarAction}>
                 <input type="hidden" name="partida_id" value={id} />
@@ -472,6 +480,19 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full hover:border-amber-500/45 hover:text-amber-200`}
                 >
                   Contestar resultado
+                </button>
+              </form>
+            </div>
+          ) : null}
+          {podeAbrirMediacao && !agendaSomente ? (
+            <div className="mt-5">
+              <form action={abrirMediacaoAdminAction}>
+                <input type="hidden" name="partida_id" value={id} />
+                <button
+                  type="submit"
+                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full border-amber-500/45 bg-amber-500/14 text-amber-200 hover:bg-amber-500/20`}
+                >
+                  Abrir mediação com o admin
                 </button>
               </form>
             </div>
