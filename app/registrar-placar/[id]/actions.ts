@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { resolveVariantFromRules, type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { buildSetFormatOptions, getMatchUIConfig, validateMatchScorePayload, type MatchScorePayload } from "@/lib/match-scoring";
+import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { sanitizeOptionalUserText, sanitizeUserText } from "@/lib/security/sanitize-input";
 import { createClient } from "@/lib/supabase/server";
@@ -39,15 +40,23 @@ async function notifyUser(
   mensagem: string
 ) {
   if (!usuarioId) return;
-  await supabase.from("notificacoes").insert({
-    usuario_id: usuarioId,
-    mensagem,
-    tipo: "desafio",
-    referencia_id: referenciaId,
-    lida: false,
-    remetente_id: remetenteId,
-    data_criacao: new Date().toISOString(),
-  });
+  const { data } = await supabase
+    .from("notificacoes")
+    .insert({
+      usuario_id: usuarioId,
+      mensagem,
+      tipo: "desafio",
+      referencia_id: referenciaId,
+      lida: false,
+      remetente_id: remetenteId,
+      data_criacao: new Date().toISOString(),
+    })
+    .select("id")
+    .limit(1);
+  const notifId = Number((data?.[0] as { id?: number } | undefined)?.id ?? 0);
+  if (Number.isFinite(notifId) && notifId > 0) {
+    await triggerPushForNotificationIdsBestEffort([notifId]);
+  }
 }
 
 function toOptionalFiniteNumber(v: unknown): number | null {

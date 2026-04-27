@@ -23,6 +23,8 @@ type PushDeliveryRow = {
   status: string;
 };
 
+type DispatchAggregate = { sent: number; failed: number; scanned: number };
+
 function normalizePushConfig() {
   const publicKey = String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim();
   const privateKey = String(process.env.VAPID_PRIVATE_KEY ?? "").trim();
@@ -54,22 +56,10 @@ function buildNotificationPayload(n: NotificacaoRow): string {
   });
 }
 
-export async function dispatchPendingPushNotifications(
+async function dispatchNotificationsToSubscriptions(
   admin: SupabaseClient,
-  opts?: { batchSize?: number }
-): Promise<{ sent: number; failed: number; scanned: number }> {
-  normalizePushConfig();
-  const batchSize = Math.max(1, Math.min(500, Number(opts?.batchSize ?? 150)));
-
-  const { data: notificacoes, error: notifErr } = await admin
-    .from("notificacoes")
-    .select("id, usuario_id, mensagem, tipo, referencia_id")
-    .eq("lida", false)
-    .order("id", { ascending: false })
-    .limit(batchSize);
-  if (notifErr) throw new Error(`Falha ao buscar notificações: ${notifErr.message}`);
-
-  const list = (notificacoes ?? []) as NotificacaoRow[];
+  list: NotificacaoRow[]
+): Promise<DispatchAggregate> {
   if (!list.length) return { sent: 0, failed: 0, scanned: 0 };
 
   const userIds = [...new Set(list.map((n) => n.usuario_id).filter(Boolean))];
@@ -152,5 +142,40 @@ export async function dispatchPendingPushNotifications(
   }
 
   return { sent, failed, scanned: list.length };
+}
+
+export async function dispatchPendingPushNotifications(
+  admin: SupabaseClient,
+  opts?: { batchSize?: number }
+): Promise<DispatchAggregate> {
+  normalizePushConfig();
+  const batchSize = Math.max(1, Math.min(500, Number(opts?.batchSize ?? 150)));
+
+  const { data: notificacoes, error: notifErr } = await admin
+    .from("notificacoes")
+    .select("id, usuario_id, mensagem, tipo, referencia_id")
+    .eq("lida", false)
+    .order("id", { ascending: false })
+    .limit(batchSize);
+  if (notifErr) throw new Error(`Falha ao buscar notificações: ${notifErr.message}`);
+
+  const list = (notificacoes ?? []) as NotificacaoRow[];
+  return dispatchNotificationsToSubscriptions(admin, list);
+}
+
+export async function dispatchPushForNotificationIds(
+  admin: SupabaseClient,
+  notificationIds: number[]
+): Promise<DispatchAggregate> {
+  normalizePushConfig();
+  const ids = [...new Set(notificationIds.filter((v) => Number.isFinite(v) && v > 0).map((v) => Math.floor(v)))];
+  if (!ids.length) return { sent: 0, failed: 0, scanned: 0 };
+  const { data: notificacoes, error: notifErr } = await admin
+    .from("notificacoes")
+    .select("id, usuario_id, mensagem, tipo, referencia_id")
+    .in("id", ids);
+  if (notifErr) throw new Error(`Falha ao buscar notificações por id: ${notifErr.message}`);
+  const list = (notificacoes ?? []) as NotificacaoRow[];
+  return dispatchNotificationsToSubscriptions(admin, list);
 }
 

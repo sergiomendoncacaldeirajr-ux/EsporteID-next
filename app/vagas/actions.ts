@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { createClient } from "@/lib/supabase/server";
 
 export type VagaActionState = { ok: true; message: string } | { ok: false; message: string };
@@ -60,15 +61,20 @@ export async function candidatarEmVagaAction(
   );
   if (upsertErr) return { ok: false, message: upsertErr.message };
 
-  await supabase.from("notificacoes").insert({
-    usuario_id: team.criador_id,
-    remetente_id: user.id,
-    mensagem: `Novo pedido para entrar em "${team.nome ?? "sua formação"}".`,
-    tipo: "candidatura_time",
-    referencia_id: timeId,
-    lida: false,
-    data_criacao: new Date().toISOString(),
-  });
+  const { data: notifCandidatura } = await supabase
+    .from("notificacoes")
+    .insert({
+      usuario_id: team.criador_id,
+      remetente_id: user.id,
+      mensagem: `Novo pedido para entrar em "${team.nome ?? "sua formação"}".`,
+      tipo: "candidatura_time",
+      referencia_id: timeId,
+      lida: false,
+      data_criacao: new Date().toISOString(),
+    })
+    .select("id")
+    .limit(1);
+  await triggerPushForNotificationIdsBestEffort([Number((notifCandidatura?.[0] as { id?: number } | undefined)?.id ?? 0)]);
 
   revalidatePath("/vagas");
   revalidatePath("/comunidade");
@@ -156,17 +162,22 @@ export async function responderCandidaturaAction(
     .eq("id", candidaturaId);
   if (updateErr) return { ok: false, message: updateErr.message };
 
-  await supabase.from("notificacoes").insert({
-    usuario_id: row.candidato_usuario_id,
-    remetente_id: user.id,
-    mensagem: aceitar
-      ? `Sua candidatura para "${team.nome ?? "a formação"}" foi aceita.`
-      : `Sua candidatura para "${team.nome ?? "a formação"}" foi recusada.`,
-    tipo: "candidatura_time",
-    referencia_id: candidaturaId,
-    lida: false,
-    data_criacao: new Date().toISOString(),
-  });
+  const { data: notifResposta } = await supabase
+    .from("notificacoes")
+    .insert({
+      usuario_id: row.candidato_usuario_id,
+      remetente_id: user.id,
+      mensagem: aceitar
+        ? `Sua candidatura para "${team.nome ?? "a formação"}" foi aceita.`
+        : `Sua candidatura para "${team.nome ?? "a formação"}" foi recusada.`,
+      tipo: "candidatura_time",
+      referencia_id: candidaturaId,
+      lida: false,
+      data_criacao: new Date().toISOString(),
+    })
+    .select("id")
+    .limit(1);
+  await triggerPushForNotificationIdsBestEffort([Number((notifResposta?.[0] as { id?: number } | undefined)?.id ?? 0)]);
 
   revalidatePath("/vagas");
   revalidatePath("/comunidade");

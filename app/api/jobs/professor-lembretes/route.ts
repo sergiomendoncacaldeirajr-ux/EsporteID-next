@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { assertCronSecret } from "@/lib/internal/cron-auth";
+import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 async function run(request: Request) {
@@ -26,29 +27,39 @@ async function run(request: Request) {
       const mensagem = `Lembrete: sua aula será em ${tipoJanela}, no local ${espaco?.nome_publico ?? "definido na agenda"}.`;
 
       if (aula.professor_id) {
-        await admin.from("notificacoes").insert({
-          usuario_id: aula.professor_id,
-          mensagem,
-          tipo: "professor_lembrete",
-          referencia_id: aula.id,
-          lida: false,
-          remetente_id: null,
-          data_criacao: new Date().toISOString(),
-        });
+        const { data } = await admin
+          .from("notificacoes")
+          .insert({
+            usuario_id: aula.professor_id,
+            mensagem,
+            tipo: "professor_lembrete",
+            referencia_id: aula.id,
+            lida: false,
+            remetente_id: null,
+            data_criacao: new Date().toISOString(),
+          })
+          .select("id")
+          .limit(1);
+        await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)]);
         notifications += 1;
       }
 
       for (const alunoItem of aula.professor_aula_alunos ?? []) {
         if (!alunoItem?.aluno_id) continue;
-        await admin.from("notificacoes").insert({
-          usuario_id: alunoItem.aluno_id,
-          mensagem,
-          tipo: "professor_lembrete",
-          referencia_id: aula.id,
-          lida: false,
-          remetente_id: aula.professor_id,
-          data_criacao: new Date().toISOString(),
-        });
+        const { data } = await admin
+          .from("notificacoes")
+          .insert({
+            usuario_id: alunoItem.aluno_id,
+            mensagem,
+            tipo: "professor_lembrete",
+            referencia_id: aula.id,
+            lida: false,
+            remetente_id: aula.professor_id,
+            data_criacao: new Date().toISOString(),
+          })
+          .select("id")
+          .limit(1);
+        await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)]);
         notifications += 1;
       }
     }

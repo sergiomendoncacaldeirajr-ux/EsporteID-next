@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 function mapPaymentStatus(raw?: string | null) {
@@ -40,6 +41,29 @@ export async function POST(request: Request) {
   }
 
   const admin = createServiceRoleClient();
+  async function sendNotificationAndPush(payload: {
+    usuario_id: string | null | undefined;
+    mensagem: string;
+    tipo: string;
+    referencia_id: number | null | undefined;
+    remetente_id: string | null | undefined;
+  }) {
+    if (!payload.usuario_id) return;
+    const { data } = await admin
+      .from("notificacoes")
+      .insert({
+        usuario_id: payload.usuario_id,
+        mensagem: payload.mensagem,
+        tipo: payload.tipo,
+        referencia_id: payload.referencia_id ?? null,
+        lida: false,
+        remetente_id: payload.remetente_id ?? null,
+        data_criacao: new Date().toISOString(),
+      })
+      .select("id")
+      .limit(1);
+    await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)]);
+  }
   const { data: pagamento } = await admin
     .from("professor_pagamentos")
     .select("id, aula_aluno_id, professor_id, aluno_id")
@@ -92,7 +116,7 @@ export async function POST(request: Request) {
     }
 
     if (pagamento.professor_id) {
-      await admin.from("notificacoes").insert({
+      await sendNotificationAndPush({
         usuario_id: pagamento.professor_id,
         mensagem:
           mapped.pagamento === "received"
@@ -100,14 +124,12 @@ export async function POST(request: Request) {
             : `Atualização de cobrança recebida: ${mapped.pagamento}.`,
         tipo: "professor_pagamento",
         referencia_id: pagamento.id,
-        lida: false,
         remetente_id: pagamento.aluno_id,
-        data_criacao: new Date().toISOString(),
       });
     }
 
     if (pagamento.aluno_id) {
-      await admin.from("notificacoes").insert({
+      await sendNotificationAndPush({
         usuario_id: pagamento.aluno_id,
         mensagem:
           mapped.pagamento === "received"
@@ -115,9 +137,7 @@ export async function POST(request: Request) {
             : `Seu pagamento da aula foi atualizado para ${mapped.pagamento}.`,
         tipo: "professor_pagamento",
         referencia_id: pagamento.id,
-        lida: false,
         remetente_id: pagamento.professor_id,
-        data_criacao: new Date().toISOString(),
       });
     }
   }
@@ -231,7 +251,7 @@ export async function POST(request: Request) {
     }
 
     if (parceiroUsuarioId) {
-      await admin.from("notificacoes").insert({
+      await sendNotificationAndPush({
         usuario_id: parceiroUsuarioId,
         mensagem:
           mapped.pagamento === "received"
@@ -239,14 +259,12 @@ export async function POST(request: Request) {
             : `Cobrança do espaço atualizada para ${mapped.pagamento}.`,
         tipo: "espaco_pagamento",
         referencia_id: espacoPagamento.id,
-        lida: false,
         remetente_id: espacoPagamento.usuario_id,
-        data_criacao: new Date().toISOString(),
       });
     }
 
     if (espacoPagamento.usuario_id) {
-      await admin.from("notificacoes").insert({
+      await sendNotificationAndPush({
         usuario_id: espacoPagamento.usuario_id,
         mensagem:
           mapped.pagamento === "received"
@@ -254,9 +272,7 @@ export async function POST(request: Request) {
             : `Seu pagamento do espaço foi atualizado para ${mapped.pagamento}.`,
         tipo: "espaco_pagamento",
         referencia_id: espacoPagamento.id,
-        lida: false,
         remetente_id: parceiroUsuarioId,
-        data_criacao: new Date().toISOString(),
       });
     }
   }

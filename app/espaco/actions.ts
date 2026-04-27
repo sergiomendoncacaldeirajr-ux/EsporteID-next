@@ -23,6 +23,7 @@ import {
   isDentroDaGradeSemanal,
   isHolidayDate,
 } from "@/lib/espacos/calendar";
+import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { createClient } from "@/lib/supabase/server";
 
@@ -184,17 +185,21 @@ async function notifyEspacoSociosAboutFeriado(
     .eq("status", "ativo");
   const targets = [...new Set((socios ?? []).map((s) => String(s.usuario_id ?? "")).filter(Boolean))];
   if (!targets.length) return;
-  await supabase.from("notificacoes").insert(
-    targets.map((uid) => ({
-      usuario_id: uid,
-      mensagem,
-      tipo: "espaco_feriado",
-      referencia_id: espacoId,
-      lida: false,
-      remetente_id: autorUsuarioId,
-      data_criacao: new Date().toISOString(),
-    }))
-  );
+  const { data } = await supabase
+    .from("notificacoes")
+    .insert(
+      targets.map((uid) => ({
+        usuario_id: uid,
+        mensagem,
+        tipo: "espaco_feriado",
+        referencia_id: espacoId,
+        lida: false,
+        remetente_id: autorUsuarioId,
+        data_criacao: new Date().toISOString(),
+      }))
+    )
+    .select("id");
+  await triggerPushForNotificationIdsBestEffort((data ?? []).map((r) => Number((r as { id?: number }).id ?? 0)));
 }
 
 async function uploadDocumentoEspaco(file: File, userId: string) {
@@ -1269,15 +1274,20 @@ export async function solicitarSocioEspacoAction(
     const notifyOwnerId =
       espaco.responsavel_usuario_id ?? espaco.criado_por_usuario_id ?? null;
     if (notifyOwnerId) {
-      await supabase.from("notificacoes").insert({
-        usuario_id: notifyOwnerId,
-        mensagem: "Um novo pedido de associação foi enviado para o seu espaço.",
-        tipo: "espaco_socio",
-        referencia_id: socio.id,
-        lida: false,
-        remetente_id: user.id,
-        data_criacao: new Date().toISOString(),
-      });
+      const { data } = await supabase
+        .from("notificacoes")
+        .insert({
+          usuario_id: notifyOwnerId,
+          mensagem: "Um novo pedido de associação foi enviado para o seu espaço.",
+          tipo: "espaco_socio",
+          referencia_id: socio.id,
+          lida: false,
+          remetente_id: user.id,
+          data_criacao: new Date().toISOString(),
+        })
+        .select("id")
+        .limit(1);
+      await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)]);
     }
 
     await supabase.rpc("espaco_criar_auditoria", {
@@ -1464,18 +1474,23 @@ export async function responderSolicitacaoEntradaEspacoAction(formData: FormData
     p_autor_usuario_id: user.id,
   });
 
-  await supabase.from("notificacoes").insert({
-    usuario_id: req.usuario_id,
-    mensagem:
-      decisao === "aprovar"
-        ? "Sua solicitação de entrada no espaço foi aprovada."
-        : "Sua solicitação de entrada no espaço foi recusada.",
-    tipo: "espaco_socio",
-    referencia_id: req.id,
-    lida: false,
-    remetente_id: user.id,
-    data_criacao: new Date().toISOString(),
-  });
+  const { data: notifSocio } = await supabase
+    .from("notificacoes")
+    .insert({
+      usuario_id: req.usuario_id,
+      mensagem:
+        decisao === "aprovar"
+          ? "Sua solicitação de entrada no espaço foi aprovada."
+          : "Sua solicitação de entrada no espaço foi recusada.",
+      tipo: "espaco_socio",
+      referencia_id: req.id,
+      lida: false,
+      remetente_id: user.id,
+      data_criacao: new Date().toISOString(),
+    })
+    .select("id")
+    .limit(1);
+  await triggerPushForNotificationIdsBestEffort([Number((notifSocio?.[0] as { id?: number } | undefined)?.id ?? 0)]);
 
   revalidatePath("/espaco/socios");
   revalidatePath("/espaco");
@@ -2034,18 +2049,23 @@ export async function criarReservaEspacoAction(
     const notifyOwnerId =
       espaco.responsavel_usuario_id ?? espaco.criado_por_usuario_id ?? null;
     if (notifyOwnerId) {
-      await admin.from("notificacoes").insert({
-        usuario_id: notifyOwnerId,
-        mensagem:
-          calculo.brutoCentavos > 0
-            ? "Uma nova reserva aguardando pagamento foi criada no seu espaço."
-            : "Uma nova reserva foi confirmada com benefício do sócio no seu espaço.",
-        tipo: "espaco_reserva",
-        referencia_id: reserva.id,
-        lida: false,
-        remetente_id: user.id,
-        data_criacao: new Date().toISOString(),
-      });
+      const { data } = await admin
+        .from("notificacoes")
+        .insert({
+          usuario_id: notifyOwnerId,
+          mensagem:
+            calculo.brutoCentavos > 0
+              ? "Uma nova reserva aguardando pagamento foi criada no seu espaço."
+              : "Uma nova reserva foi confirmada com benefício do sócio no seu espaço.",
+          tipo: "espaco_reserva",
+          referencia_id: reserva.id,
+          lida: false,
+          remetente_id: user.id,
+          data_criacao: new Date().toISOString(),
+        })
+        .select("id")
+        .limit(1);
+      await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)]);
     }
 
     revalidatePath(`/espaco/${espaco.slug ?? ""}`);

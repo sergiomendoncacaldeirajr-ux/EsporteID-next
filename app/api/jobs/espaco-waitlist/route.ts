@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { assertCronSecret } from "@/lib/internal/cron-auth";
+import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 async function run(request: Request) {
@@ -58,15 +59,20 @@ async function run(request: Request) {
         })
         .eq("id", item.id);
 
-      await admin.from("notificacoes").insert({
-        usuario_id: item.usuario_id,
-        mensagem: `Uma vaga abriu em ${espaco?.nome_publico ?? "um espaço"}. Você tem prioridade para reservar este horário.`,
-        tipo: "espaco_waitlist",
-        referencia_id: item.id,
-        lida: false,
-        remetente_id: null,
-        data_criacao: new Date().toISOString(),
-      });
+      const { data } = await admin
+        .from("notificacoes")
+        .insert({
+          usuario_id: item.usuario_id,
+          mensagem: `Uma vaga abriu em ${espaco?.nome_publico ?? "um espaço"}. Você tem prioridade para reservar este horário.`,
+          tipo: "espaco_waitlist",
+          referencia_id: item.id,
+          lida: false,
+          remetente_id: null,
+          data_criacao: new Date().toISOString(),
+        })
+        .select("id")
+        .limit(1);
+      await triggerPushForNotificationIdsBestEffort([Number((data?.[0] as { id?: number } | undefined)?.id ?? 0)]);
       notifications += 1;
     }
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { createClient } from "@/lib/supabase/server";
 
 export type ResponderMatchState = { ok: true } | { ok: false; message: string };
@@ -46,15 +47,23 @@ async function notify(
   remetenteId: string | null | undefined
 ) {
   if (!usuarioId) return;
-  await supabase.from("notificacoes").insert({
-    usuario_id: usuarioId,
-    mensagem,
-    tipo: "desafio",
-    referencia_id: referenciaId,
-    lida: false,
-    remetente_id: remetenteId ?? null,
-    data_criacao: new Date().toISOString(),
-  });
+  const { data } = await supabase
+    .from("notificacoes")
+    .insert({
+      usuario_id: usuarioId,
+      mensagem,
+      tipo: "desafio",
+      referencia_id: referenciaId,
+      lida: false,
+      remetente_id: remetenteId ?? null,
+      data_criacao: new Date().toISOString(),
+    })
+    .select("id")
+    .limit(1);
+  const notifId = Number((data?.[0] as { id?: number } | undefined)?.id ?? 0);
+  if (Number.isFinite(notifId) && notifId > 0) {
+    await triggerPushForNotificationIdsBestEffort([notifId]);
+  }
 }
 
 async function ensurePartidaAgendadaFromMatch(
