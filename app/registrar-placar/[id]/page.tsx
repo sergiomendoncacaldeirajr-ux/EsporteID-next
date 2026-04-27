@@ -477,19 +477,19 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             </p>
           ) : null}
 
-          {podeConfirmarOuContestar && !agendaSomente && !resultadoContestado ? (
+          {podeConfirmarOuContestar && !agendaSomente && resultadoTemPlacar ? (
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
               <form action={confirmarPlacarAction}>
                 <input type="hidden" name="partida_id" value={id} />
                 <button type="submit" className={DESAFIO_FLOW_CTA_BLOCK_CLASS}>
                   <DesafioFlowCtaIcon />
-                  <span>Confirmar resultado</span>
+                  <span>{resultadoContestado ? "Aceitar resultado contestado" : "Confirmar resultado"}</span>
                 </button>
               </form>
               <form action={contestarPlacarAction}>
                 <input type="hidden" name="partida_id" value={id} />
                 <StatusSubmitButton
-                  idleLabel="Contestar resultado"
+                  idleLabel={resultadoContestado ? "Contestar novamente" : "Contestar resultado"}
                   pendingLabel="Contestando..."
                   className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full hover:border-amber-500/45 hover:text-amber-200 disabled:opacity-60`}
                 />

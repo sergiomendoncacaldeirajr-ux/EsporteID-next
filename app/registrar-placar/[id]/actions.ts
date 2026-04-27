@@ -86,6 +86,38 @@ function isRankingStatus(value: string | null | undefined, expected: string): bo
     .toLowerCase() === expected;
 }
 
+function isScorePayloadEffectivelyEmpty(payload: MatchScorePayload | null): boolean {
+  if (!payload) return true;
+  if (payload.type === "sets") {
+    return (payload.sets ?? []).every((s) => {
+      const a = Number(s?.a ?? 0);
+      const b = Number(s?.b ?? 0);
+      const ta = Number(s?.tiebreakA ?? 0);
+      const tb = Number(s?.tiebreakB ?? 0);
+      return a === 0 && b === 0 && ta === 0 && tb === 0;
+    });
+  }
+  if (payload.type === "pontos") {
+    return Number(payload.points?.a ?? 0) === 0 && Number(payload.points?.b ?? 0) === 0;
+  }
+  if (payload.type === "gols") {
+    return (
+      Number(payload.goals?.a ?? 0) === 0 &&
+      Number(payload.goals?.b ?? 0) === 0 &&
+      Number(payload.goals?.overtimeA ?? 0) === 0 &&
+      Number(payload.goals?.overtimeB ?? 0) === 0 &&
+      Number(payload.goals?.penaltiesA ?? 0) === 0 &&
+      Number(payload.goals?.penaltiesB ?? 0) === 0
+    );
+  }
+  if (payload.type === "rounds") {
+    const items = payload.rounds?.items ?? [];
+    if (!items.length) return true;
+    return items.every((r) => Number(r?.a ?? 0) === 0 && Number(r?.b ?? 0) === 0);
+  }
+  return false;
+}
+
 export async function submitPlacarAction(formData: FormData) {
   const partidaId = Number(formData.get("partida_id"));
   if (!Number.isFinite(partidaId) || partidaId < 1) redirect("/agenda");
@@ -216,21 +248,15 @@ export async function submitPlacarAction(formData: FormData) {
 
   let finalPlacar1 = woAtivo ? (woVencedor === "j2" ? 0 : 1) : (placar1 as number);
   let finalPlacar2 = woAtivo ? (woVencedor === "j2" ? 1 : 0) : (placar2 as number);
+  if (!woAtivo && !payloadFromUI) {
+    go(partidaId, "erro", "Preencha o placar antes de enviar o resultado.");
+  }
   if (!woAtivo && payloadFromUI) {
     const dynamicValidation = validateMatchScorePayload(dynamicConfig, payloadFromUI);
     if (!dynamicValidation.valid || dynamicValidation.placar1 == null || dynamicValidation.placar2 == null) {
       go(partidaId, "erro", dynamicValidation.message ?? "Placar inválido para este formato.");
     }
-    if (
-      payloadFromUI.type === "sets" &&
-      (payloadFromUI.sets ?? []).every(
-        (s) =>
-          Number(s?.a ?? 0) === 0 &&
-          Number(s?.b ?? 0) === 0 &&
-          Number(s?.tiebreakA ?? 0) === 0 &&
-          Number(s?.tiebreakB ?? 0) === 0
-      )
-    ) {
+    if (isScorePayloadEffectivelyEmpty(payloadFromUI) || (dynamicValidation.placar1 === 0 && dynamicValidation.placar2 === 0)) {
       go(partidaId, "erro", "Preencha o placar antes de enviar o resultado.");
     }
     finalPlacar1 = dynamicValidation.placar1;

@@ -25,7 +25,11 @@ export function RealtimePageRefresh({ userId }: Props) {
     const shouldPauseAutoRefresh = () => {
       if (typeof window === "undefined") return false;
       const path = String(window.location.pathname ?? "");
-      return path.startsWith("/registrar-placar/");
+      if (path.startsWith("/registrar-placar/")) return true;
+      // Quando o lançador abre em overlay (iframe), pausar refresh da página-pai
+      // para não reinicializar o formulário no meio da contestação.
+      const frame = document.querySelector('iframe[src*="/registrar-placar/"]');
+      return Boolean(frame);
     };
 
     const refresh = () => {
