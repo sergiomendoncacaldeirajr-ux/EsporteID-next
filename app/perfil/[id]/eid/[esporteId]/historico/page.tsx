@@ -3,7 +3,7 @@ import { EidIndividualPartidaRow } from "@/components/perfil/eid-individual-part
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { resolveBackHref } from "@/lib/perfil/back-href";
-import { PARTIDA_STATUS_CONCLUIDA, resultadoPartidaIndividual } from "@/lib/perfil/formacao-eid-stats";
+import { partidaEncerradaParaHistorico, resultadoPartidaIndividual } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -60,7 +60,7 @@ export default async function PerfilEidEsporteHistoricoIndividualPage({ params, 
   const { data: partidas } = await supabase
     .from("partidas")
     .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, placar_1, placar_2, status, torneio_id, data_resultado, data_registro, tipo_partida"
+      "id, esporte_id, modalidade, jogador1_id, jogador2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro, tipo_partida"
     )
     .eq("esporte_id", esporteId)
     .or(`jogador1_id.eq.${profileId},jogador2_id.eq.${profileId}`)
@@ -70,9 +70,7 @@ export default async function PerfilEidEsporteHistoricoIndividualPage({ params, 
   const lista = (partidas ?? []).filter((p) => {
     if (p.jogador1_id !== profileId && p.jogador2_id !== profileId) return false;
     if (!p.jogador1_id || !p.jogador2_id) return false;
-    const st = (p.status ?? "").toLowerCase();
-    if (PARTIDA_STATUS_CONCLUIDA.has(st)) return true;
-    return user.id === profileId;
+    return partidaEncerradaParaHistorico(p);
   });
 
   const torneioIds = [

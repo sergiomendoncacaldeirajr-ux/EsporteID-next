@@ -96,6 +96,13 @@ type UnreadNotif = {
   remetente_id: string | null;
 };
 
+function isFlowActionNotif(tipoRaw: string | null | undefined): boolean {
+  const tipo = String(tipoRaw ?? "")
+    .trim()
+    .toLowerCase();
+  return tipo === "match" || tipo === "desafio";
+}
+
 function NavBadge({ n }: { n: number }) {
   if (n < 1) return null;
   return (
@@ -203,18 +210,19 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       const placar = pRes.count ?? 0;
       const unreadRows = (nRes.data ?? []) as UnreadNotif[];
       const seen = new Set<string>();
-      let unread = 0;
+      let unreadGeneral = 0;
       for (const n of unreadRows) {
-        const tipo = String(n.tipo ?? "").trim().toLowerCase();
-        const isDesafio = tipo === "match" || tipo === "desafio";
-        const key = isDesafio
-          ? `${tipo}:${String(n.referencia_id ?? "null")}:${String(n.remetente_id ?? "null")}`
+        const isFlowAction = isFlowActionNotif(n.tipo);
+        const key = isFlowAction
+          ? `flow:${String(n.tipo ?? "").trim().toLowerCase()}:${String(n.referencia_id ?? "null")}`
           : `id:${n.id}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        unread += 1;
+        // Notificações de fluxo (desafio/match) já são cobertas pelos cartões de ação
+        // (placar/pedidos). Não somar novamente para evitar badge duplicado.
+        if (!isFlowAction) unreadGeneral += 1;
       }
-      setSocialBadge(placar + unread);
+      setSocialBadge(placar + unreadGeneral);
     }
     void load();
     const t = window.setInterval(load, 60000);

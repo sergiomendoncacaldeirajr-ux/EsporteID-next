@@ -22,14 +22,13 @@ import {
   computeDisponivelAmistosoEffective,
   expireDisponivelAmistosoProfileIfNeeded,
 } from "@/lib/perfil/disponivel-amistoso";
+import { partidaEncerradaParaHistorico } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
   params: Promise<{ id: string }>;
   searchParams?: Promise<{ from?: string }>;
 };
-
-const HISTORICO_STATUS_CONCLUIDO = new Set(["concluida", "concluído", "finalizada", "encerrada"]);
 
 export default async function PerfilPublicoPage({ params, searchParams }: Props) {
   const { id } = await params;
@@ -236,7 +235,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const { data: partidasHistoricoRaw } = await supabase
     .from("partidas")
     .select(
-      "id, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, torneio_id, data_resultado, data_registro"
+      "id, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro"
     )
     .or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`)
     .order("data_registro", { ascending: false })
@@ -245,8 +244,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const partidasHistorico = (partidasHistoricoRaw ?? []).filter((p) => {
     if (!p.jogador1_id || !p.jogador2_id) return false;
     if (p.time1_id != null || p.time2_id != null) return false;
-    const st = String(p.status ?? "").toLowerCase();
-    return HISTORICO_STATUS_CONCLUIDO.has(st);
+    return partidaEncerradaParaHistorico(p);
   });
 
   const resumoHistorico = partidasHistorico.slice(0, 4).map((p) => {

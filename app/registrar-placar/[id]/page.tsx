@@ -302,7 +302,9 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             <p className="mt-4 rounded-xl border border-red-500/35 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200">{errMsg}</p>
           ) : null}
           {okMsg ? (
-            <p className="mt-4 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200">{okMsg}</p>
+            <p className="mt-4 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-success-500)_82%,var(--eid-fg)_18%)]">
+              {okMsg}
+            </p>
           ) : null}
 
           {agendaSomente ? (
@@ -504,7 +506,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           ) : null}
 
           {concluida ? (
-            <p className="mt-5 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200">
+            <p className="mt-5 rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-success-500)_82%,var(--eid-fg)_18%)]">
               Partida concluída e resultado validado.
             </p>
           ) : null}

@@ -8,6 +8,8 @@ export const PARTIDA_STATUS_CONCLUIDA = new Set([
   "validada",
 ]);
 
+const PARTIDA_STATUS_RANKING_PUBLICAVEL = new Set(["validado"]);
+
 export type PartidaColetivaRow = {
   id: number;
   time1_id: number | null;
@@ -16,12 +18,29 @@ export type PartidaColetivaRow = {
   placar_2: number | null;
   vencedor_id: number | null;
   status: string | null;
+  status_ranking: string | null;
   torneio_id: number | null;
   modalidade: string | null;
   data_resultado: string | null;
   data_registro: string | null;
   tipo_partida: string | null;
 };
+
+function normLower(v: string | null | undefined): string {
+  return String(v ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+export function partidaEncerradaParaHistorico(
+  p: Pick<PartidaColetivaRow, "status" | "status_ranking" | "torneio_id">
+): boolean {
+  const status = normLower(p.status);
+  if (!PARTIDA_STATUS_CONCLUIDA.has(status)) return false;
+  if (p.torneio_id != null && Number(p.torneio_id) > 0) return true;
+  const statusRanking = normLower(p.status_ranking);
+  return PARTIDA_STATUS_RANKING_PUBLICAVEL.has(statusRanking);
+}
 
 export function fmtDataPtBr(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -171,11 +190,11 @@ export async function carregarPartidasColetivasDoTime(
   esporteId: number,
   viewerUserId: string
 ): Promise<PartidaColetivaRow[]> {
-  const pertence = await usuarioPertenceAoTime(supabase, viewerUserId, timeId);
+  void viewerUserId;
   const { data: raw } = await supabase
     .from("partidas")
     .select(
-      "id, time1_id, time2_id, placar_1, placar_2, vencedor_id, status, torneio_id, modalidade, data_resultado, data_registro, tipo_partida"
+      "id, time1_id, time2_id, placar_1, placar_2, vencedor_id, status, status_ranking, torneio_id, modalidade, data_resultado, data_registro, tipo_partida"
     )
     .eq("esporte_id", esporteId)
     .or(`time1_id.eq.${timeId},time2_id.eq.${timeId}`)
@@ -186,9 +205,8 @@ export async function carregarPartidasColetivasDoTime(
     const t1 = p.time1_id != null ? Number(p.time1_id) : null;
     const t2 = p.time2_id != null ? Number(p.time2_id) : null;
     if (t1 == null || t2 == null) return false;
-    const st = (p.status ?? "").toLowerCase();
-    if (PARTIDA_STATUS_CONCLUIDA.has(st)) return true;
-    return pertence;
+    if (partidaEncerradaParaHistorico(p as PartidaColetivaRow)) return true;
+    return false;
   }) as PartidaColetivaRow[];
 }
 

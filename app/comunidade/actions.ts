@@ -344,6 +344,17 @@ export async function cancelarMatchAceito(
     referenciaId: matchId,
     tipos: ["match", "desafio"],
   });
+  const { data: participantsRow } = await supabase
+    .from("matches")
+    .select("usuario_id, adversario_id")
+    .eq("id", matchId)
+    .maybeSingle();
+  await triggerPushForMatchNotifications(
+    supabase,
+    matchId,
+    [participantsRow?.usuario_id, participantsRow?.adversario_id],
+    "comunidade/actions.cancelarMatchAceito"
+  );
 
   revalidatePath("/agenda");
   revalidatePath("/comunidade");
@@ -376,6 +387,17 @@ export async function cancelarPedidoMatchPendente(
     referenciaId: matchId,
     tipos: ["match", "desafio"],
   });
+  const { data: participantsRow } = await supabase
+    .from("matches")
+    .select("usuario_id, adversario_id")
+    .eq("id", matchId)
+    .maybeSingle();
+  await triggerPushForMatchNotifications(
+    supabase,
+    matchId,
+    [participantsRow?.usuario_id, participantsRow?.adversario_id],
+    "comunidade/actions.cancelarPedidoMatchPendente"
+  );
 
   revalidatePath("/comunidade");
   revalidatePath("/dashboard");
@@ -430,6 +452,11 @@ export async function gerenciarCancelamentoMatch(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Sessão expirada. Faça login novamente." };
+  const { data: participantsRow } = await supabase
+    .from("matches")
+    .select("usuario_id, adversario_id")
+    .eq("id", matchId)
+    .maybeSingle();
 
   if (intent === "request_cancel") {
     const motivo = String(formData.get("motivo") ?? "").trim();
@@ -442,6 +469,12 @@ export async function gerenciarCancelamentoMatch(
       referenciaId: matchId,
       tipos: ["match", "desafio"],
     });
+    await triggerPushForMatchNotifications(
+      supabase,
+      matchId,
+      [participantsRow?.usuario_id, participantsRow?.adversario_id],
+      "comunidade/actions.gerenciarCancelamentoMatch.request_cancel"
+    );
     revalidatePath("/agenda");
     revalidatePath("/comunidade");
     revalidatePath("/dashboard");
@@ -478,6 +511,12 @@ export async function gerenciarCancelamentoMatch(
       referenciaId: matchId,
       tipos: ["match", "desafio"],
     });
+      await triggerPushForMatchNotifications(
+        supabase,
+        matchId,
+        [participantsRow?.usuario_id, participantsRow?.adversario_id],
+        "comunidade/actions.gerenciarCancelamentoMatch.respond_cancel"
+      );
     revalidatePath("/agenda");
     revalidatePath("/comunidade");
     revalidatePath("/dashboard");
@@ -505,6 +544,12 @@ export async function gerenciarCancelamentoMatch(
       referenciaId: matchId,
       tipos: ["match", "desafio"],
     });
+    await triggerPushForMatchNotifications(
+      supabase,
+      matchId,
+      [participantsRow?.usuario_id, participantsRow?.adversario_id],
+      "comunidade/actions.gerenciarCancelamentoMatch.respond_option"
+    );
     revalidatePath("/agenda");
     revalidatePath("/comunidade");
     revalidatePath("/dashboard");
@@ -617,6 +662,12 @@ export async function gerenciarCancelamentoMatch(
       referenciaId: matchId,
       tipos: ["match", "desafio"],
     });
+    await triggerPushForMatchNotifications(
+      supabase,
+      matchId,
+      [participantsRow?.usuario_id, participantsRow?.adversario_id],
+      "comunidade/actions.gerenciarCancelamentoMatch.desist_match"
+    );
     revalidatePath("/agenda");
     revalidatePath("/comunidade");
     revalidatePath("/dashboard");

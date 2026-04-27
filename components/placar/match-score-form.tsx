@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { submitPlacarAction } from "@/app/registrar-placar/[id]/actions";
 import { type MatchScorePayload, type MatchUIConfig, type SetFormatOption, validateMatchScorePayload } from "@/lib/match-scoring";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS } from "@/lib/desafio/flow-ui";
@@ -21,6 +22,22 @@ type Props = {
   sideBAvatarUrl?: string | null;
   isTorneio: boolean;
 };
+
+function SubmitPlacarButton({ disabled, isTorneio }: { disabled: boolean; isTorneio: boolean }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={disabled || pending}
+      className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} disabled:cursor-not-allowed disabled:opacity-45`}
+    >
+      <DesafioFlowCtaIcon />
+      <span>
+        {pending ? "Lançando..." : isTorneio ? "Salvar e validar resultado" : "Enviar resultado para confirmação"}
+      </span>
+    </button>
+  );
+}
 
 function winnerInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -198,10 +215,7 @@ export function MatchScoreForm({
         </div>
       ) : null}
 
-      <button type="submit" disabled={disabled} className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} disabled:cursor-not-allowed disabled:opacity-45`}>
-        <DesafioFlowCtaIcon />
-        <span>{isTorneio ? "Salvar e validar resultado" : "Enviar resultado para confirmação"}</span>
-      </button>
+      <SubmitPlacarButton disabled={disabled} isTorneio={isTorneio} />
     </form>
   );
 }

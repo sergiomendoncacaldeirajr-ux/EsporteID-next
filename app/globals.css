@@ -1388,6 +1388,8 @@ input.eid-input-dark[type="datetime-local"] {
 }
 
 input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"] {
+  appearance: auto;
+  -webkit-appearance: auto;
   color: var(--eid-fg) !important;
   -webkit-text-fill-color: var(--eid-fg) !important;
 }
@@ -1415,8 +1417,8 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid::-webkit-datetime-edit-year-field,
 input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid::-webkit-datetime-edit-hour-field,
 input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:invalid::-webkit-datetime-edit-minute-field {
-  color: var(--eid-text-secondary) !important;
-  -webkit-text-fill-color: var(--eid-text-secondary) !important;
+  color: var(--eid-fg) !important;
+  -webkit-text-fill-color: var(--eid-fg) !important;
   opacity: 1 !important;
 }
 

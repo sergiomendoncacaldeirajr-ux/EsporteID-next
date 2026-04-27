@@ -14,7 +14,7 @@ import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
   fmtDataPtBr,
   formatLinhaExperienciaEid,
-  PARTIDA_STATUS_CONCLUIDA,
+  partidaEncerradaParaHistorico,
   resultadoColetivo,
   resultadoPartidaIndividual,
   type PartidaColetivaRow,
@@ -235,7 +235,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
     const { data: pc } = await supabase
       .from("partidas")
       .select(
-        "id, time1_id, time2_id, placar_1, placar_2, vencedor_id, status, torneio_id, modalidade, data_resultado, data_registro, tipo_partida"
+        "id, time1_id, time2_id, placar_1, placar_2, vencedor_id, status, status_ranking, torneio_id, modalidade, data_resultado, data_registro, tipo_partida"
       )
       .eq("esporte_id", esporteId)
       .or(orClause)
@@ -248,9 +248,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
   for (const f of formationList) listaColetivoPorTime.set(f.id, []);
 
   const incluirPartidaColetivaNoPerfil = (p: PartidaColetivaRow) => {
-    const st = (p.status ?? "").toLowerCase();
-    if (PARTIDA_STATUS_CONCLUIDA.has(st)) return true;
-    return user.id === profileId;
+    return partidaEncerradaParaHistorico(p);
   };
 
   for (const p of partidasColetivoRaw) {
@@ -306,7 +304,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
   const { data: partidas } = await supabase
     .from("partidas")
     .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, placar_1, placar_2, status, torneio_id, data_resultado, data_registro, tipo_partida"
+      "id, esporte_id, modalidade, jogador1_id, jogador2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro, tipo_partida"
     )
     .eq("esporte_id", esporteId)
     .or(`jogador1_id.eq.${profileId},jogador2_id.eq.${profileId}`)
@@ -316,9 +314,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
   const lista = (partidas ?? []).filter((p) => {
     if (p.jogador1_id !== profileId && p.jogador2_id !== profileId) return false;
     if (!p.jogador1_id || !p.jogador2_id) return false;
-    const st = (p.status ?? "").toLowerCase();
-    if (PARTIDA_STATUS_CONCLUIDA.has(st)) return true;
-    return user.id === profileId;
+    return partidaEncerradaParaHistorico(p);
   });
 
   const datasColetivoStr = formationList.flatMap((f) =>

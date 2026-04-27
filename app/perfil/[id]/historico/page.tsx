@@ -2,14 +2,13 @@ import { notFound, redirect } from "next/navigation";
 import { EidIndividualPartidaRow } from "@/components/perfil/eid-individual-partida-row";
 import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
+import { partidaEncerradaParaHistorico } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
   params: Promise<{ id: string }>;
   searchParams?: Promise<{ from?: string }>;
 };
-
-const HISTORICO_STATUS_CONCLUIDO = new Set(["concluida", "concluído", "finalizada", "encerrada"]);
 
 export default async function PerfilHistoricoCompletoPage({ params, searchParams }: Props) {
   const { id } = await params;
@@ -35,7 +34,7 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
   const { data: partidasRaw } = await supabase
     .from("partidas")
     .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, torneio_id, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id"
+      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id"
     )
     .or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`)
     .order("data_registro", { ascending: false })
@@ -44,8 +43,7 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
   const partidas = (partidasRaw ?? []).filter((p) => {
     if (!p.jogador1_id || !p.jogador2_id) return false;
     if (p.time1_id != null || p.time2_id != null) return false;
-    const st = String(p.status ?? "").toLowerCase();
-    return HISTORICO_STATUS_CONCLUIDO.has(st);
+    return partidaEncerradaParaHistorico(p);
   });
 
   const oponenteIds = [

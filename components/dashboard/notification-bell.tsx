@@ -18,6 +18,13 @@ type UnreadNotif = {
   remetente_id: string | null;
 };
 
+function isFlowActionNotif(tipoRaw: string | null | undefined): boolean {
+  const tipo = String(tipoRaw ?? "")
+    .trim()
+    .toLowerCase();
+  return tipo === "match" || tipo === "desafio";
+}
+
 function IconBell({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -80,16 +87,17 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     ]);
     const unreadRows = (notifRes.data ?? []) as UnreadNotif[];
     const seen = new Set<string>();
-    let unread = 0;
+    let unreadGeneral = 0;
     for (const n of unreadRows) {
-      const tipo = String(n.tipo ?? "").trim().toLowerCase();
-      const isDesafio = tipo === "match" || tipo === "desafio";
-      const key = isDesafio
-        ? `${tipo}:${String(n.referencia_id ?? "null")}:${String(n.remetente_id ?? "null")}`
+      const isFlowAction = isFlowActionNotif(n.tipo);
+      const key = isFlowAction
+        ? `flow:${String(n.tipo ?? "").trim().toLowerCase()}:${String(n.referencia_id ?? "null")}`
         : `id:${n.id}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      unread += 1;
+      // Notificações de fluxo (desafio/match) já entram em cartões de ação
+      // (pedido/placar). Evita contagem duplicada no sino.
+      if (!isFlowAction) unreadGeneral += 1;
     }
     const ag = agRes.count ?? 0;
     const m = mRes.count ?? 0;
@@ -97,7 +105,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     setAgendaN(ag);
     setMatchN(m);
     setPlacarN(p);
-    setTotal(unread + p + ag);
+    setTotal(unreadGeneral + p + ag);
     setPreview((listRes.data ?? []) as Preview[]);
   }, [userId]);
 
