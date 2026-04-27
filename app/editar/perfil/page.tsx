@@ -41,17 +41,38 @@ export default async function EditarPerfilFullscreenPage({ searchParams }: Props
       showBack={!isEmbed}
     >
       <div className="space-y-3">
-        <ProfileMediaEditor avatarUrl={profile.avatar_url ?? null} coverUrl={profile.foto_capa ?? null} />
-        <ProfileMainEditor
-          initial={{
-            nome: profile.nome ?? "",
-            username: profile.username ?? "",
-            localizacao: profile.localizacao ?? "",
-            alturaCm: profile.altura_cm ?? null,
-            pesoKg: profile.peso_kg ?? null,
-            lado: profile.lado ?? null,
-          }}
-        />
+        <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Mídia do perfil</p>
+            <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-300">
+              Avatar e capa
+            </span>
+          </div>
+          <div className="p-3">
+            <ProfileMediaEditor avatarUrl={profile.avatar_url ?? null} coverUrl={profile.foto_capa ?? null} />
+          </div>
+        </section>
+
+        <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Dados principais</p>
+            <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-action-400">
+              Perfil
+            </span>
+          </div>
+          <div className="p-3">
+            <ProfileMainEditor
+              initial={{
+                nome: profile.nome ?? "",
+                username: profile.username ?? "",
+                localizacao: profile.localizacao ?? "",
+                alturaCm: profile.altura_cm ?? null,
+                pesoKg: profile.peso_kg ?? null,
+                lado: profile.lado ?? null,
+              }}
+            />
+          </div>
+        </section>
       </div>
     </ProfileEditFullscreenShell>
   );

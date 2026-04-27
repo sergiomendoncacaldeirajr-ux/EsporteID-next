@@ -44,17 +44,27 @@ export default async function CadastrarEquipeFullscreenPage({ searchParams }: Pr
       subtitle={convidarUid ? "Preencha abaixo — ao criar, o convite é enviado ao atleta." : "Crie uma nova formação no padrão do perfil."}
       showBack={!isEmbed}
     >
-      <TeamManagementPanel
-        esportes={(esportes ?? []).map((e) => ({ id: e.id, nome: e.nome }))}
-        minhasEquipes={(minhas ?? []).map((t) => {
-          const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
-          return { id: t.id, nome: t.nome ?? "Equipe", tipo: t.tipo ?? "time", esporteNome: esp?.nome ?? "Esporte" };
-        })}
-        defaultOpenCreate
-        manageHrefTemplate={manageHrefTemplate}
-        convidarUsuarioIdAposCriar={convidarUid}
-        defaultTipoFormacao={convidarUid ? "dupla" : undefined}
-      />
+      <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+        <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Cadastro de formação</p>
+          <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-300">
+            Equipe ou dupla
+          </span>
+        </div>
+        <div className="p-3">
+          <TeamManagementPanel
+            esportes={(esportes ?? []).map((e) => ({ id: e.id, nome: e.nome }))}
+            minhasEquipes={(minhas ?? []).map((t) => {
+              const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
+              return { id: t.id, nome: t.nome ?? "Equipe", tipo: t.tipo ?? "time", esporteNome: esp?.nome ?? "Esporte" };
+            })}
+            defaultOpenCreate
+            manageHrefTemplate={manageHrefTemplate}
+            convidarUsuarioIdAposCriar={convidarUid}
+            defaultTipoFormacao={convidarUid ? "dupla" : undefined}
+          />
+        </div>
+      </section>
     </ProfileEditFullscreenShell>
   );
 }

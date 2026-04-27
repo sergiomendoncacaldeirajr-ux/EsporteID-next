@@ -49,11 +49,11 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
         {items.map((s) => (
           <li
             key={s.id}
-            className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-3 text-sm md:p-4"
+            className="overflow-hidden rounded-xl border border-amber-500/25 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-warning-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_93%,transparent))] p-3 text-sm shadow-[0_8px_18px_-14px_rgba(217,119,6,0.45)] md:p-4"
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wide text-amber-200/90">Sugestão de membro</p>
+                <p className="text-xs font-black uppercase tracking-wide text-amber-200/90">Sugestão de membro</p>
                 <p className="mt-1 text-sm font-bold text-eid-fg">
                   {s.meuTimeNome} → {s.alvoTimeNome}
                 </p>
@@ -72,7 +72,7 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
                   Ver quem sugeriu →
                 </Link>
               </div>
-              <span className="rounded-full border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-[10px] font-extrabold uppercase text-amber-100">
+              <span className="rounded-full border border-amber-400/45 bg-amber-500/18 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-amber-100">
                 Aguardando você
               </span>
             </div>

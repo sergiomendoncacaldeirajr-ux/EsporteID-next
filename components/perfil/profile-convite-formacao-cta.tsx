@@ -49,19 +49,34 @@ export function ProfileConviteFormacaoCta({
 
   if (!targetHasEsportes) {
     return (
-      <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
+      <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
+        <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Convites</p>
+          <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+            Indisponível
+          </span>
+        </div>
+        <div className={PROFILE_CARD_PAD_MD}>
         <p className="text-center text-[11px] text-eid-text-secondary">
           Com esportes no EID, dá para convidar <span className="font-medium text-eid-fg">{primeiro}</span> para sua dupla/time no mesmo esporte.
         </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} space-y-2.5`}>
+    <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
+      <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+        <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Convites para formação</p>
+        <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+          Dupla/Time
+        </span>
+      </div>
+      <div className={`${PROFILE_CARD_PAD_MD} space-y-2.5`}>
       {eligibleTeams.length > 0 ? (
         <div className="space-y-1.5">
-          <p className="text-center text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">Convidar · seu esporte</p>
+          <p className="text-center text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Convidar · seu esporte</p>
           <ul className="grid gap-2">
             {eligibleTeams.map((t) => (
               <li key={t.id}>
@@ -110,6 +125,7 @@ export function ProfileConviteFormacaoCta({
         >
           Criar dupla ou time e convidar {primeiro}
         </ProfileEditDrawerTrigger>
+      </div>
       </div>
     </div>
   );

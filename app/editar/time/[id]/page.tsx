@@ -93,23 +93,34 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
       subtitle="Altere dados da formação e gerencie elenco (pendentes/aprovados)."
       showBack={!isEmbed}
       topAction={
-        <Link href={`/perfil-time/${id}?from=${encodeURIComponent(`/editar/time/${id}`)}`} className="text-[10px] font-semibold text-eid-primary-300 underline">
+        <Link
+          href={`/perfil-time/${id}?from=${encodeURIComponent(`/editar/time/${id}`)}`}
+          className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18"
+        >
           Ver perfil público
         </Link>
       }
     >
-      <section className="eid-surface-panel mb-3 rounded-2xl p-3 sm:p-4">
-        <div className="flex items-center gap-2">
-          {t.escudo ? (
-            <img src={t.escudo} alt={t.nome ?? "Equipe"} className="h-12 w-12 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
-          ) : (
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[12px] font-black text-eid-primary-300">
-              {(t.nome ?? "EQ").trim().slice(0, 2).toUpperCase()}
-            </span>
-          )}
-          <div className="min-w-0">
-            <p className="truncate text-sm font-black text-eid-fg">{t.nome ?? "Formação"}</p>
-            <p className="truncate text-[11px] text-eid-text-secondary">{t.localizacao ?? "Cidade não informada"}</p>
+      <section className="eid-surface-panel mb-2.5 overflow-hidden rounded-2xl p-0">
+        <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Resumo da equipe</p>
+          <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-300">
+            Formação
+          </span>
+        </div>
+        <div className="p-3 sm:p-4">
+          <div className="flex items-center gap-2">
+            {t.escudo ? (
+              <img src={t.escudo} alt={t.nome ?? "Equipe"} className="h-12 w-12 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
+            ) : (
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[12px] font-black text-eid-primary-300">
+                {(t.nome ?? "EQ").trim().slice(0, 2).toUpperCase()}
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-black text-eid-fg">{t.nome ?? "Formação"}</p>
+              <p className="truncate text-[11px] text-eid-text-secondary">{t.localizacao ?? "Cidade não informada"}</p>
+            </div>
           </div>
         </div>
       </section>
@@ -127,7 +138,7 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
         interesse_torneio={Boolean(t.interesse_torneio)}
         nivel_procurado={t.nivel_procurado ?? null}
       />
-      <div className="mt-3">
+      <div className="mt-2.5">
         <TeamRosterManager
           timeId={id}
           prefillConvidarUsuarioId={convidarUsuarioId}

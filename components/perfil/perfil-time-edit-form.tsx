@@ -129,10 +129,17 @@ export function PerfilTimeEditForm({
 
   if (variant === "page") {
     return (
-      <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 text-left sm:p-5">
-        <h2 className="text-sm font-semibold text-eid-fg">Dados da formação</h2>
-        {blocoAjuda}
-        {formInner}
+      <section className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 text-left">
+        <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+          <h2 className="text-sm font-semibold text-eid-fg">Dados da formação</h2>
+          <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+            Editar
+          </span>
+        </div>
+        <div className="p-4 sm:p-5">
+          {blocoAjuda}
+          {formInner}
+        </div>
       </section>
     );
   }

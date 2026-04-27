@@ -307,8 +307,14 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
         </div>
 
         <div className="mt-6 grid gap-6">
-          <section>
+          <section className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3">
             <h2 className="sr-only">Ação principal</h2>
+            <div className="mb-2 flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Ação principal</p>
+              <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                Match
+              </span>
+            </div>
             {!isLeader && temBlocoAcaoVisitante ? (
               <div className="grid gap-3">
                 {linkWpp ? (
@@ -378,7 +384,14 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           </section>
 
           <ProfileSection title="EID e estatísticas">
-            <div className={`${PROFILE_CARD_BASE} mt-2 p-3`}>
+            <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-0`}>
+              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Resumo EID</p>
+                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                  Ranking
+                </span>
+              </div>
+              <div className="p-3">
               <div className="flex justify-center">
                 <EidBadge score={Number(t.eid_time ?? 0)} history={eidLogs ?? []} label="EID formação" />
               </div>
@@ -406,6 +419,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                   Estatísticas completas · {esp?.nome ?? "este esporte"}
                 </Link>
               ) : null}
+              </div>
             </div>
             <div className={`${PROFILE_CARD_BASE} mt-3 overflow-hidden p-0`}>
               <ProfileSportsMetricsCard
@@ -502,8 +516,14 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           </ProfileSection>
 
           {isLeader ? (
-            <div className="eid-list-item rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">Gestão da formação</p>
+            <div className="eid-list-item overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Gestão da formação</p>
+                <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+                  Líder
+                </span>
+              </div>
+              <div className="p-3">
               <Link
                 href={`/times?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
                 className="mt-2 flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
@@ -532,11 +552,19 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 interesse_torneio={Boolean(t.interesse_torneio)}
                 nivel_procurado={t.nivel_procurado ?? null}
               />
+              </div>
             </div>
           ) : null}
 
           {isMember || isLeader ? (
-            <div className="grid gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3">
+            <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Atalhos de membro</p>
+                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                  Conta
+                </span>
+              </div>
+              <div className="grid gap-2 p-3">
               <Link
                 href={CONTA_PERFIL_HREF}
                 className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
@@ -554,6 +582,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 (formação) aparece no topo e <strong className="text-eid-fg">não pode ser alterada</strong>; para mudar de
                 cidade no radar, o líder cria uma <strong className="text-eid-fg">nova formação</strong>.
               </p>
+              </div>
             </div>
           ) : null}
 

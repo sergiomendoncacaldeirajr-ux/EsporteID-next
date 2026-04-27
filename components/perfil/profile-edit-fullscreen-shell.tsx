@@ -12,12 +12,12 @@ type Props = {
 
 export function ProfileEditFullscreenShell({ title, subtitle, backHref, children, topAction, showBack = true }: Props) {
   return (
-    <main className="eid-profile-edit-screen mx-auto w-full max-w-3xl px-3 pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] pt-2 sm:px-5 sm:pt-3">
-      <section className="mb-3 flex items-start justify-between gap-3">
+    <main className="eid-profile-edit-screen mx-auto w-full max-w-3xl px-3 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] pt-1.5 sm:px-5 sm:pt-2.5">
+      <section className="mb-2.5 flex items-start justify-between gap-3">
         <div>
           {showBack ? <PerfilBackLink href={backHref} label="Voltar" /> : null}
-          <h1 className="mt-2 text-base font-black tracking-tight text-eid-fg sm:text-lg">{title}</h1>
-          {subtitle ? <p className="mt-1 text-[11px] text-eid-text-secondary sm:text-xs">{subtitle}</p> : null}
+          <h1 className="mt-1.5 text-base font-black tracking-tight text-eid-fg sm:text-lg">{title}</h1>
+          {subtitle ? <p className="mt-0.5 text-[11px] leading-4 text-eid-text-secondary sm:text-xs">{subtitle}</p> : null}
         </div>
         {topAction ? <div className="shrink-0">{topAction}</div> : null}
       </section>

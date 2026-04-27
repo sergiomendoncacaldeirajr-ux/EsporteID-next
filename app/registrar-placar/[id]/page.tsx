@@ -258,7 +258,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
     status === "aguardando_confirmacao" && p.lancado_por === user.id && resultadoTemPlacar && !agendaSomente;
 
   return (
-    <main data-eid-desafio-ui className="mx-auto w-full max-w-lg px-3 py-4 sm:max-w-xl sm:px-4 sm:py-6">
+    <main data-eid-desafio-ui className="mx-auto w-full max-w-lg px-3 py-3 sm:max-w-xl sm:px-4 sm:py-5">
         {!isEmbed ? (
           <Link href={voltarHref} className={`${DESAFIO_FLOW_SECONDARY_CLASS} max-w-fit normal-case`}>
             {voltarLabel}
@@ -392,13 +392,13 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           {podeLancar && !resultadoEnviadoAguardando ? (
             <details
               open={abrirAgendamentoPorPadrao}
-              className="mt-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 open:shadow-[0_10px_18px_-14px_rgba(15,23,42,0.5)]"
+              className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 open:shadow-[0_10px_18px_-14px_rgba(15,23,42,0.5)]"
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 sm:px-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 sm:px-4">
                 <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Agendamento (opcional)</span>
-                <span className="text-xs text-eid-text-secondary">▾</span>
+                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">Agenda</span>
               </summary>
-              <div className="border-t border-[color:var(--eid-border-subtle)] px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4">
+              <div className="px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4">
                 <form action={salvarAgendamentoAction}>
                   <input type="hidden" name="partida_id" value={id} />
                   {agendaSomente ? <input type="hidden" name="modo_agenda" value="1" /> : null}
@@ -450,7 +450,14 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           ) : null}
 
           {podeLancar && !agendaSomente && !resultadoEnviadoAguardando ? (
-            <div className="mt-5">
+            <div className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+              <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Lançamento de resultado</p>
+                <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-action-300">
+                  Placar
+                </span>
+              </div>
+              <div className="px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4">
               {variantes.length > 0 ? (
                 <p className="mb-2 text-[11px] text-eid-text-secondary">
                   Variante ativa deste esporte: {String((variantes[0] as { label?: unknown }).label ?? (variantes[0] as { key?: unknown }).key ?? "padrão")}
@@ -467,6 +474,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                 sideBAvatarUrl={j2?.avatar_url ?? null}
                 isTorneio={Boolean(p.torneio_id)}
               />
+              </div>
             </div>
           ) : null}
 
@@ -477,7 +485,14 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           ) : null}
 
           {podeConfirmarOuContestar && !agendaSomente && resultadoTemPlacar ? (
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+            <div className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+              <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Ação sobre resultado</p>
+                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
+                  Aprovação
+                </span>
+              </div>
+              <div className="grid gap-2 px-3 py-3 sm:grid-cols-2 sm:px-4 sm:py-4">
               <form action={confirmarPlacarAction}>
                 <input type="hidden" name="partida_id" value={id} />
                 <StatusSubmitButton
@@ -496,6 +511,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   />
                 </form>
               ) : null}
+              </div>
             </div>
           ) : null}
           {podeAbrirMediacao && !agendaSomente ? (

@@ -40,16 +40,22 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
       topAction={
         <Link
           href={`/editar/equipes/cadastrar?from=${encodeURIComponent(equipesRouteWithOrigin)}${isEmbed ? "&embed=1" : ""}`}
-          className="inline-flex items-center gap-1 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18"
+          className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18"
         >
           <span aria-hidden>+</span>
           Nova equipe
         </Link>
       }
     >
-      <div className="space-y-4">
-        <section className="eid-surface-panel rounded-2xl p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Equipes</p>
+      <div className="space-y-3">
+        <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Equipes</p>
+            <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-300">
+              Gestão
+            </span>
+          </div>
+          <div className="p-3">
           {(timesRows ?? []).length > 0 ? (
             <div className="mt-2 grid gap-2">
               {(timesRows ?? []).map((t) => {
@@ -78,10 +84,17 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
           ) : (
             <p className="mt-2 text-[11px] text-eid-text-secondary">Você ainda não criou equipes.</p>
           )}
+          </div>
         </section>
 
-        <section className="eid-surface-panel rounded-2xl p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Duplas</p>
+        <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Duplas</p>
+            <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-action-400">
+              Gestão
+            </span>
+          </div>
+          <div className="p-3">
           {(duplasRows ?? []).length > 0 ? (
             <div className="mt-2 grid gap-2">
               {(duplasRows ?? []).map((d) => {
@@ -106,6 +119,7 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
           ) : (
             <p className="mt-2 text-[11px] text-eid-text-secondary">Você ainda não participa de duplas registradas.</p>
           )}
+          </div>
         </section>
       </div>
     </ProfileEditFullscreenShell>

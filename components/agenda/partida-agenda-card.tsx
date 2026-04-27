@@ -278,9 +278,15 @@ export function PartidaAgendaCard({
       ) : null}
 
       {agendamentoPendente ? (
-        <div className="mt-3 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_45%,var(--eid-border-subtle)_55%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-card)_86%)] p-3">
+        <div className="mt-3 overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_45%,var(--eid-border-subtle)_55%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-card)_86%)] p-0">
+          <div className="flex items-center justify-between gap-2 border-b border-[color:color-mix(in_srgb,var(--eid-primary-500)_35%,var(--eid-border-subtle)_65%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-surface)_90%)] px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-primary-200">Agendamento pendente</p>
+            <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
+              Aceite
+            </span>
+          </div>
+          <div className="p-3">
           <p className="text-center text-[11px] font-semibold text-eid-primary-200">
-            Agendamento pendente de aceite
             {formatDeadline(agendamentoDeadline) ? ` (até ${formatDeadline(agendamentoDeadline)})` : ""}.
           </p>
           {agendamentoPodeResponder ? (
@@ -317,6 +323,7 @@ export function PartidaAgendaCard({
           {!agendaState.ok && agendaState.message ? (
             <p className="mt-2 text-center text-[11px] text-rose-300">{agendaState.message}</p>
           ) : null}
+          </div>
         </div>
       ) : null}
 
@@ -354,7 +361,14 @@ export function PartidaAgendaCard({
       {openCancel && cancelMatchId && typeof document !== "undefined"
         ? createPortal(
             <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[1.5px] sm:items-center">
-              <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-4 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
+              <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-0 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
+                <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Confirmação</p>
+                  <span className="rounded-full border border-red-400/35 bg-red-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-red-200">
+                    Cancelamento
+                  </span>
+                </div>
+                <div className="p-4">
                 <p className="text-sm font-black uppercase tracking-[0.08em] text-eid-primary-300">Solicitar cancelamento</p>
                 <p className="mt-2 text-sm text-eid-text-secondary">
                   Sem acordo de data/local? Envie a solicitação e o oponente terá prazo para responder.
@@ -386,6 +400,7 @@ export function PartidaAgendaCard({
                     </button>
                   </div>
                 </form>
+                </div>
               </div>
             </div>,
             document.body
@@ -394,7 +409,14 @@ export function PartidaAgendaCard({
       {openDesist && desistMatchId && typeof document !== "undefined"
         ? createPortal(
             <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[1.5px] sm:items-center">
-              <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-4 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
+              <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-0 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
+                <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Confirmação</p>
+                  <span className="rounded-full border border-amber-400/40 bg-amber-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-amber-200">
+                    Desistência
+                  </span>
+                </div>
+                <div className="p-4">
                 <p className="text-sm font-black uppercase tracking-[0.08em] text-amber-400">Solicitar desistência</p>
                 <p className="mt-2 text-sm text-eid-text-secondary">
                   Tem certeza que quer cancelar este desafio e passar a vitória para o oponente?
@@ -421,6 +443,7 @@ export function PartidaAgendaCard({
                     </button>
                   </div>
                 </form>
+                </div>
               </div>
             </div>,
             document.body

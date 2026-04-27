@@ -592,20 +592,28 @@ export default async function ComunidadePage() {
         }
       />
 
-        <div className="mt-5 space-y-6 md:mt-8 md:space-y-10">
+        <div className="mt-4 space-y-4 md:mt-6 md:space-y-6">
           <PushToggleCard defaultEnabled />
 
-          <section id="resultados-partida" className="eid-list-item rounded-2xl bg-eid-card/90 p-4 md:p-5">
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-action-500">Partidas e resultados</h2>
-            <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
-              Lançamento de placar, revisão e confirmação. Na{" "}
-              <Link href="/agenda" className="font-semibold text-eid-primary-300 hover:underline">
-                Agenda
-              </Link>{" "}
-              você combina <strong className="text-eid-fg">data e local</strong>.
-            </p>
+          <section id="resultados-partida" className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
+            <div className="flex items-start justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 md:px-5">
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-action-500">Partidas e resultados</h2>
+                <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
+                  Lançamento de placar, revisão e confirmação. Na{" "}
+                  <Link href="/agenda" className="font-semibold text-eid-primary-300 hover:underline">
+                    Agenda
+                  </Link>{" "}
+                  você combina <strong className="text-eid-fg">data e local</strong>.
+                </p>
+              </div>
+              <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-action-300">
+                Fluxo de placar
+              </span>
+            </div>
 
-            <div className="mt-4 space-y-6">
+            <div className="px-4 py-4 md:px-5 md:py-5">
+            <div className="space-y-6">
               <div>
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-400">Placar aguardando você</h3>
                 {(painelPlacarPendente ?? []).length === 0 ? (
@@ -699,14 +707,23 @@ export default async function ComunidadePage() {
                 )}
               </div>
             </div>
+            </div>
           </section>
 
-          <section id="desafio-pedidos" className="eid-list-item rounded-2xl bg-eid-card/90 p-4 md:p-5">
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Desafio</h2>
-            <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
-              Central de desafios: pedidos recebidos e notificações do fluxo de desafio.
-            </p>
-            <div className="mt-3 space-y-4">
+          <section id="desafio-pedidos" className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
+            <div className="flex items-start justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 md:px-5">
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Desafio</h2>
+                <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
+                  Central de desafios: pedidos recebidos e notificações do fluxo de desafio.
+                </p>
+              </div>
+              <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
+                Social
+              </span>
+            </div>
+            <div className="px-4 py-4 md:px-5 md:py-5">
+            <div className="space-y-4">
               <div id="desafio-pedidos-recebidos">
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-400">
                   Pedidos recebidos
@@ -736,14 +753,23 @@ export default async function ComunidadePage() {
                 )}
               </div>
             </div>
+            </div>
           </section>
 
-          <section className="eid-list-item rounded-2xl bg-eid-card/90 p-4 md:p-5">
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Equipe</h2>
-            <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
-              Convites, sugestões de liderança e avisos da sua dupla/time em um único quadro.
-            </p>
-            <div className="mt-3 space-y-4">
+          <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
+            <div className="flex items-start justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 md:px-5">
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Equipe</h2>
+                <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
+                  Convites, sugestões de liderança e avisos da sua dupla/time em um único quadro.
+                </p>
+              </div>
+              <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
+                Formações
+              </span>
+            </div>
+            <div className="px-4 py-4 md:px-5 md:py-5">
+            <div className="space-y-4">
               <div id="equipe-sugestoes">
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-[color:color-mix(in_srgb,var(--eid-warning-400)_78%,var(--eid-fg)_22%)]">
                   Sugestões da equipe (liderança)
@@ -773,6 +799,7 @@ export default async function ComunidadePage() {
                 )}
               </div>
             </div>
+            </div>
           </section>
 
           <section id="minhas-aulas" className="eid-list-item rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-4 opacity-80 md:p-5">
@@ -798,8 +825,14 @@ export default async function ComunidadePage() {
             </div>
           </section>
 
-          <section className="eid-list-item rounded-2xl bg-eid-card/90 p-5">
-            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Status dos módulos do app</h2>
+          <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0">
+            <div className="flex items-center justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-5 py-3">
+              <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Status dos módulos do app</h2>
+              <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-text-secondary">
+                Painel
+              </span>
+            </div>
+            <div className="p-5">
             {emBreveItems.length === 0 ? (
               <p className="mt-3 text-sm text-eid-text-secondary">
                 Tudo que é controlado pelo painel de funcionalidades está liberado para você no momento.
@@ -819,6 +852,7 @@ export default async function ComunidadePage() {
                 ))}
               </ul>
             )}
+            </div>
           </section>
 
         </div>

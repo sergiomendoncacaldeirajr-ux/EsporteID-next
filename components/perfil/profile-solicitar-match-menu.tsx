@@ -75,13 +75,26 @@ export function ProfileSolicitarMatchMenu({
 
       {aberto ? (
         <div
-          className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-3 shadow-lg backdrop-blur-sm"
+          className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/95 shadow-lg backdrop-blur-sm"
           role="menu"
           onClick={(e) => e.stopPropagation()}
         >
+          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Pedir desafio</p>
+            <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+              Match
+            </span>
+          </div>
+          <div className="space-y-3 p-3">
           {esportes.length > 1 ? (
-            <div className="mb-3">
-              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Esporte</p>
+            <div className="overflow-hidden rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Esporte</p>
+                <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+                  Seleção
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 p-2">
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {esportes.map((e) => {
                   const ativo = esporteSelSafe === e.esporteId;
@@ -102,11 +115,18 @@ export function ProfileSolicitarMatchMenu({
                   );
                 })}
               </div>
+              </div>
             </div>
           ) : null}
 
-          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Tipo de confronto</p>
-          <div className="mt-2 grid gap-2">
+          <div className="overflow-hidden rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+            <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Tipo de confronto</p>
+              <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                Finalidade
+              </span>
+            </div>
+          <div className="grid gap-2 p-2">
             {rankingBloqueado ? (
               <button
                 type="button"
@@ -154,6 +174,8 @@ export function ProfileSolicitarMatchMenu({
                 </p>
               </div>
             )}
+          </div>
+          </div>
           </div>
         </div>
       ) : null}

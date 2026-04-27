@@ -62,7 +62,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
         {items.map((m) => (
           <li
             key={m.id}
-            className="relative overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm md:rounded-2xl md:border-eid-primary-500/25 md:bg-gradient-to-br md:from-eid-card md:to-eid-primary-500/[0.06] md:p-4 md:shadow-md md:shadow-black/15"
+            className="relative overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)_92%))] p-3 text-sm shadow-[0_10px_20px_-14px_rgba(15,23,42,0.35)] md:rounded-2xl md:border-eid-primary-500/25 md:p-4 md:shadow-md md:shadow-black/15"
           >
             <div className="pointer-events-none absolute -right-6 -top-6 hidden h-20 w-20 rounded-full bg-eid-primary-500/10 blur-2xl md:block" />
             <div className="relative mt-1.5 flex min-w-0 items-start gap-2.5 pr-24">
@@ -130,7 +130,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                     Ranking
                   </span>
                 )}
-                <span className="rounded-full border border-amber-400/35 bg-amber-500/15 px-2 py-0.5 text-[9px] font-extrabold uppercase text-[color:color-mix(in_srgb,var(--eid-warning-500)_82%,var(--eid-fg)_18%)]">
+                <span className="rounded-full border border-amber-400/35 bg-amber-500/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-warning-500)_82%,var(--eid-fg)_18%)]">
                   Pendente
                 </span>
               </div>

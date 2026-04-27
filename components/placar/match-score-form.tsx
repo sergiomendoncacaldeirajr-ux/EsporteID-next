@@ -110,9 +110,14 @@ export function MatchScoreForm({
       {config.type === "sets" ? (
         <>
           {setFormatOptions.length > 0 ? (
-            <div className="grid gap-1.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65 p-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Formato disputado</span>
-              <div className="grid gap-2">
+            <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65">
+              <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Formato disputado</span>
+                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
+                  Regras
+                </span>
+              </div>
+              <div className="grid gap-2 p-2.5">
                 {setFormatOptions.map((opt) => {
                   const selected = selectedSetFormatKey === opt.key;
                   return (

@@ -33,10 +33,13 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
 
   return (
     <div className="mt-2 space-y-2">
-      {err ? <p className="text-xs text-red-300">{err}</p> : null}
+      {err ? <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{err}</p> : null}
       <ul className="space-y-2">
         {items.map((m) => (
-          <li key={m.id} className="relative rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
+          <li
+            key={m.id}
+            className="relative overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.28)]"
+          >
             <div className="flex items-start gap-2">
               <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60">
                 {m.adversarioAvatarUrl ? (
@@ -51,7 +54,7 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
                   {m.esporte} · {m.modalidade === "individual" ? "individual" : m.modalidade}
                 </p>
               </div>
-              <div className="ml-auto flex flex-col items-end gap-1">
+              <div className="ml-auto flex flex-col items-end gap-1.5">
                 <span className="rounded-full border border-amber-400/40 bg-amber-500/18 px-1.5 py-[1px] text-[7px] font-extrabold uppercase leading-none text-[color:color-mix(in_srgb,var(--eid-warning-500)_86%,var(--eid-fg)_14%)]">
                   Aguardando
                 </span>
@@ -60,7 +63,7 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
                   <button
                     type="button"
                     disabled={pending}
-                    className="inline-flex items-center justify-center rounded-md border border-red-700 bg-red-700 px-1.5 font-black tracking-[0.01em] text-white transition hover:border-red-800 hover:bg-red-800 disabled:opacity-60"
+                    className="inline-flex items-center justify-center rounded-md border border-red-700 bg-red-700 px-1.5 font-black tracking-[0.01em] text-white shadow-[0_8px_16px_-12px_rgba(220,38,38,0.9)] transition hover:border-red-800 hover:bg-red-800 disabled:opacity-60"
                     data-eid-cancel-pendente-btn="true"
                     onClick={() => setConfirmId(m.id)}
                     style={{
@@ -88,7 +91,14 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
       </ul>
       {confirmId ? (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/55 p-3 sm:items-center">
-          <div className="w-full max-w-sm rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 shadow-xl">
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-0 shadow-xl">
+            <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Confirmação</p>
+              <span className="rounded-full border border-red-400/35 bg-red-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-red-200">
+                Cancelar pedido
+              </span>
+            </div>
+            <div className="p-4">
             <p className="text-sm font-black uppercase tracking-[0.08em] text-eid-primary-300">Confirmar cancelamento</p>
             <p className="mt-2 text-sm text-eid-text-secondary">Tem certeza que deseja cancelar este pedido de desafio?</p>
             <div className="mt-4 flex gap-2">
@@ -108,6 +118,7 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
                   Confirmar cancelamento
                 </button>
               </form>
+            </div>
             </div>
           </div>
         </div>

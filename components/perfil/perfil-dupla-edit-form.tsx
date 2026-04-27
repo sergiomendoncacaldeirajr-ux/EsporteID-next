@@ -79,11 +79,18 @@ export function PerfilDuplaEditForm({
 
   if (variant === "page") {
     return (
-      <section className="rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/8 p-4 text-left sm:p-5">
-        <h2 className="text-sm font-semibold text-eid-primary-200">Dupla registrada (@ e bio)</h2>
-        {blocoAjuda}
-        {linkFormacao}
-        {formInner}
+      <section className="overflow-hidden rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/8 text-left">
+        <div className="flex items-center justify-between border-b border-eid-primary-500/25 bg-eid-primary-500/10 px-3 py-2">
+          <h2 className="text-sm font-semibold text-eid-primary-200">Dupla registrada (@ e bio)</h2>
+          <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/14 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-200">
+            Editar
+          </span>
+        </div>
+        <div className="p-4 sm:p-5">
+          {blocoAjuda}
+          {linkFormacao}
+          {formInner}
+        </div>
       </section>
     );
   }

@@ -38,9 +38,15 @@ export function TeamRosterManager({
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
 
   return (
-    <section className="eid-surface-panel rounded-2xl p-3 sm:p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Gestão do elenco</p>
-      <p className="mt-1 text-[11px] text-eid-text-secondary">Adicione atletas por @username e acompanhe status de pendente/aprovado.</p>
+    <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+      <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Gestão do elenco</p>
+        <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+          Convites
+        </span>
+      </div>
+      <div className="p-3 sm:p-4">
+      <p className="text-[11px] text-eid-text-secondary">Adicione atletas por @username e acompanhe status de pendente/aprovado.</p>
 
       {prefillConvidarUsuarioId ? (
         <div className="mt-3 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 p-3">
@@ -134,6 +140,7 @@ export function TeamRosterManager({
             <p className="mt-1 text-[11px] text-eid-text-secondary">Sem membros ativos no momento.</p>
           )}
         </div>
+      </div>
       </div>
     </section>
   );

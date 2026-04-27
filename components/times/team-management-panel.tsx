@@ -95,8 +95,9 @@ export function TeamManagementPanel({
 
   return (
     <section className="mb-4 min-w-0 space-y-3">
-      <details className="eid-surface-panel rounded-2xl p-3 sm:p-4" open={defaultOpenCreate}>
-        <summary className="cursor-pointer text-sm font-semibold text-eid-fg">Criar nova dupla ou time</summary>
+      <details className="eid-surface-panel overflow-hidden rounded-2xl p-0" open={defaultOpenCreate}>
+        <summary className="cursor-pointer border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 text-sm font-semibold text-eid-fg">Criar nova dupla ou time</summary>
+        <div className="p-3 sm:p-4">
         <p className="mt-2 text-[11px] text-eid-text-secondary">
           {convidarUsuarioIdAposCriar
             ? "Escudo obrigatório. Ao salvar, o convite vai para o atleta do perfil (Social)."
@@ -225,11 +226,13 @@ export function TeamManagementPanel({
             <p className={`text-xs sm:col-span-2 ${createState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{createState.message}</p>
           ) : null}
         </form>
+        </div>
       </details>
 
       {minhasEquipes.length > 0 ? (
-        <details className="eid-surface-panel rounded-2xl p-3 sm:p-4">
-          <summary className="cursor-pointer text-sm font-semibold text-eid-fg">Convidar atleta por @username</summary>
+        <details className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+          <summary className="cursor-pointer border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 text-sm font-semibold text-eid-fg">Convidar atleta por @username</summary>
+          <div className="p-3 sm:p-4">
           <form action={inviteAction} className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
             <select name="time_id" required className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg">
               <option value="">Selecione a equipe</option>
@@ -247,6 +250,7 @@ export function TeamManagementPanel({
               <p className={`text-xs sm:col-span-3 ${inviteState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{inviteState.message}</p>
             ) : null}
           </form>
+          </div>
         </details>
       ) : null}
     </section>

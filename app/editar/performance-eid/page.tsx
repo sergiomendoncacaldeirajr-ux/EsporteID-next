@@ -90,53 +90,67 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
       showBack={!isEmbed}
     >
       {!needsSport ? (
-        <div className="eid-surface-panel rounded-2xl p-4 sm:p-5 text-sm text-eid-text-secondary">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Esportes e EID</p>
-          <p>
-            Esta área é para quem atua como <strong className="text-eid-fg">atleta</strong> ou{" "}
-            <strong className="text-eid-fg">professor</strong>.
-          </p>
-          {canAtivarAtleta ? (
-            <form action={ativarModoAtletaAction} className="mt-4">
-              <button
-                type="submit"
-                className="rounded-xl bg-eid-action-500 px-4 py-2 text-xs font-black uppercase tracking-wide text-[var(--eid-brand-ink)] transition hover:brightness-110"
-              >
-                Ativar perfil de atleta
-              </button>
-            </form>
-          ) : null}
-        </div>
+        <section className="eid-surface-panel overflow-hidden rounded-2xl p-0 text-sm text-eid-text-secondary">
+          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Esportes e EID</p>
+            <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-300">
+              Configuração
+            </span>
+          </div>
+          <div className="p-4 sm:p-5">
+            <p>
+              Esta área é para quem atua como <strong className="text-eid-fg">atleta</strong> ou{" "}
+              <strong className="text-eid-fg">professor</strong>.
+            </p>
+            {canAtivarAtleta ? (
+              <form action={ativarModoAtletaAction} className="mt-4">
+                <button
+                  type="submit"
+                  className="rounded-xl bg-eid-action-500 px-4 py-2 text-xs font-black uppercase tracking-wide text-[var(--eid-brand-ink)] transition hover:brightness-110"
+                >
+                  Ativar perfil de atleta
+                </button>
+              </form>
+            ) : null}
+          </div>
+        </section>
       ) : (
-        <>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Esportes e EID</p>
-          <ProfilePerformanceEditor
-            sports={(esportes ?? []).map((e) => ({
-              id: e.id,
-              nome: e.nome,
-              permiteIndividual: Boolean(e.permite_individual),
-              permiteDupla: Boolean(e.permite_dupla),
-              permiteTime: Boolean(e.permite_time),
-            }))}
-            initialItems={selectedEsportes.map((esporteId) => {
-              const raw = eidRowPorEsporte.get(esporteId)?.tempo_experiencia;
-              const ma = extrairMesAnoInicio(raw);
-              const ed = selectedExperiencias[esporteId] ?? parseTempoExperienciaParaEditor(raw);
-              return {
-                esporteId,
-                modalidades:
-                  (selectedEsportesModalidades[esporteId] as Array<"individual" | "dupla" | "time"> | undefined) ??
-                  ["individual"],
-                tempoTipo: ma ? "inicio" : "faixa",
-                tempo: ed.tempo ?? "1 a 3 anos",
-                tempoAnos: ed.anos ?? 0,
-                tempoMeses: ed.meses ?? 0,
-                inicioMes: ma?.mes ?? 1,
-                inicioAno: ma?.ano ?? Math.max(1970, refAno - 2),
-              };
-            })}
-          />
-        </>
+        <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Esportes e EID</p>
+            <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-action-400">
+              Performance
+            </span>
+          </div>
+          <div className="p-3">
+            <ProfilePerformanceEditor
+              sports={(esportes ?? []).map((e) => ({
+                id: e.id,
+                nome: e.nome,
+                permiteIndividual: Boolean(e.permite_individual),
+                permiteDupla: Boolean(e.permite_dupla),
+                permiteTime: Boolean(e.permite_time),
+              }))}
+              initialItems={selectedEsportes.map((esporteId) => {
+                const raw = eidRowPorEsporte.get(esporteId)?.tempo_experiencia;
+                const ma = extrairMesAnoInicio(raw);
+                const ed = selectedExperiencias[esporteId] ?? parseTempoExperienciaParaEditor(raw);
+                return {
+                  esporteId,
+                  modalidades:
+                    (selectedEsportesModalidades[esporteId] as Array<"individual" | "dupla" | "time"> | undefined) ??
+                    ["individual"],
+                  tempoTipo: ma ? "inicio" : "faixa",
+                  tempo: ed.tempo ?? "1 a 3 anos",
+                  tempoAnos: ed.anos ?? 0,
+                  tempoMeses: ed.meses ?? 0,
+                  inicioMes: ma?.mes ?? 1,
+                  inicioAno: ma?.ano ?? Math.max(1970, refAno - 2),
+                };
+              })}
+            />
+          </div>
+        </section>
       )}
     </ProfileEditFullscreenShell>
   );

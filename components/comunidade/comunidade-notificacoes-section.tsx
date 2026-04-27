@@ -31,8 +31,11 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
   const unread = items.filter((n) => n.lida !== true && !isFlowActionNotif(n.tipo)).length;
 
   return (
-    <section id="notificacoes" className="scroll-mt-24">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <section
+      id="notificacoes"
+      className="scroll-mt-24 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3 md:p-4"
+    >
+      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] pb-3">
         <div>
           <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Notificações</h2>
           <p className="mt-1 text-sm text-eid-text-secondary">
