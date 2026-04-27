@@ -19,6 +19,25 @@ export const metadata = {
   description: "Ranking EsporteID",
 };
 
+/** Mesmo padrão dos cartões da dashboard (`dashboardSectionOuter` / `dashboardSectionHead`). */
+const rankingCardShellClass =
+  "eid-ranking-card overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]";
+
+const rankingCardHeadClass =
+  "eid-ranking-card-head flex items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
+
+const rankingCardHeadWrapClass =
+  "eid-ranking-card-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
+
+const rankingSectionTitleClass =
+  "eid-ranking-section-title text-[10px] font-black uppercase tracking-[0.18em] text-eid-primary-400";
+
+const rankingBadgePrimaryClass =
+  "eid-ranking-badge inline-flex shrink-0 items-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_8%,transparent)] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]";
+
+const rankingBadgeActionClass =
+  "eid-ranking-badge-action inline-flex shrink-0 items-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-action-500)_26%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-action-500)_10%,transparent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-action-500)_32%)]";
+
 type Props = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -325,14 +344,10 @@ export default async function RankingPage({ searchParams }: Props) {
         </div>
 
         <section className="mt-4 md:mt-6">
-          <div className="eid-ranking-card overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-            <div className="eid-ranking-card-head flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-              <h2 className="eid-ranking-section-title text-[10px] font-black uppercase tracking-[0.16em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]">
-                Filtros
-              </h2>
-              <span className="eid-ranking-badge rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
-                Busca
-              </span>
+          <div className={rankingCardShellClass}>
+            <div className={rankingCardHeadClass}>
+              <h2 className={rankingSectionTitleClass}>Filtros</h2>
+              <span className={rankingBadgePrimaryClass}>Busca</span>
             </div>
             <div className="p-2.5 sm:p-3">
               <RankingFilterBar
@@ -381,18 +396,14 @@ export default async function RankingPage({ searchParams }: Props) {
             {rankingAll.length > 0 ? (
               <>
                 <section className="relative z-[1] mt-4 md:mt-6">
-                  <div className="eid-ranking-card overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-                    <div className="eid-ranking-card-head flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                      <h2 className="eid-ranking-section-title text-[10px] font-black uppercase tracking-[0.16em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]">
-                        Classificação
-                      </h2>
-                      <div className="flex flex-wrap items-center justify-end gap-1.5">
+                  <div className={rankingCardShellClass}>
+                    <div className={rankingCardHeadWrapClass}>
+                      <h2 className={rankingSectionTitleClass}>Classificação</h2>
+                      <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
                         {esporteNomeAtual ? (
-                          <span className="eid-ranking-badge-action rounded-full border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-action-500)_38%)]">
-                            {esporteNomeAtual}
-                          </span>
+                          <span className={rankingBadgeActionClass}>{esporteNomeAtual}</span>
                         ) : null}
-                        <span className="eid-ranking-badge rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
+                        <span className={rankingBadgePrimaryClass}>
                           {rankBadgeLabel} · {periodoBadgeLabel}
                         </span>
                       </div>

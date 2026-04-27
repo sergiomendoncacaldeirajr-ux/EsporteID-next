@@ -193,20 +193,46 @@ const scrollRow =
   "-mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-4 sm:gap-3 sm:px-4 [&::-webkit-scrollbar]:hidden";
 
 const sectionActionClass =
-  "inline-flex shrink-0 items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)] transition hover:bg-eid-primary-500/18";
+  "inline-flex shrink-0 items-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_8%,transparent)] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)] transition hover:border-[color:color-mix(in_srgb,var(--eid-primary-500)_35%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,transparent)]";
 
 const sectionTitleClass =
-  "text-[10px] font-black uppercase tracking-[0.16em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]";
+  "text-[10px] font-black uppercase tracking-[0.18em] text-eid-primary-400";
 
 const dashboardSectionOuter =
-  "eid-dashboard-section overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]";
+  "eid-dashboard-section overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]";
 
 const dashboardSectionHead =
-  "eid-dashboard-section-head flex items-center justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 sm:px-4";
+  "eid-dashboard-section-head flex items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
 
 const dashboardSectionBody = "px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-3";
 
-/** Barra de atalhos tipo menu (não é card de seção como torneios/locais). */
+/** Texto introdutório sob o título da seção (bloco discreto). */
+const dashboardSectionBlurb =
+  "mb-3 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,var(--eid-primary-500)_10%)] bg-[color:color-mix(in_srgb,var(--eid-surface)_50%,transparent)] px-3 py-2.5 text-[11px] leading-relaxed text-eid-text-secondary sm:text-xs";
+
+/** Mini-cards da grade “Atletas próximos” (3 colunas). */
+const dashboardSpotlightLink =
+  "group flex flex-col items-center overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_86%,var(--eid-primary-500)_14%)] bg-[linear-gradient(168deg,color-mix(in_srgb,var(--eid-card)_98%,transparent)_0%,color-mix(in_srgb,var(--eid-surface)_92%,var(--eid-primary-500)_8%)_100%)] px-2 pb-2.5 pt-2 text-center shadow-[0_14px_34px_-18px_rgba(15,23,42,0.48)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_6%,transparent)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/50 hover:shadow-[0_22px_42px_-22px_rgba(37,99,235,0.4)] hover:ring-[color:color-mix(in_srgb,var(--eid-primary-500)_12%,transparent)] active:translate-y-0";
+
+const dashboardSpotlightEmpty =
+  "flex min-h-[8.5rem] flex-col items-center justify-center rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_70%,var(--eid-primary-500)_30%)] bg-[color:color-mix(in_srgb,var(--eid-surface)_38%,transparent)] px-2 py-3 text-center ring-1 ring-[color:color-mix(in_srgb,var(--eid-border-subtle)_94%,transparent)]";
+
+/** Card horizontal — torneios (maior). */
+const dashboardRailTorneio =
+  "group min-w-[220px] max-w-[220px] shrink-0 snap-start overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_84%,var(--eid-primary-500)_16%)] bg-eid-card/90 shadow-[0_16px_40px_-22px_rgba(15,23,42,0.55)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_5%,transparent)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/48 hover:shadow-[0_24px_48px_-24px_rgba(37,99,235,0.45)] active:translate-y-0";
+
+/** Card horizontal — times / duplas. */
+const dashboardRailTeam =
+  "group min-w-[124px] max-w-[124px] shrink-0 snap-start rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_86%,var(--eid-primary-500)_14%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,var(--eid-primary-500)_6%))] px-2.5 py-4 text-center shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_5%,transparent)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/45 hover:shadow-[0_20px_40px_-22px_rgba(37,99,235,0.38)] active:translate-y-0";
+
+/** Card horizontal — locais. */
+const dashboardRailLocal =
+  "group min-w-[148px] max-w-[148px] shrink-0 snap-start rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_86%,var(--eid-primary-500)_14%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 text-left shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_5%,transparent)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/45 hover:shadow-[0_20px_40px_-22px_rgba(37,99,235,0.36)] active:translate-y-0";
+
+const dashboardEmptyWide =
+  "rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_62%,var(--eid-primary-500)_38%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-surface)_45%,transparent),transparent)] px-4 py-9 text-center ring-1 ring-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,transparent)]";
+
+/** Barra de atalhos tipo dock / menu (sem cabeçalho de seção). */
 const dashboardAppNavClass =
   "eid-dashboard-app-nav rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,var(--eid-primary-500)_18%)] bg-[color-mix(in_srgb,var(--eid-surface)_42%,var(--eid-bg)_58%)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_24px_-18px_rgba(15,23,42,0.35)] sm:rounded-[1.35rem] sm:p-1.5";
 
@@ -674,7 +700,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         </div>
 
         <nav aria-label="Atalhos do app" className={`${dashboardAppNavClass} mt-4 sm:mt-5`}>
-        <div className={`grid gap-1 sm:gap-1.5 ${navItems.length >= 4 ? "grid-cols-4" : navItems.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+        <div className={`grid gap-1.5 sm:gap-2 ${navItems.length >= 4 ? "grid-cols-4" : navItems.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
           {quickNavMain.map((item) => {
             const Icon = item.icon;
             const cardContent = (
@@ -767,8 +793,13 @@ export default async function DashboardPage({ searchParams }: Props) {
             </a>
           </div>
           <div className={dashboardSectionBody}>
+          <p className={dashboardSectionBlurb}>
+            Destaques em <span className="font-semibold text-eid-fg">individual</span>,{" "}
+            <span className="font-semibold text-eid-fg">dupla</span> e <span className="font-semibold text-eid-fg">time</span>{" "}
+            pelo seu esporte principal e proximidade.
+          </p>
           {atletaMaisProximo || duplaMaisProxima || timeMaisProximo ? (
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {atletaMaisProximo
                 ? (() => {
                     const { row, p } = atletaMaisProximo;
@@ -780,10 +811,10 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={p?.id ?? "atleta-individual"}
                   href={`/perfil/${encodeURIComponent(String(p?.id ?? ""))}?from=/dashboard`}
-                  className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-1 py-1 text-center shadow-[0_10px_20px_-14px_rgba(15,23,42,0.38)] transition hover:border-eid-primary-500/40"
+                  className={dashboardSpotlightLink}
                 >
-                  <p className="mb-px truncate text-[9px] font-extrabold text-eid-fg">{primeiroNome(p?.nome)}</p>
-                  <div className="relative mx-auto h-11 w-11">
+                  <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{primeiroNome(p?.nome)}</p>
+                  <div className="relative mx-auto h-12 w-12">
                     {p?.avatar_url ? (
                       <Image
                         src={p.avatar_url}
@@ -803,37 +834,40 @@ export default async function DashboardPage({ searchParams }: Props) {
                         {iniciais(p?.nome)}
                       </div>
                     )}
-                    <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 overflow-hidden rounded-md border border-eid-bg text-[8px] font-black leading-none">
-                      <span className="bg-eid-bg px-1 py-0.5 text-eid-fg">EID</span>
-                      <span className="bg-eid-primary-500 px-1 py-0.5 text-[var(--eid-brand-ink)]">
+                    <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 overflow-hidden rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_80%,var(--eid-primary-500)_20%)] text-[7px] font-black leading-none shadow-sm sm:text-[8px]">
+                      <span className="bg-eid-bg px-1.5 py-0.5 text-eid-fg">EID</span>
+                      <span className="bg-eid-primary-500 px-1.5 py-0.5 text-[var(--eid-brand-ink)]">
                         {Number(row.nota_eid ?? 0).toFixed(1)}
                       </span>
                     </div>
                   </div>
-                  <p className="mt-1 inline-flex max-w-full items-center gap-0.5 truncate text-[7px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
+                  <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
                     <span aria-hidden>{esporteCardIcon}</span>
                     <span className="truncate">{esporteCardNome}</span>
                   </p>
-                  <p className="mt-0.5 inline-flex items-center gap-0.5 text-[7px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary leading-none">
-                    <span aria-hidden>👤</span> Individual
+                  <p className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-px text-[7px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
+                    <span aria-hidden className="opacity-80">
+                      👤
+                    </span>{" "}
+                    Individual
                   </p>
                 </Link>
                 );
                   })()
                 : (
-                  <div className="rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-1.5 py-2 text-center">
-                    <p className="text-[10px] font-bold text-eid-text-secondary">Sem atleta</p>
-                    <p className="mt-1 text-[9px] text-eid-text-secondary">individual</p>
+                  <div className={dashboardSpotlightEmpty}>
+                    <p className="text-[11px] font-semibold text-eid-fg">Individual</p>
+                    <p className="mt-1 max-w-[5.5rem] text-[9px] leading-snug text-eid-text-secondary">Sem sugestão no momento</p>
                   </div>
                 )}
 
               {duplaMaisProxima ? (
                 <Link
                   href={`/perfil-time/${duplaMaisProxima.t.id}?from=/dashboard`}
-                  className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-1 py-1 text-center shadow-[0_10px_20px_-14px_rgba(15,23,42,0.38)] transition hover:border-eid-primary-500/40"
+                  className={dashboardSpotlightLink}
                 >
-                  <p className="mb-px truncate text-[9px] font-extrabold text-eid-fg">{duplaMaisProxima.t.nome}</p>
-                  <div className="mx-auto h-11 w-11">
+                  <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{duplaMaisProxima.t.nome}</p>
+                  <div className="mx-auto h-12 w-12">
                     {duplaMaisProxima.t.escudo ? (
                       <Image
                         src={duplaMaisProxima.t.escudo}
@@ -849,28 +883,31 @@ export default async function DashboardPage({ searchParams }: Props) {
                       </div>
                     )}
                   </div>
-                  <p className="mt-px inline-flex max-w-full items-center gap-0.5 truncate text-[7px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
+                  <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
                     <span aria-hidden>{esporteCardIcon}</span>
                     <span className="truncate">{esporteCardNome}</span>
                   </p>
-                  <p className="mt-0.5 inline-flex items-center gap-0.5 text-[7px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary leading-none">
-                    <span aria-hidden>👥</span> Dupla
+                  <p className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-px text-[7px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
+                    <span aria-hidden className="opacity-80">
+                      👥
+                    </span>{" "}
+                    Dupla
                   </p>
                 </Link>
               ) : (
-                <div className="rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-1.5 py-2 text-center">
-                  <p className="text-[10px] font-bold text-eid-text-secondary">Sem dupla</p>
-                  <p className="mt-1 text-[9px] text-eid-text-secondary">próxima</p>
+                <div className={dashboardSpotlightEmpty}>
+                  <p className="text-[11px] font-semibold text-eid-fg">Dupla</p>
+                  <p className="mt-1 max-w-[5.5rem] text-[9px] leading-snug text-eid-text-secondary">Sem sugestão no momento</p>
                 </div>
               )}
 
               {timeMaisProximo ? (
                 <Link
                   href={`/perfil-time/${timeMaisProximo.t.id}?from=/dashboard`}
-                  className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-1 py-1 text-center shadow-[0_10px_20px_-14px_rgba(15,23,42,0.38)] transition hover:border-eid-primary-500/40"
+                  className={dashboardSpotlightLink}
                 >
-                  <p className="mb-px truncate text-[9px] font-extrabold text-eid-fg">{timeMaisProximo.t.nome}</p>
-                  <div className="mx-auto h-11 w-11">
+                  <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{timeMaisProximo.t.nome}</p>
+                  <div className="mx-auto h-12 w-12">
                     {timeMaisProximo.t.escudo ? (
                       <Image
                         src={timeMaisProximo.t.escudo}
@@ -886,25 +923,33 @@ export default async function DashboardPage({ searchParams }: Props) {
                       </div>
                     )}
                   </div>
-                  <p className="mt-px inline-flex max-w-full items-center gap-0.5 truncate text-[7px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
+                  <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
                     <span aria-hidden>{esporteCardIcon}</span>
                     <span className="truncate">{esporteCardNome}</span>
                   </p>
-                  <p className="mt-0.5 inline-flex items-center gap-0.5 text-[7px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary leading-none">
-                    <span aria-hidden>🛡️</span> Time
+                  <p className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-px text-[7px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
+                    <span aria-hidden className="opacity-80">
+                      🛡️
+                    </span>{" "}
+                    Time
                   </p>
                 </Link>
               ) : (
-                <div className="rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-1.5 py-2 text-center">
-                  <p className="text-[10px] font-bold text-eid-text-secondary">Sem time</p>
-                  <p className="mt-1 text-[9px] text-eid-text-secondary">próximo</p>
+                <div className={dashboardSpotlightEmpty}>
+                  <p className="text-[11px] font-semibold text-eid-fg">Time</p>
+                  <p className="mt-1 max-w-[5.5rem] text-[9px] leading-snug text-eid-text-secondary">Sem sugestão no momento</p>
                 </div>
               )}
             </div>
           ) : (
-            <p className="eid-list-item rounded-2xl border-dashed bg-eid-surface/45 p-4 text-sm text-eid-text-secondary">
-              {q ? "Nenhum atleta encontrado para essa busca." : "Ainda não há atletas sugeridos para seu esporte principal."}
-            </p>
+            <div className={dashboardEmptyWide}>
+              <p className="text-sm font-semibold text-eid-fg">Nada por aqui ainda</p>
+              <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-eid-text-secondary">
+                {q
+                  ? "Nenhum resultado para a busca atual. Tente outro termo ou explore o radar."
+                  : "Quando houver sugestões no seu esporte principal, elas aparecem nesta grade."}
+              </p>
+            </div>
           )}
           </div>
         </section>
@@ -918,8 +963,9 @@ export default async function DashboardPage({ searchParams }: Props) {
             </Link>
           </div>
           <div className={dashboardSectionBody}>
-          <p className="mb-3 text-[11px] leading-relaxed text-eid-text-secondary">
-            Inscrições abertas, priorizando esporte do seu perfil e proximidade da sua localização.
+          <p className={dashboardSectionBlurb}>
+            Inscrições <span className="font-semibold text-eid-fg">abertas</span>, filtradas pelo seu esporte e pela{" "}
+            <span className="font-semibold text-eid-fg">distância</span> da sua localização.
           </p>
           {torneiosFiltrados.length > 0 ? (
             <div className={scrollRow}>
@@ -927,25 +973,36 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={t.id}
                   href={`/torneios/${t.id}?from=/dashboard`}
-                  className="min-w-[210px] max-w-[210px] shrink-0 snap-start overflow-hidden rounded-[22px] border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_12px_30px_-16px_rgba(15,23,42,0.4)] transition hover:border-eid-primary-500/40 hover:shadow-[0_18px_34px_-18px_rgba(37,99,235,0.38)]"
+                  className={dashboardRailTorneio}
                 >
-                  <div className="h-[95px] w-full bg-eid-surface">
+                  <div className="relative h-[100px] w-full overflow-hidden bg-[color-mix(in_srgb,var(--eid-surface)_90%,var(--eid-primary-500)_10%)]">
                     {t.banner ? (
                       <div className="relative h-full w-full">
-                        <Image src={t.banner} alt="" fill unoptimized className="object-cover" />
+                        <Image src={t.banner} alt="" fill unoptimized className="object-cover transition duration-300 group-hover:scale-[1.03]" />
                       </div>
                     ) : (
-                      <div className="flex h-full items-center justify-center text-[10px] font-bold text-eid-text-secondary">Torneio</div>
+                      <div className="flex h-full flex-col items-center justify-center gap-0.5">
+                        <IconTorneioCard className="h-8 w-8 text-[color:color-mix(in_srgb,var(--eid-fg)_35%,var(--eid-primary-500)_65%)] opacity-80" />
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Torneio</span>
+                      </div>
                     )}
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-eid-bg/80 to-transparent" aria-hidden />
                   </div>
-                  <p className="px-2.5 py-2.5 text-[11px] font-extrabold leading-snug text-eid-fg">{t.nome}</p>
+                  <p className="border-t border-[color:var(--eid-border-subtle)] px-3 py-2.5 text-[11px] font-bold leading-snug text-eid-fg sm:text-xs sm:font-extrabold">
+                    {t.nome}
+                  </p>
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="eid-list-item rounded-2xl border-dashed bg-eid-surface/50 p-5 text-center text-sm leading-relaxed text-eid-text-secondary">
-              {q ? "Nenhum torneio encontrado para essa busca." : "Sem torneios próximos com inscrição em aberto no seu esporte."}
-            </p>
+            <div className={dashboardEmptyWide}>
+              <p className="text-sm font-semibold text-eid-fg">Sem torneios na lista</p>
+              <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-eid-text-secondary">
+                {q
+                  ? "Nada encontrado para essa busca. Ajuste o termo ou abra a lista completa."
+                  : "Não há competições com inscrição aberta no seu esporte agora. Volte mais tarde ou explore todos os torneios."}
+              </p>
+            </div>
           )}
           </div>
         </section>
@@ -959,8 +1016,8 @@ export default async function DashboardPage({ searchParams }: Props) {
             </Link>
           </div>
           <div className={dashboardSectionBody}>
-          <p className="mb-3 text-[11px] leading-relaxed text-eid-text-secondary">
-            Duplas e times com vagas abertas, próximos e compatíveis com seus esportes.
+          <p className={dashboardSectionBlurb}>
+            <span className="font-semibold text-eid-fg">Duplas e times</span> com vagas abertas, ordenados por proximidade e pelos esportes do seu perfil.
           </p>
           {timesFiltrados.length > 0 ? (
             <div className={scrollRow}>
@@ -968,9 +1025,9 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={t.id}
                   href={`/perfil-time/${t.id}?from=/dashboard`}
-                  className="min-w-[118px] max-w-[118px] shrink-0 snap-start rounded-3xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-2 py-3.5 text-center shadow-[0_12px_28px_-16px_rgba(15,23,42,0.38)] transition hover:border-eid-primary-500/40 hover:shadow-[0_16px_32px_-16px_rgba(37,99,235,0.34)]"
+                  className={dashboardRailTeam}
                 >
-                  <div className="mx-auto h-14 w-14">
+                  <div className="mx-auto h-[3.75rem] w-[3.75rem]">
                     {t.escudo ? (
                       <Image
                         src={t.escudo}
@@ -986,17 +1043,22 @@ export default async function DashboardPage({ searchParams }: Props) {
                       </div>
                     )}
                   </div>
-                  <p className="mt-3 truncate text-[11px] font-extrabold text-eid-fg">{t.nome}</p>
-                  <p className="mt-0.5 text-[10px] font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_45%,var(--eid-primary-500)_55%)]">
+                  <p className="mt-3 line-clamp-2 min-h-[2.5rem] text-[10px] font-bold leading-tight text-eid-fg sm:text-[11px] sm:font-extrabold">{t.nome}</p>
+                  <p className="mt-2 inline-flex min-h-[1.35rem] items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-eid-surface/55 px-2 py-0.5 text-[9px] font-bold tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_48%,var(--eid-primary-500)_52%)]">
                     {hasMyCoords && dist < 9000 ? `${dist.toFixed(1).replace(".", ",")} km` : "—"}
                   </p>
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="eid-list-item rounded-2xl border-dashed bg-eid-surface/45 p-4 text-sm text-eid-text-secondary">
-              {q ? "Nenhuma vaga para equipes encontrada para essa busca." : "Sem vagas de duplas/times próximos no seu esporte."}
-            </p>
+            <div className={dashboardEmptyWide}>
+              <p className="text-sm font-semibold text-eid-fg">Sem vagas listadas</p>
+              <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-eid-text-secondary">
+                {q
+                  ? "Nenhuma equipe bate com a busca. Tente outro termo."
+                  : "Não encontramos duplas/times com vagas no seu esporte por perto. Atualize o perfil ou volte depois."}
+              </p>
+            </div>
           )}
           </div>
         </section>
@@ -1009,8 +1071,11 @@ export default async function DashboardPage({ searchParams }: Props) {
             </Link>
           </div>
           <div className={dashboardSectionBody}>
-          <p className="mb-3 text-[11px] leading-relaxed text-eid-text-secondary">
-            Sugestões próximas do seu esporte, priorizando locais que aceitam sócios, mensalidade com a plataforma e reservas pagas.
+          <p className={dashboardSectionBlurb}>
+            Locais alinhados ao seu esporte, com preferência para{" "}
+            <span className="font-semibold text-eid-fg">sócios</span>,{" "}
+            <span className="font-semibold text-eid-fg">mensalidade na plataforma</span> e{" "}
+            <span className="font-semibold text-eid-fg">reserva paga</span>.
           </p>
           {locaisScroll && locaisScroll.length > 0 ? (
             <div className={scrollRow}>
@@ -1018,9 +1083,9 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={loc.id}
                   href={loc.slug ? `/espaco/${loc.slug}` : `/local/${loc.id}?from=/dashboard`}
-                  className="min-w-[140px] max-w-[140px] shrink-0 snap-start rounded-3xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_12px_28px_-16px_rgba(15,23,42,0.38)] transition hover:border-eid-primary-500/40 hover:shadow-[0_16px_32px_-16px_rgba(37,99,235,0.34)]"
+                  className={dashboardRailLocal}
                 >
-                  <div className="flex h-12 items-center justify-center overflow-hidden rounded-xl bg-eid-surface">
+                  <div className="flex h-[3.25rem] items-center justify-center overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-surface)_100%,var(--eid-field-bg)_0%),color-mix(in_srgb,var(--eid-field-bg)_35%,var(--eid-surface)_65%))]">
                     {loc.logo_arquivo ? (
                       <div className="relative h-10 w-full">
                         <Image src={loc.logo_arquivo} alt="" fill unoptimized className="object-contain" />
@@ -1029,18 +1094,24 @@ export default async function DashboardPage({ searchParams }: Props) {
                       <IconMapPin className="h-6 w-6 text-eid-primary-500/50" />
                     )}
                   </div>
-                  <p className="mt-2 line-clamp-2 text-[11px] font-extrabold leading-tight text-eid-fg">{loc.nome_publico}</p>
-                  <p className="mt-0.5 line-clamp-2 text-[10px] text-eid-text-secondary">{loc.localizacao}</p>
-                  <p className="mt-1 text-[10px] font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
+                  <p className="mt-2.5 line-clamp-2 text-[11px] font-bold leading-snug text-eid-fg">{loc.nome_publico}</p>
+                  <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-eid-text-secondary">{loc.localizacao}</p>
+                  <p className="mt-2 inline-flex items-center text-[9px] font-bold tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_52%,var(--eid-primary-500)_48%)]">
+                    <span className="mr-1 rounded-md bg-eid-primary-500/12 px-1 py-px text-[8px] font-black uppercase tracking-wide text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]">
+                      Dist.
+                    </span>
                     {hasMyCoords && loc.dist < 9000 ? `${loc.dist.toFixed(1).replace(".", ",")} km` : "—"}
                   </p>
                 </Link>
               ))}
             </div>
           ) : (
-            <p className="eid-list-item rounded-2xl border-dashed bg-eid-surface/45 p-4 text-sm text-eid-text-secondary">
-              Nenhum local próximo compatível com seus critérios no momento.
-            </p>
+            <div className={dashboardEmptyWide}>
+              <p className="text-sm font-semibold text-eid-fg">Nenhum local sugerido</p>
+              <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-eid-text-secondary">
+                Ajuste seus esportes no perfil ou cadastre um espaço para aparecer por aqui.
+              </p>
+            </div>
           )}
 
           <CadastrarLocalOverlayTrigger

@@ -33,10 +33,13 @@ export default function LoadingDashboard() {
         aria-label="Carregando atalhos"
         className="eid-dashboard-app-nav mt-4 rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,var(--eid-primary-500)_18%)] bg-[color-mix(in_srgb,var(--eid-surface)_42%,var(--eid-bg)_58%)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_24px_-18px_rgba(15,23,42,0.35)] sm:mt-5 sm:rounded-[1.35rem] sm:p-1.5"
       >
-        <div className="grid grid-cols-4 gap-1 sm:gap-1.5">
+        <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
           {Array.from({ length: 4 }).map((_, idx) => (
-            <div key={idx} className="flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 sm:min-h-[4.35rem] sm:py-2">
-              <SkBlock className="h-10 w-10 rounded-xl sm:h-11 sm:w-11" />
+            <div
+              key={idx}
+              className="flex min-h-[4rem] flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 sm:min-h-[4.35rem] sm:py-2"
+            >
+              <SkBlock className="h-10 w-10 rounded-xl sm:h-11 sm:w-11 sm:rounded-2xl" />
               <SkBlock className="h-2.5 w-12 rounded-md" />
             </div>
           ))}
@@ -46,9 +49,9 @@ export default function LoadingDashboard() {
       {Array.from({ length: 3 }).map((_, sectionIdx) => (
         <section
           key={sectionIdx}
-          className="eid-dashboard-section mt-6 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 sm:mt-8"
+          className="eid-dashboard-section mt-6 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] sm:mt-8"
         >
-          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 sm:px-4">
+          <div className="eid-dashboard-section-head flex items-center justify-between border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <SkBlock className="h-3 w-28 rounded-md" />
             <SkBlock className="h-5 w-16 rounded-full" />
           </div>

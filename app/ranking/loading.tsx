@@ -18,8 +18,8 @@ export default function LoadingRanking() {
         </div>
 
         <section className="mt-4 md:mt-6">
-          <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-            <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+          <div className="eid-ranking-card overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]">
+            <div className="eid-ranking-card-head flex items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <SkBlock className="h-3 w-16 rounded-md" />
               <SkBlock className="h-5 w-14 rounded-full" />
             </div>
@@ -64,8 +64,8 @@ export default function LoadingRanking() {
         </section>
 
         <section className="mt-4 md:mt-6">
-          <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-            <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+          <div className="eid-ranking-card overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]">
+            <div className="eid-ranking-card-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <SkBlock className="h-3 w-24 rounded-md" />
               <SkBlock className="h-5 w-28 rounded-full" />
             </div>
