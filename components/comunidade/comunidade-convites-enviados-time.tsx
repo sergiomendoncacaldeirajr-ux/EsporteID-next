@@ -53,13 +53,13 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
             key={c.id}
             className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
           >
-            <div className="flex items-start gap-3">
+            <div className="grid grid-cols-[72px_30px_minmax(0,1fr)] items-start sm:grid-cols-[72px_34px_minmax(0,1fr)]">
               <ProfileEditDrawerTrigger
                 href={`/perfil/${c.convidadoId}?from=/comunidade`}
                 title={c.convidadoNome}
                 fullscreen
                 topMode="backOnly"
-                className="block rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
+                className="-ml-1 block justify-self-start rounded-xl border border-transparent transition hover:border-eid-primary-500/35 sm:-ml-1.5"
               >
                 <div className="flex w-[72px] flex-col items-center">
                   <p className="mb-1 max-w-[72px] truncate text-center text-[11px] font-black text-eid-fg">
@@ -78,14 +78,16 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
                     <ProfileEidPerformanceSeal
                       notaEid={Number(c.convidadoNotaEid ?? 0)}
                       compact
+                      className="scale-125"
                       locationLabel={c.convidadoLocalizacao}
                       distanceKm={c.convidadoDistanceKm}
                     />
                   </div>
                 </div>
               </ProfileEditDrawerTrigger>
+              <div aria-hidden className="h-full w-full" />
 
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 pl-3 sm:pl-4">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-eid-fg">{c.convidadoNome}</p>

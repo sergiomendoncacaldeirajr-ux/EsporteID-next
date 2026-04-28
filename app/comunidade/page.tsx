@@ -55,22 +55,17 @@ function ComunidadeQuadro({
   hasPending: boolean;
   children: ReactNode;
 }) {
+  if (!hasPending) return null;
   return (
     <details
       id={id}
-      open={hasPending}
+      open
       className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3 [&_summary::-webkit-details-marker]:hidden"
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
         <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">{title}</h3>
-        <span
-          className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] ${
-            hasPending
-              ? "border-amber-400/35 bg-amber-500/14 text-amber-200"
-              : "border-[color:var(--eid-border-subtle)] bg-eid-surface/60 text-eid-text-secondary"
-          }`}
-        >
-          {hasPending ? "Pendente" : "Minimizado"}
+        <span className="rounded-full border border-amber-400/35 bg-amber-500/14 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-amber-200">
+          Pendente
         </span>
       </summary>
       <div className="mt-2">{children}</div>
@@ -797,6 +792,17 @@ export default async function ComunidadePage() {
     if (!key) return true;
     return !blockedDueloByCancelFlowPainel.has(key);
   });
+  const hasPartidasAcoes = (painelPlacarPendente ?? []).length > 0 || painelAgendadasVisiveis.length > 0;
+  const hasDesafioAcoes =
+    pedidosItems.length > 0 || pedidosEnviadosItems.length > 0 || desafioNotifs.some((n) => n.lida !== true);
+  const hasEquipeAcoes =
+    sugestoesItems.length > 0 ||
+    conviteItems.length > 0 ||
+    candidaturasEquipe.length > 0 ||
+    conviteEnviadoItems.some((i) => String(i.status ?? "").toLowerCase() === "pendente") ||
+    minhasCandidaturasEquipe.some((c) => c.statusRaw === "pendente") ||
+    equipeNotifs.some((n) => n.lida !== true);
+  const hasAulasAcoes = nAulas > 0;
 
   return (
     <main
@@ -846,6 +852,7 @@ export default async function ComunidadePage() {
         <div className="mt-4 space-y-4 md:mt-6 md:space-y-6">
           <PushToggleCard defaultEnabled />
 
+          {hasPartidasAcoes ? (
           <section id="resultados-partida" className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
             <div className="flex items-start justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 md:px-5">
               <div>
@@ -865,13 +872,9 @@ export default async function ComunidadePage() {
 
             <div className="px-4 py-4 md:px-5 md:py-5">
             <div className="space-y-6">
-              <div>
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-400">Placar aguardando você</h3>
-                {(painelPlacarPendente ?? []).length === 0 ? (
-                  <p className="eid-list-item mt-3 rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4 text-center text-sm text-eid-text-secondary">
-                    Nenhum placar pendente de confirmação.
-                  </p>
-                ) : (
+              {(painelPlacarPendente ?? []).length > 0 ? (
+                <div>
+                  <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-400">Placar aguardando você</h3>
                   <div className="mt-4 space-y-4">
                     {(painelPlacarPendente ?? []).map((row) => {
                       const esp = firstOfRelation(row.esportes);
@@ -901,19 +904,15 @@ export default async function ComunidadePage() {
                       );
                     })}
                   </div>
-                )}
-              </div>
+                </div>
+              ) : null}
 
-              <div>
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-400">Lançar resultado</h3>
-                <p className="mt-1 text-xs text-eid-text-secondary">
-                  Partidas agendadas em que você pode enviar o placar após o jogo.
-                </p>
-                {painelAgendadasVisiveis.length === 0 ? (
-                  <p className="eid-list-item mt-3 rounded-2xl bg-eid-card/60 p-4 text-center text-sm text-eid-text-secondary">
-                    Nenhuma partida agendada para lançar resultado.
+              {painelAgendadasVisiveis.length > 0 ? (
+                <div>
+                  <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-400">Lançar resultado</h3>
+                  <p className="mt-1 text-xs text-eid-text-secondary">
+                    Partidas agendadas em que você pode enviar o placar após o jogo.
                   </p>
-                ) : (
                   <div className="mt-4 space-y-4">
                     {painelAgendadasVisiveis.map((row) => {
                       const esp = firstOfRelation(row.esportes);
@@ -938,11 +937,7 @@ export default async function ComunidadePage() {
                           localLabel={localLabelPainel(pr)}
                           variant="agendada"
                           ctaFullscreen
-                          cancelMatchId={
-                            cancelMatchIdByDueloPainel.get(
-                              dueloCardKey
-                            ) ?? null
-                          }
+                          cancelMatchId={cancelMatchIdByDueloPainel.get(dueloCardKey) ?? null}
                           desistMatchId={
                             rescheduleAcceptedByDueloPainel.has(dueloCardKey)
                               ? cancelMatchIdByDueloPainel.get(dueloCardKey) ?? null
@@ -955,12 +950,14 @@ export default async function ComunidadePage() {
                       );
                     })}
                   </div>
-                )}
-              </div>
+                </div>
+              ) : null}
             </div>
             </div>
           </section>
+          ) : null}
 
+          {hasDesafioAcoes ? (
           <section id="desafio-pedidos" className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
             <div className="flex items-start justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 md:px-5">
               <div>
@@ -1003,7 +1000,9 @@ export default async function ComunidadePage() {
             </div>
             </div>
           </section>
+          ) : null}
 
+          {hasEquipeAcoes ? (
           <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
             <div className="flex items-start justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 md:px-5">
               <div>
@@ -1040,13 +1039,13 @@ export default async function ComunidadePage() {
                         key={c.id}
                         className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
                       >
-                        <div className="flex items-start gap-3">
+                        <div className="grid grid-cols-[72px_30px_minmax(0,1fr)] items-start sm:grid-cols-[72px_34px_minmax(0,1fr)]">
                           <ProfileEditDrawerTrigger
                             href={`/perfil/${c.candidatoId}?from=/comunidade`}
                             title={c.nome}
                             fullscreen
                             topMode="backOnly"
-                            className="block rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
+                            className="-ml-1 block justify-self-start rounded-xl border border-transparent transition hover:border-eid-primary-500/35 sm:-ml-1.5"
                           >
                             <div className="flex w-[72px] flex-col items-center">
                               <p className="mb-1 max-w-[72px] truncate text-center text-[11px] font-black text-eid-fg">{c.primeiroNome}</p>
@@ -1060,11 +1059,12 @@ export default async function ComunidadePage() {
                                 )}
                               </div>
                               <div className="mt-1">
-                                <ProfileEidPerformanceSeal notaEid={c.notaEid} compact />
+                                <ProfileEidPerformanceSeal notaEid={c.notaEid} compact className="scale-125" />
                               </div>
                             </div>
                           </ProfileEditDrawerTrigger>
-                          <div className="min-w-0 flex-1">
+                          <div aria-hidden className="h-full w-full" />
+                          <div className="min-w-0 flex-1 pl-3 sm:pl-4">
                             <p className="text-xs text-eid-text-secondary">
                               {c.username ? `${c.username} · ` : ""}
                               Quer entrar em{" "}
@@ -1162,7 +1162,9 @@ export default async function ComunidadePage() {
             </div>
             </div>
           </section>
+          ) : null}
 
+          {hasAulasAcoes ? (
           <section id="minhas-aulas" className="eid-list-item rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-4 opacity-80 md:p-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Minhas aulas</h2>
@@ -1185,6 +1187,7 @@ export default async function ComunidadePage() {
               </div>
             </div>
           </section>
+          ) : null}
 
           <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0">
             <div className="flex items-center justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-5 py-3">

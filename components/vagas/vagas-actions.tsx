@@ -84,7 +84,7 @@ export function CancelarCandidaturaForm({
             : "w-full rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-fg"
         }
       >
-        {pending ? "Cancelando..." : label}
+        <span className="inline-block origin-center scale-[0.68] leading-none">{pending ? "Cancelando..." : label}</span>
       </button>
       {state.message ? (
         <p className={`text-[11px] ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>

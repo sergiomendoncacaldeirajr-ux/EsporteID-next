@@ -36,7 +36,7 @@ export const PEDIDO_RECUSAR_BTN_CLASS =
  * Cancelar compacto (candidatura, pedido enviado, atalho na agenda): mesma altura fixa que Aceitar/Recusar.
  */
 export const PEDIDO_CANCELAR_COMPACT_BTN_CLASS =
-  "inline-flex !h-[18px] !min-h-0 shrink-0 items-center justify-center rounded-full border border-red-700/90 bg-red-700 px-1 text-[7px] font-black uppercase leading-none tracking-[0.03em] text-white shadow-[0_4px_14px_-4px_rgba(220,38,38,0.45)] transition hover:bg-red-800 disabled:opacity-60";
+  "inline-flex !h-[10px] !min-h-0 shrink-0 items-center justify-center rounded-full border border-red-700/90 bg-red-700 px-0 text-[2px] font-black uppercase leading-none tracking-[0.02em] text-white shadow-[0_4px_14px_-4px_rgba(220,38,38,0.45)] transition hover:bg-red-800 disabled:opacity-60";
 
 /** Ver mais / Ver menos compacto com altura padronizada. */
 export const PEDIDO_VER_MAIS_COMPACT_BTN_CLASS =

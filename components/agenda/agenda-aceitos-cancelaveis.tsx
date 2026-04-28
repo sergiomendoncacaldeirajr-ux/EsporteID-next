@@ -188,7 +188,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
             key={m.id}
             className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 py-2.5 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.18)] backdrop-blur-sm md:px-3 md:py-3"
           >
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-2 md:grid-cols-[40px_minmax(0,1fr)_auto]">
               {m.avatarOponente ? (
                 <img
                   src={m.avatarOponente}
@@ -206,7 +206,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                   {m.esporte} · {m.modalidade}
                 </p>
               </div>
-              <span className="ml-auto max-w-[48%] truncate rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-left text-[8px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] md:max-w-none md:text-[9px]">
+              <span className="whitespace-nowrap rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-left text-[8px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] md:text-[9px]">
                 {formatStatusLabel(m.statusLabel ?? m.status)}
               </span>
             </div>

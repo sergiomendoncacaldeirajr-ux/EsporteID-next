@@ -128,8 +128,11 @@ export function PartidaAgendaCard({
       {cancelMatchId && !isPlacar && !desistMatchId ? (
         <>
           {showCancelHint ? (
-            <p className="absolute left-1/2 -top-5 z-[3] w-[88%] -translate-x-1/2 rounded-md border border-eid-primary-500/40 bg-eid-card/95 px-2 py-1 text-center text-[9px] font-semibold leading-tight text-eid-text-secondary">
-              Sem acordo de data? Toque em &quot;Cancelar&quot; para abrir as opções.
+            <p
+              className="pointer-events-none absolute left-1/2 top-[2.2rem] z-[2] w-fit whitespace-nowrap rounded-full border border-eid-primary-500/35 bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-surface)_10%)] px-2 py-[2px] text-center text-[8px] font-semibold uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)] shadow-[0_6px_14px_-10px_rgba(15,23,42,0.45)] backdrop-blur-[1px] animate-[eid-vt-main-fade-in_.22s_ease-out] sm:text-[9px]"
+              style={{ transform: `translateX(calc(-50% + ${topActionShiftXPx}px))` }}
+            >
+              Sem acordo? Toque em &quot;Cancelar&quot;.
             </p>
           ) : null}
           <button
@@ -141,7 +144,7 @@ export function PartidaAgendaCard({
             className={`absolute left-1/2 top-2.5 z-[3] active:scale-[0.98] ${PEDIDO_CANCELAR_COMPACT_BTN_CLASS}`}
             style={{ transform: `translateX(calc(-50% + ${topActionShiftXPx}px))` }}
           >
-            Cancelar
+            <span className="inline-block origin-center scale-[0.68] leading-none">Cancelar</span>
           </button>
         </>
       ) : null}
@@ -193,7 +196,7 @@ export function PartidaAgendaCard({
                   )}
                 </ProfileEditDrawerTrigger>
                 <div className="-mt-0.5">
-                  <ProfileEidPerformanceSeal notaEid={Number(j1NotaEid ?? 0)} compact className="scale-125" />
+                  <ProfileEidPerformanceSeal notaEid={Number(j1NotaEid ?? 0)} compact className="scale-150" />
                 </div>
               </div>
             ) : null}
@@ -231,7 +234,7 @@ export function PartidaAgendaCard({
                   )}
                 </ProfileEditDrawerTrigger>
                 <div className="-mt-0.5">
-                  <ProfileEidPerformanceSeal notaEid={Number(j2NotaEid ?? 0)} compact className="scale-125" />
+                  <ProfileEidPerformanceSeal notaEid={Number(j2NotaEid ?? 0)} compact className="scale-150" />
                 </div>
               </div>
             ) : null}
@@ -322,7 +325,7 @@ export function PartidaAgendaCard({
             title={ctaText}
             fullscreen
             topMode="backOnly"
-            className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-2.5 w-full text-center text-[10px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs`}
+            className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-4 !min-h-[28px] w-full !px-2.5 text-center text-[9px] font-bold uppercase tracking-[0.04em] md:mt-5 md:!min-h-[40px] md:text-[11px]`}
           >
             <>
               <DesafioFlowCtaIcon />
@@ -332,7 +335,7 @@ export function PartidaAgendaCard({
         ) : (
           <Link
             href={ctaHref}
-            className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-2.5 text-center text-[10px] font-bold uppercase tracking-wide md:mt-4 md:min-h-[48px] md:text-xs`}
+            className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} mt-4 !min-h-[28px] text-center text-[9px] font-bold uppercase tracking-[0.04em] md:mt-5 md:!min-h-[40px] md:text-[11px]`}
           >
             <DesafioFlowCtaIcon />
             <span>{ctaText}</span>

@@ -102,7 +102,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                     <ProfileEidPerformanceSeal
                       notaEid={m.rankingPreview?.kind === "individual" ? m.rankingPreview.perspective.notaEidNow : 0}
                       compact
-                      className="scale-105"
+                      className="scale-125"
                     />
                   </div>
                 </div>
