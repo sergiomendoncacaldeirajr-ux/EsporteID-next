@@ -26,12 +26,20 @@ export function TeamRosterManager({
   timeId,
   membros,
   convites,
+  rosterCount,
+  rosterCap,
+  tipoFormacao,
   prefillConvidarUsuarioId = null,
   prefillConvidarNome = null,
 }: {
   timeId: number;
   membros: MemberItem[];
   convites: InviteItem[];
+  /** Tamanho atual do elenco (líder + membros ativos, contagem distinta). */
+  rosterCount: number;
+  /** Máximo: 2 dupla, 18 time. */
+  rosterCap: number;
+  tipoFormacao: "dupla" | "time";
   prefillConvidarUsuarioId?: string | null;
   prefillConvidarNome?: string | null;
 }) {
@@ -46,7 +54,13 @@ export function TeamRosterManager({
         </span>
       </div>
       <div className="p-3 sm:p-4">
-      <p className="text-[11px] text-eid-text-secondary">Adicione atletas por @username e acompanhe status de pendente/aprovado.</p>
+      <p className="text-[11px] text-eid-text-secondary">
+        Adicione atletas por @username e acompanhe status de pendente/aprovado.{" "}
+        <span className="font-semibold text-eid-fg">
+          {tipoFormacao === "dupla" ? "Dupla" : "Time"}: elenco {rosterCount}/{rosterCap} (inclui o líder). Para convidar
+          alguém novo com elenco cheio, remova um membro antes.
+        </span>
+      </p>
 
       {prefillConvidarUsuarioId ? (
         <div className="mt-3 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 p-3">

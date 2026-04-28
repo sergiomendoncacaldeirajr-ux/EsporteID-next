@@ -114,11 +114,13 @@ export function TeamManagementPanel({
           {convidarUsuarioIdAposCriar ? <input type="hidden" name="convidar_usuario_id" value={convidarUsuarioIdAposCriar} /> : null}
           <div className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 sm:col-span-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-primary-300">Escudo do time ou dupla</p>
-            <p className="mt-1 text-[10px] text-eid-text-secondary">Envie o escudo do time ou da dupla. Esse envio é obrigatório para concluir o cadastro.</p>
+            <p className="mt-1 text-[10px] text-eid-text-secondary">
+              Envie o escudo do time ou da dupla (JPG, PNG, WEBP ou HEIC). Esse envio é obrigatório para concluir o cadastro.
+            </p>
             <input
               type="file"
               name="escudo_file"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
               required
               className="mt-2 block w-full text-[11px] text-eid-text-secondary file:mr-2 file:rounded-lg file:border file:border-[color:var(--eid-border-subtle)] file:bg-eid-surface/70 file:px-2.5 file:py-1 file:text-[10px] file:font-semibold file:text-eid-fg"
             />

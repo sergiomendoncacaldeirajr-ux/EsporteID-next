@@ -35,7 +35,7 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
   const { data: t } = await supabase
     .from("times")
     .select(
-      "id, nome, username, bio, localizacao, escudo, criador_id, interesse_rank_match, disponivel_amistoso, vagas_abertas, aceita_pedidos, interesse_torneio, nivel_procurado"
+      "id, nome, username, bio, localizacao, escudo, criador_id, tipo, interesse_rank_match, disponivel_amistoso, vagas_abertas, aceita_pedidos, interesse_torneio, nivel_procurado"
     )
     .eq("id", id)
     .maybeSingle();
@@ -50,7 +50,10 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
     prefillConvidarNome = alvo?.nome ?? null;
   }
 
-  const [{ data: membrosRows }, { data: convitesRows }] = await Promise.all([
+  const tipoFormacao = String(t.tipo ?? "time").trim().toLowerCase() === "dupla" ? "dupla" : "time";
+  const rosterCap = tipoFormacao === "dupla" ? 2 : 18;
+
+  const [{ data: membrosRows }, { data: convitesRows }, rosterHeadRes] = await Promise.all([
     supabase
       .from("membros_time")
       .select("usuario_id, cargo, status")
@@ -62,7 +65,19 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
       .eq("time_id", id)
       .in("status", ["pendente", "aceito", "aprovado"])
       .order("id", { ascending: false }),
+    supabase.rpc("time_roster_headcount", { p_time_id: id }),
   ]);
+  const rosterHeadRaw = rosterHeadRes.data;
+  const rosterRpcErr = rosterHeadRes.error;
+  const memberIds = (membrosRows ?? []).map((m) => String(m.usuario_id ?? "")).filter(Boolean);
+  const rosterCountFallback = new Set([
+    ...(t.criador_id ? [String(t.criador_id)] : []),
+    ...memberIds,
+  ]).size;
+  const rosterCount =
+    !rosterRpcErr && rosterHeadRaw != null && Number.isFinite(Number(rosterHeadRaw))
+      ? Number(rosterHeadRaw)
+      : rosterCountFallback;
 
   const profileIds = [
     ...new Set([
@@ -141,6 +156,9 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
       <div className="mt-2.5">
         <TeamRosterManager
           timeId={id}
+          tipoFormacao={tipoFormacao}
+          rosterCount={rosterCount}
+          rosterCap={rosterCap}
           prefillConvidarUsuarioId={convidarUsuarioId}
           prefillConvidarNome={prefillConvidarNome}
           membros={(membrosRows ?? []).map((m) => {

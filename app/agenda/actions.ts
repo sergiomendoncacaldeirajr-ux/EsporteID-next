@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
+import { userMayRespondPropostaAgendamento } from "@/lib/agenda/partidas-usuario";
 import { createClient } from "@/lib/supabase/server";
 
 export type ResponderAgendamentoState = { ok: true; message: string } | { ok: false; message: string };
@@ -49,18 +50,19 @@ export async function responderAgendamentoPartidaAction(
 
   const { data: p } = await supabase
     .from("partidas")
-    .select("id, match_id, torneio_id, jogador1_id, jogador2_id, status, agendamento_proposto_por, agendamento_aceite_deadline")
+    .select(
+      "id, match_id, torneio_id, jogador1_id, jogador2_id, time1_id, time2_id, modalidade, status, agendamento_proposto_por, agendamento_aceite_deadline"
+    )
     .eq("id", partidaId)
     .maybeSingle();
   if (!p) return { ok: false, message: "Partida não encontrada." };
   if (String(p.status ?? "") !== "aguardando_aceite_agendamento") {
     return { ok: false, message: "Este agendamento não está pendente de aceite." };
   }
-  if (p.agendamento_proposto_por === user.id) {
-    return { ok: false, message: "Quem propôs não pode aceitar o próprio agendamento." };
+  const podeResponder = await userMayRespondPropostaAgendamento(supabase, p, user.id);
+  if (!podeResponder) {
+    return { ok: false, message: "Sem permissão para responder este agendamento." };
   }
-  const isParticipant = p.jogador1_id === user.id || p.jogador2_id === user.id;
-  if (!isParticipant) return { ok: false, message: "Sem permissão para responder este agendamento." };
   const deadlineMs = p.agendamento_aceite_deadline ? new Date(String(p.agendamento_aceite_deadline)).getTime() : Number.NaN;
   if (Number.isFinite(deadlineMs) && deadlineMs < Date.now()) {
     return { ok: false, message: "Prazo de aceite expirado. O agendamento voltou para pendente." };

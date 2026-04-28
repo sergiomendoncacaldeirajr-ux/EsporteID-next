@@ -10,6 +10,40 @@ export type TeamActionState =
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const ROSTER_CAP_DUPLA = 2;
+const ROSTER_CAP_TIME = 18;
+
+function rosterCapForTipo(tipo: string | null | undefined): number {
+  return String(tipo ?? "")
+    .trim()
+    .toLowerCase() === "dupla"
+    ? ROSTER_CAP_DUPLA
+    : ROSTER_CAP_TIME;
+}
+
+/** Alinha Content-Type ao que o bucket `avatars` aceita (evita 400 Bad Request em HEIC / octet-stream / aliases). */
+function resolveEscudoContentType(file: File, safeExt: string): string {
+  const raw = (file.type || "").trim().toLowerCase();
+  if (raw === "application/octet-stream" || raw === "binary/octet-stream" || raw === "") {
+    switch (safeExt.toLowerCase()) {
+      case "png":
+        return "image/png";
+      case "webp":
+        return "image/webp";
+      case "heic":
+      case "heif":
+        return "image/heic";
+      default:
+        return "image/jpeg";
+    }
+  }
+  if (raw === "image/jpg" || raw === "image/pjpeg") return "image/jpeg";
+  if (raw === "image/x-png") return "image/png";
+  const base = raw.split(";")[0]?.trim() ?? "";
+  if (base.startsWith("image/")) return base;
+  return "image/jpeg";
+}
+
 /** Convite por @ já resolvido — usado por `convidarUsuarioParaEquipe` e após `criarEquipe`. */
 async function conviteUsuarioParaTimeCore(
   supabase: SupabaseClient,
@@ -18,8 +52,37 @@ async function conviteUsuarioParaTimeCore(
   targetProfileId: string,
   usernameParaRpc: string
 ): Promise<TeamActionState> {
-  const { data: timeRow } = await supabase.from("times").select("id, esporte_id, criador_id").eq("id", timeId).maybeSingle();
+  const { data: timeRow } = await supabase
+    .from("times")
+    .select("id, esporte_id, criador_id, tipo")
+    .eq("id", timeId)
+    .maybeSingle();
   if (!timeRow || timeRow.criador_id !== donoId) return { ok: false, message: "Sem permissão para convidar nesta equipe." };
+
+  const cap = rosterCapForTipo(timeRow.tipo);
+  const { data: alreadyMembro } = await supabase
+    .from("membros_time")
+    .select("id")
+    .eq("time_id", timeId)
+    .eq("usuario_id", targetProfileId)
+    .in("status", ["ativo", "aceito", "aprovado"])
+    .maybeSingle();
+  if (!alreadyMembro) {
+    const { data: headRaw, error: headErr } = await supabase.rpc("time_roster_headcount", { p_time_id: timeId });
+    if (!headErr) {
+      const head = Number(headRaw);
+      if (Number.isFinite(head) && head >= cap) {
+        return {
+          ok: false,
+          message:
+            cap === ROSTER_CAP_DUPLA
+              ? "Dupla completa (máximo 2 integrantes, incluindo o líder). Remova um membro para convidar outra pessoa."
+              : "Time completo (máximo 18 integrantes, incluindo o líder). Remova um membro para convidar outra pessoa.",
+        };
+      }
+    }
+  }
+
   if (timeRow.esporte_id != null) {
     const { data: esporteConfig } = await supabase
       .from("usuario_eid")
@@ -41,11 +104,21 @@ async function conviteUsuarioParaTimeCore(
     p_username: usernameParaRpc,
   });
   if (error) {
-    if (String(error.message || "").toLowerCase().includes("usuário não encontrado")) {
+    const em = String(error.message || "").toLowerCase();
+    if (em.includes("usuário não encontrado")) {
       return {
         ok: false,
         message:
           "Usuário não encontrado. Para aparecer na opção de adicionar ao time/dupla, o atleta precisa ter esse esporte configurado no perfil.",
+      };
+    }
+    if (em.includes("limite de elenco")) {
+      return {
+        ok: false,
+        message:
+          cap === ROSTER_CAP_DUPLA
+            ? "Dupla completa (máximo 2 integrantes). Remova um membro para convidar outra pessoa."
+            : "Time completo (máximo 18 integrantes). Remova um membro para convidar outra pessoa.",
       };
     }
     return { ok: false, message: error.message };
@@ -85,21 +158,26 @@ export async function criarEquipe(
   if (!(escudoFile instanceof File) || escudoFile.size === 0) {
     return { ok: false, message: "A foto da equipe/dupla é obrigatória." };
   }
-  if (!escudoFile.type.startsWith("image/")) {
-    return { ok: false, message: "Arquivo inválido. Envie uma imagem." };
-  }
   if (escudoFile.size > 5 * 1024 * 1024) {
     return { ok: false, message: "A imagem deve ter no máximo 5MB." };
+  }
+
+  const mimeRaw = (escudoFile.type || "").trim().toLowerCase();
+  const looksLikeImage =
+    mimeRaw.startsWith("image/") || mimeRaw === "application/octet-stream" || mimeRaw === "binary/octet-stream";
+  if (!looksLikeImage) {
+    return { ok: false, message: "Arquivo inválido. Envie uma imagem (JPG, PNG, WEBP ou HEIC)." };
   }
 
   const originalName = escudoFile.name || "escudo";
   const ext = originalName.includes(".") ? originalName.split(".").pop()?.toLowerCase() ?? "jpg" : "jpg";
   const safeExt = ext.replace(/[^a-z0-9]/g, "") || "jpg";
+  const contentType = resolveEscudoContentType(escudoFile, safeExt);
   // RLS do bucket avatars: primeiro segmento do path deve ser auth.uid() (ver storage_avatars_insert_own).
   const path = `${user.id}/time_escudo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
   const up = await supabase.storage.from("avatars").upload(path, escudoFile, {
     upsert: true,
-    contentType: escudoFile.type || "image/jpeg",
+    contentType,
     cacheControl: "3600",
   });
   if (up.error) {

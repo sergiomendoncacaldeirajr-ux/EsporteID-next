@@ -129,7 +129,7 @@ export async function responderCandidaturaAction(
 
   const { data: row, error: rowErr } = await supabase
     .from("time_candidaturas")
-    .select("id, time_id, candidato_usuario_id, status, times!inner(id, nome, criador_id)")
+    .select("id, time_id, candidato_usuario_id, status, times!inner(id, nome, criador_id, tipo)")
     .eq("id", candidaturaId)
     .maybeSingle();
   if (rowErr) return { ok: false, message: rowErr.message };
@@ -140,6 +140,34 @@ export async function responderCandidaturaAction(
   if (row.status !== "pendente") return { ok: false, message: "Essa candidatura já foi respondida." };
 
   if (aceitar) {
+    const cap = String((team as { tipo?: string | null }).tipo ?? "")
+      .trim()
+      .toLowerCase() === "dupla"
+      ? 2
+      : 18;
+    const { data: jaMembro } = await supabase
+      .from("membros_time")
+      .select("id")
+      .eq("time_id", row.time_id)
+      .eq("usuario_id", row.candidato_usuario_id)
+      .in("status", ["ativo", "aceito", "aprovado"])
+      .maybeSingle();
+    if (!jaMembro) {
+      const { data: headRaw, error: headErr } = await supabase.rpc("time_roster_headcount", { p_time_id: row.time_id });
+      if (!headErr) {
+        const head = Number(headRaw);
+        if (Number.isFinite(head) && head >= cap) {
+          return {
+            ok: false,
+            message:
+              cap === 2
+                ? "Dupla já está com 2 integrantes. Remova um membro antes de aceitar outra candidatura."
+                : "Time já está com 18 integrantes. Remova um membro antes de aceitar outra candidatura.",
+          };
+        }
+      }
+    }
+
     const { error: membroErr } = await supabase.from("membros_time").upsert(
       {
         time_id: row.time_id,

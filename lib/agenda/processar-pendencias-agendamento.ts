@@ -20,6 +20,6 @@ export async function processarPendenciasAgendamentoAceite(
     .eq("status", "aguardando_aceite_agendamento")
     .not("agendamento_aceite_deadline", "is", null)
     .lte("agendamento_aceite_deadline", nowIso)
-    .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId}${teamClause}`);
+    .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId},usuario_id.eq.${userId}${teamClause}`);
 }
 

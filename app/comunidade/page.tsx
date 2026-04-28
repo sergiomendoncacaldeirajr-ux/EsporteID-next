@@ -415,7 +415,7 @@ export default async function ComunidadePage() {
   const { data: painelPartidasStatusRows } = await supabase
     .from("partidas")
     .select("id, esporte_id, jogador1_id, jogador2_id, status, status_ranking, lancado_por")
-    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id}${teamClausePainel}`)
+    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}${teamClausePainel}`)
     .in("status", ["agendada", "aguardando_confirmacao"])
     .order("id", { ascending: false })
     .limit(120);

@@ -7,9 +7,11 @@ import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import {
   type AgendaPartidaCardRow,
+  computeAgendaPodeResponderProposta,
   fetchPartidasAgendadasUsuario,
   firstOfRelation,
   getAgendaTeamContext,
+  loadUserTimeIdsOnTeams,
 } from "@/lib/agenda/partidas-usuario";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
@@ -331,6 +333,17 @@ export default async function AgendaPage() {
     return !blockedDueloByCancelFlow.has(key);
   });
 
+  const timeIdsAceiteAgendamento: number[] = [];
+  for (const row of partidasAgendadasVisiveis) {
+    if (String(row.status ?? "").trim().toLowerCase() !== "aguardando_aceite_agendamento") continue;
+    const r = row as AgendaPartidaCardRow;
+    for (const t of [r.time1_id, r.time2_id]) {
+      const n = Number(t);
+      if (Number.isFinite(n) && n > 0) timeIdsAceiteAgendamento.push(n);
+    }
+  }
+  const userTimeIdsParaAceite = await loadUserTimeIdsOnTeams(supabase, user.id, timeIdsAceiteAgendamento);
+
   function localLabel(p: AgendaPartidaCardRow) {
     if (p.local_str?.trim()) return p.local_str.trim();
     if (p.local_espaco_id) return locMap.get(p.local_espaco_id) ?? null;
@@ -384,7 +397,7 @@ export default async function AgendaPage() {
               const effectiveLocalLabel = acceptedSchedule?.scheduledLocation ?? localLabel(pr);
               const hasScheduleDefined = Boolean((acceptedSchedule?.scheduledFor ?? pr.data_partida) && effectiveLocalLabel);
               const schedulePending = String(pr.status ?? "") === "aguardando_aceite_agendamento";
-              const scheduleCanRespond = schedulePending && pr.agendamento_proposto_por !== user.id;
+              const scheduleCanRespond = computeAgendaPodeResponderProposta(pr, user.id, userTimeIdsParaAceite);
               return (
                 <PartidaAgendaCard
                   key={pr.id}

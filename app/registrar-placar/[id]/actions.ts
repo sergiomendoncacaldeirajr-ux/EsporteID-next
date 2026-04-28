@@ -8,6 +8,7 @@ import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { sanitizeOptionalUserText, sanitizeUserText } from "@/lib/security/sanitize-input";
 import { createClient } from "@/lib/supabase/server";
+import { resolveOponenteLeaderUserIdForNotificacao } from "@/lib/agenda/partidas-usuario";
 import { loadPartidaContext, revalidateAfterPartidaPlacarChange } from "@/lib/torneios/lancar-resultado-partida";
 
 function toInt(v: FormDataEntryValue | null): number | null {
@@ -301,13 +302,13 @@ export async function submitPlacarAction(formData: FormData) {
   if (error) go(partidaId, "erro", "Não foi possível salvar o placar.");
 
   if (!isTorneio) {
-    const oponenteId = p.jogador1_id === user.id ? p.jogador2_id : p.jogador1_id;
+    const oponenteId = await resolveOponenteLeaderUserIdForNotificacao(ctx.supabase, p, user.id);
     await notifyUser(
       ctx.supabase,
       oponenteId,
       user.id,
       partidaId,
-      `Seu oponente lançou o resultado (${finalPlacar1} x ${finalPlacar2}). Acesse a Agenda para confirmar ou contestar.`
+      `Seu oponente lançou o resultado (${finalPlacar1} x ${finalPlacar2}). Acesse o Painel (Partidas e resultados) ou a Agenda para confirmar ou contestar.`
     );
   }
 
@@ -598,7 +599,7 @@ export async function salvarAgendamentoAction(formData: FormData) {
   if (error) salvarAgendaRedirect(partidaId, "erro", "Não foi possível salvar o agendamento.", modoAgenda);
 
   if (!p.torneio_id) {
-    const oponenteId = p.jogador1_id === user.id ? p.jogador2_id : p.jogador1_id;
+    const oponenteId = await resolveOponenteLeaderUserIdForNotificacao(ctx.supabase, p, user.id);
     const when = payload.data_partida ? new Date(payload.data_partida).toLocaleString("pt-BR") : "data a combinar";
     const where = payload.local_str ? String(payload.local_str) : "local a combinar";
     await notifyUser(
