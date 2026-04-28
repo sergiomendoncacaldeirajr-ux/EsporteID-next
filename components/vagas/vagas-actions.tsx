@@ -111,8 +111,8 @@ export function ResponderCandidaturaForm({
         disabled={pending}
         className={
           aceitar
-            ? "eid-btn-primary rounded-lg px-3 py-1.5 text-xs font-semibold"
-            : "rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-fg"
+            ? "inline-flex min-h-[34px] min-w-[96px] items-center justify-center rounded-lg border border-eid-primary-500 bg-eid-primary-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-eid-primary-600 disabled:opacity-60"
+            : "inline-flex min-h-[34px] min-w-[96px] items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-fg transition hover:bg-eid-surface/50 disabled:opacity-60"
         }
       >
         {pending ? "Salvando..." : label}

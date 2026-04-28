@@ -42,7 +42,7 @@ export function ComunidadeSetorNotificacoes({
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/8 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/50"
+            className="inline-flex min-h-[22px] items-center rounded-md border border-eid-primary-500/35 bg-eid-primary-500/8 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.04em] text-eid-primary-300 transition hover:border-eid-primary-500/50"
           >
             {expanded ? "Ver menos" : "Ver mais"}
           </button>
@@ -62,7 +62,7 @@ export function ComunidadeSetorNotificacoes({
               }
             })();
           }}
-          className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary transition hover:border-red-400/40 hover:text-red-300 disabled:opacity-50"
+          className="inline-flex min-h-[22px] items-center rounded-md border border-[color:var(--eid-border-subtle)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.04em] text-eid-text-secondary transition hover:border-red-400/40 hover:text-red-300 disabled:opacity-50"
         >
           {pending ? "…" : "Limpar"}
         </button>

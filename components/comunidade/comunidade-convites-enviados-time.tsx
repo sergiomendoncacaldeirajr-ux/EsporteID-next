@@ -1,10 +1,20 @@
+import Image from "next/image";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+
 export type ConviteTimeEnviadoItem = {
   id: number;
   equipeNome: string;
   equipeId: number;
   equipeTipo: string;
   esporteNome: string;
+  convidadoId: string;
   convidadoNome: string;
+  convidadoUsername?: string | null;
+  convidadoAvatarUrl?: string | null;
+  convidadoNotaEid?: number | null;
+  convidadoLocalizacao?: string | null;
+  convidadoDistanceKm?: number | null;
   status: string;
   criadoEm: string | null;
   respondidoEm: string | null;
@@ -43,9 +53,48 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
             key={c.id}
             className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
           >
-            <div className="flex flex-wrap items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-eid-fg">{c.convidadoNome}</p>
+            <div className="flex items-start gap-3">
+              <ProfileEditDrawerTrigger
+                href={`/perfil/${c.convidadoId}?from=/comunidade`}
+                title={c.convidadoNome}
+                fullscreen
+                topMode="backOnly"
+                className="block rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
+              >
+                <div className="flex w-[72px] flex-col items-center">
+                  <p className="mb-1 max-w-[72px] truncate text-center text-[11px] font-black text-eid-fg">
+                    {(c.convidadoNome ?? "Atleta").trim().split(/\s+/)[0] ?? "Atleta"}
+                  </p>
+                  <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
+                    {c.convidadoAvatarUrl ? (
+                      <Image src={c.convidadoAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                        {(c.convidadoNome ?? "A").slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mt-1">
+                    <ProfileEidPerformanceSeal
+                      notaEid={Number(c.convidadoNotaEid ?? 0)}
+                      compact
+                      locationLabel={c.convidadoLocalizacao}
+                      distanceKm={c.convidadoDistanceKm}
+                    />
+                  </div>
+                </div>
+              </ProfileEditDrawerTrigger>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-eid-fg">{c.convidadoNome}</p>
+                    {c.convidadoUsername ? <p className="text-[11px] text-eid-text-secondary">@{c.convidadoUsername.replace(/^@/, "")}</p> : null}
+                  </div>
+                  <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] ${statusClass(c.status)}`}>
+                    {statusLabel(c.status)}
+                  </span>
+                </div>
                 <p className="mt-1 text-xs text-eid-text-secondary">
                   Convite para {c.equipeNome} ({(c.equipeTipo ?? "time").toUpperCase()} · {c.esporteNome})
                 </p>
@@ -54,9 +103,6 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
                   {c.respondidoEm ? ` · Respondido em ${new Date(c.respondidoEm).toLocaleString("pt-BR")}` : ""}
                 </p>
               </div>
-              <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] ${statusClass(c.status)}`}>
-                {statusLabel(c.status)}
-              </span>
             </div>
           </li>
         ))}
