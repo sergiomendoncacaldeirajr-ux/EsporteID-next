@@ -3,8 +3,6 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { responderConviteEquipe, type ResponderConviteState } from "@/app/comunidade/actions";
-import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
-import { DESAFIO_FLOW_CTA_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 import Image from "next/image";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
@@ -102,9 +100,8 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                     <button
                       type="submit"
                       disabled={pending}
-                      className={`${DESAFIO_FLOW_CTA_CLASS} h-10 w-full justify-center !px-3 text-[11px]`}
+                      className="inline-flex w-full items-center justify-center rounded-full border border-eid-action-500/90 bg-eid-action-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[var(--eid-brand-ink)] transition hover:brightness-105 disabled:opacity-60"
                     >
-                      <DesafioFlowCtaIcon />
                       <span>{pending ? "Salvando…" : "Aceitar"}</span>
                     </button>
                   </form>
@@ -114,7 +111,7 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                     <button
                       type="submit"
                       disabled={pending}
-                      className={`${DESAFIO_FLOW_SECONDARY_CLASS} h-10 w-full justify-center !px-3 text-[11px]`}
+                      className="inline-flex w-full items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/85 disabled:opacity-60"
                     >
                       Recusar
                     </button>

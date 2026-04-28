@@ -138,7 +138,7 @@ export function PartidaAgendaCard({
               setShowCancelHint(false);
               setOpenCancel(true);
             }}
-            className="absolute left-1/2 top-2 z-[3] inline-flex min-h-[18px] items-center justify-center rounded-md border border-red-600/90 bg-red-600 px-1.5 text-[7px] font-black uppercase tracking-[0.04em] text-white shadow-[0_4px_14px_-4px_rgba(220,38,38,0.45)] transition hover:bg-red-700 active:scale-[0.98]"
+            className="absolute left-1/2 top-2.5 z-[3] inline-flex items-center justify-center rounded-full border border-red-600/85 bg-red-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-white shadow-[0_4px_14px_-4px_rgba(220,38,38,0.45)] transition hover:bg-red-700 active:scale-[0.98]"
             style={{ transform: `translateX(calc(-50% + ${topActionShiftXPx}px))` }}
           >
             Cancelar

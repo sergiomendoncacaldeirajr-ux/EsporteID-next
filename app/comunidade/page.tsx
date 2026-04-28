@@ -31,6 +31,7 @@ import { getSystemFeatureConfig, SYSTEM_FEATURE_LABEL, type SystemFeatureKey } f
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { createClient } from "@/lib/supabase/server";
 import { marcarTodasNotificacoesLidas } from "./actions";
+import type { ReactNode } from "react";
 
 export const metadata = {
   title: "Painel de controle",
@@ -40,6 +41,40 @@ export const metadata = {
 function primeiroNome(nome?: string | null) {
   const n = (nome ?? "").trim();
   return n ? n.split(/\s+/u)[0] : "Atleta";
+}
+
+function ComunidadeQuadro({
+  id,
+  title,
+  hasPending,
+  children,
+}: {
+  id: string;
+  title: string;
+  hasPending: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details
+      id={id}
+      open={hasPending}
+      className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3 [&_summary::-webkit-details-marker]:hidden"
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">{title}</h3>
+        <span
+          className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] ${
+            hasPending
+              ? "border-amber-400/35 bg-amber-500/14 text-amber-200"
+              : "border-[color:var(--eid-border-subtle)] bg-eid-surface/60 text-eid-text-secondary"
+          }`}
+        >
+          {hasPending ? "Pendente" : "Minimizado"}
+        </span>
+      </summary>
+      <div className="mt-2">{children}</div>
+    </details>
+  );
 }
 
 export default async function ComunidadePage() {
@@ -939,22 +974,21 @@ export default async function ComunidadePage() {
             </div>
             <div className="px-4 py-4 md:px-5 md:py-5">
             <div className="space-y-4">
-              <div id="desafio-pedidos-recebidos">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-400">
-                  Pedidos recebidos
-                </h3>
+              <ComunidadeQuadro id="desafio-pedidos-recebidos" title="Pedidos recebidos" hasPending={pedidosItems.length > 0}>
                 <ComunidadePedidosMatch items={pedidosItems} />
-              </div>
-              <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-400">
-                  Pedidos enviados (aguardando resposta)
-                </h3>
+              </ComunidadeQuadro>
+              <ComunidadeQuadro
+                id="desafio-pedidos-enviados"
+                title="Pedidos enviados (aguardando resposta)"
+                hasPending={pedidosEnviadosItems.length > 0}
+              >
                 <ComunidadePedidosEnviados items={pedidosEnviadosItems} />
-              </div>
-              <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-300">
-                  Notificações de desafio
-                </h3>
+              </ComunidadeQuadro>
+              <ComunidadeQuadro
+                id="desafio-notificacoes"
+                title="Notificações de desafio"
+                hasPending={desafioNotifs.some((n) => n.lida !== true)}
+              >
                 <ComunidadeSetorNotificacoes
                   items={desafioNotifs.map((n) => ({
                     id: n.id,
@@ -964,7 +998,7 @@ export default async function ComunidadePage() {
                   sector="desafio"
                   emptyLabel="Sem notificações de desafio no momento."
                 />
-              </div>
+              </ComunidadeQuadro>
             </div>
             </div>
           </section>
@@ -983,22 +1017,17 @@ export default async function ComunidadePage() {
             </div>
             <div className="px-4 py-4 md:px-5 md:py-5">
             <div className="space-y-4">
-              <div id="equipe-sugestoes">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-[color:color-mix(in_srgb,var(--eid-warning-400)_78%,var(--eid-fg)_22%)]">
-                  Sugestões da equipe (liderança)
-                </h3>
+              <ComunidadeQuadro id="equipe-sugestoes" title="Sugestões da equipe (liderança)" hasPending={sugestoesItems.length > 0}>
                 <ComunidadeSugestoesMatch items={sugestoesItems} />
-              </div>
-              <div id="equipe-convites">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
-                  Convites recebidos
-                </h3>
+              </ComunidadeQuadro>
+              <ComunidadeQuadro id="equipe-convites" title="Convites recebidos" hasPending={conviteItems.length > 0}>
                 <ComunidadeConvitesTime items={conviteItems} />
-              </div>
-              <div id="equipe-pedidos-entrada">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
-                  Pedidos para entrar no elenco
-                </h3>
+              </ComunidadeQuadro>
+              <ComunidadeQuadro
+                id="equipe-pedidos-entrada"
+                title="Pedidos para entrar no elenco"
+                hasPending={candidaturasEquipe.length > 0}
+              >
                 {candidaturasEquipe.length === 0 ? (
                   <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
                     Nenhum pedido pendente para suas formações.
@@ -1060,17 +1089,19 @@ export default async function ComunidadePage() {
                     ))}
                   </ul>
                 )}
-              </div>
-              <div id="equipe-convites-enviados">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
-                  Convites enviados (acompanhamento)
-                </h3>
+              </ComunidadeQuadro>
+              <ComunidadeQuadro
+                id="equipe-convites-enviados"
+                title="Convites enviados (acompanhamento)"
+                hasPending={conviteEnviadoItems.some((i) => String(i.status ?? "").toLowerCase() === "pendente")}
+              >
                 <ComunidadeConvitesEnviadosTime items={conviteEnviadoItems} />
-              </div>
-              <div id="equipe-pedidos-enviados">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
-                  Pedidos de entrada enviados
-                </h3>
+              </ComunidadeQuadro>
+              <ComunidadeQuadro
+                id="equipe-pedidos-enviados"
+                title="Pedidos de entrada enviados"
+                hasPending={minhasCandidaturasEquipe.some((c) => c.statusRaw === "pendente")}
+              >
                 {minhasCandidaturasEquipe.length === 0 ? (
                   <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
                     Você ainda não enviou pedido para entrar em formação.
@@ -1111,56 +1142,12 @@ export default async function ComunidadePage() {
                     ))}
                   </ul>
                 )}
-              </div>
-              <div id="equipe-pedidos-enviados">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
-                  Pedidos de entrada enviados
-                </h3>
-                {minhasCandidaturasEquipe.length === 0 ? (
-                  <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
-                    Você ainda não enviou pedido para entrar em formação.
-                  </p>
-                ) : (
-                  <ul className="mt-3 space-y-3">
-                    {minhasCandidaturasEquipe.map((c) => (
-                      <li
-                        key={c.id}
-                        className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold text-eid-fg">{c.timeNome}</p>
-                          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] ${c.statusClass}`}>
-                            {c.statusLabel}
-                          </span>
-                        </div>
-                        <p className="mt-1 text-xs text-eid-text-secondary">
-                          {c.timeTipo.toLowerCase() === "dupla" ? "Dupla" : "Time"} · pedido em{" "}
-                          {new Date(c.criadoEm).toLocaleString("pt-BR")}
-                        </p>
-                        {c.mensagem ? (
-                          <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2 text-[11px] italic text-eid-text-secondary">
-                            “{c.mensagem}”
-                          </p>
-                        ) : null}
-                        {c.respondidoEm ? (
-                          <p className="mt-1 text-[10px] text-eid-text-secondary">
-                            Atualizado em {new Date(c.respondidoEm).toLocaleString("pt-BR")}
-                          </p>
-                        ) : null}
-                        {c.statusRaw === "pendente" ? (
-                          <div className="mt-3">
-                            <CancelarCandidaturaForm candidaturaId={c.id} compact label="Cancelar" />
-                          </div>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-300">
-                  Avisos de equipe
-                </h3>
+              </ComunidadeQuadro>
+              <ComunidadeQuadro
+                id="equipe-avisos"
+                title="Avisos de equipe"
+                hasPending={equipeNotifs.some((n) => n.lida !== true)}
+              >
                 <ComunidadeSetorNotificacoes
                   items={equipeNotifs.map((n) => ({
                     id: n.id,
@@ -1170,7 +1157,7 @@ export default async function ComunidadePage() {
                   sector="equipe"
                   emptyLabel="Sem avisos de equipe no momento."
                 />
-              </div>
+              </ComunidadeQuadro>
             </div>
             </div>
           </section>
