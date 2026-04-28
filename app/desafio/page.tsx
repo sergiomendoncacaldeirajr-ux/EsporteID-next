@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
 import { DesafioEsporteRegrasModal } from "@/components/desafio/desafio-esporte-regras-modal";
@@ -423,7 +424,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
   const { data: timeRow } = await supabase
     .from("times")
-    .select("id, nome, tipo, esporte_id, criador_id, eid_time")
+    .select("id, nome, tipo, esporte_id, criador_id, eid_time, escudo")
     .eq("id", timeId)
     .maybeSingle();
 
@@ -519,11 +520,24 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           </div>
         ) : null}
         <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:p-4">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-semibold text-eid-fg">{timeRow.nome ?? "Formação"}</p>
-            <ProfileEidPerformanceSeal notaEid={Number(timeRow.eid_time ?? 0)} compact />
+          <div className="flex items-center gap-3">
+            <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
+              {timeRow.escudo ? (
+                <Image src={timeRow.escudo} alt="" fill unoptimized className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-base font-black text-eid-primary-300">
+                  {(timeRow.nome ?? "F").slice(0, 1).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-eid-fg">{timeRow.nome ?? "Formação"}</p>
+              <p className="mt-1 text-xs text-eid-text-secondary">Modalidade: {modalidade}</p>
+            </div>
+            <div className="shrink-0">
+              <ProfileEidPerformanceSeal notaEid={Number(timeRow.eid_time ?? 0)} compact />
+            </div>
           </div>
-          <p className="mt-1 text-xs text-eid-text-secondary">Modalidade: {modalidade}</p>
         </div>
         {rankPrevCo ? (
           <DesafioImpactoResumo esporteNome={esporteNome} regras={rankPrevCo.regras} coletivo={rankPrevCo.coletivo} />

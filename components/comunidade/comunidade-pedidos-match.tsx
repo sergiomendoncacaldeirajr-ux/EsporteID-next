@@ -4,13 +4,17 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { responderPedidoMatch, type ResponderMatchState } from "@/app/comunidade/actions";
-import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
 import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import type { PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
-import { DESAFIO_FLOW_CTA_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
+import {
+  PEDIDO_ACEITAR_BTN_CLASS,
+  PEDIDO_MATCH_ACAO_FORM_CLASS,
+  PEDIDO_MATCH_ACOES_ROW_CLASS,
+  PEDIDO_RECUSAR_BTN_CLASS,
+} from "@/lib/desafio/flow-ui";
 
 export type PedidoMatchItem = {
   id: number;
@@ -148,27 +152,22 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 coletivo={m.rankingPreview.kind === "coletivo" ? m.rankingPreview.coletivo : null}
               />
             ) : null}
-            <div className="relative mt-4 flex flex-wrap gap-2">
-              <form action={formAction} className="min-w-0 flex-1 sm:flex-none sm:min-w-[9rem]">
+            <div className={PEDIDO_MATCH_ACOES_ROW_CLASS}>
+              <form action={formAction} className={PEDIDO_MATCH_ACAO_FORM_CLASS}>
                 <input type="hidden" name="match_id" value={String(m.id)} />
                 <input type="hidden" name="aceitar" value="true" />
-                <button
-                  type="submit"
-                  disabled={pending}
-                  className={`${DESAFIO_FLOW_CTA_CLASS} w-full !h-[30px] !min-h-[30px] !py-0`}
-                >
-                  <DesafioFlowCtaIcon />
+                <button type="submit" disabled={pending} className={PEDIDO_ACEITAR_BTN_CLASS}>
                   <span>{pending ? "Salvando…" : "Aceitar"}</span>
                 </button>
               </form>
-              <form action={formAction} className="min-w-0 flex-1 sm:flex-none sm:min-w-[9rem]">
+              <form action={formAction} className={PEDIDO_MATCH_ACAO_FORM_CLASS}>
                 <input type="hidden" name="match_id" value={String(m.id)} />
                 <input type="hidden" name="aceitar" value="false" />
                 <button
                   type="submit"
                   disabled={pending}
                   data-eid-recusar-btn="true"
-                  className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full !h-[30px] !min-h-[30px] !py-0 !border-red-400/45 !text-red-300 hover:!border-red-400/65 hover:!text-red-200`}
+                  className={PEDIDO_RECUSAR_BTN_CLASS}
                 >
                   Recusar
                 </button>

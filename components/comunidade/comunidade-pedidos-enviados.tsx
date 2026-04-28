@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useActionState, useEffect, useState } from "react";
 import { cancelarPedidoMatchPendente, type CancelarPedidoPendenteState } from "@/app/comunidade/actions";
+import { PEDIDO_CANCELAR_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
 
 type Item = {
   id: number;
@@ -63,23 +64,9 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
                   <button
                     type="button"
                     disabled={pending}
-                    className="inline-flex items-center justify-center rounded-md border border-red-700 bg-red-700 px-1.5 font-black tracking-[0.01em] text-white shadow-[0_8px_16px_-12px_rgba(220,38,38,0.9)] transition hover:border-red-800 hover:bg-red-800 disabled:opacity-60"
+                    className={PEDIDO_CANCELAR_COMPACT_BTN_CLASS}
                     data-eid-cancel-pendente-btn="true"
                     onClick={() => setConfirmId(m.id)}
-                    style={{
-                      minHeight: "14px",
-                      height: "14px",
-                      lineHeight: "1",
-                      fontSize: "8px",
-                      paddingTop: "0",
-                      paddingBottom: "0",
-                      paddingLeft: "5px",
-                      paddingRight: "5px",
-                      backgroundColor: "#dc2626",
-                      color: "#ffffff",
-                      borderColor: "#dc2626",
-                      opacity: 1,
-                    }}
                   >
                     {pending ? "Cancelando..." : "Cancelar"}
                   </button>

@@ -9,7 +9,12 @@ import {
   responderCandidaturaAction,
   type VagaActionState,
 } from "@/app/vagas/actions";
-import { DESAFIO_FLOW_CTA_BLOCK_CLASS } from "@/lib/desafio/flow-ui";
+import {
+  DESAFIO_FLOW_CTA_BLOCK_CLASS,
+  PEDIDO_ACEITAR_BTN_CLASS,
+  PEDIDO_CANCELAR_COMPACT_BTN_CLASS,
+  PEDIDO_RECUSAR_BTN_CLASS,
+} from "@/lib/desafio/flow-ui";
 
 const initialState: VagaActionState = { ok: false, message: "" };
 
@@ -75,7 +80,7 @@ export function CancelarCandidaturaForm({
         disabled={pending}
         className={
           compact
-            ? "inline-flex items-center justify-center rounded-full border border-red-700/90 bg-red-700 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-white shadow-[0_8px_16px_-12px_rgba(220,38,38,0.8)] transition hover:bg-red-800 disabled:opacity-60"
+            ? PEDIDO_CANCELAR_COMPACT_BTN_CLASS
             : "w-full rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-fg"
         }
       >
@@ -103,17 +108,13 @@ export function ResponderCandidaturaForm({
     if (state.ok) router.refresh();
   }, [state.ok, router]);
   return (
-    <form action={action} className="space-y-1">
+    <form action={action} className="inline-flex flex-col items-start gap-1">
       <input type="hidden" name="candidatura_id" value={candidaturaId} />
       <input type="hidden" name="aceitar" value={aceitar ? "true" : "false"} />
       <button
         type="submit"
         disabled={pending}
-        className={
-          aceitar
-            ? "inline-flex min-h-[34px] min-w-[96px] items-center justify-center rounded-lg border border-eid-primary-500 bg-eid-primary-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-eid-primary-600 disabled:opacity-60"
-            : "inline-flex min-h-[34px] min-w-[96px] items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-fg transition hover:bg-eid-surface/50 disabled:opacity-60"
-        }
+        className={aceitar ? PEDIDO_ACEITAR_BTN_CLASS : PEDIDO_RECUSAR_BTN_CLASS}
       >
         {pending ? "Salvando..." : label}
       </button>

@@ -17,6 +17,7 @@ import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawe
 import { CancelarCandidaturaForm, ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
 import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
+import { CANDIDATURA_ACOES_ROW_CLASS } from "@/lib/desafio/flow-ui";
 import {
   type AgendaPartidaCardRow,
   fetchPartidasAgendadasUsuario,
@@ -1074,7 +1075,7 @@ export default async function ComunidadePage() {
                             <p className="mt-1 text-[10px] text-eid-text-secondary">
                               Pedido em {new Date(c.criadoEm).toLocaleString("pt-BR")}
                             </p>
-                            <div className="mt-3 flex flex-wrap gap-2">
+                            <div className={CANDIDATURA_ACOES_ROW_CLASS}>
                               <ResponderCandidaturaForm candidaturaId={c.id} aceitar={true} label="Aprovar" />
                               <ResponderCandidaturaForm candidaturaId={c.id} aceitar={false} label="Recusar" />
                             </div>

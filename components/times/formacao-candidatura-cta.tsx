@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { CandidatarNaVagaForm, CancelarCandidaturaForm } from "@/components/vagas/vagas-actions";
 
 /** Bloco de candidatura (vagas) — reutilizado no card de /times e na página pública da formação. */
@@ -17,7 +16,6 @@ export function FormacaoCandidaturaCta({
   minhaCandidaturaPendenteId: number | null;
   jaSouMembro: boolean;
 }) {
-  const [showMsg, setShowMsg] = useState(false);
   const aceitaCand = Boolean(vagasAbertas && aceitaPedidos);
 
   if (jaSouMembro) {
@@ -40,15 +38,6 @@ export function FormacaoCandidaturaCta({
   }
 
   return (
-    <div className="space-y-2">
-      <button
-        type="button"
-        onClick={() => setShowMsg((v) => !v)}
-        className="w-full text-center text-[10px] font-semibold uppercase tracking-wide text-eid-text-secondary underline-offset-2 hover:text-eid-primary-300 hover:underline"
-      >
-        {showMsg ? "Ocultar mensagem opcional" : "Adicionar mensagem ao líder (opcional)"}
-      </button>
-      <CandidatarNaVagaForm timeId={timeId} hideMessageField={!showMsg} submitLabel="Candidatar" />
-    </div>
+    <CandidatarNaVagaForm timeId={timeId} hideMessageField submitLabel="Candidatar" />
   );
 }

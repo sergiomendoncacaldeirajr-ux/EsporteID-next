@@ -6,6 +6,12 @@ import { responderConviteEquipe, type ResponderConviteState } from "@/app/comuni
 import Image from "next/image";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+import {
+  PEDIDO_ACEITAR_BTN_CLASS,
+  PEDIDO_ACOES_ROW_CLASS,
+  PEDIDO_ACAO_FORM_INLINE_CLASS,
+  PEDIDO_RECUSAR_BTN_CLASS,
+} from "@/lib/desafio/flow-ui";
 
 export type ConviteTimeItem = {
   id: number;
@@ -93,26 +99,18 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                     Convite pendente
                   </span>
                 </div>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <form action={formAction} className="min-w-0">
+                <div className={PEDIDO_ACOES_ROW_CLASS}>
+                  <form action={formAction} className={PEDIDO_ACAO_FORM_INLINE_CLASS}>
                     <input type="hidden" name="convite_id" value={String(c.id)} />
                     <input type="hidden" name="aceitar" value="true" />
-                    <button
-                      type="submit"
-                      disabled={pending}
-                      className="inline-flex w-full items-center justify-center rounded-full border border-eid-action-500/90 bg-eid-action-500 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[var(--eid-brand-ink)] transition hover:brightness-105 disabled:opacity-60"
-                    >
+                    <button type="submit" disabled={pending} className={PEDIDO_ACEITAR_BTN_CLASS}>
                       <span>{pending ? "Salvando…" : "Aceitar"}</span>
                     </button>
                   </form>
-                  <form action={formAction} className="min-w-0">
+                  <form action={formAction} className={PEDIDO_ACAO_FORM_INLINE_CLASS}>
                     <input type="hidden" name="convite_id" value={String(c.id)} />
                     <input type="hidden" name="aceitar" value="false" />
-                    <button
-                      type="submit"
-                      disabled={pending}
-                      className="inline-flex w-full items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-surface/85 disabled:opacity-60"
-                    >
+                    <button type="submit" disabled={pending} className={PEDIDO_RECUSAR_BTN_CLASS}>
                       Recusar
                     </button>
                   </form>

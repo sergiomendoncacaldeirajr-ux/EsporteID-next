@@ -8,7 +8,7 @@ import { TimesVagaRecrutamentoCard, type TimesVagaCardData } from "@/components/
 import { ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { resolveBackHref } from "@/lib/perfil/back-href";
-import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
+import { CANDIDATURA_ACOES_ROW_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 
 export const metadata = {
   title: "Times",
@@ -265,7 +265,7 @@ export default async function TimesPage({ searchParams }: Props) {
                         “{p.mensagem.trim()}”
                       </p>
                     ) : null}
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className={CANDIDATURA_ACOES_ROW_CLASS}>
                       <ResponderCandidaturaForm candidaturaId={p.id} aceitar={true} label="Aprovar" />
                       <ResponderCandidaturaForm candidaturaId={p.id} aceitar={false} label="Recusar" />
                     </div>
