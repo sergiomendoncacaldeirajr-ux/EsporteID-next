@@ -789,6 +789,56 @@ export async function marcarTodasNotificacoesLidas() {
   revalidatePath("/dashboard");
 }
 
+/** Remove notificações do bloco “desafio” na comunidade (tipos/mensagens alinhados ao filtro da página). */
+export async function limparNotificacoesDesafio() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase
+    .from("notificacoes")
+    .delete()
+    .eq("usuario_id", user.id)
+    .or("tipo.eq.match,tipo.eq.desafio,tipo.ilike.%match%,tipo.ilike.%desafio%,mensagem.ilike.%desafio%");
+
+  revalidatePath("/comunidade");
+  revalidatePath("/dashboard");
+}
+
+/** Remove notificações do bloco “equipe” (time / convite). */
+export async function limparNotificacoesEquipe() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase
+    .from("notificacoes")
+    .delete()
+    .eq("usuario_id", user.id)
+    .or("tipo.eq.time,tipo.eq.convite,tipo.ilike.%time%,tipo.ilike.%convite%");
+
+  revalidatePath("/comunidade");
+  revalidatePath("/dashboard");
+}
+
+/** Apaga todas as notificações do usuário (ex.: ação no sininho). */
+export async function limparTodasNotificacoes() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.from("notificacoes").delete().eq("usuario_id", user.id);
+
+  revalidatePath("/comunidade");
+  revalidatePath("/dashboard");
+}
+
 export async function responderConviteEquipe(
   _prev: ResponderConviteState | undefined,
   formData: FormData

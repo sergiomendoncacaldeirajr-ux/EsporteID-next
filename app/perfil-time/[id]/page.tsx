@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { EidBadge } from "@/components/eid/eid-badge";
-import { ProfileAchievementsShelf, ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
+import { ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
 import { FormacaoCidadeAvisoLider } from "@/components/perfil/formacao-cidade-aviso-lider";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
@@ -26,6 +26,7 @@ import {
 } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
 import { TeamPublicInviteBlock } from "@/components/times/team-public-invite-block";
+import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-cta";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -131,6 +132,14 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
     .order("data_criacao", { ascending: true })
     .limit(40);
 
+  const { data: minhaCandidaturaPendente } = await supabase
+    .from("time_candidaturas")
+    .select("id")
+    .eq("time_id", id)
+    .eq("candidato_usuario_id", user.id)
+    .eq("status", "pendente")
+    .maybeSingle();
+
   const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
   const modalidade = (t.tipo ?? "time") === "dupla" ? "dupla" : "time";
 
@@ -234,11 +243,6 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
 
   const temBlocoAcaoVisitante =
     linkWpp || (canChallenge && !hasAceitoRank && Boolean(t.esporte_id));
-  const conquistas: string[] = [];
-  if (Number(t.pontos_ranking ?? 0) >= 1000) conquistas.push("Rank 1000+");
-  if (Number(t.eid_time ?? 0) >= 7) conquistas.push("EID Elite");
-  if ((membros ?? []).length >= 4) conquistas.push("Elenco Completo");
-
   const fromPublic = `/perfil-time/${id}`;
   const editarTimeHref = `/editar/time/${id}?from=${encodeURIComponent(fromPublic)}`;
   const idsExcluirConvite = [
@@ -274,17 +278,23 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
 
           {criador ? (
             <div className="mt-4 flex items-center justify-center gap-2.5">
-              {criador.avatar_url ? (
-                <img
-                  src={criador.avatar_url}
-                  alt=""
-                  className="h-9 w-9 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-10 sm:w-10"
-                />
-              ) : (
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 sm:h-10 sm:w-10">
-                  {(criador.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
-                </span>
-              )}
+              <Link
+                href={`/perfil/${criador.id}?from=/perfil-time/${id}`}
+                className="shrink-0 rounded-full ring-2 ring-transparent transition hover:ring-eid-primary-500/45 focus-visible:outline-none focus-visible:ring-eid-primary-500/60"
+                aria-label={`Abrir perfil de ${criador.nome ?? "líder"}`}
+              >
+                {criador.avatar_url ? (
+                  <img
+                    src={criador.avatar_url}
+                    alt=""
+                    className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-10 sm:w-10"
+                  />
+                ) : (
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 sm:h-10 sm:w-10">
+                    {(criador.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
+                  </span>
+                )}
+              </Link>
               <p className="text-left text-xs text-eid-text-secondary">
                 <span className="block text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary/90">Líder</span>
                 <Link
@@ -299,13 +309,33 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
 
         </div>
 
+        {!isLeader ? (
+          <section
+            className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3"
+            aria-labelledby="candidatura-elenco-heading"
+          >
+            <h2 id="candidatura-elenco-heading" className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
+              Entrar no elenco
+            </h2>
+            <div className="mt-2">
+              <FormacaoCandidaturaCta
+                timeId={id}
+                vagasAbertas={Boolean(t.vagas_abertas)}
+                aceitaPedidos={Boolean(t.aceita_pedidos)}
+                minhaCandidaturaPendenteId={minhaCandidaturaPendente?.id ?? null}
+                jaSouMembro={isMember}
+              />
+            </div>
+          </section>
+        ) : null}
+
         <div className="mt-6 grid gap-6">
           <section className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3">
             <h2 className="sr-only">Ação principal</h2>
             <div className="mb-2 flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-2">
               <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Ação principal</p>
               <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
-                Match
+                Desafio
               </span>
             </div>
             {!isLeader && temBlocoAcaoVisitante ? (
@@ -457,7 +487,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           <ProfileSection title="Participantes">
             {isLeader ? (
               <div className="mt-2 space-y-2">
-                <p className="text-[11px] text-eid-text-secondary">
+                <p className="text-sm text-eid-text-secondary">
                   Convide pelo nome ou @. Com <strong className="text-eid-fg">três letras</strong> aparecem sugestões para
                   escolher o atleta.
                 </p>
@@ -525,58 +555,20 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                   <span>Gerenciar equipe</span>
                 </ProfileEditDrawerTrigger>
                 <p className="mt-1.5 text-[10px] leading-relaxed text-eid-text-secondary">
-                  Elenco, convites, dados, escudo e preferências — mesmo painel em tela cheia da área Editar.
+                  Elenco, convites, dados e escudo — mesmo painel em tela cheia da área Editar.
                 </p>
-                <Link
-                  href={editarTimeHref}
-                  className="mt-2 flex min-h-[40px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
-                >
-                  Abrir em página cheia (sem painel)
-                </Link>
-                <Link
+                <ProfileEditDrawerTrigger
                   href={`/times?from=${encodeURIComponent(fromPublic)}`}
-                  className="mt-2 flex min-h-[40px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[10px] font-semibold uppercase tracking-wide text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg"
-                >
-                  Ver lista em Times
-                </Link>
-              </div>
-            </div>
-          ) : null}
-
-          {isMember || isLeader ? (
-            <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Atalhos de membro</p>
-                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
-                  Conta
-                </span>
-              </div>
-              <div className="grid gap-2 p-3">
-                <ProfileEditDrawerTrigger
-                  href={`/editar/perfil?from=${encodeURIComponent(fromPublic)}`}
-                  title="Editar perfil"
+                  title="Times e vagas"
                   fullscreen
                   topMode="backOnly"
-                  className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
+                  className="mt-2 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
                 >
-                  <span>Editar perfil pessoal</span>
-                </ProfileEditDrawerTrigger>
-                <ProfileEditDrawerTrigger
-                  href={`/editar/performance-eid?from=${encodeURIComponent(fromPublic)}`}
-                  title="Esportes e EID"
-                  fullscreen
-                  topMode="backOnly"
-                  className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
-                >
-                  <span>Esportes e ranking (EID)</span>
+                  <span>Ver lista em Times</span>
                 </ProfileEditDrawerTrigger>
               </div>
             </div>
           ) : null}
-
-          <ProfileSection title="Conquistas">
-            <ProfileAchievementsShelf achievements={conquistas} emptyText="Conquistas aparecerão com a evolução da equipe." />
-          </ProfileSection>
         </div>
       </main>
   );

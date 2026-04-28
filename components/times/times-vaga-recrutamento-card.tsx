@@ -1,9 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
-import { CandidatarNaVagaForm, CancelarCandidaturaForm } from "@/components/vagas/vagas-actions";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
+import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-cta";
 import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 
 export type TimesVagaCardData = {
@@ -20,6 +19,9 @@ export type TimesVagaCardData = {
   criador_id: string;
 };
 
+const chip =
+  "rounded-full border px-2 py-px text-[8px] font-black uppercase tracking-[0.08em] text-eid-fg";
+
 export function TimesVagaRecrutamentoCard({
   team,
   viewerUserId,
@@ -31,7 +33,6 @@ export function TimesVagaRecrutamentoCard({
   minhaCandidaturaPendenteId: number | null;
   jaSouMembro: boolean;
 }) {
-  const [showMsg, setShowMsg] = useState(false);
   const isLider = team.criador_id === viewerUserId;
   const aceitaCand = Boolean(team.vagas_abertas && team.aceita_pedidos);
   const tipoLabel = String(team.tipo ?? "time").toLowerCase() === "dupla" ? "Dupla" : "Time";
@@ -52,27 +53,33 @@ export function TimesVagaRecrutamentoCard({
               className="h-full w-full rounded-2xl border-2 border-eid-primary-500/45 object-cover shadow-[0_8px_24px_-12px_rgba(0,0,0,0.5)]"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-surface text-lg font-black text-eid-primary-300">
+            <div className="flex h-full w-full items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-surface text-lg font-black text-eid-fg">
               {tipoLabel.slice(0, 1)}
             </div>
           )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-px text-[8px] font-black uppercase tracking-[0.1em] text-eid-primary-300">
+            <span
+              className={`${chip} border-[color:color-mix(in_srgb,var(--eid-border-subtle)_45%,var(--eid-primary-500)_55%)] bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-primary-500)_12%)]`}
+            >
               {tipoLabel}
             </span>
             {team.esporteNome ? (
-              <span className="rounded-full border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-px text-[8px] font-bold uppercase tracking-wide text-eid-action-400">
+              <span
+                className={`${chip} border-[color:color-mix(in_srgb,var(--eid-border-subtle)_45%,var(--eid-action-500)_55%)] bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-action-500)_10%)]`}
+              >
                 {team.esporteNome}
               </span>
             ) : null}
             {aceitaCand ? (
-              <span className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-px text-[8px] font-black uppercase tracking-wide text-emerald-300">
+              <span
+                className={`${chip} border-[color:color-mix(in_srgb,rgb(5,150,105)_55%,var(--eid-border-subtle)_45%)] bg-[color:color-mix(in_srgb,var(--eid-surface)_88%,rgb(16,185,129)_12%)]`}
+              >
                 Recrutando
               </span>
             ) : (
-              <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2 py-px text-[8px] font-bold uppercase tracking-wide text-eid-text-secondary">
+              <span className={`${chip} border-[color:var(--eid-border-subtle)] bg-eid-surface/90 text-eid-text-secondary`}>
                 Sem vagas
               </span>
             )}
@@ -94,45 +101,29 @@ export function TimesVagaRecrutamentoCard({
       </div>
 
       <div className="relative mt-3 flex flex-col gap-2 border-t border-[color:color-mix(in_srgb,var(--eid-border-subtle)_75%,transparent)] pt-3">
-        <Link href={perfilHref} className={DESAFIO_FLOW_SECONDARY_CLASS + " w-full"}>
-          Ver perfil da formação
-        </Link>
-
-        {!isLider && !jaSouMembro && aceitaCand && minhaCandidaturaPendenteId == null ? (
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => setShowMsg((v) => !v)}
-              className="w-full text-center text-[10px] font-semibold uppercase tracking-wide text-eid-text-secondary underline-offset-2 hover:text-eid-primary-300 hover:underline"
-            >
-              {showMsg ? "Ocultar mensagem opcional" : "Adicionar mensagem ao líder (opcional)"}
-            </button>
-            <CandidatarNaVagaForm timeId={team.id} hideMessageField={!showMsg} />
-          </div>
-        ) : null}
-
-        {!isLider && !jaSouMembro && aceitaCand && minhaCandidaturaPendenteId != null ? (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-            <p className="text-[11px] font-semibold text-amber-100/95">Candidatura enviada — aguardando o líder.</p>
-            <div className="mt-2">
-              <CancelarCandidaturaForm candidaturaId={minhaCandidaturaPendenteId} />
-            </div>
-          </div>
-        ) : null}
-
-        {isLider ? (
+        {!isLider ? (
+          <FormacaoCandidaturaCta
+            timeId={team.id}
+            vagasAbertas={team.vagas_abertas}
+            aceitaPedidos={team.aceita_pedidos}
+            minhaCandidaturaPendenteId={minhaCandidaturaPendenteId}
+            jaSouMembro={jaSouMembro}
+          />
+        ) : (
           <p className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-center text-[10px] text-eid-text-secondary">
-            Esta é a sua formação — gerencie pedidos na caixa <strong className="text-eid-fg">“Pedidos para o elenco”</strong> acima da lista.
+            Sua formação — pedidos de entrada aparecem em <strong className="text-eid-fg">Pedidos para o seu elenco</strong> acima.
           </p>
-        ) : null}
+        )}
 
-        {jaSouMembro && !isLider ? (
-          <p className="text-center text-[10px] font-semibold text-eid-primary-300">Você já faz parte desta formação.</p>
-        ) : null}
-
-        {!aceitaCand && !isLider && !jaSouMembro ? (
-          <p className="text-center text-[10px] text-eid-text-secondary">Esta formação não está aceitando candidaturas agora.</p>
-        ) : null}
+        <ProfileEditDrawerTrigger
+          href={perfilHref}
+          title={team.nome ?? "Formação"}
+          fullscreen
+          topMode="backOnly"
+          className={DESAFIO_FLOW_SECONDARY_CLASS + " w-full"}
+        >
+          Ver perfil da formação
+        </ProfileEditDrawerTrigger>
       </div>
     </div>
   );

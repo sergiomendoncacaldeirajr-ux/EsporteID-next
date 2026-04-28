@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { limparTodasNotificacoes } from "@/app/comunidade/actions";
 import { createClient } from "@/lib/supabase/client";
 import {
   disablePushNotifications,
@@ -43,14 +44,20 @@ function formatShort(iso: string | null | undefined) {
   }
 }
 
+const PREVIEW_LIMIT = 3;
+const PREVIEW_FETCH = 80;
+
 export function NotificationBell({ userId }: { userId: string | null }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [total, setTotal] = useState(0);
   const [preview, setPreview] = useState<Preview[]>([]);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
+  const [previewLimparPending, setPreviewLimparPending] = useState(false);
   const [agendaN, setAgendaN] = useState(0);
-  const [matchN, setMatchN] = useState(0);
+  const [pedidosDesafioN, setPedidosDesafioN] = useState(0);
   const [placarN, setPlacarN] = useState(0);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
@@ -71,7 +78,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         .select("id, mensagem, lida, data_criacao, criada_em")
         .eq("usuario_id", userId)
         .order("data_criacao", { ascending: false, nullsFirst: false })
-        .limit(6),
+        .limit(PREVIEW_FETCH),
       supabase
         .from("partidas")
         .select("id", { count: "exact", head: true })
@@ -103,7 +110,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     const m = mRes.count ?? 0;
     const p = pRes.count ?? 0;
     setAgendaN(ag);
-    setMatchN(m);
+    setPedidosDesafioN(m);
     setPlacarN(p);
     // Inclui pedidos pendentes (matches) como ação social real.
     setTotal(unreadGeneral + p + ag + m);
@@ -259,7 +266,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                 className="font-bold tabular-nums text-eid-fg transition hover:opacity-85"
                 onClick={() => setOpen(false)}
               >
-                {matchN}
+                {pedidosDesafioN}
               </Link>
             </li>
             <li className="eid-list-item flex justify-between gap-2 px-3 py-2">
@@ -278,14 +285,48 @@ export function NotificationBell({ userId }: { userId: string | null }) {
           {preview.length === 0 ? (
             <p className="mt-2 text-xs text-eid-text-secondary">Nada recente.</p>
           ) : (
-            <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto pr-1">
-              {preview.map((n) => (
-                <li key={n.id} className="eid-list-item rounded-lg px-2 py-1.5 text-xs">
-                  <p className={`line-clamp-2 ${n.lida ? "text-eid-text-secondary" : "font-medium text-eid-fg"}`}>{n.mensagem}</p>
-                  <p className="mt-0.5 text-[10px] text-eid-text-secondary">{formatShort(n.data_criacao ?? n.criada_em)}</p>
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto pr-1">
+                {(previewExpanded ? preview : preview.slice(0, PREVIEW_LIMIT)).map((n) => (
+                  <li key={n.id} className="eid-list-item rounded-lg px-2 py-1.5 text-xs">
+                    <p className={`line-clamp-2 ${n.lida ? "text-eid-text-secondary" : "font-medium text-eid-fg"}`}>{n.mensagem}</p>
+                    <p className="mt-0.5 text-[10px] text-eid-text-secondary">{formatShort(n.data_criacao ?? n.criada_em)}</p>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {preview.length > PREVIEW_LIMIT ? (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewExpanded((v) => !v)}
+                    className="rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/8 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/50"
+                  >
+                    {previewExpanded ? "Ver menos" : "Ver mais"}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  disabled={previewLimparPending}
+                  onClick={() => {
+                    void (async () => {
+                      if (!confirm("Apagar todas as suas notificações? Esta ação não pode ser desfeita.")) return;
+                      setPreviewLimparPending(true);
+                      try {
+                        await limparTodasNotificacoes();
+                        setPreviewExpanded(false);
+                        router.refresh();
+                        await load();
+                      } finally {
+                        setPreviewLimparPending(false);
+                      }
+                    })();
+                  }}
+                  className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary transition hover:border-red-400/40 hover:text-red-300 disabled:opacity-50"
+                >
+                  {previewLimparPending ? "…" : "Limpar"}
+                </button>
+              </div>
+            </>
           )}
 
           <Link

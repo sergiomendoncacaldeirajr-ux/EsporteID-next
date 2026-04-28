@@ -389,10 +389,10 @@ export async function atualizarMinhaEquipe(
       bio: bio || null,
       escudo: escudoFinal,
       nivel_procurado,
-      interesse_rank_match: checkboxOn(formData, "interesse_rank_match"),
+      interesse_rank_match: true,
+      interesse_torneio: true,
       vagas_abertas: checkboxOn(formData, "vagas_abertas"),
       aceita_pedidos: checkboxOn(formData, "aceita_pedidos"),
-      interesse_torneio: checkboxOn(formData, "interesse_torneio"),
     })
     .eq("id", timeId)
     .eq("criador_id", user.id);

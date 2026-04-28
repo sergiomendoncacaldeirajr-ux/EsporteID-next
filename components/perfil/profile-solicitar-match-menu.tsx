@@ -82,7 +82,7 @@ export function ProfileSolicitarMatchMenu({
           <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
             <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Pedir desafio</p>
             <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
-              Match
+              Desafio
             </span>
           </div>
           <div className="space-y-3 p-3">

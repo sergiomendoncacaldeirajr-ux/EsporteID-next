@@ -5,29 +5,77 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useActionState } from "react";
 import { criarEquipe, convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 
 const initial: TeamActionState = { ok: false, message: "" };
 
 type Sport = { id: number; nome: string };
 type Team = { id: number; nome: string; tipo: string | null; esporteNome: string };
 
-export function TeamManagementPanel({
-  esportes,
-  minhasEquipes,
-  defaultOpenCreate,
-  manageHrefTemplate,
-  convidarUsuarioIdAposCriar,
-  defaultTipoFormacao,
-}: {
-  esportes: Sport[];
-  minhasEquipes: Team[];
-  defaultOpenCreate?: boolean;
-  manageHrefTemplate?: string;
-  /** UUID do atleta: após criar a formação, envia convite automaticamente (server action). */
-  convidarUsuarioIdAposCriar?: string;
-  /** Ao convidar a partir do perfil, sugerimos dupla por padrão. */
-  defaultTipoFormacao?: "time" | "dupla";
-}) {
+type FullscreenLaunchers = {
+  fromHref: string;
+  hasEquipes: boolean;
+  convidarUsuarioId?: string;
+};
+
+type TeamManagementPanelProps =
+  | {
+      fullscreenLaunchers: FullscreenLaunchers;
+    }
+  | {
+      esportes: Sport[];
+      minhasEquipes: Team[];
+      defaultOpenCreate?: boolean;
+      manageHrefTemplate?: string;
+      /** UUID do atleta: após criar a formação, envia convite automaticamente (server action). */
+      convidarUsuarioIdAposCriar?: string;
+      /** Ao convidar a partir do perfil, sugerimos dupla por padrão. */
+      defaultTipoFormacao?: "time" | "dupla";
+      /** `create` / `invite`: telas cheias separadas; `all`: acordeão com os dois blocos (legado). */
+      panelMode?: "all" | "create" | "invite";
+      fullscreenLaunchers?: undefined;
+    };
+
+export function TeamManagementPanel(props: TeamManagementPanelProps) {
+  if ("fullscreenLaunchers" in props && props.fullscreenLaunchers) {
+    const { fromHref, hasEquipes, convidarUsuarioId } = props.fullscreenLaunchers;
+    const cadQs = new URLSearchParams();
+    cadQs.set("from", fromHref);
+    cadQs.set("embed", "1");
+    if (convidarUsuarioId) cadQs.set("convidar", convidarUsuarioId);
+    const cadastrarHref = `/editar/equipes/cadastrar?${cadQs.toString()}`;
+    const convidarHref = `/editar/equipes/convidar?from=${encodeURIComponent(fromHref)}&embed=1`;
+    const launcherClass =
+      "flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-4 text-center text-xs font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18 sm:text-sm";
+    const launcherSecondaryClass =
+      "flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-4 text-center text-xs font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40 sm:text-sm";
+    return (
+      <section className="mb-4 grid min-w-0 gap-2 sm:grid-cols-2">
+        <ProfileEditDrawerTrigger href={cadastrarHref} title="Criar nova dupla ou time" fullscreen topMode="backOnly" className={launcherClass}>
+          <span>Criar nova dupla ou time</span>
+        </ProfileEditDrawerTrigger>
+        {hasEquipes ? (
+          <ProfileEditDrawerTrigger href={convidarHref} title="Convidar atleta" fullscreen topMode="backOnly" className={launcherSecondaryClass}>
+            <span>Convidar atleta</span>
+          </ProfileEditDrawerTrigger>
+        ) : (
+          <p className="flex min-h-[48px] items-center rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/30 px-3 text-center text-[11px] leading-snug text-eid-text-secondary sm:col-span-1">
+            Depois de criar uma formação, o convite por @ aparece aqui.
+          </p>
+        )}
+      </section>
+    );
+  }
+
+  const {
+    esportes,
+    minhasEquipes,
+    defaultOpenCreate,
+    manageHrefTemplate,
+    convidarUsuarioIdAposCriar,
+    defaultTipoFormacao,
+    panelMode = "all",
+  } = props;
   const router = useRouter();
   const [createState, createAction, createPending] = useActionState(criarEquipe, initial);
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
@@ -100,11 +148,12 @@ export function TeamManagementPanel({
     );
   }
 
-  return (
-    <section className="mb-4 min-w-0 space-y-3">
-      <details className="eid-surface-panel overflow-hidden rounded-2xl p-0" open={defaultOpenCreate}>
-        <summary className="cursor-pointer border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 text-sm font-semibold text-eid-fg">Criar nova dupla ou time</summary>
-        <div className="p-3 sm:p-4">
+  const showCreate = panelMode === "all" || panelMode === "create";
+  const showInviteBlock =
+    (panelMode === "all" || panelMode === "invite") && minhasEquipes.length > 0;
+
+  const createBody = (
+    <>
         <p className="mt-2 text-[11px] text-eid-text-secondary">
           {convidarUsuarioIdAposCriar
             ? "Escudo obrigatório. Ao salvar, o convite vai para o atleta do perfil (Social)."
@@ -235,32 +284,72 @@ export function TeamManagementPanel({
             <p className={`text-xs sm:col-span-2 ${createState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{createState.message}</p>
           ) : null}
         </form>
-        </div>
-      </details>
+    </>
+  );
 
-      {minhasEquipes.length > 0 ? (
-        <details className="eid-surface-panel overflow-hidden rounded-2xl p-0">
-          <summary className="cursor-pointer border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 text-sm font-semibold text-eid-fg">Convidar atleta por @username</summary>
-          <div className="p-3 sm:p-4">
-          <form action={inviteAction} className="mt-3 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
-            <select name="time_id" required className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg">
-              <option value="">Selecione a equipe</option>
-              {minhasEquipes.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nome} ({(t.tipo ?? "time").toUpperCase()} · {t.esporteNome})
-                </option>
-              ))}
-            </select>
-            <input name="username" required placeholder="@username do atleta" className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg" />
-            <button type="submit" disabled={invitePending} className="eid-btn-primary rounded-xl px-4 py-2 text-sm font-semibold">
-              {invitePending ? "Enviando..." : "Convidar"}
-            </button>
-            {inviteState.message ? (
-              <p className={`text-xs sm:col-span-3 ${inviteState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{inviteState.message}</p>
-            ) : null}
-          </form>
+  const inviteBody = (
+    <form action={inviteAction} className={`grid gap-2 sm:grid-cols-[1fr_1fr_auto] ${panelMode === "invite" ? "" : "mt-3"}`}>
+      <select name="time_id" required className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg">
+        <option value="">Selecione a equipe</option>
+        {minhasEquipes.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.nome} ({(t.tipo ?? "time").toUpperCase()} · {t.esporteNome})
+          </option>
+        ))}
+      </select>
+      <input name="username" required placeholder="@username do atleta" className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg" />
+      <button type="submit" disabled={invitePending} className="eid-btn-primary rounded-xl px-4 py-2 text-sm font-semibold">
+        {invitePending ? "Enviando..." : "Convidar"}
+      </button>
+      {inviteState.message ? (
+        <p className={`text-xs sm:col-span-3 ${inviteState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{inviteState.message}</p>
+      ) : null}
+    </form>
+  );
+
+  const createHeader = (
+    <div className="border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 text-sm font-semibold text-eid-fg">
+      Criar nova dupla ou time
+    </div>
+  );
+  const inviteHeader = (
+    <div className="border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 text-sm font-semibold text-eid-fg">
+      Convidar atleta por @username
+    </div>
+  );
+
+  return (
+    <section className="mb-4 min-w-0 space-y-3">
+      {showCreate ? (
+        panelMode === "create" ? (
+          <div className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+            {createHeader}
+            <div className="p-3 sm:p-4">{createBody}</div>
           </div>
-        </details>
+        ) : (
+          <details className="eid-surface-panel overflow-hidden rounded-2xl p-0" open={defaultOpenCreate}>
+            <summary className="cursor-pointer border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 text-sm font-semibold text-eid-fg">
+              Criar nova dupla ou time
+            </summary>
+            <div className="p-3 sm:p-4">{createBody}</div>
+          </details>
+        )
+      ) : null}
+
+      {showInviteBlock ? (
+        panelMode === "invite" ? (
+          <div className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+            {inviteHeader}
+            <div className="p-3 sm:p-4">{inviteBody}</div>
+          </div>
+        ) : (
+          <details className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+            <summary className="cursor-pointer border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 text-sm font-semibold text-eid-fg">
+              Convidar atleta por @username
+            </summary>
+            <div className="p-3 sm:p-4">{inviteBody}</div>
+          </details>
+        )
       ) : null}
     </section>
   );

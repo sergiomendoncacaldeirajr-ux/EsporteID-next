@@ -14,10 +14,8 @@ export function PerfilTimeEditForm({
   bio,
   localizacao,
   escudo,
-  interesse_rank_match,
   vagas_abertas,
   aceita_pedidos,
-  interesse_torneio,
   nivel_procurado,
   variant = "inline",
 }: {
@@ -27,10 +25,8 @@ export function PerfilTimeEditForm({
   bio: string | null;
   localizacao: string | null;
   escudo: string | null;
-  interesse_rank_match: boolean;
   vagas_abertas: boolean;
   aceita_pedidos: boolean;
-  interesse_torneio: boolean;
   nivel_procurado: string | null;
   /** `page`: tela dedicada (sem accordion). */
   variant?: "inline" | "page";
@@ -58,13 +54,13 @@ export function PerfilTimeEditForm({
 
   const blocoAjuda = (
     <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary">
-      Nome, @username, bio, foto do escudo e preferências podem ser alterados. O{" "}
-      <strong className="text-eid-fg">esporte e a cidade da formação são fixos</strong> depois da criação (ranking e radar
-      dependem disso). Se o time mudou de cidade ou for atuar em outro esporte, é preciso{" "}
+      Nome, @username, bio, escudo e vagas/convites podem ser alterados. Partidas de ranking e torneios são regras da
+      plataforma para todas as formações. O <strong className="text-eid-fg">esporte e a cidade são fixos</strong> depois da
+      criação. Se mudou de cidade ou de esporte,{" "}
       <Link href="/times" className="font-semibold text-eid-primary-300 underline">
-        criar uma nova formação
+        crie uma nova formação
       </Link>{" "}
-      e reorganizar o elenco.
+      e reorganize o elenco.
     </p>
   );
 
@@ -144,20 +140,12 @@ export function PerfilTimeEditForm({
           className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg sm:col-span-2"
         />
         <label className="flex items-center gap-2 text-xs text-eid-text-secondary sm:col-span-2">
-          <input type="checkbox" name="interesse_rank_match" defaultChecked={interesse_rank_match} className="rounded border-eid-border-subtle" />
-          Interesse em match no ranking
-        </label>
-        <label className="flex items-center gap-2 text-xs text-eid-text-secondary sm:col-span-2">
           <input type="checkbox" name="vagas_abertas" defaultChecked={vagas_abertas} className="rounded border-eid-border-subtle" />
           Vagas abertas
         </label>
         <label className="flex items-center gap-2 text-xs text-eid-text-secondary sm:col-span-2">
           <input type="checkbox" name="aceita_pedidos" defaultChecked={aceita_pedidos} className="rounded border-eid-border-subtle" />
           Aceita pedidos / convites
-        </label>
-        <label className="flex items-center gap-2 text-xs text-eid-text-secondary sm:col-span-2">
-          <input type="checkbox" name="interesse_torneio" defaultChecked={interesse_torneio} className="rounded border-eid-border-subtle" />
-          Interesse em torneios
         </label>
         <button
           type="submit"

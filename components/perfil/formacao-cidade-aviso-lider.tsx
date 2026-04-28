@@ -33,11 +33,11 @@ export function FormacaoCidadeAvisoLider({ timeId }: { timeId: number }) {
         }
         setHidden(true);
       }}
-      className="mt-1 w-full rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-left text-[10px] leading-relaxed text-amber-100/90 transition hover:bg-amber-500/18"
+      className="mt-1 w-full rounded-lg border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,var(--eid-action-500)_28%)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-action-500)_8%)] px-2.5 py-2 text-left text-[10px] leading-relaxed text-eid-fg transition hover:bg-[color:color-mix(in_srgb,var(--eid-surface)_88%,var(--eid-action-500)_12%)]"
     >
-      <span className="font-semibold text-amber-50/95">Cidade da formação</span> é definida na criação e{" "}
-      <strong>não pode ser alterada</strong>. Para mudar de cidade no radar, crie uma nova equipe/dupla em Times.
-      <span className="mt-1 block text-[9px] font-medium text-amber-200/70">Toque para ocultar</span>
+      <span className="font-semibold text-eid-fg">Cidade da formação</span> é definida na criação e{" "}
+      <strong className="text-eid-fg">não pode ser alterada</strong>. Para mudar de cidade no radar, crie uma nova equipe/dupla em Times.
+      <span className="mt-1 block text-[9px] font-medium text-eid-text-secondary">Toque para ocultar</span>
     </button>
   );
 }

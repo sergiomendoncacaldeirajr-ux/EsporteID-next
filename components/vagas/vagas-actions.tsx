@@ -13,7 +13,16 @@ import { DESAFIO_FLOW_CTA_BLOCK_CLASS } from "@/lib/desafio/flow-ui";
 
 const initialState: VagaActionState = { ok: false, message: "" };
 
-export function CandidatarNaVagaForm({ timeId, hideMessageField = false }: { timeId: number; hideMessageField?: boolean }) {
+export function CandidatarNaVagaForm({
+  timeId,
+  hideMessageField = false,
+  submitLabel = "Candidatar-se ao elenco",
+}: {
+  timeId: number;
+  hideMessageField?: boolean;
+  /** Texto do botão (ex.: "Candidatar" nos cards). */
+  submitLabel?: string;
+}) {
   const router = useRouter();
   const [state, action, pending] = useActionState(candidatarEmVagaAction, initialState);
 
@@ -35,7 +44,7 @@ export function CandidatarNaVagaForm({ timeId, hideMessageField = false }: { tim
       ) : null}
       <button type="submit" disabled={pending} className={DESAFIO_FLOW_CTA_BLOCK_CLASS}>
         <DesafioFlowCtaIcon />
-        <span>{pending ? "Enviando…" : "Candidatar-se ao elenco"}</span>
+        <span>{pending ? "Enviando…" : submitLabel}</span>
       </button>
       {state.message ? (
         <p className={`text-[11px] ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>

@@ -35,7 +35,7 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
   const { data: t } = await supabase
     .from("times")
     .select(
-      "id, nome, username, bio, localizacao, escudo, criador_id, tipo, interesse_rank_match, disponivel_amistoso, vagas_abertas, aceita_pedidos, interesse_torneio, nivel_procurado"
+      "id, nome, username, bio, localizacao, escudo, criador_id, tipo, disponivel_amistoso, vagas_abertas, aceita_pedidos, nivel_procurado"
     )
     .eq("id", id)
     .maybeSingle();
@@ -147,10 +147,8 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
         bio={t.bio ?? null}
         localizacao={t.localizacao ?? null}
         escudo={t.escudo ?? null}
-        interesse_rank_match={Boolean(t.interesse_rank_match)}
         vagas_abertas={Boolean(t.vagas_abertas)}
         aceita_pedidos={Boolean(t.aceita_pedidos)}
-        interesse_torneio={Boolean(t.interesse_torneio)}
         nivel_procurado={t.nivel_procurado ?? null}
       />
       <div className="mt-2.5">

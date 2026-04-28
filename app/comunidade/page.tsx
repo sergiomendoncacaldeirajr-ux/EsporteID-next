@@ -9,6 +9,7 @@ import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comun
 import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pedidos-enviados";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
+import { ComunidadeSetorNotificacoes } from "@/components/comunidade/comunidade-setor-notificacoes";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
 import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import {
@@ -740,17 +741,15 @@ export default async function ComunidadePage() {
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-300">
                   Notificações de desafio
                 </h3>
-                {desafioNotifs.length === 0 ? (
-                  <p className="mt-2 text-xs text-eid-text-secondary">Sem notificações de desafio no momento.</p>
-                ) : (
-                  <ul className="mt-2 space-y-2">
-                    {desafioNotifs.slice(0, 6).map((n) => (
-                      <li key={n.id} className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                        <p className={`text-xs leading-relaxed ${n.lida ? "text-eid-text-secondary" : "text-eid-fg"}`}>{n.mensagem}</p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <ComunidadeSetorNotificacoes
+                  items={desafioNotifs.map((n) => ({
+                    id: n.id,
+                    mensagem: n.mensagem,
+                    lida: n.lida,
+                  }))}
+                  sector="desafio"
+                  emptyLabel="Sem notificações de desafio no momento."
+                />
               </div>
             </div>
             </div>
@@ -786,17 +785,15 @@ export default async function ComunidadePage() {
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-300">
                   Avisos de equipe
                 </h3>
-                {equipeNotifs.length === 0 ? (
-                  <p className="mt-2 text-xs text-eid-text-secondary">Sem avisos de equipe no momento.</p>
-                ) : (
-                  <ul className="mt-2 space-y-2">
-                    {equipeNotifs.slice(0, 5).map((n) => (
-                      <li key={n.id} className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                        <p className={`text-xs leading-relaxed ${n.lida ? "text-eid-text-secondary" : "text-eid-fg"}`}>{n.mensagem}</p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <ComunidadeSetorNotificacoes
+                  items={equipeNotifs.map((n) => ({
+                    id: n.id,
+                    mensagem: n.mensagem,
+                    lida: n.lida,
+                  }))}
+                  sector="equipe"
+                  emptyLabel="Sem avisos de equipe no momento."
+                />
               </div>
             </div>
             </div>

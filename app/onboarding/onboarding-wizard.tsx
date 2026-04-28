@@ -336,6 +336,17 @@ function buildSportExpMesAno(monthStr: string, yearStr: string): string {
   return `${String(month).padStart(2, "0")}/${year}`;
 }
 
+/** Permite manter mês/ano escolhidos no estado mesmo antes de ambos existirem (evita o select “resetar”). */
+function getMesAnoPartsForSport(
+  eid: number,
+  expValue: string,
+  draft: Record<number, { m: string; y: string }>
+): { m: string; y: string } {
+  const d = draft[eid];
+  const split = splitSportExpMesAno(expValue);
+  return { m: d?.m ?? split.month, y: d?.y ?? split.year };
+}
+
 function formatSportExpLabel(expValue: string): string {
   if (expValue === "menos_1") return "Menos de 1 ano";
   if (expValue === "1_3") return "1 a 3 anos";
@@ -494,6 +505,7 @@ export function OnboardingWizard({
           .filter(([, val]) => Boolean(val))
       )
   );
+  const [sportExpMesAnoDraft, setSportExpMesAnoDraft] = useState<Record<number, { m: string; y: string }>>({});
   const [professorHeadline, setProfessorHeadline] = useState<string>(extrasInitial.professorHeadline);
   const [professorBio, setProfessorBio] = useState<string>(extrasInitial.professorBio);
   const [professorCertificacoes, setProfessorCertificacoes] = useState<string>(extrasInitial.professorCertificacoes);
@@ -631,6 +643,7 @@ export function OnboardingWizard({
             professorObjetivos: {} as Record<number, ProfessorObjetivoPlataforma>,
             professorTipos: {} as Record<number, ProfessorTipoAtuacao[]>,
             esportesExp: {} as Record<number, string>,
+            sportExpMesAnoDraft: {} as Record<number, { m: string; y: string }>,
             espacoLat: "",
             espacoLng: "",
           })
@@ -685,6 +698,7 @@ export function OnboardingWizard({
         espacoCep: string;
         espacoComplemento: string;
         esportesExp: Record<number, string>;
+        sportExpMesAnoDraft?: Record<number, { m: string; y: string }>;
         espacoLat: string;
         espacoLng: string;
         nome: string;
@@ -776,6 +790,21 @@ export function OnboardingWizard({
         );
         setEsportesExp(next);
       }
+      if (draft.sportExpMesAnoDraft && typeof draft.sportExpMesAnoDraft === "object") {
+        const raw = draft.sportExpMesAnoDraft as Record<string, unknown>;
+        const nextDraft: Record<number, { m: string; y: string }> = {};
+        for (const [k, v] of Object.entries(raw)) {
+          const id = Number(k);
+          if (!Number.isFinite(id)) continue;
+          if (!v || typeof v !== "object") continue;
+          const o = v as { m?: unknown; y?: unknown };
+          nextDraft[id] = {
+            m: typeof o.m === "string" ? o.m : "",
+            y: typeof o.y === "string" ? o.y : "",
+          };
+        }
+        if (Object.keys(nextDraft).length > 0) setSportExpMesAnoDraft(nextDraft);
+      }
       if (typeof draft.espacoLat === "string") setEspacoLat(draft.espacoLat);
       if (typeof draft.espacoLng === "string") setEspacoLng(draft.espacoLng);
       if (typeof draft.nome === "string") setNome(draft.nome);
@@ -838,6 +867,7 @@ export function OnboardingWizard({
       espacoCep,
       espacoComplemento,
       esportesExp,
+      sportExpMesAnoDraft,
       espacoLat,
       espacoLng,
       nome,
@@ -855,6 +885,7 @@ export function OnboardingWizard({
     espacoEsportes,
     espacoNome,
     esportesSel,
+    sportExpMesAnoDraft,
     esportesModalidades,
     esporteModes,
     professorObjetivos,
@@ -902,6 +933,7 @@ export function OnboardingWizard({
     espacoCep,
     espacoComplemento,
     esportesExp,
+    sportExpMesAnoDraft,
     espacoLat,
     espacoLng,
     step,
@@ -1045,6 +1077,7 @@ export function OnboardingWizard({
       professorObjetivos: {} as Record<number, ProfessorObjetivoPlataforma>,
       professorTipos: {} as Record<number, ProfessorTipoAtuacao[]>,
       esportesExp: {} as Record<number, string>,
+      sportExpMesAnoDraft: {} as Record<number, { m: string; y: string }>,
       espacoLat: "",
       espacoLng: "",
     };
@@ -1064,6 +1097,7 @@ export function OnboardingWizard({
     setExpMes(extrasInitial.expMes ? String(extrasInitial.expMes) : "");
     setExpAno(extrasInitial.expAno ? String(extrasInitial.expAno) : "");
     setEsportesExp({});
+    setSportExpMesAnoDraft({});
     setProfessorHeadline(extrasInitial.professorHeadline);
     setProfessorBio(extrasInitial.professorBio);
     setProfessorCertificacoes(extrasInitial.professorCertificacoes);
@@ -1788,6 +1822,7 @@ export function OnboardingWizard({
                             {(() => {
                               const expValue = esportesExp[e.id] ?? "";
                               const usingAprox = isSportExpAprox(expValue);
+                              const mesAno = getMesAnoPartsForSport(e.id, expValue, sportExpMesAnoDraft);
                               return (
                                 <>
                                   {!usingAprox ? (
@@ -1798,17 +1833,21 @@ export function OnboardingWizard({
                                             Mês
                                           </span>
                                           <select
-                                            value={splitSportExpMesAno(expValue).month}
+                                            value={mesAno.m}
                                             onChange={(ev) => {
                                               const newM = ev.target.value;
-                                              setEsportesExp((prev) => {
-                                                const updated = { ...prev };
-                                                const cur = prev[e.id] ?? "";
-                                                const y = splitSportExpMesAno(cur).year;
-                                                const next = buildSportExpMesAno(newM, y);
-                                                if (next) updated[e.id] = next;
-                                                else delete updated[e.id];
-                                                return updated;
+                                              setSportExpMesAnoDraft((prevD) => {
+                                                const y =
+                                                  prevD[e.id]?.y ?? splitSportExpMesAno(esportesExp[e.id] ?? "").year;
+                                                const nextD = { ...prevD, [e.id]: { m: newM, y } };
+                                                setEsportesExp((prevE) => {
+                                                  const next = buildSportExpMesAno(newM, y);
+                                                  const u = { ...prevE };
+                                                  if (next) u[e.id] = next;
+                                                  else delete u[e.id];
+                                                  return u;
+                                                });
+                                                return nextD;
                                               });
                                             }}
                                             className="eid-input-dark min-h-[44px] w-full cursor-pointer rounded-xl px-3 py-2 text-sm text-eid-fg"
@@ -1826,17 +1865,21 @@ export function OnboardingWizard({
                                             Ano
                                           </span>
                                           <select
-                                            value={splitSportExpMesAno(expValue).year}
+                                            value={mesAno.y}
                                             onChange={(ev) => {
                                               const newY = ev.target.value;
-                                              setEsportesExp((prev) => {
-                                                const updated = { ...prev };
-                                                const cur = prev[e.id] ?? "";
-                                                const m = splitSportExpMesAno(cur).month;
-                                                const next = buildSportExpMesAno(m, newY);
-                                                if (next) updated[e.id] = next;
-                                                else delete updated[e.id];
-                                                return updated;
+                                              setSportExpMesAnoDraft((prevD) => {
+                                                const m =
+                                                  prevD[e.id]?.m ?? splitSportExpMesAno(esportesExp[e.id] ?? "").month;
+                                                const nextD = { ...prevD, [e.id]: { m, y: newY } };
+                                                setEsportesExp((prevE) => {
+                                                  const next = buildSportExpMesAno(m, newY);
+                                                  const u = { ...prevE };
+                                                  if (next) u[e.id] = next;
+                                                  else delete u[e.id];
+                                                  return u;
+                                                });
+                                                return nextD;
                                               });
                                             }}
                                             className="eid-input-dark min-h-[44px] w-full cursor-pointer rounded-xl px-3 py-2 text-sm text-eid-fg"
@@ -1861,7 +1904,14 @@ export function OnboardingWizard({
                                       </p>
                                       <button
                                         type="button"
-                                        onClick={() => setEsportesExp((prev) => ({ ...prev, [e.id]: "menos_1" }))}
+                                        onClick={() => {
+                                          setSportExpMesAnoDraft((d) => {
+                                            const next = { ...d };
+                                            delete next[e.id];
+                                            return next;
+                                          });
+                                          setEsportesExp((prev) => ({ ...prev, [e.id]: "menos_1" }));
+                                        }}
                                         className="inline-flex items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-1.5 text-[11px] font-semibold text-eid-text-secondary transition-all hover:border-eid-primary-500/40 hover:text-eid-fg"
                                       >
                                         Usar tempo aproximado
@@ -1892,13 +1942,18 @@ export function OnboardingWizard({
                                       </div>
                                       <button
                                         type="button"
-                                        onClick={() =>
+                                        onClick={() => {
+                                          setSportExpMesAnoDraft((d) => {
+                                            const next = { ...d };
+                                            delete next[e.id];
+                                            return next;
+                                          });
                                           setEsportesExp((prev) => {
                                             const updated = { ...prev };
                                             delete updated[e.id];
                                             return updated;
-                                          })
-                                        }
+                                          });
+                                        }}
                                         className="inline-flex items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-1.5 text-[11px] font-semibold text-eid-text-secondary transition-all hover:border-eid-primary-500/40 hover:text-eid-fg"
                                       >
                                         Usar mês/ano exato

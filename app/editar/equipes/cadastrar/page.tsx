@@ -62,6 +62,7 @@ export default async function CadastrarEquipeFullscreenPage({ searchParams }: Pr
             manageHrefTemplate={manageHrefTemplate}
             convidarUsuarioIdAposCriar={convidarUid}
             defaultTipoFormacao={convidarUid ? "dupla" : undefined}
+            panelMode="create"
           />
         </div>
       </section>

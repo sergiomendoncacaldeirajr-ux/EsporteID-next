@@ -30,7 +30,7 @@ export default async function ContaEditarFormacaoTimePage({ params, searchParams
   const { data: t } = await supabase
     .from("times")
     .select(
-      "id, nome, username, bio, localizacao, escudo, criador_id, interesse_rank_match, disponivel_amistoso, vagas_abertas, aceita_pedidos, interesse_torneio, nivel_procurado"
+      "id, nome, username, bio, localizacao, escudo, criador_id, disponivel_amistoso, vagas_abertas, aceita_pedidos, nivel_procurado"
     )
     .eq("id", id)
     .maybeSingle();
@@ -44,7 +44,7 @@ export default async function ContaEditarFormacaoTimePage({ params, searchParams
       <PerfilBackLink href={from} label="Voltar" />
       <h1 className="mt-4 text-xl font-bold text-eid-fg sm:text-2xl">Editar formação</h1>
       <p className="mt-2 text-sm text-eid-text-secondary">
-        Altere nome público, @username, bio, escudo e preferências.{" "}
+        Altere nome público, @username, bio, escudo e vagas.{" "}
         <Link href={`/perfil-time/${id}`} className="font-semibold text-eid-primary-300 underline">
           Ver perfil público
         </Link>
@@ -63,10 +63,8 @@ export default async function ContaEditarFormacaoTimePage({ params, searchParams
           bio={t.bio ?? null}
           localizacao={t.localizacao ?? null}
           escudo={t.escudo ?? null}
-          interesse_rank_match={Boolean(t.interesse_rank_match)}
           vagas_abertas={Boolean(t.vagas_abertas)}
           aceita_pedidos={Boolean(t.aceita_pedidos)}
-          interesse_torneio={Boolean(t.interesse_torneio)}
           nivel_procurado={t.nivel_procurado ?? null}
         />
       </div>

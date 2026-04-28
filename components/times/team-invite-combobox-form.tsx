@@ -102,13 +102,13 @@ export function TeamInviteComboboxForm({
       : "grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start";
 
   const inputBase =
-    "eid-input-dark w-full min-h-[48px] rounded-xl px-3 py-2.5 text-sm text-eid-fg sm:min-h-[44px] sm:text-sm";
+    "eid-input-dark w-full min-h-[52px] rounded-xl px-4 py-3 text-base leading-snug text-eid-fg !text-base sm:min-h-[50px] sm:px-4 sm:py-3 sm:text-[1.05rem]";
   const inputCn = inputClassName ? `${inputBase} ${inputClassName}` : inputBase;
 
   const btnClass =
     variant === "stack"
-      ? "eid-btn-primary min-h-[48px] w-full shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold sm:min-h-[44px]"
-      : "eid-btn-primary min-h-[48px] w-full shrink-0 rounded-xl px-4 py-2.5 text-sm font-semibold sm:min-h-0 sm:w-auto sm:self-stretch";
+      ? "eid-btn-primary min-h-[52px] w-full shrink-0 rounded-xl px-4 py-3 text-base font-semibold sm:min-h-[50px]"
+      : "eid-btn-primary min-h-[52px] w-full shrink-0 rounded-xl px-4 py-3 text-base font-semibold sm:min-h-0 sm:w-auto sm:self-stretch";
 
   return (
     <div>
@@ -131,23 +131,23 @@ export function TeamInviteComboboxForm({
               window.setTimeout(() => setSuggestOpen(false), 180);
             }}
             required={needUsernameOrPick}
-            placeholder="Digite nome ou @ — 3 letras para sugestões"
+            placeholder="Nome ou @ do atleta — 3 letras para sugestões"
             autoComplete="off"
             className={inputCn}
           />
           {suggestLoading ? (
-            <p className="absolute left-0 top-full z-20 mt-1 text-[10px] text-eid-text-secondary">Buscando…</p>
+            <p className="absolute left-0 top-full z-20 mt-1.5 text-xs text-eid-text-secondary">Buscando…</p>
           ) : null}
           {suggestOpen && suggestions.length > 0 ? (
             <ul
-              className="absolute left-0 right-0 top-full z-30 mt-1 max-h-52 overflow-y-auto rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card py-1 shadow-lg"
+              className="absolute left-0 right-0 top-full z-30 mt-1.5 max-h-60 overflow-y-auto rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card py-1 shadow-lg"
               role="listbox"
             >
               {suggestions.map((it) => (
                 <li key={it.id}>
                   <button
                     type="button"
-                    className="flex w-full flex-col items-start gap-0.5 px-3 py-2.5 text-left text-[11px] hover:bg-eid-surface/60"
+                    className="flex w-full flex-col items-start gap-0.5 px-3 py-3 text-left text-sm hover:bg-eid-surface/60"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       setPickedUserId(it.id);
@@ -157,7 +157,7 @@ export function TeamInviteComboboxForm({
                     }}
                   >
                     <span className="font-semibold text-eid-fg">{it.title}</span>
-                    {it.subtitle ? <span className="text-[10px] text-eid-text-secondary">{it.subtitle}</span> : null}
+                    {it.subtitle ? <span className="text-xs text-eid-text-secondary">{it.subtitle}</span> : null}
                   </button>
                 </li>
               ))}

@@ -178,6 +178,16 @@ export async function podeExibirWhatsappPerfilFormacao(
 ): Promise<boolean> {
   if (visitanteId === criadorId) return true;
   if (await podeExibirWhatsappPerfilPublico(supabase, visitanteId, criadorId, false)) return true;
+
+  const { data: membroAlvo } = await supabase
+    .from("membros_time")
+    .select("id")
+    .eq("time_id", alvoTimeId)
+    .eq("usuario_id", visitanteId)
+    .eq("status", "ativo")
+    .limit(1);
+  if ((membroAlvo?.length ?? 0) > 0) return true;
+
   if (visitanteTimeId != null && visitanteTimeId > 0) {
     if (await temPartidaTorneioEntreTimes(supabase, visitanteTimeId, alvoTimeId)) return true;
   }

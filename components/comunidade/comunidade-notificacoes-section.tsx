@@ -73,7 +73,7 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
                 <div className="min-w-0 flex-1">
                   {n.tipo ? (
                     <span className="inline-block rounded-full border border-eid-primary-500/30 px-2 py-0.5 text-[10px] font-extrabold uppercase text-eid-primary-300">
-                      {n.tipo}
+                      {String(n.tipo).trim().toLowerCase() === "match" ? "desafio" : n.tipo}
                     </span>
                   ) : null}
                   <p className={`mt-2 text-sm leading-relaxed ${n.lida === true ? "text-eid-text-secondary" : "text-eid-fg"}`}>

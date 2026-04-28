@@ -35,6 +35,27 @@ function timesQueryHref(sp: { q?: string; todas?: string }, page: number) {
   return s ? `/times?${s}` : "/times";
 }
 
+/** Caminho com a mesma busca/página para `from` nos fluxos em tela cheia (`embed=1`). */
+function timesEmbedReturnHref(sp: {
+  q?: string;
+  todas?: string;
+  page?: string;
+  create?: string;
+  convidar?: string;
+}) {
+  const p = new URLSearchParams();
+  const qv = (sp.q ?? "").trim();
+  if (qv) p.set("q", qv);
+  if (sp.todas === "1") p.set("todas", "1");
+  const pageNum = Math.max(1, Number(sp.page ?? 1) || 1);
+  if (pageNum > 1) p.set("page", String(pageNum));
+  if (sp.create === "1") p.set("create", "1");
+  const conv = String(sp.convidar ?? "").trim();
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(conv)) p.set("convidar", conv);
+  const s = p.toString();
+  return s ? `/times?${s}` : "/times";
+}
+
 type TimeListRow = {
   id: number;
   nome: string | null;
@@ -77,13 +98,8 @@ export default async function TimesPage({ searchParams }: Props) {
   const voltarHref = resolveBackHref(sp.from, "/dashboard");
   const q = (sp.q ?? "").trim().toLowerCase();
   const mostrarTodas = sp.todas === "1";
-  const openCreate = sp.create === "1";
   const convidar = String(sp.convidar ?? "").trim();
   const convidarOk = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(convidar);
-  const fromForConvite =
-    typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : convidarOk ? `/perfil/${convidar}` : "/times";
-  const manageHrefTemplate =
-    openCreate && convidarOk ? `/editar/time/:id?from=${encodeURIComponent(fromForConvite)}&convidar=${encodeURIComponent(convidar)}` : undefined;
   const page = Math.max(1, Number(sp.page ?? 1) || 1);
   const pageSize = 12;
   const supabase = await createClient();
@@ -165,37 +181,21 @@ export default async function TimesPage({ searchParams }: Props) {
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
-            <Link
-              href="/times#vagas-recrutamento"
-              className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/15 px-4 py-2 text-center text-xs font-bold text-eid-primary-200 transition hover:border-eid-primary-500/55 sm:text-sm"
-            >
-              Ver lista
-            </Link>
             {sp.from?.trim() ? (
               <Link href={voltarHref} className={DESAFIO_FLOW_SECONDARY_CLASS + " rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2"}>
                 ← Voltar
               </Link>
             ) : null}
-            <Link
-              href="/dashboard"
-              className="rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2 text-center text-xs font-bold text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg sm:text-sm"
-            >
-              Painel
-            </Link>
           </div>
         </div>
       </div>
 
       <TeamManagementPanel
-        esportes={(esportes ?? []).map((e) => ({ id: e.id, nome: e.nome }))}
-        minhasEquipes={(minhas ?? []).map((t) => {
-          const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
-          return { id: t.id, nome: t.nome ?? "Equipe", tipo: t.tipo ?? "time", esporteNome: esp?.nome ?? "Esporte" };
-        })}
-        defaultOpenCreate={openCreate}
-        manageHrefTemplate={manageHrefTemplate}
-        convidarUsuarioIdAposCriar={convidarOk ? convidar : undefined}
-        defaultTipoFormacao={convidarOk ? "dupla" : undefined}
+        fullscreenLaunchers={{
+          fromHref: timesEmbedReturnHref(sp),
+          hasEquipes: (minhas ?? []).length > 0,
+          convidarUsuarioId: convidarOk ? convidar : undefined,
+        }}
       />
 
       {pedidos.length > 0 ? (

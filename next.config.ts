@@ -34,6 +34,11 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "15mb",
     },
+    /* Next 15: padrão dynamic=0 refaz RSC em toda navegação. Cache curto no cliente acelera voltar/reabrir rotas sem afetar realtime (Supabase). */
+    staleTimes: {
+      dynamic: 45,
+      static: 300,
+    },
     /* Tree-shake de imports amplo (ícones só entram se usados na rota). */
     optimizePackageImports: ["lucide-react"],
   },

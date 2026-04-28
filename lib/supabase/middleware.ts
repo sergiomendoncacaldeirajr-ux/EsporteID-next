@@ -89,7 +89,12 @@ export async function updateSession(request: NextRequest) {
 
   const embedShell = request.nextUrl.searchParams.get("embed") === "1";
   const hideEmbedMinimalChrome =
-    embedShell && (isEmbedEidStatsPath(path) || isEmbedDesafioPath(path) || isEmbedConfrontoPath(path));
+    embedShell &&
+    (isEmbedEidStatsPath(path) ||
+      isEmbedDesafioPath(path) ||
+      isEmbedConfrontoPath(path) ||
+      path.startsWith("/times") ||
+      path.startsWith("/perfil-time"));
 
   if (isNextjsRouterDataRequest(request)) {
     if (hideEmbedMinimalChrome) return nextWithHideAppShell(request);
