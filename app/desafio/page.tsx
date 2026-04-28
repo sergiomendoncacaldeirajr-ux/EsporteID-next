@@ -6,6 +6,7 @@ import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resum
 import { fetchColetivoRankingPreview, fetchIndividualRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
+import { getDesafioRankLockedSetFormat, getMatchUIConfig, type MatchUIConfig } from "@/lib/match-scoring";
 import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import {
@@ -35,6 +36,29 @@ function withDesafioEmbed(href: string, isEmbed: boolean): string {
 
 function exitEmbedProps(isEmbed: boolean): { target?: "_parent" } {
   return isEmbed ? { target: "_parent" } : {};
+}
+
+function resumoFormaDisputa(cfg: MatchUIConfig): string {
+  if (cfg.type === "sets") {
+    const melhorDe = cfg.setsToWin * 2 - 1;
+    const setTxt = `Melhor de ${melhorDe} sets`;
+    const gamesTxt = cfg.gamesPerSet > 0 ? `sets até ${cfg.gamesPerSet} games` : "sets";
+    const tieBreakSet =
+      cfg.tiebreak && cfg.gamesPerSet > 0
+        ? `com tie-break em ${cfg.gamesPerSet}x${cfg.gamesPerSet} (até ${cfg.tiebreakPoints} pontos, 2 de diferença)`
+        : "";
+    if (cfg.finalSetSuperTiebreak) {
+      return `${setTxt}; ${gamesTxt}${tieBreakSet ? `, ${tieBreakSet},` : ","} e set decisivo em super tie-break até ${cfg.finalSetTargetPoints} pontos (2 de diferença).`;
+    }
+    return `${setTxt}; ${gamesTxt}${tieBreakSet ? `, ${tieBreakSet}` : ""}.`;
+  }
+  if (cfg.type === "gols") {
+    return `Disputa por gols${cfg.hasOvertime ? ", com prorrogação" : ""}${cfg.hasPenalties ? " e pênaltis se necessário" : ""}.`;
+  }
+  if (cfg.type === "pontos") {
+    return `Disputa por pontos${cfg.pointsLimit ? ` até ${cfg.pointsLimit}` : ""}${cfg.winByTwo ? ", com vantagem mínima de 2" : ""}.`;
+  }
+  return `Disputa por rounds (até ${cfg.maxRounds} round${cfg.maxRounds > 1 ? "s" : ""}).`;
 }
 
 export default async function DesafioPage({ searchParams }: { searchParams?: Promise<Params> }) {
@@ -122,7 +146,11 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     );
   }
 
-  const { data: esporteRow } = await supabase.from("esportes").select("id, nome").eq("id", esporteId).maybeSingle();
+  const { data: esporteRow } = await supabase
+    .from("esportes")
+    .select("id, nome, desafio_regras_placar_json")
+    .eq("id", esporteId)
+    .maybeSingle();
   if (!esporteRow || !isSportMatchEnabled(esporteRow.nome)) {
     return (
       <main className={DESAFIO_PAGE_MAIN_CLASS}>
@@ -135,6 +163,16 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     );
   }
   const esporteNome = esporteRow?.nome ?? `Esporte #${esporteId}`;
+  const baseMatchCfg = getMatchUIConfig({
+    sport: { name: esporteNome, scoring_type: "sets" },
+    format: {},
+  });
+  const desafioLockedCfg = getDesafioRankLockedSetFormat({
+    baseConfig: baseMatchCfg,
+    sportName: esporteNome,
+    rules: (esporteRow as { desafio_regras_placar_json?: unknown } | null)?.desafio_regras_placar_json ?? {},
+  });
+  const formaDisputaResumo = resumoFormaDisputa(desafioLockedCfg?.config ?? baseMatchCfg);
 
   if (modalidade === "individual") {
     if (!UUID_RE.test(alvoKey)) {
@@ -225,6 +263,9 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             <p className="mt-2 text-sm text-eid-text-secondary">
               <span className="text-eid-fg">{perfil.nome ?? "Atleta"}</span> · {esporteNome} (individual). Escolha o tipo de confronto.
             </p>
+            <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+              Forma de disputa deste esporte: <span className="font-semibold text-eid-fg">{formaDisputaResumo}</span>
+            </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {!rankingBlockedUntil ? (
@@ -303,6 +344,9 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             </span>
             .
           </p>
+          <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+            Forma de disputa deste esporte: <span className="font-semibold text-eid-fg">{formaDisputaResumo}</span>
+          </div>
           {finalidadeEscolhida === "amistoso" ? (
             <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
               Este pedido <span className="font-semibold text-emerald-200">não soma pontos</span> e não usa agenda de ranking. O WhatsApp será liberado após aceite, para vocês combinarem. Para confronto que valha ranking, agenda e resultado, volte ao perfil e escolha{" "}
@@ -462,6 +506,9 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         <p className="mt-2 text-sm text-eid-text-secondary">
           Confirme o pedido no esporte <span className="text-eid-fg">{esporteNome}</span> ({modalidade === "dupla" ? "dupla" : "time"}).
         </p>
+        <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+          Forma de disputa deste esporte: <span className="font-semibold text-eid-fg">{formaDisputaResumo}</span>
+        </div>
         {rankingBlockedUntilColetivo ? (
           <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
             Carência ativa para desafio de ranking neste esporte ({modalidade}) até{" "}

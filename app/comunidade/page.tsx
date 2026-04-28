@@ -12,8 +12,9 @@ import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pe
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
 import { ComunidadeSetorNotificacoes } from "@/components/comunidade/comunidade-setor-notificacoes";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
-import { ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
+import { CancelarCandidaturaForm, ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
 import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import {
@@ -34,6 +35,11 @@ export const metadata = {
   title: "Painel de controle",
   description: "Painel de controle do EsporteID: acompanhe notificações, convites e pedidos com clareza.",
 };
+
+function primeiroNome(nome?: string | null) {
+  const n = (nome ?? "").trim();
+  return n ? n.split(/\s+/u)[0] : "Atleta";
+}
 
 export default async function ComunidadePage() {
   const supabase = await createClient();
@@ -349,7 +355,7 @@ export default async function ComunidadePage() {
   });
   const { data: candidaturasEquipeRaw } = await supabase
     .from("time_candidaturas")
-    .select("id, time_id, mensagem, criado_em, candidato_usuario_id, times!inner(id, nome, criador_id)")
+    .select("id, time_id, mensagem, criado_em, candidato_usuario_id, times!inner(id, nome, criador_id, esporte_id, tipo)")
     .eq("status", "pendente")
     .eq("times.criador_id", user.id)
     .order("criado_em", { ascending: false })
@@ -362,6 +368,28 @@ export default async function ComunidadePage() {
     : {
         data: [] as { id: string; nome: string | null; username: string | null; avatar_url: string | null }[],
       };
+  const candEquipeEsporteIds = [
+    ...new Set(
+      (candidaturasEquipeRaw ?? [])
+        .map((p) => {
+          const t = Array.isArray((p as { times?: unknown }).times)
+            ? ((p as { times?: Array<{ esporte_id?: number | null }> }).times?.[0] ?? null)
+            : ((p as { times?: { esporte_id?: number | null } }).times ?? null);
+          return Number(t?.esporte_id ?? 0);
+        })
+        .filter((id) => Number.isFinite(id) && id > 0)
+    ),
+  ];
+  const { data: candEquipeEidRows } = candEquipeIds.length && candEquipeEsporteIds.length
+    ? await supabase
+        .from("usuario_eid")
+        .select("usuario_id, esporte_id, nota_eid")
+        .in("usuario_id", candEquipeIds)
+        .in("esporte_id", candEquipeEsporteIds)
+    : { data: [] as Array<{ usuario_id: string; esporte_id: number; nota_eid: number | null }> };
+  const candEquipeEidMap = new Map(
+    (candEquipeEidRows ?? []).map((r) => [`${String(r.usuario_id)}:${Number(r.esporte_id)}`, Number(r.nota_eid ?? 0)])
+  );
   const candEquipeMap = new Map((candEquipeProfiles ?? []).map((r) => [r.id, r]));
   const candidaturasEquipe = (candidaturasEquipeRaw ?? []).map((raw) => {
     const p = raw as {
@@ -370,19 +398,114 @@ export default async function ComunidadePage() {
       mensagem: string | null;
       criado_em: string;
       candidato_usuario_id: string;
-      times: { id: number; nome: string | null; criador_id: string } | { id: number; nome: string | null; criador_id: string }[];
+      times:
+        | { id: number; nome: string | null; criador_id: string; esporte_id: number | null; tipo: string | null }
+        | { id: number; nome: string | null; criador_id: string; esporte_id: number | null; tipo: string | null }[];
     };
     const team = Array.isArray(p.times) ? p.times[0] : p.times;
     const prof = candEquipeMap.get(p.candidato_usuario_id);
+    const esporteId = Number(team?.esporte_id ?? 0);
+    const notaEid = candEquipeEidMap.get(`${p.candidato_usuario_id}:${esporteId}`) ?? 0;
     return {
       id: p.id,
       candidatoId: p.candidato_usuario_id,
       nome: prof?.nome?.trim() || prof?.username?.trim() || "Atleta",
+      primeiroNome: primeiroNome(prof?.nome?.trim() || prof?.username?.trim() || "Atleta"),
       username: prof?.username?.trim() ? `@${prof.username.trim()}` : null,
       avatarUrl: prof?.avatar_url ?? null,
+      notaEid,
       mensagem: p.mensagem?.trim() || null,
       criadoEm: p.criado_em,
       timeNome: team?.nome ?? "sua formação",
+      timeTipo: String(team?.tipo ?? "time"),
+    };
+  });
+  const { data: minhasCandidaturasRaw } = await supabase
+    .from("time_candidaturas")
+    .select("id, time_id, status, mensagem, criado_em, respondido_em, times(id, nome, tipo)")
+    .eq("candidato_usuario_id", user.id)
+    .order("criado_em", { ascending: false })
+    .limit(60);
+  const minhasCandidaturasEquipe = (minhasCandidaturasRaw ?? []).map((raw) => {
+    const row = raw as {
+      id: number;
+      time_id: number;
+      status: string | null;
+      mensagem: string | null;
+      criado_em: string;
+      respondido_em: string | null;
+      times: { id: number; nome: string | null; tipo: string | null } | { id: number; nome: string | null; tipo: string | null }[];
+    };
+    const team = Array.isArray(row.times) ? row.times[0] : row.times;
+    const statusRaw = String(row.status ?? "pendente").trim().toLowerCase();
+    const statusLabel =
+      statusRaw === "aprovado" || statusRaw === "aceita" || statusRaw === "aceito"
+        ? "Aprovado"
+        : statusRaw === "recusado" || statusRaw === "recusada"
+          ? "Recusado"
+          : statusRaw === "cancelado" || statusRaw === "cancelada"
+            ? "Cancelado"
+            : "Pendente";
+    const statusClass =
+      statusLabel === "Aprovado"
+        ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-200"
+        : statusLabel === "Recusado" || statusLabel === "Cancelado"
+          ? "border-rose-500/35 bg-rose-500/10 text-rose-200"
+          : "border-amber-500/35 bg-amber-500/10 text-amber-200";
+    return {
+      id: row.id,
+      statusRaw,
+      statusLabel,
+      statusClass,
+      mensagem: row.mensagem?.trim() || null,
+      criadoEm: row.criado_em,
+      respondidoEm: row.respondido_em,
+      timeNome: team?.nome ?? "Formação",
+      timeTipo: String(team?.tipo ?? "time"),
+    };
+  });
+  const { data: minhasCandidaturasRaw } = await supabase
+    .from("time_candidaturas")
+    .select("id, time_id, status, mensagem, criado_em, respondido_em, times(id, nome, tipo)")
+    .eq("candidato_usuario_id", user.id)
+    .order("criado_em", { ascending: false })
+    .limit(60);
+  const minhasCandidaturasEquipe = (minhasCandidaturasRaw ?? []).map((raw) => {
+    const row = raw as {
+      id: number;
+      time_id: number;
+      status: string | null;
+      mensagem: string | null;
+      criado_em: string;
+      respondido_em: string | null;
+      times: { id: number; nome: string | null; tipo: string | null } | { id: number; nome: string | null; tipo: string | null }[];
+    };
+    const team = Array.isArray(row.times) ? row.times[0] : row.times;
+    const statusRaw = String(row.status ?? "pendente").trim().toLowerCase();
+    const statusLabel =
+      statusRaw === "aprovado" || statusRaw === "aceito"
+        ? "Aprovado"
+        : statusRaw === "recusado"
+          ? "Recusado"
+          : statusRaw === "cancelado"
+            ? "Cancelado"
+            : "Pendente";
+    const statusClass =
+      statusRaw === "aprovado" || statusRaw === "aceito"
+        ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-200"
+        : statusRaw === "recusado" || statusRaw === "cancelado"
+          ? "border-rose-500/35 bg-rose-500/10 text-rose-200"
+          : "border-amber-500/35 bg-amber-500/10 text-amber-200";
+    return {
+      id: row.id,
+      statusRaw,
+      statusLabel,
+      statusClass,
+      mensagem: row.mensagem?.trim() || null,
+      criadoEm: row.criado_em,
+      respondidoEm: row.respondido_em,
+      timeNome: team?.nome ?? "Formação",
+      timeTipo: String(team?.tipo ?? "time"),
     };
   });
   const nNotifUnread = uniqueNotificacoes.filter((n) => n.lida !== true).length;
@@ -875,30 +998,37 @@ export default async function ComunidadePage() {
                             topMode="backOnly"
                             className="block rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
                           >
-                            <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
-                              {c.avatarUrl ? (
-                                <Image src={c.avatarUrl} alt="" width={44} height={44} unoptimized className="h-full w-full object-cover" />
-                              ) : (
-                                <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                                  {c.nome.slice(0, 1).toUpperCase()}
-                                </div>
-                              )}
+                            <div className="flex w-[72px] flex-col items-center">
+                              <p className="mb-1 max-w-[72px] truncate text-center text-[11px] font-black text-eid-fg">{c.primeiroNome}</p>
+                              <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
+                                {c.avatarUrl ? (
+                                  <Image src={c.avatarUrl} alt="" width={44} height={44} unoptimized className="h-full w-full object-cover" />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                                    {c.nome.slice(0, 1).toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="mt-1">
+                                <ProfileEidPerformanceSeal notaEid={c.notaEid} compact />
+                              </div>
                             </div>
                           </ProfileEditDrawerTrigger>
                           <div className="min-w-0 flex-1">
-                            <ProfileEditDrawerTrigger
-                              href={`/perfil/${c.candidatoId}?from=/comunidade`}
-                              title={c.nome}
-                              fullscreen
-                              topMode="backOnly"
-                              className="text-sm font-semibold text-eid-fg hover:text-eid-primary-300"
-                            >
-                              {c.nome}
-                            </ProfileEditDrawerTrigger>
-                            <p className="mt-1 text-xs text-eid-text-secondary">
+                            <p className="text-xs text-eid-text-secondary">
                               {c.username ? `${c.username} · ` : ""}
-                              Quer entrar em <span className="font-semibold text-eid-fg">{c.timeNome}</span>
+                              Quer entrar em{" "}
+                              <span className="font-semibold text-eid-fg">
+                                {c.timeTipo.toLowerCase() === "dupla" ? "Dupla" : "Time"} {c.timeNome}
+                              </span>
                             </p>
+                            <p className="mt-1 text-[10px] text-eid-text-secondary">
+                              Pedido em {new Date(c.criadoEm).toLocaleString("pt-BR")}
+                            </p>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <ResponderCandidaturaForm candidaturaId={c.id} aceitar={true} label="Aprovar" />
+                              <ResponderCandidaturaForm candidaturaId={c.id} aceitar={false} label="Recusar" />
+                            </div>
                           </div>
                         </div>
                         {c.mensagem ? (
@@ -906,13 +1036,6 @@ export default async function ComunidadePage() {
                             “{c.mensagem}”
                           </p>
                         ) : null}
-                        <p className="mt-1 text-[10px] text-eid-text-secondary">
-                          Pedido em {new Date(c.criadoEm).toLocaleString("pt-BR")}
-                        </p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <ResponderCandidaturaForm candidaturaId={c.id} aceitar={true} label="Aprovar" />
-                          <ResponderCandidaturaForm candidaturaId={c.id} aceitar={false} label="Recusar" />
-                        </div>
                       </li>
                     ))}
                   </ul>
@@ -923,6 +1046,96 @@ export default async function ComunidadePage() {
                   Convites enviados (acompanhamento)
                 </h3>
                 <ComunidadeConvitesEnviadosTime items={conviteEnviadoItems} />
+              </div>
+              <div id="equipe-pedidos-enviados">
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
+                  Pedidos de entrada enviados
+                </h3>
+                {minhasCandidaturasEquipe.length === 0 ? (
+                  <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
+                    Você ainda não enviou pedido para entrar em formação.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-3">
+                    {minhasCandidaturasEquipe.map((c) => (
+                      <li
+                        key={c.id}
+                        className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-eid-fg">{c.timeNome}</p>
+                          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] ${c.statusClass}`}>
+                            {c.statusLabel}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-eid-text-secondary">
+                          {c.timeTipo.toLowerCase() === "dupla" ? "Dupla" : "Time"} · pedido em{" "}
+                          {new Date(c.criadoEm).toLocaleString("pt-BR")}
+                        </p>
+                        {c.mensagem ? (
+                          <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2 text-[11px] italic text-eid-text-secondary">
+                            “{c.mensagem}”
+                          </p>
+                        ) : null}
+                        {c.respondidoEm ? (
+                          <p className="mt-1 text-[10px] text-eid-text-secondary">
+                            Atualizado em {new Date(c.respondidoEm).toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                        {c.statusRaw === "pendente" ? (
+                          <div className="mt-3">
+                            <CancelarCandidaturaForm candidaturaId={c.id} compact label="Cancelar" />
+                          </div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div id="equipe-pedidos-enviados">
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
+                  Pedidos de entrada enviados
+                </h3>
+                {minhasCandidaturasEquipe.length === 0 ? (
+                  <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
+                    Você ainda não enviou pedido para entrar em formação.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-3">
+                    {minhasCandidaturasEquipe.map((c) => (
+                      <li
+                        key={c.id}
+                        className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-eid-fg">{c.timeNome}</p>
+                          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] ${c.statusClass}`}>
+                            {c.statusLabel}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-eid-text-secondary">
+                          {c.timeTipo.toLowerCase() === "dupla" ? "Dupla" : "Time"} · pedido em{" "}
+                          {new Date(c.criadoEm).toLocaleString("pt-BR")}
+                        </p>
+                        {c.mensagem ? (
+                          <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2 text-[11px] italic text-eid-text-secondary">
+                            “{c.mensagem}”
+                          </p>
+                        ) : null}
+                        {c.respondidoEm ? (
+                          <p className="mt-1 text-[10px] text-eid-text-secondary">
+                            Atualizado em {new Date(c.respondidoEm).toLocaleString("pt-BR")}
+                          </p>
+                        ) : null}
+                        {c.statusRaw === "pendente" ? (
+                          <div className="mt-3">
+                            <CancelarCandidaturaForm candidaturaId={c.id} compact label="Cancelar" />
+                          </div>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-300">

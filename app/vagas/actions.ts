@@ -74,6 +74,15 @@ export async function candidatarEmVagaAction(
     })
     .select("id")
     .limit(1);
+  await supabase.from("notificacoes").insert({
+    usuario_id: user.id,
+    remetente_id: team.criador_id,
+    mensagem: `Você enviou pedido para entrar em "${team.nome ?? "a formação"}".`,
+    tipo: "candidatura_time",
+    referencia_id: timeId,
+    lida: false,
+    data_criacao: new Date().toISOString(),
+  });
   await triggerPushForNotificationIdsBestEffort([Number((notifCandidatura?.[0] as { id?: number } | undefined)?.id ?? 0)], {
     source: "vagas/actions.candidatar",
   });
@@ -111,6 +120,27 @@ export async function cancelarCandidaturaAction(
     .eq("id", candidaturaId)
     .eq("candidato_usuario_id", user.id);
   if (error) return { ok: false, message: error.message };
+  const { data: rowMeta } = await supabase
+    .from("time_candidaturas")
+    .select("time_id, times(nome, criador_id)")
+    .eq("id", candidaturaId)
+    .maybeSingle();
+  const team = rowMeta
+    ? (Array.isArray((rowMeta as { times?: unknown }).times)
+        ? (rowMeta as { times?: Array<{ nome?: string | null; criador_id?: string | null }> }).times?.[0]
+        : (rowMeta as { times?: { nome?: string | null; criador_id?: string | null } }).times) ?? null
+    : null;
+  if (team?.criador_id) {
+    await supabase.from("notificacoes").insert({
+      usuario_id: team.criador_id,
+      remetente_id: user.id,
+      mensagem: `Candidatura cancelada em "${team.nome ?? "sua formação"}".`,
+      tipo: "candidatura_time",
+      referencia_id: candidaturaId,
+      lida: false,
+      data_criacao: new Date().toISOString(),
+    });
+  }
 
   revalidatePath("/vagas");
   revalidatePath("/times");

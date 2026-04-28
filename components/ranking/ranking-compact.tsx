@@ -286,15 +286,20 @@ function blockButton(active: boolean) {
 }
 
 /** Selo EID sobre a borda inferior do avatar. */
-export function RankingEidSeal({ score }: { score: number }) {
+export function RankingEidSeal({ score, compact = false }: { score: number; compact?: boolean }) {
   const safe = Number.isFinite(score) ? score : 0;
   return (
     <span
-      className="eid-ranking-eid-seal pointer-events-none absolute bottom-0 left-1/2 z-[3] flex -translate-x-1/2 translate-y-[40%] items-center rounded-full border border-eid-primary-500/45 text-[6px] font-black uppercase leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
+      className={cn(
+        "eid-ranking-eid-seal pointer-events-none absolute bottom-0 left-1/2 z-[3] flex -translate-x-1/2 items-center rounded-full border border-eid-primary-500/45 font-black uppercase leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]",
+        compact ? "translate-y-[30%] text-[5px]" : "translate-y-[40%] text-[6px]"
+      )}
       aria-hidden
     >
-      <span className="rounded-l-full bg-black px-[3px] py-px pl-[4px]">EID</span>
-      <span className="rounded-r-full bg-eid-primary-500 px-[3px] py-px pr-[4px] tabular-nums">{safe.toFixed(1)}</span>
+      <span className={cn("rounded-l-full bg-black", compact ? "px-[2px] py-0 pl-[2px]" : "px-[3px] py-px pl-[4px]")}>EID</span>
+      <span className={cn("rounded-r-full bg-eid-primary-500 tabular-nums", compact ? "px-[2px] py-0 pr-[2px]" : "px-[3px] py-px pr-[4px]")}>
+        {safe.toFixed(1)}
+      </span>
     </span>
   );
 }
@@ -461,20 +466,20 @@ export function RankingRow({
       </span>
       <Link
         href={href}
-        className="group relative h-9 w-9 shrink-0 transition-transform duration-200 ease-out motion-safe:transform-gpu hover:scale-[1.03] active:scale-[0.97] outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
+        className="group relative h-7 w-7 shrink-0 transition-transform duration-200 ease-out motion-safe:transform-gpu hover:scale-[1.03] active:scale-[0.97] outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
         aria-label={`Perfil de ${nome}`}
       >
-        <div className="relative pb-1.5">
-          <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] transition group-hover:border-eid-primary-500/35">
+        <div className="relative pb-0.5">
+          <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] transition group-hover:border-eid-primary-500/35">
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[9px] font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]">
+              <div className="flex h-full w-full items-center justify-center bg-eid-surface text-[7px] font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]">
                 {initial}
               </div>
             )}
           </div>
-          <RankingEidSeal score={eidScore} />
+          <RankingEidSeal score={eidScore} compact />
         </div>
       </Link>
       <p className="min-w-0 flex-1 truncate text-xs font-bold text-eid-fg">{nome}</p>

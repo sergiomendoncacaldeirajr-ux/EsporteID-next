@@ -53,7 +53,15 @@ export function CandidatarNaVagaForm({
   );
 }
 
-export function CancelarCandidaturaForm({ candidaturaId }: { candidaturaId: number }) {
+export function CancelarCandidaturaForm({
+  candidaturaId,
+  compact = false,
+  label = "Cancelar candidatura",
+}: {
+  candidaturaId: number;
+  compact?: boolean;
+  label?: string;
+}) {
   const router = useRouter();
   const [state, action, pending] = useActionState(cancelarCandidaturaAction, initialState);
   useEffect(() => {
@@ -65,9 +73,13 @@ export function CancelarCandidaturaForm({ candidaturaId }: { candidaturaId: numb
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-fg"
+        className={
+          compact
+            ? "inline-flex min-h-[28px] items-center justify-center rounded-lg border border-red-700/90 bg-red-700 px-2.5 text-[10px] font-black uppercase tracking-[0.04em] text-white shadow-[0_8px_16px_-12px_rgba(220,38,38,0.8)] transition hover:bg-red-800 disabled:opacity-60"
+            : "w-full rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-fg"
+        }
       >
-        {pending ? "Cancelando..." : "Cancelar candidatura"}
+        {pending ? "Cancelando..." : label}
       </button>
       {state.message ? (
         <p className={`text-[11px] ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
