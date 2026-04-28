@@ -3,13 +3,12 @@ import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { EidBadge } from "@/components/eid/eid-badge";
 import { ProfileAchievementsShelf, ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
-import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
+import { FormacaoCidadeAvisoLider } from "@/components/perfil/formacao-cidade-aviso-lider";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
 import { ProfileMemberCard } from "@/components/perfil/profile-team-members-cards";
 import { SugerirMatchLiderForm } from "@/components/perfil/sugerir-match-lider-form";
-import { PerfilTimeEditForm } from "@/components/perfil/perfil-time-edit-form";
-import { resolveBackHref } from "@/lib/perfil/back-href";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import {
   formacaoTemMatchAceitoEntre,
   podeExibirWhatsappPerfilFormacao,
@@ -17,8 +16,6 @@ import {
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
-import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
-import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF, contaEditarFormacaoTimeHref } from "@/lib/routes/conta";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
@@ -28,6 +25,7 @@ import {
   mapTorneioNomes,
 } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
+import { TeamPublicInviteBlock } from "@/components/times/team-public-invite-block";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -40,7 +38,6 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   if (!Number.isFinite(id) || id < 1) notFound();
 
   const sp = (await searchParams) ?? {};
-  const backHref = resolveBackHref(sp.from, "/match");
 
   const supabase = await createClient();
   const {
@@ -58,16 +55,6 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
     await sb.rpc("sair_da_equipe", { p_time_id: id });
     revalidatePath(`/perfil-time/${id}`);
     revalidatePath(`/perfil/${actionUser.id}`);
-  }
-
-  async function convidarAction(formData: FormData) {
-    "use server";
-    const sb = await createClient();
-    const uname = String(formData.get("username") ?? "").trim().toLowerCase();
-    if (!uname) return;
-    await sb.rpc("convidar_para_time", { p_time_id: id, p_username: uname });
-    revalidatePath(`/perfil-time/${id}`);
-    revalidatePath("/comunidade");
   }
 
   async function removerMembroAction(formData: FormData) {
@@ -98,13 +85,6 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
     .eq("id", id)
     .maybeSingle();
   if (!t) notFound();
-
-  const timeAmistosoOn = computeDisponivelAmistosoEffective(
-    t.disponivel_amistoso,
-    "disponivel_amistoso_ate" in t
-      ? (t as { disponivel_amistoso_ate: string | null }).disponivel_amistoso_ate
-      : null
-  );
 
   const { data: criador } = await supabase
     .from("profiles")
@@ -259,10 +239,18 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   if (Number(t.eid_time ?? 0) >= 7) conquistas.push("EID Elite");
   if ((membros ?? []).length >= 4) conquistas.push("Elenco Completo");
 
+  const fromPublic = `/perfil-time/${id}`;
+  const editarTimeHref = `/editar/time/${id}?from=${encodeURIComponent(fromPublic)}`;
+  const idsExcluirConvite = [
+    ...new Set(
+      [...(membros ?? []).map((m) => String(m.usuario_id)), String(t.criador_id ?? "")]
+        .map((s) => s.trim())
+        .filter(Boolean)
+    ),
+  ];
+
   return (
     <main className={PROFILE_PUBLIC_MAIN_CLASS}>
-        <PerfilBackLink href={backHref} label="Voltar" />
-
         <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 text-center sm:p-4`}>
           {t.escudo ? (
             <img
@@ -281,27 +269,32 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           <h1 className="mt-3 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
           {t.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{t.username}</p> : null}
           <p className="mt-2 text-sm text-eid-text-secondary">{t.localizacao ?? "Localização não informada"}</p>
-          <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary">
-            Cidade da formação: definida na criação e <strong className="text-eid-fg">não editável</strong>. Para mudar de
-            cidade, crie uma <strong className="text-eid-fg">nova equipe/dupla</strong> em Times.
-          </p>
+          {isLeader ? <FormacaoCidadeAvisoLider timeId={id} /> : null}
           {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{t.bio}</p> : null}
-          <div className="mt-2 flex flex-wrap justify-center gap-1.5">
-            <span className="rounded-full border border-eid-action-500/30 px-2 py-0.5 text-[10px] font-semibold text-eid-action-400">
-              {timeAmistosoOn ? "Amistoso (agora)" : "Só competitivo"}
-            </span>
-            <span className="rounded-full border border-eid-primary-500/30 px-2 py-0.5 text-[10px] font-semibold text-eid-primary-300">
-              {t.interesse_rank_match ? "Rank ativo" : "Rank off"}
-            </span>
-          </div>
 
           {criador ? (
-            <p className="mt-4 text-xs text-eid-text-secondary">
-              Líder:{" "}
-              <Link href={`/perfil/${criador.id}?from=/perfil-time/${id}`} className="font-semibold text-eid-primary-300 hover:underline">
-                {criador.nome ?? "—"}
-              </Link>
-            </p>
+            <div className="mt-4 flex items-center justify-center gap-2.5">
+              {criador.avatar_url ? (
+                <img
+                  src={criador.avatar_url}
+                  alt=""
+                  className="h-9 w-9 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-10 sm:w-10"
+                />
+              ) : (
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 sm:h-10 sm:w-10">
+                  {(criador.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
+                </span>
+              )}
+              <p className="text-left text-xs text-eid-text-secondary">
+                <span className="block text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary/90">Líder</span>
+                <Link
+                  href={`/perfil/${criador.id}?from=/perfil-time/${id}`}
+                  className="font-semibold text-eid-primary-300 hover:underline"
+                >
+                  {criador.nome ?? "—"}
+                </Link>
+              </p>
+            </div>
           ) : null}
 
         </div>
@@ -351,14 +344,12 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
               <p className="text-xs text-eid-text-secondary">
                 Desafio aceito nesta modalidade. Registre o resultado na agenda quando jogarem.
               </p>
-            ) : t.criador_id === user.id ? (
-              <p className="text-xs text-eid-text-secondary">Esta é a sua formação.</p>
-            ) : (
+            ) : !isLeader ? (
               <p className="text-xs text-eid-text-secondary">
                 Para desafiar direto, você precisa ser líder de uma {modalidade} neste esporte — ou use a sugestão abaixo
                 se você já faz parte de uma formação.
               </p>
-            )}
+            ) : null}
             {!isLeader && canSugerirMatch ? (
               <div className="mt-3">
                 <SugerirMatchLiderForm
@@ -412,12 +403,15 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 </div>
               </div>
               {t.esporte_id ? (
-                <Link
-                  href={`/perfil-time/${id}/eid/${t.esporte_id}?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
+                <ProfileEditDrawerTrigger
+                  href={`/perfil-time/${id}/eid/${t.esporte_id}?from=${encodeURIComponent(fromPublic)}`}
+                  title={`Estatísticas · ${esp?.nome ?? "Esporte"}`}
+                  fullscreen
+                  topMode="backOnly"
                   className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
                 >
-                  Estatísticas completas · {esp?.nome ?? "este esporte"}
-                </Link>
+                  <span>Estatísticas completas · {esp?.nome ?? "este esporte"}</span>
+                </ProfileEditDrawerTrigger>
               ) : null}
               </div>
             </div>
@@ -462,16 +456,13 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
 
           <ProfileSection title="Participantes">
             {isLeader ? (
-              <form action={convidarAction} className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <input
-                  name="username"
-                  placeholder="@username para convidar"
-                  className="eid-input-dark rounded-xl px-3 py-2 text-xs text-eid-fg"
-                />
-                <button type="submit" className="eid-btn-primary rounded-xl px-3 py-2 text-xs font-semibold">
-                  Convidar
-                </button>
-              </form>
+              <div className="mt-2 space-y-2">
+                <p className="text-[11px] text-eid-text-secondary">
+                  Convide pelo nome ou @. Com <strong className="text-eid-fg">três letras</strong> aparecem sugestões para
+                  escolher o atleta.
+                </p>
+                <TeamPublicInviteBlock timeId={id} excludeUserIds={idsExcluirConvite} />
+              </div>
             ) : null}
             <ul className="mt-3 grid gap-2 sm:grid-cols-2">
               {(membros ?? []).map((m, idx) => {
@@ -524,34 +515,30 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 </span>
               </div>
               <div className="p-3">
-              <Link
-                href={`/times?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
-                className="mt-2 flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
-              >
-                Gerenciar equipe
-              </Link>
-              <p className="mt-1 text-[10px] text-eid-text-secondary">
-                Convidar atletas e convites — painel completo em Times.
-              </p>
-              <Link
-                href={`${contaEditarFormacaoTimeHref(id)}?from=${encodeURIComponent(`/perfil-time/${id}`)}`}
-                className="mt-2 flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
-              >
-                Editar em página dedicada
-              </Link>
-              <PerfilTimeEditForm
-                timeId={id}
-                nome={t.nome ?? ""}
-                username={t.username ?? null}
-                bio={t.bio ?? null}
-                localizacao={t.localizacao ?? null}
-                escudo={t.escudo ?? null}
-                interesse_rank_match={Boolean(t.interesse_rank_match)}
-                vagas_abertas={Boolean(t.vagas_abertas)}
-                aceita_pedidos={Boolean(t.aceita_pedidos)}
-                interesse_torneio={Boolean(t.interesse_torneio)}
-                nivel_procurado={t.nivel_procurado ?? null}
-              />
+                <ProfileEditDrawerTrigger
+                  href={editarTimeHref}
+                  title="Gerenciar equipe"
+                  fullscreen
+                  topMode="backOnly"
+                  className="mt-1 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
+                >
+                  <span>Gerenciar equipe</span>
+                </ProfileEditDrawerTrigger>
+                <p className="mt-1.5 text-[10px] leading-relaxed text-eid-text-secondary">
+                  Elenco, convites, dados, escudo e preferências — mesmo painel em tela cheia da área Editar.
+                </p>
+                <Link
+                  href={editarTimeHref}
+                  className="mt-2 flex min-h-[40px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+                >
+                  Abrir em página cheia (sem painel)
+                </Link>
+                <Link
+                  href={`/times?from=${encodeURIComponent(fromPublic)}`}
+                  className="mt-2 flex min-h-[40px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[10px] font-semibold uppercase tracking-wide text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg"
+                >
+                  Ver lista em Times
+                </Link>
               </div>
             </div>
           ) : null}
@@ -565,23 +552,24 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 </span>
               </div>
               <div className="grid gap-2 p-3">
-              <Link
-                href={CONTA_PERFIL_HREF}
-                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
-              >
-                Editar perfil pessoal
-              </Link>
-              <Link
-                href={CONTA_ESPORTES_EID_HREF}
-                className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
-              >
-                Esportes e ranking (EID)
-              </Link>
-              <p className="text-[10px] leading-relaxed text-eid-text-secondary">
-                Seu nome, cidade e dados de atleta são pessoais. A <strong className="text-eid-fg">cidade da equipe</strong>{" "}
-                (formação) aparece no topo e <strong className="text-eid-fg">não pode ser alterada</strong>; para mudar de
-                cidade no radar, o líder cria uma <strong className="text-eid-fg">nova formação</strong>.
-              </p>
+                <ProfileEditDrawerTrigger
+                  href={`/editar/perfil?from=${encodeURIComponent(fromPublic)}`}
+                  title="Editar perfil"
+                  fullscreen
+                  topMode="backOnly"
+                  className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
+                >
+                  <span>Editar perfil pessoal</span>
+                </ProfileEditDrawerTrigger>
+                <ProfileEditDrawerTrigger
+                  href={`/editar/performance-eid?from=${encodeURIComponent(fromPublic)}`}
+                  title="Esportes e EID"
+                  fullscreen
+                  topMode="backOnly"
+                  className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+                >
+                  <span>Esportes e ranking (EID)</span>
+                </ProfileEditDrawerTrigger>
               </div>
             </div>
           ) : null}

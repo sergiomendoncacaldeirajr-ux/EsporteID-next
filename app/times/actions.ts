@@ -316,7 +316,7 @@ export async function atualizarMinhaEquipe(
 
   const { data: owned } = await supabase
     .from("times")
-    .select("id, localizacao, esporte_id")
+    .select("id, localizacao, esporte_id, escudo")
     .eq("id", timeId)
     .eq("criador_id", user.id)
     .maybeSingle();
@@ -341,8 +341,39 @@ export async function atualizarMinhaEquipe(
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
   const username = usernameRaw ? usernameRaw.replace(/[^a-z0-9_]/g, "") : null;
   const bio = String(formData.get("bio") ?? "").trim();
-  const escudoRaw = String(formData.get("escudo") ?? "").trim();
-  const escudo = escudoRaw || null;
+  let escudoFinal = String(owned.escudo ?? "").trim() || null;
+
+  const escudoFile = formData.get("escudo_file");
+  if (escudoFile instanceof File && escudoFile.size > 0) {
+    if (escudoFile.size > 5 * 1024 * 1024) {
+      return { ok: false, message: "A imagem do escudo deve ter no máximo 5MB." };
+    }
+    const mimeRaw = (escudoFile.type || "").trim().toLowerCase();
+    const looksLikeImage =
+      mimeRaw.startsWith("image/") || mimeRaw === "application/octet-stream" || mimeRaw === "binary/octet-stream";
+    if (!looksLikeImage) {
+      return { ok: false, message: "Arquivo inválido. Envie uma imagem (JPG, PNG, WEBP ou HEIC)." };
+    }
+    const originalName = escudoFile.name || "escudo";
+    const ext = originalName.includes(".") ? originalName.split(".").pop()?.toLowerCase() ?? "jpg" : "jpg";
+    const safeExt = ext.replace(/[^a-z0-9]/g, "") || "jpg";
+    const contentType = resolveEscudoContentType(escudoFile, safeExt);
+    const path = `${user.id}/time_escudo_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${safeExt}`;
+    const up = await supabase.storage.from("avatars").upload(path, escudoFile, {
+      upsert: true,
+      contentType,
+      cacheControl: "3600",
+    });
+    if (up.error) {
+      const detail = up.error.message;
+      return {
+        ok: false,
+        message: detail ? `Não foi possível enviar o escudo. (${detail})` : "Não foi possível enviar o escudo.",
+      };
+    }
+    escudoFinal = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+  }
+
   const nivel_procurado = String(formData.get("nivel_procurado") ?? "").trim() || null;
 
   if (nome.length < 3) return { ok: false, message: "Nome da equipe inválido." };
@@ -356,7 +387,7 @@ export async function atualizarMinhaEquipe(
       nome,
       username,
       bio: bio || null,
-      escudo,
+      escudo: escudoFinal,
       nivel_procurado,
       interesse_rank_match: checkboxOn(formData, "interesse_rank_match"),
       vagas_abertas: checkboxOn(formData, "vagas_abertas"),
@@ -370,6 +401,7 @@ export async function atualizarMinhaEquipe(
 
   revalidatePath(`/perfil-time/${timeId}`);
   revalidatePath(`/conta/formacao/time/${timeId}`);
+  revalidatePath(`/editar/time/${timeId}`);
   revalidatePath("/times");
   revalidatePath(`/perfil/${user.id}`);
   return { ok: true, message: "Formação atualizada." };

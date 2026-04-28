@@ -11,6 +11,10 @@ type Props = {
   className?: string;
   inputClassName?: string;
   buttonClassName?: string;
+  /** GET action (ex.: `/times`). Se omitido, envia para a URL atual. */
+  formAction?: string;
+  /** Campos ocultos preservados no filtro (ex.: `{ todas: "1" }`). */
+  hiddenFields?: Record<string, string>;
 };
 
 export function SearchFilterForm({
@@ -21,10 +25,17 @@ export function SearchFilterForm({
   className,
   inputClassName,
   buttonClassName,
+  formAction,
+  hiddenFields,
 }: Props) {
   const [q, setQ] = useState(defaultValue);
   return (
-    <form className={className}>
+    <form className={className} method="get" action={formAction}>
+      {hiddenFields
+        ? Object.entries(hiddenFields).map(([name, value]) => (
+            <input key={name} type="hidden" name={name} value={value} />
+          ))
+        : null}
       <SearchSuggestInput
         name="q"
         value={q}

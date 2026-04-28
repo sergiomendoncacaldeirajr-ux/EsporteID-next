@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useState } from "react";
 import { atualizarMinhaEquipe, type TeamActionState } from "@/app/times/actions";
 
 const initial: TeamActionState = { ok: false, message: "" };
@@ -34,11 +35,30 @@ export function PerfilTimeEditForm({
   /** `page`: tela dedicada (sem accordion). */
   variant?: "inline" | "page";
 }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(atualizarMinhaEquipe, initial);
+  const [escudoPreview, setEscudoPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!state.ok) return;
+    setEscudoPreview((prev) => {
+      if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+      return null;
+    });
+    router.refresh();
+  }, [state.ok, router]);
+
+  useEffect(() => {
+    return () => {
+      if (escudoPreview?.startsWith("blob:")) URL.revokeObjectURL(escudoPreview);
+    };
+  }, [escudoPreview]);
+
+  const escudoDisplay = escudoPreview ?? (escudo?.trim() ? escudo : null);
 
   const blocoAjuda = (
     <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary">
-      Nome, @username, bio, escudo e preferências podem ser alterados. O{" "}
+      Nome, @username, bio, foto do escudo e preferências podem ser alterados. O{" "}
       <strong className="text-eid-fg">esporte e a cidade da formação são fixos</strong> depois da criação (ranking e radar
       dependem disso). Se o time mudou de cidade ou for atuar em outro esporte, é preciso{" "}
       <Link href="/times" className="font-semibold text-eid-primary-300 underline">
@@ -78,12 +98,38 @@ export function PerfilTimeEditForm({
           placeholder="@username (opcional)"
           className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg sm:col-span-2"
         />
-        <input
-          name="escudo"
-          defaultValue={escudo ?? ""}
-          placeholder="URL do escudo (imagem)"
-          className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg sm:col-span-2"
-        />
+        <div className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 sm:col-span-2">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-primary-300">Escudo</p>
+          <p className="mt-1 text-[10px] text-eid-text-secondary">
+            Troque a imagem do escudo quando quiser (JPG, PNG, WEBP ou HEIC, até 5MB). Se não escolher arquivo novo, mantém o atual.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            {escudoDisplay ? (
+              <img
+                src={escudoDisplay}
+                alt="Pré-visualização do escudo"
+                className="h-16 w-16 rounded-lg border border-[color:var(--eid-border-subtle)] object-cover"
+              />
+            ) : (
+              <span className="inline-flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/50 text-[10px] text-eid-text-secondary">
+                Sem foto
+              </span>
+            )}
+            <input
+              type="file"
+              name="escudo_file"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
+              className="min-w-0 flex-1 text-[11px] text-eid-text-secondary file:mr-2 file:rounded-lg file:border file:border-[color:var(--eid-border-subtle)] file:bg-eid-surface/70 file:px-2.5 file:py-1 file:text-[10px] file:font-semibold file:text-eid-fg"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                setEscudoPreview((prev) => {
+                  if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+                  return f ? URL.createObjectURL(f) : null;
+                });
+              }}
+            />
+          </div>
+        </div>
         <textarea
           name="bio"
           rows={2}

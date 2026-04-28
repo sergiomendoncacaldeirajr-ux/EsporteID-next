@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 
-type Scope = "global" | "times" | "torneios" | "locais";
+type Scope = "global" | "times" | "torneios" | "locais" | "atletas";
 
 export async function GET(request: Request) {
   const supabase = await createRouteHandlerClient();
@@ -16,6 +16,24 @@ export async function GET(request: Request) {
   const scope = String(searchParams.get("scope") ?? "global") as Scope;
   if (q.length < 3) return NextResponse.json({ ok: true, items: [] });
   const like = `%${q}%`;
+
+  if (scope === "atletas") {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, nome, username")
+      .neq("id", user.id)
+      .or(`nome.ilike.${like},username.ilike.${like}`)
+      .limit(12);
+    return NextResponse.json({
+      ok: true,
+      items: (data ?? []).map((row) => ({
+        id: String(row.id),
+        value: String(row.username ?? "").trim(),
+        title: row.nome?.trim() || row.username || "Atleta",
+        subtitle: row.username ? `@${row.username}` : null,
+      })),
+    });
+  }
 
   const { data: me } = await supabase.from("profiles").select("lat, lng").eq("id", user.id).maybeSingle();
   const myLat = Number(me?.lat ?? NaN);

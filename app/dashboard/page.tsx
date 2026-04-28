@@ -568,15 +568,24 @@ export default async function DashboardPage({ searchParams }: Props) {
       icon: IconLocationCard,
       status: statusFromFeature(canSeeLocais, featureCfg.locais.mode),
     },
-    mostrarReservarRapido
-      ? {
-          label: "Reservar",
-          shortLabel: "Reservar",
-          href: reservaHref,
-          icon: IconReservaRapida,
-          status: "active" as const,
-        }
-      : { label: "Vagas", shortLabel: "Vagas", href: undefined, icon: IconUsers, status: "coming" as const },
+    ...(mostrarReservarRapido
+      ? [
+          {
+            label: "Reservar",
+            shortLabel: "Reservar",
+            href: reservaHref,
+            icon: IconReservaRapida,
+            status: "active" as const,
+          },
+        ]
+      : []),
+    {
+      label: "Vagas",
+      shortLabel: "Vagas",
+      href: "/times",
+      icon: IconUsers,
+      status: "active" as const,
+    },
     {
       label: "Torneios",
       shortLabel: "Torneios",

@@ -79,10 +79,11 @@ export async function candidatarEmVagaAction(
   });
 
   revalidatePath("/vagas");
+  revalidatePath("/times");
   revalidatePath("/comunidade");
   revalidatePath(`/perfil-time/${timeId}`);
   revalidatePath("/dashboard");
-  return { ok: true, message: "Candidatura enviada. O líder será notificado no Social." };
+  return { ok: true, message: "Candidatura enviada. O líder recebe aviso no sino e no Social." };
 }
 
 export async function cancelarCandidaturaAction(
@@ -112,6 +113,7 @@ export async function cancelarCandidaturaAction(
   if (error) return { ok: false, message: error.message };
 
   revalidatePath("/vagas");
+  revalidatePath("/times");
   revalidatePath("/comunidade");
   revalidatePath("/dashboard");
   return { ok: true, message: "Candidatura cancelada." };
@@ -212,6 +214,7 @@ export async function responderCandidaturaAction(
   });
 
   revalidatePath("/vagas");
+  revalidatePath("/times");
   revalidatePath("/comunidade");
   revalidatePath(`/perfil-time/${row.time_id}`);
   revalidatePath("/dashboard");

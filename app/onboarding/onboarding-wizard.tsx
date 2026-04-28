@@ -302,21 +302,35 @@ function isSportExpAprox(value: string): value is SportExpAprox {
   return value === "menos_1" || value === "1_3" || value === "mais_3";
 }
 
-function toMonthInputValue(expValue: string): string {
+const ONBOARDING_MESES_PT = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+] as const;
+
+function splitSportExpMesAno(expValue: string): { month: string; year: string } {
   const m = expValue.match(/^(\d{1,2})\/(\d{4})$/);
-  if (!m) return "";
+  if (!m) return { month: "", year: "" };
   const month = Number(m[1]);
   const year = Number(m[2]);
-  if (!Number.isInteger(month) || month < 1 || month > 12) return "";
-  if (!Number.isInteger(year) || year < 1970 || year > 2100) return "";
-  return `${year}-${String(month).padStart(2, "0")}`;
+  if (!Number.isInteger(month) || month < 1 || month > 12) return { month: "", year: "" };
+  if (!Number.isInteger(year) || year < 1970 || year > 2100) return { month: "", year: "" };
+  return { month: String(month), year: String(year) };
 }
 
-function fromMonthInputValue(inputValue: string): string {
-  const m = inputValue.match(/^(\d{4})-(\d{2})$/);
-  if (!m) return "";
-  const year = Number(m[1]);
-  const month = Number(m[2]);
+function buildSportExpMesAno(monthStr: string, yearStr: string): string {
+  if (!monthStr || !yearStr) return "";
+  const month = Number(monthStr);
+  const year = Number(yearStr);
   if (!Number.isInteger(month) || month < 1 || month > 12) return "";
   if (!Number.isInteger(year) || year < 1970 || year > 2100) return "";
   return `${String(month).padStart(2, "0")}/${year}`;
@@ -1778,20 +1792,73 @@ export function OnboardingWizard({
                                 <>
                                   {!usingAprox ? (
                                     <div className="space-y-2">
-                                      <input
-                                        type="month"
-                                        value={toMonthInputValue(expValue)}
-                                        onChange={(ev) => {
-                                          const next = fromMonthInputValue(ev.target.value);
-                                          setEsportesExp((prev) => {
-                                            const updated = { ...prev };
-                                            if (next) updated[e.id] = next;
-                                            else delete updated[e.id];
-                                            return updated;
-                                          });
-                                        }}
-                                        className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
-                                      />
+                                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                        <label className="grid min-w-0 gap-1">
+                                          <span className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">
+                                            Mês
+                                          </span>
+                                          <select
+                                            value={splitSportExpMesAno(expValue).month}
+                                            onChange={(ev) => {
+                                              const newM = ev.target.value;
+                                              setEsportesExp((prev) => {
+                                                const updated = { ...prev };
+                                                const cur = prev[e.id] ?? "";
+                                                const y = splitSportExpMesAno(cur).year;
+                                                const next = buildSportExpMesAno(newM, y);
+                                                if (next) updated[e.id] = next;
+                                                else delete updated[e.id];
+                                                return updated;
+                                              });
+                                            }}
+                                            className="eid-input-dark min-h-[44px] w-full cursor-pointer rounded-xl px-3 py-2 text-sm text-eid-fg"
+                                          >
+                                            <option value="">Selecione o mês</option>
+                                            {ONBOARDING_MESES_PT.map((nome, idx) => (
+                                              <option key={nome} value={String(idx + 1)}>
+                                                {nome}
+                                              </option>
+                                            ))}
+                                          </select>
+                                        </label>
+                                        <label className="grid min-w-0 gap-1">
+                                          <span className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">
+                                            Ano
+                                          </span>
+                                          <select
+                                            value={splitSportExpMesAno(expValue).year}
+                                            onChange={(ev) => {
+                                              const newY = ev.target.value;
+                                              setEsportesExp((prev) => {
+                                                const updated = { ...prev };
+                                                const cur = prev[e.id] ?? "";
+                                                const m = splitSportExpMesAno(cur).month;
+                                                const next = buildSportExpMesAno(m, newY);
+                                                if (next) updated[e.id] = next;
+                                                else delete updated[e.id];
+                                                return updated;
+                                              });
+                                            }}
+                                            className="eid-input-dark min-h-[44px] w-full cursor-pointer rounded-xl px-3 py-2 text-sm text-eid-fg"
+                                          >
+                                            <option value="">Selecione o ano</option>
+                                            {(() => {
+                                              const yMax = new Date().getFullYear();
+                                              const opts: number[] = [];
+                                              for (let y = yMax; y >= 1970; y--) opts.push(y);
+                                              return opts.map((y) => (
+                                                <option key={y} value={String(y)}>
+                                                  {y}
+                                                </option>
+                                              ));
+                                            })()}
+                                          </select>
+                                        </label>
+                                      </div>
+                                      <p className="text-[10px] text-eid-text-secondary">
+                                        Indique quando começou a praticar (ou a ensinar) este esporte — só seleção, sem
+                                        digitar.
+                                      </p>
                                       <button
                                         type="button"
                                         onClick={() => setEsportesExp((prev) => ({ ...prev, [e.id]: "menos_1" }))}

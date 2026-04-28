@@ -2,13 +2,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { EidBadge } from "@/components/eid/eid-badge";
 import { ProfileAchievementsShelf, ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
-import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
+import { FormacaoCidadeAvisoLider } from "@/components/perfil/formacao-cidade-aviso-lider";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
 import { ProfileMemberCard } from "@/components/perfil/profile-team-members-cards";
-import { PerfilDuplaEditForm } from "@/components/perfil/perfil-dupla-edit-form";
 import { SugerirMatchLiderForm } from "@/components/perfil/sugerir-match-lider-form";
-import { resolveBackHref } from "@/lib/perfil/back-href";
 import {
   formacaoTemMatchAceitoEntre,
   podeExibirWhatsappPerfilFormacao,
@@ -18,7 +17,6 @@ import {
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
-import { CONTA_ESPORTES_EID_HREF, CONTA_PERFIL_HREF, contaEditarDuplaRegistradaHref } from "@/lib/routes/conta";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
@@ -40,7 +38,6 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   if (!Number.isFinite(id) || id < 1) notFound();
 
   const sp = (await searchParams) ?? {};
-  const backHref = resolveBackHref(sp.from, "/match");
 
   const supabase = await createClient();
   const {
@@ -125,7 +122,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
     : { data: [] };
 
   const { data: liderDupla } = timeResolvido?.criador_id
-    ? await supabase.from("profiles").select("id, nome, whatsapp").eq("id", timeResolvido.criador_id).maybeSingle()
+    ? await supabase.from("profiles").select("id, nome, whatsapp, avatar_url").eq("id", timeResolvido.criador_id).maybeSingle()
     : { data: null };
 
   const isMembroDupla = user.id === d.player1_id || user.id === d.player2_id;
@@ -268,6 +265,9 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   if (rankTotal >= 1200) conquistas.push("Rank Forte");
   if ((p1?.id ? 1 : 0) + (p2?.id ? 1 : 0) === 2) conquistas.push("Dupla Completa");
 
+  const fromPublicDupla = `/perfil-dupla/${id}`;
+  const editarDuplaHref = `/editar/dupla/${id}?from=${encodeURIComponent(fromPublicDupla)}`;
+
   const nomeExibicao = timeResolvido?.nome ?? `Dupla registrada #${id}`;
   const usernameExibicao = timeResolvido?.username ?? d.username;
   const localExibicao =
@@ -280,8 +280,6 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
 
   return (
     <main className={PROFILE_PUBLIC_MAIN_CLASS}>
-        <PerfilBackLink href={backHref} label="Voltar" />
-
         <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 text-center sm:p-4`}>
           {timeResolvido?.escudo ? (
             <img
@@ -302,20 +300,31 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             <p className="mt-1 text-xs font-medium text-eid-primary-300">@{usernameExibicao}</p>
           ) : null}
           <p className="mt-2 text-sm text-eid-text-secondary">{localExibicao ?? "Localização não informada"}</p>
-          <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary">
-            Par fixo de atletas no mesmo esporte. Com time ativo no radar, escudo e cidade da <strong className="text-eid-fg">formação</strong> vêm do ranking.
-          </p>
+          {isDonoDupla && timeResolvidoId ? <FormacaoCidadeAvisoLider timeId={timeResolvidoId} /> : null}
           {d.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{d.bio}</p> : null}
           {liderDupla ? (
-            <p className="mt-3 text-xs text-eid-text-secondary">
-              Líder:{" "}
-              <Link
-                href={`/perfil/${liderDupla.id}?from=/perfil-dupla/${id}`}
-                className="font-semibold text-eid-primary-300 hover:underline"
-              >
-                {liderDupla.nome ?? "—"}
-              </Link>
-            </p>
+            <div className="mt-4 flex items-center justify-center gap-2.5">
+              {liderDupla.avatar_url ? (
+                <img
+                  src={liderDupla.avatar_url}
+                  alt=""
+                  className="h-9 w-9 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-10 sm:w-10"
+                />
+              ) : (
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 sm:h-10 sm:w-10">
+                  {(liderDupla.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
+                </span>
+              )}
+              <p className="text-left text-xs text-eid-text-secondary">
+                <span className="block text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary/90">Líder</span>
+                <Link
+                  href={`/perfil/${liderDupla.id}?from=/perfil-dupla/${id}`}
+                  className="font-semibold text-eid-primary-300 hover:underline"
+                >
+                  {liderDupla.nome ?? "—"}
+                </Link>
+              </p>
+            </div>
           ) : null}
         </div>
 
@@ -417,12 +426,15 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     </div>
                   </div>
                   {d.esporte_id ? (
-                    <Link
-                      href={`/perfil-dupla/${id}/eid/${d.esporte_id}?from=${encodeURIComponent(`/perfil-dupla/${id}`)}`}
+                    <ProfileEditDrawerTrigger
+                      href={`/perfil-dupla/${id}/eid/${d.esporte_id}?from=${encodeURIComponent(fromPublicDupla)}`}
+                      title={`Estatísticas · ${esp?.nome ?? "Esporte"}`}
+                      fullscreen
+                      topMode="backOnly"
                       className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
                     >
-                      Estatísticas completas · {esp?.nome ?? "este esporte"}
-                    </Link>
+                      <span>Estatísticas completas · {esp?.nome ?? "este esporte"}</span>
+                    </ProfileEditDrawerTrigger>
                   ) : null}
                   </div>
                 </div>
@@ -486,12 +498,15 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                   </div>
                 ) : null}
                 {d.esporte_id ? (
-                  <Link
-                    href={`/perfil-dupla/${id}/eid/${d.esporte_id}?from=${encodeURIComponent(`/perfil-dupla/${id}`)}`}
+                  <ProfileEditDrawerTrigger
+                    href={`/perfil-dupla/${id}/eid/${d.esporte_id}?from=${encodeURIComponent(fromPublicDupla)}`}
+                    title={`Estatísticas · ${esp?.nome ?? "Esporte"}`}
+                    fullscreen
+                    topMode="backOnly"
                     className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
                   >
-                    Abrir estatísticas · {esp?.nome ?? "este esporte"}
-                  </Link>
+                    <span>Abrir estatísticas · {esp?.nome ?? "este esporte"}</span>
+                  </ProfileEditDrawerTrigger>
                 ) : null}
                 </div>
               </div>
@@ -553,41 +568,44 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
               </div>
               <div className="p-3">
               {isDonoDupla ? (
-                <>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">Sua dupla registrada</p>
-                  <Link
-                    href={`${contaEditarDuplaRegistradaHref(id)}?from=${encodeURIComponent(`/perfil-dupla/${id}`)}`}
-                    className="mt-2 flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+                <div className="space-y-2">
+                  <ProfileEditDrawerTrigger
+                    href={editarDuplaHref}
+                    title="Editar dupla"
+                    fullscreen
+                    topMode="backOnly"
+                    className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
                   >
-                    Editar em página dedicada
+                    <span>Editar dupla registrada</span>
+                  </ProfileEditDrawerTrigger>
+                  <Link
+                    href={editarDuplaHref}
+                    className="flex min-h-[40px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[10px] font-semibold uppercase tracking-wide text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg"
+                  >
+                    Abrir em página cheia (sem painel)
                   </Link>
-                  <PerfilDuplaEditForm
-                    duplaId={id}
-                    username={d.username ?? null}
-                    bio={d.bio ?? null}
-                    timeFormacaoRadarId={timeResolvidoId}
-                  />
-                </>
+                </div>
               ) : null}
               <div className={`grid gap-2 ${isDonoDupla ? "mt-3" : ""}`}>
-                <Link
-                  href={CONTA_PERFIL_HREF}
-                  className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
+                <ProfileEditDrawerTrigger
+                  href={`/editar/perfil?from=${encodeURIComponent(fromPublicDupla)}`}
+                  title="Editar perfil"
+                  fullscreen
+                  topMode="backOnly"
+                  className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/65 hover:bg-eid-primary-500/16"
                 >
-                  Editar perfil pessoal
-                </Link>
-                <Link
-                  href={CONTA_ESPORTES_EID_HREF}
-                  className="flex min-h-[38px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
+                  <span>Editar perfil pessoal</span>
+                </ProfileEditDrawerTrigger>
+                <ProfileEditDrawerTrigger
+                  href={`/editar/performance-eid?from=${encodeURIComponent(fromPublicDupla)}`}
+                  title="Esportes e EID"
+                  fullscreen
+                  topMode="backOnly"
+                  className="flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
                 >
-                  Esportes e ranking (EID)
-                </Link>
+                  <span>Esportes e ranking (EID)</span>
+                </ProfileEditDrawerTrigger>
               </div>
-              <p className="mt-1.5 text-[10px] leading-relaxed text-eid-text-secondary">
-                {isDonoDupla
-                  ? "Só o dono edita @ e bio da dupla registrada. Cidade da formação no radar segue o time ativo."
-                  : "Só o dono edita @ e bio da dupla registrada."}
-              </p>
               </div>
             </div>
           ) : null}

@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/server";
 
 type Props = {
   params: Promise<{ id: string; esporteId: string }>;
-  searchParams?: Promise<{ from?: string }>;
+  searchParams?: Promise<{ from?: string; embed?: string }>;
 };
 
 function parseEsporteId(raw: string): number | null {
@@ -33,6 +33,7 @@ export default async function PerfilDuplaEidEsportePage({ params, searchParams }
   if (esporteId == null) notFound();
 
   const sp = (await searchParams) ?? {};
+  const isEmbed = sp.embed === "1";
   const supabase = await createClient();
   const {
     data: { user },
@@ -146,6 +147,7 @@ export default async function PerfilDuplaEidEsportePage({ params, searchParams }
       timeId={timeId}
       linkPerfilFormacao={linkPerfilDupla}
       duplaRegistroLinks={[{ id: duplaId, href: linkPerfilDupla }]}
+      showBackLink={!isEmbed}
     />
   );
 }

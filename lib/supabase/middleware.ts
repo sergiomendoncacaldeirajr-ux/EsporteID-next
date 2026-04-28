@@ -6,6 +6,7 @@ import {
   type ProfileLegalAcceptance,
   PROFILE_LEGAL_ACCEPTANCE_COLUMNS,
 } from "@/lib/legal/acceptance";
+import { rateLimitForRequest } from "@/lib/security/edge-rate-limit";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 
 /**
@@ -83,6 +84,9 @@ export async function updateSession(request: NextRequest) {
   if (hasMaliciousPayload(pathAndQuery)) {
     return NextResponse.json({ error: "Requisição inválida." }, { status: 400 });
   }
+  const rateLimited = rateLimitForRequest(request);
+  if (rateLimited) return rateLimited;
+
   const embedShell = request.nextUrl.searchParams.get("embed") === "1";
   const hideEmbedMinimalChrome =
     embedShell && (isEmbedEidStatsPath(path) || isEmbedDesafioPath(path) || isEmbedConfrontoPath(path));

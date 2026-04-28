@@ -35,6 +35,8 @@ export type FormacaoEidEsporteViewProps = {
   linkPerfilFormacao: string;
   duplaRegistroLinks?: { id: number; href: string }[];
   avisoTopo?: string | null;
+  /** Em iframe (embed=1), o painel já tem “Voltar”; esconde o link duplicado. */
+  showBackLink?: boolean;
 };
 
 export function FormacaoEidEsporteView({
@@ -57,6 +59,7 @@ export function FormacaoEidEsporteView({
   linkPerfilFormacao,
   duplaRegistroLinks,
   avisoTopo,
+  showBackLink = true,
 }: FormacaoEidEsporteViewProps) {
   let cv = 0;
   let cd = 0;
@@ -73,7 +76,7 @@ export function FormacaoEidEsporteView({
 
   return (
     <main className={PROFILE_PUBLIC_MAIN_CLASS}>
-        <PerfilBackLink href={backHref} label="Voltar" />
+        {showBackLink ? <PerfilBackLink href={backHref} label="Voltar" /> : null}
 
         {avisoTopo ? (
           <p className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100/90">{avisoTopo}</p>
