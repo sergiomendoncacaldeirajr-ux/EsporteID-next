@@ -13,13 +13,30 @@ type Props = {
   distanceKm?: number | null;
 };
 
-function metaTexto(locationLabel?: string | null, distanceKm?: number | null): string | null {
+function quebrarCidadeEstado(locationLabel?: string | null): { cidade: string; estado: string } | null {
   const loc = String(locationLabel ?? "").trim();
+  if (!loc) return null;
+  const partes = loc
+    .split(/\/| - |–|—|,|\|/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (partes.length >= 2) {
+    return { cidade: partes[0] ?? "", estado: partes.slice(1).join(" ") };
+  }
+  return { cidade: loc, estado: "" };
+}
+
+function metaLinhas(locationLabel?: string | null, distanceKm?: number | null): string[] {
+  const loc = quebrarCidadeEstado(locationLabel);
   const km = Number(distanceKm ?? NaN);
   const hasKm = Number.isFinite(km) && km >= 0 && km < 9000;
-  if (!loc && !hasKm) return null;
+  if (!loc && !hasKm) return [];
   const kmTxt = hasKm ? `${km.toFixed(1).replace(".", ",")} km de você` : "";
-  return loc && kmTxt ? `${loc} · ${kmTxt}` : loc || kmTxt;
+  const linhas: string[] = [];
+  if (loc?.cidade) linhas.push(loc.cidade);
+  if (loc?.estado) linhas.push(loc.estado);
+  if (kmTxt) linhas.push(kmTxt);
+  return linhas;
 }
 
 export function ProfileEidPerformanceSeal({
@@ -31,7 +48,7 @@ export function ProfileEidPerformanceSeal({
   distanceKm,
 }: Props) {
   const v = Number.isFinite(notaEid) ? notaEid : 0;
-  const meta = metaTexto(locationLabel, distanceKm);
+  const meta = metaLinhas(locationLabel, distanceKm);
   if (compact) {
     return (
       <div className={`inline-flex shrink-0 flex-col items-center gap-0.5 ${className}`} title={title}>
@@ -41,7 +58,15 @@ export function ProfileEidPerformanceSeal({
             {v.toFixed(1)}
           </span>
         </div>
-        {meta ? <span className="max-w-[130px] text-center text-[8px] leading-tight text-eid-text-secondary">{meta}</span> : null}
+        {meta.length ? (
+          <span className="max-w-[130px] text-center text-[8px] leading-tight text-eid-text-secondary">
+            {meta.map((linha, idx) => (
+              <span key={`${linha}-${idx}`} className="block">
+                {linha}
+              </span>
+            ))}
+          </span>
+        ) : null}
       </div>
     );
   }
@@ -53,8 +78,14 @@ export function ProfileEidPerformanceSeal({
           {v.toFixed(1)}
         </span>
       </div>
-      {meta ? (
-        <span className="max-w-[220px] text-center text-[10px] leading-tight text-eid-text-secondary">{meta}</span>
+      {meta.length ? (
+        <span className="max-w-[220px] text-center text-[10px] leading-tight text-eid-text-secondary">
+          {meta.map((linha, idx) => (
+            <span key={`${linha}-${idx}`} className="block">
+              {linha}
+            </span>
+          ))}
+        </span>
       ) : null}
     </div>
   );
