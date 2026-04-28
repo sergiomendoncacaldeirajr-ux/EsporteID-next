@@ -11,8 +11,6 @@ import {
   type ProfessorObjetivoPlataforma,
   type ProfessorTipoAtuacao,
 } from "@/lib/professor/constants";
-import type { MatchModality } from "@/lib/onboarding/modalidades-match";
-import { sortModalidadesMatch } from "@/lib/onboarding/modalidades-match";
 import { CONTA_PERFIL_HREF } from "@/lib/routes/conta";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 
@@ -28,7 +26,6 @@ type EsporteOpt = {
 type Props = {
   esportes: EsporteOpt[];
   selectedEsportes: number[];
-  selectedEsportesModalidades: Record<number, MatchModality[]>;
   selectedSportModes: Record<number, ProfessorModoEsportivo>;
   selectedProfessorObjetivos: Record<number, ProfessorObjetivoPlataforma>;
   selectedProfessorTipos: Record<number, ProfessorTipoAtuacao[]>;
@@ -40,7 +37,6 @@ type Props = {
 export function ContaEsportesForm({
   esportes,
   selectedEsportes,
-  selectedEsportesModalidades,
   selectedSportModes,
   selectedProfessorObjetivos,
   selectedProfessorTipos,
@@ -53,8 +49,6 @@ export function ContaEsportesForm({
   const [message, setMessage] = useState<string | null>(null);
 
   const [esportesSel, setEsportesSel] = useState<Set<number>>(() => new Set(selectedEsportes));
-  const [esportesModalidades, setEsportesModalidades] =
-    useState<Record<number, MatchModality[]>>(selectedEsportesModalidades);
   const [sportModes, setSportModes] = useState<Record<number, ProfessorModoEsportivo>>(selectedSportModes);
   const [professorObjetivos, setProfessorObjetivos] =
     useState<Record<number, ProfessorObjetivoPlataforma>>(selectedProfessorObjetivos);
@@ -88,11 +82,6 @@ export function ContaEsportesForm({
           delete next[id];
           return next;
         });
-        setEsportesModalidades((om) => {
-          const next = { ...om };
-          delete next[id];
-          return next;
-        });
       } else {
         n.add(id);
         const esp = esportes.find((e) => e.id === id);
@@ -120,15 +109,6 @@ export function ContaEsportesForm({
           ...old,
           [id]: old[id] ?? "menos_1",
         }));
-        const defaultModalidade: MatchModality = esp?.permiteIndividual
-          ? "individual"
-          : esp?.permiteDupla
-            ? "dupla"
-            : "time";
-        setEsportesModalidades((old) => ({
-          ...old,
-          [id]: esp?.suportaConfronto ? (old[id]?.length ? old[id]! : [defaultModalidade]) : [],
-        }));
       }
       return n;
     });
@@ -148,20 +128,6 @@ export function ContaEsportesForm({
       if (checked) set.add(tipo);
       else if (set.size > 1) set.delete(tipo);
       return { ...old, [id]: [...set] as ProfessorTipoAtuacao[] };
-    });
-  }
-
-  function toggleEsporteModality(id: number, modalidade: MatchModality, checked: boolean) {
-    setEsportesModalidades((old) => {
-      const cur = old[id] ?? ["individual"];
-      const s = new Set(sortModalidadesMatch(cur));
-      if (checked) {
-        s.add(modalidade);
-      } else {
-        if (s.size <= 1) return old;
-        s.delete(modalidade);
-      }
-      return { ...old, [id]: sortModalidadesMatch([...s]) };
     });
   }
 
@@ -290,57 +256,16 @@ export function ContaEsportesForm({
                     ))}
                   </>
                 ) : null}
-                {esporteModoTemAtleta(sportModes[e.id] ?? (hasProfessor ? (hasAtleta ? "ambos" : "professor") : "atleta")) &&
-                e.suportaConfronto ? (
-                  <>
-                    <p className="mt-2 text-[11px] text-eid-text-secondary">Modalidades no desafio (marque as que quiser):</p>
-                    {e.permiteIndividual ? (
-                      <label className="mt-1 block text-xs text-eid-fg">
-                        <input
-                          type="checkbox"
-                          name={`esporte_modalidade_${e.id}`}
-                          value="individual"
-                          checked={(esportesModalidades[e.id] ?? ["individual"]).includes("individual")}
-                          onChange={(ev) => toggleEsporteModality(e.id, "individual", ev.target.checked)}
-                          className="mr-2"
-                        />
-                        Individual
-                      </label>
-                    ) : null}
-                    {e.permiteDupla ? (
-                      <label className="mt-1 block text-xs text-eid-fg">
-                        <input
-                          type="checkbox"
-                          name={`esporte_modalidade_${e.id}`}
-                          value="dupla"
-                          checked={(esportesModalidades[e.id] ?? ["individual"]).includes("dupla")}
-                          onChange={(ev) => toggleEsporteModality(e.id, "dupla", ev.target.checked)}
-                          className="mr-2"
-                        />
-                        Dupla
-                      </label>
-                    ) : null}
-                    {e.permiteTime ? (
-                      <label className="mt-1 block text-xs text-eid-fg">
-                        <input
-                          type="checkbox"
-                          name={`esporte_modalidade_${e.id}`}
-                          value="time"
-                          checked={(esportesModalidades[e.id] ?? ["individual"]).includes("time")}
-                          onChange={(ev) => toggleEsporteModality(e.id, "time", ev.target.checked)}
-                          className="mr-2"
-                        />
-                        Time
-                      </label>
-                    ) : null}
-                  </>
-                ) : (
+                {!(
+                  esporteModoTemAtleta(sportModes[e.id] ?? (hasProfessor ? (hasAtleta ? "ambos" : "professor") : "atleta")) &&
+                  e.suportaConfronto
+                ) ? (
                   <p className="mt-2 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1 text-[11px] text-eid-action-400">
                     {isSportMatchEnabled(e.nome)
                       ? "Este esporte ficará apenas no fluxo de professor."
                       : "Este esporte não entra em ranking/desafio. Use no fluxo de professor e treinos."}
                   </p>
-                )}
+                ) : null}
                 <p className="mt-2 text-[11px] text-eid-text-secondary">Experiência neste esporte</p>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {([

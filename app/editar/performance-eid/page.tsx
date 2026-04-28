@@ -1,6 +1,5 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { listarPapeis, precisaEsportesPratica } from "@/lib/roles";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
@@ -69,14 +68,11 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
 
   const { data: eidRows } = await supabase
     .from("usuario_eid")
-    .select("esporte_id, modalidade_match, modalidades_match, tempo_experiencia")
+    .select("esporte_id, tempo_experiencia")
     .eq("usuario_id", user.id);
 
   const selectedEsportes = (eidRows ?? []).map((r) => r.esporte_id);
   const eidRowPorEsporte = new Map((eidRows ?? []).map((r) => [r.esporte_id, r]));
-  const selectedEsportesModalidades = Object.fromEntries(
-    (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
-  );
   const selectedExperiencias = Object.fromEntries(
     (eidRows ?? []).map((r) => [r.esporte_id, parseTempoExperienciaParaEditor(r.tempo_experiencia)])
   ) as Record<number, { tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos"; anos: number; meses: number }>;
@@ -137,13 +133,8 @@ export default async function EditarPerformanceEidFullscreenPage({ searchParams 
                 const ed = selectedExperiencias[esporteId] ?? parseTempoExperienciaParaEditor(raw);
                 return {
                   esporteId,
-                  modalidades:
-                    (selectedEsportesModalidades[esporteId] as Array<"individual" | "dupla" | "time"> | undefined) ??
-                    ["individual"],
                   tempoTipo: ma ? "inicio" : "faixa",
                   tempo: ed.tempo ?? "1 a 3 anos",
-                  tempoAnos: ed.anos ?? 0,
-                  tempoMeses: ed.meses ?? 0,
                   inicioMes: ma?.mes ?? 1,
                   inicioAno: ma?.ano ?? Math.max(1970, refAno - 2),
                 };

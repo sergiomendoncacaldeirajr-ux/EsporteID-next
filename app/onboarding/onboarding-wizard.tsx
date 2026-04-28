@@ -15,8 +15,6 @@ import {
   type ProfessorTipoAtuacao,
 } from "@/lib/professor/constants";
 import { normalizarPapeisContaPrincipal } from "@/lib/roles";
-import type { MatchModality } from "@/lib/onboarding/modalidades-match";
-import { sortModalidadesMatch } from "@/lib/onboarding/modalidades-match";
 
 /* ── Seletor de localização via GPS ────────────────────────────────── */
 function LocationPicker({
@@ -381,7 +379,6 @@ type Props = {
     espaco: "ativo" | "em_breve" | "desenvolvimento" | "teste";
   };
   selectedEsportes: number[];
-  selectedEsportesModalidades: Record<number, MatchModality[]>;
   selectedSportModes: Record<number, ProfessorModoEsportivo>;
   selectedProfessorObjetivos: Record<number, ProfessorObjetivoPlataforma>;
   selectedProfessorTipos: Record<number, ProfessorTipoAtuacao[]>;
@@ -441,7 +438,6 @@ export function OnboardingWizard({
   roleModes,
   roleFeatureModes,
   selectedEsportes,
-  selectedEsportesModalidades,
   selectedSportModes,
   selectedProfessorObjetivos,
   selectedProfessorTipos,
@@ -485,9 +481,6 @@ export function OnboardingWizard({
     new Set(normalizarPapeisContaPrincipal(selectedPapeis))
   );
   const [esportesSel, setEsportesSel] = useState<Set<number>>(new Set(selectedEsportes));
-  const [esportesModalidades, setEsportesModalidades] = useState<Record<number, MatchModality[]>>(
-    selectedEsportesModalidades
-  );
   const [esporteModes, setEsporteModes] = useState<Record<number, ProfessorModoEsportivo>>(selectedSportModes);
   const [professorObjetivos, setProfessorObjetivos] =
     useState<Record<number, ProfessorObjetivoPlataforma>>(selectedProfessorObjetivos);
@@ -613,10 +606,6 @@ export function OnboardingWizard({
   }, [selectedEsportes]);
 
   useEffect(() => {
-    setEsportesModalidades(selectedEsportesModalidades);
-  }, [selectedEsportesModalidades]);
-
-  useEffect(() => {
     setEsporteModes(selectedSportModes);
   }, [selectedSportModes]);
 
@@ -638,7 +627,6 @@ export function OnboardingWizard({
             step: "papeis" as Step,
             papeis: [] as string[],
             esportesSel: [] as number[],
-            esportesModalidades: {} as Record<number, MatchModality[]>,
             esporteModes: {} as Record<number, ProfessorModoEsportivo>,
             professorObjetivos: {} as Record<number, ProfessorObjetivoPlataforma>,
             professorTipos: {} as Record<number, ProfessorTipoAtuacao[]>,
@@ -656,8 +644,6 @@ export function OnboardingWizard({
         step: Step;
         papeis: string[];
         esportesSel: number[];
-        esportesModalidades?: Record<number, MatchModality[]>;
-        esportesModalidade?: Record<number, "individual" | "dupla" | "time">;
         esporteModes?: Record<number, ProfessorModoEsportivo>;
         professorObjetivos?: Record<number, ProfessorObjetivoPlataforma>;
         professorTipos?: Record<number, ProfessorTipoAtuacao[]>;
@@ -723,23 +709,6 @@ export function OnboardingWizard({
       if (draft.esporteModes) setEsporteModes(draft.esporteModes);
       if (draft.professorObjetivos) setProfessorObjetivos(draft.professorObjetivos);
       if (draft.professorTipos) setProfessorTipos(draft.professorTipos);
-      const migratedMods = (() => {
-        const raw = draft.esportesModalidades ?? draft.esportesModalidade;
-        if (!raw || typeof raw !== "object") return null;
-        const out: Record<number, MatchModality[]> = {};
-        for (const [k, v] of Object.entries(raw)) {
-          const id = Number(k);
-          if (!Number.isFinite(id)) continue;
-          if (Array.isArray(v)) {
-            const ok = v.filter((x): x is MatchModality => x === "individual" || x === "dupla" || x === "time");
-            if (ok.length) out[id] = sortModalidadesMatch(ok);
-          } else if (v === "individual" || v === "dupla" || v === "time") {
-            out[id] = [v];
-          }
-        }
-        return Object.keys(out).length ? out : null;
-      })();
-      if (migratedMods) setEsportesModalidades(migratedMods);
       if (draft.expModo) setExpModo(draft.expModo);
       if (draft.expAprox) setExpAprox(draft.expAprox);
       if (typeof draft.expMes === "string") setExpMes(draft.expMes);
@@ -826,7 +795,6 @@ export function OnboardingWizard({
       step,
       papeis: [...papeis],
       esportesSel: [...esportesSel],
-      esportesModalidades,
       esporteModes,
       professorObjetivos,
       professorTipos,
@@ -886,7 +854,6 @@ export function OnboardingWizard({
     espacoNome,
     esportesSel,
     sportExpMesAnoDraft,
-    esportesModalidades,
     esporteModes,
     professorObjetivos,
     professorTipos,
@@ -1072,7 +1039,6 @@ export function OnboardingWizard({
       step: "papeis" as Step,
       papeis: [] as string[],
       esportesSel: [] as number[],
-      esportesModalidades: {} as Record<number, MatchModality[]>,
       esporteModes: {} as Record<number, ProfessorModoEsportivo>,
       professorObjetivos: {} as Record<number, ProfessorObjetivoPlataforma>,
       professorTipos: {} as Record<number, ProfessorTipoAtuacao[]>,
@@ -1088,7 +1054,6 @@ export function OnboardingWizard({
     setStep("papeis");
     setPapeis(new Set());
     setEsportesSel(new Set());
-    setEsportesModalidades({});
     setEsporteModes({});
     setProfessorObjetivos({});
     setProfessorTipos({});
@@ -1169,11 +1134,6 @@ export function OnboardingWizard({
           delete next[id];
           return next;
         });
-        setEsportesModalidades((om) => {
-          const next = { ...om };
-          delete next[id];
-          return next;
-        });
       } else {
         n.add(id);
         const defaultMode: ProfessorModoEsportivo = hasProfessor ? "professor" : "atleta";
@@ -1188,16 +1148,6 @@ export function OnboardingWizard({
         setProfessorTipos((old) => ({
           ...old,
           [id]: old[id]?.length ? old[id]! : ["aulas"],
-        }));
-        const esp = esportes.find((e) => e.id === id);
-        const defaultModalidade: MatchModality = esp?.permiteIndividual
-          ? "individual"
-          : esp?.permiteDupla
-            ? "dupla"
-            : "time";
-        setEsportesModalidades((old) => ({
-          ...old,
-          [id]: esp?.suportaConfronto ? (old[id]?.length ? old[id]! : [defaultModalidade]) : [],
         }));
       }
       return n;
@@ -1233,20 +1183,6 @@ export function OnboardingWizard({
       if (checked) current.add(tipo);
       else if (current.size > 1) current.delete(tipo);
       return { ...old, [id]: [...current] as ProfessorTipoAtuacao[] };
-    });
-  }
-
-  function toggleEsporteModality(id: number, modalidade: MatchModality, checked: boolean) {
-    setEsportesModalidades((old) => {
-      const cur = old[id] ?? ["individual"];
-      const set = new Set(sortModalidadesMatch(cur));
-      if (checked) {
-        set.add(modalidade);
-      } else {
-        if (set.size <= 1) return old;
-        set.delete(modalidade);
-      }
-      return { ...old, [id]: sortModalidadesMatch([...set]) };
     });
   }
 
@@ -1747,66 +1683,11 @@ export function OnboardingWizard({
                         </>
                       ) : null}
 
-                      {temAtletaNoEsporte ? (
-                        <>
-                      {/* Modalidades */}
-                      {e.suportaConfronto && (e.permiteIndividual || e.permiteDupla || e.permiteTime) && (
-                        <>
-                          <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">
-                            Como deseja jogar
-                          </p>
-                          <div className="mt-1.5 flex flex-wrap gap-2">
-                            {e.permiteIndividual && (
-                              <label className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
-                                (esportesModalidades[e.id] ?? ["individual"]).includes("individual")
-                                  ? "border-eid-primary-500 bg-eid-primary-500/15 text-eid-primary-400"
-                                  : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
-                              }`}>
-                                <input type="checkbox" name={`esporte_modalidade_${e.id}`} value="individual"
-                                  checked={(esportesModalidades[e.id] ?? ["individual"]).includes("individual")}
-                                  onChange={(ev) => toggleEsporteModality(e.id, "individual", ev.target.checked)}
-                                  className="sr-only"
-                                />
-                                Individual (X1)
-                              </label>
-                            )}
-                            {e.permiteDupla && (
-                              <label className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
-                                (esportesModalidades[e.id] ?? ["individual"]).includes("dupla")
-                                  ? "border-eid-primary-500 bg-eid-primary-500/15 text-eid-primary-400"
-                                  : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
-                              }`}>
-                                <input type="checkbox" name={`esporte_modalidade_${e.id}`} value="dupla"
-                                  checked={(esportesModalidades[e.id] ?? ["individual"]).includes("dupla")}
-                                  onChange={(ev) => toggleEsporteModality(e.id, "dupla", ev.target.checked)}
-                                  className="sr-only"
-                                />
-                                Dupla
-                              </label>
-                            )}
-                            {e.permiteTime && (
-                              <label className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all ${
-                                (esportesModalidades[e.id] ?? ["individual"]).includes("time")
-                                  ? "border-eid-primary-500 bg-eid-primary-500/15 text-eid-primary-400"
-                                  : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
-                              }`}>
-                                <input type="checkbox" name={`esporte_modalidade_${e.id}`} value="time"
-                                  checked={(esportesModalidades[e.id] ?? ["individual"]).includes("time")}
-                                  onChange={(ev) => toggleEsporteModality(e.id, "time", ev.target.checked)}
-                                  className="sr-only"
-                                />
-                                Time
-                              </label>
-                            )}
-                          </div>
-                        </>
-                      )}
-                        </>
-                      ) : (
+                      {!temAtletaNoEsporte ? (
                         <p className="mt-3 rounded-lg border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-1.5 text-[11px] text-eid-action-400">
                           Neste esporte você entrará apenas no fluxo de professor, sem desafio ou ranking competitivo.
                         </p>
-                      )}
+                      ) : null}
 
                       {/* Experiência por esporte — só para atleta/professor */}
                       {hasAtletaProfessor && (

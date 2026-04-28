@@ -1228,7 +1228,7 @@ export default async function ComunidadePage() {
                 hasPending={sugestoesEnviadasItems.length > 0}
                 badgeLabel={hasSugestoesEnviadasPendentes ? "Pendente" : "Resolvido"}
               >
-                <ComunidadeSugestoesEnviadasMatch items={sugestoesEnviadasItems} />
+                <ComunidadeSugestoesEnviadasMatch items={sugestoesEnviadasItems} viewerUserId={user.id} />
               </ComunidadeQuadro>
               <ComunidadeQuadro id="equipe-convites" title="Convites recebidos" hasPending={conviteItems.length > 0}>
                 <ComunidadeConvitesTime items={conviteItems} />

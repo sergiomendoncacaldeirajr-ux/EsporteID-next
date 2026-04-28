@@ -204,7 +204,7 @@ export async function responderCandidaturaAction(
 
   const { data: row, error: rowErr } = await supabase
     .from("time_candidaturas")
-    .select("id, time_id, candidato_usuario_id, status, times!inner(id, nome, criador_id, tipo)")
+    .select("id, time_id, candidato_usuario_id, status, times!inner(id, nome, criador_id, tipo, esporte_id)")
     .eq("id", candidaturaId)
     .maybeSingle();
   if (rowErr) return { ok: false, message: rowErr.message };
@@ -215,6 +215,22 @@ export async function responderCandidaturaAction(
   if (row.status !== "pendente") return { ok: false, message: "Essa candidatura já foi respondida." };
 
   if (aceitar) {
+    const esporteId = Number((team as { esporte_id?: number | null }).esporte_id ?? 0);
+    if (Number.isFinite(esporteId) && esporteId > 0) {
+      const { data: candidatoEsporte } = await supabase
+        .from("usuario_eid")
+        .select("usuario_id")
+        .eq("usuario_id", row.candidato_usuario_id)
+        .eq("esporte_id", esporteId)
+        .maybeSingle();
+      if (!candidatoEsporte) {
+        return {
+          ok: false,
+          message:
+            "Não foi possível aceitar: o atleta não tem esse esporte configurado no perfil EID. Peça para configurar em Editar Performance EID.",
+        };
+      }
+    }
     const cap = rosterCapForTipo((team as { tipo?: string | null }).tipo);
     const { data: jaMembro } = await supabase
       .from("membros_time")

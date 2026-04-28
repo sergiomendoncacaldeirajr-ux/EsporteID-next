@@ -7,6 +7,7 @@ import {
   limparSugestaoEnviadaNotificacao,
   type LimparSugestaoEnviadaState,
 } from "@/app/comunidade/actions";
+import { createClient } from "@/lib/supabase/client";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { PEDIDO_LIMPAR_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
@@ -53,11 +54,44 @@ function firstName(value?: string | null): string {
   return clean.split(/\s+/)[0] ?? clean;
 }
 
-export function ComunidadeSugestoesEnviadasMatch({ items }: { items: SugestaoEnviadaMatchItem[] }) {
+export function ComunidadeSugestoesEnviadasMatch({
+  items,
+  viewerUserId,
+}: {
+  items: SugestaoEnviadaMatchItem[];
+  viewerUserId: string;
+}) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(limparSugestaoEnviadaNotificacao, initial);
   const [clickedClearId, setClickedClearId] = useState<number | null>(null);
   const err = "ok" in state && !state.ok ? state.message : null;
+
+  useEffect(() => {
+    if (!viewerUserId) return;
+    const supabase = createClient();
+    let debounce: ReturnType<typeof setTimeout> | undefined;
+    const scheduleRefresh = () => {
+      if (debounce) clearTimeout(debounce);
+      debounce = setTimeout(() => router.refresh(), 500);
+    };
+    const ch = supabase
+      .channel(`eid-comunidade-sugestoes-enviadas-${viewerUserId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "match_sugestoes",
+          filter: `sugeridor_id=eq.${viewerUserId}`,
+        },
+        scheduleRefresh
+      )
+      .subscribe();
+    return () => {
+      if (debounce) clearTimeout(debounce);
+      void supabase.removeChannel(ch);
+    };
+  }, [viewerUserId, router]);
 
   useEffect(() => {
     if ("ok" in state && state.ok) {

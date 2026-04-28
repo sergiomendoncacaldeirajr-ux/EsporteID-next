@@ -6,7 +6,6 @@ import type {
   ProfessorObjetivoPlataforma,
   ProfessorTipoAtuacao,
 } from "@/lib/professor/constants";
-import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { CONTA_PERFIL_HREF } from "@/lib/routes/conta";
 import { listarPapeis, precisaEsportesPratica } from "@/lib/roles";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
@@ -74,13 +73,10 @@ export default async function ContaEsportesEidPage() {
 
   const { data: eidRows } = await supabase
     .from("usuario_eid")
-    .select("esporte_id, modalidade_match, modalidades_match, tempo_experiencia")
+    .select("esporte_id, tempo_experiencia")
     .eq("usuario_id", user.id);
 
   const selectedEsportes = (eidRows ?? []).map((r) => r.esporte_id);
-  const selectedEsportesModalidades = Object.fromEntries(
-    (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
-  );
   const selectedExperiencias = Object.fromEntries(
     (eidRows ?? []).map((r) => [r.esporte_id, parseTempoExperienciaParaChaveAprox(r.tempo_experiencia)])
   ) as Record<number, "menos_1" | "1_3" | "mais_3">;
@@ -179,7 +175,6 @@ export default async function ContaEsportesEidPage() {
                 suportaConfronto: isSportMatchEnabled(e.nome),
               }))}
               selectedEsportes={[...selectedSet]}
-              selectedEsportesModalidades={selectedEsportesModalidades}
               selectedSportModes={selectedSportModes}
               selectedProfessorObjetivos={selectedProfessorObjetivos}
               selectedProfessorTipos={selectedProfessorTipos}

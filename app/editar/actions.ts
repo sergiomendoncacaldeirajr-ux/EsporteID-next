@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { modalidadesMatchFromFlags } from "@/lib/onboarding/modalidades-match";
 import { createClient } from "@/lib/supabase/server";
 
 type SaveProfileResult = { ok: true } | { ok: false; message: string };
@@ -54,7 +55,8 @@ export async function saveProfileMainAction(formData: FormData): Promise<SavePro
 
 type PerformancePayloadItem = {
   esporteId: number;
-  modalidades: Array<"individual" | "dupla" | "time">;
+  /** Legado: ignorado; modalidades vêm das flags do esporte no banco. */
+  modalidades?: Array<"individual" | "dupla" | "time">;
   /** "faixa" = rótulo aproximado; "inicio" = grava MM/YYYY */
   tempoTipo?: "faixa" | "inicio";
   tempo: "Menos de 1 ano" | "1 a 3 anos" | "Mais de 3 anos";
@@ -82,10 +84,32 @@ export async function savePerformanceEidAction(formData: FormData): Promise<Save
 
   if (parsed.length === 0) return { ok: false, message: "Selecione pelo menos um esporte." };
 
+  const esporteIds = [...new Set(parsed.map((p) => p.esporteId).filter((id) => Number.isFinite(id) && id > 0))];
+  const { data: espMeta, error: espErr } = await supabase
+    .from("esportes")
+    .select("id, permite_individual, permite_dupla, permite_time")
+    .in("id", esporteIds);
+  if (espErr) return { ok: false, message: espErr.message };
+  const modsByEsporte = new Map<number, ("individual" | "dupla" | "time")[]>();
+  for (const r of espMeta ?? []) {
+    const id = Number(r.id);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    let mods = modalidadesMatchFromFlags({
+      permiteIndividual: Boolean(r.permite_individual),
+      permiteDupla: Boolean(r.permite_dupla),
+      permiteTime: Boolean(r.permite_time),
+    });
+    if (mods.length === 0) mods = ["individual"];
+    modsByEsporte.set(id, mods);
+  }
+
   const nowIso = new Date().toISOString();
   const rows = parsed
     .filter((item) => Number.isFinite(item.esporteId) && item.esporteId > 0)
     .map((item) => {
+      const modalidades =
+        modsByEsporte.get(item.esporteId) ?? (["individual"] as ("individual" | "dupla" | "time")[]);
+      const modalidadeMatch = modalidades[0] ?? "individual";
       const tipo = item.tempoTipo ?? "faixa";
       if (tipo === "inicio") {
         const mes = Number(item.inicioMes ?? 0);
@@ -97,12 +121,8 @@ export async function savePerformanceEidAction(formData: FormData): Promise<Save
           usuario_id: user.id,
           esporte_id: item.esporteId,
           interesse_match: "ranking",
-          modalidade_match: item.modalidades.includes("individual")
-            ? "individual"
-            : item.modalidades.includes("dupla")
-              ? "dupla"
-              : "time",
-          modalidades_match: item.modalidades,
+          modalidade_match: modalidadeMatch,
+          modalidades_match: modalidades,
           tempo_experiencia: tempoDetalhado,
           atualizado_em: nowIso,
         };
@@ -119,12 +139,8 @@ export async function savePerformanceEidAction(formData: FormData): Promise<Save
         usuario_id: user.id,
         esporte_id: item.esporteId,
         interesse_match: "ranking",
-        modalidade_match: item.modalidades.includes("individual")
-          ? "individual"
-          : item.modalidades.includes("dupla")
-            ? "dupla"
-            : "time",
-        modalidades_match: item.modalidades,
+        modalidade_match: modalidadeMatch,
+        modalidades_match: modalidades,
         tempo_experiencia: tempoDetalhado,
         atualizado_em: nowIso,
       };

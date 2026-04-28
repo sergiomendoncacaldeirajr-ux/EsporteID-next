@@ -317,26 +317,7 @@ export async function salvarEsportesOnboarding(
 
     if (!esporteModoTemAtleta(modoEsporte)) continue;
 
-    const rawMods = formData.getAll(`esporte_modalidade_${esporteId}`).map(String);
-    const picked = sortMods(
-      rawMods
-        .map((raw) => {
-          const normalized = raw.trim().toLowerCase();
-          if (normalized === "individual" || normalized === "dupla" || normalized === "time") {
-            return normalized as Modality;
-          }
-          return null;
-        })
-        .filter((m): m is Modality => m != null)
-    );
-    const finalMods = sortMods(picked.filter((m) => allowed.includes(m)));
-    if (finalMods.length === 0) {
-      return {
-        ok: false,
-        message: `Em “${meta.nome}”, marque ao menos uma forma de jogar nos desafios (individual, dupla ou time).`,
-      };
-    }
-    modalidadesMap.set(esporteId, finalMods);
+    modalidadesMap.set(esporteId, sortMods(allowed));
   }
 
   const { data: existentes, error: exErr } = await supabase
@@ -384,6 +365,7 @@ export async function salvarEsportesOnboarding(
           .from("usuario_eid")
           .update({
             interesse_match: "ranking",
+            modalidade_match: mods[0] ?? "individual",
             modalidades_match: mods,
             tempo_experiencia: tempoExp,
           })
@@ -397,13 +379,17 @@ export async function salvarEsportesOnboarding(
   }
 
   if (adicionar.length > 0) {
-    const rows = adicionar.map((esporteId) => ({
-      usuario_id: user.id,
-      esporte_id: esporteId,
-      interesse_match: "ranking",
-      modalidades_match: modalidadesMap.get(esporteId) ?? ["individual"],
-      tempo_experiencia: tempoExperienciaLabel(expPorEsporte.get(esporteId)),
-    }));
+    const rows = adicionar.map((esporteId) => {
+      const mods = modalidadesMap.get(esporteId) ?? ["individual"];
+      return {
+        usuario_id: user.id,
+        esporte_id: esporteId,
+        interesse_match: "ranking",
+        modalidade_match: mods[0] ?? "individual",
+        modalidades_match: mods,
+        tempo_experiencia: tempoExperienciaLabel(expPorEsporte.get(esporteId)),
+      };
+    });
     const { error: insertErr } = await supabase.from("usuario_eid").insert(rows);
     if (insertErr) return { ok: false, message: insertErr.message };
   }

@@ -15,6 +15,19 @@ export function sortModalidadesMatch(mods: MatchModality[]): MatchModality[] {
   return MATCH_MODALITY_ORDER.filter((m) => set.has(m));
 }
 
+/** Modalidades possíveis no esporte conforme flags do cadastro (usuário escolhe na hora do desafio). */
+export function modalidadesMatchFromFlags(opts: {
+  permiteIndividual: boolean;
+  permiteDupla: boolean;
+  permiteTime: boolean;
+}): MatchModality[] {
+  const mods: MatchModality[] = [];
+  if (opts.permiteIndividual) mods.push("individual");
+  if (opts.permiteDupla) mods.push("dupla");
+  if (opts.permiteTime) mods.push("time");
+  return sortModalidadesMatch(mods);
+}
+
 export function labelModalidadesMatchPt(mods: MatchModality[]): string {
   return sortModalidadesMatch(mods).map((m) => LABELS[m]).join(", ");
 }

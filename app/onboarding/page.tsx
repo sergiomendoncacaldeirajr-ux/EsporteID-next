@@ -10,7 +10,6 @@ import {
   obterDetalhesPapel,
   precisaEsportesPratica,
 } from "@/lib/roles";
-import { modalidadesFromUsuarioEidRow } from "@/lib/onboarding/modalidades-match";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
@@ -59,14 +58,8 @@ export default async function OnboardingPage() {
   const detalhesEspaco = obterDetalhesPapel(papeisRows, "espaco");
   const professorContaDedicada = papeis.includes("professor");
 
-  const { data: eidRows } = await supabase
-    .from("usuario_eid")
-    .select("esporte_id, interesse_match, modalidade_match, modalidades_match")
-    .eq("usuario_id", user.id);
+  const { data: eidRows } = await supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", user.id);
   const selectedEsportes = (eidRows ?? []).map((r) => r.esporte_id);
-  const selectedEsportesModalidades = Object.fromEntries(
-    (eidRows ?? []).map((r) => [r.esporte_id, modalidadesFromUsuarioEidRow(r)])
-  );
 
   const { data: professorEsportesRows } = professorContaDedicada
     ? await supabase
@@ -189,7 +182,6 @@ export default async function OnboardingPage() {
       roleModes={roleModes}
       roleFeatureModes={roleFeatureModes}
       selectedEsportes={selectedEsportesAll}
-      selectedEsportesModalidades={selectedEsportesModalidades}
       selectedSportModes={selectedSportModes}
       selectedProfessorObjetivos={selectedProfessorObjetivos}
       selectedProfessorTipos={selectedProfessorTipos}

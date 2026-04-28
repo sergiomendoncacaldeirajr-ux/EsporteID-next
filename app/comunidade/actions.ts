@@ -192,47 +192,86 @@ async function ensurePartidaAgendadaFromMatch(
   let time1Id: number | null = null;
   let time2Id: number | null = isColetivo && matchRow.adversario_time_id ? Number(matchRow.adversario_time_id) : null;
   if (isColetivo) {
-    // Quando o match veio de sugestão para líder, priorizamos a formação sugerida.
-    const { data: sugestaoLigada } = await supabase
+    const normTipo = (t: unknown) => String((t as { tipo?: string | null } | null)?.tipo ?? "").trim().toLowerCase();
+
+    const { data: sugestaoPar } = await supabase
       .from("match_sugestoes")
-      .select("sugeridor_time_id")
+      .select("sugeridor_time_id, alvo_time_id")
       .eq("match_id", matchId)
       .order("id", { ascending: false })
       .limit(1)
       .maybeSingle();
-    const suggestedTeamId = Number(sugestaoLigada?.sugeridor_time_id ?? 0);
-    if (Number.isFinite(suggestedTeamId) && suggestedTeamId > 0) {
-      const { data: suggestedTeam } = await supabase
+
+    const sid = Number(sugestaoPar?.sugeridor_time_id ?? 0);
+    const aid = Number(sugestaoPar?.alvo_time_id ?? 0);
+    if (Number.isFinite(sid) && sid > 0 && Number.isFinite(aid) && aid > 0) {
+      const { data: timesPar } = await supabase
         .from("times")
         .select("id, tipo, esporte_id, criador_id")
-        .eq("id", suggestedTeamId)
-        .maybeSingle();
+        .in("id", [sid, aid]);
+      const tSug = (timesPar ?? []).find((r) => Number((r as { id?: number }).id) === sid) as
+        | { id?: number; tipo?: string | null; esporte_id?: number | null; criador_id?: string | null }
+        | undefined;
+      const tAlvo = (timesPar ?? []).find((r) => Number((r as { id?: number }).id) === aid) as
+        | { id?: number; tipo?: string | null; esporte_id?: number | null; criador_id?: string | null }
+        | undefined;
       if (
-        suggestedTeam?.id &&
-        String(suggestedTeam.tipo ?? "").trim().toLowerCase() === modalidade &&
-        Number(suggestedTeam.esporte_id) === Number(matchRow.esporte_id) &&
-        suggestedTeam.criador_id === matchRow.usuario_id
+        tSug?.id &&
+        tAlvo?.id &&
+        normTipo(tSug) === modalidade &&
+        normTipo(tAlvo) === modalidade &&
+        Number(tSug.esporte_id) === Number(matchRow.esporte_id) &&
+        Number(tAlvo.esporte_id) === Number(matchRow.esporte_id) &&
+        String(tSug.criador_id ?? "") === String(matchRow.usuario_id ?? "") &&
+        String(tAlvo.criador_id ?? "") === String(matchRow.adversario_id ?? "")
       ) {
-        time1Id = Number(suggestedTeam.id);
+        time1Id = sid;
+        time2Id = aid;
       }
     }
 
-    if (!time1Id) {
-    const { data: challengerTeam } = await supabase
-      .from("times")
-      .select("id")
-      .eq("criador_id", matchRow.usuario_id)
-      .eq("esporte_id", Number(matchRow.esporte_id))
-      .eq("tipo", modalidade)
-      .order("id", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-      time1Id = challengerTeam?.id ? Number(challengerTeam.id) : null;
-    }
+    if (!time1Id || !time2Id) {
+      const { data: sugestaoLigada } = await supabase
+        .from("match_sugestoes")
+        .select("sugeridor_time_id")
+        .eq("match_id", matchId)
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const suggestedTeamId = Number(sugestaoLigada?.sugeridor_time_id ?? 0);
+      if (Number.isFinite(suggestedTeamId) && suggestedTeamId > 0) {
+        const { data: suggestedTeam } = await supabase
+          .from("times")
+          .select("id, tipo, esporte_id, criador_id")
+          .eq("id", suggestedTeamId)
+          .maybeSingle();
+        if (
+          suggestedTeam?.id &&
+          normTipo(suggestedTeam) === modalidade &&
+          Number(suggestedTeam.esporte_id) === Number(matchRow.esporte_id) &&
+          String(suggestedTeam.criador_id ?? "") === String(matchRow.usuario_id ?? "")
+        ) {
+          time1Id = Number(suggestedTeam.id);
+        }
+      }
 
-    if (!time2Id || !time1Id) {
-      time1Id = null;
-      time2Id = null;
+      if (!time1Id) {
+        const { data: challengerTeam } = await supabase
+          .from("times")
+          .select("id")
+          .eq("criador_id", matchRow.usuario_id)
+          .eq("esporte_id", Number(matchRow.esporte_id))
+          .ilike("tipo", modalidade)
+          .order("id", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        time1Id = challengerTeam?.id ? Number(challengerTeam.id) : null;
+      }
+
+      if (!time2Id || !time1Id) {
+        time1Id = null;
+        time2Id = null;
+      }
     }
   }
 

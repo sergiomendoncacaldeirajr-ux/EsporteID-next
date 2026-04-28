@@ -152,6 +152,19 @@ export async function criarEquipe(
 
   if (nome.length < 3) return { ok: false, message: "Nome da equipe inválido." };
   if (!Number.isInteger(esporteId) || esporteId < 1) return { ok: false, message: "Selecione um esporte válido." };
+  const { data: donoEsporte } = await supabase
+    .from("usuario_eid")
+    .select("usuario_id")
+    .eq("usuario_id", user.id)
+    .eq("esporte_id", esporteId)
+    .maybeSingle();
+  if (!donoEsporte) {
+    return {
+      ok: false,
+      message:
+        "Você só pode criar dupla/time em esportes que já estão no seu perfil EID. Adicione esse esporte em Editar Performance EID e tente novamente.",
+    };
+  }
   if (username && !/^[a-z0-9_]{3,24}$/.test(username)) {
     return { ok: false, message: "Username inválido. Use 3-24 caracteres [a-z0-9_]." };
   }
