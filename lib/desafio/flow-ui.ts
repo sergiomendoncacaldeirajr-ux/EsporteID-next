@@ -27,10 +27,10 @@ export const DESAFIO_CHOICE_ACTION =
  * ~70% menor em área que o bloco full-width com texto 8px.
  */
 export const PEDIDO_ACEITAR_BTN_CLASS =
-  "inline-flex !h-[15px] !min-h-0 shrink-0 items-center justify-center rounded-full border border-emerald-600/90 bg-emerald-600 px-0.5 text-[5px] font-black uppercase leading-none tracking-[0.03em] text-white shadow-none transition hover:bg-emerald-700 disabled:opacity-60 sm:!h-[18px] sm:px-1 sm:text-[7px]";
+  "inline-flex !h-[12px] !min-h-0 shrink-0 items-center justify-center rounded-full border border-emerald-600/90 bg-emerald-600 px-0 text-[4px] font-black uppercase leading-none tracking-[0.02em] text-white shadow-none transition hover:bg-emerald-700 disabled:opacity-60 md:!h-[18px] md:px-1 md:text-[7px]";
 
 export const PEDIDO_RECUSAR_BTN_CLASS =
-  "inline-flex !h-[15px] !min-h-0 shrink-0 items-center justify-center rounded-full border border-rose-600/90 bg-rose-600 px-0.5 text-[5px] font-black uppercase leading-none tracking-[0.03em] text-white transition hover:bg-rose-700 disabled:opacity-60 sm:!h-[18px] sm:px-1 sm:text-[7px]";
+  "inline-flex !h-[12px] !min-h-0 shrink-0 items-center justify-center rounded-full border border-rose-600/90 bg-rose-600 px-0 text-[4px] font-black uppercase leading-none tracking-[0.02em] text-white transition hover:bg-rose-700 disabled:opacity-60 md:!h-[18px] md:px-1 md:text-[7px]";
 
 /**
  * Cancelar compacto (candidatura, pedido enviado, atalho na agenda): mesma altura fixa que Aceitar/Recusar.
