@@ -170,20 +170,6 @@ async function ensurePartidaAgendadaFromMatch(
   if (String(matchRow.finalidade ?? "ranking").trim().toLowerCase() !== "ranking") return;
   if (!matchRow.usuario_id || !matchRow.adversario_id || !matchRow.esporte_id) return;
 
-  const { data: aberta } = await supabase
-    .from("partidas")
-    .select("id")
-    .eq("esporte_id", Number(matchRow.esporte_id))
-    .is("torneio_id", null)
-    .or(
-      `and(jogador1_id.eq.${matchRow.usuario_id},jogador2_id.eq.${matchRow.adversario_id}),and(jogador1_id.eq.${matchRow.adversario_id},jogador2_id.eq.${matchRow.usuario_id})`
-    )
-    .in("status", ["agendada", "aguardando_confirmacao"])
-    .order("id", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (aberta?.id) return;
-
   const modalidade = String(matchRow.modalidade_confronto ?? matchRow.tipo ?? "individual")
     .trim()
     .toLowerCase();
@@ -191,6 +177,7 @@ async function ensurePartidaAgendadaFromMatch(
 
   let time1Id: number | null = null;
   let time2Id: number | null = isColetivo && matchRow.adversario_time_id ? Number(matchRow.adversario_time_id) : null;
+
   if (isColetivo) {
     const normTipo = (t: unknown) => String((t as { tipo?: string | null } | null)?.tipo ?? "").trim().toLowerCase();
 
@@ -215,15 +202,14 @@ async function ensurePartidaAgendadaFromMatch(
       const tAlvo = (timesPar ?? []).find((r) => Number((r as { id?: number }).id) === aid) as
         | { id?: number; tipo?: string | null; esporte_id?: number | null; criador_id?: string | null }
         | undefined;
+      /* Partida veio de sugestão aprovada: confiamos no par da linha match_sugestoes (RPC já validou líderes). */
       if (
         tSug?.id &&
         tAlvo?.id &&
         normTipo(tSug) === modalidade &&
         normTipo(tAlvo) === modalidade &&
         Number(tSug.esporte_id) === Number(matchRow.esporte_id) &&
-        Number(tAlvo.esporte_id) === Number(matchRow.esporte_id) &&
-        String(tSug.criador_id ?? "") === String(matchRow.usuario_id ?? "") &&
-        String(tAlvo.criador_id ?? "") === String(matchRow.adversario_id ?? "")
+        Number(tAlvo.esporte_id) === Number(matchRow.esporte_id)
       ) {
         time1Id = sid;
         time2Id = aid;
@@ -275,6 +261,50 @@ async function ensurePartidaAgendadaFromMatch(
     }
   }
 
+  if (isColetivo && (!time1Id || !time2Id)) {
+    return;
+  }
+
+  const { data: abertaPorMatch } = await supabase
+    .from("partidas")
+    .select("id")
+    .eq("match_id", matchId)
+    .in("status", ["agendada", "aguardando_confirmacao"])
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (abertaPorMatch?.id) return;
+
+  if (isColetivo && time1Id && time2Id) {
+    const { data: abertaColetiva } = await supabase
+      .from("partidas")
+      .select("id")
+      .eq("esporte_id", Number(matchRow.esporte_id))
+      .is("torneio_id", null)
+      .in("status", ["agendada", "aguardando_confirmacao"])
+      .or(
+        `and(time1_id.eq.${time1Id},time2_id.eq.${time2Id}),and(time1_id.eq.${time2Id},time2_id.eq.${time1Id})`
+      )
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (abertaColetiva?.id) return;
+  } else {
+    const { data: aberta } = await supabase
+      .from("partidas")
+      .select("id")
+      .eq("esporte_id", Number(matchRow.esporte_id))
+      .is("torneio_id", null)
+      .or(
+        `and(jogador1_id.eq.${matchRow.usuario_id},jogador2_id.eq.${matchRow.adversario_id}),and(jogador1_id.eq.${matchRow.adversario_id},jogador2_id.eq.${matchRow.usuario_id})`
+      )
+      .in("status", ["agendada", "aguardando_confirmacao"])
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (aberta?.id) return;
+  }
+
   const { data: novaPartida, error: insErr } = await supabase
     .from("partidas")
     .insert({
@@ -284,6 +314,7 @@ async function ensurePartidaAgendadaFromMatch(
       jogador2_id: matchRow.adversario_id,
       time1_id: time1Id,
       time2_id: time2Id,
+      match_id: matchId,
       usuario_id: matchRow.usuario_id,
       desafiante_id: matchRow.usuario_id,
       desafiado_id: matchRow.adversario_id,
@@ -803,7 +834,6 @@ export async function sugerirMatchParaLider(
 ): Promise<SugestaoMatchState> {
   const alvo = Number(formData.get("alvo_time_id"));
   const sug = Number(formData.get("sugeridor_time_id"));
-  const msg = String(formData.get("mensagem") ?? "").trim();
 
   if (!Number.isInteger(alvo) || alvo < 1 || !Number.isInteger(sug) || sug < 1) {
     return { ok: false, message: "Dados inválidos." };
@@ -835,7 +865,7 @@ export async function sugerirMatchParaLider(
   const { data: sugestaoIdRaw, error } = await supabase.rpc("sugerir_match_para_lider", {
     p_alvo_time_id: alvo,
     p_sugeridor_time_id: sug,
-    p_mensagem: msg.length > 0 ? msg.slice(0, 500) : null,
+    p_mensagem: null,
   });
 
   if (error) return { ok: false, message: error.message };

@@ -147,13 +147,15 @@ export function PerfilTimeEditForm({
           <input type="checkbox" name="aceita_pedidos" defaultChecked={aceita_pedidos} className="rounded border-eid-border-subtle" />
           Aceita pedidos / convites
         </label>
-        <button
-          type="submit"
-          disabled={pending}
-          className="eid-btn-primary rounded-xl px-4 py-2.5 text-sm font-semibold sm:col-span-2"
-        >
-          {pending ? "Salvando..." : "Salvar alterações"}
-        </button>
+        <div className="flex justify-start sm:col-span-2">
+          <button
+            type="submit"
+            disabled={pending}
+            className="eid-btn-primary rounded-xl px-6 py-3 text-base font-bold sm:text-lg"
+          >
+            {pending ? "Salvando..." : "Salvar alterações"}
+          </button>
+        </div>
         {state.message ? (
           <p className={`text-xs sm:col-span-2 ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
         ) : null}

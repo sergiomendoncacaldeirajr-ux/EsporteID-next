@@ -659,58 +659,60 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
 
         <div className="mt-4 grid gap-4">
           {isSelf ? <MatchIdadeGateBanner gate={viewerMatchIdadeGate} /> : null}
-          {/* ── Ação principal ──────────────────────────────────────── */}
-          <section>
-            <h2 className="sr-only">Ação principal</h2>
-            <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Ação principal</p>
-                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
-                  Desafio
-                </span>
-              </div>
-              <div className="p-3">
-              {!isSelf && primeiroEsporte ? (
-                linkWpp || esportesParaDesafio.length > 0 ? (
-                  <div className="grid gap-3">
-                  {linkWpp ? (
-                    <a
-                      href={linkWpp}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-[13px] font-black uppercase tracking-[0.1em] text-white shadow-[0_0_18px_rgba(37,211,102,0.45)] transition hover:bg-[#1da851]"
-                    >
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.534 5.853L.054 23.25a.75.75 0 0 0 .916.916l5.396-1.479A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.986 0-3.84-.552-5.418-1.51l-.388-.232-4.021 1.1 1.1-4.022-.232-.388A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-                      Chamar no WhatsApp
-                    </a>
-                  ) : null}
-                  {esportesParaDesafio.length > 0 ? (
-                    <ProfileSolicitarMatchMenu
-                      alvoId={id}
-                      esportes={esportesParaDesafio.map((e) => ({ esporteId: e.esporteId, nome: e.nome }))}
-                      viewerAmistosoOn={viewerAmistosoOn}
-                      alvoAmistosoOn={amistosoPerfilOn}
-                      mostrarDicaWppRanking={Boolean(linkWpp)}
-                    />
-                  ) : null}
-                  </div>
-                ) : null
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                {!isSelf ? <ProfilePrimaryCta href="/match" className="col-span-2" /> : null}
-                {hasProfessor ? (
-                  <Link
-                    href={`/professor/${id}`}
-                    className="eid-btn-soft col-span-2 inline-flex min-h-[36px] items-center justify-center rounded-xl border-eid-action-500/30 px-3 text-[11px] font-bold uppercase tracking-wide text-eid-action-400"
-                  >
-                    Ver perfil profissional
-                  </Link>
-                ) : null}
+          {/* ── Ação principal (só visitantes: no próprio perfil o bloco ficava vazio) ── */}
+          {!isSelf ? (
+            <section>
+              <h2 className="sr-only">Ação principal</h2>
+              <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
+                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Ação principal</p>
+                  <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+                    Desafio
+                  </span>
                 </div>
-              )}
+                <div className="p-3">
+                  {primeiroEsporte ? (
+                    linkWpp || esportesParaDesafio.length > 0 ? (
+                      <div className="grid gap-3">
+                        {linkWpp ? (
+                          <a
+                            href={linkWpp}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-[13px] font-black uppercase tracking-[0.1em] text-white shadow-[0_0_18px_rgba(37,211,102,0.45)] transition hover:bg-[#1da851]"
+                          >
+                            <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.534 5.853L.054 23.25a.75.75 0 0 0 .916.916l5.396-1.479A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.986 0-3.84-.552-5.418-1.51l-.388-.232-4.021 1.1 1.1-4.022-.232-.388A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                            Chamar no WhatsApp
+                          </a>
+                        ) : null}
+                        {esportesParaDesafio.length > 0 ? (
+                          <ProfileSolicitarMatchMenu
+                            alvoId={id}
+                            esportes={esportesParaDesafio.map((e) => ({ esporteId: e.esporteId, nome: e.nome }))}
+                            viewerAmistosoOn={viewerAmistosoOn}
+                            alvoAmistosoOn={amistosoPerfilOn}
+                            mostrarDicaWppRanking={Boolean(linkWpp)}
+                          />
+                        ) : null}
+                      </div>
+                    ) : null
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      <ProfilePrimaryCta href="/match" className="col-span-2" />
+                      {hasProfessor ? (
+                        <Link
+                          href={`/professor/${id}`}
+                          className="eid-btn-soft col-span-2 inline-flex min-h-[36px] items-center justify-center rounded-xl border-eid-action-500/30 px-3 text-[11px] font-bold uppercase tracking-wide text-eid-action-400"
+                        >
+                          Ver perfil profissional
+                        </Link>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
+          ) : null}
 
           {!isSelf && alvoSemFormacao ? (
             <ProfileSection title="Dupla ou time">

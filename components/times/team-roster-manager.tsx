@@ -80,13 +80,13 @@ export function TeamRosterManager({
             <p className="mt-1 text-[11px] text-eid-text-secondary">
               Enviar convite para <span className="font-semibold text-eid-fg">{prefillConvidarNome ?? "atleta"}</span> entrar nesta formação.
             </p>
-            <form action={inviteAction} className="mt-2">
+            <form action={inviteAction} className="mt-2 flex justify-start">
               <input type="hidden" name="time_id" value={timeId} />
               <input type="hidden" name="convidado_usuario_id" value={prefillConvidarUsuarioId} />
               <button
                 type="submit"
                 disabled={invitePending}
-                className="eid-btn-primary w-full rounded-xl py-2.5 text-sm font-bold disabled:opacity-60"
+                className="eid-btn-primary rounded-xl px-6 py-3 text-base font-bold sm:text-lg disabled:opacity-60"
               >
                 {invitePending ? "Enviando..." : "Enviar convite"}
               </button>

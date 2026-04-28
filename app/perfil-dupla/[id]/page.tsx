@@ -341,6 +341,8 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
         </div>
 
         <div className="mt-6 grid gap-6">
+          {/* Dono da dupla: evita cartão “Ação principal” vazio ou só com texto redundante. */}
+          {!isDonoDupla ? (
           <section className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3">
             <h2 className="sr-only">Ação principal</h2>
             <div className="mb-2 flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-2">
@@ -403,6 +405,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
               <p className="text-xs text-eid-text-secondary">Você faz parte desta dupla registrada.</p>
             )}
           </section>
+          ) : null}
 
           <ProfileSection title="EID e estatísticas">
             {timeResolvido ? (

@@ -68,9 +68,11 @@ export function PerfilDuplaEditForm({
           placeholder="Bio da dupla"
           className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
         />
-        <button type="submit" disabled={pending} className="eid-btn-primary rounded-xl px-4 py-2.5 text-sm font-semibold">
-          {pending ? "Salvando..." : "Salvar dupla"}
-        </button>
+        <div className="flex justify-start">
+          <button type="submit" disabled={pending} className="eid-btn-primary rounded-xl px-6 py-3 text-base font-bold sm:text-lg">
+            {pending ? "Salvando..." : "Salvar dupla"}
+          </button>
+        </div>
         {state.message ? (
           <p className={`text-xs ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
         ) : null}

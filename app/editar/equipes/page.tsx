@@ -21,12 +21,6 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
     .eq("criador_id", user.id)
     .order("id", { ascending: false });
 
-  const { data: duplasRows } = await supabase
-    .from("duplas")
-    .select("id, esporte_id, esportes(nome), player1_id, player2_id, criador_id")
-    .or(`player1_id.eq.${user.id},player2_id.eq.${user.id},criador_id.eq.${user.id}`)
-    .order("id", { ascending: false });
-
   const from = typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : `/perfil/${user.id}`;
   const isEmbed = sp.embed === "1";
   const equipesRouteWithOrigin = `/editar/equipes?from=${encodeURIComponent(from)}${isEmbed ? "&embed=1" : ""}`;
@@ -34,8 +28,8 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
   return (
     <ProfileEditFullscreenShell
       backHref={from}
-      title="Editar equipes e duplas"
-      subtitle="Escolha uma formação para abrir a edição dedicada."
+      title="Editar equipes"
+      subtitle="Duplas e times aparecem aqui. Escolha uma formação para abrir a edição dedicada."
       showBack={!isEmbed}
       topAction={
         <Link
@@ -83,41 +77,6 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
             </div>
           ) : (
             <p className="mt-2 text-[11px] text-eid-text-secondary">Você ainda não criou equipes.</p>
-          )}
-          </div>
-        </section>
-
-        <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
-          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Duplas</p>
-            <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-action-400">
-              Gestão
-            </span>
-          </div>
-          <div className="p-3">
-          {(duplasRows ?? []).length > 0 ? (
-            <div className="mt-2 grid gap-2">
-              {(duplasRows ?? []).map((d) => {
-                const esp = Array.isArray(d.esportes) ? d.esportes[0] : d.esportes;
-                return (
-                  <Link
-                    key={`d-${d.id}`}
-                    href={`/editar/dupla/${d.id}?from=${encodeURIComponent(from)}${isEmbed ? "&embed=1" : ""}`}
-                    className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2 transition-all duration-200 hover:border-eid-primary-500/30"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
-                      D{d.id}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-[11px] font-bold text-eid-fg">{`Dupla #${d.id}`}</p>
-                      <p className="truncate text-[9px] text-eid-text-secondary">{esp?.nome ?? "Esporte"}</p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="mt-2 text-[11px] text-eid-text-secondary">Você ainda não participa de duplas registradas.</p>
           )}
           </div>
         </section>

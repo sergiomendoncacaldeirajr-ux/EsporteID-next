@@ -312,7 +312,7 @@ export function EditarPerformanceEidSkeleton() {
   );
 }
 
-/** Editar equipes: dois painéis + botão nova equipe no topo. */
+/** Editar equipes: lista de formações (dupla/time) + botão nova equipe no topo. */
 export function EditarEquipesSkeleton() {
   return (
     <ProfileEditShellSkeleton
@@ -321,22 +321,20 @@ export function EditarEquipesSkeleton() {
       topAction={<SkBlock className="h-8 w-28 rounded-xl" />}
     >
       <div className="space-y-4">
-        {(["Equipes", "Duplas"] as const).map((label) => (
-          <section key={label} className="eid-surface-panel rounded-2xl p-3">
-            <SkBlock className="h-3 w-24 rounded" />
-            <div className="mt-2 grid gap-2">
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2">
-                  <SkBlock className="h-10 w-10 shrink-0 rounded-full" />
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <SkBlock className="h-3 w-36 rounded" />
-                    <SkBlock className="h-2 w-28 rounded" />
-                  </div>
+        <section className="eid-surface-panel rounded-2xl p-3">
+          <SkBlock className="h-3 w-24 rounded" />
+          <div className="mt-2 grid gap-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2">
+                <SkBlock className="h-10 w-10 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1 space-y-1">
+                  <SkBlock className="h-3 w-36 rounded" />
+                  <SkBlock className="h-2 w-28 rounded" />
                 </div>
-              ))}
-            </div>
-          </section>
-        ))}
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </ProfileEditShellSkeleton>
   );

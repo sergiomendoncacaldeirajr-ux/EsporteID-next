@@ -20,6 +20,8 @@ export function SugerirMatchLiderForm({
   const [state, formAction, pending] = useActionState(sugerirMatchParaLider, initial);
   const err = !state.ok && state.message ? state.message : null;
   const ok = state.ok ? state.message : null;
+  const enviadoComSucesso = state.ok === true;
+  const formularioBloqueado = pending || enviadoComSucesso;
 
   if (formacoesMinhas.length === 0) return null;
 
@@ -39,7 +41,8 @@ export function SugerirMatchLiderForm({
           <select
             name="sugeridor_time_id"
             required
-            className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2.5 !text-[13px] font-semibold text-eid-fg"
+            disabled={formularioBloqueado}
+            className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2.5 !text-[13px] font-semibold text-eid-fg disabled:cursor-not-allowed disabled:opacity-55"
             style={{ fontSize: "13px" }}
             defaultValue={formacoesMinhas.length === 1 ? String(formacoesMinhas[0]!.id) : ""}
           >
@@ -51,23 +54,14 @@ export function SugerirMatchLiderForm({
             ))}
           </select>
         </label>
-        <label className="text-[12px] font-semibold text-eid-text-secondary">
-          Recado opcional ao líder
-          <textarea
-            name="mensagem"
-            rows={2}
-            maxLength={500}
-            placeholder="Ex.: podemos sábado à tarde…"
-            className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2.5 text-[13px] text-eid-fg placeholder:text-[12px]"
-          />
-        </label>
         <button
           type="submit"
-          disabled={pending}
-          className="eid-btn-primary min-h-[44px] rounded-xl px-4 py-2.5 !text-[14px] font-black tracking-[0.02em] disabled:opacity-50"
+          disabled={formularioBloqueado}
+          aria-busy={pending}
+          className="eid-btn-primary min-h-[44px] rounded-xl px-4 py-2.5 !text-[14px] font-black tracking-[0.02em] disabled:cursor-not-allowed disabled:opacity-55"
           style={{ fontSize: "14px" }}
         >
-          {pending ? "Enviando…" : "Enviar sugestão ao líder"}
+          {pending ? "Enviando..." : enviadoComSucesso ? "Sugestão enviada" : "Enviar sugestão ao líder"}
         </button>
         {err ? <p className="text-xs text-red-300">{err}</p> : null}
         {ok ? <p className="text-xs text-eid-primary-300">{ok}</p> : null}

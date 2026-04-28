@@ -29,6 +29,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { TeamPublicInviteBlock } from "@/components/times/team-public-invite-block";
 import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-cta";
+import { SairDaEquipeConfirmForm } from "@/components/times/sair-da-equipe-confirm-form";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -294,33 +295,52 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{t.bio}</p> : null}
 
           {criador ? (
-            <div className="mt-4 flex items-center justify-center gap-2.5">
-              <Link
-                href={`/perfil/${criador.id}?from=/perfil-time/${id}`}
-                className="shrink-0 rounded-full ring-2 ring-transparent transition hover:ring-eid-primary-500/45 focus-visible:outline-none focus-visible:ring-eid-primary-500/60"
-                aria-label={`Abrir perfil de ${criador.nome ?? "líder"}`}
-              >
-                {criador.avatar_url ? (
-                  <img
-                    src={criador.avatar_url}
-                    alt=""
-                    className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-10 sm:w-10"
-                  />
-                ) : (
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 sm:h-10 sm:w-10">
-                    {(criador.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
-                  </span>
-                )}
-              </Link>
-              <p className="text-left text-xs text-eid-text-secondary">
-                <span className="block text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary/90">Líder</span>
+            <div className="relative mt-4 flex w-full flex-col items-center sm:min-h-[3.25rem]">
+              <div className="flex items-center justify-center gap-2.5">
                 <Link
                   href={`/perfil/${criador.id}?from=/perfil-time/${id}`}
-                  className="font-semibold text-eid-primary-300 hover:underline"
+                  className="shrink-0 rounded-full ring-2 ring-transparent transition hover:ring-eid-primary-500/45 focus-visible:outline-none focus-visible:ring-eid-primary-500/60"
+                  aria-label={`Abrir perfil de ${criador.nome ?? "líder"}`}
                 >
-                  {criador.nome ?? "—"}
+                  {criador.avatar_url ? (
+                    <img
+                      src={criador.avatar_url}
+                      alt=""
+                      className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-10 sm:w-10"
+                    />
+                  ) : (
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 sm:h-10 sm:w-10">
+                      {(criador.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
+                    </span>
+                  )}
                 </Link>
-              </p>
+                <p className="text-left text-xs text-eid-text-secondary">
+                  <span className="block text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary/90">Líder</span>
+                  <Link
+                    href={`/perfil/${criador.id}?from=/perfil-time/${id}`}
+                    className="font-semibold text-eid-primary-300 hover:underline"
+                  >
+                    {criador.nome ?? "—"}
+                  </Link>
+                </p>
+              </div>
+              {canLeaveTeam ? (
+                <div className="mt-3 self-end sm:absolute sm:bottom-0 sm:right-0 sm:mt-0">
+                  <SairDaEquipeConfirmForm
+                    action={sairEquipeAction}
+                    className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-[11px] font-bold text-white shadow-md transition hover:bg-red-700 active:scale-[0.98]"
+                  />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {!criador && canLeaveTeam ? (
+            <div className="mt-4 flex w-full justify-end">
+              <SairDaEquipeConfirmForm
+                action={sairEquipeAction}
+                className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-[11px] font-bold text-white shadow-md transition hover:bg-red-700 active:scale-[0.98]"
+              />
             </div>
           ) : null}
 
@@ -348,6 +368,8 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
         ) : null}
 
         <div className="mt-6 grid gap-6">
+          {/* Líder: cartão “Ação principal” ficava só com cabeçalho (desafio é para visitantes). */}
+          {!isLeader ? (
           <section className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3">
             <h2 className="sr-only">Ação principal</h2>
             <div className="mb-2 flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-2">
@@ -356,7 +378,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 Desafio
               </span>
             </div>
-            {!isLeader && temBlocoAcaoVisitante ? (
+            {temBlocoAcaoVisitante ? (
               <div className="grid gap-3">
                 {linkWpp ? (
                   <a
@@ -389,17 +411,17 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                   </p>
                 ) : null}
               </div>
-            ) : !isLeader && canChallenge && hasAceitoRank ? (
+            ) : canChallenge && hasAceitoRank ? (
               <p className="text-xs text-eid-text-secondary">
                 Desafio aceito nesta modalidade. Registre o resultado na agenda quando jogarem.
               </p>
-            ) : !isLeader ? (
+            ) : (
               <p className="text-xs text-eid-text-secondary">
                 Para desafiar direto, você precisa ser líder de uma {modalidade} neste esporte — ou use a sugestão abaixo
                 se você já faz parte de uma formação.
               </p>
-            ) : null}
-            {!isLeader && canSugerirMatch ? (
+            )}
+            {canSugerirMatch ? (
               <div className="mt-3">
                 <SugerirMatchLiderForm
                   alvoTimeId={id}
@@ -409,19 +431,8 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 />
               </div>
             ) : null}
-            <div className="mt-2 flex flex-wrap gap-2">
-              {canLeaveTeam ? (
-                <form action={sairEquipeAction}>
-                  <button
-                    type="submit"
-                    className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-red-400/35 px-3 text-xs font-semibold text-red-300"
-                  >
-                    Sair da equipe
-                  </button>
-                </form>
-              ) : null}
-            </div>
           </section>
+          ) : null}
 
           <ProfileSection title="EID e estatísticas">
             <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-0`}>
@@ -527,21 +538,21 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                       avatarSize="sm"
                       trailing={
                         isLeader && p.id !== t.criador_id ? (
-                          <div className="flex gap-2">
-                            <form action={transferirLiderancaAction}>
+                          <div className="flex w-full gap-1.5">
+                            <form action={transferirLiderancaAction} className="min-w-0 flex-1">
                               <input type="hidden" name="usuario_id" value={p.id} />
                               <button
                                 type="submit"
-                                className="rounded-lg border border-eid-primary-500/30 px-2 py-1 text-[10px] font-semibold text-eid-primary-300"
+                                className="flex min-h-[2.75rem] w-full items-center justify-center rounded-lg border border-eid-primary-500/35 px-1 py-1.5 text-center text-[9px] font-semibold leading-snug text-eid-primary-300 sm:text-[10px]"
                               >
                                 Transferir liderança
                               </button>
                             </form>
-                            <form action={removerMembroAction}>
+                            <form action={removerMembroAction} className="min-w-0 flex-1">
                               <input type="hidden" name="usuario_id" value={p.id} />
                               <button
                                 type="submit"
-                                className="rounded-lg border border-red-400/30 px-2 py-1 text-[10px] font-semibold text-red-300"
+                                className="flex min-h-[2.75rem] w-full items-center justify-center rounded-lg border border-red-400/35 px-1 py-1.5 text-center text-[9px] font-semibold leading-snug text-red-300 sm:text-[10px]"
                               >
                                 Remover
                               </button>
