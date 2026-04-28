@@ -51,7 +51,7 @@ export function NomeLocalInputSuggestions({
         placeholder="Ex.: Arena Central"
         value={nome}
         onChange={(event) => setNome(event.target.value)}
-        className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm text-eid-fg"
+        className="eid-input-dark mt-1.5 h-10 w-full rounded-xl px-3 py-0 text-[14px] leading-[1.2] text-eid-fg placeholder:text-[12px] placeholder:text-eid-text-secondary"
       />
       {similares.length ? (
         <div className="mt-2 rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5">

@@ -318,9 +318,6 @@ export default async function TimesPage({ searchParams }: Props) {
             <p className="text-sm text-eid-text-secondary">
               Nenhuma formação com vaga aberta encontrada agora. Tente outra busca em alguns instantes.
             </p>
-            <Link href="/dashboard" className="mt-3 inline-block text-xs font-semibold text-eid-primary-300 hover:text-eid-fg">
-              Voltar ao painel
-            </Link>
           </div>
         )}
       </div>

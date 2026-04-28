@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
 import { DesafioEsporteRegrasModal } from "@/components/desafio/desafio-esporte-regras-modal";
 import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
+import { SugerirMatchLiderForm } from "@/components/perfil/sugerir-match-lider-form";
 import { fetchColetivoRankingPreview, fetchIndividualRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
+import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
 import { getDesafioRankLockedSetFormat, getMatchUIConfig, type MatchUIConfig } from "@/lib/match-scoring";
 import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
@@ -17,6 +19,7 @@ import {
   DESAFIO_FLOW_SECONDARY_CLASS,
   DESAFIO_PAGE_MAIN_CLASS,
 } from "@/lib/desafio/flow-ui";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 
@@ -339,7 +342,17 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       <main className={DESAFIO_PAGE_MAIN_CLASS}>
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">
-            Confirme o pedido no esporte <span className="text-eid-fg">{esporteNome}</span> (individual) ·{" "}
+            Confirme o pedido no esporte{" "}
+            <span className="inline-flex items-center gap-1 text-eid-fg">
+              <SportGlyphIcon sportName={esporteNome} />
+              <span>{esporteNome}</span>
+            </span>{" "}
+            ·{" "}
+            <span className="inline-flex items-center gap-1 text-eid-fg">
+              <ModalidadeGlyphIcon modalidade="individual" />
+              <span>individual</span>
+            </span>{" "}
+            ·{" "}
             <span className="font-semibold text-eid-fg">
               {finalidadeEscolhida === "amistoso" ? "Desafio amistoso" : "Desafio de ranking"}
             </span>
@@ -365,7 +378,11 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           )}
           <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:p-4">
             <p className="text-sm font-semibold text-eid-fg">{perfil.nome ?? "Atleta"}</p>
-            <p className="mt-1 text-xs text-eid-text-secondary">Modalidade: individual</p>
+            <p className="mt-1 inline-flex items-center gap-1 text-xs text-eid-text-secondary">
+              <span>Modalidade:</span>
+              <ModalidadeGlyphIcon modalidade="individual" />
+              <span>individual</span>
+            </p>
           </div>
           {finalidadeEscolhida === "ranking" && rankPrevInd ? (
             <DesafioImpactoResumo
@@ -500,12 +517,50 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     esporteId,
     modalidade: modalidade as "dupla" | "time",
   });
+  const [{ data: minhasLideradas }, { data: minhasMembroRows }] = await Promise.all([
+    supabase
+      .from("times")
+      .select("id")
+      .eq("criador_id", user.id)
+      .eq("esporte_id", esporteId)
+      .eq("tipo", modalidade)
+      .limit(1),
+    supabase
+      .from("membros_time")
+      .select("time_id, times!inner(id, nome, criador_id, tipo, esporte_id)")
+      .eq("usuario_id", user.id)
+      .eq("status", "ativo"),
+  ]);
+  const canConfirmarRanking = (minhasLideradas ?? []).length > 0;
+  const formacoesMembroNaoLider = (minhasMembroRows ?? [])
+    .map((row) => {
+      const rel = Array.isArray((row as { times?: unknown }).times)
+        ? (row as { times?: Array<{ id?: number | null; nome?: string | null; criador_id?: string | null; tipo?: string | null; esporte_id?: number | null }> }).times?.[0]
+        : (row as { times?: { id?: number | null; nome?: string | null; criador_id?: string | null; tipo?: string | null; esporte_id?: number | null } }).times;
+      return rel ?? null;
+    })
+    .filter((t): t is { id: number; nome: string | null; criador_id: string | null; tipo: string | null; esporte_id: number | null } => Boolean(t && Number.isFinite(Number(t.id))))
+    .filter((t) => String(t.criador_id ?? "") !== user.id)
+    .filter((t) => String(t.tipo ?? "").trim().toLowerCase() === modalidade)
+    .filter((t) => Number(t.esporte_id ?? 0) === esporteId)
+    .map((t) => ({ id: Number(t.id), nome: String(t.nome ?? "Minha formação") }));
+  const podeSugerirParaLider = !canConfirmarRanking && formacoesMembroNaoLider.length > 0;
 
   return (
     <main className={DESAFIO_PAGE_MAIN_CLASS}>
         <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
         <p className="mt-2 text-sm text-eid-text-secondary">
-          Confirme o pedido no esporte <span className="text-eid-fg">{esporteNome}</span> ({modalidade === "dupla" ? "dupla" : "time"}).
+          Confirme o pedido no esporte{" "}
+          <span className="inline-flex items-center gap-1 text-eid-fg">
+            <SportGlyphIcon sportName={esporteNome} />
+            <span>{esporteNome}</span>
+          </span>{" "}
+          ·{" "}
+          <span className="inline-flex items-center gap-1 text-eid-fg">
+            <ModalidadeGlyphIcon modalidade={modalidade === "dupla" ? "dupla" : "time"} />
+            <span>{modalidade === "dupla" ? "dupla" : "time"}</span>
+          </span>
+          .
         </p>
         <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
           Forma de disputa deste esporte: <span className="font-semibold text-eid-fg">{formaDisputaResumo}</span>
@@ -516,7 +571,8 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             <span className="font-semibold text-eid-fg">
               {new Date(rankingBlockedUntilColetivo).toLocaleDateString("pt-BR")}
             </span>
-            .
+            .{" "}
+            <span className="font-semibold text-eid-fg">{formatCooldownRemaining(rankingBlockedUntilColetivo)}</span>
           </div>
         ) : null}
         <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:p-4">
@@ -532,7 +588,11 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-eid-fg">{timeRow.nome ?? "Formação"}</p>
-              <p className="mt-1 text-xs text-eid-text-secondary">Modalidade: {modalidade}</p>
+              <p className="mt-1 inline-flex items-center gap-1 text-xs text-eid-text-secondary">
+                <span>Modalidade:</span>
+                <ModalidadeGlyphIcon modalidade={modalidade === "dupla" ? "dupla" : "time"} />
+                <span>{modalidade}</span>
+              </p>
             </div>
             <div className="shrink-0">
               <ProfileEidPerformanceSeal notaEid={Number(timeRow.eid_time ?? 0)} compact />
@@ -546,8 +606,23 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             Não foi possível carregar a estimativa: confira se você é líder de uma {modalidade} neste esporte (mesmo critério do envio do pedido).
           </p>
         )}
-        {!rankingBlockedUntilColetivo ? (
+        {canConfirmarRanking && !rankingBlockedUntilColetivo ? (
           <DesafioEnviarForm modalidade={modalidade} esporteId={esporteId} alvoTimeId={timeRow.id} finalidade="ranking" />
+        ) : null}
+        {!canConfirmarRanking ? (
+          <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+            Você não é líder de uma {modalidade} neste esporte. O desafio de ranking direto fica disponível apenas para o dono da formação.
+          </div>
+        ) : null}
+        {podeSugerirParaLider ? (
+          <div className="mt-3">
+            <SugerirMatchLiderForm
+              alvoTimeId={timeRow.id}
+              alvoNome={timeRow.nome ?? "Formação"}
+              modalidadeLabel={modalidade === "dupla" ? "dupla" : "equipe"}
+              formacoesMinhas={formacoesMembroNaoLider}
+            />
+          </div>
         ) : null}
         <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
           Cancelar

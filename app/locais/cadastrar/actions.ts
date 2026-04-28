@@ -95,5 +95,9 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
     const sep = returnTo.includes("?") ? "&" : "?";
     redirect(`${returnTo}${sep}${qp.toString()}`);
   }
-  redirect(`/local/${data.id}?from=/locais/cadastrar`);
+  redirect(
+    `/locais/cadastrar?sucesso=1&novo_local_nome=${encodeURIComponent(nome)}&id=${encodeURIComponent(String(data.id))}${
+      returnToQs ? returnToQs : ""
+    }`
+  );
 }

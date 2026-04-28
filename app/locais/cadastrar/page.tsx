@@ -17,7 +17,7 @@ export const metadata = {
 export default async function CadastrarLocalPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ erro?: string; id?: string; return_to?: string; from?: string }>;
+  searchParams?: Promise<{ erro?: string; id?: string; return_to?: string; from?: string; sucesso?: string; novo_local_nome?: string }>;
 }) {
   const sp = (await searchParams) ?? {};
   const returnTo = resolveBackHref(sp.return_to ?? sp.from, "/locais/cadastrar");
@@ -31,6 +31,10 @@ export default async function CadastrarLocalPage({
         : sp.erro === "gravacao"
           ? "Não foi possível salvar. Tente novamente."
           : null;
+  const sucessoMsg =
+    sp.sucesso === "1"
+      ? `Local cadastrado com sucesso${sp.novo_local_nome ? `: ${sp.novo_local_nome}` : ""}.`
+      : null;
 
   const supabase = await createClient();
   const {
@@ -95,6 +99,11 @@ export default async function CadastrarLocalPage({
               {erroMsg}
             </p>
           ) : null}
+          {sucessoMsg ? (
+            <p className="mb-4 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200" role="status">
+              {sucessoMsg}
+            </p>
+          ) : null}
 
           {localDuplicado ? (
             <div className="mb-4 rounded-xl border border-eid-action-500/30 bg-eid-action-500/10 p-3">
@@ -138,7 +147,7 @@ export default async function CadastrarLocalPage({
                 required
                 minLength={3}
                 placeholder="Ex.: Ipatinga — MG"
-                className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm text-eid-fg"
+                className="eid-input-dark mt-1.5 h-10 w-full rounded-xl px-3 py-0 text-[14px] leading-[1.2] text-eid-fg placeholder:text-[12px] placeholder:text-eid-text-secondary"
               />
             </div>
             <div>

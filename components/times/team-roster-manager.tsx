@@ -1,7 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
+import {
+  convidarUsuarioParaEquipe,
+  removerMembroDaEquipe,
+  transferirLiderancaDaEquipe,
+  type TeamActionState,
+} from "@/app/times/actions";
 import { TeamInviteComboboxForm } from "@/components/times/team-invite-combobox-form";
 
 const initial: TeamActionState = { ok: false, message: "" };
@@ -45,8 +50,12 @@ export function TeamRosterManager({
   prefillConvidarNome?: string | null;
 }) {
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
+  const [removeState, removeAction, removePending] = useActionState(removerMembroDaEquipe, initial);
+  const [transferState, transferAction, transferPending] = useActionState(transferirLiderancaDaEquipe, initial);
 
   const excludeUserIds = membros.map((m) => m.usuarioId);
+  const memberActionMsg = transferState.message || removeState.message;
+  const memberActionOk = transferState.message ? transferState.ok : removeState.ok;
 
   return (
     <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
@@ -130,6 +139,9 @@ export function TeamRosterManager({
 
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Membros</p>
+            {memberActionMsg ? (
+              <p className={`mt-2 text-xs ${memberActionOk ? "text-eid-primary-300" : "text-red-300"}`}>{memberActionMsg}</p>
+            ) : null}
             {membros.length > 0 ? (
               <ul className="mt-2 grid gap-2">
                 {membros.map((m) => (
@@ -148,6 +160,30 @@ export function TeamRosterManager({
                     <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-fg">
                       {m.status}
                     </span>
+                    <div className="ml-1 flex shrink-0 items-center gap-1">
+                      <form action={removeAction}>
+                        <input type="hidden" name="time_id" value={timeId} />
+                        <input type="hidden" name="membro_usuario_id" value={m.usuarioId} />
+                        <button
+                          type="submit"
+                          disabled={removePending || transferPending}
+                          className="inline-flex h-[18px] items-center justify-center rounded-full border border-rose-600/90 bg-rose-600 px-1.5 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-white transition hover:bg-rose-700 disabled:opacity-60"
+                        >
+                          Remover
+                        </button>
+                      </form>
+                      <form action={transferAction}>
+                        <input type="hidden" name="time_id" value={timeId} />
+                        <input type="hidden" name="novo_lider_usuario_id" value={m.usuarioId} />
+                        <button
+                          type="submit"
+                          disabled={removePending || transferPending}
+                          className="inline-flex h-[18px] items-center justify-center rounded-full border border-emerald-600/90 bg-emerald-600 px-1.5 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                        >
+                          Liderança
+                        </button>
+                      </form>
+                    </div>
                   </li>
                 ))}
               </ul>

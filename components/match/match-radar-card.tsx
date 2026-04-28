@@ -4,10 +4,10 @@ import Image from "next/image";
 import { Trophy } from "lucide-react";
 import { matchCardEidStatsHref, type MatchRadarCard, type MatchRadarFinalidade } from "@/lib/match/radar-snapshot";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
-import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { PROFILE_CARD_BASE, PROFILE_PUBLIC_AVATAR_RING_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { MatchChallengeAction } from "@/components/match/match-challenge-action";
+import { SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 
 type Props = {
   card: MatchRadarCard;
@@ -15,6 +15,7 @@ type Props = {
   matchFinalidade: MatchRadarFinalidade;
   viewerHasDupla: boolean;
   viewerHasTime: boolean;
+  suppressChallengeHint?: boolean;
 };
 
 function compactCardName(fullName: string) {
@@ -27,7 +28,14 @@ function compactCardName(fullName: string) {
   return firstAndLast.length <= 18 ? firstAndLast : first;
 }
 
-export function MatchRadarCardView({ card, esporteContextId, matchFinalidade, viewerHasDupla, viewerHasTime }: Props) {
+export function MatchRadarCardView({
+  card,
+  esporteContextId,
+  matchFinalidade,
+  viewerHasDupla,
+  viewerHasTime,
+  suppressChallengeHint = false,
+}: Props) {
   const esporteParam = card.esporteId > 0 ? String(card.esporteId) : esporteContextId;
   const desafioHref = `/desafio?id=${encodeURIComponent(card.id)}&tipo=${encodeURIComponent(card.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(matchFinalidade)}`;
   const eidStatsHref = matchCardEidStatsHref(card);
@@ -40,7 +48,6 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade, vi
   const displayName = compactCardName(card.nome);
 
   const avatarSize = "h-14 w-14 min-[390px]:h-[4.5rem] min-[390px]:w-[4.5rem] sm:h-[4.85rem] sm:w-[4.85rem]";
-  const esporteIcon = sportIconEmoji(card.esporteNome);
   const matchCtaTitle =
     matchFinalidade === "amistoso" ? "Solicitar desafio amistoso" : "Solicitar desafio ranking";
   const quickViewHref = eidStatsHref ?? card.href;
@@ -137,7 +144,10 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade, vi
       <div className="relative z-[1] mt-2">
         <div className="flex items-center justify-between gap-2 rounded-lg border border-[color:var(--eid-border-subtle)]/75 bg-eid-surface/45 px-2 py-1">
           <p className="min-w-0 truncate text-[9px] font-semibold text-eid-primary-300" title={card.esporteNome}>
-            {esporteIcon} {card.esporteNome}
+            <span className="inline-flex items-center gap-1">
+              <SportGlyphIcon sportName={card.esporteNome} />
+              <span>{card.esporteNome}</span>
+            </span>
           </p>
           <span
             className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1.5 py-0.5 text-[8px] font-bold text-eid-fg/90"
@@ -149,7 +159,7 @@ export function MatchRadarCardView({ card, esporteContextId, matchFinalidade, vi
         </div>
       </div>
 
-      {!card.canChallenge && card.challengeHint ? (
+      {!suppressChallengeHint && !card.canChallenge && card.challengeHint ? (
         <p className="mt-1.5 text-[8px] leading-snug text-eid-text-secondary sm:text-[9px]">{card.challengeHint}</p>
       ) : null}
     </article>

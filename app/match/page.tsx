@@ -56,13 +56,9 @@ function toViewMode(v: string | undefined): RadarViewMode {
   return String(v ?? "").trim().toLowerCase() === "grid" ? "grid" : "full";
 }
 
-function toGeneroFiltro(v: string | undefined, perfilGenero: string | null | undefined): RadarGeneroFiltro {
+function toGeneroFiltro(v: string | undefined): RadarGeneroFiltro {
   const raw = String(v ?? "").trim().toLowerCase();
   if (raw === "masculino" || raw === "feminino" || raw === "outro" || raw === "all") return raw;
-  const g = String(perfilGenero ?? "").trim().toLowerCase();
-  if (g === "masculino") return "masculino";
-  if (g === "feminino") return "feminino";
-  if (g) return "outro";
   return "all";
 }
 
@@ -191,7 +187,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
       : esporteIdsDisponiveis.has(esporteParam)
         ? esporteParam
         : esporteDefault;
-  const initialGeneroFiltro = toGeneroFiltro(sp.genero, (me as { genero?: string | null })?.genero ?? null);
+  const initialGeneroFiltro = toGeneroFiltro(sp.genero);
 
   const initialCards =
     initialView === "full"
@@ -207,6 +203,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
               lat: Number(me.lat),
               lng: Number(me.lng),
               finalidade: "ranking",
+              includeActiveOpponents: true,
             }),
             fetchMatchRadarCards(supabase, {
               viewerId: user.id,
@@ -217,6 +214,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
               lat: Number(me.lat),
               lng: Number(me.lng),
               finalidade: "amistoso",
+              includeActiveOpponents: true,
             }),
             fetchMatchRadarCards(supabase, {
               viewerId: user.id,
@@ -227,6 +225,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
               lat: Number(me.lat),
               lng: Number(me.lng),
               finalidade: "ranking",
+              includeActiveOpponents: true,
             }),
             fetchMatchRadarCards(supabase, {
               viewerId: user.id,
@@ -237,6 +236,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
               lat: Number(me.lat),
               lng: Number(me.lng),
               finalidade: "ranking",
+              includeActiveOpponents: true,
             }),
             ])
           ).flat();

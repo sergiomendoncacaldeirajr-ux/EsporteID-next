@@ -79,13 +79,15 @@ export type RadarSnapshotInput = {
   lng: number;
   /** Aba do radar: ranking (padrão) ou amistoso — filtra cartões e define link do desafio. */
   finalidade: MatchRadarFinalidade;
+  /** No modo tela cheia, não filtra por confronto já ativo; mantém apenas regras de carência. */
+  includeActiveOpponents?: boolean;
 };
 
 export async function fetchMatchRadarCards(
   supabase: SupabaseClient,
   input: RadarSnapshotInput
 ): Promise<MatchRadarCard[]> {
-  const { viewerId, tipo, sortBy, raio, esporteSelecionado, lat, lng, finalidade } = input;
+  const { viewerId, tipo, sortBy, raio, esporteSelecionado, lat, lng, finalidade, includeActiveOpponents } = input;
   const esporteId = /^\d+$/.test(esporteSelecionado) ? Number(esporteSelecionado) : null;
 
   let cards: MatchRadarCard[] = [];
@@ -95,11 +97,13 @@ export async function fetchMatchRadarCards(
     .or(`usuario_id.eq.${viewerId},adversario_id.eq.${viewerId}`)
     .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
   const activeOpponentIds = new Set<string>();
-  for (const m of activeMatches ?? []) {
-    const usuarioId = String((m as { usuario_id?: string | null }).usuario_id ?? "");
-    const adversarioId = String((m as { adversario_id?: string | null }).adversario_id ?? "");
-    if (usuarioId === viewerId && adversarioId) activeOpponentIds.add(adversarioId);
-    else if (adversarioId === viewerId && usuarioId) activeOpponentIds.add(usuarioId);
+  if (!includeActiveOpponents) {
+    for (const m of activeMatches ?? []) {
+      const usuarioId = String((m as { usuario_id?: string | null }).usuario_id ?? "");
+      const adversarioId = String((m as { adversario_id?: string | null }).adversario_id ?? "");
+      if (usuarioId === viewerId && adversarioId) activeOpponentIds.add(adversarioId);
+      else if (adversarioId === viewerId && usuarioId) activeOpponentIds.add(usuarioId);
+    }
   }
 
   function norm(v: string | null | undefined): string {
@@ -283,7 +287,17 @@ export async function fetchMatchRadarCards(
       );
       teamRowsByCooldown = teamRowsVisible.filter((t) => !blockedTeamIdsByCooldown.has(Number(t.id)));
     }
-    cards = teamRowsByCooldown.filter((t) => eligibleTeamIds.has(Number(t.id))).map((t) => ({
+    const teamRowsEligible = teamRowsByCooldown.filter((t) => eligibleTeamIds.has(Number(t.id)));
+    const eligibleIds = teamRowsEligible.map((t) => Number(t.id)).filter((id) => Number.isFinite(id) && id > 0);
+    const { data: teamShields } =
+      eligibleIds.length > 0
+        ? await supabase.from("times").select("id, escudo").in("id", eligibleIds)
+        : { data: [] as Array<{ id: number; escudo: string | null }> };
+    const shieldByTeamId = new Map<number, string | null>(
+      (teamShields ?? []).map((row) => [Number((row as { id?: number | null }).id ?? 0), (row as { escudo?: string | null }).escudo ?? null])
+    );
+
+    cards = teamRowsEligible.map((t) => ({
       id: String(t.id),
       nome: String(t.nome ?? "Time"),
       localizacao: String(t.localizacao ?? "Localização não informada"),
@@ -301,7 +315,7 @@ export async function fetchMatchRadarCards(
         : /^\d+$/.test(esporteSelecionado)
           ? `Somente o proprietário (capitão) pode desafiar. Crie sua ${tipo} neste esporte como líder.`
           : `Selecione um esporte e seja proprietário de uma ${tipo} para desafiar.`,
-      avatarUrl: null,
+      avatarUrl: shieldByTeamId.get(Number(t.id)) ?? null,
       disponivelAmistoso: t.disponivel_amistoso === true,
       genero: null,
     }));

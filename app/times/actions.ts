@@ -406,3 +406,78 @@ export async function atualizarMinhaEquipe(
   revalidatePath(`/perfil/${user.id}`);
   return { ok: true, message: "Formação atualizada." };
 }
+
+export async function removerMembroDaEquipe(
+  _prev: TeamActionState | undefined,
+  formData: FormData
+): Promise<TeamActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada." };
+
+  const timeId = Number(formData.get("time_id") ?? 0);
+  const membroId = String(formData.get("membro_usuario_id") ?? "").trim();
+  if (!Number.isInteger(timeId) || timeId < 1) return { ok: false, message: "Equipe inválida." };
+  if (!UUID_RE.test(membroId)) return { ok: false, message: "Membro inválido." };
+
+  const { data: teamRow } = await supabase.from("times").select("id, nome, criador_id").eq("id", timeId).maybeSingle();
+  if (!teamRow || teamRow.criador_id !== user.id) return { ok: false, message: "Sem permissão para remover membro." };
+  if (membroId === user.id) return { ok: false, message: "Você não pode remover o próprio líder por aqui." };
+
+  const { error: removeErr } = await supabase.rpc("remover_membro_time", {
+    p_time_id: timeId,
+    p_usuario_id: membroId,
+  });
+  if (removeErr) return { ok: false, message: removeErr.message };
+
+  await supabase.from("notificacoes").insert({
+    usuario_id: membroId,
+    remetente_id: user.id,
+    mensagem: `Você foi removido de "${teamRow.nome ?? "uma formação"}".`,
+    tipo: "time_convite",
+    referencia_id: timeId,
+    lida: false,
+    data_criacao: new Date().toISOString(),
+  });
+
+  revalidatePath(`/editar/time/${timeId}`);
+  revalidatePath(`/conta/formacao/time/${timeId}`);
+  revalidatePath(`/perfil-time/${timeId}`);
+  revalidatePath("/comunidade");
+  revalidatePath("/times");
+  return { ok: true, message: "Membro removido com sucesso." };
+}
+
+export async function transferirLiderancaDaEquipe(
+  _prev: TeamActionState | undefined,
+  formData: FormData
+): Promise<TeamActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada." };
+
+  const timeId = Number(formData.get("time_id") ?? 0);
+  const novoLiderId = String(formData.get("novo_lider_usuario_id") ?? "").trim();
+  if (!Number.isInteger(timeId) || timeId < 1) return { ok: false, message: "Equipe inválida." };
+  if (!UUID_RE.test(novoLiderId)) return { ok: false, message: "Membro inválido." };
+  if (novoLiderId === user.id) return { ok: false, message: "Selecione outro membro para transferir liderança." };
+
+  const { data: teamRow } = await supabase.from("times").select("id, criador_id").eq("id", timeId).maybeSingle();
+  if (!teamRow || teamRow.criador_id !== user.id) return { ok: false, message: "Sem permissão para transferir liderança." };
+
+  const { error: transferErr } = await supabase.rpc("transferir_lideranca_time", {
+    p_time_id: timeId,
+    p_novo_lider: novoLiderId,
+  });
+  if (transferErr) return { ok: false, message: transferErr.message };
+
+  revalidatePath(`/editar/time/${timeId}`);
+  revalidatePath(`/conta/formacao/time/${timeId}`);
+  revalidatePath(`/perfil-time/${timeId}`);
+  revalidatePath("/times");
+  return { ok: true, message: "Liderança transferida com sucesso." };
+}

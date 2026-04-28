@@ -9,7 +9,7 @@ import { AmistosoDailyHint } from "@/components/dashboard/amistoso-daily-hint";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
-import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
@@ -392,8 +392,6 @@ export default async function DashboardPage({ searchParams }: Props) {
     .from("times")
     .select("id, nome, tipo, localizacao, escudo, esporte_id, vagas_abertas, aceita_pedidos, lat, lng, criador_id, pontos_ranking, eid_time, esportes(nome)")
     .neq("criador_id", user.id)
-    .eq("vagas_abertas", true)
-    .eq("aceita_pedidos", true)
     .order("pontos_ranking", { ascending: false })
     .limit(50);
   if (esportesParaFiltro.length) {
@@ -435,7 +433,6 @@ export default async function DashboardPage({ searchParams }: Props) {
     .filter(({ t }) => meusEsportesSet.size === 0 || meusEsportesSet.has(Number(t.esporte_id ?? 0)));
   const atletaMaisProximo = atletasFiltrados[0] ?? null;
   const esporteCardNome = meusEsportesResumo[0]?.esporteNome ?? "Esporte";
-  const esporteCardIcon = sportIconEmoji(esporteCardNome);
   const teamRosterIds = [
     ...new Set(
       [
@@ -459,10 +456,15 @@ export default async function DashboardPage({ searchParams }: Props) {
       return [Number(t.id), Math.max(0, cap - head)] as const;
     })
   );
-  const timesComBuscaEVaga = timesComBusca.filter(({ t }) => (vagasDisponiveisMap.get(Number(t.id ?? 0)) ?? 0) > 0);
+  const timesComBuscaEVaga = timesComBusca.filter(
+    ({ t }) =>
+      Boolean(t.vagas_abertas) &&
+      Boolean(t.aceita_pedidos) &&
+      (vagasDisponiveisMap.get(Number(t.id ?? 0)) ?? 0) > 0
+  );
   const timesFiltrados = timesComBuscaEVaga.slice(0, 12);
-  const duplaMaisProxima = timesComBuscaEVaga.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "dupla");
-  const timeMaisProximo = timesComBuscaEVaga.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "time");
+  const duplaMaisProxima = timesComBusca.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "dupla");
+  const timeMaisProximo = timesComBusca.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "time");
 
   const { data: locaisScrollRaw } = canSeeLocais
     ? await supabase
@@ -717,7 +719,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                         className="inline-flex shrink-0 items-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-1 text-[10px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)]"
                         title={item.esporteNome}
                       >
-                        <span aria-hidden>{sportIconEmoji(item.esporteNome)}</span>
+                        <SportGlyphIcon sportName={item.esporteNome} />
                         <span className="truncate">{item.esporteNome}</span>
                       </span>
                     ))}
@@ -883,13 +885,11 @@ export default async function DashboardPage({ searchParams }: Props) {
                     </div>
                   </div>
                   <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
-                    <span aria-hidden>{esporteCardIcon}</span>
+                    <SportGlyphIcon sportName={esporteCardNome} />
                     <span className="truncate">{esporteCardNome}</span>
                   </p>
                   <p className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-px text-[7px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
-                    <span aria-hidden className="opacity-80">
-                      👤
-                    </span>{" "}
+                    <ModalidadeGlyphIcon modalidade="individual" />
                     Individual
                   </p>
                 </Link>
@@ -931,19 +931,17 @@ export default async function DashboardPage({ searchParams }: Props) {
                     </div>
                   </div>
                   <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
-                    <span aria-hidden>
-                      {sportIconEmoji(
-                        String(firstOf(duplaMaisProxima.t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte")
+                    <SportGlyphIcon
+                      sportName={String(
+                        firstOf(duplaMaisProxima.t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte"
                       )}
-                    </span>
+                    />
                     <span className="truncate">
                       {String(firstOf(duplaMaisProxima.t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte")}
                     </span>
                   </p>
                   <p className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-px text-[7px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
-                    <span aria-hidden className="opacity-80">
-                      👥
-                    </span>{" "}
+                    <ModalidadeGlyphIcon modalidade="dupla" />
                     Dupla
                   </p>
                 </Link>
@@ -983,19 +981,17 @@ export default async function DashboardPage({ searchParams }: Props) {
                     </div>
                   </div>
                   <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
-                    <span aria-hidden>
-                      {sportIconEmoji(
-                        String(firstOf(timeMaisProximo.t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte")
+                    <SportGlyphIcon
+                      sportName={String(
+                        firstOf(timeMaisProximo.t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte"
                       )}
-                    </span>
+                    />
                     <span className="truncate">
                       {String(firstOf(timeMaisProximo.t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte")}
                     </span>
                   </p>
                   <p className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-px text-[7px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
-                    <span aria-hidden className="opacity-80">
-                      🛡️
-                    </span>{" "}
+                    <ModalidadeGlyphIcon modalidade="time" />
                     Time
                   </p>
                 </Link>
@@ -1116,13 +1112,13 @@ export default async function DashboardPage({ searchParams }: Props) {
                     </div>
                   </div>
                   <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
-                    <span aria-hidden>
-                      {sportIconEmoji(String(firstOf(t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte"))}
-                    </span>
+                    <SportGlyphIcon
+                      sportName={String(firstOf(t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte")}
+                    />
                     <span className="truncate">{String(firstOf(t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte")}</span>
                   </p>
                   <p className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-px text-[7px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
-                    <span aria-hidden className="opacity-80">{String(t.tipo ?? "").toLowerCase() === "dupla" ? "👥" : "🛡️"}</span>
+                    <ModalidadeGlyphIcon modalidade={String(t.tipo ?? "").toLowerCase() === "dupla" ? "dupla" : "time"} />
                     {String(t.tipo ?? "").toLowerCase() === "dupla" ? "Dupla" : "Time"}
                   </p>
                   <p className="mt-1 inline-flex items-center justify-center rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-px text-[7px] font-black uppercase tracking-[0.08em] text-eid-action-300">

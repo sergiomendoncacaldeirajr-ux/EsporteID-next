@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { Grid2x2, Handshake, Maximize2, Shield, Trophy, User, Users, X } from "lucide-react";
+import { Grid2x2, Handshake, Maximize2, Trophy, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { refreshMatchRadarAction, setViewerDisponivelAmistoso } from "@/app/match/actions";
@@ -19,8 +19,8 @@ import {
   PROFILE_HERO_PANEL_CLASS,
   PROFILE_PUBLIC_AVATAR_RING_CLASS,
 } from "@/components/perfil/profile-ui-tokens";
-import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 import { matchCardEidStatsHref } from "@/lib/match/radar-snapshot";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 
 function cn(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(" ");
@@ -165,6 +165,7 @@ export function MatchRadarApp({
     }
   });
   const [entryError, setEntryError] = useState<string | null>(null);
+  const [hideOwnerChallengeHint, setHideOwnerChallengeHint] = useState(false);
   const [mounted] = useState(() => typeof window !== "undefined");
   const syncUrl = useCallback(
     (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
@@ -208,6 +209,72 @@ export function MatchRadarApp({
     []
   );
 
+  const runRefreshFull = useCallback(
+    (next: { sortBy: SortBy; raio: number; esporte: string }) => {
+      startTransition(async () => {
+        const results = await Promise.all([
+          refreshMatchRadarAction({
+            tipo: "atleta",
+            sortBy: next.sortBy,
+            raio: next.raio,
+            esporteSelecionado: next.esporte,
+            finalidade: "ranking",
+            includeActiveOpponents: true,
+          }),
+          refreshMatchRadarAction({
+            tipo: "atleta",
+            sortBy: next.sortBy,
+            raio: next.raio,
+            esporteSelecionado: next.esporte,
+            finalidade: "amistoso",
+            includeActiveOpponents: true,
+          }),
+          refreshMatchRadarAction({
+            tipo: "dupla",
+            sortBy: next.sortBy,
+            raio: next.raio,
+            esporteSelecionado: next.esporte,
+            finalidade: "ranking",
+            includeActiveOpponents: true,
+          }),
+          refreshMatchRadarAction({
+            tipo: "time",
+            sortBy: next.sortBy,
+            raio: next.raio,
+            esporteSelecionado: next.esporte,
+            finalidade: "ranking",
+            includeActiveOpponents: true,
+          }),
+        ]);
+
+        const noMaioridade = results.some((r) => !r.ok && r.error === "no_maioridade");
+        if (noMaioridade) {
+          const q = new URLSearchParams();
+          q.set("tipo", tipo);
+          q.set("esporte", /^\d+$/.test(next.esporte) ? next.esporte : "all");
+          q.set("raio", String(next.raio));
+          q.set("sort_by", next.sortBy);
+          q.set("finalidade", finalidade);
+          const nextPath = `/match?${q.toString()}`;
+          window.location.href = `/conta/confirmar-maioridade-match?next=${encodeURIComponent(nextPath)}`;
+          return;
+        }
+
+        const merged = results.flatMap((r) => (r.ok ? r.cards : []));
+        const byKey = new Map<string, MatchRadarCard>();
+        for (const card of merged) {
+          const key = `${card.modalidade}:${card.id}:${card.esporteId}`;
+          const prev = byKey.get(key);
+          if (!prev || (prev.interesseMatch !== "ranking_e_amistoso" && card.interesseMatch === "ranking_e_amistoso")) {
+            byKey.set(key, card);
+          }
+        }
+        setCards(Array.from(byKey.values()));
+      });
+    },
+    [tipo, finalidade]
+  );
+
   const applyFilters = useCallback(
     (patch: Partial<{ tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }>) => {
       const nextFinalidade = patch.finalidade ?? finalidade;
@@ -228,9 +295,10 @@ export function MatchRadarApp({
       setEsporte(next.esporte);
       setFinalidade(next.finalidade);
       syncUrl(next);
-      runRefresh(next);
+      if (viewMode === "full") runRefreshFull({ sortBy: next.sortBy, raio: next.raio, esporte: next.esporte });
+      else runRefresh(next);
     },
-    [tipo, sortBy, raio, esporte, finalidade, runRefresh, syncUrl]
+    [tipo, sortBy, raio, esporte, finalidade, runRefresh, runRefreshFull, syncUrl, viewMode]
   );
 
 
@@ -252,6 +320,9 @@ export function MatchRadarApp({
     q.set("view", next);
     q.set("genero", generoFiltro);
     window.history.replaceState(null, "", `/match?${q.toString()}`);
+    if (next === "full") {
+      runRefreshFull({ sortBy, raio, esporte });
+    }
   }
 
   async function handleEntryChoice(wantsAmistoso: boolean) {
@@ -302,6 +373,11 @@ export function MatchRadarApp({
   }
 
   const isFullView = viewMode === "full";
+  // Regra global do radar/desafio:
+  // - Gênero só filtra no individual (atleta).
+  // - Em dupla/time, nunca filtra por gênero.
+  // - Em fullscreen, também não filtra por gênero.
+  const generoFiltroEfetivo = isFullView || tipo !== "atleta" ? "all" : generoFiltro;
   const fullOrderedCards = useMemo(() => {
     type Bucket = "amistoso" | "ranking" | "dupla" | "time";
     const buckets: Record<Bucket, MatchRadarCard[]> = {
@@ -365,23 +441,27 @@ export function MatchRadarApp({
     });
   }, [cards, tipo, finalidade]);
   const challengeableCards = useMemo(
-    () => cardsByGridFilters.filter((c) => c.modalidade === "individual" || c.canChallenge),
+    // Não escondemos cards de dupla/time por indisponibilidade momentânea de desafio.
+    // O bloqueio fica no CTA/hint, mas o card deve aparecer na grade.
+    () => cardsByGridFilters,
     [cardsByGridFilters]
   );
   const cardsFiltradosGeneroChallengeable = useMemo(() => {
-    if (generoFiltro === "all") return challengeableCards;
+    if (generoFiltroEfetivo === "all") return challengeableCards;
     return challengeableCards.filter((c) => {
       if (c.modalidade !== "individual") return true;
       const g = String(c.genero ?? "").trim().toLowerCase();
-      if (generoFiltro === "masculino") return g === "masculino";
-      if (generoFiltro === "feminino") return g === "feminino";
+      if (generoFiltroEfetivo === "masculino") return g === "masculino";
+      if (generoFiltroEfetivo === "feminino") return g === "feminino";
       return g !== "" && g !== "masculino" && g !== "feminino";
     });
-  }, [challengeableCards, generoFiltro]);
+  }, [challengeableCards, generoFiltroEfetivo]);
   const fullOrderedChallengeableCards = useMemo(() => {
-    const allowed = new Set(challengeableCards.map((c) => `${c.modalidade}:${c.id}:${c.esporteId}`));
-    return fullOrderedCards.filter((c) => allowed.has(`${c.modalidade}:${c.id}:${c.esporteId}`));
-  }, [challengeableCards, fullOrderedCards]);
+    // No modo tela cheia, mostramos TODAS as sugestões (individual + dupla + time),
+    // mesmo quando o desafio estiver temporariamente indisponível para alguma formação.
+    // A indisponibilidade fica só no botão/hint, sem esconder o card.
+    return fullOrderedCards;
+  }, [fullOrderedCards]);
   const gridCardsWithoutDuplicates = useMemo(() => {
     const byKey = new Map<string, MatchRadarCard>();
     for (const card of cardsFiltradosGeneroChallengeable) {
@@ -436,7 +516,12 @@ export function MatchRadarApp({
   }, [isFullView]);
 
   return (
-    <div className="w-full min-w-0">
+    <div
+      className="w-full min-w-0"
+      onClickCapture={() => {
+        if (!hideOwnerChallengeHint) setHideOwnerChallengeHint(true);
+      }}
+    >
       {mounted && showEntryPrompt
         ? createPortal(
             <div
@@ -592,13 +677,7 @@ export function MatchRadarApp({
                     onClick={() => applyFilters({ tipo: value })}
                     className={segmentTab(active)}
                   >
-                    {value === "atleta" ? (
-                      <User className="h-2.5 w-2.5 shrink-0" strokeWidth={2.4} aria-hidden />
-                    ) : value === "dupla" ? (
-                      <Users className="h-2.5 w-2.5 shrink-0" strokeWidth={2.4} aria-hidden />
-                    ) : (
-                      <Shield className="h-2.5 w-2.5 shrink-0" strokeWidth={2.4} aria-hidden />
-                    )}
+                    <ModalidadeGlyphIcon modalidade={value === "atleta" ? "individual" : value === "dupla" ? "dupla" : "time"} />
                     <span className="truncate">{label}</span>
                   </button>
                 );
@@ -792,6 +871,7 @@ export function MatchRadarApp({
                     matchFinalidade={finalidade}
                     viewerHasDupla={viewerHasDupla}
                     viewerHasTime={viewerHasTime}
+                    suppressChallengeHint={hideOwnerChallengeHint}
                   />
                 ))}
               </div>
@@ -956,13 +1036,12 @@ export function MatchRadarApp({
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-[8px] text-eid-text-secondary">{group.entries.length} esporte(s)</p>
                         <p className="inline-flex items-center gap-0.5 text-[8px] font-semibold text-eid-text-secondary">
-                          {c.modalidade === "individual" ? <User className="h-2.5 w-2.5" strokeWidth={2.3} aria-hidden /> : c.modalidade === "dupla" ? <Users className="h-2.5 w-2.5" strokeWidth={2.3} aria-hidden /> : <Shield className="h-2.5 w-2.5" strokeWidth={2.3} aria-hidden />}
+                          <ModalidadeGlyphIcon modalidade={c.modalidade === "individual" ? "individual" : c.modalidade === "dupla" ? "dupla" : "time"} />
                           Categoria: {modalidadeLabel}
                         </p>
                       </div>
                       <div className="space-y-1">
                         {group.entries.map((entry) => {
-                          const esporteIcon = sportIconEmoji(entry.esporteNome);
                           const rowModalidade =
                             entry.modalidade === "individual" ? "Individual" : entry.modalidade === "dupla" ? "Dupla" : "Time";
                           return (
@@ -971,7 +1050,10 @@ export function MatchRadarApp({
                               className="flex items-center justify-between gap-2 rounded-lg border border-[color:var(--eid-border-subtle)]/75 bg-eid-surface/45 px-2 py-1"
                             >
                               <p className="min-w-0 truncate text-[9px] font-semibold text-eid-primary-300">
-                                {esporteIcon} {entry.esporteNome}
+                                <span className="inline-flex items-center gap-1">
+                                  <SportGlyphIcon sportName={entry.esporteNome} />
+                                  <span>{entry.esporteNome}</span>
+                                </span>
                               </p>
                               <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1.5 py-0.5 text-[8px] font-bold text-eid-fg/90">
                                 <Trophy className="h-2.5 w-2.5" strokeWidth={2.3} aria-hidden />

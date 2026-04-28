@@ -16,6 +16,7 @@ import {
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
+import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
@@ -383,7 +384,8 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                     <span className="font-semibold text-eid-fg">
                       {new Date(rankingBlockedUntilTime).toLocaleDateString("pt-BR")}
                     </span>
-                    .
+                    .{" "}
+                    <span className="font-semibold text-eid-fg">{formatCooldownRemaining(rankingBlockedUntilTime)}</span>
                   </p>
                 ) : null}
               </div>

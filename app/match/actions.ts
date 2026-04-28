@@ -52,6 +52,7 @@ export async function refreshMatchRadarAction(input: {
   raio: number;
   esporteSelecionado: string;
   finalidade: MatchRadarFinalidade;
+  includeActiveOpponents?: boolean;
 }): Promise<RefreshMatchRadarResult> {
   const { supabase, user } = await getServerAuth();
   if (!user) return { ok: false, error: "auth" };
@@ -81,6 +82,7 @@ export async function refreshMatchRadarAction(input: {
     lat,
     lng,
     finalidade: input.finalidade,
+    includeActiveOpponents: input.includeActiveOpponents === true,
   };
 
   const cards = await fetchMatchRadarCards(supabase, snap);

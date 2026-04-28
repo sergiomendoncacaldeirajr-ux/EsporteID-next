@@ -17,6 +17,7 @@ import {
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
+import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
@@ -385,7 +386,8 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     <span className="font-semibold text-eid-fg">
                       {new Date(rankingBlockedUntilDupla).toLocaleDateString("pt-BR")}
                     </span>
-                    .
+                    .{" "}
+                    <span className="font-semibold text-eid-fg">{formatCooldownRemaining(rankingBlockedUntilDupla)}</span>
                   </p>
                 ) : null}
                 {canSugerirMatchDupla && timeResolvidoId ? (
