@@ -464,50 +464,6 @@ export default async function ComunidadePage() {
       timeTipo: String(team?.tipo ?? "time"),
     };
   });
-  const { data: minhasCandidaturasRaw } = await supabase
-    .from("time_candidaturas")
-    .select("id, time_id, status, mensagem, criado_em, respondido_em, times(id, nome, tipo)")
-    .eq("candidato_usuario_id", user.id)
-    .order("criado_em", { ascending: false })
-    .limit(60);
-  const minhasCandidaturasEquipe = (minhasCandidaturasRaw ?? []).map((raw) => {
-    const row = raw as {
-      id: number;
-      time_id: number;
-      status: string | null;
-      mensagem: string | null;
-      criado_em: string;
-      respondido_em: string | null;
-      times: { id: number; nome: string | null; tipo: string | null } | { id: number; nome: string | null; tipo: string | null }[];
-    };
-    const team = Array.isArray(row.times) ? row.times[0] : row.times;
-    const statusRaw = String(row.status ?? "pendente").trim().toLowerCase();
-    const statusLabel =
-      statusRaw === "aprovado" || statusRaw === "aceito"
-        ? "Aprovado"
-        : statusRaw === "recusado"
-          ? "Recusado"
-          : statusRaw === "cancelado"
-            ? "Cancelado"
-            : "Pendente";
-    const statusClass =
-      statusRaw === "aprovado" || statusRaw === "aceito"
-        ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-200"
-        : statusRaw === "recusado" || statusRaw === "cancelado"
-          ? "border-rose-500/35 bg-rose-500/10 text-rose-200"
-          : "border-amber-500/35 bg-amber-500/10 text-amber-200";
-    return {
-      id: row.id,
-      statusRaw,
-      statusLabel,
-      statusClass,
-      mensagem: row.mensagem?.trim() || null,
-      criadoEm: row.criado_em,
-      respondidoEm: row.respondido_em,
-      timeNome: team?.nome ?? "Formação",
-      timeTipo: String(team?.tipo ?? "time"),
-    };
-  });
   const nNotifUnread = uniqueNotificacoes.filter((n) => n.lida !== true).length;
   const desafioNotifs = uniqueNotificacoes.filter((n) => {
     const tipo = String(n.tipo ?? "").toLowerCase();
