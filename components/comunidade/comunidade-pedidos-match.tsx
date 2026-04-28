@@ -27,10 +27,28 @@ export type PedidoMatchItem = {
   esporteId: number;
   rankingPosicao?: number | null;
   modalidade: string;
+  /** Dupla/time desafiante (foto e nome da formação, não do líder). */
+  formacaoDesafiante?: {
+    id: number;
+    nome: string | null;
+    escudo: string | null;
+    localizacao: string | null;
+    tipo: "dupla" | "time";
+    eidTime: number;
+    pontosRanking: number;
+  } | null;
   timeNome?: string | null;
   finalidade?: "ranking" | "amistoso";
   rankingPreview?: PedidoRankingPreview | null;
 };
+
+function iniciaisFormacao(nome: string | null | undefined): string {
+  const n = String(nome ?? "").trim();
+  if (!n) return "?";
+  const parts = n.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) return (parts[0]![0]! + parts[1]![0]!).toUpperCase();
+  return n.slice(0, 2).toUpperCase();
+}
 
 const initial: ResponderMatchState = { ok: false, message: "" };
 
@@ -65,7 +83,22 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
       ) : null}
 
       <ul className="space-y-3 md:space-y-4">
-        {items.map((m) => (
+        {items.map((m) => {
+          const f = m.formacaoDesafiante;
+          const tituloCard = (f?.nome?.trim() ? f.nome : null) ?? m.desafianteNome;
+          const localCard = (f?.localizacao?.trim() ? f.localizacao : null) ?? m.desafianteLocalizacao;
+          const statsHref = f
+            ? `/${f.tipo === "dupla" ? "perfil-dupla" : "perfil-time"}/${f.id}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`
+            : `/perfil/${m.desafianteId}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`;
+          const seloEid =
+            m.rankingPreview?.kind === "coletivo"
+              ? m.rankingPreview.coletivo.opponentTeam.eidTime
+              : m.rankingPreview?.kind === "individual"
+                ? m.rankingPreview.perspective.notaEidNow
+                : f
+                  ? f.eidTime
+                  : Number(m.desafianteNotaEid ?? 0);
+          return (
           <li
             key={m.id}
             className="relative overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)_92%))] p-3 text-sm shadow-[0_10px_20px_-14px_rgba(15,23,42,0.35)] md:rounded-2xl md:border-eid-primary-500/25 md:p-4 md:shadow-md md:shadow-black/15"
@@ -80,13 +113,25 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                     </span>
                   ) : null}
                   <ProfileEditDrawerTrigger
-                    href={`/perfil/${m.desafianteId}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`}
-                    title={`Estatísticas EID de ${m.desafianteNome}`}
+                    href={statsHref}
+                    title={f ? `Estatísticas da formação ${tituloCard}` : `Estatísticas EID de ${tituloCard}`}
                     fullscreen
                     topMode="backOnly"
                     className="block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
                   >
-                    {m.desafianteAvatarUrl ? (
+                    {f?.escudo?.trim() ? (
+                      <Image
+                        src={f.escudo.trim()}
+                        alt=""
+                        fill
+                        unoptimized
+                        className="h-full w-full rounded-full object-cover object-center"
+                      />
+                    ) : f ? (
+                      <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                        {iniciaisFormacao(f.nome)}
+                      </div>
+                    ) : m.desafianteAvatarUrl ? (
                       <Image
                         src={m.desafianteAvatarUrl}
                         alt=""
@@ -102,19 +147,15 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                   </ProfileEditDrawerTrigger>
                   <div className="absolute -bottom-1 left-1/2 z-[2] -translate-x-1/2">
                     <ProfileEidPerformanceSeal
-                      notaEid={
-                        m.rankingPreview?.kind === "individual"
-                          ? m.rankingPreview.perspective.notaEidNow
-                          : Number(m.desafianteNotaEid ?? 0)
-                      }
+                      notaEid={seloEid}
                       compact
                       className="scale-125"
-                      locationLabel={m.desafianteLocalizacao}
+                      locationLabel={localCard}
                     />
                   </div>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold tracking-tight text-eid-fg md:text-base md:font-black">{m.desafianteNome}</p>
+                  <p className="text-sm font-bold tracking-tight text-eid-fg md:text-base md:font-black">{tituloCard}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-1">
                     <p className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
                       <SportGlyphIcon sportName={m.esporte} />
@@ -139,7 +180,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                     {m.modalidade === "individual" ? "Desafio individual" : `Desafio ${m.modalidade}`}
                   </p>
                   <p className="mt-1 text-[11px] text-eid-text-secondary">
-                    {m.desafianteLocalizacao?.trim() ? m.desafianteLocalizacao : "Localização não informada"}
+                    {localCard?.trim() ? localCard : "Localização não informada"}
                   </p>
               </div>
               </div>
@@ -193,7 +234,8 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
               </form>
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );

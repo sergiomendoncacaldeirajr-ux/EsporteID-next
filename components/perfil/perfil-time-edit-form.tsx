@@ -151,7 +151,7 @@ export function PerfilTimeEditForm({
           <button
             type="submit"
             disabled={pending}
-            className="eid-btn-primary rounded-xl px-6 py-3 text-base font-bold sm:text-lg"
+            className="eid-btn-primary !min-h-[48px] rounded-xl px-6 py-3 !text-lg font-bold leading-snug sm:!min-h-[50px] sm:!text-xl"
           >
             {pending ? "Salvando..." : "Salvar alterações"}
           </button>

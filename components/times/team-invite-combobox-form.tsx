@@ -98,7 +98,7 @@ export function TeamInviteComboboxForm({
 
   const formClass =
     variant === "stack"
-      ? "flex flex-col items-start gap-2.5"
+      ? "flex flex-col gap-2 sm:flex-row sm:items-stretch sm:gap-2.5"
       : "grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start";
 
   const inputBase =
@@ -107,7 +107,7 @@ export function TeamInviteComboboxForm({
 
   const btnClass =
     variant === "stack"
-      ? "eid-btn-primary !text-base min-h-[48px] w-auto max-w-full shrink-0 self-start rounded-xl px-6 py-3 font-bold leading-tight sm:!text-lg sm:min-h-[50px]"
+      ? "eid-btn-primary w-full min-h-[50px] rounded-xl px-5 py-3 !text-base font-bold leading-tight sm:w-auto sm:min-w-[8.75rem] sm:shrink-0 sm:self-stretch sm:px-6 sm:!text-lg sm:min-h-[52px]"
       : "eid-btn-primary !text-base min-h-[48px] w-auto max-w-full shrink-0 justify-self-start rounded-xl px-6 py-3 font-bold leading-tight sm:min-h-[50px] sm:self-stretch sm:!text-lg";
 
   return (
@@ -115,7 +115,9 @@ export function TeamInviteComboboxForm({
       <form action={inviteAction} className={formClass}>
         <input type="hidden" name="time_id" value={timeId} />
         <input type="hidden" name="convidado_usuario_id" value={pickedUserId ?? ""} />
-        <div className={`relative min-w-0 w-full ${variant === "grid" ? "sm:col-span-1" : ""}`}>
+        <div
+          className={`relative min-w-0 w-full ${variant === "grid" ? "sm:col-span-1" : "sm:min-w-0 sm:flex-1"}`}
+        >
           <input
             type="text"
             name="username"

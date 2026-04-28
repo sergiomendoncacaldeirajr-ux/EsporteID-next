@@ -230,23 +230,84 @@ export default async function ComunidadePage() {
     : { data: [] };
   const timeMap = new Map((timesRows ?? []).map((t) => [t.id, t.nome]));
 
-  const pedidosItemsBase = (recebidos ?? []).map((m) => ({
-    id: Number(m.id),
-    desafianteNome: (m.usuario_id ? uMap.get(m.usuario_id)?.nome : null) ?? "Atleta",
-    desafianteId: String(m.usuario_id ?? ""),
-    desafianteAvatarUrl: (m.usuario_id ? uMap.get(m.usuario_id)?.avatar_url : null) ?? null,
-    desafianteLocalizacao: (m.usuario_id ? uMap.get(m.usuario_id)?.localizacao : null) ?? null,
-    desafianteNotaEid:
-      m.usuario_id && Number.isFinite(Number(m.esporte_id ?? 0))
-        ? desafianteEidMap.get(`${String(m.usuario_id)}:${Number(m.esporte_id ?? 0)}`) ?? 0
-        : 0,
-    esporte: (m.esporte_id ? espMap.get(m.esporte_id) : null) ?? "Esporte",
-    esporteId: Number(m.esporte_id ?? 0),
-    modalidade: m.modalidade_confronto ?? "individual",
-    timeNome: m.adversario_time_id ? timeMap.get(m.adversario_time_id) ?? null : null,
-    adversarioTimeId: m.adversario_time_id != null ? Number(m.adversario_time_id) : null,
-    finalidade: (String(m.finalidade ?? "ranking") === "amistoso" ? "amistoso" : "ranking") as "ranking" | "amistoso",
-  }));
+  /** Confronto dupla/time: desafiante é a formação (mesma regra que fetchPedidoRankingPreview), não o perfil individual do líder. */
+  const coletivoRecebidos = (recebidos ?? []).filter((row) => {
+    const mod = String(row.modalidade_confronto ?? "").toLowerCase();
+    return mod === "dupla" || mod === "time";
+  });
+  const chLiderUids = [...new Set(coletivoRecebidos.map((row) => String(row.usuario_id ?? "")).filter(Boolean))];
+  const chEsporteIdsColetivo = [
+    ...new Set(
+      coletivoRecebidos.map((row) => Number(row.esporte_id ?? 0)).filter((n) => Number.isFinite(n) && n > 0)
+    ),
+  ];
+  const { data: formacoesDesafianteRows } =
+    chLiderUids.length > 0 && chEsporteIdsColetivo.length > 0
+      ? await supabase
+          .from("times")
+          .select("id, nome, escudo, localizacao, criador_id, esporte_id, tipo, eid_time, pontos_ranking")
+          .in("criador_id", chLiderUids)
+          .in("esporte_id", chEsporteIdsColetivo)
+      : { data: [] };
+  type FormacaoDesafiantePedido = {
+    id: number;
+    nome: string | null;
+    escudo: string | null;
+    localizacao: string | null;
+    tipo: "dupla" | "time";
+    eidTime: number;
+    pontosRanking: number;
+  };
+  const formacaoDesafianteByChave = new Map<string, FormacaoDesafiantePedido>();
+  for (const row of formacoesDesafianteRows ?? []) {
+    const tipoRaw = String((row as { tipo?: string | null }).tipo ?? "").trim().toLowerCase();
+    if (tipoRaw !== "dupla" && tipoRaw !== "time") continue;
+    const tipo = tipoRaw as "dupla" | "time";
+    const uid = String((row as { criador_id?: string | null }).criador_id ?? "");
+    const esp = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
+    if (!uid || !esp) continue;
+    const key = `${uid}:${esp}:${tipo}`;
+    const id = Number((row as { id?: number }).id ?? 0);
+    const prev = formacaoDesafianteByChave.get(key);
+    if (!prev || id > prev.id) {
+      formacaoDesafianteByChave.set(key, {
+        id,
+        nome: (row as { nome?: string | null }).nome ?? null,
+        escudo: (row as { escudo?: string | null }).escudo ?? null,
+        localizacao: (row as { localizacao?: string | null }).localizacao ?? null,
+        tipo,
+        eidTime: Number((row as { eid_time?: number | null }).eid_time ?? 0),
+        pontosRanking: Number((row as { pontos_ranking?: number | null }).pontos_ranking ?? 0),
+      });
+    }
+  }
+
+  const pedidosItemsBase = (recebidos ?? []).map((m) => {
+    const mod = String(m.modalidade_confronto ?? "individual").toLowerCase();
+    const formacaoDesafianteKey =
+      m.usuario_id && (mod === "dupla" || mod === "time") && m.esporte_id
+        ? `${String(m.usuario_id)}:${Number(m.esporte_id)}:${mod}`
+        : null;
+    const formacaoDesafiante = formacaoDesafianteKey ? formacaoDesafianteByChave.get(formacaoDesafianteKey) ?? null : null;
+    return {
+      id: Number(m.id),
+      desafianteNome: (m.usuario_id ? uMap.get(m.usuario_id)?.nome : null) ?? "Atleta",
+      desafianteId: String(m.usuario_id ?? ""),
+      desafianteAvatarUrl: (m.usuario_id ? uMap.get(m.usuario_id)?.avatar_url : null) ?? null,
+      desafianteLocalizacao: (m.usuario_id ? uMap.get(m.usuario_id)?.localizacao : null) ?? null,
+      desafianteNotaEid:
+        m.usuario_id && Number.isFinite(Number(m.esporte_id ?? 0))
+          ? desafianteEidMap.get(`${String(m.usuario_id)}:${Number(m.esporte_id ?? 0)}`) ?? 0
+          : 0,
+      esporte: (m.esporte_id ? espMap.get(m.esporte_id) : null) ?? "Esporte",
+      esporteId: Number(m.esporte_id ?? 0),
+      modalidade: mod === "atleta" ? "individual" : mod,
+      formacaoDesafiante,
+      timeNome: m.adversario_time_id ? timeMap.get(m.adversario_time_id) ?? null : null,
+      adversarioTimeId: m.adversario_time_id != null ? Number(m.adversario_time_id) : null,
+      finalidade: (String(m.finalidade ?? "ranking") === "amistoso" ? "amistoso" : "ranking") as "ranking" | "amistoso",
+    };
+  });
 
   const pedidosItems = await Promise.all(
     pedidosItemsBase.map(async (m) => ({
@@ -254,6 +315,17 @@ export default async function ComunidadePage() {
       rankingPosicao:
         m.finalidade === "ranking" && m.esporteId > 0
           ? await (async () => {
+              const mod = String(m.modalidade ?? "").toLowerCase();
+              if (m.formacaoDesafiante && (mod === "dupla" || mod === "time")) {
+                const pontos = m.formacaoDesafiante.pontosRanking;
+                const { count } = await supabase
+                  .from("times")
+                  .select("id", { count: "exact", head: true })
+                  .eq("esporte_id", m.esporteId)
+                  .eq("tipo", mod)
+                  .gt("pontos_ranking", pontos);
+                return Number(count ?? 0) + 1;
+              }
               const { data: chEid } = await supabase
                 .from("usuario_eid")
                 .select("pontos_ranking")

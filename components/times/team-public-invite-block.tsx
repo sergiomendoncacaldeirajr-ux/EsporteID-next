@@ -11,7 +11,7 @@ export function TeamPublicInviteBlock({ timeId, excludeUserIds }: { timeId: numb
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
 
   return (
-    <div>
+    <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/35 p-3 sm:p-4">
       <TeamInviteComboboxForm
         timeId={timeId}
         excludeUserIds={excludeUserIds}

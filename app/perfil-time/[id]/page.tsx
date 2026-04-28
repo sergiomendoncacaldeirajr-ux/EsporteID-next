@@ -588,15 +588,6 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 <p className="mt-1.5 text-[10px] leading-relaxed text-eid-text-secondary">
                   Elenco, convites, dados e escudo — mesmo painel em tela cheia da área Editar.
                 </p>
-                <ProfileEditDrawerTrigger
-                  href={`/times?from=${encodeURIComponent(fromPublic)}`}
-                  title="Times e vagas"
-                  fullscreen
-                  topMode="backOnly"
-                  className="mt-2 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] px-3 text-[11px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40"
-                >
-                  <span>Ver lista em Times</span>
-                </ProfileEditDrawerTrigger>
               </div>
             </div>
           ) : null}

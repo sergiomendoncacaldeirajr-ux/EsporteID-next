@@ -285,7 +285,7 @@ export default async function TimesPage({ searchParams }: Props) {
 
         <SearchFilterForm
           defaultValue={sp.q ?? ""}
-          placeholder="Buscar time ou cidade..."
+          placeholder="Buscar time ou dupla pelo nome…"
           scope="times"
           formAction="/times"
           showButton={false}
