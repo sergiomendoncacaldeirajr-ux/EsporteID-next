@@ -126,6 +126,9 @@ body.eid-app-shell {
   --eid-surface: #ffffff;
   --eid-card: #ffffff;
   --eid-field-bg: #f1f5f9;
+  /* Chips/status: âmbar padrão (#f59e0b) com pouco contraste em fundo claro — tons mais escuros só aqui. */
+  --eid-warning-500: #d97706;
+  --eid-warning-400: #b45309;
   /* Header claro: superfície branca — status bar alinhada ao topo do topbar */
   --eid-system-ui-chrome: #ffffff;
 
@@ -143,6 +146,47 @@ body.eid-app-shell {
   --eid-hist-status-off: #b91c1c;
   --eid-hist-status-on-bg: color-mix(in srgb, var(--eid-success-500) 14%, var(--eid-surface));
   --eid-hist-status-off-bg: color-mix(in srgb, var(--eid-danger-500) 14%, var(--eid-surface));
+}
+
+/*
+ * Tema claro — badges de status (Pendente, avisos âmbar, etc.):
+ * `text-amber-100`–`300` e similares foram pensados para fundo escuro; em cards claros o contraste
+ * some. Força tons escuros só com `[data-eid-theme="light"]`; tema escuro permanece igual.
+ */
+[data-eid-theme="light"] :where(
+  .text-amber-50,
+  .text-amber-100,
+  .text-amber-200,
+  .text-amber-300
+) {
+  color: #b45309 !important;
+}
+
+[data-eid-theme="light"] :where(
+  .text-amber-100\/90,
+  .text-amber-200\/90,
+  .text-amber-200\/80,
+  .text-amber-200\/95,
+  .text-amber-300\/90
+) {
+  color: #b45309 !important;
+}
+
+[data-eid-theme="light"] :where(
+  .text-yellow-50,
+  .text-yellow-100,
+  .text-yellow-200,
+  .text-yellow-300
+) {
+  color: #a16207 !important;
+}
+
+[data-eid-theme="light"] :where(
+  .text-yellow-200\/90,
+  .text-yellow-100\/90,
+  .text-yellow-300\/90
+) {
+  color: #a16207 !important;
 }
 
 /*
