@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { savePerformanceEidAction } from "@/app/editar/actions";
 
@@ -52,7 +52,7 @@ type Props = {
 
 export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [items, setItems] = useState<ItemState[]>(initialItems);
 
@@ -104,14 +104,15 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
     setItems((prev) => prev.filter((item) => item.esporteId !== esporteId));
   }
 
-  function onSave() {
+  async function onSave() {
     const payload = items.map((item) => ({
       ...item,
       modalidades: item.modalidades.length > 0 ? item.modalidades : ["individual"],
     }));
     const fd = new FormData();
     fd.set("payload", JSON.stringify(payload));
-    startTransition(async () => {
+    setSaving(true);
+    try {
       const res = await savePerformanceEidAction(fd);
       if (!res.ok) {
         setMessage(res.message);
@@ -119,7 +120,9 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
       }
       setMessage("Performance EID atualizada.");
       router.refresh();
-    });
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -337,11 +340,11 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
       <div className="mt-3 flex justify-end">
         <button
           type="button"
-          disabled={pending}
+          disabled={saving}
           onClick={onSave}
           className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.08em] text-eid-fg disabled:opacity-60"
         >
-          {pending ? "Salvando..." : "Salvar Performance"}
+          {saving ? "Salvando..." : "Salvar Performance"}
         </button>
       </div>
     </div>
