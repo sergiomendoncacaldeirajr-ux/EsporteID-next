@@ -55,13 +55,13 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
             key={c.id}
             className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.28)]"
           >
-            <div className="grid grid-cols-[72px_30px_minmax(0,1fr)] items-start sm:grid-cols-[72px_34px_minmax(0,1fr)]">
+            <div className="grid grid-cols-[72px_24px_minmax(0,1fr)] items-start sm:grid-cols-[72px_34px_minmax(0,1fr)]">
               <ProfileEditDrawerTrigger
                 href={`/perfil-time/${c.equipeId}?from=/comunidade`}
                 title={c.equipeNome}
                 fullscreen
                 topMode="backOnly"
-                className="-ml-1 block justify-self-start rounded-xl border border-transparent transition hover:border-eid-primary-500/35 sm:-ml-1.5"
+                className="-ml-2 block justify-self-start rounded-xl border border-transparent transition hover:border-eid-primary-500/35 sm:-ml-1.5"
               >
                 <div className="flex w-[72px] flex-col items-center">
                   <p className="mb-1 max-w-[72px] truncate text-center text-[11px] font-black text-eid-fg">

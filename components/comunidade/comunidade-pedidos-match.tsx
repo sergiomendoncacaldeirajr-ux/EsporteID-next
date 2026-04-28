@@ -71,7 +71,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
             className="relative overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)_92%))] p-3 text-sm shadow-[0_10px_20px_-14px_rgba(15,23,42,0.35)] md:rounded-2xl md:border-eid-primary-500/25 md:p-4 md:shadow-md md:shadow-black/15"
           >
             <div className="pointer-events-none absolute -right-6 -top-6 hidden h-20 w-20 rounded-full bg-eid-primary-500/10 blur-2xl md:block" />
-            <div className="relative mt-1.5 flex min-w-0 items-start gap-2.5 pr-24">
+            <div className="relative -ml-1 mt-1.5 flex min-w-0 items-start gap-2.5 pr-24 md:ml-0">
               <div className="flex min-w-0 items-start gap-2.5">
                 <div className="relative mt-1 h-14 w-14 shrink-0">
                   {m.rankingPosicao && m.rankingPosicao > 0 ? (

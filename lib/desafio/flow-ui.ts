@@ -47,19 +47,19 @@ export const PEDIDO_LIMPAR_COMPACT_BTN_CLASS =
   "inline-flex !h-[18px] !min-h-0 shrink-0 items-center rounded-full border border-[color:var(--eid-border-subtle)] px-1 text-[7px] font-black uppercase leading-none tracking-[0.03em] text-eid-text-secondary transition hover:border-red-400/40 hover:text-red-300 disabled:opacity-50";
 
 /** Container alinhado à direita para pares Aceitar/Recusar em cards. */
-export const PEDIDO_ACOES_ROW_CLASS = "mt-2 flex items-center justify-end gap-[2px] md:gap-1";
+export const PEDIDO_ACOES_ROW_CLASS = "mt-2 flex items-center justify-end gap-0 md:gap-1";
 
 /** Form inline ao lado do outro (sem flex-1 / w-full). */
 export const PEDIDO_ACAO_FORM_INLINE_CLASS = "inline";
 
 /** Container para pedidos de desafio com botões à direita (substitui flex-1 + min-w grande). */
-export const PEDIDO_MATCH_ACOES_ROW_CLASS = "relative mt-3 flex items-center justify-end gap-[2px] md:gap-1";
+export const PEDIDO_MATCH_ACOES_ROW_CLASS = "relative mt-3 flex items-center justify-end gap-0 md:gap-1";
 
 /** Form do pedido de desafio: não estica. */
 export const PEDIDO_MATCH_ACAO_FORM_CLASS = "inline";
 
 /** Container Aprovar/Recusar candidatura na comunidade / vagas. */
-export const CANDIDATURA_ACOES_ROW_CLASS = "mt-3 flex items-center justify-end gap-[2px] md:gap-1";
+export const CANDIDATURA_ACOES_ROW_CLASS = "mt-3 flex items-center justify-end gap-0 md:gap-1";
 
 /** Container do fluxo /desafio no app logado: folga extra acima do footer + nav inferior. */
 export const DESAFIO_PAGE_MAIN_CLASS =
