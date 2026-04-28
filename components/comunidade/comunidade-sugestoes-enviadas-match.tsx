@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   limparSugestaoEnviadaNotificacao,
   type LimparSugestaoEnviadaState,
@@ -23,6 +23,7 @@ export type SugestaoEnviadaMatchItem = {
   sugeridorNome: string;
   sugeridorAvatarUrl?: string | null;
   meuTimeId?: number | null;
+  meuTimeTipo?: string | null;
   meuTimeNome: string;
   meuTimeAvatarUrl?: string | null;
   meuTimeNotaEid?: number | null;
@@ -33,7 +34,7 @@ export type SugestaoEnviadaMatchItem = {
   mensagem: string | null;
 };
 
-const initial: LimparSugestaoEnviadaState = { ok: true };
+const initial: LimparSugestaoEnviadaState = { ok: false, message: "" };
 
 function splitCityState(location?: string | null): { cidade: string; estado: string } {
   const raw = String(location ?? "").trim();
@@ -55,11 +56,21 @@ function firstName(value?: string | null): string {
 export function ComunidadeSugestoesEnviadasMatch({ items }: { items: SugestaoEnviadaMatchItem[] }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(limparSugestaoEnviadaNotificacao, initial);
+  const [clickedClearId, setClickedClearId] = useState<number | null>(null);
   const err = "ok" in state && !state.ok ? state.message : null;
 
   useEffect(() => {
-    if ("ok" in state && state.ok) router.refresh();
+    if ("ok" in state && state.ok) {
+      setClickedClearId(null);
+      router.refresh();
+    }
   }, [state, router]);
+
+  function formacaoHref(item: SugestaoEnviadaMatchItem): string {
+    const tipo = String(item.meuTimeTipo ?? item.modalidade ?? "").trim().toLowerCase();
+    const base = tipo === "dupla" ? "/perfil-dupla" : "/perfil-time";
+    return `${base}/${item.meuTimeId}?from=/comunidade`;
+  }
 
   if (!items.length) {
     return (
@@ -86,7 +97,7 @@ export function ComunidadeSugestoesEnviadasMatch({ items }: { items: SugestaoEnv
                 <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">Sua formação</p>
                 {s.meuTimeId ? (
                   <ProfileEditDrawerTrigger
-                    href={`/perfil-time/${s.meuTimeId}?from=/comunidade`}
+                    href={formacaoHref(s)}
                     title={s.meuTimeNome}
                     fullscreen
                     topMode="backOnly"
@@ -165,8 +176,13 @@ export function ComunidadeSugestoesEnviadasMatch({ items }: { items: SugestaoEnv
             {s.statusRaw !== "pendente" ? (
               <form action={formAction} className="mt-2">
                 <input type="hidden" name="sugestao_id" value={String(s.id)} />
-                <button type="submit" disabled={pending} className={PEDIDO_LIMPAR_COMPACT_BTN_CLASS}>
-                  Limpar
+                <button
+                  type="submit"
+                  disabled={pending}
+                  onClick={() => setClickedClearId(s.id)}
+                  className={PEDIDO_LIMPAR_COMPACT_BTN_CLASS}
+                >
+                  {pending && clickedClearId === s.id ? "Limpando..." : "Limpar"}
                 </button>
               </form>
             ) : null}

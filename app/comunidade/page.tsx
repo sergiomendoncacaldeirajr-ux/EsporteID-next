@@ -52,11 +52,13 @@ function ComunidadeQuadro({
   id,
   title,
   hasPending,
+  badgeLabel = "Pendente",
   children,
 }: {
   id: string;
   title: string;
   hasPending: boolean;
+  badgeLabel?: string;
   children: ReactNode;
 }) {
   if (!hasPending) return null;
@@ -69,7 +71,7 @@ function ComunidadeQuadro({
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
         <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">{title}</h3>
         <span className="rounded-full border border-amber-400/35 bg-amber-500/14 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-amber-200">
-          Pendente
+          {badgeLabel}
         </span>
       </summary>
       <div className="mt-2">{children}</div>
@@ -448,6 +450,7 @@ export default async function ComunidadePage() {
     sugeridorNome: sugPerfilMap.get(s.sugeridor_id) ?? "Atleta",
     sugeridorAvatarUrl: sugPerfilAvatarMap.get(String(s.sugeridor_id ?? "")) || null,
     meuTimeId: Number(s.sugeridor_time_id ?? 0) || null,
+    meuTimeTipo: String(s.modalidade ?? "time"),
     meuTimeNome: sugTimeMap.get(s.sugeridor_time_id) ?? "Formação",
     meuTimeAvatarUrl: sugTimeAvatarMap.get(Number(s.sugeridor_time_id ?? 0)) || null,
     meuTimeNotaEid: sugTimeEidMap.get(Number(s.sugeridor_time_id ?? 0)) ?? 0,
@@ -499,6 +502,7 @@ export default async function ComunidadePage() {
         sugeridorNome: String((profile as { nome?: string | null } | null)?.nome ?? "Você"),
         sugeridorAvatarUrl: String((profile as { avatar_url?: string | null } | null)?.avatar_url ?? "") || null,
         meuTimeId: Number(s.sugeridor_time_id ?? 0) || null,
+        meuTimeTipo: String(s.modalidade ?? "time"),
         meuTimeNome: String((time as { nome?: string | null } | null)?.nome ?? "Formação"),
         meuTimeAvatarUrl: String((time as { escudo?: string | null } | null)?.escudo ?? "") || null,
         meuTimeNotaEid: Number((time as { eid_time?: number | null } | null)?.eid_time ?? 0),
@@ -1217,7 +1221,12 @@ export default async function ComunidadePage() {
               <ComunidadeQuadro id="equipe-sugestoes" title="Sugestões da equipe (liderança)" hasPending={sugestoesItems.length > 0}>
                 <ComunidadeSugestoesMatch items={sugestoesItems} />
               </ComunidadeQuadro>
-              <ComunidadeQuadro id="equipe-sugestoes-enviadas" title="Sugestões enviadas (acompanhamento)" hasPending={sugestoesEnviadasItems.length > 0}>
+              <ComunidadeQuadro
+                id="equipe-sugestoes-enviadas"
+                title="Sugestões enviadas (acompanhamento)"
+                hasPending={sugestoesEnviadasItems.length > 0}
+                badgeLabel="Status"
+              >
                 <ComunidadeSugestoesEnviadasMatch items={sugestoesEnviadasItems} />
               </ComunidadeQuadro>
               <ComunidadeQuadro id="equipe-convites" title="Convites recebidos" hasPending={conviteItems.length > 0}>

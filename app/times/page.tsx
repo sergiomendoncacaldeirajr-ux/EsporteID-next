@@ -288,9 +288,10 @@ export default async function TimesPage({ searchParams }: Props) {
           placeholder="Buscar time ou cidade..."
           scope="times"
           formAction="/times"
-          className="mt-3 flex items-stretch gap-2"
-          inputClassName="eid-input-dark h-10 flex-1 rounded-xl px-3 text-sm text-eid-fg placeholder:text-eid-text-secondary/85"
-          buttonClassName="eid-btn-primary h-10 rounded-xl px-4 text-sm font-bold"
+          showButton={false}
+          submitOnPick
+          className="mt-3 w-full"
+          inputClassName="eid-input-dark h-11 w-full rounded-xl px-3 text-[15px] font-medium text-eid-fg placeholder:text-[13px] placeholder:text-eid-text-secondary/90"
         />
       </section>
 

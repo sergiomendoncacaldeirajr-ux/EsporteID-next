@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { responderSugestaoMatch, type ResponderSugestaoMatchState } from "@/app/comunidade/actions";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
@@ -18,6 +18,7 @@ export type SugestaoMatchItem = {
   sugeridorNome: string;
   sugeridorAvatarUrl?: string | null;
   meuTimeId?: number | null;
+  meuTimeTipo?: string | null;
   meuTimeNome: string;
   meuTimeAvatarUrl?: string | null;
   meuTimeNotaEid?: number | null;
@@ -47,14 +48,24 @@ function firstName(value?: string | null): string {
   return clean.split(/\s+/)[0] ?? clean;
 }
 
+function formacaoHref(item: SugestaoMatchItem): string {
+  const tipo = String(item.meuTimeTipo ?? item.modalidade ?? "").trim().toLowerCase();
+  const base = tipo === "dupla" ? "/perfil-dupla" : "/perfil-time";
+  return `${base}/${item.meuTimeId}?from=/comunidade`;
+}
+
 export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[] }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(responderSugestaoMatch, initial);
+  const [clickedAction, setClickedAction] = useState<{ sugestaoId: number; aceitar: boolean } | null>(null);
   const err = !state.ok && state.message ? state.message : null;
   const okMsg = state.ok ? "Resposta registrada." : null;
 
   useEffect(() => {
-    if (state.ok) router.refresh();
+    if (state.ok) {
+      setClickedAction(null);
+      router.refresh();
+    }
   }, [state.ok, router]);
 
   if (items.length === 0) {
@@ -86,7 +97,7 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
                 <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">Sugestão do membro</p>
                 {s.meuTimeId ? (
                   <ProfileEditDrawerTrigger
-                    href={`/perfil-time/${s.meuTimeId}?from=/comunidade`}
+                    href={formacaoHref(s)}
                     title={s.meuTimeNome}
                     fullscreen
                     topMode="backOnly"
@@ -200,15 +211,25 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
               <form action={formAction} className="min-w-0 w-full">
                 <input type="hidden" name="sugestao_id" value={String(s.id)} />
                 <input type="hidden" name="aceitar" value="true" />
-                <button type="submit" disabled={pending} className={`${PEDIDO_ACEITAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}>
-                  <span>{pending ? "Salvando…" : "Aprovar"}</span>
+                <button
+                  type="submit"
+                  disabled={pending}
+                  onClick={() => setClickedAction({ sugestaoId: s.id, aceitar: true })}
+                  className={`${PEDIDO_ACEITAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}
+                >
+                  <span>{pending && clickedAction?.sugestaoId === s.id && clickedAction?.aceitar ? "Salvando..." : "Aprovar"}</span>
                 </button>
               </form>
               <form action={formAction} className="min-w-0 w-full">
                 <input type="hidden" name="sugestao_id" value={String(s.id)} />
                 <input type="hidden" name="aceitar" value="false" />
-                <button type="submit" disabled={pending} className={`${PEDIDO_RECUSAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}>
-                  <span>Recusar</span>
+                <button
+                  type="submit"
+                  disabled={pending}
+                  onClick={() => setClickedAction({ sugestaoId: s.id, aceitar: false })}
+                  className={`${PEDIDO_RECUSAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}
+                >
+                  <span>{pending && clickedAction?.sugestaoId === s.id && clickedAction?.aceitar === false ? "Salvando..." : "Recusar"}</span>
                 </button>
               </form>
             </div>

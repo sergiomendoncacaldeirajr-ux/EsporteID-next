@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SearchSuggestInput } from "@/components/search/search-suggest-input";
 
 type Props = {
@@ -8,6 +8,8 @@ type Props = {
   placeholder: string;
   scope: "global" | "times" | "torneios" | "locais";
   buttonLabel?: string;
+  showButton?: boolean;
+  submitOnPick?: boolean;
   className?: string;
   inputClassName?: string;
   buttonClassName?: string;
@@ -22,6 +24,8 @@ export function SearchFilterForm({
   placeholder,
   scope,
   buttonLabel = "Filtrar",
+  showButton = true,
+  submitOnPick = false,
   className,
   inputClassName,
   buttonClassName,
@@ -29,8 +33,9 @@ export function SearchFilterForm({
   hiddenFields,
 }: Props) {
   const [q, setQ] = useState(defaultValue);
+  const formRef = useRef<HTMLFormElement | null>(null);
   return (
-    <form className={className} method="get" action={formAction}>
+    <form ref={formRef} className={className} method="get" action={formAction}>
       {hiddenFields
         ? Object.entries(hiddenFields).map(([name, value]) => (
             <input key={name} type="hidden" name={name} value={value} />
@@ -44,10 +49,16 @@ export function SearchFilterForm({
         minChars={3}
         placeholder={placeholder}
         className={inputClassName}
+        onPickValue={(picked) => {
+          setQ(picked);
+          if (submitOnPick) formRef.current?.requestSubmit();
+        }}
       />
-      <button type="submit" className={buttonClassName}>
-        {buttonLabel}
-      </button>
+      {showButton ? (
+        <button type="submit" className={buttonClassName}>
+          {buttonLabel}
+        </button>
+      ) : null}
     </form>
   );
 }

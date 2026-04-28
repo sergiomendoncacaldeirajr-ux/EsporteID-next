@@ -94,7 +94,9 @@ export async function updateSession(request: NextRequest) {
       isEmbedDesafioPath(path) ||
       isEmbedConfrontoPath(path) ||
       path.startsWith("/times") ||
-      path.startsWith("/perfil-time"));
+      path.startsWith("/perfil-time") ||
+      path.startsWith("/perfil/") ||
+      path.startsWith("/perfil-dupla"));
 
   if (isNextjsRouterDataRequest(request)) {
     if (hideEmbedMinimalChrome) return nextWithHideAppShell(request);

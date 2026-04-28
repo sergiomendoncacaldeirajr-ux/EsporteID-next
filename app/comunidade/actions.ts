@@ -940,6 +940,7 @@ export async function responderSugestaoMatch(
   revalidatePath("/agenda");
   revalidatePath("/match");
   revalidatePath("/dashboard");
+  revalidatePath("/times");
   revalidatePath(`/perfil/${user.id}`);
   return { ok: true };
 }
@@ -968,11 +969,12 @@ export async function limparSugestaoEnviadaNotificacao(
     return { ok: false, message: "Sem permissão para limpar esta sugestão." };
   }
 
-  await supabase
-    .from("match_sugestoes")
-    .update({ oculto_sugeridor: true })
-    .eq("id", sugestaoId)
-    .eq("sugeridor_id", user.id);
+  const { error: hideErr } = await supabase.rpc("ocultar_sugestao_match_sugeridor", {
+    p_sugestao_id: sugestaoId,
+  });
+  if (hideErr) {
+    return { ok: false, message: hideErr.message };
+  }
 
   const refs = [
     sugestaoId,
