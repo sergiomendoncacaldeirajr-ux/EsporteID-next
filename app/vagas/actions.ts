@@ -6,6 +6,38 @@ import { createClient } from "@/lib/supabase/server";
 
 export type VagaActionState = { ok: true; message: string } | { ok: false; message: string };
 
+const ROSTER_CAP_DUPLA = 2;
+const ROSTER_CAP_TIME = 18;
+
+function rosterCapForTipo(tipo: string | null | undefined): number {
+  return String(tipo ?? "")
+    .trim()
+    .toLowerCase() === "dupla"
+    ? ROSTER_CAP_DUPLA
+    : ROSTER_CAP_TIME;
+}
+
+async function getRosterHeadCountWithFallback(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  timeId: number,
+  leaderId?: string | null
+): Promise<number> {
+  const { data: headRaw, error: headErr } = await supabase.rpc("time_roster_headcount", { p_time_id: timeId });
+  if (!headErr) {
+    const head = Number(headRaw);
+    if (Number.isFinite(head)) return Math.max(0, head);
+  }
+  const { data: membrosRows } = await supabase
+    .from("membros_time")
+    .select("usuario_id")
+    .eq("time_id", timeId)
+    .in("status", ["ativo", "aceito", "aprovado"]);
+  const uniq = new Set((membrosRows ?? []).map((row) => String(row.usuario_id ?? "").trim()).filter(Boolean));
+  const lid = String(leaderId ?? "").trim();
+  if (lid) uniq.add(lid);
+  return uniq.size;
+}
+
 async function getAuthUserOrFail() {
   const supabase = await createClient();
   const {
@@ -29,7 +61,7 @@ export async function candidatarEmVagaAction(
 
   const { data: team, error: teamErr } = await supabase
     .from("times")
-    .select("id, nome, criador_id, vagas_abertas, aceita_pedidos")
+    .select("id, nome, criador_id, tipo, vagas_abertas, aceita_pedidos")
     .eq("id", timeId)
     .maybeSingle();
   if (teamErr) return { ok: false, message: teamErr.message };
@@ -37,6 +69,17 @@ export async function candidatarEmVagaAction(
   if (team.criador_id === user.id) return { ok: false, message: "Você já é líder desta formação." };
   if (!team.vagas_abertas || !team.aceita_pedidos) {
     return { ok: false, message: "Esta formação não está recebendo candidaturas no momento." };
+  }
+  const cap = rosterCapForTipo(team.tipo);
+  const head = await getRosterHeadCountWithFallback(supabase, timeId, team.criador_id);
+  if (head >= cap) {
+    return {
+      ok: false,
+      message:
+        cap === ROSTER_CAP_DUPLA
+          ? "Dupla completa (líder + 1 membro). Só abre candidatura quando houver vaga."
+          : "Time completo no limite de integrantes. Só abre candidatura quando houver vaga.",
+    };
   }
 
   const { data: membro } = await supabase
@@ -172,11 +215,7 @@ export async function responderCandidaturaAction(
   if (row.status !== "pendente") return { ok: false, message: "Essa candidatura já foi respondida." };
 
   if (aceitar) {
-    const cap = String((team as { tipo?: string | null }).tipo ?? "")
-      .trim()
-      .toLowerCase() === "dupla"
-      ? 2
-      : 18;
+    const cap = rosterCapForTipo((team as { tipo?: string | null }).tipo);
     const { data: jaMembro } = await supabase
       .from("membros_time")
       .select("id")
@@ -185,18 +224,15 @@ export async function responderCandidaturaAction(
       .in("status", ["ativo", "aceito", "aprovado"])
       .maybeSingle();
     if (!jaMembro) {
-      const { data: headRaw, error: headErr } = await supabase.rpc("time_roster_headcount", { p_time_id: row.time_id });
-      if (!headErr) {
-        const head = Number(headRaw);
-        if (Number.isFinite(head) && head >= cap) {
-          return {
-            ok: false,
-            message:
-              cap === 2
-                ? "Dupla já está com 2 integrantes. Remova um membro antes de aceitar outra candidatura."
-                : "Time já está com 18 integrantes. Remova um membro antes de aceitar outra candidatura.",
-          };
-        }
+      const head = await getRosterHeadCountWithFallback(supabase, row.time_id, team.criador_id);
+      if (head >= cap) {
+        return {
+          ok: false,
+          message:
+            cap === ROSTER_CAP_DUPLA
+              ? "Dupla já está com 2 integrantes (líder + 1 membro). Remova um membro antes de aceitar outra candidatura."
+              : "Time já está no limite de integrantes. Remova um membro antes de aceitar outra candidatura.",
+        };
       }
     }
 

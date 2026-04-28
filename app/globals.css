@@ -189,6 +189,38 @@ body.eid-app-shell {
   color: #a16207 !important;
 }
 
+[data-eid-theme="light"] :where(
+  .text-emerald-100,
+  .text-emerald-200,
+  .text-emerald-300
+) {
+  color: #166534 !important;
+}
+
+[data-eid-theme="light"] :where(
+  .text-emerald-100\/90,
+  .text-emerald-200\/90,
+  .text-emerald-300\/90
+) {
+  color: #166534 !important;
+}
+
+[data-eid-theme="light"] :where(
+  .text-sky-100,
+  .text-sky-200,
+  .text-sky-300
+) {
+  color: #075985 !important;
+}
+
+[data-eid-theme="light"] :where(
+  .text-sky-100\/90,
+  .text-sky-200\/90,
+  .text-sky-300\/90
+) {
+  color: #075985 !important;
+}
+
 /*
  * Admin (`data-eid-admin` em `AdminShell`): páginas usam `text-red/amber/emerald-*` pensados
  * para fundo escuro. No tema claro, força contraste legível sem reescrever cada página.

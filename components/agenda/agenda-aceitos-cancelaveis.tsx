@@ -6,11 +6,15 @@ import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-loca
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import { gerenciarCancelamentoMatch, type GerenciarCancelamentoState } from "@/app/comunidade/actions";
 import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 
 type Item = {
   id: number;
   nomeOponente: string;
   avatarOponente: string | null;
+  localizacaoOponente?: string | null;
+  notaEidOponente?: number | null;
   oponenteId: string;
   esporte: string;
   modalidade: string;
@@ -189,21 +193,45 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
             className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 py-2.5 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.18)] backdrop-blur-sm md:px-3 md:py-3"
           >
             <div className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-2 md:grid-cols-[40px_minmax(0,1fr)_auto]">
-              {m.avatarOponente ? (
-                <img
-                  src={m.avatarOponente}
-                  alt=""
-                  className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
-                />
-              ) : (
-                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 md:h-10 md:w-10 md:text-xs">
-                  {m.nomeOponente.trim().slice(0, 1).toUpperCase() || "O"}
-                </span>
-              )}
+              <div className="flex w-[40px] shrink-0 flex-col items-center">
+                {m.avatarOponente ? (
+                  <img
+                    src={m.avatarOponente}
+                    alt=""
+                    className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
+                  />
+                ) : (
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 md:h-10 md:w-10 md:text-xs">
+                    {m.nomeOponente.trim().slice(0, 1).toUpperCase() || "O"}
+                  </span>
+                )}
+                <div className="mt-1">
+                  <ProfileEidPerformanceSeal notaEid={Number(m.notaEidOponente ?? 0)} compact />
+                </div>
+              </div>
               <div className="min-w-0">
                 <p className="truncate text-[13px] font-bold text-eid-fg md:text-sm">{m.nomeOponente}</p>
                 <p className="text-[11px] text-eid-text-secondary md:text-xs">
-                  {m.esporte} · {m.modalidade}
+                  <span className="inline-flex items-center gap-1">
+                    <SportGlyphIcon sportName={m.esporte} />
+                    <span>{m.esporte}</span>
+                  </span>
+                  <span className="mx-1 opacity-70">|</span>
+                  <span className="inline-flex items-center gap-1">
+                    <ModalidadeGlyphIcon
+                      modalidade={
+                        String(m.modalidade).trim().toLowerCase() === "time"
+                          ? "time"
+                          : String(m.modalidade).trim().toLowerCase() === "individual"
+                            ? "individual"
+                            : "dupla"
+                      }
+                    />
+                    <span>{m.modalidade}</span>
+                  </span>
+                </p>
+                <p className="text-[10px] text-eid-text-secondary md:text-[11px]">
+                  {m.localizacaoOponente?.trim() ? m.localizacaoOponente : "Localização não informada"}
                 </p>
               </div>
               <span className="whitespace-nowrap rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-left text-[8px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] md:text-[9px]">

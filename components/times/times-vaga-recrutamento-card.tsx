@@ -5,6 +5,7 @@ import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawe
 import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-cta";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 
 export type TimesVagaCardData = {
   id: number;
@@ -82,13 +83,19 @@ export function TimesVagaRecrutamentoCard({
             <span
               className={`${chip} border-[color:color-mix(in_srgb,var(--eid-border-subtle)_45%,var(--eid-primary-500)_55%)] bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-primary-500)_12%)]`}
             >
-              {tipoLabel}
+              <span className="inline-flex items-center gap-1">
+                <ModalidadeGlyphIcon modalidade={String(team.tipo ?? "").trim().toLowerCase() === "time" ? "time" : "dupla"} />
+                <span>{tipoLabel}</span>
+              </span>
             </span>
             {team.esporteNome ? (
               <span
                 className={`${chip} border-[color:color-mix(in_srgb,var(--eid-border-subtle)_45%,var(--eid-action-500)_55%)] bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-action-500)_10%)]`}
               >
-                {team.esporteNome}
+                <span className="inline-flex items-center gap-1">
+                  <SportGlyphIcon sportName={team.esporteNome} />
+                  <span>{team.esporteNome}</span>
+                </span>
               </span>
             ) : null}
             {aceitaCand ? (
@@ -125,6 +132,7 @@ export function TimesVagaRecrutamentoCard({
             timeId={team.id}
             vagasAbertas={team.vagas_abertas}
             aceitaPedidos={team.aceita_pedidos}
+            vagasDisponiveis={team.vagas_disponiveis}
             minhaCandidaturaPendenteId={minhaCandidaturaPendenteId}
             jaSouMembro={jaSouMembro}
           />

@@ -25,6 +25,7 @@ import {
 } from "@/lib/perfil/disponivel-amistoso";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { partidaEncerradaParaHistorico, resultadoPartidaIndividual } from "@/lib/perfil/formacao-eid-stats";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { createClient } from "@/lib/supabase/server";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
@@ -898,6 +899,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                     {(timesFormacoes ?? []).map((t) => {
                       const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
                       const initials = (t.nome?.trim().slice(0, 2) || "EQ").toUpperCase();
+                      const nomeCurto = (t.nome ?? "Formação").trim().split(/\s+/u)[0] || "Formação";
                       const papelEquipe = leaderTeamIds.has(Number(t.id)) ? "Líder" : "Membro";
                       return (
                         <Link
@@ -915,7 +917,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                           )}
                           <div className="min-w-0">
                             <div className="flex items-center gap-1">
-                              <p className="truncate text-[11px] font-bold text-eid-fg">{t.nome}</p>
+                              <p className="truncate text-[11px] font-bold text-eid-fg">{nomeCurto}</p>
                               <span
                                 className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] ${
                                   papelEquipe === "Líder"
@@ -926,7 +928,17 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                                 {papelEquipe}
                               </span>
                             </div>
-                            <p className="truncate text-[9px] text-eid-text-secondary">{`${(t.tipo ?? "time").toUpperCase()} · ${esp?.nome ?? "Esporte"}`}</p>
+                            <p className="mt-1 flex items-center gap-1.5 truncate text-[9px] text-eid-text-secondary">
+                              <span className="inline-flex items-center gap-1 truncate">
+                                <ModalidadeGlyphIcon modalidade={String(t.tipo ?? "").trim().toLowerCase() === "time" ? "time" : "dupla"} />
+                                <span className="truncate">{(t.tipo ?? "time").toUpperCase()}</span>
+                              </span>
+                              <span aria-hidden className="text-[8px] text-eid-text-secondary/70">|</span>
+                              <span className="inline-flex min-w-0 items-center gap-1 truncate">
+                                <SportGlyphIcon sportName={esp?.nome} />
+                                <span className="truncate">{esp?.nome ?? "Esporte"}</span>
+                              </span>
+                            </p>
                           </div>
                         </Link>
                       );
@@ -944,8 +956,18 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                             D{d.id}
                           </div>
                           <div className="min-w-0">
-                            <p className="truncate text-[11px] font-bold text-eid-fg">{`Dupla #${d.id}`}</p>
-                            <p className="truncate text-[9px] text-eid-text-secondary">{esp?.nome ?? "Esporte"}</p>
+                            <p className="truncate text-[11px] font-bold text-eid-fg">Dupla</p>
+                            <p className="mt-1 flex items-center gap-1.5 truncate text-[9px] text-eid-text-secondary">
+                              <span className="inline-flex items-center gap-1 truncate">
+                                <ModalidadeGlyphIcon modalidade="dupla" />
+                                <span className="truncate">DUPLA</span>
+                              </span>
+                              <span aria-hidden className="text-[8px] text-eid-text-secondary/70">|</span>
+                              <span className="inline-flex min-w-0 items-center gap-1 truncate">
+                                <SportGlyphIcon sportName={esp?.nome} />
+                                <span className="truncate">{esp?.nome ?? "Esporte"}</span>
+                              </span>
+                            </p>
                           </div>
                         </Link>
                       );

@@ -181,12 +181,26 @@ export default async function ComunidadePage() {
     .eq("status", "Pendente")
     .order("data_registro", { ascending: false })
     .limit(30);
+  const receivedSportIds = [
+    ...new Set((recebidos ?? []).map((m) => Number(m.esporte_id ?? 0)).filter((id) => Number.isFinite(id) && id > 0)),
+  ];
 
   const uids = [...new Set((recebidos ?? []).map((m) => m.usuario_id).filter(Boolean))] as string[];
   const { data: desafiantes } = uids.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", uids)
+    ? await supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", uids)
     : { data: [] };
   const uMap = new Map((desafiantes ?? []).map((p) => [p.id, p]));
+  const { data: desafiantesEid } =
+    uids.length > 0 && receivedSportIds.length > 0
+      ? await supabase
+          .from("usuario_eid")
+          .select("usuario_id, esporte_id, nota_eid")
+          .in("usuario_id", uids)
+          .in("esporte_id", receivedSportIds)
+      : { data: [] };
+  const desafianteEidMap = new Map(
+    (desafiantesEid ?? []).map((row) => [`${String(row.usuario_id)}:${Number(row.esporte_id)}`, Number(row.nota_eid ?? 0)])
+  );
 
   const { data: enviadosPendentes } = await supabase
     .from("matches")
@@ -215,6 +229,11 @@ export default async function ComunidadePage() {
     desafianteNome: (m.usuario_id ? uMap.get(m.usuario_id)?.nome : null) ?? "Atleta",
     desafianteId: String(m.usuario_id ?? ""),
     desafianteAvatarUrl: (m.usuario_id ? uMap.get(m.usuario_id)?.avatar_url : null) ?? null,
+    desafianteLocalizacao: (m.usuario_id ? uMap.get(m.usuario_id)?.localizacao : null) ?? null,
+    desafianteNotaEid:
+      m.usuario_id && Number.isFinite(Number(m.esporte_id ?? 0))
+        ? desafianteEidMap.get(`${String(m.usuario_id)}:${Number(m.esporte_id ?? 0)}`) ?? 0
+        : 0,
     esporte: (m.esporte_id ? espMap.get(m.esporte_id) : null) ?? "Esporte",
     esporteId: Number(m.esporte_id ?? 0),
     modalidade: m.modalidade_confronto ?? "individual",
@@ -263,14 +282,30 @@ export default async function ComunidadePage() {
   const enviadosAdversarioIds = [
     ...new Set((enviadosPendentes ?? []).map((m) => String(m.adversario_id ?? "")).filter(Boolean)),
   ];
+  const enviadosEsporteIds = [
+    ...new Set((enviadosPendentes ?? []).map((m) => Number(m.esporte_id ?? 0)).filter((id) => Number.isFinite(id) && id > 0)),
+  ];
   const { data: enviadosPerfis } = enviadosAdversarioIds.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", enviadosAdversarioIds)
+    ? await supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", enviadosAdversarioIds)
     : { data: [] };
+  const { data: enviadosEids } =
+    enviadosAdversarioIds.length > 0 && enviadosEsporteIds.length > 0
+      ? await supabase
+          .from("usuario_eid")
+          .select("usuario_id, esporte_id, nota_eid")
+          .in("usuario_id", enviadosAdversarioIds)
+          .in("esporte_id", enviadosEsporteIds)
+      : { data: [] };
   const enviadosPerfisMap = new Map((enviadosPerfis ?? []).map((p) => [p.id, p]));
+  const enviadosEidMap = new Map(
+    (enviadosEids ?? []).map((row) => [`${String(row.usuario_id)}:${Number(row.esporte_id)}`, Number(row.nota_eid ?? 0)])
+  );
   const pedidosEnviadosItems = (enviadosPendentes ?? []).map((m) => ({
     id: Number(m.id),
     adversarioNome: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.nome ?? "Oponente",
     adversarioAvatarUrl: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.avatar_url ?? null,
+    adversarioLocalizacao: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.localizacao ?? null,
+    adversarioNotaEid: enviadosEidMap.get(`${String(m.adversario_id ?? "")}:${Number(m.esporte_id ?? 0)}`) ?? 0,
     esporte: (m.esporte_id ? espMap.get(m.esporte_id) : null) ?? "Esporte",
     modalidade: String(m.modalidade_confronto ?? "individual"),
   }));

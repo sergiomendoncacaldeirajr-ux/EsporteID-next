@@ -8,7 +8,7 @@ import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resum
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import type { PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
-import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
   PEDIDO_ACEITAR_BTN_CLASS,
   PEDIDO_MATCH_ACAO_FORM_CLASS,
@@ -21,6 +21,8 @@ export type PedidoMatchItem = {
   desafianteNome: string;
   desafianteId: string;
   desafianteAvatarUrl?: string | null;
+  desafianteLocalizacao?: string | null;
+  desafianteNotaEid?: number | null;
   esporte: string;
   esporteId: number;
   rankingPosicao?: number | null;
@@ -100,9 +102,14 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                   </ProfileEditDrawerTrigger>
                   <div className="absolute -bottom-1 left-1/2 z-[2] -translate-x-1/2">
                     <ProfileEidPerformanceSeal
-                      notaEid={m.rankingPreview?.kind === "individual" ? m.rankingPreview.perspective.notaEidNow : 0}
+                      notaEid={
+                        m.rankingPreview?.kind === "individual"
+                          ? m.rankingPreview.perspective.notaEidNow
+                          : Number(m.desafianteNotaEid ?? 0)
+                      }
                       compact
                       className="scale-125"
+                      locationLabel={m.desafianteLocalizacao}
                     />
                   </div>
                 </div>
@@ -110,7 +117,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                   <p className="text-sm font-bold tracking-tight text-eid-fg md:text-base md:font-black">{m.desafianteNome}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-1">
                     <p className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
-                      <span aria-hidden>{sportIconEmoji(m.esporte)}</span>
+                      <SportGlyphIcon sportName={m.esporte} />
                       <span>{m.esporte}</span>
                     </p>
                     {m.timeNome ? (
@@ -120,7 +127,19 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                     ) : null}
                   </div>
                   <p className="mt-1 inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
+                    <ModalidadeGlyphIcon
+                      modalidade={
+                        String(m.modalidade).trim().toLowerCase() === "time"
+                          ? "time"
+                          : String(m.modalidade).trim().toLowerCase() === "individual"
+                            ? "individual"
+                            : "dupla"
+                      }
+                    />
                     {m.modalidade === "individual" ? "Desafio individual" : `Desafio ${m.modalidade}`}
+                  </p>
+                  <p className="mt-1 text-[11px] text-eid-text-secondary">
+                    {m.desafianteLocalizacao?.trim() ? m.desafianteLocalizacao : "Localização não informada"}
                   </p>
               </div>
               </div>
@@ -169,7 +188,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                   data-eid-recusar-btn="true"
                   className={PEDIDO_RECUSAR_BTN_CLASS}
                 >
-                  Recusar
+                  <span>Recusar</span>
                 </button>
               </form>
             </div>

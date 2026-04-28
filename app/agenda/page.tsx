@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ConexoesStrip, type ConexaoPeer } from "@/components/agenda/conexoes-strip";
 import { AgendaAceitosCancelaveis } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import {
   type AgendaPartidaCardRow,
@@ -220,9 +221,21 @@ export default async function AgendaPage() {
 
   const advIds = [...new Set((pendentesEnvio ?? []).map((m) => m.adversario_id).filter(Boolean))] as string[];
   const { data: adversarios } = advIds.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", advIds)
+    ? await supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", advIds)
     : { data: [] };
   const advMap = new Map((adversarios ?? []).map((p) => [p.id, p]));
+  const advSportIds = [...new Set((pendentesEnvio ?? []).map((m) => Number(m.esporte_id ?? 0)).filter((id) => Number.isFinite(id) && id > 0))];
+  const { data: advEidRows } =
+    advIds.length > 0 && advSportIds.length > 0
+      ? await supabase
+          .from("usuario_eid")
+          .select("usuario_id, esporte_id, nota_eid")
+          .in("usuario_id", advIds)
+          .in("esporte_id", advSportIds)
+      : { data: [] };
+  const advEidMap = new Map(
+    (advEidRows ?? []).map((row) => [`${String(row.usuario_id)}:${Number(row.esporte_id)}`, Number(row.nota_eid ?? 0)])
+  );
 
   const eids = [...new Set((pendentesEnvio ?? []).map((m) => m.esporte_id).filter(Boolean))] as number[];
   const eidsAceitos = [...new Set((aceitosCancelaveis ?? []).map((m) => m.esporte_id).filter(Boolean))] as number[];
@@ -243,10 +256,13 @@ export default async function AgendaPage() {
     ),
   ];
   const { data: oponentesAceitos } = oponenteIdsAceitos.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", oponenteIdsAceitos)
+    ? await supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", oponenteIdsAceitos)
     : { data: [] };
   const oponenteMapAceitos = new Map(
-    (oponentesAceitos ?? []).map((p) => [p.id, { nome: p.nome ?? "Oponente", avatarUrl: p.avatar_url ?? null }])
+    (oponentesAceitos ?? []).map((p) => [
+      p.id,
+      { nome: p.nome ?? "Oponente", avatarUrl: p.avatar_url ?? null, localizacao: p.localizacao ?? null },
+    ])
   );
   const matchIdsCancel = (aceitosCancelaveis ?? []).map((m) => Number(m.id)).filter((v) => Number.isFinite(v) && v > 0);
   const { data: opcoesCancelRows } = matchIdsCancel.length
@@ -298,6 +314,8 @@ export default async function AgendaPage() {
       id: Number(m.id),
       nomeOponente: (opp ? oponenteMapAceitos.get(opp)?.nome : null) ?? "Oponente",
       avatarOponente: (opp ? oponenteMapAceitos.get(opp)?.avatarUrl : null) ?? null,
+      localizacaoOponente: (opp ? oponenteMapAceitos.get(opp)?.localizacao : null) ?? null,
+      notaEidOponente: opp ? notaEidByUserSport.get(`${opp}:${Number(m.esporte_id ?? 0)}`) ?? 0 : 0,
       oponenteId: opp ?? "",
       esporte: (m.esporte_id ? espMapAceitos.get(m.esporte_id) : null) ?? "Esporte",
       modalidade: m.modalidade_confronto ?? "individual",
@@ -490,24 +508,35 @@ export default async function AgendaPage() {
                   className="flex flex-wrap items-center justify-between gap-2.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-3 py-2.5 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.18)] backdrop-blur-sm md:gap-3 md:px-4 md:py-3"
                 >
                   <div className="flex min-w-0 items-center gap-2.5 md:gap-3">
-                    {adv?.avatar_url ? (
-                      <Image
-                        src={adv.avatar_url}
-                        alt=""
-                        width={44}
-                        height={44}
-                        unoptimized
-                        className="h-10 w-10 shrink-0 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover md:h-11 md:w-11"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300 md:h-11 md:w-11">
-                        EID
+                    <div className="flex w-[44px] shrink-0 flex-col items-center">
+                      {adv?.avatar_url ? (
+                        <Image
+                          src={adv.avatar_url}
+                          alt=""
+                          width={44}
+                          height={44}
+                          unoptimized
+                          className="h-10 w-10 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover md:h-11 md:w-11"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300 md:h-11 md:w-11">
+                          EID
+                        </div>
+                      )}
+                      <div className="mt-1">
+                        <ProfileEidPerformanceSeal
+                          notaEid={adv ? (advEidMap.get(`${String(adv.id)}:${Number(m.esporte_id ?? 0)}`) ?? 0) : 0}
+                          compact
+                        />
                       </div>
-                    )}
+                    </div>
                     <div className="min-w-0">
                       <p className="truncate text-[13px] font-bold text-eid-fg md:text-sm">{adv?.nome ?? "Oponente"}</p>
                       <p className="text-[11px] text-eid-text-secondary md:text-xs">
                         {esp ?? "Esporte"} · {m.modalidade_confronto ?? "individual"}
+                      </p>
+                      <p className="text-[10px] text-eid-text-secondary md:text-[11px]">
+                        {adv?.localizacao?.trim() ? adv.localizacao : "Localização não informada"}
                       </p>
                     </div>
                   </div>

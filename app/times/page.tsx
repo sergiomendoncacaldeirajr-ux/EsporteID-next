@@ -157,6 +157,7 @@ export default async function TimesPage({ searchParams }: Props) {
     })
   );
   const vagasDisponiveisMap = new Map<number, number>(rosterEntries);
+  const listaComVagas = lista.filter((t) => (vagasDisponiveisMap.get(t.id) ?? 0) > 0);
   const pendentePorTime = new Map((minhasCandidaturas ?? []).map((c) => [c.time_id as number, c.id as number]));
   const timesSouMembro = new Set((meusMembros ?? []).map((m) => Number(m.time_id)));
 
@@ -300,9 +301,9 @@ export default async function TimesPage({ searchParams }: Props) {
       ) : null}
 
       <div id="vagas-recrutamento" className="scroll-mt-24">
-        {lista.length > 0 ? (
+        {listaComVagas.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {lista.map((t) => (
+            {listaComVagas.map((t) => (
               <TimesVagaRecrutamentoCard
                 key={t.id}
                 team={{ ...rowToCardData(t), vagas_disponiveis: vagasDisponiveisMap.get(t.id) ?? null }}

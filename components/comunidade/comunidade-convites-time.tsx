@@ -113,7 +113,7 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                     <input type="hidden" name="convite_id" value={String(c.id)} />
                     <input type="hidden" name="aceitar" value="false" />
                     <button type="submit" disabled={pending} className={PEDIDO_RECUSAR_BTN_CLASS}>
-                      Recusar
+                      <span>Recusar</span>
                     </button>
                   </form>
                 </div>

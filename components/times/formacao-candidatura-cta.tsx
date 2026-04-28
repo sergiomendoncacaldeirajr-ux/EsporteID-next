@@ -7,23 +7,32 @@ export function FormacaoCandidaturaCta({
   timeId,
   vagasAbertas,
   aceitaPedidos,
+  vagasDisponiveis,
   minhaCandidaturaPendenteId,
   jaSouMembro,
 }: {
   timeId: number;
   vagasAbertas: boolean;
   aceitaPedidos: boolean;
+  vagasDisponiveis?: number | null;
   minhaCandidaturaPendenteId: number | null;
   jaSouMembro: boolean;
 }) {
-  const aceitaCand = Boolean(vagasAbertas && aceitaPedidos);
+  const temVagaReal = vagasDisponiveis == null ? true : Number(vagasDisponiveis) > 0;
+  const aceitaCand = Boolean(vagasAbertas && aceitaPedidos && temVagaReal);
 
   if (jaSouMembro) {
     return <p className="text-center text-[10px] font-semibold text-eid-primary-300">Você já faz parte desta formação.</p>;
   }
 
   if (!aceitaCand) {
-    return <p className="text-center text-[10px] text-eid-text-secondary">Esta formação não está aceitando candidaturas agora.</p>;
+    return (
+      <p className="text-center text-[10px] text-eid-text-secondary">
+        {temVagaReal
+          ? "Esta formação não está aceitando candidaturas agora."
+          : "Formação completa no momento. Candidaturas reabrem quando surgir vaga."}
+      </p>
+    );
   }
 
   if (minhaCandidaturaPendenteId != null) {

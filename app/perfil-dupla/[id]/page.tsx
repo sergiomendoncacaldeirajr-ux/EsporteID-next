@@ -18,6 +18,7 @@ import {
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
 import {
@@ -293,7 +294,17 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             </div>
           )}
           <span className="mt-4 inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
-            DUPLA · {esp?.nome ?? "Esporte"}
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1">
+                <ModalidadeGlyphIcon modalidade="dupla" />
+                <span>DUPLA</span>
+              </span>
+              <span aria-hidden className="opacity-70">|</span>
+              <span className="inline-flex items-center gap-1">
+                <SportGlyphIcon sportName={esp?.nome} />
+                <span>{esp?.nome ?? "Esporte"}</span>
+              </span>
+            </span>
           </span>
           <h1 className="mt-3 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{nomeExibicao}</h1>
           {usernameExibicao ? (
@@ -436,14 +447,10 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                       <span>Estatísticas completas · {esp?.nome ?? "este esporte"}</span>
                     </ProfileEditDrawerTrigger>
                   ) : null}
-                  </div>
-                </div>
-                <div className={`${PROFILE_CARD_BASE} mt-3 overflow-hidden p-0`}>
                   <ProfileSportsMetricsCard
                     sportName={esp?.nome ?? "Esporte"}
                     eidValue={Number(timeResolvido.eid_time ?? 0)}
                     rankValue={Number(timeResolvido.pontos_ranking ?? 0)}
-                    rankLabel="Pontos no ranking"
                     trendLabel="Evolução EID"
                     trendPoints={
                       (histDupla ?? []).length >= 3
@@ -458,7 +465,9 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                             Number(timeResolvido.eid_time ?? 0),
                           ]
                     }
+                    showScoreTiles={false}
                   />
+                  </div>
                 </div>
                 <ProfileCompactTimeline
                   title="Histórico de notas EID"
@@ -535,7 +544,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
           </ProfileSection>
 
           <ProfileSection title="Participantes">
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            <div className="mt-2 grid grid-cols-2 gap-2">
               {[p1, p2].map((p, i) =>
                 p ? (
                   <ProfileMemberCard
@@ -546,7 +555,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     avatarUrl={p.avatar_url}
                     fallbackLabel={`${i + 1}o`}
                     layout="stacked"
-                    avatarSize="lg"
+                    avatarSize="sm"
                     trailing={
                       <p className="text-[11px] font-semibold text-eid-primary-300">
                         EID {i === 0 ? Number(eid1?.nota_eid ?? 0).toFixed(1) : Number(eid2?.nota_eid ?? 0).toFixed(1)}

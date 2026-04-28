@@ -19,6 +19,7 @@ import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown"
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
   carregarPartidasColetivasDoTime,
   mapNomesTimesAdversarios,
@@ -139,9 +140,14 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
     .eq("candidato_usuario_id", user.id)
     .eq("status", "pendente")
     .maybeSingle();
+  const modalidade = (t.tipo ?? "time") === "dupla" ? "dupla" : "time";
+  const rosterCap = modalidade === "dupla" ? 2 : 18;
+  const { data: rosterHeadRaw, error: rosterHeadErr } = await supabase.rpc("time_roster_headcount", { p_time_id: id });
+  const rosterHeadCount =
+    !rosterHeadErr && rosterHeadRaw != null && Number.isFinite(Number(rosterHeadRaw)) ? Math.max(1, Number(rosterHeadRaw)) : 1;
+  const vagasDisponiveis = Math.max(0, rosterCap - rosterHeadCount);
 
   const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
-  const modalidade = (t.tipo ?? "time") === "dupla" ? "dupla" : "time";
 
   const { data: minhaFormacao } = await supabase
     .from("times")
@@ -268,7 +274,17 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
             </div>
           )}
           <span className="mt-4 inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
-            {(t.tipo ?? "time").toUpperCase()} · {esp?.nome ?? "Esporte"}
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1">
+                <ModalidadeGlyphIcon modalidade={String(t.tipo ?? "").trim().toLowerCase() === "time" ? "time" : "dupla"} />
+                <span>{(t.tipo ?? "time").toUpperCase()}</span>
+              </span>
+              <span aria-hidden className="opacity-70">|</span>
+              <span className="inline-flex items-center gap-1">
+                <SportGlyphIcon sportName={esp?.nome} />
+                <span>{esp?.nome ?? "Esporte"}</span>
+              </span>
+            </span>
           </span>
           <h1 className="mt-3 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
           {t.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{t.username}</p> : null}
@@ -322,6 +338,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 timeId={id}
                 vagasAbertas={Boolean(t.vagas_abertas)}
                 aceitaPedidos={Boolean(t.aceita_pedidos)}
+                vagasDisponiveis={vagasDisponiveis}
                 minhaCandidaturaPendenteId={minhaCandidaturaPendente?.id ?? null}
                 jaSouMembro={isMember}
               />
@@ -444,25 +461,23 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                     <span>Estatísticas completas · {esp?.nome ?? "este esporte"}</span>
                   </ProfileEditDrawerTrigger>
                 ) : null}
+                <ProfileSportsMetricsCard
+                  sportName={esp?.nome ?? "Esporte"}
+                  eidValue={Number(t.eid_time ?? 0)}
+                  rankValue={Number(t.pontos_ranking ?? 0)}
+                  trendLabel="Evolução EID"
+                  trendPoints={
+                    (hist ?? []).length >= 3
+                      ? ([
+                          Number((hist ?? [])[2]?.nota_nova ?? t.eid_time ?? 0),
+                          Number((hist ?? [])[1]?.nota_nova ?? t.eid_time ?? 0),
+                          Number((hist ?? [])[0]?.nota_nova ?? t.eid_time ?? 0),
+                        ] as [number, number, number])
+                      : [Number(t.eid_time ?? 0), Number(t.eid_time ?? 0), Number(t.eid_time ?? 0)]
+                  }
+                  showScoreTiles={false}
+                />
               </div>
-            </div>
-            <div className={`${PROFILE_CARD_BASE} mt-3 overflow-hidden p-0`}>
-              <ProfileSportsMetricsCard
-                sportName={esp?.nome ?? "Esporte"}
-                eidValue={Number(t.eid_time ?? 0)}
-                rankValue={Number(t.pontos_ranking ?? 0)}
-                rankLabel="Pontos no ranking"
-                trendLabel="Evolução EID"
-                trendPoints={
-                  (hist ?? []).length >= 3
-                    ? ([
-                        Number((hist ?? [])[2]?.nota_nova ?? t.eid_time ?? 0),
-                        Number((hist ?? [])[1]?.nota_nova ?? t.eid_time ?? 0),
-                        Number((hist ?? [])[0]?.nota_nova ?? t.eid_time ?? 0),
-                      ] as [number, number, number])
-                    : [Number(t.eid_time ?? 0), Number(t.eid_time ?? 0), Number(t.eid_time ?? 0)]
-                }
-              />
             </div>
             <ProfileCompactTimeline
               title="Histórico de notas EID"
@@ -495,7 +510,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 <TeamPublicInviteBlock timeId={id} excludeUserIds={idsExcluirConvite} />
               </div>
             ) : null}
-            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            <ul className="mt-3 grid grid-cols-2 gap-2">
               {(membros ?? []).map((m, idx) => {
                 const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
                 if (!p?.id) return null;
@@ -506,6 +521,8 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                       name={p.nome ?? "Membro"}
                       subtitle={m.cargo ?? "Atleta"}
                       avatarUrl={p.avatar_url}
+                      layout="stacked"
+                      avatarSize="sm"
                       trailing={
                         isLeader && p.id !== t.criador_id ? (
                           <div className="flex gap-2">

@@ -188,7 +188,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       const [agRes, pRes, mRes, nRes] = await Promise.all([
         supabase
           .from("partidas")
-          .select("id", { count: "exact", head: true })
+          .select("id, match_id")
           .or(`jogador1_id.eq.${resolvedUserId},jogador2_id.eq.${resolvedUserId}`)
           .eq("status", "agendada"),
         supabase
@@ -206,7 +206,28 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
           .limit(300),
       ]);
       if (cancelled) return;
-      setAgendaBadge(agRes.count ?? 0);
+      const agendaRows = (agRes.data ?? []) as Array<{ id: number; match_id?: number | null }>;
+      const agendaMatchIds = [
+        ...new Set(
+          agendaRows
+            .map((row) => Number(row.match_id ?? 0))
+            .filter((id) => Number.isFinite(id) && id > 0)
+        ),
+      ];
+      const agendaCancelados = new Set<number>();
+      if (agendaMatchIds.length > 0) {
+        const { data: agendaMatchRows } = await supabase.from("matches").select("id, status").in("id", agendaMatchIds);
+        for (const row of agendaMatchRows ?? []) {
+          if (String(row.status ?? "").trim().toLowerCase() === "cancelado") {
+            agendaCancelados.add(Number(row.id));
+          }
+        }
+      }
+      const agendaVisiveis = agendaRows.filter((row) => {
+        const mid = Number(row.match_id ?? 0);
+        return !(Number.isFinite(mid) && mid > 0 && agendaCancelados.has(mid));
+      });
+      setAgendaBadge(agendaVisiveis.length);
       const placar = pRes.count ?? 0;
       const pedidos = mRes.count ?? 0;
       const unreadRows = (nRes.data ?? []) as UnreadNotif[];

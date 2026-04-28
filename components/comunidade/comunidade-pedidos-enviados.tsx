@@ -4,11 +4,15 @@ import Image from "next/image";
 import { useActionState, useEffect, useState } from "react";
 import { cancelarPedidoMatchPendente, type CancelarPedidoPendenteState } from "@/app/comunidade/actions";
 import { PEDIDO_CANCELAR_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 
 type Item = {
   id: number;
   adversarioNome: string;
   adversarioAvatarUrl?: string | null;
+  adversarioLocalizacao?: string | null;
+  adversarioNotaEid?: number | null;
   esporte: string;
   modalidade: string;
 };
@@ -41,18 +45,42 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
             key={m.id}
             className="relative overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.28)]"
           >
-            <div className="flex items-start gap-2">
-              <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60">
+            <div className="flex items-start gap-2.5">
+              <div className="flex w-[44px] shrink-0 flex-col items-center">
+              <div className="relative h-9 w-9 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60">
                 {m.adversarioAvatarUrl ? (
                   <Image src={m.adversarioAvatarUrl} alt="" fill unoptimized className="object-cover object-center" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-[9px] font-black text-eid-primary-300">EID</div>
                 )}
               </div>
+              <div className="mt-1">
+                <ProfileEidPerformanceSeal notaEid={Number(m.adversarioNotaEid ?? 0)} compact />
+              </div>
+              </div>
               <div className="min-w-0">
                 <p className="truncate text-xs font-semibold text-eid-fg">{m.adversarioNome}</p>
                 <p className="text-[10px] text-eid-text-secondary">
-                  {m.esporte} · {m.modalidade === "individual" ? "individual" : m.modalidade}
+                  <span className="inline-flex items-center gap-1">
+                    <SportGlyphIcon sportName={m.esporte} />
+                    <span>{m.esporte}</span>
+                  </span>
+                  <span className="mx-1 opacity-70">|</span>
+                  <span className="inline-flex items-center gap-1">
+                    <ModalidadeGlyphIcon
+                      modalidade={
+                        String(m.modalidade).trim().toLowerCase() === "time"
+                          ? "time"
+                          : String(m.modalidade).trim().toLowerCase() === "individual"
+                            ? "individual"
+                            : "dupla"
+                      }
+                    />
+                    <span>{m.modalidade === "individual" ? "individual" : m.modalidade}</span>
+                  </span>
+                </p>
+                <p className="mt-0.5 text-[10px] text-eid-text-secondary">
+                  {m.adversarioLocalizacao?.trim() ? m.adversarioLocalizacao : "Localização não informada"}
                 </p>
               </div>
               <div className="ml-auto flex flex-col items-end gap-1.5">

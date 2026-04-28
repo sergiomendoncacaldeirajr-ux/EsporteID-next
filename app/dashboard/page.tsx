@@ -425,26 +425,21 @@ export default async function DashboardPage({ searchParams }: Props) {
     return { t, dist };
   });
   timesComDist.sort((a, b) => a.dist - b.dist);
-  const timesFiltrados = timesComDist
+  const timesComBusca = timesComDist
     .filter(({ t }) => {
       if (!q) return true;
       return (
         String(t.nome ?? "").toLowerCase().includes(q) || String(t.localizacao ?? "").toLowerCase().includes(q)
       );
     })
-    .filter(({ t }) => meusEsportesSet.size === 0 || meusEsportesSet.has(Number(t.esporte_id ?? 0)))
-    .slice(0, 12);
-  const duplaMaisProxima = timesComDist.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "dupla");
-  const timeMaisProximo = timesComDist.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "time");
+    .filter(({ t }) => meusEsportesSet.size === 0 || meusEsportesSet.has(Number(t.esporte_id ?? 0)));
   const atletaMaisProximo = atletasFiltrados[0] ?? null;
   const esporteCardNome = meusEsportesResumo[0]?.esporteNome ?? "Esporte";
   const esporteCardIcon = sportIconEmoji(esporteCardNome);
   const teamRosterIds = [
     ...new Set(
       [
-        ...timesFiltrados.map(({ t }) => Number(t.id ?? 0)),
-        Number(duplaMaisProxima?.t.id ?? 0),
-        Number(timeMaisProximo?.t.id ?? 0),
+        ...timesComBusca.map(({ t }) => Number(t.id ?? 0)),
       ].filter((id) => Number.isFinite(id) && id > 0)
     ),
   ];
@@ -457,6 +452,17 @@ export default async function DashboardPage({ searchParams }: Props) {
     })
   );
   const teamRosterMap = new Map<number, number>(rosterEntries);
+  const vagasDisponiveisMap = new Map<number, number>(
+    timesComBusca.map(({ t }) => {
+      const cap = String(t.tipo ?? "").trim().toLowerCase() === "dupla" ? 2 : 18;
+      const head = teamRosterMap.get(Number(t.id ?? 0)) ?? 1;
+      return [Number(t.id), Math.max(0, cap - head)] as const;
+    })
+  );
+  const timesComBuscaEVaga = timesComBusca.filter(({ t }) => (vagasDisponiveisMap.get(Number(t.id ?? 0)) ?? 0) > 0);
+  const timesFiltrados = timesComBuscaEVaga.slice(0, 12);
+  const duplaMaisProxima = timesComBuscaEVaga.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "dupla");
+  const timeMaisProximo = timesComBuscaEVaga.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "time");
 
   const { data: locaisScrollRaw } = canSeeLocais
     ? await supabase
