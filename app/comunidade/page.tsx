@@ -210,7 +210,7 @@ export default async function ComunidadePage() {
 
   const { data: enviadosPendentes } = await supabase
     .from("matches")
-    .select("id, adversario_id, esporte_id, modalidade_confronto, data_solicitacao")
+    .select("id, adversario_id, adversario_time_id, esporte_id, modalidade_confronto, data_solicitacao")
     .eq("usuario_id", user.id)
     .eq("status", "Pendente")
     .order("data_solicitacao", { ascending: false })
@@ -378,15 +378,60 @@ export default async function ComunidadePage() {
   const enviadosEidMap = new Map(
     (enviadosEids ?? []).map((row) => [`${String(row.usuario_id)}:${Number(row.esporte_id)}`, Number(row.nota_eid ?? 0)])
   );
-  const pedidosEnviadosItems = (enviadosPendentes ?? []).map((m) => ({
-    id: Number(m.id),
-    adversarioNome: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.nome ?? "Oponente",
-    adversarioAvatarUrl: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.avatar_url ?? null,
-    adversarioLocalizacao: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.localizacao ?? null,
-    adversarioNotaEid: enviadosEidMap.get(`${String(m.adversario_id ?? "")}:${Number(m.esporte_id ?? 0)}`) ?? 0,
-    esporte: (m.esporte_id ? espMap.get(m.esporte_id) : null) ?? "Esporte",
-    modalidade: String(m.modalidade_confronto ?? "individual"),
-  }));
+  const enviadosAdvTimeIds = [
+    ...new Set(
+      (enviadosPendentes ?? [])
+        .map((row) => Number((row as { adversario_time_id?: number | null }).adversario_time_id ?? 0))
+        .filter((n) => Number.isFinite(n) && n > 0)
+    ),
+  ];
+  const { data: enviadosFormacaoRows } = enviadosAdvTimeIds.length
+    ? await supabase.from("times").select("id, nome, escudo, localizacao, tipo, eid_time").in("id", enviadosAdvTimeIds)
+    : { data: [] };
+  const enviadosFormacaoMap = new Map(
+    (enviadosFormacaoRows ?? []).map((t) => [Number((t as { id: number }).id), t])
+  );
+  const pedidosEnviadosItems = (enviadosPendentes ?? []).map((m) => {
+    const mod = String(m.modalidade_confronto ?? "individual").toLowerCase();
+    const normalizedMod = mod === "atleta" ? "individual" : mod;
+    const advTimeId = Number((m as { adversario_time_id?: number | null }).adversario_time_id ?? 0);
+    let formacaoAdversaria: {
+      id: number;
+      nome: string | null;
+      escudo: string | null;
+      localizacao: string | null;
+      tipo: "dupla" | "time";
+      eidTime: number;
+    } | null = null;
+    if (advTimeId > 0 && (normalizedMod === "dupla" || normalizedMod === "time")) {
+      const t = enviadosFormacaoMap.get(advTimeId);
+      if (t) {
+        const tipoRaw = String((t as { tipo?: string | null }).tipo ?? "").trim().toLowerCase();
+        if (tipoRaw === "dupla" || tipoRaw === "time") {
+          formacaoAdversaria = {
+            id: advTimeId,
+            nome: (t as { nome?: string | null }).nome ?? null,
+            escudo: (t as { escudo?: string | null }).escudo ?? null,
+            localizacao: (t as { localizacao?: string | null }).localizacao ?? null,
+            tipo: tipoRaw as "dupla" | "time",
+            eidTime: Number((t as { eid_time?: number | null }).eid_time ?? 0),
+          };
+        }
+      }
+    }
+    return {
+      id: Number(m.id),
+      adversarioId: String(m.adversario_id ?? ""),
+      adversarioNome: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.nome ?? "Oponente",
+      adversarioAvatarUrl: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.avatar_url ?? null,
+      adversarioLocalizacao: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.localizacao ?? null,
+      adversarioNotaEid: enviadosEidMap.get(`${String(m.adversario_id ?? "")}:${Number(m.esporte_id ?? 0)}`) ?? 0,
+      esporte: (m.esporte_id ? espMap.get(m.esporte_id) : null) ?? "Esporte",
+      esporteId: Number(m.esporte_id ?? 0),
+      modalidade: normalizedMod,
+      formacaoAdversaria,
+    };
+  });
 
   const { data: aceitosCancelaveisPainel } = await supabase
     .from("matches")

@@ -42,7 +42,7 @@ export type PedidoMatchItem = {
   rankingPreview?: PedidoRankingPreview | null;
 };
 
-function iniciaisFormacao(nome: string | null | undefined): string {
+export function iniciaisFormacao(nome: string | null | undefined): string {
   const n = String(nome ?? "").trim();
   if (!n) return "?";
   const parts = n.split(/\s+/).filter(Boolean);

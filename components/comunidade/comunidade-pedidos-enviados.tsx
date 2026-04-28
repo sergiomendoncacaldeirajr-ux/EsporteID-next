@@ -1,20 +1,33 @@
 "use client";
 
-import Image from "next/image";
 import { useActionState, useEffect, useState } from "react";
 import { cancelarPedidoMatchPendente, type CancelarPedidoPendenteState } from "@/app/comunidade/actions";
+import { iniciaisFormacao } from "@/components/comunidade/comunidade-pedidos-match";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { PEDIDO_CANCELAR_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
-import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+import Image from "next/image";
 
 type Item = {
   id: number;
+  adversarioId: string;
   adversarioNome: string;
   adversarioAvatarUrl?: string | null;
   adversarioLocalizacao?: string | null;
   adversarioNotaEid?: number | null;
   esporte: string;
+  esporteId: number;
   modalidade: string;
+  /** Alvo dupla/time (pedido coletivo): exibir formação, não o perfil do líder. */
+  formacaoAdversaria?: {
+    id: number;
+    nome: string | null;
+    escudo: string | null;
+    localizacao: string | null;
+    tipo: "dupla" | "time";
+    eidTime: number;
+  } | null;
 };
 
 const initial: CancelarPedidoPendenteState = { ok: false, message: "" };
@@ -40,7 +53,30 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
     <div className="mt-2 space-y-2">
       {err ? <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{err}</p> : null}
       <ul className="space-y-2">
-        {items.map((m) => (
+        {items.map((m) => {
+          const f = m.formacaoAdversaria;
+          const titulo = (f?.nome?.trim() ? f.nome : null) ?? m.adversarioNome;
+          const local = (f?.localizacao?.trim() ? f.localizacao : null) ?? m.adversarioLocalizacao;
+          const statsHref =
+            f && m.esporteId > 0
+              ? `/${f.tipo === "dupla" ? "perfil-dupla" : "perfil-time"}/${f.id}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`
+              : m.adversarioId && m.esporteId > 0
+                ? `/perfil/${m.adversarioId}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`
+                : null;
+          const seloEid = f ? f.eidTime : Number(m.adversarioNotaEid ?? 0);
+          const avatarInner =
+            f?.escudo?.trim() ? (
+              <Image src={f.escudo.trim()} alt="" fill unoptimized className="object-cover object-center" />
+            ) : f ? (
+              <div className="flex h-full w-full items-center justify-center text-[9px] font-black text-eid-primary-300">
+                {iniciaisFormacao(f.nome)}
+              </div>
+            ) : m.adversarioAvatarUrl ? (
+              <Image src={m.adversarioAvatarUrl} alt="" fill unoptimized className="object-cover object-center" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[9px] font-black text-eid-primary-300">EID</div>
+            );
+          return (
           <li
             key={m.id}
             className="relative overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.28)]"
@@ -48,18 +84,26 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
             <div className="flex items-start gap-2.5">
               <div className="flex w-[44px] shrink-0 flex-col items-center">
               <div className="relative h-9 w-9 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60">
-                {m.adversarioAvatarUrl ? (
-                  <Image src={m.adversarioAvatarUrl} alt="" fill unoptimized className="object-cover object-center" />
+                {statsHref ? (
+                  <ProfileEditDrawerTrigger
+                    href={statsHref}
+                    title={f ? `Estatísticas da formação ${titulo}` : `Estatísticas EID de ${titulo}`}
+                    fullscreen
+                    topMode="backOnly"
+                    className="relative block h-9 w-9"
+                  >
+                    {avatarInner}
+                  </ProfileEditDrawerTrigger>
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-[9px] font-black text-eid-primary-300">EID</div>
+                  avatarInner
                 )}
               </div>
               <div className="mt-1">
-                <ProfileEidPerformanceSeal notaEid={Number(m.adversarioNotaEid ?? 0)} compact />
+                <ProfileEidPerformanceSeal notaEid={seloEid} compact locationLabel={local} />
               </div>
               </div>
               <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-eid-fg">{m.adversarioNome}</p>
+                <p className="truncate text-xs font-semibold text-eid-fg">{titulo}</p>
                 <p className="text-[10px] text-eid-text-secondary">
                   <span className="inline-flex items-center gap-1">
                     <SportGlyphIcon sportName={m.esporte} />
@@ -80,7 +124,7 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
                   </span>
                 </p>
                 <p className="mt-0.5 text-[10px] text-eid-text-secondary">
-                  {m.adversarioLocalizacao?.trim() ? m.adversarioLocalizacao : "Localização não informada"}
+                  {local?.trim() ? local : "Localização não informada"}
                 </p>
               </div>
               <div className="ml-auto flex flex-col items-end gap-1.5">
@@ -102,7 +146,8 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
               </div>
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
       {confirmId ? (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/55 p-3 sm:items-center">
