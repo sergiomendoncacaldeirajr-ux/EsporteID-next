@@ -47,8 +47,9 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
     redirect(`/espaco/${loc.slug}`);
   }
 
-  const { data: dono } = loc.criado_por_usuario_id
-    ? await supabase.from("profiles").select("id, nome").eq("id", loc.criado_por_usuario_id).maybeSingle()
+  const donoUserId = loc.responsavel_usuario_id ?? loc.criado_por_usuario_id;
+  const { data: dono } = donoUserId
+    ? await supabase.from("profiles").select("id, nome").eq("id", donoUserId).maybeSingle()
     : { data: null };
 
   const mapsHref =
@@ -58,9 +59,7 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
         ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.localizacao)}`
         : null;
 
-  const isGestorLocal =
-    user &&
-    (loc.criado_por_usuario_id === user.id || loc.responsavel_usuario_id === user.id);
+  const isGestorLocal = user && loc.responsavel_usuario_id === user.id;
   const isResponsavelOficial = user && loc.responsavel_usuario_id === user.id;
   const { data: minhaClaimPendente } =
     user && !isResponsavelOficial

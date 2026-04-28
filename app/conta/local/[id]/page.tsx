@@ -36,9 +36,7 @@ export default async function ContaEditarLocalPage({ params, searchParams }: Pro
     .maybeSingle();
   if (!loc) notFound();
 
-  const pode =
-    loc.criado_por_usuario_id === user.id ||
-    loc.responsavel_usuario_id === user.id;
+  const pode = loc.responsavel_usuario_id === user.id;
   if (!pode) {
     redirect(`/local/${id}?from=${encodeURIComponent(from)}`);
   }

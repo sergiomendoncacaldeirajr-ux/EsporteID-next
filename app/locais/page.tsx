@@ -162,7 +162,7 @@ export default async function LocaisPage({ searchParams }: Props) {
 
   const [{ data: sociosRows }, { data: meuEspacoRows }, { data: reservasPagasRows }, { data: visitanteRows }] = await Promise.all([
     supabase.from("espaco_socios").select("espaco_generico_id").eq("usuario_id", user.id).eq("status", "ativo"),
-    supabase.from("espacos_genericos").select("id").or(`responsavel_usuario_id.eq.${user.id},criado_por_usuario_id.eq.${user.id}`),
+    supabase.from("espacos_genericos").select("id").eq("responsavel_usuario_id", user.id),
     supabase
       .from("reservas_quadra")
       .select("espaco_generico_id")

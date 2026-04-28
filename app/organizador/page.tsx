@@ -41,7 +41,7 @@ export default async function OrganizadorPage({
     supabase
       .from("espacos_genericos")
       .select("id, nome_publico, localizacao, ownership_status, ativo_listagem")
-      .or(`criado_por_usuario_id.eq.${user.id},responsavel_usuario_id.eq.${user.id}`)
+      .eq("responsavel_usuario_id", user.id)
       .order("id", { ascending: false })
       .limit(8),
   ]);

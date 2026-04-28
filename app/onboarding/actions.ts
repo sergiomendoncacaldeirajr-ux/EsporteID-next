@@ -892,7 +892,7 @@ export async function salvarExtrasOnboarding(
     const { data: existente } = await supabase
       .from("espacos_genericos")
       .select("id")
-      .eq("criado_por_usuario_id", user.id)
+      .eq("responsavel_usuario_id", user.id)
       .order("id", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -931,6 +931,7 @@ export async function salvarExtrasOnboarding(
           venue_config_json: JSON.stringify(venueConfig),
           configuracao_reservas_json: configuracaoReservas,
           aceita_socios: reservaModelo === "socios" || reservaModelo === "misto",
+          responsavel_usuario_id: user.id,
           operacao_status: "rascunho",
           status: "pendente_validacao",
         })

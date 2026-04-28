@@ -1122,9 +1122,11 @@ export default async function DashboardPage({ searchParams }: Props) {
                   <p className="mt-1 inline-flex items-center justify-center rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-px text-[7px] font-black uppercase tracking-[0.08em] text-eid-action-300">
                     {vagasAbertasLabel(t.tipo, teamRosterMap.get(Number(t.id ?? 0)) ?? null)}
                   </p>
-                  <p className="mt-1 inline-flex min-h-[1.2rem] items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-eid-surface/55 px-2 py-0.5 text-[8px] font-bold tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_48%,var(--eid-primary-500)_52%)]">
-                    {hasMyCoords && dist < 9000 ? `${dist.toFixed(1).replace(".", ",")} km` : "—"}
-                  </p>
+                  {hasMyCoords && dist < 9000 ? (
+                    <p className="mt-1 inline-flex min-h-[1.2rem] items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-eid-surface/55 px-2 py-0.5 text-[8px] font-bold tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_48%,var(--eid-primary-500)_52%)]">
+                      {`${dist.toFixed(1).replace(".", ",")} km`}
+                    </p>
+                  ) : null}
                 </Link>
               ))}
             </div>

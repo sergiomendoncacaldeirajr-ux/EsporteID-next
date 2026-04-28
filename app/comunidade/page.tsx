@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FlowPageHeader } from "@/components/app/flow-page-header";
@@ -11,6 +12,7 @@ import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pe
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
 import { ComunidadeSetorNotificacoes } from "@/components/comunidade/comunidade-setor-notificacoes";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
 import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
@@ -377,6 +379,7 @@ export default async function ComunidadePage() {
       candidatoId: p.candidato_usuario_id,
       nome: prof?.nome?.trim() || prof?.username?.trim() || "Atleta",
       username: prof?.username?.trim() ? `@${prof.username.trim()}` : null,
+      avatarUrl: prof?.avatar_url ?? null,
       mensagem: p.mensagem?.trim() || null,
       criadoEm: p.criado_em,
       timeNome: team?.nome ?? "sua formação",
@@ -864,11 +867,40 @@ export default async function ComunidadePage() {
                         key={c.id}
                         className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
                       >
-                        <p className="text-sm font-semibold text-eid-fg">{c.nome}</p>
-                        <p className="mt-1 text-xs text-eid-text-secondary">
-                          {c.username ? `${c.username} · ` : ""}
-                          Quer entrar em <span className="font-semibold text-eid-fg">{c.timeNome}</span>
-                        </p>
+                        <div className="flex items-start gap-3">
+                          <ProfileEditDrawerTrigger
+                            href={`/perfil/${c.candidatoId}?from=/comunidade`}
+                            title={c.nome}
+                            fullscreen
+                            topMode="backOnly"
+                            className="block rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
+                          >
+                            <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
+                              {c.avatarUrl ? (
+                                <Image src={c.avatarUrl} alt="" width={44} height={44} unoptimized className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                                  {c.nome.slice(0, 1).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+                          </ProfileEditDrawerTrigger>
+                          <div className="min-w-0 flex-1">
+                            <ProfileEditDrawerTrigger
+                              href={`/perfil/${c.candidatoId}?from=/comunidade`}
+                              title={c.nome}
+                              fullscreen
+                              topMode="backOnly"
+                              className="text-sm font-semibold text-eid-fg hover:text-eid-primary-300"
+                            >
+                              {c.nome}
+                            </ProfileEditDrawerTrigger>
+                            <p className="mt-1 text-xs text-eid-text-secondary">
+                              {c.username ? `${c.username} · ` : ""}
+                              Quer entrar em <span className="font-semibold text-eid-fg">{c.timeNome}</span>
+                            </p>
+                          </div>
+                        </div>
                         {c.mensagem ? (
                           <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2 text-[11px] italic text-eid-text-secondary">
                             “{c.mensagem}”

@@ -31,7 +31,7 @@ export async function atualizarMeuLocal(
 
   const pode =
     row &&
-    (row.criado_por_usuario_id === user.id || row.responsavel_usuario_id === user.id);
+    row.responsavel_usuario_id === user.id;
   if (!pode) return { ok: false, message: "Sem permissão para editar este local." };
 
   const nome = String(formData.get("nome_publico") ?? "").trim();
@@ -112,7 +112,7 @@ export async function solicitarPropriedadeOficialLocal(
     .maybeSingle();
 
   if (!espaco) return { ok: false, message: "Espaço não encontrado." };
-  if (espaco.responsavel_usuario_id === user.id || espaco.criado_por_usuario_id === user.id) {
+  if (espaco.responsavel_usuario_id === user.id) {
     return { ok: false, message: "Você já está vinculado a este espaço." };
   }
 
