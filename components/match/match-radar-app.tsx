@@ -862,7 +862,7 @@ export function MatchRadarApp({
                 Nenhum oponente com esses filtros.
               </p>
             ) : (
-              <div className="grid min-w-0 grid-cols-2 gap-1.5 px-2 pb-3 pt-2 max-[360px]:grid-cols-1 sm:gap-3 sm:px-3 sm:pb-4">
+              <div className="grid min-w-0 grid-cols-2 gap-1.5 px-2 pb-3 pt-2 sm:gap-3 sm:px-3 sm:pb-4">
                 {visibleCards.map((c) => (
                   <MatchRadarCardView
                     key={`${c.modalidade}-${c.id}-${c.esporteId}`}
@@ -947,7 +947,7 @@ export function MatchRadarApp({
                 <X className="h-4 w-4" strokeWidth={2.5} aria-hidden />
               </button>
             </div>
-            <div className="grid min-w-0 flex-1 grid-cols-2 content-start gap-1.5 overflow-y-auto pb-2 max-[360px]:grid-cols-1 sm:gap-2.5">
+            <div className="grid min-w-0 flex-1 grid-cols-2 content-start gap-1.5 overflow-y-auto pb-2 sm:gap-2.5">
               {fullCardGroups.map((group) => {
                 const c = group.base;
                 const esporteParam = c.esporteId > 0 ? String(c.esporteId) : esporte;
