@@ -523,6 +523,7 @@ export default async function ComunidadePage() {
       if (p !== 0) return p;
       return new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime();
     });
+  const hasSugestoesEnviadasPendentes = sugestoesEnviadasItems.some((s) => s.statusRaw === "pendente");
   const { data: convites } = await supabase
     .from("time_convites")
     .select("id, time_id, convidado_por_usuario_id, times!inner(id, nome, tipo, escudo, eid_time, localizacao, lat, lng, esportes(nome))")
@@ -1225,7 +1226,7 @@ export default async function ComunidadePage() {
                 id="equipe-sugestoes-enviadas"
                 title="Sugestões enviadas (acompanhamento)"
                 hasPending={sugestoesEnviadasItems.length > 0}
-                badgeLabel="Status"
+                badgeLabel={hasSugestoesEnviadasPendentes ? "Pendente" : "Resolvido"}
               >
                 <ComunidadeSugestoesEnviadasMatch items={sugestoesEnviadasItems} />
               </ComunidadeQuadro>

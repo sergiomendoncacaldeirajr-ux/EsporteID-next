@@ -185,7 +185,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     let cancelled = false;
     const supabase = createClient();
     async function load() {
-      const [agRes, pRes, mRes, nRes] = await Promise.all([
+      const [agRes, pRes, mRes, sRes, nRes] = await Promise.all([
         supabase
           .from("partidas")
           .select("id, match_id")
@@ -198,6 +198,11 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
           .eq("status", "aguardando_confirmacao")
           .neq("lancado_por", resolvedUserId),
         supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", resolvedUserId).eq("status", "Pendente"),
+        supabase
+          .from("match_sugestoes")
+          .select("id", { count: "exact", head: true })
+          .eq("alvo_dono_id", resolvedUserId)
+          .eq("status", "pendente"),
         supabase
           .from("notificacoes")
           .select("id, tipo, referencia_id, remetente_id")
@@ -230,7 +235,31 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       setAgendaBadge(agendaVisiveis.length);
       const placar = pRes.count ?? 0;
       const pedidos = mRes.count ?? 0;
+      const sugestoesLider = sRes.count ?? 0;
       const unreadRows = (nRes.data ?? []) as UnreadNotif[];
+      const flowRefIds = [
+        ...new Set(
+          unreadRows
+            .filter((n) => isFlowActionNotif(n.tipo))
+            .map((n) => Number(n.referencia_id ?? 0))
+            .filter((id) => Number.isFinite(id) && id > 0)
+        ),
+      ];
+      const suggestionResolvedRefIds = new Set<number>();
+      if (flowRefIds.length > 0) {
+        const { data: sugRows } = await supabase
+          .from("match_sugestoes")
+          .select("id, status")
+          .in("id", flowRefIds);
+        for (const row of sugRows ?? []) {
+          const id = Number(row.id ?? 0);
+          const status = String(row.status ?? "").trim().toLowerCase();
+          if (!Number.isFinite(id) || id <= 0) continue;
+          if (status === "aprovado" || status === "recusado") {
+            suggestionResolvedRefIds.add(id);
+          }
+        }
+      }
       const seen = new Set<string>();
       let unreadGeneral = 0;
       for (const n of unreadRows) {
@@ -240,12 +269,17 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
           : `id:${n.id}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        // Notificações de fluxo (desafio/match) já são cobertas pelos cartões de ação
-        // (placar/pedidos). Não somar novamente para evitar badge duplicado.
-        if (!isFlowAction) unreadGeneral += 1;
+        if (!isFlowAction) {
+          unreadGeneral += 1;
+        } else {
+          const refId = Number(n.referencia_id ?? 0);
+          if (Number.isFinite(refId) && refId > 0 && suggestionResolvedRefIds.has(refId)) {
+            unreadGeneral += 1;
+          }
+        }
       }
       // Social = ações pendentes + notificações gerais (sem duplicar match/desafio).
-      setSocialBadge(placar + pedidos + unreadGeneral);
+      setSocialBadge(placar + pedidos + sugestoesLider + unreadGeneral);
     }
     void load();
     const t = window.setInterval(load, 20000);
@@ -264,6 +298,11 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "matches", filter: `adversario_id=eq.${resolvedUserId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "match_sugestoes", filter: `alvo_dono_id=eq.${resolvedUserId}` },
         () => void load()
       )
       .on(

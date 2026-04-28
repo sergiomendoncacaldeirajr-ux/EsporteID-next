@@ -398,6 +398,16 @@ export default async function DashboardPage({ searchParams }: Props) {
     timesQuery = timesQuery.in("esporte_id", esportesParaFiltro);
   }
   const { data: timesRaw } = await timesQuery;
+  const { data: minhasFormacoesMembro } = await supabase
+    .from("membros_time")
+    .select("time_id")
+    .eq("usuario_id", user.id)
+    .in("status", ["ativo", "aceito", "aprovado"]);
+  const meusTimesMembroIds = new Set(
+    (minhasFormacoesMembro ?? [])
+      .map((row) => Number((row as { time_id?: number | null }).time_id ?? 0))
+      .filter((id) => Number.isFinite(id) && id > 0)
+  );
   const timeCriadorIds = [...new Set((timesRaw ?? []).map((t) => String(t.criador_id ?? "")).filter(Boolean))];
   const { data: timeCriadoresProfiles } =
     timeCriadorIds.length > 0
@@ -413,6 +423,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   );
   const timesSemAtivos = (timesRaw ?? []).filter(
     (t) =>
+      !meusTimesMembroIds.has(Number(t.id ?? 0)) &&
       !activeOpponentIds.has(String(t.criador_id ?? "")) &&
       criadoresComMaioridade.has(String(t.criador_id ?? ""))
   );

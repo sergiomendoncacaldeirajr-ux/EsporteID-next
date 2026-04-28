@@ -75,6 +75,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   const [previewLimparPending, setPreviewLimparPending] = useState(false);
   const [agendaN, setAgendaN] = useState(0);
   const [pedidosDesafioN, setPedidosDesafioN] = useState(0);
+  const [sugestoesLiderN, setSugestoesLiderN] = useState(0);
   const [placarN, setPlacarN] = useState(0);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
@@ -83,7 +84,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   const load = useCallback(async () => {
     if (!userId) return;
     const supabase = createClient();
-    const [notifRes, listRes, agRes, mRes, pRes] = await Promise.all([
+    const [notifRes, listRes, agRes, mRes, sRes, pRes] = await Promise.all([
       supabase
         .from("notificacoes")
         .select("id, tipo, referencia_id, remetente_id")
@@ -102,6 +103,11 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId}`)
         .eq("status", "agendada"),
       supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", userId).eq("status", "Pendente"),
+      supabase
+        .from("match_sugestoes")
+        .select("id", { count: "exact", head: true })
+        .eq("alvo_dono_id", userId)
+        .eq("status", "pendente"),
       supabase
         .from("partidas")
         .select("id", { count: "exact", head: true })
@@ -125,6 +131,21 @@ export function NotificationBell({ userId }: { userId: string | null }) {
           .filter((id) => Number.isFinite(id) && id > 0)
       ),
     ];
+    const suggestionResolvedRefIds = new Set<number>();
+    if (flowRefIds.length > 0) {
+      const { data: sugRows } = await supabase
+        .from("match_sugestoes")
+        .select("id, status")
+        .in("id", flowRefIds);
+      for (const row of sugRows ?? []) {
+        const id = Number(row.id ?? 0);
+        const status = String(row.status ?? "").trim().toLowerCase();
+        if (!Number.isFinite(id) || id <= 0) continue;
+        if (status === "aprovado" || status === "recusado") {
+          suggestionResolvedRefIds.add(id);
+        }
+      }
+    }
     const canceledMatchIds = new Set<number>();
     if (flowRefIds.length > 0) {
       const { data: statusRows } = await supabase.from("matches").select("id, status").in("id", flowRefIds);
@@ -187,18 +208,27 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         : `id:${n.id}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      // Notificações de fluxo (desafio/match) já entram em cartões de ação
-      // (pedido/placar). Evita contagem duplicada no sino.
-      if (!isFlowAction) unreadGeneral += 1;
+      // Notificações de fluxo resolvidas de sugestão (aprovado/recusado)
+      // devem contar no sino para o usuário perceber a atualização.
+      if (!isFlowAction) {
+        unreadGeneral += 1;
+      } else {
+        const refId = Number(n.referencia_id ?? 0);
+        if (Number.isFinite(refId) && refId > 0 && suggestionResolvedRefIds.has(refId)) {
+          unreadGeneral += 1;
+        }
+      }
     }
     const ag = agendaRowsVisiveis.length;
     const m = mRes.count ?? 0;
+    const s = sRes.count ?? 0;
     const p = pRes.count ?? 0;
     setAgendaN(ag);
     setPedidosDesafioN(m);
+    setSugestoesLiderN(s);
     setPlacarN(p);
     // Inclui pedidos pendentes (matches) como ação social real.
-    setTotal(unreadGeneral + p + ag + m);
+    setTotal(unreadGeneral + p + ag + m + s);
     setPreview(previewRows);
   }, [userId]);
 
@@ -238,6 +268,11 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "matches", filter: `adversario_id=eq.${userId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "match_sugestoes", filter: `alvo_dono_id=eq.${userId}` },
         () => void load()
       )
       .on(
@@ -351,7 +386,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                 className="font-bold tabular-nums text-eid-fg transition hover:opacity-85"
                 onClick={() => setOpen(false)}
               >
-                {pedidosDesafioN}
+                {pedidosDesafioN + sugestoesLiderN}
               </Link>
             </li>
             <li className="eid-list-item flex justify-between gap-2 px-3 py-2">

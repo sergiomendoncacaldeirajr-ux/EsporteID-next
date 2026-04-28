@@ -49,9 +49,7 @@ function firstName(value?: string | null): string {
 }
 
 function formacaoHref(item: SugestaoMatchItem): string {
-  const tipo = String(item.meuTimeTipo ?? item.modalidade ?? "").trim().toLowerCase();
-  const base = tipo === "dupla" ? "/perfil-dupla" : "/perfil-time";
-  return `${base}/${item.meuTimeId}?from=/comunidade`;
+  return `/perfil-time/${item.meuTimeId}?from=/comunidade`;
 }
 
 export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[] }) {
