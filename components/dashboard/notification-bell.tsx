@@ -390,6 +390,16 @@ export function NotificationBell({ userId }: { userId: string | null }) {
               </Link>
             </li>
             <li className="eid-list-item flex justify-between gap-2 px-3 py-2">
+              <span className="text-eid-text-secondary">Sugestões da equipe</span>
+              <Link
+                href="/comunidade#equipe-sugestoes"
+                className="font-bold tabular-nums text-eid-fg transition hover:opacity-85"
+                onClick={() => setOpen(false)}
+              >
+                {sugestoesLiderN}
+              </Link>
+            </li>
+            <li className="eid-list-item flex justify-between gap-2 px-3 py-2">
               <span className="text-eid-text-secondary">Placar aguardando você</span>
               <Link
                 href="/agenda#placares"
