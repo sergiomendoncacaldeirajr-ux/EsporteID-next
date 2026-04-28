@@ -8,6 +8,7 @@ export type ResponderMatchState = { ok: true } | { ok: false; message: string };
 export type ResponderConviteState = { ok: true } | { ok: false; message: string };
 export type SugestaoMatchState = { ok: true; message?: string } | { ok: false; message: string };
 export type ResponderSugestaoMatchState = { ok: true } | { ok: false; message: string };
+export type LimparSugestaoEnviadaState = { ok: true } | { ok: false; message: string };
 export type CancelarMatchState = { ok: true } | { ok: false; message: string };
 export type GerenciarCancelamentoState = { ok: true; message: string } | { ok: false; message: string };
 export type CancelarPedidoPendenteState = { ok: true } | { ok: false; message: string };
@@ -110,6 +111,48 @@ async function triggerPushForMatchNotifications(
   if (ids.length) {
     await triggerPushForNotificationIdsBestEffort(ids, { source });
   }
+}
+
+async function triggerPushForSuggestionNotifications(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  sugestaoId: number,
+  userIds: Array<string | null | undefined>,
+  source: string
+) {
+  const uniqUsers = [...new Set(userIds.map((v) => String(v ?? "").trim()).filter(Boolean))];
+  if (!Number.isFinite(sugestaoId) || sugestaoId < 1) return;
+  let q = supabase
+    .from("notificacoes")
+    .select("id")
+    .eq("referencia_id", sugestaoId)
+    .eq("lida", false)
+    .in("tipo", ["match", "desafio", "time", "convite"])
+    .order("id", { ascending: false })
+    .limit(30);
+  if (uniqUsers.length > 0) {
+    q = q.in("usuario_id", uniqUsers);
+  }
+  const { data } = await q;
+  const ids = (data ?? [])
+    .map((row) => Number((row as { id?: number } | null)?.id ?? 0))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (ids.length) {
+    await triggerPushForNotificationIdsBestEffort(ids, { source });
+  }
+}
+
+async function getActiveTeamMemberIds(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  teamIds: Array<number | null | undefined>
+): Promise<string[]> {
+  const ids = [...new Set(teamIds.map((v) => Number(v ?? 0)).filter((v) => Number.isFinite(v) && v > 0))];
+  if (!ids.length) return [];
+  const { data } = await supabase
+    .from("membros_time")
+    .select("usuario_id")
+    .in("time_id", ids)
+    .eq("status", "ativo");
+  return [...new Set((data ?? []).map((r) => String((r as { usuario_id?: string | null }).usuario_id ?? "")).filter(Boolean))];
 }
 
 async function ensurePartidaAgendadaFromMatch(
@@ -733,13 +776,44 @@ export async function sugerirMatchParaLider(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Sessão expirada." };
 
-  const { error } = await supabase.rpc("sugerir_match_para_lider", {
+  const { data: existentePar } = await supabase
+    .from("match_sugestoes")
+    .select("id")
+    .eq("alvo_time_id", alvo)
+    .eq("sugeridor_time_id", sug)
+    .eq("status", "pendente")
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (existentePar?.id) {
+    return {
+      ok: false,
+      message:
+        "Já existe uma sugestão pendente para este confronto de dupla/time. Aguarde o líder aprovar ou recusar.",
+    };
+  }
+
+  const { data: sugestaoIdRaw, error } = await supabase.rpc("sugerir_match_para_lider", {
     p_alvo_time_id: alvo,
     p_sugeridor_time_id: sug,
     p_mensagem: msg.length > 0 ? msg.slice(0, 500) : null,
   });
 
   if (error) return { ok: false, message: error.message };
+  const sugestaoId = Number(sugestaoIdRaw ?? 0);
+  if (Number.isFinite(sugestaoId) && sugestaoId > 0) {
+    const { data: sugRow } = await supabase
+      .from("match_sugestoes")
+      .select("alvo_dono_id")
+      .eq("id", sugestaoId)
+      .maybeSingle();
+    await triggerPushForSuggestionNotifications(
+      supabase,
+      sugestaoId,
+      [String((sugRow as { alvo_dono_id?: string | null } | null)?.alvo_dono_id ?? "")],
+      "comunidade/actions.sugerirMatchParaLider"
+    );
+  }
 
   revalidatePath("/comunidade");
   revalidatePath(`/perfil-time/${alvo}`);
@@ -766,6 +840,12 @@ export async function responderSugestaoMatch(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Sessão expirada." };
 
+  const { data: sugAntes } = await supabase
+    .from("match_sugestoes")
+    .select("id, sugeridor_id, sugeridor_time_id, alvo_time_id")
+    .eq("id", sugestaoId)
+    .maybeSingle();
+
   const { error } = await supabase.rpc("responder_sugestao_match", {
     p_sugestao_id: sugestaoId,
     p_aceitar: aceitar,
@@ -778,11 +858,82 @@ export async function responderSugestaoMatch(
   });
 
   if (aceitar) {
-    const { data: sug } = await supabase.from("match_sugestoes").select("match_id").eq("id", sugestaoId).maybeSingle();
+    const { data: sug } = await supabase
+      .from("match_sugestoes")
+      .select("match_id, sugeridor_id, sugeridor_time_id, alvo_time_id")
+      .eq("id", sugestaoId)
+      .maybeSingle();
     const maybeMatchId = Number(sug?.match_id);
     if (Number.isFinite(maybeMatchId) && maybeMatchId > 0) {
       await ensurePartidaAgendadaFromMatch(supabase, maybeMatchId, user.id);
+      const memberIds = await getActiveTeamMemberIds(supabase, [
+        Number((sug as { sugeridor_time_id?: number | null } | null)?.sugeridor_time_id ?? 0),
+        Number((sug as { alvo_time_id?: number | null } | null)?.alvo_time_id ?? 0),
+      ]);
+      await triggerPushForMatchNotifications(
+        supabase,
+        maybeMatchId,
+        [
+          String((sug as { sugeridor_id?: string | null } | null)?.sugeridor_id ?? ""),
+          ...memberIds,
+        ],
+        "comunidade/actions.responderSugestaoMatch.aprovado"
+      );
+    } else {
+      await triggerPushForSuggestionNotifications(
+        supabase,
+        sugestaoId,
+        [String((sug as { sugeridor_id?: string | null } | null)?.sugeridor_id ?? "")],
+        "comunidade/actions.responderSugestaoMatch.aprovado.fallback"
+      );
     }
+  } else {
+    const sugSugeridorId = String((sugAntes as { sugeridor_id?: string | null } | null)?.sugeridor_id ?? "");
+    const sugTeamId = Number((sugAntes as { sugeridor_time_id?: number | null } | null)?.sugeridor_time_id ?? 0);
+    const targetTeamId = Number((sugAntes as { alvo_time_id?: number | null } | null)?.alvo_time_id ?? 0);
+    const [sugTeam, targetTeam] = await Promise.all([
+      Number.isFinite(sugTeamId) && sugTeamId > 0
+        ? supabase.from("times").select("nome").eq("id", sugTeamId).maybeSingle()
+        : Promise.resolve({ data: null } as { data: { nome?: string | null } | null }),
+      Number.isFinite(targetTeamId) && targetTeamId > 0
+        ? supabase.from("times").select("nome").eq("id", targetTeamId).maybeSingle()
+        : Promise.resolve({ data: null } as { data: { nome?: string | null } | null }),
+    ]);
+    const memberIds = await getActiveTeamMemberIds(supabase, [sugTeamId]);
+    const extraRecipients = memberIds.filter((uid) => uid && uid !== sugSugeridorId);
+    if (extraRecipients.length > 0) {
+      const mensagem =
+        `Sugestão recusada: o líder de ${String(targetTeam.data?.nome ?? "uma formação")} ` +
+        `recusou o desafio sugerido para ${String(sugTeam.data?.nome ?? "sua formação")}.`;
+      const { data: inserted } = await supabase
+        .from("notificacoes")
+        .insert(
+          extraRecipients.map((uid) => ({
+            usuario_id: uid,
+            mensagem,
+            tipo: "desafio",
+            referencia_id: sugestaoId,
+            lida: false,
+            remetente_id: user.id,
+            data_criacao: new Date().toISOString(),
+          }))
+        )
+        .select("id");
+      const notifIds = (inserted ?? [])
+        .map((row) => Number((row as { id?: number } | null)?.id ?? 0))
+        .filter((id) => Number.isFinite(id) && id > 0);
+      if (notifIds.length) {
+        await triggerPushForNotificationIdsBestEffort(notifIds, {
+          source: "comunidade/actions.responderSugestaoMatch.recusado.extras",
+        });
+      }
+    }
+    await triggerPushForSuggestionNotifications(
+      supabase,
+      sugestaoId,
+      [sugSugeridorId, ...memberIds],
+      "comunidade/actions.responderSugestaoMatch.recusado"
+    );
   }
 
   revalidatePath("/comunidade");
@@ -790,6 +941,55 @@ export async function responderSugestaoMatch(
   revalidatePath("/match");
   revalidatePath("/dashboard");
   revalidatePath(`/perfil/${user.id}`);
+  return { ok: true };
+}
+
+export async function limparSugestaoEnviadaNotificacao(
+  _prev: LimparSugestaoEnviadaState | undefined,
+  formData: FormData
+): Promise<LimparSugestaoEnviadaState> {
+  const sugestaoId = Number(formData.get("sugestao_id"));
+  if (!Number.isFinite(sugestaoId) || sugestaoId < 1) {
+    return { ok: false, message: "Sugestão inválida." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada." };
+
+  const { data: sug } = await supabase
+    .from("match_sugestoes")
+    .select("id, sugeridor_id, match_id")
+    .eq("id", sugestaoId)
+    .maybeSingle();
+  if (!sug || String((sug as { sugeridor_id?: string | null }).sugeridor_id ?? "") !== user.id) {
+    return { ok: false, message: "Sem permissão para limpar esta sugestão." };
+  }
+
+  await supabase
+    .from("match_sugestoes")
+    .update({ oculto_sugeridor: true })
+    .eq("id", sugestaoId)
+    .eq("sugeridor_id", user.id);
+
+  const refs = [
+    sugestaoId,
+    Number((sug as { match_id?: number | null }).match_id ?? 0),
+  ].filter((v) => Number.isFinite(v) && v > 0);
+  if (refs.length > 0) {
+    await supabase
+      .from("notificacoes")
+      .delete()
+      .eq("usuario_id", user.id)
+      .in("referencia_id", refs)
+      .in("tipo", ["match", "desafio", "time", "convite"]);
+  }
+
+  revalidatePath("/comunidade");
+  revalidatePath("/agenda");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 

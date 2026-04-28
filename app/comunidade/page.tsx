@@ -10,6 +10,10 @@ import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comun
 import { ComunidadeConvitesEnviadosTime, type ConviteTimeEnviadoItem } from "@/components/comunidade/comunidade-convites-enviados-time";
 import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pedidos-enviados";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
+import {
+  ComunidadeSugestoesEnviadasMatch,
+  type SugestaoEnviadaMatchItem,
+} from "@/components/comunidade/comunidade-sugestoes-enviadas-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
 import { ComunidadeSetorNotificacoes } from "@/components/comunidade/comunidade-setor-notificacoes";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
@@ -82,7 +86,7 @@ export default async function ComunidadePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select(`perfil_completo, localizacao, lat, lng, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
+    .select(`perfil_completo, nome, avatar_url, localizacao, lat, lng, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
     .eq("id", user.id)
     .maybeSingle();
   if (!profile || !legalAcceptanceIsCurrent(profile)) redirect("/conta/aceitar-termos");
@@ -332,6 +336,13 @@ export default async function ComunidadePage() {
     .eq("status", "pendente")
     .order("id", { ascending: false })
     .limit(25);
+  const { data: sugestoesEnviadasRaw } = await supabase
+    .from("match_sugestoes")
+    .select("id, sugeridor_id, sugeridor_time_id, alvo_time_id, esporte_id, modalidade, mensagem, status, criado_em, respondido_em, oculto_sugeridor")
+    .eq("sugeridor_id", user.id)
+    .neq("oculto_sugeridor", true)
+    .order("id", { ascending: false })
+    .limit(40);
 
   const cooldownMesesSug = await getMatchRankCooldownMeses(supabase);
 
@@ -342,13 +353,19 @@ export default async function ComunidadePage() {
     ),
   ];
   const { data: sugPerfis } = sugSugIds.length
-    ? await supabase.from("profiles").select("id, nome").in("id", sugSugIds)
+    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", sugSugIds)
     : { data: [] };
   const sugPerfilMap = new Map((sugPerfis ?? []).map((p) => [p.id, p.nome]));
+  const sugPerfilAvatarMap = new Map(
+    (sugPerfis ?? []).map((p) => [p.id, String((p as { avatar_url?: string | null }).avatar_url ?? "")])
+  );
   const { data: sugTimes } = sugTimeIds.length
-    ? await supabase.from("times").select("id, nome, criador_id").in("id", sugTimeIds)
+    ? await supabase.from("times").select("id, nome, criador_id, escudo, eid_time, localizacao").in("id", sugTimeIds)
     : { data: [] };
   const sugTimeMap = new Map((sugTimes ?? []).map((t) => [t.id, t.nome]));
+  const sugTimeAvatarMap = new Map((sugTimes ?? []).map((t) => [Number(t.id), String((t as { escudo?: string | null }).escudo ?? "")]));
+  const sugTimeEidMap = new Map((sugTimes ?? []).map((t) => [Number(t.id), Number((t as { eid_time?: number | null }).eid_time ?? 0)]));
+  const sugTimeLocMap = new Map((sugTimes ?? []).map((t) => [Number(t.id), String((t as { localizacao?: string | null }).localizacao ?? "")]));
   const sugTimeOwnerMap = new Map((sugTimes ?? []).map((t) => [Number(t.id), String((t as { criador_id?: string | null }).criador_id ?? "")]));
   const sugEspIds = [...new Set((sugestoesRaw ?? []).map((s) => s.esporte_id).filter(Boolean))] as number[];
   const { data: sugEsportes } = sugEspIds.length
@@ -427,15 +444,81 @@ export default async function ComunidadePage() {
     })
     .map((s) => ({
     id: Number(s.id),
+    sugeridorId: String(s.sugeridor_id ?? ""),
     sugeridorNome: sugPerfilMap.get(s.sugeridor_id) ?? "Atleta",
-    sugeridorId: String(s.sugeridor_id),
+    sugeridorAvatarUrl: sugPerfilAvatarMap.get(String(s.sugeridor_id ?? "")) || null,
+    meuTimeId: Number(s.sugeridor_time_id ?? 0) || null,
     meuTimeNome: sugTimeMap.get(s.sugeridor_time_id) ?? "Formação",
+    meuTimeAvatarUrl: sugTimeAvatarMap.get(Number(s.sugeridor_time_id ?? 0)) || null,
+    meuTimeNotaEid: sugTimeEidMap.get(Number(s.sugeridor_time_id ?? 0)) ?? 0,
+    meuTimeLocalizacao: sugTimeLocMap.get(Number(s.sugeridor_time_id ?? 0)) || null,
     alvoTimeNome: sugTimeMap.get(s.alvo_time_id) ?? "Formação",
     esporte: (s.esporte_id ? sugEspMap.get(s.esporte_id) : null) ?? "Esporte",
     modalidade: s.modalidade ?? "time",
     mensagem: s.mensagem ?? null,
   }));
   const nSugestoes = sugestoesItems.length;
+  const sugEnvTimeIds = [
+    ...new Set(
+      (sugestoesEnviadasRaw ?? []).flatMap((s) => [s.sugeridor_time_id, s.alvo_time_id].filter((x): x is number => x != null))
+    ),
+  ];
+  const sugEnvEspIds = [...new Set((sugestoesEnviadasRaw ?? []).map((s) => Number(s.esporte_id ?? 0)).filter((n) => Number.isFinite(n) && n > 0))];
+  const { data: sugEnvTimes } = sugEnvTimeIds.length
+    ? await supabase.from("times").select("id, nome, escudo, eid_time, localizacao").in("id", sugEnvTimeIds)
+    : { data: [] };
+  const { data: sugEnvEsportes } = sugEnvEspIds.length
+    ? await supabase.from("esportes").select("id, nome").in("id", sugEnvEspIds)
+    : { data: [] };
+  const sugEnvTimesMap = new Map((sugEnvTimes ?? []).map((t) => [Number(t.id), t]));
+  const sugEnvEspMap = new Map((sugEnvEsportes ?? []).map((e) => [Number(e.id), String(e.nome ?? "Esporte")]));
+  const sugestoesEnviadasItems: SugestaoEnviadaMatchItem[] = (sugestoesEnviadasRaw ?? [])
+    .map((s) => {
+      const time = sugEnvTimesMap.get(Number(s.sugeridor_time_id ?? 0));
+      const statusRaw = String(s.status ?? "pendente").trim().toLowerCase();
+      const statusLabel =
+        statusRaw === "aprovado"
+          ? "Aprovado"
+          : statusRaw === "recusado"
+            ? "Recusado"
+            : "Pendente";
+      const statusClass =
+        statusRaw === "aprovado"
+          ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-200"
+          : statusRaw === "recusado"
+            ? "border-rose-500/35 bg-rose-500/10 text-rose-200"
+            : "border-amber-500/35 bg-amber-500/10 text-amber-200";
+      return {
+        id: Number(s.id),
+        statusRaw,
+        statusLabel,
+        statusClass,
+        criadoEm: String(s.criado_em ?? new Date().toISOString()),
+        respondidoEm: (s as { respondido_em?: string | null }).respondido_em ?? null,
+        sugeridorId: user.id,
+        sugeridorNome: String((profile as { nome?: string | null } | null)?.nome ?? "Você"),
+        sugeridorAvatarUrl: String((profile as { avatar_url?: string | null } | null)?.avatar_url ?? "") || null,
+        meuTimeId: Number(s.sugeridor_time_id ?? 0) || null,
+        meuTimeNome: String((time as { nome?: string | null } | null)?.nome ?? "Formação"),
+        meuTimeAvatarUrl: String((time as { escudo?: string | null } | null)?.escudo ?? "") || null,
+        meuTimeNotaEid: Number((time as { eid_time?: number | null } | null)?.eid_time ?? 0),
+        meuTimeLocalizacao: String((time as { localizacao?: string | null } | null)?.localizacao ?? "") || null,
+        alvoTimeNome: String((sugEnvTimesMap.get(Number(s.alvo_time_id ?? 0)) as { nome?: string | null } | null)?.nome ?? "Formação"),
+        esporte: sugEnvEspMap.get(Number(s.esporte_id ?? 0)) ?? "Esporte",
+        modalidade: String(s.modalidade ?? "time"),
+        mensagem: String(s.mensagem ?? "").trim() || null,
+      };
+    })
+    .sort((a, b) => {
+      const priority = (status: string) => {
+        if (status === "pendente") return 0;
+        if (status === "aprovado") return 1;
+        return 2;
+      };
+      const p = priority(a.statusRaw) - priority(b.statusRaw);
+      if (p !== 0) return p;
+      return new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime();
+    });
   const { data: convites } = await supabase
     .from("time_convites")
     .select("id, time_id, convidado_por_usuario_id, times!inner(id, nome, tipo, escudo, eid_time, localizacao, lat, lng, esportes(nome))")
@@ -910,6 +993,7 @@ export default async function ComunidadePage() {
     pedidosItems.length > 0 || pedidosEnviadosItems.length > 0 || desafioNotifs.some((n) => n.lida !== true);
   const hasEquipeAcoes =
     sugestoesItems.length > 0 ||
+    sugestoesEnviadasItems.length > 0 ||
     conviteItems.length > 0 ||
     candidaturasEquipe.length > 0 ||
     conviteEnviadoItems.some((i) => String(i.status ?? "").toLowerCase() === "pendente") ||
@@ -1132,6 +1216,9 @@ export default async function ComunidadePage() {
             <div className="space-y-4">
               <ComunidadeQuadro id="equipe-sugestoes" title="Sugestões da equipe (liderança)" hasPending={sugestoesItems.length > 0}>
                 <ComunidadeSugestoesMatch items={sugestoesItems} />
+              </ComunidadeQuadro>
+              <ComunidadeQuadro id="equipe-sugestoes-enviadas" title="Sugestões enviadas (acompanhamento)" hasPending={sugestoesEnviadasItems.length > 0}>
+                <ComunidadeSugestoesEnviadasMatch items={sugestoesEnviadasItems} />
               </ComunidadeQuadro>
               <ComunidadeQuadro id="equipe-convites" title="Convites recebidos" hasPending={conviteItems.length > 0}>
                 <ComunidadeConvitesTime items={conviteItems} />

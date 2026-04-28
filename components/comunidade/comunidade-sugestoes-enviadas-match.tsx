@@ -3,18 +3,23 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
-import { responderSugestaoMatch, type ResponderSugestaoMatchState } from "@/app/comunidade/actions";
+import {
+  limparSugestaoEnviadaNotificacao,
+  type LimparSugestaoEnviadaState,
+} from "@/app/comunidade/actions";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+import { PEDIDO_LIMPAR_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
-import {
-  PEDIDO_ACEITAR_BTN_CLASS,
-  PEDIDO_RECUSAR_BTN_CLASS,
-} from "@/lib/desafio/flow-ui";
 
-export type SugestaoMatchItem = {
+export type SugestaoEnviadaMatchItem = {
   id: number;
-  sugeridorId?: string | null;
+  statusRaw: string;
+  statusLabel: string;
+  statusClass: string;
+  criadoEm: string;
+  respondidoEm?: string | null;
+  sugeridorId: string;
   sugeridorNome: string;
   sugeridorAvatarUrl?: string | null;
   meuTimeId?: number | null;
@@ -28,7 +33,7 @@ export type SugestaoMatchItem = {
   mensagem: string | null;
 };
 
-const initial: ResponderSugestaoMatchState = { ok: false, message: "" };
+const initial: LimparSugestaoEnviadaState = { ok: true };
 
 function splitCityState(location?: string | null): { cidade: string; estado: string } {
   const raw = String(location ?? "").trim();
@@ -47,43 +52,38 @@ function firstName(value?: string | null): string {
   return clean.split(/\s+/)[0] ?? clean;
 }
 
-export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[] }) {
+export function ComunidadeSugestoesEnviadasMatch({ items }: { items: SugestaoEnviadaMatchItem[] }) {
   const router = useRouter();
-  const [state, formAction, pending] = useActionState(responderSugestaoMatch, initial);
-  const err = !state.ok && state.message ? state.message : null;
-  const okMsg = state.ok ? "Resposta registrada." : null;
+  const [state, formAction, pending] = useActionState(limparSugestaoEnviadaNotificacao, initial);
+  const err = "ok" in state && !state.ok ? state.message : null;
 
   useEffect(() => {
-    if (state.ok) router.refresh();
-  }, [state.ok, router]);
+    if ("ok" in state && state.ok) router.refresh();
+  }, [state, router]);
 
-  if (items.length === 0) {
+  if (!items.length) {
     return (
       <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
-        Nenhuma sugestão de desafio da equipe. Atletas que não são líderes podem sugerir pelo perfil da formação adversária.
+        Você ainda não enviou sugestão de desafio para liderança.
       </p>
     );
   }
 
   return (
     <div className="mt-3 space-y-3">
-      {okMsg ? (
-        <p className="rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2 text-xs text-eid-fg">{okMsg}</p>
-      ) : null}
       {err ? <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{err}</p> : null}
-
       <ul className="space-y-3">
         {items.map((s) => (
           <li
             key={s.id}
             className="relative overflow-hidden rounded-xl border border-amber-500/25 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-warning-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_93%,transparent))] p-3 text-sm shadow-[0_8px_18px_-14px_rgba(217,119,6,0.45)] md:p-4"
           >
-            <span className="absolute right-3 top-3 rounded-full border border-amber-400/45 bg-amber-500/18 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-amber-100">
-              Aguardando você
+            <span className={`absolute right-3 top-3 rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] ${s.statusClass}`}>
+              {s.statusLabel}
             </span>
             <div className="grid grid-cols-[88px_minmax(0,1fr)_88px] items-start gap-2">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">Sugestão do membro</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">Sua formação</p>
                 {s.meuTimeId ? (
                   <ProfileEditDrawerTrigger
                     href={`/perfil-time/${s.meuTimeId}?from=/comunidade`}
@@ -104,35 +104,11 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
                         )}
                       </div>
                       <div className="mt-0.5">
-                        <ProfileEidPerformanceSeal
-                          notaEid={Number(s.meuTimeNotaEid ?? 0)}
-                          compact
-                          className="scale-125"
-                        />
+                        <ProfileEidPerformanceSeal notaEid={Number(s.meuTimeNotaEid ?? 0)} compact className="scale-125" />
                       </div>
                     </div>
                   </ProfileEditDrawerTrigger>
-                ) : (
-                  <div className="mt-1 flex w-full flex-col items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-1.5 py-1.5">
-                    <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(s.meuTimeNome)}</p>
-                    <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
-                      {s.meuTimeAvatarUrl ? (
-                        <Image src={s.meuTimeAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                          {(s.meuTimeNome ?? "F").slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-0.5">
-                      <ProfileEidPerformanceSeal
-                        notaEid={Number(s.meuTimeNotaEid ?? 0)}
-                        compact
-                        className="scale-125"
-                      />
-                    </div>
-                  </div>
-                )}
+                ) : null}
               </div>
               <div className="min-w-0 pt-9">
                 <div className="mx-auto flex w-full max-w-[150px] flex-col items-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-1.5 py-1.5">
@@ -159,29 +135,14 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
               </div>
               <div className="min-w-0 pt-7">
                 <p className="text-right text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">Sugerido por</p>
-                {s.sugeridorId ? (
-                  <ProfileEditDrawerTrigger
-                    href={`/perfil/${s.sugeridorId}?from=/comunidade`}
-                    title={s.sugeridorNome}
-                    fullscreen
-                    topMode="backOnly"
-                    className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
-                  >
-                    <div className="flex w-full flex-col items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-1.5 py-1.5">
-                      <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(s.sugeridorNome)}</p>
-                      <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
-                        {s.sugeridorAvatarUrl ? (
-                          <Image src={s.sugeridorAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                            {(s.sugeridorNome ?? "A").slice(0, 1).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </ProfileEditDrawerTrigger>
-                ) : (
-                  <div className="mt-1 flex w-full flex-col items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-1.5 py-1.5">
+                <ProfileEditDrawerTrigger
+                  href={`/perfil/${s.sugeridorId}?from=/comunidade`}
+                  title={s.sugeridorNome}
+                  fullscreen
+                  topMode="backOnly"
+                  className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                >
+                  <div className="flex w-full flex-col items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-1.5 py-1.5">
                     <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(s.sugeridorNome)}</p>
                     <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
                       {s.sugeridorAvatarUrl ? (
@@ -193,29 +154,22 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
                       )}
                     </div>
                   </div>
-                )}
+                </ProfileEditDrawerTrigger>
               </div>
             </div>
-            <div className="mt-3 grid w-full grid-cols-2 items-center gap-1">
-              <form action={formAction} className="min-w-0 w-full">
-                <input type="hidden" name="sugestao_id" value={String(s.id)} />
-                <input type="hidden" name="aceitar" value="true" />
-                <button type="submit" disabled={pending} className={`${PEDIDO_ACEITAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}>
-                  <span>{pending ? "Salvando…" : "Aprovar"}</span>
-                </button>
-              </form>
-              <form action={formAction} className="min-w-0 w-full">
-                <input type="hidden" name="sugestao_id" value={String(s.id)} />
-                <input type="hidden" name="aceitar" value="false" />
-                <button type="submit" disabled={pending} className={`${PEDIDO_RECUSAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}>
-                  <span>Recusar</span>
-                </button>
-              </form>
-            </div>
             <p className="mt-2 text-[10px] text-eid-text-secondary">
-              Ao aprovar, o sistema registra o desafio como <strong className="text-eid-fg">confirmado</strong> e notifica
-              todos os membros ativos das duas formações.
+              Enviado em {new Date(s.criadoEm).toLocaleString("pt-BR")}
+              {s.respondidoEm ? ` · atualizado em ${new Date(s.respondidoEm).toLocaleString("pt-BR")}` : ""}
+              {s.statusRaw === "aprovado" ? " · confira também na Agenda." : ""}
             </p>
+            {s.statusRaw !== "pendente" ? (
+              <form action={formAction} className="mt-2">
+                <input type="hidden" name="sugestao_id" value={String(s.id)} />
+                <button type="submit" disabled={pending} className={PEDIDO_LIMPAR_COMPACT_BTN_CLASS}>
+                  Limpar
+                </button>
+              </form>
+            ) : null}
           </li>
         ))}
       </ul>

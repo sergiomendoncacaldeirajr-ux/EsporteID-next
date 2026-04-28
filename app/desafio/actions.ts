@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { getMatchRankMonthlyLimitPerSport } from "@/lib/app-config/match-rank-monthly-limit";
+import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
@@ -275,7 +276,55 @@ export async function solicitarDesafioMatch(
     return { ok: false, message: "Não foi possível registrar o pedido." };
   }
 
+  const novoMatchId = Number(data);
+  if ((mod === "dupla" || mod === "time") && Number.isFinite(p_alvo_time_id ?? NaN) && Number(p_alvo_time_id) > 0 && Number.isFinite(novoMatchId) && novoMatchId > 0) {
+    const nowIso = new Date().toISOString();
+    const { data: autoAcceptedRows } = await supabase
+      .from("match_sugestoes")
+      .update({
+        status: "aprovado",
+        respondido_em: nowIso,
+        match_id: novoMatchId,
+      })
+      .eq("status", "pendente")
+      .eq("alvo_dono_id", user.id)
+      .eq("sugeridor_time_id", Number(p_alvo_time_id))
+      .eq("esporte_id", p_esporte_id)
+      .eq("modalidade", mod)
+      .select("id, sugeridor_id");
+
+    const sugestaoIds = [...new Set((autoAcceptedRows ?? []).map((r) => Number((r as { id?: number | null }).id ?? 0)).filter((n) => Number.isFinite(n) && n > 0))];
+    const sugeridorIds = [...new Set((autoAcceptedRows ?? []).map((r) => String((r as { sugeridor_id?: string | null }).sugeridor_id ?? "")).filter(Boolean))];
+    if (sugestaoIds.length > 0 && sugeridorIds.length > 0) {
+      const { data: insertedNotifs } = await supabase
+        .from("notificacoes")
+        .insert(
+          sugeridorIds.map((uid) => ({
+            usuario_id: uid,
+            mensagem: "Sua sugestão de desafio foi aceita automaticamente porque o líder já enviou o desafio oficial.",
+            tipo: "desafio",
+            referencia_id: novoMatchId,
+            lida: false,
+            remetente_id: user.id,
+            data_criacao: nowIso,
+          }))
+        )
+        .select("id");
+      const notifIds = (insertedNotifs ?? [])
+        .map((row) => Number((row as { id?: number | null }).id ?? 0))
+        .filter((id) => Number.isFinite(id) && id > 0);
+      if (notifIds.length > 0) {
+        await triggerPushForNotificationIdsBestEffort(notifIds, {
+          source: "desafio/actions.solicitarDesafioMatch.autoAcceptSuggestion",
+        });
+      }
+    }
+  }
+
   revalidatePath("/match");
+  revalidatePath("/comunidade");
+  revalidatePath("/agenda");
+  revalidatePath("/dashboard");
   return {
     ok: true,
     redirectTo: `/match?status=enviado&esporte=${p_esporte_id}`,
