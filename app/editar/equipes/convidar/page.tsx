@@ -37,7 +37,7 @@ export default async function ConvidarAtletaEquipePage({ searchParams }: Props) 
         backHref={from}
         title="Convidar atleta"
         subtitle="Você precisa de uma dupla ou time cadastrado para enviar convites pelo @."
-        showBack={!isEmbed}
+        showBack={false}
       >
         <p className="text-sm text-eid-text-secondary">
           Cadastre uma formação primeiro; em seguida volte aqui para convidar atletas pelo nome de usuário.
@@ -60,7 +60,7 @@ export default async function ConvidarAtletaEquipePage({ searchParams }: Props) 
       backHref={from}
       title="Convidar atleta"
       subtitle="Escolha sua formação e informe o @ do atleta. O convite aparece no Social dele."
-      showBack={!isEmbed}
+      showBack={false}
     >
       <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
         <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">

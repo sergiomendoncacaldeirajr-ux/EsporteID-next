@@ -24,6 +24,7 @@ export default async function OrganizadorPage({
   if (!canAccessSystemFeature(featureCfg, "organizador_torneios", user.id)) {
     redirect("/dashboard");
   }
+  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
 
   const [{ count: torneiosCount }, { count: locaisCount }, { data: meusTorneios }, { data: meusLocais }] = await Promise.all([
     supabase.from("torneios").select("id", { count: "exact", head: true }).eq("criador_id", user.id),
@@ -203,7 +204,7 @@ export default async function OrganizadorPage({
               <p className="mt-1 text-xs text-eid-text-secondary">Sedes próprias, sugeridas ou já verificadas.</p>
             </div>
             <CadastrarLocalOverlayTrigger
-              href="/locais/cadastrar?from=/organizador"
+              href="/locais/cadastrar?return_to=/organizador"
               className="text-xs font-semibold text-eid-primary-300 hover:underline"
             >
               Novo local
@@ -223,9 +224,13 @@ export default async function OrganizadorPage({
                   · {local.ativo_listagem ? "Listagem ativa" : "Fora da vitrine"}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-3 text-xs">
-                  <Link href={`/local/${local.id}`} className="font-semibold text-eid-primary-300 hover:underline">
-                    Abrir
-                  </Link>
+                  {canOpenLocais ? (
+                    <Link href={`/local/${local.id}`} className="font-semibold text-eid-primary-300 hover:underline">
+                      Abrir
+                    </Link>
+                  ) : (
+                    <span className="font-semibold text-eid-text-secondary">Visualização em breve</span>
+                  )}
                   <Link href={`/conta/local/${local.id}`} className="font-semibold text-eid-action-400 hover:underline">
                     Editar
                   </Link>

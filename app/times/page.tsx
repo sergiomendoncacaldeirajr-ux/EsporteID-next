@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { TeamManagementPanel } from "@/components/times/team-management-panel";
 import { TimesVagaRecrutamentoCard, type TimesVagaCardData } from "@/components/times/times-vaga-recrutamento-card";
 import { ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 
@@ -21,15 +22,13 @@ type Props = {
     create?: string;
     from?: string;
     convidar?: string;
-    todas?: string;
   }>;
 };
 
-function timesQueryHref(sp: { q?: string; todas?: string }, page: number) {
+function timesQueryHref(sp: { q?: string }, page: number) {
   const p = new URLSearchParams();
   const qv = (sp.q ?? "").trim();
   if (qv) p.set("q", qv);
-  if (sp.todas === "1") p.set("todas", "1");
   if (page > 1) p.set("page", String(page));
   const s = p.toString();
   return s ? `/times?${s}` : "/times";
@@ -38,7 +37,6 @@ function timesQueryHref(sp: { q?: string; todas?: string }, page: number) {
 /** Caminho com a mesma busca/página para `from` nos fluxos em tela cheia (`embed=1`). */
 function timesEmbedReturnHref(sp: {
   q?: string;
-  todas?: string;
   page?: string;
   create?: string;
   convidar?: string;
@@ -46,7 +44,6 @@ function timesEmbedReturnHref(sp: {
   const p = new URLSearchParams();
   const qv = (sp.q ?? "").trim();
   if (qv) p.set("q", qv);
-  if (sp.todas === "1") p.set("todas", "1");
   const pageNum = Math.max(1, Number(sp.page ?? 1) || 1);
   if (pageNum > 1) p.set("page", String(pageNum));
   if (sp.create === "1") p.set("create", "1");
@@ -89,6 +86,7 @@ function rowToCardData(row: TimeListRow): TimesVagaCardData {
     esporteNome: esporteNomeFromRow(row),
     vagas_abertas: Boolean(row.vagas_abertas),
     aceita_pedidos: Boolean(row.aceita_pedidos),
+    vagas_disponiveis: null,
     criador_id: row.criador_id,
   };
 }
@@ -97,7 +95,6 @@ export default async function TimesPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const voltarHref = resolveBackHref(sp.from, "/dashboard");
   const q = (sp.q ?? "").trim().toLowerCase();
-  const mostrarTodas = sp.todas === "1";
   const convidar = String(sp.convidar ?? "").trim();
   const convidarOk = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(convidar);
   const page = Math.max(1, Number(sp.page ?? 1) || 1);
@@ -116,11 +113,9 @@ export default async function TimesPage({ searchParams }: Props) {
     .select("id, nome, localizacao, vagas_abertas, aceita_pedidos, eid_time, nivel_procurado, escudo, tipo, criador_id, esportes(nome)", {
       count: "exact",
     })
+    .eq("vagas_abertas", true)
+    .eq("aceita_pedidos", true)
     .order("id", { ascending: false });
-
-  if (!mostrarTodas) {
-    timesListQuery = timesListQuery.eq("vagas_abertas", true).eq("aceita_pedidos", true);
-  }
   if (q) {
     timesListQuery = timesListQuery.or(`nome.ilike.%${q}%,localizacao.ilike.%${q}%`);
   }
@@ -153,6 +148,15 @@ export default async function TimesPage({ searchParams }: Props) {
   ]);
 
   const lista = (filtrados ?? []) as TimeListRow[];
+  const rosterEntries = await Promise.all(
+    lista.map(async (t) => {
+      const cap = String(t.tipo ?? "").trim().toLowerCase() === "dupla" ? 2 : 18;
+      const { data: headRaw, error: headErr } = await supabase.rpc("time_roster_headcount", { p_time_id: t.id });
+      const rosterCount = !headErr && headRaw != null && Number.isFinite(Number(headRaw)) ? Math.max(1, Number(headRaw)) : 1;
+      return [t.id, Math.max(0, cap - rosterCount)] as const;
+    })
+  );
+  const vagasDisponiveisMap = new Map<number, number>(rosterEntries);
   const pendentePorTime = new Map((minhasCandidaturas ?? []).map((c) => [c.time_id as number, c.id as number]));
   const timesSouMembro = new Set((meusMembros ?? []).map((m) => Number(m.time_id)));
 
@@ -168,7 +172,7 @@ export default async function TimesPage({ searchParams }: Props) {
   const hasNext = count != null ? page * pageSize < count : lista.length === pageSize;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 pb-[calc(var(--eid-shell-footer-offset,0px)+2rem)] sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset,0px)+2.25rem)]">
       <div className="relative mb-4 overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_80%,var(--eid-primary-500)_20%)] bg-[linear-gradient(155deg,color-mix(in_srgb,var(--eid-card)_90%,var(--eid-primary-500)_10%),color-mix(in_srgb,var(--eid-surface)_85%,var(--eid-bg)_15%))] p-4 shadow-[0_18px_48px_-28px_rgba(37,99,235,0.45)] sm:p-6">
         <div className="pointer-events-none absolute -right-16 -top-20 h-40 w-40 rounded-full bg-eid-action-500/10 blur-3xl" aria-hidden />
         <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -223,24 +227,29 @@ export default async function TimesPage({ searchParams }: Props) {
                   key={p.id}
                   className="rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_75%,var(--eid-primary-500)_25%)] bg-eid-card/90 p-3 sm:flex sm:items-stretch sm:gap-3 sm:p-4"
                 >
-                  <Link
-                    href={`/perfil/${p.candidato_usuario_id}?from=/times`}
-                    className="flex shrink-0 items-center gap-3 rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
-                  >
-                    <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
-                      {prof?.avatar_url ? (
-                        <Image src={prof.avatar_url} alt="" width={48} height={48} unoptimized className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                          {label.slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <ProfileEditDrawerTrigger
+                      href={`/perfil/${p.candidato_usuario_id}?from=/times`}
+                      title={label}
+                      fullscreen
+                      topMode="backOnly"
+                      className="block rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
+                    >
+                      <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
+                        {prof?.avatar_url ? (
+                          <Image src={prof.avatar_url} alt="" width={48} height={48} unoptimized className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                            {label.slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                    </ProfileEditDrawerTrigger>
                     <div className="min-w-0 sm:hidden">
                       <p className="text-sm font-bold text-eid-fg">{label}</p>
                       {sub ? <p className="text-[11px] text-eid-text-secondary">{sub}</p> : null}
                     </div>
-                  </Link>
+                  </div>
                   <div className="mt-3 min-w-0 flex-1 sm:mt-0">
                     <div className="hidden items-center gap-2 sm:flex">
                       <Link href={`/perfil/${p.candidato_usuario_id}?from=/times`} className="text-sm font-bold text-eid-fg hover:text-eid-primary-300">
@@ -268,44 +277,21 @@ export default async function TimesPage({ searchParams }: Props) {
         </section>
       ) : null}
 
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[11px] text-eid-text-secondary">
-          {mostrarTodas ? "Mostrando todas as formações." : "Mostrando só formações com vagas abertas e aceitando pedidos."}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={timesQueryHref({ q: sp.q, todas: undefined }, 1)}
-            className={`rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide ${
-              !mostrarTodas
-                ? "border border-eid-primary-500/45 bg-eid-primary-500/15 text-eid-primary-200"
-                : "border border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:border-eid-primary-500/35"
-            }`}
-          >
-            Só recrutando
-          </Link>
-          <Link
-            href={timesQueryHref({ q: sp.q, todas: "1" }, 1)}
-            className={`rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide ${
-              mostrarTodas
-                ? "border border-eid-primary-500/45 bg-eid-primary-500/15 text-eid-primary-200"
-                : "border border-[color:var(--eid-border-subtle)] text-eid-text-secondary hover:border-eid-primary-500/35"
-            }`}
-          >
-            Ver todas
-          </Link>
+      <section className="mb-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/85 p-3 sm:p-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[11px] text-eid-text-secondary">Mostrando formações com vagas abertas e aceitando pedidos.</p>
         </div>
-      </div>
 
-      <SearchFilterForm
-        defaultValue={sp.q ?? ""}
-        placeholder="Buscar time ou cidade..."
-        scope="times"
-        formAction="/times"
-        hiddenFields={mostrarTodas ? { todas: "1" } : undefined}
-        className="mb-4 flex gap-2"
-        inputClassName="eid-input-dark h-10 flex-1 rounded-xl px-3 text-sm text-eid-fg placeholder:text-eid-text-secondary/85"
-        buttonClassName="eid-btn-primary rounded-xl px-4 text-sm font-bold"
-      />
+        <SearchFilterForm
+          defaultValue={sp.q ?? ""}
+          placeholder="Buscar time ou cidade..."
+          scope="times"
+          formAction="/times"
+          className="mt-3 flex items-stretch gap-2"
+          inputClassName="eid-input-dark h-10 flex-1 rounded-xl px-3 text-sm text-eid-fg placeholder:text-eid-text-secondary/85"
+          buttonClassName="eid-btn-primary h-10 rounded-xl px-4 text-sm font-bold"
+        />
+      </section>
 
       {q ? (
         <p className="mb-4 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-xs text-eid-text-secondary">
@@ -319,7 +305,7 @@ export default async function TimesPage({ searchParams }: Props) {
             {lista.map((t) => (
               <TimesVagaRecrutamentoCard
                 key={t.id}
-                team={rowToCardData(t)}
+                team={{ ...rowToCardData(t), vagas_disponiveis: vagasDisponiveisMap.get(t.id) ?? null }}
                 viewerUserId={user.id}
                 minhaCandidaturaPendenteId={pendentePorTime.get(t.id) ?? null}
                 jaSouMembro={timesSouMembro.has(t.id)}
@@ -329,7 +315,7 @@ export default async function TimesPage({ searchParams }: Props) {
         ) : (
           <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-6 text-center">
             <p className="text-sm text-eid-text-secondary">
-              Nenhuma formação encontrada. Tente outra busca ou marque <strong className="text-eid-fg">Ver todas</strong> para listar todas as equipes.
+              Nenhuma formação com vaga aberta encontrada agora. Tente outra busca em alguns instantes.
             </p>
             <Link href="/dashboard" className="mt-3 inline-block text-xs font-semibold text-eid-primary-300 hover:text-eid-fg">
               Voltar ao painel

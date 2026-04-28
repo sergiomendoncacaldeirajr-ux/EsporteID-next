@@ -22,13 +22,14 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
   const nome = String(formData.get("nome_publico") ?? "").trim();
   const localizacao = String(formData.get("localizacao") ?? "").trim();
   const returnTo = resolveBackHref(String(formData.get("return_to") ?? "").trim(), "/locais/cadastrar");
+  const returnToQs = returnTo !== "/locais/cadastrar" ? `&return_to=${encodeURIComponent(returnTo)}` : "";
   const logoFile = formData.get("logo_file");
 
   if (nome.length < 2) {
-    redirect("/locais/cadastrar?erro=nome");
+    redirect(`/locais/cadastrar?erro=nome${returnToQs}`);
   }
   if (localizacao.length < 3) {
-    redirect("/locais/cadastrar?erro=local");
+    redirect(`/locais/cadastrar?erro=local${returnToQs}`);
   }
 
   const duplicado = await findDuplicateEspaco(supabase, {
@@ -36,16 +37,16 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
     localizacao,
   });
   if (duplicado) {
-    redirect(`/locais/cadastrar?erro=duplicado&id=${duplicado.id}`);
+    redirect(`/locais/cadastrar?erro=duplicado&id=${duplicado.id}${returnToQs}`);
   }
 
   let logoPublicUrl: string | null = null;
   if (logoFile instanceof File && logoFile.size > 0) {
     if (!logoFile.type.startsWith("image/")) {
-      redirect("/locais/cadastrar?erro=gravacao");
+      redirect(`/locais/cadastrar?erro=gravacao${returnToQs}`);
     }
     if (logoFile.size > 5 * 1024 * 1024) {
-      redirect("/locais/cadastrar?erro=gravacao");
+      redirect(`/locais/cadastrar?erro=gravacao${returnToQs}`);
     }
     const originalName = logoFile.name || "logo";
     const ext = originalName.includes(".") ? originalName.split(".").pop()?.toLowerCase() ?? "jpg" : "jpg";
@@ -56,7 +57,7 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
       contentType: logoFile.type || "image/jpeg",
     });
     if (up.error) {
-      redirect("/locais/cadastrar?erro=gravacao");
+      redirect(`/locais/cadastrar?erro=gravacao${returnToQs}`);
     }
     logoPublicUrl = supabase.storage.from("espaco-logos").getPublicUrl(path).data.publicUrl;
   }
@@ -79,9 +80,9 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
 
   if (error) {
     if (isEspacoDuplicateError(error)) {
-      redirect("/locais/cadastrar?erro=duplicado");
+      redirect(`/locais/cadastrar?erro=duplicado${returnToQs}`);
     }
-    redirect("/locais/cadastrar?erro=gravacao");
+    redirect(`/locais/cadastrar?erro=gravacao${returnToQs}`);
   }
 
   revalidatePath("/locais");

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import type { SystemFeatureKey, SystemFeatureMode } from "@/lib/system-features";
+import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { getPresetForSport } from "@/lib/desafio/score-rules";
@@ -16,6 +17,56 @@ function svc() {
 
 async function guard() {
   if (!(await getIsPlatformAdmin())) throw new Error("Acesso negado.");
+}
+
+export async function adminDispararPushTesteParaUsuario(formData: FormData) {
+  try {
+    await guard();
+    const userId = String(formData.get("user_id") ?? "").trim();
+    const mensagemIn = String(formData.get("mensagem") ?? "").trim();
+    if (!userId) {
+      redirect("/admin?adm_flash=push_teste_param_invalido");
+    }
+    const mensagem =
+      mensagemIn.length > 0
+        ? mensagemIn.slice(0, 300)
+        : "Push de teste do painel Admin. Se você recebeu isso, o canal de push está ativo.";
+    const retBase = `/admin?push_user=${encodeURIComponent(userId)}`;
+    const db = svc();
+    const { data: prof, error: profErr } = await db.from("profiles").select("id").eq("id", userId).maybeSingle();
+    if (profErr || !prof?.id) {
+      redirect(`${retBase}&adm_flash=push_teste_usuario_nao_encontrado`);
+    }
+
+    const { data: notif, error: notifErr } = await db
+      .from("notificacoes")
+      .insert({
+        usuario_id: userId,
+        mensagem,
+        tipo: "admin_push_teste",
+        referencia_id: null,
+        lida: false,
+        remetente_id: null,
+        data_criacao: new Date().toISOString(),
+      })
+      .select("id")
+      .limit(1)
+      .maybeSingle();
+    if (notifErr || !notif?.id) {
+      redirect(`${retBase}&adm_flash=push_teste_insert_erro`);
+    }
+
+    await triggerPushForNotificationIdsBestEffort([Number(notif.id)], {
+      source: "adminDispararPushTesteParaUsuario",
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/dashboard");
+    revalidatePath("/comunidade");
+    redirect(`${retBase}&adm_flash=push_teste_ok`);
+  } catch {
+    redirect("/admin?adm_flash=push_teste_erro");
+  }
 }
 
 function revalidateAdminPartidaPaths(partidaId: number, torneioId: number, includeDenuncias = false) {

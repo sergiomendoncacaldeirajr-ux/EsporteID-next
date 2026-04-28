@@ -39,6 +39,7 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
   if (!canAccessSystemFeature(featureCfg, "torneios", user.id)) {
     redirect("/dashboard");
   }
+  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
 
   const { data: t } = await supabase
     .from("torneios")
@@ -328,9 +329,13 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
         {sede ? (
           <section className="mt-6 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 md:rounded-3xl md:p-6">
             <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Local / sede</h2>
-            <Link href={`/local/${sede.id}?from=/torneios/${id}`} className="mt-2 block text-sm font-semibold text-eid-fg hover:text-eid-primary-300">
-              {sede.nome_publico}
-            </Link>
+            {canOpenLocais ? (
+              <Link href={`/local/${sede.id}?from=/torneios/${id}`} className="mt-2 block text-sm font-semibold text-eid-fg hover:text-eid-primary-300">
+                {sede.nome_publico}
+              </Link>
+            ) : (
+              <p className="mt-2 block text-sm font-semibold text-eid-fg">{sede.nome_publico}</p>
+            )}
             <p className="mt-1 text-xs text-eid-text-secondary">{sede.localizacao}</p>
           </section>
         ) : null}

@@ -26,6 +26,7 @@ import {
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { partidaEncerradaParaHistorico, resultadoPartidaIndividual } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -41,6 +42,8 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect(loginNextWithOptionalFrom(`/perfil/${id}`, sp));
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
 
   const { data: perfil } = await supabase
     .from("profiles")
@@ -943,10 +946,17 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       const esp = Array.isArray(s.espacos_genericos) ? s.espacos_genericos[0] : s.espacos_genericos;
                       return (
                         <li key={`${s.espaco_generico_id}-${idx}`}>
-                          <Link href={`/local/${esp?.id}?from=/perfil/${id}`} className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px] text-eid-fg transition hover:border-eid-primary-500/30">
-                            <span className="font-medium">{esp?.nome_publico ?? "Local"}</span>
-                            <span className="text-[10px] text-eid-text-secondary">{esp?.localizacao ?? "—"}</span>
-                          </Link>
+                          {canOpenLocais ? (
+                            <Link href={`/local/${esp?.id}?from=/perfil/${id}`} className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px] text-eid-fg transition hover:border-eid-primary-500/30">
+                              <span className="font-medium">{esp?.nome_publico ?? "Local"}</span>
+                              <span className="text-[10px] text-eid-text-secondary">{esp?.localizacao ?? "—"}</span>
+                            </Link>
+                          ) : (
+                            <div className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px] text-eid-fg">
+                              <span className="font-medium">{esp?.nome_publico ?? "Local"}</span>
+                              <span className="text-[10px] text-eid-text-secondary">{esp?.localizacao ?? "—"}</span>
+                            </div>
+                          )}
                         </li>
                       );
                     })}
@@ -968,13 +978,20 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       const esp = Array.isArray(f.espacos_genericos) ? f.espacos_genericos[0] : f.espacos_genericos;
                       return (
                         <li key={`${esp?.id}-${idx}`}>
-                          <Link
-                            href={`/local/${esp?.id}?from=/perfil/${id}`}
-                            className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px] transition hover:border-eid-primary-500/30"
-                          >
-                            <span className="font-medium text-eid-fg">{esp?.nome_publico ?? "Local"}</span>
-                            <span className="font-bold text-eid-primary-300">{f.visitas ?? 0}×</span>
-                          </Link>
+                          {canOpenLocais ? (
+                            <Link
+                              href={`/local/${esp?.id}?from=/perfil/${id}`}
+                              className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px] transition hover:border-eid-primary-500/30"
+                            >
+                              <span className="font-medium text-eid-fg">{esp?.nome_publico ?? "Local"}</span>
+                              <span className="font-bold text-eid-primary-300">{f.visitas ?? 0}×</span>
+                            </Link>
+                          ) : (
+                            <div className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px]">
+                              <span className="font-medium text-eid-fg">{esp?.nome_publico ?? "Local"}</span>
+                              <span className="font-bold text-eid-primary-300">{f.visitas ?? 0}×</span>
+                            </div>
+                          )}
                         </li>
                       );
                     })}

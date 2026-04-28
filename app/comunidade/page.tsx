@@ -6,10 +6,12 @@ import {
   type ComunidadeProfessorProfileRow,
 } from "@/components/comunidade/comunidade-aulas-section";
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
+import { ComunidadeConvitesEnviadosTime, type ConviteTimeEnviadoItem } from "@/components/comunidade/comunidade-convites-enviados-time";
 import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pedidos-enviados";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
 import { ComunidadeSetorNotificacoes } from "@/components/comunidade/comunidade-setor-notificacoes";
+import { ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
 import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import {
@@ -315,6 +317,71 @@ export default async function ComunidadePage() {
       convidadoPor: inviteUserMap.get(c.convidado_por_usuario_id) ?? "Líder",
     };
   });
+  const { data: convitesEnviados } = await supabase
+    .from("time_convites")
+    .select("id, time_id, convidado_usuario_id, status, criado_em, respondido_em, times!inner(id, nome, tipo, esportes(nome))")
+    .eq("convidado_por_usuario_id", user.id)
+    .order("id", { ascending: false })
+    .limit(40);
+  const convidadoIds = [
+    ...new Set((convitesEnviados ?? []).map((c) => String(c.convidado_usuario_id ?? "")).filter(Boolean)),
+  ] as string[];
+  const { data: convidadosPerfis } = convidadoIds.length
+    ? await supabase.from("profiles").select("id, nome").in("id", convidadoIds)
+    : { data: [] };
+  const convidadosMap = new Map((convidadosPerfis ?? []).map((p) => [p.id, p.nome]));
+  const conviteEnviadoItems: ConviteTimeEnviadoItem[] = (convitesEnviados ?? []).map((c) => {
+    const t = Array.isArray(c.times) ? c.times[0] : c.times;
+    const esp = t?.esportes ? (Array.isArray(t.esportes) ? t.esportes[0] : t.esportes) : null;
+    return {
+      id: Number(c.id),
+      equipeNome: t?.nome ?? "Equipe",
+      equipeId: Number(t?.id ?? 0),
+      equipeTipo: String(t?.tipo ?? "time"),
+      esporteNome: esp?.nome ?? "Esporte",
+      convidadoNome: convidadosMap.get(String(c.convidado_usuario_id ?? "")) ?? "Atleta",
+      status: String(c.status ?? "pendente"),
+      criadoEm: (c as { criado_em?: string | null }).criado_em ?? null,
+      respondidoEm: (c as { respondido_em?: string | null }).respondido_em ?? null,
+    };
+  });
+  const { data: candidaturasEquipeRaw } = await supabase
+    .from("time_candidaturas")
+    .select("id, time_id, mensagem, criado_em, candidato_usuario_id, times!inner(id, nome, criador_id)")
+    .eq("status", "pendente")
+    .eq("times.criador_id", user.id)
+    .order("criado_em", { ascending: false })
+    .limit(40);
+  const candEquipeIds = [
+    ...new Set((candidaturasEquipeRaw ?? []).map((p) => String(p.candidato_usuario_id ?? "")).filter(Boolean)),
+  ] as string[];
+  const { data: candEquipeProfiles } = candEquipeIds.length
+    ? await supabase.from("profiles").select("id, nome, username, avatar_url").in("id", candEquipeIds)
+    : {
+        data: [] as { id: string; nome: string | null; username: string | null; avatar_url: string | null }[],
+      };
+  const candEquipeMap = new Map((candEquipeProfiles ?? []).map((r) => [r.id, r]));
+  const candidaturasEquipe = (candidaturasEquipeRaw ?? []).map((raw) => {
+    const p = raw as {
+      id: number;
+      time_id: number;
+      mensagem: string | null;
+      criado_em: string;
+      candidato_usuario_id: string;
+      times: { id: number; nome: string | null; criador_id: string } | { id: number; nome: string | null; criador_id: string }[];
+    };
+    const team = Array.isArray(p.times) ? p.times[0] : p.times;
+    const prof = candEquipeMap.get(p.candidato_usuario_id);
+    return {
+      id: p.id,
+      candidatoId: p.candidato_usuario_id,
+      nome: prof?.nome?.trim() || prof?.username?.trim() || "Atleta",
+      username: prof?.username?.trim() ? `@${prof.username.trim()}` : null,
+      mensagem: p.mensagem?.trim() || null,
+      criadoEm: p.criado_em,
+      timeNome: team?.nome ?? "sua formação",
+    };
+  });
   const nNotifUnread = uniqueNotificacoes.filter((n) => n.lida !== true).length;
   const desafioNotifs = uniqueNotificacoes.filter((n) => {
     const tipo = String(n.tipo ?? "").toLowerCase();
@@ -323,7 +390,8 @@ export default async function ComunidadePage() {
   });
   const equipeNotifs = uniqueNotificacoes.filter((n) => {
     const tipo = String(n.tipo ?? "").toLowerCase();
-    return tipo.includes("time") || tipo.includes("convite");
+    const msg = String(n.mensagem ?? "").toLowerCase();
+    return tipo.includes("time") || tipo.includes("convite") || tipo.includes("candidatura") || msg.includes("pedido para entrar");
   });
 
   const [{ data: solicitacoes }, { data: vinculos }] = await Promise.all([
@@ -780,6 +848,49 @@ export default async function ComunidadePage() {
                   Convites recebidos
                 </h3>
                 <ComunidadeConvitesTime items={conviteItems} />
+              </div>
+              <div id="equipe-pedidos-entrada">
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
+                  Pedidos para entrar no elenco
+                </h3>
+                {candidaturasEquipe.length === 0 ? (
+                  <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
+                    Nenhum pedido pendente para suas formações.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-3">
+                    {candidaturasEquipe.map((c) => (
+                      <li
+                        key={c.id}
+                        className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
+                      >
+                        <p className="text-sm font-semibold text-eid-fg">{c.nome}</p>
+                        <p className="mt-1 text-xs text-eid-text-secondary">
+                          {c.username ? `${c.username} · ` : ""}
+                          Quer entrar em <span className="font-semibold text-eid-fg">{c.timeNome}</span>
+                        </p>
+                        {c.mensagem ? (
+                          <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2 text-[11px] italic text-eid-text-secondary">
+                            “{c.mensagem}”
+                          </p>
+                        ) : null}
+                        <p className="mt-1 text-[10px] text-eid-text-secondary">
+                          Pedido em {new Date(c.criadoEm).toLocaleString("pt-BR")}
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <ResponderCandidaturaForm candidaturaId={c.id} aceitar={true} label="Aprovar" />
+                          <ResponderCandidaturaForm candidaturaId={c.id} aceitar={false} label="Recusar" />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div id="equipe-convites-enviados">
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">
+                  Convites enviados (acompanhamento)
+                </h3>
+                <ComunidadeConvitesEnviadosTime items={conviteEnviadoItems} />
               </div>
               <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
                 <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-action-300">

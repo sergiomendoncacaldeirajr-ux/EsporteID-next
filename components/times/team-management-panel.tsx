@@ -46,11 +46,11 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     const cadastrarHref = `/editar/equipes/cadastrar?${cadQs.toString()}`;
     const convidarHref = `/editar/equipes/convidar?from=${encodeURIComponent(fromHref)}&embed=1`;
     const launcherClass =
-      "flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-4 text-center text-xs font-black uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18 sm:text-sm";
+      "flex min-h-[42px] w-full items-center justify-center gap-1.5 rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-2.5 text-center text-[10px] font-black uppercase tracking-[0.04em] text-eid-fg transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18 sm:min-h-[44px] sm:px-3 sm:text-[11px]";
     const launcherSecondaryClass =
-      "flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-4 text-center text-xs font-bold uppercase tracking-wide text-eid-fg transition hover:border-eid-primary-500/40 sm:text-sm";
+      "flex min-h-[42px] w-full items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2.5 text-center text-[10px] font-bold uppercase tracking-[0.04em] text-eid-fg transition hover:border-eid-primary-500/40 sm:min-h-[44px] sm:px-3 sm:text-[11px]";
     return (
-      <section className="mb-4 grid min-w-0 gap-2 sm:grid-cols-2">
+      <section className="mb-4 grid min-w-0 grid-cols-2 gap-2">
         <ProfileEditDrawerTrigger href={cadastrarHref} title="Criar nova dupla ou time" fullscreen topMode="backOnly" className={launcherClass}>
           <span>Criar nova dupla ou time</span>
         </ProfileEditDrawerTrigger>
@@ -59,8 +59,8 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
             <span>Convidar atleta</span>
           </ProfileEditDrawerTrigger>
         ) : (
-          <p className="flex min-h-[48px] items-center rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/30 px-3 text-center text-[11px] leading-snug text-eid-text-secondary sm:col-span-1">
-            Depois de criar uma formação, o convite por @ aparece aqui.
+          <p className="flex min-h-[42px] items-center rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/30 px-2 text-center text-[10px] leading-snug text-eid-text-secondary sm:min-h-[44px] sm:px-3 sm:text-[11px]">
+            Crie uma formação para liberar convites.
           </p>
         )}
       </section>

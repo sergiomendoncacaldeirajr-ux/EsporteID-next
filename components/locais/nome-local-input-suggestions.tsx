@@ -12,8 +12,10 @@ type LocalHint = {
 
 export function NomeLocalInputSuggestions({
   locais,
+  canOpenLocais = false,
 }: {
   locais: LocalHint[];
+  canOpenLocais?: boolean;
 }) {
   const [nome, setNome] = useState("");
   const normalized = useMemo(() => normalizeEspacoDuplicateValue(nome), [nome]);
@@ -58,14 +60,24 @@ export function NomeLocalInputSuggestions({
           </p>
           <div className="mt-2 space-y-1.5">
             {similares.map((local) => (
-              <Link
-                key={local.id}
-                href={`/local/${local.id}?from=/locais/cadastrar`}
-                className="block rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 py-2 text-xs text-eid-fg hover:border-eid-primary-500/35"
-              >
-                <p className="truncate font-semibold">{local.nome_publico ?? "Local"}</p>
-                <p className="truncate text-[11px] text-eid-text-secondary">{local.localizacao ?? "Sem localização"}</p>
-              </Link>
+              canOpenLocais ? (
+                <Link
+                  key={local.id}
+                  href={`/local/${local.id}?from=/locais/cadastrar`}
+                  className="block rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 py-2 text-xs text-eid-fg hover:border-eid-primary-500/35"
+                >
+                  <p className="truncate font-semibold">{local.nome_publico ?? "Local"}</p>
+                  <p className="truncate text-[11px] text-eid-text-secondary">{local.localizacao ?? "Sem localização"}</p>
+                </Link>
+              ) : (
+                <div
+                  key={local.id}
+                  className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 py-2 text-xs text-eid-fg"
+                >
+                  <p className="truncate font-semibold">{local.nome_publico ?? "Local"}</p>
+                  <p className="truncate text-[11px] text-eid-text-secondary">{local.localizacao ?? "Sem localização"}</p>
+                </div>
+              )
             ))}
           </div>
         </div>

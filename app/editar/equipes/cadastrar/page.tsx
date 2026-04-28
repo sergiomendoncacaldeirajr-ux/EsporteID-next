@@ -42,7 +42,7 @@ export default async function CadastrarEquipeFullscreenPage({ searchParams }: Pr
       backHref={from}
       title={convidarUid ? "Nova dupla ou time" : "Cadastrar equipe ou dupla"}
       subtitle={convidarUid ? "Preencha abaixo — ao criar, o convite é enviado ao atleta." : "Crie uma nova formação no padrão do perfil."}
-      showBack={!isEmbed}
+      showBack={false}
     >
       <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
         <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">

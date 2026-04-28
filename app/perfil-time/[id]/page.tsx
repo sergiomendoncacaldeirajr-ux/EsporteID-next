@@ -407,42 +407,43 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           <ProfileSection title="EID e estatísticas">
             <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-0`}>
               <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Resumo EID</p>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Resumo EID</p>
+                  <p className="mt-0.5 text-[11px] font-semibold text-eid-fg">Esporte: {esp?.nome ?? "Esporte não definido"}</p>
+                </div>
                 <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
                   Ranking
                 </span>
               </div>
               <div className="p-3">
-              <div className="flex justify-center">
-                <EidBadge score={Number(t.eid_time ?? 0)} history={eidLogs ?? []} label="EID formação" />
-              </div>
-              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-4">
-                <div className="text-center">
-                  <p className="text-lg font-bold tabular-nums text-eid-action-500 sm:text-xl sm:font-black">
-                    {Number(t.eid_time ?? 0).toFixed(1)}
-                  </p>
-                  <p className="text-[9px] font-bold uppercase text-eid-text-secondary">EID</p>
+                <div className="flex justify-center">
+                  <EidBadge score={Number(t.eid_time ?? 0)} history={eidLogs ?? []} label={`EID · ${esp?.nome ?? "Esporte"}`} />
                 </div>
-                <div className="text-center">
-                  <p className="text-lg font-bold tabular-nums text-eid-fg sm:text-xl sm:font-black">{t.pontos_ranking ?? 0}</p>
-                  <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Pts</p>
+                <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-3">
+                  <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2 text-center">
+                    <p className="text-base font-bold tabular-nums text-eid-action-500 sm:text-lg">{Number(t.eid_time ?? 0).toFixed(1)}</p>
+                    <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Nota EID</p>
+                  </div>
+                  <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2 text-center">
+                    <p className="text-base font-bold tabular-nums text-eid-fg sm:text-lg">{t.pontos_ranking ?? 0}</p>
+                    <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Pontos</p>
+                  </div>
+                  <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2 text-center">
+                    <p className="text-base font-bold tabular-nums text-eid-primary-300 sm:text-lg">#{posicao}</p>
+                    <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Posição</p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className="text-lg font-bold tabular-nums text-eid-primary-300 sm:text-xl sm:font-black">#{posicao}</p>
-                  <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Posição</p>
-                </div>
-              </div>
-              {t.esporte_id ? (
-                <ProfileEditDrawerTrigger
-                  href={`/perfil-time/${id}/eid/${t.esporte_id}?from=${encodeURIComponent(fromPublic)}`}
-                  title={`Estatísticas · ${esp?.nome ?? "Esporte"}`}
-                  fullscreen
-                  topMode="backOnly"
-                  className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
-                >
-                  <span>Estatísticas completas · {esp?.nome ?? "este esporte"}</span>
-                </ProfileEditDrawerTrigger>
-              ) : null}
+                {t.esporte_id ? (
+                  <ProfileEditDrawerTrigger
+                    href={`/perfil-time/${id}/eid/${t.esporte_id}?from=${encodeURIComponent(fromPublic)}`}
+                    title={`Estatísticas · ${esp?.nome ?? "Esporte"}`}
+                    fullscreen
+                    topMode="backOnly"
+                    className="mt-3 flex min-h-[42px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[10px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
+                  >
+                    <span>Estatísticas completas · {esp?.nome ?? "este esporte"}</span>
+                  </ProfileEditDrawerTrigger>
+                ) : null}
               </div>
             </div>
             <div className={`${PROFILE_CARD_BASE} mt-3 overflow-hidden p-0`}>

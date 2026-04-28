@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { getContextHomeHref } from "@/lib/auth/active-context";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 export const metadata = {
   title: "Buscar",
@@ -39,6 +40,8 @@ export default async function BuscarPage({ searchParams }: Props) {
   }
 
   const supabase = await createClient();
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
   const { data: gate } = await supabase
     .from("profiles")
     .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
@@ -218,22 +221,38 @@ export default async function BuscarPage({ searchParams }: Props) {
               <ul className="mt-3 divide-y divide-[color:var(--eid-border-subtle)] rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80">
                 {resultados.locais.map((loc) => (
                   <li key={loc.id}>
-                    <Link
-                      href={`/local/${loc.id}?from=/buscar`}
-                      className="flex items-center gap-3 px-3 py-3 transition hover:bg-eid-surface/50"
-                    >
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface">
-                        {loc.logo_arquivo ? (
-                          <img src={loc.logo_arquivo} alt="" className="h-full w-full object-contain p-1" />
-                        ) : (
-                          <span className="text-[10px] font-black text-eid-primary-400">LOC</span>
-                        )}
+                    {canOpenLocais ? (
+                      <Link
+                        href={`/local/${loc.id}?from=/buscar`}
+                        className="flex items-center gap-3 px-3 py-3 transition hover:bg-eid-surface/50"
+                      >
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface">
+                          {loc.logo_arquivo ? (
+                            <img src={loc.logo_arquivo} alt="" className="h-full w-full object-contain p-1" />
+                          ) : (
+                            <span className="text-[10px] font-black text-eid-primary-400">LOC</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-bold text-eid-fg">{loc.nome_publico ?? "Local"}</p>
+                          <p className="truncate text-xs text-eid-text-secondary">{loc.localizacao ?? "—"}</p>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-3 px-3 py-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface">
+                          {loc.logo_arquivo ? (
+                            <img src={loc.logo_arquivo} alt="" className="h-full w-full object-contain p-1" />
+                          ) : (
+                            <span className="text-[10px] font-black text-eid-primary-400">LOC</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-bold text-eid-fg">{loc.nome_publico ?? "Local"}</p>
+                          <p className="truncate text-xs text-eid-text-secondary">{loc.localizacao ?? "—"}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-bold text-eid-fg">{loc.nome_publico ?? "Local"}</p>
-                        <p className="truncate text-xs text-eid-text-secondary">{loc.localizacao ?? "—"}</p>
-                      </div>
-                    </Link>
+                    )}
                   </li>
                 ))}
               </ul>

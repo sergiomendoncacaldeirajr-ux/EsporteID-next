@@ -6,6 +6,7 @@ import { distanciaKm } from "@/lib/geo/distance-km";
 import { usuarioJaGerenciaEspaco } from "@/lib/espacos/server";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { cadastrarLocalGenerico } from "./actions";
 
 export const metadata = {
@@ -16,10 +17,10 @@ export const metadata = {
 export default async function CadastrarLocalPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ erro?: string; id?: string; return_to?: string }>;
+  searchParams?: Promise<{ erro?: string; id?: string; return_to?: string; from?: string }>;
 }) {
   const sp = (await searchParams) ?? {};
-  const returnTo = resolveBackHref(sp.return_to, "/locais/cadastrar");
+  const returnTo = resolveBackHref(sp.return_to ?? sp.from, "/locais/cadastrar");
   const erroMsg =
     sp.erro === "nome"
       ? "Informe um nome com pelo menos 2 caracteres."
@@ -36,6 +37,8 @@ export default async function CadastrarLocalPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/locais/cadastrar");
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
   if (await usuarioJaGerenciaEspaco(user.id)) {
     redirect("/espaco");
   }
@@ -109,18 +112,22 @@ export default async function CadastrarLocalPage({
                   <p className="truncate text-xs text-eid-text-secondary">{localDuplicado.localizacao ?? "Sem localização"}</p>
                 </div>
               </div>
-              <Link
-                href={`/local/${localDuplicado.id}?from=/locais/cadastrar`}
-                className="mt-3 inline-flex rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-fg"
-              >
-                Abrir local existente
-              </Link>
+              {canOpenLocais ? (
+                <Link
+                  href={`/local/${localDuplicado.id}?from=/locais/cadastrar`}
+                  className="mt-3 inline-flex rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-fg"
+                >
+                  Abrir local existente
+                </Link>
+              ) : (
+                <p className="mt-3 text-xs font-semibold text-eid-text-secondary">Visualização do local em breve.</p>
+              )}
             </div>
           ) : null}
 
           <form action={cadastrarLocalGenerico} className="space-y-4">
             <input type="hidden" name="return_to" value={returnTo} />
-            <NomeLocalInputSuggestions locais={locaisHints} />
+            <NomeLocalInputSuggestions locais={locaisHints} canOpenLocais={canOpenLocais} />
             <div>
               <label htmlFor="localizacao" className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
                 Cidade / região ou endereço
@@ -165,30 +172,54 @@ export default async function CadastrarLocalPage({
           </p>
           <div className="mt-3 space-y-2">
             {(locaisOpcoes ?? []).length ? (
-              (locaisOpcoes ?? []).map((local) => (
-                <Link
-                  key={local.id}
-                  href={`/local/${local.id}?from=/locais/cadastrar`}
-                  className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 py-2 transition hover:border-eid-primary-500/35"
-                >
-                  {local.logo_arquivo ? (
-                    <img src={local.logo_arquivo} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                  ) : (
-                    <div className="grid h-10 w-10 place-items-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-black text-eid-fg">
-                      EID
+              (locaisOpcoes ?? []).map((local) =>
+                canOpenLocais ? (
+                  <Link
+                    key={local.id}
+                    href={`/local/${local.id}?from=/locais/cadastrar`}
+                    className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 py-2 transition hover:border-eid-primary-500/35"
+                  >
+                    {local.logo_arquivo ? (
+                      <img src={local.logo_arquivo} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                    ) : (
+                      <div className="grid h-10 w-10 place-items-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-black text-eid-fg">
+                        EID
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold text-eid-fg">{local.nome_publico ?? "Local"}</p>
+                      <p className="truncate text-[11px] text-eid-text-secondary">{local.localizacao ?? "Sem localização"}</p>
+                      {Number.isFinite(local.dist) && local.dist < 9000 ? (
+                        <p className="truncate text-[10px] text-eid-primary-300">
+                          {local.dist.toFixed(1).replace(".", ",")} km
+                        </p>
+                      ) : null}
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold text-eid-fg">{local.nome_publico ?? "Local"}</p>
-                    <p className="truncate text-[11px] text-eid-text-secondary">{local.localizacao ?? "Sem localização"}</p>
-                    {Number.isFinite(local.dist) && local.dist < 9000 ? (
-                      <p className="truncate text-[10px] text-eid-primary-300">
-                        {local.dist.toFixed(1).replace(".", ",")} km
-                      </p>
-                    ) : null}
+                  </Link>
+                ) : (
+                  <div
+                    key={local.id}
+                    className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 py-2"
+                  >
+                    {local.logo_arquivo ? (
+                      <img src={local.logo_arquivo} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                    ) : (
+                      <div className="grid h-10 w-10 place-items-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-black text-eid-fg">
+                        EID
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold text-eid-fg">{local.nome_publico ?? "Local"}</p>
+                      <p className="truncate text-[11px] text-eid-text-secondary">{local.localizacao ?? "Sem localização"}</p>
+                      {Number.isFinite(local.dist) && local.dist < 9000 ? (
+                        <p className="truncate text-[10px] text-eid-primary-300">
+                          {local.dist.toFixed(1).replace(".", ",")} km
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
-                </Link>
-              ))
+                )
+              )
             ) : (
               <p className="rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-4 text-xs text-eid-text-secondary">
                 Ainda não há locais públicos para listar.

@@ -110,6 +110,17 @@ function whenLabel(iso: string | null) {
   return `${data} às ${hora}`;
 }
 
+function rosterCapForTipo(tipo: string | null | undefined): number {
+  return String(tipo ?? "").trim().toLowerCase() === "dupla" ? 2 : 18;
+}
+
+function vagasAbertasLabel(tipo: string | null | undefined, rosterCount: number | null | undefined): string {
+  const cap = rosterCapForTipo(tipo);
+  const ocupacao = Number.isFinite(Number(rosterCount)) ? Math.max(1, Number(rosterCount)) : 1;
+  const vagas = Math.max(0, cap - ocupacao);
+  return vagas === 1 ? "1 vaga" : `${vagas} vagas`;
+}
+
 function IconBolt({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -221,10 +232,6 @@ const dashboardSpotlightEmpty =
 /** Card horizontal — torneios (maior). */
 const dashboardRailTorneio =
   "group min-w-[220px] max-w-[220px] shrink-0 snap-start overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_84%,var(--eid-primary-500)_16%)] bg-eid-card/90 shadow-[0_16px_40px_-22px_rgba(15,23,42,0.55)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_5%,transparent)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/48 hover:shadow-[0_24px_48px_-24px_rgba(37,99,235,0.45)] active:translate-y-0";
-
-/** Card horizontal — times / duplas. */
-const dashboardRailTeam =
-  "group min-w-[124px] max-w-[124px] shrink-0 snap-start rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_86%,var(--eid-primary-500)_14%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,var(--eid-primary-500)_6%))] px-2.5 py-4 text-center shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_5%,transparent)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/45 hover:shadow-[0_20px_40px_-22px_rgba(37,99,235,0.38)] active:translate-y-0";
 
 /** Card horizontal — locais. */
 const dashboardRailLocal =
@@ -383,7 +390,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   let timesQuery = supabase
     .from("times")
-    .select("id, nome, tipo, localizacao, escudo, esporte_id, vagas_abertas, aceita_pedidos, lat, lng, criador_id, pontos_ranking, eid_time")
+    .select("id, nome, tipo, localizacao, escudo, esporte_id, vagas_abertas, aceita_pedidos, lat, lng, criador_id, pontos_ranking, eid_time, esportes(nome)")
     .neq("criador_id", user.id)
     .eq("vagas_abertas", true)
     .eq("aceita_pedidos", true)
@@ -432,6 +439,24 @@ export default async function DashboardPage({ searchParams }: Props) {
   const atletaMaisProximo = atletasFiltrados[0] ?? null;
   const esporteCardNome = meusEsportesResumo[0]?.esporteNome ?? "Esporte";
   const esporteCardIcon = sportIconEmoji(esporteCardNome);
+  const teamRosterIds = [
+    ...new Set(
+      [
+        ...timesFiltrados.map(({ t }) => Number(t.id ?? 0)),
+        Number(duplaMaisProxima?.t.id ?? 0),
+        Number(timeMaisProximo?.t.id ?? 0),
+      ].filter((id) => Number.isFinite(id) && id > 0)
+    ),
+  ];
+  const rosterEntries = await Promise.all(
+    teamRosterIds.map(async (timeId) => {
+      const { data: headRaw, error: headErr } = await supabase.rpc("time_roster_headcount", { p_time_id: timeId });
+      const headCount =
+        !headErr && headRaw != null && Number.isFinite(Number(headRaw)) ? Math.max(1, Number(headRaw)) : 1;
+      return [timeId, headCount] as const;
+    })
+  );
+  const teamRosterMap = new Map<number, number>(rosterEntries);
 
   const { data: locaisScrollRaw } = canSeeLocais
     ? await supabase
@@ -877,7 +902,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                   className={dashboardSpotlightLink}
                 >
                   <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{duplaMaisProxima.t.nome}</p>
-                  <div className="mx-auto h-12 w-12">
+                  <div className="relative mx-auto h-12 w-12">
                     {duplaMaisProxima.t.escudo ? (
                       <Image
                         src={duplaMaisProxima.t.escudo}
@@ -892,10 +917,22 @@ export default async function DashboardPage({ searchParams }: Props) {
                         D
                       </div>
                     )}
+                    <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 overflow-hidden rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_80%,var(--eid-primary-500)_20%)] text-[7px] font-black leading-none shadow-sm sm:text-[8px]">
+                      <span className="bg-eid-bg px-1.5 py-0.5 text-eid-fg">EID</span>
+                      <span className="bg-eid-primary-500 px-1.5 py-0.5 text-[var(--eid-brand-ink)]">
+                        {Number(duplaMaisProxima.t.eid_time ?? 0).toFixed(1)}
+                      </span>
+                    </div>
                   </div>
                   <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
-                    <span aria-hidden>{esporteCardIcon}</span>
-                    <span className="truncate">{esporteCardNome}</span>
+                    <span aria-hidden>
+                      {sportIconEmoji(
+                        String(firstOf(duplaMaisProxima.t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte")
+                      )}
+                    </span>
+                    <span className="truncate">
+                      {String(firstOf(duplaMaisProxima.t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte")}
+                    </span>
                   </p>
                   <p className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-px text-[7px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
                     <span aria-hidden className="opacity-80">
@@ -917,7 +954,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                   className={dashboardSpotlightLink}
                 >
                   <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{timeMaisProximo.t.nome}</p>
-                  <div className="mx-auto h-12 w-12">
+                  <div className="relative mx-auto h-12 w-12">
                     {timeMaisProximo.t.escudo ? (
                       <Image
                         src={timeMaisProximo.t.escudo}
@@ -932,10 +969,22 @@ export default async function DashboardPage({ searchParams }: Props) {
                         T
                       </div>
                     )}
+                    <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 overflow-hidden rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_80%,var(--eid-primary-500)_20%)] text-[7px] font-black leading-none shadow-sm sm:text-[8px]">
+                      <span className="bg-eid-bg px-1.5 py-0.5 text-eid-fg">EID</span>
+                      <span className="bg-eid-primary-500 px-1.5 py-0.5 text-[var(--eid-brand-ink)]">
+                        {Number(timeMaisProximo.t.eid_time ?? 0).toFixed(1)}
+                      </span>
+                    </div>
                   </div>
                   <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
-                    <span aria-hidden>{esporteCardIcon}</span>
-                    <span className="truncate">{esporteCardNome}</span>
+                    <span aria-hidden>
+                      {sportIconEmoji(
+                        String(firstOf(timeMaisProximo.t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte")
+                      )}
+                    </span>
+                    <span className="truncate">
+                      {String(firstOf(timeMaisProximo.t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte")}
+                    </span>
                   </p>
                   <p className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-px text-[7px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
                     <span aria-hidden className="opacity-80">
@@ -1035,26 +1084,45 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={t.id}
                   href={`/perfil-time/${t.id}?from=/dashboard`}
-                  className={dashboardRailTeam}
+                  className={`${dashboardSpotlightLink} min-w-[124px] max-w-[124px] shrink-0 snap-start`}
                 >
-                  <div className="mx-auto h-[3.75rem] w-[3.75rem]">
+                  <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{t.nome}</p>
+                  <div className="relative mx-auto h-12 w-12">
                     {t.escudo ? (
                       <Image
                         src={t.escudo}
                         alt=""
-                        width={56}
-                        height={56}
+                        width={44}
+                        height={44}
                         unoptimized
                         className="h-full w-full rounded-[14px] border-2 border-eid-primary-500/50 object-cover"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-xs font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
-                        T
+                        {String(t.tipo ?? "").toLowerCase() === "dupla" ? "D" : "T"}
                       </div>
                     )}
+                    <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 overflow-hidden rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_80%,var(--eid-primary-500)_20%)] text-[7px] font-black leading-none shadow-sm sm:text-[8px]">
+                      <span className="bg-eid-bg px-1.5 py-0.5 text-eid-fg">EID</span>
+                      <span className="bg-eid-primary-500 px-1.5 py-0.5 text-[var(--eid-brand-ink)]">
+                        {Number(t.eid_time ?? 0).toFixed(1)}
+                      </span>
+                    </div>
                   </div>
-                  <p className="mt-3 line-clamp-2 min-h-[2.5rem] text-[10px] font-bold leading-tight text-eid-fg sm:text-[11px] sm:font-extrabold">{t.nome}</p>
-                  <p className="mt-2 inline-flex min-h-[1.35rem] items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-eid-surface/55 px-2 py-0.5 text-[9px] font-bold tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_48%,var(--eid-primary-500)_52%)]">
+                  <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
+                    <span aria-hidden>
+                      {sportIconEmoji(String(firstOf(t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte"))}
+                    </span>
+                    <span className="truncate">{String(firstOf(t.esportes as { nome?: string | null } | Array<{ nome?: string | null }> | null)?.nome ?? "Esporte")}</span>
+                  </p>
+                  <p className="mt-1 inline-flex items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-px text-[7px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
+                    <span aria-hidden className="opacity-80">{String(t.tipo ?? "").toLowerCase() === "dupla" ? "👥" : "🛡️"}</span>
+                    {String(t.tipo ?? "").toLowerCase() === "dupla" ? "Dupla" : "Time"}
+                  </p>
+                  <p className="mt-1 inline-flex items-center justify-center rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-px text-[7px] font-black uppercase tracking-[0.08em] text-eid-action-300">
+                    {vagasAbertasLabel(t.tipo, teamRosterMap.get(Number(t.id ?? 0)) ?? null)}
+                  </p>
+                  <p className="mt-1 inline-flex min-h-[1.2rem] items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-eid-surface/55 px-2 py-0.5 text-[8px] font-bold tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_48%,var(--eid-primary-500)_52%)]">
                     {hasMyCoords && dist < 9000 ? `${dist.toFixed(1).replace(".", ",")} km` : "—"}
                   </p>
                 </Link>
@@ -1076,9 +1144,15 @@ export default async function DashboardPage({ searchParams }: Props) {
         <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>
           <div className={dashboardSectionHead}>
             <h2 className={sectionTitleClass}>Locais na comunidade</h2>
-            <Link href="/locais" className={sectionActionClass}>
-              Ver lista
-            </Link>
+            {canSeeLocais ? (
+              <Link href="/locais" className={sectionActionClass}>
+                Ver lista
+              </Link>
+            ) : (
+              <span className={sectionActionClass} aria-disabled>
+                Em breve
+              </span>
+            )}
           </div>
           <div className={dashboardSectionBody}>
           <DismissibleSectionIntro storageKey="dashboard:locais-comunidade" className={dashboardSectionBlurb}>
@@ -1125,7 +1199,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           )}
 
           <CadastrarLocalOverlayTrigger
-            href="/locais/cadastrar?from=/dashboard"
+            href="/locais/cadastrar?return_to=/dashboard"
             className="eid-btn-primary mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl text-xs font-extrabold uppercase tracking-wide active:scale-[0.98] sm:text-sm"
           >
             <IconMapPin className="h-5 w-5 shrink-0 text-[var(--eid-brand-ink)]" />

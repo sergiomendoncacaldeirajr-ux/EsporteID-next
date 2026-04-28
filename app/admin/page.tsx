@@ -1,4 +1,4 @@
-import { adminMarcarAlertaLido } from "@/app/admin/actions";
+import { adminDispararPushTesteParaUsuario, adminMarcarAlertaLido } from "@/app/admin/actions";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 type Alerta = {
@@ -11,7 +11,14 @@ type Alerta = {
   criado_em: string;
 };
 
-export default async function AdminHomePage() {
+type Props = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function AdminHomePage({ searchParams }: Props) {
+  const sp = (await searchParams) ?? {};
+  const flash = typeof sp.adm_flash === "string" ? sp.adm_flash : "";
+  const pushUserId = typeof sp.push_user === "string" ? sp.push_user.trim() : "";
   let counts: Record<string, number | null> = {
     profiles: null,
     torneios: null,
@@ -26,6 +33,14 @@ export default async function AdminHomePage() {
   };
 
   let alertas: Alerta[] = [];
+  let pushDiag: {
+    userId: string;
+    subsAtivas: number;
+    subsTotais: number;
+    ultimasEntregas: { status: string | null; erro: string | null; enviadoEm: string | null; notifId: number | null }[];
+    ultimosErros: { status: string | null; erro: string | null; enviadoEm: string | null; notifId: number | null }[];
+    checklist: string[];
+  } | null = null;
 
   if (hasServiceRoleConfig()) {
     try {
@@ -76,6 +91,53 @@ export default async function AdminHomePage() {
         eids: eid.count ?? 0,
       };
       alertas = (al.data ?? []) as Alerta[];
+      if (pushUserId) {
+        const [{ data: subsRows }, { data: entregaRows }] = await Promise.all([
+          db
+            .from("push_subscriptions")
+            .select("id, ativo")
+            .eq("usuario_id", pushUserId)
+            .order("id", { ascending: false })
+            .limit(40),
+          db
+            .from("push_entregas_notificacao")
+            .select("notificacao_id, status, ultimo_erro, enviado_em, subscription_id")
+            .order("notificacao_id", { ascending: false })
+            .limit(120),
+        ]);
+        const subs = (subsRows ?? []) as Array<{ id: number; ativo?: boolean | null }>;
+        const subIds = new Set(subs.map((s) => Number(s.id)).filter((n) => Number.isFinite(n) && n > 0));
+        const entregas = (entregaRows ?? [])
+          .filter((r) => subIds.has(Number((r as { subscription_id?: number | null }).subscription_id ?? 0)))
+          .map((r) => ({
+            status: (r as { status?: string | null }).status ?? null,
+            erro: (r as { ultimo_erro?: string | null }).ultimo_erro ?? null,
+            enviadoEm: (r as { enviado_em?: string | null }).enviado_em ?? null,
+            notifId: Number((r as { notificacao_id?: number | null }).notificacao_id ?? 0) || null,
+          }));
+        const ultimasEntregas = entregas.slice(0, 8);
+        const hasSuccess = ultimasEntregas.some((e) => String(e.status ?? "").toLowerCase() === "success");
+        const has410or404 = entregas.some((e) => {
+          const er = String(e.erro ?? "").toLowerCase();
+          return er.includes("410") || er.includes("404");
+        });
+        const checklist: string[] = [];
+        if (subs.length === 0) checklist.push("Sem subscription cadastrada para este usuário (precisa ativar push no aparelho).");
+        if (subs.length > 0 && subs.filter((s) => s.ativo !== false).length === 0) {
+          checklist.push("Subscriptions existem, mas nenhuma está ativa (reativar push no app).");
+        }
+        if (has410or404) checklist.push("Há erro 410/404 em envio anterior (subscription expirada/removida).");
+        if (!hasSuccess && ultimasEntregas.length > 0) checklist.push("Sem sucesso recente de entrega para este usuário.");
+        if (hasSuccess) checklist.push("Há entrega com sucesso recente: canal push está operacional para ao menos um device.");
+        pushDiag = {
+          userId: pushUserId,
+          subsAtivas: subs.filter((s) => s.ativo !== false).length,
+          subsTotais: subs.length,
+          ultimasEntregas,
+          ultimosErros: entregas.filter((e) => e.status !== "success").slice(0, 8),
+          checklist,
+        };
+      }
     } catch {
       /* service key inválida etc. */
     }
@@ -159,6 +221,97 @@ export default async function AdminHomePage() {
           </ul>
         </div>
       ) : null}
+
+      <section className="mt-6 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
+        <h3 className="text-sm font-bold text-eid-fg">Teste manual de Push</h3>
+        <p className="mt-1 text-xs text-eid-text-secondary">
+          Dispara uma notificação de teste para um usuário específico (via service role), para validar entrega no aparelho.
+        </p>
+        {flash === "push_teste_ok" ? (
+          <p className="mt-3 rounded-lg border border-emerald-500/35 bg-emerald-500/12 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-success-600)_80%,var(--eid-fg)_20%)]">
+            Push de teste disparado. Se não chegou no aparelho, valide assinatura ativa e permissões de notificação.
+          </p>
+        ) : null}
+        {flash === "push_teste_param_invalido" ||
+        flash === "push_teste_usuario_nao_encontrado" ||
+        flash === "push_teste_insert_erro" ||
+        flash === "push_teste_erro" ? (
+          <p className="mt-3 rounded-lg border border-rose-500/35 bg-rose-500/12 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-danger-600)_82%,var(--eid-fg)_18%)]">
+            Não foi possível disparar o push de teste. Revise o UUID do usuário e a configuração de push.
+          </p>
+        ) : null}
+        <form action={adminDispararPushTesteParaUsuario} className="mt-3 grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
+          <input
+            name="user_id"
+            required
+            defaultValue={pushUserId}
+            placeholder="UUID do usuário"
+            className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2 text-xs text-eid-fg"
+          />
+          <input
+            name="mensagem"
+            placeholder="Mensagem do push (opcional)"
+            className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2 text-xs text-eid-fg"
+          />
+          <button
+            type="submit"
+            className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-3 py-2 text-xs font-bold uppercase tracking-wide text-eid-primary-300 hover:border-eid-primary-500/60"
+          >
+            Disparar push
+          </button>
+        </form>
+        {pushDiag ? (
+          <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-3">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-eid-text-secondary">Diagnóstico rápido</p>
+            <p className="mt-1 text-xs text-eid-fg">
+              Usuário: <span className="font-mono">{pushDiag.userId}</span>
+            </p>
+            <p className="mt-1 text-xs text-eid-text-secondary">
+              Subscriptions: <span className="font-semibold text-eid-fg">{pushDiag.subsAtivas}</span> ativa(s) de{" "}
+              <span className="font-semibold text-eid-fg">{pushDiag.subsTotais}</span> total.
+            </p>
+            {pushDiag.checklist.length > 0 ? (
+              <ul className="mt-2 space-y-1">
+                {pushDiag.checklist.map((msg, idx) => (
+                  <li key={`${idx}-${msg.slice(0, 12)}`} className="rounded-md border border-amber-500/25 bg-amber-500/8 px-2 py-1 text-[11px] text-amber-100">
+                    {msg}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-xs text-eid-text-secondary">Sem sinais de falha no resumo automático.</p>
+            )}
+            {pushDiag.ultimasEntregas.length > 0 ? (
+              <div className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-2">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">Últimas entregas</p>
+                <ul className="mt-1 space-y-1">
+                  {pushDiag.ultimasEntregas.map((e, idx) => (
+                    <li key={`last-${e.notifId ?? "n"}-${idx}`} className="text-[11px] text-eid-text-secondary">
+                      #{e.notifId ?? "?"} · {e.status ?? "?"}
+                      {e.enviadoEm ? ` · ${new Date(e.enviadoEm).toLocaleString("pt-BR")}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {pushDiag.ultimosErros.length > 0 ? (
+              <ul className="mt-2 space-y-1.5">
+                {pushDiag.ultimosErros.map((e, idx) => (
+                  <li key={`${e.notifId ?? "n"}-${idx}`} className="rounded-lg border border-rose-500/25 bg-rose-500/8 px-2.5 py-1.5">
+                    <p className="text-[11px] text-eid-fg">
+                      {e.status ?? "erro"} · notif #{e.notifId ?? "?"}
+                    </p>
+                    {e.erro ? <p className="text-[10px] text-rose-200">{e.erro}</p> : null}
+                    {e.enviadoEm ? <p className="text-[10px] text-eid-text-secondary">{new Date(e.enviadoEm).toLocaleString("pt-BR")}</p> : null}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-xs text-eid-text-secondary">Sem falhas recentes para as subscriptions desse usuário.</p>
+            )}
+          </div>
+        ) : null}
+      </section>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
         {pills.map(({ k, label, href }) => (

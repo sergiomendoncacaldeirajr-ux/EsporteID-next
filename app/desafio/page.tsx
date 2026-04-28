@@ -4,6 +4,7 @@ import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
 import { DesafioEsporteRegrasModal } from "@/components/desafio/desafio-esporte-regras-modal";
 import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
 import { fetchColetivoRankingPreview, fetchIndividualRankingPreview } from "@/lib/desafio/fetch-impact-preview";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
@@ -378,7 +379,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
   const { data: timeRow } = await supabase
     .from("times")
-    .select("id, nome, tipo, esporte_id, criador_id")
+    .select("id, nome, tipo, esporte_id, criador_id, eid_time")
     .eq("id", timeId)
     .maybeSingle();
 
@@ -471,7 +472,10 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           </div>
         ) : null}
         <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:p-4">
-          <p className="text-sm font-semibold text-eid-fg">{timeRow.nome ?? "Formação"}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-eid-fg">{timeRow.nome ?? "Formação"}</p>
+            <ProfileEidPerformanceSeal notaEid={Number(timeRow.eid_time ?? 0)} compact />
+          </div>
           <p className="mt-1 text-xs text-eid-text-secondary">Modalidade: {modalidade}</p>
         </div>
         {rankPrevCo ? (

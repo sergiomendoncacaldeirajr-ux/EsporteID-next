@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-cta";
+import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 
 export type TimesVagaCardData = {
@@ -16,6 +17,7 @@ export type TimesVagaCardData = {
   esporteNome: string | null;
   vagas_abertas: boolean;
   aceita_pedidos: boolean;
+  vagas_disponiveis: number | null;
   criador_id: string;
 };
 
@@ -36,6 +38,12 @@ export function TimesVagaRecrutamentoCard({
   const isLider = team.criador_id === viewerUserId;
   const aceitaCand = Boolean(team.vagas_abertas && team.aceita_pedidos);
   const tipoLabel = String(team.tipo ?? "time").toLowerCase() === "dupla" ? "Dupla" : "Time";
+  const vagasLabel =
+    team.vagas_disponiveis == null
+      ? "Vagas abertas"
+      : team.vagas_disponiveis === 1
+        ? "1 vaga"
+        : `${team.vagas_disponiveis} vagas`;
   const perfilHref = `/perfil-time/${team.id}?from=/times`;
 
   return (
@@ -43,20 +51,31 @@ export function TimesVagaRecrutamentoCard({
       <div className="pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-eid-action-500/12 blur-2xl transition duration-500 group-hover:bg-eid-action-500/18" aria-hidden />
       <div className="relative flex gap-3">
         <div className="relative h-[4.25rem] w-[4.25rem] shrink-0 sm:h-[4.75rem] sm:w-[4.75rem]">
-          {team.escudo ? (
-            <Image
-              src={team.escudo}
-              alt=""
-              width={76}
-              height={76}
-              unoptimized
-              className="h-full w-full rounded-2xl border-2 border-eid-primary-500/45 object-cover shadow-[0_8px_24px_-12px_rgba(0,0,0,0.5)]"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-surface text-lg font-black text-eid-fg">
-              {tipoLabel.slice(0, 1)}
-            </div>
-          )}
+          <ProfileEditDrawerTrigger
+            href={perfilHref}
+            title={team.nome ?? "Formação"}
+            fullscreen
+            topMode="backOnly"
+            className="block h-full w-full transition hover:-translate-y-[1px]"
+          >
+            {team.escudo ? (
+              <Image
+                src={team.escudo}
+                alt=""
+                width={76}
+                height={76}
+                unoptimized
+                className="h-full w-full rounded-2xl border-2 border-eid-primary-500/45 object-cover shadow-[0_8px_24px_-12px_rgba(0,0,0,0.5)]"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-surface text-lg font-black text-eid-fg">
+                {tipoLabel.slice(0, 1)}
+              </div>
+            )}
+          </ProfileEditDrawerTrigger>
+          <div className="absolute -bottom-1 left-1/2 z-[2] -translate-x-1/2">
+            <ProfileEidPerformanceSeal notaEid={Number(team.eid_time ?? 0)} compact />
+          </div>
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -88,9 +107,9 @@ export function TimesVagaRecrutamentoCard({
             {team.nome ?? "Formação"}
           </h2>
           <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-eid-text-secondary">{team.localizacao ?? "Localização não informada"}</p>
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-eid-text-secondary">
-            <span>
-              <span className="font-bold text-eid-fg/90">EID</span> {Number(team.eid_time ?? 0).toFixed(1)}
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-eid-text-secondary">
+            <span className="inline-flex items-center rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-px text-[9px] font-black uppercase tracking-[0.08em] text-eid-action-300">
+              {vagasLabel}
             </span>
             <span className="text-[color:var(--eid-border-subtle)]">·</span>
             <span>

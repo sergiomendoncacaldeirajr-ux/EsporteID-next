@@ -10,7 +10,7 @@ type Props = {
 };
 
 export function CadastrarLocalOverlayTrigger({
-  href = "/locais/cadastrar?from=/locais",
+  href = "/locais/cadastrar?return_to=/locais",
   className,
   children,
 }: Props) {
