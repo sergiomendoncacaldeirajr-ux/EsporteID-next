@@ -93,6 +93,7 @@ export default async function ComunidadePage() {
 
   await supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id });
   await supabase.rpc("processar_pendencias_cancelamento_match", { p_only_user: user.id });
+  await supabase.rpc("limpar_notificacoes_match_cancelado", { p_only_user: user.id });
   const featureCfg = await getSystemFeatureConfig(supabase);
 
   const { data: notificacoes } = await supabase
@@ -116,6 +117,62 @@ export default async function ComunidadePage() {
     }
     return out;
   })();
+  const flowNotifRefIds = [
+    ...new Set(
+      uniqueNotificacoes
+        .filter((n) => {
+          const tipo = String(n.tipo ?? "")
+            .trim()
+            .toLowerCase();
+          return tipo === "match" || tipo === "desafio";
+        })
+        .map((n) => Number((n as { referencia_id?: number | null }).referencia_id ?? 0))
+        .filter((id) => Number.isFinite(id) && id > 0)
+    ),
+  ];
+  const { data: flowMatchStatusRows } = flowNotifRefIds.length
+    ? await supabase.from("matches").select("id, status").in("id", flowNotifRefIds)
+    : { data: [] };
+  const canceledMatchIds = new Set(
+    (flowMatchStatusRows ?? [])
+      .filter((row) => String(row.status ?? "").trim().toLowerCase() === "cancelado")
+      .map((row) => Number(row.id))
+      .filter((id) => Number.isFinite(id) && id > 0)
+  );
+  if (canceledMatchIds.size > 0) {
+    await supabase
+      .from("notificacoes")
+      .delete()
+      .eq("usuario_id", user.id)
+      .in("tipo", ["match", "desafio"])
+      .in("referencia_id", [...canceledMatchIds]);
+  }
+  const uniqueNotificacoesVisiveis = uniqueNotificacoes.filter((n) => {
+    const tipo = String(n.tipo ?? "")
+      .trim()
+      .toLowerCase();
+    if (tipo !== "match" && tipo !== "desafio") return true;
+    const refId = Number((n as { referencia_id?: number | null }).referencia_id ?? 0);
+    if (!Number.isFinite(refId) || refId < 1) return true;
+    return !canceledMatchIds.has(refId);
+  });
+  const cancelFlowNotifIds = uniqueNotificacoesVisiveis
+    .filter((n) => {
+      const tipo = String(n.tipo ?? "")
+        .trim()
+        .toLowerCase();
+      if (tipo !== "match" && tipo !== "desafio") return false;
+      const msg = String(n.mensagem ?? "")
+        .trim()
+        .toLowerCase();
+      return msg.includes("cancelado") || msg.includes("cancelamento");
+    })
+    .map((n) => Number(n.id))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (cancelFlowNotifIds.length > 0) {
+    await supabase.from("notificacoes").delete().eq("usuario_id", user.id).in("id", cancelFlowNotifIds);
+  }
+  const uniqueNotificacoesSetor = uniqueNotificacoesVisiveis.filter((n) => !cancelFlowNotifIds.includes(Number(n.id)));
 
   const { data: recebidos } = await supabase
     .from("matches")
@@ -224,6 +281,14 @@ export default async function ComunidadePage() {
     .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
     .eq("finalidade", "ranking")
     .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
+  const { data: historicoCancelamentoPainelRows } = await supabase
+    .from("matches")
+    .select("id, usuario_id, adversario_id, esporte_id, status")
+    .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+    .eq("finalidade", "ranking")
+    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente", "Cancelado"])
+    .order("id", { ascending: false })
+    .limit(120);
 
   const { data: sugestoesRaw } = await supabase
     .from("match_sugestoes")
@@ -559,13 +624,13 @@ export default async function ComunidadePage() {
       timeTipo: String(team?.tipo ?? "time"),
     };
   });
-  const nNotifUnread = uniqueNotificacoes.filter((n) => n.lida !== true).length;
-  const desafioNotifs = uniqueNotificacoes.filter((n) => {
+  const nNotifUnread = uniqueNotificacoesSetor.filter((n) => n.lida !== true).length;
+  const desafioNotifs = uniqueNotificacoesSetor.filter((n) => {
     const tipo = String(n.tipo ?? "").toLowerCase();
     const msg = String(n.mensagem ?? "").toLowerCase();
     return tipo.includes("match") || tipo.includes("desafio") || msg.includes("desafio");
   });
-  const equipeNotifs = uniqueNotificacoes.filter((n) => {
+  const equipeNotifs = uniqueNotificacoesSetor.filter((n) => {
     const tipo = String(n.tipo ?? "").toLowerCase();
     const msg = String(n.mensagem ?? "").toLowerCase();
     return tipo.includes("time") || tipo.includes("convite") || tipo.includes("candidatura") || msg.includes("pedido para entrar");
@@ -766,6 +831,16 @@ export default async function ComunidadePage() {
       blockedDueloByCancelFlowPainel.add(key);
     }
   }
+  const latestStatusByDueloPainel = new Map<string, string>();
+  for (const m of historicoCancelamentoPainelRows ?? []) {
+    const key = dueloKey(
+      (m as { usuario_id?: string | null }).usuario_id ?? null,
+      (m as { adversario_id?: string | null }).adversario_id ?? null,
+      Number((m as { esporte_id?: number | null }).esporte_id ?? 0)
+    );
+    if (!key || latestStatusByDueloPainel.has(key)) continue;
+    latestStatusByDueloPainel.set(key, String((m as { status?: string | null }).status ?? "").trim());
+  }
   const painelAgendadasVisiveis = (painelAgendadas ?? []).filter((row) => {
     if (String((row as { status?: string | null }).status ?? "") !== "agendada") return false;
     const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
@@ -790,7 +865,10 @@ export default async function ComunidadePage() {
       return false;
     }
     if (!key) return true;
-    return !blockedDueloByCancelFlowPainel.has(key);
+    if (blockedDueloByCancelFlowPainel.has(key)) return false;
+    const latestStatus = String(latestStatusByDueloPainel.get(key) ?? "").toLowerCase();
+    if (latestStatus === "cancelado") return false;
+    return true;
   });
   const hasPartidasAcoes = (painelPlacarPendente ?? []).length > 0 || painelAgendadasVisiveis.length > 0;
   const hasDesafioAcoes =

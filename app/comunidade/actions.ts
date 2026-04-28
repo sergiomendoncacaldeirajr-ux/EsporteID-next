@@ -39,6 +39,24 @@ async function marcarNotificacoesPorAcao(
   await q;
 }
 
+async function removerNotificacoesDoMatch(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  matchId: number,
+  userIds?: Array<string | null | undefined>
+) {
+  if (!Number.isFinite(matchId) || matchId < 1) return;
+  const uniqUsers = [...new Set((userIds ?? []).map((v) => String(v ?? "").trim()).filter(Boolean))];
+  let q = supabase
+    .from("notificacoes")
+    .delete()
+    .eq("referencia_id", matchId)
+    .in("tipo", ["match", "desafio"]);
+  if (uniqUsers.length > 0) {
+    q = q.in("usuario_id", uniqUsers);
+  }
+  await q;
+}
+
 async function notify(
   supabase: Awaited<ReturnType<typeof createClient>>,
   usuarioId: string | null | undefined,
@@ -510,6 +528,22 @@ export async function gerenciarCancelamentoMatch(
       p_local: aceitar ? null : (local || null),
     });
     if (error) return { ok: false, message: error.message };
+    if (aceitar) {
+      // Fallback defensivo: se a RPC não persistir o cancelamento por alguma condição de corrida,
+      // garante que o match não volte para "Lançar resultado".
+      await supabase
+        .from("matches")
+        .update({
+          status: "Cancelado",
+          cancel_requested_by: null,
+          cancel_requested_at: null,
+          cancel_response_deadline_at: null,
+          data_confirmacao: new Date().toISOString(),
+        })
+        .eq("id", matchId)
+        .in("status", ["Aceito", "CancelamentoPendente"]);
+      await removerNotificacoesDoMatch(supabase, matchId, [participantsRow?.usuario_id, participantsRow?.adversario_id]);
+    }
     await marcarNotificacoesPorAcao(supabase, user.id, {
       referenciaId: matchId,
       tipos: ["match", "desafio"],
@@ -797,11 +831,7 @@ export async function limparNotificacoesDesafio() {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase
-    .from("notificacoes")
-    .delete()
-    .eq("usuario_id", user.id)
-    .or("tipo.eq.match,tipo.eq.desafio,tipo.ilike.%match%,tipo.ilike.%desafio%,mensagem.ilike.%desafio%");
+  await supabase.from("notificacoes").delete().eq("usuario_id", user.id);
 
   revalidatePath("/comunidade");
   revalidatePath("/dashboard");
@@ -815,11 +845,7 @@ export async function limparNotificacoesEquipe() {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase
-    .from("notificacoes")
-    .delete()
-    .eq("usuario_id", user.id)
-    .or("tipo.eq.time,tipo.eq.convite,tipo.ilike.%time%,tipo.ilike.%convite%");
+  await supabase.from("notificacoes").delete().eq("usuario_id", user.id);
 
   revalidatePath("/comunidade");
   revalidatePath("/dashboard");

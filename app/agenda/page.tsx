@@ -39,6 +39,7 @@ export default async function AgendaPage() {
 
   await supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id });
   await supabase.rpc("processar_pendencias_cancelamento_match", { p_only_user: user.id });
+  await supabase.rpc("limpar_notificacoes_match_cancelado", { p_only_user: user.id });
   const { teamClause } = await getAgendaTeamContext(supabase, user.id);
   await processarPendenciasAgendamentoAceite(supabase, user.id, teamClause);
 
@@ -146,6 +147,14 @@ export default async function AgendaPage() {
     .order("data_confirmacao", { ascending: false, nullsFirst: false })
     .order("id", { ascending: false })
     .limit(20);
+  const { data: historicoCancelamentoRows } = await supabase
+    .from("matches")
+    .select("id, usuario_id, adversario_id, esporte_id, status")
+    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente", "Cancelado"])
+    .eq("finalidade", "ranking")
+    .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+    .order("id", { ascending: false })
+    .limit(120);
 
   function dueloKey(a: string | null | undefined, b: string | null | undefined, esporteId: number | null | undefined): string | null {
     if (!a || !b || !Number.isFinite(Number(esporteId)) || Number(esporteId) <= 0) return null;
@@ -326,11 +335,24 @@ export default async function AgendaPage() {
       blockedDueloByCancelFlow.add(key);
     }
   }
+  const latestStatusByDuelo = new Map<string, string>();
+  for (const m of historicoCancelamentoRows ?? []) {
+    const key = dueloKey(
+      (m as { usuario_id?: string | null }).usuario_id ?? null,
+      (m as { adversario_id?: string | null }).adversario_id ?? null,
+      Number((m as { esporte_id?: number | null }).esporte_id ?? 0)
+    );
+    if (!key || latestStatusByDuelo.has(key)) continue;
+    latestStatusByDuelo.set(key, String((m as { status?: string | null }).status ?? "").trim());
+  }
   const partidasAgendadasVisiveis = (partidasAgendadas ?? []).filter((row) => {
     const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
     const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
     if (!key) return true;
-    return !blockedDueloByCancelFlow.has(key);
+    if (blockedDueloByCancelFlow.has(key)) return false;
+    const latestStatus = String(latestStatusByDuelo.get(key) ?? "").toLowerCase();
+    if (latestStatus === "cancelado") return false;
+    return true;
   });
 
   const timeIdsAceiteAgendamento: number[] = [];

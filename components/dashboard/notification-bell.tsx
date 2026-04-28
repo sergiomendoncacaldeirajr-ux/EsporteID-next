@@ -12,7 +12,15 @@ import {
 } from "@/lib/pwa/push-client";
 import { PEDIDO_LIMPAR_COMPACT_BTN_CLASS, PEDIDO_VER_MAIS_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
 
-type Preview = { id: number; mensagem: string; lida: boolean; data_criacao: string | null; criada_em: string | null };
+type Preview = {
+  id: number;
+  mensagem: string;
+  lida: boolean;
+  data_criacao: string | null;
+  criada_em: string | null;
+  tipo: string | null;
+  referencia_id: number | null;
+};
 type UnreadNotif = {
   id: number;
   tipo: string | null;
@@ -25,6 +33,14 @@ function isFlowActionNotif(tipoRaw: string | null | undefined): boolean {
     .trim()
     .toLowerCase();
   return tipo === "match" || tipo === "desafio";
+}
+
+function isCancelamentoFlowMensagem(raw: string | null | undefined): boolean {
+  const msg = String(raw ?? "")
+    .trim()
+    .toLowerCase();
+  if (!msg) return false;
+  return msg.includes("cancelado") || msg.includes("cancelamento");
 }
 
 function IconBell({ className }: { className?: string }) {
@@ -76,7 +92,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         .limit(300),
       supabase
         .from("notificacoes")
-        .select("id, mensagem, lida, data_criacao, criada_em")
+        .select("id, mensagem, lida, data_criacao, criada_em, tipo, referencia_id")
         .eq("usuario_id", userId)
         .order("data_criacao", { ascending: false, nullsFirst: false })
         .limit(PREVIEW_FETCH),
@@ -93,7 +109,54 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         .eq("status", "aguardando_confirmacao")
         .neq("lancado_por", userId),
     ]);
-    const unreadRows = (notifRes.data ?? []) as UnreadNotif[];
+    const unreadRowsAll = (notifRes.data ?? []) as UnreadNotif[];
+    const previewRowsAll = (listRes.data ?? []) as Preview[];
+    const cancelFlowNotifIds = new Set(
+      previewRowsAll
+        .filter((n) => isFlowActionNotif(n.tipo) && isCancelamentoFlowMensagem(n.mensagem))
+        .map((n) => Number(n.id))
+        .filter((id) => Number.isFinite(id) && id > 0)
+    );
+    const flowRefIds = [
+      ...new Set(
+        [...unreadRowsAll, ...previewRowsAll]
+          .filter((n) => isFlowActionNotif((n as { tipo?: string | null }).tipo))
+          .map((n) => Number((n as { referencia_id?: number | null }).referencia_id ?? 0))
+          .filter((id) => Number.isFinite(id) && id > 0)
+      ),
+    ];
+    const canceledMatchIds = new Set<number>();
+    if (flowRefIds.length > 0) {
+      const { data: statusRows } = await supabase.from("matches").select("id, status").in("id", flowRefIds);
+      for (const row of statusRows ?? []) {
+        if (String(row.status ?? "").trim().toLowerCase() === "cancelado") {
+          canceledMatchIds.add(Number(row.id));
+        }
+      }
+      if (canceledMatchIds.size > 0) {
+        await supabase
+          .from("notificacoes")
+          .delete()
+          .eq("usuario_id", userId)
+          .in("tipo", ["match", "desafio"])
+          .in("referencia_id", [...canceledMatchIds]);
+      }
+    }
+    if (cancelFlowNotifIds.size > 0) {
+      await supabase.from("notificacoes").delete().eq("usuario_id", userId).in("id", [...cancelFlowNotifIds]);
+    }
+    const unreadRows = unreadRowsAll.filter((n) => {
+      if (cancelFlowNotifIds.has(Number(n.id))) return false;
+      if (!isFlowActionNotif(n.tipo)) return true;
+      const refId = Number(n.referencia_id ?? 0);
+      return !(Number.isFinite(refId) && refId > 0 && canceledMatchIds.has(refId));
+    });
+    const previewRows = previewRowsAll.filter((n) => {
+      if (cancelFlowNotifIds.has(Number(n.id))) return false;
+      if (!isFlowActionNotif(n.tipo)) return true;
+      const refId = Number(n.referencia_id ?? 0);
+      return !(Number.isFinite(refId) && refId > 0 && canceledMatchIds.has(refId));
+    });
     const seen = new Set<string>();
     let unreadGeneral = 0;
     for (const n of unreadRows) {
@@ -115,7 +178,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     setPlacarN(p);
     // Inclui pedidos pendentes (matches) como ação social real.
     setTotal(unreadGeneral + p + ag + m);
-    setPreview((listRes.data ?? []) as Preview[]);
+    setPreview(previewRows);
   }, [userId]);
 
   useEffect(() => {

@@ -160,6 +160,48 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     .or(`player1_id.eq.${id},player2_id.eq.${id}`)
     .limit(12);
 
+  const { data: membershipsRows } = await supabase
+    .from("membros_time")
+    .select("status, times!inner(id, nome, tipo, escudo, esporte_id, criador_id, esportes(nome))")
+    .eq("usuario_id", id)
+    .in("status", ["ativo", "aceito", "aprovado"])
+    .order("id", { ascending: false })
+    .limit(24);
+  const timesParticipa: Array<{
+    id: number;
+    nome: string | null;
+    tipo: string | null;
+    escudo: string | null;
+    esporte_id: number | null;
+    criador_id: string | null;
+    esportes: Array<{ nome: string | null }>;
+  }> = [];
+  for (const row of membershipsRows ?? []) {
+    const team = Array.isArray(row.times) ? row.times[0] : row.times;
+    if (!team?.id) continue;
+    if (String(team.criador_id ?? "") === id) continue;
+    timesParticipa.push({
+      id: Number(team.id),
+      nome: team.nome ?? null,
+      tipo: team.tipo ?? null,
+      escudo: team.escudo ?? null,
+      esporte_id: team.esporte_id ? Number(team.esporte_id) : null,
+      criador_id: team.criador_id ?? null,
+      esportes: Array.isArray(team.esportes)
+        ? (team.esportes as Array<{ nome: string | null }>)
+        : team.esportes
+          ? [team.esportes as { nome: string | null }]
+          : [],
+    });
+  }
+  const timesFormacoes = [...(timesLider ?? [])];
+  for (const team of timesParticipa) {
+    if (!timesFormacoes.some((item) => Number(item.id) === Number(team.id))) {
+      timesFormacoes.push(team);
+    }
+  }
+  const leaderTeamIds = new Set((timesLider ?? []).map((team) => Number(team.id)));
+
   const [
     { count: alvoMembrosCount },
     { count: alvoLiderTimesCount },
@@ -177,7 +219,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const alvoSemFormacao =
     (alvoMembrosCount ?? 0) === 0 && (alvoLiderTimesCount ?? 0) === 0 && (alvoDuplasCount ?? 0) === 0;
 
-  const semCardsEquipesPerfil = (timesLider ?? []).length === 0 && (duplasCadastro ?? []).length === 0;
+  const semCardsEquipesPerfil = (timesFormacoes ?? []).length === 0 && (duplasCadastro ?? []).length === 0;
   /** Visitante vendo atleta sem formação: o bloco "Dupla ou time" cobre o vazio — não repetir seção Equipes. */
   const ocultarSecaoEquipesParaVisitante = !isSelf && alvoSemFormacao && semCardsEquipesPerfil;
 
@@ -844,7 +886,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                 </div>
               ) : null}
               <ProfileSection title="Equipes">
-                {(timesLider ?? []).length > 0 || (duplasCadastro ?? []).length > 0 ? (
+                {(timesFormacoes ?? []).length > 0 || (duplasCadastro ?? []).length > 0 ? (
                   <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
                     <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
                       <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Formações cadastradas</p>
@@ -853,9 +895,10 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       </span>
                     </div>
                   <div className="grid grid-cols-2 gap-2 p-2">
-                    {(timesLider ?? []).map((t) => {
+                    {(timesFormacoes ?? []).map((t) => {
                       const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
                       const initials = (t.nome?.trim().slice(0, 2) || "EQ").toUpperCase();
+                      const papelEquipe = leaderTeamIds.has(Number(t.id)) ? "Líder" : "Membro";
                       return (
                         <Link
                           key={`t-${t.id}`}
@@ -871,7 +914,18 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                             </div>
                           )}
                           <div className="min-w-0">
-                            <p className="truncate text-[11px] font-bold text-eid-fg">{t.nome}</p>
+                            <div className="flex items-center gap-1">
+                              <p className="truncate text-[11px] font-bold text-eid-fg">{t.nome}</p>
+                              <span
+                                className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] ${
+                                  papelEquipe === "Líder"
+                                    ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-300"
+                                    : "border-sky-500/35 bg-sky-500/10 text-sky-300"
+                                }`}
+                              >
+                                {papelEquipe}
+                              </span>
+                            </div>
                             <p className="truncate text-[9px] text-eid-text-secondary">{`${(t.tipo ?? "time").toUpperCase()} · ${esp?.nome ?? "Esporte"}`}</p>
                           </div>
                         </Link>
