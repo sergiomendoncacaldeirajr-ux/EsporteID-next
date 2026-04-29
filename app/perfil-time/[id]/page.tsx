@@ -30,7 +30,9 @@ import { createClient } from "@/lib/supabase/server";
 import { TeamPublicInviteBlock, type TeamPublicPendingInvite } from "@/components/times/team-public-invite-block";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-cta";
+import { FormacaoElencoCallout } from "@/components/times/formacao-elenco-callout";
 import { SairDaEquipeConfirmForm } from "@/components/times/sair-da-equipe-confirm-form";
+import { BarChart3, ChevronRight } from "lucide-react";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -294,74 +296,73 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
 
   return (
     <main className={PROFILE_PUBLIC_MAIN_CLASS}>
-        <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 text-center sm:p-4`}>
-          {t.escudo ? (
-            <img
-              src={t.escudo}
-              alt=""
-              className="mx-auto h-24 w-24 rounded-2xl border-2 border-eid-action-500/50 object-cover shadow-lg sm:h-28 sm:w-28"
-            />
-          ) : (
-            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-surface text-sm font-bold text-eid-primary-300 sm:h-28 sm:w-28">
-              {(t.tipo ?? "T").toUpperCase().slice(0, 1)}
+        <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 sm:p-4`}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+            <div className="flex shrink-0 flex-col items-center sm:items-start">
+              {t.escudo ? (
+                <img
+                  src={t.escudo}
+                  alt=""
+                  className="h-24 w-24 rounded-2xl border-2 border-eid-action-500/50 object-cover shadow-lg sm:h-28 sm:w-28"
+                />
+              ) : (
+                <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-surface text-sm font-bold text-eid-primary-300 sm:h-28 sm:w-28">
+                  {(t.tipo ?? "T").toUpperCase().slice(0, 1)}
+                </div>
+              )}
             </div>
-          )}
-          <span className="mt-4 inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-flex items-center gap-1">
-                <ModalidadeGlyphIcon modalidade={String(t.tipo ?? "").trim().toLowerCase() === "time" ? "time" : "dupla"} />
-                <span>{(t.tipo ?? "time").toUpperCase()}</span>
+            <div className="min-w-0 flex-1 space-y-2 text-center sm:text-left">
+              <span className="inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1">
+                    <ModalidadeGlyphIcon modalidade={String(t.tipo ?? "").trim().toLowerCase() === "time" ? "time" : "dupla"} />
+                    <span>{(t.tipo ?? "time").toUpperCase()}</span>
+                  </span>
+                  <span aria-hidden className="opacity-70">|</span>
+                  <span className="inline-flex items-center gap-1">
+                    <SportGlyphIcon sportName={esp?.nome} />
+                    <span>{esp?.nome ?? "Esporte"}</span>
+                  </span>
+                </span>
               </span>
-              <span aria-hidden className="opacity-70">|</span>
-              <span className="inline-flex items-center gap-1">
-                <SportGlyphIcon sportName={esp?.nome} />
-                <span>{esp?.nome ?? "Esporte"}</span>
-              </span>
-            </span>
-          </span>
-          <h1 className="mt-3 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
-          {t.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{t.username}</p> : null}
-          <div className="mt-2 flex justify-center px-2">
-            <EidCityState location={t.localizacao} align="center" />
+              <h1 className="text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
+              {t.username ? <p className="text-xs font-medium text-eid-primary-300">@{t.username}</p> : null}
+              <div className="flex justify-center px-2 sm:justify-start sm:px-0">
+                <EidCityState location={t.localizacao} align="start" />
+              </div>
+            </div>
           </div>
           {isLeader ? <FormacaoCidadeAvisoLider timeId={id} /> : null}
-          {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{t.bio}</p> : null}
+          {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary sm:mt-3">{t.bio}</p> : null}
 
           {criador ? (
-            <div className="relative mt-4 flex w-full flex-col items-center sm:min-h-[3.25rem]">
-              <div className="flex items-center justify-center gap-2.5">
-                <Link
-                  href={`/perfil/${criador.id}?from=/perfil-time/${id}`}
-                  className="shrink-0 rounded-full ring-2 ring-transparent transition hover:ring-eid-primary-500/45 focus-visible:outline-none focus-visible:ring-eid-primary-500/60"
-                  aria-label={`Abrir perfil de ${criador.nome ?? "líder"}`}
-                >
-                  {criador.avatar_url ? (
-                    <img
-                      src={criador.avatar_url}
-                      alt=""
-                      className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-10 sm:w-10"
-                    />
-                  ) : (
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 sm:h-10 sm:w-10">
-                      {(criador.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
-                    </span>
-                  )}
-                </Link>
-                <p className="text-left text-xs text-eid-text-secondary">
+            <div className="mt-4 flex w-full min-w-0 flex-col items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2.5">
+              <Link
+                href={`/perfil/${criador.id}?from=/perfil-time/${id}`}
+                className="inline-flex max-w-full min-w-0 items-center gap-3 rounded-lg text-left transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-eid-card"
+                aria-label={`Abrir perfil de ${criador.nome ?? "líder"}`}
+              >
+                {criador.avatar_url ? (
+                  <img
+                    src={criador.avatar_url}
+                    alt=""
+                    className="h-9 w-9 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-10 sm:w-10"
+                  />
+                ) : (
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 sm:h-10 sm:w-10">
+                    {(criador.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
+                  </span>
+                )}
+                <div className="min-w-0">
                   <span className="block text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary/90">Líder</span>
-                  <Link
-                    href={`/perfil/${criador.id}?from=/perfil-time/${id}`}
-                    className="font-semibold text-eid-primary-300 hover:underline"
-                  >
-                    {criador.nome ?? "—"}
-                  </Link>
-                </p>
-              </div>
+                  <span className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">{criador.nome ?? "—"}</span>
+                </div>
+              </Link>
               {canLeaveTeam ? (
-                <div className="mt-3 self-end sm:absolute sm:bottom-0 sm:right-0 sm:mt-0">
+                <div className="flex w-full justify-center">
                   <SairDaEquipeConfirmForm
                     action={sairEquipeAction}
-                    className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-[11px] font-bold text-white shadow-md transition hover:bg-red-700 active:scale-[0.98]"
+                    className="inline-flex min-h-[40px] w-full items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-[11px] font-bold text-white shadow-md transition hover:bg-red-700 active:scale-[0.98] sm:w-auto"
                   />
                 </div>
               ) : null}
@@ -380,24 +381,17 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
         </div>
 
         {!isLeader ? (
-          <section
-            className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3"
-            aria-labelledby="candidatura-elenco-heading"
-          >
-            <h2 id="candidatura-elenco-heading" className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
-              Entrar no elenco
-            </h2>
-            <div className="mt-2">
-              <FormacaoCandidaturaCta
-                timeId={id}
-                vagasAbertas={Boolean(t.vagas_abertas)}
-                aceitaPedidos={Boolean(t.aceita_pedidos)}
-                vagasDisponiveis={vagasDisponiveis}
-                minhaCandidaturaPendenteId={minhaCandidaturaPendente?.id ?? null}
-                jaSouMembro={isMember}
-              />
-            </div>
-          </section>
+          <FormacaoElencoCallout>
+            <FormacaoCandidaturaCta
+              timeId={id}
+              vagasAbertas={Boolean(t.vagas_abertas)}
+              aceitaPedidos={Boolean(t.aceita_pedidos)}
+              vagasDisponiveis={vagasDisponiveis}
+              minhaCandidaturaPendenteId={minhaCandidaturaPendente?.id ?? null}
+              jaSouMembro={isMember}
+              textAlign="start"
+            />
+          </FormacaoElencoCallout>
         ) : null}
 
         <div className="mt-6 grid gap-6">
@@ -471,22 +465,30 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
             title="EID e estatísticas"
             info="Nota e métricas do time neste esporte: ranking, jogos e desempenho coletivo."
           >
-            <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-3`}>
-              <p className="text-[11px] font-semibold text-eid-fg">Esporte: {esp?.nome ?? "Esporte não definido"}</p>
+            <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-3 sm:rounded-2xl sm:p-4`}>
+              <p className="text-[11px] font-semibold leading-snug sm:text-[12px]">
+                <span className="text-eid-text-secondary">Esporte: </span>
+                <span className="font-bold text-eid-primary-300">{esp?.nome ?? "Esporte não definido"}</span>
+              </p>
               <div className="mt-2">
                 <div className="flex justify-center">
-                  <EidBadge score={Number(t.eid_time ?? 0)} history={eidLogs ?? []} label={`EID · ${esp?.nome ?? "Esporte"}`} />
+                  <EidBadge
+                    score={Number(t.eid_time ?? 0)}
+                    history={eidLogs ?? []}
+                    label={`EID · ${(esp?.nome ?? "Esporte").toUpperCase()}`}
+                    className="px-3 py-1.5 text-[11px] shadow-[0_8px_20px_-14px_rgba(249,115,22,0.45)]"
+                  />
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-3">
-                  <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2 text-center">
+                  <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2.5 text-center shadow-[0_10px_24px_-18px_rgba(15,23,42,0.18)]">
                     <p className="text-base font-bold tabular-nums text-eid-action-500 sm:text-lg">{Number(t.eid_time ?? 0).toFixed(1)}</p>
                     <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Nota EID</p>
                   </div>
-                  <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2 text-center">
+                  <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2.5 text-center shadow-[0_10px_24px_-18px_rgba(15,23,42,0.18)]">
                     <p className="text-base font-bold tabular-nums text-eid-fg sm:text-lg">{t.pontos_ranking ?? 0}</p>
                     <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Pontos</p>
                   </div>
-                  <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2 text-center">
+                  <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2.5 text-center shadow-[0_10px_24px_-18px_rgba(15,23,42,0.18)]">
                     <p className="text-base font-bold tabular-nums text-eid-primary-300 sm:text-lg">#{posicao}</p>
                     <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Posição</p>
                   </div>
@@ -497,9 +499,13 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                     title={`Estatísticas · ${esp?.nome ?? "Esporte"}`}
                     fullscreen
                     topMode="backOnly"
-                    className="mt-3 flex min-h-[42px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[10px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
+                    className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl border border-eid-action-500/45 bg-eid-action-500/10 px-3 py-2.5 text-[10px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
                   >
-                    <span>Estatísticas completas · {esp?.nome ?? "este esporte"}</span>
+                    <BarChart3 className="h-4 w-4 shrink-0 opacity-90" strokeWidth={2.25} aria-hidden />
+                    <span className="min-w-0 flex-1 text-center leading-tight">
+                      Estatísticas completas · {(esp?.nome ?? "este esporte").toUpperCase()}
+                    </span>
+                    <ChevronRight className="h-4 w-4 shrink-0 opacity-85" strokeWidth={2.5} aria-hidden />
                   </ProfileEditDrawerTrigger>
                 ) : null}
                 <ProfileSportsMetricsCard
@@ -549,19 +555,20 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
             info="Elenco: líderes e membros com link para o perfil de cada atleta."
           >
             {isLeader ? (
-              <div className="mt-2 space-y-2">
-                <p className="text-sm text-eid-text-secondary">
-                  Convide pelo nome ou @. Com <strong className="text-eid-fg">três letras</strong> aparecem sugestões para
-                  escolher o atleta.
+              <div className="mt-2 space-y-3">
+                <p className="text-[11px] leading-relaxed text-eid-text-secondary">
+                  Convide por nome ou <span className="font-semibold text-eid-fg">@usuário</span>. Com três letras aparecem
+                  sugestões para escolher o atleta.
                 </p>
                 <TeamPublicInviteBlock
                   timeId={id}
                   excludeUserIds={idsExcluirConvite}
                   pendingInvites={convitesPendentesPublic}
+                  collapsibleTrigger
                 />
               </div>
             ) : null}
-            <ul className="mt-3 grid grid-cols-2 gap-2">
+            <ul className="mt-4 flex flex-col gap-2.5">
               {(membros ?? []).map((m, idx) => {
                 const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
                 if (!p?.id) return null;
@@ -570,9 +577,9 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                     <ProfileMemberCard
                       href={`/perfil/${p.id}?from=/perfil-time/${id}`}
                       name={p.nome ?? "Membro"}
-                      subtitle={m.cargo ?? "Atleta"}
+                      subtitle={m.cargo ?? "Membro"}
                       avatarUrl={p.avatar_url}
-                      layout="stacked"
+                      layout="list"
                       avatarSize="sm"
                       trailing={
                         isLeader && p.id !== t.criador_id ? (

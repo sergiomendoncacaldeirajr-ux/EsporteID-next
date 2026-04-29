@@ -36,7 +36,9 @@ export function ProfileSportsMetricsCard({
           <EidRankingPtsMetric value={rankValue} label={rankLabel} size="sm" />
         </div>
       ) : null}
-      <div className={`rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 p-2 ${showScoreTiles ? "mt-2" : ""}`}>
+      <div
+        className={`rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 p-2.5 sm:p-3 ${showScoreTiles ? "mt-2" : ""}`}
+      >
         <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">
           {trendLabel} · {sportName}
         </p>

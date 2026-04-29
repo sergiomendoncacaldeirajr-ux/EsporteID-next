@@ -30,6 +30,7 @@ import {
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { createClient } from "@/lib/supabase/server";
 import { TeamPublicInviteBlock, type TeamPublicPendingInvite } from "@/components/times/team-public-invite-block";
+import { BarChart3, ChevronRight } from "lucide-react";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -319,62 +320,69 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
 
   return (
     <main className={PROFILE_PUBLIC_MAIN_CLASS}>
-        <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 text-center sm:p-4`}>
-          {timeResolvido?.escudo ? (
-            <img
-              src={timeResolvido.escudo}
-              alt=""
-              className="mx-auto h-24 w-24 rounded-2xl border-2 border-eid-action-500/50 object-cover shadow-lg sm:h-28 sm:w-28"
-            />
-          ) : (
-            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-surface text-sm font-black text-eid-primary-300 sm:h-28 sm:w-28">
-              D
-            </div>
-          )}
-          <span className="mt-4 inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-flex items-center gap-1">
-                <ModalidadeGlyphIcon modalidade="dupla" />
-                <span>DUPLA</span>
-              </span>
-              <span aria-hidden className="opacity-70">|</span>
-              <span className="inline-flex items-center gap-1">
-                <SportGlyphIcon sportName={esp?.nome} />
-                <span>{esp?.nome ?? "Esporte"}</span>
-              </span>
-            </span>
-          </span>
-          <h1 className="mt-3 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{nomeExibicao}</h1>
-          {usernameExibicao ? (
-            <p className="mt-1 text-xs font-medium text-eid-primary-300">@{usernameExibicao}</p>
-          ) : null}
-          <div className="mt-2 flex justify-center px-2">
-            <EidCityState location={localExibicao} align="center" />
-          </div>
-          {isDonoDupla && timeResolvidoId ? <FormacaoCidadeAvisoLider timeId={timeResolvidoId} /> : null}
-          {d.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{d.bio}</p> : null}
-          {liderDupla ? (
-            <div className="mt-4 flex items-center justify-center gap-2.5">
-              {liderDupla.avatar_url ? (
+        <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 sm:p-4`}>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
+            <div className="flex shrink-0 flex-col items-center sm:items-start">
+              {timeResolvido?.escudo ? (
                 <img
-                  src={liderDupla.avatar_url}
+                  src={timeResolvido.escudo}
                   alt=""
-                  className="h-9 w-9 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-10 sm:w-10"
+                  className="h-24 w-24 rounded-2xl border-2 border-eid-action-500/50 object-cover shadow-lg sm:h-28 sm:w-28"
                 />
               ) : (
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 sm:h-10 sm:w-10">
-                  {(liderDupla.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
-                </span>
+                <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-surface text-sm font-black text-eid-primary-300 sm:h-28 sm:w-28">
+                  D
+                </div>
               )}
-              <p className="text-left text-xs text-eid-text-secondary">
-                <span className="block text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary/90">Líder</span>
-                <Link
-                  href={`/perfil/${liderDupla.id}?from=/perfil-dupla/${id}`}
-                  className="font-semibold text-eid-primary-300 hover:underline"
-                >
-                  {liderDupla.nome ?? "—"}
-                </Link>
-              </p>
+            </div>
+            <div className="min-w-0 flex-1 space-y-2 text-center sm:text-left">
+              <span className="inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1">
+                    <ModalidadeGlyphIcon modalidade="dupla" />
+                    <span>DUPLA</span>
+                  </span>
+                  <span aria-hidden className="opacity-70">|</span>
+                  <span className="inline-flex items-center gap-1">
+                    <SportGlyphIcon sportName={esp?.nome} />
+                    <span>{esp?.nome ?? "Esporte"}</span>
+                  </span>
+                </span>
+              </span>
+              <h1 className="text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{nomeExibicao}</h1>
+              {usernameExibicao ? (
+                <p className="text-xs font-medium text-eid-primary-300">@{usernameExibicao}</p>
+              ) : null}
+              <div className="flex justify-center px-2 sm:justify-start sm:px-0">
+                <EidCityState location={localExibicao} align="start" />
+              </div>
+            </div>
+          </div>
+          {isDonoDupla && timeResolvidoId ? <FormacaoCidadeAvisoLider timeId={timeResolvidoId} /> : null}
+          {d.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary sm:mt-3">{d.bio}</p> : null}
+          {liderDupla ? (
+            <div className="mt-4 flex w-full min-w-0 justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2.5">
+              <Link
+                href={`/perfil/${liderDupla.id}?from=/perfil-dupla/${id}`}
+                className="inline-flex max-w-full min-w-0 items-center gap-3 rounded-lg text-left transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-eid-card"
+                aria-label={`Abrir perfil de ${liderDupla.nome ?? "líder"}`}
+              >
+                {liderDupla.avatar_url ? (
+                  <img
+                    src={liderDupla.avatar_url}
+                    alt=""
+                    className="h-9 w-9 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-10 sm:w-10"
+                  />
+                ) : (
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 sm:h-10 sm:w-10">
+                    {(liderDupla.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
+                  </span>
+                )}
+                <div className="min-w-0">
+                  <span className="block text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary/90">Líder</span>
+                  <span className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">{liderDupla.nome ?? "—"}</span>
+                </div>
+              </Link>
             </div>
           ) : null}
         </div>
@@ -452,27 +460,35 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
           >
             {timeResolvido ? (
               <>
-                <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-3`}>
-                  <p className="text-[11px] font-semibold text-eid-fg">Esporte: {esp?.nome ?? "Esporte não definido"}</p>
+                <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-3 sm:rounded-2xl sm:p-4`}>
+                  <p className="text-[11px] font-semibold leading-snug sm:text-[12px]">
+                    <span className="text-eid-text-secondary">Esporte: </span>
+                    <span className="font-bold text-eid-primary-300">{esp?.nome ?? "Esporte não definido"}</span>
+                  </p>
                   <div className="mt-2">
                   <div className="flex justify-center">
-                    <EidBadge score={Number(timeResolvido.eid_time ?? 0)} history={eidLogsDupla ?? []} label="EID dupla" />
+                    <EidBadge
+                      score={Number(timeResolvido.eid_time ?? 0)}
+                      history={eidLogsDupla ?? []}
+                      label={`EID · ${(esp?.nome ?? "DUPLA").toUpperCase()}`}
+                      className="px-3 py-1.5 text-[11px] shadow-[0_8px_20px_-14px_rgba(249,115,22,0.45)]"
+                    />
                   </div>
                   <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-3">
-                    <div className="text-center">
-                      <p className="text-lg font-bold tabular-nums text-eid-action-500 sm:text-xl sm:font-black">
+                    <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2.5 text-center shadow-[0_10px_24px_-18px_rgba(15,23,42,0.18)]">
+                      <p className="text-base font-bold tabular-nums text-eid-action-500 sm:text-lg">
                         {Number(timeResolvido.eid_time ?? 0).toFixed(1)}
                       </p>
-                      <p className="text-[9px] font-bold uppercase text-eid-text-secondary">EID</p>
+                      <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Nota EID</p>
                     </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold tabular-nums text-eid-fg sm:text-xl sm:font-black">
+                    <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2.5 text-center shadow-[0_10px_24px_-18px_rgba(15,23,42,0.18)]">
+                      <p className="text-base font-bold tabular-nums text-eid-fg sm:text-lg">
                         {timeResolvido.pontos_ranking ?? 0}
                       </p>
-                      <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Pts</p>
+                      <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Pontos</p>
                     </div>
-                    <div className="text-center">
-                      <p className="text-lg font-bold tabular-nums text-eid-primary-300 sm:text-xl sm:font-black">
+                    <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-2.5 text-center shadow-[0_10px_24px_-18px_rgba(15,23,42,0.18)]">
+                      <p className="text-base font-bold tabular-nums text-eid-primary-300 sm:text-lg">
                         {posicaoDupla != null ? `#${posicaoDupla}` : "—"}
                       </p>
                       <p className="text-[9px] font-bold uppercase text-eid-text-secondary">Posição</p>
@@ -484,9 +500,13 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                       title={`Estatísticas · ${esp?.nome ?? "Esporte"}`}
                       fullscreen
                       topMode="backOnly"
-                      className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
+                      className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl border border-eid-action-500/45 bg-eid-action-500/10 px-3 py-2.5 text-[10px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
                     >
-                      <span>Estatísticas completas · {esp?.nome ?? "este esporte"}</span>
+                      <BarChart3 className="h-4 w-4 shrink-0 opacity-90" strokeWidth={2.25} aria-hidden />
+                      <span className="min-w-0 flex-1 text-center leading-tight">
+                        Estatísticas completas · {(esp?.nome ?? "este esporte").toUpperCase()}
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 opacity-85" strokeWidth={2.5} aria-hidden />
                     </ProfileEditDrawerTrigger>
                   ) : null}
                   <ProfileSportsMetricsCard
@@ -548,9 +568,13 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     title={`Estatísticas · ${esp?.nome ?? "Esporte"}`}
                     fullscreen
                     topMode="backOnly"
-                    className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
+                    className="mt-3 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl border border-eid-action-500/45 bg-eid-action-500/10 px-3 py-2.5 text-[10px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
                   >
-                    <span>Abrir estatísticas · {esp?.nome ?? "este esporte"}</span>
+                    <BarChart3 className="h-4 w-4 shrink-0 opacity-90" strokeWidth={2.25} aria-hidden />
+                    <span className="min-w-0 flex-1 text-center leading-tight">
+                      Abrir estatísticas · {(esp?.nome ?? "este esporte").toUpperCase()}
+                    </span>
+                    <ChevronRight className="h-4 w-4 shrink-0 opacity-85" strokeWidth={2.5} aria-hidden />
                   </ProfileEditDrawerTrigger>
                 ) : null}
                 </div>
@@ -587,29 +611,30 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             info="Atletas que compõem esta dupla, com acesso ao perfil individual de cada um."
           >
             {isDonoDupla && timeResolvidoId ? (
-              <div className="mt-2 space-y-2">
-                <p className="text-sm text-eid-text-secondary">
-                  Convidar integrante pelo nome ou @ — com <strong className="text-eid-fg">três letras</strong> aparecem
-                  sugestões. Você pode cancelar um convite pendente a qualquer momento.
+              <div className="mt-2 space-y-3">
+                <p className="text-[11px] leading-relaxed text-eid-text-secondary">
+                  Convidar integrante por nome ou <span className="font-semibold text-eid-fg">@usuário</span>. Com três
+                  letras aparecem sugestões; convites pendentes podem ser cancelados a qualquer momento.
                 </p>
                 <TeamPublicInviteBlock
                   timeId={timeResolvidoId}
                   excludeUserIds={idsExcluirConviteDupla}
                   pendingInvites={convitesPendentesDupla}
+                  collapsibleTrigger
                 />
               </div>
             ) : null}
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-4 flex flex-col gap-2.5">
               {[p1, p2].map((p, i) =>
                 p ? (
                   <ProfileMemberCard
                     key={p.id}
                     href={`/perfil/${p.id}?from=/perfil-dupla/${id}`}
                     name={p.nome ?? "Atleta"}
-                    subtitle={p.localizacao ?? "—"}
+                    subtitle={p.localizacao?.trim() ? p.localizacao : "Integrante da dupla"}
                     avatarUrl={p.avatar_url}
                     fallbackLabel={`${i + 1}o`}
-                    layout="stacked"
+                    layout="list"
                     avatarSize="sm"
                     trailing={
                       <p className="text-[11px] font-semibold text-eid-primary-300">

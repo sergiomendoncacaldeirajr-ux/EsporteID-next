@@ -19,7 +19,7 @@ export const PROFILE_CARD_BASE =
 export const PROFILE_CARD_PAD_MD = "p-2.5";
 export const PROFILE_CARD_PAD_LG = "p-3 sm:rounded-2xl sm:p-4";
 export const PROFILE_SECTION_TITLE =
-  "text-[9px] font-black uppercase tracking-[0.2em] text-eid-primary-400 flex items-center gap-2 after:block after:h-px after:flex-1 after:rounded-full after:bg-[color:color-mix(in_srgb,var(--eid-primary-500)_24%,var(--eid-border-subtle)_76%)]";
+  "text-[10px] font-black uppercase tracking-[0.12em] text-eid-fg flex items-center gap-2 after:block after:h-px after:flex-1 after:rounded-full after:bg-[color:color-mix(in_srgb,var(--eid-primary-500)_28%,var(--eid-border-subtle)_72%)]";
 export const PROFILE_META_TITLE =
   "text-[10px] font-semibold uppercase tracking-[0.1em] text-eid-text-secondary";
 export const PROFILE_CARD_TITLE = "text-[12px] font-semibold text-eid-fg leading-snug";

@@ -39,6 +39,23 @@ export function ProfileTeamCard({
   );
 }
 
+function ListRowChevron({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`h-5 w-5 shrink-0 text-eid-primary-400 ${className}`.trim()}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
 export function ProfileMemberCard({
   href,
   name,
@@ -55,10 +72,12 @@ export function ProfileMemberCard({
   avatarUrl?: string | null;
   fallbackLabel?: string;
   trailing?: ReactNode;
-  layout?: "row" | "stacked";
+  /** `list` = linha horizontal estilo app (avatar redondo, chevron). */
+  layout?: "row" | "stacked" | "list";
   avatarSize?: "sm" | "md" | "lg";
 }) {
   const isStacked = layout === "stacked";
+  const isList = layout === "list";
   const avatarClass =
     avatarSize === "lg" ? PROFILE_AVATAR_LG : avatarSize === "md" ? PROFILE_AVATAR_MD : PROFILE_AVATAR_SM;
   const fallbackSize =
@@ -67,6 +86,35 @@ export function ProfileMemberCard({
       : avatarSize === "md"
         ? "h-12 w-12 rounded-xl text-[10px]"
         : "h-10 w-10 rounded-lg text-[10px]";
+
+  if (isList) {
+    return (
+      <div className={`${PROFILE_CARD_BASE} p-3 sm:rounded-2xl`}>
+        <Link
+          href={href}
+          className="group flex w-full items-center gap-3.5 transition hover:opacity-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-eid-card rounded-xl"
+        >
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt=""
+              className="h-11 w-11 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-12 sm:w-12"
+            />
+          ) : (
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-xs font-black text-eid-primary-300 sm:h-12 sm:w-12">
+              {fallbackLabel}
+            </span>
+          )}
+          <div className="min-w-0 flex-1 text-left">
+            <p className="truncate text-[13px] font-semibold leading-snug text-eid-fg">{name}</p>
+            {subtitle ? <p className="mt-0.5 truncate text-[11px] text-eid-text-secondary">{subtitle}</p> : null}
+          </div>
+          <ListRowChevron className="opacity-75 transition group-hover:opacity-100" />
+        </Link>
+        {trailing ? <div className="mt-3 border-t border-[color:var(--eid-border-subtle)] pt-3">{trailing}</div> : null}
+      </div>
+    );
+  }
 
   return (
     <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>

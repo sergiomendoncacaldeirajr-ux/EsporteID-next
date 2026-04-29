@@ -11,6 +11,7 @@ export function FormacaoCandidaturaCta({
   minhaCandidaturaPendenteId,
   jaSouMembro,
   submitLabel,
+  textAlign = "center",
 }: {
   timeId: number;
   vagasAbertas: boolean;
@@ -19,19 +20,26 @@ export function FormacaoCandidaturaCta({
   minhaCandidaturaPendenteId: number | null;
   jaSouMembro: boolean;
   submitLabel?: string;
+  /** Alinhamento do texto informativo (callout do perfil usa `start`). */
+  textAlign?: "center" | "start";
 }) {
   const temVagaReal = vagasDisponiveis == null ? true : Number(vagasDisponiveis) > 0;
   const aceitaCand = Boolean(vagasAbertas && aceitaPedidos && temVagaReal);
+  const pAlign = textAlign === "start" ? "text-left" : "text-center";
 
   if (jaSouMembro) {
-    return <p className="text-center text-[10px] font-semibold text-eid-primary-300">Você já faz parte desta formação.</p>;
+    return (
+      <p className={`${pAlign} text-[11px] font-semibold leading-snug text-eid-primary-300`}>
+        Você já faz parte desta formação.
+      </p>
+    );
   }
 
   if (!aceitaCand) {
     return (
-      <p className="text-center text-[10px] text-eid-text-secondary">
+      <p className={`${pAlign} text-[11px] leading-relaxed text-[color:color-mix(in_srgb,var(--eid-text-secondary)_92%,var(--eid-primary-400)_8%)]`}>
         {temVagaReal
-          ? "Esta formação não está aceitando candidaturas agora."
+          ? "No momento o líder não está aceitando novas candidaturas. Volte mais tarde ou entre em contato com o time."
           : "Formação completa no momento. Candidaturas reabrem quando surgir vaga."}
       </p>
     );
@@ -39,8 +47,10 @@ export function FormacaoCandidaturaCta({
 
   if (minhaCandidaturaPendenteId != null) {
     return (
-      <div className="rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_70%,var(--eid-action-500)_30%)] bg-[color:color-mix(in_srgb,var(--eid-card)_94%,var(--eid-action-500)_6%)] px-3 py-2">
-        <p className="text-[11px] font-semibold text-eid-fg">Candidatura enviada — aguardando o líder.</p>
+      <div className="rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_70%,var(--eid-action-500)_30%)] bg-[color:color-mix(in_srgb,var(--eid-card)_94%,var(--eid-action-500)_6%)] px-3 py-2.5">
+        <p className={`text-[11px] font-semibold leading-snug text-eid-fg ${pAlign}`}>
+          Candidatura enviada — aguardando o líder.
+        </p>
         <div className="mt-2">
           <CancelarCandidaturaForm candidaturaId={minhaCandidaturaPendenteId} />
         </div>
@@ -48,7 +58,5 @@ export function FormacaoCandidaturaCta({
     );
   }
 
-  return (
-    <CandidatarNaVagaForm timeId={timeId} hideMessageField submitLabel={submitLabel ?? "Candidatar"} />
-  );
+  return <CandidatarNaVagaForm timeId={timeId} hideMessageField submitLabel={submitLabel ?? "Candidatar"} />;
 }

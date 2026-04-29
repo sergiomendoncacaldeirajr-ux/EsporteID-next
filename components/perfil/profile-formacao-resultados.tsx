@@ -1,5 +1,6 @@
 "use client";
 
+import { Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PROFILE_CARD_BASE } from "@/components/perfil/profile-ui-tokens";
 
@@ -43,8 +44,16 @@ export function ProfileFormacaoResultados({
 
   if (items.length === 0) {
     return (
-      <div className={`${PROFILE_CARD_BASE} p-3 text-center`}>
-        <p className="text-[11px] text-eid-text-secondary">{emptyText}</p>
+      <div
+        className={`${PROFILE_CARD_BASE} flex items-start gap-3.5 p-3.5 sm:rounded-2xl bg-[color:color-mix(in_srgb,var(--eid-card)_93%,var(--eid-primary-500)_7%)] text-left`}
+      >
+        <div
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-eid-primary-500 text-white shadow-[0_6px_16px_-8px_rgba(37,99,235,0.65)]"
+          aria-hidden
+        >
+          <Trophy className="h-5 w-5" strokeWidth={2.25} />
+        </div>
+        <p className="min-w-0 flex-1 pt-0.5 text-[11px] leading-relaxed text-eid-text-secondary">{emptyText}</p>
       </div>
     );
   }
