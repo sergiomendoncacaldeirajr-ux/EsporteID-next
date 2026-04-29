@@ -17,6 +17,7 @@ type Props = {
   formAction?: string;
   /** Campos ocultos preservados no filtro (ex.: `{ todas: "1" }`). */
   hiddenFields?: Record<string, string>;
+  withSearchIcon?: boolean;
 };
 
 export function SearchFilterForm({
@@ -31,6 +32,7 @@ export function SearchFilterForm({
   buttonClassName,
   formAction,
   hiddenFields,
+  withSearchIcon = false,
 }: Props) {
   const [q, setQ] = useState(defaultValue);
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -49,6 +51,7 @@ export function SearchFilterForm({
         minChars={3}
         placeholder={placeholder}
         className={inputClassName}
+        withSearchIcon={withSearchIcon}
         onPickValue={(picked) => {
           setQ(picked);
           if (submitOnPick) formRef.current?.requestSubmit();

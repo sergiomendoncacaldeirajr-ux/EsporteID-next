@@ -10,6 +10,7 @@ export function FormacaoCandidaturaCta({
   vagasDisponiveis,
   minhaCandidaturaPendenteId,
   jaSouMembro,
+  submitLabel,
 }: {
   timeId: number;
   vagasAbertas: boolean;
@@ -17,6 +18,7 @@ export function FormacaoCandidaturaCta({
   vagasDisponiveis?: number | null;
   minhaCandidaturaPendenteId: number | null;
   jaSouMembro: boolean;
+  submitLabel?: string;
 }) {
   const temVagaReal = vagasDisponiveis == null ? true : Number(vagasDisponiveis) > 0;
   const aceitaCand = Boolean(vagasAbertas && aceitaPedidos && temVagaReal);
@@ -47,6 +49,6 @@ export function FormacaoCandidaturaCta({
   }
 
   return (
-    <CandidatarNaVagaForm timeId={timeId} hideMessageField submitLabel="Candidatar" />
+    <CandidatarNaVagaForm timeId={timeId} hideMessageField submitLabel={submitLabel ?? "Candidatar"} />
   );
 }

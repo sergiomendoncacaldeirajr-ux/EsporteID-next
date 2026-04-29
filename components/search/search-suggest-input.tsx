@@ -21,6 +21,7 @@ type Props = {
   minChars?: number;
   scope?: "global" | "times" | "torneios" | "locais";
   onPickValue?: (v: string) => void;
+  withSearchIcon?: boolean;
 };
 
 export function SearchSuggestInput({
@@ -33,6 +34,7 @@ export function SearchSuggestInput({
   minChars = 3,
   scope = "global",
   onPickValue,
+  withSearchIcon = false,
 }: Props) {
   const [items, setItems] = useState<SuggestItem[]>([]);
   const [open, setOpen] = useState(false);
@@ -77,6 +79,14 @@ export function SearchSuggestInput({
 
   return (
     <div ref={rootRef} className="relative">
+      {withSearchIcon ? (
+        <span className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2 text-[#6F7F99]" aria-hidden>
+          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.2-3.2" />
+          </svg>
+        </span>
+      ) : null}
       <input
         id={id}
         name={name}
@@ -87,7 +97,7 @@ export function SearchSuggestInput({
         }}
         autoComplete="off"
         placeholder={placeholder}
-        className={className}
+        className={`${className ?? ""} ${withSearchIcon ? "!pl-14" : ""}`.trim()}
       />
       {canShow ? (
         <div className="absolute z-40 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-1 shadow-xl">

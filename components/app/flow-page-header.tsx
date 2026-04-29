@@ -74,8 +74,8 @@ export function FlowHeaderLink({
       href={href}
       className={
         tone === "primary"
-          ? "rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1.5 text-[11px] font-bold text-eid-primary-300"
-          : "rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-[11px] font-bold text-eid-fg"
+          ? "eid-full-top-btn border-eid-primary-500/32 bg-eid-primary-500/10 text-eid-primary-300"
+          : "eid-full-top-btn"
       }
     >
       {label}

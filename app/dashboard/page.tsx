@@ -13,7 +13,7 @@ import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyph
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
-import { DismissibleSectionIntro } from "@/components/ui/dismissible-section-intro";
+import { EidSectionInfo } from "@/components/ui/eid-section-info";
 import { EidSealPill } from "@/components/ui/eid-seal-pill";
 
 export const metadata = {
@@ -219,24 +219,20 @@ const dashboardSectionHead =
 
 const dashboardSectionBody = "px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-3";
 
-/** Texto introdutório sob o título da seção (bloco discreto). */
-const dashboardSectionBlurb =
-  "mb-3 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,var(--eid-primary-500)_10%)] bg-[color:color-mix(in_srgb,var(--eid-surface)_50%,transparent)] px-3 py-2.5 text-[11px] leading-relaxed text-eid-text-secondary sm:text-xs";
-
 /** Mini-cards da grade “Atletas próximos” (3 colunas). */
 const dashboardSpotlightLink =
-  "group flex flex-col items-center overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_86%,var(--eid-primary-500)_14%)] bg-[linear-gradient(168deg,color-mix(in_srgb,var(--eid-card)_98%,transparent)_0%,color-mix(in_srgb,var(--eid-surface)_92%,var(--eid-primary-500)_8%)_100%)] px-2 pb-2.5 pt-2 text-center shadow-[0_14px_34px_-18px_rgba(15,23,42,0.48)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_6%,transparent)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/50 hover:shadow-[0_22px_42px_-22px_rgba(37,99,235,0.4)] hover:ring-[color:color-mix(in_srgb,var(--eid-primary-500)_12%,transparent)] active:translate-y-0";
+  "group flex flex-col items-center overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)] bg-[linear-gradient(168deg,color-mix(in_srgb,var(--eid-card)_98%,transparent)_0%,color-mix(in_srgb,var(--eid-surface)_94%,var(--eid-primary-500)_6%)_100%)] px-2 pb-2.5 pt-2 text-center shadow-[0_12px_28px_-20px_rgba(15,23,42,0.34)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/30 hover:shadow-[0_18px_36px_-24px_rgba(37,99,235,0.26)] active:translate-y-0";
 
 const dashboardSpotlightEmpty =
   "flex min-h-[8.5rem] flex-col items-center justify-center rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_70%,var(--eid-primary-500)_30%)] bg-[color:color-mix(in_srgb,var(--eid-surface)_38%,transparent)] px-2 py-3 text-center ring-1 ring-[color:color-mix(in_srgb,var(--eid-border-subtle)_94%,transparent)]";
 
 /** Card horizontal — torneios (maior). */
 const dashboardRailTorneio =
-  "group min-w-[220px] max-w-[220px] shrink-0 snap-start overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_84%,var(--eid-primary-500)_16%)] bg-eid-card/90 shadow-[0_16px_40px_-22px_rgba(15,23,42,0.55)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_5%,transparent)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/48 hover:shadow-[0_24px_48px_-24px_rgba(37,99,235,0.45)] active:translate-y-0";
+  "group min-w-[220px] max-w-[220px] shrink-0 snap-start overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)] bg-eid-card/90 shadow-[0_14px_30px_-20px_rgba(15,23,42,0.36)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/30 hover:shadow-[0_20px_40px_-24px_rgba(37,99,235,0.28)] active:translate-y-0";
 
 /** Card horizontal — locais. */
 const dashboardRailLocal =
-  "group min-w-[148px] max-w-[148px] shrink-0 snap-start rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_86%,var(--eid-primary-500)_14%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 text-left shadow-[0_14px_32px_-18px_rgba(15,23,42,0.45)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_5%,transparent)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/45 hover:shadow-[0_20px_40px_-22px_rgba(37,99,235,0.36)] active:translate-y-0";
+  "group min-w-[148px] max-w-[148px] shrink-0 snap-start rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 text-left shadow-[0_12px_26px_-18px_rgba(15,23,42,0.34)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/28 hover:shadow-[0_18px_34px_-22px_rgba(37,99,235,0.24)] active:translate-y-0";
 
 const dashboardEmptyWide =
   "rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_62%,var(--eid-primary-500)_38%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-surface)_45%,transparent),transparent)] px-4 py-9 text-center ring-1 ring-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,transparent)]";
@@ -842,17 +838,18 @@ export default async function DashboardPage({ searchParams }: Props) {
 
         <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>
           <div className={dashboardSectionHead}>
-            <h2 className={sectionTitleClass}>Atletas próximos</h2>
+            <div className="flex items-center gap-1.5">
+              <h2 className={sectionTitleClass}>Atletas próximos</h2>
+              <EidSectionInfo sectionLabel="Atletas próximos">
+                Destaques em <strong>individual</strong>, <strong>dupla</strong> e <strong>time</strong> pelo seu esporte
+                principal e proximidade.
+              </EidSectionInfo>
+            </div>
             <a href={matchHref} className={sectionActionClass}>
               Ver todos
             </a>
           </div>
           <div className={dashboardSectionBody}>
-          <DismissibleSectionIntro storageKey="dashboard:atletas-proximos" className={dashboardSectionBlurb}>
-            Destaques em <span className="font-semibold text-eid-fg">individual</span>,{" "}
-            <span className="font-semibold text-eid-fg">dupla</span> e <span className="font-semibold text-eid-fg">time</span>{" "}
-            pelo seu esporte principal e proximidade.
-          </DismissibleSectionIntro>
           {atletaMaisProximo || duplaMaisProxima || timeMaisProximo ? (
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {atletaMaisProximo
@@ -1021,16 +1018,18 @@ export default async function DashboardPage({ searchParams }: Props) {
         {canSeeTorneios ? (
         <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>
           <div className={dashboardSectionHead}>
-            <h2 className={sectionTitleClass}>Sugestões de torneios</h2>
+            <div className="flex items-center gap-1.5">
+              <h2 className={sectionTitleClass}>Sugestões de torneios</h2>
+              <EidSectionInfo sectionLabel="Sugestões de torneios">
+                Inscrições <strong>abertas</strong>, filtradas pelo seu esporte e pela <strong>distância</strong> da sua
+                localização.
+              </EidSectionInfo>
+            </div>
             <Link href="/torneios" className={sectionActionClass}>
               Explorar
             </Link>
           </div>
           <div className={dashboardSectionBody}>
-          <DismissibleSectionIntro storageKey="dashboard:torneios" className={dashboardSectionBlurb}>
-            Inscrições <span className="font-semibold text-eid-fg">abertas</span>, filtradas pelo seu esporte e pela{" "}
-            <span className="font-semibold text-eid-fg">distância</span> da sua localização.
-          </DismissibleSectionIntro>
           {torneiosFiltrados.length > 0 ? (
             <div className={scrollRow}>
               {torneiosFiltrados.map((t) => (
@@ -1074,15 +1073,17 @@ export default async function DashboardPage({ searchParams }: Props) {
 
         <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>
           <div className={dashboardSectionHead}>
-            <h2 className={sectionTitleClass}>Vagas para equipes</h2>
+            <div className="flex items-center gap-1.5">
+              <h2 className={sectionTitleClass}>Vagas para equipes</h2>
+              <EidSectionInfo sectionLabel="Vagas para equipes">
+                <strong>Duplas e times</strong> com vagas abertas, ordenados por proximidade e pelos esportes do seu perfil.
+              </EidSectionInfo>
+            </div>
             <Link href="/times" className={sectionActionClass}>
               Ver todos
             </Link>
           </div>
           <div className={dashboardSectionBody}>
-          <DismissibleSectionIntro storageKey="dashboard:vagas-equipes" className={dashboardSectionBlurb}>
-            <span className="font-semibold text-eid-fg">Duplas e times</span> com vagas abertas, ordenados por proximidade e pelos esportes do seu perfil.
-          </DismissibleSectionIntro>
           {timesFiltrados.length > 0 ? (
             <div className={scrollRow}>
               {timesFiltrados.map(({ t, dist }) => (
@@ -1147,7 +1148,13 @@ export default async function DashboardPage({ searchParams }: Props) {
 
         <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>
           <div className={dashboardSectionHead}>
-            <h2 className={sectionTitleClass}>Locais na comunidade</h2>
+            <div className="flex items-center gap-1.5">
+              <h2 className={sectionTitleClass}>Locais na comunidade</h2>
+              <EidSectionInfo sectionLabel="Locais na comunidade">
+                Locais alinhados ao seu esporte, com preferência para <strong>sócios</strong>,{" "}
+                <strong>mensalidade na plataforma</strong> e <strong>reserva paga</strong>.
+              </EidSectionInfo>
+            </div>
             {canSeeLocais ? (
               <Link href="/locais" className={sectionActionClass}>
                 Ver lista
@@ -1159,12 +1166,6 @@ export default async function DashboardPage({ searchParams }: Props) {
             )}
           </div>
           <div className={dashboardSectionBody}>
-          <DismissibleSectionIntro storageKey="dashboard:locais-comunidade" className={dashboardSectionBlurb}>
-            Locais alinhados ao seu esporte, com preferência para{" "}
-            <span className="font-semibold text-eid-fg">sócios</span>,{" "}
-            <span className="font-semibold text-eid-fg">mensalidade na plataforma</span> e{" "}
-            <span className="font-semibold text-eid-fg">reserva paga</span>.
-          </DismissibleSectionIntro>
           {locaisScroll && locaisScroll.length > 0 ? (
             <div className={scrollRow}>
               {locaisScroll.map((loc) => (

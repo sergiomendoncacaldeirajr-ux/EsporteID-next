@@ -10,9 +10,10 @@ export function PerfilBackLink({ href, label = "Voltar", className = "" }: Props
   return (
     <Link
       href={href}
-      className={`relative z-[2] inline-flex items-center gap-1 text-xs font-medium text-eid-text-secondary transition hover:text-eid-primary-300 ${className}`}
+      className={`eid-full-top-btn relative z-[2] ${className}`}
     >
-      <span aria-hidden>←</span> {label}
+      <span aria-hidden className="text-[11px] leading-none">←</span>
+      <span>{label}</span>
     </Link>
   );
 }

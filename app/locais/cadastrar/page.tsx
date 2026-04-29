@@ -81,19 +81,36 @@ export default async function CadastrarLocalPage({
   }));
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-3 py-3 sm:px-6 sm:py-4">
-      <div className="relative mb-5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 md:overflow-hidden md:rounded-3xl md:border-eid-action-500/25 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-action-500/10 md:p-8">
-        <div className="pointer-events-none absolute -left-10 top-0 hidden h-40 w-40 rounded-full bg-eid-action-500/20 blur-3xl md:block" />
-        <div className="relative">
-          <h1 className="text-xl font-black tracking-tight text-eid-fg md:text-3xl">Cadastrar local genérico</h1>
-          <p className="mt-2 max-w-2xl text-sm text-eid-text-secondary">
-            Sugira um espaço esportivo para a comunidade com nome e localização. Depois é possível complementar dados e validar propriedade.
-          </p>
+    <main className="mx-auto w-full max-w-4xl px-3 py-2 sm:px-6 sm:py-3">
+      <div className="relative mb-5 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_98%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-4 sm:p-5">
+        <div className="grid grid-cols-[44px_minmax(0,1fr)_82px] items-center gap-3 sm:grid-cols-[56px_minmax(0,1fr)_120px] sm:gap-4">
+          <div className="grid h-11 w-11 place-items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_86%,var(--eid-bg)_14%)] text-[#2F80ED] shadow-[0_6px_12px_-10px_rgba(47,128,237,0.45)] sm:h-14 sm:w-14">
+            <svg viewBox="0 0 24 24" className="h-6 w-6 sm:h-7 sm:w-7" fill="currentColor" aria-hidden>
+              <path d="M12 2.5A7.5 7.5 0 0 0 4.5 10c0 5.8 7.5 11.5 7.5 11.5s7.5-5.7 7.5-11.5A7.5 7.5 0 0 0 12 2.5Zm0 10.2a2.7 2.7 0 1 1 0-5.4 2.7 2.7 0 0 1 0 5.4Z" />
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-[17px] font-black leading-tight tracking-tight text-eid-fg sm:text-[24px]">Cadastrar local genérico</h1>
+            <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary sm:text-[13px]">
+              Sugira um espaço esportivo para a comunidade com nome e localização. Depois é possível complementar dados e validar propriedade.
+            </p>
+          </div>
+          <div className="justify-self-end" aria-hidden>
+            <svg viewBox="0 0 120 80" className="h-[52px] w-[78px] sm:h-[74px] sm:w-[112px]">
+              <rect x="6" y="18" width="108" height="56" rx="10" fill="#5CA0FF" />
+              <rect x="12" y="24" width="96" height="44" rx="8" fill="#2F80ED" />
+              <rect x="20" y="30" width="80" height="32" rx="6" fill="#1F6FDB" />
+              <path d="M22 46h76M60 30v32M38 30l44 32M82 30 38 62" stroke="#8AC0FF" strokeWidth="1.6" />
+              <circle cx="95" cy="16" r="6" fill="#43A047" />
+              <circle cx="104" cy="12" r="5" fill="#66BB6A" />
+              <circle cx="110" cy="18" r="4.5" fill="#81C784" />
+            </svg>
+          </div>
         </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-        <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 sm:p-6 md:rounded-3xl">
+        <section className="rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_96%,var(--eid-surface)_4%)] p-4 sm:p-5">
           {erroMsg ? (
             <p className="mb-4 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200" role="alert">
               {erroMsg}
@@ -138,103 +155,133 @@ export default async function CadastrarLocalPage({
             <input type="hidden" name="return_to" value={returnTo} />
             <NomeLocalInputSuggestions locais={locaisHints} canOpenLocais={canOpenLocais} />
             <div>
-              <label htmlFor="localizacao" className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
+              <label htmlFor="localizacao" className="text-[10px] font-black uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
                 Cidade / região ou endereço
               </label>
-              <input
-                id="localizacao"
-                name="localizacao"
-                required
-                minLength={3}
-                placeholder="Ex.: Ipatinga — MG"
-                className="eid-input-dark mt-1.5 h-10 w-full rounded-xl px-3 py-0 text-[14px] leading-[1.2] text-eid-fg placeholder:text-[12px] placeholder:text-eid-text-secondary"
-              />
+              <div className="mt-1.5 flex items-center gap-2">
+                <span className="inline-grid h-8 w-8 shrink-0 place-items-center rounded-[9px] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_85%,var(--eid-bg)_15%)] text-eid-primary-400">
+                  <svg viewBox="0 0 24 24" className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
+                    <path d="M12 21s6-5.6 6-10a6 6 0 1 0-12 0c0 4.4 6 10 6 10z" />
+                    <circle cx="12" cy="11" r="2.1" />
+                  </svg>
+                </span>
+                <input
+                  id="localizacao"
+                  name="localizacao"
+                  required
+                  minLength={3}
+                  placeholder="Ex.: Ipatinga — MG"
+                  className="eid-input-dark h-9 w-full rounded-[9px] px-3 py-0 text-[13px] leading-[1.2] text-eid-fg placeholder:text-[12px] placeholder:text-eid-text-secondary"
+                />
+              </div>
             </div>
             <div>
-              <label htmlFor="logo_file" className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
+              <label htmlFor="logo_file" className="text-[10px] font-black uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
                 Foto / logo do local (opcional)
               </label>
-              <input
-                id="logo_file"
-                name="logo_file"
-                type="file"
-                accept="image/*"
-                className="mt-1.5 block w-full text-xs text-eid-text-secondary file:mr-2 file:rounded-lg file:border file:border-[color:var(--eid-border-subtle)] file:bg-eid-surface/70 file:px-2.5 file:py-1.5 file:text-[11px] file:font-semibold file:text-eid-fg"
-              />
-              <p className="mt-1 text-[11px] text-eid-text-secondary">PNG, JPG ou WEBP até 5MB.</p>
+              <div className="mt-1.5 rounded-[9px] border border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_86%,var(--eid-bg)_14%)] p-3">
+                <input
+                  id="logo_file"
+                  name="logo_file"
+                  type="file"
+                  accept="image/*"
+                  className="block w-full text-xs text-eid-text-secondary file:mr-2 file:rounded-lg file:border file:border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] file:bg-eid-card file:px-2.5 file:py-1.5 file:text-[11px] file:font-semibold file:text-eid-fg"
+                />
+                <p className="mt-2 text-[11px] text-eid-text-secondary">PNG, JPG ou WEBP até 5MB.</p>
+              </div>
             </div>
             <LocalSubmitButton />
           </form>
 
-          <p className="mt-4 text-[11px] leading-relaxed text-eid-text-secondary">
-            Para ser o responsável oficial do espaço, conclua o cadastro com o papel &quot;dono de espaço&quot; no onboarding ou fale com o
-            suporte após criar o perfil do local.
-          </p>
+          <div className="mt-4 flex items-start gap-2 rounded-[10px] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-bg)_10%)] px-3 py-2.5">
+            <span className="mt-0.5 inline-grid h-4 w-4 shrink-0 place-items-center rounded-full bg-eid-primary-500/16 text-[9px] font-black text-eid-primary-400">
+              i
+            </span>
+            <p className="text-[11px] leading-relaxed text-eid-text-secondary">
+              Para ser o responsável oficial do espaço, conclua o cadastro com o papel &quot;dono de espaço&quot; no onboarding ou fale com o suporte após criar o perfil do local.
+            </p>
+          </div>
         </section>
 
-        <aside className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 sm:p-5 md:rounded-3xl">
-          <h2 className="text-sm font-bold text-eid-fg">Opções já cadastradas</h2>
-          <p className="mt-1 text-xs text-eid-text-secondary">
-            {hasCoords
-              ? "Mostrando os locais mais próximos da sua localização."
-              : "Defina sua localização no perfil para ver os locais mais próximos."}
-          </p>
-          <div className="mt-3 space-y-2">
+        <aside className="rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_96%,var(--eid-surface)_4%)] p-3.5 sm:p-5">
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5 inline-grid h-4 w-4 shrink-0 place-items-center text-eid-primary-400">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
+                <path d="M4.5 5.5h6l2 2h7v11h-6l-2-2h-7z" />
+              </svg>
+            </span>
+            <div>
+              <h2 className="text-[11px] font-black uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_74%,var(--eid-primary-500)_26%)]">
+                Opções já cadastradas
+              </h2>
+              <p className="mt-0.5 text-[11px] text-eid-text-secondary">
+                {hasCoords
+                  ? "Mostrando os locais mais próximos da sua localização."
+                  : "Defina sua localização no perfil para ver os locais mais próximos."}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-2.5 space-y-2">
             {(locaisOpcoes ?? []).length ? (
-              (locaisOpcoes ?? []).map((local) =>
-                canOpenLocais ? (
-                  <Link
-                    key={local.id}
-                    href={`/local/${local.id}?from=/locais/cadastrar`}
-                    className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 py-2 transition hover:border-eid-primary-500/35"
-                  >
+              (() => {
+                const local = locaisOpcoes[0];
+                const itemBody = (
+                  <>
                     {local.logo_arquivo ? (
-                      <img src={local.logo_arquivo} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                      <img src={local.logo_arquivo} alt="" className="h-10 w-16 rounded-lg object-cover" />
                     ) : (
-                      <div className="grid h-10 w-10 place-items-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-black text-eid-fg">
+                      <div className="grid h-10 w-16 place-items-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-black text-eid-fg">
                         EID
                       </div>
                     )}
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold text-eid-fg">{local.nome_publico ?? "Local"}</p>
-                      <p className="truncate text-[11px] text-eid-text-secondary">{local.localizacao ?? "Sem localização"}</p>
-                      {Number.isFinite(local.dist) && local.dist < 9000 ? (
-                        <p className="truncate text-[10px] text-eid-primary-300">
-                          {local.dist.toFixed(1).replace(".", ",")} km
-                        </p>
-                      ) : null}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[12px] font-bold text-eid-fg">{local.nome_publico ?? "Local"}</p>
+                      <p className="mt-0.5 inline-flex items-center gap-1 truncate text-[11px] text-eid-text-secondary">
+                        <svg viewBox="0 0 24 24" className="h-3 w-3 shrink-0 text-eid-primary-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                          <path d="M12 21s6-5.6 6-10a6 6 0 1 0-12 0c0 4.4 6 10 6 10z" />
+                          <circle cx="12" cy="11" r="2.1" />
+                        </svg>
+                        <span className="truncate">{local.localizacao ?? "Sem localização"}</span>
+                      </p>
                     </div>
+                    <span aria-hidden className="text-[14px] leading-none text-eid-text-secondary">›</span>
+                  </>
+                );
+
+                return canOpenLocais ? (
+                  <Link
+                    href={`/local/${local.id}?from=/locais/cadastrar`}
+                    className="flex items-center gap-2 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-eid-surface/50 px-2.5 py-1.5 transition hover:border-eid-primary-500/35"
+                  >
+                    {itemBody}
                   </Link>
                 ) : (
-                  <div
-                    key={local.id}
-                    className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 py-2"
-                  >
-                    {local.logo_arquivo ? (
-                      <img src={local.logo_arquivo} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                    ) : (
-                      <div className="grid h-10 w-10 place-items-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-black text-eid-fg">
-                        EID
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-semibold text-eid-fg">{local.nome_publico ?? "Local"}</p>
-                      <p className="truncate text-[11px] text-eid-text-secondary">{local.localizacao ?? "Sem localização"}</p>
-                      {Number.isFinite(local.dist) && local.dist < 9000 ? (
-                        <p className="truncate text-[10px] text-eid-primary-300">
-                          {local.dist.toFixed(1).replace(".", ",")} km
-                        </p>
-                      ) : null}
-                    </div>
+                  <div className="flex items-center gap-2 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-eid-surface/50 px-2.5 py-1.5">
+                    {itemBody}
                   </div>
-                )
-              )
+                );
+              })()
             ) : (
               <p className="rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-4 text-xs text-eid-text-secondary">
                 Ainda não há locais públicos para listar.
               </p>
             )}
           </div>
+
+          {canOpenLocais ? (
+            <Link
+              href="/locais?from=/locais/cadastrar"
+              className="mt-2.5 inline-flex min-h-8 w-full items-center justify-center gap-1.5 rounded-[10px] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-bg)_10%)] px-3 text-[11px] font-bold text-[color:color-mix(in_srgb,var(--eid-fg)_60%,var(--eid-primary-500)_40%)]"
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
+                <path d="M12 21s6-5.6 6-10a6 6 0 1 0-12 0c0 4.4 6 10 6 10z" />
+                <circle cx="12" cy="11" r="2.1" />
+              </svg>
+              Ver todos os locais próximos
+              <span aria-hidden className="text-[14px] leading-none">›</span>
+            </Link>
+          ) : null}
         </aside>
       </div>
     </main>
