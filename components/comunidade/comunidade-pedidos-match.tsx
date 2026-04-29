@@ -8,14 +8,13 @@ import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resum
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
+import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import type { PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
-  PEDIDO_MATCH_RECEBIDO_ACEITAR_BTN_CLASS,
-  PEDIDO_MATCH_RECEBIDO_ACOES_ROW_CLASS,
   PEDIDO_MATCH_RECEBIDO_FORM_CLASS,
-  PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS,
+  PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS,
 } from "@/lib/desafio/flow-ui";
 import {
   EID_SOCIAL_CARD_FOOTER,
@@ -71,11 +70,13 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
   const router = useRouter();
   const [state, formAction, pending] = useActionState(responderPedidoMatch, initial);
   const [showStatsHint, setShowStatsHint] = useState(true);
+  const [clickedAction, setClickedAction] = useState<{ matchId: number; aceitar: boolean } | null>(null);
   const err = !state.ok && state.message ? state.message : null;
   const okMsg = state.ok ? "Resposta registrada." : null;
 
   useEffect(() => {
     if (state.ok) {
+      setClickedAction(null);
       router.refresh();
     }
   }, [state.ok, router]);
@@ -245,26 +246,26 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 </div>
               ) : null}
               <div
-                className={`${EID_SOCIAL_CARD_FOOTER} ${PEDIDO_MATCH_RECEBIDO_ACOES_ROW_CLASS} !mt-0 !bg-[color:color-mix(in_srgb,var(--eid-surface)_45%,transparent)]`}
+                className={`${EID_SOCIAL_CARD_FOOTER} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !mt-0 !bg-[color:color-mix(in_srgb,var(--eid-surface)_45%,transparent)]`}
               >
                 <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                   <input type="hidden" name="match_id" value={String(m.id)} />
                   <input type="hidden" name="aceitar" value="true" />
-                  <button type="submit" disabled={pending} className={PEDIDO_MATCH_RECEBIDO_ACEITAR_BTN_CLASS}>
-                    <span>{pending ? "Salvando…" : "Aceitar"}</span>
-                  </button>
+                  <EidSocialAceitarButton
+                    pending={pending}
+                    busy={pending && clickedAction?.matchId === m.id && clickedAction.aceitar}
+                    onClick={() => setClickedAction({ matchId: m.id, aceitar: true })}
+                  />
                 </form>
                 <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                   <input type="hidden" name="match_id" value={String(m.id)} />
                   <input type="hidden" name="aceitar" value="false" />
-                  <button
-                    type="submit"
-                    disabled={pending}
-                    data-eid-recusar-btn="true"
-                    className={PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS}
-                  >
-                    <span>Recusar</span>
-                  </button>
+                  <EidSocialRecusarButton
+                    pending={pending}
+                    busy={pending && clickedAction?.matchId === m.id && !clickedAction.aceitar}
+                    withDesafioRecusarMarker
+                    onClick={() => setClickedAction({ matchId: m.id, aceitar: false })}
+                  />
                 </form>
               </div>
             </li>

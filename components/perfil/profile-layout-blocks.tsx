@@ -2,19 +2,28 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_LG, PROFILE_SECTION_TITLE } from "@/components/perfil/profile-ui-tokens";
+import { EidSectionInfo } from "@/components/ui/eid-section-info";
 
 export function ProfileSection({
   title,
+  info,
   children,
   className,
 }: {
   title: string;
+  /** Explicação curta ao clicar no ícone (i) ao lado do título. */
+  info?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <section className={className ?? ""}>
-      <h2 className={PROFILE_SECTION_TITLE}>{title}</h2>
+      <h2 className={PROFILE_SECTION_TITLE}>
+        <span className="inline-flex items-center gap-1.5">
+          {title}
+          {info != null ? <EidSectionInfo sectionLabel={title}>{info}</EidSectionInfo> : null}
+        </span>
+      </h2>
       {children}
     </section>
   );

@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FlowPageHeader } from "@/components/app/flow-page-header";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
 import {
   type ComunidadeProfessorProfileRow,
@@ -41,6 +40,50 @@ import { createClient } from "@/lib/supabase/server";
 import { marcarTodasNotificacoesLidas } from "./actions";
 import type { ReactNode } from "react";
 
+function ModuloIcon({ moduleKey }: { moduleKey: SystemFeatureKey }) {
+  const cls = "h-[15px] w-[15px]";
+  if (moduleKey === "marketplace") {
+    return (
+      <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
+        <path d="M6 8h12l-1 11H7L6 8z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M9 8V6a3 3 0 016 0v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (moduleKey === "locais") {
+    return (
+      <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
+        <path d="M12 21s6-5.2 6-10a6 6 0 10-12 0c0 4.8 6 10 6 10z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        <circle cx="12" cy="11" r="2" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (moduleKey === "torneios") {
+    return (
+      <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
+        <path d="M8 5h8v3a4 4 0 01-8 0V5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M7 8H5a2 2 0 002 2M17 8h2a2 2 0 01-2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        <path d="M12 12v4M9 20h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (moduleKey === "professores") {
+    return (
+      <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
+        <path d="M3 9l9-4 9 4-9 4-9-4z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M7 11v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
+      <circle cx="8" cy="9" r="2.5" stroke="currentColor" strokeWidth="2" />
+      <circle cx="16" cy="9" r="2.5" stroke="currentColor" strokeWidth="2" />
+      <path d="M3 19c0-2.5 2.3-4.5 5-4.5M21 19c0-2.5-2.3-4.5-5-4.5M8 19c0-2.8 1.8-5 4-5s4 2.2 4 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export const metadata = {
   title: "Painel de controle",
   description: "Painel de controle do EsporteID: acompanhe notificações, convites e pedidos com clareza.",
@@ -69,10 +112,10 @@ function ComunidadeQuadro({
     <details
       id={id}
       open
-      className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3 [&_summary::-webkit-details-marker]:hidden"
+      className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-2.5 [&_summary::-webkit-details-marker]:hidden"
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
-        <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">{title}</h3>
+        <h3 className="text-[11px] font-black tracking-tight text-eid-fg">{title}</h3>
         <EidPendingBadge label={badgeLabel} />
       </summary>
       <div className="mt-2">{children}</div>
@@ -972,12 +1015,6 @@ export default async function ComunidadePage() {
     }))
     .filter((item) => item.mode !== "ativo");
 
-  function modeLabel(mode: string) {
-    if (mode === "em_breve") return "Em breve";
-    if (mode === "teste") return "Em teste";
-    return "Em desenvolvimento";
-  }
-
   const { teamClause: teamClausePainel } = await getAgendaTeamContext(supabase, user.id);
   await processarPendenciasAgendamentoAceite(supabase, user.id, teamClausePainel);
   const [{ data: painelAgendadas }, { data: painelPlacarPendente }] = await Promise.all([
@@ -1148,56 +1185,87 @@ export default async function ComunidadePage() {
     <main
       data-eid-comunidade-panel
       data-eid-touch-ui
+      data-eid-touch-ui-compact="true"
       className="mx-auto w-full max-w-lg px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
-      <FlowPageHeader
-        title="Painel de controle"
-        subtitle="Acompanhe sua rede em um só lugar: notificações, convites e pedidos organizados para você decidir e agir com rapidez."
-        stats={[
-          { label: "não lida(s)", value: nNotifUnread, tone: "primary", href: "/comunidade#notificacoes" },
-          { label: "pedido(s) de desafio", value: nPedidos, tone: "action", href: "/comunidade#desafio-pedidos" },
-          { label: "sugestão(ões)", value: nSugestoes, tone: "default", href: "/comunidade#equipe-sugestoes" },
-          { label: "convite(s) de equipe", value: conviteItems.length, tone: "primary", href: "/comunidade#equipe-convites" },
-          { label: "item(ns) de aula", value: nAulas, tone: "default", href: "/comunidade#minhas-aulas" },
-        ]}
-        actionsTopRight
-        actions={
+      <section className="overflow-hidden rounded-[16px] border border-[color:var(--eid-border-subtle)] bg-eid-card px-2.5 py-2.5 shadow-[0_10px_26px_-20px_rgba(15,23,42,0.38)] sm:px-3 sm:py-3">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <h1 className="text-[16px] font-black leading-none tracking-tight text-eid-fg sm:text-[18px]">Painel de controle</h1>
+            <p className="mt-1 max-w-[44ch] text-[11px] leading-snug text-eid-text-secondary">
+              Acompanhe sua rede em um só lugar: notificações, convites e pedidos organizados para você decidir e agir com rapidez.
+            </p>
+          </div>
           <form action={marcarTodasNotificacoesLidas}>
             <button
               type="submit"
               data-eid-marcar-lidos-btn="true"
-              className={`inline-flex h-[16px] items-center justify-center rounded-md border px-1 py-0 font-bold uppercase leading-none transition ${
+              className={`!inline-flex !h-[16px] !min-h-[16px] items-center justify-center whitespace-nowrap !rounded-full border !px-1.5 !py-0 !text-[7px] !leading-none font-black uppercase tracking-[0.04em] transition ${
                 nNotifUnread > 0
-                  ? "border-emerald-400/60 bg-emerald-500/25 text-emerald-100 hover:bg-emerald-500/35"
-                  : "border-emerald-400/45 bg-emerald-500/18 text-emerald-100/95"
+                  ? "border-emerald-500/35 bg-emerald-500/12 text-emerald-400 hover:bg-emerald-500/18"
+                  : "border-emerald-500/28 bg-emerald-500/10 text-emerald-400"
               }`}
-              style={{
-                minHeight: "16px",
-                height: "16px",
-                padding: "0 4px",
-                lineHeight: "1",
-                whiteSpace: "nowrap",
-                fontSize: "8px",
-                letterSpacing: "0.02em",
-                transform: "scale(0.9)",
-                transformOrigin: "top right",
-              }}
             >
-              {nNotifUnread > 0 ? "✓ Marcar como lidos" : "✓ Lido"}
+              {nNotifUnread > 0 ? "Ler tudo" : "✓ Lido"}
             </button>
           </form>
-        }
-      />
+        </div>
 
-        <div className="mt-4 space-y-4 md:mt-6 md:space-y-6">
+        <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          <Link href="/comunidade#notificacoes" className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_82%,transparent)] px-2 py-2">
+            <div className="flex items-center gap-1.5 text-eid-primary-400">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+                <path d="M18 9a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <span className="text-[16px] font-black leading-none">{nNotifUnread}</span>
+            </div>
+            <p className="mt-1 text-[10px] font-semibold text-eid-text-secondary">Não lido(s)</p>
+          </Link>
+          <Link href="/comunidade#desafio-pedidos" className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_82%,transparent)] px-2 py-2">
+            <div className="flex items-center gap-1.5 text-eid-action-400">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+                <circle cx="15.5" cy="4.5" r="2" fill="currentColor" />
+                <path d="M6 20l3-5 2.5-1.5L14 16l4 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M10.5 8.5l2.5 1.5 2.5-1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="text-[16px] font-black leading-none">{nPedidos}</span>
+            </div>
+            <p className="mt-1 text-[10px] font-semibold text-eid-text-secondary">Pedido(s) de desafio</p>
+          </Link>
+          <Link href="/comunidade#equipe-sugestoes" className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_82%,transparent)] px-2 py-2">
+            <div className="flex items-center gap-1.5 text-fuchsia-400">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+                <path d="M9 18h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path d="M10 22h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path d="M12 2a7 7 0 00-4 12.7c.7.5 1 1 1 1.8V17h6v-.5c0-.8.3-1.3 1-1.8A7 7 0 0012 2z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+              </svg>
+              <span className="text-[16px] font-black leading-none">{nSugestoes}</span>
+            </div>
+            <p className="mt-1 text-[10px] font-semibold text-eid-text-secondary">Sugestão(ões)</p>
+          </Link>
+          <Link href="/comunidade#equipe-convites" className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_82%,transparent)] px-2 py-2">
+            <div className="flex items-center gap-1.5 text-emerald-400">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2" />
+                <path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="text-[16px] font-black leading-none">{conviteItems.length}</span>
+            </div>
+            <p className="mt-1 text-[10px] font-semibold text-eid-text-secondary">Convite(s)</p>
+          </Link>
+        </div>
+      </section>
+
+        <div className="mt-3 space-y-3 md:mt-5 md:space-y-5">
           <PushToggleCard defaultEnabled />
 
           {hasPartidasAcoes ? (
           <section id="resultados-partida" className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
-            <div className="flex items-start justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 md:px-5">
+            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 md:px-4">
               <div>
-                <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-action-500">Partidas e resultados</h2>
-                <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
+                <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Partidas e resultados</h2>
+                <p className="mt-0.5 hidden text-[11px] text-eid-text-secondary md:block">
                   Lançamento de placar, revisão e confirmação. Na{" "}
                   <Link href="/agenda" className="font-semibold text-eid-primary-300 hover:underline">
                     Agenda
@@ -1205,12 +1273,12 @@ export default async function ComunidadePage() {
                   você combina <strong className="text-eid-fg">data e local</strong>.
                 </p>
               </div>
-              <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-action-300">
+              <span className="shrink-0 rounded-full border border-eid-action-500/30 bg-eid-action-500/12 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-action-400">
                 Fluxo de placar
               </span>
             </div>
 
-            <div className="px-4 py-4 md:px-5 md:py-5">
+            <div className="px-3 py-3 md:px-4 md:py-4">
             <div className="space-y-6">
               {(painelPlacarPendente ?? []).length > 0 ? (
                 <div>
@@ -1299,18 +1367,18 @@ export default async function ComunidadePage() {
 
           {hasDesafioAcoes ? (
           <section id="desafio-pedidos" className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
-            <div className="flex items-start justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 md:px-5">
+            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 md:px-4">
               <div>
-                <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Desafio</h2>
-                <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
+                <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Desafio</h2>
+                <p className="mt-0.5 hidden text-[11px] text-eid-text-secondary md:block">
                   Central de desafios: pedidos recebidos e notificações do fluxo de desafio.
                 </p>
               </div>
-              <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
+              <span className="shrink-0 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-primary-300">
                 Social
               </span>
             </div>
-            <div className="px-4 py-4 md:px-5 md:py-5">
+            <div className="px-3 py-3 md:px-4 md:py-4">
             <div className="space-y-4">
               <ComunidadeQuadro id="desafio-pedidos-recebidos" title="Pedidos recebidos" hasPending={pedidosItems.length > 0}>
                 <ComunidadePedidosMatch items={pedidosItems} />
@@ -1344,18 +1412,18 @@ export default async function ComunidadePage() {
 
           {hasEquipeAcoes ? (
           <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
-            <div className="flex items-start justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 md:px-5">
+            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 md:px-4">
               <div>
-                <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-primary-500">Equipe</h2>
-                <p className="mt-1 hidden text-sm text-eid-text-secondary md:block">
+                <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Equipe</h2>
+                <p className="mt-0.5 hidden text-[11px] text-eid-text-secondary md:block">
                   Convites, sugestões de liderança e avisos da sua dupla/time em um único quadro.
                 </p>
               </div>
-              <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
+              <span className="shrink-0 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-primary-300">
                 Formações
               </span>
             </div>
-            <div className="px-4 py-4 md:px-5 md:py-5">
+            <div className="px-3 py-3 md:px-4 md:py-4">
             <div className="space-y-4">
               <ComunidadeQuadro id="equipe-sugestoes" title="Sugestões da equipe (liderança)" hasPending={sugestoesItems.length > 0}>
                 <ComunidadeSugestoesMatch items={sugestoesItems} />
@@ -1377,7 +1445,7 @@ export default async function ComunidadePage() {
                 hasPending={candidaturasEquipe.length > 0}
               >
                 {candidaturasEquipe.length === 0 ? (
-                  <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
+                  <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] p-2.5 text-[11px] text-eid-text-secondary">
                     Nenhum pedido pendente para suas formações.
                   </p>
                 ) : (
@@ -1385,7 +1453,7 @@ export default async function ComunidadePage() {
                     {candidaturasEquipe.map((c) => (
                       <li
                         key={c.id}
-                        className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
+                        className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] p-2.5"
                       >
                         <div className="grid grid-cols-[72px_30px_minmax(0,1fr)] items-start sm:grid-cols-[72px_34px_minmax(0,1fr)]">
                           <ProfileEditDrawerTrigger
@@ -1430,7 +1498,7 @@ export default async function ComunidadePage() {
                           </div>
                         </div>
                         {c.mensagem ? (
-                          <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2 text-[11px] italic text-eid-text-secondary">
+                          <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-1.5 text-[10px] italic text-eid-text-secondary">
                             “{c.mensagem}”
                           </p>
                         ) : null}
@@ -1452,7 +1520,7 @@ export default async function ComunidadePage() {
                 hasPending={minhasCandidaturasEquipe.some((c) => c.statusRaw === "pendente")}
               >
                 {minhasCandidaturasEquipe.length === 0 ? (
-                  <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
+                  <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] p-2.5 text-[11px] text-eid-text-secondary">
                     Você ainda não enviou pedido para entrar em formação.
                   </p>
                 ) : (
@@ -1460,7 +1528,7 @@ export default async function ComunidadePage() {
                     {minhasCandidaturasEquipe.map((c) => (
                       <li
                         key={c.id}
-                        className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
+                        className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] p-2.5"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-semibold text-eid-fg">{c.timeNome}</p>
@@ -1479,7 +1547,7 @@ export default async function ComunidadePage() {
                           {new Date(c.criadoEm).toLocaleString("pt-BR")}
                         </p>
                         {c.mensagem ? (
-                          <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2 text-[11px] italic text-eid-text-secondary">
+                          <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-1.5 text-[10px] italic text-eid-text-secondary">
                             “{c.mensagem}”
                           </p>
                         ) : null}
@@ -1519,14 +1587,14 @@ export default async function ComunidadePage() {
           ) : null}
 
           {hasAulasAcoes ? (
-          <section id="minhas-aulas" className="eid-list-item rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-4 opacity-80 md:p-5">
+          <section id="minhas-aulas" className="eid-list-item rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3 opacity-80 md:p-4">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Minhas aulas</h2>
-              <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
+              <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Minhas aulas</h2>
+              <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-primary-300">
                 Em desenvolvimento
               </span>
             </div>
-            <p className="mt-2 text-sm text-eid-text-secondary">
+            <p className="mt-1.5 text-[11px] text-eid-text-secondary">
               Este quadro está em preparação e ficará disponível em breve.
             </p>
             <div className="mt-3 space-y-2 pointer-events-none select-none">
@@ -1544,28 +1612,41 @@ export default async function ComunidadePage() {
           ) : null}
 
           <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0">
-            <div className="flex items-center justify-between gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-5 py-3">
-              <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-eid-text-secondary">Status dos módulos do app</h2>
-              <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-text-secondary">
-                Painel
+            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5">
+              <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Status dos módulos do app</h2>
+              <span className="shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-primary-300">
+                Ver painel
               </span>
             </div>
-            <div className="p-5">
+            <div className="p-3">
             {emBreveItems.length === 0 ? (
-              <p className="mt-3 text-sm text-eid-text-secondary">
+              <p className="mt-2 text-xs text-eid-text-secondary">
                 Tudo que é controlado pelo painel de funcionalidades está liberado para você no momento.
               </p>
             ) : (
-              <ul className="mt-3 space-y-2 text-sm text-eid-text-secondary">
+              <ul className="mt-2 space-y-1.5 text-xs text-eid-text-secondary">
                 {emBreveItems.map((item) => (
-                  <li
-                    key={item.key}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2"
-                  >
-                    <span className="text-eid-fg">{item.label}</span>
-                    <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
-                      {modeLabel(item.mode)}
-                    </span>
+                  <li key={item.key} className="flex items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-1.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:color-mix(in_srgb,var(--eid-card)_84%,#ffffff_16%)] text-eid-primary-500">
+                        <ModuloIcon moduleKey={item.key} />
+                      </span>
+                      <span className="truncate text-[11px] font-semibold text-eid-fg">{item.label}</span>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.04em] ${
+                          item.mode === "em_breve"
+                            ? "border-eid-primary-500/25 bg-eid-primary-500/10 text-eid-primary-400"
+                            : "border-eid-action-500/30 bg-eid-action-500/12 text-eid-action-400"
+                        }`}
+                      >
+                        {item.mode === "em_breve" ? "• Em breve" : "• Em desenvolvimento"}
+                      </span>
+                      <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 text-eid-text-secondary" fill="none" aria-hidden>
+                        <path d="M7 4l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
                   </li>
                 ))}
               </ul>

@@ -42,9 +42,11 @@ export const PEDIDO_CANCELAR_COMPACT_BTN_CLASS =
 export const PEDIDO_VER_MAIS_COMPACT_BTN_CLASS =
   "inline-flex !h-[18px] !min-h-0 shrink-0 items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/8 px-1 text-[7px] font-black uppercase leading-none tracking-[0.03em] text-eid-primary-300 transition hover:border-eid-primary-500/50 disabled:opacity-60";
 
-/** Limpar compacto com altura padronizada. */
+/**
+ * Limpar compacto (pílula, fundo claro, ícone lixeira) — usado por `EidLimparCompactButton`.
+ */
 export const PEDIDO_LIMPAR_COMPACT_BTN_CLASS =
-  "inline-flex !h-[18px] !min-h-0 shrink-0 items-center rounded-full border border-[color:var(--eid-border-subtle)] px-1 text-[7px] font-black uppercase leading-none tracking-[0.03em] text-eid-text-secondary transition hover:border-red-400/40 hover:text-red-300 disabled:opacity-50";
+  "inline-flex min-h-0 shrink-0 items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-surface)_10%)] px-2 py-0.5 text-[7px] font-black uppercase leading-none tracking-[0.03em] text-eid-fg transition hover:border-red-400/40 hover:text-red-300 disabled:opacity-50 [data-eid-theme=light]:bg-white/85 [data-eid-theme=light]:text-slate-800";
 
 /** Container alinhado à direita para pares Aceitar/Recusar em cards. */
 export const PEDIDO_ACOES_ROW_CLASS = "mt-2 flex items-center justify-end gap-0 md:gap-1";
@@ -62,6 +64,13 @@ export const PEDIDO_MATCH_ACAO_FORM_CLASS = "inline";
 export const PEDIDO_MATCH_RECEBIDO_ACOES_ROW_CLASS =
   "relative mt-4 flex w-full max-w-full items-stretch justify-center gap-2 sm:gap-3";
 
+/**
+ * Mesma faixa de ações, para rodapé de card social (sem margem extra, gap justo).
+ * Botões Aceitar/Recusar: use `EidSocialAceitarButton` / `EidSocialRecusarButton` em `components/ui/eid-social-acao-buttons.tsx`.
+ */
+export const PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS =
+  "flex w-full max-w-full items-center justify-center gap-1.5 sm:gap-2";
+
 export const PEDIDO_MATCH_RECEBIDO_FORM_CLASS = "min-w-0 flex-1 basis-0";
 
 export const PEDIDO_MATCH_RECEBIDO_ACEITAR_BTN_CLASS =
@@ -69,6 +78,16 @@ export const PEDIDO_MATCH_RECEBIDO_ACEITAR_BTN_CLASS =
 
 export const PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS =
   "flex min-h-[48px] w-full items-center justify-center rounded-xl border border-rose-500/90 bg-rose-600 px-2 !text-sm font-black uppercase tracking-[0.06em] text-white shadow-[0_4px_14px_-6px_rgba(225,29,72,0.45)] transition hover:bg-rose-500 disabled:pointer-events-none disabled:opacity-55 sm:min-h-[52px] sm:px-4 sm:!text-base";
+
+/**
+ * Aceitar / Recusar — classes usadas por `EidSocialAceitarButton` / `EidSocialRecusarButton`.
+ * Touch e ícones: `app/globals.css` (`data-eid-social-acao-btn`).
+ */
+export const PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS =
+  "flex min-h-0 w-full items-center justify-center gap-1 rounded-full border border-emerald-500/90 bg-emerald-600 px-2.5 py-1 text-[9px] font-black uppercase leading-none tracking-[0.04em] text-white shadow-sm transition hover:bg-emerald-500 disabled:pointer-events-none disabled:opacity-55 sm:px-3 sm:py-1.5 sm:text-[10px]";
+
+export const PEDIDO_MATCH_RECEBIDO_SOCIAL_RECUSAR_BTN_CLASS =
+  "flex min-h-0 w-full items-center justify-center gap-1 rounded-full border border-rose-500/90 bg-rose-600 px-2.5 py-1 text-[9px] font-black uppercase leading-none tracking-[0.04em] text-white shadow-sm transition hover:bg-rose-500 disabled:pointer-events-none disabled:opacity-55 sm:px-3 sm:py-1.5 sm:text-[10px]";
 
 /** Cancelar pedido de desafio enviado (Comunidade): compacto, vermelho (tema claro/escuro via utilitários + globals). */
 export const PEDIDO_DESAFIO_ENVIADO_CANCELAR_BTN_CLASS =

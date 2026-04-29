@@ -26,6 +26,10 @@ export const PROFILE_CARD_TITLE = "text-[12px] font-semibold text-eid-fg leading
 export const PROFILE_CARD_SUBTITLE = "text-[10px] text-eid-text-secondary mt-0.5";
 export const PROFILE_TROPHY_CHIP =
   "rounded-full border border-eid-action-500/30 bg-eid-action-500/10 px-2.5 py-0.5 text-[10px] font-bold text-eid-action-400 tracking-wide";
+
+/** Papel no hero (Atleta, Professor…) — chip claro alinhado ao painel/dashboard. */
+export const PROFILE_HERO_ROLE_BADGE_CLASS =
+  "inline-flex items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-surface)_12%)] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-eid-primary-600 [data-eid-theme=dark]:text-eid-primary-300";
 export const PROFILE_AVATAR_SM = "h-8 w-8 rounded-md object-cover";
 export const PROFILE_AVATAR_MD = "h-10 w-10 rounded-lg object-cover";
 export const PROFILE_AVATAR_LG = "h-16 w-16 rounded-xl object-cover";

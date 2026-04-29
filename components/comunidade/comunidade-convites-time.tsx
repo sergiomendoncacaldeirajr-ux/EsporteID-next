@@ -1,17 +1,17 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { responderConviteEquipe, type ResponderConviteState } from "@/app/comunidade/actions";
 import Image from "next/image";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
-import { EidInviteButton } from "@/components/ui/eid-invite-button";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
+import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
+import { EID_SOCIAL_CARD_FOOTER } from "@/lib/comunidade/social-panel-layout";
 import {
-  PEDIDO_MATCH_RECEBIDO_ACOES_ROW_CLASS,
   PEDIDO_MATCH_RECEBIDO_FORM_CLASS,
-  PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS,
+  PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS,
 } from "@/lib/desafio/flow-ui";
 
 export type ConviteTimeItem = {
@@ -32,9 +32,13 @@ const initial: ResponderConviteState = { ok: false, message: "" };
 export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(responderConviteEquipe, initial);
+  const [clickedAction, setClickedAction] = useState<{ conviteId: number; aceitar: boolean } | null>(null);
 
   useEffect(() => {
-    if (state.ok) router.refresh();
+    if (state.ok) {
+      setClickedAction(null);
+      router.refresh();
+    }
   }, [state.ok, router]);
 
   if (!items.length) {
@@ -105,27 +109,24 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
               </div>
             </div>
 
-            <div
-              className={`${PEDIDO_MATCH_RECEBIDO_ACOES_ROW_CLASS} !mt-0 border-t border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_40%,transparent)] px-2 py-2.5 sm:px-3 sm:py-3`}
-            >
+            <div className={`${EID_SOCIAL_CARD_FOOTER} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !mt-0`}>
               <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                 <input type="hidden" name="convite_id" value={String(c.id)} />
                 <input type="hidden" name="aceitar" value="true" />
-                <EidInviteButton
-                  type="submit"
-                  compact
-                  loading={pending}
-                  label="Convite"
-                  loadingLabel="Enviando..."
-                  className="w-full rounded-xl !text-[11px]"
+                <EidSocialAceitarButton
+                  pending={pending}
+                  busy={pending && clickedAction?.conviteId === c.id && clickedAction.aceitar}
+                  onClick={() => setClickedAction({ conviteId: c.id, aceitar: true })}
                 />
               </form>
               <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                 <input type="hidden" name="convite_id" value={String(c.id)} />
                 <input type="hidden" name="aceitar" value="false" />
-                <button type="submit" disabled={pending} className={PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS}>
-                  <span>Recusar</span>
-                </button>
+                <EidSocialRecusarButton
+                  pending={pending}
+                  busy={pending && clickedAction?.conviteId === c.id && !clickedAction.aceitar}
+                  onClick={() => setClickedAction({ conviteId: c.id, aceitar: false })}
+                />
               </form>
             </div>
           </li>

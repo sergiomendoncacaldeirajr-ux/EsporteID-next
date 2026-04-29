@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { limparNotificacoesDesafio, limparNotificacoesEquipe } from "@/app/comunidade/actions";
-import { PEDIDO_LIMPAR_COMPACT_BTN_CLASS, PEDIDO_VER_MAIS_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
+import { EidLimparCompactButton } from "@/components/ui/eid-limpar-compact-button";
+import { EidNotificacaoRow } from "@/components/ui/eid-notificacao-row";
+import { PEDIDO_VER_MAIS_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
 
 const INITIAL = 3;
 
@@ -31,10 +33,12 @@ export function ComunidadeSetorNotificacoes({
 
   return (
     <>
-      <ul className="mt-2 space-y-2">
+      <ul className="mt-2 list-none space-y-2 p-0">
         {visible.map((n) => (
-          <li key={n.id} className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-            <p className={`text-xs leading-relaxed ${n.lida ? "text-eid-text-secondary" : "text-eid-fg"}`}>{n.mensagem}</p>
+          <li key={n.id}>
+            <EidNotificacaoRow unread={n.lida !== true} density="compact">
+              <p className={`text-xs leading-relaxed ${n.lida ? "text-eid-text-secondary" : "text-eid-fg"}`}>{n.mensagem}</p>
+            </EidNotificacaoRow>
           </li>
         ))}
       </ul>
@@ -42,15 +46,17 @@ export function ComunidadeSetorNotificacoes({
         {items.length > INITIAL ? (
           <button
             type="button"
+            data-eid-compact-chip-btn="true"
             onClick={() => setExpanded((v) => !v)}
             className={PEDIDO_VER_MAIS_COMPACT_BTN_CLASS}
           >
             {expanded ? "Ver menos" : "Ver mais"}
           </button>
         ) : null}
-        <button
+        <EidLimparCompactButton
           type="button"
-          disabled={pending}
+          pending={pending}
+          busy={pending}
           onClick={() => {
             void (async () => {
               if (!confirm(`Apagar todas as notificações deste bloco (${sectorLabel})?`)) return;
@@ -63,10 +69,7 @@ export function ComunidadeSetorNotificacoes({
               }
             })();
           }}
-          className={PEDIDO_LIMPAR_COMPACT_BTN_CLASS}
-        >
-          {pending ? "…" : "Limpar"}
-        </button>
+        />
       </div>
     </>
   );

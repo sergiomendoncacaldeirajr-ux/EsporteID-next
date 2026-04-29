@@ -1,6 +1,8 @@
 import type { HTMLAttributes } from "react";
 
-type Variant = "default" | "compact" | "ranking" | "ranking-tight";
+export type EidSealPillVariant = "default" | "compact" | "emphasis" | "ranking" | "ranking-tight";
+
+type Variant = EidSealPillVariant;
 
 const variantClass: Record<
   Variant,
@@ -11,6 +13,14 @@ const variantClass: Record<
     label: "flex items-center rounded-l-full bg-[var(--eid-seal-label-bg)] px-[7px] py-px uppercase tracking-wide text-[var(--eid-seal-label-fg)]",
     score:
       "flex items-center rounded-r-full bg-[var(--eid-seal-score-bg)] px-[7px] py-px tabular-nums text-[var(--eid-seal-score-fg)]",
+  },
+  /** Entre compact e default — ex.: carrossel Performance EID no perfil. */
+  emphasis: {
+    wrap: "text-[8px] sm:text-[8.5px]",
+    label:
+      "flex items-center rounded-l-full bg-[var(--eid-seal-label-bg)] px-[6px] py-[3px] uppercase tracking-wide text-[var(--eid-seal-label-fg)] sm:px-[7px]",
+    score:
+      "flex items-center rounded-r-full bg-[var(--eid-seal-score-bg)] px-[6px] py-[3px] tabular-nums text-[var(--eid-seal-score-fg)] sm:px-[7px]",
   },
   compact: {
     wrap: "text-[6px] sm:text-[6.5px]",

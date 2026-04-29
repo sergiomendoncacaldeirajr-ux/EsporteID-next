@@ -212,7 +212,11 @@ export default async function ProfessorPublicPage({
         ) : null}
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <ProfileSection title="Proposta profissional" className="min-w-0">
+          <ProfileSection
+            title="Proposta profissional"
+            className="min-w-0"
+            info="Apresentação, certificações e público que o professor atende — o resumo do trabalho dele na plataforma."
+          >
             <div className={`${PROFILE_CARD_BASE} p-3 sm:p-4`}>
               <p className="text-[11px] leading-relaxed text-eid-text-secondary sm:text-xs">
                 {professor.bio_profissional ??
@@ -258,7 +262,11 @@ export default async function ProfessorPublicPage({
             </div>
           </ProfileSection>
 
-          <ProfileSection title="Esportes e nota docente" className="min-w-0">
+          <ProfileSection
+            title="Esportes e nota docente"
+            className="min-w-0"
+            info="Modalidades em que oferece aulas, valores base e avaliações de alunos (nota docente), quando existirem."
+          >
             <div className="mt-2 space-y-2">
               {(esportes ?? []).map((item, idx) => {
                 const esporte = Array.isArray(item.esportes) ? item.esportes[0] : item.esportes;
@@ -293,7 +301,11 @@ export default async function ProfessorPublicPage({
         </div>
 
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <ProfileSection title="Formato das aulas" className="min-w-0">
+          <ProfileSection
+            title="Formato das aulas"
+            className="min-w-0"
+            info="Presencial, online, individual ou em grupo, além de política de cancelamento quando informada."
+          >
             <div className={`${PROFILE_CARD_BASE} p-3 sm:p-4`}>
               <div className="flex flex-wrap gap-1.5">
                 {Array.isArray(professor.formato_aula_json) && professor.formato_aula_json.length ? (
@@ -323,7 +335,11 @@ export default async function ProfessorPublicPage({
             </div>
           </ProfileSection>
 
-          <ProfileSection title="Locais vinculados" className="min-w-0">
+          <ProfileSection
+            title="Locais vinculados"
+            className="min-w-0"
+            info="Espaços ou endereços onde o professor atua, conforme cadastro e tipo de vínculo."
+          >
             <div className="mt-2 space-y-2">
               {(locais ?? []).length ? (
                 (locais ?? []).map((item, idx) => {

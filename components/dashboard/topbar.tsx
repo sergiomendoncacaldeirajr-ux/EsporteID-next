@@ -211,7 +211,7 @@ export function DashboardTopbar({
       </Suspense>
     <header
       id={persistent ? "eid-persistent-topbar" : undefined}
-      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[color:var(--eid-border-subtle)] bg-eid-bg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_6px_18px_-12px_rgba(0,0,0,0.34)] backdrop-blur-xl md:mb-3`}
+      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-transparent bg-eid-bg backdrop-blur-xl md:mb-3`}
       style={{
         paddingTop: "max(0px, env(safe-area-inset-top, 0px))",
         paddingLeft: "max(0px, env(safe-area-inset-left, 0px))",
@@ -219,41 +219,59 @@ export function DashboardTopbar({
       }}
     >
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
-        <div className="flex items-center justify-between gap-2 py-1 sm:py-2">
+        <div className="flex items-center justify-between gap-2 py-2.5 sm:py-3">
           <Link href={getContextHomeHref(activeContext)} className="min-w-0 shrink transition hover:opacity-90">
-            <LogoWordmark className="h-8 max-w-[min(52vw,230px)] object-left sm:h-10 sm:max-w-[min(58vw,300px)]" />
+            <LogoWordmark className="h-10 max-w-[min(64vw,300px)] object-left sm:h-12 sm:max-w-[min(68vw,390px)]" />
           </Link>
 
-          <div className="flex shrink-0 items-center gap-1.5">
-            <ActiveContextSwitch activeContext={activeContext} availableContexts={availableContexts} />
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="hidden md:flex">
+              <ActiveContextSwitch activeContext={activeContext} availableContexts={availableContexts} />
+            </div>
             <NotificationBell userId={meId} />
-            <EidThemeToggle variant="toolbar" />
+            <EidThemeToggle
+              variant="toolbar"
+              className="h-8 w-8 rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,transparent)] text-eid-text-secondary shadow-none hover:border-eid-primary-500/35 md:h-9 md:w-9"
+            />
             <SignOutButton variant="icon" />
           </div>
         </div>
 
-        <form onSubmit={onSubmit} className="mb-0 pb-1.5 sm:pb-2.5">
+        <form onSubmit={onSubmit} className="mb-0 pb-2 sm:pb-3">
           <label htmlFor="eid-topbar-search" className="sr-only">
             Buscar no painel
           </label>
-          <SearchSuggestInput
-            id="eid-topbar-search"
-            name="q"
-            value={q}
-            onChange={setQ}
-            scope="global"
-            minChars={3}
-            placeholder={
-              activeContext === "organizador"
-                ? "Buscar torneios, locais…"
-                : activeContext === "professor"
-                  ? "Buscar alunos, aulas…"
-                  : activeContext === "espaco"
-                    ? "Buscar reservas, sócios…"
-                    : "Buscar atletas, locais…"
-            }
-            className="eid-input-dark h-9 w-full rounded-[var(--eid-radius-md)] border border-[color:var(--eid-border-subtle)] px-3.5 text-sm text-eid-fg placeholder:text-eid-text-secondary/80 md:h-10"
-          />
+          <div className="relative">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              className="pointer-events-none absolute left-4 top-1/2 z-[2] h-5 w-5 -translate-y-1/2 text-[color:color-mix(in_srgb,var(--eid-text-secondary)_82%,#475569_18%)]"
+              aria-hidden
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3.2-3.2" strokeLinecap="round" />
+            </svg>
+            <SearchSuggestInput
+              id="eid-topbar-search"
+              name="q"
+              value={q}
+              onChange={setQ}
+              scope="global"
+              minChars={3}
+              placeholder={
+                activeContext === "organizador"
+                  ? "Buscar torneios, locais..."
+                  : activeContext === "professor"
+                    ? "Buscar alunos, aulas..."
+                    : activeContext === "espaco"
+                      ? "Buscar reservas, sócios..."
+                      : "Buscar atletas, locais..."
+              }
+              className="h-11 w-full rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,var(--eid-border)_12%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] pl-12 pr-4 text-[13px] text-eid-fg shadow-[inset_0_1px_0_color-mix(in_srgb,var(--eid-fg)_8%,transparent)] outline-none transition placeholder:text-eid-text-secondary/88 focus:border-eid-primary-500/35 sm:h-12 sm:text-[15px]"
+            />
+          </div>
         </form>
       </div>
 

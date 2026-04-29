@@ -10,7 +10,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
-import { PEDIDO_LIMPAR_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
+import { EidLimparCompactButton } from "@/components/ui/eid-limpar-compact-button";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
   EID_SOCIAL_CARD_FOOTER,
@@ -216,14 +216,12 @@ export function ComunidadeSugestoesEnviadasMatch({
                 <div className={EID_SOCIAL_CARD_FOOTER}>
                   <form action={formAction}>
                     <input type="hidden" name="sugestao_id" value={String(s.id)} />
-                    <button
+                    <EidLimparCompactButton
                       type="submit"
-                      disabled={pending}
+                      pending={pending}
+                      busy={pending && clickedClearId === s.id}
                       onClick={() => setClickedClearId(s.id)}
-                      className={PEDIDO_LIMPAR_COMPACT_BTN_CLASS}
-                    >
-                      {pending && clickedClearId === s.id ? "Limpando..." : "Limpar"}
-                    </button>
+                    />
                   </form>
                 </div>
               ) : null}

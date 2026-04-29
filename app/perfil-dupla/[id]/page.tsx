@@ -446,21 +446,19 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
           </section>
           ) : null}
 
-          <ProfileSection title="EID e estatísticas">
+          <ProfileSection
+            title="EID e estatísticas"
+            info="Nota e métricas da dupla neste esporte: ranking, jogos e desempenho conjunto."
+          >
             {timeResolvido ? (
               <>
-                <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-0`}>
-                  <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Resumo EID</p>
-                    <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
-                      Ranking
-                    </span>
-                  </div>
-                  <div className="p-3">
+                <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-3`}>
+                  <p className="text-[11px] font-semibold text-eid-fg">Esporte: {esp?.nome ?? "Esporte não definido"}</p>
+                  <div className="mt-2">
                   <div className="flex justify-center">
                     <EidBadge score={Number(timeResolvido.eid_time ?? 0)} history={eidLogsDupla ?? []} label="EID dupla" />
                   </div>
-                  <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-4">
+                  <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[color:var(--eid-border-subtle)] pt-3">
                     <div className="text-center">
                       <p className="text-lg font-bold tabular-nums text-eid-action-500 sm:text-xl sm:font-black">
                         {Number(timeResolvido.eid_time ?? 0).toFixed(1)}
@@ -486,7 +484,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                       title={`Estatísticas · ${esp?.nome ?? "Esporte"}`}
                       fullscreen
                       topMode="backOnly"
-                      className="mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
+                      className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-xl border border-eid-action-500/40 bg-eid-action-500/10 px-3 text-[11px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/70 hover:bg-eid-action-500/15"
                     >
                       <span>Estatísticas completas · {esp?.nome ?? "este esporte"}</span>
                     </ProfileEditDrawerTrigger>
@@ -526,14 +524,8 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                 />
               </>
             ) : (
-              <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-0`}>
-                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Resumo EID</p>
-                  <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
-                    Sem time ativo
-                  </span>
-                </div>
-                <div className="p-3">
+              <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-3`}>
+                <div>
                 <p className="text-xs text-eid-text-secondary">
                   Ainda não há <strong className="text-eid-fg">time de dupla ativo</strong> no ranking com estes dois atletas. O EID de equipe aparece quando a formação existir no radar.
                 </p>
@@ -566,7 +558,10 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             )}
           </ProfileSection>
 
-          <ProfileSection title="Resultados">
+          <ProfileSection
+            title="Resultados"
+            info="Resumo de vitórias, derrotas e empates da formação em partidas registradas."
+          >
             {timeResolvidoId ? (
               <ProfileFormacaoResultados
                 totais={bundleResultadosDupla.totais}
@@ -587,7 +582,10 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             </p>
           </ProfileSection>
 
-          <ProfileSection title="Participantes">
+          <ProfileSection
+            title="Participantes"
+            info="Atletas que compõem esta dupla, com acesso ao perfil individual de cada um."
+          >
             {isDonoDupla && timeResolvidoId ? (
               <div className="mt-2 space-y-2">
                 <p className="text-sm text-eid-text-secondary">
@@ -676,7 +674,10 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             </div>
           ) : null}
 
-          <ProfileSection title="Conquistas">
+          <ProfileSection
+            title="Conquistas"
+            info="Selos e marcos da dupla na plataforma (quando houver)."
+          >
             <ProfileAchievementsShelf achievements={conquistas} emptyText="Conquistas aparecerão conforme evolução da dupla." />
           </ProfileSection>
         </div>

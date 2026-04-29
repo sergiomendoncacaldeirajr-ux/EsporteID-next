@@ -14,6 +14,7 @@ import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/li
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { DismissibleSectionIntro } from "@/components/ui/dismissible-section-intro";
+import { EidSealPill } from "@/components/ui/eid-seal-pill";
 
 export const metadata = {
   title: "Painel",
@@ -888,11 +889,8 @@ export default async function DashboardPage({ searchParams }: Props) {
                         {iniciais(p?.nome)}
                       </div>
                     )}
-                    <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 overflow-hidden rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_80%,var(--eid-primary-500)_20%)] text-[7px] font-black leading-none shadow-sm sm:text-[8px]">
-                      <span className="bg-eid-bg px-1.5 py-0.5 text-eid-fg">EID</span>
-                      <span className="bg-eid-primary-500 px-1.5 py-0.5 text-[var(--eid-brand-ink)]">
-                        {Number(row.nota_eid ?? 0).toFixed(1)}
-                      </span>
+                    <div className="pointer-events-none absolute -bottom-1 left-1/2 z-[1] -translate-x-1/2">
+                      <EidSealPill value={Number(row.nota_eid ?? 0)} variant="compact" />
                     </div>
                   </div>
                   <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
@@ -934,11 +932,8 @@ export default async function DashboardPage({ searchParams }: Props) {
                         D
                       </div>
                     )}
-                    <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 overflow-hidden rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_80%,var(--eid-primary-500)_20%)] text-[7px] font-black leading-none shadow-sm sm:text-[8px]">
-                      <span className="bg-eid-bg px-1.5 py-0.5 text-eid-fg">EID</span>
-                      <span className="bg-eid-primary-500 px-1.5 py-0.5 text-[var(--eid-brand-ink)]">
-                        {Number(duplaMaisProxima.t.eid_time ?? 0).toFixed(1)}
-                      </span>
+                    <div className="pointer-events-none absolute -bottom-1 left-1/2 z-[1] -translate-x-1/2">
+                      <EidSealPill value={Number(duplaMaisProxima.t.eid_time ?? 0)} variant="compact" />
                     </div>
                   </div>
                   <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
@@ -984,11 +979,8 @@ export default async function DashboardPage({ searchParams }: Props) {
                         T
                       </div>
                     )}
-                    <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 overflow-hidden rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_80%,var(--eid-primary-500)_20%)] text-[7px] font-black leading-none shadow-sm sm:text-[8px]">
-                      <span className="bg-eid-bg px-1.5 py-0.5 text-eid-fg">EID</span>
-                      <span className="bg-eid-primary-500 px-1.5 py-0.5 text-[var(--eid-brand-ink)]">
-                        {Number(timeMaisProximo.t.eid_time ?? 0).toFixed(1)}
-                      </span>
+                    <div className="pointer-events-none absolute -bottom-1 left-1/2 z-[1] -translate-x-1/2">
+                      <EidSealPill value={Number(timeMaisProximo.t.eid_time ?? 0)} variant="compact" />
                     </div>
                   </div>
                   <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">
@@ -1115,11 +1107,8 @@ export default async function DashboardPage({ searchParams }: Props) {
                         {String(t.tipo ?? "").toLowerCase() === "dupla" ? "D" : "T"}
                       </div>
                     )}
-                    <div className="absolute -bottom-1 left-1/2 flex -translate-x-1/2 overflow-hidden rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_80%,var(--eid-primary-500)_20%)] text-[7px] font-black leading-none shadow-sm sm:text-[8px]">
-                      <span className="bg-eid-bg px-1.5 py-0.5 text-eid-fg">EID</span>
-                      <span className="bg-eid-primary-500 px-1.5 py-0.5 text-[var(--eid-brand-ink)]">
-                        {Number(t.eid_time ?? 0).toFixed(1)}
-                      </span>
+                    <div className="pointer-events-none absolute -bottom-1 left-1/2 z-[1] -translate-x-1/2">
+                      <EidSealPill value={Number(t.eid_time ?? 0)} variant="compact" />
                     </div>
                   </div>
                   <p className="mt-1.5 inline-flex max-w-full items-center justify-center gap-0.5 truncate text-[8px] font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] leading-none">

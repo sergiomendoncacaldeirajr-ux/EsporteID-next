@@ -9,6 +9,8 @@ type Props = HTMLAttributes<HTMLDivElement> & {
   estado?: string | null;
   compact?: boolean;
   align?: "start" | "center" | "end";
+  /** `stacked` = cidade e estado em linhas separadas; `inline` = "Cidade - Estado" na mesma linha. */
+  layout?: "stacked" | "inline";
   /** Quando não há cidade nem estado (ou string vazia). */
   emptyLabel?: string;
 };
@@ -19,6 +21,7 @@ export function EidCityState({
   estado,
   compact = false,
   align = "start",
+  layout = "stacked",
   emptyLabel = "Localização não informada",
   className = "",
   ...props
@@ -54,6 +57,28 @@ export function EidCityState({
           <MapPin className={`${iconClass} shrink-0 opacity-90`} strokeWidth={2.25} aria-hidden />
           <span className="min-w-0 truncate">{emptyLabel}</span>
         </div>
+      </div>
+    );
+  }
+
+  if (layout === "inline") {
+    return (
+      <div
+        className={`flex min-w-0 max-w-full items-center gap-1 ${rowJustify} ${citySize} ${className}`.trim()}
+        {...props}
+      >
+        <MapPin className={`${iconClass} shrink-0 opacity-90 ${cityMuted}`} strokeWidth={2.25} aria-hidden />
+        <span className="min-w-0 truncate text-eid-fg">
+          {showState ? (
+            <>
+              <span className={`font-semibold ${cityMuted}`}>{c0 !== "-" ? c0 : "—"}</span>
+              <span className="font-normal text-eid-text-secondary"> - </span>
+              <span className="font-bold">{e0}</span>
+            </>
+          ) : (
+            <span className="font-semibold">{c0 !== "-" ? c0 : "—"}</span>
+          )}
+        </span>
       </div>
     );
   }

@@ -658,16 +658,15 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
           </div>
         </div>
 
-        <ProfileSection title="Panorama" className="mt-4">
+        <ProfileSection
+          title="Panorama"
+          className="mt-4"
+          info="Visão geral do desempenho neste esporte: nota EID, ranking, partidas e aproveitamento."
+        >
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
-              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Aproveitamento (V+D)</p>
-                <span className="rounded-full border border-emerald-500/35 bg-emerald-500/12 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-emerald-400">
-                  Performance
-                </span>
-              </div>
-              <div className={PROFILE_CARD_PAD_MD}>
+            <div className={`overflow-hidden ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
+              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Aproveitamento (V+D)</p>
+              <div>
                 <p className="mt-1 text-2xl font-black text-eid-fg">
                   {resumoAtivo.winRate != null ? `${resumoAtivo.winRate}%` : "—"}
                 </p>
@@ -680,14 +679,9 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                 </div>
               </div>
             </div>
-            <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
-              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Posição no ranking</p>
-                <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
-                  Rank
-                </span>
-              </div>
-              <div className={PROFILE_CARD_PAD_MD}>
+            <div className={`overflow-hidden ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
+              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Posição no ranking</p>
+              <div>
                 <p className="mt-1 text-2xl font-black text-eid-fg">
                   {resumoAtivo.posicao != null ? `#${resumoAtivo.posicao}` : "—"}
                 </p>
@@ -697,15 +691,10 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
               </div>
             </div>
             {view === "individual" && ue.categoria ? (
-              <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
-                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Categoria</p>
-                  <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-primary-300">
-                    Nível
-                  </span>
-                </div>
-                <div className={PROFILE_CARD_PAD_MD}>
-                  <p className="text-[12px] font-semibold text-eid-fg">{ue.categoria}</p>
+              <div className={`overflow-hidden ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
+                <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Categoria</p>
+                <div>
+                  <p className="mt-1 text-[12px] font-semibold text-eid-fg">{ue.categoria}</p>
                 </div>
               </div>
             ) : null}
@@ -713,16 +702,14 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
         </ProfileSection>
 
         {filteredFormationList.length > 0 || showDuplasSemTime ? (
-          <ProfileSection title="Equipes e duplas neste esporte" className="mt-4">
+          <ProfileSection
+            title="Equipes e duplas neste esporte"
+            className="mt-4"
+            info="Formações em que o atleta joga esta modalidade, com nota EID da equipe quando disponível."
+          >
             {showDuplasSemTime ? (
-              <div className={`mt-2 overflow-hidden ${PROFILE_CARD_BASE}`}>
-                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Duplas sem time ativo</p>
-                  <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
-                    Atenção
-                  </span>
-                </div>
-                <div className="space-y-2 p-3">
+              <div className={`mt-2 overflow-hidden ${PROFILE_CARD_BASE} space-y-2 p-3`}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Duplas sem time ativo</p>
                 <p className="text-[10px] text-eid-text-secondary">
                   Dupla registrada sem time ativo comum no ranking — abra o perfil da dupla para ver detalhes.
                 </p>
@@ -755,11 +742,10 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                     </div>
                   ))}
                 </div>
-                </div>
               </div>
             ) : null}
 
-            <div className="mt-3 space-y-4">
+            <div className="mt-2 space-y-3">
               {filteredFormationList.map((f) => {
                 const partidasForm = listaColetivoPorTime.get(f.id) ?? [];
                 let cv = 0;
@@ -790,12 +776,6 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                     key={`form-${f.id}`}
                     className={`overflow-hidden ${PROFILE_CARD_BASE}`}
                   >
-                    <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Formação</span>
-                      <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
-                        {tipoLabel}
-                      </span>
-                    </div>
                     <div className={`flex flex-wrap items-start gap-3 ${PROFILE_CARD_PAD_MD}`}>
                       <Link
                         href={hrefPerfilFormacao}
@@ -1055,7 +1035,11 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
         ) : null}
 
         {showIndividual ? (
-        <ProfileSection title="Histórico de partidas (individual)" className="mt-4">
+        <ProfileSection
+          title="Histórico de partidas (individual)"
+          className="mt-4"
+          info="Confrontos 1v1 (ou individual) neste esporte com placar e adversário, conforme registros do ranking."
+        >
           {lista.length === 0 ? (
             <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-surface)_12%)] p-3 text-[11px] text-eid-text-secondary">
               Sem partidas individuais para exibir neste esporte. Quando houver jogos válidos no ranking, eles aparecem
@@ -1159,7 +1143,11 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
         </ProfileSection>
         ) : null}
 
-        <ProfileSection title="Head-to-head" className="mt-4">
+        <ProfileSection
+          title="Head-to-head"
+          className="mt-4"
+          info="Confrontos diretos com oponentes frequentes neste esporte: vitórias, derrotas e últimos jogos."
+        >
           <div className="mt-2 space-y-3">
             {showIndividual ? (
               <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>

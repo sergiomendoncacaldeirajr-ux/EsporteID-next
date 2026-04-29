@@ -19,7 +19,7 @@ const IC = {
 function IconHome({ active }: { active: boolean }) {
   const c = active ? IC.active : IC.inactive;
   return (
-    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-[21px] w-[21px]" fill="none" aria-hidden>
       <path d="M4 11.3L12 4l8 7.3V20h-5.4v-4.8H9.4V20H4v-8.7z" fill={c} fillOpacity={active ? 0.96 : 0.8} />
     </svg>
   );
@@ -29,7 +29,7 @@ function IconHome({ active }: { active: boolean }) {
 function IconAgenda({ active }: { active: boolean }) {
   const c = active ? IC.active : IC.inactive;
   return (
-    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-[21px] w-[21px]" fill="none" aria-hidden>
       <rect x="4" y="5.5" width="16" height="14.5" rx="2.5" fill={c} fillOpacity={active ? 0.96 : 0.8} />
       <rect x="7.3" y="3.2" width="2.1" height="4.3" rx="1.05" fill={c} />
       <rect x="14.6" y="3.2" width="2.1" height="4.3" rx="1.05" fill={c} />
@@ -42,7 +42,7 @@ function IconAgenda({ active }: { active: boolean }) {
 function IconTrophy({ active }: { active: boolean }) {
   const c = active ? IC.active : IC.inactive;
   return (
-    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-[21px] w-[21px]" fill="none" aria-hidden>
       <path d="M7.1 4.5h9.8v5.4a4.9 4.9 0 01-9.8 0V4.5z" fill={c} fillOpacity={active ? 0.96 : 0.8} />
       <path d="M5 5.7h2.1V8a2.3 2.3 0 01-2.1-2.3zm13.9 0H21V8a2.3 2.3 0 01-2.1 2.3z" fill={c} fillOpacity={active ? 0.96 : 0.8} />
       <path d="M12 15v3.1" stroke={c} strokeWidth="2" strokeLinecap="round" />
@@ -55,7 +55,7 @@ function IconTrophy({ active }: { active: boolean }) {
 function IconSocial({ active }: { active: boolean }) {
   const c = active ? IC.active : IC.inactive;
   return (
-    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-[21px] w-[21px]" fill="none" aria-hidden>
       <path d="M5 6.8h14a2 2 0 012 2v6.1a2 2 0 01-2 2h-5.5l-2.9 2.6v-2.6H5a2 2 0 01-2-2V8.8a2 2 0 012-2z" fill={c} fillOpacity={active ? 0.96 : 0.8} />
       <circle cx="9.2" cy="11.8" r="1.1" fill="var(--eid-card)" />
       <circle cx="12" cy="11.8" r="1.1" fill="var(--eid-card)" />
@@ -68,7 +68,7 @@ function IconSocial({ active }: { active: boolean }) {
 function IconPerfil({ active }: { active: boolean }) {
   const c = active ? IC.active : IC.inactive;
   return (
-    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" aria-hidden>
+    <svg viewBox="0 0 24 24" className="h-[21px] w-[21px]" fill="none" aria-hidden>
       <circle cx="12" cy="8.2" r="3.5" fill={c} fillOpacity={active ? 0.96 : 0.8} />
       <path d="M5 19.2c.9-3.3 3.7-5.3 7-5.3s6.1 2 7 5.3H5z" fill={c} fillOpacity={active ? 0.96 : 0.8} />
     </svg>
@@ -515,7 +515,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     <>
       {/* Padding do conteúdo: #app-main-column (--eid-shell-footer-offset). Espaçador removido para não duplicar folga. */}
       <nav
-        className="pointer-events-auto w-full bg-eid-card"
+        className="pointer-events-auto w-full bg-transparent px-2.5"
         style={{
           paddingBottom: "max(0px, env(safe-area-inset-bottom, 0px))",
           marginBottom: "calc(-1 * max(0px, env(safe-area-inset-bottom, 0px)))",
@@ -523,15 +523,15 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         aria-label="Navegação principal"
       >
         <div
-          className="relative overflow-visible rounded-t-[16px] rounded-b-none bg-eid-card"
+          className="relative overflow-visible rounded-[2rem] border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_94%,#ffffff_6%)] shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]"
           style={{
-            minHeight: "calc(4rem + max(0px, env(safe-area-inset-bottom, 0px)))",
-            paddingBottom: "0.35rem",
+            minHeight: "calc(4.2rem + max(0px, env(safe-area-inset-bottom, 0px)))",
+            paddingBottom: "0.45rem",
             paddingLeft: "max(0px, env(safe-area-inset-left))",
             paddingRight: "max(0px, env(safe-area-inset-right))",
           }}
         >
-          <div className="flex items-end justify-around px-1 pt-1.5">
+          <div className="flex items-end justify-around px-1.5 pt-2">
             {items.map((item) => {
               if (item.rank) {
                 return (
@@ -543,7 +543,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                     aria-label={item.label}
                   >
                     <span
-                      className="pointer-events-none absolute -top-6 left-1/2 h-12 w-12 -translate-x-1/2 rounded-full blur-xl"
+                      className="pointer-events-none absolute -top-7 left-1/2 h-14 w-14 -translate-x-1/2 rounded-full blur-xl"
                       style={{
                         background: item.active
                           ? "radial-gradient(circle, color-mix(in srgb, var(--eid-action-400) 70%, transparent), transparent 72%)"
@@ -551,18 +551,23 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                       }}
                     />
                     <span
-                      className={`absolute -top-[1.62rem] flex h-[46px] w-[46px] items-center justify-center rounded-full transition-all ${
+                      className={`absolute -top-[2.15rem] flex h-[58px] w-[58px] items-center justify-center rounded-full transition-all ${
                         item.active
-                          ? "bg-eid-action-400 ring-[2.5px] ring-eid-card shadow-[0_8px_20px_-6px_color-mix(in_srgb,var(--eid-action-500)_80%,transparent)]"
-                          : "bg-eid-action-500/85 ring-[2.5px] ring-eid-card shadow-[0_6px_14px_-7px_color-mix(in_srgb,var(--eid-action-500)_70%,transparent)]"
+                          ? "bg-[color:color-mix(in_srgb,var(--eid-action-500)_82%,#f59e0b_18%)] ring-[4px] ring-[color:color-mix(in_srgb,var(--eid-card)_94%,#ffffff_6%)] shadow-[0_8px_18px_-12px_color-mix(in_srgb,var(--eid-action-500)_62%,transparent)]"
+                          : "bg-eid-action-500/85 ring-[4px] ring-[color:color-mix(in_srgb,var(--eid-card)_94%,#ffffff_6%)] shadow-[0_10px_20px_-12px_color-mix(in_srgb,var(--eid-action-500)_70%,transparent)]"
                       }`}
                     >
-                      <IconTrophy active={item.active} />
+                      <svg viewBox="0 0 24 24" className="h-[24px] w-[24px] text-white" fill="none" aria-hidden>
+                        <path d="M7.1 4.5h9.8v5.4a4.9 4.9 0 0 1-9.8 0V4.5z" fill="currentColor" fillOpacity="0.98" />
+                        <path d="M5 5.7h2.1V8A2.3 2.3 0 0 1 5 5.7zm13.9 0H21V8a2.3 2.3 0 0 1-2.1-2.3z" fill="currentColor" fillOpacity="0.98" />
+                        <path d="M12 15v3.1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        <rect x="8.4" y="18.1" width="7.2" height="2.4" rx="1.2" fill="currentColor" fillOpacity="0.98" />
+                      </svg>
                     </span>
-                    <span className="h-[22px] w-[36px]" aria-hidden />
+                    <span className="h-[28px] w-[40px]" aria-hidden />
                     <span
-                      className="text-[8px] font-medium leading-none"
-                      style={{ color: item.active ? "var(--eid-fg)" : "var(--eid-text-secondary)" }}
+                      className="text-[10px] font-semibold leading-none"
+                      style={{ color: item.active ? "var(--eid-action-500)" : "var(--eid-text-secondary)" }}
                     >
                       {item.label}
                     </span>
@@ -579,8 +584,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   aria-label={item.label}
                 >
                   <span
-                    className={`relative flex h-[25px] w-[36px] items-center justify-center rounded-xl transition-all ${
-                      item.active ? "bg-eid-primary-500/12" : "bg-transparent"
+                    className={`relative flex h-[30px] w-[38px] items-center justify-center rounded-xl transition-all ${
+                      item.active ? "bg-eid-primary-500/10" : "bg-transparent"
                     }`}
                     style={{ color: item.active ? "var(--eid-primary-500)" : "var(--eid-text-secondary)" }}
                   >
@@ -589,7 +594,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   </span>
 
                   <span
-                    className="text-[8px] font-medium leading-none transition"
+                    className="text-[10px] font-medium leading-none transition"
                     style={{ color: item.active ? "var(--eid-fg)" : "var(--eid-text-secondary)" }}
                   >
                     {item.label}

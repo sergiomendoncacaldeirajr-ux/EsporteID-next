@@ -269,7 +269,12 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
           </div>
         </section>
 
-        {isMembroAtivo || acessoPublicoPago ? <ProfileSection title="Quem vai jogar aqui" className="mt-4">
+        {isMembroAtivo || acessoPublicoPago ? (
+          <ProfileSection
+            title="Quem vai jogar aqui"
+            className="mt-4"
+            info="Reservas e quem está inscrito nas quadras ou horários deste espaço, quando a agenda está disponível."
+          >
           <div className={`${PROFILE_CARD_BASE} p-4 sm:p-5`}>
             <div className="grid gap-3 lg:grid-cols-2">
             {(reservas ?? []).length ? (
@@ -341,7 +346,8 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
             )}
             </div>
           </div>
-        </ProfileSection> : null}
+        </ProfileSection>
+        ) : null}
 
         <section className="mt-4 grid gap-4 lg:grid-cols-2">
           <div className={`${PROFILE_CARD_BASE} p-4 sm:p-5`}>

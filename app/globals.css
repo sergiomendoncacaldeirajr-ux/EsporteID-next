@@ -119,12 +119,14 @@ body.eid-app-shell {
    * (Safari / PWA) costuma ignorar ou combinar mal com o conteúdo sob o Dynamic Island. */
   padding-top: 0;
   padding-bottom: var(--eid-shell-footer-offset);
+  background-image: none;
 }
 
 /* Área rolável principal abaixo do topbar fixo (fallback SSR até o cliente medir em px). */
 #eid-app-shell-main-wrap {
   box-sizing: border-box;
   padding-top: var(--eid-shell-header-offset);
+  background-color: var(--eid-bg);
 }
 
 @media (max-width: 767px) {
@@ -332,16 +334,12 @@ body.eid-app-shell {
 
 [data-eid-theme="light"] .eid-surface-panel {
   border-color: color-mix(in srgb, var(--eid-border-subtle) 70%, var(--eid-primary-500) 30%);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--eid-card) 95%, white 5%),
-    color-mix(in srgb, var(--eid-surface) 93%, var(--eid-primary-500) 7%)
-  );
+  background: var(--eid-card);
 }
 
 [data-eid-theme="light"] .eid-list-item {
   border-color: color-mix(in srgb, var(--eid-border-subtle) 78%, black 22%);
-  background-color: color-mix(in srgb, var(--eid-surface) 97%, var(--eid-primary-500) 3%);
+  background-color: var(--eid-surface);
 }
 
 [data-eid-theme="light"] .text-eid-text-secondary {
@@ -458,6 +456,12 @@ header#eid-persistent-topbar input,
 header#eid-persistent-topbar textarea {
   -webkit-user-select: text;
   user-select: text;
+}
+
+/* Modal do sininho: não herdar escalas globais do topbar (especialmente iOS). */
+#eid-persistent-topbar [data-eid-notif-modal] :where(svg) {
+  width: unset !important;
+  height: unset !important;
 }
 
 #eid-mobile-bottom-nav {
@@ -707,7 +711,7 @@ header#eid-persistent-topbar textarea {
 
     /* Android: cola o header no topo sem linha/divisão com a barra do sistema. */
     #eid-persistent-topbar {
-      background: var(--eid-card) !important;
+      background: var(--eid-bg) !important;
       background-image: none !important;
       border-bottom-color: transparent !important;
       box-shadow: none !important;
@@ -720,7 +724,7 @@ header#eid-persistent-topbar textarea {
       right: 0;
       top: -2px;
       height: 2px;
-      background: var(--eid-card);
+      background: var(--eid-bg);
       pointer-events: none;
     }
 
@@ -1027,11 +1031,7 @@ label:has(input.sr-only):not(.eid-no-press):active {
 
 body {
   background-color: var(--eid-bg);
-  background-image: radial-gradient(
-    ellipse 120% 70% at 50% -28%,
-    color-mix(in srgb, var(--eid-primary-500) 9%, transparent),
-    transparent 55%
-  );
+  background-image: none;
   color: var(--eid-fg);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   font-feature-settings: "kern" 1, "liga" 1;
@@ -1103,6 +1103,51 @@ select,
     font-weight: 800;
   }
 
+  /* Aceitar/Recusar (e Aprovar) nos cards sociais — evita min-height 44px + padding 0.9rem que “some” com ícones pequenos. */
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
+    button[data-eid-social-acao-btn="true"] {
+    min-height: 0 !important;
+    padding: 6px 12px !important;
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+    font-weight: 800 !important;
+    border-radius: 9999px !important;
+  }
+
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
+    button[data-eid-limpar-compact-btn="true"] {
+    min-height: 0 !important;
+    padding: 4px 10px !important;
+    font-size: 7px !important;
+    line-height: 1 !important;
+    font-weight: 800 !important;
+    border-radius: 9999px !important;
+  }
+
+  /* Comunidade: botão "Ler tudo / Lido" deve permanecer compacto. */
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
+    button[data-eid-marcar-lidos-btn="true"] {
+    min-height: 16px !important;
+    height: 16px !important;
+    padding: 0 6px !important;
+    font-size: 7px !important;
+    line-height: 1 !important;
+    font-weight: 800 !important;
+    border-radius: 9999px !important;
+  }
+
+  /* Comunidade: chips/botões compactos (evita herdar 44px do touch-ui). */
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
+    :where(button[data-eid-compact-chip-btn="true"], a[data-eid-compact-chip-btn="true"]) {
+    min-height: 22px !important;
+    height: 22px !important;
+    padding: 0 10px !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+    font-weight: 800 !important;
+    border-radius: 9999px !important;
+  }
+
   :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
     :where(input.eid-input-dark, select.eid-input-dark) {
     min-height: 2.1rem;
@@ -1129,32 +1174,32 @@ select,
    * Locais (painel do espaço) — padrão mobile Android/iOS
    * Mantém consistência de toque, leitura e espaçamento sem depender de classes por tela.
    */
-  :where([data-eid-touch-ui]) :where(h1, h2) {
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact])) :where(h1, h2) {
     letter-spacing: -0.01em;
   }
 
-  :where([data-eid-touch-ui]) :where(.eid-mobile-section) {
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact])) :where(.eid-mobile-section) {
     border-radius: 16px;
     padding: 14px;
   }
 
-  :where([data-eid-touch-ui]) :where(.eid-mobile-subsection) {
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact])) :where(.eid-mobile-subsection) {
     border-radius: 14px;
     padding: 12px;
   }
 
-  :where([data-eid-touch-ui]) :where(input.eid-input-dark, select.eid-input-dark, textarea.eid-input-dark) {
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact])) :where(input.eid-input-dark, select.eid-input-dark, textarea.eid-input-dark) {
     font-size: 12px;
     line-height: 1.3;
   }
 
-  :where([data-eid-touch-ui]) :where(button, [role="button"], a[class*="eid-btn-"]) {
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact])) :where(button, [role="button"], a[class*="eid-btn-"]) {
     border-radius: 12px;
     padding-left: 0.9rem;
     padding-right: 0.9rem;
   }
 
-  :where([data-eid-touch-ui]) :where(form) {
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact])) :where(form) {
     gap: 0.6rem;
   }
 
@@ -1190,6 +1235,25 @@ select,
   }
 }
 
+/* Lucide nos botões Aceitar/Recusar/Aprovar compactos (Comunidade) — tamanho explícito (Tailwind no SVG perde para resets em alguns contextos). */
+:where([data-eid-touch-ui], .eid-touch-ui-scope) button[data-eid-social-acao-btn="true"] svg {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+  flex-shrink: 0;
+  display: block;
+}
+
+button[data-eid-limpar-compact-btn="true"] svg {
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  min-height: 10px;
+  flex-shrink: 0;
+  display: block;
+}
+
 /* Mesmo padrão do fluxo Desafio no desktop (sem inflar controles). */
 :where([data-eid-desafio-ui]) :where(
   button[class*="eid-btn-"],
@@ -1215,11 +1279,7 @@ select,
 }
 
 [data-eid-theme="light"] body {
-  background-image: radial-gradient(
-    ellipse 120% 70% at 50% -28%,
-    color-mix(in srgb, var(--eid-primary-500) 7%, transparent),
-    transparent 55%
-  );
+  background-image: none;
 }
 
 /* Auth / login / cadastro — camadas (adapta ao tema) */
@@ -1836,15 +1896,10 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 .eid-surface-panel {
   border: 1px solid var(--eid-border-subtle);
   border-radius: var(--eid-radius-xl);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--eid-card) 97%, transparent),
-    color-mix(in srgb, var(--eid-surface) 94%, transparent)
-  );
+  background: var(--eid-card);
   box-shadow:
     0 12px 26px -18px rgba(15, 23, 42, 0.4),
     0 0 24px -20px rgba(37, 99, 235, 0.45);
-  backdrop-filter: blur(10px);
 }
 
 /* Chip interativo reutilizável (ativo/inativo). */

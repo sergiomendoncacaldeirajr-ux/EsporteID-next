@@ -126,7 +126,11 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
           </div>
         </div>
 
-        <ProfileSection title="Informações" className="mt-4">
+        <ProfileSection
+          title="Informações"
+          className="mt-4"
+          info="Dados do local: tipo de quadra, política de reserva, esportes e vínculo com quem cadastrou."
+        >
           <div className={`${PROFILE_CARD_BASE} grid gap-2 p-3 text-[11px] sm:p-4 sm:text-xs`}>
             {loc.tipo_quadra ? (
               <p className="text-eid-text-secondary">

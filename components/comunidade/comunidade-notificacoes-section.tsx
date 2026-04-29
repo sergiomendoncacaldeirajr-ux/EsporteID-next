@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { marcarNotificacaoLida, marcarTodasNotificacoesLidas } from "@/app/comunidade/actions";
+import { EidNotificacaoRow } from "@/components/ui/eid-notificacao-row";
 
 export type NotifRow = {
   id: number;
@@ -46,6 +47,7 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
           <form action={marcarTodasNotificacoesLidas}>
             <button
               type="submit"
+              data-eid-compact-chip-btn="true"
               className="rounded-lg border border-eid-primary-500/40 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:bg-eid-primary-500/10"
             >
               Marcar todas lidas ({unread})
@@ -59,42 +61,40 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
           Nenhuma notificação ainda. Novos avisos aparecem aqui automaticamente.
         </p>
       ) : (
-        <ul className="mt-4 space-y-2">
+        <ul className="mt-4 list-none space-y-2 p-0">
           {items.map((n) => (
-            <li
-              key={n.id}
-              className={`rounded-xl border p-3 transition md:rounded-2xl md:p-4 ${
-                n.lida === true
-                  ? "border-[color:var(--eid-border-subtle)] bg-eid-card/80"
-                  : "border-eid-primary-500/35 bg-gradient-to-br from-eid-primary-500/10 to-eid-card"
-              }`}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  {n.tipo ? (
-                    <span className="inline-block rounded-full border border-eid-primary-500/30 px-2 py-0.5 text-[10px] font-extrabold uppercase text-eid-primary-300">
-                      {String(n.tipo).trim().toLowerCase() === "match" ? "desafio" : n.tipo}
-                    </span>
-                  ) : null}
-                  <p className={`mt-2 text-sm leading-relaxed ${n.lida === true ? "text-eid-text-secondary" : "text-eid-fg"}`}>
-                    {n.mensagem}
-                  </p>
-                  {notifDate(n) ? (
-                    <p className="mt-2 text-[11px] text-eid-text-secondary">{notifDate(n)}</p>
+            <li key={n.id}>
+              <EidNotificacaoRow unread={n.lida !== true}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    {n.tipo ? (
+                      <span className="inline-block rounded-full border border-eid-primary-500/30 px-2 py-0.5 text-[10px] font-extrabold uppercase text-eid-primary-300">
+                        {String(n.tipo).trim().toLowerCase() === "match" ? "desafio" : n.tipo}
+                      </span>
+                    ) : null}
+                    <p
+                      className={`mt-2 text-sm leading-relaxed ${n.lida === true ? "text-eid-text-secondary" : "text-eid-fg"}`}
+                    >
+                      {n.mensagem}
+                    </p>
+                    {notifDate(n) ? (
+                      <p className="mt-2 text-[11px] text-eid-text-secondary">{notifDate(n)}</p>
+                    ) : null}
+                  </div>
+                  {n.lida !== true ? (
+                    <form action={marcarNotificacaoLida} className="shrink-0">
+                      <input type="hidden" name="notif_id" value={String(n.id)} />
+                      <button
+                        type="submit"
+                        data-eid-compact-chip-btn="true"
+                        className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-[11px] font-semibold text-eid-text-secondary transition hover:border-eid-primary-500/40 hover:text-eid-fg"
+                      >
+                        Lida
+                      </button>
+                    </form>
                   ) : null}
                 </div>
-                {n.lida !== true ? (
-                  <form action={marcarNotificacaoLida} className="shrink-0">
-                    <input type="hidden" name="notif_id" value={String(n.id)} />
-                    <button
-                      type="submit"
-                      className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-[11px] font-semibold text-eid-text-secondary transition hover:border-eid-primary-500/40 hover:text-eid-fg"
-                    >
-                      Lida
-                    </button>
-                  </form>
-                ) : null}
-              </div>
+              </EidNotificacaoRow>
             </li>
           ))}
         </ul>

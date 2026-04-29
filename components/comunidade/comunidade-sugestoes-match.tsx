@@ -7,14 +7,14 @@ import { responderSugestaoMatch, type ResponderSugestaoMatchState } from "@/app/
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
-import {
-  EID_SOCIAL_CARD_FOOTER,
-  EID_SOCIAL_GRID_3,
-  formatSolicitacaoParts,
-} from "@/lib/comunidade/social-panel-layout";
+import { EID_SOCIAL_CARD_FOOTER, EID_SOCIAL_GRID_3, formatSolicitacaoParts } from "@/lib/comunidade/social-panel-layout";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
+import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import { EidCityState } from "@/components/ui/eid-city-state";
-import { PEDIDO_ACEITAR_BTN_CLASS, PEDIDO_RECUSAR_BTN_CLASS } from "@/lib/desafio/flow-ui";
+import {
+  PEDIDO_MATCH_RECEBIDO_FORM_CLASS,
+  PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS,
+} from "@/lib/desafio/flow-ui";
 
 export type SugestaoMatchItem = {
   id: number;
@@ -206,32 +206,27 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
                 </div>
               </div>
 
-              <div className={`${EID_SOCIAL_CARD_FOOTER} grid w-full grid-cols-2 items-center gap-1 border-amber-500/20 !bg-[color:color-mix(in_srgb,var(--eid-warning-500)_8%,var(--eid-surface)_92%)]`}>
-                <form action={formAction} className="min-w-0 w-full">
+              <div
+                className={`${EID_SOCIAL_CARD_FOOTER} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} border-amber-500/20 !bg-[color:color-mix(in_srgb,var(--eid-warning-500)_8%,var(--eid-surface)_92%)]`}
+              >
+                <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                   <input type="hidden" name="sugestao_id" value={String(s.id)} />
                   <input type="hidden" name="aceitar" value="true" />
-                  <button
-                    type="submit"
-                    disabled={pending}
+                  <EidSocialAceitarButton
+                    pending={pending}
+                    busy={pending && clickedAction?.sugestaoId === s.id && clickedAction.aceitar}
+                    actionLabel="aprovar"
                     onClick={() => setClickedAction({ sugestaoId: s.id, aceitar: true })}
-                    className={`${PEDIDO_ACEITAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}
-                  >
-                    <span>{pending && clickedAction?.sugestaoId === s.id && clickedAction?.aceitar ? "Salvando..." : "Aprovar"}</span>
-                  </button>
+                  />
                 </form>
-                <form action={formAction} className="min-w-0 w-full">
+                <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                   <input type="hidden" name="sugestao_id" value={String(s.id)} />
                   <input type="hidden" name="aceitar" value="false" />
-                  <button
-                    type="submit"
-                    disabled={pending}
+                  <EidSocialRecusarButton
+                    pending={pending}
+                    busy={pending && clickedAction?.sugestaoId === s.id && !clickedAction.aceitar}
                     onClick={() => setClickedAction({ sugestaoId: s.id, aceitar: false })}
-                    className={`${PEDIDO_RECUSAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}
-                  >
-                    <span>
-                      {pending && clickedAction?.sugestaoId === s.id && clickedAction?.aceitar === false ? "Salvando..." : "Recusar"}
-                    </span>
-                  </button>
+                  />
                 </form>
               </div>
               <p className="border-t border-amber-500/15 px-3 py-2 text-[10px] text-eid-text-secondary md:px-4">

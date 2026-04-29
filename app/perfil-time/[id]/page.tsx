@@ -467,18 +467,13 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           </section>
           ) : null}
 
-          <ProfileSection title="EID e estatísticas">
-            <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-0`}>
-              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Resumo EID</p>
-                  <p className="mt-0.5 text-[11px] font-semibold text-eid-fg">Esporte: {esp?.nome ?? "Esporte não definido"}</p>
-                </div>
-                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
-                  Ranking
-                </span>
-              </div>
-              <div className="p-3">
+          <ProfileSection
+            title="EID e estatísticas"
+            info="Nota e métricas do time neste esporte: ranking, jogos e desempenho coletivo."
+          >
+            <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-3`}>
+              <p className="text-[11px] font-semibold text-eid-fg">Esporte: {esp?.nome ?? "Esporte não definido"}</p>
+              <div className="mt-2">
                 <div className="flex justify-center">
                   <EidBadge score={Number(t.eid_time ?? 0)} history={eidLogs ?? []} label={`EID · ${esp?.nome ?? "Esporte"}`} />
                 </div>
@@ -538,7 +533,10 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
             />
           </ProfileSection>
 
-          <ProfileSection title="Resultados">
+          <ProfileSection
+            title="Resultados"
+            info="Resumo de vitórias, derrotas e empates do time em partidas registradas."
+          >
             <ProfileFormacaoResultados
               totais={bundleResultados.totais}
               items={bundleResultados.items}
@@ -546,7 +544,10 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
             />
           </ProfileSection>
 
-          <ProfileSection title="Participantes">
+          <ProfileSection
+            title="Participantes"
+            info="Elenco: líderes e membros com link para o perfil de cada atleta."
+          >
             {isLeader ? (
               <div className="mt-2 space-y-2">
                 <p className="text-sm text-eid-text-secondary">

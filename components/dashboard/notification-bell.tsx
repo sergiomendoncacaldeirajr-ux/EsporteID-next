@@ -1,16 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { limparTodasNotificacoes } from "@/app/comunidade/actions";
 import { createClient } from "@/lib/supabase/client";
 import {
   disablePushNotifications,
   enablePushNotifications,
   hasActivePushSubscription,
 } from "@/lib/pwa/push-client";
-import { PEDIDO_LIMPAR_COMPACT_BTN_CLASS, PEDIDO_VER_MAIS_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
 
 type Preview = {
   id: number;
@@ -64,21 +62,51 @@ function formatShort(iso: string | null | undefined) {
 const PREVIEW_LIMIT = 3;
 const PREVIEW_FETCH = 80;
 
+function SummaryGlyph({ kind }: { kind: "agenda" | "social" | "placar" }) {
+  const wrapClass =
+    kind === "agenda"
+      ? "bg-eid-primary-500/10 text-eid-primary-500"
+      : kind === "social"
+        ? "bg-eid-action-500/10 text-eid-action-500"
+        : "bg-violet-500/12 text-violet-500";
+  return (
+    <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${wrapClass}`}>
+      {kind === "agenda" ? (
+        <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" aria-hidden>
+          <rect x="4" y="6" width="16" height="14" rx="2" stroke="currentColor" strokeWidth="2" />
+          <path d="M8 3v4M16 3v4M4 10h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      ) : kind === "social" ? (
+        <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" aria-hidden>
+          <path d="M6 7h12a2 2 0 012 2v7l-4-2H6a2 2 0 01-2-2V9a2 2 0 012-2z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+          <circle cx="9" cy="11.5" r="1" fill="currentColor" />
+          <circle cx="12" cy="11.5" r="1" fill="currentColor" />
+          <circle cx="15" cy="11.5" r="1" fill="currentColor" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" aria-hidden>
+          <path d="M12 21s6-5.2 6-10a6 6 0 10-12 0c0 4.8 6 10 6 10z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+          <circle cx="12" cy="11" r="2" fill="currentColor" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
 export function NotificationBell({ userId }: { userId: string | null }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const bellBtnRef = useRef<HTMLButtonElement>(null);
   const [total, setTotal] = useState(0);
   const [preview, setPreview] = useState<Preview[]>([]);
-  const [previewExpanded, setPreviewExpanded] = useState(false);
-  const [previewLimparPending, setPreviewLimparPending] = useState(false);
   const [agendaN, setAgendaN] = useState(0);
   const [pedidosDesafioN, setPedidosDesafioN] = useState(0);
   const [sugestoesLiderN, setSugestoesLiderN] = useState(0);
   const [placarN, setPlacarN] = useState(0);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const vapidPublicKey = useMemo(() => String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim(), []);
 
   const load = useCallback(async () => {
@@ -297,6 +325,25 @@ export function NotificationBell({ userId }: { userId: string | null }) {
 
   useEffect(() => {
     if (!open) return;
+    function updatePanelPos() {
+      const rect = bellBtnRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const panelWidth = Math.min(window.innerWidth * 0.88, 300);
+      const left = Math.max(6, Math.min(rect.right - panelWidth, window.innerWidth - panelWidth - 6));
+      const top = rect.bottom + 4;
+      setPanelPos({ top, left });
+    }
+    updatePanelPos();
+    window.addEventListener("resize", updatePanelPos);
+    window.addEventListener("scroll", updatePanelPos, true);
+    return () => {
+      window.removeEventListener("resize", updatePanelPos);
+      window.removeEventListener("scroll", updatePanelPos, true);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -336,126 +383,139 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   return (
     <div className="relative shrink-0" ref={wrapRef}>
       <button
+        ref={bellBtnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] text-eid-text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_6px_14px_-12px_rgba(0,0,0,0.45)] transition-all duration-200 ease-out hover:border-eid-primary-500/30 hover:text-eid-fg active:translate-y-[0.5px] active:scale-[0.985] md:h-9 md:w-9"
+        className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,transparent)] text-[color:color-mix(in_srgb,var(--eid-text-secondary)_90%,#475569_10%)] shadow-none transition-all duration-200 ease-out hover:border-eid-primary-500/35 hover:text-eid-fg active:translate-y-[0.5px] active:scale-[0.985] md:h-9 md:w-9"
         aria-label="Notificações e resumos"
         aria-expanded={open}
       >
         <IconBell className="h-4.5 w-4.5" />
         {bellCount > 0 ? (
-          <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-eid-action-500 px-1 text-[9px] font-black text-[var(--eid-brand-ink)] shadow-[0_6px_14px_-8px_color-mix(in_srgb,var(--eid-action-500)_85%,transparent)] ring-1 ring-white/20">
+          <span className="absolute -right-1.5 -top-1.5 flex h-[21px] min-w-[21px] items-center justify-center rounded-full bg-eid-action-500 px-1 text-[10px] font-black text-white shadow-[0_6px_14px_-8px_color-mix(in_srgb,var(--eid-action-500)_85%,transparent)] ring-2 ring-white">
             {bellCount > 99 ? "99+" : bellCount}
           </span>
         ) : null}
       </button>
 
       {open ? (
-        <div className="eid-surface-panel fixed left-1/2 top-[var(--eid-shell-header-offset)] z-[70] w-[min(94vw,340px)] -translate-x-1/2 p-3 md:absolute md:left-auto md:right-0 md:top-[calc(100%+8px)] md:w-[min(100vw-2rem,340px)] md:translate-x-0">
-          <div className="mb-2.5 flex items-center justify-between gap-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">
-              Push
-            </span>
-            <button
-              type="button"
-              onClick={onTogglePush}
-              disabled={pushBusy}
-              className={`inline-flex min-h-[26px] items-center justify-center rounded-md border px-2.5 text-[10px] font-bold uppercase tracking-wide transition ${
-                pushEnabled
-                  ? "border-emerald-500/35 bg-emerald-500/15 text-emerald-300"
-                  : "border-eid-primary-500/30 bg-eid-primary-500/10 text-eid-primary-300"
-              } ${pushBusy ? "opacity-60" : "hover:brightness-110"}`}
-            >
-              {pushBusy ? "..." : pushEnabled ? "Ativo" : "Ativar"}
-            </button>
-          </div>
-          <p className="border-b border-[color:var(--eid-border-subtle)] pb-2 text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">
-            Resumo rápido
-          </p>
-          <ul className="mt-2 space-y-2 text-sm">
-            <li className="eid-list-item flex justify-between gap-2 px-3 py-2">
-              <span className="text-eid-text-secondary">Agenda (jogos agendados)</span>
-              <Link href="/agenda" className="font-bold tabular-nums text-eid-fg transition hover:opacity-85" onClick={() => setOpen(false)}>
-                {agendaN}
-              </Link>
-            </li>
-            <li className="eid-list-item flex justify-between gap-2 px-3 py-2">
-              <span className="text-eid-text-secondary">Social (pedidos)</span>
-              <Link
-                href="/comunidade"
-                className="font-bold tabular-nums text-eid-fg transition hover:opacity-85"
+        <div
+          data-eid-notif-modal="true"
+          className="fixed z-[70] w-[min(88vw,300px)] overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-2 shadow-[0_20px_48px_-30px_rgba(15,23,42,0.55)]"
+          style={{ top: `${panelPos.top}px`, left: `${panelPos.left}px` }}
+        >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-eid-primary-500/10 text-eid-primary-500">
+                  <IconBell className="h-3 w-3" />
+                </span>
+                <div>
+                  <h2 className="text-[12px] font-black leading-none tracking-tight text-eid-fg">Central de notificações</h2>
+                  <p className="mt-0.5 text-[9px] text-eid-text-secondary">Acompanhe tudo o que acontece</p>
+                </div>
+              </div>
+              <button
+                type="button"
                 onClick={() => setOpen(false)}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full text-eid-text-secondary transition hover:bg-eid-surface/70 hover:text-eid-fg"
+                aria-label="Fechar"
               >
-                {pedidosDesafioN + sugestoesLiderN}
-              </Link>
-            </li>
-            <li className="eid-list-item flex justify-between gap-2 px-3 py-2">
-              <span className="text-eid-text-secondary">Placar aguardando você</span>
-              <Link
-                href="/agenda#placares"
-                className="font-bold tabular-nums text-eid-fg transition hover:opacity-85"
-                onClick={() => setOpen(false)}
-              >
-                {placarN}
-              </Link>
-            </li>
-          </ul>
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+                  <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
 
-          <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Últimas notificações</p>
-          {preview.length === 0 ? (
-            <p className="mt-2 text-xs text-eid-text-secondary">Nada recente.</p>
-          ) : (
-            <>
-              <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto pr-1">
-                {(previewExpanded ? preview : preview.slice(0, PREVIEW_LIMIT)).map((n) => (
-                  <li key={n.id} className="eid-list-item rounded-lg px-2 py-1.5 text-xs">
-                    <p className={`line-clamp-2 ${n.lida ? "text-eid-text-secondary" : "font-medium text-eid-fg"}`}>{n.mensagem}</p>
-                    <p className="mt-0.5 text-[10px] text-eid-text-secondary">{formatShort(n.data_criacao ?? n.criada_em)}</p>
+            <div className="mt-2.5 flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] pb-1.5">
+              <span className="text-[10px] font-black uppercase tracking-[0.08em] text-eid-fg">Push</span>
+              <button
+                type="button"
+                onClick={onTogglePush}
+                disabled={pushBusy}
+                className={`inline-flex min-h-[20px] items-center justify-center rounded-full border px-2 text-[7px] font-black uppercase tracking-[0.03em] transition ${
+                  pushEnabled
+                    ? "border-emerald-500/25 bg-emerald-500/12 text-emerald-400"
+                    : "border-eid-primary-500/28 bg-eid-primary-500/10 text-eid-primary-400"
+                } ${pushBusy ? "opacity-60" : ""}`}
+              >
+                {pushBusy ? "..." : pushEnabled ? "• Ativo" : "Ativar"}
+              </button>
+            </div>
+
+            <p className="mt-2 text-[9px] font-black uppercase tracking-[0.08em] text-eid-fg">Resumo rápido</p>
+            <ul className="mt-1.5 space-y-1.5">
+              <li className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <SummaryGlyph kind="agenda" />
+                  <div>
+                    <p className="text-[10px] font-bold text-eid-fg">Agenda</p>
+                    <p className="text-[9px] text-eid-text-secondary">Jogos agendados</p>
+                  </div>
+                </div>
+                <Link href="/agenda" className="text-[18px] font-black leading-none text-eid-primary-500" onClick={() => setOpen(false)}>
+                  {agendaN}
+                </Link>
+              </li>
+              <li className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <SummaryGlyph kind="social" />
+                  <div>
+                    <p className="text-[10px] font-bold text-eid-fg">Social</p>
+                    <p className="text-[9px] text-eid-text-secondary">Pedidos recebidos</p>
+                  </div>
+                </div>
+                <Link href="/comunidade" className="text-[18px] font-black leading-none text-eid-action-500" onClick={() => setOpen(false)}>
+                  {pedidosDesafioN + sugestoesLiderN}
+                </Link>
+              </li>
+              <li className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <SummaryGlyph kind="placar" />
+                  <div>
+                    <p className="text-[10px] font-bold text-eid-fg">Placar</p>
+                    <p className="text-[9px] text-eid-text-secondary">Aguardando você</p>
+                  </div>
+                </div>
+                <Link href="/agenda#placares" className="text-[18px] font-black leading-none text-violet-500" onClick={() => setOpen(false)}>
+                  {placarN}
+                </Link>
+              </li>
+            </ul>
+
+            <p className="mt-2 border-t border-[color:var(--eid-border-subtle)] pt-2 text-[9px] font-black uppercase tracking-[0.08em] text-eid-fg">
+              Últimas notificações
+            </p>
+            {preview.length === 0 ? (
+              <div className="mt-1.5 flex flex-col items-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2.5 py-3 text-center">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-eid-primary-500/10 text-eid-primary-400">
+                  <IconBell className="h-5 w-5" />
+                </span>
+                <p className="mt-1.5 text-[11px] font-black text-eid-fg">Nada recente por aqui</p>
+                <p className="mt-1 text-[9px] text-eid-text-secondary">Quando houver novidades, você verá aqui.</p>
+              </div>
+            ) : (
+              <ul className="mt-1.5 max-h-40 space-y-1.5 overflow-y-auto pr-1">
+                {preview.slice(0, PREVIEW_LIMIT).map((n) => (
+                  <li key={n.id} className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2 py-1.5">
+                    <p className={`line-clamp-2 text-[10px] ${n.lida ? "text-eid-text-secondary" : "font-semibold text-eid-fg"}`}>{n.mensagem}</p>
+                    <p className="mt-1 text-[9px] text-eid-text-secondary">{formatShort(n.data_criacao ?? n.criada_em)}</p>
                   </li>
                 ))}
               </ul>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {preview.length > PREVIEW_LIMIT ? (
-                  <button
-                    type="button"
-                    onClick={() => setPreviewExpanded((v) => !v)}
-                    className={PEDIDO_VER_MAIS_COMPACT_BTN_CLASS}
-                  >
-                    {previewExpanded ? "Ver menos" : "Ver mais"}
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  disabled={previewLimparPending}
-                  onClick={() => {
-                    void (async () => {
-                      if (!confirm("Apagar todas as suas notificações? Esta ação não pode ser desfeita.")) return;
-                      setPreviewLimparPending(true);
-                      try {
-                        await limparTodasNotificacoes();
-                        setPreviewExpanded(false);
-                        router.refresh();
-                        await load();
-                      } finally {
-                        setPreviewLimparPending(false);
-                      }
-                    })();
-                  }}
-                  className={PEDIDO_LIMPAR_COMPACT_BTN_CLASS}
-                >
-                  {previewLimparPending ? "…" : "Limpar"}
-                </button>
-              </div>
-            </>
-          )}
+            )}
 
-          <Link
-            href="/comunidade#notificacoes"
-            className="eid-btn-soft mt-3 min-h-[40px] w-full rounded-xl text-xs font-bold text-eid-primary-300"
-            onClick={() => setOpen(false)}
-          >
-            Abrir central Social
-          </Link>
+            <Link
+              href="/comunidade#notificacoes"
+              className="mt-2 inline-flex min-h-[30px] w-full items-center justify-center rounded-lg border border-eid-primary-500/25 bg-eid-primary-500/14 px-2.5 text-[10px] font-black text-eid-primary-500 transition hover:bg-eid-primary-500/20"
+              onClick={() => setOpen(false)}
+            >
+              <span className="inline-flex items-center gap-2">
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
+                  <path d="M14 5h5v5M10 14L19 5M19 14v5h-5M5 10V5h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                Abrir Central Social
+              </span>
+            </Link>
         </div>
       ) : null}
     </div>

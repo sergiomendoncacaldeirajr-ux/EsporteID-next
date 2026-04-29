@@ -164,7 +164,11 @@ export function FormacaoEidEsporteView({
           />
         </div>
 
-        <ProfileSection title="Panorama (só este esporte)" className="mt-4">
+        <ProfileSection
+          title="Panorama (só este esporte)"
+          className="mt-4"
+          info="Aproveitamento da formação (vitórias, derrotas, empates) considerando só as partidas listadas neste esporte."
+        >
           <div className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} mt-2`}>
             <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Aproveitamento nas partidas listadas</p>
             <p className="mt-1 text-sm font-bold text-eid-fg">
@@ -182,7 +186,11 @@ export function FormacaoEidEsporteView({
           </div>
         </ProfileSection>
 
-        <ProfileSection title="Histórico de partidas (formação)" className="mt-4">
+        <ProfileSection
+          title="Histórico de partidas (formação)"
+          className="mt-4"
+          info="Jogos em equipe registrados no ranking para esta formação neste esporte, com adversário e resultado."
+        >
           {partidas.length === 0 ? (
             <p className={`mt-2 ${PROFILE_CARD_BASE} p-3 text-[11px] text-eid-text-secondary`}>
               Nenhuma partida em equipe listada para esta formação neste esporte. Quando houver jogos válidos no ranking,

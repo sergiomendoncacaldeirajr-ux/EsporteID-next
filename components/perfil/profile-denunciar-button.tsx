@@ -109,11 +109,11 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
         }}
         className={
           compact
-            ? "inline-flex h-6 min-w-[5.75rem] touch-manipulation items-center justify-center gap-1 rounded-lg border border-red-500/35 bg-black/40 px-1.5 text-[7px] font-black uppercase tracking-[0.08em] text-red-200 transition hover:border-red-400/60 hover:bg-red-500/18"
+            ? "inline-flex touch-manipulation items-center justify-center gap-1 rounded-full border border-red-400/40 bg-black/45 px-2.5 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.07em] text-red-200 shadow-[0_3px_10px_-7px_rgba(0,0,0,0.55)] backdrop-blur-sm transition hover:border-red-400/55 hover:bg-red-500/14 sm:text-[9px]"
             : "flex w-full min-h-[2.25rem] touch-manipulation items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/12 px-2.5 py-1.5 text-center text-[10px] font-bold uppercase tracking-[0.08em] text-red-300/95 transition hover:border-red-500/40 hover:bg-red-500/18 active:bg-red-500/22"
         }
       >
-        <svg viewBox="0 0 12 14" className="h-3 w-2.5 shrink-0 opacity-90" fill="currentColor" aria-hidden>
+        <svg viewBox="0 0 12 14" className="h-2.5 w-2.5 shrink-0 opacity-90" fill="currentColor" aria-hidden>
           <path d="M0 0h2v14H0zM2 2l9 3.5L2 9z" />
         </svg>
         <span>Denunciar perfil</span>
