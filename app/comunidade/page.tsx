@@ -681,7 +681,7 @@ export default async function ComunidadePage() {
   });
   const { data: convitesEnviados } = await supabase
     .from("time_convites")
-    .select("id, time_id, convidado_usuario_id, status, criado_em, respondido_em, times!inner(id, nome, tipo, esporte_id, esportes(nome))")
+    .select("id, time_id, convidado_usuario_id, status, criado_em, respondido_em, times!inner(id, nome, tipo, escudo, eid_time, localizacao, esporte_id, esportes(nome))")
     .eq("convidado_por_usuario_id", user.id)
     .order("id", { ascending: false })
     .limit(40);
@@ -737,6 +737,9 @@ export default async function ComunidadePage() {
       equipeNome: t?.nome ?? "Equipe",
       equipeId: Number(t?.id ?? 0),
       equipeTipo: String(t?.tipo ?? "time"),
+      equipeAvatarUrl: (t as { escudo?: string | null } | null)?.escudo ?? null,
+      equipeNotaEid: Number((t as { eid_time?: number | null } | null)?.eid_time ?? 0),
+      equipeLocalizacao: (t as { localizacao?: string | null } | null)?.localizacao ?? null,
       esporteNome: esp?.nome ?? "Esporte",
       convidadoId,
       convidadoNome: perfil?.nome ?? "Atleta",

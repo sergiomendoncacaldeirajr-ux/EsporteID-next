@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Loader2 } from "lucide-react";
 import {
   cancelarConviteDaEquipe,
   convidarUsuarioParaEquipe,
@@ -81,7 +82,14 @@ export function TeamPublicInviteBlock({
                     disabled={cancelInvitePending || invitePending}
                     className="inline-flex min-h-[36px] w-full items-center justify-center rounded-lg border border-rose-600/80 bg-rose-600/15 px-3 text-[10px] font-black uppercase tracking-[0.06em] text-red-700 transition hover:bg-rose-600/25 disabled:opacity-60 dark:text-red-300"
                   >
-                    {cancelInvitePending ? "…" : "Cancelar convite"}
+                    {cancelInvitePending ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                        Cancelando...
+                      </span>
+                    ) : (
+                      "Cancelar convite"
+                    )}
                   </button>
                 </form>
               </li>

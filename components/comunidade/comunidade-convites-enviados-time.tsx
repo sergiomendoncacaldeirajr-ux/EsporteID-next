@@ -1,17 +1,22 @@
 "use client";
 
 import Image from "next/image";
+import { Loader2 } from "lucide-react";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { cancelarConviteDaEquipe, type TeamActionState } from "@/app/times/actions";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 
 export type ConviteTimeEnviadoItem = {
   id: number;
   equipeNome: string;
   equipeId: number;
   equipeTipo: string;
+  equipeAvatarUrl?: string | null;
+  equipeNotaEid?: number | null;
+  equipeLocalizacao?: string | null;
   esporteNome: string;
   convidadoId: string;
   convidadoNome: string;
@@ -26,6 +31,23 @@ export type ConviteTimeEnviadoItem = {
 };
 
 const cancelInitial: TeamActionState = { ok: false, message: "" };
+
+function firstName(value?: string | null): string {
+  const clean = String(value ?? "").trim();
+  if (!clean) return "Atleta";
+  return clean.split(/\s+/)[0] ?? clean;
+}
+
+function splitCityState(location?: string | null): { cidade: string; estado: string } {
+  const raw = String(location ?? "").trim();
+  if (!raw) return { cidade: "-", estado: "-" };
+  const parts = raw
+    .split(/\/| - |–|—|,|\|/g)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length >= 2) return { cidade: parts[0] ?? "-", estado: parts.slice(1).join(" ") || "-" };
+  return { cidade: raw, estado: "-" };
+}
 
 function statusLabel(status: string): string {
   const s = String(status ?? "").trim().toLowerCase();
@@ -75,79 +97,148 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
       <ul className="space-y-3">
         {items.map((c) => {
           const pendente = String(c.status ?? "").trim().toLowerCase() === "pendente";
+          const localConvidado = splitCityState(c.convidadoLocalizacao);
+          const localFormacao = splitCityState(c.equipeLocalizacao);
           return (
             <li
               key={c.id}
-              className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
+              className="relative rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3"
             >
-              <div className="grid grid-cols-[72px_30px_minmax(0,1fr)] items-start sm:grid-cols-[72px_34px_minmax(0,1fr)]">
-                <ProfileEditDrawerTrigger
-                  href={`/perfil/${c.convidadoId}?from=/comunidade`}
-                  title={c.convidadoNome}
-                  fullscreen
-                  topMode="backOnly"
-                  className="-ml-1 block justify-self-start rounded-xl border border-transparent transition hover:border-eid-primary-500/35 sm:-ml-1.5"
-                >
-                  <div className="flex w-[72px] flex-col items-center">
-                    <p className="mb-1 max-w-[72px] truncate text-center text-[11px] font-black text-eid-fg">
-                      {(c.convidadoNome ?? "Atleta").trim().split(/\s+/)[0] ?? "Atleta"}
-                    </p>
-                    <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
-                      {c.convidadoAvatarUrl ? (
-                        <Image src={c.convidadoAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                          {(c.convidadoNome ?? "A").slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
+              <span className="absolute left-3 top-3 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
+                Convite
+              </span>
+              <span
+                className={`absolute right-3 top-3 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] ${statusClass(c.status)}`}
+              >
+                {statusLabel(c.status)}
+              </span>
+              <div className="grid grid-cols-[88px_minmax(0,1fr)_88px] items-start gap-2">
+                <div className="min-w-0 pt-9">
+                  <p className="text-[10px] font-black uppercase tracking-[0.08em] text-eid-primary-300/90">Formação</p>
+                  <ProfileEditDrawerTrigger
+                    href={`/perfil-time/${c.equipeId}?from=/comunidade`}
+                    title={c.equipeNome}
+                    fullscreen
+                    topMode="backOnly"
+                    className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                  >
+                    <div className="flex w-full flex-col items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-1.5 py-1.5">
+                      <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(c.equipeNome)}</p>
+                      <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+                        {c.equipeAvatarUrl ? (
+                          <Image src={c.equipeAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                            {(c.equipeNome ?? "T").slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-0.5">
+                        <ProfileEidPerformanceSeal
+                          notaEid={Number(c.equipeNotaEid ?? 0)}
+                          compact
+                          className="scale-125"
+                        />
+                      </div>
+                      <p className="mt-0.5 max-w-full truncate text-center text-[9px] font-semibold text-eid-fg">
+                        {localFormacao.cidade}
+                      </p>
+                      <p className="max-w-full truncate text-center text-[9px] text-eid-text-secondary">
+                        {localFormacao.estado}
+                      </p>
                     </div>
-                    <div className="mt-1">
-                      <ProfileEidPerformanceSeal
-                        notaEid={Number(c.convidadoNotaEid ?? 0)}
-                        compact
-                        className="scale-125"
-                        locationLabel={c.convidadoLocalizacao}
-                        distanceKm={c.convidadoDistanceKm}
-                      />
-                    </div>
-                  </div>
-                </ProfileEditDrawerTrigger>
-                <div aria-hidden className="h-full w-full" />
+                  </ProfileEditDrawerTrigger>
+                </div>
 
-                <div className="min-w-0 flex-1 pl-3 sm:pl-4">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-eid-fg">{c.convidadoNome}</p>
-                      {c.convidadoUsername ? (
-                        <p className="text-[11px] text-eid-text-secondary">@{c.convidadoUsername.replace(/^@/, "")}</p>
-                      ) : null}
+                <div className="min-w-0 pt-5">
+                  <div className="translate-y-6 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2 py-2">
+                    <div className="flex flex-wrap items-start gap-1.5">
+                      <p className="inline-flex items-center rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-semibold leading-none text-eid-action-200">
+                        <span className="inline-flex items-center gap-1">
+                          <SportGlyphIcon sportName={c.esporteNome} />
+                          <span>{c.esporteNome}</span>
+                        </span>
+                      </p>
+                      <p className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-semibold leading-none text-eid-primary-200">
+                        <ModalidadeGlyphIcon
+                          modalidade={
+                            String(c.equipeTipo ?? "").trim().toLowerCase() === "dupla"
+                              ? "dupla"
+                              : String(c.equipeTipo ?? "").trim().toLowerCase() === "time"
+                                ? "time"
+                                : "individual"
+                          }
+                        />
+                        <span>{(c.equipeTipo ?? "time").toUpperCase()}</span>
+                      </p>
                     </div>
-                    <span
-                      className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] ${statusClass(c.status)}`}
-                    >
-                      {statusLabel(c.status)}
-                    </span>
+                    <p className="mt-1 text-[10px] text-eid-text-secondary">
+                      Enviado em {c.criadoEm ? new Date(c.criadoEm).toLocaleString("pt-BR") : "—"}
+                    </p>
+                    {c.respondidoEm ? (
+                      <p className="mt-1 text-[10px] text-eid-text-secondary">
+                        Respondido em {new Date(c.respondidoEm).toLocaleString("pt-BR")}
+                      </p>
+                    ) : null}
                   </div>
-                  <p className="mt-1 text-xs text-eid-text-secondary">
-                    Convite para {c.equipeNome} ({(c.equipeTipo ?? "time").toUpperCase()} · {c.esporteNome})
-                  </p>
-                  <p className="mt-1 text-[11px] text-eid-text-secondary">
-                    Enviado em {c.criadoEm ? new Date(c.criadoEm).toLocaleString("pt-BR") : "—"}
-                    {c.respondidoEm ? ` · Respondido em ${new Date(c.respondidoEm).toLocaleString("pt-BR")}` : ""}
-                  </p>
                   {pendente ? (
-                    <form action={cancelAction} className="mt-2">
+                    <form action={cancelAction} className="mt-8 flex justify-end">
                       <input type="hidden" name="time_id" value={c.equipeId} />
                       <input type="hidden" name="convite_id" value={c.id} />
                       <button
                         type="submit"
                         disabled={cancelPending}
-                        className="inline-flex min-h-[36px] items-center justify-center rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 text-[11px] font-bold text-rose-100 transition hover:border-rose-400/55 hover:bg-rose-500/16 disabled:opacity-50"
+                        className="inline-flex !h-[14px] !min-h-0 !max-h-[14px] items-center justify-center rounded border border-red-600/90 bg-red-600 px-1 text-[4.5px] font-black uppercase leading-none tracking-[0.01em] text-white transition hover:bg-red-500 disabled:opacity-60"
+                        style={{ fontSize: "10px", lineHeight: 1 }}
                       >
-                        {cancelPending ? "Cancelando…" : "Cancelar convite"}
+                        {cancelPending ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Loader2 className="h-2 w-2 animate-spin" aria-hidden />
+                            Cancelando...
+                          </span>
+                        ) : (
+                          "Cancelar"
+                        )}
                       </button>
                     </form>
                   ) : null}
+                </div>
+
+                <div className="min-w-0 !pt-9">
+                  <p className="text-right text-[10px] font-black uppercase tracking-[0.08em] text-eid-primary-300/90">Convidado</p>
+                  <ProfileEditDrawerTrigger
+                    href={`/perfil/${c.convidadoId}?from=/comunidade`}
+                    title={c.convidadoNome}
+                    fullscreen
+                    topMode="backOnly"
+                    className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                  >
+                    <div className="flex w-full flex-col items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-1.5 py-1.5">
+                      <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(c.convidadoNome)}</p>
+                      <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+                        {c.convidadoAvatarUrl ? (
+                          <Image src={c.convidadoAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                            {(c.convidadoNome ?? "A").slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-0.5">
+                        <ProfileEidPerformanceSeal
+                          notaEid={Number(c.convidadoNotaEid ?? 0)}
+                          compact
+                          className="scale-125"
+                        />
+                      </div>
+                      <p className="mt-0.5 max-w-full truncate text-center text-[9px] font-semibold text-eid-fg">
+                        {localConvidado.cidade}
+                      </p>
+                      <p className="max-w-full truncate text-center text-[9px] text-eid-text-secondary">
+                        {localConvidado.estado}
+                      </p>
+                    </div>
+                  </ProfileEditDrawerTrigger>
                 </div>
               </div>
             </li>

@@ -152,11 +152,11 @@ export function PerfilTimeEditForm({
           <button
             type="submit"
             disabled={pending}
-            className="eid-btn-primary inline-flex !min-h-[40px] items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold leading-none sm:!min-h-[42px] sm:px-5 sm:text-[15px]"
+            className="eid-btn-primary inline-flex !min-h-[32px] min-w-[132px] items-center justify-center gap-1.5 rounded-lg px-5 py-1.5 text-[12px] font-extrabold leading-none sm:!min-h-[34px] sm:min-w-[148px] sm:px-6 sm:text-[13px]"
           >
             {pending ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 Salvando...
               </>
             ) : (

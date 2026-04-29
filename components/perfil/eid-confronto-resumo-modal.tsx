@@ -405,7 +405,7 @@ export function EidConfrontoResumoModal({
                             {ladoA.trim().slice(0, 1).toUpperCase() || "A"}
                           </span>
                         )}
-                        <span className="line-clamp-2 max-w-full text-[11px] font-bold leading-tight text-eid-fg underline-offset-2 group-hover:text-eid-primary-200 group-hover:underline sm:text-xs">
+                        <span className="line-clamp-2 max-w-full text-[11px] font-bold leading-tight text-eid-fg group-hover:text-eid-primary-200 sm:text-xs">
                           {ladoA}
                         </span>
                       </Link>
@@ -435,7 +435,7 @@ export function EidConfrontoResumoModal({
                             {ladoB.trim().slice(0, 1).toUpperCase() || "B"}
                           </span>
                         )}
-                        <span className="line-clamp-2 max-w-full text-[11px] font-bold leading-tight text-eid-fg underline-offset-2 group-hover:text-eid-primary-200 group-hover:underline sm:text-xs">
+                        <span className="line-clamp-2 max-w-full text-[11px] font-bold leading-tight text-eid-fg group-hover:text-eid-primary-200 sm:text-xs">
                           {ladoB}
                         </span>
                       </Link>

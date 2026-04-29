@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { Loader2 } from "lucide-react";
 import type { TeamActionState } from "@/app/times/actions";
 
 type FormActionProp = NonNullable<ComponentProps<"form">["action"]>;
@@ -107,8 +108,8 @@ export function TeamInviteComboboxForm({
 
   const btnClass =
     variant === "stack"
-      ? "eid-btn-primary w-full min-h-[50px] rounded-xl px-5 py-3 !text-base font-bold leading-tight sm:w-auto sm:min-w-[8.75rem] sm:shrink-0 sm:self-stretch sm:px-6 sm:!text-lg sm:min-h-[52px]"
-      : "eid-btn-primary !text-base min-h-[48px] w-auto max-w-full shrink-0 justify-self-start rounded-xl px-6 py-3 font-bold leading-tight sm:min-h-[50px] sm:self-stretch sm:!text-lg";
+      ? "eid-btn-primary w-full min-h-[38px] rounded-xl px-3 py-1.5 !text-[12px] font-bold leading-tight sm:w-auto sm:min-w-[6.75rem] sm:shrink-0 sm:self-stretch sm:px-4 sm:!text-sm sm:min-h-[40px]"
+      : "eid-btn-primary !text-[12px] min-h-[36px] w-auto max-w-full shrink-0 justify-self-start rounded-xl px-3 py-1.5 font-bold leading-tight sm:min-h-[38px] sm:self-stretch sm:!text-sm";
 
   return (
     <div>
@@ -167,7 +168,14 @@ export function TeamInviteComboboxForm({
           ) : null}
         </div>
         <button type="submit" disabled={invitePending} className={btnClass}>
-          {invitePending ? "Enviando..." : submitLabel}
+          {invitePending ? (
+            <span className="inline-flex items-center justify-center gap-1">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              Adicionando...
+            </span>
+          ) : (
+            submitLabel
+          )}
         </button>
       </form>
     </div>
