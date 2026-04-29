@@ -58,8 +58,8 @@
   --eid-on-dark: var(--eid-fg);
 
   /* Bordas / foco */
-  --eid-border: rgba(255, 255, 255, 0.12);
-  --eid-border-subtle: rgba(255, 255, 255, 0.09);
+  --eid-border: rgba(255, 255, 255, 0.09);
+  --eid-border-subtle: rgba(255, 255, 255, 0.065);
   --eid-focus-ring: var(--eid-primary-500);
 
   /* Status legível no escuro (evitar 300 em fundo claro — ver tema light) */
@@ -1914,6 +1914,30 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 
 [data-eid-theme="light"] [data-eid-dashboard-page] .eid-dashboard-app-nav-item.eid-list-item:hover {
   background: color-mix(in srgb, var(--eid-primary-500) 12%, #ffffff 88%) !important;
+}
+
+/* Tema escuro — bordas/divisórias mais suaves nas páginas repaginadas. */
+[data-eid-theme="dark"] :where(
+  [data-eid-dashboard-page],
+  [data-eid-ranking-page],
+  [data-eid-vagas-page],
+  [data-eid-comunidade-panel],
+  #perfil-public-main,
+  main[data-eid-touch-ui]
+) :where(.eid-surface-panel, .eid-card, .eid-list-item) {
+  border-color: color-mix(in srgb, var(--eid-border-subtle) 72%, transparent) !important;
+  box-shadow: 0 8px 22px -20px rgba(2, 6, 23, 0.42) !important;
+}
+
+[data-eid-theme="dark"] :where(
+  [data-eid-dashboard-page],
+  [data-eid-ranking-page],
+  [data-eid-vagas-page],
+  [data-eid-comunidade-panel],
+  #perfil-public-main,
+  main[data-eid-touch-ui]
+) :where(.border-b, hr, .divide-x > :not([hidden]) ~ :not([hidden])) {
+  border-color: color-mix(in srgb, var(--eid-border-subtle) 64%, transparent) !important;
 }
 
 /* Desafio /match — hero e cartões no tema claro (alinhado à dashboard e ao ranking) */

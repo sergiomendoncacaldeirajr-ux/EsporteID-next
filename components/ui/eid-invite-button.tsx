@@ -34,7 +34,7 @@ export function EidInviteButton({
       {...props}
     >
       {loading ? <Loader2 className={`${iconClass} animate-spin`} aria-hidden /> : <Send className={iconClass} aria-hidden />}
-      <span>{loading ? loadingLabel : label}</span>
+      <span className={loading ? "animate-pulse" : ""}>{loading ? loadingLabel : label}</span>
     </button>
   );
 }

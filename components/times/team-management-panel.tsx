@@ -13,6 +13,7 @@ const initial: TeamActionState = { ok: false, message: "" };
 
 type Sport = { id: number; nome: string };
 type Team = { id: number; nome: string; tipo: string | null; esporteNome: string };
+type AtletaSuggest = { id: string; title: string; subtitle: string | null };
 
 type FullscreenLaunchers = {
   fromHref: string;
@@ -37,6 +38,8 @@ type TeamManagementPanelProps =
       panelMode?: "all" | "create" | "invite";
       /** Aparência específica do formulário de cadastro em tela cheia. */
       createStyle?: "default" | "cadastrar";
+      /** Aparência específica do formulário de convite em tela cheia. */
+      inviteStyle?: "default" | "convidar";
       fullscreenLaunchers?: undefined;
     };
 
@@ -92,8 +95,10 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     defaultTipoFormacao,
     panelMode = "all",
     createStyle = "default",
+    inviteStyle = "default",
   } = props;
   const isCadastrarStyle = createStyle === "cadastrar";
+  const isConvidarStyle = inviteStyle === "convidar";
   const router = useRouter();
   const [createState, createAction, createPending] = useActionState(criarEquipe, initial);
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
@@ -104,6 +109,12 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
   const [localizacao, setLocalizacao] = useState("");
   const [gpsStatus, setGpsStatus] = useState<"idle" | "loading" | "error">("idle");
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [inviteTeamId, setInviteTeamId] = useState<string>("");
+  const [inviteQuery, setInviteQuery] = useState("");
+  const [pickedInviteUserId, setPickedInviteUserId] = useState<string | null>(null);
+  const [inviteSuggestions, setInviteSuggestions] = useState<AtletaSuggest[]>([]);
+  const [inviteSuggestOpen, setInviteSuggestOpen] = useState(false);
+  const [inviteSuggestLoading, setInviteSuggestLoading] = useState(false);
 
   useEffect(() => {
     if (esporteId !== "" || esportes.length === 0) return;
@@ -126,6 +137,59 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     }
     router.push(nextHref);
   }, [createState, manageHrefTemplate, router]);
+
+  useEffect(() => {
+    if (inviteTeamId !== "" || minhasEquipes.length === 0) return;
+    setInviteTeamId(String(minhasEquipes[0].id));
+  }, [inviteTeamId, minhasEquipes]);
+
+  useEffect(() => {
+    if (!isConvidarStyle) return;
+    const q = inviteQuery.trim().replace(/^@+/, "");
+    if (pickedInviteUserId || q.length < 3) {
+      if (q.length < 3) {
+        setInviteSuggestions([]);
+        setInviteSuggestOpen(false);
+      }
+      return;
+    }
+
+    let cancelled = false;
+    const t = window.setTimeout(() => {
+      void (async () => {
+        setInviteSuggestLoading(true);
+        try {
+          const r = await fetch(`/api/search/suggest?q=${encodeURIComponent(q)}&scope=atletas`, { credentials: "same-origin" });
+          const j = (await r.json()) as { items?: AtletaSuggest[] };
+          if (cancelled) return;
+          const items = Array.isArray(j.items) ? j.items : [];
+          setInviteSuggestions(items);
+          setInviteSuggestOpen(items.length > 0);
+        } catch {
+          if (!cancelled) {
+            setInviteSuggestions([]);
+            setInviteSuggestOpen(false);
+          }
+        } finally {
+          if (!cancelled) setInviteSuggestLoading(false);
+        }
+      })();
+    }, 240);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+      setInviteSuggestLoading(false);
+    };
+  }, [inviteQuery, pickedInviteUserId, isConvidarStyle]);
+
+  useEffect(() => {
+    if (!inviteState.ok || !isConvidarStyle) return;
+    setInviteQuery("");
+    setPickedInviteUserId(null);
+    setInviteSuggestions([]);
+    setInviteSuggestOpen(false);
+  }, [inviteState.ok, isConvidarStyle]);
 
   function obterLocalizacao() {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -486,7 +550,115 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     </>
   );
 
-  const inviteBody = (
+  const inviteBody = isConvidarStyle ? (
+    <div className="rounded-[16px] border border-[color:var(--eid-border-subtle)] bg-eid-card p-3">
+      <p className="text-[13px] font-black text-eid-fg">Convidar atleta por @username</p>
+      <form action={inviteAction} className={`mt-3 grid gap-2 ${panelMode === "invite" ? "" : "mt-3"}`}>
+        <input type="hidden" name="convidado_usuario_id" value={pickedInviteUserId ?? ""} />
+        <label className="grid gap-1">
+          <span className="text-[11px] font-black uppercase tracking-[0.03em] text-eid-fg">Selecione a equipe</span>
+          <div className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
+            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#64748B]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="m12 2 7 2.4V11c0 4.1-2.8 7.7-7 9-4.2-1.3-7-4.9-7-9V4.4L12 2Z" />
+              <path d="m12 7.2 1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5 1.5-3Z" />
+            </svg>
+            <select
+              name="time_id"
+              required
+              value={inviteTeamId}
+              onChange={(e) => setInviteTeamId(e.target.value)}
+              className="h-11 w-full bg-transparent text-[12px] text-eid-fg focus:outline-none"
+            >
+              <option value="">Selecione a equipe</option>
+              {minhasEquipes.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nome} ({(t.tipo ?? "time").toUpperCase()} · {t.esporteNome})
+                </option>
+              ))}
+            </select>
+          </div>
+        </label>
+        <label className="grid gap-1">
+          <span className="text-[11px] font-black uppercase tracking-[0.03em] text-eid-fg">@username do atleta</span>
+          <div className="relative flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
+            <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#64748B]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <circle cx="12" cy="12" r="8" />
+              <path d="M8.5 14.8c.8-1.6 2-2.4 3.5-2.4s2.7.8 3.5 2.4" />
+              <path d="M9.8 9.8h4.4" />
+            </svg>
+            <input
+              name="username"
+              required={!pickedInviteUserId}
+              value={inviteQuery}
+              onChange={(e) => {
+                setPickedInviteUserId(null);
+                setInviteQuery(e.target.value);
+              }}
+              onFocus={() => {
+                if (inviteSuggestions.length > 0 && !pickedInviteUserId) setInviteSuggestOpen(true);
+              }}
+              onBlur={() => {
+                window.setTimeout(() => setInviteSuggestOpen(false), 180);
+              }}
+              placeholder="@username do atleta (3 letras para sugerir)"
+              autoComplete="off"
+              className="h-11 w-full bg-transparent text-[12px] text-eid-fg placeholder:text-[#64748B] focus:outline-none"
+            />
+            {inviteSuggestLoading ? (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-[#64748B]">Buscando...</span>
+            ) : null}
+            {inviteSuggestOpen && inviteSuggestions.length > 0 ? (
+              <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-56 overflow-auto rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card py-1 shadow-lg">
+                {inviteSuggestions.map((it) => (
+                  <li key={it.id}>
+                    <button
+                      type="button"
+                      className="flex w-full flex-col items-start px-3 py-2 text-left hover:bg-eid-surface/60"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setPickedInviteUserId(it.id);
+                        setInviteQuery(it.subtitle ? `${it.title} (${it.subtitle})` : it.title);
+                        setInviteSuggestOpen(false);
+                        setInviteSuggestions([]);
+                      }}
+                    >
+                      <span className="text-[12px] font-semibold text-eid-fg">{it.title}</span>
+                      {it.subtitle ? <span className="text-[10px] text-[#64748B]">{it.subtitle}</span> : null}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        </label>
+        <button
+          type="submit"
+          disabled={invitePending}
+          className="mt-1 inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-[12px] border border-[#2563EB] bg-[linear-gradient(90deg,#1D4ED8,#2563EB)] px-4 text-[12px] font-black uppercase tracking-[0.03em] text-white shadow-[0_10px_18px_-14px_rgba(37,99,235,0.8)] transition hover:brightness-105 disabled:opacity-60"
+        >
+          {invitePending ? (
+            <>
+              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" aria-hidden />
+              <span className="animate-pulse">Convidando...</span>
+            </>
+          ) : (
+            <>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="m22 2-10 10" />
+                <path d="m22 2-6 20-4-9-9-4 19-7Z" />
+              </svg>
+              <span>Convidar</span>
+            </>
+          )}
+        </button>
+        {inviteState.message ? (
+          <p className={`text-xs ${inviteState.ok ? "text-eid-primary-700 dark:text-eid-primary-300" : "text-red-700 dark:text-red-300"}`}>
+            {inviteState.message}
+          </p>
+        ) : null}
+      </form>
+    </div>
+  ) : (
     <form action={inviteAction} className={`grid gap-2 sm:grid-cols-[1fr_1fr_auto] ${panelMode === "invite" ? "" : "mt-3"}`}>
       <select name="time_id" required className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg">
         <option value="">Selecione a equipe</option>
@@ -539,10 +711,14 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
 
       {showInviteBlock ? (
         panelMode === "invite" ? (
-          <div className="eid-surface-panel overflow-hidden rounded-2xl p-0">
-            {inviteHeader}
-            <div className="p-3 sm:p-4">{inviteBody}</div>
-          </div>
+          isConvidarStyle ? (
+            <div className="p-0">{inviteBody}</div>
+          ) : (
+            <div className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+              {inviteHeader}
+              <div className="p-3 sm:p-4">{inviteBody}</div>
+            </div>
+          )
         ) : (
           <details className="eid-surface-panel overflow-hidden rounded-2xl p-0">
             <summary className="cursor-pointer border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2 text-sm font-semibold text-eid-fg">
