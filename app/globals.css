@@ -1209,6 +1209,61 @@ select,
     font-size: inherit !important;
     font-weight: inherit !important;
   }
+  [data-eid-ranking-page] {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  [data-eid-ranking-page] [data-eid-ranking-filter="true"] :where(.eid-ranking-filter-segment) {
+    min-height: 30px !important;
+    height: 30px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    font-size: 6.5px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    border-radius: 8px !important;
+  }
+  [data-eid-ranking-page] [data-eid-ranking-filter="true"] .eid-ranking-filter-sport {
+    min-height: 28px !important;
+    height: 28px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    font-size: 7px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    border-radius: 8px !important;
+  }
+  [data-eid-ranking-page] [data-eid-ranking-filter="true"] .eid-ranking-filter-plus {
+    min-height: 28px !important;
+    min-width: 28px !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 14px !important;
+    line-height: 1 !important;
+  }
+  [data-eid-ranking-page] [data-eid-ranking-filter="true"] .eid-ranking-filter-clear {
+    min-height: 24px !important;
+    height: 24px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    font-size: 7px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+  }
+  [data-eid-ranking-page] .eid-ranking-toggle-shell {
+    min-height: 1.3rem !important;
+    height: 1.3rem !important;
+    min-width: 6rem !important;
+    padding: 2px !important;
+  }
+  [data-eid-ranking-page] .eid-ranking-toggle-shell a {
+    min-height: 0 !important;
+    font-size: 8px !important;
+    font-weight: 600 !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    line-height: 1 !important;
+  }
 
   /*
    * Fluxo Desafio (match/desafio/maioridade/placar): compacto e consistente

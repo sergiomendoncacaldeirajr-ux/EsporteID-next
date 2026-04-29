@@ -124,7 +124,7 @@ function normalizeCityHint(raw: string | null | undefined): string {
   const s = String(raw ?? "").trim();
   if (!s) return "";
   const part = s.split(",")[0]?.trim() ?? s;
-  return part.toLowerCase();
+  return normalizeSearchText(part);
 }
 
 function cidadeDisplayFromProfile(raw: string | null | undefined): string | null {
@@ -132,6 +132,15 @@ function cidadeDisplayFromProfile(raw: string | null | undefined): string | null
   if (!s) return null;
   const part = s.split(",")[0]?.trim() ?? s;
   return part || null;
+}
+
+function normalizeSearchText(raw: string | null | undefined): string {
+  return String(raw ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 function bestViewerRankIndex(rows: UnifiedRank[], viewerId: string, teamIds: Set<number>, mode: RankingSearchState["tipo"]): number | null {
@@ -230,7 +239,7 @@ export default async function RankingPage({ searchParams }: Props) {
       const rows = ((raw ?? []) as UsuarioEidRow[]).filter((r) => {
         if (!cityNeedle) return true;
         const p = firstOf(r.profiles);
-        const loc = String(p?.localizacao ?? "").toLowerCase();
+        const loc = normalizeSearchText(p?.localizacao ?? "");
         return loc.includes(cityNeedle);
       });
       rankingAll = rows.map((r) => {
@@ -250,19 +259,24 @@ export default async function RankingPage({ searchParams }: Props) {
         };
       });
     } else {
-      const tipoTime = state.tipo === "dupla" ? "dupla" : "time";
       let q = supabase
         .from("times")
         .select("id, nome, escudo, localizacao, pontos_ranking, eid_time, esporte_id, tipo")
-        .eq("tipo", tipoTime)
         .eq("esporte_id", selectedEsporteId);
       q = state.rank === "match" ? q.order("pontos_ranking", { ascending: false }) : q.order("eid_time", { ascending: false });
       const { data: raw } = await q;
-      const rows = ((raw ?? []) as TimeRow[]).filter((r) => {
-        if (!cityNeedle) return true;
-        const loc = String(r.localizacao ?? "").toLowerCase();
-        return loc.includes(cityNeedle);
-      });
+      const tipoMatches = (r: TimeRow): boolean => {
+        const t = String(r.tipo ?? "")
+          .trim()
+          .toLowerCase();
+        if (state.tipo === "dupla") return t === "dupla" || t === "duplas";
+        // Time: considera qualquer formação que não seja explícita como dupla.
+        return t !== "dupla" && t !== "duplas";
+      };
+      const baseRows = ((raw ?? []) as TimeRow[]).filter(tipoMatches);
+      const rows = cityNeedle
+        ? baseRows.filter((r) => normalizeSearchText(r.localizacao ?? "").includes(cityNeedle))
+        : baseRows;
       rankingAll = rows.map((r) => ({
         key: `t-${r.id}-${r.esporte_id ?? 0}`,
         timeId: r.id,
