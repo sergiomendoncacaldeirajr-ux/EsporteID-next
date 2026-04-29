@@ -1,0 +1,22 @@
+import { CircleCheck } from "lucide-react";
+import type { HTMLAttributes } from "react";
+
+type Props = HTMLAttributes<HTMLSpanElement> & {
+  label?: string;
+  compact?: boolean;
+};
+
+export function EidAcceptedBadge({ label = "Aceito", compact = false, className = "", ...props }: Props) {
+  const sizeClass = compact ? "px-1.5 py-[1px] text-[8px]" : "px-2 py-0.5 text-[9px]";
+  const iconClass = compact ? "h-3 w-3" : "h-3.5 w-3.5";
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-success-500)_46%,var(--eid-border-subtle)_54%)] bg-[color:color-mix(in_srgb,var(--eid-success-500)_14%,var(--eid-card)_86%)] ${sizeClass} font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-success-500)_82%,var(--eid-fg)_18%)] ${className}`.trim()}
+      {...props}
+    >
+      <CircleCheck className={iconClass} aria-hidden />
+      {label}
+    </span>
+  );
+}

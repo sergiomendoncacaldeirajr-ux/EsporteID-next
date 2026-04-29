@@ -18,6 +18,9 @@ import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/c
 import { ComunidadeSetorNotificacoes } from "@/components/comunidade/comunidade-setor-notificacoes";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
+import { EidAcceptedBadge } from "@/components/ui/eid-accepted-badge";
+import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
+import { EidRejectedBadge } from "@/components/ui/eid-rejected-badge";
 import { CancelarCandidaturaForm, ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
 import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
@@ -70,9 +73,7 @@ function ComunidadeQuadro({
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
         <h3 className="text-[11px] font-bold uppercase tracking-[0.1em] text-eid-primary-300">{title}</h3>
-        <span className="rounded-full border border-amber-400/35 bg-amber-500/14 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-amber-200">
-          {badgeLabel}
-        </span>
+        <EidPendingBadge label={badgeLabel} />
       </summary>
       <div className="mt-2">{children}</div>
     </details>
@@ -291,6 +292,10 @@ export default async function ComunidadePage() {
     const formacaoDesafiante = formacaoDesafianteKey ? formacaoDesafianteByChave.get(formacaoDesafianteKey) ?? null : null;
     return {
       id: Number(m.id),
+      dataSolicitacao:
+        (m as { data_solicitacao?: string | null }).data_solicitacao ??
+        (m as { data_registro?: string | null }).data_registro ??
+        null,
       desafianteNome: (m.usuario_id ? uMap.get(m.usuario_id)?.nome : null) ?? "Atleta",
       desafianteId: String(m.usuario_id ?? ""),
       desafianteAvatarUrl: (m.usuario_id ? uMap.get(m.usuario_id)?.avatar_url : null) ?? null,
@@ -421,6 +426,7 @@ export default async function ComunidadePage() {
     }
     return {
       id: Number(m.id),
+      solicitadoEm: (m as { data_solicitacao?: string | null }).data_solicitacao ?? null,
       adversarioId: String(m.adversario_id ?? ""),
       adversarioNome: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.nome ?? "Oponente",
       adversarioAvatarUrl: enviadosPerfisMap.get(String(m.adversario_id ?? ""))?.avatar_url ?? null,
@@ -450,7 +456,7 @@ export default async function ComunidadePage() {
 
   const { data: sugestoesRaw } = await supabase
     .from("match_sugestoes")
-    .select("id, sugeridor_id, sugeridor_time_id, alvo_time_id, esporte_id, modalidade, mensagem")
+    .select("id, sugeridor_id, sugeridor_time_id, alvo_time_id, esporte_id, modalidade, mensagem, criado_em")
     .eq("alvo_dono_id", user.id)
     .eq("status", "pendente")
     .order("id", { ascending: false })
@@ -472,11 +478,17 @@ export default async function ComunidadePage() {
     ),
   ];
   const { data: sugPerfis } = sugSugIds.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", sugSugIds)
+    ? await supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", sugSugIds)
     : { data: [] };
   const sugPerfilMap = new Map((sugPerfis ?? []).map((p) => [p.id, p.nome]));
   const sugPerfilAvatarMap = new Map(
     (sugPerfis ?? []).map((p) => [p.id, String((p as { avatar_url?: string | null }).avatar_url ?? "")])
+  );
+  const sugPerfilLocMap = new Map<string, string | null>(
+    (sugPerfis ?? []).map((p) => {
+      const loc = String((p as { localizacao?: string | null }).localizacao ?? "").trim();
+      return [p.id, loc || null];
+    })
   );
   const { data: sugTimes } = sugTimeIds.length
     ? await supabase.from("times").select("id, nome, criador_id, escudo, eid_time, localizacao").in("id", sugTimeIds)
@@ -563,9 +575,11 @@ export default async function ComunidadePage() {
     })
     .map((s) => ({
     id: Number(s.id),
+    criadoEm: String((s as { criado_em?: string | null }).criado_em ?? "").trim() || null,
     sugeridorId: String(s.sugeridor_id ?? ""),
     sugeridorNome: sugPerfilMap.get(s.sugeridor_id) ?? "Atleta",
     sugeridorAvatarUrl: sugPerfilAvatarMap.get(String(s.sugeridor_id ?? "")) || null,
+    sugeridorLocalizacao: sugPerfilLocMap.get(String(s.sugeridor_id ?? "")) ?? null,
     meuTimeId: Number(s.sugeridor_time_id ?? 0) || null,
     meuTimeTipo: String(s.modalidade ?? "time"),
     meuTimeNome: sugTimeMap.get(s.sugeridor_time_id) ?? "Formação",
@@ -625,6 +639,10 @@ export default async function ComunidadePage() {
         meuTimeNotaEid: Number((time as { eid_time?: number | null } | null)?.eid_time ?? 0),
         meuTimeLocalizacao: String((time as { localizacao?: string | null } | null)?.localizacao ?? "") || null,
         alvoTimeNome: String((sugEnvTimesMap.get(Number(s.alvo_time_id ?? 0)) as { nome?: string | null } | null)?.nome ?? "Formação"),
+        alvoLocalizacao:
+          String(
+            (sugEnvTimesMap.get(Number(s.alvo_time_id ?? 0)) as { localizacao?: string | null } | null)?.localizacao ?? ""
+          ).trim() || null,
         esporte: sugEnvEspMap.get(Number(s.esporte_id ?? 0)) ?? "Esporte",
         modalidade: String(s.modalidade ?? "time"),
         mensagem: String(s.mensagem ?? "").trim() || null,
@@ -1446,9 +1464,15 @@ export default async function ComunidadePage() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-semibold text-eid-fg">{c.timeNome}</p>
-                          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] ${c.statusClass}`}>
-                            {c.statusLabel}
-                          </span>
+                          {c.statusLabel === "Aprovado" ? (
+                            <EidAcceptedBadge label={c.statusLabel} />
+                          ) : c.statusLabel === "Recusado" || c.statusLabel === "Cancelado" ? (
+                            <EidRejectedBadge label={c.statusLabel} />
+                          ) : (
+                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] ${c.statusClass}`}>
+                              {c.statusLabel}
+                            </span>
+                          )}
                         </div>
                         <p className="mt-1 text-xs text-eid-text-secondary">
                           {c.timeTipo.toLowerCase() === "dupla" ? "Dupla" : "Time"} · pedido em{" "}

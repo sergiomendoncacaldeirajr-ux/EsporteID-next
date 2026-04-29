@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { convidarTorneioStaff, type TorneioStaffActionState } from "@/app/torneios/actions";
+import { EidInviteButton } from "@/components/ui/eid-invite-button";
 
 const initialState: TorneioStaffActionState = { ok: false, message: "" };
 
@@ -29,13 +30,13 @@ export function TorneioStaffForm({ torneioId }: { torneioId: number }) {
           className="eid-input-dark rounded-xl px-3 py-2.5 text-sm text-eid-fg"
         />
       </div>
-      <button
+      <EidInviteButton
         type="submit"
-        disabled={pending}
-        className="mt-3 rounded-xl bg-eid-action-500 px-4 py-2 text-xs font-black uppercase tracking-wide text-[var(--eid-brand-ink)] disabled:opacity-60"
-      >
-        {pending ? "Convidando..." : "Adicionar staff"}
-      </button>
+        loading={pending}
+        label="Adicionar staff"
+        loadingLabel="Convidando..."
+        className="mt-3 rounded-xl"
+      />
       {state.message ? (
         <p className={`mt-3 text-xs ${state.ok ? "text-emerald-300" : "text-red-300"}`}>{state.message}</p>
       ) : null}

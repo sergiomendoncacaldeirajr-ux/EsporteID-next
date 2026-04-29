@@ -68,6 +68,24 @@
   --eid-hist-status-on-bg: color-mix(in srgb, var(--eid-success-500) 16%, transparent);
   --eid-hist-status-off-bg: color-mix(in srgb, var(--eid-danger-500) 16%, transparent);
 
+  /*
+   * Selo EID (cápsula): carvão + faixa azul — no escuro a direita vira azul translúcido sobre o card.
+   */
+  --eid-seal-border: color-mix(in srgb, var(--eid-primary-400) 38%, var(--eid-border-subtle) 62%);
+  --eid-seal-label-bg: #1a1c24;
+  --eid-seal-label-fg: #ffffff;
+  --eid-seal-score-bg: color-mix(in srgb, var(--eid-primary-500) 28%, var(--eid-card) 72%);
+  --eid-seal-score-fg: #bfdbfe;
+  --eid-seal-shadow: 0 2px 8px rgba(0, 0, 0, 0.32);
+
+  /* Cancelar (texto vermelho + X branco em círculo dentro de quadrado rosado/borda) */
+  --eid-cancel-inline-fg: #f87171;
+  --eid-cancel-inline-hover-fg: #fca5a5;
+  --eid-cancel-icon-ring-border: color-mix(in srgb, var(--eid-danger-500) 45%, var(--eid-border-subtle) 55%);
+  --eid-cancel-icon-ring-bg: color-mix(in srgb, var(--eid-danger-500) 14%, var(--eid-card) 86%);
+  --eid-cancel-icon-dot-bg: var(--eid-danger-500);
+  --eid-cancel-icon-fg: #ffffff;
+
   --background: var(--eid-bg);
   --foreground: var(--eid-fg);
 
@@ -146,6 +164,20 @@ body.eid-app-shell {
   --eid-hist-status-off: #b91c1c;
   --eid-hist-status-on-bg: color-mix(in srgb, var(--eid-success-500) 14%, var(--eid-surface));
   --eid-hist-status-off-bg: color-mix(in srgb, var(--eid-danger-500) 14%, var(--eid-surface));
+
+  --eid-seal-border: rgba(0, 82, 255, 0.22);
+  --eid-seal-label-bg: #1a1c24;
+  --eid-seal-label-fg: #ffffff;
+  --eid-seal-score-bg: #f0f5ff;
+  --eid-seal-score-fg: #0052ff;
+  --eid-seal-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+
+  --eid-cancel-inline-fg: #ef4444;
+  --eid-cancel-inline-hover-fg: #dc2626;
+  --eid-cancel-icon-ring-border: #fecaca;
+  --eid-cancel-icon-ring-bg: #fef2f2;
+  --eid-cancel-icon-dot-bg: #ef4444;
+  --eid-cancel-icon-fg: #ffffff;
 }
 
 /*
@@ -1674,8 +1706,7 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 }
 
 [data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-eid-seal {
-  border-color: color-mix(in srgb, #2563eb 35%, var(--eid-border) 65%);
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--eid-seal-shadow);
 }
 
 /* Dashboard (/dashboard) — cartões e hero no tema claro */

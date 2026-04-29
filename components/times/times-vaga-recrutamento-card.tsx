@@ -6,6 +6,7 @@ import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
+import { EidCityState } from "@/components/ui/eid-city-state";
 
 export type TimesVagaCardData = {
   id: number;
@@ -113,7 +114,9 @@ export function TimesVagaRecrutamentoCard({
           <h2 className="mt-1.5 line-clamp-2 text-sm font-black uppercase leading-tight tracking-tight text-eid-fg sm:text-base">
             {team.nome ?? "Formação"}
           </h2>
-          <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-eid-text-secondary">{team.localizacao ?? "Localização não informada"}</p>
+          <div className="mt-1 min-w-0">
+            <EidCityState location={team.localizacao} align="start" />
+          </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-eid-text-secondary">
             <span className="inline-flex items-center rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-px text-[9px] font-black uppercase tracking-[0.08em] text-eid-action-300">
               {vagasLabel}

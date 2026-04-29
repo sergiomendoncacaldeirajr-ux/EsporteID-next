@@ -14,19 +14,21 @@ export function ModalidadeGlyphIcon({ modalidade }: { modalidade: ModalidadeKind
   if (modalidade === "time") {
     return (
       <svg viewBox="0 0 16 16" aria-hidden className="h-3 w-3 shrink-0">
-        <path
-          fill="currentColor"
-          d="M5 3.2a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2Zm6 0a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2ZM8 2.6a1.9 1.9 0 1 1 0 3.8 1.9 1.9 0 0 1 0-3.8ZM2.9 11.8c0-1.2 1.1-1.95 2.1-1.95.95 0 2.1.7 2.1 1.95a.6.6 0 1 1-1.2 0c0-.45-.48-.75-.9-.75-.45 0-.9.32-.9.75a.6.6 0 1 1-1.2 0Zm6 0c0-1.25 1.15-1.95 2.1-1.95 1 0 2.1.75 2.1 1.95a.6.6 0 1 1-1.2 0c0-.43-.45-.75-.9-.75-.42 0-.9.3-.9.75a.6.6 0 1 1-1.2 0ZM5.1 12.2c0-1.55 1.55-2.45 2.9-2.45s2.9.9 2.9 2.45a.7.7 0 0 1-1.4 0c0-.66-.72-1.05-1.5-1.05s-1.5.4-1.5 1.05a.7.7 0 0 1-1.4 0Z"
-        />
+        <circle cx="8" cy="4.2" r="1.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+        <circle cx="4.2" cy="5.1" r="1.2" fill="none" stroke="currentColor" strokeWidth="1.2" />
+        <circle cx="11.8" cy="5.1" r="1.2" fill="none" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M5.8 11.7c.2-1.3 1.15-2.1 2.2-2.1 1.05 0 2 .8 2.2 2.1" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        <path d="M2.7 11.7c.12-.95.86-1.55 1.5-1.55.62 0 1.36.6 1.48 1.55" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+        <path d="M10.3 11.7c.12-.95.86-1.55 1.5-1.55.62 0 1.36.6 1.48 1.55" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
       </svg>
     );
   }
   return (
     <svg viewBox="0 0 16 16" aria-hidden className="h-3 w-3 shrink-0">
-      <path
-        fill="currentColor"
-        d="M5.2 3a1.75 1.75 0 1 1 0 3.5 1.75 1.75 0 0 1 0-3.5Zm5.6 0a1.75 1.75 0 1 1 0 3.5 1.75 1.75 0 0 1 0-3.5ZM2.8 12c0-1.5 1.45-2.35 2.4-2.35S7.6 10.5 7.6 12a.6.6 0 0 1-1.2 0c0-.6-.64-1.15-1.2-1.15S4 11.4 4 12a.6.6 0 0 1-1.2 0Zm5.6 0c0-1.5 1.45-2.35 2.4-2.35s2.4.85 2.4 2.35a.6.6 0 1 1-1.2 0c0-.6-.64-1.15-1.2-1.15S9.6 11.4 9.6 12a.6.6 0 1 1-1.2 0Z"
-      />
+      <circle cx="5.2" cy="4.4" r="1.35" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="10.8" cy="4.4" r="1.35" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M3.2 11.7c.18-1.2 1.1-2 2-2s1.82.8 2 2" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+      <path d="M8.8 11.7c.18-1.2 1.1-2 2-2s1.82.8 2 2" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
     </svg>
   );
 }

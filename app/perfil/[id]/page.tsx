@@ -8,6 +8,7 @@ import { ProfileSolicitarMatchMenu } from "@/components/perfil/profile-solicitar
 import { ProfileDenunciarButton } from "@/components/perfil/profile-denunciar-button";
 import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+import { EidCityState } from "@/components/ui/eid-city-state";
 import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { ProfileConviteFormacaoCta } from "@/components/perfil/profile-convite-formacao-cta";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
@@ -561,12 +562,9 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                       />
                     ) : null}
                     {perfil.localizacao ? (
-                      <p className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-px text-eid-text-secondary">
-                        <svg viewBox="0 0 16 16" fill="currentColor" className="h-2.5 w-2.5 shrink-0 text-eid-action-500/90">
-                          <path fillRule="evenodd" d="M8 1.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9ZM2 6a6 6 0 1 1 10.95 3.396l-3.535 5.142a1.5 1.5 0 0 1-2.83 0L2.95 9.396A5.972 5.972 0 0 1 2 6Zm6 2a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" clipRule="evenodd" />
-                        </svg>
-                        {perfil.localizacao}
-                      </p>
+                      <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-1.5 py-1">
+                        <EidCityState location={perfil.localizacao} compact align="start" />
+                      </div>
                     ) : null}
                   </div>
                 ) : null}

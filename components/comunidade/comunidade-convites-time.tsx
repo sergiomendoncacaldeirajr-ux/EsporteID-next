@@ -6,8 +6,9 @@ import { responderConviteEquipe, type ResponderConviteState } from "@/app/comuni
 import Image from "next/image";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+import { EidInviteButton } from "@/components/ui/eid-invite-button";
+import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import {
-  PEDIDO_MATCH_RECEBIDO_ACEITAR_BTN_CLASS,
   PEDIDO_MATCH_RECEBIDO_ACOES_ROW_CLASS,
   PEDIDO_MATCH_RECEBIDO_FORM_CLASS,
   PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS,
@@ -98,9 +99,7 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                         {(c.equipeTipo ?? "time").toUpperCase()} · {c.esporteNome} · convite de {c.convidadoPor}
                       </p>
                     </div>
-                    <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
-                      Convite pendente
-                    </span>
+                    <EidPendingBadge label="Pendente" />
                   </div>
                 </div>
               </div>
@@ -112,9 +111,14 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
               <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                 <input type="hidden" name="convite_id" value={String(c.id)} />
                 <input type="hidden" name="aceitar" value="true" />
-                <button type="submit" disabled={pending} className={PEDIDO_MATCH_RECEBIDO_ACEITAR_BTN_CLASS}>
-                  <span>{pending ? "Salvando…" : "Aceitar"}</span>
-                </button>
+                <EidInviteButton
+                  type="submit"
+                  compact
+                  loading={pending}
+                  label="Convite"
+                  loadingLabel="Enviando..."
+                  className="w-full rounded-xl !text-[11px]"
+                />
               </form>
               <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                 <input type="hidden" name="convite_id" value={String(c.id)} />

@@ -4,6 +4,7 @@ import {
   cancelarSolicitacaoAlunoAction,
 } from "@/app/professor/actions";
 import { descreverPoliticaCancelamentoProfessor } from "@/lib/professor/cancellation";
+import { EidCancelAction } from "@/components/ui/eid-cancel-action";
 
 export type ComunidadeProfessorProfileRow = {
   id: string;
@@ -138,9 +139,7 @@ export function ComunidadeAulasSection({
                       {solicitacao.status === "pendente" ? (
                         <form action={cancelarSolicitacaoAlunoAction}>
                           <input type="hidden" name="solicitacao_id" value={solicitacao.id} />
-                          <button className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-fg">
-                            Cancelar pedido
-                          </button>
+                          <EidCancelAction label="Cancelar pedido" className="rounded-lg !text-xs" />
                         </form>
                       ) : null}
                     </div>

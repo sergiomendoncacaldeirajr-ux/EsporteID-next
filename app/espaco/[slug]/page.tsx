@@ -9,6 +9,7 @@ import {
 } from "@/components/espaco/espaco-public-cta";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_WIDE_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { EidCityState } from "@/components/ui/eid-city-state";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeEspacoAssociacaoConfig } from "@/lib/espacos/associacao-config";
 
@@ -136,9 +137,13 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                   "Estrutura esportiva pronta para reservas, sócios, professores e eventos."}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
-                <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-xs font-semibold text-eid-primary-300">
-                  {espaco.cidade ?? "Cidade"} {espaco.uf ? `· ${espaco.uf}` : ""}
-                </span>
+                <div className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1.5">
+                  <EidCityState
+                    cidade={espaco.cidade?.trim() ? espaco.cidade : "Cidade"}
+                    estado={espaco.uf?.trim() ? espaco.uf : undefined}
+                    align="start"
+                  />
+                </div>
                 {espaco.aceita_socios ? (
                   <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-3 py-1 text-xs font-semibold text-eid-action-400">
                     Aceitando sócios

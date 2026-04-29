@@ -28,6 +28,7 @@ import {
 } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
 import { TeamPublicInviteBlock, type TeamPublicPendingInvite } from "@/components/times/team-public-invite-block";
+import { EidCityState } from "@/components/ui/eid-city-state";
 import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-cta";
 import { SairDaEquipeConfirmForm } from "@/components/times/sair-da-equipe-confirm-form";
 
@@ -320,7 +321,9 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           </span>
           <h1 className="mt-3 text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
           {t.username ? <p className="mt-1 text-xs font-medium text-eid-primary-300">@{t.username}</p> : null}
-          <p className="mt-2 text-sm text-eid-text-secondary">{t.localizacao ?? "Localização não informada"}</p>
+          <div className="mt-2 flex justify-center px-2">
+            <EidCityState location={t.localizacao} align="center" />
+          </div>
           {isLeader ? <FormacaoCidadeAvisoLider timeId={id} /> : null}
           {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{t.bio}</p> : null}
 

@@ -27,6 +27,7 @@ import {
   mapNomesTimesAdversarios,
   mapTorneioNomes,
 } from "@/lib/perfil/formacao-eid-stats";
+import { EidCityState } from "@/components/ui/eid-city-state";
 import { createClient } from "@/lib/supabase/server";
 import { TeamPublicInviteBlock, type TeamPublicPendingInvite } from "@/components/times/team-public-invite-block";
 
@@ -347,7 +348,9 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
           {usernameExibicao ? (
             <p className="mt-1 text-xs font-medium text-eid-primary-300">@{usernameExibicao}</p>
           ) : null}
-          <p className="mt-2 text-sm text-eid-text-secondary">{localExibicao ?? "Localização não informada"}</p>
+          <div className="mt-2 flex justify-center px-2">
+            <EidCityState location={localExibicao} align="center" />
+          </div>
           {isDonoDupla && timeResolvidoId ? <FormacaoCidadeAvisoLider timeId={timeResolvidoId} /> : null}
           {d.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{d.bio}</p> : null}
           {liderDupla ? (

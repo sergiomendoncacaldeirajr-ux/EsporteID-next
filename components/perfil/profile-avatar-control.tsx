@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { removeProfileAvatarAction, uploadProfileAvatarAction } from "@/app/perfil/actions";
+import { EidCancelAction } from "@/components/ui/eid-cancel-action";
 
 type Props = {
   hasAvatar: boolean;
@@ -130,13 +131,7 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
               />
             </label>
             <div className="mt-2 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={closeEditor}
-                className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2 py-1 text-[10px] font-semibold text-eid-text-secondary"
-              >
-                Cancelar
-              </button>
+              <EidCancelAction type="button" compact className="rounded-lg" onClick={closeEditor} />
               <button
                 type="button"
                 onClick={confirmCropAndUpload}

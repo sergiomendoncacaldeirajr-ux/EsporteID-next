@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState } from "react";
-import { Loader2 } from "lucide-react";
 import {
   cancelarConviteDaEquipe,
   convidarUsuarioParaEquipe,
@@ -10,6 +9,9 @@ import {
   type TeamActionState,
 } from "@/app/times/actions";
 import { TeamInviteComboboxForm } from "@/components/times/team-invite-combobox-form";
+import { EidCancelButton } from "@/components/ui/eid-cancel-button";
+import { EidCityState } from "@/components/ui/eid-city-state";
+import { EidInviteButton } from "@/components/ui/eid-invite-button";
 
 const initial: TeamActionState = { ok: false, message: "" };
 
@@ -86,13 +88,12 @@ export function TeamRosterManager({
             <form action={inviteAction} className="mt-2 flex justify-start">
               <input type="hidden" name="time_id" value={timeId} />
               <input type="hidden" name="convidado_usuario_id" value={prefillConvidarUsuarioId} />
-              <button
+              <EidInviteButton
                 type="submit"
-                disabled={invitePending}
-                className="eid-btn-primary rounded-xl px-6 py-3 text-base font-bold sm:text-lg disabled:opacity-60"
-              >
-                {invitePending ? "Enviando..." : "Enviar convite"}
-              </button>
+                loading={invitePending}
+                label="Enviar convite"
+                className="rounded-xl px-6 py-3 text-base sm:text-lg"
+              />
             </form>
           </div>
         ) : null}
@@ -140,7 +141,7 @@ export function TeamRosterManager({
                       )}
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[11px] font-bold text-eid-fg">{c.nome}</p>
-                        <p className="truncate text-[9px] text-eid-text-secondary">{c.localizacao ?? "Localização não informada"}</p>
+                        <EidCityState location={c.localizacao} compact align="start" className="w-full" />
                       </div>
                       <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-fg">
                         {c.status}
@@ -149,20 +150,14 @@ export function TeamRosterManager({
                         <form action={cancelInviteAction} className="w-full sm:ml-auto sm:w-auto">
                           <input type="hidden" name="time_id" value={timeId} />
                           <input type="hidden" name="convite_id" value={c.conviteId} />
-                          <button
+                          <EidCancelButton
                             type="submit"
-                            disabled={cancelInvitePending || invitePending}
-                            className="inline-flex min-h-[32px] w-full items-center justify-center rounded-lg border border-rose-600/80 bg-rose-600/15 px-2.5 text-[9px] font-black uppercase tracking-[0.06em] text-red-700 transition hover:bg-rose-600/25 disabled:opacity-60 dark:text-red-300"
-                          >
-                            {cancelInvitePending ? (
-                              <span className="inline-flex items-center gap-1">
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                                Cancelando...
-                              </span>
-                            ) : (
-                              "Cancelar convite"
-                            )}
-                          </button>
+                            compact
+                            loading={cancelInvitePending}
+                            label="Cancelar convite"
+                            className="w-full rounded-lg !min-h-[24px] text-[9px]"
+                            disabled={invitePending}
+                          />
                         </form>
                       ) : null}
                     </li>
@@ -203,7 +198,7 @@ export function TeamRosterManager({
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[11px] font-bold text-eid-fg">{m.nome}</p>
-                      <p className="truncate text-[9px] text-eid-text-secondary">{m.localizacao ?? "Localização não informada"}</p>
+                      <EidCityState location={m.localizacao} compact align="start" className="w-full" />
                     </div>
                     <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-fg">
                       {m.status}

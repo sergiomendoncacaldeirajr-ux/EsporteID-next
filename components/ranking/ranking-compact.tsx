@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { RankingSearchState } from "@/lib/ranking/ranking-href";
 import { rankingHref } from "@/lib/ranking/ranking-href";
 import CityGpsLabel from "@/components/ranking/city-gps-label";
+import { EidSealPill } from "@/components/ui/eid-seal-pill";
 
 function cn(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(" ");
@@ -289,18 +290,15 @@ function blockButton(active: boolean) {
 export function RankingEidSeal({ score, compact = false }: { score: number; compact?: boolean }) {
   const safe = Number.isFinite(score) ? score : 0;
   return (
-    <span
-      className={cn(
-        "eid-ranking-eid-seal pointer-events-none absolute bottom-0 left-1/2 z-[3] flex -translate-x-1/2 items-center rounded-full border border-eid-primary-500/45 font-black uppercase leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,0.2)]",
-        compact ? "translate-y-[30%] text-[5px]" : "translate-y-[40%] text-[6px]"
-      )}
+    <EidSealPill
+      value={safe}
+      variant={compact ? "ranking-tight" : "ranking"}
       aria-hidden
-    >
-      <span className={cn("rounded-l-full bg-black", compact ? "px-[2px] py-0 pl-[2px]" : "px-[3px] py-px pl-[4px]")}>EID</span>
-      <span className={cn("rounded-r-full bg-eid-primary-500 tabular-nums", compact ? "px-[2px] py-0 pr-[2px]" : "px-[3px] py-px pr-[4px]")}>
-        {safe.toFixed(1)}
-      </span>
-    </span>
+      className={cn(
+        "eid-ranking-eid-seal pointer-events-none absolute bottom-0 left-1/2 z-[3] -translate-x-1/2",
+        compact ? "translate-y-[30%]" : "translate-y-[40%]"
+      )}
+    />
   );
 }
 

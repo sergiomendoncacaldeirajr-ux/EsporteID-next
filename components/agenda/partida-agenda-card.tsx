@@ -11,8 +11,10 @@ import {
 } from "@/app/agenda/actions";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
-import { DESAFIO_FLOW_CTA_BLOCK_CLASS, PEDIDO_CANCELAR_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
+import { DESAFIO_FLOW_CTA_BLOCK_CLASS } from "@/lib/desafio/flow-ui";
 import { createPortal } from "react-dom";
+import { EidCancelButton } from "@/components/ui/eid-cancel-button";
+import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 
 type Props = {
   id: number;
@@ -135,17 +137,16 @@ export function PartidaAgendaCard({
               Sem acordo? Toque em &quot;Cancelar&quot;.
             </p>
           ) : null}
-          <button
+          <EidCancelButton
             type="button"
+            compact
+            className="absolute left-1/2 top-2.5 z-[3] !min-h-[22px] -translate-x-1/2 rounded-lg !px-2 text-[9px] active:scale-[0.98]"
+            style={{ transform: `translateX(${topActionShiftXPx}px)` }}
             onClick={() => {
               setShowCancelHint(false);
               setOpenCancel(true);
             }}
-            className={`absolute left-1/2 top-2.5 z-[3] active:scale-[0.98] ${PEDIDO_CANCELAR_COMPACT_BTN_CLASS}`}
-            style={{ transform: `translateX(calc(-50% + ${topActionShiftXPx}px))` }}
-          >
-            <span className="inline-block origin-center scale-[0.68] leading-none">Cancelar</span>
-          </button>
+          />
         </>
       ) : null}
       {desistMatchId && !isPlacar ? (
@@ -257,9 +258,7 @@ export function PartidaAgendaCard({
       {agendamentoPendente ? (
         <div className="mt-3 overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_40%,var(--eid-border-subtle)_60%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)_88%)] p-0">
           <div className="flex items-center justify-between gap-2 border-b border-[color:color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-border-subtle)_70%)] bg-eid-surface/45 px-3 py-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
-              Agendamento pendente
-            </p>
+            <EidPendingBadge label="Agendamento pendente" />
             <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
               Responder
             </span>

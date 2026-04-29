@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
+import { EID_INVITE_ACTION_CLASS, EidInviteButton } from "@/components/ui/eid-invite-button";
 
 const initial: TeamActionState = { ok: false, message: "" };
 
@@ -89,13 +90,14 @@ export function ProfileConviteFormacaoCta({
                       {(t.tipo ?? "time").toLowerCase() === "dupla" ? "Dupla" : "Time"} · {t.esporteNome}
                     </p>
                   </div>
-                  <button
+                  <EidInviteButton
                     type="submit"
-                    disabled={pending}
-                    className="eid-btn-primary shrink-0 rounded-xl px-3 py-2 text-[11px] font-bold uppercase tracking-wide disabled:opacity-60"
-                  >
-                    {pending ? "…" : "Convidar"}
-                  </button>
+                    loading={pending}
+                    label="Convidar"
+                    loadingLabel="Enviando..."
+                    compact
+                    className="shrink-0 rounded-xl"
+                  />
                 </form>
               </li>
             ))}
@@ -121,7 +123,7 @@ export function ProfileConviteFormacaoCta({
         <ProfileEditDrawerTrigger
           href={cadastrarHref}
           title="Nova formação"
-          className="mx-auto flex min-h-10 w-full max-w-sm items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-3 text-center text-[11px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18"
+          className={`${EID_INVITE_ACTION_CLASS} mx-auto flex min-h-10 w-full max-w-sm rounded-xl px-3 text-center text-[11px] font-black uppercase tracking-wide`}
         >
           Criar dupla ou time e convidar {primeiro}
         </ProfileEditDrawerTrigger>

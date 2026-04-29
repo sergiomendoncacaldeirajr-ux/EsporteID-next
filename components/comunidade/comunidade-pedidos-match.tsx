@@ -7,6 +7,8 @@ import { responderPedidoMatch, type ResponderMatchState } from "@/app/comunidade
 import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
+import { EidCityState } from "@/components/ui/eid-city-state";
 import type { PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
@@ -15,9 +17,16 @@ import {
   PEDIDO_MATCH_RECEBIDO_FORM_CLASS,
   PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS,
 } from "@/lib/desafio/flow-ui";
+import {
+  EID_SOCIAL_CARD_FOOTER,
+  EID_SOCIAL_CARD_SHELL,
+  EID_SOCIAL_GRID_3,
+  formatSolicitacaoParts,
+} from "@/lib/comunidade/social-panel-layout";
 
 export type PedidoMatchItem = {
   id: number;
+  dataSolicitacao?: string | null;
   desafianteNome: string;
   desafianteId: string;
   desafianteAvatarUrl?: string | null;
@@ -41,6 +50,12 @@ export type PedidoMatchItem = {
   finalidade?: "ranking" | "amistoso";
   rankingPreview?: PedidoRankingPreview | null;
 };
+
+function firstNamePedido(value?: string | null): string {
+  const clean = String(value ?? "").trim();
+  if (!clean) return "Atleta";
+  return clean.split(/\s+/)[0] ?? clean;
+}
 
 export function iniciaisFormacao(nome: string | null | undefined): string {
   const n = String(nome ?? "").trim();
@@ -99,88 +114,40 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 : f
                   ? f.eidTime
                   : Number(m.desafianteNotaEid ?? 0);
+          const recebido = formatSolicitacaoParts(m.dataSolicitacao);
+          const avatarPedidoRecebido =
+            f?.escudo?.trim() ? (
+              <Image
+                src={f.escudo.trim()}
+                alt=""
+                fill
+                unoptimized
+                className="h-full w-full rounded-full object-cover object-center"
+              />
+            ) : f ? (
+              <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                {iniciaisFormacao(f.nome)}
+              </div>
+            ) : m.desafianteAvatarUrl ? (
+              <Image
+                src={m.desafianteAvatarUrl}
+                alt=""
+                fill
+                unoptimized
+                className="h-full w-full rounded-full object-cover object-center"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                EID
+              </div>
+            );
           return (
-          <li
-            key={m.id}
-            className="relative overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)_92%))] p-3 text-sm shadow-[0_10px_20px_-14px_rgba(15,23,42,0.35)] md:rounded-2xl md:border-eid-primary-500/25 md:p-4 md:shadow-md md:shadow-black/15"
-          >
-            <div className="pointer-events-none absolute -right-6 -top-6 hidden h-20 w-20 rounded-full bg-eid-primary-500/10 blur-2xl md:block" />
-            <div className="relative -ml-1 mt-1.5 flex min-w-0 items-start gap-2.5 pr-24 md:ml-0">
-              <div className="flex min-w-0 items-start gap-2.5">
-                <div className="mt-1 flex shrink-0 flex-col items-center gap-1.5">
-                  <div className="relative h-14 w-14 shrink-0">
-                    {m.rankingPosicao && m.rankingPosicao > 0 ? (
-                      <span className="absolute -top-4 left-1/2 z-[3] -translate-x-1/2 rounded-full border border-eid-primary-400/55 bg-eid-primary-500/20 px-1.5 py-[1px] text-[8px] font-black uppercase text-eid-primary-100 shadow-[0_4px_10px_-8px_color-mix(in_srgb,var(--eid-primary-500)_85%,transparent)]">
-                        #{m.rankingPosicao}
-                      </span>
-                    ) : null}
-                    <ProfileEditDrawerTrigger
-                      href={statsHref}
-                      title={f ? `Estatísticas da formação ${tituloCard}` : `Estatísticas EID de ${tituloCard}`}
-                      fullscreen
-                      topMode="backOnly"
-                      className="relative block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
-                    >
-                      {f?.escudo?.trim() ? (
-                        <Image
-                          src={f.escudo.trim()}
-                          alt=""
-                          fill
-                          unoptimized
-                          className="h-full w-full rounded-full object-cover object-center"
-                        />
-                      ) : f ? (
-                        <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
-                          {iniciaisFormacao(f.nome)}
-                        </div>
-                      ) : m.desafianteAvatarUrl ? (
-                        <Image
-                          src={m.desafianteAvatarUrl}
-                          alt=""
-                          fill
-                          unoptimized
-                          className="h-full w-full rounded-full object-cover object-center"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
-                          EID
-                        </div>
-                      )}
-                    </ProfileEditDrawerTrigger>
-                  </div>
-                  <ProfileEidPerformanceSeal notaEid={seloEid} compact className="scale-125" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold tracking-tight text-eid-fg md:text-base md:font-black">{tituloCard}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-1">
-                    <p className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
-                      <SportGlyphIcon sportName={m.esporte} />
-                      <span>{m.esporte}</span>
-                    </p>
-                    {m.timeNome ? (
-                      <p className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
-                        <span>{m.timeNome}</span>
-                      </p>
-                    ) : null}
-                  </div>
-                  <p className="mt-1 inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
-                    <ModalidadeGlyphIcon
-                      modalidade={
-                        String(m.modalidade).trim().toLowerCase() === "time"
-                          ? "time"
-                          : String(m.modalidade).trim().toLowerCase() === "individual"
-                            ? "individual"
-                            : "dupla"
-                      }
-                    />
-                    {m.modalidade === "individual" ? "Desafio individual" : `Desafio ${m.modalidade}`}
-                  </p>
-                  <p className="mt-1 text-[11px] text-eid-text-secondary">
-                    {localCard?.trim() ? localCard : "Localização não informada"}
-                  </p>
-              </div>
-              </div>
-              <div className="absolute right-0 top-0 flex flex-col items-end gap-1">
+            <li
+              key={m.id}
+              className={`${EID_SOCIAL_CARD_SHELL} text-sm md:rounded-2xl md:border-eid-primary-500/25`}
+            >
+              <div className="pointer-events-none absolute -right-6 -top-6 hidden h-20 w-20 rounded-full bg-eid-primary-500/10 blur-2xl md:block" />
+              <div className="absolute right-3 top-3 z-[1] flex flex-col items-end gap-1">
                 {m.finalidade === "amistoso" ? (
                   <span className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-200">
                     Amistoso
@@ -190,46 +157,117 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                     Ranking
                   </span>
                 )}
-                <span className="rounded-full border border-amber-400/35 bg-amber-500/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-warning-500)_82%,var(--eid-fg)_18%)]">
-                  Pendente
-                </span>
+                <EidPendingBadge label="Pendente" />
               </div>
-            </div>
-            {showStatsHint ? (
-              <p className="mt-2 text-[10px] text-eid-text-secondary">
-                Toque na foto para abrir as estatísticas EID em tela cheia.
-              </p>
-            ) : null}
-            {m.finalidade === "ranking" && m.rankingPreview ? (
-              <DesafioImpactoResumo
-                esporteNome={m.esporte}
-                regras={m.rankingPreview.regras}
-                individual={m.rankingPreview.kind === "individual" ? m.rankingPreview.perspective : null}
-                coletivo={m.rankingPreview.kind === "coletivo" ? m.rankingPreview.coletivo : null}
-              />
-            ) : null}
-            <div className={PEDIDO_MATCH_RECEBIDO_ACOES_ROW_CLASS}>
-              <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
-                <input type="hidden" name="match_id" value={String(m.id)} />
-                <input type="hidden" name="aceitar" value="true" />
-                <button type="submit" disabled={pending} className={PEDIDO_MATCH_RECEBIDO_ACEITAR_BTN_CLASS}>
-                  <span>{pending ? "Salvando…" : "Aceitar"}</span>
-                </button>
-              </form>
-              <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
-                <input type="hidden" name="match_id" value={String(m.id)} />
-                <input type="hidden" name="aceitar" value="false" />
-                <button
-                  type="submit"
-                  disabled={pending}
-                  data-eid-recusar-btn="true"
-                  className={PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS}
-                >
-                  <span>Recusar</span>
-                </button>
-              </form>
-            </div>
-          </li>
+
+              <div className={`${EID_SOCIAL_GRID_3} pt-11`}>
+                <div className="min-w-0 px-2 pb-3 pt-1 sm:px-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.08em] text-eid-primary-300/90">Desafiante</p>
+                  <div className="mt-1 flex w-full flex-col items-center px-0.5 py-1">
+                    <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg md:text-xs">
+                      {firstNamePedido(tituloCard)}
+                    </p>
+                    <div className="relative mt-1 h-12 w-12 shrink-0 md:h-14 md:w-14">
+                      {m.rankingPosicao && m.rankingPosicao > 0 ? (
+                        <span className="absolute -top-3 left-1/2 z-[2] -translate-x-1/2 rounded-full border border-eid-primary-400/55 bg-eid-primary-500/20 px-1 py-[1px] text-[7px] font-black uppercase text-eid-primary-100">
+                          #{m.rankingPosicao}
+                        </span>
+                      ) : null}
+                      <ProfileEditDrawerTrigger
+                        href={statsHref}
+                        title={f ? `Estatísticas da formação ${tituloCard}` : `Estatísticas EID de ${tituloCard}`}
+                        fullscreen
+                        topMode="backOnly"
+                        className="relative block h-full w-full overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
+                      >
+                        {avatarPedidoRecebido}
+                      </ProfileEditDrawerTrigger>
+                    </div>
+                    <div className="mt-0.5">
+                      <ProfileEidPerformanceSeal notaEid={seloEid} compact className="scale-125" />
+                    </div>
+                    <EidCityState location={localCard?.trim() ? localCard : null} compact align="center" className="mt-1 w-full" />
+                  </div>
+                </div>
+
+                <div className="flex min-w-0 flex-col items-center gap-2 px-2 pb-3 pt-1 text-center sm:px-3">
+                  <div className="w-full">
+                    <p className="text-[11px] tabular-nums text-eid-text-secondary">{recebido.date}</p>
+                    <p className="mt-0.5 text-[11px] tabular-nums text-eid-text-secondary">{recebido.time}</p>
+                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-wide text-eid-text-muted">Recebido</p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-1">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
+                      <SportGlyphIcon sportName={m.esporte} />
+                      <span>{m.esporte}</span>
+                    </span>
+                    {m.timeNome ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
+                        <span>{m.timeNome}</span>
+                      </span>
+                    ) : null}
+                    <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
+                      <ModalidadeGlyphIcon
+                        modalidade={
+                          String(m.modalidade).trim().toLowerCase() === "time"
+                            ? "time"
+                            : String(m.modalidade).trim().toLowerCase() === "individual"
+                              ? "individual"
+                              : "dupla"
+                        }
+                      />
+                      {m.modalidade === "individual" ? "Individual" : m.modalidade}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex min-w-0 flex-col items-center px-2 pb-3 pt-1 text-center sm:px-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.08em] text-eid-text-secondary">Resposta</p>
+                  <p className="mt-3 max-w-[8rem] text-[10px] font-semibold leading-snug text-eid-text-secondary">
+                    Use os botões abaixo para aceitar ou recusar o desafio.
+                  </p>
+                </div>
+              </div>
+
+              {showStatsHint ? (
+                <p className="px-3 pb-2 text-[10px] text-eid-text-secondary md:px-4">
+                  Toque na foto para abrir as estatísticas EID em tela cheia.
+                </p>
+              ) : null}
+              {m.finalidade === "ranking" && m.rankingPreview ? (
+                <div className="px-2 md:px-3">
+                  <DesafioImpactoResumo
+                    esporteNome={m.esporte}
+                    regras={m.rankingPreview.regras}
+                    individual={m.rankingPreview.kind === "individual" ? m.rankingPreview.perspective : null}
+                    coletivo={m.rankingPreview.kind === "coletivo" ? m.rankingPreview.coletivo : null}
+                  />
+                </div>
+              ) : null}
+              <div
+                className={`${EID_SOCIAL_CARD_FOOTER} ${PEDIDO_MATCH_RECEBIDO_ACOES_ROW_CLASS} !mt-0 !bg-[color:color-mix(in_srgb,var(--eid-surface)_45%,transparent)]`}
+              >
+                <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
+                  <input type="hidden" name="match_id" value={String(m.id)} />
+                  <input type="hidden" name="aceitar" value="true" />
+                  <button type="submit" disabled={pending} className={PEDIDO_MATCH_RECEBIDO_ACEITAR_BTN_CLASS}>
+                    <span>{pending ? "Salvando…" : "Aceitar"}</span>
+                  </button>
+                </form>
+                <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
+                  <input type="hidden" name="match_id" value={String(m.id)} />
+                  <input type="hidden" name="aceitar" value="false" />
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    data-eid-recusar-btn="true"
+                    className={PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS}
+                  >
+                    <span>Recusar</span>
+                  </button>
+                </form>
+              </div>
+            </li>
           );
         })}
       </ul>

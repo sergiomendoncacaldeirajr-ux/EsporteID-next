@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { denunciarPerfilUsuario } from "@/app/perfil/denuncia-actions";
+import { EidCancelAction } from "@/components/ui/eid-cancel-action";
 
 const MOTIVOS: { codigo: string; label: string; desc: string }[] = [
   { codigo: "abuso", label: "Abuso ou assédio", desc: "Ameaças, assédio ou comportamento abusivo." },
@@ -204,17 +205,13 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
                   >
                     {pending ? "Enviando…" : "Enviar denúncia"}
                   </button>
-                  <button
+                  <EidCancelAction
                     type="button"
+                    label="Cancelar"
+                    compact
+                    className="rounded-lg"
                     onClick={() => setAberto(false)}
-                    className={`rounded-lg border px-3 py-1.5 text-[11px] font-semibold ${
-                      theme === "light"
-                        ? "border-slate-300 text-slate-700"
-                        : "border-[color:var(--eid-border-subtle)] text-eid-text-secondary"
-                    }`}
-                  >
-                    Cancelar
-                  </button>
+                  />
                 </div>
                 </div>
               </div>
@@ -278,13 +275,13 @@ export function ProfileDenunciarButton({ alvoUsuarioId, compact = false, classNa
             >
               {pending ? "Enviando…" : "Enviar denúncia"}
             </button>
-            <button
+            <EidCancelAction
               type="button"
+              label="Cancelar"
+              compact
+              className="rounded-lg"
               onClick={() => setAberto(false)}
-              className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-[11px] font-semibold text-eid-text-secondary"
-            >
-              Cancelar
-            </button>
+            />
           </div>
           </div>
         </div>

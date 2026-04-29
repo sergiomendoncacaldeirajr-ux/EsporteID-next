@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useActionState } from "react";
 import { criarEquipe, convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
+import { EID_INVITE_ACTION_CLASS, EidInviteButton } from "@/components/ui/eid-invite-button";
 
 const initial: TeamActionState = { ok: false, message: "" };
 
@@ -48,7 +49,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     const launcherClass =
       "flex min-h-[42px] w-full items-center justify-center gap-1.5 rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-2.5 text-center text-[10px] font-black uppercase tracking-[0.04em] text-eid-fg transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18 sm:min-h-[44px] sm:px-3 sm:text-[11px]";
     const launcherSecondaryClass =
-      "flex min-h-[42px] w-full items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2.5 text-center text-[10px] font-bold uppercase tracking-[0.04em] text-eid-fg transition hover:border-eid-primary-500/40 sm:min-h-[44px] sm:px-3 sm:text-[11px]";
+      `${EID_INVITE_ACTION_CLASS} flex min-h-[42px] w-full px-2.5 text-center text-[10px] font-black uppercase tracking-[0.04em] sm:min-h-[44px] sm:px-3 sm:text-[11px]`;
     return (
       <section className="mb-4 grid min-w-0 grid-cols-2 gap-2">
         <ProfileEditDrawerTrigger href={cadastrarHref} title="Criar nova dupla ou time" fullscreen topMode="backOnly" className={launcherClass}>
@@ -302,9 +303,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
         ))}
       </select>
       <input name="username" required placeholder="@username do atleta" className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg" />
-      <button type="submit" disabled={invitePending} className="eid-btn-primary rounded-xl px-4 py-2 text-sm font-semibold">
-        {invitePending ? "Enviando..." : "Convidar"}
-      </button>
+      <EidInviteButton type="submit" loading={invitePending} label="Convidar" className="rounded-xl px-4 py-2 text-sm" />
       {inviteState.message ? (
         <p
           className={`text-xs sm:col-span-3 ${inviteState.ok ? "text-eid-primary-700 dark:text-eid-primary-300" : "text-red-700 dark:text-red-300"}`}

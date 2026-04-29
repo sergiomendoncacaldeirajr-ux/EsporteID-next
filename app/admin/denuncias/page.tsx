@@ -1,5 +1,6 @@
 import { adminMediarResultadoDaDenuncia, adminSetDenunciaStatus } from "@/app/admin/actions";
 import { AdminDenunciaStatusSubmitButton } from "@/app/admin/denuncias/status-submit-button";
+import { EidCancelAction } from "@/components/ui/eid-cancel-action";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 const ST = ["aberta", "em_analise", "resolvida", "arquivada"];
@@ -178,12 +179,7 @@ export default async function AdminDenunciasPage({ searchParams }: Props) {
                       <input type="hidden" name="denuncia_id" value={d.id} />
                       <input type="hidden" name="partida_id" value={partidaIdMediacao} />
                       <input type="hidden" name="decision" value="cancel" />
-                      <button
-                        type="submit"
-                        className="inline-flex items-center gap-1 rounded-lg border border-rose-500/45 bg-rose-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-rose-200"
-                      >
-                        Cancelar partida na mediação
-                      </button>
+                      <EidCancelAction label="Cancelar partida na mediação" compact className="rounded-lg" />
                     </form>
                   </>
                 ) : null}

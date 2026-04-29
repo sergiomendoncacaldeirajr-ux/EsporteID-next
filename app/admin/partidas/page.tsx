@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { adminCancelarLimparPartida, adminDefinirResultadoPartida } from "@/app/admin/actions";
+import { EidCancelAction } from "@/components/ui/eid-cancel-action";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 type Props = {
@@ -166,12 +167,7 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
                 {podeLimpar ? (
                   <form action={adminCancelarLimparPartida}>
                     <input type="hidden" name="partida_id" value={p.id} />
-                    <button
-                      type="submit"
-                      className="rounded-md border border-rose-600/55 bg-rose-500/18 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-danger-700)_82%,var(--eid-fg)_18%)] hover:bg-rose-500/30"
-                    >
-                      Cancelar/Limpar
-                    </button>
+                    <EidCancelAction label="Cancelar/Limpar" compact className="rounded-md" />
                   </form>
                 ) : null}
                 {!podeLimpar && !podeDefinirResultado ? (

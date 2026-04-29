@@ -7,6 +7,7 @@ import {
   organizerSubstituirInscricao,
   type TorneioStaffActionState,
 } from "@/app/torneios/actions";
+import { EidCancelButton } from "@/components/ui/eid-cancel-button";
 
 const initialState: TorneioStaffActionState = { ok: false, message: "" };
 
@@ -57,9 +58,13 @@ export function TorneioInscricoesManager({
       <form action={cancelAction} className="mt-3">
         <input type="hidden" name="torneio_id" value={torneioId} />
         <input type="hidden" name="inscricao_id" value={inscricao.id} />
-        <button type="submit" disabled={cancelPending} className="rounded-lg border border-red-500/35 px-2.5 py-1 text-xs font-bold text-red-300">
-          Cancelar + estornar no Asaas
-        </button>
+        <EidCancelButton
+          type="submit"
+          loading={cancelPending}
+          label="Cancelar + estornar no Asaas"
+          loadingLabel="Cancelando..."
+          className="rounded-lg !text-xs"
+        />
       </form>
       {cancelState.message ? <p className={`mt-2 text-xs ${cancelState.ok ? "text-emerald-300" : "text-red-300"}`}>{cancelState.message}</p> : null}
 

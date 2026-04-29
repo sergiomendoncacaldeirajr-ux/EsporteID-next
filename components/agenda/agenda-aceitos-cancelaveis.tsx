@@ -8,6 +8,9 @@ import { gerenciarCancelamentoMatch, type GerenciarCancelamentoState } from "@/a
 import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
+import { EidAcceptedBadge } from "@/components/ui/eid-accepted-badge";
+import { EidCityState } from "@/components/ui/eid-city-state";
 
 type Item = {
   id: number;
@@ -230,13 +233,19 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                     <span>{m.modalidade}</span>
                   </span>
                 </p>
-                <p className="text-[10px] text-eid-text-secondary md:text-[11px]">
-                  {m.localizacaoOponente?.trim() ? m.localizacaoOponente : "Localização não informada"}
-                </p>
+                <div className="text-[10px] md:text-[11px]">
+                  <EidCityState location={m.localizacaoOponente?.trim() ? m.localizacaoOponente : null} compact align="start" />
+                </div>
               </div>
-              <span className="whitespace-nowrap rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-left text-[8px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] md:text-[9px]">
-                {formatStatusLabel(m.statusLabel ?? m.status)}
-              </span>
+              {String(m.status ?? "").includes("Pendente") ? (
+                <EidPendingBadge label={formatStatusLabel(m.statusLabel ?? m.status)} compact className="whitespace-nowrap md:text-[9px]" />
+              ) : String(m.status ?? "").trim().toLowerCase() === "aceito" ? (
+                <EidAcceptedBadge label={formatStatusLabel(m.statusLabel ?? m.status)} compact className="whitespace-nowrap md:text-[9px]" />
+              ) : (
+                <span className="whitespace-nowrap rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-left text-[8px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] md:text-[9px]">
+                  {formatStatusLabel(m.statusLabel ?? m.status)}
+                </span>
+              )}
             </div>
             <div className="mt-1.5 min-w-0 md:mt-2">
               {m.status === "CancelamentoPendente" ? (

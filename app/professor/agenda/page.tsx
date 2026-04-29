@@ -5,6 +5,7 @@ import {
   criarDisponibilidadeProfessorAction,
   inscreverAlunoEmAulaAction,
 } from "@/app/professor/actions";
+import { EidCancelAction } from "@/components/ui/eid-cancel-action";
 import { requireProfessorUser } from "@/lib/professor/server";
 
 export default async function ProfessorAgendaPage() {
@@ -186,9 +187,7 @@ export default async function ProfessorAgendaPage() {
                           placeholder="Motivo do cancelamento"
                           className="eid-input-dark rounded-xl px-3 py-2 text-sm"
                         />
-                        <button className="rounded-xl border border-red-400/35 px-3 py-2 text-xs font-semibold text-red-200">
-                          Cancelar aula
-                        </button>
+                        <EidCancelAction label="Cancelar aula" className="rounded-xl !text-xs" />
                       </form>
                     ) : null}
                   </div>

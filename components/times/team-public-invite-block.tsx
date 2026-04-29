@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import { Loader2 } from "lucide-react";
 import {
   cancelarConviteDaEquipe,
   convidarUsuarioParaEquipe,
   type TeamActionState,
 } from "@/app/times/actions";
 import { TeamInviteComboboxForm } from "@/components/times/team-invite-combobox-form";
+import { EidCancelButton } from "@/components/ui/eid-cancel-button";
+import { EidCityState } from "@/components/ui/eid-city-state";
 
 const initial: TeamActionState = { ok: false, message: "" };
 
@@ -72,25 +73,18 @@ export function TeamPublicInviteBlock({
                 )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[11px] font-bold text-eid-fg">{inv.nome}</p>
-                  <p className="truncate text-[9px] text-eid-text-secondary">{inv.localizacao ?? "—"}</p>
+                  <EidCityState location={inv.localizacao} compact align="start" emptyLabel="—" className="w-full" />
                 </div>
                 <form action={cancelInviteAction} className="w-full sm:ml-auto sm:w-auto">
                   <input type="hidden" name="time_id" value={timeId} />
                   <input type="hidden" name="convite_id" value={inv.conviteId} />
-                  <button
+                  <EidCancelButton
                     type="submit"
-                    disabled={cancelInvitePending || invitePending}
-                    className="inline-flex min-h-[36px] w-full items-center justify-center rounded-lg border border-rose-600/80 bg-rose-600/15 px-3 text-[10px] font-black uppercase tracking-[0.06em] text-red-700 transition hover:bg-rose-600/25 disabled:opacity-60 dark:text-red-300"
-                  >
-                    {cancelInvitePending ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                        Cancelando...
-                      </span>
-                    ) : (
-                      "Cancelar convite"
-                    )}
-                  </button>
+                    loading={cancelInvitePending}
+                    label="Cancelar convite"
+                    className="w-full rounded-lg text-[10px]"
+                    disabled={invitePending}
+                  />
                 </form>
               </li>
             ))}

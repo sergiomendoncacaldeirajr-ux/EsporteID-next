@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
 import type { TeamActionState } from "@/app/times/actions";
+import { EidInviteButton } from "@/components/ui/eid-invite-button";
 
 type FormActionProp = NonNullable<ComponentProps<"form">["action"]>;
 
@@ -108,8 +108,8 @@ export function TeamInviteComboboxForm({
 
   const btnClass =
     variant === "stack"
-      ? "eid-btn-primary w-full min-h-[38px] rounded-xl px-3 py-1.5 !text-[12px] font-bold leading-tight sm:w-auto sm:min-w-[6.75rem] sm:shrink-0 sm:self-stretch sm:px-4 sm:!text-sm sm:min-h-[40px]"
-      : "eid-btn-primary !text-[12px] min-h-[36px] w-auto max-w-full shrink-0 justify-self-start rounded-xl px-3 py-1.5 font-bold leading-tight sm:min-h-[38px] sm:self-stretch sm:!text-sm";
+      ? "w-full sm:w-auto sm:min-w-[6.75rem] sm:shrink-0 sm:self-stretch"
+      : "w-auto max-w-full shrink-0 justify-self-start sm:self-stretch";
 
   return (
     <div>
@@ -167,16 +167,13 @@ export function TeamInviteComboboxForm({
             </ul>
           ) : null}
         </div>
-        <button type="submit" disabled={invitePending} className={btnClass}>
-          {invitePending ? (
-            <span className="inline-flex items-center justify-center gap-1">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-              Adicionando...
-            </span>
-          ) : (
-            submitLabel
-          )}
-        </button>
+        <EidInviteButton
+          type="submit"
+          loading={invitePending}
+          label={submitLabel}
+          loadingLabel="Enviando..."
+          className={btnClass}
+        />
       </form>
     </div>
   );

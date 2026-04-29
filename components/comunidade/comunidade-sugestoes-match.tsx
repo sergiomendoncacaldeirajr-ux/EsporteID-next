@@ -8,15 +8,21 @@ import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawe
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
-  PEDIDO_ACEITAR_BTN_CLASS,
-  PEDIDO_RECUSAR_BTN_CLASS,
-} from "@/lib/desafio/flow-ui";
+  EID_SOCIAL_CARD_FOOTER,
+  EID_SOCIAL_GRID_3,
+  formatSolicitacaoParts,
+} from "@/lib/comunidade/social-panel-layout";
+import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
+import { EidCityState } from "@/components/ui/eid-city-state";
+import { PEDIDO_ACEITAR_BTN_CLASS, PEDIDO_RECUSAR_BTN_CLASS } from "@/lib/desafio/flow-ui";
 
 export type SugestaoMatchItem = {
   id: number;
+  criadoEm?: string | null;
   sugeridorId?: string | null;
   sugeridorNome: string;
   sugeridorAvatarUrl?: string | null;
+  sugeridorLocalizacao?: string | null;
   meuTimeId?: number | null;
   meuTimeTipo?: string | null;
   meuTimeNome: string;
@@ -31,17 +37,6 @@ export type SugestaoMatchItem = {
 
 const initial: ResponderSugestaoMatchState = { ok: false, message: "" };
 
-function splitCityState(location?: string | null): { cidade: string; estado: string } {
-  const raw = String(location ?? "").trim();
-  if (!raw) return { cidade: "-", estado: "-" };
-  const parts = raw
-    .split(/\/| - |–|—|,|\|/g)
-    .map((p) => p.trim())
-    .filter(Boolean);
-  if (parts.length >= 2) return { cidade: parts[0] ?? "-", estado: parts.slice(1).join(" ") || "-" };
-  return { cidade: raw, estado: "-" };
-}
-
 function firstName(value?: string | null): string {
   const clean = String(value ?? "").trim();
   if (!clean) return "";
@@ -51,6 +46,9 @@ function firstName(value?: string | null): string {
 function formacaoHref(item: SugestaoMatchItem): string {
   return `/perfil-time/${item.meuTimeId}?from=/comunidade`;
 }
+
+const sugestaoCardShell =
+  "relative overflow-hidden rounded-xl border border-amber-500/25 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-warning-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_93%,transparent))] text-sm shadow-[0_8px_18px_-14px_rgba(217,119,6,0.45)]";
 
 export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[] }) {
   const router = useRouter();
@@ -82,26 +80,42 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
       {err ? <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{err}</p> : null}
 
       <ul className="space-y-3">
-        {items.map((s) => (
-          <li
-            key={s.id}
-            className="relative overflow-hidden rounded-xl border border-amber-500/25 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-warning-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_93%,transparent))] p-3 text-sm shadow-[0_8px_18px_-14px_rgba(217,119,6,0.45)] md:p-4"
-          >
-            <span className="absolute right-3 top-3 rounded-full border border-amber-400/45 bg-amber-500/18 px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-amber-100">
-              Aguardando você
-            </span>
-            <div className="grid grid-cols-[88px_minmax(0,1fr)_88px] items-start gap-2">
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">Sugestão do membro</p>
-                {s.meuTimeId ? (
-                  <ProfileEditDrawerTrigger
-                    href={formacaoHref(s)}
-                    title={s.meuTimeNome}
-                    fullscreen
-                    topMode="backOnly"
-                    className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
-                  >
-                    <div className="flex w-full flex-col items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-1.5 py-1.5">
+        {items.map((s) => {
+          const criado = formatSolicitacaoParts(s.criadoEm);
+          return (
+            <li key={s.id} className={sugestaoCardShell}>
+              <EidPendingBadge label="Pendente" compact className="absolute right-3 top-3 z-[1]" />
+
+              <div className={`${EID_SOCIAL_GRID_3} pt-11`}>
+                <div className="min-w-0 px-2 pb-3 pt-1 sm:px-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">Sugestão do membro</p>
+                  {s.meuTimeId ? (
+                    <ProfileEditDrawerTrigger
+                      href={formacaoHref(s)}
+                      title={s.meuTimeNome}
+                      fullscreen
+                      topMode="backOnly"
+                      className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                    >
+                      <div className="flex w-full flex-col items-center px-0.5 py-1">
+                        <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(s.meuTimeNome)}</p>
+                        <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+                          {s.meuTimeAvatarUrl ? (
+                            <Image src={s.meuTimeAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                              {(s.meuTimeNome ?? "F").slice(0, 1).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-0.5">
+                          <ProfileEidPerformanceSeal notaEid={Number(s.meuTimeNotaEid ?? 0)} compact className="scale-125" />
+                        </div>
+                        <EidCityState location={s.meuTimeLocalizacao} compact align="center" className="mt-1 w-full" />
+                      </div>
+                    </ProfileEditDrawerTrigger>
+                  ) : (
+                    <div className="mt-1 flex w-full flex-col items-center px-0.5 py-1">
                       <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(s.meuTimeNome)}</p>
                       <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
                         {s.meuTimeAvatarUrl ? (
@@ -113,70 +127,69 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
                         )}
                       </div>
                       <div className="mt-0.5">
-                        <ProfileEidPerformanceSeal
-                          notaEid={Number(s.meuTimeNotaEid ?? 0)}
-                          compact
-                          className="scale-125"
-                        />
+                        <ProfileEidPerformanceSeal notaEid={Number(s.meuTimeNotaEid ?? 0)} compact className="scale-125" />
                       </div>
+                      <EidCityState location={s.meuTimeLocalizacao} compact align="center" className="mt-1 w-full" />
                     </div>
-                  </ProfileEditDrawerTrigger>
-                ) : (
-                  <div className="mt-1 flex w-full flex-col items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-1.5 py-1.5">
-                    <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(s.meuTimeNome)}</p>
-                    <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
-                      {s.meuTimeAvatarUrl ? (
-                        <Image src={s.meuTimeAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                          {(s.meuTimeNome ?? "F").slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-0.5">
-                      <ProfileEidPerformanceSeal
-                        notaEid={Number(s.meuTimeNotaEid ?? 0)}
-                        compact
-                        className="scale-125"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0 pt-9">
-                <div className="mx-auto flex w-full max-w-[150px] flex-col items-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-1.5 py-1.5">
-                  <p className="inline-flex min-w-0 items-center gap-1 self-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-semibold leading-none text-eid-primary-200">
-                    <ModalidadeGlyphIcon modalidade={String(s.modalidade).toLowerCase() === "dupla" ? "dupla" : String(s.modalidade).toLowerCase() === "time" ? "time" : "individual"} />
-                    <span className="truncate">{s.modalidade}</span>
-                  </p>
-                  <p className="inline-flex min-w-0 items-center gap-1 self-center rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-semibold leading-none text-eid-action-200">
-                    <SportGlyphIcon sportName={s.esporte} />
-                    <span className="truncate">{s.esporte}</span>
-                  </p>
-                  <p className="inline-flex min-w-0 items-center self-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/75 px-2 py-0.5 text-[10px] leading-none text-eid-text-secondary">
-                    <span className="truncate">{splitCityState(s.meuTimeLocalizacao).cidade}</span>
-                  </p>
-                  <p className="inline-flex min-w-0 items-center self-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/75 px-2 py-0.5 text-[10px] leading-none text-eid-text-secondary">
-                    <span className="truncate">{splitCityState(s.meuTimeLocalizacao).estado}</span>
-                  </p>
+                  )}
                 </div>
-                {s.mensagem ? (
-                  <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card/80 px-2 py-1.5 text-xs text-eid-fg">
-                    “{s.mensagem}”
+
+                <div className="flex min-w-0 flex-col items-center gap-2 px-2 pb-3 pt-1 text-center sm:px-3">
+                  <div className="w-full">
+                    <p className="text-[11px] tabular-nums text-eid-text-secondary">{criado.date}</p>
+                    <p className="mt-0.5 text-[11px] tabular-nums text-eid-text-secondary">{criado.time}</p>
+                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-wide text-eid-text-muted">Registrada</p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-1">
+                    <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-semibold leading-none text-eid-primary-200">
+                      <ModalidadeGlyphIcon
+                        modalidade={
+                          String(s.modalidade).toLowerCase() === "dupla" ? "dupla" : String(s.modalidade).toLowerCase() === "time" ? "time" : "individual"
+                        }
+                      />
+                      <span className="truncate">{s.modalidade}</span>
+                    </span>
+                    <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-semibold leading-none text-eid-action-200">
+                      <SportGlyphIcon sportName={s.esporte} />
+                      <span className="truncate">{s.esporte}</span>
+                    </span>
+                  </div>
+                  <p className="text-[10px] font-semibold text-eid-text-secondary">
+                    Alvo: <span className="text-eid-fg">{s.alvoTimeNome}</span>
                   </p>
-                ) : null}
-              </div>
-              <div className="min-w-0 pt-7">
-                <p className="text-right text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">Sugerido por</p>
-                {s.sugeridorId ? (
-                  <ProfileEditDrawerTrigger
-                    href={`/perfil/${s.sugeridorId}?from=/comunidade`}
-                    title={s.sugeridorNome}
-                    fullscreen
-                    topMode="backOnly"
-                    className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
-                  >
-                    <div className="flex w-full flex-col items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-1.5 py-1.5">
+                  {s.mensagem ? (
+                    <p className="w-full rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card/80 px-2 py-1.5 text-[10px] text-eid-fg">
+                      “{s.mensagem}”
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="min-w-0 px-2 pb-3 pt-1 sm:px-3">
+                  <p className="text-right text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">Sugerido por</p>
+                  {s.sugeridorId ? (
+                    <ProfileEditDrawerTrigger
+                      href={`/perfil/${s.sugeridorId}?from=/comunidade`}
+                      title={s.sugeridorNome}
+                      fullscreen
+                      topMode="backOnly"
+                      className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                    >
+                      <div className="flex w-full flex-col items-center px-0.5 py-1">
+                        <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(s.sugeridorNome)}</p>
+                        <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+                          {s.sugeridorAvatarUrl ? (
+                            <Image src={s.sugeridorAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                              {(s.sugeridorNome ?? "A").slice(0, 1).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                        <EidCityState location={s.sugeridorLocalizacao} compact align="center" className="mt-2 w-full" />
+                      </div>
+                    </ProfileEditDrawerTrigger>
+                  ) : (
+                    <div className="mt-1 flex w-full flex-col items-center px-0.5 py-1">
                       <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(s.sugeridorNome)}</p>
                       <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
                         {s.sugeridorAvatarUrl ? (
@@ -187,56 +200,47 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
                           </div>
                         )}
                       </div>
+                      <EidCityState location={s.sugeridorLocalizacao} compact align="center" className="mt-2 w-full" />
                     </div>
-                  </ProfileEditDrawerTrigger>
-                ) : (
-                  <div className="mt-1 flex w-full flex-col items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-1.5 py-1.5">
-                    <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(s.sugeridorNome)}</p>
-                    <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
-                      {s.sugeridorAvatarUrl ? (
-                        <Image src={s.sugeridorAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                          {(s.sugeridorNome ?? "A").slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="mt-3 grid w-full grid-cols-2 items-center gap-1">
-              <form action={formAction} className="min-w-0 w-full">
-                <input type="hidden" name="sugestao_id" value={String(s.id)} />
-                <input type="hidden" name="aceitar" value="true" />
-                <button
-                  type="submit"
-                  disabled={pending}
-                  onClick={() => setClickedAction({ sugestaoId: s.id, aceitar: true })}
-                  className={`${PEDIDO_ACEITAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}
-                >
-                  <span>{pending && clickedAction?.sugestaoId === s.id && clickedAction?.aceitar ? "Salvando..." : "Aprovar"}</span>
-                </button>
-              </form>
-              <form action={formAction} className="min-w-0 w-full">
-                <input type="hidden" name="sugestao_id" value={String(s.id)} />
-                <input type="hidden" name="aceitar" value="false" />
-                <button
-                  type="submit"
-                  disabled={pending}
-                  onClick={() => setClickedAction({ sugestaoId: s.id, aceitar: false })}
-                  className={`${PEDIDO_RECUSAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}
-                >
-                  <span>{pending && clickedAction?.sugestaoId === s.id && clickedAction?.aceitar === false ? "Salvando..." : "Recusar"}</span>
-                </button>
-              </form>
-            </div>
-            <p className="mt-2 text-[10px] text-eid-text-secondary">
-              Ao aprovar, o sistema registra o desafio como <strong className="text-eid-fg">confirmado</strong> e notifica
-              todos os membros ativos das duas formações.
-            </p>
-          </li>
-        ))}
+
+              <div className={`${EID_SOCIAL_CARD_FOOTER} grid w-full grid-cols-2 items-center gap-1 border-amber-500/20 !bg-[color:color-mix(in_srgb,var(--eid-warning-500)_8%,var(--eid-surface)_92%)]`}>
+                <form action={formAction} className="min-w-0 w-full">
+                  <input type="hidden" name="sugestao_id" value={String(s.id)} />
+                  <input type="hidden" name="aceitar" value="true" />
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    onClick={() => setClickedAction({ sugestaoId: s.id, aceitar: true })}
+                    className={`${PEDIDO_ACEITAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}
+                  >
+                    <span>{pending && clickedAction?.sugestaoId === s.id && clickedAction?.aceitar ? "Salvando..." : "Aprovar"}</span>
+                  </button>
+                </form>
+                <form action={formAction} className="min-w-0 w-full">
+                  <input type="hidden" name="sugestao_id" value={String(s.id)} />
+                  <input type="hidden" name="aceitar" value="false" />
+                  <button
+                    type="submit"
+                    disabled={pending}
+                    onClick={() => setClickedAction({ sugestaoId: s.id, aceitar: false })}
+                    className={`${PEDIDO_RECUSAR_BTN_CLASS} !h-[16px] !scale-100 w-full px-1.5 text-[6px]`}
+                  >
+                    <span>
+                      {pending && clickedAction?.sugestaoId === s.id && clickedAction?.aceitar === false ? "Salvando..." : "Recusar"}
+                    </span>
+                  </button>
+                </form>
+              </div>
+              <p className="border-t border-amber-500/15 px-3 py-2 text-[10px] text-eid-text-secondary md:px-4">
+                Ao aprovar, o sistema registra o desafio como <strong className="text-eid-fg">confirmado</strong> e notifica todos os
+                membros ativos das duas formações.
+              </p>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

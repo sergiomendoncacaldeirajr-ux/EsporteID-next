@@ -5,6 +5,7 @@ import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
 import { DesafioEsporteRegrasModal } from "@/components/desafio/desafio-esporte-regras-modal";
 import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
 import { SugerirMatchLiderForm } from "@/components/perfil/sugerir-match-lider-form";
+import { EidCancelLink } from "@/components/ui/eid-cancel-link";
 import { fetchColetivoRankingPreview, fetchIndividualRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
@@ -522,9 +523,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             >
               ← Trocar tipo de desafio
             </Link>
-            <Link href="/match" {...exitEmbedProps(isEmbed)} className={DESAFIO_FLOW_SECONDARY_CLASS}>
-              Cancelar
-            </Link>
+            <EidCancelLink href="/match" {...exitEmbedProps(isEmbed)} />
           </div>
           {finalidadeEscolhida === "ranking" && rankPrevInd ? (
             <DesafioEsporteRegrasModal
@@ -744,9 +743,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             />
           </div>
         ) : null}
-        <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
-          Cancelar
-        </Link>
+        <EidCancelLink href="/match" {...exitEmbedProps(isEmbed)} className="mt-4" />
         {rankPrevCo ? (
           <DesafioEsporteRegrasModal
             esporteId={esporteId}

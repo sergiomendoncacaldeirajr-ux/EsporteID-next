@@ -12,9 +12,9 @@ import {
 import {
   DESAFIO_FLOW_CTA_BLOCK_CLASS,
   PEDIDO_ACEITAR_BTN_CLASS,
-  PEDIDO_CANCELAR_COMPACT_BTN_CLASS,
   PEDIDO_RECUSAR_BTN_CLASS,
 } from "@/lib/desafio/flow-ui";
+import { EidCancelButton } from "@/components/ui/eid-cancel-button";
 
 const initialState: VagaActionState = { ok: false, message: "" };
 
@@ -75,17 +75,17 @@ export function CancelarCandidaturaForm({
   return (
     <form action={action} className="space-y-2">
       <input type="hidden" name="candidatura_id" value={candidaturaId} />
-      <button
+      <EidCancelButton
         type="submit"
-        disabled={pending}
+        loading={pending}
+        label={label}
+        compact={compact}
         className={
           compact
-            ? PEDIDO_CANCELAR_COMPACT_BTN_CLASS
-            : "w-full rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-fg"
+            ? "!min-h-[22px] rounded-lg !px-2 text-[9px]"
+            : "w-full justify-center rounded-xl !text-xs"
         }
-      >
-        <span className="inline-block origin-center scale-[0.68] leading-none">{pending ? "Cancelando..." : label}</span>
-      </button>
+      />
       {state.message ? (
         <p className={`text-[11px] ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
       ) : null}

@@ -6,6 +6,8 @@ import { AgendaAceitosCancelaveis } from "@/components/agenda/agenda-aceitos-can
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
+import { EidCityState } from "@/components/ui/eid-city-state";
 import {
   type AgendaPartidaCardRow,
   computeAgendaPodeResponderProposta,
@@ -489,9 +491,7 @@ export default async function AgendaPage() {
         <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
           <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
             <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Pedidos que você enviou</h2>
-            <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
-              Pendentes
-            </span>
+            <EidPendingBadge label="Pendentes" />
           </div>
         {(pendentesEnvio ?? []).length === 0 ? (
           <p className="eid-list-item m-3 rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-4 text-center text-sm text-eid-text-secondary">
@@ -535,14 +535,12 @@ export default async function AgendaPage() {
                       <p className="text-[11px] text-eid-text-secondary md:text-xs">
                         {esp ?? "Esporte"} · {m.modalidade_confronto ?? "individual"}
                       </p>
-                      <p className="text-[10px] text-eid-text-secondary md:text-[11px]">
-                        {adv?.localizacao?.trim() ? adv.localizacao : "Localização não informada"}
-                      </p>
+                      <div className="text-[10px] md:text-[11px]">
+                        <EidCityState location={adv?.localizacao?.trim() ? adv.localizacao : null} compact align="start" />
+                      </div>
                     </div>
                   </div>
-                  <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-action-500)_28%)]">
-                    Aguardando
-                  </span>
+                  <EidPendingBadge label="Pendente" />
                 </li>
               );
             })}
