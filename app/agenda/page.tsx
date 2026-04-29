@@ -48,7 +48,7 @@ export default async function AgendaPage() {
 
   const { data: aceitos } = await supabase
     .from("matches")
-    .select("usuario_id, adversario_id")
+    .select("usuario_id, adversario_id, esporte_id")
     .eq("status", "Aceito")
     .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
     .order("data_confirmacao", { ascending: false, nullsFirst: false })
@@ -57,6 +57,7 @@ export default async function AgendaPage() {
 
   const seenPeer = new Set<string>();
   const peerList: string[] = [];
+  const peerSportId = new Map<string, number>();
   for (const m of aceitos ?? []) {
     if (m.usuario_id && m.usuario_id !== user.id && !seenPeer.has(m.usuario_id)) {
       seenPeer.add(m.usuario_id);
@@ -66,7 +67,21 @@ export default async function AgendaPage() {
       seenPeer.add(m.adversario_id);
       peerList.push(m.adversario_id);
     }
+    const sid = Number((m as { esporte_id?: number | null }).esporte_id ?? 0);
+    if (Number.isFinite(sid) && sid > 0) {
+      if (m.usuario_id && m.usuario_id !== user.id && !peerSportId.has(m.usuario_id)) {
+        peerSportId.set(m.usuario_id, sid);
+      }
+      if (m.adversario_id && m.adversario_id !== user.id && !peerSportId.has(m.adversario_id)) {
+        peerSportId.set(m.adversario_id, sid);
+      }
+    }
   }
+  const sportIds = Array.from(new Set(Array.from(peerSportId.values())));
+  const { data: peerSportsRows } = sportIds.length
+    ? await supabase.from("esportes").select("id, nome").in("id", sportIds)
+    : { data: [] };
+  const sportNameById = new Map((peerSportsRows ?? []).map((s) => [Number(s.id), String(s.nome ?? "").trim()]));
 
   const { data: peerProfiles } = peerList.length
     ? await supabase
@@ -84,6 +99,7 @@ export default async function AgendaPage() {
       avatar_url: p.avatar_url,
       disponivel_amistoso: p.disponivel_amistoso,
       disponivel_amistoso_ate: p.disponivel_amistoso_ate,
+      esporte_nome: sportNameById.get(peerSportId.get(p.id) ?? -1) ?? null,
     }));
 
   const { data: partidasAgendadas } = await fetchPartidasAgendadasUsuario(supabase, user.id, teamClause);
@@ -397,12 +413,28 @@ export default async function AgendaPage() {
       data-eid-touch-ui
       className="mx-auto w-full max-w-lg px-3 pt-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
-      <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}>
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-eid-action-400">Agenda</p>
-        <h1 className="mt-1 text-base font-black leading-tight text-eid-fg sm:text-lg">Seus confrontos e próximos passos</h1>
-        <p className="mt-1 text-[10px] text-eid-text-secondary">
-          Gerencie agendamentos, aceite/reagendamento e pedidos pendentes em um só lugar.
-        </p>
+      <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-4 py-4 sm:px-6 sm:py-5`}>
+        <div className="grid grid-cols-[minmax(0,1fr)_88px] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_150px] sm:gap-4">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-eid-action-400 sm:text-[12px]">Agenda</p>
+            <h1 className="mt-1 text-[17px] font-black leading-[1.12] tracking-tight text-eid-fg sm:text-[28px]">
+              Seus confrontos e próximos passos
+            </h1>
+            <p className="mt-2 max-w-[32ch] text-[10px] leading-relaxed text-eid-text-secondary sm:mt-3 sm:text-[18px]">
+              Gerencie agendamentos, aceite/reagendamento e pedidos pendentes em um só lugar.
+            </p>
+          </div>
+          <div className="justify-self-end" aria-hidden>
+            <svg viewBox="0 0 96 96" className="h-[78px] w-[78px] drop-shadow-[0_8px_12px_rgba(249,115,22,0.28)] sm:h-[130px] sm:w-[130px]">
+              <rect x="10" y="14" width="76" height="72" rx="16" fill="#FF7A00" />
+              <rect x="16" y="24" width="64" height="56" rx="12" fill="#FF8B20" />
+              <rect x="22" y="36" width="52" height="38" rx="8" fill="#FFF7ED" />
+              <rect x="28" y="8" width="8" height="18" rx="4" fill="#FF7A00" />
+              <rect x="60" y="8" width="8" height="18" rx="4" fill="#FF7A00" />
+              <path d="m35 55 11 11 16-20" fill="none" stroke="#FF7A00" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
       </div>
 
       <ConexoesStrip peers={conexoes} />

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
+import { SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 
 export type ConexaoPeer = {
   id: string;
@@ -7,6 +8,7 @@ export type ConexaoPeer = {
   avatar_url: string | null;
   disponivel_amistoso?: boolean | null;
   disponivel_amistoso_ate?: string | null;
+  esporte_nome?: string | null;
 };
 
 function primeiroNome(n: string | null) {
@@ -42,27 +44,35 @@ export function ConexoesStrip({ peers }: { peers: ConexaoPeer[] }) {
             <Link
               key={p.id}
               href={`/perfil/${p.id}?from=/agenda`}
-              className="group flex min-w-[68px] flex-col items-center text-center md:min-w-[76px]"
+              className="group flex min-w-[78px] flex-col items-center text-center md:min-w-[92px]"
             >
-              <div
-                className={`rounded-full p-[2px] md:p-[3px] ${
-                  amistosoOn
-                    ? "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-md shadow-emerald-500/25"
-                    : "bg-gradient-to-br from-red-500 to-rose-700 shadow-md shadow-red-500/25"
-                }`}
-              >
-                <div className="overflow-hidden rounded-full border-[2px] border-eid-bg bg-eid-bg md:border-[3px]">
-                  {p.avatar_url ? (
-                    <img src={p.avatar_url} alt="" className="h-12 w-12 object-cover md:h-14 md:w-14" />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center bg-eid-surface text-[10px] font-black text-eid-primary-300 md:h-14 md:w-14 md:text-xs">
-                      EID
-                    </div>
-                  )}
+              <div className="relative">
+                <div
+                  className={`rounded-full p-[2px] md:p-[3px] ${
+                    amistosoOn
+                      ? "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-md shadow-emerald-500/25"
+                      : "bg-gradient-to-br from-red-500 to-rose-700 shadow-md shadow-red-500/25"
+                  }`}
+                >
+                  <div className="overflow-hidden rounded-full border-[2px] border-eid-bg bg-eid-bg md:border-[3px]">
+                    {p.avatar_url ? (
+                      <img src={p.avatar_url} alt="" className="h-12 w-12 object-cover md:h-14 md:w-14" />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center bg-eid-surface text-[10px] font-black text-eid-primary-300 md:h-14 md:w-14 md:text-xs">
+                        EID
+                      </div>
+                    )}
+                  </div>
                 </div>
+                <span className="absolute -bottom-0.5 -right-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-bg)_12%)] text-eid-primary-400 shadow-[0_4px_8px_-6px_rgba(37,99,235,0.4)]">
+                  <SportGlyphIcon sportName={p.esporte_nome ?? ""} />
+                </span>
               </div>
               <span className="mt-1.5 max-w-[76px] truncate text-[9px] font-extrabold text-eid-fg group-hover:text-eid-primary-300 md:mt-2 md:max-w-[80px] md:text-[10px]">
                 {primeiroNome(p.nome)}
+              </span>
+              <span className="mt-0.5 max-w-[90px] truncate text-[9px] font-black uppercase tracking-[0.03em] text-eid-primary-400 md:text-[10px]">
+                {p.esporte_nome?.trim() || "Esporte"}
               </span>
             </Link>
             );
