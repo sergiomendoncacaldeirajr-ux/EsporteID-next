@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { PerfilTimeEditForm } from "@/components/perfil/perfil-time-edit-form";
 import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-fullscreen-shell";
 import { TeamRosterManager } from "@/components/times/team-roster-manager";
 import { contaNextPath, requireContaPerfilPronto } from "@/lib/conta/require-perfil-pronto";
+import { FormacaoCapIcon } from "@/lib/perfil/formacao-glyphs";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -106,35 +108,71 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
       backHref={from}
       title="Editar equipe"
       subtitle="Altere dados da formação e gerencie elenco (pendentes/aprovados)."
-      showBack={!isEmbed}
-      topAction={
-        <Link
-          href={`/perfil-time/${id}?from=${encodeURIComponent(`/editar/time/${id}`)}`}
-          className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18"
-        >
-          Ver perfil público
-        </Link>
-      }
+      showBack={false}
+      hideHeader
     >
-      <section className="eid-surface-panel mb-2.5 overflow-hidden rounded-2xl p-0">
+      <section className="mb-3">
+        {!isEmbed ? <PerfilBackLink href={from} label="Voltar" /> : null}
+        <div className="mt-3.5 overflow-hidden rounded-[22px] border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_96%,white_4%),color-mix(in_srgb,var(--eid-surface)_94%,white_6%))] px-3.5 py-3 sm:px-5 sm:py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-2.5">
+              <span className="mt-0.5 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_8px_16px_-12px_rgba(37,99,235,0.42)]">
+                <svg viewBox="0 0 24 24" className="h-5.5 w-5.5 text-[#2563EB]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <circle cx="8" cy="9" r="2.6" />
+                  <circle cx="15.8" cy="9.6" r="2.2" />
+                  <path d="M3.6 18a4.8 4.8 0 0 1 8.8 0" />
+                  <path d="M12.8 18a4 4 0 0 1 7.2 0" />
+                  <path d="m16.8 16.6 3.6 3.6" />
+                  <circle cx="18.6" cy="18.5" r="2.6" />
+                </svg>
+              </span>
+              <div className="min-w-0 pt-1">
+                <h1 className="text-[16px] font-black leading-none tracking-tight text-eid-fg sm:text-[26px]">Editar equipe</h1>
+                <p className="mt-2 text-[11px] leading-snug text-eid-text-secondary sm:text-[14px]">
+                  Altere dados da formação e gerencie elenco (pendentes/aprovados).
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/perfil-time/${id}?from=${encodeURIComponent(`/editar/time/${id}`)}`}
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#C9D8F6] bg-white px-2 py-[3px] text-[8px] font-black uppercase tracking-[0.02em] text-[#2563EB] transition hover:bg-[#EEF4FF]"
+            >
+              <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <circle cx="12" cy="12" r="3" />
+                <path d="M2 12s3.7-6 10-6 10 6 10 6-3.7 6-10 6-10-6-10-6Z" />
+              </svg>
+              Ver perfil público
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="eid-surface-panel mb-2.5 overflow-hidden rounded-[18px] p-0">
         <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Resumo da equipe</p>
-          <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-300">
+          <p className="text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg">Resumo da equipe</p>
+          <span className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.04em] text-eid-primary-300">
+            <FormacaoCapIcon className="h-3 w-3 shrink-0" />
             Formação
           </span>
         </div>
-        <div className="p-3 sm:p-4">
+        <div className="p-3">
           <div className="flex items-center gap-2">
             {t.escudo ? (
-              <img src={t.escudo} alt={t.nome ?? "Equipe"} className="h-12 w-12 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
+              <img src={t.escudo} alt={t.nome ?? "Equipe"} className="h-12 w-12 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover" />
             ) : (
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[12px] font-black text-eid-primary-300">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[12px] font-black text-eid-primary-300">
                 {(t.nome ?? "EQ").trim().slice(0, 2).toUpperCase()}
               </span>
             )}
             <div className="min-w-0">
-              <p className="truncate text-sm font-black text-eid-fg">{t.nome ?? "Formação"}</p>
-              <p className="truncate text-[11px] text-eid-text-secondary">{t.localizacao ?? "Cidade não informada"}</p>
+              <p className="truncate text-[13px] font-black text-eid-fg">{t.nome ?? "Formação"}</p>
+              <p className="inline-flex max-w-full items-center gap-1 truncate text-[11px] text-eid-text-secondary">
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-[#64748B]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M12 21s7-5.8 7-11a7 7 0 1 0-14 0c0 5.2 7 11 7 11Z" />
+                  <circle cx="12" cy="10" r="2.4" />
+                </svg>
+                <span className="truncate">{t.localizacao ?? "Cidade não informada"}</span>
+              </p>
             </div>
           </div>
         </div>

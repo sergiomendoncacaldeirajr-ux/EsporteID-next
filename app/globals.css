@@ -1346,6 +1346,27 @@ button[data-eid-limpar-compact-btn="true"] svg {
   display: block;
 }
 
+button[data-eid-remove-media-btn="true"] {
+  border-color: rgba(244, 63, 94, 0.32) !important;
+  background: rgba(244, 63, 94, 0.1) !important;
+  color: rgb(251, 113, 133) !important;
+  box-shadow: none !important;
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+button[data-eid-remove-media-btn="true"]:hover {
+  border-color: rgba(244, 63, 94, 0.38) !important;
+  background: rgba(244, 63, 94, 0.14) !important;
+}
+
+button[data-eid-remove-media-btn="true"]:focus,
+button[data-eid-remove-media-btn="true"]:focus-visible,
+button[data-eid-remove-media-btn="true"]:active {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 /* Mesmo padrão do fluxo Desafio no desktop (sem inflar controles). */
 :where([data-eid-desafio-ui]) :where(
   button[class*="eid-btn-"],

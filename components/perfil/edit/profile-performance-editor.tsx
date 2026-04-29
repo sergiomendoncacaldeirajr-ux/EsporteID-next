@@ -233,8 +233,8 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
   }
 
   return (
-    <div className="eid-surface-panel rounded-2xl p-3 sm:p-4">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Dados de performance</p>
+    <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65 p-3 sm:p-4">
+      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Dados de performance</p>
       {message ? (
         <p className="mb-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2 text-xs text-eid-fg">
           {message}
@@ -243,7 +243,7 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
 
       {savedItems.length > 0 ? (
         <div className="mb-4">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">
+          <p className="mb-2 text-[11px] font-black uppercase tracking-[0.08em] text-eid-fg">
             Esportes no perfil
           </p>
           <div className="grid gap-2">
@@ -257,14 +257,14 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
                     type="button"
                     onClick={() => toggleSavedExpanded(item.esporteId)}
                     aria-expanded={open}
-                    className="flex w-full items-center gap-2 px-3 py-2.5 text-left transition hover:bg-eid-surface/30"
+                    className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition hover:bg-eid-surface/30"
                   >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 text-eid-primary-300">
-                      <span className="scale-125">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 text-eid-primary-300">
+                      <span className="scale-110">
                         <SportGlyphIcon sportName={sport.nome} />
                       </span>
                     </span>
-                    <span className="min-w-0 flex-1 text-sm font-semibold text-eid-fg">{sport.nome}</span>
+                    <span className="min-w-0 flex-1 text-[13px] font-semibold text-eid-fg">{sport.nome}</span>
                     <ChevronDown
                       className={`h-4 w-4 shrink-0 text-eid-text-secondary transition-transform ${open ? "rotate-180" : ""}`}
                     />
@@ -332,16 +332,16 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
 
       {availableToAdd.length > 0 ? (
         <div className="mt-1 border-t border-[color:var(--eid-border-subtle)] pt-3">
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">
+          <p className="mb-1.5 text-[11px] font-black uppercase tracking-[0.08em] text-eid-fg">
             Adicionar esporte ao perfil
           </p>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-2">
             {availableToAdd.map((sport) => (
               <button
                 key={sport.id}
                 type="button"
                 onClick={() => addSport(sport.id)}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[10px] font-semibold text-eid-text-secondary transition-colors hover:text-eid-fg"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-[11px] font-medium text-eid-fg transition-colors hover:border-eid-primary-500/35"
               >
                 <span className="text-eid-primary-300">
                   <SportGlyphIcon sportName={sport.nome} />
@@ -353,14 +353,31 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
         </div>
       ) : null}
 
-      <div className="mt-3 flex justify-end">
+      <div className="mt-4 flex justify-center">
         <button
           type="button"
           disabled={saving}
           onClick={onSave}
-          className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.08em] text-eid-fg disabled:opacity-60"
+          className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-[#C9D8F6] bg-[#F5F8FF] px-3 text-[12px] font-black uppercase tracking-[0.04em] text-[#2D58A6] transition hover:bg-[#EEF4FF] disabled:opacity-60"
         >
-          {saving ? "Salvando..." : "Salvar Performance"}
+          {saving ? (
+            <>
+              <svg viewBox="0 0 24 24" className="h-4 w-4 animate-spin" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <circle cx="12" cy="12" r="8" className="opacity-30" />
+                <path d="M20 12a8 8 0 0 0-8-8" strokeLinecap="round" />
+              </svg>
+              <span className="animate-pulse">Salvando...</span>
+            </>
+          ) : (
+            <>
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M5 4h11l3 3v13H5V4Z" />
+                <path d="M8 4v5h8V4" />
+                <path d="M9 16h6" />
+              </svg>
+              Salvar Performance
+            </>
+          )}
         </button>
       </div>
     </div>

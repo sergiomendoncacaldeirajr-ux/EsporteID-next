@@ -1,5 +1,16 @@
 type ModalidadeKind = "individual" | "dupla" | "time";
 
+export function FormacaoCapIcon({ className = "h-3.5 w-3.5 shrink-0" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className={className} fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="m2.5 9.4 9.5-4.3 9.5 4.3-9.5 4.3-9.5-4.3Z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6.7 11.3v4.1c0 .5.3.9.7 1.2 1.1.7 2.7 1.2 4.6 1.2s3.5-.5 4.6-1.2c.4-.3.7-.7.7-1.2v-4.1" strokeLinecap="round" />
+      <path d="M20.7 10.5v4.2" strokeLinecap="round" />
+      <circle cx="20.7" cy="15.9" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function ModalidadeGlyphIcon({ modalidade }: { modalidade: ModalidadeKind }) {
   if (modalidade === "individual") {
     return (

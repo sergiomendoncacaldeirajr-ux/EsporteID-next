@@ -21,6 +21,7 @@ export function TeamInviteComboboxForm({
   invitePending,
   inviteState,
   submitLabel = "Adicionar",
+  submitLoadingLabel = "Adicionando...",
   variant = "grid",
   inputClassName,
   prefillSiblingActive = false,
@@ -31,6 +32,7 @@ export function TeamInviteComboboxForm({
   invitePending: boolean;
   inviteState: TeamActionState;
   submitLabel?: string;
+  submitLoadingLabel?: string;
   variant?: "grid" | "stack";
   inputClassName?: string;
   prefillSiblingActive?: boolean;
@@ -119,6 +121,13 @@ export function TeamInviteComboboxForm({
         <div
           className={`relative min-w-0 w-full ${variant === "grid" ? "sm:col-span-1" : "sm:min-w-0 sm:flex-1"}`}
         >
+          <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[#64748B]" aria-hidden>
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="9" cy="8.5" r="2.5" />
+              <path d="M4.5 18a5 5 0 0 1 9 0" />
+              <path d="M17.5 7.2v4M15.5 9.2h4" />
+            </svg>
+          </span>
           <input
             type="text"
             name="username"
@@ -136,7 +145,7 @@ export function TeamInviteComboboxForm({
             required={needUsernameOrPick}
             placeholder="Nome ou @ do atleta — 3 letras para sugestões"
             autoComplete="off"
-            className={inputCn}
+            className={`${inputCn} !pl-10`}
           />
           {suggestLoading ? (
             <p className="absolute left-0 top-full z-20 mt-1.5 text-xs text-eid-text-secondary">Buscando…</p>
@@ -171,7 +180,7 @@ export function TeamInviteComboboxForm({
           type="submit"
           loading={invitePending}
           label={submitLabel}
-          loadingLabel="Enviando..."
+          loadingLabel={submitLoadingLabel}
           className={btnClass}
         />
       </form>

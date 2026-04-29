@@ -111,38 +111,49 @@ export default async function PerfilHistoricoCompletoPage({ params, searchParams
   );
 
   return (
-    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main className={`${PROFILE_PUBLIC_MAIN_CLASS} pt-3 sm:pt-4`}>
       <div className={`${PROFILE_HERO_PANEL_CLASS} p-3 sm:p-4`}>
           <div className="flex items-center justify-between gap-2">
-            <h1 className="text-sm font-black uppercase tracking-[0.08em] text-eid-fg">Histórico completo</h1>
+            <div className="inline-flex items-center gap-2">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-eid-primary-500/12 text-eid-primary-300">
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M4 19V9" />
+                  <path d="M10 19V5" />
+                  <path d="M16 19v-8" />
+                  <path d="M22 19v-4" />
+                </svg>
+              </span>
+              <h1 className="text-[13px] font-black uppercase tracking-[0.03em] text-eid-fg">Histórico completo</h1>
+            </div>
           </div>
-          <p className="mt-0.5 text-[10px] text-eid-text-secondary">{perfil.nome ?? "Atleta"} · somente confrontos individuais</p>
-          <p className="mt-1 text-[9px] text-eid-text-secondary">
+          <p className="mt-0.5 text-[13px] text-eid-text-secondary">{perfil.nome ?? "Atleta"} · somente confrontos individuais</p>
+          <p className="mt-2 text-[12px] leading-relaxed text-eid-text-secondary">
             Aqui estão todos os confrontos deste perfil. Para ver resultados por esporte, volte ao perfil e acesse as estatísticas no EID de cada esporte.
           </p>
 
-          <div className="mt-3 grid grid-cols-5 gap-1.5">
-            <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
-              <p className="text-[12px] font-black text-emerald-300">{totais.vitorias}</p>
-              <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">V</p>
+          <div className="mt-3 grid grid-cols-5 gap-1">
+            <div className="eid-list-item rounded-md bg-eid-surface/45 px-1 py-1 text-center">
+              <p className="text-[18px] font-black leading-none text-emerald-300">{totais.vitorias}</p>
+              <p className="mt-0.5 text-[8px] font-bold uppercase text-emerald-300">Vitória</p>
             </div>
-            <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
-              <p className="text-[12px] font-black text-red-300">{totais.derrotas}</p>
-              <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">D</p>
+            <div className="eid-list-item rounded-md bg-eid-surface/45 px-1 py-1 text-center">
+              <p className="text-[18px] font-black leading-none text-rose-300">{totais.derrotas}</p>
+              <p className="mt-0.5 text-[8px] font-bold uppercase text-rose-300">Derrotas</p>
             </div>
-            <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
-              <p className="text-[12px] font-black text-eid-primary-300">{totais.empates}</p>
-              <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">E</p>
+            <div className="eid-list-item rounded-md bg-eid-surface/45 px-1 py-1 text-center">
+              <p className="text-[18px] font-black leading-none text-eid-primary-300">{totais.empates}</p>
+              <p className="mt-0.5 text-[8px] font-bold uppercase text-eid-primary-300">Empates</p>
             </div>
-            <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
-              <p className="text-[12px] font-black text-eid-fg">{totais.rank}</p>
-              <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">Rank</p>
+            <div className="eid-list-item rounded-md bg-eid-surface/45 px-1 py-1 text-center">
+              <p className="text-[18px] font-black leading-none text-eid-fg">{totais.rank}</p>
+              <p className="mt-0.5 text-[8px] font-bold uppercase text-eid-text-secondary">Rank</p>
             </div>
-            <div className="eid-list-item rounded-lg bg-eid-surface/45 px-1.5 py-1 text-center">
-              <p className="text-[12px] font-black text-eid-fg">{totais.torneio}</p>
-              <p className="text-[8px] font-semibold uppercase text-eid-text-secondary">Torneio</p>
+            <div className="eid-list-item rounded-md bg-eid-surface/45 px-1 py-1 text-center">
+              <p className="text-[18px] font-black leading-none text-eid-fg">{totais.torneio}</p>
+              <p className="mt-0.5 text-[8px] font-bold uppercase text-eid-text-secondary">Torneios</p>
             </div>
           </div>
+          <div className="mt-3 h-px w-full bg-[color:var(--eid-border-subtle)]" />
 
           {partidas.length > 0 ? (
             <ul className="mt-3 grid gap-1.5">
