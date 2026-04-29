@@ -10,10 +10,10 @@ import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-perfo
 import type { PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
-  PEDIDO_ACEITAR_BTN_CLASS,
-  PEDIDO_MATCH_ACAO_FORM_CLASS,
-  PEDIDO_MATCH_ACOES_ROW_CLASS,
-  PEDIDO_RECUSAR_BTN_CLASS,
+  PEDIDO_MATCH_RECEBIDO_ACEITAR_BTN_CLASS,
+  PEDIDO_MATCH_RECEBIDO_ACOES_ROW_CLASS,
+  PEDIDO_MATCH_RECEBIDO_FORM_CLASS,
+  PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS,
 } from "@/lib/desafio/flow-ui";
 
 export type PedidoMatchItem = {
@@ -87,8 +87,9 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
           const f = m.formacaoDesafiante;
           const tituloCard = (f?.nome?.trim() ? f.nome : null) ?? m.desafianteNome;
           const localCard = (f?.localizacao?.trim() ? f.localizacao : null) ?? m.desafianteLocalizacao;
+          /** `formacaoDesafiante.id` é sempre `times.id` (dupla ou time no radar). */
           const statsHref = f
-            ? `/${f.tipo === "dupla" ? "perfil-dupla" : "perfil-time"}/${f.id}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`
+            ? `/perfil-time/${f.id}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`
             : `/perfil/${m.desafianteId}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`;
           const seloEid =
             m.rankingPreview?.kind === "coletivo"
@@ -106,53 +107,48 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
             <div className="pointer-events-none absolute -right-6 -top-6 hidden h-20 w-20 rounded-full bg-eid-primary-500/10 blur-2xl md:block" />
             <div className="relative -ml-1 mt-1.5 flex min-w-0 items-start gap-2.5 pr-24 md:ml-0">
               <div className="flex min-w-0 items-start gap-2.5">
-                <div className="relative mt-1 h-14 w-14 shrink-0">
-                  {m.rankingPosicao && m.rankingPosicao > 0 ? (
-                    <span className="absolute -top-4 left-1/2 z-[3] -translate-x-1/2 rounded-full border border-eid-primary-400/55 bg-eid-primary-500/20 px-1.5 py-[1px] text-[8px] font-black uppercase text-eid-primary-100 shadow-[0_4px_10px_-8px_color-mix(in_srgb,var(--eid-primary-500)_85%,transparent)]">
-                      #{m.rankingPosicao}
-                    </span>
-                  ) : null}
-                  <ProfileEditDrawerTrigger
-                    href={statsHref}
-                    title={f ? `Estatísticas da formação ${tituloCard}` : `Estatísticas EID de ${tituloCard}`}
-                    fullscreen
-                    topMode="backOnly"
-                    className="block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
-                  >
-                    {f?.escudo?.trim() ? (
-                      <Image
-                        src={f.escudo.trim()}
-                        alt=""
-                        fill
-                        unoptimized
-                        className="h-full w-full rounded-full object-cover object-center"
-                      />
-                    ) : f ? (
-                      <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
-                        {iniciaisFormacao(f.nome)}
-                      </div>
-                    ) : m.desafianteAvatarUrl ? (
-                      <Image
-                        src={m.desafianteAvatarUrl}
-                        alt=""
-                        fill
-                        unoptimized
-                        className="h-full w-full rounded-full object-cover object-center"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
-                        EID
-                      </div>
-                    )}
-                  </ProfileEditDrawerTrigger>
-                  <div className="absolute -bottom-1 left-1/2 z-[2] -translate-x-1/2">
-                    <ProfileEidPerformanceSeal
-                      notaEid={seloEid}
-                      compact
-                      className="scale-125"
-                      locationLabel={localCard}
-                    />
+                <div className="mt-1 flex shrink-0 flex-col items-center gap-1.5">
+                  <div className="relative h-14 w-14 shrink-0">
+                    {m.rankingPosicao && m.rankingPosicao > 0 ? (
+                      <span className="absolute -top-4 left-1/2 z-[3] -translate-x-1/2 rounded-full border border-eid-primary-400/55 bg-eid-primary-500/20 px-1.5 py-[1px] text-[8px] font-black uppercase text-eid-primary-100 shadow-[0_4px_10px_-8px_color-mix(in_srgb,var(--eid-primary-500)_85%,transparent)]">
+                        #{m.rankingPosicao}
+                      </span>
+                    ) : null}
+                    <ProfileEditDrawerTrigger
+                      href={statsHref}
+                      title={f ? `Estatísticas da formação ${tituloCard}` : `Estatísticas EID de ${tituloCard}`}
+                      fullscreen
+                      topMode="backOnly"
+                      className="relative block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
+                    >
+                      {f?.escudo?.trim() ? (
+                        <Image
+                          src={f.escudo.trim()}
+                          alt=""
+                          fill
+                          unoptimized
+                          className="h-full w-full rounded-full object-cover object-center"
+                        />
+                      ) : f ? (
+                        <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                          {iniciaisFormacao(f.nome)}
+                        </div>
+                      ) : m.desafianteAvatarUrl ? (
+                        <Image
+                          src={m.desafianteAvatarUrl}
+                          alt=""
+                          fill
+                          unoptimized
+                          className="h-full w-full rounded-full object-cover object-center"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                          EID
+                        </div>
+                      )}
+                    </ProfileEditDrawerTrigger>
                   </div>
+                  <ProfileEidPerformanceSeal notaEid={seloEid} compact className="scale-125" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold tracking-tight text-eid-fg md:text-base md:font-black">{tituloCard}</p>
@@ -212,22 +208,22 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 coletivo={m.rankingPreview.kind === "coletivo" ? m.rankingPreview.coletivo : null}
               />
             ) : null}
-            <div className={PEDIDO_MATCH_ACOES_ROW_CLASS}>
-              <form action={formAction} className={PEDIDO_MATCH_ACAO_FORM_CLASS}>
+            <div className={PEDIDO_MATCH_RECEBIDO_ACOES_ROW_CLASS}>
+              <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                 <input type="hidden" name="match_id" value={String(m.id)} />
                 <input type="hidden" name="aceitar" value="true" />
-                <button type="submit" disabled={pending} className={PEDIDO_ACEITAR_BTN_CLASS}>
+                <button type="submit" disabled={pending} className={PEDIDO_MATCH_RECEBIDO_ACEITAR_BTN_CLASS}>
                   <span>{pending ? "Salvando…" : "Aceitar"}</span>
                 </button>
               </form>
-              <form action={formAction} className={PEDIDO_MATCH_ACAO_FORM_CLASS}>
+              <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                 <input type="hidden" name="match_id" value={String(m.id)} />
                 <input type="hidden" name="aceitar" value="false" />
                 <button
                   type="submit"
                   disabled={pending}
                   data-eid-recusar-btn="true"
-                  className={PEDIDO_RECUSAR_BTN_CLASS}
+                  className={PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS}
                 >
                   <span>Recusar</span>
                 </button>

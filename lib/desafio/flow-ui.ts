@@ -58,6 +58,22 @@ export const PEDIDO_MATCH_ACOES_ROW_CLASS = "relative mt-3 flex items-center jus
 /** Form do pedido de desafio: não estica. */
 export const PEDIDO_MATCH_ACAO_FORM_CLASS = "inline";
 
+/** Pedido de desafio recebido (Comunidade): Aceitar/Recusar em linha inteira, ~50% cada. */
+export const PEDIDO_MATCH_RECEBIDO_ACOES_ROW_CLASS =
+  "relative mt-4 flex w-full max-w-full items-stretch justify-center gap-2 sm:gap-3";
+
+export const PEDIDO_MATCH_RECEBIDO_FORM_CLASS = "min-w-0 flex-1 basis-0";
+
+export const PEDIDO_MATCH_RECEBIDO_ACEITAR_BTN_CLASS =
+  "flex min-h-[48px] w-full items-center justify-center rounded-xl border border-emerald-500/90 bg-emerald-600 px-2 !text-sm font-black uppercase tracking-[0.06em] text-white shadow-[0_4px_14px_-6px_rgba(5,150,105,0.55)] transition hover:bg-emerald-500 disabled:pointer-events-none disabled:opacity-55 sm:min-h-[52px] sm:px-4 sm:!text-base";
+
+export const PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS =
+  "flex min-h-[48px] w-full items-center justify-center rounded-xl border border-rose-500/90 bg-rose-600 px-2 !text-sm font-black uppercase tracking-[0.06em] text-white shadow-[0_4px_14px_-6px_rgba(225,29,72,0.45)] transition hover:bg-rose-500 disabled:pointer-events-none disabled:opacity-55 sm:min-h-[52px] sm:px-4 sm:!text-base";
+
+/** Cancelar pedido de desafio enviado (Comunidade): compacto, vermelho (tema claro/escuro via utilitários + globals). */
+export const PEDIDO_DESAFIO_ENVIADO_CANCELAR_BTN_CLASS =
+  "inline-flex min-h-[17px] shrink-0 items-center justify-center rounded border border-red-600 !bg-red-600 px-1.5 py-px leading-none !text-[6.5px] font-black uppercase tracking-[0.06em] !text-white shadow-sm transition hover:!bg-red-500 hover:!border-red-500 disabled:pointer-events-none disabled:opacity-55 sm:min-h-[18px] sm:!text-[7px]";
+
 /** Container Aprovar/Recusar candidatura na comunidade / vagas. */
 export const CANDIDATURA_ACOES_ROW_CLASS = "mt-3 flex items-center justify-end gap-0 md:gap-1";
 

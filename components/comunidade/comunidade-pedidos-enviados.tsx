@@ -5,7 +5,7 @@ import { cancelarPedidoMatchPendente, type CancelarPedidoPendenteState } from "@
 import { iniciaisFormacao } from "@/components/comunidade/comunidade-pedidos-match";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
-import { PEDIDO_CANCELAR_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
+import { PEDIDO_DESAFIO_ENVIADO_CANCELAR_BTN_CLASS } from "@/lib/desafio/flow-ui";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import Image from "next/image";
 
@@ -57,9 +57,10 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
           const f = m.formacaoAdversaria;
           const titulo = (f?.nome?.trim() ? f.nome : null) ?? m.adversarioNome;
           const local = (f?.localizacao?.trim() ? f.localizacao : null) ?? m.adversarioLocalizacao;
+          /** `formacaoAdversaria.id` é `times.id` (dupla ou time). */
           const statsHref =
             f && m.esporteId > 0
-              ? `/${f.tipo === "dupla" ? "perfil-dupla" : "perfil-time"}/${f.id}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`
+              ? `/perfil-time/${f.id}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`
               : m.adversarioId && m.esporteId > 0
                 ? `/perfil/${m.adversarioId}/eid/${m.esporteId}?from=${encodeURIComponent("/comunidade")}`
                 : null;
@@ -68,41 +69,39 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
             f?.escudo?.trim() ? (
               <Image src={f.escudo.trim()} alt="" fill unoptimized className="object-cover object-center" />
             ) : f ? (
-              <div className="flex h-full w-full items-center justify-center text-[9px] font-black text-eid-primary-300">
+              <div className="flex h-full w-full items-center justify-center text-[11px] font-black text-eid-primary-300">
                 {iniciaisFormacao(f.nome)}
               </div>
             ) : m.adversarioAvatarUrl ? (
               <Image src={m.adversarioAvatarUrl} alt="" fill unoptimized className="object-cover object-center" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-[9px] font-black text-eid-primary-300">EID</div>
+              <div className="flex h-full w-full items-center justify-center text-[11px] font-black text-eid-primary-300">EID</div>
             );
           return (
           <li
             key={m.id}
             className="relative overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-3 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.28)]"
           >
-            <div className="flex items-start gap-2.5">
-              <div className="flex w-[44px] shrink-0 flex-col items-center">
-              <div className="relative h-9 w-9 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60">
-                {statsHref ? (
-                  <ProfileEditDrawerTrigger
-                    href={statsHref}
-                    title={f ? `Estatísticas da formação ${titulo}` : `Estatísticas EID de ${titulo}`}
-                    fullscreen
-                    topMode="backOnly"
-                    className="relative block h-9 w-9"
-                  >
-                    {avatarInner}
-                  </ProfileEditDrawerTrigger>
-                ) : (
-                  avatarInner
-                )}
+            <div className="flex items-stretch gap-3">
+              <div className="flex w-[3.75rem] shrink-0 flex-col items-center gap-1.5">
+                <div className="relative h-12 w-12 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60">
+                  {statsHref ? (
+                    <ProfileEditDrawerTrigger
+                      href={statsHref}
+                      title={f ? `Estatísticas da formação ${titulo}` : `Estatísticas EID de ${titulo}`}
+                      fullscreen
+                      topMode="backOnly"
+                      className="relative block h-12 w-12 overflow-hidden rounded-full"
+                    >
+                      {avatarInner}
+                    </ProfileEditDrawerTrigger>
+                  ) : (
+                    avatarInner
+                  )}
+                </div>
+                <ProfileEidPerformanceSeal notaEid={seloEid} compact className="scale-[1.2] sm:scale-125" />
               </div>
-              <div className="mt-1">
-                <ProfileEidPerformanceSeal notaEid={seloEid} compact locationLabel={local} />
-              </div>
-              </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1 self-start">
                 <p className="truncate text-xs font-semibold text-eid-fg">{titulo}</p>
                 <p className="text-[10px] text-eid-text-secondary">
                   <span className="inline-flex items-center gap-1">
@@ -127,16 +126,16 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
                   {local?.trim() ? local : "Localização não informada"}
                 </p>
               </div>
-              <div className="ml-auto flex flex-col items-end gap-1.5">
+              <div className="flex min-w-0 shrink-0 flex-col items-end justify-between gap-2">
                 <span className="rounded-full border border-amber-400/40 bg-amber-500/18 px-1.5 py-[1px] text-[7px] font-extrabold uppercase leading-none text-[color:color-mix(in_srgb,var(--eid-warning-500)_86%,var(--eid-fg)_14%)]">
                   Aguardando
                 </span>
-                <form action={formAction}>
+                <form action={formAction} className="inline">
                   <input type="hidden" name="match_id" value={String(m.id)} />
                   <button
                     type="button"
                     disabled={pending}
-                    className={PEDIDO_CANCELAR_COMPACT_BTN_CLASS}
+                    className={PEDIDO_DESAFIO_ENVIADO_CANCELAR_BTN_CLASS}
                     data-eid-cancel-pendente-btn="true"
                     onClick={() => setConfirmId(m.id)}
                   >

@@ -908,17 +908,17 @@ label:has(input.sr-only):not(.eid-no-press):active {
 }
 
 [data-eid-theme="light"] [data-eid-cancel-pendente-btn="true"] {
-  border-color: #7f1d1d !important;
-  background-color: #7f1d1d !important;
+  border-color: #dc2626 !important;
+  background-color: #dc2626 !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
   opacity: 1 !important;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.65) !important;
+  text-shadow: none !important;
 }
 
 [data-eid-theme="light"] [data-eid-cancel-pendente-btn="true"]:hover {
-  border-color: #5f1414 !important;
-  background-color: #5f1414 !important;
+  border-color: #b91c1c !important;
+  background-color: #b91c1c !important;
   color: #ffffff !important;
 }
 
