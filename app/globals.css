@@ -931,6 +931,28 @@ label:has(input.sr-only):not(.eid-no-press):active {
   color: #047857;
 }
 
+/* Desafio — “Se você perder” / formação perder */
+.eid-desafio-impact-lose-title {
+  color: #fda4af;
+}
+.eid-desafio-impact-lose-icon-wrap {
+  color: #fda4af;
+  background-color: color-mix(in srgb, var(--eid-danger-500) 18%, transparent);
+}
+
+/* Tema claro: tons mais escuros (legíveis em fundo rosado claro) */
+[data-eid-theme="light"] .eid-desafio-impact-lose-card {
+  border-color: color-mix(in srgb, #be123c 35%, var(--eid-border-subtle) 65%);
+  background-color: color-mix(in srgb, #fda4af 14%, var(--eid-card) 86%);
+}
+[data-eid-theme="light"] .eid-desafio-impact-lose-title {
+  color: #881337;
+}
+[data-eid-theme="light"] .eid-desafio-impact-lose-icon-wrap {
+  color: #9f1239;
+  background-color: color-mix(in srgb, #f43f5e 20%, white 80%);
+}
+
 [data-eid-theme="light"] [data-eid-recusar-btn="true"] {
   border-color: color-mix(in srgb, var(--eid-danger-500) 42%, white 58%) !important;
   color: color-mix(in srgb, var(--eid-danger-500) 82%, #111827 18%) !important;
@@ -1964,45 +1986,45 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 /* Desafio /match — hero e cartões no tema claro (alinhado à dashboard e ao ranking) */
 [data-eid-theme="light"] [data-eid-match-page] .eid-match-hero.eid-surface-panel {
   box-shadow:
-    0 16px 34px -22px rgba(15, 23, 42, 0.13),
-    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 10%, transparent);
+    0 7px 16px -16px rgba(15, 23, 42, 0.05),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 2%, transparent);
 }
 
 [data-eid-theme="light"] [data-eid-match-page] .eid-match-filter-card {
-  border-color: color-mix(in srgb, var(--eid-border) 78%, var(--eid-primary-500) 22%) !important;
+  border-color: color-mix(in srgb, var(--eid-border) 94%, transparent) !important;
   background: linear-gradient(
     180deg,
     #ffffff 0%,
     color-mix(in srgb, var(--eid-field-bg) 52%, #ffffff 48%) 100%
   ) !important;
   box-shadow:
-    0 12px 28px -20px rgba(15, 23, 42, 0.11),
-    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 7%, transparent);
+    0 6px 14px -16px rgba(15, 23, 42, 0.045),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 1%, transparent);
 }
 
 [data-eid-theme="light"] [data-eid-match-page] .eid-match-section-head {
   background: transparent !important;
-  border-bottom-color: color-mix(in srgb, var(--eid-border) 82%, var(--eid-primary-500) 18%) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  border-bottom-color: color-mix(in srgb, var(--eid-border) 92%, transparent) !important;
+  box-shadow: none;
 }
 
 [data-eid-theme="light"] [data-eid-match-page] .eid-match-surface-card {
-  border-color: color-mix(in srgb, var(--eid-border) 78%, var(--eid-primary-500) 22%) !important;
+  border-color: color-mix(in srgb, var(--eid-border) 94%, transparent) !important;
   box-shadow:
-    0 10px 24px -18px rgba(15, 23, 42, 0.1),
-    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 6%, transparent);
+    0 6px 12px -16px rgba(15, 23, 42, 0.045),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 1%, transparent);
 }
 
 [data-eid-theme="light"] [data-eid-match-page] .eid-match-results-card {
-  border-color: color-mix(in srgb, var(--eid-border) 78%, var(--eid-primary-500) 22%) !important;
+  border-color: color-mix(in srgb, var(--eid-border) 94%, transparent) !important;
   background: linear-gradient(
     180deg,
     #ffffff 0%,
     color-mix(in srgb, var(--eid-field-bg) 52%, #ffffff 48%) 100%
   ) !important;
   box-shadow:
-    0 12px 28px -20px rgba(15, 23, 42, 0.11),
-    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 7%, transparent);
+    0 6px 14px -16px rgba(15, 23, 42, 0.045),
+    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 1%, transparent);
 }
 
 /* Locais (/locais) — hero e cartões no tema claro */

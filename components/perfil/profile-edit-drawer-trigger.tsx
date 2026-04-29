@@ -10,6 +10,8 @@ type Props = {
   className?: string;
   title: string;
   children: ReactNode;
+  openingLabel?: ReactNode;
+  openingDelayMs?: number;
   fullscreen?: boolean;
   /** default = título + Fechar · backOnly = só Voltar · backAndClose = Voltar (histórico do iframe) + Fechar */
   topMode?: "default" | "backOnly" | "backAndClose";
@@ -22,6 +24,8 @@ export function ProfileEditDrawerTrigger({
   className,
   title,
   children,
+  openingLabel,
+  openingDelayMs = 120,
   fullscreen = false,
   topMode = "default",
   disableIframeBack = false,
@@ -30,6 +34,7 @@ export function ProfileEditDrawerTrigger({
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [frameLoading, setFrameLoading] = useState(false);
+  const [opening, setOpening] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof document === "undefined") return "dark";
     return document.documentElement.getAttribute("data-eid-theme") === "light" ? "light" : "dark";
@@ -92,10 +97,15 @@ export function ProfileEditDrawerTrigger({
   }
 
   function openDrawer() {
-    setOpenNonce((v) => v + 1);
-    setFrameLoading(true);
-    setOpen(true);
-    window.setTimeout(() => setVisible(true), 10);
+    if (opening) return;
+    setOpening(true);
+    window.setTimeout(() => {
+      setOpenNonce((v) => v + 1);
+      setFrameLoading(true);
+      setOpen(true);
+      window.setTimeout(() => setVisible(true), 10);
+      setOpening(false);
+    }, Math.max(0, openingDelayMs));
   }
 
   function handleFrameLoad() {
@@ -112,8 +122,8 @@ export function ProfileEditDrawerTrigger({
 
   return (
     <>
-      <button type="button" onClick={openDrawer} className={className} aria-label={title} title={title}>
-        {children}
+      <button type="button" onClick={openDrawer} className={className} aria-label={title} title={title} disabled={opening}>
+        {opening && openingLabel ? openingLabel : children}
       </button>
       {open && typeof document !== "undefined"
         ? createPortal(

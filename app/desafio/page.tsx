@@ -74,6 +74,56 @@ function desafioPrimeiroNome(nome: string | null | undefined, fallback: string):
   return parts[0] ?? fallback;
 }
 
+const desafioRuleIconBadgeClass =
+  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-card)_86%)] shadow-sm ring-1 ring-[color:color-mix(in_srgb,var(--eid-primary-500)_32%,var(--eid-border-subtle)_68%)]";
+
+/** Ícone “info” em círculo à esquerda do título “Forma de disputa”. */
+function DesafioInfoRuleIcon() {
+  return (
+    <span className={desafioRuleIconBadgeClass}>
+      <svg
+        viewBox="0 0 24 24"
+        className="h-[1.15rem] w-[1.15rem] shrink-0 text-eid-fg"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4" />
+        <path d="M12 8h.01" />
+      </svg>
+    </span>
+  );
+}
+
+/** Ícone de lista / regras (“desafio de ranking”). */
+function DesafioRankingRuleIcon() {
+  return (
+    <span className={desafioRuleIconBadgeClass}>
+      <svg
+        viewBox="0 0 24 24"
+        className="h-[1.15rem] w-[1.15rem] shrink-0 text-eid-fg"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <line x1="8" y1="6" x2="21" y2="6" />
+        <line x1="8" y1="12" x2="21" y2="12" />
+        <line x1="8" y1="18" x2="21" y2="18" />
+        <line x1="3" y1="6" x2="3.01" y2="6" />
+        <line x1="3" y1="12" x2="3.01" y2="12" />
+        <line x1="3" y1="18" x2="3.01" y2="18" />
+      </svg>
+    </span>
+  );
+}
+
 export default async function DesafioPage({ searchParams }: { searchParams?: Promise<Params> }) {
   const sp = (await searchParams) ?? {};
   const isEmbed = sp.embed === "1";
@@ -209,7 +259,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
     return (
       <main className={DESAFIO_PAGE_MAIN_CLASS}>
-          <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">
             Defina o esporte do desafio (no radar, use um esporte específico — não &quot;Todos&quot;) ou abra o desafio a
             partir do perfil da dupla/time, que já traz o esporte certo.
@@ -264,7 +314,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
     const { data: perfil } = await supabase
       .from("profiles")
-      .select("id, nome, disponivel_amistoso, disponivel_amistoso_ate")
+      .select("id, nome, avatar_url, disponivel_amistoso, disponivel_amistoso_ate")
       .eq("id", alvoKey)
       .maybeSingle();
     if (!perfil || perfil.id === user.id) {
@@ -454,8 +504,8 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
     return (
       <main className={DESAFIO_PAGE_MAIN_CLASS}>
-          <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
-          <p className="mt-2 text-sm text-eid-text-secondary">
+          <h1 className="text-2xl font-bold tracking-tight text-eid-fg">Solicitar desafio</h1>
+          <p className="mt-1.5 text-sm leading-relaxed text-eid-text-secondary">
             Confirme o pedido no esporte{" "}
             <span className="inline-flex items-center gap-1 text-eid-fg">
               <SportGlyphIcon sportName={esporteNome} />
@@ -472,37 +522,62 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             </span>
             .
           </p>
-          <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
-            Forma de disputa deste esporte: <span className="font-semibold text-eid-fg">{formaDisputaResumo}</span>
+          <div className="mt-5 flex flex-col gap-3">
+          <div className="rounded-2xl border border-eid-primary-500/18 bg-eid-primary-500/8 px-3 py-2.5 text-[12px] leading-relaxed text-eid-text-secondary">
+            <p className="inline-flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-primary-300">
+              <DesafioInfoRuleIcon />
+              Forma de disputa deste esporte
+            </p>
+            <p className="mt-1"><span className="font-semibold text-eid-fg">{formaDisputaResumo}</span></p>
           </div>
           {finalidadeEscolhida === "amistoso" ? (
-            <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
               Este pedido <span className="font-semibold text-emerald-200">não soma pontos</span> e não usa agenda de ranking. O WhatsApp será liberado após aceite, para vocês combinarem. Para confronto que valha ranking, agenda e resultado, volte ao perfil e escolha{" "}
               <span className="font-semibold text-eid-fg">desafio de ranking</span>.
             </div>
           ) : rankingBlockedUntil ? (
-            <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+            <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
               Carência ativa para desafio de ranking neste esporte até{" "}
               <span className="font-semibold text-eid-fg">{new Date(rankingBlockedUntil).toLocaleDateString("pt-BR")}</span>.
             </div>
           ) : (
-            <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
-              Desafio de ranking: após aceito, use a <span className="font-semibold text-eid-fg">agenda</span> e o lançamento de resultado para atualizar o ranking.
+            <div className="rounded-2xl border border-eid-primary-500/18 bg-eid-primary-500/8 px-3 py-2.5 text-[12px] leading-relaxed text-eid-text-secondary">
+              <p className="inline-flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-primary-300">
+                <DesafioRankingRuleIcon />
+                Desafio de ranking
+              </p>
+              <p className="mt-1">
+                Após aceito, use a <span className="font-semibold text-eid-fg">agenda</span> e o lançamento de resultado para atualizar o ranking.
+              </p>
             </div>
           )}
-          <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:p-4">
-            <p className="text-sm font-semibold text-eid-fg">{desafioPrimeiroNome(perfil.nome, "Atleta")}</p>
-            <p className="mt-1 inline-flex items-center gap-1 text-xs text-eid-text-secondary">
-              <span>Modalidade:</span>
-              <ModalidadeGlyphIcon modalidade="individual" />
-              <span>individual</span>
-            </p>
+          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:p-4">
+            <div className="flex items-center gap-3">
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+                {perfil.avatar_url ? (
+                  <Image src={perfil.avatar_url} alt="" fill unoptimized className="object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-base font-black text-eid-primary-300">
+                    {desafioPrimeiroNome(perfil.nome, "A").slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-eid-fg">{desafioPrimeiroNome(perfil.nome, "Atleta")}</p>
+                <p className="mt-1 inline-flex flex-wrap items-center gap-1 text-xs text-eid-text-secondary">
+                  <span>Modalidade:</span>
+                  <ModalidadeGlyphIcon modalidade="individual" />
+                  <span>individual</span>
+                </p>
+              </div>
+            </div>
           </div>
           {finalidadeEscolhida === "ranking" && rankPrevInd ? (
             <DesafioImpactoResumo
               esporteNome={esporteNome}
               regras={rankPrevInd.regras}
               individual={rankPrevInd.perspective}
+              className="!mt-0"
             />
           ) : null}
           {!rankingBlockedUntil || finalidadeEscolhida !== "ranking" ? (
@@ -511,19 +586,21 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
               esporteId={esporteId}
               alvoUsuarioId={perfil.id}
               finalidade={finalidadeEscolhida}
+              className="!mt-0"
             />
           ) : null}
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <Link
               href={withDesafioEmbed(
                 `/desafio?id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${esporteId}`,
                 isEmbed
               )}
-              className={DESAFIO_FLOW_SECONDARY_CLASS}
+              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-3 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg"
             >
-              ← Trocar tipo de desafio
+              Trocar tipo de desafio
             </Link>
-            <EidCancelLink href="/match" {...exitEmbedProps(isEmbed)} />
+            <EidCancelLink href="/match" {...exitEmbedProps(isEmbed)} className="!min-h-[44px] !rounded-xl !text-[11px] !font-black !tracking-[0.04em]" />
+          </div>
           </div>
           {finalidadeEscolhida === "ranking" && rankPrevInd ? (
             <DesafioEsporteRegrasModal
@@ -667,8 +744,8 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
   return (
     <main className={DESAFIO_PAGE_MAIN_CLASS}>
-        <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
-        <p className="mt-2 text-sm text-eid-text-secondary">
+          <h1 className="text-2xl font-bold tracking-tight text-eid-fg">Solicitar desafio</h1>
+        <p className="mt-1.5 text-sm leading-relaxed text-eid-text-secondary">
           Confirme o pedido no esporte{" "}
           <span className="inline-flex items-center gap-1 text-eid-fg">
             <SportGlyphIcon sportName={esporteNome} />
@@ -681,11 +758,16 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           </span>
           .
         </p>
-        <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
-          Forma de disputa deste esporte: <span className="font-semibold text-eid-fg">{formaDisputaResumo}</span>
+        <div className="mt-5 flex flex-col gap-3">
+        <div className="rounded-2xl border border-eid-primary-500/18 bg-eid-primary-500/8 px-3 py-2.5 text-[12px] leading-relaxed text-eid-text-secondary">
+          <p className="inline-flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-primary-300">
+            <DesafioInfoRuleIcon />
+            Forma de disputa deste esporte
+          </p>
+          <p className="mt-1"><span className="font-semibold text-eid-fg">{formaDisputaResumo}</span></p>
         </div>
         {rankingBlockedUntilColetivo ? (
-          <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
             Carência ativa para desafio de ranking neste esporte ({modalidade}) até{" "}
             <span className="font-semibold text-eid-fg">
               {new Date(rankingBlockedUntilColetivo).toLocaleDateString("pt-BR")}
@@ -694,7 +776,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             <span className="font-semibold text-eid-fg">{formatCooldownRemaining(rankingBlockedUntilColetivo)}</span>
           </div>
         ) : null}
-        <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:p-4">
+        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:p-4">
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
               {timeRow.escudo ? (
@@ -719,31 +801,41 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           </div>
         </div>
         {rankPrevCo ? (
-          <DesafioImpactoResumo esporteNome={esporteNome} regras={rankPrevCo.regras} coletivo={rankPrevCo.coletivo} />
+          <DesafioImpactoResumo
+            esporteNome={esporteNome}
+            regras={rankPrevCo.regras}
+            coletivo={rankPrevCo.coletivo}
+            className="!mt-0"
+          />
         ) : (
-          <p className="mt-3 text-[11px] text-amber-200/90">
+          <p className="text-[11px] text-amber-200/90">
             Não foi possível carregar a estimativa: confira se você é líder de uma {modalidade} neste esporte (mesmo critério do envio do pedido).
           </p>
         )}
         {canConfirmarRanking && !rankingBlockedUntilColetivo ? (
-          <DesafioEnviarForm modalidade={modalidade} esporteId={esporteId} alvoTimeId={timeRow.id} finalidade="ranking" />
+          <DesafioEnviarForm
+            modalidade={modalidade}
+            esporteId={esporteId}
+            alvoTimeId={timeRow.id}
+            finalidade="ranking"
+            className="!mt-0"
+          />
         ) : null}
         {!canConfirmarRanking ? (
-          <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
             Você não é líder de uma {modalidade} neste esporte. O desafio de ranking direto fica disponível apenas para o dono da formação.
           </div>
         ) : null}
         {podeSugerirParaLider ? (
-          <div className="mt-3">
             <SugerirMatchLiderForm
               alvoTimeId={timeRow.id}
               alvoNome={desafioPrimeiroNome(timeRow.nome, "Formação")}
               modalidadeLabel={modalidade === "dupla" ? "dupla" : "equipe"}
               formacoesMinhas={formacoesMembroNaoLider}
             />
-          </div>
         ) : null}
-        <EidCancelLink href="/match" {...exitEmbedProps(isEmbed)} className="mt-4" />
+        <EidCancelLink href="/match" {...exitEmbedProps(isEmbed)} className="!mt-0 !min-h-[44px] !rounded-xl !text-[11px] !font-black !tracking-[0.04em]" />
+        </div>
         {rankPrevCo ? (
           <DesafioEsporteRegrasModal
             esporteId={esporteId}

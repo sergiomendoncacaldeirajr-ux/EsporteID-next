@@ -34,6 +34,8 @@ type TeamManagementPanelProps =
       convidarUsuarioIdAposCriar?: string;
       /** Ao convidar a partir do perfil, sugerimos dupla por padrão. */
       defaultTipoFormacao?: "time" | "dupla";
+      /** Pré-seleção do esporte (ex.: link do radar /desafio). */
+      defaultEsporteId?: number;
       /** `create` / `invite`: telas cheias separadas; `all`: acordeão com os dois blocos (legado). */
       panelMode?: "all" | "create" | "invite";
       /** Aparência específica do formulário de cadastro em tela cheia. */
@@ -80,8 +82,8 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
             <path d="M4.8 18a4.2 4.2 0 0 1 8.4 0" />
             <path d="M17.8 7.2v4M15.8 9.2h4" />
           </svg>
-          <span>Convidar atleta</span>
-        </ProfileEditDrawerTrigger>
+            <span>Convidar atleta</span>
+          </ProfileEditDrawerTrigger>
       </section>
     );
   }
@@ -93,6 +95,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     manageHrefTemplate,
     convidarUsuarioIdAposCriar,
     defaultTipoFormacao,
+    defaultEsporteId,
     panelMode = "all",
     createStyle = "default",
     inviteStyle = "default",
@@ -103,9 +106,13 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
   const [createState, createAction, createPending] = useActionState(criarEquipe, initial);
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
   const [tipo, setTipo] = useState<"time" | "dupla">(defaultTipoFormacao ?? "time");
-  const [esporteId, setEsporteId] = useState<string>(() =>
-    esportes.length === 1 ? String(esportes[0].id) : ""
-  );
+  const [esporteId, setEsporteId] = useState<string>(() => {
+    if (defaultEsporteId != null && esportes.some((e) => e.id === defaultEsporteId)) {
+      return String(defaultEsporteId);
+    }
+    if (esportes.length === 1) return String(esportes[0].id);
+    return "";
+  });
   const [localizacao, setLocalizacao] = useState("");
   const [gpsStatus, setGpsStatus] = useState<"idle" | "loading" | "error">("idle");
   const [gpsError, setGpsError] = useState<string | null>(null);
@@ -257,7 +264,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
                 <p className={`${isCadastrarStyle ? "text-[11px] font-black uppercase tracking-[0.05em] text-[#2563EB]" : "text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-primary-300"}`}>Escudo do time ou dupla</p>
                 <p className={`${isCadastrarStyle ? "mt-1 text-[11px] text-[#556987]" : "mt-1 text-[10px] text-eid-text-secondary"}`}>
               Envie o escudo do time ou da dupla (JPG, PNG, WEBP ou HEIC). Esse envio é obrigatório para concluir o cadastro.
-                </p>
+            </p>
               </div>
             </div>
             <input
@@ -331,7 +338,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
                         : "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
                       : isCadastrarStyle
                         ? "text-[#334155] hover:bg-eid-surface/35"
-                        : "text-eid-text-secondary hover:bg-eid-surface/35"
+                      : "text-eid-text-secondary hover:bg-eid-surface/35"
                   }`}
                 >
                   {isCadastrarStyle ? <ModalidadeGlyphIcon modalidade="time" /> : null}
@@ -349,7 +356,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
                         : "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
                       : isCadastrarStyle
                         ? "text-[#334155] hover:bg-eid-surface/35"
-                        : "text-eid-text-secondary hover:bg-eid-surface/35"
+                      : "text-eid-text-secondary hover:bg-eid-surface/35"
                   }`}
                 >
                   {isCadastrarStyle ? <ModalidadeGlyphIcon modalidade="dupla" /> : null}
@@ -423,14 +430,14 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
                   <circle cx="12" cy="10" r="2.5" />
                 </svg>
               ) : null}
-              <input
-                name="localizacao"
-                required
-                value={localizacao}
-                onChange={(ev) => setLocalizacao(ev.target.value)}
-                placeholder="Cidade / Estado"
+            <input
+              name="localizacao"
+              required
+              value={localizacao}
+              onChange={(ev) => setLocalizacao(ev.target.value)}
+              placeholder="Cidade / Estado"
                 className={`${isCadastrarStyle ? "h-10 w-full bg-transparent text-[11px] text-eid-fg placeholder:text-[#64748B] focus:outline-none" : "eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm text-eid-fg"}`}
-              />
+            />
             </div>
             <p className={`${isCadastrarStyle ? "mt-2 rounded-xl border border-[#F2D8AE] bg-[#FFF8EC] px-3 py-2 text-[10px] font-semibold leading-snug text-[#9A5B06]" : "mt-1 rounded-lg border border-[#d39b2a] bg-[#ffe7b3] px-2 py-1 text-[10px] font-bold leading-snug text-[#4b2b00]"}`}>
               Atenção: a cidade da formação não pode ser alterada depois. Para trocar, será necessário criar outra equipe/dupla.
@@ -527,17 +534,17 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
               </p>
             </div>
           ) : (
-            <button
-              type="submit"
-              disabled={createPending}
-              className="rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/22 px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/65 hover:bg-eid-primary-500/30 disabled:opacity-60 sm:col-span-2"
-            >
-              {createPending
-                ? "Criando…"
-                : convidarUsuarioIdAposCriar
-                  ? "Criar e enviar convite"
-                  : "Criar formação e abrir gestão"}
-            </button>
+          <button
+            type="submit"
+            disabled={createPending}
+            className="rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/22 px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/65 hover:bg-eid-primary-500/30 disabled:opacity-60 sm:col-span-2"
+          >
+            {createPending
+              ? "Criando…"
+              : convidarUsuarioIdAposCriar
+                ? "Criar e enviar convite"
+                : "Criar formação e abrir gestão"}
+          </button>
           )}
           {createState.message ? (
             <p
@@ -714,10 +721,10 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
           isConvidarStyle ? (
             <div className="p-0">{inviteBody}</div>
           ) : (
-            <div className="eid-surface-panel overflow-hidden rounded-2xl p-0">
-              {inviteHeader}
-              <div className="p-3 sm:p-4">{inviteBody}</div>
-            </div>
+          <div className="eid-surface-panel overflow-hidden rounded-2xl p-0">
+            {inviteHeader}
+            <div className="p-3 sm:p-4">{inviteBody}</div>
+          </div>
           )
         ) : (
           <details className="eid-surface-panel overflow-hidden rounded-2xl p-0">

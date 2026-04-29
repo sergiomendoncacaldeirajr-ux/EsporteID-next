@@ -4,7 +4,7 @@ import { TeamManagementPanel } from "@/components/times/team-management-panel";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
-  searchParams?: Promise<{ from?: string; embed?: string; convidar?: string }>;
+  searchParams?: Promise<{ from?: string; embed?: string; convidar?: string; esporte?: string; tipo?: string }>;
 };
 
 export default async function CadastrarEquipeFullscreenPage({ searchParams }: Props) {
@@ -30,6 +30,11 @@ export default async function CadastrarEquipeFullscreenPage({ searchParams }: Pr
   const convidarRaw = typeof sp.convidar === "string" ? sp.convidar.trim() : "";
   const convidarUid =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(convidarRaw) ? convidarRaw : undefined;
+
+  const esportePref = Number(typeof sp.esporte === "string" ? sp.esporte : "");
+  const tipoParam = typeof sp.tipo === "string" ? sp.tipo.trim().toLowerCase() : "";
+  const tipoFromUrl = tipoParam === "dupla" || tipoParam === "time" ? tipoParam : undefined;
+  const defaultEsporteId = Number.isFinite(esportePref) && esportePref > 0 ? esportePref : undefined;
 
   const manageQs = new URLSearchParams();
   manageQs.set("from", from);
@@ -81,7 +86,8 @@ export default async function CadastrarEquipeFullscreenPage({ searchParams }: Pr
         defaultOpenCreate
         manageHrefTemplate={manageHrefTemplate}
         convidarUsuarioIdAposCriar={convidarUid}
-        defaultTipoFormacao={convidarUid ? "dupla" : undefined}
+        defaultTipoFormacao={tipoFromUrl ?? (convidarUid ? "dupla" : undefined)}
+        defaultEsporteId={defaultEsporteId}
         panelMode="create"
         createStyle="cadastrar"
       />

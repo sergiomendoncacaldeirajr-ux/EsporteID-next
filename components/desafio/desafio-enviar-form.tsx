@@ -13,6 +13,7 @@ type Props = {
   alvoTimeId?: number;
   /** ranking = pontos EID/agenda; amistoso = só combinar (WhatsApp), sem ranking. */
   finalidade?: "ranking" | "amistoso";
+  className?: string;
 };
 
 const initial: SolicitarDesafioState = { ok: false, message: "" };
@@ -23,6 +24,7 @@ export function DesafioEnviarForm({
   alvoUsuarioId,
   alvoTimeId,
   finalidade = "ranking",
+  className,
 }: Props) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(solicitarDesafioMatch, initial);
@@ -46,7 +48,7 @@ export function DesafioEnviarForm({
   const err = !state.ok && state.message ? state.message : null;
 
   return (
-    <form action={formAction} className="mt-4 space-y-4">
+    <form action={formAction} className={`space-y-4 ${className ?? "mt-4"}`.trim()}>
       <input type="hidden" name="modalidade" value={modalidade === "individual" ? "individual" : modalidade} />
       <input type="hidden" name="esporte_id" value={String(esporteId)} />
       <input type="hidden" name="finalidade" value={finalidade} />
