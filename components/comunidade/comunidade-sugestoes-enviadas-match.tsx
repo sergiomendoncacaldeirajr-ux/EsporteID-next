@@ -107,7 +107,7 @@ export function ComunidadeSugestoesEnviadasMatch({
 
   if (!items.length) {
     return (
-      <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
+      <p className="mt-2 rounded-xl bg-eid-surface/30 p-2.5 text-[11px] text-eid-text-secondary">
         Você ainda não enviou sugestão de desafio para liderança.
       </p>
     );
@@ -193,7 +193,7 @@ export function ComunidadeSugestoesEnviadasMatch({
                     </div>
                   ) : null}
                   {s.mensagem ? (
-                    <p className="w-full rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card/80 px-2 py-1.5 text-[10px] text-eid-fg">
+                    <p className="w-full rounded-lg bg-eid-surface/35 px-2 py-1.5 text-[10px] text-eid-fg">
                       “{s.mensagem}”
                     </p>
                   ) : null}

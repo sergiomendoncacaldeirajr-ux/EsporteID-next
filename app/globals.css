@@ -333,12 +333,12 @@ body.eid-app-shell {
 }
 
 [data-eid-theme="light"] .eid-surface-panel {
-  border-color: color-mix(in srgb, var(--eid-border-subtle) 70%, var(--eid-primary-500) 30%);
+  border-color: transparent;
   background: var(--eid-card);
 }
 
 [data-eid-theme="light"] .eid-list-item {
-  border-color: color-mix(in srgb, var(--eid-border-subtle) 78%, black 22%);
+  border-color: transparent;
   background-color: var(--eid-surface);
 }
 
@@ -1203,6 +1203,13 @@ select,
     gap: 0.6rem;
   }
 
+  /* Ranking: mantém escala compacta mesmo quando existir algum escopo touch-ui externo. */
+  [data-eid-ranking-page] :where(button, [role="button"], a) {
+    min-height: unset !important;
+    font-size: inherit !important;
+    font-weight: inherit !important;
+  }
+
   /*
    * Fluxo Desafio (match/desafio/maioridade/placar): compacto e consistente
    * no mesmo padrão visual aprovado (ranking-like).
@@ -1500,7 +1507,7 @@ a:focus-visible:not(.eid-btn-primary) {
 /* Cartão */
 .eid-card {
   border-radius: var(--eid-radius-lg);
-  border: 1px solid var(--eid-border-subtle);
+  border: 1px solid transparent;
   background: var(--eid-card);
   padding: 14px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
@@ -1630,7 +1637,7 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 
 /* Ranking — pódio no tema claro */
 [data-eid-theme="light"] .eid-podium-card {
-  border-color: color-mix(in srgb, var(--eid-border) 72%, var(--eid-primary-500) 28%) !important;
+  border-color: var(--eid-border-subtle) !important;
   background-image: radial-gradient(
     ellipse at top,
     color-mix(in srgb, var(--eid-primary-500) 18%, transparent),
@@ -1638,8 +1645,7 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
     color-mix(in srgb, var(--eid-field-bg) 88%, #ffffff) 100%
   ) !important;
   box-shadow:
-    0 16px 32px -22px rgba(15, 23, 42, 0.14),
-    0 0 0 1px color-mix(in srgb, var(--eid-primary-500) 9%, transparent);
+    0 16px 32px -22px rgba(15, 23, 42, 0.14);
 }
 
 /*
@@ -1653,7 +1659,7 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 }
 
 [data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-card {
-  border-color: color-mix(in srgb, var(--eid-border) 78%, var(--eid-primary-500) 22%) !important;
+  border-color: color-mix(in srgb, var(--eid-border-subtle) 92%, transparent) !important;
   background: linear-gradient(
     180deg,
     #ffffff 0%,
@@ -1666,7 +1672,7 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 
 [data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-card-head {
   background: transparent !important;
-  border-bottom-color: color-mix(in srgb, var(--eid-border) 82%, var(--eid-primary-500) 18%) !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 94%, transparent) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
@@ -1762,7 +1768,7 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 }
 
 [data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-row {
-  border-bottom-color: color-mix(in srgb, var(--eid-border) 88%, var(--eid-primary-500) 12%) !important;
+  border-bottom-color: color-mix(in srgb, var(--eid-border-subtle) 95%, transparent) !important;
 }
 
 [data-eid-theme="light"] [data-eid-ranking-page] .eid-ranking-eid-seal {
@@ -1894,7 +1900,7 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 
 /* Superfície padrão tipo Ranking (glass card). */
 .eid-surface-panel {
-  border: 1px solid var(--eid-border-subtle);
+  border: 1px solid transparent;
   border-radius: var(--eid-radius-xl);
   background: var(--eid-card);
   box-shadow:
@@ -2036,9 +2042,18 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
 /* Item de lista reutilizável para blocos de cards. */
 .eid-list-item {
   border-radius: var(--eid-radius-lg);
-  border: 1px solid var(--eid-border-subtle);
+  border: 1px solid transparent;
   background: color-mix(in srgb, var(--eid-card) 96%, transparent);
   box-shadow: 0 8px 20px -16px rgba(15, 23, 42, 0.45);
+}
+
+/* Evita "caixa dentro da caixa" quando cards são aninhados. */
+.eid-list-item .eid-list-item,
+.eid-list-item .eid-card,
+.eid-list-item .eid-surface-panel {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 /* Badges semânticos para estados globais. */

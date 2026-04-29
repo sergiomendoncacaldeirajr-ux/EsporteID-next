@@ -1412,10 +1412,10 @@ export default async function ComunidadePage() {
 
           {hasEquipeAcoes ? (
           <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
-            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 md:px-4">
+            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2 md:px-4">
               <div>
                 <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Equipe</h2>
-                <p className="mt-0.5 hidden text-[11px] text-eid-text-secondary md:block">
+                <p className="mt-0.5 hidden text-[10px] text-eid-text-secondary md:block">
                   Convites, sugestões de liderança e avisos da sua dupla/time em um único quadro.
                 </p>
               </div>
@@ -1423,8 +1423,8 @@ export default async function ComunidadePage() {
                 Formações
               </span>
             </div>
-            <div className="px-3 py-3 md:px-4 md:py-4">
-            <div className="space-y-4">
+            <div className="px-3 py-2.5 md:px-4 md:py-3">
+            <div className="space-y-3">
               <ComunidadeQuadro id="equipe-sugestoes" title="Sugestões da equipe (liderança)" hasPending={sugestoesItems.length > 0}>
                 <ComunidadeSugestoesMatch items={sugestoesItems} />
               </ComunidadeQuadro>

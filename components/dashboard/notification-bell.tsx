@@ -328,8 +328,9 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     function updatePanelPos() {
       const rect = bellBtnRef.current?.getBoundingClientRect();
       if (!rect) return;
-      const panelWidth = Math.min(window.innerWidth * 0.88, 300);
-      const left = Math.max(6, Math.min(rect.right - panelWidth, window.innerWidth - panelWidth - 6));
+      const panelWidth = Math.min(window.innerWidth * 0.84, 280);
+      const preferredLeft = rect.right - panelWidth + 10;
+      const left = Math.max(6, Math.min(preferredLeft, window.innerWidth - panelWidth - 6));
       const top = rect.bottom + 4;
       setPanelPos({ top, left });
     }
@@ -401,7 +402,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       {open ? (
         <div
           data-eid-notif-modal="true"
-          className="fixed z-[70] w-[min(88vw,300px)] overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-2 shadow-[0_20px_48px_-30px_rgba(15,23,42,0.55)]"
+          className="fixed z-[70] w-[min(84vw,280px)] overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-2 shadow-[0_20px_48px_-30px_rgba(15,23,42,0.55)]"
           style={{ top: `${panelPos.top}px`, left: `${panelPos.left}px` }}
         >
             <div className="flex items-start justify-between gap-3">

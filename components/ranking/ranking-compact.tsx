@@ -4,6 +4,7 @@ import type { RankingSearchState } from "@/lib/ranking/ranking-href";
 import { rankingHref } from "@/lib/ranking/ranking-href";
 import CityGpsLabel from "@/components/ranking/city-gps-label";
 import { EidSealPill } from "@/components/ui/eid-seal-pill";
+import { SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 
 function cn(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(" ");
@@ -11,8 +12,12 @@ function cn(...xs: (string | false | undefined)[]) {
 
 function IconCrown({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
-      <path d="M5 16L3 7l5.5 3L12 4l3.5 6L21 7l-2 9H5zm2.65 2h8.7l.45 2H7.2l.45-2z" />
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <path fill="#F4A300" d="M5 16.6h14l-1.3-6.5-3.5 3.1L12 7.1l-2.2 6.1-3.5-3.1L5 16.6Z" />
+      <rect x="4.7" y="17.4" width="14.6" height="1.7" rx="0.85" fill="#F4A300" />
+      <circle cx="6.3" cy="8.8" r="1.05" fill="#F4A300" />
+      <circle cx="12" cy="5.6" r="1.05" fill="#F4A300" />
+      <circle cx="17.7" cy="8.8" r="1.05" fill="#F4A300" />
     </svg>
   );
 }
@@ -69,17 +74,6 @@ function IconBrazil({ className }: { className?: string }) {
   );
 }
 
-function IconSport({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
-      <circle cx="12" cy="12" r="7.2" />
-      <path d="M12 4.8v14.4M4.8 12h14.4" />
-      <path d="M7.4 7.4c1.5 1.4 2.2 2.9 2.2 4.6s-.7 3.2-2.2 4.6" />
-      <path d="M16.6 7.4c-1.5 1.4-2.2 2.9-2.2 4.6s.7 3.2 2.2 4.6" />
-    </svg>
-  );
-}
-
 type FilterBarProps = {
   state: RankingSearchState;
   principalEsporteId: number | null;
@@ -100,35 +94,54 @@ export function RankingFilterBar({
 }: FilterBarProps) {
   const pe = principalEsporteId;
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, pe);
+  const clearHref = rankingHref(
+    { tipo: "individual", local: "cidade", esporte: "", rank: "match", periodo: "ano", page: 1 },
+    state,
+    pe
+  );
 
   return (
-    <div className="space-y-2 [&_a]:[-webkit-tap-highlight-color:transparent]">
-        <div className="eid-ranking-filter-slab rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
-          <div className="eid-ranking-segment-track flex h-[1.5rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)]">
+    <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_95%,transparent)] [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] px-4 py-2.5">
+        <h3 className="text-[11px] font-black uppercase tracking-[0.14em] text-eid-fg">Filtros</h3>
+        <Link
+          href={clearHref}
+          className="inline-flex h-6 items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_72%,var(--eid-bg)_28%)] px-2 text-[7px] font-black uppercase tracking-[0.05em] text-eid-primary-400"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path d="M4 6h16M8 12h8M10 18h4" strokeLinecap="round" />
+          </svg>
+          Limpar
+        </Link>
+      </div>
+
+      <div className="space-y-2 p-2.5">
+        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+          <div className="grid grid-cols-3 gap-1">
             <Link href={href({ tipo: "individual", page: 1 })} className={tipoSegmentButton(state.tipo === "individual")}>
-              <IconSingle className="h-2.5 w-2.5 shrink-0" />
+              <IconSingle className="h-4 w-4 shrink-0" />
               <span>Individual</span>
             </Link>
             <Link href={href({ tipo: "dupla", page: 1 })} className={tipoSegmentButton(state.tipo === "dupla")}>
-              <IconDouble className="h-2.5 w-2.5 shrink-0" />
+              <IconDouble className="h-4 w-4 shrink-0" />
               <span>Duplas</span>
             </Link>
             <Link href={href({ tipo: "time", page: 1 })} className={tipoSegmentButton(state.tipo === "time")}>
-              <IconTeam className="h-2.5 w-2.5 shrink-0" />
+              <IconTeam className="h-4 w-4 shrink-0" />
               <span>Times</span>
             </Link>
           </div>
         </div>
 
-        <div className="eid-ranking-filter-slab grid grid-cols-2 gap-1.5 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm">
+        <div className="grid grid-cols-2 gap-1 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
           <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
-            <IconPin className="h-2.5 w-2.5 shrink-0" />
+            <IconPin className="h-4 w-4 shrink-0" />
             <span className="min-w-0 truncate">
               <CityGpsLabel fallbackCity={cidadeDisplay} />
             </span>
           </Link>
           <Link href={href({ local: "brasil", page: 1 })} className={blockButton(state.local === "brasil")}>
-            <IconBrazil className="h-2.5 w-2.5 shrink-0" />
+            <IconBrazil className="h-4 w-4 shrink-0" />
             <span className="truncate">Brasil</span>
           </Link>
         </div>
@@ -145,7 +158,7 @@ export function RankingFilterBar({
         ) : null}
 
         {todosEsportes.length > 0 ? (
-          <div className="eid-ranking-filter-slab rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm">
+          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1.5">
             <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-0.5 pr-0.5 select-none [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
               <div className="flex min-w-max flex-nowrap items-center gap-1.5">
               {todosEsportes.map((opt) => {
@@ -157,22 +170,32 @@ export function RankingFilterBar({
                     href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                     title={isPrincipal ? "Esporte principal do perfil" : undefined}
                     className={cn(
-                      "inline-flex h-[1.38rem] w-auto shrink-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
+                      "inline-flex h-7 w-auto shrink-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[7px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
                       active
-                        ? "eid-ranking-sport-pill-active bg-eid-primary-500/14 text-eid-fg shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
-                        : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55",
+                        ? "eid-ranking-sport-pill-active bg-eid-primary-500/16 text-eid-primary-300 shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
+                        : "bg-[color:color-mix(in_srgb,var(--eid-card)_76%,var(--eid-surface)_24%)] text-eid-text-secondary hover:bg-eid-surface/55",
                       isPrincipal && !active && "bg-eid-primary-500/08 text-eid-fg/90"
                     )}
                   >
-                    <IconSport className="h-2.5 w-2.5 shrink-0" />
+                    <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                      <SportGlyphIcon sportName={opt.nome} />
+                    </span>
                     <span>{opt.nome}</span>
                   </Link>
                 );
               })}
+              <button
+                type="button"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_76%,var(--eid-surface)_24%)] text-eid-text-secondary"
+                aria-label="Mais esportes"
+              >
+                +
+              </button>
             </div>
           </div>
         </div>
         ) : null}
+      </div>
     </div>
   );
 }
@@ -270,18 +293,18 @@ export function RankingRankToggle({
 
 function tipoSegmentButton(active: boolean) {
   return cn(
-    "inline-flex min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-sm px-1 text-[9px] font-semibold uppercase leading-none tracking-[0.035em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
+    "inline-flex h-[30px] min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6.5px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
     active
-      ? "eid-ranking-chip-active bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
+      ? "eid-ranking-chip-active bg-[color-mix(in_srgb,var(--eid-primary-500)_24%,var(--eid-card)_76%)] text-eid-primary-300 shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35"
   );
 }
 
 function blockButton(active: boolean) {
   return cn(
-    "inline-flex h-[1.38rem] w-auto min-w-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
+    "inline-flex h-[30px] w-auto min-w-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6.5px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
     active
-      ? "eid-ranking-chip-active bg-eid-primary-500/14 text-eid-fg shadow-[0_7px_16px_-11px_rgba(37,99,235,0.4)]"
+      ? "eid-ranking-chip-active bg-eid-primary-500/14 text-eid-primary-500 shadow-[0_7px_16px_-11px_rgba(37,99,235,0.4)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55"
   );
 }
@@ -296,7 +319,7 @@ export function RankingEidSeal({ score, compact = false }: { score: number; comp
       aria-hidden
       className={cn(
         "eid-ranking-eid-seal pointer-events-none absolute bottom-0 left-1/2 z-[3] -translate-x-1/2",
-        compact ? "translate-y-[30%]" : "translate-y-[40%]"
+        compact ? "translate-y-[24%]" : "translate-y-[18%] scale-[1.08]"
       )}
     />
   );
@@ -332,36 +355,40 @@ export function RankingPodium({
 
   return (
     <section className="relative z-[1] mb-0.5 isolate">
-      <div className="eid-podium-card overflow-visible rounded-xl border border-[color:var(--eid-border-subtle)] bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--eid-primary-500)_22%,transparent),color-mix(in_srgb,var(--eid-card)_96%,transparent)_48%,color-mix(in_srgb,var(--eid-surface)_97%,transparent)_100%)] px-2.5 py-3 shadow-[0_12px_28px_-18px_rgba(15,23,42,0.38),0_0_24px_-14px_rgba(37,99,235,0.42)] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="eid-podium-card overflow-visible rounded-[1.65rem] border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_95%,var(--eid-surface)_5%)] px-3 py-3.5 shadow-[0_14px_34px_-26px_rgba(15,23,42,0.25)] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
         {rankToggle || periodToggle ? (
           <div className="relative z-[3] mb-1 grid grid-cols-2 items-start gap-2">
             <div className="min-w-0 w-fit flex flex-col items-start">
-              <p className="eid-ranking-podium-label mb-1 w-full text-left text-[10px] font-black uppercase tracking-[0.16em] text-[color:color-mix(in_srgb,var(--eid-fg)_52%,var(--eid-primary-500)_48%)]">
+              <p className="eid-ranking-podium-label mb-1 w-full text-left text-[10px] font-black uppercase tracking-[0.12em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
                 Tipo de rank
               </p>
               {rankToggle}
             </div>
             <div className="ml-auto min-w-0 w-fit flex flex-col items-end">
-              <p className="eid-ranking-podium-label mb-1 w-full text-right text-[10px] font-black uppercase tracking-[0.16em] text-[color:color-mix(in_srgb,var(--eid-fg)_52%,var(--eid-primary-500)_48%)]">
+              <p className="eid-ranking-podium-label mb-1 w-full text-right text-[10px] font-black uppercase tracking-[0.12em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
                 Período
               </p>
               {periodToggle}
             </div>
           </div>
         ) : null}
-        <h2 className="pointer-events-none eid-podium-title -mt-5 mb-2 text-center text-[10px] font-black uppercase tracking-[0.16em]">
+        <h2 className="pointer-events-none eid-podium-title -mt-4 mb-2.5 text-center text-[11px] font-black uppercase tracking-[0.16em] text-eid-primary-500">
           Pódio
         </h2>
         {hasAnyPodium ? (
-          <div className="mx-auto grid w-full max-w-[46rem] grid-cols-3 items-end gap-2">
-            <div className="min-h-[1px]">
+          <div className="relative mx-auto w-full max-w-[46rem]">
+            <div className="pointer-events-none absolute left-1/3 top-[6.55rem] hidden h-[5.15rem] w-px -translate-x-1/2 bg-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,transparent)] sm:block" />
+            <div className="pointer-events-none absolute left-2/3 top-[6.55rem] hidden h-[5.15rem] w-px -translate-x-1/2 bg-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,transparent)] sm:block" />
+            <div className="grid w-full grid-cols-3 items-end gap-1 sm:gap-2">
+            <div className="relative min-h-[1px]">
               {second ? <PodiumFace slot={second} highlight={false} rankKind={rankKind} /> : null}
             </div>
             <div className="z-10 -translate-y-1">
               {first ? <PodiumFace slot={first} highlight rankKind={rankKind} /> : null}
             </div>
-            <div className="min-h-[1px]">
+            <div className="relative min-h-[1px]">
               {third ? <PodiumFace slot={third} highlight={false} rankKind={rankKind} /> : null}
+            </div>
             </div>
           </div>
         ) : (
@@ -383,19 +410,19 @@ function PodiumFace({ slot, highlight, rankKind }: { slot: PodiumSlot; highlight
   const avatarClass = cn(
     "relative mx-auto shrink-0 overflow-hidden rounded-full",
     highlight
-      ? "h-[3.35rem] w-[3.35rem] border-[1.5px]"
-      : "h-[2.55rem] w-[2.55rem] border-[1.5px]",
+      ? "h-[3.45rem] w-[3.45rem] border-[1.5px]"
+      : "h-[2.65rem] w-[2.65rem] border-[1.5px]",
     placeTone,
-    "before:pointer-events-none before:absolute before:inset-0 before:rounded-full before:bg-white/5 before:opacity-70 before:animate-[pulse_2.8s_ease-in-out_infinite]"
+    "before:pointer-events-none before:absolute before:inset-0 before:rounded-full before:bg-white/4 before:opacity-70 before:animate-[pulse_2.8s_ease-in-out_infinite]"
   );
   return (
     <div className={cn("flex flex-col items-center text-center", highlight && "scale-[1.03]")}>
-      <span className="mb-0.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-px text-[8px] font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)]">
+      <span className="mb-0.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-1 py-px text-[8px] font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_66%,var(--eid-primary-500)_34%)]">
         {slot.place}
       </span>
       {highlight ? (
-        <div className="eid-ranking-crown mb-0.5 text-eid-primary-400/55" aria-hidden>
-          <IconCrown className="mx-auto h-2.5 w-2.5" />
+        <div className="eid-ranking-crown mb-0.5 [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.18))]" aria-hidden>
+          <IconCrown className="mx-auto h-4 w-4" />
         </div>
       ) : (
         <div className="mb-0.5 h-2.5" aria-hidden />
@@ -418,10 +445,10 @@ function PodiumFace({ slot, highlight, rankKind }: { slot: PodiumSlot; highlight
           {rankKind === "match" ? <RankingEidSeal score={slot.notaEid} /> : null}
         </div>
       </Link>
-      <p className="mt-1.5 line-clamp-2 max-w-[10rem] px-0.5 text-[10px] font-bold leading-tight text-eid-fg">
+      <p className="mt-1.5 line-clamp-2 max-w-[10rem] px-0.5 text-[10px] font-extrabold leading-tight text-eid-fg">
         {slot.nome}
       </p>
-      <p className="mt-0.5 text-[10px] font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
+      <p className="mt-0.5 text-[11px] font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_52%,var(--eid-primary-500)_48%)]">
         {rankKind === "eid" ? (
           <>
             {(Number.isFinite(slot.notaEid) ? slot.notaEid : 0).toFixed(1)}{" "}
@@ -444,6 +471,9 @@ export function RankingRow({
   metricValue,
   metricKind,
   eidScore,
+  vitorias,
+  derrotas,
+  rankDelta,
   avatarUrl,
   href,
 }: {
@@ -452,23 +482,31 @@ export function RankingRow({
   metricValue: number;
   metricKind: "pontos" | "eid";
   eidScore: number;
+  vitorias?: number | null;
+  derrotas?: number | null;
+  rankDelta?: number | null;
   avatarUrl: string | null;
   href: string;
 }) {
   const initial = (nome.trim().slice(0, 2) || "—").toUpperCase();
   const valueText = metricKind === "eid" ? metricValue.toFixed(1) : String(metricValue);
+  const wins = Number.isFinite(vitorias) ? Number(vitorias) : 0;
+  const losses = Number.isFinite(derrotas) ? Number(derrotas) : 0;
+  const perfDelta = wins - losses;
+  const delta = Number.isFinite(rankDelta as number) ? Number(rankDelta) : perfDelta;
+  const showWDL = vitorias != null || derrotas != null;
   return (
-    <div className="eid-ranking-row flex items-center gap-2 border-b border-[color:var(--eid-border-subtle)] py-1.5 last:border-b-0">
-      <span className="eid-ranking-rank-num w-7 shrink-0 text-center text-sm font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
+    <div className="eid-ranking-row flex items-center gap-2.5 border-b border-[color:var(--eid-border-subtle)] py-2 last:border-b-0 sm:py-2.5">
+      <span className="eid-ranking-rank-num w-8 shrink-0 text-center text-[16px] font-black tabular-nums leading-none text-[color:color-mix(in_srgb,var(--eid-fg)_48%,var(--eid-primary-500)_52%)] sm:text-[18px]">
         {rank}º
       </span>
       <Link
         href={href}
-        className="group relative h-7 w-7 shrink-0 transition-transform duration-200 ease-out motion-safe:transform-gpu hover:scale-[1.03] active:scale-[0.97] outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
+        className="group relative h-8 w-8 shrink-0 transition-transform duration-200 ease-out motion-safe:transform-gpu hover:scale-[1.03] active:scale-[0.97] outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500 sm:h-9 sm:w-9"
         aria-label={`Perfil de ${nome}`}
       >
-        <div className="relative pb-0.5">
-          <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] transition group-hover:border-eid-primary-500/35">
+        <div className="relative pb-1">
+          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] transition group-hover:border-eid-primary-500/35 sm:h-9 sm:w-9">
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -480,11 +518,35 @@ export function RankingRow({
           <RankingEidSeal score={eidScore} compact />
         </div>
       </Link>
-      <p className="min-w-0 flex-1 truncate text-xs font-bold text-eid-fg">{nome}</p>
-      <p className="shrink-0 text-base font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
-        {valueText}
-        <span className="ml-1 text-[8px] font-bold uppercase tracking-wide text-eid-text-secondary">{metricKind === "eid" ? "EID" : "PTS"}</span>
-      </p>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[10px] font-bold leading-tight text-eid-fg sm:text-[12px]">{nome}</p>
+        {showWDL ? (
+          <p className="mt-0.5 text-[9px] font-black leading-none">
+            <span className="text-emerald-600">{wins}V</span>{" "}
+            <span className="text-rose-500">{losses}D</span>
+          </p>
+        ) : null}
+      </div>
+      <div className="flex shrink-0 items-end gap-2">
+        <p className="text-[16px] font-black tabular-nums leading-none text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] sm:text-[18px]">
+          {valueText}
+          <span className="ml-1 text-[8px] font-bold uppercase tracking-wide text-eid-text-secondary sm:text-[9px]">{metricKind === "eid" ? "EID" : "PTS"}</span>
+        </p>
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 pb-[1px] text-[9px] font-black tabular-nums leading-none",
+            delta > 0 ? "text-emerald-600" : delta < 0 ? "text-rose-500" : "text-eid-text-secondary"
+          )}
+          aria-label={delta > 0 ? `Subiu ${delta}` : delta < 0 ? `Desceu ${Math.abs(delta)}` : "Sem variação"}
+        >
+          {delta === 0 ? (
+            <span className="inline-block h-0.5 w-2.5 rounded-full bg-current" aria-hidden />
+          ) : (
+            <span aria-hidden>{delta > 0 ? "▲" : "▼"}</span>
+          )}
+          <span>{Math.abs(delta)}</span>
+        </span>
+      </div>
     </div>
   );
 }

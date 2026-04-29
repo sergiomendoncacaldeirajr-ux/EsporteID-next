@@ -48,7 +48,7 @@ function formacaoHref(item: SugestaoMatchItem): string {
 }
 
 const sugestaoCardShell =
-  "relative overflow-hidden rounded-xl border border-amber-500/25 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-warning-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_93%,transparent))] text-sm shadow-[0_8px_18px_-14px_rgba(217,119,6,0.45)]";
+  "relative overflow-hidden rounded-xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-warning-500)_9%,var(--eid-card)_91%)] text-sm shadow-[0_8px_18px_-14px_rgba(217,119,6,0.45)]";
 
 export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[] }) {
   const router = useRouter();
@@ -66,7 +66,7 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
 
   if (items.length === 0) {
     return (
-      <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
+      <p className="mt-2 rounded-xl bg-eid-surface/30 p-2.5 text-[11px] text-eid-text-secondary">
         Nenhuma sugestão de desafio da equipe. Atletas que não são líderes podem sugerir pelo perfil da formação adversária.
       </p>
     );
@@ -158,7 +158,7 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
                     Alvo: <span className="text-eid-fg">{s.alvoTimeNome}</span>
                   </p>
                   {s.mensagem ? (
-                    <p className="w-full rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card/80 px-2 py-1.5 text-[10px] text-eid-fg">
+                    <p className="w-full rounded-lg bg-eid-surface/35 px-2 py-1.5 text-[10px] text-eid-fg">
                       “{s.mensagem}”
                     </p>
                   ) : null}

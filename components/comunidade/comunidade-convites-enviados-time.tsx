@@ -80,7 +80,7 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
 
   if (!items.length) {
     return (
-      <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
+      <p className="mt-2 rounded-xl bg-eid-surface/30 p-2.5 text-[11px] text-eid-text-secondary">
         Você ainda não enviou convites de equipe.
       </p>
     );

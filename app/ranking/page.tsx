@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import {
   RankingFilterBar,
   RankingPeriodToggle,
@@ -14,6 +14,7 @@ import { parseRankingSearch, rankingHref, type RankingSearchState } from "@/lib/
 import { isSportRankingEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 import { MatchRankingRulesModal } from "@/components/match/match-ranking-rules-modal";
+import { RankingLoadMoreButton } from "@/components/ranking/ranking-load-more-button";
 
 export const metadata = {
   title: "Ranking",
@@ -28,16 +29,16 @@ const rankingCardHeadClass =
   "eid-ranking-card-head flex items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
 
 const rankingCardHeadWrapClass =
-  "eid-ranking-card-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
+  "eid-ranking-card-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
 
 const rankingSectionTitleClass =
-  "eid-ranking-section-title text-[10px] font-black uppercase tracking-[0.18em] text-eid-primary-400";
+  "eid-ranking-section-title text-[11px] font-black uppercase tracking-[0.08em] text-eid-primary-400";
 
 const rankingBadgePrimaryClass =
-  "eid-ranking-badge inline-flex shrink-0 items-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_8%,transparent)] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]";
+  "eid-ranking-badge inline-flex shrink-0 items-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_8%,transparent)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]";
 
 const rankingBadgeActionClass =
-  "eid-ranking-badge-action inline-flex shrink-0 items-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-action-500)_26%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-action-500)_10%,transparent)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-action-500)_32%)]";
+  "eid-ranking-badge-action inline-flex shrink-0 items-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-action-500)_26%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-action-500)_10%,transparent)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.05em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-action-500)_32%)]";
 
 type Props = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -51,6 +52,9 @@ type UsuarioEidRow = {
   esporte_id: number;
   nota_eid?: number | null;
   pontos_ranking?: number | null;
+  vitorias?: number | null;
+  derrotas?: number | null;
+  posicao_rank?: number | null;
   profiles?: ProfileMini | ProfileMini[] | null;
   esportes?: SportMini | SportMini[] | null;
 };
@@ -78,6 +82,9 @@ type UnifiedRank = {
   avatarUrl: string | null;
   pontos: number;
   notaEid: number;
+  vitorias?: number | null;
+  derrotas?: number | null;
+  posicaoRank?: number | null;
   usuarioId?: string;
   timeId?: number;
   href: string;
@@ -216,7 +223,7 @@ export default async function RankingPage({ searchParams }: Props) {
     if (state.tipo === "individual") {
       let q = supabase
         .from("usuario_eid")
-        .select("usuario_id, esporte_id, nota_eid, pontos_ranking, profiles!inner(nome, avatar_url, localizacao)")
+        .select("usuario_id, esporte_id, nota_eid, pontos_ranking, vitorias, derrotas, posicao_rank, profiles!inner(nome, avatar_url, localizacao)")
         .eq("esporte_id", selectedEsporteId);
       q = state.rank === "match" ? q.order("pontos_ranking", { ascending: false }) : q.order("nota_eid", { ascending: false });
       const { data: raw } = await q;
@@ -236,6 +243,9 @@ export default async function RankingPage({ searchParams }: Props) {
           avatarUrl: p?.avatar_url ?? null,
           pontos: Number(r.pontos_ranking ?? 0),
           notaEid: Number(r.nota_eid ?? 0),
+          vitorias: Number(r.vitorias ?? 0),
+          derrotas: Number(r.derrotas ?? 0),
+          posicaoRank: Number.isFinite(Number(r.posicao_rank)) ? Number(r.posicao_rank) : null,
           href: `/perfil/${uid}`,
         };
       });
@@ -329,38 +339,45 @@ export default async function RankingPage({ searchParams }: Props) {
   const periodoBadgeLabel = state.periodo === "mes" ? "Mês" : "Ano";
 
   return (
-    <div className="relative z-0 flex w-full min-w-0 flex-col" data-eid-ranking-page>
+    <div className="relative z-0 flex w-full min-w-0 flex-col" data-eid-ranking-page data-eid-touch-ui-compact="true">
       <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg" aria-hidden />
       <div
         className="pointer-events-none absolute inset-x-0 top-0 z-0 h-48 max-h-[24rem] bg-[radial-gradient(ellipse_95%_60%_at_50%_-8%,rgba(37,99,235,0.11),transparent_55%)] sm:h-64"
         aria-hidden
       />
       <main className="relative z-[1] mx-auto flex w-full min-w-0 max-w-lg flex-col px-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] pt-0 sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]">
-        <div className={`eid-ranking-hero mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-eid-action-400">Painel competitivo</p>
-          <h1 className="mt-1 text-base font-black leading-tight text-eid-fg sm:text-lg">Ranking EID</h1>
-          <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary sm:text-[11px]">
-            Posições por esporte, modalidade e período. Compare desafios (pontos) ou nota EID.
-          </p>
+        <div className={`eid-ranking-hero mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-6 sm:py-5`}>
+          <div className="grid grid-cols-[minmax(0,1fr)_132px] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_320px] sm:gap-4">
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-[0.12em] text-eid-action-400 sm:text-[13px]">Painel competitivo</p>
+              <h1 className="mt-1 text-[18px] font-black leading-none tracking-tight text-eid-fg sm:text-[42px]">Ranking EID</h1>
+              <p className="mt-1.5 max-w-[30ch] text-[9px] leading-relaxed text-eid-text-secondary sm:mt-3 sm:max-w-[36ch] sm:text-[18px] sm:leading-relaxed">
+                Posições por esporte, modalidade e período. Compare desafios (pontos) ou nota EID.
+              </p>
+            </div>
+            <div className="block justify-self-end" aria-hidden>
+              <div className="relative h-[82px] w-[132px] overflow-hidden sm:h-[165px] sm:w-[320px]">
+                <Image
+                  src="/ranking-podio-alpha.png"
+                  alt=""
+                  fill
+                  unoptimized
+                  className="object-contain object-center"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <section className="mt-4 md:mt-6">
-          <div className={rankingCardShellClass}>
-            <div className={rankingCardHeadClass}>
-              <h2 className={rankingSectionTitleClass}>Filtros</h2>
-              <span className={rankingBadgePrimaryClass}>Busca</span>
-            </div>
-            <div className="p-2.5 sm:p-3">
-              <RankingFilterBar
-                state={state}
-                principalEsporteId={esportePrincipalId}
-                selectedEsporteId={selectedEsporteId}
-                cidadeDisplay={cidadeDisplay}
-                needsCidadeFallback={needsCidadeFallback}
-                todosEsportes={todosEsportes}
-              />
-            </div>
-          </div>
+          <RankingFilterBar
+            state={state}
+            principalEsporteId={esportePrincipalId}
+            selectedEsporteId={selectedEsporteId}
+            cidadeDisplay={cidadeDisplay}
+            needsCidadeFallback={needsCidadeFallback}
+            todosEsportes={todosEsportes}
+          />
         </section>
 
         {noCatalogHint ? (
@@ -433,6 +450,9 @@ export default async function RankingPage({ searchParams }: Props) {
                             metricValue={state.rank === "eid" ? row.notaEid : row.pontos}
                             metricKind={state.rank === "eid" ? "eid" : "pontos"}
                             eidScore={row.notaEid}
+                            vitorias={row.vitorias ?? null}
+                            derrotas={row.derrotas ?? null}
+                            rankDelta={row.posicaoRank != null ? row.posicaoRank - rank : null}
                             avatarUrl={row.avatarUrl}
                             href={row.href}
                           />
@@ -444,13 +464,11 @@ export default async function RankingPage({ searchParams }: Props) {
                 </section>
 
                 {hasMore ? (
-                  <div className="mt-4 flex justify-center pb-1">
-                    <Link
+                  <div className="mt-0">
+                    <RankingLoadMoreButton
                       href={rankingHref({ page: state.page + 1 }, state, esportePrincipalId)}
-                      className="eid-ranking-cta inline-flex min-h-10 items-center justify-center rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-6 text-[11px] font-black uppercase tracking-wide text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] shadow-[0_6px_18px_-12px_rgba(37,99,235,0.45)] transition-all duration-200 ease-out motion-safe:transform-gpu hover:-translate-y-px hover:bg-eid-primary-500/18 active:translate-y-0 active:scale-[0.98] md:text-xs"
-                    >
-                      Ver mais
-                    </Link>
+                      className="eid-ranking-cta inline-flex min-h-10 w-full items-center justify-center gap-1.5 border-t border-[color:var(--eid-border-subtle)] px-5 text-[11px] font-black uppercase tracking-[0.02em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] transition-all duration-200 ease-out motion-safe:transform-gpu hover:bg-eid-primary-500/10 active:scale-[0.995]"
+                    />
                   </div>
                 ) : null}
               </>

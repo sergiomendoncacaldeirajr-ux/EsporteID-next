@@ -43,7 +43,7 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
 
   if (!items.length) {
     return (
-      <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 text-sm text-eid-text-secondary">
+      <p className="mt-2 rounded-xl bg-eid-surface/30 p-2.5 text-[11px] text-eid-text-secondary">
         Nenhum convite de equipe no momento.
       </p>
     );
@@ -58,10 +58,10 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
         {items.map((c) => (
           <li
             key={c.id}
-            className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_8px_18px_-14px_rgba(15,23,42,0.28)]"
+            className="overflow-hidden rounded-xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] shadow-[0_8px_18px_-14px_rgba(15,23,42,0.28)]"
           >
             <div className="p-3">
-              <div className="grid grid-cols-[72px_24px_minmax(0,1fr)] items-start sm:grid-cols-[72px_34px_minmax(0,1fr)]">
+              <div className="grid grid-cols-[72px_minmax(0,1fr)] items-start gap-3 sm:gap-4">
                 <ProfileEditDrawerTrigger
                   href={`/perfil-time/${c.equipeId}?from=/comunidade`}
                   title={c.equipeNome}
@@ -93,9 +93,7 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                     </div>
                   </div>
                 </ProfileEditDrawerTrigger>
-                <div aria-hidden className="h-full w-full" />
-
-                <div className="min-w-0 flex-1 pl-3 sm:pl-4">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p className="text-sm font-semibold text-eid-fg">{c.equipeNome}</p>
