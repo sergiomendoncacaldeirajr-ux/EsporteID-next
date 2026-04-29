@@ -151,6 +151,25 @@ export async function solicitarDesafioMatch(
     return { ok: false, message: "Modalidade inválida." };
   }
 
+  if (mod === "individual" && p_alvo_usuario_id) {
+    const [{ data: ueSelf }, { data: ueOpp }] = await Promise.all([
+      supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", user.id).eq("esporte_id", p_esporte_id).maybeSingle(),
+      supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", p_alvo_usuario_id).eq("esporte_id", p_esporte_id).maybeSingle(),
+    ]);
+    if (!ueSelf) {
+      return {
+        ok: false,
+        message: "Você não tem este esporte no perfil. O desafio precisa ser no mesmo esporte para os dois.",
+      };
+    }
+    if (!ueOpp) {
+      return {
+        ok: false,
+        message: "O oponente não tem este esporte no perfil. Escolha um esporte que vocês dois jogam.",
+      };
+    }
+  }
+
   if (p_finalidade === "ranking") {
     const limite = await getRankPendingLimit(supabase);
     const limiteMensalPorEsporte = await getMatchRankMonthlyLimitPerSport(supabase);

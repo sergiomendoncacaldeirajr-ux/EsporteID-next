@@ -27,6 +27,7 @@ import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown"
 import { partidaEncerradaParaHistorico, resultadoPartidaIndividual } from "@/lib/perfil/formacao-eid-stats";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { createClient } from "@/lib/supabase/server";
+import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 type Props = {
@@ -127,13 +128,23 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     ? new Set<number>()
     : await esporteIdsComMatchAceitoEntre(supabase, user.id, id);
 
-  const { data: eids } = await supabase
-    .from("usuario_eid")
-    .select(
-      "esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas, interesse_match, modalidade_match, posicao_rank, esportes(nome)"
-    )
-    .eq("usuario_id", id)
-    .order("pontos_ranking", { ascending: false });
+  const [{ data: eids }, { data: viewerEidRowsParaDesafio }] = await Promise.all([
+    supabase
+      .from("usuario_eid")
+      .select(
+        "esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas, interesse_match, modalidade_match, posicao_rank, esportes(nome)"
+      )
+      .eq("usuario_id", id)
+      .order("pontos_ranking", { ascending: false }),
+    !isSelf
+      ? supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", user.id)
+      : Promise.resolve({ data: null as { esporte_id: number }[] | null }),
+  ]);
+  const viewerEsporteIdsParaDesafio = new Set(
+    (viewerEidRowsParaDesafio ?? [])
+      .map((r) => Number(r.esporte_id))
+      .filter((n) => Number.isFinite(n) && n > 0)
+  );
 
   const principalEid =
     eids && eids.length > 0
@@ -303,6 +314,8 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     }
   }
   const esportesParaDesafio = esportesDoPerfil
+    .filter((e) => isSportMatchEnabled(e.nome))
+    .filter((e) => isSelf || viewerEsporteIdsParaDesafio.has(e.esporteId))
     .filter((e) => !esportesMatchAceito.has(e.esporteId))
     .map((e) => ({
       esporteId: e.esporteId,

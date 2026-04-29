@@ -1059,6 +1059,18 @@ select,
     font-weight: 800;
   }
 
+  /* Cancelar pedido pendente (ex.: desafio enviado): mantém chip baixo; não usar altura mínima de toque 44px. */
+  :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
+    button[data-eid-cancel-pendente-btn="true"] {
+    min-height: 17px;
+    max-height: 22px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    font-size: 6.5px;
+    line-height: 1;
+    font-weight: 800;
+  }
+
   :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
     :where(input.eid-input-dark, select.eid-input-dark) {
     min-height: 2.1rem;

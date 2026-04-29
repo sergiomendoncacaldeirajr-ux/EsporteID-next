@@ -105,7 +105,11 @@ export function TeamRosterManager({
           />
         </div>
         {inviteState.message ? (
-          <p className={`mt-2 text-xs ${inviteState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{inviteState.message}</p>
+          <p
+            className={`mt-2 text-xs ${inviteState.ok ? "text-eid-primary-700 dark:text-eid-primary-300" : "text-red-700 dark:text-red-300"}`}
+          >
+            {inviteState.message}
+          </p>
         ) : null}
 
         <div className="mt-4 space-y-3">
@@ -140,7 +144,11 @@ export function TeamRosterManager({
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Membros</p>
             {memberActionMsg ? (
-              <p className={`mt-2 text-xs ${memberActionOk ? "text-eid-primary-300" : "text-red-300"}`}>{memberActionMsg}</p>
+              <p
+                className={`mt-2 text-xs ${memberActionOk ? "text-eid-primary-700 dark:text-eid-primary-300" : "text-red-700 dark:text-red-300"}`}
+              >
+                {memberActionMsg}
+              </p>
             ) : null}
             {membros.length > 0 ? (
               <ul className="mt-2 grid gap-2">

@@ -63,9 +63,7 @@ export function matchCardEidStatsHref(card: MatchRadarCard): string | null {
   if (card.modalidade === "individual") {
     return `/perfil/${encodeURIComponent(card.id)}/eid/${card.esporteId}?from=${from}`;
   }
-  if (card.modalidade === "dupla") {
-    return `/perfil-dupla/${encodeURIComponent(card.id)}/eid/${card.esporteId}?from=${from}`;
-  }
+  /** No radar, dupla e time usam `times.id`; `/perfil-time/[id]` cobre ambos (tipo dupla no registro). */
   return `/perfil-time/${encodeURIComponent(card.id)}/eid/${card.esporteId}?from=${from}`;
 }
 

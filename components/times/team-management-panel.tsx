@@ -255,7 +255,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
             <p className="mt-1 rounded-lg border border-[#d39b2a] bg-[#ffe7b3] px-2 py-1 text-[10px] font-bold leading-snug text-[#4b2b00]">
               Atenção: a cidade da formação não pode ser alterada depois. Para trocar, será necessário criar outra equipe/dupla.
             </p>
-            {gpsError ? <p className="mt-1 text-[10px] text-red-300">{gpsError}</p> : null}
+            {gpsError ? <p className="mt-1 text-[10px] text-red-700 dark:text-red-300">{gpsError}</p> : null}
           </div>
           <div className="sm:col-span-2 grid gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Configuração de vagas</p>
@@ -281,7 +281,11 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
                 : "Criar formação e abrir gestão"}
           </button>
           {createState.message ? (
-            <p className={`text-xs sm:col-span-2 ${createState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{createState.message}</p>
+            <p
+              className={`text-xs sm:col-span-2 ${createState.ok ? "text-eid-primary-700 dark:text-eid-primary-300" : "text-red-700 dark:text-red-300"}`}
+            >
+              {createState.message}
+            </p>
           ) : null}
         </form>
     </>
@@ -302,7 +306,11 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
         {invitePending ? "Enviando..." : "Convidar"}
       </button>
       {inviteState.message ? (
-        <p className={`text-xs sm:col-span-3 ${inviteState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{inviteState.message}</p>
+        <p
+          className={`text-xs sm:col-span-3 ${inviteState.ok ? "text-eid-primary-700 dark:text-eid-primary-300" : "text-red-700 dark:text-red-300"}`}
+        >
+          {inviteState.message}
+        </p>
       ) : null}
     </form>
   );

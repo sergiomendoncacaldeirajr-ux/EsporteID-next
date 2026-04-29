@@ -119,18 +119,6 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
       ? String(meAm?.disponivel_amistoso_ate ?? me.disponivel_amistoso_ate)
       : null;
   const hasLocation = Number.isFinite(Number(me.lat)) && Number.isFinite(Number(me.lng));
-  const [{ data: meusTimesCriados }, { data: minhasMembRows }] = await Promise.all([
-    supabase.from("times").select("id, tipo").eq("criador_id", user.id),
-    supabase.from("membros_time").select("time_id").eq("usuario_id", user.id).eq("status", "ativo"),
-  ]);
-  const meusTimesMembroIds = (minhasMembRows ?? []).map((r) => Number((r as { time_id: number }).time_id)).filter((n) => Number.isFinite(n) && n > 0);
-  const { data: meusTimesMembro } =
-    meusTimesMembroIds.length > 0
-      ? await supabase.from("times").select("id, tipo").in("id", meusTimesMembroIds)
-      : { data: [] as Array<{ id: number; tipo: string | null }> };
-  const allViewerTimes = [...(meusTimesCriados ?? []), ...(meusTimesMembro ?? [])];
-  const viewerHasDupla = allViewerTimes.some((t) => String((t as { tipo?: string | null }).tipo ?? "").trim().toLowerCase() === "dupla");
-  const viewerHasTime = allViewerTimes.some((t) => String((t as { tipo?: string | null }).tipo ?? "").trim().toLowerCase() === "time");
 
   if (!hasLocation) {
     return (
@@ -188,6 +176,40 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         ? esporteParam
         : esporteDefault;
   const initialGeneroFiltro = toGeneroFiltro(sp.genero);
+
+  const espSelNum = Number(esporteSelecionado);
+  const viewerFormacaoNesteEsporte = Number.isFinite(espSelNum) && espSelNum > 0;
+  const [{ data: meusTimesCriados }, { data: minhasMembRows }] = await Promise.all([
+    supabase.from("times").select("id, tipo, esporte_id").eq("criador_id", user.id),
+    supabase
+      .from("membros_time")
+      .select("time_id")
+      .eq("usuario_id", user.id)
+      .in("status", ["ativo", "aceito", "aprovado"]),
+  ]);
+  const meusTimesMembroIds = (minhasMembRows ?? [])
+    .map((r) => Number((r as { time_id: number }).time_id))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  const { data: meusTimesMembro } =
+    meusTimesMembroIds.length > 0
+      ? await supabase.from("times").select("id, tipo, esporte_id").in("id", meusTimesMembroIds)
+      : { data: [] as Array<{ id: number; tipo: string | null; esporte_id: number | null }> };
+  const allViewerTimesRaw = [...(meusTimesCriados ?? []), ...(meusTimesMembro ?? [])];
+  const byTimeId = new Map<number, { id: number; tipo: string | null; esporte_id: number | null }>();
+  for (const t of allViewerTimesRaw) {
+    const id = Number((t as { id?: number | null }).id ?? 0);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    if (!byTimeId.has(id)) byTimeId.set(id, t as { id: number; tipo: string | null; esporte_id: number | null });
+  }
+  const allViewerTimes = Array.from(byTimeId.values());
+  const matchesSportFilter = (t: { esporte_id?: number | null }) =>
+    !viewerFormacaoNesteEsporte || Number((t as { esporte_id?: number | null }).esporte_id ?? 0) === espSelNum;
+  const viewerHasDupla = allViewerTimes.some(
+    (t) => String((t as { tipo?: string | null }).tipo ?? "").trim().toLowerCase() === "dupla" && matchesSportFilter(t)
+  );
+  const viewerHasTime = allViewerTimes.some(
+    (t) => String((t as { tipo?: string | null }).tipo ?? "").trim().toLowerCase() === "time" && matchesSportFilter(t)
+  );
 
   const initialCards =
     initialView === "full"

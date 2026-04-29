@@ -26,14 +26,11 @@ function cn(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(" ");
 }
 
+/** Radar/desafio: só o primeiro nome (individual, dupla e time). */
 function compactCardName(fullName: string) {
   const parts = fullName.trim().split(/\s+/u).filter(Boolean);
-  if (parts.length === 0) return fullName;
-  if (parts.length === 1) return parts[0];
-  const first = parts[0];
-  const last = parts[parts.length - 1];
-  const firstAndLast = `${first} ${last}`.trim();
-  return firstAndLast.length <= 18 ? firstAndLast : first;
+  if (parts.length === 0) return fullName.trim() || "—";
+  return parts[0] ?? "—";
 }
 
 function segmentTab(active: boolean) {
@@ -961,9 +958,7 @@ export function MatchRadarApp({
                   esporteIdStats > 0
                     ? c.modalidade === "individual"
                       ? `/perfil/${encodeURIComponent(c.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
-                      : c.modalidade === "dupla"
-                        ? `/perfil-dupla/${encodeURIComponent(c.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
-                        : `/perfil-time/${encodeURIComponent(c.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
+                      : `/perfil-time/${encodeURIComponent(c.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
                     : matchCardEidStatsHref(c);
                 const avatarBlock = c.avatarUrl ? (
                   <Image

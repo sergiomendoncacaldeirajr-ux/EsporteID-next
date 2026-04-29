@@ -65,6 +65,14 @@ function resumoFormaDisputa(cfg: MatchUIConfig): string {
   return `Disputa por rounds (até ${cfg.maxRounds} round${cfg.maxRounds > 1 ? "s" : ""}).`;
 }
 
+function desafioPrimeiroNome(nome: string | null | undefined, fallback: string): string {
+  const parts = String(nome ?? "")
+    .trim()
+    .split(/\s+/u)
+    .filter(Boolean);
+  return parts[0] ?? fallback;
+}
+
 export default async function DesafioPage({ searchParams }: { searchParams?: Promise<Params> }) {
   const sp = (await searchParams) ?? {};
   const isEmbed = sp.embed === "1";
@@ -89,27 +97,68 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   const esporteId = Number(sp.esporte ?? "");
 
   if (!Number.isFinite(esporteId) || esporteId < 1) {
+    if (modalidade === "dupla" || modalidade === "time") {
+      const tid = Number(alvoKey);
+      if (Number.isFinite(tid) && tid > 0) {
+        const { data: tr } = await supabase.from("times").select("id, esporte_id, tipo").eq("id", tid).maybeSingle();
+        const tt = String(tr?.tipo ?? "").trim().toLowerCase();
+        if (tr && Number(tr.esporte_id) > 0 && (tt === "dupla" || tt === "time") && tt === modalidade) {
+          const next = new URLSearchParams();
+          for (const [k, v] of Object.entries(sp)) {
+            if (typeof v === "string" && v.length > 0) next.set(k, v);
+          }
+          next.set("esporte", String(tr.esporte_id));
+          redirect(`/desafio?${next.toString()}`);
+        }
+      }
+    }
+
     if (modalidade === "individual" && UUID_RE.test(alvoKey)) {
       const { data: perfilAlvo } = await supabase.from("profiles").select("id, nome").eq("id", alvoKey).maybeSingle();
-      const { data: esportesAlvo } = await supabase
-        .from("usuario_eid")
-        .select("esporte_id, esportes(nome)")
-        .eq("usuario_id", alvoKey)
-        .order("pontos_ranking", { ascending: false });
+      const [{ data: esportesAlvo }, { data: esportesViewer }] = await Promise.all([
+        supabase
+          .from("usuario_eid")
+          .select("esporte_id, esportes(nome)")
+          .eq("usuario_id", alvoKey)
+          .order("pontos_ranking", { ascending: false }),
+        supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", user.id),
+      ]);
+      const viewerIds = new Set(
+        (esportesViewer ?? [])
+          .map((r) => Number((r as { esporte_id?: number | null }).esporte_id))
+          .filter((n) => Number.isFinite(n) && n > 0)
+      );
 
       const opcoes = (esportesAlvo ?? [])
         .map((e) => ({
           esporteId: Number(e.esporte_id),
           esporteNome: (Array.isArray(e.esportes) ? e.esportes[0] : e.esportes)?.nome ?? "Esporte",
         }))
-        .filter((e) => Number.isFinite(e.esporteId) && e.esporteId > 0 && isSportMatchEnabled(e.esporteNome));
+        .filter(
+          (e) =>
+            Number.isFinite(e.esporteId) &&
+            e.esporteId > 0 &&
+            isSportMatchEnabled(e.esporteNome) &&
+            viewerIds.has(e.esporteId)
+        );
+
+      if (perfilAlvo && perfilAlvo.id !== user.id && opcoes.length === 1) {
+        redirect(
+          withDesafioEmbed(
+            `/desafio?id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${opcoes[0]!.esporteId}`,
+            isEmbed
+          )
+        );
+      }
 
       if (perfilAlvo && perfilAlvo.id !== user.id && opcoes.length > 0) {
         return (
             <main className={DESAFIO_PAGE_MAIN_CLASS}>
               <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
               <p className="mt-2 text-sm text-eid-text-secondary">
-                Escolha o esporte para desafiar <span className="text-eid-fg">{perfilAlvo.nome ?? "Atleta"}</span>.
+                Escolha o esporte do desafio — só aparecem modalidades que{" "}
+                <span className="text-eid-fg">você e {desafioPrimeiroNome(perfilAlvo.nome, "o atleta")}</span> têm no perfil (o confronto
+                vale sempre no mesmo esporte para os dois).
               </p>
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {opcoes.map((op) => (
@@ -135,13 +184,34 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             </main>
         );
       }
+
+      if (perfilAlvo && perfilAlvo.id !== user.id && opcoes.length === 0) {
+        return (
+          <main className={DESAFIO_PAGE_MAIN_CLASS}>
+            <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
+            <p className="mt-2 text-sm text-eid-text-secondary">
+              Não há esporte em comum (com match ativo) entre você e{" "}
+              <span className="text-eid-fg">{desafioPrimeiroNome(perfilAlvo.nome, "este atleta")}</span> no perfil. Adicionem o mesmo
+              esporte para desafiar um ao outro.
+            </p>
+            <Link
+              href={`/perfil/${encodeURIComponent(alvoKey)}?from=/match`}
+              {...exitEmbedProps(isEmbed)}
+              className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}
+            >
+              Voltar ao perfil
+            </Link>
+          </main>
+        );
+      }
     }
 
     return (
       <main className={DESAFIO_PAGE_MAIN_CLASS}>
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">
-            Escolha um esporte no radar (não use &quot;Todos&quot;) para enviar um desafio com o esporte correto.
+            Defina o esporte do desafio (no radar, use um esporte específico — não &quot;Todos&quot;) ou abra o desafio a
+            partir do perfil da dupla/time, que já traz o esporte certo.
           </p>
           <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
             Voltar ao radar
@@ -208,6 +278,49 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       );
     }
 
+    const { data: eidAlinhamento } = await supabase
+      .from("usuario_eid")
+      .select("usuario_id")
+      .in("usuario_id", [user.id, perfil.id])
+      .eq("esporte_id", esporteId);
+    const temViewer = (eidAlinhamento ?? []).some((r) => String((r as { usuario_id?: string }).usuario_id) === user.id);
+    const temAlvo = (eidAlinhamento ?? []).some((r) => String((r as { usuario_id?: string }).usuario_id) === perfil.id);
+    if (!temViewer) {
+      return (
+        <main className={DESAFIO_PAGE_MAIN_CLASS}>
+          <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
+          <p className="mt-2 text-sm text-eid-text-secondary">
+            Você não tem <span className="font-semibold text-eid-fg">{esporteNome}</span> no perfil. O desafio precisa ser
+            no mesmo esporte para os dois — adicione o esporte ou escolha outro oponente/esporte.
+          </p>
+          <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
+            Voltar ao radar
+          </Link>
+        </main>
+      );
+    }
+    if (!temAlvo) {
+      return (
+        <main className={DESAFIO_PAGE_MAIN_CLASS}>
+          <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
+          <p className="mt-2 text-sm text-eid-text-secondary">
+            <span className="text-eid-fg">{desafioPrimeiroNome(perfil.nome, "Este atleta")}</span> não tem{" "}
+            <span className="font-semibold text-eid-fg">{esporteNome}</span> no perfil. Escolha um esporte que vocês dois
+            jogam.
+          </p>
+          <Link
+            href={withDesafioEmbed(`/desafio?id=${encodeURIComponent(alvoKey)}&tipo=individual`, isEmbed)}
+            className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4 inline-block`}
+          >
+            Escolher esporte em comum
+          </Link>
+          <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-2 block`}>
+            Voltar ao radar
+          </Link>
+        </main>
+      );
+    }
+
     const finRaw = String(sp.finalidade ?? "").trim().toLowerCase();
     const finalidadeEscolhida: "ranking" | "amistoso" | null =
       finRaw === "amistoso" ? "amistoso" : finRaw === "ranking" ? "ranking" : null;
@@ -265,7 +378,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         <main className={DESAFIO_PAGE_MAIN_CLASS}>
             <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
             <p className="mt-2 text-sm text-eid-text-secondary">
-              <span className="text-eid-fg">{perfil.nome ?? "Atleta"}</span> · {esporteNome} (individual). Escolha o tipo de confronto.
+              <span className="text-eid-fg">{desafioPrimeiroNome(perfil.nome, "Atleta")}</span> · {esporteNome} (individual). Escolha o tipo de confronto.
             </p>
             <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
               Forma de disputa deste esporte: <span className="font-semibold text-eid-fg">{formaDisputaResumo}</span>
@@ -377,7 +490,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             </div>
           )}
           <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:rounded-2xl sm:p-4">
-            <p className="text-sm font-semibold text-eid-fg">{perfil.nome ?? "Atleta"}</p>
+            <p className="text-sm font-semibold text-eid-fg">{desafioPrimeiroNome(perfil.nome, "Atleta")}</p>
             <p className="mt-1 inline-flex items-center gap-1 text-xs text-eid-text-secondary">
               <span>Modalidade:</span>
               <ModalidadeGlyphIcon modalidade="individual" />
@@ -464,7 +577,11 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     return (
       <main className={DESAFIO_PAGE_MAIN_CLASS}>
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
-          <p className="mt-2 text-sm text-eid-text-secondary">O esporte selecionado não confere com esta formação. Ajuste o filtro no radar.</p>
+          <p className="mt-2 text-sm text-eid-text-secondary">
+            Só é possível desafiar uma dupla ou time no <span className="font-semibold text-eid-fg">mesmo esporte</span>{" "}
+            da formação deles. O link ou filtro do radar está com outro esporte — use o esporte desta formação ou volte ao
+            radar com o filtro correto.
+          </p>
           <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
             Voltar ao radar
           </Link>
@@ -529,7 +646,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       .from("membros_time")
       .select("time_id, times!inner(id, nome, criador_id, tipo, esporte_id)")
       .eq("usuario_id", user.id)
-      .eq("status", "ativo"),
+      .in("status", ["ativo", "aceito", "aprovado"]),
   ]);
   const canConfirmarRanking = (minhasLideradas ?? []).length > 0;
   const formacoesMembroNaoLider = (minhasMembroRows ?? [])
@@ -543,7 +660,10 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     .filter((t) => String(t.criador_id ?? "") !== user.id)
     .filter((t) => String(t.tipo ?? "").trim().toLowerCase() === modalidade)
     .filter((t) => Number(t.esporte_id ?? 0) === esporteId)
-    .map((t) => ({ id: Number(t.id), nome: String(t.nome ?? "Minha formação") }));
+    .map((t) => ({
+      id: Number(t.id),
+      nome: desafioPrimeiroNome(t.nome, "Minha formação"),
+    }));
   const podeSugerirParaLider = !canConfirmarRanking && formacoesMembroNaoLider.length > 0;
 
   return (
@@ -582,12 +702,12 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
                 <Image src={timeRow.escudo} alt="" fill unoptimized className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-base font-black text-eid-primary-300">
-                  {(timeRow.nome ?? "F").slice(0, 1).toUpperCase()}
+                  {desafioPrimeiroNome(timeRow.nome, "F").slice(0, 1).toUpperCase()}
                 </div>
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-eid-fg">{timeRow.nome ?? "Formação"}</p>
+              <p className="truncate text-sm font-semibold text-eid-fg">{desafioPrimeiroNome(timeRow.nome, "Formação")}</p>
               <p className="mt-1 inline-flex items-center gap-1 text-xs text-eid-text-secondary">
                 <span>Modalidade:</span>
                 <ModalidadeGlyphIcon modalidade={modalidade === "dupla" ? "dupla" : "time"} />
@@ -618,7 +738,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           <div className="mt-3">
             <SugerirMatchLiderForm
               alvoTimeId={timeRow.id}
-              alvoNome={timeRow.nome ?? "Formação"}
+              alvoNome={desafioPrimeiroNome(timeRow.nome, "Formação")}
               modalidadeLabel={modalidade === "dupla" ? "dupla" : "equipe"}
               formacoesMinhas={formacoesMembroNaoLider}
             />

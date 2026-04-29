@@ -59,8 +59,8 @@ export function MatchChallengeAction({
       {showCreatePrompt ? (
         <div className="mt-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/75 p-2">
           <p className="text-[9px] leading-snug text-eid-text-secondary sm:text-[10px]">
-            Você ainda não tem uma <span className="font-semibold text-eid-fg">{alvoLabel}</span> no seu perfil para
-            este tipo de desafio. Deseja criar agora?
+            Você ainda não tem uma <span className="font-semibold text-eid-fg">{alvoLabel}</span> neste esporte no seu
+            perfil para este tipo de desafio. Deseja criar agora?
           </p>
           <div className="mt-1.5 flex items-center gap-1.5">
             <ProfileEditDrawerTrigger

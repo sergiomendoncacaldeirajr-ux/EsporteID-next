@@ -18,14 +18,11 @@ type Props = {
   suppressChallengeHint?: boolean;
 };
 
+/** Radar/desafio: só o primeiro nome (individual, dupla e time). */
 function compactCardName(fullName: string) {
   const parts = fullName.trim().split(/\s+/u).filter(Boolean);
-  if (parts.length === 0) return fullName;
-  if (parts.length === 1) return parts[0];
-  const first = parts[0];
-  const last = parts[parts.length - 1];
-  const firstAndLast = `${first} ${last}`.trim();
-  return firstAndLast.length <= 18 ? firstAndLast : first;
+  if (parts.length === 0) return fullName.trim() || "—";
+  return parts[0] ?? "—";
 }
 
 export function MatchRadarCardView({

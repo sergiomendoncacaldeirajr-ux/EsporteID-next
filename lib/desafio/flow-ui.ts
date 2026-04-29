@@ -72,7 +72,7 @@ export const PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS =
 
 /** Cancelar pedido de desafio enviado (Comunidade): compacto, vermelho (tema claro/escuro via utilitários + globals). */
 export const PEDIDO_DESAFIO_ENVIADO_CANCELAR_BTN_CLASS =
-  "inline-flex min-h-[17px] shrink-0 items-center justify-center rounded border border-red-600 !bg-red-600 px-1.5 py-px leading-none !text-[6.5px] font-black uppercase tracking-[0.06em] !text-white shadow-sm transition hover:!bg-red-500 hover:!border-red-500 disabled:pointer-events-none disabled:opacity-55 sm:min-h-[18px] sm:!text-[7px]";
+  "inline-flex !min-h-[17px] !max-h-[22px] shrink-0 items-center justify-center rounded border border-red-600 !bg-red-600 px-1.5 !py-0 !text-[6.5px] font-black uppercase !leading-none tracking-[0.06em] !text-white shadow-sm transition hover:!bg-red-500 hover:!border-red-500 disabled:pointer-events-none disabled:opacity-55 sm:!min-h-[18px] sm:!max-h-[24px] sm:!text-[7px]";
 
 /** Container Aprovar/Recusar candidatura na comunidade / vagas. */
 export const CANDIDATURA_ACOES_ROW_CLASS = "mt-3 flex items-center justify-end gap-0 md:gap-1";

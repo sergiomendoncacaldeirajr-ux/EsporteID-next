@@ -22,7 +22,11 @@ export function TeamPublicInviteBlock({ timeId, excludeUserIds }: { timeId: numb
         variant="stack"
       />
       {inviteState.message ? (
-        <p className={`mt-2 text-xs ${inviteState.ok ? "text-eid-primary-300" : "text-red-300"}`}>{inviteState.message}</p>
+        <p
+          className={`mt-2 text-xs ${inviteState.ok ? "text-eid-primary-700 dark:text-eid-primary-300" : "text-red-700 dark:text-red-300"}`}
+        >
+          {inviteState.message}
+        </p>
       ) : null}
     </div>
   );
