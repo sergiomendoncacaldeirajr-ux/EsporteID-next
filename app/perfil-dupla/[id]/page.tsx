@@ -28,6 +28,7 @@ import {
   mapTorneioNomes,
 } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
+import { TeamPublicInviteBlock, type TeamPublicPendingInvite } from "@/components/times/team-public-invite-block";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -130,6 +131,41 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   const isMembroDupla = user.id === d.player1_id || user.id === d.player2_id;
   const donoDuplaId = d.criador_id ?? d.player1_id;
   const isDonoDupla = user.id === donoDuplaId;
+
+  let convitesPendentesDupla: TeamPublicPendingInvite[] = [];
+  const idsExcluirConviteDupla = [
+    ...new Set(
+      [d.player1_id, d.player2_id, user.id].map((x) => String(x ?? "").trim()).filter(Boolean)
+    ),
+  ];
+  if (isDonoDupla && timeResolvidoId) {
+    const { data: pendRowsDupla } = await supabase
+      .from("time_convites")
+      .select("id, convidado_usuario_id")
+      .eq("time_id", timeResolvidoId)
+      .eq("status", "pendente")
+      .order("id", { ascending: false });
+    const pidsD = [...new Set((pendRowsDupla ?? []).map((r) => String(r.convidado_usuario_id ?? "")).filter(Boolean))];
+    if (pidsD.length > 0) {
+      const { data: profsPendD } = await supabase
+        .from("profiles")
+        .select("id, nome, avatar_url, localizacao")
+        .in("id", pidsD);
+      const pmapD = new Map((profsPendD ?? []).map((p) => [String(p.id), p]));
+      convitesPendentesDupla = (pendRowsDupla ?? [])
+        .map((r) => {
+          const pid = String(r.convidado_usuario_id ?? "");
+          const pr = pmapD.get(pid);
+          return {
+            conviteId: Number(r.id),
+            nome: pr?.nome ?? "Atleta",
+            avatarUrl: pr?.avatar_url ?? null,
+            localizacao: pr?.localizacao ?? null,
+          };
+        })
+        .filter((x) => Number.isFinite(x.conviteId) && x.conviteId > 0);
+    }
+  }
 
   const formacoesMembroNaoLiderDupla: { id: number; nome: string }[] = [];
   if (!isMembroDupla && timeResolvidoId && d.esporte_id) {
@@ -549,6 +585,19 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
           </ProfileSection>
 
           <ProfileSection title="Participantes">
+            {isDonoDupla && timeResolvidoId ? (
+              <div className="mt-2 space-y-2">
+                <p className="text-sm text-eid-text-secondary">
+                  Convidar integrante pelo nome ou @ — com <strong className="text-eid-fg">três letras</strong> aparecem
+                  sugestões. Você pode cancelar um convite pendente a qualquer momento.
+                </p>
+                <TeamPublicInviteBlock
+                  timeId={timeResolvidoId}
+                  excludeUserIds={idsExcluirConviteDupla}
+                  pendingInvites={convitesPendentesDupla}
+                />
+              </div>
+            ) : null}
             <div className="mt-2 grid grid-cols-2 gap-2">
               {[p1, p2].map((p, i) =>
                 p ? (

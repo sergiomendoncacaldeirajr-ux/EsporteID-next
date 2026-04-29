@@ -13,8 +13,8 @@ type Props = {
   card: MatchRadarCard;
   esporteContextId: string;
   matchFinalidade: MatchRadarFinalidade;
-  viewerHasDupla: boolean;
-  viewerHasTime: boolean;
+  viewerEsportesComDupla: readonly number[];
+  viewerEsportesComTime: readonly number[];
   suppressChallengeHint?: boolean;
 };
 
@@ -29,8 +29,8 @@ export function MatchRadarCardView({
   card,
   esporteContextId,
   matchFinalidade,
-  viewerHasDupla,
-  viewerHasTime,
+  viewerEsportesComDupla,
+  viewerEsportesComTime,
   suppressChallengeHint = false,
 }: Props) {
   const esporteParam = card.esporteId > 0 ? String(card.esporteId) : esporteContextId;
@@ -132,8 +132,9 @@ export function MatchRadarCardView({
             desafioHref={desafioHref}
             className="eid-btn-match-cta relative mt-1 inline-flex min-h-[26px] w-full max-w-full items-center justify-center overflow-hidden rounded-md px-2 py-1 text-[8px] font-bold uppercase leading-none tracking-[0.05em]"
             title={matchCtaTitle}
-            viewerHasDupla={viewerHasDupla}
-            viewerHasTime={viewerHasTime}
+            cardEsporteId={card.esporteId}
+            viewerEsportesComDupla={viewerEsportesComDupla}
+            viewerEsportesComTime={viewerEsportesComTime}
           />
         </div>
       </div>

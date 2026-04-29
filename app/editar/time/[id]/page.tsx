@@ -63,7 +63,7 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
       .from("time_convites")
       .select("id, convidado_usuario_id, status")
       .eq("time_id", id)
-      .in("status", ["pendente", "aceito", "aprovado"])
+      .eq("status", "pendente")
       .order("id", { ascending: false }),
     supabase.rpc("time_roster_headcount", { p_time_id: id }),
   ]);

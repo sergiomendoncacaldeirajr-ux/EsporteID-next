@@ -73,8 +73,10 @@ type Props = {
   viewerId: string;
   initialCards: MatchRadarCard[];
   esportes: EsporteConfrontoRow[];
-  /** Esporte efetivo da URL ou default do primeiro EID */
-  esporteSelecionado: string;
+  /** Filtro de esporte na UI: `"all"` ou id numérico */
+  initialEsporteFiltro: string;
+  /** Esportes do perfil em confronto usados no modo tela cheia quando o filtro é "Todos" */
+  fullRadarEsporteIds: string[];
   initialTipo: RadarTipo;
   initialSortBy: SortBy;
   initialRaio: number;
@@ -85,8 +87,8 @@ type Props = {
   /** ISO da janela de 4h quando o modo amistoso está ligado */
   viewerAmistosoExpiresAt: string | null;
   showSentBanner: boolean;
-  viewerHasDupla: boolean;
-  viewerHasTime: boolean;
+  viewerEsportesComDupla: number[];
+  viewerEsportesComTime: number[];
 };
 
 const RAII = [10, 30, 50, 100] as const;
@@ -111,7 +113,8 @@ export function MatchRadarApp({
   viewerId,
   initialCards,
   esportes,
-  esporteSelecionado,
+  initialEsporteFiltro,
+  fullRadarEsporteIds,
   initialTipo,
   initialSortBy,
   initialRaio,
@@ -121,13 +124,13 @@ export function MatchRadarApp({
   viewerDisponivelAmistoso,
   viewerAmistosoExpiresAt,
   showSentBanner,
-  viewerHasDupla,
-  viewerHasTime,
+  viewerEsportesComDupla,
+  viewerEsportesComTime,
 }: Props) {
   const [tipo, setTipo] = useState<RadarTipo>(initialTipo);
   const [sortBy, setSortBy] = useState<SortBy>(initialSortBy);
   const [raio, setRaio] = useState(initialRaio);
-  const [esporte, setEsporte] = useState(esporteSelecionado);
+  const [esporte, setEsporte] = useState(initialEsporteFiltro);
   const [finalidade, setFinalidade] = useState<MatchRadarFinalidade>(initialFinalidade);
   const [cards, setCards] = useState<MatchRadarCard[]>(initialCards);
   const [viewMode, setViewMode] = useState<"full" | "grid">(initialView);
@@ -208,41 +211,52 @@ export function MatchRadarApp({
 
   const runRefreshFull = useCallback(
     (next: { sortBy: SortBy; raio: number; esporte: string }) => {
+      const ids =
+        next.esporte === "all" || !/^\d+$/.test(String(next.esporte))
+          ? fullRadarEsporteIds.filter((id) => /^\d+$/.test(id))
+          : [String(next.esporte)];
+      if (ids.length === 0) return;
+
       startTransition(async () => {
-        const results = await Promise.all([
-          refreshMatchRadarAction({
-            tipo: "atleta",
-            sortBy: next.sortBy,
-            raio: next.raio,
-            esporteSelecionado: next.esporte,
-            finalidade: "ranking",
-            includeActiveOpponents: true,
-          }),
-          refreshMatchRadarAction({
-            tipo: "atleta",
-            sortBy: next.sortBy,
-            raio: next.raio,
-            esporteSelecionado: next.esporte,
-            finalidade: "amistoso",
-            includeActiveOpponents: true,
-          }),
-          refreshMatchRadarAction({
-            tipo: "dupla",
-            sortBy: next.sortBy,
-            raio: next.raio,
-            esporteSelecionado: next.esporte,
-            finalidade: "ranking",
-            includeActiveOpponents: true,
-          }),
-          refreshMatchRadarAction({
-            tipo: "time",
-            sortBy: next.sortBy,
-            raio: next.raio,
-            esporteSelecionado: next.esporte,
-            finalidade: "ranking",
-            includeActiveOpponents: true,
-          }),
-        ]);
+        const resultsNested = await Promise.all(
+          ids.map((eid) =>
+            Promise.all([
+              refreshMatchRadarAction({
+                tipo: "atleta",
+                sortBy: next.sortBy,
+                raio: next.raio,
+                esporteSelecionado: eid,
+                finalidade: "ranking",
+                includeActiveOpponents: true,
+              }),
+              refreshMatchRadarAction({
+                tipo: "atleta",
+                sortBy: next.sortBy,
+                raio: next.raio,
+                esporteSelecionado: eid,
+                finalidade: "amistoso",
+                includeActiveOpponents: true,
+              }),
+              refreshMatchRadarAction({
+                tipo: "dupla",
+                sortBy: next.sortBy,
+                raio: next.raio,
+                esporteSelecionado: eid,
+                finalidade: "ranking",
+                includeActiveOpponents: true,
+              }),
+              refreshMatchRadarAction({
+                tipo: "time",
+                sortBy: next.sortBy,
+                raio: next.raio,
+                esporteSelecionado: eid,
+                finalidade: "ranking",
+                includeActiveOpponents: true,
+              }),
+            ])
+          )
+        );
+        const results = resultsNested.flat();
 
         const noMaioridade = results.some((r) => !r.ok && r.error === "no_maioridade");
         if (noMaioridade) {
@@ -269,7 +283,7 @@ export function MatchRadarApp({
         setCards(Array.from(byKey.values()));
       });
     },
-    [tipo, finalidade]
+    [tipo, finalidade, fullRadarEsporteIds]
   );
 
   const applyFilters = useCallback(
@@ -866,8 +880,8 @@ export function MatchRadarApp({
                     card={c}
                     esporteContextId={esporte}
                     matchFinalidade={finalidade}
-                    viewerHasDupla={viewerHasDupla}
-                    viewerHasTime={viewerHasTime}
+                    viewerEsportesComDupla={viewerEsportesComDupla}
+                    viewerEsportesComTime={viewerEsportesComTime}
                     suppressChallengeHint={hideOwnerChallengeHint}
                   />
                 ))}
@@ -1022,8 +1036,9 @@ export function MatchRadarApp({
                           desafioHref={desafioHref}
                           className="eid-btn-match-cta mt-1 inline-flex min-h-[20px] w-full items-center justify-center rounded-md px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.03em]"
                           title="Solicitar desafio"
-                          viewerHasDupla={viewerHasDupla}
-                          viewerHasTime={viewerHasTime}
+                          viewerEsportesComDupla={viewerEsportesComDupla}
+                          viewerEsportesComTime={viewerEsportesComTime}
+                          cardEsporteId={c.esporteId}
                         />
                       </div>
                     </div>

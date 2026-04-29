@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import {
+  cancelarConviteDaEquipe,
   convidarUsuarioParaEquipe,
   removerMembroDaEquipe,
   transferirLiderancaDaEquipe,
@@ -50,6 +51,7 @@ export function TeamRosterManager({
   prefillConvidarNome?: string | null;
 }) {
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
+  const [cancelInviteState, cancelInviteAction, cancelInvitePending] = useActionState(cancelarConviteDaEquipe, initial);
   const [removeState, removeAction, removePending] = useActionState(removerMembroDaEquipe, initial);
   const [transferState, transferAction, transferPending] = useActionState(transferirLiderancaDaEquipe, initial);
 
@@ -117,28 +119,58 @@ export function TeamRosterManager({
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary">Convites</p>
             {convites.length > 0 ? (
               <ul className="mt-2 grid gap-2">
-                {convites.map((c) => (
-                  <li key={c.conviteId} className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2">
-                    {c.avatarUrl ? (
-                      <img src={c.avatarUrl} alt={c.nome} className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
-                    ) : (
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
-                        {c.nome.trim().slice(0, 1).toUpperCase() || "A"}
+                {convites.map((c) => {
+                  const pendente = String(c.status ?? "").trim().toLowerCase() === "pendente";
+                  return (
+                    <li
+                      key={c.conviteId}
+                      className="eid-list-item flex flex-wrap items-center gap-2 rounded-xl bg-eid-card/55 p-2"
+                    >
+                      {c.avatarUrl ? (
+                        <img
+                          src={c.avatarUrl}
+                          alt={c.nome}
+                          className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover"
+                        />
+                      ) : (
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                          {c.nome.trim().slice(0, 1).toUpperCase() || "A"}
+                        </span>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-bold text-eid-fg">{c.nome}</p>
+                        <p className="truncate text-[9px] text-eid-text-secondary">{c.localizacao ?? "Localização não informada"}</p>
+                      </div>
+                      <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-fg">
+                        {c.status}
                       </span>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11px] font-bold text-eid-fg">{c.nome}</p>
-                      <p className="truncate text-[9px] text-eid-text-secondary">{c.localizacao ?? "Localização não informada"}</p>
-                    </div>
-                    <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-fg">
-                      {c.status}
-                    </span>
-                  </li>
-                ))}
+                      {pendente ? (
+                        <form action={cancelInviteAction} className="w-full sm:ml-auto sm:w-auto">
+                          <input type="hidden" name="time_id" value={timeId} />
+                          <input type="hidden" name="convite_id" value={c.conviteId} />
+                          <button
+                            type="submit"
+                            disabled={cancelInvitePending || invitePending}
+                            className="inline-flex min-h-[32px] w-full items-center justify-center rounded-lg border border-rose-600/80 bg-rose-600/15 px-2.5 text-[9px] font-black uppercase tracking-[0.06em] text-red-700 transition hover:bg-rose-600/25 disabled:opacity-60 dark:text-red-300"
+                          >
+                            {cancelInvitePending ? "…" : "Cancelar convite"}
+                          </button>
+                        </form>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="mt-1 text-[11px] text-eid-text-secondary">Nenhum convite pendente.</p>
             )}
+            {cancelInviteState.message ? (
+              <p
+                className={`mt-2 text-xs ${cancelInviteState.ok ? "text-eid-primary-700 dark:text-eid-primary-300" : "text-red-700 dark:text-red-300"}`}
+              >
+                {cancelInviteState.message}
+              </p>
+            ) : null}
           </div>
 
           <div>

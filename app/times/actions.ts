@@ -463,6 +463,38 @@ export async function removerMembroDaEquipe(
   return { ok: true, message: "Membro removido com sucesso." };
 }
 
+export async function cancelarConviteDaEquipe(
+  _prev: TeamActionState | undefined,
+  formData: FormData
+): Promise<TeamActionState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada." };
+
+  const conviteId = Number(formData.get("convite_id") ?? 0);
+  const timeId = Number(formData.get("time_id") ?? 0);
+  if (!Number.isInteger(conviteId) || conviteId < 1) return { ok: false, message: "Convite inválido." };
+  if (!Number.isInteger(timeId) || timeId < 1) return { ok: false, message: "Equipe inválida." };
+
+  const { data: teamRow } = await supabase.from("times").select("id, criador_id").eq("id", timeId).maybeSingle();
+  if (!teamRow || teamRow.criador_id !== user.id) {
+    return { ok: false, message: "Sem permissão para cancelar este convite." };
+  }
+
+  const { error } = await supabase.rpc("cancelar_convite_time_lider", { p_convite_id: conviteId });
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/editar/time/${timeId}`);
+  revalidatePath(`/conta/formacao/time/${timeId}`);
+  revalidatePath(`/perfil-time/${timeId}`);
+  revalidatePath("/comunidade");
+  revalidatePath("/times");
+  revalidatePath(`/perfil/${user.id}`);
+  return { ok: true, message: "Convite cancelado. A pessoa foi avisada em Social." };
+}
+
 export async function transferirLiderancaDaEquipe(
   _prev: TeamActionState | undefined,
   formData: FormData

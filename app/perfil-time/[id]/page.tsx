@@ -27,7 +27,7 @@ import {
   mapTorneioNomes,
 } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
-import { TeamPublicInviteBlock } from "@/components/times/team-public-invite-block";
+import { TeamPublicInviteBlock, type TeamPublicPendingInvite } from "@/components/times/team-public-invite-block";
 import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-cta";
 import { SairDaEquipeConfirmForm } from "@/components/times/sair-da-equipe-confirm-form";
 
@@ -260,6 +260,36 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
         .filter(Boolean)
     ),
   ];
+
+  let convitesPendentesPublic: TeamPublicPendingInvite[] = [];
+  if (isLeader) {
+    const { data: pendRows } = await supabase
+      .from("time_convites")
+      .select("id, convidado_usuario_id")
+      .eq("time_id", id)
+      .eq("status", "pendente")
+      .order("id", { ascending: false });
+    const pids = [...new Set((pendRows ?? []).map((r) => String(r.convidado_usuario_id ?? "")).filter(Boolean))];
+    if (pids.length > 0) {
+      const { data: profsPend } = await supabase
+        .from("profiles")
+        .select("id, nome, avatar_url, localizacao")
+        .in("id", pids);
+      const pmap = new Map((profsPend ?? []).map((p) => [String(p.id), p]));
+      convitesPendentesPublic = (pendRows ?? [])
+        .map((r) => {
+          const pid = String(r.convidado_usuario_id ?? "");
+          const pr = pmap.get(pid);
+          return {
+            conviteId: Number(r.id),
+            nome: pr?.nome ?? "Atleta",
+            avatarUrl: pr?.avatar_url ?? null,
+            localizacao: pr?.localizacao ?? null,
+          };
+        })
+        .filter((x) => Number.isFinite(x.conviteId) && x.conviteId > 0);
+    }
+  }
 
   return (
     <main className={PROFILE_PUBLIC_MAIN_CLASS}>
@@ -520,7 +550,11 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                   Convide pelo nome ou @. Com <strong className="text-eid-fg">três letras</strong> aparecem sugestões para
                   escolher o atleta.
                 </p>
-                <TeamPublicInviteBlock timeId={id} excludeUserIds={idsExcluirConvite} />
+                <TeamPublicInviteBlock
+                  timeId={id}
+                  excludeUserIds={idsExcluirConvite}
+                  pendingInvites={convitesPendentesPublic}
+                />
               </div>
             ) : null}
             <ul className="mt-3 grid grid-cols-2 gap-2">

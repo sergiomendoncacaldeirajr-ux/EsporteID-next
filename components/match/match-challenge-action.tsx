@@ -8,8 +8,9 @@ type Props = {
   desafioHref: string;
   className: string;
   title: string;
-  viewerHasDupla: boolean;
-  viewerHasTime: boolean;
+  cardEsporteId: number;
+  viewerEsportesComDupla: readonly number[];
+  viewerEsportesComTime: readonly number[];
 };
 
 export function MatchChallengeAction({
@@ -17,13 +18,15 @@ export function MatchChallengeAction({
   desafioHref,
   className,
   title,
-  viewerHasDupla,
-  viewerHasTime,
+  cardEsporteId,
+  viewerEsportesComDupla,
+  viewerEsportesComTime,
 }: Props) {
   const [showCreatePrompt, setShowCreatePrompt] = useState(false);
 
   const blockedByMissingFormation =
-    (modalidade === "dupla" && !viewerHasDupla) || (modalidade === "time" && !viewerHasTime);
+    (modalidade === "dupla" && !viewerEsportesComDupla.includes(cardEsporteId)) ||
+    (modalidade === "time" && !viewerEsportesComTime.includes(cardEsporteId));
   const alvoLabel = modalidade === "dupla" ? "dupla" : "time";
 
   const createHref = useMemo(() => {
