@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
 import { atualizarMinhaEquipe, type TeamActionState } from "@/app/times/actions";
@@ -151,9 +152,16 @@ export function PerfilTimeEditForm({
           <button
             type="submit"
             disabled={pending}
-            className="eid-btn-primary !min-h-[48px] rounded-xl px-6 py-3 !text-lg font-bold leading-snug sm:!min-h-[50px] sm:!text-xl"
+            className="eid-btn-primary inline-flex !min-h-[40px] items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold leading-none sm:!min-h-[42px] sm:px-5 sm:text-[15px]"
           >
-            {pending ? "Salvando..." : "Salvar alterações"}
+            {pending ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                Salvando...
+              </>
+            ) : (
+              "Salvar alterações"
+            )}
           </button>
         </div>
         {state.message ? (

@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
-import { getContextHomeHref } from "@/lib/auth/active-context";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
@@ -33,7 +32,7 @@ export default async function BuscarPage({ searchParams }: Props) {
   const qLower = qSafe.toLowerCase();
 
   const contextState = await getAuthContextState();
-  const { user, activeContext } = contextState;
+  const { user } = contextState;
   if (!user) {
     const next = `/buscar${rawDisplay ? `?q=${encodeURIComponent(rawDisplay)}` : ""}`;
     redirect(`/login?next=${encodeURIComponent(next)}`);
@@ -54,7 +53,6 @@ export default async function BuscarPage({ searchParams }: Props) {
     redirect("/onboarding");
   }
 
-  const homeHref = getContextHomeHref(activeContext);
   const pat = qLower ? `%${qLower}%` : "";
 
   const empty = {
@@ -121,29 +119,21 @@ export default async function BuscarPage({ searchParams }: Props) {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-4">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-eid-text-secondary">Busca global</p>
-          <h1 className="mt-1 text-xl font-black tracking-tight text-eid-fg sm:text-2xl">Resultados</h1>
-          {qSafe ? (
-            <p className="mt-2 max-w-2xl text-sm text-eid-text-secondary">
-              Termo: <span className="font-semibold text-eid-fg">{rawDisplay || qSafe}</span>
-              {total > 0 ? (
-                <span className="text-eid-text-secondary"> · {total} resultado{total !== 1 ? "s" : ""}</span>
-              ) : null}
-            </p>
-          ) : (
-            <p className="mt-2 max-w-2xl text-sm text-eid-text-secondary">
-              Use o campo de busca no topo, confirme com Enter e veja atletas, locais, times e torneios em aberto.
-            </p>
-          )}
-        </div>
-        <Link
-          href={homeHref}
-          className="rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-bold text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg"
-        >
-          ← Painel
-        </Link>
+      <div className="mb-4">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-eid-text-secondary">Busca global</p>
+        <h1 className="mt-1 text-xl font-black tracking-tight text-eid-fg sm:text-2xl">Resultados</h1>
+        {qSafe ? (
+          <p className="mt-2 max-w-2xl text-sm text-eid-text-secondary">
+            Termo: <span className="font-semibold text-eid-fg">{rawDisplay || qSafe}</span>
+            {total > 0 ? (
+              <span className="text-eid-text-secondary"> · {total} resultado{total !== 1 ? "s" : ""}</span>
+            ) : null}
+          </p>
+        ) : (
+          <p className="mt-2 max-w-2xl text-sm text-eid-text-secondary">
+            Use o campo de busca no topo, confirme com Enter e veja atletas, locais, times e torneios em aberto.
+          </p>
+        )}
       </div>
 
       {!qSafe ? (

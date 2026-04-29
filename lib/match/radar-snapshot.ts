@@ -295,6 +295,7 @@ export async function fetchMatchRadarCards(
       (teamShields ?? []).map((row) => [Number((row as { id?: number | null }).id ?? 0), (row as { escudo?: string | null }).escudo ?? null])
     );
 
+    const modalidadeFormacao: "dupla" | "time" = tipo === "dupla" ? "dupla" : "time";
     cards = teamRowsEligible.map((t) => ({
       id: String(t.id),
       nome: String(t.nome ?? "Time"),
@@ -304,15 +305,15 @@ export async function fetchMatchRadarCards(
       dist: Number(t.dist_km ?? 99999),
       eid: Number(t.eid_time ?? 0),
       rank: Number(t.pontos_ranking ?? 0),
-      modalidade: tipo,
+      modalidade: modalidadeFormacao,
       interesseMatch: t.interesse_match === "ranking" ? "ranking" : "ranking_e_amistoso",
       href: `/perfil-time/${t.id}?from=/match`,
       canChallenge: Boolean(t.can_challenge),
       challengeHint: Boolean(t.can_challenge)
         ? undefined
         : /^\d+$/.test(esporteSelecionado)
-          ? `Somente o proprietário (capitão) pode desafiar. Crie sua ${tipo} neste esporte como líder.`
-          : `Selecione um esporte e seja proprietário de uma ${tipo} para desafiar.`,
+          ? `Somente o proprietário (capitão) pode desafiar. Crie sua ${modalidadeFormacao} neste esporte como líder.`
+          : `Selecione um esporte e seja proprietário de uma ${modalidadeFormacao} para desafiar.`,
       avatarUrl: shieldByTeamId.get(Number(t.id)) ?? null,
       disponivelAmistoso: t.disponivel_amistoso === true,
       genero: null,

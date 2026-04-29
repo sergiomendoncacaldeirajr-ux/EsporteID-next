@@ -75,8 +75,8 @@ type Props = {
   esportes: EsporteConfrontoRow[];
   /** Filtro de esporte na UI: `"all"` ou id numérico */
   initialEsporteFiltro: string;
-  /** Esportes do perfil em confronto usados no modo tela cheia quando o filtro é "Todos" */
-  fullRadarEsporteIds: string[];
+  /** Esportes do perfil em confronto: busca do radar em tela cheia sempre usa esta lista (o chip só filtra a exibição). */
+  fullRadarFetchEsporteIds: string[];
   initialTipo: RadarTipo;
   initialSortBy: SortBy;
   initialRaio: number;
@@ -114,7 +114,7 @@ export function MatchRadarApp({
   initialCards,
   esportes,
   initialEsporteFiltro,
-  fullRadarEsporteIds,
+  fullRadarFetchEsporteIds,
   initialTipo,
   initialSortBy,
   initialRaio,
@@ -211,10 +211,7 @@ export function MatchRadarApp({
 
   const runRefreshFull = useCallback(
     (next: { sortBy: SortBy; raio: number; esporte: string }) => {
-      const ids =
-        next.esporte === "all" || !/^\d+$/.test(String(next.esporte))
-          ? fullRadarEsporteIds.filter((id) => /^\d+$/.test(id))
-          : [String(next.esporte)];
+      const ids = fullRadarFetchEsporteIds.filter((id) => /^\d+$/.test(id));
       if (ids.length === 0) return;
 
       startTransition(async () => {
@@ -283,7 +280,7 @@ export function MatchRadarApp({
         setCards(Array.from(byKey.values()));
       });
     },
-    [tipo, finalidade, fullRadarEsporteIds]
+    [tipo, finalidade, fullRadarFetchEsporteIds]
   );
 
   const applyFilters = useCallback(
@@ -468,11 +465,16 @@ export function MatchRadarApp({
     });
   }, [challengeableCards, generoFiltroEfetivo]);
   const fullOrderedChallengeableCards = useMemo(() => {
-    // No modo tela cheia, mostramos TODAS as sugestões (individual + dupla + time),
-    // mesmo quando o desafio estiver temporariamente indisponível para alguma formação.
-    // A indisponibilidade fica só no botão/hint, sem esconder o card.
-    return fullOrderedCards;
-  }, [fullOrderedCards]);
+    // No modo tela cheia, mostramos todas as modalidades; o chip de esporte só restringe a lista na UI.
+    let ordered = fullOrderedCards;
+    if (isFullView && esporte !== "all" && /^\d+$/.test(String(esporte))) {
+      const sid = Number(esporte);
+      if (Number.isFinite(sid)) {
+        ordered = fullOrderedCards.filter((c) => c.esporteId === sid);
+      }
+    }
+    return ordered;
+  }, [fullOrderedCards, isFullView, esporte]);
   const gridCardsWithoutDuplicates = useMemo(() => {
     const byKey = new Map<string, MatchRadarCard>();
     for (const card of cardsFiltradosGeneroChallengeable) {

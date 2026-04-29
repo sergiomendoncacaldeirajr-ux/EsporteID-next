@@ -197,6 +197,9 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         : esportes[0]
           ? [String(esportes[0].id)]
           : [];
+  /** No modo tela cheia, sempre busca em todos os esportes do perfil em confronto (chip só filtra a lista na UI). */
+  const fullRadarFetchEsporteIds =
+    esportesPerfilConfronto.length > 0 ? esportesPerfilConfronto : fullRadarEsporteIdsResolved;
   const initialGeneroFiltro = toGeneroFiltro(sp.genero);
 
   const [{ data: meusTimesCriados }, { data: minhasMembRows }] = await Promise.all([
@@ -309,7 +312,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
 
   const initialCards =
     initialView === "full"
-      ? await mergeFullRadarForEsportes(fullRadarEsporteIdsResolved)
+      ? await mergeFullRadarForEsportes(fullRadarFetchEsporteIds)
       : await fetchMatchRadarCards(supabase, {
           viewerId: user.id,
           tipo,
@@ -330,7 +333,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         initialCards={initialCards}
         esportes={esportes}
         initialEsporteFiltro={initialEsporteFiltro}
-        fullRadarEsporteIds={fullRadarEsporteIdsResolved}
+        fullRadarFetchEsporteIds={fullRadarFetchEsporteIds}
         initialTipo={tipo}
         initialSortBy={sortBy}
         initialRaio={raio}
