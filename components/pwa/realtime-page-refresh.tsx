@@ -41,6 +41,31 @@ function idListInFilter(ids: number[]): string | null {
   return `in.(${list})`;
 }
 
+function payloadNumberField(
+  payload: unknown,
+  field: string
+): number | null {
+  const p = payload as { new?: Record<string, unknown>; old?: Record<string, unknown> } | null;
+  const vNew = p?.new?.[field];
+  const vOld = p?.old?.[field];
+  const nNew = Number(vNew ?? NaN);
+  if (Number.isFinite(nNew) && nNew > 0) return nNew;
+  const nOld = Number(vOld ?? NaN);
+  if (Number.isFinite(nOld) && nOld > 0) return nOld;
+  return null;
+}
+
+function payloadStringField(
+  payload: unknown,
+  field: string
+): string | null {
+  const p = payload as { new?: Record<string, unknown>; old?: Record<string, unknown> } | null;
+  const vNew = String(p?.new?.[field] ?? "").trim();
+  if (vNew) return vNew;
+  const vOld = String(p?.old?.[field] ?? "").trim();
+  return vOld || null;
+}
+
 /**
  * Atualização ao vivo do app logado: notificações, matches, partidas (1x1 e coletivas),
  * candidaturas e convites de time, sugestões de match para líder, mudanças de elenco.
@@ -88,11 +113,6 @@ export function RealtimePageRefresh({ userId }: Props) {
       router.refresh();
     };
 
-    const isCandidaturaRealtimePath = () => {
-      const p = String(pathname ?? "");
-      return p.startsWith("/comunidade") || p.startsWith("/vagas") || p.startsWith("/perfil-time/") || p.startsWith("/perfil-dupla/");
-    };
-
     const notifyForeground = (notifId: number, mensagem: string) => {
       if (!Number.isFinite(notifId) || notifId < 1) return;
       if (notifiedIdsRef.current.has(notifId)) return;
@@ -135,11 +155,6 @@ export function RealtimePageRefresh({ userId }: Props) {
       refresh();
     };
     document.addEventListener("visibilitychange", onVisibility);
-    const candidaturasPollId = window.setInterval(() => {
-      if (document.visibilityState !== "visible") return;
-      if (!isCandidaturaRealtimePath()) return;
-      refreshForced();
-    }, 3500);
 
     const channelTag = `${userId}-${instanceIdRef.current}-${pathname}-${elencoVersion}`;
 
@@ -152,6 +167,7 @@ export function RealtimePageRefresh({ userId }: Props) {
 
       const teamFilter = idListInFilter(teamIds);
       const ownedFilter = idListInFilter(ownedIds);
+      const ownedSet = new Set(ownedIds);
 
       if (teamFilter) {
         register(
@@ -180,6 +196,26 @@ export function RealtimePageRefresh({ userId }: Props) {
             .on(
               "postgres_changes",
               { event: "*", schema: "public", table: "membros_time", filter: `time_id=${teamFilter}` },
+              refresh
+            )
+            .subscribe()
+        );
+        register(
+          supabase
+            .channel(`eid-refresh-times-${channelTag}`)
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "times", filter: `id=${teamFilter}` },
+              refresh
+            )
+            .subscribe()
+        );
+        register(
+          supabase
+            .channel(`eid-refresh-eid-coletivo-${channelTag}`)
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "historico_eid_coletivo", filter: `time_id=${teamFilter}` },
               refresh
             )
             .subscribe()
@@ -238,12 +274,16 @@ export function RealtimePageRefresh({ userId }: Props) {
           )
           .subscribe()
       );
-      // Fallback global para garantir refresh imediato do painel social
-      // quando filtros por owner/time não forem avaliados como esperado.
       register(
         supabase
           .channel(`eid-refresh-cand-all-${channelTag}`)
-          .on("postgres_changes", { event: "*", schema: "public", table: "time_candidaturas" }, refresh)
+          .on("postgres_changes", { event: "*", schema: "public", table: "time_candidaturas" }, (payload) => {
+            const candidatoId = payloadStringField(payload, "candidato_usuario_id");
+            const timeId = payloadNumberField(payload, "time_id");
+            if (candidatoId === userId || (timeId != null && ownedSet.has(timeId))) {
+              refreshForced();
+            }
+          })
           .subscribe()
       );
       if (ownedFilter) {
@@ -275,6 +315,16 @@ export function RealtimePageRefresh({ userId }: Props) {
           .on(
             "postgres_changes",
             { event: "*", schema: "public", table: "time_convites", filter: `convidado_usuario_id=eq.${userId}` },
+            refresh
+          )
+          .subscribe()
+      );
+      register(
+        supabase
+          .channel(`eid-refresh-eid-individual-${channelTag}`)
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "usuario_eid", filter: `usuario_id=eq.${userId}` },
             refresh
           )
           .subscribe()
@@ -326,7 +376,6 @@ export function RealtimePageRefresh({ userId }: Props) {
     return () => {
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisibility);
-      window.clearInterval(candidaturasPollId);
       channels.forEach((c) => void supabase.removeChannel(c));
     };
   }, [router, userId, pathname, elencoVersion]);
