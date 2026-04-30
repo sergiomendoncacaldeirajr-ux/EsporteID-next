@@ -170,6 +170,23 @@ export async function solicitarDesafioMatch(
     }
   }
 
+  if ((mod === "dupla" || mod === "time") && Number.isFinite(p_alvo_time_id ?? NaN) && Number(p_alvo_time_id) > 0) {
+    const { data: alvoTimeRow } = await supabase
+      .from("times")
+      .select("id, criador_id")
+      .eq("id", Number(p_alvo_time_id))
+      .maybeSingle();
+    if (!alvoTimeRow?.id) {
+      return { ok: false, message: "Formação alvo não encontrada." };
+    }
+    if (String(alvoTimeRow.criador_id ?? "") === String(user.id)) {
+      return {
+        ok: false,
+        message: "Você só pode desafiar dupla/time de outro dono.",
+      };
+    }
+  }
+
   if (p_finalidade === "ranking") {
     const limite = await getRankPendingLimit(supabase);
     const limiteMensalPorEsporte = await getMatchRankMonthlyLimitPerSport(supabase);

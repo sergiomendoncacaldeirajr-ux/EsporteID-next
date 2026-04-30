@@ -807,7 +807,7 @@ export function MatchRadarApp({
                     disabled={entryPending}
                     className="eid-btn-match-cta inline-flex min-h-[44px] items-center justify-center rounded-xl px-3 text-[12px] font-black uppercase tracking-[0.08em] disabled:opacity-55"
                   >
-                    Sim
+                    {entryPending ? "Ativando..." : "Sim"}
                   </button>
                   <button
                     type="button"

@@ -353,33 +353,43 @@ export async function fetchMatchRadarCards(
     });
 
     const timeRows = ((formacoes ?? []) as FormacaoRow[]).filter((t) => Number.isFinite(Number(t.id)) && Number(t.id) > 0);
+    const { data: ownersAll } =
+      timeRows.length > 0
+        ? await supabase
+            .from("times")
+            .select("id, criador_id")
+            .in(
+              "id",
+              timeRows.map((t) => Number(t.id))
+            )
+        : { data: [] as Array<{ id: number; criador_id: string | null }> };
+    const ownerByTeamId = new Map<number, string>(
+      (ownersAll ?? [])
+        .map((row) => ({
+          id: Number((row as { id?: number | null }).id ?? 0),
+          ownerId: String((row as { criador_id?: string | null }).criador_id ?? ""),
+        }))
+        .filter((row) => Number.isFinite(row.id) && row.id > 0 && row.ownerId)
+        .map((row) => [row.id, row.ownerId])
+    );
+    // Nunca sugerir ao dono a própria formação no radar de dupla/time.
+    const teamRowsNotOwned = timeRows.filter((t) => ownerByTeamId.get(Number(t.id)) !== viewerId);
     let blockedTeamIds = new Set<number>();
-    if (timeRows.length > 0 && activeOpponentIds.size > 0) {
-      const { data: timesOwners } = await supabase
-        .from("times")
-        .select("id, criador_id")
-        .in(
-          "id",
-          timeRows.map((t) => Number(t.id))
-        );
+    if (teamRowsNotOwned.length > 0 && activeOpponentIds.size > 0) {
       blockedTeamIds = new Set(
-        (timesOwners ?? [])
+        (ownersAll ?? [])
           .filter((row) => activeOpponentIds.has(String((row as { criador_id?: string | null }).criador_id ?? "")))
           .map((row) => Number((row as { id?: number | null }).id ?? 0))
           .filter((id) => Number.isFinite(id) && id > 0)
       );
     }
-    const teamRowsVisible = timeRows.filter((t) => !blockedTeamIds.has(Number(t.id)));
+    const teamRowsVisible = teamRowsNotOwned.filter((t) => !blockedTeamIds.has(Number(t.id)));
     let eligibleTeamIds = new Set<number>(teamRowsVisible.map((t) => Number(t.id)));
     if (teamRowsVisible.length > 0) {
-      const { data: owners } = await supabase
-        .from("times")
-        .select("id, criador_id")
-        .in(
-          "id",
-          teamRowsVisible.map((t) => Number(t.id))
-        );
-      const ownerIds = [...new Set((owners ?? []).map((r) => String((r as { criador_id?: string | null }).criador_id ?? "")).filter(Boolean))];
+      const ownersVisible = (ownersAll ?? []).filter((r) =>
+        teamRowsVisible.some((t) => Number(t.id) === Number((r as { id?: number | null }).id ?? 0))
+      );
+      const ownerIds = [...new Set(ownersVisible.map((r) => String((r as { criador_id?: string | null }).criador_id ?? "")).filter(Boolean))];
       if (ownerIds.length > 0) {
         const { data: ownerProfiles } = await supabase
           .from("profiles")
@@ -391,7 +401,7 @@ export async function fetchMatchRadarCards(
             .map((p) => String((p as { id: string }).id))
         );
         eligibleTeamIds = new Set(
-          (owners ?? [])
+          ownersVisible
             .filter((r) => ownerEligible.has(String((r as { criador_id?: string | null }).criador_id ?? "")))
             .map((r) => Number((r as { id?: number | null }).id ?? 0))
             .filter((id) => Number.isFinite(id) && id > 0)
@@ -402,15 +412,11 @@ export async function fetchMatchRadarCards(
     }
     let teamRowsByCooldown = teamRowsVisible;
     if (finalidade === "ranking" && blockedOpponentUsersByCooldown.size > 0) {
-      const { data: owners } = await supabase
-        .from("times")
-        .select("id, criador_id")
-        .in(
-          "id",
-          teamRowsVisible.map((t) => Number(t.id))
-        );
+      const ownersVisible = (ownersAll ?? []).filter((r) =>
+        teamRowsVisible.some((t) => Number(t.id) === Number((r as { id?: number | null }).id ?? 0))
+      );
       const blockedTeamIdsByCooldown = new Set(
-        (owners ?? [])
+        ownersVisible
           .filter((o) => blockedOpponentUsersByCooldown.has(String((o as { criador_id?: string | null }).criador_id ?? "")))
           .map((o) => Number((o as { id?: number | null }).id ?? 0))
           .filter((id) => Number.isFinite(id) && id > 0)

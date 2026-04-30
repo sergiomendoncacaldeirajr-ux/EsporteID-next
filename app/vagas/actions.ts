@@ -169,6 +169,24 @@ export async function cancelarCandidaturaAction(
         ? (rowMeta as { times?: Array<{ nome?: string | null; criador_id?: string | null }> }).times?.[0]
         : (rowMeta as { times?: { nome?: string | null; criador_id?: string | null } }).times) ?? null
     : null;
+  const timeId = Number((rowMeta as { time_id?: number | null } | null)?.time_id ?? 0);
+  if (Number.isFinite(timeId) && timeId > 0 && team?.criador_id) {
+    // Remove notificações pendentes do pedido original para os dois lados.
+    await supabase
+      .from("notificacoes")
+      .delete()
+      .eq("tipo", "candidatura_time")
+      .eq("referencia_id", timeId)
+      .eq("usuario_id", team.criador_id)
+      .eq("remetente_id", user.id);
+    await supabase
+      .from("notificacoes")
+      .delete()
+      .eq("tipo", "candidatura_time")
+      .eq("referencia_id", timeId)
+      .eq("usuario_id", user.id)
+      .eq("remetente_id", team.criador_id);
+  }
   if (team?.criador_id) {
     await supabase.from("notificacoes").insert({
       usuario_id: team.criador_id,
@@ -271,6 +289,24 @@ export async function responderCandidaturaAction(
     })
     .eq("id", candidaturaId);
   if (updateErr) return { ok: false, message: updateErr.message };
+
+  // Limpa notificações pendentes do pedido original para ambos os lados:
+  // - líder (recebeu "novo pedido para entrar")
+  // - candidato (recebeu "você enviou pedido")
+  await supabase
+    .from("notificacoes")
+    .delete()
+    .eq("tipo", "candidatura_time")
+    .eq("referencia_id", row.time_id)
+    .eq("usuario_id", user.id)
+    .eq("remetente_id", row.candidato_usuario_id);
+  await supabase
+    .from("notificacoes")
+    .delete()
+    .eq("tipo", "candidatura_time")
+    .eq("referencia_id", row.time_id)
+    .eq("usuario_id", row.candidato_usuario_id)
+    .eq("remetente_id", user.id);
 
   const { data: notifResposta } = await supabase
     .from("notificacoes")

@@ -840,12 +840,9 @@ export default async function DashboardPage({ searchParams }: Props) {
                 principal e proximidade.
               </EidSectionInfo>
             </div>
-            <FindChallengeCta
-              href={matchHref}
-              label="Ver todos"
-              pendingLabel="Encontrando..."
-              className={sectionActionClass}
-            />
+            <a href={matchHref} className={sectionActionClass}>
+              Ver todos
+            </a>
           </div>
           <div className={dashboardSectionBody}>
           {atletaMaisProximo || duplaMaisProxima || timeMaisProximo ? (
