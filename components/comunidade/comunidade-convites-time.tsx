@@ -8,11 +8,9 @@ import { Calendar, Clock, Shield, User } from "lucide-react";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { EidCityState } from "@/components/ui/eid-city-state";
-import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import {
   EID_SOCIAL_CARD_FOOTER,
-  EID_SOCIAL_GRID_3,
   EID_SOCIAL_SUGESTAO_ENVIADA_CARD_SHELL,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
@@ -21,6 +19,10 @@ import {
   PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS,
 } from "@/lib/desafio/flow-ui";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
+
+/** Três colunas iguais, largura total do card — conteúdo centralizado em cada faixa. */
+const CONVITE_TIME_GRID =
+  "grid w-full min-w-0 grid-cols-3 justify-items-stretch gap-x-2 sm:gap-x-4 md:gap-x-5";
 
 export type ConviteTimeItem = {
   id: number;
@@ -33,15 +35,14 @@ export type ConviteTimeItem = {
   equipeLocalizacao?: string | null;
   equipeDistanceKm?: number | null;
   esporteNome: string;
-  /** Nome amigável do convidante (legado / fallback). */
-  convidadoPor: string;
   criadoEm: string;
-  convidanteId: string;
-  convidanteNome: string;
-  convidantePrimeiroNome: string;
-  convidanteUsername: string | null;
-  convidanteAvatarUrl: string | null;
-  convidanteLocalizacao?: string | null;
+  /** Perfil de quem enviou o convite (`convidado_por_usuario_id`). */
+  convidadoPorUsuarioId: string;
+  convidadoPorNome: string;
+  convidadoPorPrimeiroNome: string;
+  convidadoPorUsername: string | null;
+  convidadoPorAvatarUrl: string | null;
+  convidadoPorLocalizacao?: string | null;
 };
 
 const initial: ResponderConviteState = { ok: false, message: "" };
@@ -71,7 +72,7 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
       {!state.ok && state.message ? (
         <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{state.message}</p>
       ) : null}
-      <ul className="space-y-3">
+      <ul className="list-none space-y-3 p-0">
         {items.map((c) => {
           const criado = formatSolicitacaoParts(c.criadoEm);
           const isDupla = String(c.equipeTipo ?? "")
@@ -79,12 +80,10 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
             .toLowerCase() === "dupla";
           const formacaoHref = `/perfil-time/${c.equipeId}?from=/comunidade`;
           return (
-            <li key={c.id} className={EID_SOCIAL_SUGESTAO_ENVIADA_CARD_SHELL}>
-              <EidPendingBadge label="Pendente" compact className="absolute right-3 top-3 z-[1]" />
-
-              <div className={`${EID_SOCIAL_GRID_3} pt-11`}>
-                <div className="min-w-0 px-2 pb-3 pt-1 sm:px-3">
-                  <p className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">
+            <li key={c.id} className={`${EID_SOCIAL_SUGESTAO_ENVIADA_CARD_SHELL} w-full min-w-0`}>
+              <div className={`${CONVITE_TIME_GRID} pt-2`}>
+                <div className="flex min-w-0 w-full flex-col items-center px-1.5 pb-3 pt-0 sm:px-2">
+                  <p className="flex w-full min-w-0 items-center justify-start gap-1 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">
                     <Shield className="h-3 w-3 shrink-0 text-amber-200/90" aria-hidden />
                     Formação
                   </p>
@@ -93,10 +92,13 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                     title={c.equipeNome}
                     fullscreen
                     topMode="backOnly"
-                    className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                    className="mt-0.5 block w-full rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
                   >
-                    <div className="flex w-full flex-col gap-2 px-0.5 py-1">
-                      <div className="flex w-full items-start gap-2.5">
+                    <div className="flex w-full flex-col items-center gap-1.5 px-0.5 pb-0 pt-0">
+                      <div className="flex w-full flex-col items-center gap-1.5">
+                        <div className="min-w-0 w-full text-center">
+                          <p className="truncate text-[11px] font-black text-eid-fg">{c.equipePrimeiroNome}</p>
+                        </div>
                         <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
                           {c.equipeAvatarUrl ? (
                             <Image src={c.equipeAvatarUrl} alt="" fill unoptimized className="object-cover" />
@@ -106,27 +108,25 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                             </div>
                           )}
                         </div>
-                        <div className="min-w-0 flex-1 pt-0.5 text-left">
-                          <p className="truncate text-[11px] font-black text-eid-fg">{c.equipePrimeiroNome}</p>
-                          <p className="mt-0.5 truncate text-[9px] text-eid-text-secondary">
-                            {isDupla ? "Dupla" : "Time"} · {c.esporteNome}
-                          </p>
+                        <div className="flex w-full justify-center">
+                          <ProfileEidPerformanceSeal
+                            notaEid={Number(c.equipeNotaEid ?? 0)}
+                            compact
+                            className="origin-center scale-[1.42]"
+                          />
                         </div>
-                      </div>
-                      <div className="flex justify-center sm:justify-start">
-                        <ProfileEidPerformanceSeal notaEid={Number(c.equipeNotaEid ?? 0)} compact className="scale-125" />
                       </div>
                       <EidCityState
                         location={c.equipeLocalizacao}
                         compact
-                        align="start"
+                        align="center"
                         className="w-full"
                       />
                     </div>
                   </ProfileEditDrawerTrigger>
                 </div>
 
-                <div className="flex min-w-0 flex-col items-center gap-2 px-2 pb-3 pt-1 text-center sm:px-3">
+                <div className="flex min-w-0 flex-col items-center gap-2 px-1.5 pb-3 pt-0 text-center sm:px-2.5">
                   <div className="flex w-full flex-col items-center gap-1">
                     <p className="inline-flex items-center gap-1.5 text-[11px] tabular-nums text-eid-text-secondary">
                       <Calendar className="h-3.5 w-3.5 shrink-0 text-eid-primary-400" aria-hidden />
@@ -137,7 +137,7 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                       {criado.time}
                     </p>
                   </div>
-                  <div className="flex w-full max-w-[11rem] flex-col items-stretch gap-1.5">
+                  <div className="flex w-full min-w-0 flex-col items-stretch gap-1.5">
                     <span className="inline-flex w-full items-center justify-center rounded-full border border-sky-500/35 bg-sky-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-sky-200">
                       Convite
                     </span>
@@ -150,49 +150,42 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                       <span className="truncate">{c.esporteNome}</span>
                     </span>
                   </div>
-                  <p className="text-[10px] leading-snug text-eid-text-secondary">
+                  <p className="w-full text-center text-[10px] leading-snug text-eid-text-secondary">
                     Convite para integrar{" "}
                     <span className="font-semibold text-eid-fg">{c.equipeNome}</span>
                   </p>
                 </div>
 
-                <div className="flex min-w-0 flex-col items-end px-2 pb-3 pt-1 sm:px-3">
-                  <p className="flex w-full items-center justify-end gap-1 text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">
+                <div className="flex min-w-0 w-full flex-col items-center px-1.5 pb-3 pt-0 sm:px-2">
+                  <p className="flex w-full min-w-0 items-center justify-end gap-1 whitespace-nowrap px-0.5 text-[9px] font-black uppercase leading-none tracking-[0.05em] text-amber-200/90 sm:text-[10px] sm:tracking-[0.07em]">
                     <User className="h-3 w-3 shrink-0 text-amber-200/90" aria-hidden />
-                    Convidante
+                    Convidado por
                   </p>
                   <ProfileEditDrawerTrigger
-                    href={`/perfil/${c.convidanteId}?from=/comunidade`}
-                    title={c.convidanteNome}
+                    href={`/perfil/${c.convidadoPorUsuarioId}?from=/comunidade`}
+                    title={c.convidadoPorNome}
                     fullscreen
                     topMode="backOnly"
-                    className="mt-1 block w-fit max-w-full rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                    className="mt-0.5 block w-full rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
                   >
-                    <div className="flex w-full flex-col items-end gap-2 px-0.5 py-1">
-                      <div className="flex w-full items-start justify-end gap-2.5">
-                        <div className="min-w-0 flex-1 pt-0.5 text-right">
-                          <p className="truncate text-[11px] font-black text-eid-fg">{c.convidantePrimeiroNome}</p>
-                          {c.convidanteUsername ? (
-                            <p className="mt-0.5 truncate text-[9px] font-semibold text-eid-primary-300">
-                              {c.convidanteUsername}
-                            </p>
-                          ) : null}
-                        </div>
-                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
-                          {c.convidanteAvatarUrl ? (
-                            <Image src={c.convidanteAvatarUrl} alt="" fill unoptimized className="object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                              {(c.convidanteNome ?? "?").slice(0, 1).toUpperCase()}
-                            </div>
-                          )}
-                        </div>
+                    <div className="flex w-full flex-col items-center gap-1.5 px-0.5 pb-0 pt-0">
+                      <div className="min-w-0 w-full text-center">
+                        <p className="truncate text-[11px] font-black text-eid-fg">{c.convidadoPorPrimeiroNome}</p>
+                      </div>
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+                        {c.convidadoPorAvatarUrl ? (
+                          <Image src={c.convidadoPorAvatarUrl} alt="" fill unoptimized className="object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                            {(c.convidadoPorNome ?? "?").slice(0, 1).toUpperCase()}
+                          </div>
+                        )}
                       </div>
                       <EidCityState
-                        location={c.convidanteLocalizacao}
+                        location={c.convidadoPorLocalizacao}
                         compact
-                        align="end"
-                        className="w-full max-w-[10rem]"
+                        align="center"
+                        className="w-full min-w-0"
                       />
                     </div>
                   </ProfileEditDrawerTrigger>

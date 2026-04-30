@@ -172,7 +172,7 @@ function ComunidadeQuadro({
     <details
       id={id}
       open
-      className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-2.5 [&_summary::-webkit-details-marker]:hidden"
+      className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 px-1 py-2 sm:px-1.5 sm:py-2.5 [&_summary::-webkit-details-marker]:hidden"
     >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
         <h3 className="text-[11px] font-black tracking-tight text-eid-fg">{title}</h3>
@@ -808,13 +808,12 @@ export default async function ComunidadePage() {
           : null,
       esporteNome: esp?.nome ?? "Esporte",
       criadoEm: String((c as { criado_em?: string | null }).criado_em ?? new Date().toISOString()),
-      convidanteId: inviterId,
-      convidanteNome: invNome,
-      convidantePrimeiroNome: primeiroNome(invNome),
-      convidanteUsername: inv?.username?.trim() ? `@${inv.username.trim()}` : null,
-      convidanteAvatarUrl: inv?.avatar_url ?? null,
-      convidanteLocalizacao: inv?.localizacao ?? null,
-      convidadoPor: invNome,
+      convidadoPorUsuarioId: inviterId,
+      convidadoPorNome: invNome,
+      convidadoPorPrimeiroNome: primeiroNome(invNome),
+      convidadoPorUsername: inv?.username?.trim() ? `@${inv.username.trim()}` : null,
+      convidadoPorAvatarUrl: inv?.avatar_url ?? null,
+      convidadoPorLocalizacao: inv?.localizacao ?? null,
     };
   });
   const { data: convitesEnviados } = await supabase
@@ -1375,7 +1374,7 @@ export default async function ComunidadePage() {
       data-eid-comunidade-panel
       data-eid-touch-ui
       data-eid-touch-ui-compact="true"
-      className="mx-auto w-full max-w-lg px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+      className="mx-auto w-full max-w-3xl px-2.5 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-6xl sm:px-5 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
       <section className="overflow-hidden rounded-[16px] border border-[color:var(--eid-border-subtle)] bg-eid-card px-2.5 py-2.5 shadow-[0_10px_26px_-20px_rgba(15,23,42,0.38)] sm:px-3 sm:py-3">
         <div className="flex items-start justify-between gap-2">
@@ -1617,7 +1616,7 @@ export default async function ComunidadePage() {
                 Formações
               </span>
             </div>
-            <div className="px-3 py-2.5 md:px-4 md:py-3">
+            <div className="px-2 py-2.5 md:px-3 md:py-3">
             <div className="space-y-3">
               <ComunidadeQuadro id="equipe-sugestoes" title="Sugestões da equipe (liderança)" hasPending={sugestoesItems.length > 0}>
                 <ComunidadeSugestoesMatch items={sugestoesItems} />
