@@ -223,6 +223,14 @@ export function RealtimePageRefresh({ userId }: Props) {
           )
           .subscribe()
       );
+      // Fallback global para garantir refresh imediato do painel social
+      // quando filtros por owner/time não forem avaliados como esperado.
+      register(
+        supabase
+          .channel(`eid-refresh-cand-all-${channelTag}`)
+          .on("postgres_changes", { event: "*", schema: "public", table: "time_candidaturas" }, refresh)
+          .subscribe()
+      );
       if (ownedFilter) {
         register(
           supabase

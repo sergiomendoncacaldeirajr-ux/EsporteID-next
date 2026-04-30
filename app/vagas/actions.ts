@@ -171,31 +171,10 @@ export async function cancelarCandidaturaAction(
     : null;
   const timeId = Number((rowMeta as { time_id?: number | null } | null)?.time_id ?? 0);
   if (Number.isFinite(timeId) && timeId > 0 && team?.criador_id) {
-    // Remove notificações pendentes do pedido original para os dois lados.
-    await supabase
-      .from("notificacoes")
-      .delete()
-      .eq("tipo", "candidatura_time")
-      .eq("referencia_id", timeId)
-      .eq("usuario_id", team.criador_id)
-      .eq("remetente_id", user.id);
-    await supabase
-      .from("notificacoes")
-      .delete()
-      .eq("tipo", "candidatura_time")
-      .eq("referencia_id", timeId)
-      .eq("usuario_id", user.id)
-      .eq("remetente_id", team.criador_id);
-  }
-  if (team?.criador_id) {
-    await supabase.from("notificacoes").insert({
-      usuario_id: team.criador_id,
-      remetente_id: user.id,
-      mensagem: `Candidatura cancelada em "${team.nome ?? "sua formação"}".`,
-      tipo: "candidatura_time",
-      referencia_id: candidaturaId,
-      lida: false,
-      data_criacao: new Date().toISOString(),
+    await supabase.rpc("limpar_notificacoes_candidatura_time", {
+      p_time_id: timeId,
+      p_candidato_id: user.id,
+      p_lider_id: team.criador_id,
     });
   }
 
@@ -290,23 +269,11 @@ export async function responderCandidaturaAction(
     .eq("id", candidaturaId);
   if (updateErr) return { ok: false, message: updateErr.message };
 
-  // Limpa notificações pendentes do pedido original para ambos os lados:
-  // - líder (recebeu "novo pedido para entrar")
-  // - candidato (recebeu "você enviou pedido")
-  await supabase
-    .from("notificacoes")
-    .delete()
-    .eq("tipo", "candidatura_time")
-    .eq("referencia_id", row.time_id)
-    .eq("usuario_id", user.id)
-    .eq("remetente_id", row.candidato_usuario_id);
-  await supabase
-    .from("notificacoes")
-    .delete()
-    .eq("tipo", "candidatura_time")
-    .eq("referencia_id", row.time_id)
-    .eq("usuario_id", row.candidato_usuario_id)
-    .eq("remetente_id", user.id);
+  await supabase.rpc("limpar_notificacoes_candidatura_time", {
+    p_time_id: row.time_id,
+    p_candidato_id: row.candidato_usuario_id,
+    p_lider_id: user.id,
+  });
 
   const { data: notifResposta } = await supabase
     .from("notificacoes")
