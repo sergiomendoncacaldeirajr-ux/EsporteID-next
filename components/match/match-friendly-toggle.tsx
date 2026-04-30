@@ -1,6 +1,6 @@
 "use client";
 
-import { Handshake } from "lucide-react";
+import { Handshake, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { setViewerDisponivelAmistoso } from "@/app/match/actions";
 import {
@@ -35,6 +35,8 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
   const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [pending, startTransition] = useTransition();
+  const [showFirstUsePrompt, setShowFirstUsePrompt] = useState(false);
+  const [pendingFirstUseActivate, setPendingFirstUseActivate] = useState(false);
 
   useEffect(() => {
     onStateChange?.(initialOn);
@@ -79,12 +81,7 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
   const effectiveOn = on && !isExpired;
   const effectiveExpiresAt = effectiveOn ? expiresAt : null;
 
-  function toggle(next: boolean) {
-    if (next && !amistoso4hFirstUseWarningJaAceito()) {
-      const ok = window.confirm(`${AMISTOSO_4H_AVISO_TEXTO}\n\nLigar o modo amistoso agora?`);
-      if (!ok) return;
-      marcarAmistoso4hFirstUseWarningAceito();
-    }
+  function applyToggle(next: boolean) {
     setOn(next);
     setExpiresAt(next ? new Date(Date.now() + AMISTOSO_DURACAO_MS).toISOString() : null);
     onStateChange?.(next);
@@ -95,7 +92,16 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
         setExpiresAt(null);
         onStateChange?.(!next);
       }
+      setPendingFirstUseActivate(false);
     });
+  }
+
+  function toggle(next: boolean) {
+    if (next && !amistoso4hFirstUseWarningJaAceito()) {
+      setShowFirstUsePrompt(true);
+      return;
+    }
+    applyToggle(next);
   }
 
   const restanteMs = effectiveOn && effectiveExpiresAt ? new Date(effectiveExpiresAt).getTime() - nowMs : 0;
@@ -108,7 +114,7 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
   return (
     <button
       type="button"
-      disabled={pending}
+      disabled={pending || pendingFirstUseActivate}
       onClick={() => toggle(!effectiveOn)}
       title={titleHint}
       aria-pressed={effectiveOn}
@@ -127,7 +133,7 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
         aria-hidden
       />
       <span className="min-w-0 flex-1 whitespace-nowrap">
-        {pending ? (
+        {pending || pendingFirstUseActivate ? (
           <span>Aguarde…</span>
         ) : effectiveOn ? (
           <span>Amistoso ativo</span>
@@ -135,6 +141,41 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
           <span>Amistoso off</span>
         )}
       </span>
+      {showFirstUsePrompt ? (
+        <span className="absolute inset-x-0 top-[calc(100%+6px)] z-20 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-2 text-left shadow-[0_14px_28px_-20px_rgba(2,6,23,0.9)]">
+          <span className="block text-[9px] font-semibold normal-case leading-relaxed tracking-normal text-eid-text-secondary">
+            {AMISTOSO_4H_AVISO_TEXTO}
+          </span>
+          <span className="mt-2 flex items-center justify-end gap-1.5">
+            <button
+              type="button"
+              className="rounded-md border border-[color:var(--eid-border-subtle)] px-2 py-1 text-[8px] font-bold uppercase tracking-[0.06em] text-eid-text-secondary"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (pendingFirstUseActivate) return;
+                setShowFirstUsePrompt(false);
+              }}
+            >
+              Não
+            </button>
+            <button
+              type="button"
+              className="inline-flex min-w-[72px] items-center justify-center gap-1 rounded-md border border-emerald-400/35 bg-emerald-500/12 px-2 py-1 text-[8px] font-bold uppercase tracking-[0.06em] text-emerald-300"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (pendingFirstUseActivate) return;
+                setPendingFirstUseActivate(true);
+                marcarAmistoso4hFirstUseWarningAceito();
+                setShowFirstUsePrompt(false);
+                applyToggle(true);
+              }}
+            >
+              {pendingFirstUseActivate ? <Loader2 className="h-2.5 w-2.5 animate-spin" aria-hidden /> : null}
+              {pendingFirstUseActivate ? "Ligando..." : "Sim"}
+            </button>
+          </span>
+        </span>
+      ) : null}
     </button>
   );
 }

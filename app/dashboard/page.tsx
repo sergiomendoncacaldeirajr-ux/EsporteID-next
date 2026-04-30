@@ -15,6 +15,7 @@ import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-fea
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { EidSectionInfo } from "@/components/ui/eid-section-info";
 import { EidSealPill } from "@/components/ui/eid-seal-pill";
+import { FindChallengeCta } from "@/components/dashboard/find-challenge-cta";
 
 export const metadata = {
   title: "Painel",
@@ -741,13 +742,7 @@ export default async function DashboardPage({ searchParams }: Props) {
             <MatchIdadeGateBanner gate={matchIdadeGate} />
           </div>
 
-          <a
-            href={matchHref}
-            className="eid-btn-dashboard-cta relative mt-3 flex w-full items-center justify-center gap-2.5 rounded-xl sm:mt-4"
-          >
-            <IconBolt className="h-5 w-5 shrink-0 text-white drop-shadow-sm" />
-            Encontrar desafio
-          </a>
+          <FindChallengeCta href={matchHref} />
         </div>
 
         <nav aria-label="Atalhos do app" className={`${dashboardAppNavClass} mt-4 sm:mt-5`}>
@@ -845,9 +840,12 @@ export default async function DashboardPage({ searchParams }: Props) {
                 principal e proximidade.
               </EidSectionInfo>
             </div>
-            <a href={matchHref} className={sectionActionClass}>
-              Ver todos
-            </a>
+            <FindChallengeCta
+              href={matchHref}
+              label="Ver todos"
+              pendingLabel="Encontrando..."
+              className={sectionActionClass}
+            />
           </div>
           <div className={dashboardSectionBody}>
           {atletaMaisProximo || duplaMaisProxima || timeMaisProximo ? (

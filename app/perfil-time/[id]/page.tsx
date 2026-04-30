@@ -105,6 +105,10 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   const torneioNomeMap = await mapTorneioNomes(supabase, partidasColetivas);
   const nomeOponenteMap = await mapNomesTimesAdversarios(supabase, id, partidasColetivas);
   const bundleResultados = buildFormacaoResultadosPerfil(partidasColetivas, id, nomeOponenteMap, torneioNomeMap);
+  const vitoriasTime = Number(bundleResultados.totais.vitorias ?? 0);
+  const derrotasTime = Number(bundleResultados.totais.derrotas ?? 0);
+  const jogosTime = vitoriasTime + derrotasTime;
+  const winRateTime = jogosTime > 0 ? Math.round((vitoriasTime / jogosTime) * 100) : null;
 
   const { data: hist } = await supabase
     .from("historico_eid_coletivo")
@@ -325,6 +329,24 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           </div>
           {isLeader ? <FormacaoCidadeAvisoLider timeId={id} /> : null}
           {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary sm:mt-3">{t.bio}</p> : null}
+          <div className="mt-4 grid grid-cols-4 divide-x divide-[color:var(--eid-border-subtle)] rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card text-center shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+            <div className="py-2">
+              <p className="text-sm font-black text-eid-fg">{vitoriasTime}</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vitórias</p>
+            </div>
+            <div className="py-2">
+              <p className="text-sm font-black text-eid-fg">{derrotasTime}</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Derrotas</p>
+            </div>
+            <div className="py-2">
+              <p className="text-sm font-black text-eid-action-500">{winRateTime != null ? `${winRateTime}%` : "—"}</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Win Rate</p>
+            </div>
+            <div className="py-2">
+              <p className="text-sm font-black text-eid-primary-400">{jogosTime}</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Jogos</p>
+            </div>
+          </div>
 
           {criador ? (
             <div className="mt-4 flex w-full min-w-0 flex-col items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2.5">
@@ -531,8 +553,8 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           </ProfileSection>
 
           <ProfileSection
-            title="Resultados"
-            info="Resumo de vitórias, derrotas e empates do time em partidas registradas."
+            title="Histórico de confrontos"
+            info="Mesmo padrão do perfil de atleta: totais de vitórias/derrotas/empates e lista dos confrontos da formação."
           >
             <ProfileFormacaoResultados
               totais={bundleResultados.totais}

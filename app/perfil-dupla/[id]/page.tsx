@@ -107,6 +107,10 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   const bundleResultadosDupla = timeResolvidoId
     ? buildFormacaoResultadosPerfil(partidasColetivasDupla, timeResolvidoId, nomeOponenteDupla, torneioNomeDupla)
     : { items: [], totais: { vitorias: 0, derrotas: 0, empates: 0, rank: 0, torneio: 0 } };
+  const vitoriasDupla = Number(bundleResultadosDupla.totais.vitorias ?? 0);
+  const derrotasDupla = Number(bundleResultadosDupla.totais.derrotas ?? 0);
+  const jogosDupla = vitoriasDupla + derrotasDupla;
+  const winRateDupla = jogosDupla > 0 ? Math.round((vitoriasDupla / jogosDupla) * 100) : null;
 
   const { data: eidLogsDupla } = timeResolvidoId
     ? await supabase
@@ -299,14 +303,9 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
     .maybeSingle();
 
   const esp = Array.isArray(d.esportes) ? d.esportes[0] : d.esportes;
-  const mediaEid =
-    eid1?.nota_eid != null && eid2?.nota_eid != null
-      ? (Number(eid1.nota_eid) + Number(eid2.nota_eid)) / 2
-      : null;
-  const rankTotal = Number(eid1?.pontos_ranking ?? 0) + Number(eid2?.pontos_ranking ?? 0);
   const conquistas: string[] = [];
-  if ((mediaEid ?? 0) >= 7) conquistas.push("Dupla Elite");
-  if (rankTotal >= 1200) conquistas.push("Rank Forte");
+  if ((Number(timeResolvido?.eid_time ?? 0) ?? 0) >= 7) conquistas.push("Dupla Elite");
+  if (Number(timeResolvido?.pontos_ranking ?? 0) >= 1200) conquistas.push("Rank Forte");
   if ((p1?.id ? 1 : 0) + (p2?.id ? 1 : 0) === 2) conquistas.push("Dupla Completa");
 
   const fromPublicDupla = `/perfil-dupla/${id}`;
@@ -364,6 +363,24 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
           </div>
           {isDonoDupla && timeResolvidoId ? <FormacaoCidadeAvisoLider timeId={timeResolvidoId} /> : null}
           {d.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary sm:mt-3">{d.bio}</p> : null}
+          <div className="mt-4 grid grid-cols-4 divide-x divide-[color:var(--eid-border-subtle)] rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card text-center shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+            <div className="py-2">
+              <p className="text-sm font-black text-eid-fg">{vitoriasDupla}</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vitórias</p>
+            </div>
+            <div className="py-2">
+              <p className="text-sm font-black text-eid-fg">{derrotasDupla}</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Derrotas</p>
+            </div>
+            <div className="py-2">
+              <p className="text-sm font-black text-eid-action-500">{winRateDupla != null ? `${winRateDupla}%` : "—"}</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Win Rate</p>
+            </div>
+            <div className="py-2">
+              <p className="text-sm font-black text-eid-primary-400">{jogosDupla}</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Jogos</p>
+            </div>
+          </div>
           {liderDupla ? (
             <div className="mt-4 flex w-full min-w-0 justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2.5">
               <Link
@@ -553,19 +570,6 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                 <p className="text-xs text-eid-text-secondary">
                   Ainda não há <strong className="text-eid-fg">time de dupla ativo</strong> no ranking com estes dois atletas. O EID de equipe aparece quando a formação existir no radar.
                 </p>
-                {mediaEid != null ? (
-                  <div className="mt-3">
-                    <ProfileSportsMetricsCard
-                      sportName={esp?.nome ?? "Esporte"}
-                      eidValue={mediaEid}
-                      rankValue={rankTotal}
-                      eidLabel="EID médio (atletas)"
-                      rankLabel="Soma pontos individuais"
-                      trendLabel="Referência"
-                      trendPoints={[mediaEid, mediaEid + 0.05, mediaEid + 0.1]}
-                    />
-                  </div>
-                ) : null}
                 {d.esporte_id ? (
                   <ProfileEditDrawerTrigger
                     href={`/perfil-dupla/${id}/eid/${d.esporte_id}?from=${encodeURIComponent(fromPublicDupla)}`}
@@ -587,8 +591,8 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
           </ProfileSection>
 
           <ProfileSection
-            title="Resultados"
-            info="Resumo de vitórias, derrotas e empates da formação em partidas registradas."
+            title="Histórico de confrontos"
+            info="Mesmo padrão do perfil de atleta: totais de vitórias/derrotas/empates e lista dos confrontos da formação."
           >
             {timeResolvidoId ? (
               <ProfileFormacaoResultados
