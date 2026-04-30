@@ -83,6 +83,7 @@ export function RealtimePageRefresh({ userId }: Props) {
     const supabase = createClient();
     let cancelled = false;
     const channels: RealtimeChannel[] = [];
+    let candidaturasPollId: number | null = null;
 
     const register = (ch: RealtimeChannel) => {
       if (cancelled) {
@@ -98,6 +99,17 @@ export function RealtimePageRefresh({ userId }: Props) {
       if (path.startsWith("/registrar-placar/")) return true;
       const frame = document.querySelector('iframe[src*="/registrar-placar/"]');
       return Boolean(frame);
+    };
+
+    const isInteractionRealtimePath = () => {
+      const p = String(pathname ?? "");
+      return (
+        p.startsWith("/comunidade") ||
+        p.startsWith("/vagas") ||
+        p.startsWith("/perfil-time/") ||
+        p.startsWith("/perfil-dupla/") ||
+        p.startsWith("/times")
+      );
     };
 
     const refresh = () => {
@@ -371,11 +383,58 @@ export function RealtimePageRefresh({ userId }: Props) {
           )
           .subscribe()
       );
+
+      // Fallback robusto: se publicação realtime de `time_candidaturas` falhar/atrasar,
+      // detecta mudança de assinatura e atualiza apenas quando realmente mudou.
+      const buildCandidaturaSignature = async () => {
+        const [candMine, candOwned] = await Promise.all([
+          supabase
+            .from("time_candidaturas")
+            .select("id, atualizado_em, status")
+            .eq("candidato_usuario_id", userId)
+            .order("atualizado_em", { ascending: false })
+            .limit(1),
+          ownedIds.length > 0
+            ? supabase
+                .from("time_candidaturas")
+                .select("id, atualizado_em, status")
+                .in("time_id", ownedIds.slice(0, 100))
+                .order("atualizado_em", { ascending: false })
+                .limit(1)
+            : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
+        ]);
+        const m = (candMine.data?.[0] ?? null) as { id?: number; atualizado_em?: string; status?: string } | null;
+        const o = (candOwned.data?.[0] ?? null) as { id?: number; atualizado_em?: string; status?: string } | null;
+        return [
+          String(m?.id ?? 0),
+          String(m?.atualizado_em ?? ""),
+          String(m?.status ?? ""),
+          String(o?.id ?? 0),
+          String(o?.atualizado_em ?? ""),
+          String(o?.status ?? ""),
+        ].join("|");
+      };
+
+      if (isInteractionRealtimePath()) {
+        let lastSig = await buildCandidaturaSignature();
+        candidaturasPollId = window.setInterval(async () => {
+          if (cancelled) return;
+          if (document.visibilityState !== "visible") return;
+          if (!isInteractionRealtimePath()) return;
+          if (shouldPauseAutoRefresh()) return;
+          const nextSig = await buildCandidaturaSignature();
+          if (nextSig !== lastSig) {
+            lastSig = nextSig;
+            refreshForced();
+          }
+        }, 1800);
+      }
     })();
 
     return () => {
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisibility);
+      if (candidaturasPollId != null) window.clearInterval(candidaturasPollId);
       channels.forEach((c) => void supabase.removeChannel(c));
     };
   }, [router, userId, pathname, elencoVersion]);
