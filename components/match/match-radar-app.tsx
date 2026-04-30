@@ -16,6 +16,7 @@ import {
   isMatchChallengeBlockedByMissingFormation,
   MatchChallengeAction,
   MatchChallengeMissingFormationPrompt,
+  type DesafioVariant,
 } from "@/components/match/match-challenge-action";
 import { MatchRankingRulesModal } from "@/components/match/match-ranking-rules-modal";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
@@ -39,10 +40,19 @@ function compactCardName(fullName: string) {
   return parts[0] ?? "—";
 }
 
+function sortIndividualCardsForGroup(cards: MatchRadarCard[]) {
+  return [...cards].sort((a, b) => {
+    if (b.rank !== a.rank) return b.rank - a.rank;
+    if (b.eid !== a.eid) return b.eid - a.eid;
+    return a.esporteNome.localeCompare(b.esporteNome, "pt-BR");
+  });
+}
+
 /** Mini card (grade tela cheia): botão Desafio na coluna do nome; aviso “criar dupla/time” full-width. */
 function MatchRadarGridMiniChallengeBlock({
   card,
   desafioHref,
+  desafioVariants,
   nomeCurto,
   avatarColumn,
   viewerEsportesComDupla,
@@ -50,6 +60,7 @@ function MatchRadarGridMiniChallengeBlock({
 }: {
   card: MatchRadarCard;
   desafioHref: string;
+  desafioVariants?: DesafioVariant[];
   nomeCurto: string;
   avatarColumn: ReactNode;
   viewerEsportesComDupla: readonly number[];
@@ -78,6 +89,7 @@ function MatchRadarGridMiniChallengeBlock({
           <MatchChallengeAction
             modalidade={card.modalidade}
             desafioHref={desafioHref}
+            desafioVariants={desafioVariants}
             className="eid-btn-match-cta mt-1 inline-flex min-h-[20px] w-full items-center justify-center rounded-md px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.03em]"
             title="Solicitar desafio"
             viewerEsportesComDupla={viewerEsportesComDupla}
@@ -161,6 +173,8 @@ type Props = {
   showSentBanner: boolean;
   viewerEsportesComDupla: number[];
   viewerEsportesComTime: number[];
+  /** Esportes em que o viewer tem confronto na modalidade individual (`usuario_eid.modalidades_match`). */
+  viewerEsportesIndividual: number[];
 };
 
 const RAII = [10, 30, 50, 100] as const;
@@ -198,6 +212,7 @@ export function MatchRadarApp({
   showSentBanner,
   viewerEsportesComDupla,
   viewerEsportesComTime,
+  viewerEsportesIndividual,
 }: Props) {
   const [tipo, setTipo] = useState<RadarTipo>(initialTipo);
   const [sortBy, setSortBy] = useState<SortBy>(initialSortBy);
@@ -381,8 +396,22 @@ export function MatchRadarApp({
     [tipo, sortBy, raio, esporte, finalidade, runRefresh, runRefreshFull, syncUrl, viewMode]
   );
 
+  const esporteOptions = useMemo(() => {
+    const allowed =
+      tipo === "atleta"
+        ? new Set(viewerEsportesIndividual.map(String))
+        : tipo === "dupla"
+          ? new Set(viewerEsportesComDupla.map(String))
+          : new Set(viewerEsportesComTime.map(String));
+    const list = esportes.filter((e) => allowed.has(String(e.id)));
+    return [{ id: "all", nome: "Todos" }, ...list.map((e) => ({ id: String(e.id), nome: e.nome ?? "" }))];
+  }, [esportes, tipo, viewerEsportesIndividual, viewerEsportesComDupla, viewerEsportesComTime]);
 
-  const esporteOptions = useMemo(() => [{ id: "all", nome: "Todos" }, ...esportes.map((e) => ({ id: String(e.id), nome: e.nome ?? "" }))], [esportes]);
+  useEffect(() => {
+    if (esporte === "all") return;
+    const ok = esporteOptions.some((o) => String(o.id) === String(esporte));
+    if (!ok) applyFilters({ esporte: "all" });
+  }, [tipo, esporte, esporteOptions, applyFilters]);
 
   const esporteNomeResumo = useMemo(() => {
     const row = esporteOptions.find((e) => String(e.id) === String(esporte));
@@ -548,13 +577,33 @@ export function MatchRadarApp({
     return ordered;
   }, [fullOrderedCards, isFullView, esporte]);
   const gridCardsWithoutDuplicates = useMemo(() => {
-    const byKey = new Map<string, MatchRadarCard>();
-    for (const card of cardsFiltradosGeneroChallengeable) {
-      const key = `${card.modalidade}:${card.id}:${card.esporteId}`;
-      if (!byKey.has(key)) byKey.set(key, card);
+    if (tipo !== "atleta") {
+      const byKey = new Map<string, MatchRadarCard>();
+      for (const card of cardsFiltradosGeneroChallengeable) {
+        const key = `${card.modalidade}:${card.id}:${card.esporteId}`;
+        if (!byKey.has(key)) byKey.set(key, card);
+      }
+      return Array.from(byKey.values());
     }
-    return Array.from(byKey.values());
-  }, [cardsFiltradosGeneroChallengeable]);
+    const byUser = new Map<string, MatchRadarCard[]>();
+    for (const card of cardsFiltradosGeneroChallengeable) {
+      if (card.modalidade !== "individual") continue;
+      const list = byUser.get(card.id) ?? [];
+      list.push(card);
+      byUser.set(card.id, list);
+    }
+    const mergedIndividuals: MatchRadarCard[] = [];
+    for (const arr of byUser.values()) {
+      const sorted = sortIndividualCardsForGroup(arr);
+      const base = sorted[0]!;
+      mergedIndividuals.push(
+        sorted.length === 1
+          ? { ...base, groupedIndividualSports: undefined }
+          : { ...base, groupedIndividualSports: sorted.slice(1) }
+      );
+    }
+    return mergedIndividuals;
+  }, [cardsFiltradosGeneroChallengeable, tipo]);
   const visibleCards = isFullView ? fullOrderedChallengeableCards : gridCardsWithoutDuplicates;
   const fullCardGroups = useMemo(() => {
     if (!isFullView) return [];
@@ -1063,6 +1112,22 @@ export function MatchRadarApp({
                 const cardFinalidade =
                   c.modalidade !== "individual" ? "ranking" : c.interesseMatch === "amistoso" ? "amistoso" : "ranking";
                 const desafioHref = `/desafio?id=${encodeURIComponent(c.id)}&tipo=${encodeURIComponent(c.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(cardFinalidade)}`;
+                const desafioVariantsMini: DesafioVariant[] | undefined =
+                  c.modalidade === "individual" && group.entries.length > 1
+                    ? group.entries.map((row) => {
+                        const fin =
+                          row.modalidade !== "individual"
+                            ? "ranking"
+                            : row.interesseMatch === "amistoso"
+                              ? "amistoso"
+                              : "ranking";
+                        const esp = row.esporteId > 0 ? String(row.esporteId) : esporte;
+                        return {
+                          href: `/desafio?id=${encodeURIComponent(row.id)}&tipo=${encodeURIComponent(row.modalidade)}&esporte=${encodeURIComponent(esp)}&finalidade=${encodeURIComponent(fin)}`,
+                          label: row.esporteNome,
+                        };
+                      })
+                    : undefined;
                 const nomeCurto = compactCardName(c.nome);
                 const modalidadeLabel = c.modalidade === "individual" ? "Individual" : c.modalidade === "dupla" ? "Dupla" : "Time";
                 const esporteIdStats = /^\d+$/.test(esporteParam) ? Number(esporteParam) : c.esporteId;
@@ -1130,6 +1195,7 @@ export function MatchRadarApp({
                     <MatchRadarGridMiniChallengeBlock
                       card={c}
                       desafioHref={desafioHref}
+                      desafioVariants={desafioVariantsMini}
                       nomeCurto={nomeCurto}
                       avatarColumn={avatarColumn}
                       viewerEsportesComDupla={viewerEsportesComDupla}
@@ -1190,12 +1256,19 @@ export function MatchRadarApp({
       {!isFullView ? (
         <div className="mt-4 flex items-center justify-center gap-1.5 text-center text-[10px] leading-relaxed text-eid-text-secondary">
           <span>
-            O esporte do confronto é o selecionado acima em{" "}
-            <span className="font-semibold text-eid-fg/90">Esporte</span>.
+            O contexto do esporte vem do filtro{" "}
+            <span className="font-semibold text-eid-fg/90">Esporte</span> acima. No{" "}
+            <span className="font-semibold text-eid-fg/90">individual</span>, se o mesmo atleta aparecer em mais de um
+            esporte, toque em <span className="font-semibold text-eid-fg/90">Desafio</span> e escolha o esporte no painel
+            que abrir.
           </span>
           <EidSectionInfo sectionLabel="Informações do radar de desafio">
-            O esporte do confronto é o selecionado acima em Esporte (se você tem mais de um EID, troque o chip antes de
-            solicitar). Preferência de jogo e privacidade no{" "}
+            O chip <span className="font-semibold text-eid-fg">Esporte</span> limita a lista ao confronto desejado (em{" "}
+            <span className="font-semibold text-eid-fg">individual</span>, <span className="font-semibold text-eid-fg">dupla</span> ou{" "}
+            <span className="font-semibold text-eid-fg">time</span> só entram esportes em que você disputa naquela modalidade).
+            Se um atleta estiver em mais de um esporte no ranking individual, o cartão mostra todos; ao tocar em{" "}
+            <span className="font-semibold text-eid-fg">Desafio</span>, abre um seletor para definir em qual esporte será o
+            desafio. Preferência de jogo e privacidade no{" "}
             <Link
               href="/conta/perfil"
               className="font-semibold text-eid-primary-400 underline-offset-2 transition hover:text-eid-primary-300 hover:underline"

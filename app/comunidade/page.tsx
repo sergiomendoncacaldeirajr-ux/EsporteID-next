@@ -37,6 +37,7 @@ import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/li
 import { getSystemFeatureConfig, SYSTEM_FEATURE_LABEL, type SystemFeatureKey } from "@/lib/system-features";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { createClient } from "@/lib/supabase/server";
+import { ModalidadeGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { marcarTodasNotificacoesLidas } from "./actions";
 import type { ReactNode } from "react";
 
@@ -886,10 +887,36 @@ export default async function ComunidadePage() {
   });
   const { data: minhasCandidaturasRaw } = await supabase
     .from("time_candidaturas")
-    .select("id, time_id, status, mensagem, criado_em, respondido_em, times(id, nome, tipo)")
+    .select("id, time_id, status, mensagem, criado_em, respondido_em, times(id, nome, tipo, esporte_id)")
     .eq("candidato_usuario_id", user.id)
     .order("criado_em", { ascending: false })
     .limit(60);
+  const minhasCandEsporteIds = [
+    ...new Set(
+      (minhasCandidaturasRaw ?? [])
+        .map((raw) => {
+          const r = raw as {
+            times?:
+              | { esporte_id?: number | null }
+              | Array<{ esporte_id?: number | null }>;
+          };
+          const tm = Array.isArray(r.times) ? r.times[0] : r.times;
+          return Number(tm?.esporte_id ?? 0);
+        })
+        .filter((id) => Number.isFinite(id) && id > 0)
+    ),
+  ];
+  const { data: minhasCandEidRows } =
+    minhasCandEsporteIds.length > 0
+      ? await supabase
+          .from("usuario_eid")
+          .select("esporte_id, nota_eid")
+          .eq("usuario_id", user.id)
+          .in("esporte_id", minhasCandEsporteIds)
+      : { data: [] as { esporte_id: number; nota_eid: number | null }[] };
+  const minhasCandEidMap = new Map(
+    (minhasCandEidRows ?? []).map((r) => [Number(r.esporte_id), Number(r.nota_eid ?? 0)])
+  );
   const minhasCandidaturasEquipe = (minhasCandidaturasRaw ?? []).map((raw) => {
     const row = raw as {
       id: number;
@@ -898,7 +925,9 @@ export default async function ComunidadePage() {
       mensagem: string | null;
       criado_em: string;
       respondido_em: string | null;
-      times: { id: number; nome: string | null; tipo: string | null } | { id: number; nome: string | null; tipo: string | null }[];
+      times:
+        | { id: number; nome: string | null; tipo: string | null; esporte_id?: number | null }
+        | { id: number; nome: string | null; tipo: string | null; esporte_id?: number | null }[];
     };
     const team = Array.isArray(row.times) ? row.times[0] : row.times;
     const statusRaw = String(row.status ?? "pendente").trim().toLowerCase();
@@ -916,8 +945,15 @@ export default async function ComunidadePage() {
         : statusLabel === "Recusado" || statusLabel === "Cancelado"
           ? "border-rose-500/35 bg-rose-500/10 text-rose-200"
           : "border-amber-500/35 bg-amber-500/10 text-amber-200";
+    const espId = Number(team?.esporte_id ?? 0);
+    const notaEidMeu = minhasCandEidMap.get(espId) ?? 0;
+    const isDuplaTipo =
+      String(team?.tipo ?? "")
+        .trim()
+        .toLowerCase() === "dupla";
     return {
       id: row.id,
+      timeId: row.time_id,
       statusRaw,
       statusLabel,
       statusClass,
@@ -926,6 +962,10 @@ export default async function ComunidadePage() {
       respondidoEm: row.respondido_em,
       timeNome: team?.nome ?? "Formação",
       timeTipo: String(team?.tipo ?? "time"),
+      isDuplaTipo,
+      notaEidMeu,
+      meuPrimeiroNome: primeiroNome(profile?.nome ?? null),
+      meuAvatarUrl: profile?.avatar_url ?? null,
     };
   });
   const nNotifUnread = uniqueNotificacoesSetor.filter((n) => n.lida !== true).length;
@@ -1530,22 +1570,83 @@ export default async function ComunidadePage() {
                         key={c.id}
                         className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] p-2.5"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold text-eid-fg">{c.timeNome}</p>
-                          {c.statusLabel === "Aprovado" ? (
-                            <EidAcceptedBadge label={c.statusLabel} />
-                          ) : c.statusLabel === "Recusado" || c.statusLabel === "Cancelado" ? (
-                            <EidRejectedBadge label={c.statusLabel} />
-                          ) : (
-                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] ${c.statusClass}`}>
-                              {c.statusLabel}
-                            </span>
-                          )}
+                        <div className="flex gap-3 sm:gap-4">
+                          <div className="min-w-0 flex-1">
+                            {Number.isFinite(c.timeId) && c.timeId > 0 ? (
+                              <Link
+                                href={`/perfil-time/${c.timeId}?from=/comunidade`}
+                                className="block truncate text-sm font-semibold text-eid-fg underline-offset-2 hover:text-eid-primary-300 hover:underline"
+                              >
+                                {c.timeNome}
+                              </Link>
+                            ) : (
+                              <p className="truncate text-sm font-semibold text-eid-fg">{c.timeNome}</p>
+                            )}
+                            <ProfileEditDrawerTrigger
+                              href={`/perfil/${user.id}?from=/comunidade`}
+                              title="Meu perfil"
+                              fullscreen
+                              topMode="backOnly"
+                              className="mt-2 inline-flex max-w-full flex-col items-start rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
+                            >
+                              <p className="max-w-[200px] truncate text-left text-[11px] font-black text-eid-fg">
+                                {c.meuPrimeiroNome}
+                              </p>
+                              <div className="relative mt-1 h-12 w-12 shrink-0 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+                                {c.meuAvatarUrl ? (
+                                  <Image
+                                    src={c.meuAvatarUrl}
+                                    alt=""
+                                    width={48}
+                                    height={48}
+                                    unoptimized
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                                    {(c.meuPrimeiroNome || "?").slice(0, 1).toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="mt-1.5">
+                                <ProfileEidPerformanceSeal notaEid={c.notaEidMeu} compact className="scale-125" />
+                              </div>
+                            </ProfileEditDrawerTrigger>
+                          </div>
+                          <div className="flex shrink-0 flex-col items-end gap-2 text-right">
+                            <div>
+                              {c.statusLabel === "Aprovado" ? (
+                                <EidAcceptedBadge label={c.statusLabel} />
+                              ) : c.statusLabel === "Recusado" || c.statusLabel === "Cancelado" ? (
+                                <EidRejectedBadge label={c.statusLabel} />
+                              ) : (
+                                <span
+                                  className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] ${c.statusClass}`}
+                                >
+                                  {c.statusLabel}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex flex-col items-center gap-1 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2">
+                              <span className="text-eid-primary-400">
+                                <ModalidadeGlyphIcon modalidade={c.isDuplaTipo ? "dupla" : "time"} />
+                              </span>
+                              <span className="text-[9px] font-black uppercase tracking-[0.06em] text-eid-text-secondary">
+                                {c.isDuplaTipo ? "Dupla" : "Time"}
+                              </span>
+                            </div>
+                            <p className="max-w-[9.5rem] text-[10px] leading-snug text-eid-text-secondary sm:max-w-none">
+                              Pedido em{" "}
+                              {new Date(c.criadoEm).toLocaleString("pt-BR", {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
                         </div>
-                        <p className="mt-1 text-xs text-eid-text-secondary">
-                          {c.timeTipo.toLowerCase() === "dupla" ? "Dupla" : "Time"} · pedido em{" "}
-                          {new Date(c.criadoEm).toLocaleString("pt-BR")}
-                        </p>
                         {c.mensagem ? (
                           <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-1.5 text-[10px] italic text-eid-text-secondary">
                             “{c.mensagem}”

@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
+import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
+import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 
 export type RadarTipo = "atleta" | "dupla" | "time";
 export type SortBy = "eid_score" | "match_ranking_points";
@@ -23,6 +25,8 @@ export type MatchRadarCard = {
   disponivelAmistoso: boolean;
   /** Gênero do perfil (quando modalidade individual). */
   genero?: "Masculino" | "Feminino" | "Outro" | null;
+  /** Grade individual: mesmo atleta em mais de um esporte no ranking individual (UI empilha + seletor no desafio). */
+  groupedIndividualSports?: MatchRadarCard[];
 };
 
 type AtletaRow = {
@@ -110,6 +114,10 @@ export async function fetchMatchRadarCards(
       .toLowerCase();
   }
 
+  function isIndividualMatchRow(modalidadeRaw: string | null | undefined): boolean {
+    return norm(modalidadeRaw) === "individual";
+  }
+
   const blockedOpponentUsersByCooldown = new Set<string>();
   if (finalidade === "ranking" && Number.isFinite(esporteId) && Number(esporteId) > 0) {
     const cooldownMeses = await getMatchRankCooldownMeses(supabase);
@@ -147,6 +155,25 @@ export async function fetchMatchRadarCards(
   }
 
   if (tipo === "atleta") {
+    const { data: espRows } = await supabase
+      .from("esportes")
+      .select("id, nome, tipo, permite_individual")
+      .eq("ativo", true)
+      .eq("categoria_processamento", "confronto")
+      .order("ordem", { ascending: true });
+    const esporteIdsRadarIndividual = new Set(
+      (espRows ?? [])
+        .filter((r) => isSportMatchEnabled((r as { nome?: string | null }).nome))
+        .filter((r) =>
+          isEsportePermitidoDesafioPerfilIndividual(
+            (r as { tipo?: string | null }).tipo,
+            (r as { permite_individual?: boolean | null }).permite_individual
+          )
+        )
+        .map((r) => Number((r as { id?: number }).id))
+        .filter((n) => Number.isFinite(n) && n > 0)
+    );
+
     const { data } = await supabase.rpc("buscar_match_atletas", {
       p_viewer_id: viewerId,
       p_lat: lat,
@@ -159,6 +186,8 @@ export async function fetchMatchRadarCards(
     const baseCards: MatchRadarCard[] = ((data ?? []) as AtletaRow[])
       .filter((row) => !activeOpponentIds.has(String(row.usuario_id ?? "")))
       .filter((row) => !blockedOpponentUsersByCooldown.has(String(row.usuario_id ?? "")))
+      .filter((row) => isIndividualMatchRow(row.modalidade_match))
+      .filter((row) => esporteIdsRadarIndividual.has(Number(row.esporte_id ?? 0)))
       .map((row) => {
       return {
         id: String(row.usuario_id),

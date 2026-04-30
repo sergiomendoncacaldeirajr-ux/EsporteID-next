@@ -5,6 +5,7 @@ import { MatchRadarApp } from "@/components/match/match-radar-app";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { getEsportesConfrontoCached } from "@/lib/match/esportes-confronto";
+import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
 import {
   fetchMatchRadarCards,
   type MatchRadarFinalidade,
@@ -158,51 +159,12 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   const esportes = await getEsportesConfrontoCached();
   const esporteIdsDisponiveis = new Set(esportes.map((e) => String(e.id)));
 
-  const { data: meusEidsRows } = await supabase
-    .from("usuario_eid")
-    .select("esporte_id")
-    .eq("usuario_id", user.id)
-    .order("id", { ascending: true });
-  const esportesPerfilConfronto: string[] = [];
-  const seenEidSport = new Set<string>();
-  for (const row of meusEidsRows ?? []) {
-    const sid = String((row as { esporte_id?: number | null }).esporte_id ?? "");
-    if (!sid || !esporteIdsDisponiveis.has(sid)) continue;
-    if (seenEidSport.has(sid)) continue;
-    seenEidSport.add(sid);
-    esportesPerfilConfronto.push(sid);
-  }
-  const esporteDefault =
-    esportesPerfilConfronto[0] ?? (esportes[0] ? String(esportes[0].id) : "all");
-  const esporteSelecionado =
-    esporteParam === "all"
-      ? esporteDefault
-      : esporteIdsDisponiveis.has(esporteParam)
-        ? esporteParam
-        : esporteDefault;
-  const initialEsporteFiltro = esporteParam === "all" ? "all" : esporteSelecionado;
-  const fullRadarEsporteIds =
-    esporteParam === "all"
-      ? esportesPerfilConfronto.length > 0
-        ? esportesPerfilConfronto
-        : esporteDefault !== "all"
-          ? [esporteDefault]
-          : []
-      : [esporteSelecionado];
-  const fullRadarEsporteIdsResolved =
-    fullRadarEsporteIds.length > 0
-      ? fullRadarEsporteIds
-      : /^\d+$/.test(esporteSelecionado)
-        ? [esporteSelecionado]
-        : esportes[0]
-          ? [String(esportes[0].id)]
-          : [];
-  /** No modo tela cheia, sempre busca em todos os esportes do perfil em confronto (chip só filtra a lista na UI). */
-  const fullRadarFetchEsporteIds =
-    esportesPerfilConfronto.length > 0 ? esportesPerfilConfronto : fullRadarEsporteIdsResolved;
-  const initialGeneroFiltro = toGeneroFiltro(sp.genero);
-
-  const [{ data: meusTimesCriados }, { data: minhasMembRows }] = await Promise.all([
+  const [{ data: meusEidsRows }, { data: meusTimesCriados }, { data: minhasMembRows }] = await Promise.all([
+    supabase
+      .from("usuario_eid")
+      .select("esporte_id, modalidades_match")
+      .eq("usuario_id", user.id)
+      .order("id", { ascending: true }),
     supabase.from("times").select("id, tipo, esporte_id").eq("criador_id", user.id),
     supabase
       .from("membros_time")
@@ -236,6 +198,99 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   }
   const viewerEsportesComDuplaDedup = [...new Set(viewerEsportesComDupla)];
   const viewerEsportesComTimeDedup = [...new Set(viewerEsportesComTime)];
+
+  const esportesPerfilConfronto: string[] = [];
+  const viewerEsportesIndividualNums: number[] = [];
+  const seenEidSport = new Set<string>();
+  for (const row of meusEidsRows ?? []) {
+    const sid = String((row as { esporte_id?: number | null }).esporte_id ?? "");
+    if (!sid || !esporteIdsDisponiveis.has(sid)) continue;
+    const mods = (row as { modalidades_match?: string[] | null }).modalidades_match;
+    const hasIndividual =
+      mods == null ||
+      !Array.isArray(mods) ||
+      mods.length === 0 ||
+      mods.some((m) => String(m).trim().toLowerCase() === "individual");
+    if (hasIndividual) {
+      const n = Number(sid);
+      if (Number.isFinite(n) && n > 0) viewerEsportesIndividualNums.push(n);
+    }
+    if (seenEidSport.has(sid)) continue;
+    seenEidSport.add(sid);
+    esportesPerfilConfronto.push(sid);
+  }
+  const viewerEsportesIndividualDedup = [...new Set(viewerEsportesIndividualNums)].filter((id) =>
+    esportes.some((e) => e.id === id && isEsportePermitidoDesafioPerfilIndividual(e.tipo, e.permite_individual))
+  );
+
+  const esporteDefault =
+    tipo === "atleta"
+      ? viewerEsportesIndividualDedup.length > 0
+        ? String(viewerEsportesIndividualDedup[0])
+        : "all"
+      : tipo === "dupla"
+        ? viewerEsportesComDuplaDedup.length > 0
+          ? String(viewerEsportesComDuplaDedup[0])
+          : "all"
+        : viewerEsportesComTimeDedup.length > 0
+          ? String(viewerEsportesComTimeDedup[0])
+          : "all";
+
+  const allowedEsporteIdsForTipo = new Set(
+    (tipo === "atleta"
+      ? viewerEsportesIndividualDedup
+      : tipo === "dupla"
+        ? viewerEsportesComDuplaDedup
+        : viewerEsportesComTimeDedup
+    ).map(String)
+  );
+
+  const esporteSelecionado =
+    esporteParam === "all"
+      ? esporteDefault
+      : esporteIdsDisponiveis.has(esporteParam) &&
+          (allowedEsporteIdsForTipo.size === 0 || allowedEsporteIdsForTipo.has(esporteParam))
+        ? esporteParam
+        : esporteDefault;
+  const initialEsporteFiltro = esporteParam === "all" ? "all" : esporteSelecionado;
+  const fullRadarEsporteIds =
+    esporteParam === "all"
+      ? esportesPerfilConfronto.length > 0
+        ? esportesPerfilConfronto
+        : esporteDefault !== "all"
+          ? [esporteDefault]
+          : []
+      : [esporteSelecionado];
+  const fullRadarEsporteIdsResolved =
+    fullRadarEsporteIds.length > 0
+      ? fullRadarEsporteIds
+      : /^\d+$/.test(esporteSelecionado)
+        ? [esporteSelecionado]
+        : esportes[0]
+          ? [String(esportes[0].id)]
+          : [];
+  const fullRadarUnionNums = [
+    ...new Set([
+      ...viewerEsportesIndividualDedup,
+      ...viewerEsportesComDuplaDedup,
+      ...viewerEsportesComTimeDedup,
+    ]),
+  ];
+  /** Todos os esportes com EID de confronto no perfil (inclui time/dupla só no cadastro EID, ainda sem `times`). */
+  const perfilConfrontoNums = esportesPerfilConfronto
+    .map((id) => Number(id))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  const fullRadarFetchMergedNums = [...new Set([...fullRadarUnionNums, ...perfilConfrontoNums])];
+  /** Tela cheia: busca sugestões em toda união (modalidades nas formações + qualquer esporte do perfil em confronto). */
+  const fullRadarFetchEsporteIds =
+    fullRadarFetchMergedNums.length > 0
+      ? fullRadarFetchMergedNums.map(String)
+      : fullRadarEsporteIdsResolved.length > 0
+        ? fullRadarEsporteIdsResolved
+        : esportes[0]
+          ? [String(esportes[0].id)]
+          : [];
+  const initialGeneroFiltro = toGeneroFiltro(sp.genero);
 
   const latN = Number(me.lat);
   const lngN = Number(me.lng);
@@ -345,6 +400,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         showSentBanner={sp.status === "enviado"}
         viewerEsportesComDupla={viewerEsportesComDuplaDedup}
         viewerEsportesComTime={viewerEsportesComTimeDedup}
+        viewerEsportesIndividual={viewerEsportesIndividualDedup}
       />
     </MatchPageShell>
   );

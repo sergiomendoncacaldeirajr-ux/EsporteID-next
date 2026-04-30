@@ -30,6 +30,8 @@ export default async function ConvidarAtletaEquipePage({ searchParams }: Props) 
   cadastrarQs.set("from", from);
   cadastrarQs.set("embed", "1");
   const cadastrarHref = `/editar/equipes/cadastrar?${cadastrarQs.toString()}`;
+  const cadastrarCtaClass =
+    "mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-[12px] border border-[#2563EB] bg-[linear-gradient(90deg,#1D4ED8,#2563EB)] px-4 text-[12px] font-black uppercase tracking-[0.03em] text-white shadow-[0_10px_18px_-14px_rgba(37,99,235,0.8)] transition hover:brightness-105";
 
   if ((minhas ?? []).length === 0) {
     return (
@@ -89,18 +91,21 @@ export default async function ConvidarAtletaEquipePage({ searchParams }: Props) 
               </p>
             </div>
 
-            <ProfileEditDrawerTrigger
-              href={cadastrarHref}
-              title="Cadastrar formação"
-              fullscreen
-              topMode="backOnly"
-              className="mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-[12px] border border-[#2563EB] bg-[linear-gradient(90deg,#1D4ED8,#2563EB)] px-4 text-[12px] font-black uppercase tracking-[0.03em] text-white shadow-[0_10px_18px_-14px_rgba(37,99,235,0.8)] transition hover:brightness-105"
-            >
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              Cadastrar dupla ou time
-            </ProfileEditDrawerTrigger>
+            {isEmbed ? (
+              <a href={cadastrarHref} className={cadastrarCtaClass}>
+                <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Cadastrar dupla ou time
+              </a>
+            ) : (
+              <ProfileEditDrawerTrigger href={cadastrarHref} title="Cadastrar formação" fullscreen topMode="backOnly" className={cadastrarCtaClass}>
+                <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Cadastrar dupla ou time
+              </ProfileEditDrawerTrigger>
+            )}
           </div>
         </section>
       </ProfileEditFullscreenShell>

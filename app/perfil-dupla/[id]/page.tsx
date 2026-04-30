@@ -30,6 +30,7 @@ import {
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { createClient } from "@/lib/supabase/server";
 import { TeamPublicInviteBlock, type TeamPublicPendingInvite } from "@/components/times/team-public-invite-block";
+import { FormacaoTransferirLiderancaForm } from "@/components/times/formacao-transferir-lideranca-form";
 import { BarChart3, ChevronRight } from "lucide-react";
 
 type Props = {
@@ -133,6 +134,9 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   const isMembroDupla = user.id === d.player1_id || user.id === d.player2_id;
   const donoDuplaId = d.criador_id ?? d.player1_id;
   const isDonoDupla = user.id === donoDuplaId;
+  /** Líder do time de dupla no radar (gestão / transferência de liderança). */
+  const isLiderTimeDupla =
+    Boolean(timeResolvidoId) && timeResolvido != null && timeResolvido.criador_id === user.id;
 
   let convitesPendentesDupla: TeamPublicPendingInvite[] = [];
   const idsExcluirConviteDupla = [
@@ -637,9 +641,18 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     layout="list"
                     avatarSize="sm"
                     trailing={
-                      <p className="text-[11px] font-semibold text-eid-primary-300">
-                        EID {i === 0 ? Number(eid1?.nota_eid ?? 0).toFixed(1) : Number(eid2?.nota_eid ?? 0).toFixed(1)}
-                      </p>
+                      <div className="flex flex-col gap-2">
+                        <p className="text-[11px] font-semibold text-eid-primary-300">
+                          EID {i === 0 ? Number(eid1?.nota_eid ?? 0).toFixed(1) : Number(eid2?.nota_eid ?? 0).toFixed(1)}
+                        </p>
+                        {isLiderTimeDupla && timeResolvidoId && p.id !== user.id ? (
+                          <FormacaoTransferirLiderancaForm
+                            timeId={timeResolvidoId}
+                            novoLiderUsuarioId={p.id}
+                            className="flex min-h-[2.75rem] w-full items-center justify-center rounded-lg border border-eid-primary-500/35 px-2 py-1.5 text-center text-[9px] font-semibold leading-snug text-eid-primary-300 disabled:opacity-60 sm:text-[10px]"
+                          />
+                        ) : null}
+                      </div>
                     }
                   />
                 ) : null

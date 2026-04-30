@@ -12,6 +12,13 @@ import {
   MatchChallengeAction,
   MatchChallengeMissingFormationPrompt,
 } from "@/components/match/match-challenge-action";
+
+function rowDesafioHref(row: MatchRadarCard, esporteContextId: string) {
+  const esporteParam = row.esporteId > 0 ? String(row.esporteId) : esporteContextId;
+  const fin: MatchRadarFinalidade =
+    row.modalidade !== "individual" ? "ranking" : row.interesseMatch === "amistoso" ? "amistoso" : "ranking";
+  return `/desafio?id=${encodeURIComponent(row.id)}&tipo=${encodeURIComponent(row.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(fin)}`;
+}
 import { SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 
 type Props = {
@@ -41,7 +48,16 @@ export function MatchRadarCardView({
   const [missingFormationPromptOpen, setMissingFormationPromptOpen] = useState(false);
 
   const esporteParam = card.esporteId > 0 ? String(card.esporteId) : esporteContextId;
-  const desafioHref = `/desafio?id=${encodeURIComponent(card.id)}&tipo=${encodeURIComponent(card.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(matchFinalidade)}`;
+  const desafioHref = rowDesafioHref(card, esporteContextId);
+  const individualRows =
+    card.modalidade === "individual" ? [card, ...(card.groupedIndividualSports ?? [])] : [card];
+  const desafioVariants =
+    card.modalidade === "individual" && individualRows.length > 1
+      ? individualRows.map((row) => ({
+          href: rowDesafioHref(row, esporteContextId),
+          label: row.esporteNome,
+        }))
+      : undefined;
   const eidStatsHref = matchCardEidStatsHref(card);
 
   const initials = card.nome
@@ -147,6 +163,7 @@ export function MatchRadarCardView({
           <MatchChallengeAction
             modalidade={card.modalidade}
             desafioHref={desafioHref}
+            desafioVariants={desafioVariants}
             className="eid-btn-match-cta relative mt-1 inline-flex min-h-[28px] w-full max-w-full items-center justify-center overflow-hidden rounded-md px-2 py-1 text-[9px] font-bold uppercase leading-none tracking-[0.04em]"
             title={matchCtaTitle}
             cardEsporteId={card.esporteId}
@@ -170,22 +187,27 @@ export function MatchRadarCardView({
         </div>
       ) : null}
 
-      <div className="relative z-[1] mt-2">
-        <div className="flex items-center justify-between gap-2 rounded-lg border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_62%,transparent)] bg-eid-surface/45 px-2 py-1">
-          <p className="min-w-0 truncate text-[10px] font-semibold text-eid-primary-300" title={card.esporteNome}>
-            <span className="inline-flex items-center gap-1">
-              <SportGlyphIcon sportName={card.esporteNome} />
-              <span>{card.esporteNome}</span>
-            </span>
-          </p>
-          <span
-            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_62%,transparent)] bg-eid-surface/70 px-1.5 py-0.5 text-[9px] font-bold text-eid-fg/90"
-            title="Pontos no ranking de desafio"
+      <div className="relative z-[1] mt-2 space-y-1">
+        {individualRows.map((row) => (
+          <div
+            key={`${row.id}-${row.esporteId}-${row.esporteNome}`}
+            className="flex items-center justify-between gap-2 rounded-lg border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_62%,transparent)] bg-eid-surface/45 px-2 py-1"
           >
-            <Trophy className="h-2.5 w-2.5 shrink-0 text-eid-action-400" strokeWidth={2.25} aria-hidden />
-            {card.rank} pts
-          </span>
-        </div>
+            <p className="min-w-0 truncate text-[10px] font-semibold text-eid-primary-300" title={row.esporteNome}>
+              <span className="inline-flex items-center gap-1">
+                <SportGlyphIcon sportName={row.esporteNome} />
+                <span>{row.esporteNome}</span>
+              </span>
+            </p>
+            <span
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_62%,transparent)] bg-eid-surface/70 px-1.5 py-0.5 text-[9px] font-bold text-eid-fg/90"
+              title="Pontos no ranking de desafio"
+            >
+              <Trophy className="h-2.5 w-2.5 shrink-0 text-eid-action-400" strokeWidth={2.25} aria-hidden />
+              {row.rank} pts
+            </span>
+          </div>
+        ))}
       </div>
 
       {!suppressChallengeHint && !card.canChallenge && card.challengeHint ? (

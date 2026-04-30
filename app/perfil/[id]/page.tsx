@@ -32,6 +32,7 @@ import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown"
 import { partidaEncerradaParaHistorico, resultadoPartidaIndividual } from "@/lib/perfil/formacao-eid-stats";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { createClient } from "@/lib/supabase/server";
+import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
@@ -147,7 +148,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     supabase
       .from("usuario_eid")
       .select(
-        "esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas, interesse_match, modalidade_match, posicao_rank, esportes(nome)"
+        "esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas, interesse_match, modalidade_match, posicao_rank, esportes(nome, tipo, permite_individual)"
       )
       .eq("usuario_id", id)
       .order("pontos_ranking", { ascending: false }),
@@ -283,12 +284,16 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     (t) => t.esporte_id != null && targetEsporteIdsParaConvite.has(t.esporte_id)
   );
 
-  const primeiroEsporte = eids?.[0]?.esporte_id;
   const esportesDoPerfil = (eids ?? [])
-    .map((e) => ({
-      esporteId: Number(e.esporte_id),
-      nome: (Array.isArray(e.esportes) ? e.esportes[0] : e.esportes)?.nome ?? "Esporte",
-    }))
+    .map((e) => {
+      const esp = Array.isArray(e.esportes) ? e.esportes[0] : e.esportes;
+      return {
+        esporteId: Number(e.esporte_id),
+        nome: esp?.nome ?? "Esporte",
+        tipo: (esp as { tipo?: string | null } | null)?.tipo ?? null,
+        permiteIndividual: Boolean((esp as { permite_individual?: boolean | null } | null)?.permite_individual),
+      };
+    })
     .filter((e) => Number.isFinite(e.esporteId) && e.esporteId > 0);
   const cooldownMeses = await getMatchRankCooldownMeses(supabase);
   const esporteIdsPerfil = [...new Set(esportesDoPerfil.map((e) => Number(e.esporteId)).filter((n) => Number.isFinite(n) && n > 0))];
@@ -329,6 +334,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     }
   }
   const esportesParaDesafio = esportesDoPerfil
+    .filter((e) => isEsportePermitidoDesafioPerfilIndividual(e.tipo, e.permiteIndividual))
     .filter((e) => isSportMatchEnabled(e.nome))
     .filter((e) => isSelf || viewerEsporteIdsParaDesafio.has(e.esporteId))
     .filter((e) => !esportesMatchAceito.has(e.esporteId))
@@ -679,31 +685,29 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
                   </span>
                 </div>
                 <div className="p-3">
-                  {primeiroEsporte ? (
-                    linkWpp || esportesParaDesafio.length > 0 ? (
-                      <div className="grid gap-3">
-                        {linkWpp ? (
-                          <a
-                            href={linkWpp}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-[13px] font-black uppercase tracking-[0.1em] text-white shadow-[0_0_18px_rgba(37,211,102,0.45)] transition hover:bg-[#1da851]"
-                          >
-                            <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.534 5.853L.054 23.25a.75.75 0 0 0 .916.916l5.396-1.479A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.986 0-3.84-.552-5.418-1.51l-.388-.232-4.021 1.1 1.1-4.022-.232-.388A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-                            Chamar no WhatsApp
-                          </a>
-                        ) : null}
-                        {esportesParaDesafio.length > 0 ? (
-                          <ProfileSolicitarMatchMenu
-                            alvoId={id}
-                            esportes={esportesParaDesafio.map((e) => ({ esporteId: e.esporteId, nome: e.nome }))}
-                            viewerAmistosoOn={viewerAmistosoOn}
-                            alvoAmistosoOn={amistosoPerfilOn}
-                            mostrarDicaWppRanking={Boolean(linkWpp)}
-                          />
-                        ) : null}
-                      </div>
-                    ) : null
+                  {linkWpp || esportesParaDesafio.length > 0 ? (
+                    <div className="grid gap-3">
+                      {linkWpp ? (
+                        <a
+                          href={linkWpp}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 text-[13px] font-black uppercase tracking-[0.1em] text-white shadow-[0_0_18px_rgba(37,211,102,0.45)] transition hover:bg-[#1da851]"
+                        >
+                          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.122 1.534 5.853L.054 23.25a.75.75 0 0 0 .916.916l5.396-1.479A11.953 11.953 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.986 0-3.84-.552-5.418-1.51l-.388-.232-4.021 1.1 1.1-4.022-.232-.388A9.96 9.96 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                          Chamar no WhatsApp
+                        </a>
+                      ) : null}
+                      {esportesParaDesafio.length > 0 ? (
+                        <ProfileSolicitarMatchMenu
+                          alvoId={id}
+                          esportes={esportesParaDesafio.map((e) => ({ esporteId: e.esporteId, nome: e.nome }))}
+                          viewerAmistosoOn={viewerAmistosoOn}
+                          alvoAmistosoOn={amistosoPerfilOn}
+                          mostrarDicaWppRanking={Boolean(linkWpp)}
+                        />
+                      ) : null}
+                    </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-2">
                       <ProfilePrimaryCta href="/match" className="col-span-2" />

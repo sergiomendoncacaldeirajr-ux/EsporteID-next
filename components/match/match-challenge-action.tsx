@@ -1,13 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 
 type Modalidade = "individual" | "dupla" | "time";
 
+export type DesafioVariant = { href: string; label: string };
+
 type Props = {
   modalidade: Modalidade;
   desafioHref: string;
+  /** Vários esportes no mesmo atleta (individual): abre seletor em vez de link único. */
+  desafioVariants?: DesafioVariant[];
   className: string;
   title: string;
   cardEsporteId: number;
@@ -97,6 +101,7 @@ export function MatchChallengeMissingFormationPrompt({
 export function MatchChallengeAction({
   modalidade,
   desafioHref,
+  desafioVariants,
   className,
   title,
   cardEsporteId,
@@ -107,6 +112,11 @@ export function MatchChallengeAction({
   onMissingFormationPromptChange,
 }: Props) {
   const [internalPromptOpen, setInternalPromptOpen] = useState(false);
+  const [sportPickerOpen, setSportPickerOpen] = useState(false);
+
+  useEffect(() => {
+    setSportPickerOpen(false);
+  }, [desafioHref, cardEsporteId, modalidade, desafioVariants?.length]);
 
   const blockedByMissingFormation = isMatchChallengeBlockedByMissingFormation(
     modalidade,
@@ -124,10 +134,54 @@ export function MatchChallengeAction({
   const alvoLabel = modalidade === "dupla" ? "dupla" : "time";
   const alvoArtigo = modalidade === "dupla" ? "uma" : "um";
 
+  const variantsResolved: DesafioVariant[] =
+    modalidade === "individual" &&
+    Array.isArray(desafioVariants) &&
+    desafioVariants.length > 0
+      ? desafioVariants
+      : [{ href: desafioHref, label: "" }];
+
   if (!blockedByMissingFormation) {
+    if (modalidade === "individual" && variantsResolved.length > 1) {
+      return (
+        <div className="w-full min-w-0 max-w-full">
+          <button
+            type="button"
+            title={title}
+            aria-label={title}
+            aria-expanded={sportPickerOpen}
+            className={className}
+            onClick={() => setSportPickerOpen((v) => !v)}
+          >
+            Desafio
+          </button>
+          {sportPickerOpen ? (
+            <div className="mt-1.5 w-full min-w-0 space-y-1 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/80 p-1.5">
+              <p className="px-0.5 text-[8px] font-semibold uppercase tracking-[0.06em] text-eid-text-secondary">
+                Esporte do desafio
+              </p>
+              {variantsResolved.map((v) => (
+                <ProfileEditDrawerTrigger
+                  key={v.href}
+                  href={v.href}
+                  title={`${title} — ${v.label}`}
+                  openingLabel={<span className="animate-pulse">Abrindo...</span>}
+                  fullscreen
+                  topMode="backAndClose"
+                  className="flex w-full min-w-0 items-center justify-center rounded-md border border-[color:var(--eid-border-subtle)] bg-eid-card px-2 py-1.5 text-[9px] font-bold uppercase tracking-[0.04em] text-eid-fg transition hover:border-eid-primary-500/35"
+                >
+                  {v.label.trim() || "Esporte"}
+                </ProfileEditDrawerTrigger>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+
     return (
       <ProfileEditDrawerTrigger
-        href={desafioHref}
+        href={variantsResolved[0]?.href ?? desafioHref}
         title={title}
         openingLabel={<span className="animate-pulse">Desafiando...</span>}
         fullscreen

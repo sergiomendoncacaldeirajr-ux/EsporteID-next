@@ -43,7 +43,7 @@ function isCancelamentoFlowMensagem(raw: string | null | undefined): boolean {
 
 function IconBell({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+    <svg className={className} viewBox="0 0 24 24" width={24} height={24} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
       <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M13.73 21a2 2 0 01-3.46 0" strokeLinecap="round" />
     </svg>
@@ -77,14 +77,14 @@ function SummaryGlyph({ kind }: { kind: "agenda" | "social" | "placar" }) {
           <path d="M8 3v4M16 3v4M4 10h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       ) : kind === "social" ? (
-        <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" aria-hidden>
+        <svg viewBox="0 0 24 24" width={17} height={17} className="shrink-0" fill="none" aria-hidden>
           <path d="M6 7h12a2 2 0 012 2v7l-4-2H6a2 2 0 01-2-2V9a2 2 0 012-2z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
           <circle cx="9" cy="11.5" r="1" fill="currentColor" />
           <circle cx="12" cy="11.5" r="1" fill="currentColor" />
           <circle cx="15" cy="11.5" r="1" fill="currentColor" />
         </svg>
       ) : (
-        <svg viewBox="0 0 24 24" className="h-[17px] w-[17px]" fill="none" aria-hidden>
+        <svg viewBox="0 0 24 24" width={17} height={17} className="shrink-0" fill="none" aria-hidden>
           <path d="M12 21s6-5.2 6-10a6 6 0 10-12 0c0 4.8 6 10 6 10z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
           <circle cx="12" cy="11" r="2" fill="currentColor" />
         </svg>
@@ -387,11 +387,11 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         ref={bellBtnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,transparent)] text-[color:color-mix(in_srgb,var(--eid-text-secondary)_90%,#475569_10%)] shadow-none transition-all duration-200 ease-out hover:border-eid-primary-500/35 hover:text-eid-fg active:translate-y-[0.5px] active:scale-[0.985] md:h-9 md:w-9"
+        className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,transparent)] text-eid-text-secondary shadow-none transition-all duration-200 ease-out hover:border-eid-primary-500/35 hover:text-eid-fg active:translate-y-[0.5px] active:scale-[0.985] md:h-9 md:w-9 [touch-action:manipulation]"
         aria-label="Notificações e resumos"
         aria-expanded={open}
       >
-        <IconBell className="h-4.5 w-4.5" />
+        <IconBell className="h-[18px] w-[18px] shrink-0 md:h-5 md:w-5" />
         {bellCount > 0 ? (
           <span className="absolute -right-1.5 -top-1.5 flex h-[21px] min-w-[21px] items-center justify-center rounded-full bg-eid-action-500 px-1 text-[10px] font-black text-white shadow-[0_6px_14px_-8px_color-mix(in_srgb,var(--eid-action-500)_85%,transparent)] ring-2 ring-white">
             {bellCount > 99 ? "99+" : bellCount}

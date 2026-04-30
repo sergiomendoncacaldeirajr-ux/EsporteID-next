@@ -32,6 +32,7 @@ import { EidCityState } from "@/components/ui/eid-city-state";
 import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-cta";
 import { FormacaoElencoCallout } from "@/components/times/formacao-elenco-callout";
 import { SairDaEquipeConfirmForm } from "@/components/times/sair-da-equipe-confirm-form";
+import { FormacaoTransferirLiderancaForm } from "@/components/times/formacao-transferir-lideranca-form";
 import { BarChart3, ChevronRight } from "lucide-react";
 
 type Props = {
@@ -70,16 +71,6 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
     const uid = String(formData.get("usuario_id") ?? "");
     if (!uid) return;
     await sb.rpc("remover_membro_time", { p_time_id: id, p_usuario_id: uid });
-    revalidatePath(`/perfil-time/${id}`);
-    revalidatePath(`/perfil/${uid}`);
-  }
-
-  async function transferirLiderancaAction(formData: FormData) {
-    "use server";
-    const sb = await createClient();
-    const uid = String(formData.get("usuario_id") ?? "");
-    if (!uid) return;
-    await sb.rpc("transferir_lideranca_time", { p_time_id: id, p_novo_lider: uid });
     revalidatePath(`/perfil-time/${id}`);
     revalidatePath(`/perfil/${uid}`);
   }
@@ -584,15 +575,11 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                       trailing={
                         isLeader && p.id !== t.criador_id ? (
                           <div className="flex w-full gap-1.5">
-                            <form action={transferirLiderancaAction} className="min-w-0 flex-1">
-                              <input type="hidden" name="usuario_id" value={p.id} />
-                              <button
-                                type="submit"
-                                className="flex min-h-[2.75rem] w-full items-center justify-center rounded-lg border border-eid-primary-500/35 px-1 py-1.5 text-center text-[9px] font-semibold leading-snug text-eid-primary-300 sm:text-[10px]"
-                              >
-                                Transferir liderança
-                              </button>
-                            </form>
+                            <FormacaoTransferirLiderancaForm
+                              timeId={id}
+                              novoLiderUsuarioId={p.id}
+                              className="flex min-h-[2.75rem] w-full items-center justify-center rounded-lg border border-eid-primary-500/35 px-1 py-1.5 text-center text-[9px] font-semibold leading-snug text-eid-primary-300 disabled:opacity-60 sm:text-[10px]"
+                            />
                             <form action={removerMembroAction} className="min-w-0 flex-1">
                               <input type="hidden" name="usuario_id" value={p.id} />
                               <button

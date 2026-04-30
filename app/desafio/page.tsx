@@ -21,6 +21,7 @@ import {
   DESAFIO_PAGE_MAIN_CLASS,
 } from "@/lib/desafio/flow-ui";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
+import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 
@@ -169,7 +170,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       const [{ data: esportesAlvo }, { data: esportesViewer }] = await Promise.all([
         supabase
           .from("usuario_eid")
-          .select("esporte_id, esportes(nome)")
+          .select("esporte_id, esportes(nome, tipo, permite_individual)")
           .eq("usuario_id", alvoKey)
           .order("pontos_ranking", { ascending: false }),
         supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", user.id),
@@ -181,14 +182,20 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       );
 
       const opcoes = (esportesAlvo ?? [])
-        .map((e) => ({
-          esporteId: Number(e.esporte_id),
-          esporteNome: (Array.isArray(e.esportes) ? e.esportes[0] : e.esportes)?.nome ?? "Esporte",
-        }))
+        .map((e) => {
+          const esp = Array.isArray(e.esportes) ? e.esportes[0] : e.esportes;
+          return {
+            esporteId: Number(e.esporte_id),
+            esporteNome: esp?.nome ?? "Esporte",
+            tipo: (esp as { tipo?: string | null } | null)?.tipo ?? null,
+            permiteIndividual: Boolean((esp as { permite_individual?: boolean | null } | null)?.permite_individual),
+          };
+        })
         .filter(
           (e) =>
             Number.isFinite(e.esporteId) &&
             e.esporteId > 0 &&
+            isEsportePermitidoDesafioPerfilIndividual(e.tipo, e.permiteIndividual) &&
             isSportMatchEnabled(e.esporteNome) &&
             viewerIds.has(e.esporteId)
         );
@@ -273,7 +280,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
   const { data: esporteRow } = await supabase
     .from("esportes")
-    .select("id, nome, desafio_regras_placar_json")
+    .select("id, nome, desafio_regras_placar_json, tipo, permite_individual")
     .eq("id", esporteId)
     .maybeSingle();
   if (!esporteRow || !isSportMatchEnabled(esporteRow.nome)) {
@@ -281,6 +288,27 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       <main className={DESAFIO_PAGE_MAIN_CLASS}>
         <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
         <p className="mt-2 text-sm text-eid-text-secondary">Este esporte não aceita desafio/ranking no momento.</p>
+        <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
+          Voltar ao radar
+        </Link>
+      </main>
+    );
+  }
+  if (
+    modalidade === "individual" &&
+    !isEsportePermitidoDesafioPerfilIndividual(
+      (esporteRow as { tipo?: string | null }).tipo,
+      (esporteRow as { permite_individual?: boolean | null }).permite_individual
+    )
+  ) {
+    return (
+      <main className={DESAFIO_PAGE_MAIN_CLASS}>
+        <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
+        <p className="mt-2 text-sm text-eid-text-secondary">
+          Este esporte é disputado em desafio apenas por <span className="font-semibold text-eid-fg">dupla</span> ou{" "}
+          <span className="font-semibold text-eid-fg">time</span>, não no perfil individual. Use o radar em modo dupla
+          ou time, ou o perfil da formação.
+        </p>
         <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
           Voltar ao radar
         </Link>

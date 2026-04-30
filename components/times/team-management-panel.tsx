@@ -61,7 +61,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     return (
       <section className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3">
         <ProfileEditDrawerTrigger href={cadastrarHref} title="Criar nova dupla ou time" fullscreen topMode="backOnly" className={launcherClass}>
-          <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 sm:h-5 sm:w-5" fill="currentColor" aria-hidden>
+          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 sm:h-5 sm:w-5" fill="currentColor" aria-hidden>
             <circle cx="8.5" cy="9" r="2.4" />
             <circle cx="15.5" cy="10" r="2.1" />
             <path d="M4.5 18a4 4 0 0 1 8 0" />
@@ -77,7 +77,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
           topMode="backOnly"
           className={`${launcherSecondaryClass} ${!hasEquipes ? "opacity-75" : ""}`}
         >
-          <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 sm:h-5 sm:w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 sm:h-5 sm:w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <circle cx="9" cy="8.3" r="2.4" />
             <path d="M4.8 18a4.2 4.2 0 0 1 8.4 0" />
             <path d="M17.8 7.2v4M15.8 9.2h4" />
@@ -254,7 +254,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
             <div className="flex items-start gap-2.5">
               {isCadastrarStyle ? (
                 <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_6px_14px_-10px_rgba(37,99,235,0.45)]">
-                  <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 text-[#2563EB]" fill="currentColor" aria-hidden>
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-[#2563EB]" fill="currentColor" aria-hidden>
                     <path d="m12 2 7 2.4V11c0 4.1-2.8 7.7-7 9-4.2-1.3-7-4.9-7-9V4.4L12 2Z" />
                     <path d="m12 7.2 1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5 1.5-3Z" fill="#60A5FA" />
                   </svg>
@@ -495,7 +495,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
             <div className="sm:col-span-2 rounded-[14px] border border-[#C9D8F6] bg-[#EFF5FF] px-3 py-2.5">
               <div className="flex items-start gap-2.5">
                 <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_6px_14px_-10px_rgba(37,99,235,0.45)]">
-                  <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 text-[#2563EB]" fill="currentColor" aria-hidden>
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-[#2563EB]" fill="currentColor" aria-hidden>
                     <path d="m12 2 7 2.4V11c0 4.1-2.8 7.7-7 9-4.2-1.3-7-4.9-7-9V4.4L12 2Z" />
                     <path d="m12 14.8-3.2-3.2 1.5-1.5 1.7 1.7 3.7-3.7 1.5 1.5-5.2 5.2Z" fill="#93C5FD" />
                   </svg>

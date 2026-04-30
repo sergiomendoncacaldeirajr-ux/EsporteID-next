@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { applyEidTheme } from "@/components/eid-theme-hydration";
 
 function IconMoon({ className }: { className?: string }) {
@@ -40,8 +40,16 @@ export function EidThemeToggle({ className, variant = "default" }: Props) {
     return document.documentElement.dataset.eidTheme === "light" ? "light" : "dark";
   });
 
+  useLayoutEffect(() => {
+    const t = document.documentElement.dataset.eidTheme === "light" ? "light" : "dark";
+    setTheme(t);
+  }, []);
+
   function toggle() {
-    const next = theme === "light" ? "dark" : "light";
+    /** Sempre ler do DOM: evita 1º toque “morto” quando o estado React ficou dessincronizado (ex.: iframe / hidratação). */
+    const dom =
+      typeof document !== "undefined" && document.documentElement.dataset.eidTheme === "light" ? "light" : "dark";
+    const next = dom === "light" ? "dark" : "light";
     setTheme(next);
     applyEidTheme(next);
   }
@@ -50,8 +58,8 @@ export function EidThemeToggle({ className, variant = "default" }: Props) {
 
   const toolbarCls =
     variant === "toolbar"
-      ? "eid-btn-ghost inline-flex h-9 w-9 shrink-0 rounded-xl p-0 text-eid-text-muted hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50"
-      : "inline-flex h-10 items-center gap-2 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-3 text-eid-text-muted shadow-sm backdrop-blur-sm transition hover:border-eid-primary-500/30 hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50";
+      ? "eid-btn-ghost inline-flex h-9 w-9 shrink-0 rounded-xl p-0 text-eid-text-muted hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50 [touch-action:manipulation]"
+      : "inline-flex h-10 items-center gap-2 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-3 text-eid-text-muted shadow-sm backdrop-blur-sm transition hover:border-eid-primary-500/30 hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50 [touch-action:manipulation]";
 
   return (
     <button

@@ -40,6 +40,7 @@ export function ProfileEditDrawerTrigger({
     return document.documentElement.getAttribute("data-eid-theme") === "light" ? "light" : "dark";
   });
   const [openNonce, setOpenNonce] = useState(0);
+  const [chromeCompact, setChromeCompact] = useState(false);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
 
   const frameSrc = useMemo(() => {
@@ -54,6 +55,14 @@ export function ProfileEditDrawerTrigger({
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-eid-theme"] });
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    try {
+      setChromeCompact(window.self !== window.top);
+    } catch {
+      setChromeCompact(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -151,9 +160,10 @@ export function ProfileEditDrawerTrigger({
                   visible ? "translate-x-0" : "translate-x-[102%]"
                 }`}
                 style={{
-                  top: "max(0px, env(safe-area-inset-top, 0px))",
-                  paddingTop:
-                    "calc(1rem + max(5.2rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
+                  top: chromeCompact ? "0px" : "max(0px, env(safe-area-inset-top, 0px))",
+                  paddingTop: chromeCompact
+                    ? "max(3.35rem, calc(0.35rem + env(safe-area-inset-top, 0px)))"
+                    : "calc(1rem + max(5.2rem, constant(safe-area-inset-top), env(safe-area-inset-top, 0px)))",
                   overscrollBehavior: "contain",
                 }}
               >
