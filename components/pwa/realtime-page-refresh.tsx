@@ -82,6 +82,16 @@ export function RealtimePageRefresh({ userId }: Props) {
       lastRefreshAt.current = now;
       router.refresh();
     };
+    const refreshForced = () => {
+      if (shouldPauseAutoRefresh()) return;
+      lastRefreshAt.current = Date.now();
+      router.refresh();
+    };
+
+    const isCandidaturaRealtimePath = () => {
+      const p = String(pathname ?? "");
+      return p.startsWith("/comunidade") || p.startsWith("/vagas") || p.startsWith("/perfil-time/") || p.startsWith("/perfil-dupla/");
+    };
 
     const notifyForeground = (notifId: number, mensagem: string) => {
       if (!Number.isFinite(notifId) || notifId < 1) return;
@@ -125,6 +135,11 @@ export function RealtimePageRefresh({ userId }: Props) {
       refresh();
     };
     document.addEventListener("visibilitychange", onVisibility);
+    const candidaturasPollId = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      if (!isCandidaturaRealtimePath()) return;
+      refreshForced();
+    }, 3500);
 
     const channelTag = `${userId}-${instanceIdRef.current}-${pathname}-${elencoVersion}`;
 
@@ -311,6 +326,7 @@ export function RealtimePageRefresh({ userId }: Props) {
     return () => {
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisibility);
+      window.clearInterval(candidaturasPollId);
       channels.forEach((c) => void supabase.removeChannel(c));
     };
   }, [router, userId, pathname, elencoVersion]);
