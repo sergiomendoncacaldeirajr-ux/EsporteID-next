@@ -278,8 +278,8 @@ export default async function TimesPage({ searchParams }: Props) {
                       </p>
                     ) : null}
                     <div className={CANDIDATURA_ACOES_ROW_CLASS}>
-                      <ResponderCandidaturaForm candidaturaId={p.id} aceitar={true} label="Aprovar" />
-                      <ResponderCandidaturaForm candidaturaId={p.id} aceitar={false} label="Recusar" />
+                      <ResponderCandidaturaForm candidaturaId={p.id} aceitar={true} label="Aprovar" stretch />
+                      <ResponderCandidaturaForm candidaturaId={p.id} aceitar={false} label="Recusar" stretch />
                     </div>
                   </div>
                 </li>

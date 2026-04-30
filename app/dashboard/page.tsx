@@ -913,7 +913,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                   href={`/perfil-time/${duplaMaisProxima.t.id}?from=/dashboard`}
                   className={dashboardSpotlightLink}
                 >
-                  <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{duplaMaisProxima.t.nome}</p>
+                  <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{primeiroNome(duplaMaisProxima.t.nome)}</p>
                   <div className="relative mx-auto h-12 w-12">
                     {duplaMaisProxima.t.escudo ? (
                       <Image
@@ -960,7 +960,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                   href={`/perfil-time/${timeMaisProximo.t.id}?from=/dashboard`}
                   className={dashboardSpotlightLink}
                 >
-                  <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{timeMaisProximo.t.nome}</p>
+                  <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{primeiroNome(timeMaisProximo.t.nome)}</p>
                   <div className="relative mx-auto h-12 w-12">
                     {timeMaisProximo.t.escudo ? (
                       <Image
@@ -1092,7 +1092,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                   href={`/perfil-time/${t.id}?from=/dashboard`}
                   className={`${dashboardSpotlightLink} min-w-[124px] max-w-[124px] shrink-0 snap-start`}
                 >
-                  <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{t.nome}</p>
+                  <p className="mb-1 truncate text-[10px] font-black tracking-tight text-eid-fg">{primeiroNome(t.nome)}</p>
                   <div className="relative mx-auto h-12 w-12">
                     {t.escudo ? (
                       <Image

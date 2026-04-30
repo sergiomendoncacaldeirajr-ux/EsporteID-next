@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Swords } from "lucide-react";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 
 type Modalidade = "individual" | "dupla" | "time";
@@ -24,6 +25,7 @@ type Props = {
   detachMissingFormationPrompt?: boolean;
   missingFormationPromptOpen?: boolean;
   onMissingFormationPromptChange?: (open: boolean) => void;
+  ctaContent?: ReactNode;
 };
 
 export function isMatchChallengeBlockedByMissingFormation(
@@ -110,6 +112,7 @@ export function MatchChallengeAction({
   detachMissingFormationPrompt = false,
   missingFormationPromptOpen = false,
   onMissingFormationPromptChange,
+  ctaContent,
 }: Props) {
   const [internalPromptOpen, setInternalPromptOpen] = useState(false);
   const [sportPickerOpen, setSportPickerOpen] = useState(false);
@@ -140,6 +143,12 @@ export function MatchChallengeAction({
     desafioVariants.length > 0
       ? desafioVariants
       : [{ href: desafioHref, label: "" }];
+  const labelContent = ctaContent ?? (
+    <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
+      <Swords className="h-[1em] w-[1em] shrink-0" strokeWidth={2.7} aria-hidden />
+      <span>Pedir desafio</span>
+    </span>
+  );
 
   if (!blockedByMissingFormation) {
     if (modalidade === "individual" && variantsResolved.length > 1) {
@@ -153,7 +162,7 @@ export function MatchChallengeAction({
             className={className}
             onClick={() => setSportPickerOpen((v) => !v)}
           >
-            Desafio
+            {labelContent}
           </button>
           {sportPickerOpen ? (
             <div className="mt-1.5 w-full min-w-0 space-y-1 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/80 p-1.5">
@@ -188,7 +197,7 @@ export function MatchChallengeAction({
         topMode="backAndClose"
         className={className}
       >
-        Desafio
+        {labelContent}
       </ProfileEditDrawerTrigger>
     );
   }
@@ -203,7 +212,7 @@ export function MatchChallengeAction({
         aria-expanded={promptOpen}
         onClick={() => setPromptOpen(!promptOpen)}
       >
-        Desafio
+        {labelContent}
       </button>
     );
   }
@@ -217,7 +226,7 @@ export function MatchChallengeAction({
         className={className}
         onClick={() => setPromptOpen(!promptOpen)}
       >
-        Desafio
+        {labelContent}
       </button>
       {promptOpen ? (
         <div className="mt-1.5 w-full min-w-0 max-w-full rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/75 p-2">

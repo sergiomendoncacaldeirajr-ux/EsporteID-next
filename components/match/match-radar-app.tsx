@@ -12,10 +12,6 @@ import type { MatchRadarCard, MatchRadarFinalidade, RadarTipo, SortBy } from "@/
 import { MatchFriendlyToggle } from "@/components/match/match-friendly-toggle";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import {
-  MatchRadarCardView,
-  MatchRadarOpponentMetaStack,
-  RadarRankSeal,
-  matchRadarRankPosition,
 } from "@/components/match/match-radar-card";
 import {
   isMatchChallengeBlockedByMissingFormation,
@@ -44,12 +40,15 @@ function compactCardName(fullName: string) {
   return parts[0] ?? "—";
 }
 
-/** Mini card (grade tela cheia): botão Desafio na coluna do nome; aviso “criar dupla/time” full-width. */
+/** Mini card (tela cheia): figurinha vertical com nome, foto+EID, esporte e modalidade. */
 function MatchRadarGridMiniChallengeBlock({
   card,
   desafioHref,
   nomeCurto,
   avatarColumn,
+  esporteNome,
+  modalidadeLabel,
+  compact = false,
   viewerEsportesComDupla,
   viewerEsportesComTime,
 }: {
@@ -57,6 +56,9 @@ function MatchRadarGridMiniChallengeBlock({
   desafioHref: string;
   nomeCurto: string;
   avatarColumn: ReactNode;
+  esporteNome: string;
+  modalidadeLabel: string | null;
+  compact?: boolean;
   viewerEsportesComDupla: readonly number[];
   viewerEsportesComTime: readonly number[];
 }) {
@@ -74,32 +76,98 @@ function MatchRadarGridMiniChallengeBlock({
 
   return (
     <>
-      <div className="flex min-w-0 items-start gap-2">
-        {avatarColumn}
-        <div className="min-w-0 flex-1 self-center">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <p className="min-w-0 flex-1 truncate text-[11px] font-black text-eid-fg" title={card.nome}>
-              {nomeCurto}
-            </p>
-            <span className="shrink-0">
-              <RadarRankSeal position={matchRadarRankPosition(card)} compact />
-            </span>
-          </div>
-          <MatchRadarOpponentMetaStack card={card} compact />
-          <MatchChallengeAction
-            modalidade={card.modalidade}
-            desafioHref={desafioHref}
-            desafioVariants={undefined}
-            className="eid-btn-match-cta mt-1 inline-flex min-h-[20px] w-full items-center justify-center rounded-md px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.03em]"
-            title="Solicitar desafio"
-            viewerEsportesComDupla={viewerEsportesComDupla}
-            viewerEsportesComTime={viewerEsportesComTime}
-            cardEsporteId={card.esporteId}
-            detachMissingFormationPrompt
-            missingFormationPromptOpen={missingFormationPromptOpen}
-            onMissingFormationPromptChange={setMissingFormationPromptOpen}
-          />
+      <div className="flex min-w-0 flex-col items-center text-center">
+        <div className="flex w-full min-w-0 items-center justify-center gap-0.5">
+          <span
+            className="-ml-1 inline-flex shrink-0 text-[color:color-mix(in_srgb,var(--eid-action-500)_82%,#f59e0b_18%)]"
+            aria-hidden
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className={cn(compact ? "h-[1.05rem] w-[1.05rem]" : "h-[1.35rem] w-[1.35rem]", "-translate-y-[0.5px]")}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={compact ? 2.4 : 2.7}
+            >
+              <path d="M4 10l4 2" strokeLinecap="round" />
+              <path d="M5 5l4 3" strokeLinecap="round" />
+            </svg>
+          </span>
+          <p
+            className={cn(
+              "min-w-0 truncate font-black leading-none tracking-tight text-eid-fg",
+              compact ? "text-[12px]" : "text-[14px]"
+            )}
+            title={card.nome}
+          >
+            {nomeCurto}
+          </p>
+          <span
+            className="inline-flex shrink-0 text-[color:color-mix(in_srgb,var(--eid-action-500)_82%,#f59e0b_18%)]"
+            aria-hidden
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className={cn(
+                compact ? "h-[1.05rem] w-[1.05rem]" : "h-[1.35rem] w-[1.35rem]",
+                "-translate-y-[0.5px] -scale-x-100"
+              )}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={compact ? 2.4 : 2.7}
+            >
+              <path d="M4 10l4 2" strokeLinecap="round" />
+              <path d="M5 5l4 3" strokeLinecap="round" />
+            </svg>
+          </span>
         </div>
+        <div className={compact ? "mt-1.5" : "mt-2"}>{avatarColumn}</div>
+        <p
+          className={cn(
+            "inline-flex max-w-full items-center gap-1 truncate font-bold text-eid-primary-400",
+            compact ? "mt-2 text-[10px]" : "mt-3 text-[11px]"
+          )}
+          title={esporteNome}
+        >
+          <SportGlyphIcon sportName={esporteNome} />
+          <span className="truncate">{esporteNome}</span>
+        </p>
+        {modalidadeLabel ? (
+          <p
+            className={cn(
+              "inline-flex items-center gap-1 font-semibold uppercase tracking-[0.08em] text-eid-text-secondary",
+              compact ? "mt-0.5 text-[7px]" : "mt-1 text-[8px]"
+            )}
+          >
+            <ModalidadeGlyphIcon modalidade={card.modalidade === "dupla" ? "dupla" : "time"} />
+            {modalidadeLabel}
+          </p>
+        ) : null}
+        <div className={cn("flex w-full items-center gap-2 px-1", compact ? "mt-0.5" : "mt-1")} aria-hidden>
+          <span className="h-px flex-1 bg-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,transparent)]" />
+          <span className="text-[10px] text-[color:color-mix(in_srgb,var(--eid-primary-500)_55%,var(--eid-text-secondary)_45%)]">
+            ✦
+          </span>
+          <span className="h-px flex-1 bg-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,transparent)]" />
+        </div>
+        <MatchChallengeAction
+          modalidade={card.modalidade}
+          desafioHref={desafioHref}
+          desafioVariants={undefined}
+          className={cn(
+            "eid-btn-match-cta inline-flex items-center justify-center border border-orange-200/35 bg-[linear-gradient(180deg,#ffb14a_0%,#ff8d1c_48%,#ef6c00_100%)] font-black uppercase text-white shadow-[0_8px_18px_-10px_rgba(239,108,0,0.75)]",
+            compact
+              ? "mt-1 min-h-[24px] w-[84%] max-w-[9rem] rounded-lg px-1.5 py-0.5 text-[8px] tracking-[0.04em]"
+              : "mt-1.5 min-h-[30px] w-[86%] max-w-[11rem] rounded-xl px-2 py-1 text-[10px] tracking-[0.05em]"
+          )}
+          title="Solicitar desafio"
+          viewerEsportesComDupla={viewerEsportesComDupla}
+          viewerEsportesComTime={viewerEsportesComTime}
+          cardEsporteId={card.esporteId}
+          detachMissingFormationPrompt
+          missingFormationPromptOpen={missingFormationPromptOpen}
+          onMissingFormationPromptChange={setMissingFormationPromptOpen}
+        />
       </div>
       {blockedByMissingFormation && missingFormationPromptOpen ? (
         <div className="mt-1 w-full min-w-0">
@@ -112,6 +180,108 @@ function MatchRadarGridMiniChallengeBlock({
         </div>
       ) : null}
     </>
+  );
+}
+
+/** Versão mini da figurinha para o modo grade (não fullscreen). */
+function MatchRadarGridStickerCard({
+  card,
+  esporteContextId,
+  viewerEsportesComDupla,
+  viewerEsportesComTime,
+}: {
+  card: MatchRadarCard;
+  esporteContextId: string;
+  viewerEsportesComDupla: readonly number[];
+  viewerEsportesComTime: readonly number[];
+}) {
+  const esporteParam = card.esporteId > 0 ? String(card.esporteId) : esporteContextId;
+  const cardFinalidade =
+    card.modalidade !== "individual" ? "ranking" : card.interesseMatch === "amistoso" ? "amistoso" : "ranking";
+  const desafioHref = `/desafio?id=${encodeURIComponent(card.id)}&tipo=${encodeURIComponent(card.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(cardFinalidade)}`;
+  const nomeCurto = compactCardName(card.nome);
+  const modalidadeLabel = card.modalidade === "individual" ? null : card.modalidade === "dupla" ? "Dupla" : "Time";
+  const esporteIdStats = /^\d+$/.test(esporteParam) ? Number(esporteParam) : card.esporteId;
+  const eidStatsHref =
+    esporteIdStats > 0
+      ? card.modalidade === "individual"
+        ? `/perfil/${encodeURIComponent(card.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
+        : `/perfil-time/${encodeURIComponent(card.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
+      : matchCardEidStatsHref(card);
+
+  const avatarBlock = card.avatarUrl ? (
+    <Image
+      src={card.avatarUrl}
+      alt=""
+      fill
+      unoptimized
+      className={`h-full w-full ${PROFILE_PUBLIC_AVATAR_RING_CLASS} !object-cover object-center`}
+    />
+  ) : (
+    <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
+      EID
+    </div>
+  );
+
+  const avatarColumn = (
+    <div className="relative h-[3.9rem] w-[3.9rem] shrink-0">
+      <ProfileEditDrawerTrigger
+        href={eidStatsHref ?? card.href}
+        title={`Estatísticas EID de ${card.nome}`}
+        fullscreen
+        topMode="backOnly"
+        className="block h-[3.9rem] w-[3.9rem] overflow-hidden rounded-full border-2 border-orange-200/65 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,white_4%),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_0_0_3px_color-mix(in_srgb,var(--eid-surface)_86%,white_14%),0_10px_26px_-16px_rgba(239,108,0,0.55)]"
+      >
+        {avatarBlock}
+      </ProfileEditDrawerTrigger>
+      <span
+        className={`pointer-events-none absolute inset-0 rounded-full border-2 motion-safe:animate-pulse ${
+          card.disponivelAmistoso
+            ? "border-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.45),0_0_12px_rgba(16,185,129,0.75)]"
+            : "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.45),0_0_12px_rgba(239,68,68,0.72)]"
+        }`}
+        aria-hidden
+      />
+      <div className="absolute -bottom-1 left-1/2 z-[2] -translate-x-1/2">
+        {eidStatsHref ? (
+          <ProfileEditDrawerTrigger
+            href={eidStatsHref}
+            title={`Estatísticas EID de ${card.esporteNome} — ${card.nome}`}
+            fullscreen
+            topMode="backOnly"
+            className="inline-flex rounded-full"
+          >
+            <ProfileEidPerformanceSeal notaEid={card.eid} compact className="scale-[1.1]" />
+          </ProfileEditDrawerTrigger>
+        ) : (
+          <ProfileEidPerformanceSeal notaEid={card.eid} compact className="scale-[1.1]" />
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <article className="relative isolate overflow-hidden rounded-[1.2rem] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,white_18%)] bg-[radial-gradient(130%_100%_at_0%_0%,color-mix(in_srgb,var(--eid-primary-500)_7%,white_93%)_0%,transparent_42%),linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_98%,white_2%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.45)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_4%,transparent)]">
+      <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+        <span className="absolute -left-8 -top-7 rotate-[-12deg] text-[88px] opacity-[0.03] blur-[0.2px]">⚽</span>
+        <span className="absolute -right-7 top-2 rotate-[16deg] text-[84px] opacity-[0.028] blur-[0.2px]">🎾</span>
+        <span className="absolute -left-6 bottom-1 rotate-[8deg] text-[92px] opacity-[0.026] blur-[0.2px]">🏀</span>
+        <span className="absolute -right-5 bottom-0 rotate-[-10deg] text-[80px] opacity-[0.024] blur-[0.2px]">🏸</span>
+      </div>
+      <div className="relative z-[1]">
+        <MatchRadarGridMiniChallengeBlock
+          card={card}
+          desafioHref={desafioHref}
+          nomeCurto={nomeCurto}
+          avatarColumn={avatarColumn}
+          esporteNome={card.esporteNome}
+          modalidadeLabel={modalidadeLabel}
+          compact
+          viewerEsportesComDupla={viewerEsportesComDupla}
+          viewerEsportesComTime={viewerEsportesComTime}
+        />
+      </div>
+    </article>
   );
 }
 
@@ -981,14 +1151,12 @@ export function MatchRadarApp({
             ) : (
               <div className="grid min-w-0 grid-cols-2 gap-1.5 px-2 pb-3 pt-2 sm:gap-3 sm:px-3 sm:pb-4">
                 {visibleCards.map((c) => (
-                  <MatchRadarCardView
+                  <MatchRadarGridStickerCard
                     key={`${c.modalidade}-${c.id}-${c.esporteId}`}
                     card={c}
                     esporteContextId={esporte}
-                    matchFinalidade={finalidade}
                     viewerEsportesComDupla={viewerEsportesComDupla}
                     viewerEsportesComTime={viewerEsportesComTime}
-                    suppressChallengeHint={hideOwnerChallengeHint}
                   />
                 ))}
               </div>
@@ -1071,7 +1239,7 @@ export function MatchRadarApp({
                   c.modalidade !== "individual" ? "ranking" : c.interesseMatch === "amistoso" ? "amistoso" : "ranking";
                 const desafioHref = `/desafio?id=${encodeURIComponent(c.id)}&tipo=${encodeURIComponent(c.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(cardFinalidade)}`;
                 const nomeCurto = compactCardName(c.nome);
-                const modalidadeLabel = c.modalidade === "individual" ? "Individual" : c.modalidade === "dupla" ? "Dupla" : "Time";
+                const modalidadeLabel = c.modalidade === "individual" ? null : c.modalidade === "dupla" ? "Dupla" : "Time";
                 const esporteIdStats = /^\d+$/.test(esporteParam) ? Number(esporteParam) : c.esporteId;
                 const eidStatsHref =
                   esporteIdStats > 0
@@ -1093,13 +1261,13 @@ export function MatchRadarApp({
                   </div>
                 );
                 const avatarColumn = (
-                  <div className="relative h-14 w-14 shrink-0">
+                  <div className="relative h-[5.1rem] w-[5.1rem] shrink-0">
                     <ProfileEditDrawerTrigger
                       href={eidStatsHref ?? c.href}
                       title={`Estatísticas EID de ${c.nome}`}
                       fullscreen
                       topMode="backOnly"
-                      className="block h-14 w-14 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
+                      className="block h-[5.1rem] w-[5.1rem] overflow-hidden rounded-full border-2 border-orange-200/65 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,white_4%),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_0_0_4px_color-mix(in_srgb,var(--eid-surface)_86%,white_14%),0_10px_26px_-16px_rgba(239,108,0,0.55)]"
                     >
                       {avatarBlock}
                     </ProfileEditDrawerTrigger>
@@ -1120,10 +1288,10 @@ export function MatchRadarApp({
                           topMode="backOnly"
                           className="inline-flex rounded-full"
                         >
-                          <ProfileEidPerformanceSeal notaEid={c.eid} compact className="scale-[1.18]" />
+                          <ProfileEidPerformanceSeal notaEid={c.eid} compact className="scale-[1.28]" />
                         </ProfileEditDrawerTrigger>
                       ) : (
-                        <ProfileEidPerformanceSeal notaEid={c.eid} compact className="scale-[1.18]" />
+                        <ProfileEidPerformanceSeal notaEid={c.eid} compact className="scale-[1.28]" />
                       )}
                     </div>
                   </div>
@@ -1132,38 +1300,25 @@ export function MatchRadarApp({
                 return (
                   <article
                     key={`${c.modalidade}-${c.id}-${c.esporteId}-mini`}
-                    className="rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_86%,var(--eid-primary-500)_14%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2.5 shadow-[0_12px_28px_-18px_rgba(15,23,42,0.35)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_5%,transparent)]"
+                    className="relative isolate overflow-hidden rounded-[1.6rem] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,white_18%)] bg-[radial-gradient(130%_100%_at_0%_0%,color-mix(in_srgb,var(--eid-primary-500)_7%,white_93%)_0%,transparent_42%),linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_98%,white_2%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_4%,transparent)]"
                   >
-                    <MatchRadarGridMiniChallengeBlock
-                      card={c}
-                      desafioHref={desafioHref}
-                      nomeCurto={nomeCurto}
-                      avatarColumn={avatarColumn}
-                      viewerEsportesComDupla={viewerEsportesComDupla}
-                      viewerEsportesComTime={viewerEsportesComTime}
-                    />
-                    <div className="relative z-[1] mt-2 space-y-1">
-                      {c.modalidade !== "individual" ? (
-                        <p className="inline-flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.06em] text-eid-text-secondary">
-                          <ModalidadeGlyphIcon modalidade={c.modalidade === "dupla" ? "dupla" : "time"} />
-                          {c.modalidade === "dupla" ? "Dupla" : "Time"}
-                        </p>
-                      ) : null}
-                      <div className="flex items-center justify-between gap-2 rounded-lg border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_62%,transparent)] bg-eid-surface/45 px-2 py-1">
-                        <p className="min-w-0 truncate text-[9px] font-semibold text-eid-primary-300" title={c.esporteNome}>
-                          <span className="inline-flex items-center gap-1">
-                            <SportGlyphIcon sportName={c.esporteNome} />
-                            <span>{c.esporteNome}</span>
-                          </span>
-                        </p>
-                        <span
-                          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_62%,transparent)] bg-eid-surface/70 px-1.5 py-0.5 text-[8px] font-bold text-eid-fg/90 min-[390px]:text-[9px]"
-                          title="Pontos no ranking de desafio"
-                        >
-                          <Trophy className="h-2.5 w-2.5 shrink-0 text-eid-action-400" strokeWidth={2.25} aria-hidden />
-                          {c.rank} pts
-                        </span>
-                      </div>
+                    <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+                      <span className="absolute -left-8 -top-7 rotate-[-12deg] text-[88px] opacity-[0.03] blur-[0.2px]">⚽</span>
+                      <span className="absolute -right-7 top-2 rotate-[16deg] text-[84px] opacity-[0.028] blur-[0.2px]">🎾</span>
+                      <span className="absolute -left-6 bottom-1 rotate-[8deg] text-[92px] opacity-[0.026] blur-[0.2px]">🏀</span>
+                      <span className="absolute -right-5 bottom-0 rotate-[-10deg] text-[80px] opacity-[0.024] blur-[0.2px]">🏸</span>
+                    </div>
+                    <div className="relative z-[1]">
+                      <MatchRadarGridMiniChallengeBlock
+                        card={c}
+                        desafioHref={desafioHref}
+                        nomeCurto={nomeCurto}
+                        avatarColumn={avatarColumn}
+                        esporteNome={c.esporteNome}
+                        modalidadeLabel={modalidadeLabel}
+                        viewerEsportesComDupla={viewerEsportesComDupla}
+                        viewerEsportesComTime={viewerEsportesComTime}
+                      />
                     </div>
                   </article>
                 );

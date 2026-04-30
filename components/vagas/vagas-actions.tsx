@@ -12,10 +12,8 @@ import {
 } from "@/app/vagas/actions";
 import {
   DESAFIO_FLOW_CTA_BLOCK_CLASS,
-  PEDIDO_ACEITAR_BTN_CLASS,
   PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS,
   PEDIDO_MATCH_RECEBIDO_SOCIAL_RECUSAR_BTN_CLASS,
-  PEDIDO_RECUSAR_BTN_CLASS,
 } from "@/lib/desafio/flow-ui";
 import { EidCancelButton } from "@/components/ui/eid-cancel-button";
 
@@ -101,7 +99,7 @@ export function ResponderCandidaturaForm({
   aceitar,
   label,
   /** Dois botões lado a lado ocupando a faixa (ex.: card na Comunidade). */
-  stretch = false,
+  stretch = true,
   /** Mantido por compatibilidade; mensagens de sucesso/erro usam tom claro quando `stretch`. */
   lightChrome = false,
 }: {
@@ -117,13 +115,9 @@ export function ResponderCandidaturaForm({
     if (state.ok) router.refresh();
   }, [state.ok, router]);
   const lightMsg = stretch || lightChrome;
-  const btnClass = stretch
-    ? aceitar
-      ? PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS
-      : PEDIDO_MATCH_RECEBIDO_SOCIAL_RECUSAR_BTN_CLASS
-    : aceitar
-      ? PEDIDO_ACEITAR_BTN_CLASS
-      : PEDIDO_RECUSAR_BTN_CLASS;
+  const btnClass = aceitar
+    ? PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS
+    : PEDIDO_MATCH_RECEBIDO_SOCIAL_RECUSAR_BTN_CLASS;
   const formClass = stretch
     ? "flex min-h-0 w-full min-w-0 flex-1 flex-col gap-1"
     : "inline-flex flex-col items-start gap-1";
