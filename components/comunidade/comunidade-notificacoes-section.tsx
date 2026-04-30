@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { marcarNotificacaoLida, marcarTodasNotificacoesLidas } from "@/app/comunidade/actions";
 import { EidNotificacaoRow } from "@/components/ui/eid-notificacao-row";
+import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
 
 export type NotifRow = {
   id: number;
@@ -66,7 +67,7 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
             <li key={n.id}>
               <EidNotificacaoRow unread={n.lida !== true}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
+                  <Link href={resolveNotificationHref({ tipo: n.tipo, mensagem: n.mensagem })} className="min-w-0 flex-1">
                     {n.tipo ? (
                       <span className="inline-block rounded-full border border-eid-primary-500/30 px-2 py-0.5 text-[10px] font-extrabold uppercase text-eid-primary-300">
                         {String(n.tipo).trim().toLowerCase() === "match" ? "desafio" : n.tipo}
@@ -80,7 +81,7 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
                     {notifDate(n) ? (
                       <p className="mt-2 text-[11px] text-eid-text-secondary">{notifDate(n)}</p>
                     ) : null}
-                  </div>
+                  </Link>
                   {n.lida !== true ? (
                     <form action={marcarNotificacaoLida} className="shrink-0">
                       <input type="hidden" name="notif_id" value={String(n.id)} />

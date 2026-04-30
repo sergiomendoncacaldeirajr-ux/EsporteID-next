@@ -11,6 +11,7 @@ import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-perfo
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { EidAcceptedBadge } from "@/components/ui/eid-accepted-badge";
 import { EidCityState } from "@/components/ui/eid-city-state";
+import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 
 type Item = {
   id: number;
@@ -92,6 +93,7 @@ function addMinutesToDatetimeLocal(base: string, minutes: number): string {
 export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, initial);
   const [openRefuseByMatch, setOpenRefuseByMatch] = useState<Record<number, boolean>>({});
+  const [clickedAction, setClickedAction] = useState<Record<number, "acceptCancel" | "rejectCancel" | "acceptOption" | "rejectOption">>({});
   const [localPrefillByMatch, setLocalPrefillByMatch] = useState<Record<number, string>>({});
   const [datetimeValueByField, setDatetimeValueByField] = useState<Record<string, string>>({});
   const [minDateTimeLocal] = useState<string>(() => minDatetimeLocalNow());
@@ -271,28 +273,28 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                       <input type="hidden" name="intent" value="respond_cancel" />
                       <input type="hidden" name="match_id" value={String(m.id)} />
                       <input type="hidden" name="aceitar_cancelamento" value="1" />
-                      <button
-                        type="submit"
-                        disabled={pending}
-                        className="inline-flex min-h-[34px] w-full items-center justify-center rounded-xl border border-emerald-600 bg-emerald-600 px-2 text-[9px] font-black uppercase tracking-wide text-white shadow-[0_4px_14px_-4px_rgba(16,185,129,0.35)] transition hover:bg-emerald-700 disabled:opacity-50 md:text-[10px]"
-                      >
-                        Aceitar
-                      </button>
+                      <EidSocialAceitarButton
+                        pending={pending}
+                        busy={pending && clickedAction[m.id] === "acceptCancel"}
+                        actionLabel="aprovar"
+                        onClick={() => setClickedAction((prev) => ({ ...prev, [m.id]: "acceptCancel" }))}
+                        className="min-h-[34px] rounded-xl text-[9px] md:text-[10px]"
+                      />
                     </form>
-                    <button
+                    <EidSocialRecusarButton
                       type="button"
-                      disabled={pending}
+                      pending={pending}
+                      busy={false}
                       onClick={() => {
+                        setClickedAction((prev) => ({ ...prev, [m.id]: "rejectCancel" }));
                         setOpenRefuseByMatch((s) => {
                           const nextOpen = !s[m.id];
                           if (nextOpen) ensureInitialDateOptions(m.id);
                           return { ...s, [m.id]: nextOpen };
                         });
                       }}
-                      className="inline-flex min-h-[34px] w-full items-center justify-center rounded-xl border border-rose-600 bg-rose-600 px-2 text-[9px] font-black uppercase tracking-wide text-white shadow-[0_4px_14px_-4px_rgba(244,63,94,0.35)] transition hover:bg-rose-700 disabled:opacity-50 md:text-[10px]"
-                    >
-                      Não aceitar
-                    </button>
+                      className="min-h-[34px] rounded-xl text-[9px] md:text-[10px]"
+                    />
                   </div>
 
                   {openRefuseByMatch[m.id] ? (
@@ -396,26 +398,25 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                           <input type="hidden" name="match_id" value={String(m.id)} />
                           <input type="hidden" name="option_idx" value={String(op.optionIdx)} />
                           <input type="hidden" name="aceitar_opcao" value="1" />
-                          <button
-                            type="submit"
-                            disabled={pending || op.status !== "pendente"}
-                            className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full min-h-[32px] rounded-xl border-emerald-500/40 bg-emerald-500/15 text-[color:color-mix(in_srgb,var(--eid-fg)_60%,#10b981_40%)] hover:bg-emerald-500/22 disabled:opacity-50 sm:w-auto sm:min-w-[7rem]`}
-                          >
-                            Aceitar
-                          </button>
+                          <EidSocialAceitarButton
+                            pending={pending || op.status !== "pendente"}
+                            busy={pending && clickedAction[m.id] === "acceptOption"}
+                            actionLabel="aprovar"
+                            onClick={() => setClickedAction((prev) => ({ ...prev, [m.id]: "acceptOption" }))}
+                            className="min-h-[32px] rounded-xl text-[9px] sm:min-w-[7rem]"
+                          />
                         </form>
                         <form action={formAction} className="min-w-0 flex-1 sm:flex-none">
                           <input type="hidden" name="intent" value="respond_option" />
                           <input type="hidden" name="match_id" value={String(m.id)} />
                           <input type="hidden" name="option_idx" value={String(op.optionIdx)} />
                           <input type="hidden" name="aceitar_opcao" value="0" />
-                          <button
-                            type="submit"
-                            disabled={pending || op.status !== "pendente"}
-                            className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full min-h-[32px] rounded-xl border-red-500/35 bg-red-500/12 text-[color:color-mix(in_srgb,var(--eid-fg)_60%,#f43f5e_40%)] hover:bg-red-500/18 disabled:opacity-50 sm:w-auto sm:min-w-[7rem]`}
-                          >
-                            Recusar
-                          </button>
+                          <EidSocialRecusarButton
+                            pending={pending || op.status !== "pendente"}
+                            busy={pending && clickedAction[m.id] === "rejectOption"}
+                            onClick={() => setClickedAction((prev) => ({ ...prev, [m.id]: "rejectOption" }))}
+                            className="min-h-[32px] rounded-xl text-[9px] sm:min-w-[7rem]"
+                          />
                         </form>
                       </div>
                     </div>

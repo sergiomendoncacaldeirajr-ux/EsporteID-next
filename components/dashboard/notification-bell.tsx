@@ -9,6 +9,7 @@ import {
   enablePushNotifications,
   hasActivePushSubscription,
 } from "@/lib/pwa/push-client";
+import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
 
 type Preview = {
   id: number;
@@ -497,9 +498,15 @@ export function NotificationBell({ userId }: { userId: string | null }) {
             ) : (
               <ul className="mt-1.5 max-h-40 space-y-1.5 overflow-y-auto pr-1">
                 {preview.slice(0, PREVIEW_LIMIT).map((n) => (
-                  <li key={n.id} className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2 py-1.5">
-                    <p className={`line-clamp-2 text-[10px] ${n.lida ? "text-eid-text-secondary" : "font-semibold text-eid-fg"}`}>{n.mensagem}</p>
-                    <p className="mt-1 text-[9px] text-eid-text-secondary">{formatShort(n.data_criacao ?? n.criada_em)}</p>
+                  <li key={n.id}>
+                    <Link
+                      href={resolveNotificationHref({ tipo: n.tipo, mensagem: n.mensagem })}
+                      onClick={() => setOpen(false)}
+                      className="block rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2 py-1.5 transition hover:border-eid-primary-500/35"
+                    >
+                      <p className={`line-clamp-2 text-[10px] ${n.lida ? "text-eid-text-secondary" : "font-semibold text-eid-fg"}`}>{n.mensagem}</p>
+                      <p className="mt-1 text-[9px] text-eid-text-secondary">{formatShort(n.data_criacao ?? n.criada_em)}</p>
+                    </Link>
                   </li>
                 ))}
               </ul>

@@ -15,6 +15,7 @@ import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyph
 import {
   EID_SOCIAL_CARD_FOOTER,
   EID_SOCIAL_GRID_3,
+  getSocialStatusCardShell,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
 import { EidAcceptedBadge } from "@/components/ui/eid-accepted-badge";
@@ -51,9 +52,6 @@ function firstName(value?: string | null): string {
   if (!clean) return "";
   return clean.split(/\s+/)[0] ?? clean;
 }
-
-const sugestaoEnviadaShell =
-  "relative overflow-hidden rounded-xl border border-amber-500/25 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-warning-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_93%,transparent))] text-sm shadow-[0_8px_18px_-14px_rgba(217,119,6,0.45)] md:p-0";
 
 export function ComunidadeSugestoesEnviadasMatch({
   items,
@@ -121,7 +119,7 @@ export function ComunidadeSugestoesEnviadasMatch({
           const criado = formatSolicitacaoParts(s.criadoEm);
           const resp = s.respondidoEm ? formatSolicitacaoParts(s.respondidoEm) : null;
           return (
-            <li key={s.id} className={sugestaoEnviadaShell}>
+            <li key={s.id} className={getSocialStatusCardShell(s.statusRaw)}>
               {String(s.statusLabel).toLowerCase() === "aprovado" || String(s.statusLabel).toLowerCase() === "aceito" ? (
                 <EidAcceptedBadge label={s.statusLabel} compact className="absolute right-3 top-3 z-[1]" />
               ) : String(s.statusLabel).toLowerCase() === "recusado" ? (

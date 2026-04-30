@@ -6,10 +6,11 @@ import { limparNotificacoesDesafio, limparNotificacoesEquipe } from "@/app/comun
 import { EidLimparCompactButton } from "@/components/ui/eid-limpar-compact-button";
 import { EidNotificacaoRow } from "@/components/ui/eid-notificacao-row";
 import { PEDIDO_VER_MAIS_COMPACT_BTN_CLASS } from "@/lib/desafio/flow-ui";
+import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
 
 const INITIAL = 3;
 
-type Item = { id: number; mensagem: string | null; lida: boolean | null };
+type Item = { id: number; mensagem: string | null; lida: boolean | null; tipo?: string | null };
 
 export function ComunidadeSetorNotificacoes({
   items,
@@ -36,9 +37,11 @@ export function ComunidadeSetorNotificacoes({
       <ul className="mt-2 list-none space-y-2 p-0">
         {visible.map((n) => (
           <li key={n.id}>
-            <EidNotificacaoRow unread={n.lida !== true} density="compact">
-              <p className={`text-xs leading-relaxed ${n.lida ? "text-eid-text-secondary" : "text-eid-fg"}`}>{n.mensagem}</p>
-            </EidNotificacaoRow>
+            <a href={resolveNotificationHref({ tipo: n.tipo, mensagem: n.mensagem })} className="block">
+              <EidNotificacaoRow unread={n.lida !== true} density="compact" className="cursor-pointer transition hover:border-eid-primary-500/40">
+                <p className={`text-xs leading-relaxed ${n.lida ? "text-eid-text-secondary" : "text-eid-fg"}`}>{n.mensagem}</p>
+              </EidNotificacaoRow>
+            </a>
           </li>
         ))}
       </ul>

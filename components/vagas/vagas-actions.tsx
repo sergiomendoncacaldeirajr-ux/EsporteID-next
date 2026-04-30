@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
 import { DesafioFlowCtaIcon } from "@/components/desafio/desafio-flow-cta-icon";
+import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import {
   candidatarEmVagaAction,
   cancelarCandidaturaAction,
@@ -12,6 +13,8 @@ import {
 import {
   DESAFIO_FLOW_CTA_BLOCK_CLASS,
   PEDIDO_ACEITAR_BTN_CLASS,
+  PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS,
+  PEDIDO_MATCH_RECEBIDO_SOCIAL_RECUSAR_BTN_CLASS,
   PEDIDO_RECUSAR_BTN_CLASS,
 } from "@/lib/desafio/flow-ui";
 import { EidCancelButton } from "@/components/ui/eid-cancel-button";
@@ -97,29 +100,61 @@ export function ResponderCandidaturaForm({
   candidaturaId,
   aceitar,
   label,
+  /** Dois botões lado a lado ocupando a faixa (ex.: card na Comunidade). */
+  stretch = false,
+  /** Mantido por compatibilidade; mensagens de sucesso/erro usam tom claro quando `stretch`. */
+  lightChrome = false,
 }: {
   candidaturaId: number;
   aceitar: boolean;
   label: string;
+  stretch?: boolean;
+  lightChrome?: boolean;
 }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(responderCandidaturaAction, initialState);
   useEffect(() => {
     if (state.ok) router.refresh();
   }, [state.ok, router]);
+  const lightMsg = stretch || lightChrome;
+  const btnClass = stretch
+    ? aceitar
+      ? PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS
+      : PEDIDO_MATCH_RECEBIDO_SOCIAL_RECUSAR_BTN_CLASS
+    : aceitar
+      ? PEDIDO_ACEITAR_BTN_CLASS
+      : PEDIDO_RECUSAR_BTN_CLASS;
+  const formClass = stretch
+    ? "flex min-h-0 w-full min-w-0 flex-1 flex-col gap-1"
+    : "inline-flex flex-col items-start gap-1";
   return (
-    <form action={action} className="inline-flex flex-col items-start gap-1">
+    <form action={action} className={formClass}>
       <input type="hidden" name="candidatura_id" value={candidaturaId} />
       <input type="hidden" name="aceitar" value={aceitar ? "true" : "false"} />
-      <button
-        type="submit"
-        disabled={pending}
-        className={aceitar ? PEDIDO_ACEITAR_BTN_CLASS : PEDIDO_RECUSAR_BTN_CLASS}
-      >
-        {pending ? "Salvando..." : label}
-      </button>
+      {stretch ? (
+        aceitar ? (
+          <EidSocialAceitarButton
+            pending={pending}
+            busy={pending}
+            actionLabel="aprovar"
+            className={`${btnClass} w-full shrink-0`}
+          />
+        ) : (
+          <EidSocialRecusarButton pending={pending} busy={pending} className={`${btnClass} w-full shrink-0`} />
+        )
+      ) : (
+        <button type="submit" disabled={pending} className={`${btnClass} w-full shrink-0 uppercase`}>
+          <span className={pending ? "eid-social-action-loading-text" : ""}>
+            {pending ? (aceitar ? "Aprovando…" : "Recusando…") : label}
+          </span>
+        </button>
+      )}
       {state.message ? (
-        <p className={`text-[11px] ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
+        <p
+          className={`text-[11px] ${lightMsg ? (state.ok ? "text-emerald-700" : "text-red-600") : state.ok ? "text-eid-primary-300" : "text-red-300"}`}
+        >
+          {state.message}
+        </p>
       ) : null}
     </form>
   );

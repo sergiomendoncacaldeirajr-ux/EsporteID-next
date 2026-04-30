@@ -25,8 +25,13 @@ export type MatchRadarCard = {
   disponivelAmistoso: boolean;
   /** Gênero do perfil (quando modalidade individual). */
   genero?: "Masculino" | "Feminino" | "Outro" | null;
-  /** Grade individual: mesmo atleta em mais de um esporte no ranking individual (UI empilha + seletor no desafio). */
+  /** @deprecated Um card por esporte; não agrupar na UI. */
   groupedIndividualSports?: MatchRadarCard[];
+  /** Vitórias / derrotas registradas no esporte (modalidade individual — `usuario_eid`). */
+  vitorias?: number;
+  derrotas?: number;
+  /** Posição no ranking (mesmo esporte + modalidade), quando calculável. */
+  posicaoRank?: number | null;
 };
 
 type AtletaRow = {
@@ -42,6 +47,9 @@ type AtletaRow = {
   interesse_match: string | null;
   avatar_url?: string | null;
   disponivel_amistoso?: boolean | null;
+  vitorias?: number | null;
+  derrotas?: number | null;
+  posicao_rank?: number | null;
 };
 
 type FormacaoRow = {
@@ -56,6 +64,8 @@ type FormacaoRow = {
   interesse_match: string | null;
   can_challenge: boolean | null;
   disponivel_amistoso?: boolean | null;
+  vitorias?: number | null;
+  derrotas?: number | null;
 };
 
 export type MatchRadarFinalidade = "ranking" | "amistoso";
@@ -69,6 +79,91 @@ export function matchCardEidStatsHref(card: MatchRadarCard): string | null {
   }
   /** No radar, dupla e time usam `times.id`; `/perfil-time/[id]` cobre ambos (tipo dupla no registro). */
   return `/perfil-time/${encodeURIComponent(card.id)}/eid/${card.esporteId}?from=${from}`;
+}
+
+/**
+ * Posição no ranking de formações: mesma regra do perfil (`perfil-time` / `perfil-dupla`):
+ * 1 + quantidade de times no mesmo esporte e modalidade com pontos estritamente maiores.
+ */
+async function enrichFormationCardsRankPosition(
+  supabase: SupabaseClient,
+  cards: MatchRadarCard[]
+): Promise<MatchRadarCard[]> {
+  const targets = cards.filter((c) => c.modalidade === "dupla" || c.modalidade === "time");
+  if (targets.length === 0) return cards;
+
+  const esporteIds = [...new Set(targets.map((c) => c.esporteId).filter((n) => Number.isFinite(n) && n > 0))];
+  if (esporteIds.length === 0) return cards;
+
+  const { data: rows } = await supabase.from("times").select("id, esporte_id, tipo, pontos_ranking").in("esporte_id", esporteIds);
+
+  type TRow = { id: number; esporte_id: number | null; tipo: string | null; pontos_ranking: number | null };
+  const rowsTyped = (rows ?? []) as TRow[];
+
+  return cards.map((c) => {
+    if (c.modalidade !== "dupla" && c.modalidade !== "time") return c;
+    const tid = Number(c.id);
+    if (!Number.isFinite(tid)) return c;
+    const eid = Number(c.esporteId);
+    const bucketDupla = c.modalidade === "dupla";
+
+    const selfRow = rowsTyped.find((r) => Number(r.id) === tid);
+    const pts = Number(selfRow?.pontos_ranking ?? c.rank ?? 0);
+
+    const inBucket = rowsTyped.filter((r) => {
+      if (Number(r.esporte_id ?? 0) !== eid) return false;
+      const rt = String(r.tipo ?? "").trim().toLowerCase();
+      const isDupla = rt === "dupla";
+      return bucketDupla ? isDupla : !isDupla;
+    });
+
+    const acima = inBucket.filter((r) => Number(r.pontos_ranking ?? 0) > pts).length;
+    return { ...c, posicaoRank: acima + 1 };
+  });
+}
+
+/**
+ * Posição individual: só pontos de ranking (`pontos_ranking` desc). Nota EID não entra na ordem.
+ * Desempate estável por `usuario_id` para posição determinística em empates de pontos.
+ * Se não achar na lista, usa `posicao_rank` vindo do RPC.
+ */
+async function enrichIndividualCardsRankPosition(
+  supabase: SupabaseClient,
+  cards: MatchRadarCard[]
+): Promise<MatchRadarCard[]> {
+  const ind = cards.filter((c) => c.modalidade === "individual");
+  if (ind.length === 0) return cards;
+
+  const esporteIds = [...new Set(ind.map((c) => c.esporteId).filter((n) => Number.isFinite(n) && n > 0))];
+  if (esporteIds.length === 0) return cards;
+
+  const posByUsuarioEsporte = new Map<string, number>();
+
+  for (const eid of esporteIds) {
+    const { data: rankingRows } = await supabase
+      .from("usuario_eid")
+      .select("usuario_id, pontos_ranking")
+      .eq("esporte_id", eid)
+      .order("pontos_ranking", { ascending: false })
+      .order("usuario_id", { ascending: true })
+      .limit(8000);
+
+    (rankingRows ?? []).forEach((r, idx) => {
+      const uid = String((r as { usuario_id?: string }).usuario_id ?? "");
+      if (!uid) return;
+      const key = `${uid}:${eid}`;
+      if (!posByUsuarioEsporte.has(key)) posByUsuarioEsporte.set(key, idx + 1);
+    });
+  }
+
+  return cards.map((c) => {
+    if (c.modalidade !== "individual") return c;
+    const computed = posByUsuarioEsporte.get(`${c.id}:${c.esporteId}`);
+    const stored = c.posicaoRank;
+    const pos =
+      computed != null && computed > 0 ? computed : stored != null && stored > 0 ? stored : null;
+    return { ...c, posicaoRank: pos };
+  });
 }
 
 export type RadarSnapshotInput = {
@@ -210,6 +305,12 @@ export async function fetchMatchRadarCards(
         avatarUrl: row.avatar_url ? String(row.avatar_url) : null,
         disponivelAmistoso: row.disponivel_amistoso === true,
         genero: null,
+        vitorias: Number(row.vitorias ?? 0),
+        derrotas: Number(row.derrotas ?? 0),
+        posicaoRank:
+          row.posicao_rank != null && Number.isFinite(Number(row.posicao_rank)) && Number(row.posicao_rank) >= 1
+            ? Math.round(Number(row.posicao_rank))
+            : null,
       };
     });
 
@@ -238,6 +339,8 @@ export async function fetchMatchRadarCards(
     } else {
       cards = baseCards;
     }
+
+    cards = await enrichIndividualCardsRankPosition(supabase, cards);
   } else {
     const { data: formacoes } = await supabase.rpc("buscar_match_formacoes", {
       p_viewer_id: viewerId,
@@ -346,7 +449,13 @@ export async function fetchMatchRadarCards(
       avatarUrl: shieldByTeamId.get(Number(t.id)) ?? null,
       disponivelAmistoso: t.disponivel_amistoso === true,
       genero: null,
+      vitorias: Number(t.vitorias ?? 0),
+      derrotas: Number(t.derrotas ?? 0),
     }));
+  }
+
+  if (tipo !== "atleta") {
+    cards = await enrichFormationCardsRankPosition(supabase, cards);
   }
 
   return filterAndSortRadarCards(cards, { sortBy, raio, finalidade });

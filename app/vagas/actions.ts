@@ -104,12 +104,12 @@ export async function candidatarEmVagaAction(
   );
   if (upsertErr) return { ok: false, message: upsertErr.message };
 
-  const { data: notifCandidatura } = await supabase
+  const { data: notifCandidatura, error: errNotifLider } = await supabase
     .from("notificacoes")
     .insert({
       usuario_id: team.criador_id,
       remetente_id: user.id,
-      mensagem: `Novo pedido para entrar em "${team.nome ?? "sua formação"}".`,
+      mensagem: `Novo pedido para entrar em "${team.nome ?? "sua formação"}". Abra Social → Equipe para aprovar ou recusar.`,
       tipo: "candidatura_time",
       referencia_id: timeId,
       lida: false,
@@ -117,7 +117,10 @@ export async function candidatarEmVagaAction(
     })
     .select("id")
     .limit(1);
-  await supabase.from("notificacoes").insert({
+  if (errNotifLider) {
+    console.error("[candidatarEmVagaAction] notificação ao líder:", errNotifLider.message, errNotifLider);
+  }
+  const { error: errNotifSelf } = await supabase.from("notificacoes").insert({
     usuario_id: user.id,
     remetente_id: team.criador_id,
     mensagem: `Você enviou pedido para entrar em "${team.nome ?? "a formação"}".`,
@@ -126,6 +129,9 @@ export async function candidatarEmVagaAction(
     lida: false,
     data_criacao: new Date().toISOString(),
   });
+  if (errNotifSelf) {
+    console.error("[candidatarEmVagaAction] notificação ao candidato:", errNotifSelf.message, errNotifSelf);
+  }
   await triggerPushForNotificationIdsBestEffort([Number((notifCandidatura?.[0] as { id?: number } | undefined)?.id ?? 0)], {
     source: "vagas/actions.candidatar",
   });

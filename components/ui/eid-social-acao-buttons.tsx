@@ -19,6 +19,8 @@ import { EID_SOCIAL_ACAO_BTN_ATTR } from "@/lib/comunidade/social-panel-layout";
 import {
   PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS,
   PEDIDO_MATCH_RECEBIDO_SOCIAL_RECUSAR_BTN_CLASS,
+  PEDIDO_SOCIAL_LIGHT_ICON_RING_ACEITAR,
+  PEDIDO_SOCIAL_LIGHT_ICON_RING_RECUSAR,
 } from "@/lib/desafio/flow-ui";
 
 const ICON_STROKE = 2.75;
@@ -41,7 +43,7 @@ export function EidSocialAceitarButton({
   ...props
 }: EidSocialAceitarButtonProps) {
   const idle = actionLabel === "aprovar" ? "Aprovar" : "Aceitar";
-  const loadingText = actionLabel === "aprovar" ? "Aprovando…" : "Aceitando…";
+  const loadingText = "Aprovando…";
   return (
     <button
       type={type}
@@ -51,11 +53,15 @@ export function EidSocialAceitarButton({
       {...props}
     >
       {busy ? (
-        <Loader2 className="shrink-0 animate-spin opacity-95" strokeWidth={ICON_STROKE} aria-hidden />
+        <span className={PEDIDO_SOCIAL_LIGHT_ICON_RING_ACEITAR}>
+          <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin sm:h-3 sm:w-3" strokeWidth={ICON_STROKE} aria-hidden />
+        </span>
       ) : (
-        <Check strokeWidth={ICON_STROKE} aria-hidden />
+        <span className={PEDIDO_SOCIAL_LIGHT_ICON_RING_ACEITAR}>
+          <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3" strokeWidth={ICON_STROKE} aria-hidden />
+        </span>
       )}
-      <span>{busy ? loadingText : idle}</span>
+      <span className={busy ? "eid-social-action-loading-text" : ""}>{busy ? loadingText : idle}</span>
     </button>
   );
 }
@@ -85,11 +91,15 @@ export function EidSocialRecusarButton({
       {...props}
     >
       {busy ? (
-        <Loader2 className="shrink-0 animate-spin opacity-95" strokeWidth={ICON_STROKE} aria-hidden />
+        <span className={PEDIDO_SOCIAL_LIGHT_ICON_RING_RECUSAR}>
+          <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin sm:h-3 sm:w-3" strokeWidth={ICON_STROKE} aria-hidden />
+        </span>
       ) : (
-        <X strokeWidth={ICON_STROKE} aria-hidden />
+        <span className={PEDIDO_SOCIAL_LIGHT_ICON_RING_RECUSAR}>
+          <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" strokeWidth={ICON_STROKE} aria-hidden />
+        </span>
       )}
-      <span>{busy ? "Recusando…" : "Recusar"}</span>
+      <span className={busy ? "eid-social-action-loading-text" : ""}>{busy ? "Recusando…" : "Recusar"}</span>
     </button>
   );
 }

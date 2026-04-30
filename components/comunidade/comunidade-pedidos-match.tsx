@@ -7,18 +7,19 @@ import { responderPedidoMatch, type ResponderMatchState } from "@/app/comunidade
 import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
-import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import type { PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
+import { Calendar, Clock, Clock3 } from "lucide-react";
 import {
   PEDIDO_MATCH_RECEBIDO_FORM_CLASS,
   PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS,
 } from "@/lib/desafio/flow-ui";
 import {
-  EID_SOCIAL_CARD_FOOTER,
-  EID_SOCIAL_CARD_SHELL,
+  EID_SOCIAL_LIGHT_ACOES_ROW,
+  EID_SOCIAL_LIGHT_CARD_SHELL,
+  EID_SOCIAL_LIGHT_PANEL,
   EID_SOCIAL_GRID_3,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
@@ -126,7 +127,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 className="h-full w-full rounded-full object-cover object-center"
               />
             ) : f ? (
-              <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
+              <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-field-bg text-[10px] font-black text-eid-text-muted">
                 {iniciaisFormacao(f.nome)}
               </div>
             ) : m.desafianteAvatarUrl ? (
@@ -138,135 +139,153 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 className="h-full w-full rounded-full object-cover object-center"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
+              <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-field-bg text-[10px] font-black text-eid-text-muted">
                 EID
               </div>
             );
+          const modalidadeKind =
+            String(m.modalidade).trim().toLowerCase() === "time"
+              ? "time"
+              : String(m.modalidade).trim().toLowerCase() === "individual"
+                ? "individual"
+                : "dupla";
           return (
-            <li
-              key={m.id}
-              className={`${EID_SOCIAL_CARD_SHELL} text-sm md:rounded-2xl md:border-eid-primary-500/25`}
-            >
-              <div className="pointer-events-none absolute -right-6 -top-6 hidden h-20 w-20 rounded-full bg-eid-primary-500/10 blur-2xl md:block" />
+            <li key={m.id} className={`${EID_SOCIAL_LIGHT_CARD_SHELL} p-0 text-sm`}>
               <div className="absolute right-3 top-3 z-[1] flex flex-col items-end gap-1">
                 {m.finalidade === "amistoso" ? (
-                  <span className="rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold uppercase text-emerald-200">
+                  <span className="rounded-full border border-emerald-500/35 bg-emerald-500/12 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-emerald-100 eid-light:border-emerald-200 eid-light:bg-emerald-50 eid-light:text-emerald-800">
                     Amistoso
                   </span>
                 ) : (
-                  <span className="rounded-full border border-eid-primary-400/55 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_30%,transparent),color-mix(in_srgb,var(--eid-primary-700)_26%,transparent))] px-2 py-0.5 text-[9px] font-bold uppercase text-eid-primary-100 shadow-[0_0_0_1px_color-mix(in_srgb,var(--eid-primary-500)_25%,transparent),0_6px_14px_-10px_color-mix(in_srgb,var(--eid-primary-500)_75%,transparent)]">
+                  <span className="rounded-full border border-sky-400/35 bg-sky-500/12 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-sky-100 eid-light:border-sky-200 eid-light:bg-sky-50 eid-light:text-[#1d4ed8]">
                     Ranking
                   </span>
                 )}
-                <EidPendingBadge label="Pendente" />
+                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] text-amber-800 eid-dark:border-amber-300/65 eid-dark:bg-amber-950/55 eid-dark:text-amber-100 eid-light:border-amber-400 eid-light:bg-yellow-50 eid-light:text-amber-600">
+                  <Clock3 className="h-3 w-3 shrink-0 text-amber-800 eid-dark:text-amber-100 eid-light:text-amber-600" strokeWidth={2.25} aria-hidden />
+                  Pendente
+                </span>
               </div>
 
-              <div className={`${EID_SOCIAL_GRID_3} pt-11`}>
-                <div className="min-w-0 px-2 pb-3 pt-1 sm:px-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.08em] text-eid-primary-300/90">Desafiante</p>
-                  <div className="mt-1 flex w-full flex-col items-center px-0.5 py-1">
-                    <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg md:text-xs">
-                      {firstNamePedido(tituloCard)}
+              <div className={EID_SOCIAL_LIGHT_PANEL}>
+                <div className={`${EID_SOCIAL_GRID_3} pt-11`}>
+                  <div className="flex min-w-0 flex-col items-center">
+                    <p className="flex flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.14em] text-eid-action-600">
+                      <span className="shrink-0">Desafiante</span>
                     </p>
-                    <div className="relative mt-1 h-12 w-12 shrink-0 md:h-14 md:w-14">
-                      {m.rankingPosicao && m.rankingPosicao > 0 ? (
-                        <span className="absolute -top-3 left-1/2 z-[2] -translate-x-1/2 rounded-full border border-eid-primary-400/55 bg-eid-primary-500/20 px-1 py-[1px] text-[7px] font-black uppercase text-eid-primary-100">
-                          #{m.rankingPosicao}
+                    <div className="mt-3 flex w-full flex-col items-center px-0.5 py-0.5 text-center">
+                      <p className="max-w-[12rem] truncate text-[15px] font-bold leading-tight text-eid-fg">
+                        {firstNamePedido(tituloCard)}
+                      </p>
+                      <div className="relative mt-2 h-14 w-14 shrink-0">
+                        {m.rankingPosicao && m.rankingPosicao > 0 ? (
+                          <span className="absolute -top-2 left-1/2 z-[2] -translate-x-1/2 rounded-full border border-sky-400/40 bg-sky-500/15 px-1 py-[1px] text-[7px] font-black uppercase text-sky-100 eid-light:border-sky-200 eid-light:bg-sky-100 eid-light:text-[#1a2b4c]">
+                            #{m.rankingPosicao}
+                          </span>
+                        ) : null}
+                        <ProfileEditDrawerTrigger
+                          href={statsHref}
+                          title={f ? `Estatísticas da formação ${tituloCard}` : `Estatísticas EID de ${tituloCard}`}
+                          fullscreen
+                          topMode="backOnly"
+                          className="relative block h-full w-full overflow-hidden rounded-full border-[2.5px] border-eid-card bg-eid-field-bg shadow-md ring-1 ring-[color:var(--eid-border-subtle)]"
+                        >
+                          {avatarPedidoRecebido}
+                        </ProfileEditDrawerTrigger>
+                      </div>
+                      <div className="mt-2 flex justify-center">
+                        <ProfileEidPerformanceSeal notaEid={seloEid} compact className="scale-110" />
+                      </div>
+                      <EidCityState
+                        location={localCard?.trim() ? localCard : null}
+                        compact
+                        align="center"
+                        className="mt-1.5 w-full text-eid-text-secondary [&_.font-semibold]:text-eid-fg"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex min-w-0 w-full flex-col items-center gap-3 px-0.5 pt-0 text-center">
+                    <div className="mx-auto flex w-full max-w-[11rem] flex-col items-center gap-0.5">
+                      <p className="inline-flex items-center justify-center gap-1.5 text-[10px] tabular-nums text-eid-text-secondary">
+                        <Calendar className="h-3 w-3 shrink-0 text-eid-text-muted" strokeWidth={2} aria-hidden />
+                        {recebido.date}
+                      </p>
+                      <p className="inline-flex items-center justify-center gap-1.5 text-[10px] tabular-nums text-eid-text-secondary">
+                        <Clock className="h-3 w-3 shrink-0 text-eid-text-muted" strokeWidth={2} aria-hidden />
+                        {recebido.time}
+                      </p>
+                    </div>
+                    <div className="mx-auto flex w-full max-w-[11rem] flex-col items-stretch gap-1.5">
+                      <span className="inline-flex w-full items-center justify-center rounded-full border border-sky-300/55 bg-sky-500/12 px-2 py-1 text-[8px] font-bold uppercase tracking-[0.06em] text-eid-fg eid-light:border-sky-200/90 eid-light:bg-sky-100 eid-light:text-[#1a2b4c]">
+                        Recebido
+                      </span>
+                      <span className="inline-flex w-full items-center justify-center gap-1 rounded-full border border-orange-500/35 bg-orange-500/10 px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.04em] text-orange-200 eid-light:border-orange-200/90 eid-light:bg-[#fff7ed] eid-light:text-[#9a3412]">
+                        <span className="text-orange-300 eid-light:text-[#c2410c]">
+                          <SportGlyphIcon sportName={m.esporte} />
+                        </span>
+                        <span className="truncate normal-case">{m.esporte}</span>
+                      </span>
+                      {m.timeNome ? (
+                        <span className="inline-flex w-full items-center justify-center rounded-full border border-sky-300/55 bg-sky-500/12 px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.04em] text-eid-fg eid-light:border-sky-200/90 eid-light:bg-sky-100 eid-light:text-[#1a2b4c]">
+                          <span className="truncate">{m.timeNome}</span>
                         </span>
                       ) : null}
-                      <ProfileEditDrawerTrigger
-                        href={statsHref}
-                        title={f ? `Estatísticas da formação ${tituloCard}` : `Estatísticas EID de ${tituloCard}`}
-                        fullscreen
-                        topMode="backOnly"
-                        className="relative block h-full w-full overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/65"
-                      >
-                        {avatarPedidoRecebido}
-                      </ProfileEditDrawerTrigger>
-                    </div>
-                    <div className="mt-0.5">
-                      <ProfileEidPerformanceSeal notaEid={seloEid} compact className="scale-125" />
-                    </div>
-                    <EidCityState location={localCard?.trim() ? localCard : null} compact align="center" className="mt-1 w-full" />
-                  </div>
-                </div>
-
-                <div className="flex min-w-0 flex-col items-center gap-2 px-2 pb-3 pt-1 text-center sm:px-3">
-                  <div className="w-full">
-                    <p className="text-[11px] tabular-nums text-eid-text-secondary">{recebido.date}</p>
-                    <p className="mt-0.5 text-[11px] tabular-nums text-eid-text-secondary">{recebido.time}</p>
-                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-wide text-eid-text-muted">Recebido</p>
-                  </div>
-                  <div className="flex flex-wrap items-center justify-center gap-1">
-                    <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
-                      <SportGlyphIcon sportName={m.esporte} />
-                      <span>{m.esporte}</span>
-                    </span>
-                    {m.timeNome ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
-                        <span>{m.timeNome}</span>
+                      <span className="inline-flex w-full items-center justify-center gap-1 rounded-full border border-teal-500/35 bg-teal-500/12 px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-[0.05em] text-teal-100 eid-light:border-teal-200/90 eid-light:bg-teal-50 eid-light:text-teal-900">
+                        <span className="inline-flex shrink-0 scale-90 text-teal-200 eid-light:text-teal-800">
+                          <ModalidadeGlyphIcon modalidade={modalidadeKind} />
+                        </span>
+                        <span className="truncate">{m.modalidade === "individual" ? "Individual" : m.modalidade}</span>
                       </span>
-                    ) : null}
-                    <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-bold uppercase text-eid-text-secondary">
-                      <ModalidadeGlyphIcon
-                        modalidade={
-                          String(m.modalidade).trim().toLowerCase() === "time"
-                            ? "time"
-                            : String(m.modalidade).trim().toLowerCase() === "individual"
-                              ? "individual"
-                              : "dupla"
-                        }
-                      />
-                      {m.modalidade === "individual" ? "Individual" : m.modalidade}
-                    </span>
+                    </div>
+                  </div>
+
+                  <div className="flex min-w-0 flex-col items-center px-0.5 text-center">
+                    <p className="flex w-full flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.14em] text-eid-action-600">
+                      <span className="shrink-0">Resposta</span>
+                    </p>
+                    <p className="mt-3 max-w-[11rem] text-[10px] font-medium leading-snug text-eid-text-secondary">
+                      Use os botões abaixo para aceitar ou recusar o desafio.
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex min-w-0 flex-col items-center px-2 pb-3 pt-1 text-center sm:px-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.08em] text-eid-text-secondary">Resposta</p>
-                  <p className="mt-3 max-w-[8rem] text-[10px] font-semibold leading-snug text-eid-text-secondary">
-                    Use os botões abaixo para aceitar ou recusar o desafio.
-                  </p>
+                {showStatsHint ? (
+                  <p className="px-0.5 pb-2 text-center text-[10px] text-eid-text-secondary">Toque na foto para abrir as estatísticas EID em tela cheia.</p>
+                ) : null}
+                {m.finalidade === "ranking" && m.rankingPreview ? (
+                  <div className="px-0.5 pb-1">
+                    <DesafioImpactoResumo
+                      esporteNome={m.esporte}
+                      regras={m.rankingPreview.regras}
+                      individual={m.rankingPreview.kind === "individual" ? m.rankingPreview.perspective : null}
+                      coletivo={m.rankingPreview.kind === "coletivo" ? m.rankingPreview.coletivo : null}
+                    />
+                  </div>
+                ) : null}
+                <div
+                  className={`${EID_SOCIAL_LIGHT_ACOES_ROW} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !items-stretch gap-1.5 sm:gap-2`}
+                >
+                  <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
+                    <input type="hidden" name="match_id" value={String(m.id)} />
+                    <input type="hidden" name="aceitar" value="true" />
+                    <EidSocialAceitarButton
+                      pending={pending}
+                      busy={pending && clickedAction?.matchId === m.id && clickedAction.aceitar}
+                      onClick={() => setClickedAction({ matchId: m.id, aceitar: true })}
+                    />
+                  </form>
+                  <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
+                    <input type="hidden" name="match_id" value={String(m.id)} />
+                    <input type="hidden" name="aceitar" value="false" />
+                    <EidSocialRecusarButton
+                      pending={pending}
+                      busy={pending && clickedAction?.matchId === m.id && !clickedAction.aceitar}
+                      withDesafioRecusarMarker
+                      onClick={() => setClickedAction({ matchId: m.id, aceitar: false })}
+                    />
+                  </form>
                 </div>
-              </div>
-
-              {showStatsHint ? (
-                <p className="px-3 pb-2 text-[10px] text-eid-text-secondary md:px-4">
-                  Toque na foto para abrir as estatísticas EID em tela cheia.
-                </p>
-              ) : null}
-              {m.finalidade === "ranking" && m.rankingPreview ? (
-                <div className="px-2 md:px-3">
-                  <DesafioImpactoResumo
-                    esporteNome={m.esporte}
-                    regras={m.rankingPreview.regras}
-                    individual={m.rankingPreview.kind === "individual" ? m.rankingPreview.perspective : null}
-                    coletivo={m.rankingPreview.kind === "coletivo" ? m.rankingPreview.coletivo : null}
-                  />
-                </div>
-              ) : null}
-              <div
-                className={`${EID_SOCIAL_CARD_FOOTER} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !mt-0 !bg-[color:color-mix(in_srgb,var(--eid-surface)_45%,transparent)]`}
-              >
-                <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
-                  <input type="hidden" name="match_id" value={String(m.id)} />
-                  <input type="hidden" name="aceitar" value="true" />
-                  <EidSocialAceitarButton
-                    pending={pending}
-                    busy={pending && clickedAction?.matchId === m.id && clickedAction.aceitar}
-                    onClick={() => setClickedAction({ matchId: m.id, aceitar: true })}
-                  />
-                </form>
-                <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
-                  <input type="hidden" name="match_id" value={String(m.id)} />
-                  <input type="hidden" name="aceitar" value="false" />
-                  <EidSocialRecusarButton
-                    pending={pending}
-                    busy={pending && clickedAction?.matchId === m.id && !clickedAction.aceitar}
-                    withDesafioRecusarMarker
-                    onClick={() => setClickedAction({ matchId: m.id, aceitar: false })}
-                  />
-                </form>
               </div>
             </li>
           );

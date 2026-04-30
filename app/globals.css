@@ -1,6 +1,30 @@
 @import "tailwindcss";
 
 /*
+ * Tema (`data-eid-theme` no `<html>`): no Tailwind v4, `[data-eid-theme=dark]:` nos utilitários
+ * compila para um seletor inválido no elemento — use `eid-dark:` / `eid-light:`.
+ */
+@custom-variant eid-dark (&:where([data-eid-theme="dark"] *));
+@custom-variant eid-light (&:where([data-eid-theme="light"] *));
+
+@keyframes eid-action-loading-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.72;
+    transform: translateY(-0.5px);
+  }
+}
+
+.eid-social-action-loading-text {
+  display: inline-block;
+  animation: eid-action-loading-pulse 0.95s ease-in-out infinite;
+}
+
+/*
  * EsporteID — identidade visual (fonte: logo oficial)
  * ---------------------------------------------------------------------------
  * • Azul estrutural (#2563eb e escala): navegação, foco, links informativos
@@ -966,18 +990,18 @@ label:has(input.sr-only):not(.eid-no-press):active {
 }
 
 [data-eid-theme="light"] [data-eid-cancel-pendente-btn="true"] {
-  border-color: #dc2626 !important;
-  background-color: #dc2626 !important;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff !important;
+  border-color: #f87171 !important;
+  background-color: color-mix(in srgb, #ef4444 6%, white 94%) !important;
+  color: #dc2626 !important;
+  -webkit-text-fill-color: #dc2626 !important;
   opacity: 1 !important;
   text-shadow: none !important;
 }
 
 [data-eid-theme="light"] [data-eid-cancel-pendente-btn="true"]:hover {
-  border-color: #b91c1c !important;
-  background-color: #b91c1c !important;
-  color: #ffffff !important;
+  border-color: #ef4444 !important;
+  background-color: color-mix(in srgb, #ef4444 12%, white 88%) !important;
+  color: #b91c1c !important;
 }
 
 .eid-loading-skeleton-screen {
@@ -1125,15 +1149,22 @@ select,
     font-weight: 800;
   }
 
-  /* Aceitar/Recusar (e Aprovar) nos cards sociais — evita min-height 44px + padding 0.9rem que “some” com ícones pequenos. */
+  /* Aceitar/Recusar (e Aprovar) nos cards sociais — padrão claro compacto (alinhado a pedidos ao elenco). */
   :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
     button[data-eid-social-acao-btn="true"] {
     min-height: 0 !important;
-    padding: 6px 12px !important;
-    font-size: 9px !important;
+    padding: 4px 8px !important;
+    font-size: 7px !important;
     line-height: 1.1 !important;
     font-weight: 800 !important;
     border-radius: 9999px !important;
+  }
+
+  @media (min-width: 640px) {
+    :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
+      button[data-eid-social-acao-btn="true"] {
+      font-size: 8px !important;
+    }
   }
 
   :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
@@ -1349,14 +1380,23 @@ select,
   }
 }
 
-/* Lucide nos botões Aceitar/Recusar/Aprovar compactos (Comunidade) — tamanho explícito (Tailwind no SVG perde para resets em alguns contextos). */
+/* Lucide nos botões Aceitar/Recusar/Aprovar compactos — ícones no anel (10–12px). */
 :where([data-eid-touch-ui], .eid-touch-ui-scope) button[data-eid-social-acao-btn="true"] svg {
-  width: 12px;
-  height: 12px;
-  min-width: 12px;
-  min-height: 12px;
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  min-height: 10px;
   flex-shrink: 0;
   display: block;
+}
+
+@media (min-width: 640px) {
+  :where([data-eid-touch-ui], .eid-touch-ui-scope) button[data-eid-social-acao-btn="true"] svg {
+    width: 12px;
+    height: 12px;
+    min-width: 12px;
+    min-height: 12px;
+  }
 }
 
 button[data-eid-limpar-compact-btn="true"] svg {

@@ -27,10 +27,10 @@ export const DESAFIO_CHOICE_ACTION =
  * ~70% menor em área que o bloco full-width com texto 8px.
  */
 export const PEDIDO_ACEITAR_BTN_CLASS =
-  "inline-flex !h-[12px] !min-h-0 shrink-0 origin-center scale-[0.82] items-center justify-center overflow-hidden whitespace-nowrap rounded-full border border-emerald-600/90 bg-emerald-600 px-0 text-[4px] font-black uppercase leading-none tracking-[0.02em] text-white shadow-none transition hover:bg-emerald-700 disabled:opacity-60 [&_span]:inline-block [&_span]:origin-center [&_span]:scale-[0.78] md:!h-[18px] md:scale-100 md:px-1 md:text-[7px] md:[&_span]:scale-100";
+  "inline-flex !h-[12px] !min-h-0 shrink-0 origin-center scale-[0.82] items-center justify-center overflow-hidden whitespace-nowrap rounded-[6px] border border-[#2563EB] bg-[#2563EB] px-0 text-[4px] font-black uppercase leading-none tracking-[0.02em] text-white shadow-none transition hover:border-[#1D4ED8] hover:bg-[#1D4ED8] active:border-[#1D4ED8] active:bg-[#1D4ED8] disabled:opacity-60 [&_span]:inline-block [&_span]:origin-center [&_span]:scale-[0.78] md:!h-[18px] md:scale-100 md:px-1 md:text-[7px] md:[&_span]:scale-100";
 
 export const PEDIDO_RECUSAR_BTN_CLASS =
-  "inline-flex !h-[12px] !min-h-0 shrink-0 origin-center scale-[0.82] items-center justify-center overflow-hidden whitespace-nowrap rounded-full border border-rose-600/90 bg-rose-600 px-0 text-[4px] font-black uppercase leading-none tracking-[0.02em] text-white transition hover:bg-rose-700 disabled:opacity-60 [&_span]:inline-block [&_span]:origin-center [&_span]:scale-[0.78] md:!h-[18px] md:scale-100 md:px-1 md:text-[7px] md:[&_span]:scale-100";
+  "inline-flex !h-[12px] !min-h-0 shrink-0 origin-center scale-[0.82] items-center justify-center overflow-hidden whitespace-nowrap rounded-[6px] border border-[#475569] bg-transparent px-0 text-[4px] font-black uppercase leading-none tracking-[0.02em] text-[#CBD5F5] transition hover:border-[#ef4444] hover:bg-red-500/15 hover:text-red-100 active:border-[#ef4444] active:bg-red-500/22 active:text-white disabled:opacity-60 [&_span]:inline-block [&_span]:origin-center [&_span]:scale-[0.78] md:!h-[18px] md:scale-100 md:px-1 md:text-[7px] md:[&_span]:scale-100 eid-light:border-[#475569] eid-light:text-[#475569]";
 
 /**
  * Cancelar compacto (candidatura, pedido enviado, atalho na agenda): mesma altura fixa que Aceitar/Recusar.
@@ -46,7 +46,7 @@ export const PEDIDO_VER_MAIS_COMPACT_BTN_CLASS =
  * Limpar compacto (pílula, fundo claro, ícone lixeira) — usado por `EidLimparCompactButton`.
  */
 export const PEDIDO_LIMPAR_COMPACT_BTN_CLASS =
-  "inline-flex min-h-0 shrink-0 items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-surface)_10%)] px-2 py-0.5 text-[7px] font-black uppercase leading-none tracking-[0.03em] text-eid-fg transition hover:border-red-400/40 hover:text-red-300 disabled:opacity-50 [data-eid-theme=light]:bg-white/85 [data-eid-theme=light]:text-slate-800";
+  "inline-flex min-h-0 shrink-0 items-center justify-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-surface)_10%)] px-2 py-0.5 text-[7px] font-black uppercase leading-none tracking-[0.03em] text-eid-fg transition hover:border-red-400/40 hover:text-red-300 disabled:opacity-50 eid-light:bg-white/85 eid-light:text-slate-800";
 
 /** Container alinhado à direita para pares Aceitar/Recusar em cards. */
 export const PEDIDO_ACOES_ROW_CLASS = "mt-2 flex items-center justify-end gap-0 md:gap-1";
@@ -80,14 +80,23 @@ export const PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS =
   "flex min-h-[48px] w-full items-center justify-center rounded-xl border border-rose-500/90 bg-rose-600 px-2 !text-sm font-black uppercase tracking-[0.06em] text-white shadow-[0_4px_14px_-6px_rgba(225,29,72,0.45)] transition hover:bg-rose-500 disabled:pointer-events-none disabled:opacity-55 sm:min-h-[52px] sm:px-4 sm:!text-base";
 
 /**
- * Aceitar / Recusar — classes usadas por `EidSocialAceitarButton` / `EidSocialRecusarButton`.
- * Touch e ícones: `app/globals.css` (`data-eid-social-acao-btn`).
+ * Aceitar / Recusar / Aprovar — padrão global (cards sociais, candidatura, pedidos ao líder).
+ * Contorno + fundo leve na cor do botão; ícone em círculo (`PEDIDO_SOCIAL_LIGHT_ICON_RING_*`).
+ * Touch: `app/globals.css` (`data-eid-social-acao-btn`).
  */
 export const PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS =
-  "flex min-h-0 w-full items-center justify-center gap-1 rounded-full border border-emerald-500/90 bg-emerald-600 px-2.5 py-1 text-[9px] font-black uppercase leading-none tracking-[0.04em] text-white shadow-sm transition hover:bg-emerald-500 disabled:pointer-events-none disabled:opacity-55 sm:px-3 sm:py-1.5 sm:text-[10px]";
+  "flex min-h-[30px] w-full items-center justify-center gap-1 rounded-[9px] border border-[#2563EB] bg-[#2563EB] px-1 text-[7px] font-black uppercase tracking-[0.07em] text-white shadow-none transition hover:border-[#1D4ED8] hover:bg-[#1D4ED8] active:border-[#1D4ED8] active:bg-[#1D4ED8] disabled:pointer-events-none disabled:opacity-50 sm:min-h-[32px] sm:text-[8px]";
 
 export const PEDIDO_MATCH_RECEBIDO_SOCIAL_RECUSAR_BTN_CLASS =
-  "flex min-h-0 w-full items-center justify-center gap-1 rounded-full border border-rose-500/90 bg-rose-600 px-2.5 py-1 text-[9px] font-black uppercase leading-none tracking-[0.04em] text-white shadow-sm transition hover:bg-rose-500 disabled:pointer-events-none disabled:opacity-55 sm:px-3 sm:py-1.5 sm:text-[10px]";
+  "flex min-h-[30px] w-full items-center justify-center gap-1 rounded-[9px] border border-[#475569] bg-transparent px-1 text-[7px] font-black uppercase tracking-[0.07em] text-[#CBD5F5] shadow-none transition hover:border-[#ef4444] hover:bg-red-500/15 hover:text-red-100 active:border-[#ef4444] active:bg-red-500/22 active:text-white disabled:pointer-events-none disabled:opacity-50 sm:min-h-[32px] sm:text-[8px] eid-light:border-[#475569] eid-light:text-[#475569]";
+
+/** Anel do ícone Check / Loader dentro do botão Aceitar (chrome claro / escuro). */
+export const PEDIDO_SOCIAL_LIGHT_ICON_RING_ACEITAR =
+  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-white/80 bg-white/10 text-white sm:h-[22px] sm:w-[22px]";
+
+/** Anel do ícone X / Loader dentro do botão Recusar (chrome claro / escuro). */
+export const PEDIDO_SOCIAL_LIGHT_ICON_RING_RECUSAR =
+  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#475569] bg-transparent text-[#CBD5F5] sm:h-[22px] sm:w-[22px] eid-light:border-[#64748b] eid-light:bg-transparent eid-light:text-[#475569]";
 
 /** Cancelar pedido de desafio enviado (Comunidade): compacto, vermelho (tema claro/escuro via utilitários + globals). */
 export const PEDIDO_DESAFIO_ENVIADO_CANCELAR_BTN_CLASS =

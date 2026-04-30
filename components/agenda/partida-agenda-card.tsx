@@ -12,6 +12,7 @@ import {
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS } from "@/lib/desafio/flow-ui";
+import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import { createPortal } from "react-dom";
 import { EidCancelButton } from "@/components/ui/eid-cancel-button";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
@@ -103,6 +104,7 @@ export function PartidaAgendaCard({
   const [openCancel, setOpenCancel] = useState(false);
   const [openDesist, setOpenDesist] = useState(false);
   const [showCancelHint, setShowCancelHint] = useState(Boolean(cancelMatchId) && !isPlacar);
+  const [agendaActionClicked, setAgendaActionClicked] = useState<"accept" | "reject" | null>(null);
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, cancelInitial);
   const [agendaState, agendaAction, agendaPending] = useActionState(responderAgendamentoPartidaAction, agendaInitial);
   useEffect(() => {
@@ -275,24 +277,23 @@ export function PartidaAgendaCard({
                   <form action={agendaAction} className="min-w-0 flex-1">
                     <input type="hidden" name="partida_id" value={String(id)} />
                     <input type="hidden" name="accept" value="1" />
-                    <button
-                      type="submit"
-                      disabled={agendaPending}
-                      className="inline-flex min-h-[36px] w-full items-center justify-center rounded-xl border border-emerald-600 bg-emerald-600 px-2 text-[10px] font-black uppercase tracking-wide text-white shadow-[0_4px_14px_-4px_rgba(16,185,129,0.35)] transition hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      {agendaPending ? "Enviando..." : "Aceitar"}
-                    </button>
+                    <EidSocialAceitarButton
+                      pending={agendaPending}
+                      busy={agendaPending && agendaActionClicked === "accept"}
+                      actionLabel="aprovar"
+                      onClick={() => setAgendaActionClicked("accept")}
+                      className="min-h-[36px] rounded-xl text-[10px]"
+                    />
                   </form>
                   <form action={agendaAction} className="min-w-0 flex-1">
                     <input type="hidden" name="partida_id" value={String(id)} />
                     <input type="hidden" name="accept" value="0" />
-                    <button
-                      type="submit"
-                      disabled={agendaPending}
-                      className="inline-flex min-h-[36px] w-full items-center justify-center rounded-xl border border-rose-600 bg-rose-600 px-2 text-[10px] font-black uppercase tracking-wide text-white shadow-[0_4px_14px_-4px_rgba(244,63,94,0.35)] transition hover:bg-rose-700 disabled:opacity-50"
-                    >
-                      {agendaPending ? "Enviando..." : "Recusar"}
-                    </button>
+                    <EidSocialRecusarButton
+                      pending={agendaPending}
+                      busy={agendaPending && agendaActionClicked === "reject"}
+                      onClick={() => setAgendaActionClicked("reject")}
+                      className="min-h-[36px] rounded-xl text-[10px]"
+                    />
                   </form>
                 </div>
               </>

@@ -4,19 +4,28 @@ import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { responderConviteEquipe, type ResponderConviteState } from "@/app/comunidade/actions";
 import Image from "next/image";
+import { Calendar, Clock, Shield, User } from "lucide-react";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
+import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
-import { EID_SOCIAL_CARD_FOOTER } from "@/lib/comunidade/social-panel-layout";
+import {
+  EID_SOCIAL_CARD_FOOTER,
+  EID_SOCIAL_GRID_3,
+  EID_SOCIAL_SUGESTAO_ENVIADA_CARD_SHELL,
+  formatSolicitacaoParts,
+} from "@/lib/comunidade/social-panel-layout";
 import {
   PEDIDO_MATCH_RECEBIDO_FORM_CLASS,
   PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS,
 } from "@/lib/desafio/flow-ui";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 
 export type ConviteTimeItem = {
   id: number;
   equipeNome: string;
+  equipePrimeiroNome: string;
   equipeId: number;
   equipeTipo: string;
   equipeAvatarUrl?: string | null;
@@ -24,7 +33,15 @@ export type ConviteTimeItem = {
   equipeLocalizacao?: string | null;
   equipeDistanceKm?: number | null;
   esporteNome: string;
+  /** Nome amigável do convidante (legado / fallback). */
   convidadoPor: string;
+  criadoEm: string;
+  convidanteId: string;
+  convidanteNome: string;
+  convidantePrimeiroNome: string;
+  convidanteUsername: string | null;
+  convidanteAvatarUrl: string | null;
+  convidanteLocalizacao?: string | null;
 };
 
 const initial: ResponderConviteState = { ok: false, message: "" };
@@ -55,80 +72,160 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
         <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">{state.message}</p>
       ) : null}
       <ul className="space-y-3">
-        {items.map((c) => (
-          <li
-            key={c.id}
-            className="overflow-hidden rounded-xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] shadow-[0_8px_18px_-14px_rgba(15,23,42,0.28)]"
-          >
-            <div className="p-3">
-              <div className="grid grid-cols-[72px_minmax(0,1fr)] items-start gap-3 sm:gap-4">
-                <ProfileEditDrawerTrigger
-                  href={`/perfil-time/${c.equipeId}?from=/comunidade`}
-                  title={c.equipeNome}
-                  fullscreen
-                  topMode="backOnly"
-                  className="-ml-2 block justify-self-start rounded-xl border border-transparent transition hover:border-eid-primary-500/35 sm:-ml-1.5"
-                >
-                  <div className="flex w-[72px] flex-col items-center">
-                    <p className="mb-1 max-w-[72px] truncate text-center text-[11px] font-black text-eid-fg">
-                      {(c.equipeTipo ?? "time").toLowerCase() === "dupla" ? "Dupla" : "Time"}
-                    </p>
-                    <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
-                      {c.equipeAvatarUrl ? (
-                        <Image src={c.equipeAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                          {(c.equipeNome ?? "T").slice(0, 1).toUpperCase()}
+        {items.map((c) => {
+          const criado = formatSolicitacaoParts(c.criadoEm);
+          const isDupla = String(c.equipeTipo ?? "")
+            .trim()
+            .toLowerCase() === "dupla";
+          const formacaoHref = `/perfil-time/${c.equipeId}?from=/comunidade`;
+          return (
+            <li key={c.id} className={EID_SOCIAL_SUGESTAO_ENVIADA_CARD_SHELL}>
+              <EidPendingBadge label="Pendente" compact className="absolute right-3 top-3 z-[1]" />
+
+              <div className={`${EID_SOCIAL_GRID_3} pt-11`}>
+                <div className="min-w-0 px-2 pb-3 pt-1 sm:px-3">
+                  <p className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">
+                    <Shield className="h-3 w-3 shrink-0 text-amber-200/90" aria-hidden />
+                    Formação
+                  </p>
+                  <ProfileEditDrawerTrigger
+                    href={formacaoHref}
+                    title={c.equipeNome}
+                    fullscreen
+                    topMode="backOnly"
+                    className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                  >
+                    <div className="flex w-full flex-col gap-2 px-0.5 py-1">
+                      <div className="flex w-full items-start gap-2.5">
+                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+                          {c.equipeAvatarUrl ? (
+                            <Image src={c.equipeAvatarUrl} alt="" fill unoptimized className="object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                              {(c.equipeNome ?? "T").slice(0, 1).toUpperCase()}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="mt-1">
-                      <ProfileEidPerformanceSeal
-                        notaEid={Number(c.equipeNotaEid ?? 0)}
+                        <div className="min-w-0 flex-1 pt-0.5 text-left">
+                          <p className="truncate text-[11px] font-black text-eid-fg">{c.equipePrimeiroNome}</p>
+                          <p className="mt-0.5 truncate text-[9px] text-eid-text-secondary">
+                            {isDupla ? "Dupla" : "Time"} · {c.esporteNome}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex justify-center sm:justify-start">
+                        <ProfileEidPerformanceSeal notaEid={Number(c.equipeNotaEid ?? 0)} compact className="scale-125" />
+                      </div>
+                      <EidCityState
+                        location={c.equipeLocalizacao}
                         compact
-                        className="scale-125"
-                        locationLabel={c.equipeLocalizacao}
-                        distanceKm={c.equipeDistanceKm}
+                        align="start"
+                        className="w-full"
                       />
                     </div>
+                  </ProfileEditDrawerTrigger>
+                </div>
+
+                <div className="flex min-w-0 flex-col items-center gap-2 px-2 pb-3 pt-1 text-center sm:px-3">
+                  <div className="flex w-full flex-col items-center gap-1">
+                    <p className="inline-flex items-center gap-1.5 text-[11px] tabular-nums text-eid-text-secondary">
+                      <Calendar className="h-3.5 w-3.5 shrink-0 text-eid-primary-400" aria-hidden />
+                      {criado.date}
+                    </p>
+                    <p className="inline-flex items-center gap-1.5 text-[11px] tabular-nums text-eid-text-secondary">
+                      <Clock className="h-3.5 w-3.5 shrink-0 text-eid-primary-400" aria-hidden />
+                      {criado.time}
+                    </p>
                   </div>
-                </ProfileEditDrawerTrigger>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-eid-fg">{c.equipeNome}</p>
-                      <p className="mt-1 text-xs text-eid-text-secondary">
-                        {(c.equipeTipo ?? "time").toUpperCase()} · {c.esporteNome} · convite de {c.convidadoPor}
-                      </p>
+                  <div className="flex w-full max-w-[11rem] flex-col items-stretch gap-1.5">
+                    <span className="inline-flex w-full items-center justify-center rounded-full border border-sky-500/35 bg-sky-500/10 px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-sky-200">
+                      Convite
+                    </span>
+                    <span className="inline-flex w-full items-center justify-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-1 text-[9px] font-semibold leading-none text-eid-primary-200">
+                      <ModalidadeGlyphIcon modalidade={isDupla ? "dupla" : "time"} />
+                      <span className="truncate">{isDupla ? "Dupla" : "Time"}</span>
+                    </span>
+                    <span className="inline-flex w-full items-center justify-center gap-1 rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-1 text-[9px] font-semibold leading-none text-eid-action-200">
+                      <SportGlyphIcon sportName={c.esporteNome} />
+                      <span className="truncate">{c.esporteNome}</span>
+                    </span>
+                  </div>
+                  <p className="text-[10px] leading-snug text-eid-text-secondary">
+                    Convite para integrar{" "}
+                    <span className="font-semibold text-eid-fg">{c.equipeNome}</span>
+                  </p>
+                </div>
+
+                <div className="flex min-w-0 flex-col items-end px-2 pb-3 pt-1 sm:px-3">
+                  <p className="flex w-full items-center justify-end gap-1 text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">
+                    <User className="h-3 w-3 shrink-0 text-amber-200/90" aria-hidden />
+                    Convidante
+                  </p>
+                  <ProfileEditDrawerTrigger
+                    href={`/perfil/${c.convidanteId}?from=/comunidade`}
+                    title={c.convidanteNome}
+                    fullscreen
+                    topMode="backOnly"
+                    className="mt-1 block w-fit max-w-full rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                  >
+                    <div className="flex w-full flex-col items-end gap-2 px-0.5 py-1">
+                      <div className="flex w-full items-start justify-end gap-2.5">
+                        <div className="min-w-0 flex-1 pt-0.5 text-right">
+                          <p className="truncate text-[11px] font-black text-eid-fg">{c.convidantePrimeiroNome}</p>
+                          {c.convidanteUsername ? (
+                            <p className="mt-0.5 truncate text-[9px] font-semibold text-eid-primary-300">
+                              {c.convidanteUsername}
+                            </p>
+                          ) : null}
+                        </div>
+                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+                          {c.convidanteAvatarUrl ? (
+                            <Image src={c.convidanteAvatarUrl} alt="" fill unoptimized className="object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                              {(c.convidanteNome ?? "?").slice(0, 1).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <EidCityState
+                        location={c.convidanteLocalizacao}
+                        compact
+                        align="end"
+                        className="w-full max-w-[10rem]"
+                      />
                     </div>
-                    <EidPendingBadge label="Pendente" />
-                  </div>
+                  </ProfileEditDrawerTrigger>
                 </div>
               </div>
-            </div>
 
-            <div className={`${EID_SOCIAL_CARD_FOOTER} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !mt-0`}>
-              <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
-                <input type="hidden" name="convite_id" value={String(c.id)} />
-                <input type="hidden" name="aceitar" value="true" />
-                <EidSocialAceitarButton
-                  pending={pending}
-                  busy={pending && clickedAction?.conviteId === c.id && clickedAction.aceitar}
-                  onClick={() => setClickedAction({ conviteId: c.id, aceitar: true })}
-                />
-              </form>
-              <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
-                <input type="hidden" name="convite_id" value={String(c.id)} />
-                <input type="hidden" name="aceitar" value="false" />
-                <EidSocialRecusarButton
-                  pending={pending}
-                  busy={pending && clickedAction?.conviteId === c.id && !clickedAction.aceitar}
-                  onClick={() => setClickedAction({ conviteId: c.id, aceitar: false })}
-                />
-              </form>
-            </div>
-          </li>
-        ))}
+              <div
+                className={`${EID_SOCIAL_CARD_FOOTER} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !items-stretch gap-2 border-amber-500/20 !bg-[color:color-mix(in_srgb,var(--eid-warning-500)_8%,var(--eid-surface)_92%)] sm:gap-3`}
+              >
+                <form action={formAction} className={`${PEDIDO_MATCH_RECEBIDO_FORM_CLASS} flex min-h-0 min-w-0`}>
+                  <input type="hidden" name="convite_id" value={String(c.id)} />
+                  <input type="hidden" name="aceitar" value="true" />
+                  <EidSocialAceitarButton
+                    pending={pending}
+                    busy={pending && clickedAction?.conviteId === c.id && clickedAction.aceitar}
+                    onClick={() => setClickedAction({ conviteId: c.id, aceitar: true })}
+                    className="min-h-[44px] w-full rounded-xl text-[10px] sm:min-h-[48px] sm:text-[11px]"
+                  />
+                </form>
+                <form action={formAction} className={`${PEDIDO_MATCH_RECEBIDO_FORM_CLASS} flex min-h-0 min-w-0`}>
+                  <input type="hidden" name="convite_id" value={String(c.id)} />
+                  <input type="hidden" name="aceitar" value="false" />
+                  <EidSocialRecusarButton
+                    pending={pending}
+                    busy={pending && clickedAction?.conviteId === c.id && !clickedAction.aceitar}
+                    onClick={() => setClickedAction({ conviteId: c.id, aceitar: false })}
+                    className="min-h-[44px] w-full rounded-xl text-[10px] sm:min-h-[48px] sm:text-[11px]"
+                  />
+                </form>
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

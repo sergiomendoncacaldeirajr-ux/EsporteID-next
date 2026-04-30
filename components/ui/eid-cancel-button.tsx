@@ -28,15 +28,18 @@ export function EidCancelButton({
 }: Props) {
   const isDisabled = disabled || loading;
   const textClass = compact
-    ? "text-[11px] font-semibold leading-none tracking-normal"
-    : "text-sm font-semibold leading-snug tracking-normal";
-  const densityClass = compact ? "gap-1 py-0" : "gap-2 py-1";
+    ? "text-[10px] font-black uppercase leading-none tracking-[0.05em]"
+    : "text-[14px] font-black leading-snug tracking-[0.01em]";
+  const densityClass = compact ? "min-h-[30px] gap-1.5 px-2.5 py-1" : "min-h-[46px] gap-2 px-4 py-2";
+  const baseShell =
+    "inline-flex w-full items-center justify-center rounded-xl border border-red-400/55 bg-red-500/6 text-[color:var(--eid-cancel-inline-fg)] transition hover:border-red-500/70 hover:bg-red-500/12 hover:text-[color:var(--eid-cancel-inline-hover-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--eid-danger-500)_55%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--eid-card)] disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
     <button
       type={type}
       disabled={isDisabled}
-      className={`inline-flex items-center rounded-lg bg-transparent px-0 text-left text-[color:var(--eid-cancel-inline-fg)] transition hover:text-[color:var(--eid-cancel-inline-hover-fg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:color-mix(in_srgb,var(--eid-danger-500)_55%,transparent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--eid-card)] disabled:cursor-not-allowed disabled:opacity-50 ${densityClass} ${textClass} ${className}`.trim()}
+      {...(compact ? { "data-eid-cancel-pendente-btn": "true" as const } : {})}
+      className={`${baseShell} ${densityClass} ${textClass} ${className}`.trim()}
       {...props}
     >
       {loading ? (
@@ -44,7 +47,7 @@ export function EidCancelButton({
       ) : (
         (icon ?? <EidCancelInlineIcon compact={compact} />)
       )}
-      <span>{loading ? loadingLabel : label}</span>
+      <span className={loading ? "eid-social-action-loading-text" : ""}>{loading ? loadingLabel : label}</span>
     </button>
   );
 }

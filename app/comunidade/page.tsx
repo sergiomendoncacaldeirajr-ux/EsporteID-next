@@ -17,13 +17,20 @@ import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/c
 import { ComunidadeSetorNotificacoes } from "@/components/comunidade/comunidade-setor-notificacoes";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
+import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidAcceptedBadge } from "@/components/ui/eid-accepted-badge";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { EidRejectedBadge } from "@/components/ui/eid-rejected-badge";
 import { CancelarCandidaturaForm, ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
 import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
-import { CANDIDATURA_ACOES_ROW_CLASS } from "@/lib/desafio/flow-ui";
+import { PEDIDO_MATCH_RECEBIDO_FORM_CLASS, PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS } from "@/lib/desafio/flow-ui";
+import {
+  EID_SOCIAL_CARD_FOOTER,
+  EID_SOCIAL_GRID_3,
+  getSocialStatusCardShell,
+  formatSolicitacaoParts,
+} from "@/lib/comunidade/social-panel-layout";
 import {
   type AgendaPartidaCardRow,
   fetchPartidasAgendadasUsuario,
@@ -33,11 +40,13 @@ import {
 } from "@/lib/agenda/partidas-usuario";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { distanciaKm } from "@/lib/geo/distance-km";
+import { splitCityState } from "@/lib/geo/split-city-state";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { getSystemFeatureConfig, SYSTEM_FEATURE_LABEL, type SystemFeatureKey } from "@/lib/system-features";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { createClient } from "@/lib/supabase/server";
-import { ModalidadeGlyphIcon } from "@/lib/perfil/formacao-glyphs";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
+import { Calendar, Clock, Clock3, LayoutGrid, MapPin, Shield, User, UserPlus } from "lucide-react";
 import { marcarTodasNotificacoesLidas } from "./actions";
 import type { ReactNode } from "react";
 
@@ -93,6 +102,56 @@ export const metadata = {
 function primeiroNome(nome?: string | null) {
   const n = (nome ?? "").trim();
   return n ? n.split(/\s+/u)[0] : "Atleta";
+}
+
+/** Localização nos cards de pedido ao elenco (tema claro / escuro via tokens). */
+function PedidoElencoLocationLight({
+  location,
+  align,
+}: {
+  location: string | null;
+  align: "start" | "end" | "center";
+}) {
+  const { cidade, estado } = splitCityState(location);
+  const end = align === "end";
+  const center = align === "center";
+  return (
+    <div
+      className={`mt-1.5 flex flex-col gap-0.5 ${end ? "items-end text-right" : center ? "items-center text-center" : "items-start text-left"}`}
+    >
+      <div
+        className={`flex max-w-[11rem] items-center gap-1 text-[11px] font-normal leading-tight text-eid-text-secondary ${end ? "justify-end" : center ? "justify-center" : "justify-start"}`}
+      >
+        <MapPin className="h-3.5 w-3.5 shrink-0 text-eid-text-muted" strokeWidth={2} aria-hidden />
+        <span className="min-w-0 truncate">{cidade !== "-" ? cidade : "—"}</span>
+      </div>
+      {estado !== "-" ? (
+        <p
+          className={`text-[11px] font-bold leading-tight text-eid-fg ${end ? "text-end" : center ? "text-center" : "text-start"}`}
+        >
+          {estado}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+/** Selo EID compacto — usa variáveis `--eid-seal-*` (claro/escuro em `globals.css`). */
+function PedidoElencoEidSeal({ notaEid }: { notaEid: number }) {
+  const v = (Number.isFinite(notaEid) ? notaEid : 0).toFixed(1);
+  return (
+    <div
+      className="inline-flex items-stretch overflow-hidden rounded-full border text-[9px] font-black leading-none sm:text-[10px] [border-color:var(--eid-seal-border)] [box-shadow:var(--eid-seal-shadow)]"
+      title="Nota EID no esporte"
+    >
+      <span className="flex items-center px-[7px] py-[4px] uppercase tracking-[0.08em] [background-color:var(--eid-seal-label-bg)] [color:var(--eid-seal-label-fg)]">
+        EID
+      </span>
+      <span className="flex items-center px-[7px] py-[4px] tabular-nums [background-color:var(--eid-seal-score-bg)] [color:var(--eid-seal-score-fg)]">
+        {v}
+      </span>
+    </div>
+  );
 }
 
 function ComunidadeQuadro({
@@ -692,6 +751,7 @@ export default async function ComunidadePage() {
         mensagem: String(s.mensagem ?? "").trim() || null,
       };
     })
+    .filter((s) => s.statusRaw !== "recusado" && s.statusRaw !== "cancelado")
     .sort((a, b) => {
       const priority = (status: string) => {
         if (status === "pendente") return 0;
@@ -705,22 +765,31 @@ export default async function ComunidadePage() {
   const hasSugestoesEnviadasPendentes = sugestoesEnviadasItems.some((s) => s.statusRaw === "pendente");
   const { data: convites } = await supabase
     .from("time_convites")
-    .select("id, time_id, convidado_por_usuario_id, times!inner(id, nome, tipo, escudo, eid_time, localizacao, lat, lng, esportes(nome))")
+    .select(
+      "id, time_id, convidado_por_usuario_id, criado_em, times!inner(id, nome, tipo, escudo, eid_time, localizacao, lat, lng, esportes(nome))"
+    )
     .eq("convidado_usuario_id", user.id)
     .eq("status", "pendente")
     .order("id", { ascending: false })
     .limit(30);
   const inviterIds = [...new Set((convites ?? []).map((c) => c.convidado_por_usuario_id).filter(Boolean))] as string[];
-  const { data: inviteUsers } = inviterIds.length
-    ? await supabase.from("profiles").select("id, nome").in("id", inviterIds)
-    : { data: [] };
-  const inviteUserMap = new Map((inviteUsers ?? []).map((u) => [u.id, u.nome]));
+  const { data: inviteProfiles } = inviterIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id, nome, username, avatar_url, localizacao")
+        .in("id", inviterIds)
+    : { data: [] as { id: string; nome: string | null; username: string | null; avatar_url: string | null; localizacao: string | null }[] };
+  const inviteProfileMap = new Map((inviteProfiles ?? []).map((u) => [u.id, u]));
   const conviteItems: ConviteTimeItem[] = (convites ?? []).map((c) => {
     const t = Array.isArray(c.times) ? c.times[0] : c.times;
     const esp = t?.esportes ? (Array.isArray(t.esportes) ? t.esportes[0] : t.esportes) : null;
+    const inviterId = String(c.convidado_por_usuario_id ?? "");
+    const inv = inviteProfileMap.get(inviterId);
+    const invNome = inv?.nome?.trim() || inv?.username?.trim() || "Líder";
     return {
       id: Number(c.id),
       equipeNome: t?.nome ?? "Equipe",
+      equipePrimeiroNome: primeiroNome(t?.nome ?? null),
       equipeId: Number(t?.id ?? 0),
       equipeTipo: String(t?.tipo ?? "time"),
       equipeAvatarUrl: (t as { escudo?: string | null } | null)?.escudo ?? null,
@@ -738,7 +807,14 @@ export default async function ComunidadePage() {
             )
           : null,
       esporteNome: esp?.nome ?? "Esporte",
-      convidadoPor: inviteUserMap.get(c.convidado_por_usuario_id) ?? "Líder",
+      criadoEm: String((c as { criado_em?: string | null }).criado_em ?? new Date().toISOString()),
+      convidanteId: inviterId,
+      convidanteNome: invNome,
+      convidantePrimeiroNome: primeiroNome(invNome),
+      convidanteUsername: inv?.username?.trim() ? `@${inv.username.trim()}` : null,
+      convidanteAvatarUrl: inv?.avatar_url ?? null,
+      convidanteLocalizacao: inv?.localizacao ?? null,
+      convidadoPor: invNome,
     };
   });
   const { data: convitesEnviados } = await supabase
@@ -788,39 +864,46 @@ export default async function ComunidadePage() {
   const convitesEidMap = new Map(
     (convitesEidRows ?? []).map((r) => [`${String(r.usuario_id)}:${Number(r.esporte_id)}`, Number(r.nota_eid ?? 0)])
   );
-  const conviteEnviadoItems: ConviteTimeEnviadoItem[] = (convitesEnviados ?? []).map((c) => {
-    const t = Array.isArray(c.times) ? c.times[0] : c.times;
-    const esp = t?.esportes ? (Array.isArray(t.esportes) ? t.esportes[0] : t.esportes) : null;
-    const convidadoId = String(c.convidado_usuario_id ?? "");
-    const perfil = convidadosMap.get(convidadoId);
-    const esporteId = Number((t as { esporte_id?: number | null } | null)?.esporte_id ?? 0);
-    return {
-      id: Number(c.id),
-      equipeNome: t?.nome ?? "Equipe",
-      equipeId: Number(t?.id ?? 0),
-      equipeTipo: String(t?.tipo ?? "time"),
-      equipeAvatarUrl: (t as { escudo?: string | null } | null)?.escudo ?? null,
-      equipeNotaEid: Number((t as { eid_time?: number | null } | null)?.eid_time ?? 0),
-      equipeLocalizacao: (t as { localizacao?: string | null } | null)?.localizacao ?? null,
-      esporteNome: esp?.nome ?? "Esporte",
-      convidadoId,
-      convidadoNome: perfil?.nome ?? "Atleta",
-      convidadoUsername: perfil?.username ?? null,
-      convidadoAvatarUrl: perfil?.avatarUrl ?? null,
-      convidadoNotaEid: convitesEidMap.get(`${convidadoId}:${esporteId}`) ?? 0,
-      convidadoLocalizacao: perfil?.localizacao ?? null,
-      convidadoDistanceKm:
-        hasMyCoords && Number.isFinite(Number(perfil?.lat ?? NaN)) && Number.isFinite(Number(perfil?.lng ?? NaN))
-          ? distanciaKm(myLat, myLng, Number(perfil?.lat ?? NaN), Number(perfil?.lng ?? NaN))
-          : null,
-      status: String(c.status ?? "pendente"),
-      criadoEm: (c as { criado_em?: string | null }).criado_em ?? null,
-      respondidoEm: (c as { respondido_em?: string | null }).respondido_em ?? null,
-    };
-  });
+  const conviteEnviadoItems: ConviteTimeEnviadoItem[] = (convitesEnviados ?? [])
+    .map((c) => {
+      const t = Array.isArray(c.times) ? c.times[0] : c.times;
+      const esp = t?.esportes ? (Array.isArray(t.esportes) ? t.esportes[0] : t.esportes) : null;
+      const convidadoId = String(c.convidado_usuario_id ?? "");
+      const perfil = convidadosMap.get(convidadoId);
+      const esporteId = Number((t as { esporte_id?: number | null } | null)?.esporte_id ?? 0);
+      return {
+        id: Number(c.id),
+        equipeNome: t?.nome ?? "Equipe",
+        equipeId: Number(t?.id ?? 0),
+        equipeTipo: String(t?.tipo ?? "time"),
+        equipeAvatarUrl: (t as { escudo?: string | null } | null)?.escudo ?? null,
+        equipeNotaEid: Number((t as { eid_time?: number | null } | null)?.eid_time ?? 0),
+        equipeLocalizacao: (t as { localizacao?: string | null } | null)?.localizacao ?? null,
+        esporteNome: esp?.nome ?? "Esporte",
+        convidadoId,
+        convidadoNome: perfil?.nome ?? "Atleta",
+        convidadoUsername: perfil?.username ?? null,
+        convidadoAvatarUrl: perfil?.avatarUrl ?? null,
+        convidadoNotaEid: convitesEidMap.get(`${convidadoId}:${esporteId}`) ?? 0,
+        convidadoLocalizacao: perfil?.localizacao ?? null,
+        convidadoDistanceKm:
+          hasMyCoords && Number.isFinite(Number(perfil?.lat ?? NaN)) && Number.isFinite(Number(perfil?.lng ?? NaN))
+            ? distanciaKm(myLat, myLng, Number(perfil?.lat ?? NaN), Number(perfil?.lng ?? NaN))
+            : null,
+        status: String(c.status ?? "pendente"),
+        criadoEm: (c as { criado_em?: string | null }).criado_em ?? null,
+        respondidoEm: (c as { respondido_em?: string | null }).respondido_em ?? null,
+      };
+    })
+    .filter((c) => {
+      const s = String(c.status ?? "").trim().toLowerCase();
+      return s !== "recusado" && s !== "cancelado";
+    });
   const { data: candidaturasEquipeRaw } = await supabase
     .from("time_candidaturas")
-    .select("id, time_id, mensagem, criado_em, candidato_usuario_id, times!inner(id, nome, criador_id, esporte_id, tipo)")
+    .select(
+      "id, time_id, mensagem, criado_em, candidato_usuario_id, times!inner(id, nome, criador_id, esporte_id, tipo, escudo, eid_time, localizacao, esportes(nome))"
+    )
     .eq("status", "pendente")
     .eq("times.criador_id", user.id)
     .order("criado_em", { ascending: false })
@@ -829,9 +912,9 @@ export default async function ComunidadePage() {
     ...new Set((candidaturasEquipeRaw ?? []).map((p) => String(p.candidato_usuario_id ?? "")).filter(Boolean)),
   ] as string[];
   const { data: candEquipeProfiles } = candEquipeIds.length
-    ? await supabase.from("profiles").select("id, nome, username, avatar_url").in("id", candEquipeIds)
+    ? await supabase.from("profiles").select("id, nome, username, avatar_url, localizacao").in("id", candEquipeIds)
     : {
-        data: [] as { id: string; nome: string | null; username: string | null; avatar_url: string | null }[],
+        data: [] as { id: string; nome: string | null; username: string | null; avatar_url: string | null; localizacao: string | null }[],
       };
   const candEquipeEsporteIds = [
     ...new Set(
@@ -864,30 +947,67 @@ export default async function ComunidadePage() {
       criado_em: string;
       candidato_usuario_id: string;
       times:
-        | { id: number; nome: string | null; criador_id: string; esporte_id: number | null; tipo: string | null }
-        | { id: number; nome: string | null; criador_id: string; esporte_id: number | null; tipo: string | null }[];
+        | {
+            id: number;
+            nome: string | null;
+            criador_id: string;
+            esporte_id: number | null;
+            tipo: string | null;
+            escudo?: string | null;
+            eid_time?: number | null;
+            localizacao?: string | null;
+            esportes?: { nome: string | null } | { nome: string | null }[] | null;
+          }
+        | {
+            id: number;
+            nome: string | null;
+            criador_id: string;
+            esporte_id: number | null;
+            tipo: string | null;
+            escudo?: string | null;
+            eid_time?: number | null;
+            localizacao?: string | null;
+            esportes?: { nome: string | null } | { nome: string | null }[] | null;
+          }[];
     };
     const team = Array.isArray(p.times) ? p.times[0] : p.times;
     const prof = candEquipeMap.get(p.candidato_usuario_id);
     const esporteId = Number(team?.esporte_id ?? 0);
     const notaEid = candEquipeEidMap.get(`${p.candidato_usuario_id}:${esporteId}`) ?? 0;
+    const espRel = team?.esportes;
+    const esporteNome =
+      (Array.isArray(espRel) ? espRel[0]?.nome : espRel?.nome)?.trim() || "Esporte";
+    const isDuplaTipo =
+      String(team?.tipo ?? "")
+        .trim()
+        .toLowerCase() === "dupla";
     return {
       id: p.id,
+      timeId: p.time_id,
       candidatoId: p.candidato_usuario_id,
       nome: prof?.nome?.trim() || prof?.username?.trim() || "Atleta",
       primeiroNome: primeiroNome(prof?.nome?.trim() || prof?.username?.trim() || "Atleta"),
       username: prof?.username?.trim() ? `@${prof.username.trim()}` : null,
       avatarUrl: prof?.avatar_url ?? null,
+      candidatoLocalizacao: prof?.localizacao ?? null,
       notaEid,
       mensagem: p.mensagem?.trim() || null,
       criadoEm: p.criado_em,
       timeNome: team?.nome ?? "sua formação",
       timeTipo: String(team?.tipo ?? "time"),
+      timePrimeiroNome: primeiroNome(team?.nome ?? null),
+      timeEscudoUrl: team?.escudo ?? null,
+      timeNotaEid: Number(team?.eid_time ?? 0),
+      timeLocalizacao: team?.localizacao ?? null,
+      esporteNome,
+      isDuplaTipo,
     };
   });
   const { data: minhasCandidaturasRaw } = await supabase
     .from("time_candidaturas")
-    .select("id, time_id, status, mensagem, criado_em, respondido_em, times(id, nome, tipo, esporte_id)")
+    .select(
+      "id, time_id, status, mensagem, criado_em, respondido_em, times(id, nome, tipo, esporte_id, escudo, eid_time, localizacao, esportes(nome))"
+    )
     .eq("candidato_usuario_id", user.id)
     .order("criado_em", { ascending: false })
     .limit(60);
@@ -926,10 +1046,31 @@ export default async function ComunidadePage() {
       criado_em: string;
       respondido_em: string | null;
       times:
-        | { id: number; nome: string | null; tipo: string | null; esporte_id?: number | null }
-        | { id: number; nome: string | null; tipo: string | null; esporte_id?: number | null }[];
+        | {
+            id: number;
+            nome: string | null;
+            tipo: string | null;
+            esporte_id?: number | null;
+            escudo?: string | null;
+            eid_time?: number | null;
+            localizacao?: string | null;
+            esportes?: { nome: string | null } | { nome: string | null }[] | null;
+          }
+        | {
+            id: number;
+            nome: string | null;
+            tipo: string | null;
+            esporte_id?: number | null;
+            escudo?: string | null;
+            eid_time?: number | null;
+            localizacao?: string | null;
+            esportes?: { nome: string | null } | { nome: string | null }[] | null;
+          }[];
     };
     const team = Array.isArray(row.times) ? row.times[0] : row.times;
+    const espRel = team?.esportes;
+    const espNome =
+      (Array.isArray(espRel) ? espRel[0]?.nome : espRel?.nome)?.trim() || "Esporte";
     const statusRaw = String(row.status ?? "pendente").trim().toLowerCase();
     const statusLabel =
       statusRaw === "aprovado" || statusRaw === "aceita" || statusRaw === "aceito"
@@ -964,19 +1105,27 @@ export default async function ComunidadePage() {
       timeTipo: String(team?.tipo ?? "time"),
       isDuplaTipo,
       notaEidMeu,
+      timePrimeiroNome: primeiroNome(team?.nome ?? null),
+      timeEscudoUrl: team?.escudo ?? null,
+      timeNotaEid: Number(team?.eid_time ?? 0),
+      timeLocalizacao: team?.localizacao ?? null,
+      esporteNome: espNome,
       meuPrimeiroNome: primeiroNome(profile?.nome ?? null),
       meuAvatarUrl: profile?.avatar_url ?? null,
+      meuLocalizacao: profile?.localizacao ?? null,
     };
-  });
+  }).filter((c) => c.statusRaw !== "recusado" && c.statusRaw !== "cancelado");
   const nNotifUnread = uniqueNotificacoesSetor.filter((n) => n.lida !== true).length;
   const desafioNotifs = uniqueNotificacoesSetor.filter((n) => {
     const tipo = String(n.tipo ?? "").toLowerCase();
     const msg = String(n.mensagem ?? "").toLowerCase();
+    if (msg.includes("cancelad") || msg.includes("cancelamento") || msg.includes("recusad")) return false;
     return tipo.includes("match") || tipo.includes("desafio") || msg.includes("desafio");
   });
   const equipeNotifs = uniqueNotificacoesSetor.filter((n) => {
     const tipo = String(n.tipo ?? "").toLowerCase();
     const msg = String(n.mensagem ?? "").toLowerCase();
+    if (msg.includes("cancelad") || msg.includes("cancelamento") || msg.includes("recusad")) return false;
     return tipo.includes("time") || tipo.includes("convite") || tipo.includes("candidatura") || msg.includes("pedido para entrar");
   });
 
@@ -1440,6 +1589,7 @@ export default async function ComunidadePage() {
                     id: n.id,
                     mensagem: n.mensagem,
                     lida: n.lida,
+                    tipo: n.tipo,
                   }))}
                   sector="desafio"
                   emptyLabel="Sem notificações de desafio no momento."
@@ -1452,14 +1602,18 @@ export default async function ComunidadePage() {
 
           {hasEquipeAcoes ? (
           <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
-            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2 md:px-4">
-              <div>
-                <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Equipe</h2>
-                <p className="mt-0.5 hidden text-[10px] text-eid-text-secondary md:block">
-                  Convites, sugestões de liderança e avisos da sua dupla/time em um único quadro.
-                </p>
+            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 md:px-4">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <UserPlus className="h-3.5 w-3.5 shrink-0 text-eid-primary-500" strokeWidth={2} aria-hidden />
+                <div className="min-w-0">
+                  <h2 className="text-[8px] font-black uppercase tracking-[0.14em] text-eid-fg">Equipe</h2>
+                  <p className="mt-0.5 hidden text-[8px] font-medium text-eid-text-secondary md:block">
+                    Convites, sugestões de liderança e avisos da sua dupla/time em um único quadro.
+                  </p>
+                </div>
               </div>
-              <span className="shrink-0 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-primary-300">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.08em] text-eid-primary-500 eid-dark:text-eid-primary-300">
+                <LayoutGrid className="h-3 w-3 text-eid-primary-500" strokeWidth={2} aria-hidden />
                 Formações
               </span>
             </div>
@@ -1479,74 +1633,187 @@ export default async function ComunidadePage() {
               <ComunidadeQuadro id="equipe-convites" title="Convites recebidos" hasPending={conviteItems.length > 0}>
                 <ComunidadeConvitesTime items={conviteItems} />
               </ComunidadeQuadro>
-              <ComunidadeQuadro
-                id="equipe-pedidos-entrada"
-                title="Pedidos para entrar no elenco"
-                hasPending={candidaturasEquipe.length > 0}
-              >
-                {candidaturasEquipe.length === 0 ? (
-                  <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] p-2.5 text-[11px] text-eid-text-secondary">
-                    Nenhum pedido pendente para suas formações.
-                  </p>
-                ) : (
-                  <ul className="mt-3 space-y-3">
-                    {candidaturasEquipe.map((c) => (
-                      <li
-                        key={c.id}
-                        className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] p-2.5"
-                      >
-                        <div className="grid grid-cols-[72px_30px_minmax(0,1fr)] items-start sm:grid-cols-[72px_34px_minmax(0,1fr)]">
-                          <ProfileEditDrawerTrigger
-                            href={`/perfil/${c.candidatoId}?from=/comunidade`}
-                            title={c.nome}
-                            fullscreen
-                            topMode="backOnly"
-                            className="-ml-1 block justify-self-start rounded-xl border border-transparent transition hover:border-eid-primary-500/35 sm:-ml-1.5"
-                          >
-                            <div className="flex w-[72px] flex-col items-center">
-                              <p className="mb-1 max-w-[72px] truncate text-center text-[11px] font-black text-eid-fg">{c.primeiroNome}</p>
-                              <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
-                                {c.avatarUrl ? (
-                                  <Image src={c.avatarUrl} alt="" width={44} height={44} unoptimized className="h-full w-full object-cover" />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                                    {c.nome.slice(0, 1).toUpperCase()}
+              {candidaturasEquipe.length > 0 ? (
+                <>
+                  {candidaturasEquipe.length > 1 ? (
+                    <h3
+                      id="equipe-pedidos-entrada"
+                      className="mb-1.5 text-[12px] font-bold leading-snug tracking-tight text-eid-primary-500 eid-dark:text-eid-primary-300"
+                    >
+                      Pedidos para entrar no elenco
+                    </h3>
+                  ) : null}
+                  <ul
+                    id={candidaturasEquipe.length === 1 ? "equipe-pedidos-entrada" : undefined}
+                    className="space-y-4"
+                  >
+                    {candidaturasEquipe.map((c) => {
+                      const criado = formatSolicitacaoParts(c.criadoEm);
+                      const formacaoHref =
+                        Number.isFinite(c.timeId) && c.timeId > 0
+                          ? `/perfil-time/${c.timeId}?from=/comunidade`
+                          : "/comunidade";
+                      return (
+                        <li key={c.id} className={`${getSocialStatusCardShell("pendente")} p-0 text-sm`}>
+                          <div className="flex items-center justify-between gap-2 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_62%,transparent)] px-3.5 py-2 sm:px-4.5 eid-light:bg-white/95">
+                            {candidaturasEquipe.length === 1 ? (
+                              <h3 className="min-w-0 text-[11px] font-semibold leading-snug tracking-tight text-eid-primary-500 eid-dark:text-eid-primary-300">
+                                Pedidos para entrar no elenco
+                              </h3>
+                            ) : (
+                              <p className="min-w-0 truncate text-[11px] font-medium text-eid-fg">
+                                {c.primeiroNome}
+                              </p>
+                            )}
+                            <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-amber-500/40 bg-amber-500/12 px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-[0.06em] text-amber-800 eid-dark:border-amber-300/65 eid-dark:bg-amber-950/55 eid-dark:text-amber-100 eid-light:border-amber-400 eid-light:bg-yellow-50 eid-light:text-amber-600">
+                              <Clock3 className="h-3 w-3 shrink-0 text-amber-800 eid-dark:text-amber-100 eid-light:text-amber-600" strokeWidth={2.25} aria-hidden />
+                              Pendente
+                            </span>
+                          </div>
+
+                          <div className="mx-1.5 mb-2.5 mt-1.5 overflow-hidden rounded-[12px] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-warning-500)_8%,var(--eid-card)_92%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-2.5 pb-2.5 pt-3 sm:mx-2 sm:px-3.5 sm:pb-3 eid-light:bg-[linear-gradient(180deg,color-mix(in_srgb,#f59e0b_4%,#fffdf7_96%),#fffefc)]">
+                            <div className="grid min-w-0 grid-cols-3 gap-x-2 gap-y-1 sm:gap-x-5">
+                              <div className="flex min-w-0 flex-col items-center">
+                                <p className="flex flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap text-[8px] font-semibold uppercase tracking-[0.14em] text-eid-action-600">
+                                  <User className="h-3.5 w-3.5 shrink-0 text-eid-action-600" strokeWidth={2.25} aria-hidden />
+                                  <span className="shrink-0">Candidato</span>
+                                </p>
+                                <ProfileEditDrawerTrigger
+                                  href={`/perfil/${c.candidatoId}?from=/comunidade`}
+                                  title={c.nome}
+                                  fullscreen
+                                  topMode="backOnly"
+                                  className="mt-2.5 block w-full max-w-full rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                                >
+                                  <div className="flex w-full flex-col items-center gap-2 px-0.5 py-0.5 text-center">
+                                    <div className="flex w-full flex-col items-center gap-1.5">
+                                      <p className="w-full max-w-[12rem] truncate text-[14px] font-semibold leading-tight text-eid-fg">
+                                        {c.primeiroNome}
+                                      </p>
+                                      <div className="relative mt-0.5 h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-eid-card bg-eid-field-bg shadow-sm ring-1 ring-[color:var(--eid-border-subtle)]">
+                                        {c.avatarUrl ? (
+                                          <Image src={c.avatarUrl} alt="" fill unoptimized className="object-cover" />
+                                        ) : (
+                                          <div className="flex h-full w-full items-center justify-center text-lg font-black text-eid-text-muted">
+                                            {c.nome.slice(0, 1).toUpperCase()}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex justify-center">
+                                      <PedidoElencoEidSeal notaEid={c.notaEid} />
+                                    </div>
+                                    <PedidoElencoLocationLight location={c.candidatoLocalizacao} align="center" />
                                   </div>
-                                )}
+                                </ProfileEditDrawerTrigger>
                               </div>
-                              <div className="mt-1">
-                                <ProfileEidPerformanceSeal notaEid={c.notaEid} compact className="scale-125" />
+
+                              <div className="flex min-w-0 w-full flex-col items-center gap-2.5 px-0.5 pt-0 text-center">
+                                <div className="mx-auto flex w-full max-w-[11rem] flex-col items-center gap-0.5">
+                                  <p className="inline-flex items-center justify-center gap-1.5 text-[10px] tabular-nums text-eid-text-secondary">
+                                    <Calendar className="h-3 w-3 shrink-0 text-eid-text-muted" strokeWidth={2} aria-hidden />
+                                    {criado.date}
+                                  </p>
+                                  <p className="inline-flex items-center justify-center gap-1.5 text-[10px] tabular-nums text-eid-text-secondary">
+                                    <Clock className="h-3 w-3 shrink-0 text-eid-text-muted" strokeWidth={2} aria-hidden />
+                                    {criado.time}
+                                  </p>
+                                </div>
+                                <div className="mx-auto flex w-full max-w-[11rem] flex-col items-stretch">
+                                  <span className="inline-flex w-full items-center justify-center rounded-full border border-sky-300/55 bg-sky-500/12 px-2 py-0.5 text-[7px] font-semibold uppercase tracking-[0.06em] text-eid-fg eid-light:border-sky-200/90 eid-light:bg-sky-100 eid-light:text-[#1a2b4c]">
+                                    Pedido
+                                  </span>
+                                  <div className="mt-2.5 flex w-full flex-col gap-1.5 sm:mt-3">
+                                    <span className="inline-flex w-full items-center justify-center gap-1 rounded-full border border-teal-500/35 bg-teal-500/12 px-1.5 py-0.5 text-[6.5px] font-semibold uppercase tracking-[0.05em] text-teal-100 eid-light:border-teal-200/90 eid-light:bg-teal-50 eid-light:text-teal-900">
+                                      <span className="inline-flex shrink-0 scale-90 text-teal-200 eid-light:text-teal-800">
+                                        <ModalidadeGlyphIcon modalidade={c.isDuplaTipo ? "dupla" : "time"} />
+                                      </span>
+                                      <span className="truncate">{c.isDuplaTipo ? "Dupla" : "Time"}</span>
+                                    </span>
+                                    <span className="inline-flex w-full items-center justify-center gap-1 rounded-full border border-orange-500/35 bg-orange-500/10 px-1.5 py-0.5 text-[6.5px] font-semibold uppercase tracking-[0.04em] text-orange-200 eid-light:border-orange-200/90 eid-light:bg-[#fff7ed] eid-light:text-[#9a3412]">
+                                      <span className="inline-flex shrink-0 scale-90 text-orange-300 eid-light:text-[#c2410c]">
+                                        <SportGlyphIcon sportName={c.esporteNome} />
+                                      </span>
+                                      <span className="truncate normal-case">{c.esporteNome}</span>
+                                    </span>
+                                  </div>
+                                </div>
+                                <p className="mx-auto w-full max-w-[13rem] text-center text-[10px] leading-snug text-eid-text-secondary">
+                                  Quer integrar{" "}
+                                  <span className="font-semibold text-eid-fg">{c.timeNome}</span>
+                                </p>
+                                {c.mensagem ? (
+                                  <p className="mx-auto w-full max-w-[13rem] rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-surface)_12%)] px-2.5 py-2 text-center text-[10px] leading-snug text-eid-text-secondary eid-light:bg-white/90 eid-light:text-slate-700">
+                                    “{c.mensagem}”
+                                  </p>
+                                ) : null}
+                              </div>
+
+                              <div className="flex min-w-0 flex-col items-center">
+                                <p className="flex w-full flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap text-[8px] font-semibold uppercase tracking-[0.14em] text-eid-action-600">
+                                  <Shield className="h-3.5 w-3.5 shrink-0 text-eid-action-600" strokeWidth={2.25} aria-hidden />
+                                  <span className="shrink-0">Sua formação</span>
+                                </p>
+                                <ProfileEditDrawerTrigger
+                                  href={formacaoHref}
+                                  title={c.timeNome}
+                                  fullscreen
+                                  topMode="backOnly"
+                                  className="mt-2.5 block w-full max-w-full rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                                >
+                                  <div className="flex flex-col items-center gap-2 px-0.5 py-0.5 text-center">
+                                    <p className="max-w-[12rem] truncate text-[14px] font-semibold leading-tight text-eid-fg">
+                                      {c.timePrimeiroNome}
+                                    </p>
+                                    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-eid-card bg-eid-field-bg shadow-sm ring-1 ring-[color:var(--eid-border-subtle)]">
+                                      {c.timeEscudoUrl ? (
+                                        <Image src={c.timeEscudoUrl} alt="" fill unoptimized className="object-cover" />
+                                      ) : (
+                                        <div className="flex h-full w-full items-center justify-center text-lg font-black text-eid-text-muted">
+                                          {(c.timeNome ?? "F").slice(0, 1).toUpperCase()}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="flex justify-center">
+                                      <PedidoElencoEidSeal notaEid={c.timeNotaEid} />
+                                    </div>
+                                    <PedidoElencoLocationLight location={c.timeLocalizacao} align="center" />
+                                  </div>
+                                </ProfileEditDrawerTrigger>
                               </div>
                             </div>
-                          </ProfileEditDrawerTrigger>
-                          <div aria-hidden className="h-full w-full" />
-                          <div className="min-w-0 flex-1 pl-3 sm:pl-4">
-                            <p className="text-xs text-eid-text-secondary">
-                              {c.username ? `${c.username} · ` : ""}
-                              Quer entrar em{" "}
-                              <span className="font-semibold text-eid-fg">
-                                {c.timeTipo.toLowerCase() === "dupla" ? "Dupla" : "Time"} {c.timeNome}
-                              </span>
-                            </p>
-                            <p className="mt-1 text-[10px] text-eid-text-secondary">
-                              Pedido em {new Date(c.criadoEm).toLocaleString("pt-BR")}
-                            </p>
-                            <div className={CANDIDATURA_ACOES_ROW_CLASS}>
-                              <ResponderCandidaturaForm candidaturaId={c.id} aceitar={true} label="Aprovar" />
-                              <ResponderCandidaturaForm candidaturaId={c.id} aceitar={false} label="Recusar" />
+
+                            <div className="mt-1.5 rounded-b-[12px] bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-surface)_10%)] px-0 pb-0 pt-1.5 eid-light:bg-[#fffefb]">
+                              <div
+                                className={`${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !items-stretch gap-1.5 px-3 pb-1.5 sm:gap-2 sm:px-4 sm:pb-2`}
+                              >
+                                <div className={`${PEDIDO_MATCH_RECEBIDO_FORM_CLASS} flex min-h-0 min-w-0`}>
+                                  <ResponderCandidaturaForm
+                                    candidaturaId={c.id}
+                                    aceitar={true}
+                                    stretch
+                                    lightChrome
+                                    label="Aprovar"
+                                  />
+                                </div>
+                                <div className={`${PEDIDO_MATCH_RECEBIDO_FORM_CLASS} flex min-h-0 min-w-0`}>
+                                  <ResponderCandidaturaForm
+                                    candidaturaId={c.id}
+                                    aceitar={false}
+                                    stretch
+                                    lightChrome
+                                    label="Recusar"
+                                  />
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        {c.mensagem ? (
-                          <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-1.5 text-[10px] italic text-eid-text-secondary">
-                            “{c.mensagem}”
-                          </p>
-                        ) : null}
-                      </li>
-                    ))}
+                        </li>
+                      );
+                    })}
                   </ul>
-                )}
-              </ComunidadeQuadro>
+                </>
+              ) : null}
               <ComunidadeQuadro
                 id="equipe-convites-enviados"
                 title="Convites enviados (acompanhamento)"
@@ -1565,105 +1832,144 @@ export default async function ComunidadePage() {
                   </p>
                 ) : (
                   <ul className="mt-3 space-y-3">
-                    {minhasCandidaturasEquipe.map((c) => (
-                      <li
-                        key={c.id}
-                        className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] p-2.5"
-                      >
-                        <div className="flex gap-3 sm:gap-4">
-                          <div className="min-w-0 flex-1">
-                            {Number.isFinite(c.timeId) && c.timeId > 0 ? (
-                              <Link
-                                href={`/perfil-time/${c.timeId}?from=/comunidade`}
-                                className="block truncate text-sm font-semibold text-eid-fg underline-offset-2 hover:text-eid-primary-300 hover:underline"
-                              >
-                                {c.timeNome}
-                              </Link>
-                            ) : (
-                              <p className="truncate text-sm font-semibold text-eid-fg">{c.timeNome}</p>
-                            )}
-                            <ProfileEditDrawerTrigger
-                              href={`/perfil/${user.id}?from=/comunidade`}
-                              title="Meu perfil"
-                              fullscreen
-                              topMode="backOnly"
-                              className="mt-2 inline-flex max-w-full flex-col items-start rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
-                            >
-                              <p className="max-w-[200px] truncate text-left text-[11px] font-black text-eid-fg">
-                                {c.meuPrimeiroNome}
+                    {minhasCandidaturasEquipe.map((c) => {
+                      const criado = formatSolicitacaoParts(c.criadoEm);
+                      const resp = c.respondidoEm ? formatSolicitacaoParts(c.respondidoEm) : null;
+                      const formacaoHref =
+                        Number.isFinite(c.timeId) && c.timeId > 0
+                          ? `/perfil-time/${c.timeId}?from=/comunidade`
+                          : "/comunidade";
+                      return (
+                        <li key={c.id} className={`${getSocialStatusCardShell(c.statusRaw)} p-0 text-sm`}>
+
+                          <div className={`${EID_SOCIAL_GRID_3} pt-2`}>
+                            <div className="min-w-0 px-2 pb-2 pt-1 sm:px-3">
+                              <p className="text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">
+                                Formação
                               </p>
-                              <div className="relative mt-1 h-12 w-12 shrink-0 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
-                                {c.meuAvatarUrl ? (
-                                  <Image
-                                    src={c.meuAvatarUrl}
-                                    alt=""
-                                    width={48}
-                                    height={48}
-                                    unoptimized
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                                    {(c.meuPrimeiroNome || "?").slice(0, 1).toUpperCase()}
+                              <ProfileEditDrawerTrigger
+                                href={formacaoHref}
+                                title={c.timeNome}
+                                fullscreen
+                                topMode="backOnly"
+                                className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                              >
+                                <div className="flex w-full flex-col items-center px-0.5 py-1">
+                                  <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">
+                                    {c.timePrimeiroNome}
+                                  </p>
+                                  <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+                                    {c.timeEscudoUrl ? (
+                                      <Image
+                                        src={c.timeEscudoUrl}
+                                        alt=""
+                                        fill
+                                        unoptimized
+                                        className="object-cover"
+                                      />
+                                    ) : (
+                                      <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                                        {(c.timeNome ?? "F").slice(0, 1).toUpperCase()}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
+                                  <div className="mt-0.5">
+                                    <ProfileEidPerformanceSeal notaEid={c.timeNotaEid} compact className="scale-125" />
+                                  </div>
+                                  <EidCityState
+                                    location={c.timeLocalizacao}
+                                    compact
+                                    align="center"
+                                    className="mt-1 w-full"
+                                  />
+                                </div>
+                              </ProfileEditDrawerTrigger>
+                            </div>
+
+                            <div className="flex min-w-0 flex-col items-center gap-2 px-2 pb-2 pt-1 text-center sm:px-3">
+                              <div className="w-full">
+                                <p className="text-[11px] tabular-nums text-eid-text-secondary">{criado.date}</p>
+                                <p className="mt-0.5 text-[11px] tabular-nums text-eid-text-secondary">{criado.time}</p>
+                                <p className="mt-1 text-[9px] font-semibold uppercase tracking-wide text-eid-text-muted">
+                                  Pedido
+                                </p>
                               </div>
-                              <div className="mt-1.5">
-                                <ProfileEidPerformanceSeal notaEid={c.notaEidMeu} compact className="scale-125" />
-                              </div>
-                            </ProfileEditDrawerTrigger>
-                          </div>
-                          <div className="flex shrink-0 flex-col items-end gap-2 text-right">
-                            <div>
-                              {c.statusLabel === "Aprovado" ? (
-                                <EidAcceptedBadge label={c.statusLabel} />
-                              ) : c.statusLabel === "Recusado" || c.statusLabel === "Cancelado" ? (
-                                <EidRejectedBadge label={c.statusLabel} />
-                              ) : (
-                                <span
-                                  className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em] ${c.statusClass}`}
-                                >
-                                  {c.statusLabel}
+                              <div className="flex flex-wrap items-center justify-center gap-1">
+                                <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-semibold leading-none text-eid-primary-200">
+                                  <ModalidadeGlyphIcon modalidade={c.isDuplaTipo ? "dupla" : "time"} />
+                                  <span className="truncate">{c.isDuplaTipo ? "Dupla" : "Time"}</span>
                                 </span>
-                              )}
+                                <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-semibold leading-none text-eid-action-200">
+                                  <SportGlyphIcon sportName={c.esporteNome} />
+                                  <span className="truncate">{c.esporteNome}</span>
+                                </span>
+                              </div>
+                              {resp ? (
+                                <div className="w-full border-t border-[color:var(--eid-border-subtle)] pt-2">
+                                  <p className="text-[10px] font-semibold text-eid-text-secondary">Atualizado</p>
+                                  <p className="text-[11px] tabular-nums text-eid-text-secondary">{resp.date}</p>
+                                  <p className="text-[11px] tabular-nums text-eid-text-secondary">{resp.time}</p>
+                                </div>
+                              ) : null}
+                              {c.mensagem ? (
+                                <p className="w-full rounded-lg bg-eid-surface/35 px-2 py-1.5 text-[10px] text-eid-fg">
+                                  “{c.mensagem}”
+                                </p>
+                              ) : null}
                             </div>
-                            <div className="flex flex-col items-center gap-1 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2">
-                              <span className="text-eid-primary-400">
-                                <ModalidadeGlyphIcon modalidade={c.isDuplaTipo ? "dupla" : "time"} />
-                              </span>
-                              <span className="text-[9px] font-black uppercase tracking-[0.06em] text-eid-text-secondary">
-                                {c.isDuplaTipo ? "Dupla" : "Time"}
-                              </span>
+
+                            <div className="flex min-w-0 flex-col items-center px-2 pb-2 pt-1 sm:px-3">
+                              <p className="text-center text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">
+                                Você
+                              </p>
+                              <ProfileEditDrawerTrigger
+                                href={`/perfil/${user.id}?from=/comunidade`}
+                                title="Meu perfil"
+                                fullscreen
+                                topMode="backOnly"
+                                className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
+                              >
+                                <div className="flex w-full flex-col items-center px-0.5 py-1">
+                                  <p className="max-w-full truncate text-center text-[11px] font-black text-eid-fg">
+                                    {c.meuPrimeiroNome}
+                                  </p>
+                                  <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+                                    {c.meuAvatarUrl ? (
+                                      <Image
+                                        src={c.meuAvatarUrl}
+                                        alt=""
+                                        fill
+                                        unoptimized
+                                        className="object-cover"
+                                      />
+                                    ) : (
+                                      <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                                        {(c.meuPrimeiroNome || "?").slice(0, 1).toUpperCase()}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="mt-0.5">
+                                    <ProfileEidPerformanceSeal notaEid={c.notaEidMeu} compact className="scale-125" />
+                                  </div>
+                                  <EidCityState
+                                    location={c.meuLocalizacao}
+                                    compact
+                                    align="center"
+                                    className="mt-1 w-full"
+                                  />
+                                </div>
+                              </ProfileEditDrawerTrigger>
                             </div>
-                            <p className="max-w-[9.5rem] text-[10px] leading-snug text-eid-text-secondary sm:max-w-none">
-                              Pedido em{" "}
-                              {new Date(c.criadoEm).toLocaleString("pt-BR", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </p>
                           </div>
-                        </div>
-                        {c.mensagem ? (
-                          <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-1.5 text-[10px] italic text-eid-text-secondary">
-                            “{c.mensagem}”
-                          </p>
-                        ) : null}
-                        {c.respondidoEm ? (
-                          <p className="mt-1 text-[10px] text-eid-text-secondary">
-                            Atualizado em {new Date(c.respondidoEm).toLocaleString("pt-BR")}
-                          </p>
-                        ) : null}
-                        {c.statusRaw === "pendente" ? (
-                          <div className="mt-3">
-                            <CancelarCandidaturaForm candidaturaId={c.id} compact label="Cancelar" />
-                          </div>
-                        ) : null}
-                      </li>
-                    ))}
+
+                          {c.statusRaw === "pendente" ? (
+                            <div className={EID_SOCIAL_CARD_FOOTER}>
+                              <CancelarCandidaturaForm candidaturaId={c.id} compact label="Cancelar" />
+                            </div>
+                          ) : null}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </ComunidadeQuadro>
@@ -1677,6 +1983,7 @@ export default async function ComunidadePage() {
                     id: n.id,
                     mensagem: n.mensagem,
                     lida: n.lida,
+                    tipo: n.tipo,
                   }))}
                   sector="equipe"
                   emptyLabel="Sem avisos de equipe no momento."
