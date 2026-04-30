@@ -133,8 +133,16 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
         aria-hidden
       />
       <span className="min-w-0 flex-1 whitespace-nowrap">
-        {pending || pendingFirstUseActivate ? (
-          <span>Aguarde…</span>
+        {pendingFirstUseActivate ? (
+          <span className="inline-flex items-center gap-1">
+            <Loader2 className="h-[1em] w-[1em] animate-spin" aria-hidden />
+            <span>Ligando...</span>
+          </span>
+        ) : pending ? (
+          <span className="inline-flex items-center gap-1">
+            <Loader2 className="h-[1em] w-[1em] animate-spin" aria-hidden />
+            <span>Aguarde...</span>
+          </span>
         ) : effectiveOn ? (
           <span>Amistoso ativo</span>
         ) : (
@@ -160,7 +168,7 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
             </button>
             <button
               type="button"
-              className="inline-flex min-w-[72px] items-center justify-center gap-1 rounded-md border border-emerald-400/35 bg-emerald-500/12 px-2 py-1 text-[8px] font-bold uppercase tracking-[0.06em] text-emerald-300"
+              className="inline-flex min-w-[78px] items-center justify-center gap-1 rounded-md border border-emerald-400/35 bg-emerald-500/12 px-2 py-1 text-[8px] font-bold uppercase tracking-[0.06em] text-emerald-300"
               onClick={(e) => {
                 e.stopPropagation();
                 if (pendingFirstUseActivate) return;
@@ -170,7 +178,7 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
                 applyToggle(true);
               }}
             >
-              {pendingFirstUseActivate ? <Loader2 className="h-2.5 w-2.5 animate-spin" aria-hidden /> : null}
+              {pendingFirstUseActivate ? <Loader2 className="h-[1em] w-[1em] animate-spin" aria-hidden /> : null}
               {pendingFirstUseActivate ? "Ligando..." : "Sim"}
             </button>
           </span>

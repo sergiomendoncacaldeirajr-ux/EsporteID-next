@@ -83,8 +83,8 @@ export function CancelarCandidaturaForm({
         compact={compact}
         className={
           compact
-            ? "!min-h-[22px] rounded-lg !px-2 text-[9px]"
-            : "w-full justify-center rounded-xl !text-xs"
+            ? "!min-h-[21px] !w-full justify-center overflow-hidden rounded-lg !px-2 text-[9px] focus-visible:ring-0 focus-visible:ring-offset-0"
+            : "w-full justify-center overflow-hidden rounded-xl !text-xs"
         }
       />
       {state.message ? (

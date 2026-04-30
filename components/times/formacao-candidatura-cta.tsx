@@ -47,12 +47,12 @@ export function FormacaoCandidaturaCta({
 
   if (minhaCandidaturaPendenteId != null) {
     return (
-      <div className="rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_70%,var(--eid-action-500)_30%)] bg-[color:color-mix(in_srgb,var(--eid-card)_94%,var(--eid-action-500)_6%)] px-3 py-2.5">
-        <p className={`text-[11px] font-semibold leading-snug text-eid-fg ${pAlign}`}>
+      <div className="rounded-lg border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,var(--eid-action-500)_28%)] bg-[color:color-mix(in_srgb,var(--eid-card)_96%,var(--eid-action-500)_4%)] px-2.5 py-2">
+        <p className={`text-[10px] font-semibold leading-snug text-eid-fg ${pAlign}`}>
           Candidatura enviada — aguardando o líder.
         </p>
-        <div className="mt-2">
-          <CancelarCandidaturaForm candidaturaId={minhaCandidaturaPendenteId} />
+        <div className="mt-1.5">
+          <CancelarCandidaturaForm candidaturaId={minhaCandidaturaPendenteId} compact />
         </div>
       </div>
     );
