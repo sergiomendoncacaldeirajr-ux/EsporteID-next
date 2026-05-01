@@ -37,6 +37,7 @@ export function TeamPublicInviteBlock({
 }) {
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
   const [cancelInviteState, cancelInviteAction, cancelInvitePending] = useActionState(cancelarConviteDaEquipe, initial);
+  const [cancelTargetInviteId, setCancelTargetInviteId] = useState<number | null>(null);
   const [painelAberto, setPainelAberto] = useState(
     () => !collapsibleTrigger || pendingInvites.length > 0,
   );
@@ -103,10 +104,11 @@ export function TeamPublicInviteBlock({
                   <input type="hidden" name="convite_id" value={inv.conviteId} />
                   <EidCancelButton
                     type="submit"
-                    loading={cancelInvitePending}
+                    loading={cancelInvitePending && cancelTargetInviteId === inv.conviteId}
                     label="Cancelar convite"
                     className="w-full rounded-lg text-[10px]"
                     disabled={invitePending}
+                    onClick={() => setCancelTargetInviteId(inv.conviteId)}
                   />
                 </form>
               </li>

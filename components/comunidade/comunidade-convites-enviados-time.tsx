@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Clock3, Send } from "lucide-react";
 import { cancelarConviteDaEquipe, type TeamActionState } from "@/app/times/actions";
@@ -71,6 +71,7 @@ function statusClass(status: string): string {
 export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEnviadoItem[] }) {
   const router = useRouter();
   const [cancelState, cancelAction, cancelPending] = useActionState(cancelarConviteDaEquipe, cancelInitial);
+  const [clickedCancelId, setClickedCancelId] = useState<number | null>(null);
 
   useEffect(() => {
     if (cancelState.ok) {
@@ -229,8 +230,9 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
                     <EidCancelButton
                       type="submit"
                       compact
-                      loading={cancelPending}
+                      loading={cancelPending && clickedCancelId === c.id}
                       label="Cancelar convite"
+                      onClick={() => setClickedCancelId(c.id)}
                     />
                   </form>
                 </div>

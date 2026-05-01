@@ -57,6 +57,7 @@ export function TeamRosterManager({
   const [cancelInviteState, cancelInviteAction, cancelInvitePending] = useActionState(cancelarConviteDaEquipe, initial);
   const [removeState, removeAction, removePending] = useActionState(removerMembroDaEquipe, initial);
   const [transferState, transferAction, transferPending] = useActionState(transferirLiderancaDaEquipe, initial);
+  const [cancelTargetInviteId, setCancelTargetInviteId] = useState<number | null>(null);
   const [memberActionTarget, setMemberActionTarget] = useState<{ type: "remove" | "transfer"; userId: string } | null>(null);
 
   const excludeUserIds = membros.map((m) => m.usuarioId);
@@ -169,10 +170,11 @@ export function TeamRosterManager({
                           <EidCancelButton
                             type="submit"
                             compact
-                            loading={cancelInvitePending}
+                            loading={cancelInvitePending && cancelTargetInviteId === c.conviteId}
                             label="Cancelar convite"
                             className="w-full rounded-lg !min-h-[24px] text-[9px]"
                             disabled={invitePending}
+                            onClick={() => setCancelTargetInviteId(c.conviteId)}
                           />
                         </form>
                       ) : null}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { cancelarPedidoMatchPendente, type CancelarPedidoPendenteState } from "@/app/comunidade/actions";
 import { iniciaisFormacao } from "@/components/comunidade/comunidade-pedidos-match";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
@@ -47,15 +48,15 @@ function firstName(value?: string | null): string {
 }
 
 export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(cancelarPedidoMatchPendente, initial);
   const [confirmId, setConfirmId] = useState<number | null>(null);
 
   useEffect(() => {
     if (state.ok) {
-      setConfirmId(null);
-      window.location.reload();
+      router.refresh();
     }
-  }, [state.ok]);
+  }, [state.ok, router]);
 
   if (items.length === 0) {
     return <p className="mt-2 text-xs text-eid-text-secondary">Sem pedidos enviados aguardando resposta.</p>;
@@ -168,7 +169,7 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
                   <EidCancelButton
                     type="button"
                     compact
-                    loading={pending}
+                    loading={pending && confirmId === m.id}
                     label="Cancelar pedido"
                     onClick={() => setConfirmId(m.id)}
                   />
@@ -202,9 +203,10 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
                   <input type="hidden" name="match_id" value={String(confirmId)} />
                   <button
                     type="submit"
+                    disabled={pending}
                     className="inline-flex min-h-[32px] w-full items-center justify-center rounded-lg border border-red-700 bg-red-700 px-3 text-xs font-black text-white"
                   >
-                    Confirmar cancelamento
+                    {pending ? "Cancelando..." : "Confirmar cancelamento"}
                   </button>
                 </form>
               </div>
