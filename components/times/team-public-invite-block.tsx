@@ -99,14 +99,15 @@ export function TeamPublicInviteBlock({
                   <p className="truncate text-[11px] font-bold text-eid-fg">{inv.nome}</p>
                   <EidCityState location={inv.localizacao} compact align="start" emptyLabel="—" className="w-full" />
                 </div>
-                <form action={cancelInviteAction} className="w-full sm:ml-auto sm:w-auto">
+                <form action={cancelInviteAction} className="flex w-full justify-start sm:ml-auto sm:w-auto sm:justify-end">
                   <input type="hidden" name="time_id" value={timeId} />
                   <input type="hidden" name="convite_id" value={inv.conviteId} />
                   <EidCancelButton
                     type="submit"
+                    compact
                     loading={cancelInvitePending && cancelTargetInviteId === inv.conviteId}
                     label="Cancelar convite"
-                    className="w-full rounded-lg text-[10px]"
+                    className="w-full rounded-lg !min-h-[24px] text-[9px] sm:w-auto sm:shrink-0"
                     disabled={invitePending}
                     onClick={() => setCancelTargetInviteId(inv.conviteId)}
                   />
