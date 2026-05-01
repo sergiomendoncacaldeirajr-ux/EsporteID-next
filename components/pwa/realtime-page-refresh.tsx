@@ -3,6 +3,12 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  EID_REALTIME_REFRESH_THROTTLE_MS,
+  EID_REALTIME_SIGNATURE_POLL_MS,
+  eidShouldPauseAutoRefreshFromLocation,
+  eidShouldRunGlobalInteractionPoll,
+} from "@/lib/realtime/eid-realtime-config";
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 
 type Props = {
@@ -67,16 +73,21 @@ function payloadStringField(
 }
 
 /**
- * Atualização ao vivo do app logado: notificações, matches, partidas (1x1 e coletivas),
- * candidaturas e convites de time, sugestões de match para líder, mudanças de elenco.
+ * Atualização ao vivo global no app com shell autenticado: notificações, matches, partidas,
+ * candidaturas, convites, sugestões, elenco. Tempos e escopo do poll em `eid-realtime-config`.
  */
 export function RealtimePageRefresh({ userId }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const pathnameRef = useRef(pathname);
   const lastRefreshAt = useRef(0);
   const instanceId = useId();
   const notifiedIdsRef = useRef<Set<number>>(new Set());
   const [elencoVersion, setElencoVersion] = useState(0);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     if (!userId) return;
@@ -93,30 +104,17 @@ export function RealtimePageRefresh({ userId }: Props) {
       channels.push(ch);
     };
 
-    const shouldPauseAutoRefresh = () => {
-      if (typeof window === "undefined") return false;
-      const path = String(window.location.pathname ?? "");
-      if (path.startsWith("/registrar-placar/")) return true;
-      const frame = document.querySelector('iframe[src*="/registrar-placar/"]');
-      return Boolean(frame);
-    };
+    const shouldPauseAutoRefresh = () => eidShouldPauseAutoRefreshFromLocation();
 
-    const isInteractionRealtimePath = () => {
-      const p = String(pathname ?? "");
-      return (
-        p.startsWith("/comunidade") ||
-        p.startsWith("/vagas") ||
-        p.startsWith("/perfil-time/") ||
-        p.startsWith("/perfil-dupla/") ||
-        p.startsWith("/times")
-      );
-    };
-
-    const revalidateComunidadeIfNeeded = async () => {
-      const p = String(pathname ?? "");
-      if (!p.startsWith("/comunidade")) return;
+    const revalidateCurrentRouteIfNeeded = async () => {
+      const p = String(pathnameRef.current ?? "") || "/";
       try {
-        await fetch("/api/comunidade/revalidate", { method: "POST", credentials: "same-origin" });
+        await fetch("/api/realtime/revalidate-current", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path: p }),
+        });
       } catch {
         /* ignore */
       }
@@ -125,10 +123,10 @@ export function RealtimePageRefresh({ userId }: Props) {
     const refresh = () => {
       if (shouldPauseAutoRefresh()) return;
       const now = Date.now();
-      if (now - lastRefreshAt.current < 1500) return;
+      if (now - lastRefreshAt.current < EID_REALTIME_REFRESH_THROTTLE_MS) return;
       lastRefreshAt.current = now;
       void (async () => {
-        await revalidateComunidadeIfNeeded();
+        await revalidateCurrentRouteIfNeeded();
         if (cancelled) return;
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
@@ -140,7 +138,7 @@ export function RealtimePageRefresh({ userId }: Props) {
       if (shouldPauseAutoRefresh()) return;
       lastRefreshAt.current = Date.now();
       void (async () => {
-        await revalidateComunidadeIfNeeded();
+        await revalidateCurrentRouteIfNeeded();
         if (cancelled) return;
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
@@ -474,19 +472,19 @@ export function RealtimePageRefresh({ userId }: Props) {
         ].join("|");
       };
 
-      if (isInteractionRealtimePath()) {
+      if (eidShouldRunGlobalInteractionPoll(pathnameRef.current)) {
         let lastSig = await buildInteractionSignature();
         candidaturasPollId = window.setInterval(async () => {
           if (cancelled) return;
           if (document.visibilityState !== "visible") return;
-          if (!isInteractionRealtimePath()) return;
+          if (!eidShouldRunGlobalInteractionPoll(pathnameRef.current)) return;
           if (shouldPauseAutoRefresh()) return;
           const nextSig = await buildInteractionSignature();
           if (nextSig !== lastSig) {
             lastSig = nextSig;
             refreshForced();
           }
-        }, 2200);
+        }, EID_REALTIME_SIGNATURE_POLL_MS);
       }
     })();
 

@@ -1,10 +1,10 @@
-import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { revalidateAppPath } from "@/lib/realtime/revalidate-app-path";
 
 export const preferredRegion = ["gru1"];
 
-/** Invalida o cache da rota /comunidade antes de `router.refresh()` no cliente (Next 16 / RSC). */
+/** Compat: mesmo efeito de `POST /api/realtime/revalidate-current` com path fixo. */
 export async function POST() {
   try {
     const supabase = await createRouteHandlerClient();
@@ -13,7 +13,7 @@ export async function POST() {
     } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ ok: false, reason: "unauthenticated" }, { status: 401 });
 
-    revalidatePath("/comunidade");
+    revalidateAppPath("/comunidade");
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false }, { status: 500 });

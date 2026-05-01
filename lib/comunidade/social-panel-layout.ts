@@ -92,7 +92,7 @@ export const EID_SOCIAL_LIGHT_ACOES_ROW =
  */
 export const EID_SOCIAL_ACAO_BTN_ATTR = { "data-eid-social-acao-btn": "true" } as const;
 
-/** Dispara `eid:realtime-refresh` (ex.: sininho / outras telas que revalidam ao vivo). */
+/** Dispara `eid:realtime-refresh` — alinhado a `RealtimePageRefresh` e `eid-realtime-config`. */
 export function emitEidSocialDataRefresh() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
