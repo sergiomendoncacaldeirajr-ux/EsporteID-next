@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
+export const preferredRegion = ["gru1"];
+
 function mapPaymentStatus(raw?: string | null) {
   const status = String(raw ?? "").toUpperCase();
   if (status === "RECEIVED" || status === "CONFIRMED" || status === "RECEIVED_IN_CASH") {

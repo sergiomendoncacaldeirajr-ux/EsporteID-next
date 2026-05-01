@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 
+export const preferredRegion = ["gru1"];
+
 export async function GET(request: Request) {
   const supabase = await createRouteHandlerClient();
   const {

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createAsaasCustomer } from "@/lib/asaas/client";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 
+export const preferredRegion = ["gru1"];
+
 export async function POST() {
   const supabase = await createRouteHandlerClient();
   const {

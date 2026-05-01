@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 
+export const preferredRegion = ["gru1"];
+
 type PushPayload = {
   endpoint?: string;
   keys?: { p256dh?: string; auth?: string };

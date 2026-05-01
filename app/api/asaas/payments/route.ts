@@ -4,6 +4,8 @@ import { getProfessorFinanceiro } from "@/lib/financeiro/config";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 
+export const preferredRegion = ["gru1"];
+
 function mapAsaasStatus(status?: string | null) {
   const normalized = String(status ?? "").toUpperCase();
   if (normalized === "RECEIVED" || normalized === "CONFIRMED") return "received";
