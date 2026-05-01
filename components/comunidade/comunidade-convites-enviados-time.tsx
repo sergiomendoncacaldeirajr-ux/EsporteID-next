@@ -103,28 +103,24 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
           const enviado = formatSolicitacaoParts(c.criadoEm);
           const resp = c.respondidoEm ? formatSolicitacaoParts(c.respondidoEm) : null;
           return (
-            <li key={c.id} className={getSocialStatusPanelItemShell(c.status)}>
+            <li key={c.id} data-eid-social-item="true" data-eid-pending={pendente ? "true" : "false"} className={getSocialStatusPanelItemShell(c.status)}>
               <span className={`${EID_INVITE_ACTION_CLASS} absolute left-3 top-3 z-[1] inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em]`}>
                 <Send className="h-3 w-3" aria-hidden />
                 Convite
               </span>
-              <span className="absolute right-3 top-3 z-[1]">
-                {String(c.status ?? "").trim().toLowerCase() === "pendente" ? (
-                  <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] ${statusClass(c.status)}`}>
-                    <span className="inline-flex items-center gap-1">
-                      <Clock3 className="h-3 w-3" aria-hidden />
-                      {statusLabel(c.status)}
-                    </span>
-                  </span>
-                ) : String(c.status ?? "").trim().toLowerCase() === "aceito" ||
+              <span data-eid-social-status-corner="true" className="absolute right-3 top-3 z-[1]">
+                {String(c.status ?? "").trim().toLowerCase() === "aceito" ||
                   String(c.status ?? "").trim().toLowerCase() === "aprovado" ? (
                   <EidAcceptedBadge label={statusLabel(c.status)} />
                 ) : String(c.status ?? "").trim().toLowerCase() === "recusado" ||
                   String(c.status ?? "").trim().toLowerCase() === "cancelado" ? (
                   <EidRejectedBadge label={statusLabel(c.status)} />
-                ) : (
-                  <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] ${statusClass(c.status)}`}>
-                    {statusLabel(c.status)}
+                ) : String(c.status ?? "").trim().toLowerCase() === "pendente" ? null : (
+                  <span className={`rounded-full border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.04em] ${statusClass(c.status)}`}>
+                    <span className="inline-flex items-center gap-0.5">
+                      <Clock3 className="h-2.5 w-2.5" aria-hidden />
+                      {statusLabel(c.status)}
+                    </span>
                   </span>
                 )}
               </span>
@@ -140,7 +136,7 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
                         topMode="backOnly"
                         className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
                       >
-                        <div className="flex w-full flex-col items-center px-0.5 py-1">
+                        <div data-eid-social-profile-stack="true" className="flex w-full flex-col items-center px-0.5 py-1">
                           <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(c.equipeNome)}</p>
                           <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
                             {c.equipeAvatarUrl ? (
@@ -205,8 +201,8 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
                         topMode="backOnly"
                         className="mt-1 block rounded-lg border border-transparent transition hover:border-eid-primary-500/35"
                       >
-                        <div className="flex w-full flex-col items-center px-0.5 py-1">
-                          <p className="max-w-full truncate text-center text-[10px] font-black text-eid-fg">{firstName(c.convidadoNome)}</p>
+                        <div data-eid-social-profile-stack="true" className="flex w-full flex-col items-center px-0.5 py-1 text-center">
+                          <p className="max-w-full truncate text-[10px] font-black text-eid-fg">{firstName(c.convidadoNome)}</p>
                           <div className="relative mt-1 h-12 w-12 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
                             {c.convidadoAvatarUrl ? (
                               <Image src={c.convidadoAvatarUrl} alt="" fill unoptimized className="h-full w-full object-cover" />

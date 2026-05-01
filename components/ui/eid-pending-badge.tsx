@@ -8,9 +8,9 @@ type Props = HTMLAttributes<HTMLSpanElement> & {
 
 export function EidPendingBadge({ label = "Pendente", compact = false, className = "", ...props }: Props) {
   const sizeClass = compact
-    ? "px-1.5 py-[1px] text-[8px]"
-    : "px-2 py-0.5 text-[9px]";
-  const iconClass = compact ? "h-3 w-3" : "h-3.5 w-3.5";
+    ? "px-1.5 py-[1px] text-[7px]"
+    : "px-1.5 py-0.5 text-[8px]";
+  const iconClass = compact ? "h-2.5 w-2.5" : "h-3 w-3";
 
   return (
     <span

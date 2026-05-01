@@ -413,6 +413,56 @@ body.eid-app-shell {
   box-shadow: none !important;
 }
 
+/* Social/Agenda: grid de 3 colunas com alinhamento consistente (esquerda/centro/direita). */
+:where([data-eid-comunidade-panel], [data-eid-agenda-page]) .eid-social-grid-3 > :nth-child(1) {
+  justify-self: start;
+  text-align: left;
+}
+:where([data-eid-comunidade-panel], [data-eid-agenda-page]) .eid-social-grid-3 > :nth-child(2) {
+  justify-self: center;
+  text-align: center;
+}
+:where([data-eid-comunidade-panel], [data-eid-agenda-page]) .eid-social-grid-3 > :nth-child(3) {
+  justify-self: end;
+  text-align: right;
+}
+:where([data-eid-comunidade-panel], [data-eid-agenda-page]) .eid-social-grid-3 > :nth-child(3) > * {
+  margin-left: auto;
+}
+
+/* Força coerência de alinhamento interno por coluna (Social/Agenda). */
+:where([data-eid-comunidade-panel], [data-eid-agenda-page])
+  .eid-social-grid-3
+  :where([data-eid-social-profile-stack="true"]) {
+  align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: center !important;
+}
+:where([data-eid-comunidade-panel], [data-eid-agenda-page])
+  .eid-social-grid-3
+  :where([data-eid-social-profile-stack="true"] > *) {
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Social: evita selo de status duplicado quando o item já está em "pendente". */
+[data-eid-comunidade-panel] [data-eid-social-item="true"][data-eid-pending="true"] [data-eid-social-status-corner="true"] {
+  display: none !important;
+}
+
+/* Social/Agenda: padroniza tamanho de chips de status para leitura limpa. */
+:where([data-eid-comunidade-panel], [data-eid-agenda-page])
+  :where(.eid-social-grid-3 .rounded-full.border, .eid-social-grid-3 [class*="badge"], .eid-social-grid-3 [data-eid-status-chip="true"]) {
+  font-size: 7px !important;
+  letter-spacing: 0.03em !important;
+}
+@media (min-width: 640px) {
+  :where([data-eid-comunidade-panel], [data-eid-agenda-page])
+    :where(.eid-social-grid-3 .rounded-full.border, .eid-social-grid-3 [class*="badge"], .eid-social-grid-3 [data-eid-status-chip="true"]) {
+    font-size: 7.5px !important;
+  }
+}
+
 /* Perfil: suaviza contornos internos para evitar blocos duplicados. */
 [data-eid-perfil-page] :where(.eid-list-item),
 [data-eid-theme="dark"] [data-eid-perfil-page] :where(.eid-list-item) {
@@ -687,6 +737,31 @@ header#eid-persistent-topbar textarea {
       height: 100%;
       object-fit: cover;
       object-position: center;
+    }
+
+    /* iPhone: corrige escala dos seletores do pódio/filtros do ranking. */
+    [data-eid-ranking-page] .eid-ranking-filter-segment {
+      font-size: 6px !important;
+      line-height: 1 !important;
+      font-weight: 900 !important;
+    }
+    [data-eid-ranking-page] .eid-ranking-filter-sport {
+      font-size: 6.5px !important;
+      line-height: 1 !important;
+      font-weight: 900 !important;
+    }
+    [data-eid-ranking-page] .eid-ranking-filter-clear {
+      font-size: 6.5px !important;
+      line-height: 1 !important;
+      font-weight: 900 !important;
+    }
+    [data-eid-ranking-page] .eid-ranking-filter-plus {
+      font-size: 12px !important;
+      line-height: 1 !important;
+    }
+    [data-eid-ranking-page] .eid-ranking-podium-label {
+      font-size: 10px !important;
+      line-height: 1 !important;
     }
 
   }

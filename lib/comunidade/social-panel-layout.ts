@@ -10,7 +10,7 @@ export function formatSolicitacaoParts(iso: string | null | undefined): { date: 
   };
 }
 
-export const EID_SOCIAL_GRID_3 = "grid min-w-0 grid-cols-3";
+export const EID_SOCIAL_GRID_3 = "eid-social-grid-3 grid min-w-0 grid-cols-3";
 
 /** Shell âmbar: sugestões enviadas ao líder e pedidos de entrada enviados (Comunidade). */
 export const EID_SOCIAL_SUGESTAO_ENVIADA_CARD_SHELL =
