@@ -321,7 +321,7 @@ const matchSectionHeadClass =
   "eid-match-section-head flex items-center justify-between gap-3 border-b border-transparent bg-transparent px-3 py-2.5 sm:px-4";
 
 const matchSectionTitleClass =
-  "text-[12px] font-black uppercase tracking-[0.06em] text-eid-fg";
+  "text-[10px] font-black uppercase tracking-[0.05em] text-eid-fg sm:text-[11px]";
 
 const matchBadgeGhostClass =
   "inline-flex shrink-0 items-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_16%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_6%,transparent)] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)] transition hover:border-[color:color-mix(in_srgb,var(--eid-primary-500)_24%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--eid-primary-500)_10%,transparent)]";
@@ -920,8 +920,8 @@ export function MatchRadarApp({
             aria-controls="match-radar-filtros-body"
           >
             <div className="min-w-0">
-              <h2 className={cn(matchSectionTitleClass, "inline-flex items-center gap-1.5")}>
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-eid-primary-300" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <h2 className={cn(matchSectionTitleClass, "inline-flex items-center gap-1")}>
+                <svg viewBox="0 0 24 24" className="h-3 w-3 shrink-0 text-eid-primary-300" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M4 6h16M7 12h10M10 18h4" />
                 </svg>
                 Filtros do radar
@@ -1155,8 +1155,8 @@ export function MatchRadarApp({
         {!isFullView ? (
           <div className={matchResultsCardClass}>
             <div className={matchSectionHeadClass}>
-            <h2 className={cn(matchSectionTitleClass, "inline-flex items-center gap-1.5")}>
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-eid-primary-300" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <h2 className={cn(matchSectionTitleClass, "inline-flex items-center gap-1")}>
+              <svg viewBox="0 0 24 24" className="h-3 w-3 shrink-0 text-eid-primary-300" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M5 19V9M12 19V5M19 19v-8" />
               </svg>
               Resultados

@@ -59,7 +59,7 @@ export function EidCollapsiblePanel({
               <path d="m6 9 6 6 6-6" />
             </svg>
           </span>
-          <h3 className="text-[11px] font-black uppercase tracking-[0.14em] text-eid-fg">{title}</h3>
+          <h3 className="text-[8px] font-black uppercase tracking-[0.09em] text-eid-fg sm:text-[9px]">{title}</h3>
         </button>
         {summaryRight}
       </div>

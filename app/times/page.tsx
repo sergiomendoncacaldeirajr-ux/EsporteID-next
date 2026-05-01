@@ -321,8 +321,8 @@ export default async function TimesPage({ searchParams }: Props) {
 
       <section className="mb-4 rounded-[20px] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,white_12%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,white_3%),color-mix(in_srgb,var(--eid-surface)_94%,white_6%))] px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[12px] leading-tight text-eid-text-secondary sm:text-[13px]">
-            Mostrando formações com vagas abertas e aceitando pedidos.
+          <p className="min-w-0 shrink whitespace-nowrap text-[11px] leading-tight text-eid-text-secondary sm:text-[12px]">
+            Formações com vagas abertas e aceitando pedidos.
           </p>
           {q ? (
             <span className="inline-flex shrink-0 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-eid-primary-300">
