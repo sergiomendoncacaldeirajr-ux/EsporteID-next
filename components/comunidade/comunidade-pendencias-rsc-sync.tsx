@@ -76,6 +76,8 @@ export function ComunidadePendenciasRscSync({
   snapshot: ComunidadePendenciasServerSnapshot;
 }) {
   const router = useRouter();
+  const routerRefreshRef = useRef(router.refresh);
+  routerRefreshRef.current = router.refresh;
   const serverSigRef = useRef(serialize(snapshot));
   const lastRefreshAt = useRef(0);
 
@@ -83,6 +85,7 @@ export function ComunidadePendenciasRscSync({
     serverSigRef.current = serialize(snapshot);
   }, [snapshot]);
 
+  // Dependência só de `userId`: incluir `router` recriava o canal a cada mudança de identidade após `refresh()`.
   useEffect(() => {
     if (!userId) return;
     const supabase = createClient();
@@ -93,7 +96,7 @@ export function ComunidadePendenciasRscSync({
       const now = Date.now();
       if (now - lastRefreshAt.current < 600) return;
       lastRefreshAt.current = now;
-      router.refresh();
+      routerRefreshRef.current();
     };
 
     async function tick() {
@@ -139,7 +142,7 @@ export function ComunidadePendenciasRscSync({
       window.removeEventListener("eid:realtime-refresh", onRealtimeBridge);
       void supabase.removeChannel(channel);
     };
-  }, [userId, router]);
+  }, [userId]);
 
   return null;
 }

@@ -66,6 +66,9 @@ function ConviteTimeRow({ c }: { c: ConviteTimeItem }) {
         setRowError(res.message);
         return;
       }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+      }
       router.refresh();
     } catch (e) {
       setRowError(e instanceof Error ? e.message : "Não foi possível concluir. Tente de novo.");
