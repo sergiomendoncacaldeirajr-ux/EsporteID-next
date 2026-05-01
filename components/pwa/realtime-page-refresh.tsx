@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 
@@ -74,7 +74,7 @@ export function RealtimePageRefresh({ userId }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const lastRefreshAt = useRef(0);
-  const instanceIdRef = useRef(`rpr-${Math.random().toString(36).slice(2, 10)}`);
+  const instanceId = useId();
   const notifiedIdsRef = useRef<Set<number>>(new Set());
   const [elencoVersion, setElencoVersion] = useState(0);
 
@@ -117,11 +117,17 @@ export function RealtimePageRefresh({ userId }: Props) {
       const now = Date.now();
       if (now - lastRefreshAt.current < 1500) return;
       lastRefreshAt.current = now;
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+      }
       router.refresh();
     };
     const refreshForced = () => {
       if (shouldPauseAutoRefresh()) return;
       lastRefreshAt.current = Date.now();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+      }
       router.refresh();
     };
 
@@ -168,7 +174,7 @@ export function RealtimePageRefresh({ userId }: Props) {
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    const channelTag = `${userId}-${instanceIdRef.current}-${pathname}-${elencoVersion}`;
+    const channelTag = `${userId}-${instanceId}-${pathname}-${elencoVersion}`;
 
     void (async () => {
       const [teamIds, ownedIds] = await Promise.all([
@@ -384,50 +390,80 @@ export function RealtimePageRefresh({ userId }: Props) {
           .subscribe()
       );
 
-      // Fallback robusto: se publicação realtime de `time_candidaturas` falhar/atrasar,
-      // detecta mudança de assinatura e atualiza apenas quando realmente mudou.
-      const buildCandidaturaSignature = async () => {
-        const [candMine, candOwned] = await Promise.all([
-          supabase
-            .from("time_candidaturas")
-            .select("id, atualizado_em, status")
-            .eq("candidato_usuario_id", userId)
-            .order("atualizado_em", { ascending: false })
-            .limit(1),
-          ownedIds.length > 0
-            ? supabase
-                .from("time_candidaturas")
-                .select("id, atualizado_em, status")
-                .in("time_id", ownedIds.slice(0, 100))
-                .order("atualizado_em", { ascending: false })
-                .limit(1)
-            : Promise.resolve({ data: [] as Array<Record<string, unknown>> }),
-        ]);
-        const m = (candMine.data?.[0] ?? null) as { id?: number; atualizado_em?: string; status?: string } | null;
-        const o = (candOwned.data?.[0] ?? null) as { id?: number; atualizado_em?: string; status?: string } | null;
+      // Fallback robusto (Social + Agenda + sino): detecta mudanças mesmo se canais realtime falharem.
+      const buildInteractionSignature = async () => {
+        const [notifUnread, matchesAdvPend, matchesMinePend, sugAlvoPend, sugMinePend, partidasRows, convMePend, convOwnedPend, candMePend, candOwnedPend] =
+          await Promise.all([
+            supabase.from("notificacoes").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("lida", false),
+            supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", userId).eq("status", "Pendente"),
+            supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("status", "Pendente"),
+            supabase.from("match_sugestoes").select("id", { count: "exact", head: true }).eq("alvo_dono_id", userId).eq("status", "pendente"),
+            supabase.from("match_sugestoes").select("id", { count: "exact", head: true }).eq("sugeridor_id", userId).eq("status", "pendente"),
+            supabase.from("partidas").select("id, status, jogador1_id, jogador2_id, time1_id, time2_id").order("id", { ascending: false }).limit(120),
+            supabase.from("time_convites").select("id", { count: "exact", head: true }).eq("convidado_usuario_id", userId).eq("status", "pendente"),
+            ownedIds.length > 0
+              ? supabase.from("time_convites").select("id", { count: "exact", head: true }).in("time_id", ownedIds.slice(0, 100)).eq("status", "pendente")
+              : Promise.resolve({ count: 0 }),
+            supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).eq("candidato_usuario_id", userId).eq("status", "pendente"),
+            ownedIds.length > 0
+              ? supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).in("time_id", ownedIds.slice(0, 100)).eq("status", "pendente")
+              : Promise.resolve({ count: 0 }),
+          ]);
+
+        const teamSet = new Set(teamIds);
+        const agRows = (partidasRows.data ?? []) as Array<{
+          id?: number;
+          status?: string | null;
+          jogador1_id?: string | null;
+          jogador2_id?: string | null;
+          time1_id?: number | null;
+          time2_id?: number | null;
+        }>;
+        const agendaRelacionada = agRows.filter((r) => {
+          const j1 = String(r.jogador1_id ?? "");
+          const j2 = String(r.jogador2_id ?? "");
+          const t1 = Number(r.time1_id ?? 0);
+          const t2 = Number(r.time2_id ?? 0);
+          return j1 === userId || j2 === userId || teamSet.has(t1) || teamSet.has(t2);
+        });
+        const agendadaN = agendaRelacionada.filter((r) => String(r.status ?? "").trim().toLowerCase() === "agendada").length;
+        const aguardandoPlacarN = agendaRelacionada.filter(
+          (r) => String(r.status ?? "").trim().toLowerCase() === "aguardando_confirmacao"
+        ).length;
+        const latestPartidaId = Math.max(
+          0,
+          ...agendaRelacionada.map((r) => Number(r.id ?? 0)).filter((n) => Number.isFinite(n) && n > 0)
+        );
+
         return [
-          String(m?.id ?? 0),
-          String(m?.atualizado_em ?? ""),
-          String(m?.status ?? ""),
-          String(o?.id ?? 0),
-          String(o?.atualizado_em ?? ""),
-          String(o?.status ?? ""),
+          String(notifUnread.count ?? 0),
+          String(matchesAdvPend.count ?? 0),
+          String(matchesMinePend.count ?? 0),
+          String(sugAlvoPend.count ?? 0),
+          String(sugMinePend.count ?? 0),
+          String(convMePend.count ?? 0),
+          String(convOwnedPend.count ?? 0),
+          String(candMePend.count ?? 0),
+          String(candOwnedPend.count ?? 0),
+          String(agendadaN),
+          String(aguardandoPlacarN),
+          String(latestPartidaId),
         ].join("|");
       };
 
       if (isInteractionRealtimePath()) {
-        let lastSig = await buildCandidaturaSignature();
+        let lastSig = await buildInteractionSignature();
         candidaturasPollId = window.setInterval(async () => {
           if (cancelled) return;
           if (document.visibilityState !== "visible") return;
           if (!isInteractionRealtimePath()) return;
           if (shouldPauseAutoRefresh()) return;
-          const nextSig = await buildCandidaturaSignature();
+          const nextSig = await buildInteractionSignature();
           if (nextSig !== lastSig) {
             lastSig = nextSig;
             refreshForced();
           }
-        }, 1800);
+        }, 2200);
       }
     })();
 
@@ -437,7 +473,7 @@ export function RealtimePageRefresh({ userId }: Props) {
       if (candidaturasPollId != null) window.clearInterval(candidaturasPollId);
       channels.forEach((c) => void supabase.removeChannel(c));
     };
-  }, [router, userId, pathname, elencoVersion]);
+  }, [router, userId, pathname, elencoVersion, instanceId]);
 
   return null;
 }

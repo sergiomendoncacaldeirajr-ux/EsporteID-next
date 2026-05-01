@@ -271,17 +271,20 @@ export function NotificationBell({ userId }: { userId: string | null }) {
 
   useEffect(() => {
     if (!userId) return;
-    const t = window.setInterval(() => void load(), 20000);
+    const t = window.setInterval(() => void load(), 6000);
     const onFocus = () => void load();
     const onVisible = () => {
       if (document.visibilityState === "visible") void load();
     };
+    const onRealtimeRefresh = () => void load();
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("eid:realtime-refresh", onRealtimeRefresh as EventListener);
     return () => {
       window.clearInterval(t);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("eid:realtime-refresh", onRealtimeRefresh as EventListener);
     };
   }, [userId, load]);
 
