@@ -43,7 +43,7 @@ export function EidSocialAceitarButton({
   ...props
 }: EidSocialAceitarButtonProps) {
   const idle = actionLabel === "aprovar" ? "Aprovar" : "Aceitar";
-  const loadingText = "Aprovando…";
+  const loadingText = actionLabel === "aprovar" ? "Aprovando…" : "Aceitando…";
   return (
     <button
       type={type}

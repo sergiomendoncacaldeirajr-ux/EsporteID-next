@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { responderConviteEquipe, type ResponderConviteState } from "@/app/comunidade/actions";
 import Image from "next/image";
@@ -47,17 +48,26 @@ export type ConviteTimeItem = {
 
 const initial: ResponderConviteState = { ok: false, message: "" };
 
+/** `pending` do `useActionState` é compartilhado entre todos os cards; `useFormStatus` reflete só o form pai. */
+function ConviteAceitarSubmitButton() {
+  const { pending } = useFormStatus();
+  return <EidSocialAceitarButton pending={pending} busy={pending} className="w-full" />;
+}
+
+function ConviteRecusarSubmitButton() {
+  const { pending } = useFormStatus();
+  return <EidSocialRecusarButton pending={pending} busy={pending} className="w-full" />;
+}
+
 export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) {
   const router = useRouter();
-  const [state, formAction, pending] = useActionState(responderConviteEquipe, initial);
-  const [clickedAction, setClickedAction] = useState<{ conviteId: number; aceitar: boolean } | null>(null);
+  const [state, formAction] = useActionState(responderConviteEquipe, initial);
 
   useEffect(() => {
-    if (state.ok) {
-      setClickedAction(null);
-      router.refresh();
-    }
-  }, [state.ok, router]);
+    if (!state.ok) return;
+    router.refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `router.refresh` estável; incluir `router` pode re-disparar após cada refresh.
+  }, [state]);
 
   if (!items.length) {
     return (
@@ -198,22 +208,12 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                 <form action={formAction} className={`${PEDIDO_MATCH_RECEBIDO_FORM_CLASS} flex min-h-0 min-w-0`}>
                   <input type="hidden" name="convite_id" value={String(c.id)} />
                   <input type="hidden" name="aceitar" value="true" />
-                  <EidSocialAceitarButton
-                    pending={pending}
-                    busy={pending && clickedAction?.conviteId === c.id && clickedAction.aceitar}
-                    onClick={() => setClickedAction({ conviteId: c.id, aceitar: true })}
-                    className="w-full"
-                  />
+                  <ConviteAceitarSubmitButton />
                 </form>
                 <form action={formAction} className={`${PEDIDO_MATCH_RECEBIDO_FORM_CLASS} flex min-h-0 min-w-0`}>
                   <input type="hidden" name="convite_id" value={String(c.id)} />
                   <input type="hidden" name="aceitar" value="false" />
-                  <EidSocialRecusarButton
-                    pending={pending}
-                    busy={pending && clickedAction?.conviteId === c.id && !clickedAction.aceitar}
-                    onClick={() => setClickedAction({ conviteId: c.id, aceitar: false })}
-                    className="w-full"
-                  />
+                  <ConviteRecusarSubmitButton />
                 </form>
               </div>
             </li>
