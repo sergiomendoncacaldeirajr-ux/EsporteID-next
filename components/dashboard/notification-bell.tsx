@@ -112,6 +112,8 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   const [limpandoTodas, setLimpandoTodas] = useState(false);
   const [panelPos, setPanelPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const vapidPublicKey = useMemo(() => String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim(), []);
+  /** Alinha miolo da /comunidade ao sino quando o resumo muda (ex.: convite → nova notificação). */
+  const comunidadeResumoSigRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -255,6 +257,18 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     const m = mRes.count ?? 0;
     const s = sRes.count ?? 0;
     const p = pRes.count ?? 0;
+    const pLen = previewRows.length;
+    const resumoSig = `${ag}|${m}|${s}|${p}|${unreadGeneral}|${pLen}`;
+    const onComunidade = pathname === "/comunidade" || pathname.startsWith("/comunidade/");
+    if (onComunidade) {
+      const prev = comunidadeResumoSigRef.current;
+      if (prev != null && prev !== resumoSig) {
+        window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+      }
+      comunidadeResumoSigRef.current = resumoSig;
+    } else {
+      comunidadeResumoSigRef.current = null;
+    }
     setAgendaN(ag);
     setPedidosDesafioN(m);
     setSugestoesLiderN(s);
@@ -262,7 +276,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     // Sininho conta apenas notificações não lidas; ações pendentes ficam no footer social.
     setTotal(unreadGeneral);
     setPreview(previewRows);
-  }, [userId]);
+  }, [userId, pathname]);
 
   useEffect(() => {
     const id = window.setTimeout(() => {

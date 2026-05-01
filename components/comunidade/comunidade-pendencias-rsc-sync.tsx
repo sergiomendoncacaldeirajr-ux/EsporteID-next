@@ -108,7 +108,10 @@ export function ComunidadePendenciasRscSync({
           /* ignore */
         }
         if (cancelled) return;
-        queueMicrotask(() => routerRefreshRef.current());
+        queueMicrotask(() => {
+          routerRefreshRef.current();
+          queueMicrotask(() => routerRefreshRef.current());
+        });
       })();
     };
 
@@ -134,6 +137,18 @@ export function ComunidadePendenciasRscSync({
       if (document.visibilityState === "visible") void tick();
     };
     document.addEventListener("visibilitychange", onVis);
+
+    /**
+     * Canal só de `notificacoes`: convite de time, desafio etc. atualizam o sino antes do miolo;
+     * sem isto o RSC da /comunidade às vezes não acompanhava (outros canais não disparavam a tempo).
+     */
+    const chNotif = supabase
+      .channel(`eid-comunidade-sync-notif-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "notificacoes", filter: `usuario_id=eq.${userId}` }, maybeRefresh)
+      .subscribe((status) => {
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") void tick();
+      });
+    registered.push(chNotif);
 
     function idListInFilter(ids: number[]): string | null {
       if (ids.length === 0) return null;
