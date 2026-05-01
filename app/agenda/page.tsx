@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { ConexoesStrip, type ConexaoPeer } from "@/components/agenda/conexoes-strip";
+import { AgendaBackgroundSync } from "@/components/agenda/agenda-background-sync";
 import { AgendaAceitosCancelaveis } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
@@ -40,67 +40,8 @@ export default async function AgendaPage() {
   if (!profile || !legalAcceptanceIsCurrent(profile)) redirect("/conta/aceitar-termos");
   if (!profile.perfil_completo) redirect("/onboarding");
 
-  await supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id });
-  await supabase.rpc("processar_pendencias_cancelamento_match", { p_only_user: user.id });
-  await supabase.rpc("limpar_notificacoes_match_cancelado", { p_only_user: user.id });
   const { teamClause } = await getAgendaTeamContext(supabase, user.id);
   await processarPendenciasAgendamentoAceite(supabase, user.id, teamClause);
-
-  const { data: aceitos } = await supabase
-    .from("matches")
-    .select("usuario_id, adversario_id, esporte_id")
-    .eq("status", "Aceito")
-    .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
-    .order("data_confirmacao", { ascending: false, nullsFirst: false })
-    .order("id", { ascending: false })
-    .limit(200);
-
-  const seenPeer = new Set<string>();
-  const peerList: string[] = [];
-  const peerSportId = new Map<string, number>();
-  for (const m of aceitos ?? []) {
-    if (m.usuario_id && m.usuario_id !== user.id && !seenPeer.has(m.usuario_id)) {
-      seenPeer.add(m.usuario_id);
-      peerList.push(m.usuario_id);
-    }
-    if (m.adversario_id && m.adversario_id !== user.id && !seenPeer.has(m.adversario_id)) {
-      seenPeer.add(m.adversario_id);
-      peerList.push(m.adversario_id);
-    }
-    const sid = Number((m as { esporte_id?: number | null }).esporte_id ?? 0);
-    if (Number.isFinite(sid) && sid > 0) {
-      if (m.usuario_id && m.usuario_id !== user.id && !peerSportId.has(m.usuario_id)) {
-        peerSportId.set(m.usuario_id, sid);
-      }
-      if (m.adversario_id && m.adversario_id !== user.id && !peerSportId.has(m.adversario_id)) {
-        peerSportId.set(m.adversario_id, sid);
-      }
-    }
-  }
-  const sportIds = Array.from(new Set(Array.from(peerSportId.values())));
-  const { data: peerSportsRows } = sportIds.length
-    ? await supabase.from("esportes").select("id, nome").in("id", sportIds)
-    : { data: [] };
-  const sportNameById = new Map((peerSportsRows ?? []).map((s) => [Number(s.id), String(s.nome ?? "").trim()]));
-
-  const { data: peerProfiles } = peerList.length
-    ? await supabase
-        .from("profiles")
-        .select("id, nome, avatar_url, disponivel_amistoso, disponivel_amistoso_ate")
-        .in("id", peerList)
-    : { data: [] };
-  const profileById = new Map((peerProfiles ?? []).map((p) => [p.id, p]));
-  const conexoes: ConexaoPeer[] = peerList
-    .map((id) => profileById.get(id))
-    .filter((p): p is NonNullable<typeof p> => p != null)
-    .map((p) => ({
-      id: p.id,
-      nome: p.nome,
-      avatar_url: p.avatar_url,
-      disponivel_amistoso: p.disponivel_amistoso,
-      disponivel_amistoso_ate: p.disponivel_amistoso_ate,
-      esporte_nome: sportNameById.get(peerSportId.get(p.id) ?? -1) ?? null,
-    }));
 
   const { data: partidasAgendadas } = await fetchPartidasAgendadasUsuario(supabase, user.id, teamClause);
 
@@ -410,9 +351,11 @@ export default async function AgendaPage() {
 
   return (
     <main
+      data-eid-agenda-page
       data-eid-touch-ui
       className="mx-auto w-full max-w-lg px-3 pt-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
+      <AgendaBackgroundSync />
       <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-4 py-4 sm:px-6 sm:py-5`}>
         <div className="grid grid-cols-[minmax(0,1fr)_88px] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_150px] sm:gap-4">
           <div className="min-w-0">
@@ -437,11 +380,9 @@ export default async function AgendaPage() {
         </div>
       </div>
 
-      <ConexoesStrip peers={conexoes} />
-
       <section className="mt-6 md:mt-10">
-        <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+        <div className="overflow-hidden rounded-xl border border-transparent bg-eid-card/55">
+          <div className="flex items-center justify-between border-b border-transparent bg-eid-surface/45 px-3 py-2">
             <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-500">Confrontos</h2>
             <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
               Agenda
@@ -520,8 +461,8 @@ export default async function AgendaPage() {
       <AgendaAceitosCancelaveis items={aceitosItems} />
 
       <section className="mt-6 md:mt-10">
-        <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+        <div className="overflow-hidden rounded-xl border border-transparent bg-eid-card/55">
+          <div className="flex items-center justify-between border-b border-transparent bg-eid-surface/45 px-3 py-2">
             <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Pedidos que você enviou</h2>
             <EidPendingBadge label="Pendentes" />
           </div>
@@ -581,7 +522,7 @@ export default async function AgendaPage() {
         </div>
       </section>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 px-3 py-3 text-center md:mt-10 md:px-4 md:py-3.5">
+      <div className="mt-6 overflow-hidden rounded-xl border border-transparent bg-eid-card/55 px-3 py-3 text-center md:mt-10 md:px-4 md:py-3.5">
         <p className="text-[11px] leading-relaxed text-eid-text-secondary md:text-xs">
           Pedidos recebidos para aceitar estão no{" "}
           <Link href="/comunidade" className="font-bold text-eid-primary-300 hover:underline">

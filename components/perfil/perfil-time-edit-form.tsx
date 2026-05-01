@@ -18,6 +18,7 @@ export function PerfilTimeEditForm({
   vagas_abertas,
   aceita_pedidos,
   nivel_procurado,
+  genero,
   variant = "inline",
 }: {
   timeId: number;
@@ -29,6 +30,7 @@ export function PerfilTimeEditForm({
   vagas_abertas: boolean;
   aceita_pedidos: boolean;
   nivel_procurado: string | null;
+  genero: string | null;
   /** `page`: tela dedicada (sem accordion). */
   variant?: "inline" | "page";
 }) {
@@ -198,6 +200,25 @@ export function PerfilTimeEditForm({
               <option value="profissional">Profissional</option>
             </select>
           </div>
+        </div>
+        <div className="sm:col-span-2">
+          <p className={`${isPage ? "inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg" : "text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary"}`}>
+            Gênero da formação
+          </p>
+          <div className="mt-1 flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
+            <select
+              name="genero"
+              defaultValue={String(genero ?? "misto").toLowerCase()}
+              className="h-10 w-full bg-transparent text-sm text-eid-fg focus:outline-none"
+            >
+              <option value="masculino">Masculino</option>
+              <option value="feminino">Feminino</option>
+              <option value="misto">Misto</option>
+            </select>
+          </div>
+          <p className="mt-1 text-[10px] text-eid-text-secondary">
+            Se a formação tiver membros de gêneros diferentes, o ranking por gênero considera como misto.
+          </p>
         </div>
 
         {isPage ? (

@@ -110,29 +110,31 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     viewerMatchIdadeGate = String(mgRow?.match_idade_gate ?? "ok");
   }
 
-  const [{ data: papeisRows }, { data: professorPerfil }, { data: professorEsportes }, { data: professorMetricas }] =
-    await Promise.all([
-      supabase.from("usuario_papeis").select("papel").eq("usuario_id", id),
-      supabase
-        .from("professor_perfil")
-        .select("headline, bio_profissional, aceita_novos_alunos, perfil_publicado")
-        .eq("usuario_id", id)
-        .maybeSingle(),
-      supabase
-        .from("professor_esportes")
-        .select("tipo_atuacao, valor_base_centavos, esportes(nome)")
-        .eq("professor_id", id)
-        .eq("ativo", true),
-      supabase
-        .from("professor_metricas")
-        .select("nota_docente, total_avaliacoes_validas, esportes(nome)")
-        .eq("professor_id", id)
-        .order("nota_docente", { ascending: false }),
-    ]);
+  const { data: papeisRows } = await supabase.from("usuario_papeis").select("papel").eq("usuario_id", id);
   const papeis = (papeisRows ?? []).map((row) => row.papel);
   const hasProfessor = papeis.includes("professor");
   const hasOrganizador = papeis.includes("organizador");
   const hasEspaco = papeis.includes("espaco");
+
+  const [{ data: professorPerfil }, { data: professorEsportes }, { data: professorMetricas }] = hasProfessor
+    ? await Promise.all([
+        supabase
+          .from("professor_perfil")
+          .select("headline, bio_profissional, aceita_novos_alunos, perfil_publicado")
+          .eq("usuario_id", id)
+          .maybeSingle(),
+        supabase
+          .from("professor_esportes")
+          .select("tipo_atuacao, valor_base_centavos, esportes(nome)")
+          .eq("professor_id", id)
+          .eq("ativo", true),
+        supabase
+          .from("professor_metricas")
+          .select("nota_docente, total_avaliacoes_validas, esportes(nome)")
+          .eq("professor_id", id)
+          .order("nota_docente", { ascending: false }),
+      ])
+    : [{ data: null }, { data: [] }, { data: [] }];
 
   const podeVerWhatsappAtleta = await podeExibirWhatsappPerfilPublico(supabase, user.id, id, isSelf);
   const podeVerWhatsappProfessor = hasProfessor
@@ -344,28 +346,33 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
       rankingBlockedUntil: cooldownUntilBySport.get(e.esporteId) ?? null,
     }));
 
-  const { data: socioRows } = await supabase
-    .from("membership_requests")
-    .select("espaco_generico_id, espacos_genericos!inner(id, nome_publico, localizacao)")
-    .eq("usuario_id", id)
-    .eq("status", "aprovado")
-    .limit(20);
+  const [{ data: socioRows }, { data: frequentesRows }] = await Promise.all([
+    supabase
+      .from("membership_requests")
+      .select("espaco_generico_id, espacos_genericos!inner(id, nome_publico, localizacao)")
+      .eq("usuario_id", id)
+      .eq("status", "aprovado")
+      .limit(20),
+    supabase
+      .from("usuario_locais_frequentes")
+      .select("visitas, espacos_genericos!inner(id, nome_publico, localizacao)")
+      .eq("usuario_id", id)
+      .order("visitas", { ascending: false })
+      .limit(10),
+  ]);
 
-  const { data: frequentesRows } = await supabase
-    .from("usuario_locais_frequentes")
-    .select("visitas, espacos_genericos!inner(id, nome_publico, localizacao)")
-    .eq("usuario_id", id)
-    .order("visitas", { ascending: false })
-    .limit(10);
-
-  const { data: partidasHistoricoRaw } = await supabase
-    .from("partidas")
-    .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, tipo_partida, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id, mensagem"
-    )
-    .or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`)
-    .order("data_registro", { ascending: false })
-    .limit(180);
+  const mostrarHistoricoPublico = perfil.mostrar_historico_publico !== false;
+  const podeVerHistorico = isSelf || mostrarHistoricoPublico;
+  const { data: partidasHistoricoRaw } = podeVerHistorico
+    ? await supabase
+        .from("partidas")
+        .select(
+          "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, tipo_partida, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id, mensagem"
+        )
+        .or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`)
+        .order("data_registro", { ascending: false })
+        .limit(180)
+    : { data: [] };
 
   const partidasHistorico = (partidasHistoricoRaw ?? []).filter((p) => {
     if (!p.jogador1_id || !p.jogador2_id) return false;
@@ -447,9 +454,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     },
     { vitorias: 0, derrotas: 0, empates: 0, rank: 0, torneio: 0 }
   );
-  const mostrarHistoricoPublico = perfil.mostrar_historico_publico !== false;
-  const podeVerHistorico = isSelf || mostrarHistoricoPublico;
-
   const conquistas: string[] = [];
   if ((eids ?? []).length >= 3) conquistas.push("Multi-esporte");
   if ((winRate ?? 0) >= 60 && jogosT >= 10) conquistas.push("Winrate 60%+");
@@ -457,7 +461,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   if ((principalEid?.nota_eid ?? 0) >= 7) conquistas.push("EID Elite");
 
   return (
-    <main id="perfil-public-main" className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main id="perfil-public-main" data-eid-perfil-page className={PROFILE_PUBLIC_MAIN_CLASS}>
         {/* ── Hero Card ─────────────────────────────────────────────── */}
         {/* ── Hero Card ──
              overflow-hidden no container clipa tudo dentro dos cantos arredondados.
@@ -580,7 +584,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
             ) : null}
 
             {/* Stats bar */}
-            <div className="mt-4 grid grid-cols-4 divide-x divide-[color:var(--eid-border-subtle)] rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card text-center shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+            <div className="mt-4 grid grid-cols-4 divide-x divide-transparent rounded-xl border border-transparent bg-eid-surface/40 text-center shadow-none">
               <div className="py-2">
                 <p className="text-sm font-black text-eid-fg">{vitT}</p>
                 <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vitórias</p>

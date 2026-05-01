@@ -13,6 +13,7 @@ type ProfileInitial = {
   alturaCm: number | null;
   pesoKg: number | null;
   lado: string | null;
+  genero: string | null;
   avatarUrl: string | null;
   bio: string;
   estiloJogo: string;
@@ -38,6 +39,7 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
   const [pesoKg, setPesoKg] = useState(profileInitial.pesoKg ? String(profileInitial.pesoKg) : "");
   const [lado, setLado] = useState(profileInitial.lado ?? "");
   const [bio, setBio] = useState(profileInitial.bio);
+  const [genero, setGenero] = useState(String(profileInitial.genero ?? "").trim());
   const [estiloJogo, setEstiloJogo] = useState(profileInitial.estiloJogo);
   const [disponibilidadeSemanaJson, setDisponibilidadeSemanaJson] = useState(
     profileInitial.disponibilidadeSemanaJson || "{}"
@@ -64,8 +66,9 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
       if (!Number.isInteger(perfilPesoNum) || perfilPesoNum < 20 || perfilPesoNum > 300) return false;
       if (!["Destro", "Canhoto", "Ambos"].includes(lado)) return false;
     }
+    if (genero && !["Masculino", "Feminino", "Outro"].includes(genero)) return false;
     return true;
-  }, [hasAtletaProfessor, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum, username]);
+  }, [genero, hasAtletaProfessor, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum, username]);
 
   const hasFotoSelecionada = Boolean(fotoPreviewUrl);
 
@@ -247,6 +250,17 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
           placeholder="Nome completo"
           className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
         />
+        <select
+          name="genero"
+          value={genero}
+          onChange={(ev) => setGenero(ev.target.value)}
+          className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg [&>option]:bg-[#0b1220] [&>option]:text-white"
+        >
+          <option value="">Gênero (opcional)</option>
+          <option value="Masculino">Masculino</option>
+          <option value="Feminino">Feminino</option>
+          <option value="Outro">Outro</option>
+        </select>
         <input
           name="username"
           value={username}

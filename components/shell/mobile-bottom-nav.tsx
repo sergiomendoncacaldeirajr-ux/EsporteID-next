@@ -174,9 +174,9 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       const [agRes, pRes, mRecebidosRes, mEnviadosRes, sLiderRes, sEnviadasRes, conviteRecebidoRes, conviteEnviadoRes, candidaturaEnviadaRes, meusTimesRes] = await Promise.all([
         supabase
           .from("partidas")
-          .select("id, match_id")
+          .select("id, match_id, status, data_partida, local_str, local_espaco_id, agendamento_proposto_por, agendamento_aceite_deadline")
           .or(`jogador1_id.eq.${resolvedUserId},jogador2_id.eq.${resolvedUserId}`)
-          .eq("status", "agendada"),
+          .in("status", ["agendada", "aguardando_aceite_agendamento"]),
         supabase
           .from("partidas")
           .select("id", { count: "exact", head: true })
@@ -234,7 +234,23 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         const mid = Number(row.match_id ?? 0);
         return !(Number.isFinite(mid) && mid > 0 && agendaCancelados.has(mid));
       });
-      setAgendaBadge(agendaVisiveis.length);
+      const agendaPendentesAcao = agendaVisiveis.filter((row) => {
+        const status = String((row as { status?: string | null }).status ?? "").trim().toLowerCase();
+        if (status === "aguardando_aceite_agendamento") {
+          const proposedBy = String((row as { agendamento_proposto_por?: string | null }).agendamento_proposto_por ?? "");
+          return proposedBy !== resolvedUserId;
+        }
+        if (status === "agendada") {
+          const hasDate = Boolean((row as { data_partida?: string | null }).data_partida);
+          const hasLocal = Boolean(
+            String((row as { local_str?: string | null }).local_str ?? "").trim() ||
+              Number((row as { local_espaco_id?: number | null }).local_espaco_id ?? 0) > 0
+          );
+          return !(hasDate && hasLocal);
+        }
+        return false;
+      });
+      setAgendaBadge(agendaPendentesAcao.length);
       const placar = pRes.count ?? 0;
       const pedidosRecebidos = mRecebidosRes.count ?? 0;
       const pedidosEnviados = mEnviadosRes.count ?? 0;

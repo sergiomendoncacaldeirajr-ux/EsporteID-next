@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import {
   RankingFilterBar,
+  RankingGenderToggle,
   RankingPeriodToggle,
   RankingRankToggle,
   RankingPodium,
@@ -23,13 +24,13 @@ export const metadata = {
 
 /** Mesmo padrão dos cartões da dashboard (`dashboardSectionOuter` / `dashboardSectionHead`). */
 const rankingCardShellClass =
-  "eid-ranking-card overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]";
+  "eid-ranking-card overflow-hidden rounded-2xl border border-transparent bg-eid-surface/40 shadow-none";
 
 const rankingCardHeadClass =
-  "eid-ranking-card-head flex items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
+  "eid-ranking-card-head flex items-center justify-between gap-3 border-b border-transparent bg-transparent px-3 py-2.5 shadow-none sm:px-4";
 
 const rankingCardHeadWrapClass =
-  "eid-ranking-card-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
+  "eid-ranking-card-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-transparent bg-transparent px-3 py-3 shadow-none sm:px-4";
 
 const rankingSectionTitleClass =
   "eid-ranking-section-title text-[11px] font-black uppercase tracking-[0.08em] text-eid-primary-400";
@@ -44,7 +45,7 @@ type Props = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-type ProfileMini = { nome?: string | null; avatar_url?: string | null; localizacao?: string | null };
+type ProfileMini = { nome?: string | null; avatar_url?: string | null; localizacao?: string | null; genero?: string | null };
 type SportMini = { nome?: string | null };
 
 type UsuarioEidRow = {
@@ -64,6 +65,8 @@ type TimeRow = {
   nome?: string | null;
   escudo?: string | null;
   localizacao?: string | null;
+  criador_id?: string | null;
+  genero?: string | null;
   pontos_ranking?: number | null;
   eid_time?: number | null;
   esporte_id?: number | null;
@@ -98,6 +101,24 @@ type PartidaPeriodoRow = {
   data_partida?: string | null;
   data_registro?: string | null;
 };
+
+type PartidaRankingRow = {
+  id?: number | null;
+  jogador1_id?: string | null;
+  jogador2_id?: string | null;
+  time1_id?: number | null;
+  time2_id?: number | null;
+  vencedor_id?: number | null;
+  placar_1?: number | null;
+  placar_2?: number | null;
+  placar_desafiante?: number | null;
+  placar_desafiado?: number | null;
+  data_resultado?: string | null;
+  data_partida?: string | null;
+  data_registro?: string | null;
+};
+
+type GeneroBucket = "masculino" | "feminino" | "misto";
 
 function timestampPartidaNoMesAtual(p: PartidaPeriodoRow, monthStartMs: number, nextMonthStartMs: number): boolean {
   const raw = p.data_resultado ?? p.data_partida ?? p.data_registro;
@@ -171,6 +192,33 @@ function toPodiumSlot(row: UnifiedRank | undefined, place: string): PodiumSlot |
   };
 }
 
+function normalizeGeneroRanking(raw: string | null | undefined): "masculino" | "feminino" | "" {
+  const g = String(raw ?? "")
+    .trim()
+    .toLowerCase();
+  if (g === "masculino") return "masculino";
+  if (g === "feminino") return "feminino";
+  return "";
+}
+
+function matchBucketIndividual(g1: string | null | undefined, g2: string | null | undefined): GeneroBucket {
+  const a = normalizeGeneroRanking(g1);
+  const b = normalizeGeneroRanking(g2);
+  if (a && a === b) return a;
+  return "misto";
+}
+
+function teamBucketFromMembers(memberGeneros: Array<string | null | undefined>): GeneroBucket {
+  const set = new Set(memberGeneros.map((g) => normalizeGeneroRanking(g)).filter(Boolean));
+  if (set.size === 1) return Array.from(set)[0] as GeneroBucket;
+  return "misto";
+}
+
+function matchBucketFormacoes(t1: GeneroBucket, t2: GeneroBucket): GeneroBucket {
+  if (t1 === t2 && (t1 === "masculino" || t1 === "feminino")) return t1;
+  return "misto";
+}
+
 export default async function RankingPage({ searchParams }: Props) {
   const spRaw = (await searchParams) ?? {};
   const state = parseRankingSearch(spRaw);
@@ -182,7 +230,7 @@ export default async function RankingPage({ searchParams }: Props) {
   const viewerId = user.id;
 
   const [{ data: me }, { data: meusEsportesRaw }, { data: criados }, { data: membro }, { data: esportesCatalogoRaw }] = await Promise.all([
-    supabase.from("profiles").select("localizacao").eq("id", viewerId).maybeSingle(),
+    supabase.from("profiles").select("localizacao, genero").eq("id", viewerId).maybeSingle(),
     supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", viewerId).order("esporte_id", { ascending: true }),
     supabase.from("times").select("id").eq("criador_id", viewerId),
     supabase.from("membros_time").select("time_id").eq("usuario_id", viewerId).eq("status", "ativo"),
@@ -191,6 +239,9 @@ export default async function RankingPage({ searchParams }: Props) {
 
   const meusEsportes = (meusEsportesRaw ?? []) as MeuEsporteRow[];
   const esportePrincipalId = meusEsportes[0]?.esporte_id ?? null;
+  const generoPerfil = normalizeGeneroRanking((me as { genero?: string | null } | null)?.genero ?? null) || "masculino";
+  const generoSelecionado = (state.genero || generoPerfil) as RankingSearchState["genero"];
+  const stateComGenero: RankingSearchState = { ...state, genero: generoSelecionado };
 
   const todosEsportes = (esportesCatalogoRaw ?? [])
     .filter((e): e is { id: number; nome: string | null } => typeof (e as { id?: number }).id === "number" && Number.isFinite((e as { id: number }).id))
@@ -227,13 +278,38 @@ export default async function RankingPage({ searchParams }: Props) {
   const cityNeedle = state.local === "cidade" ? normalizeCityHint(me?.localizacao ?? null) : "";
 
   let rankingAll: UnifiedRank[] = [];
+  let partidasRanking: PartidaRankingRow[] = [];
+  let pontosVitoriaRegra = 10;
+  let pontosDerrotaRegra = 4;
+
+  if (selectedEsporteId != null && stateComGenero.rank === "match") {
+    const [{ data: regras }, { data: partidasBrutas }] = await Promise.all([
+      supabase.from("regras_ranking_match").select("pontos_vitoria, pontos_derrota").eq("esporte_id", selectedEsporteId).maybeSingle(),
+      supabase
+        .from("partidas")
+        .select("id, jogador1_id, jogador2_id, time1_id, time2_id, vencedor_id, placar_1, placar_2, placar_desafiante, placar_desafiado, data_resultado, data_partida, data_registro")
+        .eq("esporte_id", selectedEsporteId)
+        .eq("tipo_partida", "ranking")
+        .in("status", ["encerrada", "finalizada", "concluida", "concluída", "validada"]),
+    ]);
+    pontosVitoriaRegra = Number.isFinite(Number(regras?.pontos_vitoria)) ? Number(regras?.pontos_vitoria) : 10;
+    pontosDerrotaRegra = Number.isFinite(Number(regras?.pontos_derrota)) ? Number(regras?.pontos_derrota) : 4;
+    partidasRanking = (partidasBrutas ?? []) as PartidaRankingRow[];
+  }
 
   if (selectedEsporteId != null) {
     if (state.tipo === "individual") {
-      let q = supabase
-        .from("usuario_eid")
-        .select("usuario_id, esporte_id, nota_eid, pontos_ranking, vitorias, derrotas, posicao_rank, profiles!inner(nome, avatar_url, localizacao)")
-        .eq("esporte_id", selectedEsporteId);
+      let q = cityNeedle
+        ? supabase
+            .from("usuario_eid")
+            .select(
+              "usuario_id, esporte_id, nota_eid, pontos_ranking, vitorias, derrotas, posicao_rank, profiles!inner(nome, avatar_url, localizacao, genero)"
+            )
+            .eq("esporte_id", selectedEsporteId)
+        : supabase
+            .from("usuario_eid")
+            .select("usuario_id, esporte_id, nota_eid, pontos_ranking, vitorias, derrotas, posicao_rank, profiles!inner(nome, avatar_url, genero)")
+            .eq("esporte_id", selectedEsporteId);
       q = state.rank === "match" ? q.order("pontos_ranking", { ascending: false }) : q.order("nota_eid", { ascending: false });
       const { data: raw } = await q;
       const rows = ((raw ?? []) as UsuarioEidRow[]).filter((r) => {
@@ -242,27 +318,98 @@ export default async function RankingPage({ searchParams }: Props) {
         const loc = normalizeSearchText(p?.localizacao ?? "");
         return loc.includes(cityNeedle);
       });
-      rankingAll = rows.map((r) => {
+      const perfilGeneroByUser = new Map<string, "masculino" | "feminino" | "">();
+      for (const r of rows) {
+        const p = firstOf(r.profiles);
+        perfilGeneroByUser.set(String(r.usuario_id), normalizeGeneroRanking(p?.genero ?? null));
+      }
+      const pontosByUserBucket = new Map<string, Record<GeneroBucket, number>>();
+      const winsByUserBucket = new Map<string, Record<GeneroBucket, number>>();
+      const lossesByUserBucket = new Map<string, Record<GeneroBucket, number>>();
+      const ensureUserBuckets = (uid: string) => {
+        if (!pontosByUserBucket.has(uid)) pontosByUserBucket.set(uid, { masculino: 0, feminino: 0, misto: 0 });
+        if (!winsByUserBucket.has(uid)) winsByUserBucket.set(uid, { masculino: 0, feminino: 0, misto: 0 });
+        if (!lossesByUserBucket.has(uid)) lossesByUserBucket.set(uid, { masculino: 0, feminino: 0, misto: 0 });
+      };
+      if (stateComGenero.rank === "match") {
+        const ordered = [...partidasRanking].sort((a, b) => {
+          const ta = new Date(a.data_resultado ?? a.data_partida ?? a.data_registro ?? 0).getTime();
+          const tb = new Date(b.data_resultado ?? b.data_partida ?? b.data_registro ?? 0).getTime();
+          return ta - tb;
+        });
+        for (const p of ordered) {
+          const u1 = String(p.jogador1_id ?? "");
+          const u2 = String(p.jogador2_id ?? "");
+          if (!u1 || !u2) continue;
+          const s1 = Number(p.placar_1 ?? p.placar_desafiante ?? NaN);
+          const s2 = Number(p.placar_2 ?? p.placar_desafiado ?? NaN);
+          if (!Number.isFinite(s1) || !Number.isFinite(s2) || s1 === s2) continue;
+          const winner = s1 > s2 ? u1 : u2;
+          const loser = s1 > s2 ? u2 : u1;
+          const bucket = matchBucketIndividual(perfilGeneroByUser.get(u1), perfilGeneroByUser.get(u2));
+          ensureUserBuckets(winner);
+          ensureUserBuckets(loser);
+          const wBase = pontosByUserBucket.get(winner)![bucket];
+          const lBase = pontosByUserBucket.get(loser)![bucket];
+          const upsetCap = Math.max(0, Math.floor(pontosVitoriaRegra * 0.2));
+          const upset = lBase > wBase ? upsetCap : 0;
+          pontosByUserBucket.get(winner)![bucket] += pontosVitoriaRegra + upset;
+          pontosByUserBucket.get(loser)![bucket] += pontosDerrotaRegra;
+          winsByUserBucket.get(winner)![bucket] += 1;
+          lossesByUserBucket.get(loser)![bucket] += 1;
+        }
+      }
+      rankingAll = rows
+        .filter((r) => {
+          if (stateComGenero.rank !== "match") return true;
+          const p = firstOf(r.profiles);
+          const g = normalizeGeneroRanking(p?.genero ?? null);
+          if (stateComGenero.genero === "masculino" || stateComGenero.genero === "feminino") return g === stateComGenero.genero;
+          if (stateComGenero.genero === "misto" && stateComGenero.rank === "match") {
+            const uid = String(r.usuario_id);
+            const rec = pontosByUserBucket.get(uid);
+            return (rec?.misto ?? 0) > 0;
+          }
+          return true;
+        })
+        .map((r) => {
         const p = firstOf(r.profiles);
         const uid = r.usuario_id;
+        const pontosGenero =
+          stateComGenero.rank === "match"
+            ? (pontosByUserBucket.get(uid)?.[stateComGenero.genero as GeneroBucket] ?? 0)
+            : Number(r.pontos_ranking ?? 0);
+        const vitoriasGenero =
+          stateComGenero.rank === "match"
+            ? (winsByUserBucket.get(uid)?.[stateComGenero.genero as GeneroBucket] ?? 0)
+            : Number(r.vitorias ?? 0);
+        const derrotasGenero =
+          stateComGenero.rank === "match"
+            ? (lossesByUserBucket.get(uid)?.[stateComGenero.genero as GeneroBucket] ?? 0)
+            : Number(r.derrotas ?? 0);
         return {
           key: `u-${uid}-${r.esporte_id}`,
           usuarioId: uid,
           nome: p?.nome ?? "Atleta",
           avatarUrl: p?.avatar_url ?? null,
-          pontos: Number(r.pontos_ranking ?? 0),
+          pontos: pontosGenero,
           notaEid: Number(r.nota_eid ?? 0),
-          vitorias: Number(r.vitorias ?? 0),
-          derrotas: Number(r.derrotas ?? 0),
+          vitorias: vitoriasGenero,
+          derrotas: derrotasGenero,
           posicaoRank: Number.isFinite(Number(r.posicao_rank)) ? Number(r.posicao_rank) : null,
           href: `/perfil/${uid}`,
         };
-      });
+        });
     } else {
-      let q = supabase
-        .from("times")
-        .select("id, nome, escudo, localizacao, pontos_ranking, eid_time, esporte_id, tipo")
-        .eq("esporte_id", selectedEsporteId);
+      let q = cityNeedle
+        ? supabase
+            .from("times")
+            .select("id, nome, escudo, localizacao, pontos_ranking, eid_time, esporte_id, tipo, criador_id, genero")
+            .eq("esporte_id", selectedEsporteId)
+        : supabase
+            .from("times")
+            .select("id, nome, escudo, pontos_ranking, eid_time, esporte_id, tipo, criador_id, genero")
+            .eq("esporte_id", selectedEsporteId);
       q = state.rank === "match" ? q.order("pontos_ranking", { ascending: false }) : q.order("eid_time", { ascending: false });
       const { data: raw } = await q;
       const tipoMatches = (r: TimeRow): boolean => {
@@ -277,13 +424,114 @@ export default async function RankingPage({ searchParams }: Props) {
       const rows = cityNeedle
         ? baseRows.filter((r) => normalizeSearchText(r.localizacao ?? "").includes(cityNeedle))
         : baseRows;
-      rankingAll = rows.map((r) => ({
+      const teamIds = rows.map((r) => Number(r.id)).filter((id) => Number.isFinite(id));
+      const { data: rosterRows } =
+        teamIds.length > 0
+          ? await supabase
+              .from("membros_time")
+              .select("time_id, usuario_id")
+              .in("time_id", teamIds)
+              .in("status", ["ativo", "aceito", "aprovado"])
+          : { data: [] as Array<{ time_id?: number | null; usuario_id?: string | null }> };
+      const membersByTeam = new Map<number, Set<string>>();
+      const profileIds = new Set<string>();
+      for (const r of rows) {
+        if (r.criador_id) profileIds.add(String(r.criador_id));
+        if (!membersByTeam.has(Number(r.id))) membersByTeam.set(Number(r.id), new Set<string>());
+      }
+      for (const m of rosterRows ?? []) {
+        const tid = Number(m.time_id ?? 0);
+        const uid = String(m.usuario_id ?? "");
+        if (!tid || !uid) continue;
+        if (!membersByTeam.has(tid)) membersByTeam.set(tid, new Set<string>());
+        membersByTeam.get(tid)!.add(uid);
+        profileIds.add(uid);
+      }
+      const { data: perfilGenerosRows } =
+        profileIds.size > 0
+          ? await supabase.from("profiles").select("id, genero").in("id", Array.from(profileIds))
+          : { data: [] as Array<{ id?: string | null; genero?: string | null }> };
+      const generoByProfile = new Map<string, string | null>();
+      for (const p of perfilGenerosRows ?? []) generoByProfile.set(String(p.id ?? ""), p.genero ?? null);
+      const generoByTeam = new Map<number, GeneroBucket>();
+      for (const t of rows) {
+        const ids = new Set<string>([String(t.criador_id ?? "")]);
+        for (const mid of membersByTeam.get(Number(t.id)) ?? new Set<string>()) ids.add(mid);
+        const generos = Array.from(ids).map((id) => generoByProfile.get(id) ?? null);
+        generoByTeam.set(Number(t.id), teamBucketFromMembers(generos));
+      }
+      const pontosByTeamBucket = new Map<number, Record<GeneroBucket, number>>();
+      const winsByTeamBucket = new Map<number, Record<GeneroBucket, number>>();
+      const lossesByTeamBucket = new Map<number, Record<GeneroBucket, number>>();
+      const ensureTeamBuckets = (tid: number) => {
+        if (!pontosByTeamBucket.has(tid)) pontosByTeamBucket.set(tid, { masculino: 0, feminino: 0, misto: 0 });
+        if (!winsByTeamBucket.has(tid)) winsByTeamBucket.set(tid, { masculino: 0, feminino: 0, misto: 0 });
+        if (!lossesByTeamBucket.has(tid)) lossesByTeamBucket.set(tid, { masculino: 0, feminino: 0, misto: 0 });
+      };
+      if (stateComGenero.rank === "match") {
+        const ordered = [...partidasRanking].sort((a, b) => {
+          const ta = new Date(a.data_resultado ?? a.data_partida ?? a.data_registro ?? 0).getTime();
+          const tb = new Date(b.data_resultado ?? b.data_partida ?? b.data_registro ?? 0).getTime();
+          return ta - tb;
+        });
+        for (const p of ordered) {
+          const t1 = Number(p.time1_id ?? 0);
+          const t2 = Number(p.time2_id ?? 0);
+          if (!t1 || !t2) continue;
+          const s1 = Number(p.placar_1 ?? p.placar_desafiante ?? NaN);
+          const s2 = Number(p.placar_2 ?? p.placar_desafiado ?? NaN);
+          let winner = 0;
+          let loser = 0;
+          if (Number(p.vencedor_id ?? 0) === t1 || Number(p.vencedor_id ?? 0) === t2) {
+            winner = Number(p.vencedor_id ?? 0);
+            loser = winner === t1 ? t2 : t1;
+          } else if (Number.isFinite(s1) && Number.isFinite(s2) && s1 !== s2) {
+            winner = s1 > s2 ? t1 : t2;
+            loser = winner === t1 ? t2 : t1;
+          } else {
+            continue;
+          }
+          const g1 = generoByTeam.get(t1) ?? "misto";
+          const g2 = generoByTeam.get(t2) ?? "misto";
+          const bucket = matchBucketFormacoes(g1, g2);
+          ensureTeamBuckets(winner);
+          ensureTeamBuckets(loser);
+          const wBase = pontosByTeamBucket.get(winner)![bucket];
+          const lBase = pontosByTeamBucket.get(loser)![bucket];
+          const upsetCap = Math.max(0, Math.floor(pontosVitoriaRegra * 0.2));
+          const upset = lBase > wBase ? upsetCap : 0;
+          pontosByTeamBucket.get(winner)![bucket] += pontosVitoriaRegra + upset;
+          pontosByTeamBucket.get(loser)![bucket] += pontosDerrotaRegra;
+          winsByTeamBucket.get(winner)![bucket] += 1;
+          lossesByTeamBucket.get(loser)![bucket] += 1;
+        }
+      }
+      rankingAll = rows
+        .filter((r) => {
+          if (stateComGenero.rank !== "match") return true;
+          const teamGenero = generoByTeam.get(Number(r.id)) ?? "misto";
+          if (stateComGenero.genero === "misto") return teamGenero === "misto";
+          if (stateComGenero.genero === "masculino" || stateComGenero.genero === "feminino") return teamGenero === stateComGenero.genero;
+          return true;
+        })
+        .map((r) => ({
         key: `t-${r.id}-${r.esporte_id ?? 0}`,
         timeId: r.id,
         nome: r.nome?.trim() || "Equipe",
         avatarUrl: r.escudo ?? null,
-        pontos: Number(r.pontos_ranking ?? 0),
+        pontos:
+          stateComGenero.rank === "match"
+            ? (pontosByTeamBucket.get(Number(r.id))?.[stateComGenero.genero as GeneroBucket] ?? 0)
+            : Number(r.pontos_ranking ?? 0),
         notaEid: Number(r.eid_time ?? 0),
+        vitorias:
+          stateComGenero.rank === "match"
+            ? (winsByTeamBucket.get(Number(r.id))?.[stateComGenero.genero as GeneroBucket] ?? 0)
+            : null,
+        derrotas:
+          stateComGenero.rank === "match"
+            ? (lossesByTeamBucket.get(Number(r.id))?.[stateComGenero.genero as GeneroBucket] ?? 0)
+            : null,
         href: state.tipo === "dupla" ? `/perfil-dupla/${r.id}` : `/perfil-time/${r.id}`,
       }));
     }
@@ -331,6 +579,12 @@ export default async function RankingPage({ searchParams }: Props) {
       return typeof r.timeId === "number" && activeTeams.has(r.timeId);
     });
   }
+  rankingAll.sort((a, b) => {
+    const metricA = stateComGenero.rank === "eid" ? a.notaEid : a.pontos;
+    const metricB = stateComGenero.rank === "eid" ? b.notaEid : b.pontos;
+    if (metricB !== metricA) return metricB - metricA;
+    return b.notaEid - a.notaEid;
+  });
 
   const podiumRows = rankingAll.slice(0, 3);
   const afterPodium = rankingAll.slice(3);
@@ -385,7 +639,7 @@ export default async function RankingPage({ searchParams }: Props) {
 
         <section className="mt-4 md:mt-6">
           <RankingFilterBar
-            state={state}
+            state={stateComGenero}
             principalEsporteId={esportePrincipalId}
             selectedEsporteId={selectedEsporteId}
             cidadeDisplay={cidadeDisplay}
@@ -395,7 +649,7 @@ export default async function RankingPage({ searchParams }: Props) {
         </section>
 
         {noCatalogHint ? (
-          <p className="eid-ranking-empty mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-5 text-center text-sm leading-relaxed text-eid-text-secondary shadow-[0_10px_22px_-16px_rgba(15,23,42,0.2)]">
+          <p className="eid-ranking-empty mt-4 rounded-xl border border-transparent bg-eid-surface/40 p-5 text-center text-sm leading-relaxed text-eid-text-secondary shadow-none">
             Nenhum esporte disponível no momento.
           </p>
         ) : (
@@ -407,8 +661,13 @@ export default async function RankingPage({ searchParams }: Props) {
                   first={podiumFirst}
                   third={podiumThird}
                   rankKind={state.rank}
-                  rankToggle={<RankingRankToggle state={state} principalEsporteId={esportePrincipalId} />}
-                  periodToggle={<RankingPeriodToggle state={state} principalEsporteId={esportePrincipalId} />}
+                  genderToggle={
+                    state.rank === "match" ? (
+                      <RankingGenderToggle state={stateComGenero} principalEsporteId={esportePrincipalId} />
+                    ) : undefined
+                  }
+                  rankToggle={<RankingRankToggle state={stateComGenero} principalEsporteId={esportePrincipalId} />}
+                  periodToggle={<RankingPeriodToggle state={stateComGenero} principalEsporteId={esportePrincipalId} />}
                 />
               </section>
             ) : null}
@@ -420,7 +679,7 @@ export default async function RankingPage({ searchParams }: Props) {
             ) : null}
 
             {rankingAll.length === 0 ? (
-              <p className="eid-ranking-empty mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-6 text-center text-sm text-eid-text-secondary shadow-[0_10px_22px_-16px_rgba(15,23,42,0.2)]">
+              <p className="eid-ranking-empty mt-4 rounded-xl border border-transparent bg-eid-surface/40 p-6 text-center text-sm text-eid-text-secondary shadow-none">
                 Nenhum resultado para estes filtros.
               </p>
             ) : null}
@@ -480,8 +739,8 @@ export default async function RankingPage({ searchParams }: Props) {
                 {hasMore ? (
                   <div className="mt-0">
                     <RankingLoadMoreButton
-                      href={rankingHref({ page: state.page + 1 }, state, esportePrincipalId)}
-                      className="eid-ranking-cta inline-flex min-h-10 w-full items-center justify-center gap-1.5 border-t border-[color:var(--eid-border-subtle)] px-5 text-[11px] font-black uppercase tracking-[0.02em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] transition-all duration-200 ease-out motion-safe:transform-gpu hover:bg-eid-primary-500/10 active:scale-[0.995]"
+                      href={rankingHref({ page: state.page + 1 }, stateComGenero, esportePrincipalId)}
+                      className="eid-ranking-cta inline-flex min-h-10 w-full items-center justify-center gap-1.5 border-t border-transparent px-5 text-[11px] font-black uppercase tracking-[0.02em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] transition-all duration-200 ease-out motion-safe:transform-gpu hover:bg-eid-primary-500/10 active:scale-[0.995]"
                     />
                   </div>
                 ) : null}

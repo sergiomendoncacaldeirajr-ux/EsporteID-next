@@ -106,6 +106,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
   const [createState, createAction, createPending] = useActionState(criarEquipe, initial);
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
   const [tipo, setTipo] = useState<"time" | "dupla">(defaultTipoFormacao ?? "time");
+  const [genero, setGenero] = useState<"masculino" | "feminino" | "misto">("misto");
   const [esporteId, setEsporteId] = useState<string>(() => {
     if (defaultEsporteId != null && esportes.some((e) => e.id === defaultEsporteId)) {
       return String(defaultEsporteId);
@@ -290,6 +291,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
           </p>
           <input type="hidden" name="tipo" value={tipo} />
           <input type="hidden" name="esporte_id" value={esporteId} />
+          <input type="hidden" name="genero" value={genero} />
           <div className="sm:col-span-2">
             <div className={`${isCadastrarStyle ? "flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3" : ""}`}>
               {isCadastrarStyle ? (
@@ -362,6 +364,33 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
                   {isCadastrarStyle ? <ModalidadeGlyphIcon modalidade="dupla" /> : null}
                   Dupla
                 </button>
+              </div>
+            </div>
+          </label>
+          <label className="grid min-w-0 gap-1">
+            <span className={`${isCadastrarStyle ? "inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg" : "text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary"}`}>
+              Gênero da formação
+            </span>
+            <div className={`${isCadastrarStyle ? "min-w-0 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-1" : "min-w-0 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm"}`}>
+              <div className={`${isCadastrarStyle ? "flex h-7 overflow-hidden rounded-lg bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-surface)_12%)]" : "flex h-[1.65rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)]"}`}>
+                {(["masculino", "feminino", "misto"] as const).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGenero(g)}
+                    className={`inline-flex min-w-0 flex-1 items-center justify-center rounded-sm px-1.5 ${isCadastrarStyle ? "text-[10px] font-black tracking-[0.02em]" : "text-[9px] font-semibold uppercase leading-none tracking-[0.03em]"} transition-all duration-200 ${
+                      genero === g
+                        ? isCadastrarStyle
+                          ? "bg-[#DDE9FF] text-[#2563EB]"
+                          : "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
+                        : isCadastrarStyle
+                          ? "text-[#334155] hover:bg-eid-surface/35"
+                          : "text-eid-text-secondary hover:bg-eid-surface/35"
+                    }`}
+                  >
+                    {g === "masculino" ? "Masculino" : g === "feminino" ? "Feminino" : "Misto"}
+                  </button>
+                ))}
               </div>
             </div>
           </label>

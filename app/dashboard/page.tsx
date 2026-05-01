@@ -213,34 +213,34 @@ const sectionTitleClass =
   "text-[10px] font-black uppercase tracking-[0.18em] text-eid-primary-400";
 
 const dashboardSectionOuter =
-  "eid-dashboard-section overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]";
+  "eid-dashboard-section overflow-hidden rounded-2xl border border-transparent bg-eid-surface/40 shadow-none";
 
 const dashboardSectionHead =
-  "eid-dashboard-section-head flex items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
+  "eid-dashboard-section-head flex items-center justify-between gap-3 border-b border-transparent bg-transparent px-3 py-2.5 shadow-none sm:px-4";
 
 const dashboardSectionBody = "px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-3";
 
 /** Mini-cards da grade “Atletas próximos” (3 colunas). */
 const dashboardSpotlightLink =
-  "group flex flex-col items-center overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)] bg-[linear-gradient(168deg,color-mix(in_srgb,var(--eid-card)_98%,transparent)_0%,color-mix(in_srgb,var(--eid-surface)_94%,var(--eid-primary-500)_6%)_100%)] px-2 pb-2.5 pt-2 text-center shadow-[0_12px_28px_-20px_rgba(15,23,42,0.34)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/30 hover:shadow-[0_18px_36px_-24px_rgba(37,99,235,0.26)] active:translate-y-0";
+  "group flex flex-col items-center overflow-hidden rounded-2xl border border-transparent bg-eid-surface/40 px-2 pb-2.5 pt-2 text-center shadow-none transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/30 hover:bg-eid-primary-500/10 active:translate-y-0";
 
 const dashboardSpotlightEmpty =
-  "flex min-h-[8.5rem] flex-col items-center justify-center rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_70%,var(--eid-primary-500)_30%)] bg-[color:color-mix(in_srgb,var(--eid-surface)_38%,transparent)] px-2 py-3 text-center ring-1 ring-[color:color-mix(in_srgb,var(--eid-border-subtle)_94%,transparent)]";
+  "flex min-h-[8.5rem] flex-col items-center justify-center rounded-2xl border border-transparent bg-eid-surface/35 px-2 py-3 text-center shadow-none";
 
 /** Card horizontal — torneios (maior). */
 const dashboardRailTorneio =
-  "group min-w-[220px] max-w-[220px] shrink-0 snap-start overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)] bg-eid-card/90 shadow-[0_14px_30px_-20px_rgba(15,23,42,0.36)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/30 hover:shadow-[0_20px_40px_-24px_rgba(37,99,235,0.28)] active:translate-y-0";
+  "group min-w-[220px] max-w-[220px] shrink-0 snap-start overflow-hidden rounded-2xl border border-transparent bg-eid-surface/40 shadow-none transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/30 hover:bg-eid-primary-500/10 active:translate-y-0";
 
 /** Card horizontal — locais. */
 const dashboardRailLocal =
-  "group min-w-[148px] max-w-[148px] shrink-0 snap-start rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,transparent)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 text-left shadow-[0_12px_26px_-18px_rgba(15,23,42,0.34)] transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/28 hover:shadow-[0_18px_34px_-22px_rgba(37,99,235,0.24)] active:translate-y-0";
+  "group min-w-[148px] max-w-[148px] shrink-0 snap-start rounded-2xl border border-transparent bg-eid-surface/40 p-3 text-left shadow-none transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/28 hover:bg-eid-primary-500/10 active:translate-y-0";
 
 const dashboardEmptyWide =
   "rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_62%,var(--eid-primary-500)_38%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-surface)_45%,transparent),transparent)] px-4 py-9 text-center ring-1 ring-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,transparent)]";
 
 /** Barra de atalhos tipo dock / menu (sem cabeçalho de seção). */
 const dashboardAppNavClass =
-  "eid-dashboard-app-nav rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,var(--eid-primary-500)_18%)] bg-[color-mix(in_srgb,var(--eid-surface)_42%,var(--eid-bg)_58%)] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_24px_-18px_rgba(15,23,42,0.35)] sm:rounded-[1.35rem] sm:p-1.5";
+  "eid-dashboard-app-nav rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_42%,var(--eid-bg)_58%)] p-1 shadow-none sm:rounded-[1.35rem] sm:p-1.5";
 
 export default async function DashboardPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
@@ -254,19 +254,21 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (activeContext === "organizador" && contextState.papeis.includes("organizador")) {
     redirect("/organizador");
   }
-  const featureCfg = await getSystemFeatureConfig(supabase);
+  const [featureCfg, profileRes] = await Promise.all([
+    getSystemFeatureConfig(supabase),
+    supabase
+      .from("profiles")
+      .select(
+        `nome, avatar_url, localizacao, lat, lng, perfil_completo, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
+      )
+      .eq("id", user.id)
+      .maybeSingle(),
+  ]);
   const canSeeLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
   const canSeeTorneios = canAccessSystemFeature(featureCfg, "torneios", user.id);
   const canSeeProfessores = canAccessSystemFeature(featureCfg, "professores", user.id);
   const canSeeMarketplace = canAccessSystemFeature(featureCfg, "marketplace", user.id);
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(
-      `nome, avatar_url, localizacao, lat, lng, perfil_completo, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
-    )
-    .eq("id", user.id)
-    .maybeSingle();
+  const profile = profileRes.data;
 
   if (!profile || !legalAcceptanceIsCurrent(profile)) {
     redirect("/conta/aceitar-termos");
@@ -283,11 +285,19 @@ export default async function DashboardPage({ searchParams }: Props) {
   const myLng = Number(profile.lng ?? NaN);
   const hasMyCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
-  const { data: activeMatches } = await supabase
-    .from("matches")
-    .select("usuario_id, adversario_id, status")
-    .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
-    .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
+  const [{ data: activeMatches }, { data: meusEsportes }] = await Promise.all([
+    supabase
+      .from("matches")
+      .select("usuario_id, adversario_id, status")
+      .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+      .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"]),
+    supabase
+      .from("usuario_eid")
+      .select("esporte_id, esportes(nome)")
+      .eq("usuario_id", user.id)
+      .order("esporte_id", { ascending: true })
+      .limit(3),
+  ]);
   const activeOpponentIds = new Set<string>();
   for (const m of activeMatches ?? []) {
     const usuarioId = String((m as { usuario_id?: string | null }).usuario_id ?? "");
@@ -296,12 +306,6 @@ export default async function DashboardPage({ searchParams }: Props) {
     else if (adversarioId === user.id && usuarioId) activeOpponentIds.add(usuarioId);
   }
 
-  const { data: meusEsportes } = await supabase
-    .from("usuario_eid")
-    .select("esporte_id, esportes(nome)")
-    .eq("usuario_id", user.id)
-    .order("esporte_id", { ascending: true })
-    .limit(3);
   const meusEsportesResumo = (meusEsportes ?? [])
     .map((row) => {
       const esporteNome =
@@ -314,6 +318,22 @@ export default async function DashboardPage({ searchParams }: Props) {
     .filter((item) => Number.isFinite(item.esporteId) && item.esporteId > 0);
   const meusEsportesSet = new Set(meusEsportesResumo.map((item) => item.esporteId));
   const esportePrincipalId = meusEsportes?.[0]?.esporte_id ?? null;
+  const partidasAgendadasResumoPromise = supabase
+    .from("partidas")
+    .select("id, data_partida, data_registro, torneio_id, esportes(nome)")
+    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}`)
+    .eq("status", "agendada")
+    .order("data_partida", { ascending: true, nullsFirst: false })
+    .limit(20);
+
+  const placarPendenteResumoPromise = supabase
+    .from("partidas")
+    .select("id, data_partida, data_registro, torneio_id, esportes(nome)")
+    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id}`)
+    .eq("status", "aguardando_confirmacao")
+    .neq("lancado_por", user.id)
+    .order("data_registro", { ascending: false })
+    .limit(20);
 
   let atletasQuery = supabase
     .from("usuario_eid")
@@ -395,12 +415,10 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (esportesParaFiltro.length) {
     timesQuery = timesQuery.in("esporte_id", esportesParaFiltro);
   }
-  const { data: timesRaw } = await timesQuery;
-  const { data: minhasFormacoesMembro } = await supabase
-    .from("membros_time")
-    .select("time_id")
-    .eq("usuario_id", user.id)
-    .in("status", ["ativo", "aceito", "aprovado"]);
+  const [{ data: timesRaw }, { data: minhasFormacoesMembro }] = await Promise.all([
+    timesQuery,
+    supabase.from("membros_time").select("time_id").eq("usuario_id", user.id).in("status", ["ativo", "aceito", "aprovado"]),
+  ]);
   const meusTimesMembroIds = new Set(
     (minhasFormacoesMembro ?? [])
       .map((row) => Number((row as { time_id?: number | null }).time_id ?? 0))
@@ -449,15 +467,22 @@ export default async function DashboardPage({ searchParams }: Props) {
       ].filter((id) => Number.isFinite(id) && id > 0)
     ),
   ];
-  const rosterEntries = await Promise.all(
-    teamRosterIds.map(async (timeId) => {
-      const { data: headRaw, error: headErr } = await supabase.rpc("time_roster_headcount", { p_time_id: timeId });
-      const headCount =
-        !headErr && headRaw != null && Number.isFinite(Number(headRaw)) ? Math.max(1, Number(headRaw)) : 1;
-      return [timeId, headCount] as const;
-    })
-  );
-  const teamRosterMap = new Map<number, number>(rosterEntries);
+  const teamRosterMap = new Map<number, number>();
+  if (teamRosterIds.length > 0) {
+    const { data: rosterRows } = await supabase
+      .from("membros_time")
+      .select("time_id")
+      .in("time_id", teamRosterIds)
+      .in("status", ["ativo", "aceito", "aprovado"]);
+    for (const row of rosterRows ?? []) {
+      const timeId = Number((row as { time_id?: number | null }).time_id ?? 0);
+      if (!Number.isFinite(timeId) || timeId <= 0) continue;
+      teamRosterMap.set(timeId, (teamRosterMap.get(timeId) ?? 0) + 1);
+    }
+  }
+  for (const timeId of teamRosterIds) {
+    teamRosterMap.set(timeId, Math.max(1, teamRosterMap.get(timeId) ?? 0));
+  }
   const vagasDisponiveisMap = new Map<number, number>(
     timesComBusca.map(({ t }) => {
       const cap = String(t.tipo ?? "").trim().toLowerCase() === "dupla" ? 2 : 18;
@@ -508,17 +533,19 @@ export default async function DashboardPage({ searchParams }: Props) {
     .sort((a, b) => a.dist - b.dist || b.score - a.score)
     .slice(0, 12);
 
-  const [{ data: sociosAtivosRows }, { data: atalhosRows }] = await Promise.all([
-    supabase
-      .from("espaco_socios")
-      .select("espaco_generico_id, espacos_genericos!inner(id, slug, nome_publico, ativo_listagem)")
-      .eq("usuario_id", user.id)
-      .eq("status", "ativo"),
-    supabase
-      .from("espaco_reserva_atalhos")
-      .select("espaco_generico_id, espacos_genericos!inner(id, slug, nome_publico, ativo_listagem)")
-      .eq("usuario_id", user.id),
-  ]);
+  const [{ data: sociosAtivosRows }, { data: atalhosRows }] = canSeeLocais
+    ? await Promise.all([
+        supabase
+          .from("espaco_socios")
+          .select("espaco_generico_id, espacos_genericos!inner(id, slug, nome_publico, ativo_listagem)")
+          .eq("usuario_id", user.id)
+          .eq("status", "ativo"),
+        supabase
+          .from("espaco_reserva_atalhos")
+          .select("espaco_generico_id, espacos_genericos!inner(id, slug, nome_publico, ativo_listagem)")
+          .eq("usuario_id", user.id),
+      ])
+    : [{ data: [] as Array<{ espaco_generico_id?: number | null; espacos_genericos?: unknown }> }, { data: [] as Array<{ espaco_generico_id?: number | null; espacos_genericos?: unknown }> }];
   const reservaRapidaMap = new Map<number, { id: number; slug: string | null; nome_publico: string | null }>();
   for (const row of [...(sociosAtivosRows ?? []), ...(atalhosRows ?? [])]) {
     const espacoRaw = Array.isArray(row.espacos_genericos) ? row.espacos_genericos[0] : row.espacos_genericos;
@@ -539,22 +566,10 @@ export default async function DashboardPage({ searchParams }: Props) {
       : "/reservar";
   const mostrarReservarRapido = espacosReservaRapida.length > 0;
 
-  const { data: partidasAgendadasResumo } = await supabase
-    .from("partidas")
-    .select("id, data_partida, data_registro, torneio_id, esportes(nome)")
-    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}`)
-    .eq("status", "agendada")
-    .order("data_partida", { ascending: true, nullsFirst: false })
-    .limit(20);
-
-  const { data: placarPendenteResumo } = await supabase
-    .from("partidas")
-    .select("id, data_partida, data_registro, torneio_id, esportes(nome)")
-    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id}`)
-    .eq("status", "aguardando_confirmacao")
-    .neq("lancado_por", user.id)
-    .order("data_registro", { ascending: false })
-    .limit(20);
+  const [{ data: partidasAgendadasResumo }, { data: placarPendenteResumo }] = await Promise.all([
+    partidasAgendadasResumoPromise,
+    placarPendenteResumoPromise,
+  ]);
 
   const agora = new Date();
   const agoraMs = agora.getTime();
@@ -763,8 +778,8 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <span
                   className={`flex h-10 w-10 items-center justify-center rounded-xl border sm:h-11 sm:w-11 sm:rounded-2xl ${
                     item.status !== "active"
-                      ? "border-[color:var(--eid-border-subtle)] bg-eid-surface/55 text-eid-text-secondary"
-                      : "border-eid-primary-500/35 bg-eid-primary-500/14 text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]"
+                      ? "border-transparent bg-eid-surface/45 text-eid-text-secondary"
+                      : "border-transparent bg-eid-primary-500/14 text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]"
                   }`}
                 >
                   <Icon className="h-[22px] w-[22px] sm:h-6 sm:w-6" />
@@ -826,7 +841,7 @@ export default async function DashboardPage({ searchParams }: Props) {
           </Link>
         ) : null}
         {q ? (
-          <p className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/70 px-3 py-2 text-xs text-eid-text-secondary shadow-[0_8px_20px_-14px_rgba(15,23,42,0.12)]">
+          <p className="mt-4 rounded-xl border border-transparent bg-eid-surface/40 px-3 py-2 text-xs text-eid-text-secondary shadow-none">
             Busca ativa por: <span className="font-semibold text-eid-fg">{sp.q}</span>
           </p>
         ) : null}
@@ -1046,7 +1061,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                     )}
                     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-eid-bg/80 to-transparent" aria-hidden />
                   </div>
-                  <p className="border-t border-[color:var(--eid-border-subtle)] px-3 py-2.5 text-[11px] font-bold leading-snug text-eid-fg sm:text-xs sm:font-extrabold">
+                  <p className="border-t border-transparent px-3 py-2.5 text-[11px] font-bold leading-snug text-eid-fg sm:text-xs sm:font-extrabold">
                     {t.nome}
                   </p>
                 </Link>
@@ -1169,7 +1184,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                   href={loc.slug ? `/espaco/${loc.slug}` : `/local/${loc.id}?from=/dashboard`}
                   className={dashboardRailLocal}
                 >
-                  <div className="flex h-[3.25rem] items-center justify-center overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-surface)_100%,var(--eid-field-bg)_0%),color-mix(in_srgb,var(--eid-field-bg)_35%,var(--eid-surface)_65%))]">
+                  <div className="flex h-[3.25rem] items-center justify-center overflow-hidden rounded-xl border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-surface)_100%,var(--eid-field-bg)_0%),color-mix(in_srgb,var(--eid-field-bg)_35%,var(--eid-surface)_65%))]">
                     {loc.logo_arquivo ? (
                       <div className="relative h-10 w-full">
                         <Image src={loc.logo_arquivo} alt="" fill unoptimized className="object-contain" />

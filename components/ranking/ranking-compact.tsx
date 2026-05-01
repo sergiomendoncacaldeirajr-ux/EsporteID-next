@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { RankingSearchState } from "@/lib/ranking/ranking-href";
 import { rankingHref } from "@/lib/ranking/ranking-href";
 import CityGpsLabel from "@/components/ranking/city-gps-label";
+import { RankingFilterBarPanel } from "@/components/ranking/ranking-filter-bar-panel";
 import { EidSealPill } from "@/components/ui/eid-seal-pill";
 import { SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 
@@ -95,56 +96,51 @@ export function RankingFilterBar({
   const pe = principalEsporteId;
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, pe);
   const clearHref = rankingHref(
-    { tipo: "individual", local: "cidade", esporte: "", rank: "match", periodo: "ano", page: 1 },
+    { tipo: "individual", local: "cidade", esporte: "", rank: "match", periodo: "ano", genero: "", page: 1 },
     state,
     pe
   );
 
   return (
-    <div
-      data-eid-ranking-filter="true"
-      className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_95%,transparent)] [&_a]:[-webkit-tap-highlight-color:transparent]"
-    >
-      <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] px-4 py-2.5">
-        <h3 className="text-[11px] font-black uppercase tracking-[0.14em] text-eid-fg">Filtros</h3>
+    <RankingFilterBarPanel
+      summaryRight={
         <Link
           href={clearHref}
-          className="eid-ranking-filter-clear inline-flex h-6 items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_72%,var(--eid-bg)_28%)] px-2 text-[7px] font-black uppercase tracking-[0.05em] text-eid-primary-400"
+          className="eid-ranking-filter-clear inline-flex h-4 shrink-0 items-center gap-1 rounded-full border border-transparent bg-eid-surface/50 px-2 text-[6.5px] font-black uppercase tracking-[0.05em] text-eid-primary-400"
         >
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+          <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <path d="M4 6h16M8 12h8M10 18h4" strokeLinecap="round" />
           </svg>
           Limpar
         </Link>
-      </div>
-
-      <div className="space-y-2 p-2.5">
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+      }
+    >
+        <div className="rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
           <div className="grid grid-cols-3 gap-1">
-            <Link href={href({ tipo: "individual", page: 1 })} className={tipoSegmentButton(state.tipo === "individual")}>
-              <IconSingle className="h-4 w-4 shrink-0" />
+            <Link href={href({ tipo: "individual", page: 1 })} className={filterBarSegmentButton(state.tipo === "individual")}>
+              <IconSingle className="h-3.5 w-3.5 shrink-0" />
               <span>Individual</span>
             </Link>
-            <Link href={href({ tipo: "dupla", page: 1 })} className={tipoSegmentButton(state.tipo === "dupla")}>
-              <IconDouble className="h-4 w-4 shrink-0" />
+            <Link href={href({ tipo: "dupla", page: 1 })} className={filterBarSegmentButton(state.tipo === "dupla")}>
+              <IconDouble className="h-3.5 w-3.5 shrink-0" />
               <span>Duplas</span>
             </Link>
-            <Link href={href({ tipo: "time", page: 1 })} className={tipoSegmentButton(state.tipo === "time")}>
-              <IconTeam className="h-4 w-4 shrink-0" />
+            <Link href={href({ tipo: "time", page: 1 })} className={filterBarSegmentButton(state.tipo === "time")}>
+              <IconTeam className="h-3.5 w-3.5 shrink-0" />
               <span>Times</span>
             </Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-1 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+        <div className="grid grid-cols-2 gap-1 rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
           <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
-            <IconPin className="h-4 w-4 shrink-0" />
+            <IconPin className="h-3.5 w-3.5 shrink-0" />
             <span className="min-w-0 truncate">
               <CityGpsLabel fallbackCity={cidadeDisplay} />
             </span>
           </Link>
           <Link href={href({ local: "brasil", page: 1 })} className={blockButton(state.local === "brasil")}>
-            <IconBrazil className="h-4 w-4 shrink-0" />
+            <IconBrazil className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">Brasil</span>
           </Link>
         </div>
@@ -161,7 +157,7 @@ export function RankingFilterBar({
         ) : null}
 
         {todosEsportes.length > 0 ? (
-          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1.5">
+          <div className="rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
             <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-0.5 pr-0.5 select-none [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
               <div className="flex min-w-max flex-nowrap items-center gap-1.5">
               {todosEsportes.map((opt) => {
@@ -173,14 +169,14 @@ export function RankingFilterBar({
                     href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                     title={isPrincipal ? "Esporte principal do perfil" : undefined}
                     className={cn(
-                      "eid-ranking-filter-sport inline-flex h-7 w-auto shrink-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[7px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
+                      "eid-ranking-filter-sport inline-flex h-4 w-auto shrink-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6.5px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
                       active
                         ? "eid-ranking-sport-pill-active bg-eid-primary-500/16 text-eid-primary-300 shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
                         : "bg-[color:color-mix(in_srgb,var(--eid-card)_76%,var(--eid-surface)_24%)] text-eid-text-secondary hover:bg-eid-surface/55",
                       isPrincipal && !active && "bg-eid-primary-500/08 text-eid-fg/90"
                     )}
                   >
-                    <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                    <span className="inline-flex h-3 w-3 shrink-0 items-center justify-center">
                       <SportGlyphIcon sportName={opt.nome} />
                     </span>
                     <span>{opt.nome}</span>
@@ -189,7 +185,7 @@ export function RankingFilterBar({
               })}
               <button
                 type="button"
-                className="eid-ranking-filter-plus inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_76%,var(--eid-surface)_24%)] text-eid-text-secondary"
+                className="eid-ranking-filter-plus inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-transparent bg-[color:color-mix(in_srgb,var(--eid-card)_76%,var(--eid-surface)_24%)] text-eid-text-secondary"
                 aria-label="Mais esportes"
               >
                 +
@@ -198,8 +194,7 @@ export function RankingFilterBar({
           </div>
         </div>
         ) : null}
-      </div>
-    </div>
+    </RankingFilterBarPanel>
   );
 }
 
@@ -212,37 +207,46 @@ export function RankingPeriodToggle({
 }) {
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
   return (
-    <div className="flex justify-end">
-      <div className="eid-ranking-toggle-shell relative flex h-[1.3rem] min-w-[6rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[8px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
-        <span
-          className={cn(
-            "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
-            state.periodo === "mes" ? "translate-x-[calc(100%+1px)]" : "translate-x-0"
-          )}
-          aria-hidden
-        />
-        <Link
-          href={href({ periodo: "ano", page: 1 })}
-          className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1 text-[8px] font-semibold uppercase leading-none tracking-[0.025em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985] cursor-pointer",
-            state.periodo === "ano"
-              ? "text-eid-fg"
-              : "text-eid-text-secondary hover:bg-white/[0.03]"
-          )}
-        >
-          Ano
-        </Link>
-        <Link
-          href={href({ periodo: "mes", page: 1 })}
-          className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1 text-[8px] font-semibold uppercase leading-none tracking-[0.025em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985] cursor-pointer",
-            state.periodo === "mes"
-              ? "text-eid-fg"
-              : "text-eid-text-secondary hover:bg-white/[0.03]"
-          )}
-        >
-          Mês
-        </Link>
+    <div className="flex justify-end [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="w-full max-w-[8.4rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+        <div className="grid grid-cols-2 gap-1">
+          <Link href={href({ periodo: "ano", page: 1 })} className={tipoSegmentButton(state.periodo === "ano")}>
+            Ano
+          </Link>
+          <Link href={href({ periodo: "mes", page: 1 })} className={tipoSegmentButton(state.periodo === "mes")}>
+            Mês
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function RankingGenderToggle({
+  state,
+  principalEsporteId,
+}: {
+  state: RankingSearchState;
+  principalEsporteId: number | null;
+}) {
+  const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
+  const isMasc = state.genero === "masculino";
+  const isFem = state.genero === "feminino";
+  const isMisto = state.genero === "misto";
+  return (
+    <div className="flex w-full justify-center px-0.5 [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="w-full max-w-[17.5rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+        <div className="grid grid-cols-3 gap-1">
+          <Link href={href({ genero: "masculino", page: 1 })} className={tipoSegmentButton(isMasc)}>
+            Masculino
+          </Link>
+          <Link href={href({ genero: "misto", page: 1 })} className={tipoSegmentButton(isMisto)}>
+            Misto
+          </Link>
+          <Link href={href({ genero: "feminino", page: 1 })} className={tipoSegmentButton(isFem)}>
+            Feminino
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -258,37 +262,16 @@ export function RankingRankToggle({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
   const rankIsMatch = state.rank === "match";
   return (
-    <div className="flex justify-start">
-      <div className="eid-ranking-toggle-shell relative flex h-[1.3rem] min-w-[6rem] overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)] p-0.5 text-[8px] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
-        <span
-          className={cn(
-            "pointer-events-none absolute inset-y-0.5 left-0.5 z-0 w-[calc(50%-2px)] rounded-full border border-eid-primary-500/30 bg-eid-primary-500/14 shadow-[0_6px_12px_-9px_rgba(37,99,235,0.5)] transition-transform duration-200",
-            rankIsMatch ? "translate-x-0" : "translate-x-[calc(100%+1px)]"
-          )}
-          aria-hidden
-        />
-        <Link
-          href={href({ rank: "match", page: 1 })}
-          className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1 text-[8px] font-semibold uppercase leading-none tracking-[0.025em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985] cursor-pointer",
-            rankIsMatch
-              ? "text-eid-fg"
-              : "text-eid-text-secondary hover:bg-white/[0.03]"
-          )}
-        >
-          Desafio
-        </Link>
-        <Link
-          href={href({ rank: "eid", page: 1 })}
-          className={cn(
-            "relative z-[1] inline-flex h-full min-w-0 flex-1 touch-manipulation items-center justify-center whitespace-nowrap rounded-full px-1 text-[8px] font-semibold uppercase leading-none tracking-[0.025em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985] cursor-pointer",
-            !rankIsMatch
-              ? "text-eid-fg"
-              : "text-eid-text-secondary hover:bg-white/[0.03]"
-          )}
-        >
-          EID
-        </Link>
+    <div className="flex justify-start [&_a]:[-webkit-tap-highlight-color:transparent]">
+      <div className="w-full max-w-[8.4rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+        <div className="grid grid-cols-2 gap-1">
+          <Link href={href({ rank: "match", page: 1 })} className={tipoSegmentButton(rankIsMatch)}>
+            Desafio
+          </Link>
+          <Link href={href({ rank: "eid", page: 1 })} className={tipoSegmentButton(!rankIsMatch)}>
+            EID
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -296,7 +279,17 @@ export function RankingRankToggle({
 
 function tipoSegmentButton(active: boolean) {
   return cn(
-    "eid-ranking-filter-segment inline-flex h-[30px] min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6.5px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
+    "eid-ranking-filter-segment inline-flex h-5 min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
+    active
+      ? "eid-ranking-chip-active bg-[color-mix(in_srgb,var(--eid-primary-500)_24%,var(--eid-card)_76%)] text-eid-primary-300 shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
+      : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35"
+  );
+}
+
+/** Segmentos da barra Filtros (tipo/local): mais baixos que os toggles do pódio. */
+function filterBarSegmentButton(active: boolean) {
+  return cn(
+    "eid-ranking-filter-segment inline-flex h-4 min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
     active
       ? "eid-ranking-chip-active bg-[color-mix(in_srgb,var(--eid-primary-500)_24%,var(--eid-card)_76%)] text-eid-primary-300 shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35"
@@ -305,7 +298,7 @@ function tipoSegmentButton(active: boolean) {
 
 function blockButton(active: boolean) {
   return cn(
-    "eid-ranking-filter-segment inline-flex h-[30px] w-auto min-w-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6.5px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
+    "eid-ranking-filter-segment inline-flex h-4 w-auto min-w-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
     active
       ? "eid-ranking-chip-active bg-eid-primary-500/14 text-eid-primary-500 shadow-[0_7px_16px_-11px_rgba(37,99,235,0.4)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55"
@@ -322,7 +315,7 @@ export function RankingEidSeal({ score, compact = false }: { score: number; comp
       aria-hidden
       className={cn(
         "eid-ranking-eid-seal pointer-events-none absolute bottom-0 left-1/2 z-[3] -translate-x-1/2",
-        compact ? "translate-y-[24%]" : "translate-y-[18%] scale-[1.08]"
+        compact ? "translate-y-[24%] scale-[1.2]" : "translate-y-[18%] scale-[1.32]"
       )}
     />
   );
@@ -342,6 +335,7 @@ export function RankingPodium({
   first,
   third,
   rankKind = "match",
+  genderToggle,
   rankToggle,
   periodToggle,
 }: {
@@ -350,6 +344,7 @@ export function RankingPodium({
   third: PodiumSlot | null;
   /** Métrica exibida no pódio: pontos (match) ou nota EID. */
   rankKind?: "match" | "eid";
+  genderToggle?: ReactNode;
   rankToggle?: ReactNode;
   periodToggle?: ReactNode;
 }) {
@@ -359,6 +354,7 @@ export function RankingPodium({
   return (
     <section className="relative z-[1] mb-0.5 isolate">
       <div className="eid-podium-card overflow-visible rounded-[1.65rem] border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_95%,var(--eid-surface)_5%)] px-3 py-3.5 shadow-[0_14px_34px_-26px_rgba(15,23,42,0.25)] backdrop-blur-sm [&_a]:[-webkit-tap-highlight-color:transparent]">
+        {genderToggle ? <div className="relative z-[4] mb-1 flex justify-center">{genderToggle}</div> : null}
         {rankToggle || periodToggle ? (
           <div className="relative z-[3] mb-1 grid grid-cols-2 items-start gap-2">
             <div className="min-w-0 w-fit flex flex-col items-start">
@@ -508,7 +504,7 @@ export function RankingRow({
         className="group relative h-8 w-8 shrink-0 transition-transform duration-200 ease-out motion-safe:transform-gpu hover:scale-[1.03] active:scale-[0.97] outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500 sm:h-9 sm:w-9"
         aria-label={`Perfil de ${nome}`}
       >
-        <div className="relative pb-1">
+        <div className="relative">
           <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] transition group-hover:border-eid-primary-500/35 sm:h-9 sm:w-9">
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -518,7 +514,6 @@ export function RankingRow({
               </div>
             )}
           </div>
-          <RankingEidSeal score={eidScore} compact />
         </div>
       </Link>
       <div className="min-w-0 flex-1">

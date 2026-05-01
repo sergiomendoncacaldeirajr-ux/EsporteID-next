@@ -20,7 +20,7 @@ export default async function ContaPerfilPage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      `nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
+      `nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, genero, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -83,6 +83,7 @@ export default async function ContaPerfilPage() {
             alturaCm: profile.altura_cm ?? null,
             pesoKg: profile.peso_kg ?? null,
             lado: profile.lado ?? null,
+            genero: profile.genero ?? null,
             avatarUrl: profile.avatar_url ?? null,
             bio: profile.bio ?? "",
             estiloJogo: profile.estilo_jogo ?? "",

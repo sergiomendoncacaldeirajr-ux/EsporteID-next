@@ -169,8 +169,8 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
 
   return (
     <section className="mt-6 md:mt-10">
-      <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-      <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+      <div className="overflow-hidden rounded-xl border border-transparent bg-eid-card/55">
+      <div className="flex items-center justify-between border-b border-transparent bg-eid-surface/45 px-3 py-2">
         <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Desafios aceitos</h2>
         <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
           Gestão
@@ -195,7 +195,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
         {items.map((m) => (
           <article
             key={m.id}
-            className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 py-2.5 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.18)] backdrop-blur-sm md:px-3 md:py-3"
+            className="rounded-2xl border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 py-2.5 shadow-none backdrop-blur-sm md:px-3 md:py-3"
           >
             <div className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-2 md:grid-cols-[40px_minmax(0,1fr)_auto]">
               <div className="flex w-[40px] shrink-0 flex-col items-center">

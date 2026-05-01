@@ -406,6 +406,27 @@ body.eid-app-shell {
   box-shadow: none !important;
 }
 
+/* Agenda: sem linhas de divisão visíveis entre blocos internos. */
+[data-eid-agenda-page] :where(.eid-list-item),
+[data-eid-theme="dark"] [data-eid-agenda-page] :where(.eid-list-item) {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Perfil: suaviza contornos internos para evitar blocos duplicados. */
+[data-eid-perfil-page] :where(.eid-list-item),
+[data-eid-theme="dark"] [data-eid-perfil-page] :where(.eid-list-item) {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Perfil de formação (dupla/time): mesma ideia de bloco único, sem caixas internas duplicadas. */
+[data-eid-formacao-page] :where(.eid-list-item),
+[data-eid-theme="dark"] [data-eid-formacao-page] :where(.eid-list-item) {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 [data-eid-theme="light"] [data-eid-marcar-lidos-btn="true"] {
   border-color: color-mix(in srgb, #059669 45%, white 55%) !important;
   background-color: color-mix(in srgb, #10b981 22%, white 78%) !important;

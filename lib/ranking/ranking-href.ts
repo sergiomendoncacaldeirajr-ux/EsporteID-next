@@ -5,6 +5,7 @@ export type RankingSearchState = {
   rank: "match" | "eid";
   local: "brasil" | "cidade";
   periodo: "ano" | "mes";
+  genero: "" | "masculino" | "feminino" | "misto";
   /** Vazio = esporte principal do perfil (omitido na URL). */
   esporte: string;
   page: number;
@@ -26,9 +27,14 @@ export function parseRankingSearch(sp: Record<string, string | string[] | undefi
   const local: RankingSearchState["local"] = localRaw === "brasil" ? "brasil" : "cidade";
   const periodoRaw = (g("periodo") ?? "ano").toLowerCase();
   const periodo: RankingSearchState["periodo"] = periodoRaw === "mes" ? "mes" : "ano";
+  const generoRaw = String(g("genero") ?? "")
+    .trim()
+    .toLowerCase();
+  const genero: RankingSearchState["genero"] =
+    generoRaw === "feminino" ? "feminino" : generoRaw === "masculino" ? "masculino" : generoRaw === "misto" ? "misto" : "";
   const esporte = String(g("esporte") ?? "").trim();
   const page = Math.max(1, Number(g("page") ?? 1) || 1);
-  return { tipo, rank, local, periodo, esporte, page };
+  return { tipo, rank, local, periodo, genero, esporte, page };
 }
 
 /**
@@ -44,6 +50,7 @@ export function rankingHref(
     rank: next.rank ?? base.rank,
     local: next.local ?? base.local,
     periodo: next.periodo ?? base.periodo,
+    genero: next.genero !== undefined ? next.genero : base.genero,
     esporte: next.esporte !== undefined ? next.esporte : base.esporte,
     page: next.page !== undefined ? next.page : base.page,
   };
@@ -52,6 +59,7 @@ export function rankingHref(
   if (merged.rank !== "match") u.set("rank", merged.rank);
   if (merged.local !== "cidade") u.set("local", merged.local);
   if (merged.periodo !== "ano") u.set("periodo", merged.periodo);
+  if (merged.tipo === "individual" && merged.rank === "match" && merged.genero) u.set("genero", merged.genero);
   const pe = principalEsporteId != null && principalEsporteId > 0 ? String(principalEsporteId) : "";
   if (merged.esporte && merged.esporte !== pe) u.set("esporte", merged.esporte);
   if (merged.page > 1) u.set("page", String(merged.page));

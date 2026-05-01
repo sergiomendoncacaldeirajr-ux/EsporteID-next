@@ -58,16 +58,18 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
     .maybeSingle();
   if (!d) notFound();
 
-  const { data: p1 } = await supabase
-    .from("profiles")
-    .select("id, nome, avatar_url, localizacao, whatsapp")
-    .eq("id", d.player1_id)
-    .maybeSingle();
-  const { data: p2 } = await supabase
-    .from("profiles")
-    .select("id, nome, avatar_url, localizacao, whatsapp")
-    .eq("id", d.player2_id)
-    .maybeSingle();
+  const [{ data: p1 }, { data: p2 }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, nome, avatar_url, localizacao, whatsapp")
+      .eq("id", d.player1_id)
+      .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("id, nome, avatar_url, localizacao, whatsapp")
+      .eq("id", d.player2_id)
+      .maybeSingle(),
+  ]);
 
   const timeResolvidoId = await resolverTimeIdParaDuplaRegistrada(
     supabase,
@@ -289,18 +291,20 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
     }
   }
 
-  const { data: eid1 } = await supabase
-    .from("usuario_eid")
-    .select("nota_eid, pontos_ranking")
-    .eq("usuario_id", d.player1_id)
-    .eq("esporte_id", d.esporte_id)
-    .maybeSingle();
-  const { data: eid2 } = await supabase
-    .from("usuario_eid")
-    .select("nota_eid, pontos_ranking")
-    .eq("usuario_id", d.player2_id)
-    .eq("esporte_id", d.esporte_id)
-    .maybeSingle();
+  const [{ data: eid1 }, { data: eid2 }] = await Promise.all([
+    supabase
+      .from("usuario_eid")
+      .select("nota_eid, pontos_ranking")
+      .eq("usuario_id", d.player1_id)
+      .eq("esporte_id", d.esporte_id)
+      .maybeSingle(),
+    supabase
+      .from("usuario_eid")
+      .select("nota_eid, pontos_ranking")
+      .eq("usuario_id", d.player2_id)
+      .eq("esporte_id", d.esporte_id)
+      .maybeSingle(),
+  ]);
 
   const esp = Array.isArray(d.esportes) ? d.esportes[0] : d.esportes;
   const conquistas: string[] = [];
@@ -322,7 +326,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
     null;
 
   return (
-    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main data-eid-formacao-page className={PROFILE_PUBLIC_MAIN_CLASS}>
         <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 sm:p-4`}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
             <div className="flex shrink-0 flex-col items-center sm:items-start">
@@ -363,7 +367,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
           </div>
           {isDonoDupla && timeResolvidoId ? <FormacaoCidadeAvisoLider timeId={timeResolvidoId} /> : null}
           {d.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary sm:mt-3">{d.bio}</p> : null}
-          <div className="mt-4 grid grid-cols-4 divide-x divide-[color:var(--eid-border-subtle)] rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card text-center shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+          <div className="mt-4 grid grid-cols-4 divide-x divide-transparent rounded-xl border border-transparent bg-eid-surface/40 text-center shadow-none">
             <div className="py-2">
               <p className="text-sm font-black text-eid-fg">{vitoriasDupla}</p>
               <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vitórias</p>
@@ -411,9 +415,9 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
         <div className="mt-6 grid gap-6">
           {/* Dono da dupla: evita cartão “Ação principal” vazio ou só com texto redundante. */}
           {!isDonoDupla ? (
-          <section className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3">
+          <section className="overflow-hidden rounded-xl border border-transparent bg-eid-card/55 p-3">
             <h2 className="sr-only">Ação principal</h2>
-            <div className="mb-2 flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-2">
+            <div className="mb-2 flex items-center justify-between border-b border-transparent bg-eid-surface/45 px-2.5 py-2">
               <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Ação principal</p>
               <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
                 Match
@@ -665,8 +669,8 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
           </ProfileSection>
 
           {isMembroDupla ? (
-            <div className="eid-list-item overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <div className="eid-list-item overflow-hidden rounded-xl border border-transparent bg-eid-card/55">
+              <div className="flex items-center justify-between border-b border-transparent bg-eid-surface/45 px-3 py-2">
                 <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Gestão da dupla</p>
                 <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
                   Conta

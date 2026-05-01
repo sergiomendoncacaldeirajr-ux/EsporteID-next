@@ -30,7 +30,7 @@ export default async function ContaEditarFormacaoTimePage({ params, searchParams
   const { data: t } = await supabase
     .from("times")
     .select(
-      "id, nome, username, bio, localizacao, escudo, criador_id, disponivel_amistoso, vagas_abertas, aceita_pedidos, nivel_procurado"
+      "id, nome, username, bio, localizacao, escudo, criador_id, genero, disponivel_amistoso, vagas_abertas, aceita_pedidos, nivel_procurado"
     )
     .eq("id", id)
     .maybeSingle();
@@ -66,6 +66,7 @@ export default async function ContaEditarFormacaoTimePage({ params, searchParams
           vagas_abertas={Boolean(t.vagas_abertas)}
           aceita_pedidos={Boolean(t.aceita_pedidos)}
           nivel_procurado={t.nivel_procurado ?? null}
+          genero={t.genero ?? "misto"}
         />
       </div>
     </main>

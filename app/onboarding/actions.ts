@@ -1067,6 +1067,7 @@ export async function salvarPerfilOnboarding(
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
   const username = usernameRaw ? usernameRaw.replace(/[^a-z0-9_]/g, "") : null;
   const localizacao = String(formData.get("localizacao") ?? "").trim();
+  const genero = String(formData.get("genero") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
   const estiloJogo = String(formData.get("estilo_jogo") ?? "").trim();
   const disponibilidadeRaw = String(formData.get("disponibilidade_semana_json") ?? "").trim();
@@ -1082,6 +1083,9 @@ export async function salvarPerfilOnboarding(
     };
   }
   if (!localizacao) return { ok: false, message: "Informe cidade e estado." };
+  if (genero && !["Masculino", "Feminino", "Outro"].includes(genero)) {
+    return { ok: false, message: "Selecione um gênero válido ou deixe em branco." };
+  }
   let disponibilidadeSemana: Record<string, unknown> | null = null;
   if (disponibilidadeRaw) {
     try {
@@ -1188,6 +1192,7 @@ export async function salvarPerfilOnboarding(
       nome,
       username,
       localizacao,
+      genero: genero || null,
       bio: bio || null,
       estilo_jogo: estiloJogo || null,
       disponibilidade_semana_json: disponibilidadeSemana,

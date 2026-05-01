@@ -84,18 +84,19 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
     .maybeSingle();
   if (!t) notFound();
 
-  const { data: criador } = await supabase
-    .from("profiles")
-    .select("id, nome, avatar_url, whatsapp")
-    .eq("id", t.criador_id)
-    .maybeSingle();
-
-  const { count: acima } = await supabase
-    .from("times")
-    .select("id", { count: "exact", head: true })
-    .eq("esporte_id", t.esporte_id)
-    .eq("tipo", t.tipo ?? "time")
-    .gt("pontos_ranking", t.pontos_ranking ?? 0);
+  const [{ data: criador }, { count: acima }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, nome, avatar_url, whatsapp")
+      .eq("id", t.criador_id)
+      .maybeSingle(),
+    supabase
+      .from("times")
+      .select("id", { count: "exact", head: true })
+      .eq("esporte_id", t.esporte_id)
+      .eq("tipo", t.tipo ?? "time")
+      .gt("pontos_ranking", t.pontos_ranking ?? 0),
+  ]);
 
   const posicao = (acima ?? 0) + 1;
 
@@ -110,36 +111,36 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   const jogosTime = vitoriasTime + derrotasTime;
   const winRateTime = jogosTime > 0 ? Math.round((vitoriasTime / jogosTime) * 100) : null;
 
-  const { data: hist } = await supabase
-    .from("historico_eid_coletivo")
-    .select("nota_nova, data_alteracao")
-    .eq("time_id", id)
-    .order("data_alteracao", { ascending: false })
-    .limit(12);
-
-  const { data: eidLogs } = await supabase
-    .from("eid_logs")
-    .select("change_amount, reason, created_at, esportes(nome)")
-    .eq("entity_kind", "time")
-    .eq("entity_time_id", id)
-    .order("created_at", { ascending: false })
-    .limit(3);
-
-  const { data: membros } = await supabase
-    .from("membros_time")
-    .select("usuario_id, cargo, status, profiles(id, nome, avatar_url)")
-    .eq("time_id", id)
-    .eq("status", "ativo")
-    .order("data_criacao", { ascending: true })
-    .limit(40);
-
-  const { data: minhaCandidaturaPendente } = await supabase
-    .from("time_candidaturas")
-    .select("id")
-    .eq("time_id", id)
-    .eq("candidato_usuario_id", user.id)
-    .eq("status", "pendente")
-    .maybeSingle();
+  const [{ data: hist }, { data: eidLogs }, { data: membros }, { data: minhaCandidaturaPendente }] =
+    await Promise.all([
+      supabase
+        .from("historico_eid_coletivo")
+        .select("nota_nova, data_alteracao")
+        .eq("time_id", id)
+        .order("data_alteracao", { ascending: false })
+        .limit(12),
+      supabase
+        .from("eid_logs")
+        .select("change_amount, reason, created_at, esportes(nome)")
+        .eq("entity_kind", "time")
+        .eq("entity_time_id", id)
+        .order("created_at", { ascending: false })
+        .limit(3),
+      supabase
+        .from("membros_time")
+        .select("usuario_id, cargo, status, profiles(id, nome, avatar_url)")
+        .eq("time_id", id)
+        .eq("status", "ativo")
+        .order("data_criacao", { ascending: true })
+        .limit(40),
+      supabase
+        .from("time_candidaturas")
+        .select("id")
+        .eq("time_id", id)
+        .eq("candidato_usuario_id", user.id)
+        .eq("status", "pendente")
+        .maybeSingle(),
+    ]);
   const modalidade = (t.tipo ?? "time") === "dupla" ? "dupla" : "time";
   const rosterCap = modalidade === "dupla" ? 2 : 18;
   const { data: rosterHeadRaw, error: rosterHeadErr } = await supabase.rpc("time_roster_headcount", { p_time_id: id });
@@ -290,7 +291,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   }
 
   return (
-    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main data-eid-formacao-page className={PROFILE_PUBLIC_MAIN_CLASS}>
         <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 sm:p-4`}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
             <div className="flex shrink-0 flex-col items-center sm:items-start">
@@ -329,7 +330,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           </div>
           {isLeader ? <FormacaoCidadeAvisoLider timeId={id} /> : null}
           {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary sm:mt-3">{t.bio}</p> : null}
-          <div className="mt-4 grid grid-cols-4 divide-x divide-[color:var(--eid-border-subtle)] rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card text-center shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+          <div className="mt-4 grid grid-cols-4 divide-x divide-transparent rounded-xl border border-transparent bg-eid-surface/40 text-center shadow-none">
             <div className="py-2">
               <p className="text-sm font-black text-eid-fg">{vitoriasTime}</p>
               <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vitórias</p>
@@ -410,9 +411,9 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
         <div className="mt-6 grid gap-6">
           {/* Líder: cartão “Ação principal” ficava só com cabeçalho (desafio é para visitantes). */}
           {!isLeader ? (
-          <section className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3">
+          <section className="overflow-hidden rounded-xl border border-transparent bg-eid-card/55 p-3">
             <h2 className="sr-only">Ação principal</h2>
-            <div className="mb-2 flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-2">
+            <div className="mb-2 flex items-center justify-between border-b border-transparent bg-eid-surface/45 px-2.5 py-2">
               <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Ação principal</p>
               <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
                 Desafio
@@ -622,8 +623,8 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
           </ProfileSection>
 
           {isLeader ? (
-            <div className="eid-list-item overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-              <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
+            <div className="eid-list-item overflow-hidden rounded-xl border border-transparent bg-eid-card/55">
+              <div className="flex items-center justify-between border-b border-transparent bg-eid-surface/45 px-3 py-2">
                 <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Gestão da formação</p>
                 <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
                   Líder
