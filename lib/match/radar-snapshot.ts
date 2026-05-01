@@ -171,6 +171,45 @@ export function formacaoKindFromTipoRaw(tipoRaw: string | null | undefined): "du
   return String(tipoRaw ?? "").trim().toLowerCase() === "dupla" ? "dupla" : "time";
 }
 
+/** Formações em que o viewer é líder ou membro ativo (mesma regra do radar de dupla/time). */
+async function loadViewerFormationTimeIds(
+  supabase: SupabaseClient,
+  viewerId: string,
+  modalidadeFormacao: "dupla" | "time",
+  eidNumForMine: number | null
+): Promise<Set<number>> {
+  const viewerFormationTimeIds = new Set<number>();
+  let ownedQuery = supabase.from("times").select("id, tipo").eq("criador_id", viewerId);
+  if (eidNumForMine != null) ownedQuery = ownedQuery.eq("esporte_id", eidNumForMine);
+  const { data: ownedTeams } = await ownedQuery;
+  for (const r of ownedTeams ?? []) {
+    if (formacaoKindFromTipoRaw((r as { tipo?: string | null }).tipo) !== modalidadeFormacao) continue;
+    const id = Number((r as { id?: number }).id ?? 0);
+    if (Number.isFinite(id) && id > 0) viewerFormationTimeIds.add(id);
+  }
+  const { data: memRows } = await supabase
+    .from("membros_time")
+    .select("time_id, times!inner(esporte_id, tipo)")
+    .eq("usuario_id", viewerId)
+    .in("status", ["ativo", "aceito", "aprovado"]);
+  for (const row of memRows ?? []) {
+    const mr = row as {
+      time_id?: number | null;
+      times?:
+        | { esporte_id?: number | null; tipo?: string | null }
+        | { esporte_id?: number | null; tipo?: string | null }[]
+        | null;
+    };
+    const tMeta = Array.isArray(mr.times) ? mr.times[0] : mr.times;
+    if (!tMeta) continue;
+    if (eidNumForMine != null && Number(tMeta.esporte_id ?? 0) !== eidNumForMine) continue;
+    if (formacaoKindFromTipoRaw(tMeta.tipo) !== modalidadeFormacao) continue;
+    const tid = Number(mr.time_id ?? 0);
+    if (Number.isFinite(tid) && tid > 0) viewerFormationTimeIds.add(tid);
+  }
+  return viewerFormationTimeIds;
+}
+
 export type RadarSnapshotInput = {
   viewerId: string;
   tipo: RadarTipo;
@@ -181,7 +220,10 @@ export type RadarSnapshotInput = {
   lng: number;
   /** Aba do radar: ranking (padrão) ou amistoso — filtra cartões e define link do desafio. */
   finalidade: MatchRadarFinalidade;
-  /** No modo tela cheia, não filtra por confronto já ativo; mantém apenas regras de carência. */
+  /**
+   * No modo tela cheia, não oculta oponentes individuais já em confronto ativo (apenas atleta).
+   * Dupla/time ocultam a outra formação (desafiante ou desafiada) com match ativo no mesmo esporte.
+   */
   includeActiveOpponents?: boolean;
 };
 
@@ -193,16 +235,66 @@ export async function fetchMatchRadarCards(
   const esporteId = /^\d+$/.test(esporteSelecionado) ? Number(esporteSelecionado) : null;
 
   let cards: MatchRadarCard[] = [];
+
+  const modalidadeFormacaoEarly: "dupla" | "time" | null = tipo === "dupla" ? "dupla" : tipo === "time" ? "time" : null;
+  const eidNumForMineEarly =
+    Number.isFinite(Number(esporteId)) && Number(esporteId) > 0 ? Number(esporteId) : null;
+  const viewerFormationTimeIdsForBlock =
+    modalidadeFormacaoEarly != null
+      ? await loadViewerFormationTimeIds(supabase, viewerId, modalidadeFormacaoEarly, eidNumForMineEarly)
+      : new Set<number>();
+
   const { data: activeMatches } = await supabase
     .from("matches")
-    .select("usuario_id, adversario_id, status")
-    .or(`usuario_id.eq.${viewerId},adversario_id.eq.${viewerId}`)
+    .select("usuario_id, adversario_id, adversario_time_id, desafiante_time_id, esporte_id, status")
     .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
   const activeOpponentIds = new Set<string>();
-  if (!includeActiveOpponents) {
-    for (const m of activeMatches ?? []) {
-      const usuarioId = String((m as { usuario_id?: string | null }).usuario_id ?? "");
-      const adversarioId = String((m as { adversario_id?: string | null }).adversario_id ?? "");
+  /** Times adversários a ocultar (lado desafiante) ou times desafiantes a ocultar (lado desafiado). */
+  const blockedFormationTeamIdsFromMatches = new Set<number>();
+  const activeStatuses = new Set(["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
+
+  for (const m of activeMatches ?? []) {
+    const st = String((m as { status?: string | null }).status ?? "");
+    if (!activeStatuses.has(st)) continue;
+
+    const usuarioId = String((m as { usuario_id?: string | null }).usuario_id ?? "");
+    const adversarioId = String((m as { adversario_id?: string | null }).adversario_id ?? "");
+    const mEsporte = Number((m as { esporte_id?: number | null }).esporte_id ?? 0);
+
+    const advTimeRaw = (m as { adversario_time_id?: number | null }).adversario_time_id;
+    const desTimeRaw = (m as { desafiante_time_id?: number | null }).desafiante_time_id;
+    const advT = Number(advTimeRaw ?? 0);
+    const desT = Number(desTimeRaw ?? 0);
+
+    if (
+      modalidadeFormacaoEarly != null &&
+      eidNumForMineEarly != null &&
+      mEsporte === eidNumForMineEarly &&
+      Number.isFinite(advT) &&
+      advT > 0
+    ) {
+      const viewerIsChallengerCaptain = usuarioId === viewerId;
+      const viewerInChallengerTeam = Number.isFinite(desT) && desT > 0 && viewerFormationTimeIdsForBlock.has(desT);
+      if (viewerIsChallengerCaptain || viewerInChallengerTeam) {
+        blockedFormationTeamIdsFromMatches.add(advT);
+      }
+    }
+
+    if (
+      modalidadeFormacaoEarly != null &&
+      eidNumForMineEarly != null &&
+      mEsporte === eidNumForMineEarly &&
+      Number.isFinite(desT) &&
+      desT > 0
+    ) {
+      const viewerIsChallengedCaptain = adversarioId === viewerId;
+      const viewerInChallengedTeam = Number.isFinite(advT) && advT > 0 && viewerFormationTimeIdsForBlock.has(advT);
+      if (viewerIsChallengedCaptain || viewerInChallengedTeam) {
+        blockedFormationTeamIdsFromMatches.add(desT);
+      }
+    }
+
+    if (!includeActiveOpponents) {
       if (usuarioId === viewerId && adversarioId) activeOpponentIds.add(adversarioId);
       else if (adversarioId === viewerId && usuarioId) activeOpponentIds.add(usuarioId);
     }
@@ -373,37 +465,9 @@ export async function fetchMatchRadarCards(
     });
 
     /** Formações do próprio viewer (líder ou membro) nesta modalidade — não sugerir a si; carência time×time usa esporte explícito. */
-    const viewerFormationTimeIds = new Set<number>();
+    const viewerFormationTimeIds = viewerFormationTimeIdsForBlock;
     const eidNumForMine =
       Number.isFinite(Number(esporteId)) && Number(esporteId) > 0 ? Number(esporteId) : null;
-    let ownedQuery = supabase.from("times").select("id, tipo").eq("criador_id", viewerId);
-    if (eidNumForMine != null) ownedQuery = ownedQuery.eq("esporte_id", eidNumForMine);
-    const { data: ownedTeams } = await ownedQuery;
-    for (const r of ownedTeams ?? []) {
-      if (formacaoKindFromTipoRaw((r as { tipo?: string | null }).tipo) !== modalidadeFormacao) continue;
-      const id = Number((r as { id?: number }).id ?? 0);
-      if (Number.isFinite(id) && id > 0) viewerFormationTimeIds.add(id);
-    }
-    const { data: memRows } = await supabase
-      .from("membros_time")
-      .select("time_id, times!inner(esporte_id, tipo)")
-      .eq("usuario_id", viewerId)
-      .in("status", ["ativo", "aceito", "aprovado"]);
-    for (const row of memRows ?? []) {
-      const mr = row as {
-        time_id?: number | null;
-        times?:
-          | { esporte_id?: number | null; tipo?: string | null }
-          | { esporte_id?: number | null; tipo?: string | null }[]
-          | null;
-      };
-      const tMeta = Array.isArray(mr.times) ? mr.times[0] : mr.times;
-      if (!tMeta) continue;
-      if (eidNumForMine != null && Number(tMeta.esporte_id ?? 0) !== eidNumForMine) continue;
-      if (formacaoKindFromTipoRaw(tMeta.tipo) !== modalidadeFormacao) continue;
-      const tid = Number(mr.time_id ?? 0);
-      if (Number.isFinite(tid) && tid > 0) viewerFormationTimeIds.add(tid);
-    }
 
     if (
       finalidade === "ranking" &&
@@ -455,14 +519,16 @@ export async function fetchMatchRadarCards(
     );
     // Não sugerir formações do próprio elenco (líder ou membro).
     const teamRowsNotMine = timeRows.filter((t) => !viewerFormationTimeIds.has(Number(t.id)));
-    let blockedTeamIds = new Set<number>();
+    const blockedTeamIds = new Set<number>();
+    for (const tid of blockedFormationTeamIdsFromMatches) {
+      if (Number.isFinite(tid) && tid > 0) blockedTeamIds.add(tid);
+    }
     if (teamRowsNotMine.length > 0 && activeOpponentIds.size > 0) {
-      blockedTeamIds = new Set(
-        (ownersAll ?? [])
-          .filter((row) => activeOpponentIds.has(String((row as { criador_id?: string | null }).criador_id ?? "")))
-          .map((row) => Number((row as { id?: number | null }).id ?? 0))
-          .filter((id) => Number.isFinite(id) && id > 0)
-      );
+      for (const row of ownersAll ?? []) {
+        if (!activeOpponentIds.has(String((row as { criador_id?: string | null }).criador_id ?? ""))) continue;
+        const id = Number((row as { id?: number | null }).id ?? 0);
+        if (Number.isFinite(id) && id > 0) blockedTeamIds.add(id);
+      }
     }
     const teamRowsVisible = teamRowsNotMine.filter((t) => !blockedTeamIds.has(Number(t.id)));
     let eligibleTeamIds = new Set<number>(teamRowsVisible.map((t) => Number(t.id)));

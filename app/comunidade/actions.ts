@@ -414,7 +414,7 @@ export async function responderPedidoMatch(
 
   const { data: participantsRow } = await supabase
     .from("matches")
-    .select("usuario_id, adversario_id")
+    .select("usuario_id, adversario_id, adversario_time_id")
     .eq("id", matchId)
     .maybeSingle();
 
@@ -434,10 +434,29 @@ export async function responderPedidoMatch(
     referenciaId: matchId,
     tipos: ["match", "desafio"],
   });
+
+  const pushUserIds: Array<string | null | undefined> = [
+    participantsRow?.usuario_id,
+    participantsRow?.adversario_id,
+  ];
+  if (aceitar && participantsRow?.adversario_time_id != null) {
+    const tid = Number(participantsRow.adversario_time_id);
+    if (Number.isFinite(tid) && tid > 0) {
+      const { data: mems } = await supabase
+        .from("membros_time")
+        .select("usuario_id")
+        .eq("time_id", tid)
+        .in("status", ["ativo", "aceito", "aprovado"]);
+      for (const r of mems ?? []) {
+        pushUserIds.push(String((r as { usuario_id?: string | null }).usuario_id ?? ""));
+      }
+    }
+  }
+
   await triggerPushForMatchNotifications(
     supabase,
     matchId,
-    [participantsRow?.usuario_id, participantsRow?.adversario_id],
+    pushUserIds,
     "comunidade/actions.responderPedidoMatch"
   );
 

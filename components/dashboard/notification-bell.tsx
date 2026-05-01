@@ -237,15 +237,19 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     let unreadGeneral = 0;
     for (const n of unreadRows) {
       const isFlowAction = isFlowActionNotif(n.tipo);
+      const tipoLower = String(n.tipo ?? "").trim().toLowerCase();
       const key = isFlowAction
-        ? `flow:${String(n.tipo ?? "").trim().toLowerCase()}:${String(n.referencia_id ?? "null")}`
+        ? `flow:${tipoLower}:${String(n.referencia_id ?? "null")}`
         : `id:${n.id}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      // Notificações de fluxo resolvidas de sugestão (aprovado/recusado)
-      // devem contar no sino para o usuário perceber a atualização.
       if (!isFlowAction) {
         unreadGeneral += 1;
+      } else if (tipoLower === "match") {
+        const refId = Number(n.referencia_id ?? 0);
+        if (!(Number.isFinite(refId) && refId > 0 && canceledMatchIds.has(refId))) {
+          unreadGeneral += 1;
+        }
       } else {
         const refId = Number(n.referencia_id ?? 0);
         if (Number.isFinite(refId) && refId > 0 && suggestionResolvedRefIds.has(refId)) {
@@ -273,7 +277,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     setPedidosDesafioN(m);
     setSugestoesLiderN(s);
     setPlacarN(p);
-    // Sininho conta apenas notificações não lidas; ações pendentes ficam no footer social.
+    // Sininho: notificações não lidas (inclui tipo match: desafio pendente, aceite, etc.). Footer social continua com resumo de ações.
     setTotal(unreadGeneral);
     setPreview(previewRows);
   }, [userId, pathname]);
