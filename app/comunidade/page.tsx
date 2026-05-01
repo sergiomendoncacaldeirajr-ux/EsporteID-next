@@ -48,6 +48,9 @@ export const metadata = {
   description: "Central de ações pendentes no EsporteID: desafios, equipe e placar que precisam da sua resposta.",
 };
 
+/** Sempre dinâmico: pendentes vêm do Supabase e precisam refletir realtime/refresh sem cache velho. */
+export const dynamic = "force-dynamic";
+
 function primeiroNome(nome?: string | null) {
   const n = (nome ?? "").trim();
   return n ? n.split(/\s+/u)[0] : "Atleta";
@@ -149,8 +152,6 @@ export default async function ComunidadePage() {
 
   const uidEq = user.id;
   const [
-    { count: cntMatchIn },
-    { count: cntMatchOut },
     { count: cntSugRec },
     { count: cntSugEnv },
     { count: cntConvRec },
@@ -161,8 +162,6 @@ export default async function ComunidadePage() {
     { count: cntPartAgend },
     { count: cntMatchRankFlow },
   ] = await Promise.all([
-    supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", uidEq).eq("status", "Pendente"),
-    supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", uidEq).eq("status", "Pendente"),
     supabase.from("match_sugestoes").select("id", { count: "exact", head: true }).eq("alvo_dono_id", uidEq).eq("status", "pendente"),
     supabase
       .from("match_sugestoes")
@@ -196,8 +195,6 @@ export default async function ComunidadePage() {
       .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]),
   ]);
 
-  const loadIncoming = (cntMatchIn ?? 0) > 0;
-  const loadOutgoing = (cntMatchOut ?? 0) > 0;
   const needEquipe =
     (cntSugRec ?? 0) > 0 ||
     (cntSugEnv ?? 0) > 0 ||
@@ -208,15 +205,13 @@ export default async function ComunidadePage() {
   const needPartidas =
     (cntPartAguarda ?? 0) > 0 || (cntPartAgend ?? 0) > 0 || (cntMatchRankFlow ?? 0) > 0;
 
-  const { data: recebidos } = loadIncoming
-    ? await supabase
-        .from("matches")
-        .select("id, modalidade_confronto, data_solicitacao, data_registro, usuario_id, esporte_id, adversario_time_id, finalidade")
-        .eq("adversario_id", user.id)
-        .eq("status", "Pendente")
-        .order("data_registro", { ascending: false })
-        .limit(30)
-    : { data: [] };
+  const { data: recebidos } = await supabase
+    .from("matches")
+    .select("id, modalidade_confronto, data_solicitacao, data_registro, usuario_id, esporte_id, adversario_time_id, finalidade")
+    .eq("adversario_id", user.id)
+    .eq("status", "Pendente")
+    .order("data_registro", { ascending: false })
+    .limit(30);
   const receivedSportIds = [
     ...new Set((recebidos ?? []).map((m) => Number(m.esporte_id ?? 0)).filter((id) => Number.isFinite(id) && id > 0)),
   ];
@@ -238,15 +233,13 @@ export default async function ComunidadePage() {
     (desafiantesEid ?? []).map((row) => [`${String(row.usuario_id)}:${Number(row.esporte_id)}`, Number(row.nota_eid ?? 0)])
   );
 
-  const { data: enviadosPendentes } = loadOutgoing
-    ? await supabase
-        .from("matches")
-        .select("id, adversario_id, adversario_time_id, esporte_id, modalidade_confronto, data_solicitacao")
-        .eq("usuario_id", user.id)
-        .eq("status", "Pendente")
-        .order("data_solicitacao", { ascending: false })
-        .limit(20)
-    : { data: [] };
+  const { data: enviadosPendentes } = await supabase
+    .from("matches")
+    .select("id, adversario_id, adversario_time_id, esporte_id, modalidade_confronto, data_solicitacao")
+    .eq("usuario_id", user.id)
+    .eq("status", "Pendente")
+    .order("data_solicitacao", { ascending: false })
+    .limit(20);
 
   const eidsRecebidos = (recebidos ?? []).map((m) => m.esporte_id).filter(Boolean) as number[];
   const eidsEnviados = (enviadosPendentes ?? []).map((m) => m.esporte_id).filter(Boolean) as number[];

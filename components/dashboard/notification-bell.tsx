@@ -10,6 +10,7 @@ import {
   hasActivePushSubscription,
 } from "@/lib/pwa/push-client";
 import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
+import { limparTodasNotificacoes } from "@/app/comunidade/actions";
 
 type Preview = {
   id: number;
@@ -108,6 +109,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   const [placarN, setPlacarN] = useState(0);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
+  const [limpandoTodas, setLimpandoTodas] = useState(false);
   const [panelPos, setPanelPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const vapidPublicKey = useMemo(() => String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim(), []);
 
@@ -401,6 +403,23 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     [router, userId]
   );
 
+  const onLimparTodasNotificacoes = useCallback(async () => {
+    if (!userId || limpandoTodas) return;
+    if (preview.length === 0 && total === 0) return;
+    setLimpandoTodas(true);
+    try {
+      await limparTodasNotificacoes();
+      setTotal(0);
+      setPreview([]);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+      }
+      await load();
+    } finally {
+      setLimpandoTodas(false);
+    }
+  }, [userId, limpandoTodas, preview.length, total, load]);
+
   if (!userId) return null;
 
   const bellCount = total;
@@ -534,6 +553,18 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                 ))}
               </ul>
             )}
+
+            <div className="mt-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => void onLimparTodasNotificacoes()}
+                disabled={limpandoTodas || (preview.length === 0 && total === 0)}
+                className={`inline-flex min-h-[24px] items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 text-[8px] font-black tracking-[0.06em] text-eid-text-secondary transition hover:border-eid-action-500/30 hover:text-eid-fg disabled:pointer-events-none disabled:opacity-45 ${limpandoTodas ? "normal-case" : "uppercase"}`}
+                aria-busy={limpandoTodas}
+              >
+                {limpandoTodas ? "limpando..." : "Limpar todas"}
+              </button>
+            </div>
 
             <Link
               href="/comunidade#notificacoes"

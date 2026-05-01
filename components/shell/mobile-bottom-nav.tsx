@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { getContextHomeHref, type ActiveAppContext } from "@/lib/auth/active-context";
 import { createClient } from "@/lib/supabase/client";
@@ -100,6 +100,8 @@ function NavBadge({ n }: { n: number }) {
 
 export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const pathname = usePathname() ?? "";
+  const router = useRouter();
+  const pathnameRef = useRef(pathname);
   const [resolvedUserId, setResolvedUserId] = useState<string | null>(userId);
   const [agendaBadge, setAgendaBadge] = useState(0);
   const [socialBadge, setSocialBadge] = useState(0);
@@ -126,6 +128,10 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       window.clearTimeout(releaseTimerRef.current);
       releaseTimerRef.current = undefined;
     }
+  }, [pathname]);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
   }, [pathname]);
 
   useEffect(() => {
@@ -250,7 +256,14 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         }
         return false;
       });
-      setAgendaBadge(agendaPendentesAcao.length);
+      const agendaNext = agendaPendentesAcao.length;
+      setAgendaBadge((prev) => {
+        const p = String(pathnameRef.current ?? "");
+        if (prev !== agendaNext && p.startsWith("/agenda")) {
+          queueMicrotask(() => router.refresh());
+        }
+        return agendaNext;
+      });
       const placar = pRes.count ?? 0;
       const pedidosRecebidos = mRecebidosRes.count ?? 0;
       const pedidosEnviados = mEnviadosRes.count ?? 0;
@@ -270,17 +283,25 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         candidaturasEquipe = count ?? 0;
       }
       // Footer Social exibe ações pendentes reais (o sininho cobre só "não lidas").
-      setSocialBadge(
+      const socialNext =
         placar +
-          pedidosRecebidos +
-          pedidosEnviados +
-          sugestoesLider +
-          sugestoesEnviadas +
-          convitesRecebidos +
-          convitesEnviados +
-          candidaturasEquipe +
-          candidaturasEnviadas
-      );
+        pedidosRecebidos +
+        pedidosEnviados +
+        sugestoesLider +
+        sugestoesEnviadas +
+        convitesRecebidos +
+        convitesEnviados +
+        candidaturasEquipe +
+        candidaturasEnviadas;
+      setSocialBadge((prev) => {
+        const p = String(pathnameRef.current ?? "");
+        const onSocialSurface =
+          p.startsWith("/comunidade") || p.startsWith("/times") || p.startsWith("/vagas");
+        if (prev !== socialNext && onSocialSurface) {
+          queueMicrotask(() => router.refresh());
+        }
+        return socialNext;
+      });
     }
     void load();
     const t = window.setInterval(load, 20000);
@@ -360,7 +381,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [resolvedUserId]);
+  }, [resolvedUserId, router]);
 
   if (!resolvedUserId) return null;
 
