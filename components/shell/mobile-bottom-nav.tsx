@@ -171,7 +171,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     let cancelled = false;
     const supabase = createClient();
     async function load() {
-      const [agRes, pRes, mRes, sRes] = await Promise.all([
+      const [agRes, pRes, mRecebidosRes, mEnviadosRes, sLiderRes, sEnviadasRes, conviteRecebidoRes, conviteEnviadoRes, candidaturaEnviadaRes, meusTimesRes] = await Promise.all([
         supabase
           .from("partidas")
           .select("id, match_id")
@@ -184,11 +184,33 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
           .eq("status", "aguardando_confirmacao")
           .neq("lancado_por", resolvedUserId),
         supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", resolvedUserId).eq("status", "Pendente"),
+        supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", resolvedUserId).eq("status", "Pendente"),
         supabase
           .from("match_sugestoes")
           .select("id", { count: "exact", head: true })
           .eq("alvo_dono_id", resolvedUserId)
           .eq("status", "pendente"),
+        supabase
+          .from("match_sugestoes")
+          .select("id", { count: "exact", head: true })
+          .eq("sugeridor_id", resolvedUserId)
+          .eq("status", "pendente"),
+        supabase
+          .from("time_convites")
+          .select("id", { count: "exact", head: true })
+          .eq("convidado_usuario_id", resolvedUserId)
+          .eq("status", "pendente"),
+        supabase
+          .from("time_convites")
+          .select("id", { count: "exact", head: true })
+          .eq("convidado_por_usuario_id", resolvedUserId)
+          .eq("status", "pendente"),
+        supabase
+          .from("time_candidaturas")
+          .select("id", { count: "exact", head: true })
+          .eq("candidato_usuario_id", resolvedUserId)
+          .eq("status", "pendente"),
+        supabase.from("times").select("id").eq("criador_id", resolvedUserId),
       ]);
       if (cancelled) return;
       const agendaRows = (agRes.data ?? []) as Array<{ id: number; match_id?: number | null }>;
@@ -214,10 +236,35 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       });
       setAgendaBadge(agendaVisiveis.length);
       const placar = pRes.count ?? 0;
-      const pedidos = mRes.count ?? 0;
-      const sugestoesLider = sRes.count ?? 0;
-      // Footer Social exibe somente ações pendentes reais (não inclui "não lidas" do sininho).
-      setSocialBadge(placar + pedidos + sugestoesLider);
+      const pedidosRecebidos = mRecebidosRes.count ?? 0;
+      const pedidosEnviados = mEnviadosRes.count ?? 0;
+      const sugestoesLider = sLiderRes.count ?? 0;
+      const sugestoesEnviadas = sEnviadasRes.count ?? 0;
+      const convitesRecebidos = conviteRecebidoRes.count ?? 0;
+      const convitesEnviados = conviteEnviadoRes.count ?? 0;
+      const candidaturasEnviadas = candidaturaEnviadaRes.count ?? 0;
+      const meusTimeIds = [...new Set((meusTimesRes.data ?? []).map((t) => Number((t as { id?: number | null }).id ?? 0)).filter((id) => Number.isFinite(id) && id > 0))];
+      let candidaturasEquipe = 0;
+      if (meusTimeIds.length > 0) {
+        const { count } = await supabase
+          .from("time_candidaturas")
+          .select("id", { count: "exact", head: true })
+          .in("time_id", meusTimeIds)
+          .eq("status", "pendente");
+        candidaturasEquipe = count ?? 0;
+      }
+      // Footer Social exibe ações pendentes reais (o sininho cobre só "não lidas").
+      setSocialBadge(
+        placar +
+          pedidosRecebidos +
+          pedidosEnviados +
+          sugestoesLider +
+          sugestoesEnviadas +
+          convitesRecebidos +
+          convitesEnviados +
+          candidaturasEquipe +
+          candidaturasEnviadas
+      );
     }
     void load();
     const t = window.setInterval(load, 20000);
@@ -245,12 +292,42 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       )
       .on(
         "postgres_changes",
+        { event: "*", schema: "public", table: "match_sugestoes", filter: `sugeridor_id=eq.${resolvedUserId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
         { event: "*", schema: "public", table: "partidas", filter: `jogador1_id=eq.${resolvedUserId}` },
         () => void load()
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "partidas", filter: `jogador2_id=eq.${resolvedUserId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "time_convites", filter: `convidado_usuario_id=eq.${resolvedUserId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "time_convites", filter: `convidado_por_usuario_id=eq.${resolvedUserId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "time_candidaturas", filter: `candidato_usuario_id=eq.${resolvedUserId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "time_candidaturas" },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "times", filter: `criador_id=eq.${resolvedUserId}` },
         () => void load()
       )
       .subscribe();
