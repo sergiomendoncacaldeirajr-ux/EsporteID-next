@@ -1,7 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { revalidateAfterTimeRosterOrConviteChange } from "@/lib/comunidade/revalidate-time-social-paths";
 import { createClient } from "@/lib/supabase/server";
 
 export type TeamActionState =
@@ -124,10 +124,11 @@ async function conviteUsuarioParaTimeCore(
     return { ok: false, message: error.message };
   }
 
-  revalidatePath("/times");
-  revalidatePath("/comunidade");
-  revalidatePath(`/perfil-time/${timeId}`);
-  revalidatePath(`/perfil/${targetProfileId}`);
+  await revalidateAfterTimeRosterOrConviteChange(supabase, {
+    timeId,
+    leaderId: donoId,
+    affectedProfileIds: [targetProfileId],
+  });
   return { ok: true, message: "Convite enviado. A pessoa recebe aviso em Social para aceitar ou recusar." };
 }
 
@@ -249,8 +250,9 @@ export async function criarEquipe(
     }
   }
 
-  revalidatePath("/times");
-  revalidatePath(`/perfil/${user.id}`);
+  if (createdId > 0) {
+    await revalidateAfterTimeRosterOrConviteChange(supabase, { timeId: createdId, leaderId: user.id });
+  }
   return {
     ok: true,
     message,
@@ -412,11 +414,7 @@ export async function atualizarMinhaEquipe(
 
   if (error) return { ok: false, message: error.message };
 
-  revalidatePath(`/perfil-time/${timeId}`);
-  revalidatePath(`/conta/formacao/time/${timeId}`);
-  revalidatePath(`/editar/time/${timeId}`);
-  revalidatePath("/times");
-  revalidatePath(`/perfil/${user.id}`);
+  await revalidateAfterTimeRosterOrConviteChange(supabase, { timeId, leaderId: user.id });
   return { ok: true, message: "Formação atualizada." };
 }
 
@@ -455,11 +453,11 @@ export async function removerMembroDaEquipe(
     data_criacao: new Date().toISOString(),
   });
 
-  revalidatePath(`/editar/time/${timeId}`);
-  revalidatePath(`/conta/formacao/time/${timeId}`);
-  revalidatePath(`/perfil-time/${timeId}`);
-  revalidatePath("/comunidade");
-  revalidatePath("/times");
+  await revalidateAfterTimeRosterOrConviteChange(supabase, {
+    timeId,
+    leaderId: user.id,
+    affectedProfileIds: [membroId],
+  });
   return { ok: true, message: "Membro removido com sucesso." };
 }
 
@@ -486,12 +484,7 @@ export async function cancelarConviteDaEquipe(
   const { error } = await supabase.rpc("cancelar_convite_time_lider", { p_convite_id: conviteId });
   if (error) return { ok: false, message: error.message };
 
-  revalidatePath(`/editar/time/${timeId}`);
-  revalidatePath(`/conta/formacao/time/${timeId}`);
-  revalidatePath(`/perfil-time/${timeId}`);
-  revalidatePath("/comunidade");
-  revalidatePath("/times");
-  revalidatePath(`/perfil/${user.id}`);
+  await revalidateAfterTimeRosterOrConviteChange(supabase, { timeId, leaderId: user.id });
   return { ok: true, message: "Convite cancelado. A pessoa foi avisada em Social." };
 }
 
@@ -520,9 +513,10 @@ export async function transferirLiderancaDaEquipe(
   });
   if (transferErr) return { ok: false, message: transferErr.message };
 
-  revalidatePath(`/editar/time/${timeId}`);
-  revalidatePath(`/conta/formacao/time/${timeId}`);
-  revalidatePath(`/perfil-time/${timeId}`);
-  revalidatePath("/times");
+  await revalidateAfterTimeRosterOrConviteChange(supabase, {
+    timeId,
+    leaderId: user.id,
+    affectedProfileIds: [novoLiderId],
+  });
   return { ok: true, message: "Liderança transferida com sucesso." };
 }

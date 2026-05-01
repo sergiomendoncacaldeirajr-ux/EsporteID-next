@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 import {
   cancelarConviteDaEquipe,
@@ -12,6 +13,7 @@ import { TeamInviteComboboxForm } from "@/components/times/team-invite-combobox-
 import { EidCancelButton } from "@/components/ui/eid-cancel-button";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidInviteButton } from "@/components/ui/eid-invite-button";
+import { emitEidSocialDataRefresh } from "@/lib/comunidade/social-panel-layout";
 
 const initial: TeamActionState = { ok: false, message: "" };
 
@@ -53,12 +55,35 @@ export function TeamRosterManager({
   prefillConvidarUsuarioId?: string | null;
   prefillConvidarNome?: string | null;
 }) {
+  const router = useRouter();
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
-  const [cancelInviteState, cancelInviteAction, cancelInvitePending] = useActionState(cancelarConviteDaEquipe, initial);
   const [removeState, removeAction, removePending] = useActionState(removerMembroDaEquipe, initial);
   const [transferState, transferAction, transferPending] = useActionState(transferirLiderancaDaEquipe, initial);
-  const [cancelTargetInviteId, setCancelTargetInviteId] = useState<number | null>(null);
+  const [cancelInviteError, setCancelInviteError] = useState<string | null>(null);
+  const [pendingCancelConviteId, setPendingCancelConviteId] = useState<number | null>(null);
   const [memberActionTarget, setMemberActionTarget] = useState<{ type: "remove" | "transfer"; userId: string } | null>(null);
+
+  async function handleCancelarConvite(conviteId: number) {
+    if (pendingCancelConviteId != null) return;
+    setPendingCancelConviteId(conviteId);
+    setCancelInviteError(null);
+    try {
+      const fd = new FormData();
+      fd.set("time_id", String(timeId));
+      fd.set("convite_id", String(conviteId));
+      const res = await cancelarConviteDaEquipe(undefined, fd);
+      if (!res.ok) {
+        setCancelInviteError(res.message);
+        return;
+      }
+      emitEidSocialDataRefresh();
+      router.refresh();
+    } catch (e) {
+      setCancelInviteError(e instanceof Error ? e.message : "Não foi possível cancelar o convite.");
+    } finally {
+      setPendingCancelConviteId(null);
+    }
+  }
 
   const excludeUserIds = membros.map((m) => m.usuarioId);
   const memberActionMsg = transferState.message || removeState.message;
@@ -136,6 +161,9 @@ export function TeamRosterManager({
               </svg>
               Convites
             </p>
+            {cancelInviteError ? (
+              <p className="mt-2 rounded-lg border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-[11px] text-red-200">{cancelInviteError}</p>
+            ) : null}
             {convites.length > 0 ? (
               <ul className="mt-2 grid gap-2">
                 {convites.map((c) => {
@@ -164,19 +192,17 @@ export function TeamRosterManager({
                         {c.status}
                       </span>
                       {pendente ? (
-                        <form action={cancelInviteAction} className="w-full sm:ml-auto sm:w-auto">
-                          <input type="hidden" name="time_id" value={timeId} />
-                          <input type="hidden" name="convite_id" value={c.conviteId} />
+                        <div className="w-full sm:ml-auto sm:w-auto">
                           <EidCancelButton
-                            type="submit"
+                            type="button"
                             compact
-                            loading={cancelInvitePending && cancelTargetInviteId === c.conviteId}
+                            loading={pendingCancelConviteId === c.conviteId}
                             label="Cancelar convite"
                             className="w-full rounded-lg !min-h-[24px] text-[9px]"
-                            disabled={invitePending}
-                            onClick={() => setCancelTargetInviteId(c.conviteId)}
+                            disabled={invitePending || pendingCancelConviteId != null}
+                            onClick={() => void handleCancelarConvite(c.conviteId)}
                           />
-                        </form>
+                        </div>
                       ) : null}
                     </li>
                   );
@@ -185,13 +211,6 @@ export function TeamRosterManager({
             ) : (
               <p className="mt-1 text-[11px] text-eid-text-secondary">Nenhum convite pendente.</p>
             )}
-            {cancelInviteState.message ? (
-              <p
-                className={`mt-2 text-xs ${cancelInviteState.ok ? "text-eid-primary-700 dark:text-eid-primary-300" : "text-red-700 dark:text-red-300"}`}
-              >
-                {cancelInviteState.message}
-              </p>
-            ) : null}
           </div>
 
           <div>

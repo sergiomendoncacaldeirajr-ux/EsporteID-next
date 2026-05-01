@@ -1,15 +1,13 @@
 "use client";
 
 import { UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
-import {
-  cancelarConviteDaEquipe,
-  convidarUsuarioParaEquipe,
-  type TeamActionState,
-} from "@/app/times/actions";
+import { cancelarConviteDaEquipe, convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
 import { TeamInviteComboboxForm } from "@/components/times/team-invite-combobox-form";
 import { EidCancelButton } from "@/components/ui/eid-cancel-button";
 import { EidCityState } from "@/components/ui/eid-city-state";
+import { emitEidSocialDataRefresh } from "@/lib/comunidade/social-panel-layout";
 
 const initial: TeamActionState = { ok: false, message: "" };
 
@@ -35,13 +33,36 @@ export function TeamPublicInviteBlock({
   collapsibleTrigger?: boolean;
   addParticipantLabel?: string;
 }) {
+  const router = useRouter();
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
-  const [cancelInviteState, cancelInviteAction, cancelInvitePending] = useActionState(cancelarConviteDaEquipe, initial);
-  const [cancelTargetInviteId, setCancelTargetInviteId] = useState<number | null>(null);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [pendingCancelConviteId, setPendingCancelConviteId] = useState<number | null>(null);
   const [painelAberto, setPainelAberto] = useState(
     () => !collapsibleTrigger || pendingInvites.length > 0,
   );
   const mostrarPainel = !collapsibleTrigger || painelAberto;
+
+  async function handleCancelarConvite(conviteId: number) {
+    if (pendingCancelConviteId != null) return;
+    setPendingCancelConviteId(conviteId);
+    setCancelError(null);
+    try {
+      const fd = new FormData();
+      fd.set("time_id", String(timeId));
+      fd.set("convite_id", String(conviteId));
+      const res = await cancelarConviteDaEquipe(undefined, fd);
+      if (!res.ok) {
+        setCancelError(res.message);
+        return;
+      }
+      emitEidSocialDataRefresh();
+      router.refresh();
+    } catch (e) {
+      setCancelError(e instanceof Error ? e.message : "Não foi possível cancelar o convite.");
+    } finally {
+      setPendingCancelConviteId(null);
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -78,6 +99,9 @@ export function TeamPublicInviteBlock({
       {pendingInvites.length > 0 ? (
         <div className="mt-4 border-t border-[color:var(--eid-border-subtle)] pt-3">
           <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Convites pendentes</p>
+          {cancelError ? (
+            <p className="mt-2 rounded-lg border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-[11px] text-red-200">{cancelError}</p>
+          ) : null}
           <ul className="mt-2 grid gap-2">
             {pendingInvites.map((inv) => (
               <li
@@ -99,30 +123,21 @@ export function TeamPublicInviteBlock({
                   <p className="truncate text-[11px] font-bold text-eid-fg">{inv.nome}</p>
                   <EidCityState location={inv.localizacao} compact align="start" emptyLabel="—" className="w-full" />
                 </div>
-                <form action={cancelInviteAction} className="flex w-full justify-start sm:ml-auto sm:w-auto sm:justify-end">
-                  <input type="hidden" name="time_id" value={timeId} />
-                  <input type="hidden" name="convite_id" value={inv.conviteId} />
+                <div className="flex w-full justify-start sm:ml-auto sm:w-auto sm:justify-end">
                   <EidCancelButton
-                    type="submit"
+                    type="button"
                     compact
-                    loading={cancelInvitePending && cancelTargetInviteId === inv.conviteId}
+                    loading={pendingCancelConviteId === inv.conviteId}
                     label="Cancelar convite"
                     className="w-full rounded-lg !min-h-[24px] text-[9px] sm:w-auto sm:shrink-0"
-                    disabled={invitePending}
-                    onClick={() => setCancelTargetInviteId(inv.conviteId)}
+                    disabled={invitePending || pendingCancelConviteId != null}
+                    onClick={() => void handleCancelarConvite(inv.conviteId)}
                   />
-                </form>
+                </div>
               </li>
             ))}
           </ul>
         </div>
-      ) : null}
-      {cancelInviteState.message ? (
-        <p
-          className={`mt-2 text-xs ${cancelInviteState.ok ? "text-eid-primary-700 dark:text-eid-primary-300" : "text-red-700 dark:text-red-300"}`}
-        >
-          {cancelInviteState.message}
-        </p>
       ) : null}
     </div>
       ) : null}
