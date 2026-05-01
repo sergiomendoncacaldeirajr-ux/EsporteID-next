@@ -304,6 +304,9 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       });
     }
     void load();
+    /** Alinha com `RealtimePageRefresh` / sininho: o miolo já revalida, mas o estado do badge ficava só no próximo Realtime ou em até 20s. */
+    const onEidRealtimeRefresh = () => void load();
+    window.addEventListener("eid:realtime-refresh", onEidRealtimeRefresh as EventListener);
     const t = window.setInterval(load, 20000);
     const channel = supabase
       .channel(`eid-mobile-nav-${resolvedUserId}`)
@@ -377,6 +380,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     return () => {
       cancelled = true;
       window.clearInterval(t);
+      window.removeEventListener("eid:realtime-refresh", onEidRealtimeRefresh as EventListener);
       void supabase.removeChannel(channel);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisible);
