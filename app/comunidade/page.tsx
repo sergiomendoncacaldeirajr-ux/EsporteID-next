@@ -5,10 +5,11 @@ import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
 import { ComunidadeConvitesEnviadosTime, type ConviteTimeEnviadoItem } from "@/components/comunidade/comunidade-convites-enviados-time";
 import { ComunidadeBackgroundSync } from "@/components/comunidade/comunidade-background-sync";
+import { ComunidadePendenciasRscSync } from "@/components/comunidade/comunidade-pendencias-rsc-sync";
 import {
-  ComunidadePendenciasRscSync,
   type ComunidadePendenciasServerSnapshot,
-} from "@/components/comunidade/comunidade-pendencias-rsc-sync";
+  pendenciasSnapshotSignature,
+} from "@/lib/comunidade/pendencias-snapshot";
 import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pedidos-enviados";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import {
@@ -1317,7 +1318,7 @@ export default async function ComunidadePage() {
       className="mx-auto w-full max-w-3xl px-2.5 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-6xl sm:px-5 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
       <ComunidadeBackgroundSync />
-      <ComunidadePendenciasRscSync userId={user.id} snapshot={pendenciasSnapshot} />
+      <ComunidadePendenciasRscSync userId={user.id} snapshotSig={pendenciasSnapshotSignature(pendenciasSnapshot)} />
       <div className="mb-3 md:mb-4">
         <PushToggleCard defaultEnabled />
       </div>

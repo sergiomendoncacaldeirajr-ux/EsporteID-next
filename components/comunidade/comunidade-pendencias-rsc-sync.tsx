@@ -1,24 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { startTransition, useEffect, useRef } from "react";
+import {
+  type ComunidadePendenciasServerSnapshot,
+  pendenciasSnapshotSignature,
+} from "@/lib/comunidade/pendencias-snapshot";
 import { createClient } from "@/lib/supabase/client";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type ComunidadePendenciasServerSnapshot = {
-  pedidosRec: number;
-  pedidosEnv: number;
-  sugRec: number;
-  sugEnv: number;
-  convRec: number;
-  convEnv: number;
-  candLider: number;
-  candMine: number;
-};
-
-function serialize(s: ComunidadePendenciasServerSnapshot): string {
-  return `${s.pedidosRec}|${s.pedidosEnv}|${s.sugRec}|${s.sugEnv}|${s.convRec}|${s.convEnv}|${s.candLider}|${s.candMine}`;
-}
+export type { ComunidadePendenciasServerSnapshot };
 
 function countFromSettled(r: PromiseSettledResult<{ count: number | null }>): number {
   if (r.status !== "fulfilled") return 0;
@@ -73,46 +64,58 @@ async function fetchRawPendenciasCounts(supabase: SupabaseClient, userId: string
 }
 
 /**
- * Mantém o Server Component da Comunidade alinhado ao Supabase: o footer/sino atualizam no cliente,
- * mas o miolo da página só muda com `router.refresh()`. Este bridge detecta divergência nas contagens
- * brutas e força o refresh (polling leve + realtime).
+ * Mantém o Server Component da Comunidade alinhado ao Supabase: o miolo só muda com `router.refresh()`.
+ * — Diff por assinatura estável (`snapshotSig`) evita corrida com objeto novo a cada voo RSC.
+ * — Refresh periódico leve (fallback) recupera se diff falhar ou Realtime não entregar.
  */
 export function ComunidadePendenciasRscSync({
   userId,
-  snapshot,
+  snapshotSig,
 }: {
   userId: string;
-  snapshot: ComunidadePendenciasServerSnapshot;
+  /** `pendenciasSnapshotSignature(...)` no servidor — string primitiva. */
+  snapshotSig: string;
 }) {
   const router = useRouter();
   const routerRefreshRef = useRef(router.refresh);
   routerRefreshRef.current = router.refresh;
-  const serverSigRef = useRef(serialize(snapshot));
+  const serverSigRef = useRef(snapshotSig);
   const lastRefreshAt = useRef(0);
+  const pollCycles = useRef(0);
 
   useEffect(() => {
-    serverSigRef.current = serialize(snapshot);
-  }, [snapshot]);
+    serverSigRef.current = snapshotSig;
+  }, [snapshotSig]);
 
-  // Dependência só de `userId`: incluir `router` recriava o canal a cada mudança de identidade após `refresh()`.
   useEffect(() => {
     if (!userId) return;
     const supabase = createClient();
     let cancelled = false;
 
+    const runRscRefresh = () => {
+      startTransition(() => {
+        routerRefreshRef.current();
+      });
+    };
+
     const maybeRefresh = () => {
       if (cancelled) return;
       const now = Date.now();
-      if (now - lastRefreshAt.current < 280) return;
+      if (now - lastRefreshAt.current < 260) return;
       lastRefreshAt.current = now;
-      routerRefreshRef.current();
+      runRscRefresh();
     };
 
     async function tick() {
       if (cancelled || document.visibilityState !== "visible") return;
+      pollCycles.current += 1;
       try {
         const live = await fetchRawPendenciasCounts(supabase, userId);
-        if (serialize(live) !== serverSigRef.current) {
+        const liveSig = pendenciasSnapshotSignature(live);
+        const stale = liveSig !== serverSigRef.current;
+        /** A cada ~6s força um refresh: cobre cache RSC / diff errado / Realtime ausente. */
+        const forceBeat = pollCycles.current % 5 === 0;
+        if (stale || forceBeat) {
           maybeRefresh();
         }
       } catch {
@@ -126,9 +129,12 @@ export function ComunidadePendenciasRscSync({
     };
     document.addEventListener("visibilitychange", onVis);
 
+    /**
+     * Sem `notificacoes` aqui: em alguns projetos Realtime/RLS quebra a inscrição inteira.
+     * Sem `time_candidaturas` sem filtro: payload global pode estourar limite ou ser bloqueado.
+     */
     const channel = supabase
       .channel(`eid-comunidade-pendencias-sync-${userId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "notificacoes", filter: `usuario_id=eq.${userId}` }, maybeRefresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `adversario_id=eq.${userId}` }, maybeRefresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "matches", filter: `usuario_id=eq.${userId}` }, maybeRefresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "match_sugestoes", filter: `alvo_dono_id=eq.${userId}` }, maybeRefresh)
@@ -136,7 +142,6 @@ export function ComunidadePendenciasRscSync({
       .on("postgres_changes", { event: "*", schema: "public", table: "time_convites", filter: `convidado_usuario_id=eq.${userId}` }, maybeRefresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "time_convites", filter: `convidado_por_usuario_id=eq.${userId}` }, maybeRefresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "time_candidaturas", filter: `candidato_usuario_id=eq.${userId}` }, maybeRefresh)
-      .on("postgres_changes", { event: "*", schema: "public", table: "time_candidaturas" }, maybeRefresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "times", filter: `criador_id=eq.${userId}` }, maybeRefresh)
       .subscribe();
 
