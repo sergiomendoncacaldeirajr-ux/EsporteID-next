@@ -6,6 +6,18 @@ export const preferredRegion = ["gru1"];
 
 type Scope = "global" | "times" | "torneios" | "locais" | "atletas";
 
+type AtletaRow = { id: string; nome: string | null; username: string | null };
+type LocalRow = {
+  id: number;
+  slug: string | null;
+  nome_publico: string | null;
+  localizacao: string | null;
+  lat: string | null;
+  lng: string | null;
+};
+type TimeRow = { id: number; nome: string | null; localizacao: string | null };
+type TorneioRow = { id: number; nome: string | null; status: string | null };
+
 export async function GET(request: Request) {
   const supabase = await createRouteHandlerClient();
   const {
@@ -17,18 +29,21 @@ export async function GET(request: Request) {
   const q = String(searchParams.get("q") ?? "").trim();
   const scope = String(searchParams.get("scope") ?? "global") as Scope;
   if (q.length < 3) return NextResponse.json({ ok: true, items: [] });
-  const like = `%${q}%`;
 
   if (scope === "atletas") {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, nome, username")
-      .neq("id", user.id)
-      .or(`nome.ilike.${like},username.ilike.${like}`)
-      .limit(12);
+    const { data, error } = await supabase.rpc("api_fold_search_atletas", {
+      p_search: q,
+      p_exclude_user: user.id,
+      p_limit: 12,
+    });
+    if (error) {
+      console.error("[search/suggest] api_fold_search_atletas", error);
+      return NextResponse.json({ ok: true, items: [] });
+    }
+    const rows = (data ?? []) as AtletaRow[];
     return NextResponse.json({
       ok: true,
-      items: (data ?? []).map((row) => ({
+      items: rows.map((row) => ({
         id: String(row.id),
         value: String(row.username ?? "").trim(),
         title: row.nome?.trim() || row.username || "Atleta",
@@ -43,15 +58,18 @@ export async function GET(request: Request) {
   const hasCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
   if (scope === "times") {
-    const { data } = await supabase
-      .from("times")
-      .select("id, nome, localizacao")
-      .or(`nome.ilike.${like},localizacao.ilike.${like}`)
-      .order("id", { ascending: false })
-      .limit(8);
+    const { data, error } = await supabase.rpc("api_fold_search_times_suggest", {
+      p_search: q,
+      p_limit: 8,
+    });
+    if (error) {
+      console.error("[search/suggest] api_fold_search_times_suggest", error);
+      return NextResponse.json({ ok: true, items: [] });
+    }
+    const rows = (data ?? []) as TimeRow[];
     return NextResponse.json({
       ok: true,
-      items: (data ?? []).map((row) => ({
+      items: rows.map((row) => ({
         id: `time-${row.id}`,
         value: String(row.nome ?? ""),
         title: row.nome ?? "Time",
@@ -62,15 +80,18 @@ export async function GET(request: Request) {
   }
 
   if (scope === "torneios") {
-    const { data } = await supabase
-      .from("torneios")
-      .select("id, nome, status")
-      .ilike("nome", like)
-      .order("criado_em", { ascending: false })
-      .limit(8);
+    const { data, error } = await supabase.rpc("api_fold_search_torneios_suggest", {
+      p_search: q,
+      p_limit: 8,
+    });
+    if (error) {
+      console.error("[search/suggest] api_fold_search_torneios_suggest", error);
+      return NextResponse.json({ ok: true, items: [] });
+    }
+    const rows = (data ?? []) as TorneioRow[];
     return NextResponse.json({
       ok: true,
-      items: (data ?? []).map((row) => ({
+      items: rows.map((row) => ({
         id: `torneio-${row.id}`,
         value: String(row.nome ?? ""),
         title: row.nome ?? "Torneio",
@@ -81,13 +102,16 @@ export async function GET(request: Request) {
   }
 
   if (scope === "locais") {
-    const { data } = await supabase
-      .from("espacos_genericos")
-      .select("id, slug, nome_publico, localizacao, lat, lng")
-      .eq("ativo_listagem", true)
-      .or(`nome_publico.ilike.${like},localizacao.ilike.${like}`)
-      .limit(30);
-    const items = (data ?? [])
+    const { data, error } = await supabase.rpc("api_fold_search_espacos_listagem", {
+      p_search: q,
+      p_limit: 30,
+    });
+    if (error) {
+      console.error("[search/suggest] api_fold_search_espacos_listagem", error);
+      return NextResponse.json({ ok: true, items: [] });
+    }
+    const rows = (data ?? []) as LocalRow[];
+    const items = rows
       .map((row) => {
         const dist = hasCoords ? distanciaKm(myLat, myLng, Number(row.lat ?? NaN), Number(row.lng ?? NaN)) : 99999;
         return {
@@ -115,26 +139,36 @@ export async function GET(request: Request) {
   }
 
   const [atletas, locais, times, torneios] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, nome, username")
-      .or(`nome.ilike.${like},username.ilike.${like}`)
-      .limit(6),
-    supabase
-      .from("espacos_genericos")
-      .select("id, slug, nome_publico, localizacao, lat, lng")
-      .eq("ativo_listagem", true)
-      .or(`nome_publico.ilike.${like},localizacao.ilike.${like}`)
-      .limit(16),
-    supabase
-      .from("times")
-      .select("id, nome, localizacao")
-      .or(`nome.ilike.${like},localizacao.ilike.${like}`)
-      .limit(6),
-    supabase.from("torneios").select("id, nome, status").ilike("nome", like).limit(6),
+    supabase.rpc("api_fold_search_atletas", {
+      p_search: q,
+      p_exclude_user: null,
+      p_limit: 6,
+    }),
+    supabase.rpc("api_fold_search_espacos_listagem", {
+      p_search: q,
+      p_limit: 16,
+    }),
+    supabase.rpc("api_fold_search_times_suggest", {
+      p_search: q,
+      p_limit: 6,
+    }),
+    supabase.rpc("api_fold_search_torneios_suggest", {
+      p_search: q,
+      p_limit: 6,
+    }),
   ]);
 
-  const localItems = (locais.data ?? [])
+  if (atletas.error) console.error("[search/suggest] global atletas", atletas.error);
+  if (locais.error) console.error("[search/suggest] global locais", locais.error);
+  if (times.error) console.error("[search/suggest] global times", times.error);
+  if (torneios.error) console.error("[search/suggest] global torneios", torneios.error);
+
+  const atletaRows = (atletas.data ?? []) as AtletaRow[];
+  const localRows = (locais.data ?? []) as LocalRow[];
+  const timeRows = (times.data ?? []) as TimeRow[];
+  const torneioRows = (torneios.data ?? []) as TorneioRow[];
+
+  const localItems = localRows
     .map((row) => {
       const dist = hasCoords ? distanciaKm(myLat, myLng, Number(row.lat ?? NaN), Number(row.lng ?? NaN)) : 99999;
       return {
@@ -160,7 +194,7 @@ export async function GET(request: Request) {
     }));
 
   const items = [
-    ...(atletas.data ?? []).map((row) => ({
+    ...atletaRows.map((row) => ({
       id: `atleta-${row.id}`,
       value: String(row.nome ?? row.username ?? ""),
       title: row.nome ?? row.username ?? "Atleta",
@@ -168,14 +202,14 @@ export async function GET(request: Request) {
       href: `/perfil/${row.id}?from=/buscar`,
     })),
     ...localItems,
-    ...(times.data ?? []).map((row) => ({
+    ...timeRows.map((row) => ({
       id: `time-${row.id}`,
       value: String(row.nome ?? ""),
       title: row.nome ?? "Time",
       subtitle: row.localizacao ?? "Sem localização",
       href: `/perfil-time/${row.id}?from=/buscar`,
     })),
-    ...(torneios.data ?? []).map((row) => ({
+    ...torneioRows.map((row) => ({
       id: `torneio-${row.id}`,
       value: String(row.nome ?? ""),
       title: row.nome ?? "Torneio",

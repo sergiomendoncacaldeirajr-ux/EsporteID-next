@@ -22,7 +22,7 @@ import {
   resolveActiveAppContext,
   type ActiveAppContext,
 } from "@/lib/auth/active-context";
-import { EID_APP_CHROME_THEME_COLOR, EID_LOGO_ICON_E_SRC } from "@/lib/branding";
+import { EID_APP_CHROME_THEME_COLOR, EID_LOGO_AUTH_MARK_SRC } from "@/lib/branding";
 import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
 import { SiteFooterLoader } from "@/components/site-footer-loader";
 import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
@@ -63,11 +63,12 @@ export const metadata: Metadata = {
     "Plataforma esportiva: perfil, partidas, torneios e ranking — com privacidade e LGPD.",
   applicationName: "EsporteID",
   icons: {
-    icon: [{ url: EID_LOGO_ICON_E_SRC, type: "image/png" }],
+    icon: [{ url: EID_LOGO_AUTH_MARK_SRC, type: "image/png" }],
+    shortcut: [{ url: EID_LOGO_AUTH_MARK_SRC, type: "image/png" }],
     apple: [
       { url: "/pwa-icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/pwa-icon-512.png", sizes: "512x512", type: "image/png" },
-      { url: EID_LOGO_ICON_E_SRC, type: "image/png" },
+      { url: EID_LOGO_AUTH_MARK_SRC, type: "image/png" },
     ],
   },
   appleWebApp: {

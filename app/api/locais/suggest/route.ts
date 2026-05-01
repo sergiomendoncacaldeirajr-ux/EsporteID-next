@@ -4,6 +4,15 @@ import { createRouteHandlerClient } from "@/lib/supabase/server";
 
 export const preferredRegion = ["gru1"];
 
+type LocalRow = {
+  id: number;
+  slug: string | null;
+  nome_publico: string | null;
+  localizacao: string | null;
+  lat: string | null;
+  lng: string | null;
+};
+
 export async function GET(request: Request) {
   const supabase = await createRouteHandlerClient();
   const {
@@ -20,15 +29,17 @@ export async function GET(request: Request) {
   const myLng = Number(profile?.lng ?? NaN);
   const hasCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
-  const like = `%${q}%`;
-  const { data } = await supabase
-    .from("espacos_genericos")
-    .select("id, slug, nome_publico, localizacao, lat, lng")
-    .eq("ativo_listagem", true)
-    .or(`nome_publico.ilike.${like},localizacao.ilike.${like}`)
-    .limit(60);
+  const { data, error } = await supabase.rpc("api_fold_search_espacos_listagem", {
+    p_search: q,
+    p_limit: 60,
+  });
+  if (error) {
+    console.error("[locais/suggest] api_fold_search_espacos_listagem", error);
+    return NextResponse.json({ ok: true, items: [] });
+  }
 
-  const items = (data ?? [])
+  const rows = (data ?? []) as LocalRow[];
+  const items = rows
     .map((row) => {
       const dist = hasCoords ? distanciaKm(myLat, myLng, Number(row.lat ?? NaN), Number(row.lng ?? NaN)) : 99999;
       return {

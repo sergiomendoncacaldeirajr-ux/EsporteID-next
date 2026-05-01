@@ -29,7 +29,6 @@ export default async function BuscarPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const rawDisplay = (sp.q ?? "").trim();
   const qSafe = sanitizeBusca(rawDisplay);
-  const qLower = qSafe.toLowerCase();
 
   const contextState = await getAuthContextState();
   const { user } = contextState;
@@ -53,8 +52,6 @@ export default async function BuscarPage({ searchParams }: Props) {
     redirect("/onboarding");
   }
 
-  const pat = qLower ? `%${qLower}%` : "";
-
   const empty = {
     atletas: [] as Array<{
       id: string;
@@ -71,36 +68,31 @@ export default async function BuscarPage({ searchParams }: Props) {
   };
 
   let resultados = empty;
-  if (pat) {
+  if (qSafe) {
     const [atletasRes, locaisRes, timesRes, torneiosRes] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, nome, username, avatar_url, localizacao, disponivel_amistoso, disponivel_amistoso_ate")
-        .neq("id", user.id)
-        .or(`nome.ilike.${pat},username.ilike.${pat}`)
-        .limit(28),
-      supabase
-        .from("espacos_genericos")
-        .select("id, nome_publico, localizacao, logo_arquivo")
-        .eq("ativo_listagem", true)
-        .or(`nome_publico.ilike.${pat},localizacao.ilike.${pat}`)
-        .order("id", { ascending: false })
-        .limit(20),
-      supabase
-        .from("times")
-        .select("id, nome, localizacao, escudo, tipo")
-        .neq("criador_id", user.id)
-        .or(`nome.ilike.${pat},localizacao.ilike.${pat}`)
-        .order("pontos_ranking", { ascending: false })
-        .limit(20),
-      supabase
-        .from("torneios")
-        .select("id, nome, banner")
-        .eq("status", "aberto")
-        .ilike("nome", pat)
-        .order("criado_em", { ascending: false })
-        .limit(20),
+      supabase.rpc("api_fold_search_atletas_buscar", {
+        p_search: qSafe,
+        p_exclude_user: user.id,
+        p_limit: 28,
+      }),
+      supabase.rpc("api_fold_search_espacos_buscar", {
+        p_search: qSafe,
+        p_limit: 20,
+      }),
+      supabase.rpc("api_fold_search_times_buscar", {
+        p_search: qSafe,
+        p_exclude_creator: user.id,
+        p_limit: 20,
+      }),
+      supabase.rpc("api_fold_search_torneios_abertos_buscar", {
+        p_search: qSafe,
+        p_limit: 20,
+      }),
     ]);
+    if (atletasRes.error) console.error("[buscar] atletas", atletasRes.error);
+    if (locaisRes.error) console.error("[buscar] locais", locaisRes.error);
+    if (timesRes.error) console.error("[buscar] times", timesRes.error);
+    if (torneiosRes.error) console.error("[buscar] torneios", torneiosRes.error);
     resultados = {
       atletas: (atletasRes.data ?? []) as typeof empty.atletas,
       locais: (locaisRes.data ?? []) as typeof empty.locais,
