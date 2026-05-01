@@ -155,6 +155,24 @@ export default async function ComunidadePage() {
   const hasMyCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
   const uidEq = user.id;
+  const { data: meusTimesLider } = await supabase.from("times").select("id").eq("criador_id", uidEq);
+  const meusTimeIdsLider = [
+    ...new Set(
+      (meusTimesLider ?? [])
+        .map((t) => Number((t as { id?: number | null }).id ?? 0))
+        .filter((id) => Number.isFinite(id) && id > 0),
+    ),
+  ];
+  let cntCandLider = 0;
+  if (meusTimeIdsLider.length > 0) {
+    const { count: candLiderCount } = await supabase
+      .from("time_candidaturas")
+      .select("id", { count: "exact", head: true })
+      .in("time_id", meusTimeIdsLider.slice(0, 100))
+      .eq("status", "pendente");
+    cntCandLider = candLiderCount ?? 0;
+  }
+
   const [
     { count: cntMatchIn },
     { count: cntMatchOut },
@@ -162,7 +180,6 @@ export default async function ComunidadePage() {
     { count: cntSugEnv },
     { count: cntConvRec },
     { count: cntConvEnv },
-    { count: cntCandLider },
     { count: cntCandMine },
     { count: cntPartAguarda },
     { count: cntPartAgend },
@@ -179,11 +196,6 @@ export default async function ComunidadePage() {
       .neq("oculto_sugeridor", true),
     supabase.from("time_convites").select("id", { count: "exact", head: true }).eq("convidado_usuario_id", uidEq).eq("status", "pendente"),
     supabase.from("time_convites").select("id", { count: "exact", head: true }).eq("convidado_por_usuario_id", uidEq).eq("status", "pendente"),
-    supabase
-      .from("time_candidaturas")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pendente")
-      .eq("times.criador_id", uidEq),
     supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).eq("candidato_usuario_id", uidEq).eq("status", "pendente"),
     supabase
       .from("partidas")

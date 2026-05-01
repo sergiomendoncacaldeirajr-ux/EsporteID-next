@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useActionState } from "react";
 import { criarEquipe, convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
+import { emitEidSocialDataRefresh } from "@/lib/comunidade/social-panel-layout";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { EidInviteButton } from "@/components/ui/eid-invite-button";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
@@ -189,6 +190,12 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
       setInviteSuggestLoading(false);
     };
   }, [inviteQuery, pickedInviteUserId, isConvidarStyle]);
+
+  useEffect(() => {
+    if (!inviteState.ok) return;
+    emitEidSocialDataRefresh();
+    router.refresh();
+  }, [inviteState.ok, router]);
 
   useEffect(() => {
     if (!inviteState.ok || !isConvidarStyle) return;

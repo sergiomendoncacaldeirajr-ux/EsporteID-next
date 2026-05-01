@@ -16,6 +16,7 @@ import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyph
 import {
   EID_SOCIAL_GRID_3,
   EID_SOCIAL_PANEL_FOOTER,
+  emitEidSocialDataRefresh,
   getSocialStatusPanelItemShell,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
@@ -84,9 +85,7 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
         setErrorText(res.message);
         return;
       }
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
-      }
+      emitEidSocialDataRefresh();
       router.refresh();
     } catch (e) {
       setErrorText(e instanceof Error ? e.message : "Não foi possível cancelar o convite.");

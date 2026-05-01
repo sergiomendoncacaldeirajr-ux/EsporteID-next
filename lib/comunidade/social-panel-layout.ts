@@ -91,3 +91,9 @@ export const EID_SOCIAL_LIGHT_ACOES_ROW =
  * Preferir `EidSocialAceitarButton` / `EidSocialRecusarButton` (`components/ui/eid-social-acao-buttons.tsx`), que já aplicam este atributo.
  */
 export const EID_SOCIAL_ACAO_BTN_ATTR = { "data-eid-social-acao-btn": "true" } as const;
+
+/** Alinha com `ComunidadePendenciasRscSync` / footer: força `router.refresh()` onde há listener de `eid:realtime-refresh`. */
+export function emitEidSocialDataRefresh() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+}

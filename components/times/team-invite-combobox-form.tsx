@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
 import { useEffect, useMemo, useState } from "react";
 import type { TeamActionState } from "@/app/times/actions";
+import { emitEidSocialDataRefresh } from "@/lib/comunidade/social-panel-layout";
 import { EidInviteButton } from "@/components/ui/eid-invite-button";
 
 type FormActionProp = NonNullable<ComponentProps<"form">["action"]>;
@@ -94,6 +95,7 @@ export function TeamInviteComboboxForm({
     setPickedUserId(null);
     setSuggestions([]);
     setSuggestOpen(false);
+    emitEidSocialDataRefresh();
     router.refresh();
   }, [inviteState.ok, router]);
 

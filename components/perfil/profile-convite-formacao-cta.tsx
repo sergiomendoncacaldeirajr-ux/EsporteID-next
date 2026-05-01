@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
+import { emitEidSocialDataRefresh } from "@/lib/comunidade/social-panel-layout";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
 import { EID_INVITE_ACTION_CLASS, EidInviteButton } from "@/components/ui/eid-invite-button";
@@ -43,7 +44,9 @@ export function ProfileConviteFormacaoCta({
   const primeiro = primeiroNome(targetNome);
 
   useEffect(() => {
-    if (state.ok) router.refresh();
+    if (!state.ok) return;
+    emitEidSocialDataRefresh();
+    router.refresh();
   }, [state.ok, router]);
 
   const cadastrarHref = `/editar/equipes/cadastrar?from=${encodeURIComponent(perfilPath)}&convidar=${encodeURIComponent(targetUserId)}`;

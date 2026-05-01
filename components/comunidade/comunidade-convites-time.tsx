@@ -12,6 +12,7 @@ import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/
 import {
   EID_SOCIAL_PANEL_FOOTER,
   EID_SOCIAL_PANEL_ITEM_AMBER,
+  emitEidSocialDataRefresh,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
 import {
@@ -66,9 +67,7 @@ function ConviteTimeRow({ c }: { c: ConviteTimeItem }) {
         setRowError(res.message);
         return;
       }
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
-      }
+      emitEidSocialDataRefresh();
       router.refresh();
     } catch (e) {
       setRowError(e instanceof Error ? e.message : "Não foi possível concluir. Tente de novo.");
