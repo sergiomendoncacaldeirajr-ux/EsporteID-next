@@ -174,12 +174,47 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
       return t ?? null;
     })
     .filter((t): t is { id: number; tipo: string | null; esporte_id: number | null } => Number.isFinite(Number(t?.id)));
-  const allViewerTimesRaw = [...(meusTimesCriados ?? []), ...(meusTimesMembro ?? [])];
-  const byTimeId = new Map<number, { id: number; tipo: string | null; esporte_id: number | null }>();
-  for (const t of allViewerTimesRaw) {
-    const id = Number((t as { id?: number | null }).id ?? 0);
-    if (!Number.isFinite(id) || id <= 0) continue;
-    if (!byTimeId.has(id)) byTimeId.set(id, t as { id: number; tipo: string | null; esporte_id: number | null });
+
+  /** Mesma convenção que `formacaoKindFromTipoRaw` + prioridade explícita dupla/time sobre null (evita “primeiro vence” líder vs membro). */
+  function viewerTimeTipoRank(tipo: string | null): number {
+    const t = String(tipo ?? "").trim().toLowerCase();
+    if (t === "dupla") return 2;
+    if (t === "time") return 1;
+    return 0;
+  }
+  type ViewerTimeNorm = { id: number; tipo: string | null; esporte_id: number | null };
+  const rowsMembro: ViewerTimeNorm[] = meusTimesMembro.map((t) => ({
+    id: Number(t.id),
+    tipo: t.tipo ?? null,
+    esporte_id: t.esporte_id ?? null,
+  }));
+  const rowsCriador: ViewerTimeNorm[] = (meusTimesCriados ?? []).map((t) => {
+    const row = t as { id?: number | null; tipo?: string | null; esporte_id?: number | null };
+    return {
+      id: Number(row.id ?? 0),
+      tipo: row.tipo ?? null,
+      esporte_id: row.esporte_id ?? null,
+    };
+  });
+  const byTimeId = new Map<number, ViewerTimeNorm>();
+  for (const row of [...rowsMembro, ...rowsCriador]) {
+    if (!Number.isFinite(row.id) || row.id <= 0) continue;
+    const prev = byTimeId.get(row.id);
+    if (!prev) {
+      byTimeId.set(row.id, row);
+      continue;
+    }
+    const rNew = viewerTimeTipoRank(row.tipo);
+    const rPrev = viewerTimeTipoRank(prev.tipo);
+    if (rNew > rPrev) {
+      byTimeId.set(row.id, {
+        id: row.id,
+        tipo: row.tipo ?? prev.tipo,
+        esporte_id: Number.isFinite(Number(row.esporte_id)) && Number(row.esporte_id) > 0 ? Number(row.esporte_id) : prev.esporte_id,
+      });
+    } else if (rNew === rPrev && !prev.tipo && row.tipo) {
+      byTimeId.set(row.id, { ...prev, tipo: row.tipo });
+    }
   }
   const allViewerTimes = Array.from(byTimeId.values());
   const viewerEsportesComDupla: number[] = [];

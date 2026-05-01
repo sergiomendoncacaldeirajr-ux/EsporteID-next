@@ -158,7 +158,7 @@ function MatchRadarGridMiniChallengeBlock({
           desafioHref={desafioHref}
           desafioVariants={undefined}
           className={cn(
-            "eid-btn-match-cta inline-flex min-w-0 max-w-full shrink items-center justify-center border border-orange-200/35 bg-[linear-gradient(180deg,#ffb14a_0%,#ff8d1c_48%,#ef6c00_100%)] font-black uppercase text-white shadow-[0_8px_18px_-10px_rgba(239,108,0,0.75)]",
+            "eid-btn-match-cta inline-flex min-w-0 max-w-full shrink-0 items-center justify-center border border-orange-200/35 bg-[linear-gradient(180deg,#ffb14a_0%,#ff8d1c_48%,#ef6c00_100%)] font-black uppercase text-white shadow-[0_8px_18px_-10px_rgba(239,108,0,0.75)]",
             compact
               ? "mt-1 min-h-8 w-full rounded-lg px-1 py-1.5 text-[7px] leading-tight tracking-[0.04em] min-[390px]:min-h-9 min-[390px]:px-1.5 min-[390px]:text-[8px]"
               : "mt-1.5 min-h-11 w-full rounded-xl px-2.5 py-2.5 text-[9px] leading-snug tracking-[0.05em] min-[390px]:min-h-12 min-[390px]:px-3 min-[390px]:py-3 min-[390px]:text-[10px]"
@@ -272,13 +272,13 @@ function MatchRadarStickerCard({
   return (
     <article
       className={cn(
-        "relative isolate w-full min-w-0 max-w-full overflow-hidden border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,white_18%)] bg-[radial-gradient(130%_100%_at_0%_0%,color-mix(in_srgb,var(--eid-primary-500)_7%,white_93%)_0%,transparent_42%),linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_98%,white_2%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_4%,transparent)]",
+        "relative isolate w-full min-w-0 max-w-full overflow-visible border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,white_18%)] bg-[radial-gradient(130%_100%_at_0%_0%,color-mix(in_srgb,var(--eid-primary-500)_7%,white_93%)_0%,transparent_42%),linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_98%,white_2%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_4%,transparent)]",
         compact
           ? "rounded-[1.05rem] p-1.5 pb-2 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.45)] min-[390px]:rounded-[1.2rem] min-[390px]:p-2 min-[390px]:pb-2"
-          : "rounded-[1.35rem] p-2 pb-2.5 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] min-[390px]:rounded-[1.6rem] min-[390px]:p-3 min-[390px]:pb-3"
+          : "rounded-[1.35rem] p-2 pb-3.5 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] min-[390px]:rounded-[1.6rem] min-[390px]:p-3 min-[390px]:pb-4"
       )}
     >
-      <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit]" aria-hidden>
         <span className="absolute -left-8 -top-7 rotate-[-12deg] text-[88px] opacity-[0.03] blur-[0.2px]">⚽</span>
         <span className="absolute -right-7 top-2 rotate-[16deg] text-[84px] opacity-[0.028] blur-[0.2px]">🎾</span>
         <span className="absolute -left-6 bottom-1 rotate-[8deg] text-[92px] opacity-[0.026] blur-[0.2px]">🏀</span>
@@ -1258,7 +1258,7 @@ export function MatchRadarApp({
                 Nenhum oponente com esses filtros.
               </p>
             ) : (
-              <div className="@container grid min-w-0 grid-cols-2 gap-1.5 px-2 pb-3 pt-2 sm:gap-3 sm:px-3 sm:pb-4">
+              <div className="@container grid min-w-0 grid-cols-2 items-start gap-1.5 px-2 pb-3 pt-2 sm:gap-3 sm:px-3 sm:pb-4">
                 {displayedSuggestionCards.map((c) => (
                   <div key={`${c.modalidade}-${c.id}-${c.esporteId}`} className="min-w-0">
                     <MatchRadarStickerCard
@@ -1359,7 +1359,7 @@ export function MatchRadarApp({
                 <X className="h-4 w-4" strokeWidth={2.5} aria-hidden />
               </button>
             </div>
-            <div className="@container grid min-w-0 flex-1 grid-cols-2 content-start gap-1.5 overflow-y-auto pb-2 sm:gap-2.5">
+            <div className="@container grid min-w-0 flex-1 grid-cols-2 content-start items-start gap-1.5 overflow-y-auto pb-2 sm:gap-2.5">
               {displayedSuggestionCards.map((c) => (
                 <div key={`${c.modalidade}-${c.id}-${c.esporteId}-full`} className="min-w-0">
                   <MatchRadarStickerCard
