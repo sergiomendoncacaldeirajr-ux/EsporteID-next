@@ -92,34 +92,8 @@ export const EID_SOCIAL_LIGHT_ACOES_ROW =
  */
 export const EID_SOCIAL_ACAO_BTN_ATTR = { "data-eid-social-acao-btn": "true" } as const;
 
-/** Alinha com `ComunidadePendenciasRscSync` / footer: força `router.refresh()` onde há listener de `eid:realtime-refresh`. */
+/** Dispara `eid:realtime-refresh` (ex.: sininho / outras telas que revalidam ao vivo). */
 export function emitEidSocialDataRefresh() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
-}
-
-/** PWA instalado / modo app — `router.refresh()` costuma falhar no miolo; usar recarga completa como fallback. */
-export function eidIsPwaStandaloneDisplay(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    if (window.matchMedia("(display-mode: standalone)").matches) return true;
-    if (window.matchMedia("(display-mode: minimal-ui)").matches) return true;
-  } catch {
-    /* ignore */
-  }
-  return (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
-}
-
-/** PWA ou celular com tela estreita + toque — mesmo problema de RSC “preso” que no standalone. */
-export function eidPreferHardReloadComunidadeRsc(): boolean {
-  if (eidIsPwaStandaloneDisplay()) return true;
-  if (typeof window === "undefined") return false;
-  try {
-    if (window.matchMedia("(max-width: 640px)").matches && window.matchMedia("(pointer: coarse)").matches) {
-      return true;
-    }
-  } catch {
-    /* ignore */
-  }
-  return false;
 }

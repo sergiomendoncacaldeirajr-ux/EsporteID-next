@@ -2,14 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
-import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
-import { ComunidadeConvitesEnviadosTime, type ConviteTimeEnviadoItem } from "@/components/comunidade/comunidade-convites-enviados-time";
+import type { ConviteTimeEnviadoItem } from "@/components/comunidade/comunidade-convites-enviados-time";
+import { ComunidadeConvitesEnviadosLive } from "@/components/comunidade/comunidade-convites-enviados-live";
+import { ComunidadeConvitesRecebidosLive } from "@/components/comunidade/comunidade-convites-recebidos-live";
+import type { ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
 import { ComunidadeBackgroundSync } from "@/components/comunidade/comunidade-background-sync";
 import { ComunidadePendenciasRscSync } from "@/components/comunidade/comunidade-pendencias-rsc-sync";
-import {
-  type ComunidadePendenciasServerSnapshot,
-  pendenciasSnapshotSignature,
-} from "@/lib/comunidade/pendencias-snapshot";
+import { ComunidadeQuadro } from "@/components/comunidade/comunidade-quadro";
+import { type ComunidadePendenciasServerSnapshot } from "@/lib/comunidade/pendencias-snapshot";
 import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pedidos-enviados";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import {
@@ -46,7 +46,6 @@ import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown"
 import { createClient } from "@/lib/supabase/server";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { Calendar, Clock, Clock3, LayoutGrid, MapPin, Shield, User, UserPlus } from "lucide-react";
-import type { ReactNode } from "react";
 
 export const metadata = {
   title: "Ações pendentes",
@@ -107,32 +106,6 @@ function PedidoElencoEidSeal({ notaEid }: { notaEid: number }) {
       <span className="flex items-center px-[7px] py-[4px] tabular-nums [background-color:var(--eid-seal-score-bg)] [color:var(--eid-seal-score-fg)]">
         {v}
       </span>
-    </div>
-  );
-}
-
-/** Cabeçalho de subseção sem card extra — o bloco principal (Desafio / Equipe) já é o único “quadro”. */
-function ComunidadeQuadro({
-  id,
-  title,
-  hasPending,
-  badgeLabel = "Pendente",
-  children,
-}: {
-  id: string;
-  title: string;
-  hasPending: boolean;
-  badgeLabel?: string;
-  children: ReactNode;
-}) {
-  if (!hasPending) return null;
-  return (
-    <div id={id} className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <h3 className="text-[11px] font-black tracking-tight text-eid-primary-500 eid-dark:text-eid-primary-300">{title}</h3>
-        <EidPendingBadge label={badgeLabel} />
-      </div>
-      <div className="min-w-0">{children}</div>
     </div>
   );
 }
@@ -1305,9 +1278,6 @@ export default async function ComunidadePage() {
     minhasCandidaturasEquipe.some((c) => c.statusRaw === "pendente");
   const temAlgumaAcaoPendente = hasPartidasAcoes || hasDesafioAcoes || hasEquipeAcoes;
   const sugestoesEnviadasSoPendentes = sugestoesEnviadasItems.filter((s) => s.statusRaw === "pendente");
-  const convitesEnviadosSoPendentes = conviteEnviadoItems.filter(
-    (i) => String(i.status ?? "").toLowerCase() === "pendente"
-  );
   const minhasCandSoPendentes = minhasCandidaturasEquipe.filter((c) => c.statusRaw === "pendente");
 
   return (
@@ -1318,7 +1288,7 @@ export default async function ComunidadePage() {
       className="mx-auto w-full max-w-3xl px-2.5 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-6xl sm:px-5 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
       <ComunidadeBackgroundSync />
-      <ComunidadePendenciasRscSync userId={user.id} snapshotSig={pendenciasSnapshotSignature(pendenciasSnapshot)} />
+      <ComunidadePendenciasRscSync userId={user.id} pendenciasSnapshot={pendenciasSnapshot} />
       <div className="mb-3 md:mb-4">
         <PushToggleCard defaultEnabled />
       </div>
@@ -1465,7 +1435,7 @@ export default async function ComunidadePage() {
           </section>
           ) : null}
 
-          {hasEquipeAcoes ? (
+          {needEquipe ? (
           <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
             <div className="flex items-center justify-between gap-2 border-b border-transparent bg-eid-card px-3 py-2 md:px-4">
               <div className="flex min-w-0 items-center gap-1.5">
@@ -1495,9 +1465,12 @@ export default async function ComunidadePage() {
               >
                 <ComunidadeSugestoesEnviadasMatch items={sugestoesEnviadasSoPendentes} viewerUserId={user.id} />
               </ComunidadeQuadro>
-              <ComunidadeQuadro id="equipe-convites" title="Convites recebidos" hasPending={conviteItems.length > 0}>
-                <ComunidadeConvitesTime items={conviteItems} />
-              </ComunidadeQuadro>
+              <ComunidadeConvitesRecebidosLive
+                initialItems={conviteItems}
+                userId={user.id}
+                viewerLat={hasMyCoords ? myLat : null}
+                viewerLng={hasMyCoords ? myLng : null}
+              />
               {candidaturasEquipe.length > 0 ? (
                 <>
                   {candidaturasEquipe.length > 1 ? (
@@ -1658,13 +1631,12 @@ export default async function ComunidadePage() {
                   </ul>
                 </>
               ) : null}
-              <ComunidadeQuadro
-                id="equipe-convites-enviados"
-                title="Convites enviados (aguardando resposta)"
-                hasPending={convitesEnviadosSoPendentes.length > 0}
-              >
-                <ComunidadeConvitesEnviadosTime items={convitesEnviadosSoPendentes} />
-              </ComunidadeQuadro>
+              <ComunidadeConvitesEnviadosLive
+                initialItems={conviteEnviadoItems}
+                userId={user.id}
+                viewerLat={hasMyCoords ? myLat : null}
+                viewerLng={hasMyCoords ? myLng : null}
+              />
               <ComunidadeQuadro
                 id="equipe-pedidos-enviados"
                 title="Pedidos de entrada enviados"

@@ -1,12 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import {
+  applyClientOverride,
+  clearComunidadePendenciasOverride,
+} from "@/lib/comunidade/comunidade-client-pendencias-override";
 import {
   type ComunidadePendenciasServerSnapshot,
   pendenciasSnapshotSignature,
 } from "@/lib/comunidade/pendencias-snapshot";
-import { eidPreferHardReloadComunidadeRsc } from "@/lib/comunidade/social-panel-layout";
 import { createClient } from "@/lib/supabase/client";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -66,28 +69,28 @@ async function fetchRawPendenciasCounts(supabase: SupabaseClient, userId: string
 
 /**
  * Mantém o Server Component da Comunidade alinhado ao Supabase: o miolo só muda com `router.refresh()`.
- * — Diff por assinatura estável (`snapshotSig`) evita corrida com objeto novo a cada voo RSC.
- * — Refresh periódico leve (fallback) recupera se diff falhar ou Realtime não entregar.
+ * Convites de equipe atualizam em blocos cliente (`ComunidadeConvites*Live` + override de contagens) sem refresh global.
  */
 export function ComunidadePendenciasRscSync({
   userId,
-  snapshotSig,
+  pendenciasSnapshot,
 }: {
   userId: string;
-  /** `pendenciasSnapshotSignature(...)` no servidor — string primitiva. */
-  snapshotSig: string;
+  pendenciasSnapshot: ComunidadePendenciasServerSnapshot;
 }) {
   const router = useRouter();
   const routerRefreshRef = useRef(router.refresh);
-  const serverSigRef = useRef(snapshotSig);
+  const snapshotRef = useRef(pendenciasSnapshot);
   const lastRefreshAt = useRef(0);
-  const lastHardReloadAt = useRef(0);
-  const consecStaleTicks = useRef(0);
-  const pollCycles = useRef(0);
 
   useEffect(() => {
-    serverSigRef.current = snapshotSig;
-  }, [snapshotSig]);
+    snapshotRef.current = pendenciasSnapshot;
+  }, [pendenciasSnapshot]);
+
+  /** Antes dos `useEffect` dos filhos (convites live repõem contagens no mesmo commit). */
+  useLayoutEffect(() => {
+    clearComunidadePendenciasOverride();
+  }, [pendenciasSnapshot]);
 
   useEffect(() => {
     routerRefreshRef.current = router.refresh;
@@ -98,22 +101,6 @@ export function ComunidadePendenciasRscSync({
     const supabase = createClient();
     let cancelled = false;
     const registered: ReturnType<typeof supabase.channel>[] = [];
-
-    const maybeHardReloadIfPwaStillStale = async () => {
-      if (cancelled || !eidPreferHardReloadComunidadeRsc()) return false;
-      try {
-        const live = await fetchRawPendenciasCounts(supabase, userId);
-        const liveSig = pendenciasSnapshotSignature(live);
-        if (liveSig === serverSigRef.current) return false;
-        const t = Date.now();
-        if (t - lastHardReloadAt.current < 2800) return false;
-        lastHardReloadAt.current = t;
-        window.location.reload();
-        return true;
-      } catch {
-        return false;
-      }
-    };
 
     const maybeRefresh = () => {
       if (cancelled) return;
@@ -127,7 +114,6 @@ export function ComunidadePendenciasRscSync({
           /* ignore */
         }
         if (cancelled) return;
-        if (await maybeHardReloadIfPwaStillStale()) return;
         queueMicrotask(() => {
           routerRefreshRef.current();
           queueMicrotask(() => routerRefreshRef.current());
@@ -137,38 +123,12 @@ export function ComunidadePendenciasRscSync({
 
     async function tick() {
       if (cancelled) return;
-      pollCycles.current += 1;
       try {
         const live = await fetchRawPendenciasCounts(supabase, userId);
         const liveSig = pendenciasSnapshotSignature(live);
-        const stale = liveSig !== serverSigRef.current;
+        const effectiveSig = pendenciasSnapshotSignature(applyClientOverride(snapshotRef.current));
+        const stale = liveSig !== effectiveSig;
         if (stale) {
-          consecStaleTicks.current += 1;
-        } else {
-          consecStaleTicks.current = 0;
-        }
-        /**
-         * PWA (WebView): `router.refresh()` muitas vezes não aplica o flight novo no miolo.
-         * Após vários polls seguidos com assinatura cliente ≠ servidor, recarrega a página (com throttle).
-         */
-        if (
-          eidPreferHardReloadComunidadeRsc() &&
-          stale &&
-          consecStaleTicks.current >= 5 &&
-          Date.now() - lastHardReloadAt.current >= 4500
-        ) {
-          lastHardReloadAt.current = Date.now();
-          try {
-            await fetch("/api/comunidade/revalidate", { method: "POST", credentials: "same-origin" });
-          } catch {
-            /* ignore */
-          }
-          if (!cancelled) window.location.reload();
-          return;
-        }
-        /** A cada ~4s força refresh: cobre cache RSC / Realtime ausente. */
-        const forceBeat = pollCycles.current % 4 === 0;
-        if (stale || forceBeat) {
           maybeRefresh();
         }
       } catch {
@@ -182,10 +142,6 @@ export function ComunidadePendenciasRscSync({
     };
     document.addEventListener("visibilitychange", onVis);
 
-    /**
-     * Canal só de `notificacoes`: convite de time, desafio etc. atualizam o sino antes do miolo;
-     * sem isto o RSC da /comunidade às vezes não acompanhava (outros canais não disparavam a tempo).
-     */
     const chNotif = supabase
       .channel(`eid-comunidade-sync-notif-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "notificacoes", filter: `usuario_id=eq.${userId}` }, maybeRefresh)
@@ -229,8 +185,6 @@ export function ComunidadePendenciasRscSync({
 
       const chEquipe = supabase
         .channel(`eid-comunidade-sync-equipe-${userId}`)
-        .on("postgres_changes", { event: "*", schema: "public", table: "time_convites", filter: `convidado_usuario_id=eq.${userId}` }, maybeRefresh)
-        .on("postgres_changes", { event: "*", schema: "public", table: "time_convites", filter: `convidado_por_usuario_id=eq.${userId}` }, maybeRefresh)
         .on("postgres_changes", { event: "*", schema: "public", table: "time_candidaturas", filter: `candidato_usuario_id=eq.${userId}` }, maybeRefresh)
         .on("postgres_changes", { event: "*", schema: "public", table: "times", filter: `criador_id=eq.${userId}` }, maybeRefresh);
 
@@ -238,7 +192,7 @@ export function ComunidadePendenciasRscSync({
         chEquipe.on(
           "postgres_changes",
           { event: "*", schema: "public", table: "time_candidaturas", filter: `time_id=${ownedTimeFilter}` },
-          maybeRefresh
+          maybeRefresh,
         );
       }
 
@@ -252,16 +206,12 @@ export function ComunidadePendenciasRscSync({
       registered.push(chEquipe);
     })();
 
-    const onRealtimeBridge = () => maybeRefresh();
-    window.addEventListener("eid:realtime-refresh", onRealtimeBridge);
-
     void tick();
 
     return () => {
       cancelled = true;
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", onVis);
-      window.removeEventListener("eid:realtime-refresh", onRealtimeBridge);
       for (const ch of registered) void supabase.removeChannel(ch);
     };
   }, [userId]);
