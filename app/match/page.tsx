@@ -54,7 +54,9 @@ function toMatchFinalidade(v: string | undefined): MatchRadarFinalidade {
 }
 
 function toViewMode(v: string | undefined): RadarViewMode {
-  return String(v ?? "").trim().toLowerCase() === "grid" ? "grid" : "full";
+  const raw = String(v ?? "").trim().toLowerCase();
+  if (raw === "full") return "full";
+  return "grid";
 }
 
 function toGeneroFiltro(v: string | undefined): RadarGeneroFiltro {
@@ -106,19 +108,11 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
     redirect(`/conta/confirmar-maioridade-match?next=${encodeURIComponent(matchNext)}`);
   }
   await expireDisponivelAmistosoProfileIfNeeded(supabase, user.id);
-  const { data: meAm } = await supabase
-    .from("profiles")
-    .select("disponivel_amistoso, disponivel_amistoso_ate")
-    .eq("id", user.id)
-    .maybeSingle();
   const viewerAmistosoOn = computeDisponivelAmistosoEffective(
-    meAm?.disponivel_amistoso ?? me.disponivel_amistoso,
-    meAm?.disponivel_amistoso_ate ?? me.disponivel_amistoso_ate
+    me.disponivel_amistoso,
+    me.disponivel_amistoso_ate
   );
-  const viewerAmistosoExpiresAt =
-    viewerAmistosoOn && (meAm?.disponivel_amistoso_ate ?? me.disponivel_amistoso_ate)
-      ? String(meAm?.disponivel_amistoso_ate ?? me.disponivel_amistoso_ate)
-      : null;
+  const viewerAmistosoExpiresAt = viewerAmistosoOn && me.disponivel_amistoso_ate ? String(me.disponivel_amistoso_ate) : null;
   const hasLocation = Number.isFinite(Number(me.lat)) && Number.isFinite(Number(me.lng));
 
   if (!hasLocation) {
@@ -168,17 +162,18 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
     supabase.from("times").select("id, tipo, esporte_id").eq("criador_id", user.id),
     supabase
       .from("membros_time")
-      .select("time_id")
+      .select("time_id, times!inner(id, tipo, esporte_id)")
       .eq("usuario_id", user.id)
       .in("status", ["ativo", "aceito", "aprovado"]),
   ]);
-  const meusTimesMembroIds = (minhasMembRows ?? [])
-    .map((r) => Number((r as { time_id: number }).time_id))
-    .filter((n) => Number.isFinite(n) && n > 0);
-  const { data: meusTimesMembro } =
-    meusTimesMembroIds.length > 0
-      ? await supabase.from("times").select("id, tipo, esporte_id").in("id", meusTimesMembroIds)
-      : { data: [] as Array<{ id: number; tipo: string | null; esporte_id: number | null }> };
+  const meusTimesMembro = (minhasMembRows ?? [])
+    .map((r) => {
+      const t = Array.isArray((r as { times?: unknown }).times)
+        ? (r as { times?: Array<{ id?: number | null; tipo?: string | null; esporte_id?: number | null }> }).times?.[0]
+        : (r as { times?: { id?: number | null; tipo?: string | null; esporte_id?: number | null } }).times;
+      return t ?? null;
+    })
+    .filter((t): t is { id: number; tipo: string | null; esporte_id: number | null } => Number.isFinite(Number(t?.id)));
   const allViewerTimesRaw = [...(meusTimesCriados ?? []), ...(meusTimesMembro ?? [])];
   const byTimeId = new Map<number, { id: number; tipo: string | null; esporte_id: number | null }>();
   for (const t of allViewerTimesRaw) {

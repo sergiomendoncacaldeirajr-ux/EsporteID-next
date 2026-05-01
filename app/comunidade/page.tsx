@@ -15,13 +15,11 @@ import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/c
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { EidCityState } from "@/components/ui/eid-city-state";
-import { EidAcceptedBadge } from "@/components/ui/eid-accepted-badge";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
-import { EidRejectedBadge } from "@/components/ui/eid-rejected-badge";
-import { CancelarCandidaturaForm, ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
+import { CancelarCandidaturaForm } from "@/components/vagas/vagas-actions";
+import { CandidaturaResponseActions } from "@/components/vagas/candidatura-response-actions";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
 import { fetchPedidoRankingPreview, type PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
-import { PEDIDO_MATCH_RECEBIDO_FORM_CLASS, PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS } from "@/lib/desafio/flow-ui";
 import {
   EID_SOCIAL_GRID_3,
   EID_SOCIAL_PANEL_FOOTER,
@@ -430,7 +428,6 @@ export default async function ComunidadePage() {
     })()
   );
 
-  const nPedidos = pedidosItems.length;
 
   const enviadosAdversarioIds = [
     ...new Set((enviadosPendentes ?? []).map((m) => String(m.adversario_id ?? "")).filter(Boolean)),
@@ -513,7 +510,6 @@ export default async function ComunidadePage() {
     if (!needEquipe) {
       return {
         sugestoesItems: [] as SugestaoMatchItem[],
-        nSugestoes: 0,
         sugestoesEnviadasItems: [] as SugestaoEnviadaMatchItem[],
         conviteItems: [] as ConviteTimeItem[],
         conviteEnviadoItems: [] as ConviteTimeEnviadoItem[],
@@ -659,7 +655,6 @@ export default async function ComunidadePage() {
     modalidade: s.modalidade ?? "time",
     mensagem: s.mensagem ?? null,
   }));
-  const nSugestoes = sugestoesItems.length;
   const sugEnvTimeIds = [
     ...new Set(
       (sugestoesEnviadasRaw ?? []).flatMap((s) => [s.sugeridor_time_id, s.alvo_time_id].filter((x): x is number => x != null))
@@ -1081,7 +1076,6 @@ export default async function ComunidadePage() {
 
     return {
       sugestoesItems,
-      nSugestoes,
       sugestoesEnviadasItems,
       conviteItems,
       conviteEnviadoItems,
@@ -1091,7 +1085,6 @@ export default async function ComunidadePage() {
   })();
   const {
     sugestoesItems,
-    nSugestoes,
     sugestoesEnviadasItems,
     conviteItems,
     conviteEnviadoItems,
@@ -1635,28 +1628,7 @@ export default async function ComunidadePage() {
                             </div>
 
                             <div className="mt-2 border-t border-transparent pt-2">
-                              <div
-                                className={`${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !items-stretch gap-1.5 px-3 pb-1.5 sm:gap-2 sm:px-4 sm:pb-2`}
-                              >
-                                <div className={`${PEDIDO_MATCH_RECEBIDO_FORM_CLASS} flex min-h-0 min-w-0`}>
-                                  <ResponderCandidaturaForm
-                                    candidaturaId={c.id}
-                                    aceitar={true}
-                                    stretch
-                                    lightChrome
-                                    label="Aprovar"
-                                  />
-                                </div>
-                                <div className={`${PEDIDO_MATCH_RECEBIDO_FORM_CLASS} flex min-h-0 min-w-0`}>
-                                  <ResponderCandidaturaForm
-                                    candidaturaId={c.id}
-                                    aceitar={false}
-                                    stretch
-                                    lightChrome
-                                    label="Recusar"
-                                  />
-                                </div>
-                              </div>
+                              <CandidaturaResponseActions candidaturaId={c.id} className="!items-stretch gap-1.5 px-3 pb-1.5 sm:gap-2 sm:px-4 sm:pb-2" />
                             </div>
                           </div>
                         </li>

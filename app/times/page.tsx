@@ -5,9 +5,9 @@ import { SearchFilterForm } from "@/components/search/search-filter-form";
 import { createClient } from "@/lib/supabase/server";
 import { TeamManagementPanel } from "@/components/times/team-management-panel";
 import { TimesVagaRecrutamentoCard, type TimesVagaCardData } from "@/components/times/times-vaga-recrutamento-card";
-import { ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
+import { CandidaturaResponseActions } from "@/components/vagas/candidatura-response-actions";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
-import { CANDIDATURA_ACOES_ROW_CLASS } from "@/lib/desafio/flow-ui";
+import { EidCollapsiblePanel } from "@/components/ui/eid-collapsible-panel";
 
 export const metadata = {
   title: "Times",
@@ -66,6 +66,11 @@ type TimeListRow = {
   esportes: { nome: string | null } | { nome: string | null }[] | null;
 };
 
+type RosterHeadcountBatchRow = {
+  time_id: number;
+  headcount: number;
+};
+
 function esporteNomeFromRow(row: TimeListRow): string | null {
   const esp = row.esportes;
   if (Array.isArray(esp)) return esp[0]?.nome ?? null;
@@ -118,15 +123,8 @@ export default async function TimesPage({ searchParams }: Props) {
     timesListQuery = timesListQuery.or(`nome.ilike.%${q}%,localizacao.ilike.%${q}%`);
   }
 
-  const [
-    { data: esportes },
-    { data: minhas },
-    { data: filtrados, count },
-    { data: minhasCandidaturas },
-    { data: meusMembros },
-    { data: pedidosRaw },
-  ] = await Promise.all([
-    supabase.from("esportes").select("id, nome").eq("ativo", true).order("ordem", { ascending: true }),
+  const [{ data: minhas }, { data: filtrados, count }, { data: minhasCandidaturas }, { data: meusMembros }, { data: pedidosRaw }] =
+    await Promise.all([
     supabase
       .from("times")
       .select("id, nome, tipo, esportes(nome)")
@@ -136,21 +134,37 @@ export default async function TimesPage({ searchParams }: Props) {
     timesListQuery.range(from, to),
     supabase.from("time_candidaturas").select("id, time_id").eq("candidato_usuario_id", user.id).eq("status", "pendente"),
     supabase.from("membros_time").select("time_id").eq("usuario_id", user.id).in("status", ["ativo", "aceito", "aprovado"]),
-    supabase
-      .from("time_candidaturas")
-      .select("id, time_id, mensagem, criado_em, candidato_usuario_id, times!inner(id, nome, criador_id)")
-      .eq("status", "pendente")
-      .eq("times.criador_id", user.id)
-      .order("criado_em", { ascending: false })
-      .limit(40),
-  ]);
+      supabase
+        .from("time_candidaturas")
+        .select("id, time_id, mensagem, criado_em, candidato_usuario_id, times!inner(id, nome, criador_id)")
+        .eq("status", "pendente")
+        .eq("times.criador_id", user.id)
+        .order("criado_em", { ascending: false })
+        .limit(40),
+    ]);
 
   const lista = (filtrados ?? []) as TimeListRow[];
+  const timeIds = lista.map((t) => Number(t.id)).filter((id) => Number.isFinite(id) && id > 0);
+  const { data: rosterBatchRows, error: rosterBatchErr } =
+    timeIds.length > 0
+      ? await supabase.rpc("time_roster_headcount_many", { p_time_ids: timeIds })
+      : { data: [] as RosterHeadcountBatchRow[], error: null };
+  const headcountByTime = new Map<number, number>();
+  if (!rosterBatchErr && Array.isArray(rosterBatchRows)) {
+    for (const row of rosterBatchRows as RosterHeadcountBatchRow[]) {
+      const tid = Number(row.time_id);
+      const head = Number(row.headcount);
+      if (Number.isFinite(tid) && tid > 0) headcountByTime.set(tid, Number.isFinite(head) ? Math.max(1, head) : 1);
+    }
+  }
   const rosterEntries = await Promise.all(
     lista.map(async (t) => {
       const cap = String(t.tipo ?? "").trim().toLowerCase() === "dupla" ? 2 : 18;
-      const { data: headRaw, error: headErr } = await supabase.rpc("time_roster_headcount", { p_time_id: t.id });
-      const rosterCount = !headErr && headRaw != null && Number.isFinite(Number(headRaw)) ? Math.max(1, Number(headRaw)) : 1;
+      let rosterCount = headcountByTime.get(t.id) ?? null;
+      if (rosterCount == null) {
+        const { data: headRaw, error: headErr } = await supabase.rpc("time_roster_headcount", { p_time_id: t.id });
+        rosterCount = !headErr && headRaw != null && Number.isFinite(Number(headRaw)) ? Math.max(1, Number(headRaw)) : 1;
+      }
       return [t.id, Math.max(0, cap - rosterCount)] as const;
     })
   );
@@ -214,98 +228,118 @@ export default async function TimesPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {pedidos.length > 0 ? (
-        <section id="pedidos-elenco" className="mb-6 scroll-mt-24">
-          <h2 className="text-sm font-black uppercase tracking-wide text-eid-fg">Pedidos para o seu elenco</h2>
-          <p className="mt-1 text-xs text-eid-text-secondary">
-            Quem pediu para entrar nas suas formações. Aprovar adiciona a pessoa ao time ou dupla e envia notificação; recusar também avisa o candidato.
-          </p>
-          <ul className="mt-3 space-y-3">
-            {pedidos.map((raw) => {
-              const p = raw as {
-                id: number;
-                time_id: number;
-                mensagem: string | null;
-                criado_em: string;
-                candidato_usuario_id: string;
-                times: { id: number; nome: string | null; criador_id: string } | { id: number; nome: string | null; criador_id: string }[];
-              };
-              const team = Array.isArray(p.times) ? p.times[0] : p.times;
-              const prof = profileMap.get(p.candidato_usuario_id);
-              const label = prof?.nome?.trim() || prof?.username?.trim() || "Atleta";
-              const sub = prof?.username?.trim() && prof?.username !== prof?.nome ? `@${prof.username}` : null;
-              return (
-                <li
-                  key={p.id}
-                  className="rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_75%,var(--eid-primary-500)_25%)] bg-eid-card/90 p-3 sm:flex sm:items-stretch sm:gap-3 sm:p-4"
-                >
-                  <div className="flex shrink-0 items-center gap-3">
-                    <ProfileEditDrawerTrigger
-                      href={`/perfil/${p.candidato_usuario_id}?from=/times`}
-                      title={label}
-                      fullscreen
-                      topMode="backOnly"
-                      className="block rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
+      <section id="pedidos-elenco" className="mb-4 scroll-mt-24">
+        <EidCollapsiblePanel
+          title="Pedidos para o seu elenco"
+          defaultOpen={false}
+          summaryRight={
+            pedidos.length > 0 ? (
+              <span className="inline-flex shrink-0 rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-eid-action-400">
+                {pedidos.length} pendente{pedidos.length > 1 ? "s" : ""}
+              </span>
+            ) : (
+              <span className="inline-flex shrink-0 rounded-full border border-transparent bg-eid-surface/50 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-eid-text-secondary">
+                sem pendências
+              </span>
+            )
+          }
+        >
+          {pedidos.length > 0 ? (
+            <>
+              <p className="px-1 text-xs text-eid-text-secondary">
+                Quem pediu para entrar nas suas formações. Aprovar adiciona a pessoa ao elenco e recusar avisa o candidato.
+              </p>
+              <ul className="space-y-3">
+                {pedidos.map((raw) => {
+                  const p = raw as {
+                    id: number;
+                    time_id: number;
+                    mensagem: string | null;
+                    criado_em: string;
+                    candidato_usuario_id: string;
+                    times: { id: number; nome: string | null; criador_id: string } | { id: number; nome: string | null; criador_id: string }[];
+                  };
+                  const team = Array.isArray(p.times) ? p.times[0] : p.times;
+                  const prof = profileMap.get(p.candidato_usuario_id);
+                  const label = prof?.nome?.trim() || prof?.username?.trim() || "Atleta";
+                  const sub = prof?.username?.trim() && prof?.username !== prof?.nome ? `@${prof.username}` : null;
+                  return (
+                    <li
+                      key={p.id}
+                      className="rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] p-3 sm:flex sm:items-stretch sm:gap-3 sm:p-4"
                     >
-                      <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
-                        {prof?.avatar_url ? (
-                          <Image src={prof.avatar_url} alt="" width={48} height={48} unoptimized className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                            {label.slice(0, 1).toUpperCase()}
+                      <div className="flex shrink-0 items-center gap-3">
+                        <ProfileEditDrawerTrigger
+                          href={`/perfil/${p.candidato_usuario_id}?from=/times`}
+                          title={label}
+                          fullscreen
+                          topMode="backOnly"
+                          className="block rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
+                        >
+                          <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
+                            {prof?.avatar_url ? (
+                              <Image src={prof.avatar_url} alt="" width={48} height={48} unoptimized className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
+                                {label.slice(0, 1).toUpperCase()}
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </ProfileEditDrawerTrigger>
+                        <div className="min-w-0 sm:hidden">
+                          <p className="text-sm font-bold text-eid-fg">{label}</p>
+                          {sub ? <p className="text-[11px] text-eid-text-secondary">{sub}</p> : null}
+                        </div>
                       </div>
-                    </ProfileEditDrawerTrigger>
-                    <div className="min-w-0 sm:hidden">
-                      <p className="text-sm font-bold text-eid-fg">{label}</p>
-                      {sub ? <p className="text-[11px] text-eid-text-secondary">{sub}</p> : null}
-                    </div>
-                  </div>
-                  <div className="mt-3 min-w-0 flex-1 sm:mt-0">
-                    <div className="hidden items-center gap-2 sm:flex">
-                      <Link href={`/perfil/${p.candidato_usuario_id}?from=/times`} className="text-sm font-bold text-eid-fg hover:text-eid-primary-300">
-                        {label}
-                      </Link>
-                      {sub ? <span className="text-[11px] text-eid-text-secondary">{sub}</span> : null}
-                    </div>
-                    <p className="mt-1 text-[11px] text-eid-text-secondary">
-                      Quer entrar em <span className="font-semibold text-eid-fg">{team?.nome ?? "sua formação"}</span>
-                    </p>
-                    {p.mensagem?.trim() ? (
-                      <p className="mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2 text-[11px] italic text-eid-text-secondary">
-                        “{p.mensagem.trim()}”
-                      </p>
-                    ) : null}
-                    <div className={CANDIDATURA_ACOES_ROW_CLASS}>
-                      <ResponderCandidaturaForm candidaturaId={p.id} aceitar={true} label="Aprovar" stretch />
-                      <ResponderCandidaturaForm candidaturaId={p.id} aceitar={false} label="Recusar" stretch />
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ) : null}
+                      <div className="mt-3 min-w-0 flex-1 sm:mt-0">
+                        <div className="hidden items-center gap-2 sm:flex">
+                          <Link href={`/perfil/${p.candidato_usuario_id}?from=/times`} className="text-sm font-bold text-eid-fg hover:text-eid-primary-300">
+                            {label}
+                          </Link>
+                          {sub ? <span className="text-[11px] text-eid-text-secondary">{sub}</span> : null}
+                        </div>
+                        <p className="mt-1 text-[11px] text-eid-text-secondary">
+                          Quer entrar em <span className="font-semibold text-eid-fg">{team?.nome ?? "sua formação"}</span>
+                        </p>
+                        {p.mensagem?.trim() ? (
+                          <p className="mt-2 rounded-lg border border-transparent bg-eid-surface/40 px-2.5 py-2 text-[11px] italic text-eid-text-secondary">
+                            “{p.mensagem.trim()}”
+                          </p>
+                        ) : null}
+                        <CandidaturaResponseActions candidaturaId={p.id} className="mt-2 gap-1.5" />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          ) : (
+            <p className="px-1 py-1 text-xs text-eid-text-secondary">Nenhum pedido pendente no momento.</p>
+          )}
+        </EidCollapsiblePanel>
+      </section>
 
       <section className="mb-4 rounded-[20px] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,white_12%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,white_3%),color-mix(in_srgb,var(--eid-surface)_94%,white_6%))] px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[12px] leading-tight text-[#64748B] sm:text-[13px]">
+          <p className="text-[12px] leading-tight text-eid-text-secondary sm:text-[13px]">
             Mostrando formações com vagas abertas e aceitando pedidos.
           </p>
+          {q ? (
+            <span className="inline-flex shrink-0 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-eid-primary-300">
+              filtro ativo
+            </span>
+          ) : null}
         </div>
-
         <SearchFilterForm
           defaultValue={sp.q ?? ""}
-          placeholder="Buscar time ou dupla pelo nome…"
+          placeholder="Buscar time ou dupla pelo nome..."
           scope="times"
           withSearchIcon
           formAction="/times"
           showButton={false}
           submitOnPick
           className="mt-2 w-full sm:mt-2.5"
-          inputClassName="eid-input-dark h-[41px] w-full rounded-[12px] border border-[#D6DCEA] bg-[#F6F8FC] px-3 text-[11px] font-medium text-[#556987] placeholder:text-[11px] placeholder:font-medium placeholder:text-[#7587A5] sm:h-[43px] sm:text-[12px] sm:placeholder:text-[12px]"
+          inputClassName="eid-input-dark h-[39px] w-full rounded-[12px] border border-[#D6DCEA] bg-[#F6F8FC] px-3 text-[10px] font-medium text-[#556987] placeholder:text-[10px] placeholder:font-medium placeholder:text-[#7587A5] sm:h-[41px] sm:text-[11px] sm:placeholder:text-[11px]"
         />
       </section>
 

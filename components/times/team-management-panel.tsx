@@ -55,20 +55,20 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     const cadastrarHref = `/editar/equipes/cadastrar?${cadQs.toString()}`;
     const convidarHref = `/editar/equipes/convidar?from=${encodeURIComponent(fromHref)}&embed=1`;
     const launcherClass =
-      "eid-vagas-hero-cta flex min-h-[46px] w-full items-center justify-center gap-1.5 rounded-full border border-eid-primary-500/35 bg-[linear-gradient(90deg,#2563eb,#0d6efd)] px-3.5 text-center text-[10px] font-black uppercase tracking-[0.02em] text-white shadow-[0_12px_24px_-16px_rgba(37,99,235,0.65)] transition hover:brightness-110 sm:min-h-[52px] sm:px-4 sm:text-[12px]";
+      "eid-vagas-hero-cta flex min-h-[34px] w-full items-center justify-center gap-1 rounded-full border border-eid-primary-500/35 bg-[linear-gradient(90deg,#2563eb,#0d6efd)] px-2.5 text-center text-[8px] font-black uppercase tracking-[0.02em] text-white shadow-[0_10px_20px_-16px_rgba(37,99,235,0.65)] transition hover:brightness-110 sm:min-h-[38px] sm:px-3 sm:text-[9px]";
     const launcherSecondaryClass =
-      "eid-vagas-hero-cta flex min-h-[46px] w-full items-center justify-center gap-1.5 rounded-full border border-eid-primary-500/55 bg-transparent px-3.5 text-center text-[10px] font-black uppercase tracking-[0.02em] text-eid-primary-400 transition hover:bg-eid-primary-500/8 sm:min-h-[52px] sm:px-4 sm:text-[12px]";
+      "eid-vagas-hero-cta flex min-h-[34px] w-full items-center justify-center gap-1 rounded-full border border-eid-primary-500/55 bg-transparent px-2.5 text-center text-[8px] font-black uppercase tracking-[0.02em] text-eid-primary-400 transition hover:bg-eid-primary-500/8 sm:min-h-[38px] sm:px-3 sm:text-[9px]";
     return (
       <section className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3">
-        <ProfileEditDrawerTrigger href={cadastrarHref} title="Criar nova dupla ou time" fullscreen topMode="backOnly" className={launcherClass}>
-          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 sm:h-5 sm:w-5" fill="currentColor" aria-hidden>
+        <ProfileEditDrawerTrigger href={cadastrarHref} title="Criar novo" fullscreen topMode="backOnly" className={launcherClass}>
+          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 sm:h-[17px] sm:w-[17px]" fill="currentColor" aria-hidden>
             <circle cx="8.5" cy="9" r="2.4" />
             <circle cx="15.5" cy="10" r="2.1" />
             <path d="M4.5 18a4 4 0 0 1 8 0" />
             <path d="M13.5 17.8a3.4 3.4 0 0 1 4.5-3.2" />
             <path d="M18.8 7.1v4M16.8 9.1h4" />
           </svg>
-          <span>Criar nova dupla ou time</span>
+          <span>CRIAR NOVO</span>
         </ProfileEditDrawerTrigger>
         <ProfileEditDrawerTrigger
           href={convidarHref}
@@ -77,7 +77,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
           topMode="backOnly"
           className={`${launcherSecondaryClass} ${!hasEquipes ? "opacity-75" : ""}`}
         >
-          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 sm:h-5 sm:w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 sm:h-[17px] sm:w-[17px]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <circle cx="9" cy="8.3" r="2.4" />
             <path d="M4.8 18a4.2 4.2 0 0 1 8.4 0" />
             <path d="M17.8 7.2v4M15.8 9.2h4" />
@@ -106,7 +106,6 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
   const [createState, createAction, createPending] = useActionState(criarEquipe, initial);
   const [inviteState, inviteAction, invitePending] = useActionState(convidarUsuarioParaEquipe, initial);
   const [tipo, setTipo] = useState<"time" | "dupla">(defaultTipoFormacao ?? "time");
-  const [genero, setGenero] = useState<"masculino" | "feminino" | "misto">("misto");
   const [esporteId, setEsporteId] = useState<string>(() => {
     if (defaultEsporteId != null && esportes.some((e) => e.id === defaultEsporteId)) {
       return String(defaultEsporteId);
@@ -291,7 +290,6 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
           </p>
           <input type="hidden" name="tipo" value={tipo} />
           <input type="hidden" name="esporte_id" value={esporteId} />
-          <input type="hidden" name="genero" value={genero} />
           <div className="sm:col-span-2">
             <div className={`${isCadastrarStyle ? "flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3" : ""}`}>
               {isCadastrarStyle ? (
@@ -364,33 +362,6 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
                   {isCadastrarStyle ? <ModalidadeGlyphIcon modalidade="dupla" /> : null}
                   Dupla
                 </button>
-              </div>
-            </div>
-          </label>
-          <label className="grid min-w-0 gap-1">
-            <span className={`${isCadastrarStyle ? "inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg" : "text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary"}`}>
-              Gênero da formação
-            </span>
-            <div className={`${isCadastrarStyle ? "min-w-0 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-1" : "min-w-0 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm"}`}>
-              <div className={`${isCadastrarStyle ? "flex h-7 overflow-hidden rounded-lg bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-surface)_12%)]" : "flex h-[1.65rem] overflow-hidden rounded-md bg-[color-mix(in_srgb,var(--eid-bg)_24%,var(--eid-surface)_76%)]"}`}>
-                {(["masculino", "feminino", "misto"] as const).map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => setGenero(g)}
-                    className={`inline-flex min-w-0 flex-1 items-center justify-center rounded-sm px-1.5 ${isCadastrarStyle ? "text-[10px] font-black tracking-[0.02em]" : "text-[9px] font-semibold uppercase leading-none tracking-[0.03em]"} transition-all duration-200 ${
-                      genero === g
-                        ? isCadastrarStyle
-                          ? "bg-[#DDE9FF] text-[#2563EB]"
-                          : "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
-                        : isCadastrarStyle
-                          ? "text-[#334155] hover:bg-eid-surface/35"
-                          : "text-eid-text-secondary hover:bg-eid-surface/35"
-                    }`}
-                  >
-                    {g === "masculino" ? "Masculino" : g === "feminino" ? "Feminino" : "Misto"}
-                  </button>
-                ))}
               </div>
             </div>
           </label>

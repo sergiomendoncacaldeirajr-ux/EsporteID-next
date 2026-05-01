@@ -54,6 +54,12 @@ export default async function ContaEditarFormacaoTimePage({ params, searchParams
         </Link>
         .
       </p>
+      <p className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-eid-text-secondary">
+        <span className="inline-flex rounded-full border border-transparent bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-semibold text-eid-primary-300">
+          Gênero automático: {String(t.genero ?? "misto").trim().toLowerCase() === "masculino" ? "Masculino" : String(t.genero ?? "misto").trim().toLowerCase() === "feminino" ? "Feminino" : "Misto"}
+        </span>
+        detectado pelo elenco ativo da formação
+      </p>
       <div className="mt-6">
         <PerfilTimeEditForm
           variant="page"
@@ -66,7 +72,6 @@ export default async function ContaEditarFormacaoTimePage({ params, searchParams
           vagas_abertas={Boolean(t.vagas_abertas)}
           aceita_pedidos={Boolean(t.aceita_pedidos)}
           nivel_procurado={t.nivel_procurado ?? null}
-          genero={t.genero ?? "misto"}
         />
       </div>
     </main>

@@ -23,18 +23,23 @@ export function CandidatarNaVagaForm({
   timeId,
   hideMessageField = false,
   submitLabel = "Candidatar-se ao elenco",
+  onSuccess,
+  refreshOnSuccess = true,
 }: {
   timeId: number;
   hideMessageField?: boolean;
   /** Texto do botão (ex.: "Candidatar" nos cards). */
   submitLabel?: string;
+  onSuccess?: () => void;
+  refreshOnSuccess?: boolean;
 }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(candidatarEmVagaAction, initialState);
-
   useEffect(() => {
-    if (state.ok) router.refresh();
-  }, [state.ok, router]);
+    if (!state.ok) return;
+    onSuccess?.();
+    if (refreshOnSuccess) router.refresh();
+  }, [state.ok, onSuccess, refreshOnSuccess, router]);
 
   return (
     <form action={action} className="space-y-2">
@@ -63,16 +68,22 @@ export function CancelarCandidaturaForm({
   candidaturaId,
   compact = false,
   label = "Cancelar candidatura",
+  onSuccess,
+  refreshOnSuccess = true,
 }: {
   candidaturaId: number;
   compact?: boolean;
   label?: string;
+  onSuccess?: () => void;
+  refreshOnSuccess?: boolean;
 }) {
   const router = useRouter();
   const [state, action, pending] = useActionState(cancelarCandidaturaAction, initialState);
   useEffect(() => {
-    if (state.ok) router.refresh();
-  }, [state.ok, router]);
+    if (!state.ok) return;
+    onSuccess?.();
+    if (refreshOnSuccess) router.refresh();
+  }, [state.ok, onSuccess, refreshOnSuccess, router]);
   return (
     <form action={action} className="space-y-2">
       <input type="hidden" name="candidatura_id" value={candidaturaId} />

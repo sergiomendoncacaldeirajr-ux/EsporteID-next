@@ -1202,9 +1202,10 @@ select,
     button[data-eid-social-acao-btn="true"] {
     min-height: 0 !important;
     padding: 3px 6px !important;
-    font-size: 6.5px !important;
+    font-size: 7.5px !important;
     line-height: 1.1 !important;
     font-weight: 800 !important;
+    text-transform: uppercase !important;
     border-radius: 9999px !important;
   }
 
@@ -1212,7 +1213,7 @@ select,
     :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
       button[data-eid-social-acao-btn="true"] {
       padding: 3px 7px !important;
-      font-size: 7px !important;
+      font-size: 8px !important;
     }
   }
 
@@ -1220,16 +1221,17 @@ select,
   :where([data-eid-touch-ui][data-eid-touch-ui-compact]) button[data-eid-social-acao-btn="true"] {
     min-height: 0 !important;
     padding: 3px 6px !important;
-    font-size: 6.5px !important;
+    font-size: 7.5px !important;
     line-height: 1.1 !important;
     font-weight: 800 !important;
+    text-transform: uppercase !important;
     border-radius: 9999px !important;
   }
 
   @media (min-width: 640px) {
     :where([data-eid-touch-ui][data-eid-touch-ui-compact]) button[data-eid-social-acao-btn="true"] {
       padding: 3px 7px !important;
-      font-size: 7px !important;
+      font-size: 8px !important;
     }
   }
 
@@ -1371,10 +1373,10 @@ select,
   }
   /* Vagas: ajusta somente os CTAs do hero, sem quebrar os demais botões da página. */
   [data-eid-vagas-page] .eid-vagas-hero-cta {
-    min-height: 46px !important;
-    padding-left: 14px !important;
-    padding-right: 14px !important;
-    font-size: 10px !important;
+    min-height: 34px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    font-size: 8px !important;
     font-weight: 900 !important;
     line-height: 1 !important;
     border-radius: 9999px !important;
@@ -1386,10 +1388,10 @@ select,
   }
   @media (min-width: 640px) {
     [data-eid-vagas-page] .eid-vagas-hero-cta {
-      min-height: 52px !important;
-      padding-left: 16px !important;
-      padding-right: 16px !important;
-      font-size: 12px !important;
+      min-height: 38px !important;
+      padding-left: 12px !important;
+      padding-right: 12px !important;
+      font-size: 9px !important;
     }
     [data-eid-vagas-page] .eid-vagas-hero-title {
       font-size: 28px !important;
@@ -1448,20 +1450,20 @@ select,
 
 /* Lucide nos botões Aceitar/Recusar/Aprovar compactos — ícones no anel. */
 :where([data-eid-touch-ui], .eid-touch-ui-scope) button[data-eid-social-acao-btn="true"] svg {
-  width: 9px;
-  height: 9px;
-  min-width: 9px;
-  min-height: 9px;
+  width: 7px;
+  height: 7px;
+  min-width: 7px;
+  min-height: 7px;
   flex-shrink: 0;
   display: block;
 }
 
 @media (min-width: 640px) {
   :where([data-eid-touch-ui], .eid-touch-ui-scope) button[data-eid-social-acao-btn="true"] svg {
-    width: 10px;
-    height: 10px;
-    min-width: 10px;
-    min-height: 10px;
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    min-height: 8px;
   }
 }
 

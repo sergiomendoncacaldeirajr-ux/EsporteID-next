@@ -23,7 +23,7 @@ export type TimesVagaCardData = {
 };
 
 const chip =
-  "rounded-full border px-2 py-[3px] text-[8px] font-black uppercase tracking-[0.05em] text-eid-fg";
+  "rounded-full border px-1.5 py-[2px] text-[7px] font-black uppercase tracking-[0.04em] text-eid-fg";
 
 function VagasChairIcon() {
   return (
@@ -120,19 +120,21 @@ export function TimesVagaRecrutamentoCard({
               </span>
             )}
           </div>
-          <h2 className="mt-2 line-clamp-2 text-[13px] font-black uppercase leading-[1.06] tracking-tight text-eid-fg sm:mt-2.5 sm:text-[16px]">
+          <h2 className="mt-1.5 line-clamp-2 text-[11px] font-black uppercase leading-[1.05] tracking-tight text-eid-fg sm:mt-2 sm:text-[13px]">
             {team.nome ?? "Formação"}
           </h2>
           <div className="mt-1 min-w-0">
             <EidCityState location={team.localizacao} align="start" />
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1.5 text-[9px] text-eid-text-secondary">
-            <span className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-action-500)_45%,var(--eid-border-subtle)_55%)] bg-[color:color-mix(in_srgb,var(--eid-action-500)_12%,var(--eid-card)_88%)] px-2 py-[3px] text-[8px] font-black uppercase tracking-[0.03em] text-eid-action-300">
-              <VagasChairIcon />
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[8px] text-eid-text-secondary">
+            <span className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-action-500)_45%,var(--eid-border-subtle)_55%)] bg-[color:color-mix(in_srgb,var(--eid-action-500)_12%,var(--eid-card)_88%)] px-1.5 py-[2px] text-[7px] font-black uppercase tracking-[0.03em] text-eid-action-300">
+              <span className="[&_svg]:h-3 [&_svg]:w-3">
+                <VagasChairIcon />
+              </span>
               {vagasLabel}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_65%,var(--eid-card)_35%)] px-2 py-[3px] text-[8px] font-semibold text-eid-text-secondary">
-              <svg viewBox="0 0 16 16" className="h-3 w-3" fill="currentColor" aria-hidden>
+            <span className="inline-flex items-center gap-1 rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_65%,var(--eid-card)_35%)] px-1.5 py-[2px] text-[7px] font-semibold text-eid-text-secondary">
+              <svg viewBox="0 0 16 16" className="h-[11px] w-[11px]" fill="currentColor" aria-hidden>
                 <rect x="2" y="8.7" width="2.6" height="5.1" rx=".5" />
                 <rect x="6.7" y="5.8" width="2.6" height="8" rx=".5" />
                 <rect x="11.4" y="3" width="2.6" height="10.8" rx=".5" />

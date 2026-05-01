@@ -17,6 +17,13 @@ function rosterCapForTipo(tipo: string | null | undefined): number {
     : ROSTER_CAP_TIME;
 }
 
+function revalidateVagaSurfaces({ timeId, includeDashboard = false }: { timeId?: number | null; includeDashboard?: boolean }) {
+  revalidatePath("/times");
+  revalidatePath("/comunidade");
+  if (Number.isFinite(Number(timeId)) && Number(timeId) > 0) revalidatePath(`/perfil-time/${Number(timeId)}`);
+  if (includeDashboard) revalidatePath("/dashboard");
+}
+
 async function getRosterHeadCountWithFallback(
   supabase: Awaited<ReturnType<typeof createClient>>,
   timeId: number,
@@ -126,11 +133,7 @@ export async function candidatarEmVagaAction(
   }
   await triggerPushForNotificationIdsBestEffort([notifLiderId], { source: "vagas/actions.candidatar" });
 
-  revalidatePath("/vagas");
-  revalidatePath("/times");
-  revalidatePath("/comunidade");
-  revalidatePath(`/perfil-time/${timeId}`);
-  revalidatePath("/dashboard");
+  revalidateVagaSurfaces({ timeId });
   return { ok: true, message: "Candidatura enviada. O líder recebe aviso no sino e no Social." };
 }
 
@@ -178,10 +181,7 @@ export async function cancelarCandidaturaAction(
     });
   }
 
-  revalidatePath("/vagas");
-  revalidatePath("/times");
-  revalidatePath("/comunidade");
-  revalidatePath("/dashboard");
+  revalidateVagaSurfaces({ timeId });
   return { ok: true, message: "Candidatura cancelada." };
 }
 
@@ -294,10 +294,6 @@ export async function responderCandidaturaAction(
     source: "vagas/actions.responder",
   });
 
-  revalidatePath("/vagas");
-  revalidatePath("/times");
-  revalidatePath("/comunidade");
-  revalidatePath(`/perfil-time/${row.time_id}`);
-  revalidatePath("/dashboard");
+  revalidateVagaSurfaces({ timeId: row.time_id, includeDashboard: true });
   return { ok: true, message: aceitar ? "Candidatura aceita e membro adicionado." : "Candidatura recusada." };
 }

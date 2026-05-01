@@ -62,7 +62,7 @@ export function EidSectionInfo({ sectionLabel, children, className = "" }: Props
       <button
         ref={btnRef}
         type="button"
-        className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_92%,var(--eid-text-secondary)_8%)] bg-[color:color-mix(in_srgb,var(--eid-surface)_55%,transparent)] text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-primary-500 ${className}`.trim()}
+        className={`inline-flex h-4 w-4 shrink-0 items-center justify-center text-eid-text-secondary transition hover:text-eid-primary-500 ${className}`.trim()}
         aria-label={`O que é: ${sectionLabel}`}
         aria-expanded={open}
         aria-controls={panelId}

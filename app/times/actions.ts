@@ -12,7 +12,6 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 const ROSTER_CAP_DUPLA = 2;
 const ROSTER_CAP_TIME = 18;
-const TEAM_GENEROS_VALIDOS = new Set(["masculino", "feminino", "misto"]);
 
 function rosterCapForTipo(tipo: string | null | undefined): number {
   return String(tipo ?? "")
@@ -148,8 +147,6 @@ export async function criarEquipe(
   const tipoRaw = String(formData.get("tipo") ?? "time");
   const tipo = tipoRaw === "dupla" ? "dupla" : "time";
   const esporteId = Number(formData.get("esporte_id") ?? 0);
-  const generoRaw = String(formData.get("genero") ?? "").trim().toLowerCase();
-  const genero = TEAM_GENEROS_VALIDOS.has(generoRaw) ? generoRaw : "misto";
   const localizacao = String(formData.get("localizacao") ?? "").trim();
   const escudoFile = formData.get("escudo_file");
 
@@ -215,7 +212,6 @@ export async function criarEquipe(
     bio: null,
     tipo,
     esporte_id: esporteId,
-    genero,
     localizacao: localizacao || null,
     escudo,
     criador_id: user.id,
@@ -392,8 +388,6 @@ export async function atualizarMinhaEquipe(
   }
 
   const nivel_procurado = String(formData.get("nivel_procurado") ?? "").trim() || null;
-  const generoRaw = String(formData.get("genero") ?? "").trim().toLowerCase();
-  const genero = TEAM_GENEROS_VALIDOS.has(generoRaw) ? generoRaw : "misto";
 
   if (nome.length < 3) return { ok: false, message: "Nome da equipe inválido." };
   if (username && !/^[a-z0-9_]{3,24}$/.test(username)) {
@@ -408,7 +402,6 @@ export async function atualizarMinhaEquipe(
       bio: bio || null,
       escudo: escudoFinal,
       nivel_procurado,
-      genero,
       interesse_rank_match: true,
       interesse_torneio: true,
       vagas_abertas: checkboxOn(formData, "vagas_abertas"),

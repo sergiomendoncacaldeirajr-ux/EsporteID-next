@@ -6,6 +6,7 @@ import { DesafioEsporteRegrasModal } from "@/components/desafio/desafio-esporte-
 import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
 import { SugerirMatchLiderForm } from "@/components/perfil/sugerir-match-lider-form";
 import { EidCancelLink } from "@/components/ui/eid-cancel-link";
+import { EidSectionInfo } from "@/components/ui/eid-section-info";
 import { fetchColetivoRankingPreview, fetchIndividualRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
@@ -75,6 +76,59 @@ function desafioPrimeiroNome(nome: string | null | undefined, fallback: string):
   return parts[0] ?? fallback;
 }
 
+type RankGeneroBucket = "masculino" | "feminino" | "misto";
+
+function normalizeRankGenero(raw: string | null | undefined): RankGeneroBucket {
+  const v = String(raw ?? "")
+    .trim()
+    .toLowerCase();
+  if (v === "masculino") return "masculino";
+  if (v === "feminino") return "feminino";
+  return "misto";
+}
+
+function rankGeneroLabel(bucket: RankGeneroBucket): string {
+  if (bucket === "masculino") return "Masculino";
+  if (bucket === "feminino") return "Feminino";
+  return "Misto";
+}
+
+function resolveIndividualRankGenero(viewerGenero: string | null | undefined, alvoGenero: string | null | undefined): {
+  bucket: RankGeneroBucket;
+  reason: string;
+} {
+  const viewer = normalizeRankGenero(viewerGenero);
+  const alvo = normalizeRankGenero(alvoGenero);
+  if (viewer === alvo && viewer !== "misto") {
+    return {
+      bucket: viewer,
+      reason: "os dois atletas têm o mesmo gênero no perfil para este confronto.",
+    };
+  }
+  return {
+    bucket: "misto",
+    reason: "há combinação de gêneros diferentes (ou perfil marcado como misto/outro) entre os atletas.",
+  };
+}
+
+function resolveColetivoRankGenero(meuGenero: string | null | undefined, alvoGenero: string | null | undefined): {
+  bucket: RankGeneroBucket;
+  reason: string;
+} {
+  const meu = normalizeRankGenero(meuGenero);
+  const alvo = normalizeRankGenero(alvoGenero);
+  if (meu === alvo && meu !== "misto") {
+    return {
+      bucket: meu,
+      reason: "as duas formações têm o mesmo gênero detectado pelo elenco.",
+    };
+  }
+  return {
+    bucket: "misto",
+    reason: "as formações estão em gêneros diferentes ou alguma delas já é mista pelo elenco.",
+  };
+}
+
 const desafioRuleIconBadgeClass =
   "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-card)_86%)] shadow-sm ring-1 ring-[color:color-mix(in_srgb,var(--eid-primary-500)_32%,var(--eid-border-subtle)_68%)]";
 
@@ -125,10 +179,25 @@ function DesafioRankingRuleIcon() {
   );
 }
 
+function DesafioRuleSummaryCard({ formaDisputaResumo }: { formaDisputaResumo: string }) {
+  return (
+    <div className="rounded-2xl border border-transparent bg-eid-primary-500/8 px-3 py-2.5 text-[12px] leading-relaxed text-eid-text-secondary">
+      <p className="inline-flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-primary-300">
+        <DesafioInfoRuleIcon />
+        Forma de disputa deste esporte
+      </p>
+      <p className="mt-1">
+        <span className="font-semibold text-eid-fg">{formaDisputaResumo}</span>
+      </p>
+    </div>
+  );
+}
+
 export default async function DesafioPage({ searchParams }: { searchParams?: Promise<Params> }) {
   const sp = (await searchParams) ?? {};
   const isEmbed = sp.embed === "1";
   const supabase = await createClient();
+  const nowIso = new Date().toISOString();
   const desafioQs = new URLSearchParams();
   for (const [k, v] of Object.entries(sp)) {
     if (typeof v === "string" && v.length > 0) desafioQs.set(k, v);
@@ -342,7 +411,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
     const { data: perfil } = await supabase
       .from("profiles")
-      .select("id, nome, avatar_url, disponivel_amistoso, disponivel_amistoso_ate")
+      .select("id, nome, avatar_url, genero, disponivel_amistoso, disponivel_amistoso_ate")
       .eq("id", alvoKey)
       .maybeSingle();
     if (!perfil || perfil.id === user.id) {
@@ -400,6 +469,14 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       );
     }
 
+    const { data: viewerProfile } = await supabase
+      .from("profiles")
+      .select("genero, disponivel_amistoso, disponivel_amistoso_ate")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const rankGeneroIndividual = resolveIndividualRankGenero(viewerProfile?.genero, perfil.genero);
+
     const finRaw = String(sp.finalidade ?? "").trim().toLowerCase();
     const finalidadeEscolhida: "ranking" | "amistoso" | null =
       finRaw === "amistoso" ? "amistoso" : finRaw === "ranking" ? "ranking" : null;
@@ -433,21 +510,17 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       if (Number.isNaN(base.getTime()) || base.getTime() < cutoffMs) continue;
       const until = new Date(base);
       until.setMonth(until.getMonth() + cooldownMeses);
-      if (until.getTime() > Date.now()) {
-        rankingBlockedUntil = until.toISOString();
+      const untilIso = until.toISOString();
+      if (untilIso > nowIso) {
+        rankingBlockedUntil = untilIso;
         break;
       }
     }
 
     if (!finalidadeEscolhida) {
-      const { data: viewerProf } = await supabase
-        .from("profiles")
-        .select("disponivel_amistoso, disponivel_amistoso_ate")
-        .eq("id", user.id)
-        .maybeSingle();
       const viewerAm = computeDisponivelAmistosoEffective(
-        viewerProf?.disponivel_amistoso,
-        viewerProf?.disponivel_amistoso_ate
+        viewerProfile?.disponivel_amistoso,
+        viewerProfile?.disponivel_amistoso_ate
       );
       const alvoAm = computeDisponivelAmistosoEffective(perfil.disponivel_amistoso, perfil.disponivel_amistoso_ate);
       const amistosoPermitido = viewerAm && alvoAm;
@@ -461,6 +534,18 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             </p>
             <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
               Forma de disputa deste esporte: <span className="font-semibold text-eid-fg">{formaDisputaResumo}</span>
+            </div>
+            <div className="mt-2 rounded-xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)_93%)] px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+              <p className="inline-flex items-center gap-1.5 font-semibold text-eid-fg">
+                Faixa de pontos deste confronto:{" "}
+                <span className="text-eid-primary-300">{rankGeneroLabel(rankGeneroIndividual.bucket)}</span>
+                <EidSectionInfo sectionLabel="Como definimos a faixa de pontos por gênero">
+                  No individual, o sistema cruza o gênero dos dois perfis no momento do pedido. Quando ambos são do mesmo
+                  gênero, pontua naquela faixa; se houver combinação diferente, pontua em{" "}
+                  <span className="font-semibold text-eid-fg">misto</span>.
+                </EidSectionInfo>
+              </p>
+              <p className="mt-1">{`Motivo: ${rankGeneroIndividual.reason}`}</p>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -551,24 +636,32 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             .
           </p>
           <div className="mt-5 flex flex-col gap-3">
-          <div className="rounded-2xl border border-eid-primary-500/18 bg-eid-primary-500/8 px-3 py-2.5 text-[12px] leading-relaxed text-eid-text-secondary">
-            <p className="inline-flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-primary-300">
-              <DesafioInfoRuleIcon />
-              Forma de disputa deste esporte
-            </p>
-            <p className="mt-1"><span className="font-semibold text-eid-fg">{formaDisputaResumo}</span></p>
-          </div>
+          <DesafioRuleSummaryCard formaDisputaResumo={formaDisputaResumo} />
           {finalidadeEscolhida === "amistoso" ? (
             <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
               Este pedido <span className="font-semibold text-emerald-200">não soma pontos</span> e não usa agenda de ranking. O WhatsApp será liberado após aceite, para vocês combinarem. Para confronto que valha ranking, agenda e resultado, volte ao perfil e escolha{" "}
               <span className="font-semibold text-eid-fg">desafio de ranking</span>.
             </div>
-          ) : rankingBlockedUntil ? (
+          ) : (
+            <div className="rounded-xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)_93%)] px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+              <p className="inline-flex items-center gap-1.5 font-semibold text-eid-fg">
+                Faixa de pontos deste confronto:{" "}
+                <span className="text-eid-primary-300">{rankGeneroLabel(rankGeneroIndividual.bucket)}</span>
+                <EidSectionInfo sectionLabel="Como definimos a faixa de pontos por gênero">
+                  No individual, o sistema cruza o gênero dos dois perfis no momento do pedido. Quando ambos são do mesmo
+                  gênero, pontua naquela faixa; se houver combinação diferente, pontua em{" "}
+                  <span className="font-semibold text-eid-fg">misto</span>.
+                </EidSectionInfo>
+              </p>
+              <p className="mt-1">{`Motivo: ${rankGeneroIndividual.reason}`}</p>
+            </div>
+          )}
+          {rankingBlockedUntil && finalidadeEscolhida !== "amistoso" ? (
             <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
               Carência ativa para desafio de ranking neste esporte até{" "}
               <span className="font-semibold text-eid-fg">{new Date(rankingBlockedUntil).toLocaleDateString("pt-BR")}</span>.
             </div>
-          ) : (
+          ) : finalidadeEscolhida !== "amistoso" ? (
             <div className="rounded-2xl border border-eid-primary-500/18 bg-eid-primary-500/8 px-3 py-2.5 text-[12px] leading-relaxed text-eid-text-secondary">
               <p className="inline-flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-primary-300">
                 <DesafioRankingRuleIcon />
@@ -578,7 +671,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
                 Após aceito, use a <span className="font-semibold text-eid-fg">agenda</span> e o lançamento de resultado para atualizar o ranking.
               </p>
             </div>
-          )}
+          ) : null}
           <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:p-4">
             <div className="flex items-center gap-3">
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
@@ -623,11 +716,21 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
                 `/desafio?id=${encodeURIComponent(alvoKey)}&tipo=individual&esporte=${esporteId}`,
                 isEmbed
               )}
-              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-3 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg"
+              className="inline-flex min-h-[40px] items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2.5 text-[10.5px] font-extrabold uppercase tracking-[0.02em] text-eid-fg sm:min-h-[42px] sm:px-3 sm:text-[11px]"
             >
+              <svg viewBox="0 0 24 24" className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M4 7h11" />
+                <path d="m12 3 4 4-4 4" />
+                <path d="M20 17H9" />
+                <path d="m12 13-4 4 4 4" />
+              </svg>
               Trocar tipo de desafio
             </Link>
-            <EidCancelLink href="/match" {...exitEmbedProps(isEmbed)} className="!min-h-[44px] !rounded-xl !text-[11px] !font-black !tracking-[0.04em]" />
+            <EidCancelLink
+              href="/match"
+              {...exitEmbedProps(isEmbed)}
+              className="!min-h-[40px] !rounded-xl !px-2.5 !text-[10.5px] !font-extrabold !tracking-[0.02em] !whitespace-nowrap sm:!min-h-[42px] sm:!px-3 sm:!text-[11px]"
+            />
           </div>
           </div>
           {finalidadeEscolhida === "ranking" && rankPrevInd ? (
@@ -658,7 +761,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
   const { data: timeRow } = await supabase
     .from("times")
-    .select("id, nome, tipo, esporte_id, criador_id, eid_time, escudo")
+    .select("id, nome, tipo, esporte_id, criador_id, genero, eid_time, escudo")
     .eq("id", timeId)
     .maybeSingle();
 
@@ -726,8 +829,9 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     if (Number.isNaN(base.getTime()) || base.getTime() < cutoffColetivoMs) continue;
     const until = new Date(base);
     until.setMonth(until.getMonth() + cooldownMesesColetivo);
-    if (until.getTime() > Date.now()) {
-      rankingBlockedUntilColetivo = until.toISOString();
+    const untilIso = until.toISOString();
+    if (untilIso > nowIso) {
+      rankingBlockedUntilColetivo = untilIso;
       break;
     }
   }
@@ -741,7 +845,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   const [{ data: minhasLideradas }, { data: minhasMembroRows }] = await Promise.all([
     supabase
       .from("times")
-      .select("id")
+      .select("id, genero")
       .eq("criador_id", user.id)
       .eq("esporte_id", esporteId)
       .eq("tipo", modalidade)
@@ -753,6 +857,8 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       .in("status", ["ativo", "aceito", "aprovado"]),
   ]);
   const canConfirmarRanking = (minhasLideradas ?? []).length > 0;
+  const meuTimeGenero = (minhasLideradas?.[0] as { genero?: string | null } | undefined)?.genero ?? null;
+  const rankGeneroColetivo = resolveColetivoRankGenero(meuTimeGenero, timeRow.genero);
   const formacoesMembroNaoLider = (minhasMembroRows ?? [])
     .map((row) => {
       const rel = Array.isArray((row as { times?: unknown }).times)
@@ -787,13 +893,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           .
         </p>
         <div className="mt-5 flex flex-col gap-3">
-        <div className="rounded-2xl border border-eid-primary-500/18 bg-eid-primary-500/8 px-3 py-2.5 text-[12px] leading-relaxed text-eid-text-secondary">
-          <p className="inline-flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-primary-300">
-            <DesafioInfoRuleIcon />
-            Forma de disputa deste esporte
-          </p>
-          <p className="mt-1"><span className="font-semibold text-eid-fg">{formaDisputaResumo}</span></p>
-        </div>
+        <DesafioRuleSummaryCard formaDisputaResumo={formaDisputaResumo} />
         {rankingBlockedUntilColetivo ? (
           <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
             Carência ativa para desafio de ranking neste esporte ({modalidade}) até{" "}
@@ -804,6 +904,18 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             <span className="font-semibold text-eid-fg">{formatCooldownRemaining(rankingBlockedUntilColetivo)}</span>
           </div>
         ) : null}
+        <div className="rounded-xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)_93%)] px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+          <p className="inline-flex items-center gap-1.5 font-semibold text-eid-fg">
+            Faixa de pontos deste confronto:{" "}
+            <span className="text-eid-primary-300">{rankGeneroLabel(rankGeneroColetivo.bucket)}</span>
+            <EidSectionInfo sectionLabel="Como definimos a faixa de pontos por gênero">
+              Em dupla/time, o sistema calcula automaticamente o gênero de cada formação pelo elenco ativo. Se as duas
+              formações tiverem a mesma faixa, pontua nela; caso contrário, vai para{" "}
+              <span className="font-semibold text-eid-fg">misto</span>.
+            </EidSectionInfo>
+          </p>
+          <p className="mt-1">{`Motivo: ${rankGeneroColetivo.reason}`}</p>
+        </div>
         <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:p-4">
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">

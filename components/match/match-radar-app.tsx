@@ -12,8 +12,6 @@ import type { MatchRadarCard, MatchRadarFinalidade, RadarTipo, SortBy } from "@/
 import { MatchFriendlyToggle } from "@/components/match/match-friendly-toggle";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import {
-} from "@/components/match/match-radar-card";
-import {
   isMatchChallengeBlockedByMissingFormation,
   MatchChallengeAction,
   MatchChallengeMissingFormationPrompt,
@@ -69,10 +67,6 @@ function MatchRadarGridMiniChallengeBlock({
     viewerEsportesComDupla,
     viewerEsportesComTime
   );
-
-  useEffect(() => {
-    setMissingFormationPromptOpen(false);
-  }, [card.id, card.modalidade, card.esporteId]);
 
   return (
     <>
@@ -183,17 +177,19 @@ function MatchRadarGridMiniChallengeBlock({
   );
 }
 
-/** Versão mini da figurinha para o modo grade (não fullscreen). */
-function MatchRadarGridStickerCard({
+/** Figurinha de desafio reutilizada em grade e fullscreen. */
+function MatchRadarStickerCard({
   card,
   esporteContextId,
   viewerEsportesComDupla,
   viewerEsportesComTime,
+  compact = true,
 }: {
   card: MatchRadarCard;
   esporteContextId: string;
   viewerEsportesComDupla: readonly number[];
   viewerEsportesComTime: readonly number[];
+  compact?: boolean;
 }) {
   const esporteParam = card.esporteId > 0 ? String(card.esporteId) : esporteContextId;
   const cardFinalidade =
@@ -224,13 +220,16 @@ function MatchRadarGridStickerCard({
   );
 
   const avatarColumn = (
-    <div className="relative h-[3.9rem] w-[3.9rem] shrink-0">
+    <div className={cn("relative shrink-0", compact ? "h-[3.9rem] w-[3.9rem]" : "h-[5.1rem] w-[5.1rem]")}>
       <ProfileEditDrawerTrigger
         href={eidStatsHref ?? card.href}
         title={`Estatísticas EID de ${card.nome}`}
         fullscreen
         topMode="backOnly"
-        className="block h-[3.9rem] w-[3.9rem] overflow-hidden rounded-full border-2 border-orange-200/65 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,white_4%),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_0_0_3px_color-mix(in_srgb,var(--eid-surface)_86%,white_14%),0_10px_26px_-16px_rgba(239,108,0,0.55)]"
+        className={cn(
+          "block overflow-hidden rounded-full border-2 border-orange-200/65 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,white_4%),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_0_0_3px_color-mix(in_srgb,var(--eid-surface)_86%,white_14%),0_10px_26px_-16px_rgba(239,108,0,0.55)]",
+          compact ? "h-[3.9rem] w-[3.9rem]" : "h-[5.1rem] w-[5.1rem]"
+        )}
       >
         {avatarBlock}
       </ProfileEditDrawerTrigger>
@@ -251,17 +250,24 @@ function MatchRadarGridStickerCard({
             topMode="backOnly"
             className="inline-flex rounded-full"
           >
-            <ProfileEidPerformanceSeal notaEid={card.eid} compact className="scale-[1.1]" />
+            <ProfileEidPerformanceSeal notaEid={card.eid} compact className={compact ? "scale-[1.1]" : "scale-[1.28]"} />
           </ProfileEditDrawerTrigger>
         ) : (
-          <ProfileEidPerformanceSeal notaEid={card.eid} compact className="scale-[1.1]" />
+          <ProfileEidPerformanceSeal notaEid={card.eid} compact className={compact ? "scale-[1.1]" : "scale-[1.28]"} />
         )}
       </div>
     </div>
   );
 
   return (
-    <article className="relative isolate overflow-hidden rounded-[1.2rem] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,white_18%)] bg-[radial-gradient(130%_100%_at_0%_0%,color-mix(in_srgb,var(--eid-primary-500)_7%,white_93%)_0%,transparent_42%),linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_98%,white_2%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.45)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_4%,transparent)]">
+    <article
+      className={cn(
+        "relative isolate overflow-hidden border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,white_18%)] bg-[radial-gradient(130%_100%_at_0%_0%,color-mix(in_srgb,var(--eid-primary-500)_7%,white_93%)_0%,transparent_42%),linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_98%,white_2%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_4%,transparent)]",
+        compact
+          ? "rounded-[1.2rem] p-2 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.45)]"
+          : "rounded-[1.6rem] p-3 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)]"
+      )}
+    >
       <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
         <span className="absolute -left-8 -top-7 rotate-[-12deg] text-[88px] opacity-[0.03] blur-[0.2px]">⚽</span>
         <span className="absolute -right-7 top-2 rotate-[16deg] text-[84px] opacity-[0.028] blur-[0.2px]">🎾</span>
@@ -276,7 +282,7 @@ function MatchRadarGridStickerCard({
           avatarColumn={avatarColumn}
           esporteNome={card.esporteNome}
           modalidadeLabel={modalidadeLabel}
-          compact
+          compact={compact}
           viewerEsportesComDupla={viewerEsportesComDupla}
           viewerEsportesComTime={viewerEsportesComTime}
         />
@@ -309,10 +315,10 @@ const FILTER_LABEL = "mb-0.5 text-[8px] font-semibold uppercase tracking-[0.1em]
 
 /** Cartão de filtros — alinhado ao ranking/dashboard. */
 const matchFilterCardClass =
-  "eid-match-filter-card overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,transparent)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_10px_24px_-22px_rgba(15,23,42,0.2)] [&_button]:[-webkit-tap-highlight-color:transparent]";
+  "eid-match-filter-card overflow-hidden rounded-2xl border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_10px_24px_-22px_rgba(15,23,42,0.2)] [&_button]:[-webkit-tap-highlight-color:transparent]";
 
 const matchSectionHeadClass =
-  "eid-match-section-head flex items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_58%,transparent)] bg-transparent px-3 py-2.5 sm:px-4";
+  "eid-match-section-head flex items-center justify-between gap-3 border-b border-transparent bg-transparent px-3 py-2.5 sm:px-4";
 
 const matchSectionTitleClass =
   "text-[12px] font-black uppercase tracking-[0.06em] text-eid-fg";
@@ -321,7 +327,7 @@ const matchBadgeGhostClass =
   "inline-flex shrink-0 items-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_16%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_6%,transparent)] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)] transition hover:border-[color:color-mix(in_srgb,var(--eid-primary-500)_24%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--eid-primary-500)_10%,transparent)]";
 
 const matchResultsCardClass =
-  "eid-match-results-card overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,transparent)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_10px_24px_-22px_rgba(15,23,42,0.2)]";
+  "eid-match-results-card overflow-hidden rounded-2xl border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_10px_24px_-22px_rgba(15,23,42,0.2)]";
 
 type Props = {
   viewerId: string;
@@ -394,6 +400,7 @@ export function MatchRadarApp({
   const [generoFiltro, setGeneroFiltro] = useState<"all" | "masculino" | "feminino" | "outro">(initialGeneroFiltro);
   const [isPending, startTransition] = useTransition();
   const [entryPending, setEntryPending] = useState(false);
+  const [filtrosMinimizados, setFiltrosMinimizados] = useState(true);
   const [radarFiltrosAbertos, setRadarFiltrosAbertos] = useState(false);
   const [amistosoLigado, setAmistosoLigado] = useState(viewerDisponivelAmistoso);
   const [showEntryPrompt] = useState(() => {
@@ -554,6 +561,15 @@ export function MatchRadarApp({
         esporte: patch.esporte ?? esporte,
         finalidade: nextFinalidade,
       };
+      const allowedForTipo =
+        next.tipo === "atleta"
+          ? new Set(viewerEsportesIndividual.map(String))
+          : next.tipo === "dupla"
+            ? new Set(viewerEsportesComDupla.map(String))
+            : new Set(viewerEsportesComTime.map(String));
+      if (next.esporte !== "all" && !allowedForTipo.has(String(next.esporte))) {
+        next.esporte = "all";
+      }
       setTipo(next.tipo);
       setSortBy(next.sortBy);
       setRaio(next.raio);
@@ -563,7 +579,20 @@ export function MatchRadarApp({
       if (viewMode === "full") runRefreshFull({ sortBy: next.sortBy, raio: next.raio, esporte: next.esporte });
       else runRefresh(next);
     },
-    [tipo, sortBy, raio, esporte, finalidade, runRefresh, runRefreshFull, syncUrl, viewMode]
+    [
+      tipo,
+      sortBy,
+      raio,
+      esporte,
+      finalidade,
+      runRefresh,
+      runRefreshFull,
+      syncUrl,
+      viewMode,
+      viewerEsportesIndividual,
+      viewerEsportesComDupla,
+      viewerEsportesComTime,
+    ]
   );
 
   const esporteOptions = useMemo(() => {
@@ -576,12 +605,6 @@ export function MatchRadarApp({
     const list = esportes.filter((e) => allowed.has(String(e.id)));
     return [{ id: "all", nome: "Todos" }, ...list.map((e) => ({ id: String(e.id), nome: e.nome ?? "" }))];
   }, [esportes, tipo, viewerEsportesIndividual, viewerEsportesComDupla, viewerEsportesComTime]);
-
-  useEffect(() => {
-    if (esporte === "all") return;
-    const ok = esporteOptions.some((o) => String(o.id) === String(esporte));
-    if (!ok) applyFilters({ esporte: "all" });
-  }, [tipo, esporte, esporteOptions, applyFilters]);
 
   const esporteNomeResumo = useMemo(() => {
     const row = esporteOptions.find((e) => String(e.id) === String(esporte));
@@ -767,7 +790,7 @@ export function MatchRadarApp({
       if (!byKey.has(key)) byKey.set(key, { ...card, groupedIndividualSports: undefined });
     }
     return Array.from(byKey.values());
-  }, [cardsFiltradosGeneroChallengeable, tipo]);
+  }, [cardsFiltradosGeneroChallengeable]);
   const visibleCards = isFullView ? fullOrderedChallengeableCards : gridCardsWithoutDuplicates;
   useEffect(() => {
     if (!isFullView) return;
@@ -882,15 +905,34 @@ export function MatchRadarApp({
 
       {viewMode === "grid" ? (
         <div className={cn(matchFilterCardClass, "mt-1.5 mb-2")}>
-          <div className={matchSectionHeadClass}>
-            <h2 className={cn(matchSectionTitleClass, "inline-flex items-center gap-1.5")}>
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-eid-primary-300" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M4 6h16M7 12h10M10 18h4" />
-              </svg>
-              Filtros do radar
-            </h2>
+          <div
+            className={cn(matchSectionHeadClass, "cursor-pointer")}
+            onClick={() => setFiltrosMinimizados((v) => !v)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setFiltrosMinimizados((v) => !v);
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-expanded={!filtrosMinimizados}
+            aria-controls="match-radar-filtros-body"
+          >
+            <div className="min-w-0">
+              <h2 className={cn(matchSectionTitleClass, "inline-flex items-center gap-1.5")}>
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-eid-primary-300" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M4 6h16M7 12h10M10 18h4" />
+                </svg>
+                Filtros do radar
+              </h2>
+            </div>
             <div className="inline-flex items-center gap-1.5">
-              <span className={matchBadgeGhostClass}>Radar</span>
+              {filtrosMinimizados ? (
+                <span className="text-[7px] font-medium uppercase tracking-[0.05em] text-eid-text-secondary">
+                  clique para abrir
+                </span>
+              ) : null}
               <EidSectionInfo sectionLabel="Como funcionam os filtros do radar">
                 Tipo de desafio define se o confronto é de ranking ou amistoso. Modalidade seleciona individual, dupla ou
                 time. Em Esporte você escolhe qual EID usar no confronto; Raio limita a distância em km; Ordenação alterna
@@ -898,7 +940,8 @@ export function MatchRadarApp({
               </EidSectionInfo>
             </div>
           </div>
-          <div className="space-y-2 px-3 pb-3 pt-2 sm:px-4 sm:pb-4">
+          {!filtrosMinimizados ? (
+          <div id="match-radar-filtros-body" className="space-y-2 px-3 pb-3 pt-2 sm:px-4 sm:pb-4">
         <div>
           <p className={FILTER_LABEL}>Tipo de desafio</p>
           <div className="mt-0.5 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
@@ -1098,6 +1141,7 @@ export function MatchRadarApp({
           </div>
         </div>
           </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -1151,7 +1195,7 @@ export function MatchRadarApp({
             ) : (
               <div className="grid min-w-0 grid-cols-2 gap-1.5 px-2 pb-3 pt-2 sm:gap-3 sm:px-3 sm:pb-4">
                 {visibleCards.map((c) => (
-                  <MatchRadarGridStickerCard
+                  <MatchRadarStickerCard
                     key={`${c.modalidade}-${c.id}-${c.esporteId}`}
                     card={c}
                     esporteContextId={esporte}
@@ -1233,96 +1277,16 @@ export function MatchRadarApp({
               </button>
             </div>
             <div className="grid min-w-0 flex-1 grid-cols-2 content-start gap-1.5 overflow-y-auto pb-2 sm:gap-2.5">
-              {visibleCards.map((c) => {
-                const esporteParam = c.esporteId > 0 ? String(c.esporteId) : esporte;
-                const cardFinalidade =
-                  c.modalidade !== "individual" ? "ranking" : c.interesseMatch === "amistoso" ? "amistoso" : "ranking";
-                const desafioHref = `/desafio?id=${encodeURIComponent(c.id)}&tipo=${encodeURIComponent(c.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(cardFinalidade)}`;
-                const nomeCurto = compactCardName(c.nome);
-                const modalidadeLabel = c.modalidade === "individual" ? null : c.modalidade === "dupla" ? "Dupla" : "Time";
-                const esporteIdStats = /^\d+$/.test(esporteParam) ? Number(esporteParam) : c.esporteId;
-                const eidStatsHref =
-                  esporteIdStats > 0
-                    ? c.modalidade === "individual"
-                      ? `/perfil/${encodeURIComponent(c.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
-                      : `/perfil-time/${encodeURIComponent(c.id)}/eid/${esporteIdStats}?from=${encodeURIComponent("/match")}`
-                    : matchCardEidStatsHref(c);
-                const avatarBlock = c.avatarUrl ? (
-                  <Image
-                    src={c.avatarUrl}
-                    alt=""
-                    fill
-                    unoptimized
-                    className={`h-full w-full ${PROFILE_PUBLIC_AVATAR_RING_CLASS} !object-cover object-center`}
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
-                    EID
-                  </div>
-                );
-                const avatarColumn = (
-                  <div className="relative h-[5.1rem] w-[5.1rem] shrink-0">
-                    <ProfileEditDrawerTrigger
-                      href={eidStatsHref ?? c.href}
-                      title={`Estatísticas EID de ${c.nome}`}
-                      fullscreen
-                      topMode="backOnly"
-                      className="block h-[5.1rem] w-[5.1rem] overflow-hidden rounded-full border-2 border-orange-200/65 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,white_4%),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_0_0_4px_color-mix(in_srgb,var(--eid-surface)_86%,white_14%),0_10px_26px_-16px_rgba(239,108,0,0.55)]"
-                    >
-                      {avatarBlock}
-                    </ProfileEditDrawerTrigger>
-                    <span
-                      className={`pointer-events-none absolute inset-0 rounded-full border-2 motion-safe:animate-pulse ${
-                        c.disponivelAmistoso
-                          ? "border-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.45),0_0_12px_rgba(16,185,129,0.75)]"
-                          : "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.45),0_0_12px_rgba(239,68,68,0.72)]"
-                      }`}
-                      aria-hidden
-                    />
-                    <div className="absolute -bottom-1 left-1/2 z-[2] -translate-x-1/2">
-                      {eidStatsHref ? (
-                        <ProfileEditDrawerTrigger
-                          href={eidStatsHref}
-                          title={`Estatísticas EID de ${c.esporteNome} — ${c.nome}`}
-                          fullscreen
-                          topMode="backOnly"
-                          className="inline-flex rounded-full"
-                        >
-                          <ProfileEidPerformanceSeal notaEid={c.eid} compact className="scale-[1.28]" />
-                        </ProfileEditDrawerTrigger>
-                      ) : (
-                        <ProfileEidPerformanceSeal notaEid={c.eid} compact className="scale-[1.28]" />
-                      )}
-                    </div>
-                  </div>
-                );
-
-                return (
-                  <article
-                    key={`${c.modalidade}-${c.id}-${c.esporteId}-mini`}
-                    className="relative isolate overflow-hidden rounded-[1.6rem] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,white_18%)] bg-[radial-gradient(130%_100%_at_0%_0%,color-mix(in_srgb,var(--eid-primary-500)_7%,white_93%)_0%,transparent_42%),linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_98%,white_2%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_4%,transparent)]"
-                  >
-                    <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
-                      <span className="absolute -left-8 -top-7 rotate-[-12deg] text-[88px] opacity-[0.03] blur-[0.2px]">⚽</span>
-                      <span className="absolute -right-7 top-2 rotate-[16deg] text-[84px] opacity-[0.028] blur-[0.2px]">🎾</span>
-                      <span className="absolute -left-6 bottom-1 rotate-[8deg] text-[92px] opacity-[0.026] blur-[0.2px]">🏀</span>
-                      <span className="absolute -right-5 bottom-0 rotate-[-10deg] text-[80px] opacity-[0.024] blur-[0.2px]">🏸</span>
-                    </div>
-                    <div className="relative z-[1]">
-                      <MatchRadarGridMiniChallengeBlock
-                        card={c}
-                        desafioHref={desafioHref}
-                        nomeCurto={nomeCurto}
-                        avatarColumn={avatarColumn}
-                        esporteNome={c.esporteNome}
-                        modalidadeLabel={modalidadeLabel}
-                        viewerEsportesComDupla={viewerEsportesComDupla}
-                        viewerEsportesComTime={viewerEsportesComTime}
-                      />
-                    </div>
-                  </article>
-                );
-              })}
+              {visibleCards.map((c) => (
+                <MatchRadarStickerCard
+                  key={`${c.modalidade}-${c.id}-${c.esporteId}-full`}
+                  card={c}
+                  esporteContextId={esporte}
+                  viewerEsportesComDupla={viewerEsportesComDupla}
+                  viewerEsportesComTime={viewerEsportesComTime}
+                  compact={false}
+                />
+              ))}
             </div>
             <div className="sticky bottom-0 z-[2] flex justify-center bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--eid-bg)_88%,transparent)_35%)] pb-1 pt-1">
               <button
