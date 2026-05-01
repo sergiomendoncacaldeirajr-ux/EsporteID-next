@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   cancelarConviteDaEquipe,
   convidarUsuarioParaEquipe,
@@ -10,10 +10,11 @@ import {
   type TeamActionState,
 } from "@/app/times/actions";
 import { TeamInviteComboboxForm } from "@/components/times/team-invite-combobox-form";
+import { TransferirLiderancaConfirmPanel } from "@/components/times/transferir-lideranca-confirm-panel";
 import { EidCancelButton } from "@/components/ui/eid-cancel-button";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidInviteButton } from "@/components/ui/eid-invite-button";
-import { emitEidSocialDataRefresh } from "@/lib/comunidade/social-panel-layout";
+import { eidPostRevalidateCurrentAndBroadcast } from "@/lib/realtime/eid-route-refresh-client";
 
 const initial: TeamActionState = { ok: false, message: "" };
 
@@ -62,6 +63,29 @@ export function TeamRosterManager({
   const [cancelInviteError, setCancelInviteError] = useState<string | null>(null);
   const [pendingCancelConviteId, setPendingCancelConviteId] = useState<number | null>(null);
   const [memberActionTarget, setMemberActionTarget] = useState<{ type: "remove" | "transfer"; userId: string } | null>(null);
+  const [transferConfirm, setTransferConfirm] = useState<{
+    userId: string;
+    nome: string;
+    avatarUrl: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!transferState.ok || !transferState.message) return;
+    let cancelled = false;
+    void (async () => {
+      await eidPostRevalidateCurrentAndBroadcast();
+      if (cancelled) return;
+      router.refresh();
+      if (cancelled) return;
+      window.setTimeout(() => {
+        setTransferConfirm(null);
+        setMemberActionTarget(null);
+      }, 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [transferState.ok, transferState.message, router]);
 
   async function handleCancelarConvite(conviteId: number) {
     if (pendingCancelConviteId != null) return;
@@ -76,7 +100,7 @@ export function TeamRosterManager({
         setCancelInviteError(res.message);
         return;
       }
-      emitEidSocialDataRefresh();
+      await eidPostRevalidateCurrentAndBroadcast();
       router.refresh();
     } catch (e) {
       setCancelInviteError(e instanceof Error ? e.message : "Não foi possível cancelar o convite.");
@@ -88,6 +112,8 @@ export function TeamRosterManager({
   const excludeUserIds = membros.map((m) => m.usuarioId);
   const memberActionMsg = transferState.message || removeState.message;
   const memberActionOk = transferState.message ? transferState.ok : removeState.ok;
+  const hideMemberMsgForTransferPanel =
+    Boolean(transferConfirm) && Boolean(transferState.message) && !transferState.ok;
 
   return (
     <section className="eid-surface-panel overflow-hidden rounded-[18px] p-0">
@@ -223,7 +249,7 @@ export function TeamRosterManager({
               </svg>
               Membros
             </p>
-            {memberActionMsg ? (
+            {memberActionMsg && !hideMemberMsgForTransferPanel ? (
               <p
                 className={`mt-2 text-xs ${memberActionOk ? "text-eid-primary-700 dark:text-eid-primary-300" : "text-red-700 dark:text-red-300"}`}
               >
@@ -272,29 +298,16 @@ export function TeamRosterManager({
                             : "Remover"}
                         </button>
                       </form>
-                      <form
-                        action={transferAction}
-                        onSubmit={(e) => {
-                          const ok = window.confirm("Tem certeza que deseja transferir a liderança para este membro?");
-                          if (!ok) {
-                            e.preventDefault();
-                            return;
-                          }
-                          setMemberActionTarget({ type: "transfer", userId: m.usuarioId });
-                        }}
+                      <button
+                        type="button"
+                        disabled={removePending || transferPending}
+                        onClick={() =>
+                          setTransferConfirm({ userId: m.usuarioId, nome: m.nome, avatarUrl: m.avatarUrl })
+                        }
+                        className="inline-flex h-[22px] items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-eid-primary-300 transition hover:bg-eid-primary-500/20 disabled:opacity-60"
                       >
-                        <input type="hidden" name="time_id" value={timeId} />
-                        <input type="hidden" name="novo_lider_usuario_id" value={m.usuarioId} />
-                        <button
-                          type="submit"
-                          disabled={removePending || transferPending}
-                          className="inline-flex h-[22px] items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-eid-primary-300 transition hover:bg-eid-primary-500/20 disabled:opacity-60"
-                        >
-                          {transferPending && memberActionTarget?.type === "transfer" && memberActionTarget.userId === m.usuarioId
-                            ? "Transferindo..."
-                            : "Liderança"}
-                        </button>
-                      </form>
+                        Liderança
+                      </button>
                     </div>
                   </li>
                 ))}
@@ -302,6 +315,62 @@ export function TeamRosterManager({
             ) : (
               <p className="mt-1 text-[11px] text-eid-text-secondary">Sem membros ativos no momento.</p>
             )}
+            {transferConfirm ? (
+              <div className="mt-3 space-y-2">
+                <TransferirLiderancaConfirmPanel
+                  novoLiderNome={transferConfirm.nome}
+                  novoLiderAvatarUrl={transferConfirm.avatarUrl}
+                  formacaoTipo={tipoFormacao}
+                  actions={
+                    <>
+                      <EidCancelButton
+                        type="button"
+                        compact
+                        disabled={transferPending}
+                        label="Cancelar"
+                        className="!w-full border-[color:color-mix(in_srgb,var(--eid-border-subtle)_70%,transparent)] bg-eid-surface/60 text-eid-fg hover:bg-eid-surface sm:!w-auto sm:min-w-[7.5rem]"
+                        onClick={() => {
+                          setTransferConfirm(null);
+                          setMemberActionTarget(null);
+                        }}
+                      />
+                      <form
+                        action={transferAction}
+                        className="w-full sm:w-auto sm:min-w-[12rem]"
+                        onSubmit={() => {
+                          setMemberActionTarget({ type: "transfer", userId: transferConfirm.userId });
+                        }}
+                      >
+                        <input type="hidden" name="time_id" value={timeId} />
+                        <input type="hidden" name="novo_lider_usuario_id" value={transferConfirm.userId} />
+                        <button
+                          type="submit"
+                          disabled={transferPending}
+                          className="inline-flex min-h-[46px] w-full items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/14 px-4 text-[12px] font-black uppercase tracking-[0.06em] text-eid-primary-300 transition hover:bg-eid-primary-500/22 disabled:opacity-60 eid-light:border-sky-300 eid-light:bg-sky-600 eid-light:text-white eid-light:hover:bg-sky-700"
+                        >
+                          {transferPending && memberActionTarget?.type === "transfer" && memberActionTarget.userId === transferConfirm.userId ? (
+                            <span className="inline-flex items-center gap-2">
+                              <span
+                                className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-eid-primary-400 border-t-transparent eid-light:border-white eid-light:border-t-transparent"
+                                aria-hidden
+                              />
+                              Transferindo…
+                            </span>
+                          ) : (
+                            "Confirmar transferência"
+                          )}
+                        </button>
+                      </form>
+                    </>
+                  }
+                />
+                {transferState.message && !transferState.ok ? (
+                  <p className="rounded-lg border border-red-400/30 bg-red-500/10 px-2 py-1.5 text-[11px] text-red-200 eid-light:text-red-800">
+                    {transferState.message}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           <div className="mt-3 rounded-xl border border-[#C9D8F6] bg-[#EFF5FF] px-3 py-2">
             <p className="inline-flex items-start gap-1.5 text-[11px] leading-snug text-[#556987]">

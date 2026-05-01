@@ -358,7 +358,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
               </span>
               <h1 className="text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{nomeExibicao}</h1>
               {usernameExibicao ? (
-                <p className="text-xs font-medium text-eid-primary-300">@{usernameExibicao}</p>
+                <p className="block w-full text-center text-xs font-medium text-eid-primary-300">@{usernameExibicao}</p>
               ) : null}
               <div className="flex justify-center px-2 sm:justify-start sm:px-0">
                 <EidCityState location={localExibicao} align="start" />
@@ -650,14 +650,17 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     avatarSize="sm"
                     trailing={
                       <div className="flex flex-col gap-2">
-                        <p className="text-[11px] font-semibold text-eid-primary-300">
+                        <p className="text-[11px] font-semibold text-eid-primary-300 eid-light:text-sky-900">
                           EID {i === 0 ? Number(eid1?.nota_eid ?? 0).toFixed(1) : Number(eid2?.nota_eid ?? 0).toFixed(1)}
                         </p>
                         {isLiderTimeDupla && timeResolvidoId && p.id !== user.id ? (
                           <FormacaoTransferirLiderancaForm
                             timeId={timeResolvidoId}
                             novoLiderUsuarioId={p.id}
-                            className="flex min-h-[2.75rem] w-full items-center justify-center rounded-lg border border-eid-primary-500/35 px-2 py-1.5 text-center text-[9px] font-semibold leading-snug text-eid-primary-300 disabled:opacity-60 sm:text-[10px]"
+                            novoLiderNome={p.nome ?? "Atleta"}
+                            novoLiderAvatarUrl={p.avatar_url}
+                            formacaoTipo="dupla"
+                            className="flex h-9 min-h-9 w-full min-w-0 items-center justify-center rounded-lg border border-eid-primary-500/45 px-1.5 py-0 text-center text-[10px] font-semibold leading-snug text-eid-primary-300 transition hover:bg-eid-primary-500/10 disabled:opacity-60 eid-light:border-sky-700/40 eid-light:bg-sky-50 eid-light:text-sky-950 eid-light:hover:bg-sky-100 sm:px-2 sm:text-[11px]"
                           />
                         ) : null}
                       </div>

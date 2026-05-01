@@ -31,8 +31,8 @@ import { TeamPublicInviteBlock, type TeamPublicPendingInvite } from "@/component
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-cta";
 import { FormacaoElencoCallout } from "@/components/times/formacao-elenco-callout";
-import { SairDaEquipeConfirmForm } from "@/components/times/sair-da-equipe-confirm-form";
-import { FormacaoTransferirLiderancaForm } from "@/components/times/formacao-transferir-lideranca-form";
+import { SairDaEquipeExitButton } from "@/components/times/sair-da-equipe-exit-button";
+import { PerfilTimeMembroLiderAcoes } from "@/components/times/perfil-time-membro-lider-acoes";
 import { BarChart3, ChevronRight } from "lucide-react";
 
 type Props = {
@@ -293,6 +293,15 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   return (
     <main data-eid-formacao-page className={PROFILE_PUBLIC_MAIN_CLASS}>
         <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 sm:p-4`}>
+          {canLeaveTeam ? (
+            <div className="absolute right-2 top-2 z-10 sm:right-3 sm:top-3">
+              <SairDaEquipeExitButton
+                leaveAction={sairEquipeAction}
+                formationName={t.nome ?? "Formação"}
+                formacaoTipo="time"
+              />
+            </div>
+          ) : null}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
             <div className="flex shrink-0 flex-col items-center sm:items-start">
               {t.escudo ? (
@@ -307,7 +316,9 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 </div>
               )}
             </div>
-            <div className="min-w-0 flex-1 space-y-2 text-center sm:text-left">
+            <div
+              className={`min-w-0 flex-1 space-y-2 text-center sm:text-left ${canLeaveTeam ? "pr-10 sm:pr-12" : ""}`}
+            >
               <span className="inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="inline-flex items-center gap-1">
@@ -322,7 +333,9 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 </span>
               </span>
               <h1 className="text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
-              {t.username ? <p className="text-xs font-medium text-eid-primary-300">@{t.username}</p> : null}
+              {t.username ? (
+                <p className="block w-full text-center text-xs font-medium text-eid-primary-300">@{t.username}</p>
+              ) : null}
               <div className="flex justify-center px-2 sm:justify-start sm:px-0">
                 <EidCityState location={t.localizacao} align="start" />
               </div>
@@ -372,23 +385,6 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                   <span className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">{criador.nome ?? "—"}</span>
                 </div>
               </Link>
-              {canLeaveTeam ? (
-                <div className="flex w-full justify-center">
-                  <SairDaEquipeConfirmForm
-                    action={sairEquipeAction}
-                    className="inline-flex min-h-[40px] w-full items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-[11px] font-bold text-white shadow-md transition hover:bg-red-700 active:scale-[0.98] sm:w-auto"
-                  />
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {!criador && canLeaveTeam ? (
-            <div className="mt-4 flex w-full justify-end">
-              <SairDaEquipeConfirmForm
-                action={sairEquipeAction}
-                className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-[11px] font-bold text-white shadow-md transition hover:bg-red-700 active:scale-[0.98]"
-              />
             </div>
           ) : null}
 
@@ -591,28 +587,21 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                     <ProfileMemberCard
                       href={`/perfil/${p.id}?from=/perfil-time/${id}`}
                       name={p.nome ?? "Membro"}
-                      subtitle={m.cargo ?? "Membro"}
+                      subtitle={p.id === t.criador_id ? "Líder" : (m.cargo ?? "Membro")}
                       avatarUrl={p.avatar_url}
                       layout="list"
                       avatarSize="sm"
                       trailing={
                         isLeader && p.id !== t.criador_id ? (
-                          <div className="flex w-full gap-1.5">
-                            <FormacaoTransferirLiderancaForm
-                              timeId={id}
-                              novoLiderUsuarioId={p.id}
-                              className="flex min-h-[2.75rem] w-full items-center justify-center rounded-lg border border-eid-primary-500/35 px-1 py-1.5 text-center text-[9px] font-semibold leading-snug text-eid-primary-300 disabled:opacity-60 sm:text-[10px]"
-                            />
-                            <form action={removerMembroAction} className="min-w-0 flex-1">
-                              <input type="hidden" name="usuario_id" value={p.id} />
-                              <button
-                                type="submit"
-                                className="flex min-h-[2.75rem] w-full items-center justify-center rounded-lg border border-red-400/35 px-1 py-1.5 text-center text-[9px] font-semibold leading-snug text-red-300 sm:text-[10px]"
-                              >
-                                Remover
-                              </button>
-                            </form>
-                          </div>
+                          <PerfilTimeMembroLiderAcoes
+                            timeId={id}
+                            membroUsuarioId={p.id}
+                            membroNome={p.nome ?? "Membro"}
+                            membroAvatarUrl={p.avatar_url ?? null}
+                            transferButtonClassName="flex h-9 min-h-9 w-full min-w-0 items-center justify-center rounded-lg border border-eid-primary-500/45 px-1.5 py-0 text-center text-[10px] font-semibold leading-snug text-eid-primary-300 transition hover:bg-eid-primary-500/10 disabled:opacity-60 eid-light:border-sky-700/40 eid-light:bg-sky-50 eid-light:text-sky-950 eid-light:hover:bg-sky-100 sm:px-2 sm:text-[11px]"
+                            removerAction={removerMembroAction}
+                            removerButtonClassName="flex h-9 min-h-9 w-full items-center justify-center rounded-lg border border-red-400/50 px-1.5 py-0 text-center text-[10px] font-semibold leading-snug text-red-300 transition hover:bg-red-500/12 eid-light:border-red-700/45 eid-light:bg-red-50 eid-light:text-red-900 eid-light:hover:bg-red-100 sm:px-2 sm:text-[11px]"
+                          />
                         ) : null
                       }
                     />

@@ -105,9 +105,13 @@ export function ProfileMemberCard({
               {fallbackLabel}
             </span>
           )}
-          <div className="min-w-0 flex-1 text-left">
+          <div className="min-w-0 flex-1 text-center">
             <p className="truncate text-[13px] font-semibold leading-snug text-eid-fg">{name}</p>
-            {subtitle ? <p className="mt-0.5 truncate text-[11px] text-eid-text-secondary">{subtitle}</p> : null}
+            {subtitle ? (
+              <p className="mt-0.5 truncate text-[11px] font-medium text-eid-primary-400 eid-light:text-sky-900">
+                {subtitle}
+              </p>
+            ) : null}
           </div>
           <ListRowChevron className="opacity-75 transition group-hover:opacity-100" />
         </Link>

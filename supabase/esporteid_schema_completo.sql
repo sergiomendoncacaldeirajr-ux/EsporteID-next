@@ -2584,14 +2584,14 @@ begin
     values (p_time_id, v_old_leader, 'Membro', 'ativo', now())
     on conflict (time_id, usuario_id) do update
       set status = 'ativo',
-          cargo = coalesce(public.membros_time.cargo, excluded.cargo);
+          cargo = 'Membro';
   end if;
 
   insert into public.membros_time (time_id, usuario_id, cargo, status, data_adesao)
-  values (p_time_id, p_novo_lider, 'Membro', 'ativo', now())
+  values (p_time_id, p_novo_lider, 'Líder', 'ativo', now())
   on conflict (time_id, usuario_id) do update
     set status = 'ativo',
-        cargo = coalesce(nullif(trim(public.membros_time.cargo), ''), excluded.cargo);
+        cargo = 'Líder';
 end;
 $$;
 
