@@ -5,6 +5,10 @@ import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
 import { ComunidadeConvitesEnviadosTime, type ConviteTimeEnviadoItem } from "@/components/comunidade/comunidade-convites-enviados-time";
 import { ComunidadeBackgroundSync } from "@/components/comunidade/comunidade-background-sync";
+import {
+  ComunidadePendenciasRscSync,
+  type ComunidadePendenciasServerSnapshot,
+} from "@/components/comunidade/comunidade-pendencias-rsc-sync";
 import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pedidos-enviados";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import {
@@ -152,6 +156,8 @@ export default async function ComunidadePage() {
 
   const uidEq = user.id;
   const [
+    { count: cntMatchIn },
+    { count: cntMatchOut },
     { count: cntSugRec },
     { count: cntSugEnv },
     { count: cntConvRec },
@@ -162,6 +168,8 @@ export default async function ComunidadePage() {
     { count: cntPartAgend },
     { count: cntMatchRankFlow },
   ] = await Promise.all([
+    supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", uidEq).eq("status", "Pendente"),
+    supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", uidEq).eq("status", "Pendente"),
     supabase.from("match_sugestoes").select("id", { count: "exact", head: true }).eq("alvo_dono_id", uidEq).eq("status", "pendente"),
     supabase
       .from("match_sugestoes")
@@ -195,15 +203,21 @@ export default async function ComunidadePage() {
       .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]),
   ]);
 
-  const needEquipe =
-    (cntSugRec ?? 0) > 0 ||
-    (cntSugEnv ?? 0) > 0 ||
-    (cntConvRec ?? 0) > 0 ||
-    (cntConvEnv ?? 0) > 0 ||
-    (cntCandLider ?? 0) > 0 ||
-    (cntCandMine ?? 0) > 0;
+  /** Sempre carregar bloco Equipe na Central: evita quadros vazios quando o RSC atrasou mas o cliente já vê pendência. */
+  const needEquipe = true;
   const needPartidas =
     (cntPartAguarda ?? 0) > 0 || (cntPartAgend ?? 0) > 0 || (cntMatchRankFlow ?? 0) > 0;
+
+  const pendenciasSnapshot: ComunidadePendenciasServerSnapshot = {
+    pedidosRec: cntMatchIn ?? 0,
+    pedidosEnv: cntMatchOut ?? 0,
+    sugRec: cntSugRec ?? 0,
+    sugEnv: cntSugEnv ?? 0,
+    convRec: cntConvRec ?? 0,
+    convEnv: cntConvEnv ?? 0,
+    candLider: cntCandLider ?? 0,
+    candMine: cntCandMine ?? 0,
+  };
 
   const { data: recebidos } = await supabase
     .from("matches")
@@ -1291,6 +1305,7 @@ export default async function ComunidadePage() {
       className="mx-auto w-full max-w-3xl px-2.5 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-6xl sm:px-5 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
       <ComunidadeBackgroundSync />
+      <ComunidadePendenciasRscSync userId={user.id} snapshot={pendenciasSnapshot} />
       <div className="mb-3 md:mb-4">
         <PushToggleCard defaultEnabled />
       </div>

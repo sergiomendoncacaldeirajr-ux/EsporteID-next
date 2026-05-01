@@ -85,18 +85,18 @@ export const PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS =
  * Touch: `app/globals.css` (`data-eid-social-acao-btn`).
  */
 export const PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS =
-  "flex min-h-[26px] w-full items-center justify-center gap-0.5 rounded-[8px] border border-orange-200/35 bg-[linear-gradient(180deg,#ffb14a_0%,#ff8d1c_48%,#ef6c00_100%)] px-0.5 text-[8.5px] font-black uppercase tracking-[0.05em] text-white shadow-[0_6px_14px_-10px_rgba(239,108,0,0.72)] transition hover:brightness-105 active:brightness-95 disabled:pointer-events-none disabled:opacity-50 sm:min-h-[28px] sm:gap-1 sm:px-1 sm:text-[9px]";
+  "flex min-h-[30px] w-full items-center justify-center gap-0.5 rounded-[8px] border border-orange-200/35 bg-[linear-gradient(180deg,#ffb14a_0%,#ff8d1c_48%,#ef6c00_100%)] px-0.5 text-[8.5px] font-black uppercase tracking-[0.05em] text-white shadow-[0_6px_14px_-10px_rgba(239,108,0,0.72)] transition hover:brightness-105 active:brightness-95 disabled:pointer-events-none disabled:opacity-50 sm:min-h-[32px] sm:gap-1 sm:px-1 sm:text-[9px]";
 
 export const PEDIDO_MATCH_RECEBIDO_SOCIAL_RECUSAR_BTN_CLASS =
-  "flex min-h-[26px] w-full items-center justify-center gap-0.5 rounded-[8px] border border-[#475569] bg-transparent px-0.5 text-[8.5px] font-black uppercase tracking-[0.05em] text-[#CBD5F5] shadow-none transition hover:border-[#ef4444] hover:bg-red-500/15 hover:text-red-100 active:border-[#ef4444] active:bg-red-500/22 active:text-white disabled:pointer-events-none disabled:opacity-50 sm:min-h-[28px] sm:gap-1 sm:px-1 sm:text-[9px] eid-light:border-[#475569] eid-light:text-[#475569]";
+  "flex min-h-[30px] w-full items-center justify-center gap-0.5 rounded-[8px] border border-[#475569] bg-transparent px-0.5 text-[8.5px] font-black uppercase tracking-[0.05em] text-[#CBD5F5] shadow-none transition hover:border-[#ef4444] hover:bg-red-500/15 hover:text-red-100 active:border-[#ef4444] active:bg-red-500/22 active:text-white disabled:pointer-events-none disabled:opacity-50 sm:min-h-[32px] sm:gap-1 sm:px-1 sm:text-[9px] eid-light:border-[#475569] eid-light:text-[#475569]";
 
 /** Anel do ícone Check / Loader dentro do botão Aceitar (chrome claro / escuro). */
 export const PEDIDO_SOCIAL_LIGHT_ICON_RING_ACEITAR =
-  "flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border border-orange-100/85 bg-transparent text-[#fff7ed] sm:h-[14px] sm:w-[14px] eid-light:border-orange-100/85 eid-light:text-[#fff7ed]";
+  "flex h-[9px] w-[9px] shrink-0 items-center justify-center rounded-full border border-orange-100/85 bg-transparent text-[#fff7ed] sm:h-[10px] sm:w-[10px] eid-light:border-orange-100/85 eid-light:text-[#fff7ed]";
 
 /** Anel do ícone X / Loader dentro do botão Recusar (chrome claro / escuro). */
 export const PEDIDO_SOCIAL_LIGHT_ICON_RING_RECUSAR =
-  "flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-full border border-[#475569] bg-transparent text-[#CBD5F5] sm:h-[14px] sm:w-[14px] eid-light:border-[#64748b] eid-light:bg-transparent eid-light:text-[#475569]";
+  "flex h-[9px] w-[9px] shrink-0 items-center justify-center rounded-full border border-[#475569] bg-transparent text-[#CBD5F5] sm:h-[10px] sm:w-[10px] eid-light:border-[#64748b] eid-light:bg-transparent eid-light:text-[#475569]";
 
 /** Cancelar pedido de desafio enviado (Comunidade): compacto, vermelho (tema claro/escuro via utilitários + globals). */
 export const PEDIDO_DESAFIO_ENVIADO_CANCELAR_BTN_CLASS =

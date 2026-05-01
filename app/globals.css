@@ -1276,7 +1276,7 @@ select,
   :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
     button[data-eid-social-acao-btn="true"] {
     min-height: 0 !important;
-    padding: 3px 6px !important;
+    padding: 5px 6px !important;
     font-size: 8.5px !important;
     line-height: 1.1 !important;
     font-weight: 800 !important;
@@ -1287,7 +1287,7 @@ select,
   @media (min-width: 640px) {
     :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
       button[data-eid-social-acao-btn="true"] {
-      padding: 3px 7px !important;
+      padding: 5px 7px !important;
       font-size: 9px !important;
     }
   }
@@ -1295,7 +1295,7 @@ select,
   /* Comunidade compacta: mesma escala dos botões sociais (sem 44px do touch padrão). */
   :where([data-eid-touch-ui][data-eid-touch-ui-compact]) button[data-eid-social-acao-btn="true"] {
     min-height: 0 !important;
-    padding: 3px 6px !important;
+    padding: 5px 6px !important;
     font-size: 8.5px !important;
     line-height: 1.1 !important;
     font-weight: 800 !important;
@@ -1305,7 +1305,7 @@ select,
 
   @media (min-width: 640px) {
     :where([data-eid-touch-ui][data-eid-touch-ui-compact]) button[data-eid-social-acao-btn="true"] {
-      padding: 3px 7px !important;
+      padding: 5px 7px !important;
       font-size: 9px !important;
     }
   }
