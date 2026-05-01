@@ -1277,7 +1277,7 @@ select,
     button[data-eid-social-acao-btn="true"] {
     min-height: 0 !important;
     padding: 3px 6px !important;
-    font-size: 7.5px !important;
+    font-size: 8.5px !important;
     line-height: 1.1 !important;
     font-weight: 800 !important;
     text-transform: uppercase !important;
@@ -1288,7 +1288,7 @@ select,
     :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact]), .eid-touch-ui-scope)
       button[data-eid-social-acao-btn="true"] {
       padding: 3px 7px !important;
-      font-size: 8px !important;
+      font-size: 9px !important;
     }
   }
 
@@ -1296,7 +1296,7 @@ select,
   :where([data-eid-touch-ui][data-eid-touch-ui-compact]) button[data-eid-social-acao-btn="true"] {
     min-height: 0 !important;
     padding: 3px 6px !important;
-    font-size: 7.5px !important;
+    font-size: 8.5px !important;
     line-height: 1.1 !important;
     font-weight: 800 !important;
     text-transform: uppercase !important;
@@ -1306,7 +1306,7 @@ select,
   @media (min-width: 640px) {
     :where([data-eid-touch-ui][data-eid-touch-ui-compact]) button[data-eid-social-acao-btn="true"] {
       padding: 3px 7px !important;
-      font-size: 8px !important;
+      font-size: 9px !important;
     }
   }
 
@@ -1525,20 +1525,20 @@ select,
 
 /* Lucide nos botões Aceitar/Recusar/Aprovar compactos — ícones no anel. */
 :where([data-eid-touch-ui], .eid-touch-ui-scope) button[data-eid-social-acao-btn="true"] svg {
-  width: 7px;
-  height: 7px;
-  min-width: 7px;
-  min-height: 7px;
+  width: 6px;
+  height: 6px;
+  min-width: 6px;
+  min-height: 6px;
   flex-shrink: 0;
   display: block;
 }
 
 @media (min-width: 640px) {
   :where([data-eid-touch-ui], .eid-touch-ui-scope) button[data-eid-social-acao-btn="true"] svg {
-    width: 8px;
-    height: 8px;
-    min-width: 8px;
-    min-height: 8px;
+    width: 7px;
+    height: 7px;
+    min-width: 7px;
+    min-height: 7px;
   }
 }
 
