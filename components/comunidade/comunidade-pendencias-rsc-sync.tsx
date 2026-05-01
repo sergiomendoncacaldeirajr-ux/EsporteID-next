@@ -6,6 +6,7 @@ import {
   type ComunidadePendenciasServerSnapshot,
   pendenciasSnapshotSignature,
 } from "@/lib/comunidade/pendencias-snapshot";
+import { eidPreferHardReloadComunidadeRsc } from "@/lib/comunidade/social-panel-layout";
 import { createClient } from "@/lib/supabase/client";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -80,6 +81,8 @@ export function ComunidadePendenciasRscSync({
   const routerRefreshRef = useRef(router.refresh);
   const serverSigRef = useRef(snapshotSig);
   const lastRefreshAt = useRef(0);
+  const lastHardReloadAt = useRef(0);
+  const consecStaleTicks = useRef(0);
   const pollCycles = useRef(0);
 
   useEffect(() => {
@@ -96,6 +99,22 @@ export function ComunidadePendenciasRscSync({
     let cancelled = false;
     const registered: ReturnType<typeof supabase.channel>[] = [];
 
+    const maybeHardReloadIfPwaStillStale = async () => {
+      if (cancelled || !eidPreferHardReloadComunidadeRsc()) return false;
+      try {
+        const live = await fetchRawPendenciasCounts(supabase, userId);
+        const liveSig = pendenciasSnapshotSignature(live);
+        if (liveSig === serverSigRef.current) return false;
+        const t = Date.now();
+        if (t - lastHardReloadAt.current < 2800) return false;
+        lastHardReloadAt.current = t;
+        window.location.reload();
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
     const maybeRefresh = () => {
       if (cancelled) return;
       const now = Date.now();
@@ -108,6 +127,7 @@ export function ComunidadePendenciasRscSync({
           /* ignore */
         }
         if (cancelled) return;
+        if (await maybeHardReloadIfPwaStillStale()) return;
         queueMicrotask(() => {
           routerRefreshRef.current();
           queueMicrotask(() => routerRefreshRef.current());
@@ -122,6 +142,30 @@ export function ComunidadePendenciasRscSync({
         const live = await fetchRawPendenciasCounts(supabase, userId);
         const liveSig = pendenciasSnapshotSignature(live);
         const stale = liveSig !== serverSigRef.current;
+        if (stale) {
+          consecStaleTicks.current += 1;
+        } else {
+          consecStaleTicks.current = 0;
+        }
+        /**
+         * PWA (WebView): `router.refresh()` muitas vezes não aplica o flight novo no miolo.
+         * Após vários polls seguidos com assinatura cliente ≠ servidor, recarrega a página (com throttle).
+         */
+        if (
+          eidPreferHardReloadComunidadeRsc() &&
+          stale &&
+          consecStaleTicks.current >= 5 &&
+          Date.now() - lastHardReloadAt.current >= 4500
+        ) {
+          lastHardReloadAt.current = Date.now();
+          try {
+            await fetch("/api/comunidade/revalidate", { method: "POST", credentials: "same-origin" });
+          } catch {
+            /* ignore */
+          }
+          if (!cancelled) window.location.reload();
+          return;
+        }
         /** A cada ~4s força refresh: cobre cache RSC / Realtime ausente. */
         const forceBeat = pollCycles.current % 4 === 0;
         if (stale || forceBeat) {
