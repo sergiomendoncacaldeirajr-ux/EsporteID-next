@@ -398,7 +398,12 @@ export function RealtimePageRefresh({ userId }: Props) {
             supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", userId).eq("status", "Pendente"),
             supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("status", "Pendente"),
             supabase.from("match_sugestoes").select("id", { count: "exact", head: true }).eq("alvo_dono_id", userId).eq("status", "pendente"),
-            supabase.from("match_sugestoes").select("id", { count: "exact", head: true }).eq("sugeridor_id", userId).eq("status", "pendente"),
+            supabase
+              .from("match_sugestoes")
+              .select("id", { count: "exact", head: true })
+              .eq("sugeridor_id", userId)
+              .eq("status", "pendente")
+              .neq("oculto_sugeridor", true),
             supabase.from("partidas").select("id, status, jogador1_id, jogador2_id, time1_id, time2_id").order("id", { ascending: false }).limit(120),
             supabase.from("time_convites").select("id", { count: "exact", head: true }).eq("convidado_usuario_id", userId).eq("status", "pendente"),
             ownedIds.length > 0
