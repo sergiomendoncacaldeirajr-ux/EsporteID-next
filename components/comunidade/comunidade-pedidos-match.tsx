@@ -17,10 +17,10 @@ import {
   PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS,
 } from "@/lib/desafio/flow-ui";
 import {
-  EID_SOCIAL_LIGHT_ACOES_ROW,
-  EID_SOCIAL_LIGHT_CARD_SHELL,
-  EID_SOCIAL_LIGHT_PANEL,
   EID_SOCIAL_GRID_3,
+  EID_SOCIAL_PANEL_ACOES_ROW,
+  EID_SOCIAL_PANEL_BODY,
+  EID_SOCIAL_PANEL_MATCH_RECEBIDO_SHELL,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
 
@@ -150,7 +150,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 ? "individual"
                 : "dupla";
           return (
-            <li key={m.id} className={`${EID_SOCIAL_LIGHT_CARD_SHELL} p-0 text-sm`}>
+            <li key={m.id} className={`${EID_SOCIAL_PANEL_MATCH_RECEBIDO_SHELL} p-0 text-sm`}>
               <div className="absolute right-3 top-3 z-[1] flex flex-col items-end gap-1">
                 {m.finalidade === "amistoso" ? (
                   <span className="rounded-full border border-emerald-500/35 bg-emerald-500/12 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-emerald-100 eid-light:border-emerald-200 eid-light:bg-emerald-50 eid-light:text-emerald-800">
@@ -167,7 +167,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                 </span>
               </div>
 
-              <div className={EID_SOCIAL_LIGHT_PANEL}>
+              <div className={EID_SOCIAL_PANEL_BODY}>
                 <div className={`${EID_SOCIAL_GRID_3} pt-11`}>
                   <div className="flex min-w-0 flex-col items-center">
                     <p className="flex flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.14em] text-eid-action-600">
@@ -264,7 +264,7 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
                   </div>
                 ) : null}
                 <div
-                  className={`${EID_SOCIAL_LIGHT_ACOES_ROW} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !items-stretch gap-1.5 sm:gap-2`}
+                  className={`${EID_SOCIAL_PANEL_ACOES_ROW} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !items-stretch gap-1.5 sm:gap-2`}
                 >
                   <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                     <input type="hidden" name="match_id" value={String(m.id)} />

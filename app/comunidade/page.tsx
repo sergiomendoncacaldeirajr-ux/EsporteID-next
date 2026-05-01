@@ -2,9 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
-import {
-  type ComunidadeProfessorProfileRow,
-} from "@/components/comunidade/comunidade-aulas-section";
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
 import { ComunidadeConvitesEnviadosTime, type ConviteTimeEnviadoItem } from "@/components/comunidade/comunidade-convites-enviados-time";
 import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pedidos-enviados";
@@ -14,7 +11,6 @@ import {
   type SugestaoEnviadaMatchItem,
 } from "@/components/comunidade/comunidade-sugestoes-enviadas-match";
 import { ComunidadeSugestoesMatch, type SugestaoMatchItem } from "@/components/comunidade/comunidade-sugestoes-match";
-import { ComunidadeSetorNotificacoes } from "@/components/comunidade/comunidade-setor-notificacoes";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { EidCityState } from "@/components/ui/eid-city-state";
@@ -26,9 +22,9 @@ import { PushToggleCard } from "@/components/pwa/push-toggle-card";
 import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { PEDIDO_MATCH_RECEBIDO_FORM_CLASS, PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS } from "@/lib/desafio/flow-ui";
 import {
-  EID_SOCIAL_CARD_FOOTER,
   EID_SOCIAL_GRID_3,
-  getSocialStatusCardShell,
+  EID_SOCIAL_PANEL_FOOTER,
+  getSocialStatusPanelItemShell,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
 import {
@@ -42,61 +38,15 @@ import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pen
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { splitCityState } from "@/lib/geo/split-city-state";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
-import { getSystemFeatureConfig, SYSTEM_FEATURE_LABEL, type SystemFeatureKey } from "@/lib/system-features";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { createClient } from "@/lib/supabase/server";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { Calendar, Clock, Clock3, LayoutGrid, MapPin, Shield, User, UserPlus } from "lucide-react";
-import { marcarTodasNotificacoesLidas } from "./actions";
 import type { ReactNode } from "react";
 
-function ModuloIcon({ moduleKey }: { moduleKey: SystemFeatureKey }) {
-  const cls = "h-[15px] w-[15px]";
-  if (moduleKey === "marketplace") {
-    return (
-      <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
-        <path d="M6 8h12l-1 11H7L6 8z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-        <path d="M9 8V6a3 3 0 016 0v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    );
-  }
-  if (moduleKey === "locais") {
-    return (
-      <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
-        <path d="M12 21s6-5.2 6-10a6 6 0 10-12 0c0 4.8 6 10 6 10z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-        <circle cx="12" cy="11" r="2" fill="currentColor" />
-      </svg>
-    );
-  }
-  if (moduleKey === "torneios") {
-    return (
-      <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
-        <path d="M8 5h8v3a4 4 0 01-8 0V5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-        <path d="M7 8H5a2 2 0 002 2M17 8h2a2 2 0 01-2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M12 12v4M9 20h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    );
-  }
-  if (moduleKey === "professores") {
-    return (
-      <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
-        <path d="M3 9l9-4 9 4-9 4-9-4z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-        <path d="M7 11v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" className={cls} fill="none" aria-hidden>
-      <circle cx="8" cy="9" r="2.5" stroke="currentColor" strokeWidth="2" />
-      <circle cx="16" cy="9" r="2.5" stroke="currentColor" strokeWidth="2" />
-      <path d="M3 19c0-2.5 2.3-4.5 5-4.5M21 19c0-2.5-2.3-4.5-5-4.5M8 19c0-2.8 1.8-5 4-5s4 2.2 4 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export const metadata = {
-  title: "Painel de controle",
-  description: "Painel de controle do EsporteID: acompanhe notificações, convites e pedidos com clareza.",
+  title: "Ações pendentes",
+  description: "Central de ações pendentes no EsporteID: desafios, equipe e placar que precisam da sua resposta.",
 };
 
 function primeiroNome(nome?: string | null) {
@@ -154,6 +104,7 @@ function PedidoElencoEidSeal({ notaEid }: { notaEid: number }) {
   );
 }
 
+/** Cabeçalho de subseção sem card extra — o bloco principal (Desafio / Equipe) já é o único “quadro”. */
 function ComunidadeQuadro({
   id,
   title,
@@ -169,17 +120,13 @@ function ComunidadeQuadro({
 }) {
   if (!hasPending) return null;
   return (
-    <details
-      id={id}
-      open
-      className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 px-1 py-2 sm:px-1.5 sm:py-2.5 [&_summary::-webkit-details-marker]:hidden"
-    >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
-        <h3 className="text-[11px] font-black tracking-tight text-eid-fg">{title}</h3>
+    <div id={id} className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-[11px] font-black tracking-tight text-eid-primary-500 eid-dark:text-eid-primary-300">{title}</h3>
         <EidPendingBadge label={badgeLabel} />
-      </summary>
-      <div className="mt-2">{children}</div>
-    </details>
+      </div>
+      <div className="min-w-0">{children}</div>
+    </div>
   );
 }
 
@@ -201,96 +148,82 @@ export default async function ComunidadePage() {
   const myLng = Number((profile as { lng?: number | null }).lng ?? NaN);
   const hasMyCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
-  await supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id });
-  await supabase.rpc("processar_pendencias_cancelamento_match", { p_only_user: user.id });
-  await supabase.rpc("limpar_notificacoes_match_cancelado", { p_only_user: user.id });
-  const featureCfg = await getSystemFeatureConfig(supabase);
+  await Promise.all([
+    supabase.rpc("auto_aprovar_resultados_pendentes", { p_only_user: user.id }),
+    supabase.rpc("processar_pendencias_cancelamento_match", { p_only_user: user.id }),
+    supabase.rpc("limpar_notificacoes_match_cancelado", { p_only_user: user.id }),
+  ]);
 
-  const { data: notificacoes } = await supabase
-    .from("notificacoes")
-    .select("id, mensagem, tipo, lida, criada_em, data_criacao, referencia_id, remetente_id")
-    .eq("usuario_id", user.id)
-    .order("id", { ascending: false })
-    .limit(50);
-  const uniqueNotificacoes = (() => {
-    const seen = new Set<string>();
-    const out: NonNullable<typeof notificacoes> = [];
-    for (const n of notificacoes ?? []) {
-      const tipo = String(n.tipo ?? "").trim().toLowerCase();
-      const isDedupeTipo = tipo === "match" || tipo === "desafio" || tipo === "time" || tipo === "convite";
-      const key = isDedupeTipo
-        ? `${tipo}:${String((n as { referencia_id?: number | null }).referencia_id ?? "null")}:${String((n as { remetente_id?: string | null }).remetente_id ?? "null")}`
-        : `id:${n.id}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push(n);
-    }
-    return out;
-  })();
-  const flowNotifRefIds = [
-    ...new Set(
-      uniqueNotificacoes
-        .filter((n) => {
-          const tipo = String(n.tipo ?? "")
-            .trim()
-            .toLowerCase();
-          return tipo === "match" || tipo === "desafio";
-        })
-        .map((n) => Number((n as { referencia_id?: number | null }).referencia_id ?? 0))
-        .filter((id) => Number.isFinite(id) && id > 0)
-    ),
-  ];
-  const { data: flowMatchStatusRows } = flowNotifRefIds.length
-    ? await supabase.from("matches").select("id, status").in("id", flowNotifRefIds)
+  const uidEq = user.id;
+  const [
+    { count: cntMatchIn },
+    { count: cntMatchOut },
+    { count: cntSugRec },
+    { count: cntSugEnv },
+    { count: cntConvRec },
+    { count: cntConvEnv },
+    { count: cntCandLider },
+    { count: cntCandMine },
+    { count: cntPartAguarda },
+    { count: cntPartAgend },
+    { count: cntMatchRankFlow },
+  ] = await Promise.all([
+    supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", uidEq).eq("status", "Pendente"),
+    supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", uidEq).eq("status", "Pendente"),
+    supabase.from("match_sugestoes").select("id", { count: "exact", head: true }).eq("alvo_dono_id", uidEq).eq("status", "pendente"),
+    supabase
+      .from("match_sugestoes")
+      .select("id", { count: "exact", head: true })
+      .eq("sugeridor_id", uidEq)
+      .eq("status", "pendente")
+      .neq("oculto_sugeridor", true),
+    supabase.from("time_convites").select("id", { count: "exact", head: true }).eq("convidado_usuario_id", uidEq).eq("status", "pendente"),
+    supabase.from("time_convites").select("id", { count: "exact", head: true }).eq("convidado_por_usuario_id", uidEq).eq("status", "pendente"),
+    supabase
+      .from("time_candidaturas")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pendente")
+      .eq("times.criador_id", uidEq),
+    supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).eq("candidato_usuario_id", uidEq).eq("status", "pendente"),
+    supabase
+      .from("partidas")
+      .select("id", { count: "exact", head: true })
+      .or(`jogador1_id.eq.${uidEq},jogador2_id.eq.${uidEq},usuario_id.eq.${uidEq}`)
+      .eq("status", "aguardando_confirmacao"),
+    supabase
+      .from("partidas")
+      .select("id", { count: "exact", head: true })
+      .or(`jogador1_id.eq.${uidEq},jogador2_id.eq.${uidEq}`)
+      .eq("status", "agendada"),
+    supabase
+      .from("matches")
+      .select("id", { count: "exact", head: true })
+      .or(`usuario_id.eq.${uidEq},adversario_id.eq.${uidEq}`)
+      .eq("finalidade", "ranking")
+      .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]),
+  ]);
+
+  const loadIncoming = (cntMatchIn ?? 0) > 0;
+  const loadOutgoing = (cntMatchOut ?? 0) > 0;
+  const needEquipe =
+    (cntSugRec ?? 0) > 0 ||
+    (cntSugEnv ?? 0) > 0 ||
+    (cntConvRec ?? 0) > 0 ||
+    (cntConvEnv ?? 0) > 0 ||
+    (cntCandLider ?? 0) > 0 ||
+    (cntCandMine ?? 0) > 0;
+  const needPartidas =
+    (cntPartAguarda ?? 0) > 0 || (cntPartAgend ?? 0) > 0 || (cntMatchRankFlow ?? 0) > 0;
+
+  const { data: recebidos } = loadIncoming
+    ? await supabase
+        .from("matches")
+        .select("id, modalidade_confronto, data_solicitacao, data_registro, usuario_id, esporte_id, adversario_time_id, finalidade")
+        .eq("adversario_id", user.id)
+        .eq("status", "Pendente")
+        .order("data_registro", { ascending: false })
+        .limit(30)
     : { data: [] };
-  const canceledMatchIds = new Set(
-    (flowMatchStatusRows ?? [])
-      .filter((row) => String(row.status ?? "").trim().toLowerCase() === "cancelado")
-      .map((row) => Number(row.id))
-      .filter((id) => Number.isFinite(id) && id > 0)
-  );
-  if (canceledMatchIds.size > 0) {
-    await supabase
-      .from("notificacoes")
-      .delete()
-      .eq("usuario_id", user.id)
-      .in("tipo", ["match", "desafio"])
-      .in("referencia_id", [...canceledMatchIds]);
-  }
-  const uniqueNotificacoesVisiveis = uniqueNotificacoes.filter((n) => {
-    const tipo = String(n.tipo ?? "")
-      .trim()
-      .toLowerCase();
-    if (tipo !== "match" && tipo !== "desafio") return true;
-    const refId = Number((n as { referencia_id?: number | null }).referencia_id ?? 0);
-    if (!Number.isFinite(refId) || refId < 1) return true;
-    return !canceledMatchIds.has(refId);
-  });
-  const cancelFlowNotifIds = uniqueNotificacoesVisiveis
-    .filter((n) => {
-      const tipo = String(n.tipo ?? "")
-        .trim()
-        .toLowerCase();
-      if (tipo !== "match" && tipo !== "desafio") return false;
-      const msg = String(n.mensagem ?? "")
-        .trim()
-        .toLowerCase();
-      return msg.includes("cancelado") || msg.includes("cancelamento");
-    })
-    .map((n) => Number(n.id))
-    .filter((id) => Number.isFinite(id) && id > 0);
-  if (cancelFlowNotifIds.length > 0) {
-    await supabase.from("notificacoes").delete().eq("usuario_id", user.id).in("id", cancelFlowNotifIds);
-  }
-  const uniqueNotificacoesSetor = uniqueNotificacoesVisiveis.filter((n) => !cancelFlowNotifIds.includes(Number(n.id)));
-
-  const { data: recebidos } = await supabase
-    .from("matches")
-    .select("id, modalidade_confronto, data_solicitacao, data_registro, usuario_id, esporte_id, adversario_time_id, finalidade")
-    .eq("adversario_id", user.id)
-    .eq("status", "Pendente")
-    .order("data_registro", { ascending: false })
-    .limit(30);
   const receivedSportIds = [
     ...new Set((recebidos ?? []).map((m) => Number(m.esporte_id ?? 0)).filter((id) => Number.isFinite(id) && id > 0)),
   ];
@@ -312,13 +245,15 @@ export default async function ComunidadePage() {
     (desafiantesEid ?? []).map((row) => [`${String(row.usuario_id)}:${Number(row.esporte_id)}`, Number(row.nota_eid ?? 0)])
   );
 
-  const { data: enviadosPendentes } = await supabase
-    .from("matches")
-    .select("id, adversario_id, adversario_time_id, esporte_id, modalidade_confronto, data_solicitacao")
-    .eq("usuario_id", user.id)
-    .eq("status", "Pendente")
-    .order("data_solicitacao", { ascending: false })
-    .limit(20);
+  const { data: enviadosPendentes } = loadOutgoing
+    ? await supabase
+        .from("matches")
+        .select("id, adversario_id, adversario_time_id, esporte_id, modalidade_confronto, data_solicitacao")
+        .eq("usuario_id", user.id)
+        .eq("status", "Pendente")
+        .order("data_solicitacao", { ascending: false })
+        .limit(20)
+    : { data: [] };
 
   const eidsRecebidos = (recebidos ?? []).map((m) => m.esporte_id).filter(Boolean) as number[];
   const eidsEnviados = (enviadosPendentes ?? []).map((m) => m.esporte_id).filter(Boolean) as number[];
@@ -542,20 +477,18 @@ export default async function ComunidadePage() {
     };
   });
 
-  const { data: aceitosCancelaveisPainel } = await supabase
-    .from("matches")
-    .select("id, usuario_id, adversario_id, esporte_id, status, reschedule_selected_option")
-    .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
-    .eq("finalidade", "ranking")
-    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
-  const { data: historicoCancelamentoPainelRows } = await supabase
-    .from("matches")
-    .select("id, usuario_id, adversario_id, esporte_id, status")
-    .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
-    .eq("finalidade", "ranking")
-    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente", "Cancelado"])
-    .order("id", { ascending: false })
-    .limit(120);
+  const equipeData = await (async () => {
+    if (!needEquipe) {
+      return {
+        sugestoesItems: [] as SugestaoMatchItem[],
+        nSugestoes: 0,
+        sugestoesEnviadasItems: [] as SugestaoEnviadaMatchItem[],
+        conviteItems: [] as ConviteTimeItem[],
+        conviteEnviadoItems: [] as ConviteTimeEnviadoItem[],
+        candidaturasEquipe: [],
+        minhasCandidaturasEquipe: [],
+      };
+    }
 
   const { data: sugestoesRaw } = await supabase
     .from("match_sugestoes")
@@ -762,7 +695,6 @@ export default async function ComunidadePage() {
       if (p !== 0) return p;
       return new Date(b.criadoEm).getTime() - new Date(a.criadoEm).getTime();
     });
-  const hasSugestoesEnviadasPendentes = sugestoesEnviadasItems.some((s) => s.statusRaw === "pendente");
   const { data: convites } = await supabase
     .from("time_convites")
     .select(
@@ -1114,152 +1046,26 @@ export default async function ComunidadePage() {
       meuLocalizacao: profile?.localizacao ?? null,
     };
   }).filter((c) => c.statusRaw !== "recusado" && c.statusRaw !== "cancelado");
-  const nNotifUnread = uniqueNotificacoesSetor.filter((n) => n.lida !== true).length;
-  const desafioNotifs = uniqueNotificacoesSetor.filter((n) => {
-    const tipo = String(n.tipo ?? "").toLowerCase();
-    const msg = String(n.mensagem ?? "").toLowerCase();
-    if (msg.includes("cancelad") || msg.includes("cancelamento") || msg.includes("recusad")) return false;
-    return tipo.includes("match") || tipo.includes("desafio") || msg.includes("desafio");
-  });
-  const equipeNotifs = uniqueNotificacoesSetor.filter((n) => {
-    const tipo = String(n.tipo ?? "").toLowerCase();
-    const msg = String(n.mensagem ?? "").toLowerCase();
-    if (msg.includes("cancelad") || msg.includes("cancelamento") || msg.includes("recusad")) return false;
-    return tipo.includes("time") || tipo.includes("convite") || tipo.includes("candidatura") || msg.includes("pedido para entrar");
-  });
 
-  const [{ data: solicitacoes }, { data: vinculos }] = await Promise.all([
-    supabase
-      .from("professor_solicitacoes_aula")
-      .select(
-        "id, professor_id, esporte_id, mensagem, status, criado_em, respondido_em, esportes(nome)"
-      )
-      .eq("aluno_id", user.id)
-      .order("criado_em", { ascending: false }),
-    supabase
-      .from("professor_aula_alunos")
-      .select(
-        "id, aula_id, aluno_id, valor_centavos, status_inscricao, status_pagamento, taxa_cancelamento_centavos, motivo_cancelamento, professor_aulas!inner(id, professor_id, titulo, inicio, fim, status, esportes(nome))"
-      )
-      .eq("aluno_id", user.id)
-      .order("id", { ascending: false }),
-  ]);
-
-  const professorIds = [
-    ...new Set([
-      ...(solicitacoes ?? []).map((item) => item.professor_id),
-      ...(vinculos ?? []).map((item) => {
-        const aula = Array.isArray(item.professor_aulas)
-          ? item.professor_aulas[0]
-          : item.professor_aulas;
-        return aula?.professor_id ?? null;
-      }),
-    ].filter(Boolean)),
-  ] as string[];
-
-  const [{ data: professores }, { data: professorPerfis }] = professorIds.length
-    ? await Promise.all([
-        supabase.from("profiles").select("id, nome, whatsapp").in("id", professorIds),
-        supabase
-          .from("professor_perfil")
-          .select("usuario_id, whatsapp_visibilidade, headline, politica_cancelamento_json")
-          .in("usuario_id", professorIds),
-      ])
-    : [
-        { data: [] as Array<{ id: string; nome: string | null; whatsapp: string | null }> },
-        {
-          data: [] as Array<{
-            usuario_id: string;
-            whatsapp_visibilidade: string | null;
-            headline: string | null;
-            politica_cancelamento_json: unknown;
-          }>,
-        },
-      ];
-
-  const professorMap = new Map<string, ComunidadeProfessorProfileRow>();
-  const professorPerfilMap = new Map(
-    (professorPerfis ?? []).map((item) => [item.usuario_id, item])
-  );
-  for (const item of professores ?? []) {
-    const professorPerfil = professorPerfilMap.get(item.id);
-    professorMap.set(item.id, {
-      id: item.id,
-      nome: item.nome ?? null,
-      whatsapp: item.whatsapp ?? null,
-      whatsapp_visibilidade: professorPerfil?.whatsapp_visibilidade ?? "publico",
-      headline: professorPerfil?.headline ?? null,
-      politica_cancelamento_json: professorPerfil?.politica_cancelamento_json ?? null,
-    });
-  }
-
-  const nAulas = (solicitacoes?.length ?? 0) + (vinculos?.length ?? 0);
-  const emBreveKeys: SystemFeatureKey[] = ["marketplace", "locais", "torneios", "professores", "organizador_torneios"];
-  const emBreveItems = emBreveKeys
-    .map((key) => ({
-      key,
-      label: SYSTEM_FEATURE_LABEL[key],
-      mode: featureCfg[key].mode,
-    }))
-    .filter((item) => item.mode !== "ativo");
-
-  const { teamClause: teamClausePainel } = await getAgendaTeamContext(supabase, user.id);
-  await processarPendenciasAgendamentoAceite(supabase, user.id, teamClausePainel);
-  const [{ data: painelAgendadas }, { data: painelPlacarPendente }] = await Promise.all([
-    fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel),
-    fetchPlacarAguardandoConfirmacao(supabase, user.id, teamClausePainel),
-  ]);
-  const { data: painelPartidasStatusRows } = await supabase
-    .from("partidas")
-    .select("id, esporte_id, jogador1_id, jogador2_id, status, status_ranking, lancado_por")
-    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}${teamClausePainel}`)
-    .in("status", ["agendada", "aguardando_confirmacao"])
-    .order("id", { ascending: false })
-    .limit(120);
-  const painelPartidasAll = [...(painelAgendadas ?? []), ...(painelPlacarPendente ?? [])];
-  const painelLocalIds = [
-    ...new Set(
-      painelPartidasAll.map((p) => p.local_espaco_id).filter((x): x is number => typeof x === "number" && x > 0)
-    ),
-  ];
-  const { data: painelLocaisRows } = painelLocalIds.length
-    ? await supabase.from("espacos_genericos").select("id, nome_publico").in("id", painelLocalIds)
-    : { data: [] };
-  const painelLocMap = new Map((painelLocaisRows ?? []).map((l) => [l.id, l.nome_publico]));
-  const painelPlayerIds = new Set<string>();
-  for (const p of painelPartidasAll) {
-    if (p.jogador1_id) painelPlayerIds.add(p.jogador1_id);
-    if (p.jogador2_id) painelPlayerIds.add(p.jogador2_id);
-  }
-  const painelPlayerList = [...painelPlayerIds];
-  const { data: painelNomeRows } = painelPlayerList.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", painelPlayerList)
-    : { data: [] };
-  const painelPerfilMap = new Map((painelNomeRows ?? []).map((r) => [r.id, r]));
-  const painelNomeMap = new Map((painelNomeRows ?? []).map((r) => [r.id, r.nome]));
-  const painelEsporteIds = [
-    ...new Set(
-      painelPartidasAll
-        .map((p) => Number((p as { esporte_id?: number | null }).esporte_id ?? 0))
-        .filter((v) => Number.isFinite(v) && v > 0)
-    ),
-  ];
-  const { data: painelUeRows } = painelPlayerList.length && painelEsporteIds.length
-    ? await supabase
-        .from("usuario_eid")
-        .select("usuario_id, esporte_id, nota_eid")
-        .in("usuario_id", painelPlayerList)
-        .in("esporte_id", painelEsporteIds)
-    : { data: [] };
-  const painelNotaEidByUserSport = new Map(
-    (painelUeRows ?? []).map((r) => [`${String(r.usuario_id)}:${Number(r.esporte_id)}`, Number(r.nota_eid ?? 0)])
-  );
-
-  function localLabelPainel(p: AgendaPartidaCardRow) {
-    if (p.local_str?.trim()) return p.local_str.trim();
-    if (p.local_espaco_id) return painelLocMap.get(p.local_espaco_id) ?? null;
-    return null;
-  }
+    return {
+      sugestoesItems,
+      nSugestoes,
+      sugestoesEnviadasItems,
+      conviteItems,
+      conviteEnviadoItems,
+      candidaturasEquipe,
+      minhasCandidaturasEquipe,
+    };
+  })();
+  const {
+    sugestoesItems,
+    nSugestoes,
+    sugestoesEnviadasItems,
+    conviteItems,
+    conviteEnviadoItems,
+    candidaturasEquipe,
+    minhasCandidaturasEquipe,
+  } = equipeData;
 
   function dueloKey(a: string | null | undefined, b: string | null | undefined, esporteId: number | null | undefined): string | null {
     if (!a || !b || !Number.isFinite(Number(esporteId)) || Number(esporteId) <= 0) return null;
@@ -1272,102 +1078,192 @@ export default async function ComunidadePage() {
     return `${x}:${y}`;
   }
 
-  const partidaMaisRecentePorDueloPainel = new Map<
-    string,
-    { status: string | null; status_ranking: string | null; lancado_por: string | null }
-  >();
-  const partidaMaisRecentePorDueloPainelNoSport = new Map<
-    string,
-    { status: string | null; status_ranking: string | null; lancado_por: string | null }
-  >();
-  for (const row of painelPartidasStatusRows ?? []) {
-    const key = dueloKey(
-      (row as { jogador1_id?: string | null }).jogador1_id ?? null,
-      (row as { jogador2_id?: string | null }).jogador2_id ?? null,
-      Number((row as { esporte_id?: number | null }).esporte_id ?? 0)
-    );
-    const meta = {
-      status: (row as { status?: string | null }).status ?? null,
-      status_ranking: (row as { status_ranking?: string | null }).status_ranking ?? null,
-      lancado_por: (row as { lancado_por?: string | null }).lancado_por ?? null,
-    };
-    if (key && !partidaMaisRecentePorDueloPainel.has(key)) {
-      partidaMaisRecentePorDueloPainel.set(key, meta);
-    }
-    const keyNoSport = dueloKeyNoSport(
-      (row as { jogador1_id?: string | null }).jogador1_id ?? null,
-      (row as { jogador2_id?: string | null }).jogador2_id ?? null
-    );
-    if (keyNoSport && !partidaMaisRecentePorDueloPainelNoSport.has(keyNoSport)) {
-      partidaMaisRecentePorDueloPainelNoSport.set(keyNoSport, meta);
-    }
+  let hasPartidasAcoes = false;
+  let painelPlacarPendente: AgendaPartidaCardRow[] = [];
+  let painelAgendadasVisiveis: AgendaPartidaCardRow[] = [];
+  let painelNomeMap = new Map<string, string | null>();
+  let painelPerfilMap = new Map<string, { nome: string | null; avatar_url: string | null }>();
+  let painelNotaEidByUserSport = new Map<string, number>();
+  let cancelMatchIdByDueloPainel = new Map<string, number>();
+  let rescheduleAcceptedByDueloPainel = new Set<string>();
+  let painelLocMap = new Map<number, string | null>();
+
+  function localLabelPainel(p: AgendaPartidaCardRow) {
+    if (p.local_str?.trim()) return p.local_str.trim();
+    if (p.local_espaco_id) return painelLocMap.get(p.local_espaco_id) ?? null;
+    return null;
   }
 
-  const cancelMatchIdByDueloPainel = new Map<string, number>();
-  const rescheduleAcceptedByDueloPainel = new Set<string>();
-  const blockedDueloByCancelFlowPainel = new Set<string>();
-  for (const m of aceitosCancelaveisPainel ?? []) {
-    const key = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
-    if (!key) continue;
-    if (String(m.status ?? "") === "Aceito") {
-      cancelMatchIdByDueloPainel.set(key, Number(m.id));
-      const selected = Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? 0);
-      if (Number.isFinite(selected) && selected > 0) rescheduleAcceptedByDueloPainel.add(key);
-    } else if (String(m.status ?? "") === "CancelamentoPendente" || String(m.status ?? "") === "ReagendamentoPendente") {
-      blockedDueloByCancelFlowPainel.add(key);
+  if (needPartidas) {
+    const { data: aceitosCancelaveisPainel } = await supabase
+      .from("matches")
+      .select("id, usuario_id, adversario_id, esporte_id, status, reschedule_selected_option")
+      .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+      .eq("finalidade", "ranking")
+      .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
+    const { data: historicoCancelamentoPainelRows } = await supabase
+      .from("matches")
+      .select("id, usuario_id, adversario_id, esporte_id, status")
+      .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+      .eq("finalidade", "ranking")
+      .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente", "Cancelado"])
+      .order("id", { ascending: false })
+      .limit(120);
+
+    const { teamClause: teamClausePainel } = await getAgendaTeamContext(supabase, user.id);
+    await processarPendenciasAgendamentoAceite(supabase, user.id, teamClausePainel);
+    const [{ data: painelAgendadas }, { data: painelPlacarFetch }] = await Promise.all([
+      fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel),
+      fetchPlacarAguardandoConfirmacao(supabase, user.id, teamClausePainel),
+    ]);
+    painelPlacarPendente = painelPlacarFetch ?? [];
+    const { data: painelPartidasStatusRows } = await supabase
+      .from("partidas")
+      .select("id, esporte_id, jogador1_id, jogador2_id, status, status_ranking, lancado_por")
+      .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}${teamClausePainel}`)
+      .in("status", ["agendada", "aguardando_confirmacao"])
+      .order("id", { ascending: false })
+      .limit(120);
+    const painelPartidasAll = [...(painelAgendadas ?? []), ...painelPlacarPendente];
+    const painelLocalIds = [
+      ...new Set(
+        painelPartidasAll.map((p) => p.local_espaco_id).filter((x): x is number => typeof x === "number" && x > 0)
+      ),
+    ];
+    const { data: painelLocaisRows } = painelLocalIds.length
+      ? await supabase.from("espacos_genericos").select("id, nome_publico").in("id", painelLocalIds)
+      : { data: [] };
+    painelLocMap = new Map((painelLocaisRows ?? []).map((l) => [l.id, l.nome_publico]));
+    const painelPlayerIds = new Set<string>();
+    for (const p of painelPartidasAll) {
+      if (p.jogador1_id) painelPlayerIds.add(p.jogador1_id);
+      if (p.jogador2_id) painelPlayerIds.add(p.jogador2_id);
     }
-  }
-  const latestStatusByDueloPainel = new Map<string, string>();
-  for (const m of historicoCancelamentoPainelRows ?? []) {
-    const key = dueloKey(
-      (m as { usuario_id?: string | null }).usuario_id ?? null,
-      (m as { adversario_id?: string | null }).adversario_id ?? null,
-      Number((m as { esporte_id?: number | null }).esporte_id ?? 0)
+    const painelPlayerList = [...painelPlayerIds];
+    const { data: painelNomeRows } = painelPlayerList.length
+      ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", painelPlayerList)
+      : { data: [] };
+    painelPerfilMap = new Map((painelNomeRows ?? []).map((r) => [r.id, r]));
+    painelNomeMap = new Map((painelNomeRows ?? []).map((r) => [r.id, r.nome]));
+    const painelEsporteIds = [
+      ...new Set(
+        painelPartidasAll
+          .map((p) => Number((p as { esporte_id?: number | null }).esporte_id ?? 0))
+          .filter((v) => Number.isFinite(v) && v > 0)
+      ),
+    ];
+    const { data: painelUeRows } = painelPlayerList.length && painelEsporteIds.length
+      ? await supabase
+          .from("usuario_eid")
+          .select("usuario_id, esporte_id, nota_eid")
+          .in("usuario_id", painelPlayerList)
+          .in("esporte_id", painelEsporteIds)
+      : { data: [] };
+    painelNotaEidByUserSport = new Map(
+      (painelUeRows ?? []).map((r) => [`${String(r.usuario_id)}:${Number(r.esporte_id)}`, Number(r.nota_eid ?? 0)])
     );
-    if (!key || latestStatusByDueloPainel.has(key)) continue;
-    latestStatusByDueloPainel.set(key, String((m as { status?: string | null }).status ?? "").trim());
+
+    const partidaMaisRecentePorDueloPainel = new Map<
+      string,
+      { status: string | null; status_ranking: string | null; lancado_por: string | null }
+    >();
+    const partidaMaisRecentePorDueloPainelNoSport = new Map<
+      string,
+      { status: string | null; status_ranking: string | null; lancado_por: string | null }
+    >();
+    for (const row of painelPartidasStatusRows ?? []) {
+      const key = dueloKey(
+        (row as { jogador1_id?: string | null }).jogador1_id ?? null,
+        (row as { jogador2_id?: string | null }).jogador2_id ?? null,
+        Number((row as { esporte_id?: number | null }).esporte_id ?? 0)
+      );
+      const meta = {
+        status: (row as { status?: string | null }).status ?? null,
+        status_ranking: (row as { status_ranking?: string | null }).status_ranking ?? null,
+        lancado_por: (row as { lancado_por?: string | null }).lancado_por ?? null,
+      };
+      if (key && !partidaMaisRecentePorDueloPainel.has(key)) {
+        partidaMaisRecentePorDueloPainel.set(key, meta);
+      }
+      const keyNoSport = dueloKeyNoSport(
+        (row as { jogador1_id?: string | null }).jogador1_id ?? null,
+        (row as { jogador2_id?: string | null }).jogador2_id ?? null
+      );
+      if (keyNoSport && !partidaMaisRecentePorDueloPainelNoSport.has(keyNoSport)) {
+        partidaMaisRecentePorDueloPainelNoSport.set(keyNoSport, meta);
+      }
+    }
+
+    cancelMatchIdByDueloPainel = new Map();
+    rescheduleAcceptedByDueloPainel = new Set();
+    const blockedDueloByCancelFlowPainel = new Set<string>();
+    for (const m of aceitosCancelaveisPainel ?? []) {
+      const key = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
+      if (!key) continue;
+      if (String(m.status ?? "") === "Aceito") {
+        cancelMatchIdByDueloPainel.set(key, Number(m.id));
+        const selected = Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? 0);
+        if (Number.isFinite(selected) && selected > 0) rescheduleAcceptedByDueloPainel.add(key);
+      } else if (String(m.status ?? "") === "CancelamentoPendente" || String(m.status ?? "") === "ReagendamentoPendente") {
+        blockedDueloByCancelFlowPainel.add(key);
+      }
+    }
+    const latestStatusByDueloPainel = new Map<string, string>();
+    for (const m of historicoCancelamentoPainelRows ?? []) {
+      const key = dueloKey(
+        (m as { usuario_id?: string | null }).usuario_id ?? null,
+        (m as { adversario_id?: string | null }).adversario_id ?? null,
+        Number((m as { esporte_id?: number | null }).esporte_id ?? 0)
+      );
+      if (!key || latestStatusByDueloPainel.has(key)) continue;
+      latestStatusByDueloPainel.set(key, String((m as { status?: string | null }).status ?? "").trim());
+    }
+    painelAgendadasVisiveis = (painelAgendadas ?? []).filter((row) => {
+      if (String((row as { status?: string | null }).status ?? "") !== "agendada") return false;
+      const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
+      const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
+      const keyNoSport = dueloKeyNoSport(row.jogador1_id, row.jogador2_id);
+      const meta = (key ? partidaMaisRecentePorDueloPainel.get(key) ?? null : null) ??
+        (keyNoSport ? partidaMaisRecentePorDueloPainelNoSport.get(keyNoSport) ?? null : null);
+      const rowStatusRanking = String(meta?.status_ranking ?? (row as { status_ranking?: string | null }).status_ranking ?? "")
+        .trim()
+        .toLowerCase();
+      const rowLancadoPor = String(meta?.lancado_por ?? (row as { lancado_por?: string | null }).lancado_por ?? "").trim();
+      const isContestadoLegacy =
+        rowStatusRanking === "contestado" ||
+        rowStatusRanking === "resultado_contestado" ||
+        rowStatusRanking === "pendente_confirmacao_revisao" ||
+        rowStatusRanking === "em_analise_admin";
+      if (isContestadoLegacy) {
+        if (!rowLancadoPor) return false;
+        if (rowLancadoPor !== user.id) return false;
+      }
+      if (rowStatusRanking === "em_analise_admin") {
+        return false;
+      }
+      if (!key) return true;
+      if (blockedDueloByCancelFlowPainel.has(key)) return false;
+      const latestStatus = String(latestStatusByDueloPainel.get(key) ?? "").toLowerCase();
+      if (latestStatus === "cancelado") return false;
+      return true;
+    });
+    hasPartidasAcoes = painelPlacarPendente.length > 0 || painelAgendadasVisiveis.length > 0;
   }
-  const painelAgendadasVisiveis = (painelAgendadas ?? []).filter((row) => {
-    if (String((row as { status?: string | null }).status ?? "") !== "agendada") return false;
-    const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
-    const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
-    const keyNoSport = dueloKeyNoSport(row.jogador1_id, row.jogador2_id);
-    const meta = (key ? partidaMaisRecentePorDueloPainel.get(key) ?? null : null) ??
-      (keyNoSport ? partidaMaisRecentePorDueloPainelNoSport.get(keyNoSport) ?? null : null);
-    const rowStatusRanking = String(meta?.status_ranking ?? (row as { status_ranking?: string | null }).status_ranking ?? "")
-      .trim()
-      .toLowerCase();
-    const rowLancadoPor = String(meta?.lancado_por ?? (row as { lancado_por?: string | null }).lancado_por ?? "").trim();
-    const isContestadoLegacy =
-      rowStatusRanking === "contestado" ||
-      rowStatusRanking === "resultado_contestado" ||
-      rowStatusRanking === "pendente_confirmacao_revisao" ||
-      rowStatusRanking === "em_analise_admin";
-    if (isContestadoLegacy) {
-      if (!rowLancadoPor) return false;
-      if (rowLancadoPor !== user.id) return false;
-    }
-    if (rowStatusRanking === "em_analise_admin") {
-      return false;
-    }
-    if (!key) return true;
-    if (blockedDueloByCancelFlowPainel.has(key)) return false;
-    const latestStatus = String(latestStatusByDueloPainel.get(key) ?? "").toLowerCase();
-    if (latestStatus === "cancelado") return false;
-    return true;
-  });
-  const hasPartidasAcoes = (painelPlacarPendente ?? []).length > 0 || painelAgendadasVisiveis.length > 0;
-  const hasDesafioAcoes =
-    pedidosItems.length > 0 || pedidosEnviadosItems.length > 0 || desafioNotifs.some((n) => n.lida !== true);
+
+  const hasDesafioAcoes = pedidosItems.length > 0 || pedidosEnviadosItems.length > 0;
   const hasEquipeAcoes =
     sugestoesItems.length > 0 ||
-    sugestoesEnviadasItems.length > 0 ||
+    sugestoesEnviadasItems.some((s) => s.statusRaw === "pendente") ||
     conviteItems.length > 0 ||
     candidaturasEquipe.length > 0 ||
     conviteEnviadoItems.some((i) => String(i.status ?? "").toLowerCase() === "pendente") ||
-    minhasCandidaturasEquipe.some((c) => c.statusRaw === "pendente") ||
-    equipeNotifs.some((n) => n.lida !== true);
-  const hasAulasAcoes = nAulas > 0;
+    minhasCandidaturasEquipe.some((c) => c.statusRaw === "pendente");
+  const temAlgumaAcaoPendente = hasPartidasAcoes || hasDesafioAcoes || hasEquipeAcoes;
+  const sugestoesEnviadasSoPendentes = sugestoesEnviadasItems.filter((s) => s.statusRaw === "pendente");
+  const convitesEnviadosSoPendentes = conviteEnviadoItems.filter(
+    (i) => String(i.status ?? "").toLowerCase() === "pendente"
+  );
+  const minhasCandSoPendentes = minhasCandidaturasEquipe.filter((c) => c.statusRaw === "pendente");
 
   return (
     <main
@@ -1376,81 +1272,20 @@ export default async function ComunidadePage() {
       data-eid-touch-ui-compact="true"
       className="mx-auto w-full max-w-3xl px-2.5 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-6xl sm:px-5 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
-      <section className="overflow-hidden rounded-[16px] border border-[color:var(--eid-border-subtle)] bg-eid-card px-2.5 py-2.5 shadow-[0_10px_26px_-20px_rgba(15,23,42,0.38)] sm:px-3 sm:py-3">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h1 className="text-[16px] font-black leading-none tracking-tight text-eid-fg sm:text-[18px]">Painel de controle</h1>
-            <p className="mt-1 max-w-[44ch] text-[11px] leading-snug text-eid-text-secondary">
-              Acompanhe sua rede em um só lugar: notificações, convites e pedidos organizados para você decidir e agir com rapidez.
+      <div className="mb-3 md:mb-4">
+        <PushToggleCard defaultEnabled />
+      </div>
+
+        <div className="space-y-3 md:space-y-5">
+          {!temAlgumaAcaoPendente ? (
+            <p className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 px-3 py-4 text-center text-sm text-eid-text-secondary">
+              Nada pendente por aqui no momento.
             </p>
-          </div>
-          <form action={marcarTodasNotificacoesLidas}>
-            <button
-              type="submit"
-              data-eid-marcar-lidos-btn="true"
-              className={`!inline-flex !h-[16px] !min-h-[16px] items-center justify-center whitespace-nowrap !rounded-full border !px-1.5 !py-0 !text-[7px] !leading-none font-black uppercase tracking-[0.04em] transition ${
-                nNotifUnread > 0
-                  ? "border-emerald-500/35 bg-emerald-500/12 text-emerald-400 hover:bg-emerald-500/18"
-                  : "border-emerald-500/28 bg-emerald-500/10 text-emerald-400"
-              }`}
-            >
-              {nNotifUnread > 0 ? "Ler tudo" : "✓ Lido"}
-            </button>
-          </form>
-        </div>
-
-        <div className="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-          <Link href="/comunidade#notificacoes" className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_82%,transparent)] px-2 py-2">
-            <div className="flex items-center gap-1.5 text-eid-primary-400">
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
-                <path d="M18 9a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-              <span className="text-[16px] font-black leading-none">{nNotifUnread}</span>
-            </div>
-            <p className="mt-1 text-[10px] font-semibold text-eid-text-secondary">Não lido(s)</p>
-          </Link>
-          <Link href="/comunidade#desafio-pedidos" className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_82%,transparent)] px-2 py-2">
-            <div className="flex items-center gap-1.5 text-eid-action-400">
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
-                <circle cx="15.5" cy="4.5" r="2" fill="currentColor" />
-                <path d="M6 20l3-5 2.5-1.5L14 16l4 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M10.5 8.5l2.5 1.5 2.5-1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="text-[16px] font-black leading-none">{nPedidos}</span>
-            </div>
-            <p className="mt-1 text-[10px] font-semibold text-eid-text-secondary">Pedido(s) de desafio</p>
-          </Link>
-          <Link href="/comunidade#equipe-sugestoes" className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_82%,transparent)] px-2 py-2">
-            <div className="flex items-center gap-1.5 text-fuchsia-400">
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
-                <path d="M9 18h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <path d="M10 22h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <path d="M12 2a7 7 0 00-4 12.7c.7.5 1 1 1 1.8V17h6v-.5c0-.8.3-1.3 1-1.8A7 7 0 0012 2z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-              </svg>
-              <span className="text-[16px] font-black leading-none">{nSugestoes}</span>
-            </div>
-            <p className="mt-1 text-[10px] font-semibold text-eid-text-secondary">Sugestão(ões)</p>
-          </Link>
-          <Link href="/comunidade#equipe-convites" className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-surface)_82%,transparent)] px-2 py-2">
-            <div className="flex items-center gap-1.5 text-emerald-400">
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
-                <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="2" />
-                <path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="text-[16px] font-black leading-none">{conviteItems.length}</span>
-            </div>
-            <p className="mt-1 text-[10px] font-semibold text-eid-text-secondary">Convite(s)</p>
-          </Link>
-        </div>
-      </section>
-
-        <div className="mt-3 space-y-3 md:mt-5 md:space-y-5">
-          <PushToggleCard defaultEnabled />
+          ) : null}
 
           {hasPartidasAcoes ? (
           <section id="resultados-partida" className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
-            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 md:px-4">
+            <div className="flex items-center justify-between gap-2 border-b border-transparent bg-eid-surface/40 px-3 py-2.5 md:px-4">
               <div>
                 <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Partidas e resultados</h2>
                 <p className="mt-0.5 hidden text-[11px] text-eid-text-secondary md:block">
@@ -1555,11 +1390,11 @@ export default async function ComunidadePage() {
 
           {hasDesafioAcoes ? (
           <section id="desafio-pedidos" className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
-            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 md:px-4">
+            <div className="flex items-center justify-between gap-2 border-b border-transparent bg-eid-surface/40 px-3 py-2.5 md:px-4">
               <div>
                 <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Desafio</h2>
                 <p className="mt-0.5 hidden text-[11px] text-eid-text-secondary md:block">
-                  Central de desafios: pedidos recebidos e notificações do fluxo de desafio.
+                  Pedidos de desafio que aguardam aceite ou resposta.
                 </p>
               </div>
               <span className="shrink-0 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-primary-300">
@@ -1578,22 +1413,6 @@ export default async function ComunidadePage() {
               >
                 <ComunidadePedidosEnviados items={pedidosEnviadosItems} />
               </ComunidadeQuadro>
-              <ComunidadeQuadro
-                id="desafio-notificacoes"
-                title="Notificações de desafio"
-                hasPending={desafioNotifs.some((n) => n.lida !== true)}
-              >
-                <ComunidadeSetorNotificacoes
-                  items={desafioNotifs.map((n) => ({
-                    id: n.id,
-                    mensagem: n.mensagem,
-                    lida: n.lida,
-                    tipo: n.tipo,
-                  }))}
-                  sector="desafio"
-                  emptyLabel="Sem notificações de desafio no momento."
-                />
-              </ComunidadeQuadro>
             </div>
             </div>
           </section>
@@ -1601,13 +1420,13 @@ export default async function ComunidadePage() {
 
           {hasEquipeAcoes ? (
           <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
-            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 md:px-4">
+            <div className="flex items-center justify-between gap-2 border-b border-transparent bg-eid-card px-3 py-2 md:px-4">
               <div className="flex min-w-0 items-center gap-1.5">
                 <UserPlus className="h-3.5 w-3.5 shrink-0 text-eid-primary-500" strokeWidth={2} aria-hidden />
                 <div className="min-w-0">
                   <h2 className="text-[8px] font-black uppercase tracking-[0.14em] text-eid-fg">Equipe</h2>
                   <p className="mt-0.5 hidden text-[8px] font-medium text-eid-text-secondary md:block">
-                    Convites, sugestões de liderança e avisos da sua dupla/time em um único quadro.
+                    Convites e sugestões de liderança que precisam da sua resposta.
                   </p>
                 </div>
               </div>
@@ -1623,11 +1442,11 @@ export default async function ComunidadePage() {
               </ComunidadeQuadro>
               <ComunidadeQuadro
                 id="equipe-sugestoes-enviadas"
-                title="Sugestões enviadas (acompanhamento)"
-                hasPending={sugestoesEnviadasItems.length > 0}
-                badgeLabel={hasSugestoesEnviadasPendentes ? "Pendente" : "Resolvido"}
+                title="Sugestões enviadas (aguardando resposta)"
+                hasPending={sugestoesEnviadasSoPendentes.length > 0}
+                badgeLabel="Pendente"
               >
-                <ComunidadeSugestoesEnviadasMatch items={sugestoesEnviadasItems} viewerUserId={user.id} />
+                <ComunidadeSugestoesEnviadasMatch items={sugestoesEnviadasSoPendentes} viewerUserId={user.id} />
               </ComunidadeQuadro>
               <ComunidadeQuadro id="equipe-convites" title="Convites recebidos" hasPending={conviteItems.length > 0}>
                 <ComunidadeConvitesTime items={conviteItems} />
@@ -1653,8 +1472,8 @@ export default async function ComunidadePage() {
                           ? `/perfil-time/${c.timeId}?from=/comunidade`
                           : "/comunidade";
                       return (
-                        <li key={c.id} className={`${getSocialStatusCardShell("pendente")} p-0 text-sm`}>
-                          <div className="flex items-center justify-between gap-2 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_62%,transparent)] px-3.5 py-2 sm:px-4.5 eid-light:bg-white/95">
+                        <li key={c.id} className={`${getSocialStatusPanelItemShell("pendente")} p-0 text-sm`}>
+                          <div className="flex items-center justify-between gap-2 border-b border-transparent bg-[color:color-mix(in_srgb,var(--eid-card)_62%,transparent)] px-3.5 py-2 sm:px-4.5 eid-light:bg-white/95">
                             {candidaturasEquipe.length === 1 ? (
                               <h3 className="min-w-0 text-[11px] font-semibold leading-snug tracking-tight text-eid-primary-500 eid-dark:text-eid-primary-300">
                                 Pedidos para entrar no elenco
@@ -1670,7 +1489,7 @@ export default async function ComunidadePage() {
                             </span>
                           </div>
 
-                          <div className="mx-1.5 mb-2.5 mt-1.5 overflow-hidden rounded-[12px] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-warning-500)_8%,var(--eid-card)_92%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-2.5 pb-2.5 pt-3 sm:mx-2 sm:px-3.5 sm:pb-3 eid-light:bg-[linear-gradient(180deg,color-mix(in_srgb,#f59e0b_4%,#fffdf7_96%),#fffefc)]">
+                          <div className="mt-2 px-0.5 pb-1 pt-0.5 sm:px-1 sm:pb-2 sm:pt-1">
                             <div className="grid min-w-0 grid-cols-3 gap-x-2 gap-y-1 sm:gap-x-5">
                               <div className="flex min-w-0 flex-col items-center">
                                 <p className="flex flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap text-[8px] font-semibold uppercase tracking-[0.14em] text-eid-action-600">
@@ -1782,7 +1601,7 @@ export default async function ComunidadePage() {
                               </div>
                             </div>
 
-                            <div className="mt-1.5 rounded-b-[12px] bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-surface)_10%)] px-0 pb-0 pt-1.5 eid-light:bg-[#fffefb]">
+                            <div className="mt-2 border-t border-transparent pt-2">
                               <div
                                 className={`${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !items-stretch gap-1.5 px-3 pb-1.5 sm:gap-2 sm:px-4 sm:pb-2`}
                               >
@@ -1815,23 +1634,19 @@ export default async function ComunidadePage() {
               ) : null}
               <ComunidadeQuadro
                 id="equipe-convites-enviados"
-                title="Convites enviados (acompanhamento)"
-                hasPending={conviteEnviadoItems.some((i) => String(i.status ?? "").toLowerCase() === "pendente")}
+                title="Convites enviados (aguardando resposta)"
+                hasPending={convitesEnviadosSoPendentes.length > 0}
               >
-                <ComunidadeConvitesEnviadosTime items={conviteEnviadoItems} />
+                <ComunidadeConvitesEnviadosTime items={convitesEnviadosSoPendentes} />
               </ComunidadeQuadro>
               <ComunidadeQuadro
                 id="equipe-pedidos-enviados"
                 title="Pedidos de entrada enviados"
-                hasPending={minhasCandidaturasEquipe.some((c) => c.statusRaw === "pendente")}
+                hasPending={minhasCandSoPendentes.length > 0}
               >
-                {minhasCandidaturasEquipe.length === 0 ? (
-                  <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] p-2.5 text-[11px] text-eid-text-secondary">
-                    Você ainda não enviou pedido para entrar em formação.
-                  </p>
-                ) : (
+                {minhasCandSoPendentes.length === 0 ? null : (
                   <ul className="mt-3 space-y-3">
-                    {minhasCandidaturasEquipe.map((c) => {
+                    {minhasCandSoPendentes.map((c) => {
                       const criado = formatSolicitacaoParts(c.criadoEm);
                       const resp = c.respondidoEm ? formatSolicitacaoParts(c.respondidoEm) : null;
                       const formacaoHref =
@@ -1839,7 +1654,7 @@ export default async function ComunidadePage() {
                           ? `/perfil-time/${c.timeId}?from=/comunidade`
                           : "/comunidade";
                       return (
-                        <li key={c.id} className={`${getSocialStatusCardShell(c.statusRaw)} p-0 text-sm`}>
+                        <li key={c.id} className={`${getSocialStatusPanelItemShell(c.statusRaw)} p-0 text-sm`}>
 
                           <div className={`${EID_SOCIAL_GRID_3} pt-2`}>
                             <div className="min-w-0 px-2 pb-2 pt-1 sm:px-3">
@@ -1962,7 +1777,7 @@ export default async function ComunidadePage() {
                           </div>
 
                           {c.statusRaw === "pendente" ? (
-                            <div className={EID_SOCIAL_CARD_FOOTER}>
+                            <div className={EID_SOCIAL_PANEL_FOOTER}>
                               <CancelarCandidaturaForm candidaturaId={c.id} compact label="Cancelar" />
                             </div>
                           ) : null}
@@ -1972,94 +1787,10 @@ export default async function ComunidadePage() {
                   </ul>
                 )}
               </ComunidadeQuadro>
-              <ComunidadeQuadro
-                id="equipe-avisos"
-                title="Avisos de equipe"
-                hasPending={equipeNotifs.some((n) => n.lida !== true)}
-              >
-                <ComunidadeSetorNotificacoes
-                  items={equipeNotifs.map((n) => ({
-                    id: n.id,
-                    mensagem: n.mensagem,
-                    lida: n.lida,
-                    tipo: n.tipo,
-                  }))}
-                  sector="equipe"
-                  emptyLabel="Sem avisos de equipe no momento."
-                />
-              </ComunidadeQuadro>
             </div>
             </div>
           </section>
           ) : null}
-
-          {hasAulasAcoes ? (
-          <section id="minhas-aulas" className="eid-list-item rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-3 opacity-80 md:p-4">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Minhas aulas</h2>
-              <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-primary-300">
-                Em desenvolvimento
-              </span>
-            </div>
-            <p className="mt-1.5 text-[11px] text-eid-text-secondary">
-              Este quadro está em preparação e ficará disponível em breve.
-            </p>
-            <div className="mt-3 space-y-2 pointer-events-none select-none">
-              <div className="rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-xs text-eid-text-secondary">
-                Pedidos de aula
-              </div>
-              <div className="rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-xs text-eid-text-secondary">
-                Aulas confirmadas e em andamento
-              </div>
-              <div className="rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-xs text-eid-text-secondary">
-                Avisos das suas aulas
-              </div>
-            </div>
-          </section>
-          ) : null}
-
-          <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0">
-            <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5">
-              <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Status dos módulos do app</h2>
-              <span className="shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-primary-300">
-                Ver painel
-              </span>
-            </div>
-            <div className="p-3">
-            {emBreveItems.length === 0 ? (
-              <p className="mt-2 text-xs text-eid-text-secondary">
-                Tudo que é controlado pelo painel de funcionalidades está liberado para você no momento.
-              </p>
-            ) : (
-              <ul className="mt-2 space-y-1.5 text-xs text-eid-text-secondary">
-                {emBreveItems.map((item) => (
-                  <li key={item.key} className="flex items-center justify-between gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-1.5">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[color:color-mix(in_srgb,var(--eid-card)_84%,#ffffff_16%)] text-eid-primary-500">
-                        <ModuloIcon moduleKey={item.key} />
-                      </span>
-                      <span className="truncate text-[11px] font-semibold text-eid-fg">{item.label}</span>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span
-                        className={`rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.04em] ${
-                          item.mode === "em_breve"
-                            ? "border-eid-primary-500/25 bg-eid-primary-500/10 text-eid-primary-400"
-                            : "border-eid-action-500/30 bg-eid-action-500/12 text-eid-action-400"
-                        }`}
-                      >
-                        {item.mode === "em_breve" ? "• Em breve" : "• Em desenvolvimento"}
-                      </span>
-                      <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 text-eid-text-secondary" fill="none" aria-hidden>
-                        <path d="M7 4l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            </div>
-          </section>
 
         </div>
     </main>

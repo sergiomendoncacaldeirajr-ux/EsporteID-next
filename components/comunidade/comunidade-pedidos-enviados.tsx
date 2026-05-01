@@ -7,9 +7,9 @@ import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-perfo
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
-  EID_SOCIAL_CARD_FOOTER,
-  EID_SOCIAL_CARD_SHELL,
   EID_SOCIAL_GRID_3,
+  EID_SOCIAL_PANEL_FOOTER,
+  EID_SOCIAL_PANEL_ITEM_NEUTRAL,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
 import { EidCancelButton } from "@/components/ui/eid-cancel-button";
@@ -116,7 +116,7 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
             </div>
           );
           return (
-            <li key={m.id} className={EID_SOCIAL_CARD_SHELL}>
+            <li key={m.id} className={EID_SOCIAL_PANEL_ITEM_NEUTRAL}>
               <span className="absolute right-3 top-3 z-[1]">
                 <EidPendingBadge label="Pendente" compact />
               </span>
@@ -163,7 +163,7 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
                 </div>
               </div>
 
-              <div className={EID_SOCIAL_CARD_FOOTER}>
+              <div className={EID_SOCIAL_PANEL_FOOTER}>
                 <div className="flex w-full justify-start">
                   <EidCancelButton
                     type="button"

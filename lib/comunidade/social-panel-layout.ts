@@ -33,6 +33,37 @@ export function getSocialStatusCardShell(statusRaw: string | null | undefined): 
   return EID_SOCIAL_STATUS_PENDING_CARD_SHELL;
 }
 
+/** Itens em /comunidade: sem borda visível — o bloco da seção já delimita o conteúdo. */
+export const EID_SOCIAL_PANEL_ITEM_AMBER =
+  "relative w-full min-w-0 overflow-hidden rounded-xl border border-transparent bg-transparent text-sm";
+
+export const EID_SOCIAL_PANEL_ITEM_NEUTRAL =
+  "relative w-full min-w-0 overflow-hidden rounded-xl border border-transparent bg-transparent text-sm";
+
+export function getSocialStatusPanelItemShell(statusRaw: string | null | undefined): string {
+  const s = String(statusRaw ?? "").trim().toLowerCase();
+  if (s === "aprovado" || s === "aceito" || s === "aceita") {
+    return "relative w-full min-w-0 overflow-hidden rounded-xl border border-transparent bg-transparent text-sm";
+  }
+  if (s === "recusado" || s === "recusada" || s === "cancelado" || s === "cancelada") {
+    return "relative w-full min-w-0 overflow-hidden rounded-xl border border-transparent bg-transparent text-sm";
+  }
+  return EID_SOCIAL_PANEL_ITEM_AMBER;
+}
+
+/** Pedido de desafio recebido: um bloco sem contorno extra dentro da seção. */
+export const EID_SOCIAL_PANEL_MATCH_RECEBIDO_SHELL =
+  "relative overflow-hidden rounded-xl border border-transparent bg-transparent p-0 text-sm font-[family-name:var(--font-barlow),ui-sans-serif] text-[#1a2b4c] eid-dark:text-eid-fg";
+
+export const EID_SOCIAL_PANEL_BODY = "px-2 pb-2 pt-1 sm:px-3 sm:pb-3 sm:pt-2";
+
+export const EID_SOCIAL_PANEL_ACOES_ROW =
+  "-mx-2 mt-3 border-t border-transparent bg-transparent px-2 pt-2 sm:-mx-3 sm:px-3 sm:pt-2.5";
+
+/** Rodapé de ações no painel social: sem linha divisória visível. */
+export const EID_SOCIAL_PANEL_FOOTER =
+  "border-t border-transparent bg-transparent px-3 py-2 sm:px-4 sm:py-2.5";
+
 export const EID_SOCIAL_CARD_SHELL =
   "relative overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_95%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_4px_14px_-12px_rgba(15,23,42,0.35)] eid-light:shadow-[0_4px_18px_-12px_rgba(15,23,42,0.12)]";
 

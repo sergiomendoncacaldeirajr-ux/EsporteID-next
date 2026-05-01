@@ -278,7 +278,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                         busy={pending && clickedAction[m.id] === "acceptCancel"}
                         actionLabel="aprovar"
                         onClick={() => setClickedAction((prev) => ({ ...prev, [m.id]: "acceptCancel" }))}
-                        className="min-h-[34px] rounded-xl text-[9px] md:text-[10px]"
+                        className="min-h-[28px] rounded-xl text-[8px] md:text-[9px]"
                       />
                     </form>
                     <EidSocialRecusarButton
@@ -293,7 +293,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                           return { ...s, [m.id]: nextOpen };
                         });
                       }}
-                      className="min-h-[34px] rounded-xl text-[9px] md:text-[10px]"
+                      className="min-h-[28px] rounded-xl text-[8px] md:text-[9px]"
                     />
                   </div>
 
@@ -403,7 +403,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                             busy={pending && clickedAction[m.id] === "acceptOption"}
                             actionLabel="aprovar"
                             onClick={() => setClickedAction((prev) => ({ ...prev, [m.id]: "acceptOption" }))}
-                            className="min-h-[32px] rounded-xl text-[9px] sm:min-w-[7rem]"
+                            className="min-h-[28px] rounded-xl text-[8px] sm:min-w-[7rem] sm:text-[9px]"
                           />
                         </form>
                         <form action={formAction} className="min-w-0 flex-1 sm:flex-none">
@@ -415,7 +415,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                             pending={pending || op.status !== "pendente"}
                             busy={pending && clickedAction[m.id] === "rejectOption"}
                             onClick={() => setClickedAction((prev) => ({ ...prev, [m.id]: "rejectOption" }))}
-                            className="min-h-[32px] rounded-xl text-[9px] sm:min-w-[7rem]"
+                            className="min-h-[28px] rounded-xl text-[8px] sm:min-w-[7rem] sm:text-[9px]"
                           />
                         </form>
                       </div>

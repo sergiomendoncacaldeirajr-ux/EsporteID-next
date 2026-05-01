@@ -14,10 +14,9 @@ import { EID_INVITE_ACTION_CLASS } from "@/components/ui/eid-invite-button";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
-  EID_SOCIAL_CARD_FOOTER,
-  EID_SOCIAL_CARD_SHELL,
   EID_SOCIAL_GRID_3,
-  getSocialStatusCardShell,
+  EID_SOCIAL_PANEL_FOOTER,
+  getSocialStatusPanelItemShell,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
 
@@ -104,7 +103,7 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
           const enviado = formatSolicitacaoParts(c.criadoEm);
           const resp = c.respondidoEm ? formatSolicitacaoParts(c.respondidoEm) : null;
           return (
-            <li key={c.id} className={getSocialStatusCardShell(c.status) || EID_SOCIAL_CARD_SHELL}>
+            <li key={c.id} className={getSocialStatusPanelItemShell(c.status)}>
               <span className={`${EID_INVITE_ACTION_CLASS} absolute left-3 top-3 z-[1] inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em]`}>
                 <Send className="h-3 w-3" aria-hidden />
                 Convite
@@ -227,7 +226,7 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
                   </div>
 
               {pendente ? (
-                <div className={EID_SOCIAL_CARD_FOOTER}>
+                <div className={EID_SOCIAL_PANEL_FOOTER}>
                   <form action={cancelAction} className="flex w-full justify-start">
                     <input type="hidden" name="time_id" value={c.equipeId} />
                     <input type="hidden" name="convite_id" value={c.id} />

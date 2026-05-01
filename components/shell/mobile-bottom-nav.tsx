@@ -89,20 +89,6 @@ type Props = {
   activeContext?: ActiveAppContext;
 };
 
-type UnreadNotif = {
-  id: number;
-  tipo: string | null;
-  referencia_id: number | null;
-  remetente_id: string | null;
-};
-
-function isFlowActionNotif(tipoRaw: string | null | undefined): boolean {
-  const tipo = String(tipoRaw ?? "")
-    .trim()
-    .toLowerCase();
-  return tipo === "match" || tipo === "desafio";
-}
-
 function NavBadge({ n }: { n: number }) {
   if (n < 1) return null;
   return (
@@ -185,7 +171,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     let cancelled = false;
     const supabase = createClient();
     async function load() {
-      const [agRes, pRes, mRes, sRes, nRes] = await Promise.all([
+      const [agRes, pRes, mRes, sRes] = await Promise.all([
         supabase
           .from("partidas")
           .select("id, match_id")
@@ -203,12 +189,6 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
           .select("id", { count: "exact", head: true })
           .eq("alvo_dono_id", resolvedUserId)
           .eq("status", "pendente"),
-        supabase
-          .from("notificacoes")
-          .select("id, tipo, referencia_id, remetente_id")
-          .eq("usuario_id", resolvedUserId)
-          .eq("lida", false)
-          .limit(300),
       ]);
       if (cancelled) return;
       const agendaRows = (agRes.data ?? []) as Array<{ id: number; match_id?: number | null }>;
@@ -236,50 +216,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       const placar = pRes.count ?? 0;
       const pedidos = mRes.count ?? 0;
       const sugestoesLider = sRes.count ?? 0;
-      const unreadRows = (nRes.data ?? []) as UnreadNotif[];
-      const flowRefIds = [
-        ...new Set(
-          unreadRows
-            .filter((n) => isFlowActionNotif(n.tipo))
-            .map((n) => Number(n.referencia_id ?? 0))
-            .filter((id) => Number.isFinite(id) && id > 0)
-        ),
-      ];
-      const suggestionResolvedRefIds = new Set<number>();
-      if (flowRefIds.length > 0) {
-        const { data: sugRows } = await supabase
-          .from("match_sugestoes")
-          .select("id, status")
-          .in("id", flowRefIds);
-        for (const row of sugRows ?? []) {
-          const id = Number(row.id ?? 0);
-          const status = String(row.status ?? "").trim().toLowerCase();
-          if (!Number.isFinite(id) || id <= 0) continue;
-          if (status === "aprovado" || status === "recusado") {
-            suggestionResolvedRefIds.add(id);
-          }
-        }
-      }
-      const seen = new Set<string>();
-      let unreadGeneral = 0;
-      for (const n of unreadRows) {
-        const isFlowAction = isFlowActionNotif(n.tipo);
-        const key = isFlowAction
-          ? `flow:${String(n.tipo ?? "").trim().toLowerCase()}:${String(n.referencia_id ?? "null")}`
-          : `id:${n.id}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        if (!isFlowAction) {
-          unreadGeneral += 1;
-        } else {
-          const refId = Number(n.referencia_id ?? 0);
-          if (Number.isFinite(refId) && refId > 0 && suggestionResolvedRefIds.has(refId)) {
-            unreadGeneral += 1;
-          }
-        }
-      }
-      // Social = ações pendentes + notificações gerais (sem duplicar match/desafio).
-      setSocialBadge(placar + pedidos + sugestoesLider + unreadGeneral);
+      // Footer Social exibe somente ações pendentes reais (não inclui "não lidas" do sininho).
+      setSocialBadge(placar + pedidos + sugestoesLider);
     }
     void load();
     const t = window.setInterval(load, 20000);

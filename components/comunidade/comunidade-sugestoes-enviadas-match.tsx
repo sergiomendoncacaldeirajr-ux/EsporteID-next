@@ -13,9 +13,9 @@ import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-perfo
 import { EidLimparCompactButton } from "@/components/ui/eid-limpar-compact-button";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import {
-  EID_SOCIAL_CARD_FOOTER,
   EID_SOCIAL_GRID_3,
-  getSocialStatusCardShell,
+  EID_SOCIAL_PANEL_FOOTER,
+  getSocialStatusPanelItemShell,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
 import { EidAcceptedBadge } from "@/components/ui/eid-accepted-badge";
@@ -119,7 +119,7 @@ export function ComunidadeSugestoesEnviadasMatch({
           const criado = formatSolicitacaoParts(s.criadoEm);
           const resp = s.respondidoEm ? formatSolicitacaoParts(s.respondidoEm) : null;
           return (
-            <li key={s.id} className={getSocialStatusCardShell(s.statusRaw)}>
+            <li key={s.id} className={getSocialStatusPanelItemShell(s.statusRaw)}>
               {String(s.statusLabel).toLowerCase() === "aprovado" || String(s.statusLabel).toLowerCase() === "aceito" ? (
                 <EidAcceptedBadge label={s.statusLabel} compact className="absolute right-3 top-3 z-[1]" />
               ) : String(s.statusLabel).toLowerCase() === "recusado" ? (
@@ -206,12 +206,12 @@ export function ComunidadeSugestoesEnviadasMatch({
                 </div>
               </div>
 
-              <p className="border-t border-amber-500/15 px-3 py-2 text-[10px] text-eid-text-secondary md:px-4">
+              <p className="border-t border-transparent px-3 py-2 text-[10px] text-eid-text-secondary md:px-4">
                 {s.statusRaw === "aprovado" ? "Confira também na Agenda." : null}
               </p>
 
               {s.statusRaw !== "pendente" ? (
-                <div className={EID_SOCIAL_CARD_FOOTER}>
+                <div className={EID_SOCIAL_PANEL_FOOTER}>
                   <form action={formAction}>
                     <input type="hidden" name="sugestao_id" value={String(s.id)} />
                     <EidLimparCompactButton

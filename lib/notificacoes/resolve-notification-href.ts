@@ -23,10 +23,14 @@ export function resolveNotificationHref({ tipo, mensagem }: NotificationRouteInp
   }
 
   if (tipoNorm === "time" || tipoNorm === "convite" || tipoNorm === "candidatura") {
-    if (msgNorm.includes("pedido para entrar")) return "/comunidade#equipe-pedidos-enviados";
+    if (msgNorm.includes("pedido para entrar") || msgNorm.includes("entrar no elenco")) {
+      return "/comunidade#equipe-pedidos-entrada";
+    }
+    if (msgNorm.includes("pedido de entrada enviado")) return "/comunidade#equipe-pedidos-enviados";
+    if (msgNorm.includes("convite enviado")) return "/comunidade#equipe-convites-enviados";
     if (msgNorm.includes("convite")) return "/comunidade#equipe-convites";
     if (msgNorm.includes("sugest")) return "/comunidade#equipe-sugestoes";
-    return "/comunidade#equipe-avisos";
+    return "/comunidade";
   }
 
   return "/comunidade#notificacoes";

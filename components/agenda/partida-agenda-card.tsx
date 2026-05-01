@@ -282,7 +282,7 @@ export function PartidaAgendaCard({
                       busy={agendaPending && agendaActionClicked === "accept"}
                       actionLabel="aprovar"
                       onClick={() => setAgendaActionClicked("accept")}
-                      className="min-h-[36px] rounded-xl text-[10px]"
+                      className="min-h-[30px] rounded-xl text-[8px] sm:text-[9px]"
                     />
                   </form>
                   <form action={agendaAction} className="min-w-0 flex-1">
@@ -292,7 +292,7 @@ export function PartidaAgendaCard({
                       pending={agendaPending}
                       busy={agendaPending && agendaActionClicked === "reject"}
                       onClick={() => setAgendaActionClicked("reject")}
-                      className="min-h-[36px] rounded-xl text-[10px]"
+                      className="min-h-[30px] rounded-xl text-[8px] sm:text-[9px]"
                     />
                   </form>
                 </div>

@@ -11,6 +11,7 @@ import { LegalGateDeferred } from "@/components/legal-gate";
 import { MobileBottomNav } from "@/components/shell/mobile-bottom-nav";
 import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle-float";
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
+import { HashTargetHighlight } from "@/components/system/hash-target-highlight";
 import { InstallAppOfferDynamic } from "@/components/pwa/install-app-offer-dynamic";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { PwaLaunchSplash } from "@/components/pwa/pwa-launch-splash";
@@ -146,6 +147,7 @@ export default async function RootLayout({
         <ThemeColorSync />
         <InstallAppOfferDynamic />
         <GlobalScrollReset />
+        <HashTargetHighlight />
         <InteractionFeedback />
         {!user ? <VisitorThemeToggleFloat /> : null}
         {onboardingMinimalChrome ? <OnboardingTopbar /> : null}

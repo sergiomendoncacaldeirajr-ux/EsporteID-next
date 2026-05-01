@@ -7,7 +7,12 @@ import { responderSugestaoMatch, type ResponderSugestaoMatchState } from "@/app/
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
-import { EID_SOCIAL_CARD_FOOTER, EID_SOCIAL_GRID_3, formatSolicitacaoParts } from "@/lib/comunidade/social-panel-layout";
+import {
+  EID_SOCIAL_GRID_3,
+  EID_SOCIAL_PANEL_FOOTER,
+  EID_SOCIAL_PANEL_ITEM_AMBER,
+  formatSolicitacaoParts,
+} from "@/lib/comunidade/social-panel-layout";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import { EidCityState } from "@/components/ui/eid-city-state";
@@ -83,7 +88,7 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
         {items.map((s) => {
           const criado = formatSolicitacaoParts(s.criadoEm);
           return (
-            <li key={s.id} className={sugestaoCardShell}>
+            <li key={s.id} className={EID_SOCIAL_PANEL_ITEM_AMBER}>
               <EidPendingBadge label="Pendente" compact className="absolute right-3 top-3 z-[1]" />
 
               <div className={`${EID_SOCIAL_GRID_3} pt-11`}>
@@ -207,7 +212,7 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
               </div>
 
               <div
-                className={`${EID_SOCIAL_CARD_FOOTER} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} border-amber-500/20 !bg-[color:color-mix(in_srgb,var(--eid-warning-500)_8%,var(--eid-surface)_92%)]`}
+                className={`${EID_SOCIAL_PANEL_FOOTER} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS}`}
               >
                 <form action={formAction} className={PEDIDO_MATCH_RECEBIDO_FORM_CLASS}>
                   <input type="hidden" name="sugestao_id" value={String(s.id)} />

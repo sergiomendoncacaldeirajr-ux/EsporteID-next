@@ -132,8 +132,8 @@ export default function TermosPage() {
             exemplo, painel social).
           </li>
           <li>
-            <strong className="text-eid-fg">Painel de controle (comunidade):</strong> pedidos recebidos,
-            notificações, convites, sugestões de liderança, partidas e resultados em um só lugar.
+            <strong className="text-eid-fg">Painel social (comunidade):</strong> ações pendentes que exigem
+            resposta (por exemplo desafios, convites e placar); avisos gerais ficam no sininho de notificações.
           </li>
           <li>
             <strong className="text-eid-fg">Registrar resultado:</strong> envio de placar, agendamento

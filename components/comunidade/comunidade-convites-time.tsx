@@ -10,8 +10,8 @@ import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-perfo
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import {
-  EID_SOCIAL_CARD_FOOTER,
-  EID_SOCIAL_SUGESTAO_ENVIADA_CARD_SHELL,
+  EID_SOCIAL_PANEL_FOOTER,
+  EID_SOCIAL_PANEL_ITEM_AMBER,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
 import {
@@ -80,7 +80,7 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
             .toLowerCase() === "dupla";
           const formacaoHref = `/perfil-time/${c.equipeId}?from=/comunidade`;
           return (
-            <li key={c.id} className={`${EID_SOCIAL_SUGESTAO_ENVIADA_CARD_SHELL} w-full min-w-0`}>
+            <li key={c.id} className={`${EID_SOCIAL_PANEL_ITEM_AMBER} w-full min-w-0`}>
               <div className={`${CONVITE_TIME_GRID} pt-2`}>
                 <div className="flex min-w-0 w-full flex-col items-center px-1.5 pb-3 pt-0 sm:px-2">
                   <p className="flex w-full min-w-0 items-center justify-start gap-1 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">
@@ -193,7 +193,7 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
               </div>
 
               <div
-                className={`${EID_SOCIAL_CARD_FOOTER} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !items-stretch gap-2 border-amber-500/20 !bg-[color:color-mix(in_srgb,var(--eid-warning-500)_8%,var(--eid-surface)_92%)] sm:gap-3`}
+                className={`${EID_SOCIAL_PANEL_FOOTER} ${PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS} !items-stretch gap-2 sm:gap-3`}
               >
                 <form action={formAction} className={`${PEDIDO_MATCH_RECEBIDO_FORM_CLASS} flex min-h-0 min-w-0`}>
                   <input type="hidden" name="convite_id" value={String(c.id)} />
@@ -202,7 +202,7 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                     pending={pending}
                     busy={pending && clickedAction?.conviteId === c.id && clickedAction.aceitar}
                     onClick={() => setClickedAction({ conviteId: c.id, aceitar: true })}
-                    className="min-h-[44px] w-full rounded-xl text-[10px] sm:min-h-[48px] sm:text-[11px]"
+                    className="w-full"
                   />
                 </form>
                 <form action={formAction} className={`${PEDIDO_MATCH_RECEBIDO_FORM_CLASS} flex min-h-0 min-w-0`}>
@@ -212,7 +212,7 @@ export function ComunidadeConvitesTime({ items }: { items: ConviteTimeItem[] }) 
                     pending={pending}
                     busy={pending && clickedAction?.conviteId === c.id && !clickedAction.aceitar}
                     onClick={() => setClickedAction({ conviteId: c.id, aceitar: false })}
-                    className="min-h-[44px] w-full rounded-xl text-[10px] sm:min-h-[48px] sm:text-[11px]"
+                    className="w-full"
                   />
                 </form>
               </div>

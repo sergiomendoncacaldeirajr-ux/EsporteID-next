@@ -53,12 +53,12 @@ export function EidSocialAceitarButton({
       {...props}
     >
       {busy ? (
-        <span className={PEDIDO_SOCIAL_LIGHT_ICON_RING_ACEITAR}>
-          <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin sm:h-3 sm:w-3" strokeWidth={ICON_STROKE} aria-hidden />
+        <span className={`${PEDIDO_SOCIAL_LIGHT_ICON_RING_ACEITAR} mr-0.5 sm:mr-1`}>
+          <Loader2 className="h-[3px] w-[3px] shrink-0 animate-spin sm:h-1 sm:w-1" strokeWidth={ICON_STROKE} aria-hidden />
         </span>
       ) : (
-        <span className={PEDIDO_SOCIAL_LIGHT_ICON_RING_ACEITAR}>
-          <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3" strokeWidth={ICON_STROKE} aria-hidden />
+        <span className={`${PEDIDO_SOCIAL_LIGHT_ICON_RING_ACEITAR} mr-0.5 sm:mr-1`}>
+          <Check className="h-[3px] w-[3px] sm:h-1 sm:w-1" strokeWidth={ICON_STROKE} aria-hidden />
         </span>
       )}
       <span className={busy ? "eid-social-action-loading-text" : ""}>{busy ? loadingText : idle}</span>
@@ -91,12 +91,12 @@ export function EidSocialRecusarButton({
       {...props}
     >
       {busy ? (
-        <span className={PEDIDO_SOCIAL_LIGHT_ICON_RING_RECUSAR}>
-          <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin sm:h-3 sm:w-3" strokeWidth={ICON_STROKE} aria-hidden />
+        <span className={`${PEDIDO_SOCIAL_LIGHT_ICON_RING_RECUSAR} mr-0.5 sm:mr-1`}>
+          <Loader2 className="h-[3px] w-[3px] shrink-0 animate-spin sm:h-1 sm:w-1" strokeWidth={ICON_STROKE} aria-hidden />
         </span>
       ) : (
-        <span className={PEDIDO_SOCIAL_LIGHT_ICON_RING_RECUSAR}>
-          <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" strokeWidth={ICON_STROKE} aria-hidden />
+        <span className={`${PEDIDO_SOCIAL_LIGHT_ICON_RING_RECUSAR} mr-0.5 sm:mr-1`}>
+          <X className="h-[3px] w-[3px] sm:h-1 sm:w-1" strokeWidth={ICON_STROKE} aria-hidden />
         </span>
       )}
       <span className={busy ? "eid-social-action-loading-text" : ""}>{busy ? "Recusando…" : "Recusar"}</span>

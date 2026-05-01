@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -60,7 +60,7 @@ function formatShort(iso: string | null | undefined) {
   }
 }
 
-const PREVIEW_LIMIT = 3;
+const PREVIEW_LIMIT = 5;
 const PREVIEW_FETCH = 80;
 
 function SummaryGlyph({ kind }: { kind: "agenda" | "social" | "placar" }) {
@@ -95,6 +95,7 @@ function SummaryGlyph({ kind }: { kind: "agenda" | "social" | "placar" }) {
 }
 
 export function NotificationBell({ userId }: { userId: string | null }) {
+  const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -256,8 +257,8 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     setPedidosDesafioN(m);
     setSugestoesLiderN(s);
     setPlacarN(p);
-    // Inclui pedidos pendentes (matches) como ação social real.
-    setTotal(unreadGeneral + p + ag + m + s);
+    // Sininho conta apenas notificações não lidas; ações pendentes ficam no footer social.
+    setTotal(unreadGeneral);
     setPreview(previewRows);
   }, [userId]);
 
@@ -377,6 +378,25 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       setPushBusy(false);
     }
   }, [pushBusy, pushEnabled, vapidPublicKey]);
+
+  const onPreviewClick = useCallback(
+    async (n: Preview) => {
+      const href = resolveNotificationHref({ tipo: n.tipo, mensagem: n.mensagem });
+      setOpen(false);
+      if (!userId) {
+        router.push(href);
+        return;
+      }
+      if (n.lida !== true) {
+        const supabase = createClient();
+        await supabase.from("notificacoes").update({ lida: true }).eq("id", n.id).eq("usuario_id", userId);
+        setPreview((prev) => prev.map((item) => (item.id === n.id ? { ...item, lida: true } : item)));
+        setTotal((prev) => Math.max(0, prev - 1));
+      }
+      router.push(href);
+    },
+    [router, userId]
+  );
 
   if (!userId) return null;
 
@@ -499,14 +519,14 @@ export function NotificationBell({ userId }: { userId: string | null }) {
               <ul className="mt-1.5 max-h-40 space-y-1.5 overflow-y-auto pr-1">
                 {preview.slice(0, PREVIEW_LIMIT).map((n) => (
                   <li key={n.id}>
-                    <Link
-                      href={resolveNotificationHref({ tipo: n.tipo, mensagem: n.mensagem })}
-                      onClick={() => setOpen(false)}
-                      className="block rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2 py-1.5 transition hover:border-eid-primary-500/35"
+                    <button
+                      type="button"
+                      onClick={() => void onPreviewClick(n)}
+                      className="block w-full rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2 py-1.5 text-left transition hover:border-eid-primary-500/35"
                     >
                       <p className={`line-clamp-2 text-[10px] ${n.lida ? "text-eid-text-secondary" : "font-semibold text-eid-fg"}`}>{n.mensagem}</p>
                       <p className="mt-1 text-[9px] text-eid-text-secondary">{formatShort(n.data_criacao ?? n.criada_em)}</p>
-                    </Link>
+                    </button>
                   </li>
                 ))}
               </ul>
