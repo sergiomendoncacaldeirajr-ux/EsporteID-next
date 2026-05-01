@@ -1103,18 +1103,6 @@ label:has(input.sr-only):not(.eid-no-press):active {
   background-color: color-mix(in srgb, #f43f5e 20%, white 80%);
 }
 
-[data-eid-theme="light"] [data-eid-recusar-btn="true"] {
-  border-color: color-mix(in srgb, var(--eid-danger-500) 42%, white 58%) !important;
-  color: color-mix(in srgb, var(--eid-danger-500) 82%, #111827 18%) !important;
-  background-color: color-mix(in srgb, var(--eid-danger-500) 50%, white 50%) !important;
-}
-
-[data-eid-theme="light"] [data-eid-recusar-btn="true"]:hover {
-  border-color: color-mix(in srgb, var(--eid-danger-500) 56%, white 44%) !important;
-  color: color-mix(in srgb, var(--eid-danger-500) 90%, #111827 10%) !important;
-  background-color: color-mix(in srgb, var(--eid-danger-500) 60%, white 40%) !important;
-}
-
 [data-eid-theme="light"] [data-eid-cancel-pendente-btn="true"] {
   border-color: #f87171 !important;
   background-color: color-mix(in srgb, #ef4444 6%, white 94%) !important;

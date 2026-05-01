@@ -11,7 +11,7 @@ import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/
 import { EidCityState } from "@/components/ui/eid-city-state";
 import type { PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
-import { Calendar, Clock, Clock3 } from "lucide-react";
+import { Calendar, Clock } from "lucide-react";
 import {
   PEDIDO_MATCH_RECEBIDO_FORM_CLASS,
   PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS,
@@ -23,6 +23,7 @@ import {
   EID_SOCIAL_PANEL_MATCH_RECEBIDO_SHELL,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
+import { PedidoMatchFinalidadeSeal } from "@/components/comunidade/pedido-match-finalidade-seal";
 
 export type PedidoMatchItem = {
   id: number;
@@ -149,26 +150,17 @@ export function ComunidadePedidosMatch({ items }: { items: PedidoMatchItem[] }) 
               : String(m.modalidade).trim().toLowerCase() === "individual"
                 ? "individual"
                 : "dupla";
+          const showFinalidadeNoCard = items.length > 1;
+          const gridTopPad = showFinalidadeNoCard ? "pt-1" : "pt-2";
           return (
             <li key={m.id} className={`${EID_SOCIAL_PANEL_MATCH_RECEBIDO_SHELL} p-0 text-sm`}>
-              <div className="absolute right-3 top-3 z-[1] flex flex-col items-end gap-1">
-                {m.finalidade === "amistoso" ? (
-                  <span className="rounded-full border border-emerald-500/35 bg-emerald-500/12 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-emerald-100 eid-light:border-emerald-200 eid-light:bg-emerald-50 eid-light:text-emerald-800">
-                    Amistoso
-                  </span>
-                ) : (
-                  <span className="rounded-full border border-sky-400/35 bg-sky-500/12 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-sky-100 eid-light:border-sky-200 eid-light:bg-sky-50 eid-light:text-[#1d4ed8]">
-                    Ranking
-                  </span>
-                )}
-                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] text-amber-800 eid-dark:border-amber-300/65 eid-dark:bg-amber-950/55 eid-dark:text-amber-100 eid-light:border-amber-400 eid-light:bg-yellow-50 eid-light:text-amber-600">
-                  <Clock3 className="h-3 w-3 shrink-0 text-amber-800 eid-dark:text-amber-100 eid-light:text-amber-600" strokeWidth={2.25} aria-hidden />
-                  Pendente
-                </span>
-              </div>
-
               <div className={EID_SOCIAL_PANEL_BODY}>
-                <div className={`${EID_SOCIAL_GRID_3} pt-11`}>
+                {showFinalidadeNoCard ? (
+                  <div className="flex justify-end pb-1 sm:pb-1.5">
+                    <PedidoMatchFinalidadeSeal finalidade={m.finalidade} />
+                  </div>
+                ) : null}
+                <div className={`${EID_SOCIAL_GRID_3} ${gridTopPad}`}>
                   <div className="flex min-w-0 flex-col items-center">
                     <p className="flex flex-nowrap items-center justify-center gap-1.5 whitespace-nowrap text-[9px] font-bold uppercase tracking-[0.14em] text-eid-action-600">
                       <span className="shrink-0">Desafiante</span>

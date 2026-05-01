@@ -11,6 +11,7 @@ import { ComunidadeBackgroundSync } from "@/components/comunidade/comunidade-bac
 import { ComunidadeQuadro } from "@/components/comunidade/comunidade-quadro";
 import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pedidos-enviados";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
+import { PedidoMatchFinalidadeSeal } from "@/components/comunidade/pedido-match-finalidade-seal";
 import {
   ComunidadeSugestoesEnviadasMatch,
   type SugestaoEnviadaMatchItem,
@@ -1416,7 +1417,14 @@ export default async function ComunidadePage() {
             </div>
             <div className="px-3 py-3 md:px-4 md:py-4">
             <div className="space-y-4">
-              <ComunidadeQuadro id="desafio-pedidos-recebidos" title="Pedidos recebidos" hasPending={pedidosItems.length > 0}>
+              <ComunidadeQuadro
+                id="desafio-pedidos-recebidos"
+                title="Pedidos recebidos"
+                hasPending={pedidosItems.length > 0}
+                headerBadgeExtra={
+                  pedidosItems.length === 1 ? <PedidoMatchFinalidadeSeal finalidade={pedidosItems[0]?.finalidade} /> : null
+                }
+              >
                 <ComunidadePedidosMatch items={pedidosItems} />
               </ComunidadeQuadro>
               <ComunidadeQuadro
