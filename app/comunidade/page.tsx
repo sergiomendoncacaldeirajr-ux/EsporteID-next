@@ -20,7 +20,7 @@ import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { EidRejectedBadge } from "@/components/ui/eid-rejected-badge";
 import { CancelarCandidaturaForm, ResponderCandidaturaForm } from "@/components/vagas/vagas-actions";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
-import { fetchPedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
+import { fetchPedidoRankingPreview, type PedidoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { PEDIDO_MATCH_RECEBIDO_FORM_CLASS, PEDIDO_MATCH_RECEBIDO_SOCIAL_ACOES_ROW_CLASS } from "@/lib/desafio/flow-ui";
 import {
   EID_SOCIAL_GRID_3,
@@ -348,49 +348,86 @@ export default async function ComunidadePage() {
   });
 
   const pedidosItems = await Promise.all(
-    pedidosItemsBase.map(async (m) => ({
-      ...m,
-      rankingPosicao:
-        m.finalidade === "ranking" && m.esporteId > 0
-          ? await (async () => {
-              const mod = String(m.modalidade ?? "").toLowerCase();
-              if (m.formacaoDesafiante && (mod === "dupla" || mod === "time")) {
-                const pontos = m.formacaoDesafiante.pontosRanking;
-                const { count } = await supabase
-                  .from("times")
-                  .select("id", { count: "exact", head: true })
-                  .eq("esporte_id", m.esporteId)
-                  .eq("tipo", mod)
-                  .gt("pontos_ranking", pontos);
-                return Number(count ?? 0) + 1;
-              }
-              const { data: chEid } = await supabase
-                .from("usuario_eid")
-                .select("pontos_ranking")
-                .eq("usuario_id", m.desafianteId)
-                .eq("esporte_id", m.esporteId)
-                .maybeSingle();
-              const pontos = Number(chEid?.pontos_ranking ?? NaN);
-              if (!Number.isFinite(pontos)) return null;
-              const { count } = await supabase
-                .from("usuario_eid")
-                .select("id", { count: "exact", head: true })
-                .eq("esporte_id", m.esporteId)
-                .gt("pontos_ranking", pontos);
-              return Number(count ?? 0) + 1;
-            })()
-          : null,
-      rankingPreview:
-        m.finalidade === "ranking" && m.esporteId > 0
-          ? await fetchPedidoRankingPreview(supabase, {
-              accepterId: user.id,
-              challengerId: m.desafianteId,
-              esporteId: m.esporteId,
-              modalidade: m.modalidade,
-              adversarioTimeId: m.adversarioTimeId,
-            })
-          : null,
-    }))
+    (() => {
+      const rankingPosCache = new Map<string, Promise<number | null>>();
+      const rankingPontosCache = new Map<string, Promise<number | null>>();
+      const rankingPreviewCache = new Map<string, Promise<PedidoRankingPreview | null>>();
+
+      async function getRankingPosicao(item: (typeof pedidosItemsBase)[number]): Promise<number | null> {
+        if (item.finalidade !== "ranking" || item.esporteId <= 0) return null;
+        const mod = String(item.modalidade ?? "").toLowerCase();
+
+        if (item.formacaoDesafiante && (mod === "dupla" || mod === "time")) {
+          const key = `time:${item.esporteId}:${mod}:${item.formacaoDesafiante.pontosRanking}`;
+          const cached = rankingPosCache.get(key);
+          if (cached) return cached;
+          const promise = (async () => {
+            const { count } = await supabase
+              .from("times")
+              .select("id", { count: "exact", head: true })
+              .eq("esporte_id", item.esporteId)
+              .eq("tipo", mod)
+              .gt("pontos_ranking", item.formacaoDesafiante?.pontosRanking ?? 0);
+            return Number(count ?? 0) + 1;
+          })();
+          rankingPosCache.set(key, promise);
+          return promise;
+        }
+
+        const pontosKey = `${item.desafianteId}:${item.esporteId}`;
+        const pontosPromise =
+          rankingPontosCache.get(pontosKey) ??
+          (async () => {
+            const { data: chEid } = await supabase
+              .from("usuario_eid")
+              .select("pontos_ranking")
+              .eq("usuario_id", item.desafianteId)
+              .eq("esporte_id", item.esporteId)
+              .maybeSingle();
+            const pontos = Number(chEid?.pontos_ranking ?? NaN);
+            return Number.isFinite(pontos) ? pontos : null;
+          })();
+        rankingPontosCache.set(pontosKey, pontosPromise);
+        const pontos = await pontosPromise;
+        if (!Number.isFinite(pontos)) return null;
+
+        const key = `user:${item.esporteId}:${pontos}`;
+        const cached = rankingPosCache.get(key);
+        if (cached) return cached;
+        const promise = (async () => {
+          const { count } = await supabase
+            .from("usuario_eid")
+            .select("id", { count: "exact", head: true })
+            .eq("esporte_id", item.esporteId)
+            .gt("pontos_ranking", pontos ?? 0);
+          return Number(count ?? 0) + 1;
+        })();
+        rankingPosCache.set(key, promise);
+        return promise;
+      }
+
+      async function getRankingPreview(item: (typeof pedidosItemsBase)[number]): Promise<PedidoRankingPreview | null> {
+        if (item.finalidade !== "ranking" || item.esporteId <= 0) return null;
+        const previewKey = `${uidEq}:${item.desafianteId}:${item.esporteId}:${String(item.modalidade ?? "").toLowerCase()}:${Number(item.adversarioTimeId ?? 0)}`;
+        const cached = rankingPreviewCache.get(previewKey);
+        if (cached) return cached;
+        const promise = fetchPedidoRankingPreview(supabase, {
+          accepterId: uidEq,
+          challengerId: item.desafianteId,
+          esporteId: item.esporteId,
+          modalidade: item.modalidade,
+          adversarioTimeId: item.adversarioTimeId,
+        });
+        rankingPreviewCache.set(previewKey, promise);
+        return promise;
+      }
+
+      return pedidosItemsBase.map(async (m) => ({
+        ...m,
+        rankingPosicao: await getRankingPosicao(m),
+        rankingPreview: await getRankingPreview(m),
+      }));
+    })()
   );
 
   const nPedidos = pedidosItems.length;
