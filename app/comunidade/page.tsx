@@ -2,14 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
-import type { ConviteTimeEnviadoItem } from "@/components/comunidade/comunidade-convites-enviados-time";
-import { ComunidadeConvitesEnviadosLive } from "@/components/comunidade/comunidade-convites-enviados-live";
-import { ComunidadeConvitesRecebidosLive } from "@/components/comunidade/comunidade-convites-recebidos-live";
-import type { ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
+import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
+import {
+  ComunidadeConvitesEnviadosTime,
+  type ConviteTimeEnviadoItem,
+} from "@/components/comunidade/comunidade-convites-enviados-time";
 import { ComunidadeBackgroundSync } from "@/components/comunidade/comunidade-background-sync";
-import { ComunidadePendenciasRscSync } from "@/components/comunidade/comunidade-pendencias-rsc-sync";
 import { ComunidadeQuadro } from "@/components/comunidade/comunidade-quadro";
-import { type ComunidadePendenciasServerSnapshot } from "@/lib/comunidade/pendencias-snapshot";
 import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pedidos-enviados";
 import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
 import {
@@ -189,21 +188,16 @@ export default async function ComunidadePage() {
       .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]),
   ]);
 
-  /** Sempre carregar bloco Equipe na Central: evita quadros vazios quando o RSC atrasou mas o cliente já vê pendência. */
-  const needEquipe = true;
+  /** Só busca o miolo “Equipe” quando as contagens indicam alguma pendência (mesma regra de exibir o bloco). */
+  const needEquipe =
+    (cntSugRec ?? 0) > 0 ||
+    (cntSugEnv ?? 0) > 0 ||
+    (cntConvRec ?? 0) > 0 ||
+    (cntConvEnv ?? 0) > 0 ||
+    (cntCandLider ?? 0) > 0 ||
+    (cntCandMine ?? 0) > 0;
   const needPartidas =
     (cntPartAguarda ?? 0) > 0 || (cntPartAgend ?? 0) > 0 || (cntMatchRankFlow ?? 0) > 0;
-
-  const pendenciasSnapshot: ComunidadePendenciasServerSnapshot = {
-    pedidosRec: cntMatchIn ?? 0,
-    pedidosEnv: cntMatchOut ?? 0,
-    sugRec: cntSugRec ?? 0,
-    sugEnv: cntSugEnv ?? 0,
-    convRec: cntConvRec ?? 0,
-    convEnv: cntConvEnv ?? 0,
-    candLider: cntCandLider ?? 0,
-    candMine: cntCandMine ?? 0,
-  };
 
   const { data: recebidos } = await supabase
     .from("matches")
@@ -1278,6 +1272,9 @@ export default async function ComunidadePage() {
     minhasCandidaturasEquipe.some((c) => c.statusRaw === "pendente");
   const temAlgumaAcaoPendente = hasPartidasAcoes || hasDesafioAcoes || hasEquipeAcoes;
   const sugestoesEnviadasSoPendentes = sugestoesEnviadasItems.filter((s) => s.statusRaw === "pendente");
+  const convitesEnviadosSoPendentes = conviteEnviadoItems.filter(
+    (i) => String(i.status ?? "").toLowerCase() === "pendente",
+  );
   const minhasCandSoPendentes = minhasCandidaturasEquipe.filter((c) => c.statusRaw === "pendente");
 
   return (
@@ -1288,7 +1285,6 @@ export default async function ComunidadePage() {
       className="mx-auto w-full max-w-3xl px-2.5 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-6xl sm:px-5 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
       <ComunidadeBackgroundSync />
-      <ComunidadePendenciasRscSync userId={user.id} pendenciasSnapshot={pendenciasSnapshot} />
       <div className="mb-3 md:mb-4">
         <PushToggleCard defaultEnabled />
       </div>
@@ -1435,7 +1431,7 @@ export default async function ComunidadePage() {
           </section>
           ) : null}
 
-          {needEquipe ? (
+          {hasEquipeAcoes ? (
           <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
             <div className="flex items-center justify-between gap-2 border-b border-transparent bg-eid-card px-3 py-2 md:px-4">
               <div className="flex min-w-0 items-center gap-1.5">
@@ -1465,12 +1461,9 @@ export default async function ComunidadePage() {
               >
                 <ComunidadeSugestoesEnviadasMatch items={sugestoesEnviadasSoPendentes} viewerUserId={user.id} />
               </ComunidadeQuadro>
-              <ComunidadeConvitesRecebidosLive
-                initialItems={conviteItems}
-                userId={user.id}
-                viewerLat={hasMyCoords ? myLat : null}
-                viewerLng={hasMyCoords ? myLng : null}
-              />
+              <ComunidadeQuadro id="equipe-convites" title="Convites recebidos" hasPending={conviteItems.length > 0}>
+                <ComunidadeConvitesTime items={conviteItems} />
+              </ComunidadeQuadro>
               {candidaturasEquipe.length > 0 ? (
                 <>
                   {candidaturasEquipe.length > 1 ? (
@@ -1631,12 +1624,13 @@ export default async function ComunidadePage() {
                   </ul>
                 </>
               ) : null}
-              <ComunidadeConvitesEnviadosLive
-                initialItems={conviteEnviadoItems}
-                userId={user.id}
-                viewerLat={hasMyCoords ? myLat : null}
-                viewerLng={hasMyCoords ? myLng : null}
-              />
+              <ComunidadeQuadro
+                id="equipe-convites-enviados"
+                title="Convites enviados (aguardando resposta)"
+                hasPending={convitesEnviadosSoPendentes.length > 0}
+              >
+                <ComunidadeConvitesEnviadosTime items={convitesEnviadosSoPendentes} />
+              </ComunidadeQuadro>
               <ComunidadeQuadro
                 id="equipe-pedidos-enviados"
                 title="Pedidos de entrada enviados"

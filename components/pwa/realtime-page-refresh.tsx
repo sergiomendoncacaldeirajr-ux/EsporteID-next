@@ -112,23 +112,41 @@ export function RealtimePageRefresh({ userId }: Props) {
       );
     };
 
+    const revalidateComunidadeIfNeeded = async () => {
+      const p = String(pathname ?? "");
+      if (!p.startsWith("/comunidade")) return;
+      try {
+        await fetch("/api/comunidade/revalidate", { method: "POST", credentials: "same-origin" });
+      } catch {
+        /* ignore */
+      }
+    };
+
     const refresh = () => {
       if (shouldPauseAutoRefresh()) return;
       const now = Date.now();
       if (now - lastRefreshAt.current < 1500) return;
       lastRefreshAt.current = now;
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
-      }
-      router.refresh();
+      void (async () => {
+        await revalidateComunidadeIfNeeded();
+        if (cancelled) return;
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+        }
+        router.refresh();
+      })();
     };
     const refreshForced = () => {
       if (shouldPauseAutoRefresh()) return;
       lastRefreshAt.current = Date.now();
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
-      }
-      router.refresh();
+      void (async () => {
+        await revalidateComunidadeIfNeeded();
+        if (cancelled) return;
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+        }
+        router.refresh();
+      })();
     };
 
     const notifyForeground = (notifId: number, mensagem: string) => {
