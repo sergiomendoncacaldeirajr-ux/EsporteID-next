@@ -106,7 +106,7 @@ export function RankingFilterBar({
       summaryRight={
         <Link
           href={clearHref}
-          className="eid-ranking-filter-clear inline-flex h-4 shrink-0 items-center gap-1 rounded-full border border-transparent bg-eid-surface/50 px-2 text-[6.5px] font-black uppercase tracking-[0.05em] text-eid-primary-400"
+          className="eid-ranking-filter-clear inline-flex h-[22px] shrink-0 items-center gap-1 rounded-full border border-transparent bg-eid-surface/50 px-2.5 text-[7.5px] font-black uppercase leading-tight tracking-[0.06em] text-eid-primary-400"
         >
           <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <path d="M4 6h16M8 12h8M10 18h4" strokeLinecap="round" />
@@ -118,15 +118,15 @@ export function RankingFilterBar({
         <div className="rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
           <div className="grid grid-cols-3 gap-1">
             <Link href={href({ tipo: "individual", page: 1 })} className={filterBarSegmentButton(state.tipo === "individual")}>
-              <IconSingle className="h-3.5 w-3.5 shrink-0" />
+              <IconSingle className="h-4 w-4 shrink-0" />
               <span>Individual</span>
             </Link>
             <Link href={href({ tipo: "dupla", page: 1 })} className={filterBarSegmentButton(state.tipo === "dupla")}>
-              <IconDouble className="h-3.5 w-3.5 shrink-0" />
+              <IconDouble className="h-4 w-4 shrink-0" />
               <span>Duplas</span>
             </Link>
             <Link href={href({ tipo: "time", page: 1 })} className={filterBarSegmentButton(state.tipo === "time")}>
-              <IconTeam className="h-3.5 w-3.5 shrink-0" />
+              <IconTeam className="h-4 w-4 shrink-0" />
               <span>Times</span>
             </Link>
           </div>
@@ -134,13 +134,13 @@ export function RankingFilterBar({
 
         <div className="grid grid-cols-2 gap-1 rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
           <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
-            <IconPin className="h-3.5 w-3.5 shrink-0" />
+            <IconPin className="h-4 w-4 shrink-0" />
             <span className="min-w-0 truncate">
               <CityGpsLabel fallbackCity={cidadeDisplay} />
             </span>
           </Link>
           <Link href={href({ local: "brasil", page: 1 })} className={blockButton(state.local === "brasil")}>
-            <IconBrazil className="h-3.5 w-3.5 shrink-0" />
+            <IconBrazil className="h-4 w-4 shrink-0" />
             <span className="truncate">Brasil</span>
           </Link>
         </div>
@@ -169,14 +169,14 @@ export function RankingFilterBar({
                     href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                     title={isPrincipal ? "Esporte principal do perfil" : undefined}
                     className={cn(
-                      "eid-ranking-filter-sport inline-flex h-4 w-auto shrink-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6.5px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
+                      "eid-ranking-filter-sport inline-flex h-[22px] w-auto shrink-0 touch-manipulation items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-[7.5px] font-black uppercase leading-tight tracking-[0.05em] motion-safe:transform-gpu transition-[transform,background-color,color,box-shadow,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:translate-y-[0.5px] active:scale-[0.98]",
                       active
                         ? "eid-ranking-sport-pill-active bg-eid-primary-500/16 text-eid-primary-300 shadow-[0_6px_14px_-10px_rgba(37,99,235,0.35)]"
                         : "bg-[color:color-mix(in_srgb,var(--eid-card)_76%,var(--eid-surface)_24%)] text-eid-text-secondary hover:bg-eid-surface/55",
                       isPrincipal && !active && "bg-eid-primary-500/08 text-eid-fg/90"
                     )}
                   >
-                    <span className="inline-flex h-3 w-3 shrink-0 items-center justify-center">
+                    <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
                       <SportGlyphIcon sportName={opt.nome} />
                     </span>
                     <span>{opt.nome}</span>
@@ -185,7 +185,7 @@ export function RankingFilterBar({
               })}
               <button
                 type="button"
-                className="eid-ranking-filter-plus inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-transparent bg-[color:color-mix(in_srgb,var(--eid-card)_76%,var(--eid-surface)_24%)] text-eid-text-secondary"
+                className="eid-ranking-filter-plus inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-transparent bg-[color:color-mix(in_srgb,var(--eid-card)_76%,var(--eid-surface)_24%)] text-[13px] font-bold leading-none text-eid-text-secondary"
                 aria-label="Mais esportes"
               >
                 +
@@ -277,19 +277,14 @@ export function RankingRankToggle({
   );
 }
 
+/** Chips do pódio (gênero / tipo de rank / período): mesma tipografia e altura dos segmentos da barra Filtros. */
 function tipoSegmentButton(active: boolean) {
-  return cn(
-    "eid-ranking-filter-segment inline-flex h-5 min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
-    active
-      ? "eid-ranking-chip-active bg-[color-mix(in_srgb,var(--eid-primary-500)_24%,var(--eid-card)_76%)] text-eid-primary-300 shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
-      : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35"
-  );
+  return filterBarSegmentButton(active);
 }
 
-/** Segmentos da barra Filtros (tipo/local): mais baixos que os toggles do pódio. */
 function filterBarSegmentButton(active: boolean) {
   return cn(
-    "eid-ranking-filter-segment inline-flex h-4 min-w-0 flex-1 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
+    "eid-ranking-filter-segment inline-flex h-[22px] min-h-[22px] min-w-0 flex-1 touch-manipulation items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-[7.5px] font-black uppercase leading-tight tracking-[0.05em] motion-safe:transform-gpu transition-[transform,background-color,color,box-shadow,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:translate-y-[0.5px] active:scale-[0.98]",
     active
       ? "eid-ranking-chip-active bg-[color-mix(in_srgb,var(--eid-primary-500)_24%,var(--eid-card)_76%)] text-eid-primary-300 shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/35"
@@ -298,7 +293,7 @@ function filterBarSegmentButton(active: boolean) {
 
 function blockButton(active: boolean) {
   return cn(
-    "eid-ranking-filter-segment inline-flex h-4 w-auto min-w-0 touch-manipulation items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 text-[6px] font-black uppercase leading-none tracking-[0.03em] transition-all duration-250 ease-out motion-safe:transform-gpu active:translate-y-[0.5px] active:scale-[0.985]",
+    "eid-ranking-filter-segment inline-flex h-[22px] min-h-[22px] w-auto min-w-0 touch-manipulation items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-[7.5px] font-black uppercase leading-tight tracking-[0.05em] motion-safe:transform-gpu transition-[transform,background-color,color,box-shadow,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] active:translate-y-[0.5px] active:scale-[0.98]",
     active
       ? "eid-ranking-chip-active bg-eid-primary-500/14 text-eid-primary-500 shadow-[0_7px_16px_-11px_rgba(37,99,235,0.4)]"
       : "bg-transparent text-eid-text-secondary hover:bg-eid-surface/55"

@@ -179,7 +179,8 @@ export function RealtimePageRefresh({ userId }: Props) {
     void primeNotifiedCache();
 
     const onElencoChange = () => {
-      refresh();
+      // Troca de cargo / elenco: não pode cair no throttle — quem recebe liderança precisa ver a UI na hora.
+      refreshForced();
       window.setTimeout(() => setElencoVersion((v) => v + 1), 0);
     };
 
@@ -230,7 +231,7 @@ export function RealtimePageRefresh({ userId }: Props) {
             .on(
               "postgres_changes",
               { event: "*", schema: "public", table: "membros_time", filter: `time_id=${teamFilter}` },
-              refresh
+              refreshForced
             )
             .subscribe()
         );
@@ -240,7 +241,7 @@ export function RealtimePageRefresh({ userId }: Props) {
             .on(
               "postgres_changes",
               { event: "*", schema: "public", table: "times", filter: `id=${teamFilter}` },
-              refresh
+              refreshForced
             )
             .subscribe()
         );
@@ -408,28 +409,43 @@ export function RealtimePageRefresh({ userId }: Props) {
 
       // Fallback robusto (Social + Agenda + sino): detecta mudanças mesmo se canais realtime falharem.
       const buildInteractionSignature = async () => {
-        const [notifUnread, matchesAdvPend, matchesMinePend, sugAlvoPend, sugMinePend, partidasRows, convMePend, convOwnedPend, candMePend, candOwnedPend] =
-          await Promise.all([
-            supabase.from("notificacoes").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("lida", false),
-            supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", userId).eq("status", "Pendente"),
-            supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("status", "Pendente"),
-            supabase.from("match_sugestoes").select("id", { count: "exact", head: true }).eq("alvo_dono_id", userId).eq("status", "pendente"),
-            supabase
-              .from("match_sugestoes")
-              .select("id", { count: "exact", head: true })
-              .eq("sugeridor_id", userId)
-              .eq("status", "pendente")
-              .neq("oculto_sugeridor", true),
-            supabase.from("partidas").select("id, status, jogador1_id, jogador2_id, time1_id, time2_id").order("id", { ascending: false }).limit(120),
-            supabase.from("time_convites").select("id", { count: "exact", head: true }).eq("convidado_usuario_id", userId).eq("status", "pendente"),
-            ownedIds.length > 0
-              ? supabase.from("time_convites").select("id", { count: "exact", head: true }).in("time_id", ownedIds.slice(0, 100)).eq("status", "pendente")
-              : Promise.resolve({ count: 0 }),
-            supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).eq("candidato_usuario_id", userId).eq("status", "pendente"),
-            ownedIds.length > 0
-              ? supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).in("time_id", ownedIds.slice(0, 100)).eq("status", "pendente")
-              : Promise.resolve({ count: 0 }),
-          ]);
+        const teamSlice = teamIds.slice(0, 100);
+        const [
+          notifUnread,
+          matchesAdvPend,
+          matchesMinePend,
+          sugAlvoPend,
+          sugMinePend,
+          partidasRows,
+          convMePend,
+          convOwnedPend,
+          candMePend,
+          candOwnedPend,
+          timesLeadership,
+        ] = await Promise.all([
+          supabase.from("notificacoes").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("lida", false),
+          supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", userId).eq("status", "Pendente"),
+          supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("status", "Pendente"),
+          supabase.from("match_sugestoes").select("id", { count: "exact", head: true }).eq("alvo_dono_id", userId).eq("status", "pendente"),
+          supabase
+            .from("match_sugestoes")
+            .select("id", { count: "exact", head: true })
+            .eq("sugeridor_id", userId)
+            .eq("status", "pendente")
+            .neq("oculto_sugeridor", true),
+          supabase.from("partidas").select("id, status, jogador1_id, jogador2_id, time1_id, time2_id").order("id", { ascending: false }).limit(120),
+          supabase.from("time_convites").select("id", { count: "exact", head: true }).eq("convidado_usuario_id", userId).eq("status", "pendente"),
+          ownedIds.length > 0
+            ? supabase.from("time_convites").select("id", { count: "exact", head: true }).in("time_id", ownedIds.slice(0, 100)).eq("status", "pendente")
+            : Promise.resolve({ count: 0 }),
+          supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).eq("candidato_usuario_id", userId).eq("status", "pendente"),
+          ownedIds.length > 0
+            ? supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).in("time_id", ownedIds.slice(0, 100)).eq("status", "pendente")
+            : Promise.resolve({ count: 0 }),
+          teamSlice.length > 0
+            ? supabase.from("times").select("id,criador_id").in("id", teamSlice).order("id", { ascending: true })
+            : Promise.resolve({ data: [] as { id?: number; criador_id?: string | null }[] }),
+        ]);
 
         const teamSet = new Set(teamIds);
         const agRows = (partidasRows.data ?? []) as Array<{
@@ -456,6 +472,14 @@ export function RealtimePageRefresh({ userId }: Props) {
           ...agendaRelacionada.map((r) => Number(r.id ?? 0)).filter((n) => Number.isFinite(n) && n > 0)
         );
 
+        const liderancaTimesSig = (timesLeadership.data ?? [])
+          .map((r) => {
+            const id = Number((r as { id?: number }).id ?? 0);
+            const lid = String((r as { criador_id?: string | null }).criador_id ?? "").trim();
+            return `${id}:${lid}`;
+          })
+          .join(";");
+
         return [
           String(notifUnread.count ?? 0),
           String(matchesAdvPend.count ?? 0),
@@ -469,6 +493,7 @@ export function RealtimePageRefresh({ userId }: Props) {
           String(agendadaN),
           String(aguardandoPlacarN),
           String(latestPartidaId),
+          liderancaTimesSig,
         ].join("|");
       };
 

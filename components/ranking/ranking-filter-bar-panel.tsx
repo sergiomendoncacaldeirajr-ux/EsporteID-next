@@ -48,7 +48,7 @@ export function RankingFilterBarPanel({ summaryRight, children }: Props) {
               <path d="m6 9 6 6 6-6" />
             </svg>
           </span>
-          <h3 className="text-[11px] font-black uppercase tracking-[0.14em] text-eid-fg">Filtros</h3>
+          <h3 className="text-[9px] font-black uppercase tracking-[0.1em] text-eid-fg">Filtros</h3>
         </button>
         {summaryRight}
       </div>

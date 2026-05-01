@@ -37,6 +37,7 @@ type InviteItem = {
 
 export function TeamRosterManager({
   timeId,
+  liderUsuarioId,
   membros,
   convites,
   rosterCount,
@@ -46,6 +47,8 @@ export function TeamRosterManager({
   prefillConvidarNome = null,
 }: {
   timeId: number;
+  /** `times.criador_id`: não exibir Remover / transferir liderança para a própria linha do líder. */
+  liderUsuarioId: string;
   membros: MemberItem[];
   convites: InviteItem[];
   /** Tamanho atual do elenco (líder + membros ativos, contagem distinta). */
@@ -86,6 +89,21 @@ export function TeamRosterManager({
       cancelled = true;
     };
   }, [transferState.ok, transferState.message, router]);
+
+  useEffect(() => {
+    if (!removeState.ok || !removeState.message) return;
+    let cancelled = false;
+    void (async () => {
+      await eidPostRevalidateCurrentAndBroadcast();
+      if (cancelled) return;
+      router.refresh();
+      if (cancelled) return;
+      window.setTimeout(() => setMemberActionTarget(null), 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [removeState.ok, removeState.message, router]);
 
   async function handleCancelarConvite(conviteId: number) {
     if (pendingCancelConviteId != null) return;
@@ -258,59 +276,69 @@ export function TeamRosterManager({
             ) : null}
             {membros.length > 0 ? (
               <ul className="mt-2 grid gap-2">
-                {membros.map((m) => (
-                  <li key={m.usuarioId} className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2">
-                    {m.avatarUrl ? (
-                      <img src={m.avatarUrl} alt={m.nome} className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
-                    ) : (
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
-                        {m.nome.trim().slice(0, 1).toUpperCase() || "A"}
+                {membros.map((m) => {
+                  const isLiderAtual =
+                    Boolean(liderUsuarioId) && m.usuarioId === liderUsuarioId;
+                  return (
+                    <li key={m.usuarioId} className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2">
+                      {m.avatarUrl ? (
+                        <img src={m.avatarUrl} alt={m.nome} className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
+                      ) : (
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                          {m.nome.trim().slice(0, 1).toUpperCase() || "A"}
+                        </span>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-bold text-eid-fg">{m.nome}</p>
+                        <EidCityState location={m.localizacao} compact align="start" className="w-full" />
+                      </div>
+                      <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-emerald-300">
+                        {m.status}
                       </span>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11px] font-bold text-eid-fg">{m.nome}</p>
-                      <EidCityState location={m.localizacao} compact align="start" className="w-full" />
-                    </div>
-                    <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-emerald-300">
-                      {m.status}
-                    </span>
-                    <div className="ml-1 flex shrink-0 items-center gap-1">
-                      <form
-                        action={removeAction}
-                        onSubmit={(e) => {
-                          const ok = window.confirm("Tem certeza que deseja remover este membro da equipe?");
-                          if (!ok) {
-                            e.preventDefault();
-                            return;
-                          }
-                          setMemberActionTarget({ type: "remove", userId: m.usuarioId });
-                        }}
-                      >
-                        <input type="hidden" name="time_id" value={timeId} />
-                        <input type="hidden" name="membro_usuario_id" value={m.usuarioId} />
-                        <button
-                          type="submit"
-                          disabled={removePending || transferPending}
-                          className="inline-flex h-[22px] items-center justify-center rounded-full border border-rose-500/40 bg-rose-500/12 px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-rose-300 transition hover:bg-rose-500/20 disabled:opacity-60"
-                        >
-                          {removePending && memberActionTarget?.type === "remove" && memberActionTarget.userId === m.usuarioId
-                            ? "Removendo..."
-                            : "Remover"}
-                        </button>
-                      </form>
-                      <button
-                        type="button"
-                        disabled={removePending || transferPending}
-                        onClick={() =>
-                          setTransferConfirm({ userId: m.usuarioId, nome: m.nome, avatarUrl: m.avatarUrl })
-                        }
-                        className="inline-flex h-[22px] items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-eid-primary-300 transition hover:bg-eid-primary-500/20 disabled:opacity-60"
-                      >
-                        Liderança
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                      {isLiderAtual ? (
+                        <span className="ml-1 shrink-0 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-eid-primary-300">
+                          Líder
+                        </span>
+                      ) : (
+                        <div className="ml-1 flex shrink-0 items-center gap-1">
+                          <form
+                            action={removeAction}
+                            onSubmit={(e) => {
+                              const ok = window.confirm("Tem certeza que deseja remover este membro da equipe?");
+                              if (!ok) {
+                                e.preventDefault();
+                                return;
+                              }
+                              setMemberActionTarget({ type: "remove", userId: m.usuarioId });
+                            }}
+                          >
+                            <input type="hidden" name="time_id" value={timeId} />
+                            <input type="hidden" name="membro_usuario_id" value={m.usuarioId} />
+                            <button
+                              type="submit"
+                              disabled={removePending || transferPending}
+                              className="inline-flex h-[22px] items-center justify-center rounded-full border border-rose-500/40 bg-rose-500/12 px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-rose-300 transition hover:bg-rose-500/20 disabled:opacity-60"
+                            >
+                              {removePending && memberActionTarget?.type === "remove" && memberActionTarget.userId === m.usuarioId
+                                ? "Removendo..."
+                                : "Remover"}
+                            </button>
+                          </form>
+                          <button
+                            type="button"
+                            disabled={removePending || transferPending}
+                            onClick={() =>
+                              setTransferConfirm({ userId: m.usuarioId, nome: m.nome, avatarUrl: m.avatarUrl })
+                            }
+                            className="inline-flex h-[22px] items-center justify-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 text-[8px] font-black uppercase leading-none tracking-[0.04em] text-eid-primary-300 transition hover:bg-eid-primary-500/20 disabled:opacity-60"
+                          >
+                            Liderança
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="mt-1 text-[11px] text-eid-text-secondary">Sem membros ativos no momento.</p>

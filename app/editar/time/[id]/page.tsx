@@ -198,6 +198,7 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
       <div className="mt-2.5">
         <TeamRosterManager
           timeId={id}
+          liderUsuarioId={String(t.criador_id ?? "")}
           tipoFormacao={tipoFormacao}
           rosterCount={rosterCount}
           rosterCap={rosterCap}

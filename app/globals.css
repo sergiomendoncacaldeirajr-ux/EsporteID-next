@@ -741,22 +741,25 @@ header#eid-persistent-topbar textarea {
 
     /* iPhone: corrige escala dos seletores do pódio/filtros do ranking. */
     [data-eid-ranking-page] .eid-ranking-filter-segment {
-      font-size: 6px !important;
-      line-height: 1 !important;
+      font-size: 7.5px !important;
+      line-height: 1.2 !important;
       font-weight: 900 !important;
+      letter-spacing: 0.05em !important;
     }
     [data-eid-ranking-page] .eid-ranking-filter-sport {
-      font-size: 6.5px !important;
-      line-height: 1 !important;
+      font-size: 8px !important;
+      line-height: 1.2 !important;
       font-weight: 900 !important;
+      letter-spacing: 0.05em !important;
     }
     [data-eid-ranking-page] .eid-ranking-filter-clear {
-      font-size: 6.5px !important;
-      line-height: 1 !important;
+      font-size: 7.5px !important;
+      line-height: 1.2 !important;
       font-weight: 900 !important;
+      letter-spacing: 0.06em !important;
     }
     [data-eid-ranking-page] .eid-ranking-filter-plus {
-      font-size: 12px !important;
+      font-size: 13px !important;
       line-height: 1 !important;
     }
     [data-eid-ranking-page] .eid-ranking-podium-label {
@@ -1410,41 +1413,56 @@ select,
     text-size-adjust: 100%;
   }
   [data-eid-ranking-page] [data-eid-ranking-filter="true"] :where(.eid-ranking-filter-segment) {
-    min-height: 30px !important;
-    height: 30px !important;
-    padding-left: 6px !important;
-    padding-right: 6px !important;
-    font-size: 6.5px !important;
+    min-height: 22px !important;
+    height: 22px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    font-size: 7.5px !important;
     font-weight: 900 !important;
-    line-height: 1 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.05em !important;
+    border-radius: 8px !important;
+  }
+  /* Pódio: mesmos chips que o painel Filtros (o reset `a { font-weight: inherit }` acima não tem escopo do filtro). */
+  [data-eid-ranking-page] .eid-podium-card :where(.eid-ranking-filter-segment) {
+    min-height: 22px !important;
+    height: 22px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    font-size: 7.5px !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.05em !important;
     border-radius: 8px !important;
   }
   [data-eid-ranking-page] [data-eid-ranking-filter="true"] .eid-ranking-filter-sport {
-    min-height: 28px !important;
-    height: 28px !important;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
-    font-size: 7px !important;
+    min-height: 22px !important;
+    height: 22px !important;
+    padding-left: 9px !important;
+    padding-right: 9px !important;
+    font-size: 7.5px !important;
     font-weight: 900 !important;
-    line-height: 1 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.05em !important;
     border-radius: 8px !important;
   }
   [data-eid-ranking-page] [data-eid-ranking-filter="true"] .eid-ranking-filter-plus {
-    min-height: 28px !important;
-    min-width: 28px !important;
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 14px !important;
+    min-height: 22px !important;
+    min-width: 22px !important;
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 13px !important;
     line-height: 1 !important;
   }
   [data-eid-ranking-page] [data-eid-ranking-filter="true"] .eid-ranking-filter-clear {
-    min-height: 24px !important;
-    height: 24px !important;
-    padding-left: 8px !important;
-    padding-right: 8px !important;
-    font-size: 7px !important;
+    min-height: 22px !important;
+    height: 22px !important;
+    padding-left: 9px !important;
+    padding-right: 9px !important;
+    font-size: 7.5px !important;
     font-weight: 900 !important;
-    line-height: 1 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.06em !important;
   }
   /* Vagas: ajusta somente os CTAs do hero, sem quebrar os demais botões da página. */
   [data-eid-vagas-page] .eid-vagas-hero-cta {
@@ -1957,6 +1975,29 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
   ) !important;
   box-shadow:
     0 16px 32px -22px rgba(15, 23, 42, 0.14);
+}
+
+/* Ranking: “pop” suave no chip que fica ativo após trocar filtro/pódio (nova navegação). */
+@keyframes eid-ranking-chip-select-in {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.55;
+  }
+  65% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-eid-ranking-page] a.eid-ranking-filter-segment.eid-ranking-chip-active,
+  [data-eid-ranking-page] a.eid-ranking-filter-sport.eid-ranking-sport-pill-active {
+    animation: eid-ranking-chip-select-in 0.42s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+  }
 }
 
 /*
