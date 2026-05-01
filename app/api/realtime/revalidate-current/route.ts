@@ -18,16 +18,33 @@ export async function POST(req: Request) {
     if (!user) return NextResponse.json({ ok: false, reason: "unauthenticated" }, { status: 401 });
 
     let rawPath = "/";
+    let extraRaw: unknown[] = [];
     try {
-      const body = (await req.json()) as { path?: unknown };
+      const body = (await req.json()) as { path?: unknown; extraPaths?: unknown };
       if (typeof body?.path === "string" && body.path.trim()) rawPath = body.path.trim();
+      if (Array.isArray(body?.extraPaths)) extraRaw = body.extraPaths;
     } catch {
       rawPath = "/";
     }
 
-    const path = normalizeRevalidateAppPath(rawPath);
-    revalidatePath(path);
-    return NextResponse.json({ ok: true, path });
+    const paths = new Set<string>();
+    try {
+      paths.add(normalizeRevalidateAppPath(rawPath));
+    } catch {
+      paths.add("/");
+    }
+    for (const x of extraRaw) {
+      if (typeof x !== "string" || !x.trim()) continue;
+      try {
+        paths.add(normalizeRevalidateAppPath(x.trim()));
+      } catch {
+        /* ignora path inválido */
+      }
+    }
+    for (const path of paths) {
+      revalidatePath(path);
+    }
+    return NextResponse.json({ ok: true, path: rawPath, paths: [...paths] });
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
   }

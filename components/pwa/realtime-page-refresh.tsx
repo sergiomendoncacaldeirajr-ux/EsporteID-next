@@ -338,7 +338,7 @@ export function RealtimePageRefresh({ userId }: Props) {
             .on(
               "postgres_changes",
               { event: "*", schema: "public", table: "time_convites", filter: `time_id=${ownedFilter}` },
-              refresh
+              refreshForced
             )
             .subscribe()
         );
@@ -350,7 +350,7 @@ export function RealtimePageRefresh({ userId }: Props) {
           .on(
             "postgres_changes",
             { event: "*", schema: "public", table: "time_convites", filter: `convidado_usuario_id=eq.${userId}` },
-            refresh
+            refreshForced
           )
           .subscribe()
       );
@@ -370,7 +370,7 @@ export function RealtimePageRefresh({ userId }: Props) {
           .on(
             "postgres_changes",
             { event: "*", schema: "public", table: "time_convites", filter: `convidado_por_usuario_id=eq.${userId}` },
-            refresh
+            refreshForced
           )
           .subscribe()
       );
@@ -421,6 +421,7 @@ export function RealtimePageRefresh({ userId }: Props) {
           convOwnedPend,
           candMePend,
           candOwnedPend,
+          membrosOwnedActive,
           timesLeadership,
         ] = await Promise.all([
           supabase.from("notificacoes").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("lida", false),
@@ -441,6 +442,13 @@ export function RealtimePageRefresh({ userId }: Props) {
           supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).eq("candidato_usuario_id", userId).eq("status", "pendente"),
           ownedIds.length > 0
             ? supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).in("time_id", ownedIds.slice(0, 100)).eq("status", "pendente")
+            : Promise.resolve({ count: 0 }),
+          ownedIds.length > 0
+            ? supabase
+                .from("membros_time")
+                .select("id", { count: "exact", head: true })
+                .in("time_id", ownedIds.slice(0, 100))
+                .in("status", ["ativo", "aceito", "aprovado"])
             : Promise.resolve({ count: 0 }),
           teamSlice.length > 0
             ? supabase.from("times").select("id,criador_id").in("id", teamSlice).order("id", { ascending: true })
@@ -490,6 +498,7 @@ export function RealtimePageRefresh({ userId }: Props) {
           String(convOwnedPend.count ?? 0),
           String(candMePend.count ?? 0),
           String(candOwnedPend.count ?? 0),
+          String(membrosOwnedActive.count ?? 0),
           String(agendadaN),
           String(aguardandoPlacarN),
           String(latestPartidaId),

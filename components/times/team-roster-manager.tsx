@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import {
   cancelarConviteDaEquipe,
   convidarUsuarioParaEquipe,
@@ -72,11 +72,24 @@ export function TeamRosterManager({
     avatarUrl: string | null;
   } | null>(null);
 
+  const elencoRevalidateExtras = useMemo(
+    () => ["/times", "/comunidade", `/perfil-time/${timeId}`],
+    [timeId]
+  );
+
+  useEffect(() => {
+    const onGlobalRefresh = () => {
+      router.refresh();
+    };
+    window.addEventListener("eid:realtime-refresh", onGlobalRefresh as EventListener);
+    return () => window.removeEventListener("eid:realtime-refresh", onGlobalRefresh as EventListener);
+  }, [router]);
+
   useEffect(() => {
     if (!transferState.ok || !transferState.message) return;
     let cancelled = false;
     void (async () => {
-      await eidPostRevalidateCurrentAndBroadcast();
+      await eidPostRevalidateCurrentAndBroadcast(undefined, elencoRevalidateExtras);
       if (cancelled) return;
       router.refresh();
       if (cancelled) return;
@@ -88,13 +101,13 @@ export function TeamRosterManager({
     return () => {
       cancelled = true;
     };
-  }, [transferState.ok, transferState.message, router]);
+  }, [transferState.ok, transferState.message, router, elencoRevalidateExtras]);
 
   useEffect(() => {
     if (!removeState.ok || !removeState.message) return;
     let cancelled = false;
     void (async () => {
-      await eidPostRevalidateCurrentAndBroadcast();
+      await eidPostRevalidateCurrentAndBroadcast(undefined, elencoRevalidateExtras);
       if (cancelled) return;
       router.refresh();
       if (cancelled) return;
@@ -103,7 +116,7 @@ export function TeamRosterManager({
     return () => {
       cancelled = true;
     };
-  }, [removeState.ok, removeState.message, router]);
+  }, [removeState.ok, removeState.message, router, elencoRevalidateExtras]);
 
   async function handleCancelarConvite(conviteId: number) {
     if (pendingCancelConviteId != null) return;
@@ -118,7 +131,7 @@ export function TeamRosterManager({
         setCancelInviteError(res.message);
         return;
       }
-      await eidPostRevalidateCurrentAndBroadcast();
+      await eidPostRevalidateCurrentAndBroadcast(undefined, elencoRevalidateExtras);
       router.refresh();
     } catch (e) {
       setCancelInviteError(e instanceof Error ? e.message : "Não foi possível cancelar o convite.");
@@ -182,6 +195,7 @@ export function TeamRosterManager({
             invitePending={invitePending}
             inviteState={inviteState}
             prefillSiblingActive={Boolean(prefillConvidarUsuarioId)}
+            revalidateExtraPaths={elencoRevalidateExtras}
             variant="stack"
             submitLabel="Adicionar"
             submitLoadingLabel="Adicionando..."

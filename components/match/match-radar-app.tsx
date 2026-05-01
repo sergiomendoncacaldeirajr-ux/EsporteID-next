@@ -70,15 +70,20 @@ function MatchRadarGridMiniChallengeBlock({
 
   return (
     <>
-      <div className="flex min-w-0 flex-col items-center text-center">
-        <div className="flex w-full min-w-0 items-center justify-center gap-0.5">
+      <div className="flex w-full min-w-0 max-w-full flex-col items-center px-0.5 text-center">
+        <div className="flex w-full min-w-0 max-w-full items-center justify-center gap-0.5">
           <span
-            className="-ml-1 inline-flex shrink-0 text-[color:color-mix(in_srgb,var(--eid-action-500)_82%,#f59e0b_18%)]"
+            className="-ml-1 inline-flex shrink-0 text-[color:color-mix(in_srgb,var(--eid-action-500)_82%,#f59e0b_18%)] max-[380px]:-ml-0.5"
             aria-hidden
           >
             <svg
               viewBox="0 0 24 24"
-              className={cn(compact ? "h-[1.05rem] w-[1.05rem]" : "h-[1.35rem] w-[1.35rem]", "-translate-y-[0.5px]")}
+              className={cn(
+                compact
+                  ? "h-[0.95rem] w-[0.95rem] min-[390px]:h-[1.05rem] min-[390px]:w-[1.05rem]"
+                  : "h-[1.15rem] w-[1.15rem] min-[390px]:h-[1.35rem] min-[390px]:w-[1.35rem]",
+                "-translate-y-[0.5px]"
+              )}
               fill="none"
               stroke="currentColor"
               strokeWidth={compact ? 2.4 : 2.7}
@@ -89,8 +94,10 @@ function MatchRadarGridMiniChallengeBlock({
           </span>
           <p
             className={cn(
-              "min-w-0 truncate font-black leading-none tracking-tight text-eid-fg",
-              compact ? "text-[12px]" : "text-[14px]"
+              "min-w-0 max-w-full truncate font-black leading-none tracking-tight text-eid-fg",
+              compact
+                ? "text-[11px] min-[390px]:text-[12px]"
+                : "text-[12px] min-[390px]:text-[14px]"
             )}
             title={card.nome}
           >
@@ -103,7 +110,9 @@ function MatchRadarGridMiniChallengeBlock({
             <svg
               viewBox="0 0 24 24"
               className={cn(
-                compact ? "h-[1.05rem] w-[1.05rem]" : "h-[1.35rem] w-[1.35rem]",
+                compact
+                  ? "h-[0.95rem] w-[0.95rem] min-[390px]:h-[1.05rem] min-[390px]:w-[1.05rem]"
+                  : "h-[1.15rem] w-[1.15rem] min-[390px]:h-[1.35rem] min-[390px]:w-[1.35rem]",
                 "-translate-y-[0.5px] -scale-x-100"
               )}
               fill="none"
@@ -115,11 +124,11 @@ function MatchRadarGridMiniChallengeBlock({
             </svg>
           </span>
         </div>
-        <div className={compact ? "mt-1.5" : "mt-2"}>{avatarColumn}</div>
+        <div className={cn(compact ? "mt-1.5" : "mt-2", "w-full min-w-0")}>{avatarColumn}</div>
         <p
           className={cn(
             "inline-flex max-w-full items-center gap-1 truncate font-bold text-eid-primary-400",
-            compact ? "mt-2 text-[10px]" : "mt-3 text-[11px]"
+            compact ? "mt-2 text-[9px] min-[390px]:text-[10px]" : "mt-3 text-[10px] min-[390px]:text-[11px]"
           )}
           title={esporteNome}
         >
@@ -129,32 +138,33 @@ function MatchRadarGridMiniChallengeBlock({
         {modalidadeLabel ? (
           <p
             className={cn(
-              "inline-flex items-center gap-1 font-semibold uppercase tracking-[0.08em] text-eid-text-secondary",
-              compact ? "mt-0.5 text-[7px]" : "mt-1 text-[8px]"
+              "inline-flex max-w-full items-center gap-1 font-semibold uppercase tracking-[0.08em] text-eid-text-secondary",
+              compact ? "mt-0.5 text-[6.5px] min-[390px]:text-[7px]" : "mt-1 text-[7px] min-[390px]:text-[8px]"
             )}
           >
             <ModalidadeGlyphIcon modalidade={card.modalidade === "dupla" ? "dupla" : "time"} />
             {modalidadeLabel}
           </p>
         ) : null}
-        <div className={cn("flex w-full items-center gap-2 px-1", compact ? "mt-0.5" : "mt-1")} aria-hidden>
-          <span className="h-px flex-1 bg-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,transparent)]" />
-          <span className="text-[10px] text-[color:color-mix(in_srgb,var(--eid-primary-500)_55%,var(--eid-text-secondary)_45%)]">
+        <div className={cn("flex w-full max-w-full items-center gap-1.5 px-0.5 min-[390px]:gap-2 min-[390px]:px-1", compact ? "mt-0.5" : "mt-1")} aria-hidden>
+          <span className="h-px min-w-0 flex-1 bg-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,transparent)]" />
+          <span className="shrink-0 text-[9px] text-[color:color-mix(in_srgb,var(--eid-primary-500)_55%,var(--eid-text-secondary)_45%)] min-[390px]:text-[10px]">
             ✦
           </span>
-          <span className="h-px flex-1 bg-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,transparent)]" />
+          <span className="h-px min-w-0 flex-1 bg-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,transparent)]" />
         </div>
         <MatchChallengeAction
           modalidade={card.modalidade}
           desafioHref={desafioHref}
           desafioVariants={undefined}
           className={cn(
-            "eid-btn-match-cta inline-flex items-center justify-center border border-orange-200/35 bg-[linear-gradient(180deg,#ffb14a_0%,#ff8d1c_48%,#ef6c00_100%)] font-black uppercase text-white shadow-[0_8px_18px_-10px_rgba(239,108,0,0.75)]",
+            "eid-btn-match-cta inline-flex min-w-0 max-w-full shrink items-center justify-center border border-orange-200/35 bg-[linear-gradient(180deg,#ffb14a_0%,#ff8d1c_48%,#ef6c00_100%)] font-black uppercase text-white shadow-[0_8px_18px_-10px_rgba(239,108,0,0.75)]",
             compact
-              ? "mt-1 min-h-[24px] w-[84%] max-w-[9rem] rounded-lg px-1.5 py-0.5 text-[8px] tracking-[0.04em]"
-              : "mt-1.5 min-h-[30px] w-[86%] max-w-[11rem] rounded-xl px-2 py-1 text-[10px] tracking-[0.05em]"
+              ? "mt-1 min-h-8 w-full rounded-lg px-1 py-1.5 text-[7px] leading-tight tracking-[0.04em] min-[390px]:min-h-9 min-[390px]:px-1.5 min-[390px]:text-[8px]"
+              : "mt-1.5 min-h-11 w-full rounded-xl px-2.5 py-2.5 text-[9px] leading-snug tracking-[0.05em] min-[390px]:min-h-12 min-[390px]:px-3 min-[390px]:py-3 min-[390px]:text-[10px]"
           )}
           title="Solicitar desafio"
+          allowCtaWrap
           viewerEsportesComDupla={viewerEsportesComDupla}
           viewerEsportesComTime={viewerEsportesComTime}
           cardEsporteId={card.esporteId}
@@ -220,14 +230,14 @@ function MatchRadarStickerCard({
   );
 
   const avatarColumn = (
-    <div className={cn("relative shrink-0", compact ? "h-[3.9rem] w-[3.9rem]" : "h-[5.1rem] w-[5.1rem]")}>
+    <div className={cn("relative mx-auto shrink-0", compact ? "h-[3.9rem] w-[3.9rem]" : "h-[5.1rem] w-[5.1rem]")}>
       <ProfileEditDrawerTrigger
         href={eidStatsHref ?? card.href}
         title={`Estatísticas EID de ${card.nome}`}
         fullscreen
         topMode="backOnly"
         className={cn(
-          "block overflow-hidden rounded-full border-2 border-orange-200/65 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,white_4%),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_0_0_3px_color-mix(in_srgb,var(--eid-surface)_86%,white_14%),0_10px_26px_-16px_rgba(239,108,0,0.55)]",
+          "relative block overflow-hidden rounded-full border-2 border-orange-200/65 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,white_4%),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_0_0_3px_color-mix(in_srgb,var(--eid-surface)_86%,white_14%),0_10px_26px_-16px_rgba(239,108,0,0.55)]",
           compact ? "h-[3.9rem] w-[3.9rem]" : "h-[5.1rem] w-[5.1rem]"
         )}
       >
@@ -262,10 +272,10 @@ function MatchRadarStickerCard({
   return (
     <article
       className={cn(
-        "relative isolate overflow-hidden border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,white_18%)] bg-[radial-gradient(130%_100%_at_0%_0%,color-mix(in_srgb,var(--eid-primary-500)_7%,white_93%)_0%,transparent_42%),linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_98%,white_2%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_4%,transparent)]",
+        "relative isolate w-full min-w-0 max-w-full overflow-hidden border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,white_18%)] bg-[radial-gradient(130%_100%_at_0%_0%,color-mix(in_srgb,var(--eid-primary-500)_7%,white_93%)_0%,transparent_42%),linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_98%,white_2%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] ring-1 ring-[color:color-mix(in_srgb,var(--eid-fg)_4%,transparent)]",
         compact
-          ? "rounded-[1.2rem] p-2 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.45)]"
-          : "rounded-[1.6rem] p-3 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)]"
+          ? "rounded-[1.05rem] p-1.5 pb-2 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.45)] min-[390px]:rounded-[1.2rem] min-[390px]:p-2 min-[390px]:pb-2"
+          : "rounded-[1.35rem] p-2 pb-2.5 shadow-[0_18px_36px_-26px_rgba(15,23,42,0.45)] min-[390px]:rounded-[1.6rem] min-[390px]:p-3 min-[390px]:pb-3"
       )}
     >
       <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
@@ -328,6 +338,9 @@ const matchBadgeGhostClass =
 
 const matchResultsCardClass =
   "eid-match-results-card overflow-hidden rounded-2xl border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_10px_24px_-22px_rgba(15,23,42,0.2)]";
+
+/** Quantidade inicial e incremento do botão "Ver mais" (grade e tela cheia). */
+const MATCH_RADAR_SUGGESTIONS_PAGE = 10;
 
 type Props = {
   viewerId: string;
@@ -397,6 +410,7 @@ export function MatchRadarApp({
   const [finalidade, setFinalidade] = useState<MatchRadarFinalidade>(initialFinalidade);
   const [cards, setCards] = useState<MatchRadarCard[]>(initialCards);
   const [viewMode, setViewMode] = useState<"full" | "grid">(initialView);
+  const isFullView = viewMode === "full";
   const [generoFiltro, setGeneroFiltro] = useState<"all" | "masculino" | "feminino" | "outro">(initialGeneroFiltro);
   const [isPending, startTransition] = useTransition();
   const [entryPending, setEntryPending] = useState(false);
@@ -562,11 +576,17 @@ export function MatchRadarApp({
         finalidade: nextFinalidade,
       };
       const allowedForTipo =
-        next.tipo === "atleta"
-          ? new Set(viewerEsportesIndividual.map(String))
-          : next.tipo === "dupla"
-            ? new Set(viewerEsportesComDupla.map(String))
-            : new Set(viewerEsportesComTime.map(String));
+        viewMode === "full"
+          ? new Set([
+              ...viewerEsportesIndividual.map(String),
+              ...viewerEsportesComDupla.map(String),
+              ...viewerEsportesComTime.map(String),
+            ])
+          : next.tipo === "atleta"
+            ? new Set(viewerEsportesIndividual.map(String))
+            : next.tipo === "dupla"
+              ? new Set(viewerEsportesComDupla.map(String))
+              : new Set(viewerEsportesComTime.map(String));
       if (next.esporte !== "all" && !allowedForTipo.has(String(next.esporte))) {
         next.esporte = "all";
       }
@@ -596,15 +616,20 @@ export function MatchRadarApp({
   );
 
   const esporteOptions = useMemo(() => {
-    const allowed =
-      tipo === "atleta"
+    const allowed = isFullView
+      ? new Set([
+          ...viewerEsportesIndividual.map(String),
+          ...viewerEsportesComDupla.map(String),
+          ...viewerEsportesComTime.map(String),
+        ])
+      : tipo === "atleta"
         ? new Set(viewerEsportesIndividual.map(String))
         : tipo === "dupla"
           ? new Set(viewerEsportesComDupla.map(String))
           : new Set(viewerEsportesComTime.map(String));
     const list = esportes.filter((e) => allowed.has(String(e.id)));
     return [{ id: "all", nome: "Todos" }, ...list.map((e) => ({ id: String(e.id), nome: e.nome ?? "" }))];
-  }, [esportes, tipo, viewerEsportesIndividual, viewerEsportesComDupla, viewerEsportesComTime]);
+  }, [esportes, tipo, isFullView, viewerEsportesIndividual, viewerEsportesComDupla, viewerEsportesComTime]);
 
   const esporteNomeResumo = useMemo(() => {
     const row = esporteOptions.find((e) => String(e.id) === String(esporte));
@@ -613,9 +638,27 @@ export function MatchRadarApp({
 
   function switchViewMode(next: "full" | "grid") {
     setViewMode(next);
+
+    let esporteForUrl = esporte;
+    if (next === "full") {
+      setEsporte("all");
+      esporteForUrl = "all";
+    } else {
+      const allowedForGrid =
+        tipo === "atleta"
+          ? new Set(viewerEsportesIndividual.map(String))
+          : tipo === "dupla"
+            ? new Set(viewerEsportesComDupla.map(String))
+            : new Set(viewerEsportesComTime.map(String));
+      if (esporte !== "all" && !allowedForGrid.has(String(esporte))) {
+        setEsporte("all");
+        esporteForUrl = "all";
+      }
+    }
+
     const q = new URLSearchParams();
     q.set("tipo", tipo);
-    q.set("esporte", /^\d+$/.test(esporte) ? esporte : "all");
+    q.set("esporte", /^\d+$/.test(esporteForUrl) ? esporteForUrl : "all");
     q.set("raio", String(raio));
     q.set("sort_by", sortBy);
     q.set("finalidade", finalidade);
@@ -623,7 +666,7 @@ export function MatchRadarApp({
     q.set("genero", generoFiltro);
     window.history.replaceState(null, "", `/match?${q.toString()}`);
     if (next === "full") {
-      runRefreshFull({ sortBy, raio, esporte });
+      runRefreshFull({ sortBy, raio, esporte: "all" });
     }
   }
 
@@ -644,7 +687,7 @@ export function MatchRadarApp({
       }
       const q = new URLSearchParams();
       q.set("tipo", tipo);
-      q.set("esporte", /^\d+$/.test(esporte) ? esporte : "all");
+      q.set("esporte", "all");
       q.set("raio", String(raio));
       q.set("sort_by", sortBy);
       q.set("finalidade", finalidade);
@@ -664,7 +707,7 @@ export function MatchRadarApp({
     }
     const q = new URLSearchParams();
     q.set("tipo", tipo);
-    q.set("esporte", /^\d+$/.test(esporte) ? esporte : "all");
+    q.set("esporte", "all");
     q.set("raio", String(raio));
     q.set("sort_by", sortBy);
     q.set("finalidade", "ranking");
@@ -674,7 +717,6 @@ export function MatchRadarApp({
     window.location.href = `/match?${q.toString()}`;
   }
 
-  const isFullView = viewMode === "full";
   // Regra global do radar/desafio:
   // - Gênero só filtra no individual (atleta).
   // - Em dupla/time, nunca filtra por gênero.
@@ -731,7 +773,10 @@ export function MatchRadarApp({
 
     return ordered;
   }, [cards, amistosoLigado]);
-  /** Tela cheia: um cartão por esporte/modalidade só se o viewer disputa aquele esporte naquela modalidade (espelha a regra do RPC). */
+  /**
+   * Tela cheia: individual com EID de confronto; dupla/time só se o viewer for líder ou membro de uma formação
+   * daquela modalidade naquele esporte (alinhado ao perfil do time em `times.esporte_id`).
+   */
   const fullOrderedCardsPerfil = useMemo(() => {
     const ind = new Set(viewerEsportesIndividual);
     const dup = new Set(viewerEsportesComDupla);
@@ -792,6 +837,26 @@ export function MatchRadarApp({
     return Array.from(byKey.values());
   }, [cardsFiltradosGeneroChallengeable]);
   const visibleCards = isFullView ? fullOrderedChallengeableCards : gridCardsWithoutDuplicates;
+
+  const suggestionListSignature = useMemo(
+    () => visibleCards.map((c) => `${c.modalidade}:${c.id}:${c.esporteId}`).join("|"),
+    [visibleCards]
+  );
+  const [suggestionsVisibleCount, setSuggestionsVisibleCount] = useState(MATCH_RADAR_SUGGESTIONS_PAGE);
+  useEffect(() => {
+    setSuggestionsVisibleCount(MATCH_RADAR_SUGGESTIONS_PAGE);
+  }, [suggestionListSignature]);
+  const displayedSuggestionCards = useMemo(
+    () => visibleCards.slice(0, suggestionsVisibleCount),
+    [visibleCards, suggestionsVisibleCount]
+  );
+  const hasMoreSuggestionCards = suggestionsVisibleCount < visibleCards.length;
+  const suggestionLoadMoreAria = useMemo(() => {
+    const rest = Math.max(0, visibleCards.length - suggestionsVisibleCount);
+    const next = Math.min(MATCH_RADAR_SUGGESTIONS_PAGE, rest);
+    return `Carregar mais ${next} sugestões (${rest} restantes no total)`;
+  }, [visibleCards.length, suggestionsVisibleCount]);
+
   useEffect(() => {
     if (!isFullView) return;
     const prevOverflow = document.body.style.overflow;
@@ -1193,16 +1258,34 @@ export function MatchRadarApp({
                 Nenhum oponente com esses filtros.
               </p>
             ) : (
-              <div className="grid min-w-0 grid-cols-2 gap-1.5 px-2 pb-3 pt-2 sm:gap-3 sm:px-3 sm:pb-4">
-                {visibleCards.map((c) => (
-                  <MatchRadarStickerCard
-                    key={`${c.modalidade}-${c.id}-${c.esporteId}`}
-                    card={c}
-                    esporteContextId={esporte}
-                    viewerEsportesComDupla={viewerEsportesComDupla}
-                    viewerEsportesComTime={viewerEsportesComTime}
-                  />
+              <div className="@container grid min-w-0 grid-cols-2 gap-1.5 px-2 pb-3 pt-2 sm:gap-3 sm:px-3 sm:pb-4">
+                {displayedSuggestionCards.map((c) => (
+                  <div key={`${c.modalidade}-${c.id}-${c.esporteId}`} className="min-w-0">
+                    <MatchRadarStickerCard
+                      card={c}
+                      esporteContextId={esporte}
+                      viewerEsportesComDupla={viewerEsportesComDupla}
+                      viewerEsportesComTime={viewerEsportesComTime}
+                    />
+                  </div>
                 ))}
+                {hasMoreSuggestionCards ? (
+                  <div className="col-span-2 flex justify-center pt-1">
+                    <button
+                      type="button"
+                      aria-label={suggestionLoadMoreAria}
+                      onClick={() =>
+                        setSuggestionsVisibleCount((n) => n + MATCH_RADAR_SUGGESTIONS_PAGE)
+                      }
+                      className={cn(
+                        matchBadgeGhostClass,
+                        "min-h-9 w-full max-w-xs touch-manipulation justify-center px-4 py-2 text-[10px] font-black tracking-[0.05em] sm:min-h-10 sm:text-[11px]"
+                      )}
+                    >
+                      Ver mais
+                    </button>
+                  </div>
+                ) : null}
               </div>
             )}
           </div>
@@ -1276,17 +1359,35 @@ export function MatchRadarApp({
                 <X className="h-4 w-4" strokeWidth={2.5} aria-hidden />
               </button>
             </div>
-            <div className="grid min-w-0 flex-1 grid-cols-2 content-start gap-1.5 overflow-y-auto pb-2 sm:gap-2.5">
-              {visibleCards.map((c) => (
-                <MatchRadarStickerCard
-                  key={`${c.modalidade}-${c.id}-${c.esporteId}-full`}
-                  card={c}
-                  esporteContextId={esporte}
-                  viewerEsportesComDupla={viewerEsportesComDupla}
-                  viewerEsportesComTime={viewerEsportesComTime}
-                  compact={false}
-                />
+            <div className="@container grid min-w-0 flex-1 grid-cols-2 content-start gap-1.5 overflow-y-auto pb-2 sm:gap-2.5">
+              {displayedSuggestionCards.map((c) => (
+                <div key={`${c.modalidade}-${c.id}-${c.esporteId}-full`} className="min-w-0">
+                  <MatchRadarStickerCard
+                    card={c}
+                    esporteContextId={esporte}
+                    viewerEsportesComDupla={viewerEsportesComDupla}
+                    viewerEsportesComTime={viewerEsportesComTime}
+                    compact={false}
+                  />
+                </div>
               ))}
+              {hasMoreSuggestionCards ? (
+                <div className="col-span-2 flex justify-center py-2">
+                  <button
+                    type="button"
+                    aria-label={suggestionLoadMoreAria}
+                    onClick={() =>
+                      setSuggestionsVisibleCount((n) => n + MATCH_RADAR_SUGGESTIONS_PAGE)
+                    }
+                    className={cn(
+                      matchBadgeGhostClass,
+                      "min-h-9 w-full max-w-xs touch-manipulation justify-center px-4 py-2 text-[10px] font-black tracking-[0.05em] sm:min-h-10 sm:text-[11px]"
+                    )}
+                  >
+                    Ver mais
+                  </button>
+                </div>
+              ) : null}
             </div>
             <div className="sticky bottom-0 z-[2] flex justify-center bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--eid-bg)_88%,transparent)_35%)] pb-1 pt-1">
               <button

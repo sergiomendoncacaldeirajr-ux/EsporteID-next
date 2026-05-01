@@ -26,6 +26,8 @@ type Props = {
   missingFormationPromptOpen?: boolean;
   onMissingFormationPromptChange?: (open: boolean) => void;
   ctaContent?: ReactNode;
+  /** Cartões estreitos (radar): permite quebra de linha / encolher texto no CTA. */
+  allowCtaWrap?: boolean;
 };
 
 export function isMatchChallengeBlockedByMissingFormation(
@@ -113,6 +115,7 @@ export function MatchChallengeAction({
   missingFormationPromptOpen = false,
   onMissingFormationPromptChange,
   ctaContent,
+  allowCtaWrap = false,
 }: Props) {
   const [internalPromptOpen, setInternalPromptOpen] = useState(false);
   const [sportPickerOpen, setSportPickerOpen] = useState(false);
@@ -144,9 +147,11 @@ export function MatchChallengeAction({
       ? desafioVariants
       : [{ href: desafioHref, label: "" }];
   const labelContent = ctaContent ?? (
-    <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
+    <span
+      className={`inline-flex min-w-0 max-w-full items-center justify-center gap-1 ${allowCtaWrap ? "text-center leading-tight" : "whitespace-nowrap"}`}
+    >
       <Swords className="h-[1em] w-[1em] shrink-0" strokeWidth={2.7} aria-hidden />
-      <span>Pedir desafio</span>
+      <span className={allowCtaWrap ? "min-w-0 break-words" : undefined}>Pedir desafio</span>
     </span>
   );
 

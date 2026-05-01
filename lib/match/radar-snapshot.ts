@@ -166,6 +166,11 @@ async function enrichIndividualCardsRankPosition(
   });
 }
 
+/** Alinha ao SQL `buscar_match_formacoes` e ao app (`times.tipo ?? "time"`). */
+export function formacaoKindFromTipoRaw(tipoRaw: string | null | undefined): "dupla" | "time" {
+  return String(tipoRaw ?? "").trim().toLowerCase() === "dupla" ? "dupla" : "time";
+}
+
 export type RadarSnapshotInput = {
   viewerId: string;
   tipo: RadarTipo;
@@ -213,39 +218,52 @@ export async function fetchMatchRadarCards(
     return norm(modalidadeRaw) === "individual";
   }
 
+  function partidaDentroRankingCooldown(p: Record<string, unknown>, cutoffMs: number): boolean {
+    const status = norm((p as { status?: string | null }).status);
+    const statusRanking = norm((p as { status_ranking?: string | null }).status_ranking);
+    const valid =
+      statusRanking === "validado" ||
+      ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
+    if (!valid) return false;
+    const dtRaw =
+      (p as { data_resultado?: string | null }).data_resultado ??
+      (p as { data_partida?: string | null }).data_partida ??
+      (p as { data_registro?: string | null }).data_registro ??
+      null;
+    if (!dtRaw) return false;
+    const ts = new Date(dtRaw).getTime();
+    return Number.isFinite(ts) && ts >= cutoffMs;
+  }
+
   const blockedOpponentUsersByCooldown = new Set<string>();
+  /** Times já enfrentados no ranking (1x1 vs time, time×time) dentro da carência — esconde sugestão de time. */
+  const blockedOpponentTeamIdsByCooldown = new Set<number>();
+  let rankingCooldownCutoffMs: number | null = null;
   if (finalidade === "ranking" && Number.isFinite(esporteId) && Number(esporteId) > 0) {
     const cooldownMeses = await getMatchRankCooldownMeses(supabase);
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - cooldownMeses);
-    const cutoffMs = cutoff.getTime();
+    rankingCooldownCutoffMs = cutoff.getTime();
     const { data: partRows } = await supabase
       .from("partidas")
-      .select("jogador1_id, jogador2_id, status, status_ranking, data_resultado, data_registro, data_partida")
+      .select(
+        "jogador1_id, jogador2_id, time1_id, time2_id, status, status_ranking, data_resultado, data_registro, data_partida"
+      )
       .eq("esporte_id", Number(esporteId))
       .is("torneio_id", null)
       .or(`jogador1_id.eq.${viewerId},jogador2_id.eq.${viewerId}`)
       .order("id", { ascending: false })
       .limit(300);
     for (const p of partRows ?? []) {
-      const status = norm((p as { status?: string | null }).status);
-      const statusRanking = norm((p as { status_ranking?: string | null }).status_ranking);
-      const valid =
-        statusRanking === "validado" ||
-        ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
-      if (!valid) continue;
-      const dtRaw =
-        (p as { data_resultado?: string | null }).data_resultado ??
-        (p as { data_partida?: string | null }).data_partida ??
-        (p as { data_registro?: string | null }).data_registro ??
-        null;
-      if (!dtRaw) continue;
-      const ts = new Date(dtRaw).getTime();
-      if (!Number.isFinite(ts) || ts < cutoffMs) continue;
+      if (!partidaDentroRankingCooldown(p as Record<string, unknown>, rankingCooldownCutoffMs)) continue;
       const j1 = String((p as { jogador1_id?: string | null }).jogador1_id ?? "");
       const j2 = String((p as { jogador2_id?: string | null }).jogador2_id ?? "");
+      const t1 = Number((p as { time1_id?: number | null }).time1_id ?? 0);
+      const t2 = Number((p as { time2_id?: number | null }).time2_id ?? 0);
       if (j1 === viewerId && j2) blockedOpponentUsersByCooldown.add(j2);
       else if (j2 === viewerId && j1) blockedOpponentUsersByCooldown.add(j1);
+      if (j1 === viewerId && Number.isFinite(t2) && t2 > 0) blockedOpponentTeamIdsByCooldown.add(t2);
+      if (j2 === viewerId && Number.isFinite(t1) && t1 > 0) blockedOpponentTeamIdsByCooldown.add(t1);
     }
   }
 
@@ -342,6 +360,8 @@ export async function fetchMatchRadarCards(
 
     cards = await enrichIndividualCardsRankPosition(supabase, cards);
   } else {
+    const modalidadeFormacao: "dupla" | "time" = tipo === "dupla" ? "dupla" : "time";
+
     const { data: formacoes } = await supabase.rpc("buscar_match_formacoes", {
       p_viewer_id: viewerId,
       p_tipo: tipo,
@@ -351,6 +371,67 @@ export async function fetchMatchRadarCards(
       p_raio_km: raio,
       p_limit: 300,
     });
+
+    /** Formações do próprio viewer (líder ou membro) nesta modalidade — não sugerir a si; carência time×time usa esporte explícito. */
+    const viewerFormationTimeIds = new Set<number>();
+    const eidNumForMine =
+      Number.isFinite(Number(esporteId)) && Number(esporteId) > 0 ? Number(esporteId) : null;
+    let ownedQuery = supabase.from("times").select("id, tipo").eq("criador_id", viewerId);
+    if (eidNumForMine != null) ownedQuery = ownedQuery.eq("esporte_id", eidNumForMine);
+    const { data: ownedTeams } = await ownedQuery;
+    for (const r of ownedTeams ?? []) {
+      if (formacaoKindFromTipoRaw((r as { tipo?: string | null }).tipo) !== modalidadeFormacao) continue;
+      const id = Number((r as { id?: number }).id ?? 0);
+      if (Number.isFinite(id) && id > 0) viewerFormationTimeIds.add(id);
+    }
+    const { data: memRows } = await supabase
+      .from("membros_time")
+      .select("time_id, times!inner(esporte_id, tipo)")
+      .eq("usuario_id", viewerId)
+      .in("status", ["ativo", "aceito", "aprovado"]);
+    for (const row of memRows ?? []) {
+      const mr = row as {
+        time_id?: number | null;
+        times?:
+          | { esporte_id?: number | null; tipo?: string | null }
+          | { esporte_id?: number | null; tipo?: string | null }[]
+          | null;
+      };
+      const tMeta = Array.isArray(mr.times) ? mr.times[0] : mr.times;
+      if (!tMeta) continue;
+      if (eidNumForMine != null && Number(tMeta.esporte_id ?? 0) !== eidNumForMine) continue;
+      if (formacaoKindFromTipoRaw(tMeta.tipo) !== modalidadeFormacao) continue;
+      const tid = Number(mr.time_id ?? 0);
+      if (Number.isFinite(tid) && tid > 0) viewerFormationTimeIds.add(tid);
+    }
+
+    if (
+      finalidade === "ranking" &&
+      rankingCooldownCutoffMs != null &&
+      eidNumForMine != null &&
+      viewerFormationTimeIds.size > 0
+    ) {
+      const idArr = [...viewerFormationTimeIds].filter((n) => Number.isFinite(n) && n > 0).slice(0, 80);
+      const idList = idArr.join(",");
+      if (idList.length > 0) {
+        const mine = new Set(idArr);
+        const { data: partTeamRows } = await supabase
+          .from("partidas")
+          .select("time1_id, time2_id, status, status_ranking, data_resultado, data_registro, data_partida")
+          .eq("esporte_id", eidNumForMine)
+          .is("torneio_id", null)
+          .or(`time1_id.in.(${idList}),time2_id.in.(${idList})`)
+          .order("id", { ascending: false })
+          .limit(300);
+        for (const p of partTeamRows ?? []) {
+          if (!partidaDentroRankingCooldown(p as Record<string, unknown>, rankingCooldownCutoffMs)) continue;
+          const t1 = Number((p as { time1_id?: number | null }).time1_id ?? 0);
+          const t2 = Number((p as { time2_id?: number | null }).time2_id ?? 0);
+          if (mine.has(t1) && Number.isFinite(t2) && t2 > 0) blockedOpponentTeamIdsByCooldown.add(t2);
+          if (mine.has(t2) && Number.isFinite(t1) && t1 > 0) blockedOpponentTeamIdsByCooldown.add(t1);
+        }
+      }
+    }
 
     const timeRows = ((formacoes ?? []) as FormacaoRow[]).filter((t) => Number.isFinite(Number(t.id)) && Number(t.id) > 0);
     const { data: ownersAll } =
@@ -372,10 +453,10 @@ export async function fetchMatchRadarCards(
         .filter((row) => Number.isFinite(row.id) && row.id > 0 && row.ownerId)
         .map((row) => [row.id, row.ownerId])
     );
-    // Nunca sugerir ao dono a própria formação no radar de dupla/time.
-    const teamRowsNotOwned = timeRows.filter((t) => ownerByTeamId.get(Number(t.id)) !== viewerId);
+    // Não sugerir formações do próprio elenco (líder ou membro).
+    const teamRowsNotMine = timeRows.filter((t) => !viewerFormationTimeIds.has(Number(t.id)));
     let blockedTeamIds = new Set<number>();
-    if (teamRowsNotOwned.length > 0 && activeOpponentIds.size > 0) {
+    if (teamRowsNotMine.length > 0 && activeOpponentIds.size > 0) {
       blockedTeamIds = new Set(
         (ownersAll ?? [])
           .filter((row) => activeOpponentIds.has(String((row as { criador_id?: string | null }).criador_id ?? "")))
@@ -383,7 +464,7 @@ export async function fetchMatchRadarCards(
           .filter((id) => Number.isFinite(id) && id > 0)
       );
     }
-    const teamRowsVisible = teamRowsNotOwned.filter((t) => !blockedTeamIds.has(Number(t.id)));
+    const teamRowsVisible = teamRowsNotMine.filter((t) => !blockedTeamIds.has(Number(t.id)));
     let eligibleTeamIds = new Set<number>(teamRowsVisible.map((t) => Number(t.id)));
     if (teamRowsVisible.length > 0) {
       const ownersVisible = (ownersAll ?? []).filter((r) =>
@@ -411,17 +492,23 @@ export async function fetchMatchRadarCards(
       }
     }
     let teamRowsByCooldown = teamRowsVisible;
-    if (finalidade === "ranking" && blockedOpponentUsersByCooldown.size > 0) {
+    if (finalidade === "ranking") {
       const ownersVisible = (ownersAll ?? []).filter((r) =>
         teamRowsVisible.some((t) => Number(t.id) === Number((r as { id?: number | null }).id ?? 0))
       );
-      const blockedTeamIdsByCooldown = new Set(
-        ownersVisible
-          .filter((o) => blockedOpponentUsersByCooldown.has(String((o as { criador_id?: string | null }).criador_id ?? "")))
-          .map((o) => Number((o as { id?: number | null }).id ?? 0))
-          .filter((id) => Number.isFinite(id) && id > 0)
-      );
-      teamRowsByCooldown = teamRowsVisible.filter((t) => !blockedTeamIdsByCooldown.has(Number(t.id)));
+      const blockedTeamIdsByCooldown = new Set<number>();
+      for (const o of ownersVisible) {
+        if (blockedOpponentUsersByCooldown.has(String((o as { criador_id?: string | null }).criador_id ?? ""))) {
+          const id = Number((o as { id?: number | null }).id ?? 0);
+          if (Number.isFinite(id) && id > 0) blockedTeamIdsByCooldown.add(id);
+        }
+      }
+      for (const tid of blockedOpponentTeamIdsByCooldown) {
+        if (Number.isFinite(tid) && tid > 0) blockedTeamIdsByCooldown.add(tid);
+      }
+      if (blockedTeamIdsByCooldown.size > 0) {
+        teamRowsByCooldown = teamRowsVisible.filter((t) => !blockedTeamIdsByCooldown.has(Number(t.id)));
+      }
     }
     const teamRowsEligible = teamRowsByCooldown.filter((t) => eligibleTeamIds.has(Number(t.id)));
     const eligibleIds = teamRowsEligible.map((t) => Number(t.id)).filter((id) => Number.isFinite(id) && id > 0);
@@ -433,7 +520,6 @@ export async function fetchMatchRadarCards(
       (teamShields ?? []).map((row) => [Number((row as { id?: number | null }).id ?? 0), (row as { escudo?: string | null }).escudo ?? null])
     );
 
-    const modalidadeFormacao: "dupla" | "time" = tipo === "dupla" ? "dupla" : "time";
     cards = teamRowsEligible.map((t) => ({
       id: String(t.id),
       nome: String(t.nome ?? "Time"),

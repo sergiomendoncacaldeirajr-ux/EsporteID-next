@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { SearchFilterForm } from "@/components/search/search-filter-form";
 import { createClient } from "@/lib/supabase/server";
 import { TeamManagementPanel } from "@/components/times/team-management-panel";
-import { TimesVagaRecrutamentoCard, type TimesVagaCardData } from "@/components/times/times-vaga-recrutamento-card";
+import type { TimesVagaCardData } from "@/components/times/times-vaga-recrutamento-card";
+import { TimesRecrutamentoVagasList } from "@/components/times/times-recrutamento-vagas-list";
 import { CandidaturaResponseActions } from "@/components/vagas/candidatura-response-actions";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { EidCollapsiblePanel } from "@/components/ui/eid-collapsible-panel";
@@ -17,40 +18,26 @@ export const metadata = {
 type Props = {
   searchParams?: Promise<{
     q?: string;
-    page?: string;
     create?: string;
     from?: string;
     convidar?: string;
   }>;
 };
 
-function timesQueryHref(sp: { q?: string }, page: number) {
+/** Caminho com a mesma busca para `from` nos fluxos em tela cheia (`embed=1`). */
+function timesEmbedReturnHref(sp: { q?: string; create?: string; convidar?: string }) {
   const p = new URLSearchParams();
   const qv = (sp.q ?? "").trim();
   if (qv) p.set("q", qv);
-  if (page > 1) p.set("page", String(page));
-  const s = p.toString();
-  return s ? `/times?${s}` : "/times";
-}
-
-/** Caminho com a mesma busca/página para `from` nos fluxos em tela cheia (`embed=1`). */
-function timesEmbedReturnHref(sp: {
-  q?: string;
-  page?: string;
-  create?: string;
-  convidar?: string;
-}) {
-  const p = new URLSearchParams();
-  const qv = (sp.q ?? "").trim();
-  if (qv) p.set("q", qv);
-  const pageNum = Math.max(1, Number(sp.page ?? 1) || 1);
-  if (pageNum > 1) p.set("page", String(pageNum));
   if (sp.create === "1") p.set("create", "1");
   const conv = String(sp.convidar ?? "").trim();
   if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(conv)) p.set("convidar", conv);
   const s = p.toString();
   return s ? `/times?${s}` : "/times";
 }
+
+/** Limite de formações carregadas para a lista (sem paginação por URL). */
+const RECRUTAMENTO_VAGAS_FETCH_LIMIT = 300;
 
 type TimeListRow = {
   id: number;
@@ -100,30 +87,24 @@ export default async function TimesPage({ searchParams }: Props) {
   const q = (sp.q ?? "").trim().toLowerCase();
   const convidar = String(sp.convidar ?? "").trim();
   const convidarOk = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(convidar);
-  const page = Math.max(1, Number(sp.page ?? 1) || 1);
-  const pageSize = 12;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/times");
 
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-
   let timesListQuery = supabase
     .from("times")
-    .select("id, nome, localizacao, vagas_abertas, aceita_pedidos, eid_time, nivel_procurado, escudo, tipo, criador_id, esportes(nome)", {
-      count: "exact",
-    })
+    .select("id, nome, localizacao, vagas_abertas, aceita_pedidos, eid_time, nivel_procurado, escudo, tipo, criador_id, esportes(nome)")
     .eq("vagas_abertas", true)
     .eq("aceita_pedidos", true)
-    .order("id", { ascending: false });
+    .order("id", { ascending: false })
+    .limit(RECRUTAMENTO_VAGAS_FETCH_LIMIT);
   if (q) {
     timesListQuery = timesListQuery.or(`nome.ilike.%${q}%,localizacao.ilike.%${q}%`);
   }
 
-  const [{ data: minhas }, { data: filtrados, count }, { data: minhasCandidaturas }, { data: meusMembros }, { data: pedidosRaw }] =
+  const [{ data: minhas }, { data: filtrados }, { data: minhasCandidaturas }, { data: meusMembros }, { data: pedidosRaw }] =
     await Promise.all([
     supabase
       .from("times")
@@ -131,7 +112,7 @@ export default async function TimesPage({ searchParams }: Props) {
       .eq("criador_id", user.id)
       .order("id", { ascending: false })
       .limit(20),
-    timesListQuery.range(from, to),
+    timesListQuery,
     supabase.from("time_candidaturas").select("id, time_id").eq("candidato_usuario_id", user.id).eq("status", "pendente"),
     supabase.from("membros_time").select("time_id").eq("usuario_id", user.id).in("status", ["ativo", "aceito", "aprovado"]),
       supabase
@@ -173,6 +154,17 @@ export default async function TimesPage({ searchParams }: Props) {
   const pendentePorTime = new Map((minhasCandidaturas ?? []).map((c) => [c.time_id as number, c.id as number]));
   const timesSouMembro = new Set((meusMembros ?? []).map((m) => Number(m.time_id)));
 
+  const meuTimeIds = new Set<number>();
+  for (const row of minhas ?? []) {
+    const id = Number((row as { id?: number }).id);
+    if (Number.isFinite(id) && id > 0) meuTimeIds.add(id);
+  }
+  for (const row of meusMembros ?? []) {
+    const id = Number((row as { time_id?: number }).time_id);
+    if (Number.isFinite(id) && id > 0) meuTimeIds.add(id);
+  }
+  const listaRecrutamentoPublico = listaComVagas.filter((t) => !meuTimeIds.has(Number(t.id)));
+
   const pedidos = pedidosRaw ?? [];
   const candIds = [...new Set(pedidos.map((p) => p.candidato_usuario_id as string))];
   const { data: candProfiles } =
@@ -181,8 +173,11 @@ export default async function TimesPage({ searchParams }: Props) {
       : { data: [] as { id: string; nome: string | null; username: string | null; avatar_url: string | null }[] };
   const profileMap = new Map((candProfiles ?? []).map((r) => [r.id, r]));
 
-  const hasPrev = page > 1;
-  const hasNext = count != null ? page * pageSize < count : lista.length === pageSize;
+  const vagasListItems = listaRecrutamentoPublico.map((t) => ({
+    team: { ...rowToCardData(t), vagas_disponiveis: vagasDisponiveisMap.get(t.id) ?? null },
+    minhaCandidaturaPendenteId: pendentePorTime.get(t.id) ?? null,
+    jaSouMembro: timesSouMembro.has(t.id),
+  }));
 
   return (
     <div
@@ -350,51 +345,11 @@ export default async function TimesPage({ searchParams }: Props) {
       ) : null}
 
       <div id="vagas-recrutamento" className="scroll-mt-24">
-        {listaComVagas.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {listaComVagas.map((t) => (
-              <TimesVagaRecrutamentoCard
-                key={t.id}
-                team={{ ...rowToCardData(t), vagas_disponiveis: vagasDisponiveisMap.get(t.id) ?? null }}
-                viewerUserId={user.id}
-                minhaCandidaturaPendenteId={pendentePorTime.get(t.id) ?? null}
-                jaSouMembro={timesSouMembro.has(t.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-6 text-center">
-            <p className="text-sm text-eid-text-secondary">
-              Nenhuma formação com vaga aberta encontrada agora. Tente outra busca em alguns instantes.
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="mt-5 flex items-center justify-between">
-        <Link
-          href={timesQueryHref(sp, page - 1)}
-          aria-disabled={!hasPrev}
-          className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
-            hasPrev
-              ? "border-[color:var(--eid-border-subtle)] text-eid-fg hover:border-eid-primary-500/35"
-              : "pointer-events-none border-[color:var(--eid-border-subtle)] text-eid-text-secondary opacity-50"
-          }`}
-        >
-          ← Anterior
-        </Link>
-        <span className="text-xs text-eid-text-secondary">Página {page}</span>
-        <Link
-          href={timesQueryHref(sp, page + 1)}
-          aria-disabled={!hasNext}
-          className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
-            hasNext
-              ? "border-[color:var(--eid-border-subtle)] text-eid-fg hover:border-eid-primary-500/35"
-              : "pointer-events-none border-[color:var(--eid-border-subtle)] text-eid-text-secondary opacity-50"
-          }`}
-        >
-          Próxima →
-        </Link>
+        <TimesRecrutamentoVagasList
+          key={`${(sp.q ?? "").trim()}:${vagasListItems.map((i) => i.team.id).join(",")}`}
+          viewerUserId={user.id}
+          items={vagasListItems}
+        />
       </div>
     </div>
   );

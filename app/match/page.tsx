@@ -189,7 +189,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
     if (!Number.isFinite(eid) || eid <= 0) continue;
     const tipoT = String((t as { tipo?: string | null }).tipo ?? "").trim().toLowerCase();
     if (tipoT === "dupla") viewerEsportesComDupla.push(eid);
-    if (tipoT === "time") viewerEsportesComTime.push(eid);
+    else viewerEsportesComTime.push(eid);
   }
   const viewerEsportesComDuplaDedup = [...new Set(viewerEsportesComDupla)];
   const viewerEsportesComTimeDedup = [...new Set(viewerEsportesComTime)];
@@ -247,7 +247,6 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
           (allowedEsporteIdsForTipo.size === 0 || allowedEsporteIdsForTipo.has(esporteParam))
         ? esporteParam
         : esporteDefault;
-  const initialEsporteFiltro = esporteParam === "all" ? "all" : esporteSelecionado;
   const fullRadarEsporteIds =
     esporteParam === "all"
       ? esportesPerfilConfronto.length > 0
@@ -375,6 +374,14 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         });
   const initialViewResolved: RadarViewMode =
     initialView === "full" && initialCards.length === 0 ? "grid" : initialView;
+
+  /** Tela cheia mistura modalidades; filtrar pelo esporte da grade escondia times em outro esporte. */
+  const initialEsporteFiltro =
+    initialViewResolved === "full"
+      ? "all"
+      : esporteParam === "all"
+        ? "all"
+        : esporteSelecionado;
 
   return (
     <MatchPageShell fullBleed={initialViewResolved === "full"}>

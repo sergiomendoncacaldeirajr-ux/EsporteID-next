@@ -26,6 +26,7 @@ export function TeamInviteComboboxForm({
   variant = "grid",
   inputClassName,
   prefillSiblingActive = false,
+  revalidateExtraPaths,
 }: {
   timeId: number;
   excludeUserIds: string[];
@@ -37,6 +38,8 @@ export function TeamInviteComboboxForm({
   variant?: "grid" | "stack";
   inputClassName?: string;
   prefillSiblingActive?: boolean;
+  /** Rotas adicionais a invalidar (gestão em iframe + listagens no shell). */
+  revalidateExtraPaths?: readonly string[];
 }) {
   const router = useRouter();
   const excluded = useMemo(() => new Set(excludeUserIds.filter(Boolean)), [excludeUserIds]);
@@ -100,7 +103,7 @@ export function TeamInviteComboboxForm({
       setSuggestOpen(false);
     }, 0);
     void (async () => {
-      await eidPostRevalidateCurrentAndBroadcast();
+      await eidPostRevalidateCurrentAndBroadcast(undefined, revalidateExtraPaths);
       if (cancelled) return;
       router.refresh();
     })();
@@ -108,7 +111,7 @@ export function TeamInviteComboboxForm({
       cancelled = true;
       window.clearTimeout(resetId);
     };
-  }, [inviteState.ok, inviteState.message, router]);
+  }, [inviteState.ok, inviteState.message, router, revalidateExtraPaths]);
 
   const needUsernameOrPick = !pickedUserId && !prefillSiblingActive;
 
