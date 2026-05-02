@@ -103,6 +103,47 @@ export default async function AgendaPage() {
     .order("id", { ascending: false })
     .limit(20);
 
+  const { data: pendentesRankingElencoRows } = await supabase
+    .from("matches")
+    .select(
+      "id, usuario_id, adversario_id, desafiante_time_id, adversario_time_id, esporte_id, modalidade_confronto, data_solicitacao, data_registro"
+    )
+    .eq("status", "Pendente")
+    .eq("finalidade", "ranking")
+    .in("modalidade_confronto", ["dupla", "time"])
+    .or(matchAceitosOr)
+    .order("data_registro", { ascending: false, nullsFirst: false })
+    .order("id", { ascending: false })
+    .limit(20);
+
+  /** Elenco (não o líder desafiante): acompanhar pedido na Agenda; capitão adversário também entra aqui. */
+  const pendentesRankingStatus = (pendentesRankingElencoRows ?? []).filter((m) => m.usuario_id !== user.id);
+
+  const pendentesRankingTimeIds = [
+    ...new Set(
+      (pendentesRankingStatus ?? [])
+        .flatMap((m) => [m.desafiante_time_id, m.adversario_time_id])
+        .map((x) => Number(x ?? 0))
+        .filter((n) => Number.isFinite(n) && n > 0)
+    ),
+  ];
+  const { data: timesPendentesRanking } = pendentesRankingTimeIds.length
+    ? await supabase.from("times").select("id, nome").in("id", pendentesRankingTimeIds)
+    : { data: [] };
+  const nomeTimePendenteById = new Map((timesPendentesRanking ?? []).map((t) => [Number(t.id), String(t.nome ?? "").trim() || "Formação"]));
+
+  const eidsPendenteRanking = [
+    ...new Set(
+      (pendentesRankingStatus ?? [])
+        .map((m) => Number(m.esporte_id ?? 0))
+        .filter((id) => Number.isFinite(id) && id > 0)
+    ),
+  ];
+  const { data: esportesPendenteRanking } = eidsPendenteRanking.length
+    ? await supabase.from("esportes").select("id, nome").in("id", eidsPendenteRanking)
+    : { data: [] };
+  const espNomePendenteById = new Map((esportesPendenteRanking ?? []).map((e) => [Number(e.id), String(e.nome ?? "Esporte")]));
+
   const { items: aceitosItems, aceitosMatches, criadorPorTimeIdAgenda } = await loadAceitosCancelaveisItems(
     supabase,
     user.id,
@@ -373,7 +414,72 @@ export default async function AgendaPage() {
         </div>
       </section>
 
-      <AgendaAceitosCancelaveis items={aceitosItems} somenteInformativo cadastrarLocalReturnBase="/comunidade" />
+      {pendentesRankingStatus.length > 0 || aceitosItems.length > 0 ? (
+        <section id="agenda-status-ranking" className="scroll-mt-4 mt-6 space-y-6 md:scroll-mt-6 md:mt-10">
+          {pendentesRankingStatus.length > 0 ? (
+            <div className="overflow-hidden rounded-xl border border-transparent bg-eid-card/55">
+              <div className="flex items-center justify-between border-b border-transparent bg-eid-surface/45 px-3 py-2">
+                <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">
+                  Pedidos de ranking em análise
+                </h2>
+                <EidPendingBadge label="Pendente" />
+              </div>
+              <p className="px-3 pt-2 text-[11px] text-eid-text-secondary md:text-xs">
+                Status para o elenco: o capitão adversário responde no{" "}
+                <Link href="/comunidade#desafio-pedidos" className="font-bold text-eid-primary-300 hover:underline">
+                  Painel social
+                </Link>
+                . Sem data/local até o pedido ser aceito.
+              </p>
+              <ul className="m-3 space-y-2">
+                {pendentesRankingStatus.map((m) => {
+                  const tid1 = Number(m.desafiante_time_id ?? 0);
+                  const tid2 = Number(m.adversario_time_id ?? 0);
+                  const nome1 = Number.isFinite(tid1) && tid1 > 0 ? nomeTimePendenteById.get(tid1) ?? "Formação" : "Formação";
+                  const nome2 = Number.isFinite(tid2) && tid2 > 0 ? nomeTimePendenteById.get(tid2) ?? "Formação" : "Formação";
+                  const espNome = m.esporte_id ? espNomePendenteById.get(Number(m.esporte_id)) ?? "Esporte" : "Esporte";
+                  const capitaoRecebedor = m.adversario_id === user.id;
+                  const noTimeDesafiado =
+                    Number.isFinite(tid2) &&
+                    tid2 > 0 &&
+                    agendaTeamIds.includes(tid2) &&
+                    !capitaoRecebedor;
+                  const sublinha = capitaoRecebedor
+                    ? "Você é o capitão desta formação — aceite ou recuse no Painel social."
+                    : noTimeDesafiado
+                      ? "Seu capitão deve aceitar ou recusar este pedido no Painel social."
+                      : "Aguardando o capitão adversário aceitar ou recusar.";
+                  return (
+                    <li
+                      key={m.id}
+                      className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-3 py-2.5 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.18)] md:px-4 md:py-3"
+                    >
+                      <p className="text-[13px] font-bold text-eid-fg md:text-sm">
+                        {nome1} <span className="font-normal text-eid-text-secondary">vs</span> {nome2}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-eid-text-secondary md:text-xs">
+                        {espNome} · {m.modalidade_confronto ?? "time"}
+                      </p>
+                      <p className="mt-1.5 text-[11px] leading-relaxed text-eid-text-secondary md:text-xs">{sublinha}</p>
+                      {capitaoRecebedor ? (
+                        <p className="mt-2">
+                          <Link
+                            href="/comunidade#desafio-pedidos"
+                            className="text-[11px] font-bold text-eid-primary-300 hover:underline md:text-xs"
+                          >
+                            Abrir pedidos recebidos
+                          </Link>
+                        </p>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+          <AgendaAceitosCancelaveis items={aceitosItems} somenteInformativo cadastrarLocalReturnBase="/comunidade" />
+        </section>
+      ) : null}
 
       <section className="mt-6 md:mt-10">
         <div className="overflow-hidden rounded-xl border border-transparent bg-eid-card/55">

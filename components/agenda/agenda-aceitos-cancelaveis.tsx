@@ -186,8 +186,7 @@ export function AgendaAceitosCancelaveis({
   if (items.length === 0) return null;
 
   return (
-    <section id="agenda-status-ranking" className="scroll-mt-4 mt-6 md:scroll-mt-6 md:mt-10">
-      <div className="overflow-hidden rounded-xl border border-transparent bg-eid-card/55">
+    <div className="overflow-hidden rounded-xl border border-transparent bg-eid-card/55">
       <div className="flex items-center justify-between border-b border-transparent bg-eid-surface/45 px-3 py-2">
         <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Desafios aceitos</h2>
         <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
@@ -507,7 +506,6 @@ export function AgendaAceitosCancelaveis({
           </article>
         ))}
       </div>
-      </div>
-    </section>
+    </div>
   );
 }
