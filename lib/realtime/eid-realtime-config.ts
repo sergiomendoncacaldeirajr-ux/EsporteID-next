@@ -9,8 +9,9 @@ export const EID_REALTIME_REFRESH_THROTTLE_MS = 1500;
 /**
  * Poll leve que compara uma assinatura de pendências no banco — cobre atraso/falha do WebSocket.
  * Roda em (quase) toda rota autenticada; ver `eidShouldRunGlobalInteractionPoll`.
+ * Intervalo maior reduz carga no Supabase e no cliente; o Realtime continua sendo o caminho principal.
  */
-export const EID_REALTIME_SIGNATURE_POLL_MS = 2200;
+export const EID_REALTIME_SIGNATURE_POLL_MS = 8000;
 
 /** Rede de segurança dos badges do footer mobile (além de Realtime + `eid:realtime-refresh`). */
 export const EID_MOBILE_NAV_BADGE_POLL_MS = 20000;

@@ -111,14 +111,13 @@ export default async function RootLayout({
     cookieStore = ck;
     user = auth.user;
     if (user) {
-      papeis = await getCachedUsuarioPapeis(user.id);
       const { supabase } = auth;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select(PROFILE_LEGAL_ACCEPTANCE_COLUMNS)
-        .eq("id", user.id)
-        .maybeSingle();
-      canShowAuthenticatedChrome = legalAcceptanceIsCurrent(profile);
+      const [papeisResolved, profileRes] = await Promise.all([
+        getCachedUsuarioPapeis(user.id),
+        supabase.from("profiles").select(PROFILE_LEGAL_ACCEPTANCE_COLUMNS).eq("id", user.id).maybeSingle(),
+      ]);
+      papeis = papeisResolved;
+      canShowAuthenticatedChrome = legalAcceptanceIsCurrent(profileRes.data);
     }
   } catch {
     hdrs = await headers();
