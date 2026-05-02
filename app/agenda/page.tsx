@@ -26,8 +26,9 @@ import {
 } from "@/lib/agenda/partidas-usuario";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { pickFormacaoLadoPartida } from "@/lib/agenda/partida-formacao-lado";
-import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
+import { getServerAuth } from "@/lib/auth/rsc-auth";
+import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
 
 export const metadata = {
   title: "Agenda",
@@ -45,17 +46,10 @@ export default function AgendaPage() {
 }
 
 async function AgendaPageContent() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getServerAuth();
   if (!user) redirect("/login?next=/agenda");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
-    .eq("id", user.id)
-    .maybeSingle();
+  const profile = await getCachedProfileLegalRow(user.id);
   if (!profile || !legalAcceptanceIsCurrent(profile)) redirect("/conta/aceitar-termos");
   if (!profile.perfil_completo) redirect("/onboarding");
 

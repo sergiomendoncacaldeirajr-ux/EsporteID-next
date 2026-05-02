@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
-import { createClient } from "@/lib/supabase/server";
+import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
+import { getServerAuth } from "@/lib/auth/rsc-auth";
+import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
@@ -37,14 +38,12 @@ export default async function BuscarPage({ searchParams }: Props) {
     redirect(`/login?next=${encodeURIComponent(next)}`);
   }
 
-  const supabase = await createClient();
-  const featureCfg = await getSystemFeatureConfig(supabase);
+  const { supabase } = await getServerAuth();
+  const [featureCfg, gate] = await Promise.all([
+    getSystemFeatureConfig(supabase),
+    getCachedProfileLegalRow(user.id),
+  ]);
   const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
-  const { data: gate } = await supabase
-    .from("profiles")
-    .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
-    .eq("id", user.id)
-    .maybeSingle();
   if (!gate || !legalAcceptanceIsCurrent(gate)) {
     redirect(`/conta/aceitar-termos?next=${encodeURIComponent(`/buscar${rawDisplay ? `?q=${encodeURIComponent(rawDisplay)}` : ""}`)}`);
   }

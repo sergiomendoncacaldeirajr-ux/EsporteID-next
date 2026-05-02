@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SearchFilterForm } from "@/components/search/search-filter-form";
-import { createClient } from "@/lib/supabase/server";
+import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { TeamManagementPanel } from "@/components/times/team-management-panel";
 import type { TimesVagaCardData } from "@/components/times/times-vaga-recrutamento-card";
 import { TimesRecrutamentoVagasList } from "@/components/times/times-recrutamento-vagas-list";
@@ -87,10 +87,7 @@ export default async function TimesPage({ searchParams }: Props) {
   const q = (sp.q ?? "").trim().toLowerCase();
   const convidar = String(sp.convidar ?? "").trim();
   const convidarOk = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(convidar);
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getServerAuth();
   if (!user) redirect("/login?next=/times");
 
   let timesListQuery = supabase

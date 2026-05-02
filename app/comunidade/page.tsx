@@ -50,9 +50,10 @@ import { pickFormacaoLadoPartida } from "@/lib/agenda/partida-formacao-lado";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { splitCityState } from "@/lib/geo/split-city-state";
-import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
+import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
+import { getServerAuth } from "@/lib/auth/rsc-auth";
+import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
-import { createClient } from "@/lib/supabase/server";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { Calendar, Clock, Clock3, LayoutGrid, MapPin, Shield, User, UserPlus } from "lucide-react";
 
@@ -125,19 +126,17 @@ export default function ComunidadePage() {
 }
 
 async function ComunidadePageContent() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getServerAuth();
   if (!user) redirect("/login?next=/comunidade");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(`perfil_completo, nome, avatar_url, localizacao, lat, lng, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
-    .eq("id", user.id)
-    .maybeSingle();
-  if (!profile || !legalAcceptanceIsCurrent(profile)) redirect("/conta/aceitar-termos");
-  if (!profile.perfil_completo) redirect("/onboarding");
+  const [gate, { data: profileExtra }] = await Promise.all([
+    getCachedProfileLegalRow(user.id),
+    supabase.from("profiles").select("nome, avatar_url, localizacao, lat, lng").eq("id", user.id).maybeSingle(),
+  ]);
+  if (!gate || !legalAcceptanceIsCurrent(gate)) redirect("/conta/aceitar-termos");
+  if (!gate.perfil_completo) redirect("/onboarding");
+  if (!profileExtra) redirect("/onboarding");
+  const profile = { ...profileExtra, perfil_completo: gate.perfil_completo };
   const myLat = Number((profile as { lat?: number | null }).lat ?? NaN);
   const myLng = Number((profile as { lng?: number | null }).lng ?? NaN);
   const hasMyCoords = Number.isFinite(myLat) && Number.isFinite(myLng);

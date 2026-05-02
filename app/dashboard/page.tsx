@@ -5,15 +5,16 @@ import { redirect } from "next/navigation";
 import { DashboardPageSkeleton } from "@/components/loading/dashboard-page-skeleton";
 import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
-import { createClient } from "@/lib/supabase/server";
 import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
 import { AmistosoDailyHint } from "@/components/dashboard/amistoso-daily-hint";
 import { getAuthContextState } from "@/lib/auth/active-context-server";
+import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
+import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
-import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
+import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { EidSectionInfo } from "@/components/ui/eid-section-info";
@@ -285,20 +286,25 @@ async function DashboardPageContent({ searchParams }: Props) {
   const q = (sp.q ?? "").trim().toLowerCase();
   const contextState = await getAuthContextState();
   const { user, activeContext } = contextState;
-  const supabase = await createClient();
+  const { supabase } = await getServerAuth();
   if (!user) {
     redirect("/login?next=/dashboard");
   }
   if (activeContext === "organizador" && contextState.papeis.includes("organizador")) {
     redirect("/organizador");
   }
+  const gate = await getCachedProfileLegalRow(user.id);
+  if (!gate || !legalAcceptanceIsCurrent(gate)) {
+    redirect("/conta/aceitar-termos");
+  }
+  if (!gate.perfil_completo) {
+    redirect("/onboarding");
+  }
   const [featureCfg, profileRes] = await Promise.all([
     getSystemFeatureConfig(supabase),
     supabase
       .from("profiles")
-      .select(
-        `nome, avatar_url, localizacao, lat, lng, perfil_completo, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
-      )
+      .select("nome, avatar_url, localizacao, lat, lng, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate, perfil_completo")
       .eq("id", user.id)
       .maybeSingle(),
   ]);
@@ -308,10 +314,7 @@ async function DashboardPageContent({ searchParams }: Props) {
   const canSeeMarketplace = canAccessSystemFeature(featureCfg, "marketplace", user.id);
   const profile = profileRes.data;
 
-  if (!profile || !legalAcceptanceIsCurrent(profile)) {
-    redirect("/conta/aceitar-termos");
-  }
-  if (!profile.perfil_completo) {
+  if (!profile) {
     redirect("/onboarding");
   }
 

@@ -13,7 +13,7 @@ import {
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { parseRankingSearch, rankingHref, type RankingSearchState } from "@/lib/ranking/ranking-href";
 import { isSportRankingEnabled } from "@/lib/sport-capabilities";
-import { createClient } from "@/lib/supabase/server";
+import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { MatchRankingRulesModal } from "@/components/match/match-ranking-rules-modal";
 import { RankingLoadMoreButton } from "@/components/ranking/ranking-load-more-button";
 
@@ -222,10 +222,7 @@ function matchBucketFormacoes(t1: GeneroBucket, t2: GeneroBucket): GeneroBucket 
 export default async function RankingPage({ searchParams }: Props) {
   const spRaw = (await searchParams) ?? {};
   const state = parseRankingSearch(spRaw);
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getServerAuth();
   if (!user) redirect("/login?next=/ranking");
   const viewerId = user.id;
 
