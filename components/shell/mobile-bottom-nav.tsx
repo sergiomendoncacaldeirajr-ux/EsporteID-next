@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { getContextHomeHref, type ActiveAppContext } from "@/lib/auth/active-context";
 import { createClient } from "@/lib/supabase/client";
 import { EID_MOBILE_NAV_BADGE_POLL_MS } from "@/lib/realtime/eid-realtime-config";
+import { userMustActGestaoRankingCancel } from "@/lib/notificacoes/gestao-ranking-cancel";
 import type { ReactNode } from "react";
 
 /* ── Cores reativas ao tema ── */
@@ -175,6 +176,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
 
   useEffect(() => {
     if (!resolvedUserId) return;
+    const uid = resolvedUserId;
     let cancelled = false;
     const supabase = createClient();
     async function load() {
@@ -182,42 +184,42 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         supabase
           .from("partidas")
           .select("id, match_id, status, data_partida, local_str, local_espaco_id, agendamento_proposto_por, agendamento_aceite_deadline")
-          .or(`jogador1_id.eq.${resolvedUserId},jogador2_id.eq.${resolvedUserId}`)
+          .or(`jogador1_id.eq.${uid},jogador2_id.eq.${uid}`)
           .in("status", ["agendada", "aguardando_aceite_agendamento"]),
         supabase
           .from("partidas")
           .select("id", { count: "exact", head: true })
-          .or(`jogador1_id.eq.${resolvedUserId},jogador2_id.eq.${resolvedUserId}`)
+          .or(`jogador1_id.eq.${uid},jogador2_id.eq.${uid}`)
           .eq("status", "aguardando_confirmacao")
-          .neq("lancado_por", resolvedUserId),
-        supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", resolvedUserId).eq("status", "Pendente"),
-        supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", resolvedUserId).eq("status", "Pendente"),
+          .neq("lancado_por", uid),
+        supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", uid).eq("status", "Pendente"),
+        supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", uid).eq("status", "Pendente"),
         supabase
           .from("match_sugestoes")
           .select("id", { count: "exact", head: true })
-          .eq("alvo_dono_id", resolvedUserId)
+          .eq("alvo_dono_id", uid)
           .eq("status", "pendente"),
         supabase
           .from("match_sugestoes")
           .select("id", { count: "exact", head: true })
-          .eq("sugeridor_id", resolvedUserId)
+          .eq("sugeridor_id", uid)
           .eq("status", "pendente"),
         supabase
           .from("time_convites")
           .select("id", { count: "exact", head: true })
-          .eq("convidado_usuario_id", resolvedUserId)
+          .eq("convidado_usuario_id", uid)
           .eq("status", "pendente"),
         supabase
           .from("time_convites")
           .select("id", { count: "exact", head: true })
-          .eq("convidado_por_usuario_id", resolvedUserId)
+          .eq("convidado_por_usuario_id", uid)
           .eq("status", "pendente"),
         supabase
           .from("time_candidaturas")
           .select("id", { count: "exact", head: true })
-          .eq("candidato_usuario_id", resolvedUserId)
+          .eq("candidato_usuario_id", uid)
           .eq("status", "pendente"),
-        supabase.from("times").select("id").eq("criador_id", resolvedUserId),
+        supabase.from("times").select("id").eq("criador_id", uid),
       ]);
       if (cancelled) return;
       const agendaRows = (agRes.data ?? []) as Array<{ id: number; match_id?: number | null }>;
@@ -228,24 +230,30 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
             .filter((id) => Number.isFinite(id) && id > 0)
         ),
       ];
-      const agendaCancelados = new Set<number>();
+      /** Match cancelado ou em fluxo de cancelamento/reag.: não entra no badge da Agenda (isso é social / sininho agenda_status). */
+      const agendaMatchIdsExcluirFooter = new Set<number>();
       if (agendaMatchIds.length > 0) {
         const { data: agendaMatchRows } = await supabase.from("matches").select("id, status").in("id", agendaMatchIds);
         for (const row of agendaMatchRows ?? []) {
-          if (String(row.status ?? "").trim().toLowerCase() === "cancelado") {
-            agendaCancelados.add(Number(row.id));
+          const st = String(row.status ?? "").trim().toLowerCase();
+          if (
+            st === "cancelado" ||
+            st === "cancelamentopendente" ||
+            st === "reagendamentopendente"
+          ) {
+            agendaMatchIdsExcluirFooter.add(Number(row.id));
           }
         }
       }
       const agendaVisiveis = agendaRows.filter((row) => {
         const mid = Number(row.match_id ?? 0);
-        return !(Number.isFinite(mid) && mid > 0 && agendaCancelados.has(mid));
+        return !(Number.isFinite(mid) && mid > 0 && agendaMatchIdsExcluirFooter.has(mid));
       });
       const agendaPendentesAcao = agendaVisiveis.filter((row) => {
         const status = String((row as { status?: string | null }).status ?? "").trim().toLowerCase();
         if (status === "aguardando_aceite_agendamento") {
           const proposedBy = String((row as { agendamento_proposto_por?: string | null }).agendamento_proposto_por ?? "");
-          return proposedBy !== resolvedUserId;
+          return proposedBy !== uid;
         }
         if (status === "agendada") {
           const hasDate = Boolean((row as { data_partida?: string | null }).data_partida);
@@ -274,6 +282,20 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       const convitesEnviados = conviteEnviadoRes.count ?? 0;
       const candidaturasEnviadas = candidaturaEnviadaRes.count ?? 0;
       const meusTimeIds = [...new Set((meusTimesRes.data ?? []).map((t) => Number((t as { id?: number | null }).id ?? 0)).filter((id) => Number.isFinite(id) && id > 0))];
+      const matchGestaoOr =
+        meusTimeIds.length > 0
+          ? `usuario_id.eq.${uid},adversario_id.eq.${uid},desafiante_time_id.in.(${meusTimeIds.join(",")}),adversario_time_id.in.(${meusTimeIds.join(",")})`
+          : `usuario_id.eq.${uid},adversario_id.eq.${uid}`;
+      const { data: gestaoMatchRows } = await supabase
+        .from("matches")
+        .select("status, cancel_requested_by, usuario_id, adversario_id, desafiante_time_id, adversario_time_id")
+        .eq("finalidade", "ranking")
+        .in("status", ["CancelamentoPendente", "ReagendamentoPendente"])
+        .or(matchGestaoOr);
+      let gestaoCancelRanking = 0;
+      for (const row of gestaoMatchRows ?? []) {
+        if (userMustActGestaoRankingCancel(row, uid, meusTimeIds)) gestaoCancelRanking += 1;
+      }
       let candidaturasEquipe = 0;
       if (meusTimeIds.length > 0) {
         const { count } = await supabase
@@ -293,7 +315,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         convitesRecebidos +
         convitesEnviados +
         candidaturasEquipe +
-        candidaturasEnviadas;
+        candidaturasEnviadas +
+        gestaoCancelRanking;
       setSocialBadge((prev) => {
         const p = String(pathnameRef.current ?? "");
         const onSocialSurface =

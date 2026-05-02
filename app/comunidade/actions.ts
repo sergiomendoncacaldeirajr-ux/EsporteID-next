@@ -51,7 +51,7 @@ async function removerNotificacoesDoMatch(
     .from("notificacoes")
     .delete()
     .eq("referencia_id", matchId)
-    .in("tipo", ["match", "desafio"]);
+    .in("tipo", ["match", "desafio", "agenda_status"]);
   if (uniqUsers.length > 0) {
     q = q.in("usuario_id", uniqUsers);
   }
@@ -98,7 +98,7 @@ async function triggerPushForMatchNotifications(
     .select("id")
     .eq("referencia_id", matchId)
     .eq("lida", false)
-    .in("tipo", ["match", "desafio"])
+    .in("tipo", ["match", "desafio", "agenda_status"])
     .order("id", { ascending: false })
     .limit(30);
   if (uniqUsers.length > 0) {
@@ -656,7 +656,7 @@ export async function gerenciarCancelamentoMatch(
     }
     await marcarNotificacoesPorAcao(supabase, user.id, {
       referenciaId: matchId,
-      tipos: ["match", "desafio"],
+      tipos: ["match", "desafio", "agenda_status"],
     });
     await triggerPushForMatchNotifications(
       supabase,
@@ -691,7 +691,7 @@ export async function gerenciarCancelamentoMatch(
     const canceladoPorRecusas = String(statusRow?.status ?? "") === "Cancelado";
     await marcarNotificacoesPorAcao(supabase, user.id, {
       referenciaId: matchId,
-      tipos: ["match", "desafio"],
+      tipos: ["match", "desafio", "agenda_status"],
     });
     await triggerPushForMatchNotifications(
       supabase,
@@ -809,7 +809,7 @@ export async function gerenciarCancelamentoMatch(
 
     await marcarNotificacoesPorAcao(supabase, user.id, {
       referenciaId: matchId,
-      tipos: ["match", "desafio"],
+      tipos: ["match", "desafio", "agenda_status"],
     });
     await triggerPushForMatchNotifications(
       supabase,

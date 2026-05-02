@@ -9,12 +9,36 @@ export function resolveNotificationHref({ tipo, mensagem }: NotificationRouteInp
   const tipoNorm = String(tipo ?? "").trim().toLowerCase();
   const msgNorm = String(mensagem ?? "").trim().toLowerCase();
 
+  /** Elenco: status de cancelamento/reag. do ranking (referência na Agenda). */
+  if (tipoNorm === "agenda_status") {
+    return "/agenda#agenda-status-ranking";
+  }
+
   if (tipoNorm === "match" || tipoNorm === "desafio") {
     if (isAmistosoAceiteInformativoNotif(tipoNorm, msgNorm)) {
       return "/comunidade#notificacoes";
     }
-    if (msgNorm.includes("placar") || msgNorm.includes("resultado")) {
+    if (
+      msgNorm.includes("placar") ||
+      msgNorm.includes("resultado") ||
+      msgNorm.includes("w.o.") ||
+      msgNorm.includes("wo automático")
+    ) {
       return "/comunidade#resultados-partida";
+    }
+    if (
+      msgNorm.includes("opção de reagendamento foi aceita") ||
+      msgNorm.includes("opcao de reagendamento foi aceita")
+    ) {
+      return "/agenda";
+    }
+    if (
+      msgNorm.includes("pedido de cancelamento") ||
+      msgNorm.includes("cancelamento foi recusado") ||
+      msgNorm.includes("escolha uma das 3") ||
+      (msgNorm.includes("opções") && msgNorm.includes("confronto"))
+    ) {
+      return "/comunidade#desafios-aceitos-gestao";
     }
     if (
       msgNorm.includes("agenda") ||

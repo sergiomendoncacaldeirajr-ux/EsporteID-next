@@ -51,6 +51,10 @@ type Props = {
   agendamentoDeadline?: string | null;
   /** Membro do elenco (não líder): só acompanha; não agenda nem cancela pelo card. */
   somenteLeituraElenco?: boolean;
+  /** Na Agenda (só informação): não exibe solicitar/responder cancelamento nem desistência. */
+  ocultarFluxoCancelamento?: boolean;
+  /** Na Agenda (só informação): não exibe aprovar/recusar proposta de data/hora; ação fica no Painel social. */
+  ocultarFluxoAgendamento?: boolean;
   /** Query `from=` nos links de EID (ex.: `/comunidade` no painel). */
   perfilEidFrom?: string;
 };
@@ -111,6 +115,8 @@ export function PartidaAgendaCard({
   agendamentoPodeResponder = false,
   agendamentoDeadline = null,
   somenteLeituraElenco = false,
+  ocultarFluxoCancelamento = false,
+  ocultarFluxoAgendamento = false,
   perfilEidFrom = "/agenda",
 }: Props) {
   const isPlacar = variant === "placar";
@@ -247,11 +253,46 @@ export function PartidaAgendaCard({
           <div className="flex items-center justify-between gap-2 border-b border-[color:color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-border-subtle)_70%)] bg-eid-surface/45 px-3 py-2">
             <EidPendingBadge label="Agendamento pendente" />
             <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
-              Responder
+              {ocultarFluxoAgendamento ? "Status" : "Responder"}
             </span>
           </div>
           <div className="p-2.5 md:p-3">
-            {somenteLeituraElenco ? (
+            {ocultarFluxoAgendamento ? (
+              <p className="text-center text-[11px] leading-snug text-eid-text-secondary">
+                {somenteLeituraElenco ? (
+                  <>
+                    Proposta de agendamento pendente. <span className="font-semibold text-eid-fg">Só o líder</span> da sua
+                    formação responde no{" "}
+                    <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
+                      Painel social
+                    </Link>
+                    .
+                  </>
+                ) : agendamentoPodeResponder ? (
+                  <>
+                    {formatDeadline(agendamentoDeadline)
+                      ? `Prazo para resposta: ${formatDeadline(agendamentoDeadline)}. `
+                      : "Há uma proposta de data e horário pendente. "}
+                    Aceite ou recuse no{" "}
+                    <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
+                      Painel social
+                    </Link>
+                    .
+                  </>
+                ) : (
+                  <>
+                    {formatDeadline(agendamentoDeadline)
+                      ? `Proposta enviada. Aguardando o oponente até ${formatDeadline(agendamentoDeadline)}.`
+                      : "Proposta enviada. Aguardando resposta do oponente."}{" "}
+                    Acompanhe no{" "}
+                    <Link href="/comunidade#resultados-partida" className="font-bold text-eid-primary-300 hover:underline">
+                      Painel social
+                    </Link>
+                    .
+                  </>
+                )}
+              </p>
+            ) : somenteLeituraElenco ? (
               <p className="text-center text-[11px] leading-snug text-eid-text-secondary">
                 Proposta de agendamento pendente. <span className="font-semibold text-eid-fg">Só o líder</span> da sua
                 formação pode aceitar ou recusar.
@@ -343,7 +384,10 @@ export function PartidaAgendaCard({
         </div>
       )}
 
-      {!isPlacar && (cancelMatchId || desistMatchId) && !somenteLeituraElenco ? (
+      {!isPlacar &&
+      !ocultarFluxoCancelamento &&
+      (cancelMatchId || desistMatchId) &&
+      !somenteLeituraElenco ? (
         <div className="mt-3 border-t border-transparent pt-2">
           <div className="flex flex-wrap items-center justify-end gap-2">
             {cancelMatchId && !desistMatchId ? (
@@ -369,7 +413,10 @@ export function PartidaAgendaCard({
         </div>
       ) : null}
 
-      {openCancel && cancelMatchId && typeof document !== "undefined"
+      {!ocultarFluxoCancelamento &&
+      openCancel &&
+      cancelMatchId &&
+      typeof document !== "undefined"
         ? createPortal(
             <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[1.5px] sm:items-center">
               <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-0 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
@@ -413,7 +460,10 @@ export function PartidaAgendaCard({
             document.body
           )
         : null}
-      {openDesist && desistMatchId && typeof document !== "undefined"
+      {!ocultarFluxoCancelamento &&
+      openDesist &&
+      desistMatchId &&
+      typeof document !== "undefined"
         ? createPortal(
             <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[1.5px] sm:items-center">
               <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-0 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">

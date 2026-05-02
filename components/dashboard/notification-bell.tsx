@@ -11,6 +11,7 @@ import {
 } from "@/lib/pwa/push-client";
 import { isAmistosoAceiteInformativoNotif } from "@/lib/notificacoes/amistoso-aceite-informativo";
 import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
+import { userMustActGestaoRankingCancel } from "@/lib/notificacoes/gestao-ranking-cancel";
 import { limparTodasNotificacoes } from "@/app/comunidade/actions";
 
 type Preview = {
@@ -34,14 +35,6 @@ function isFlowActionNotif(tipoRaw: string | null | undefined): boolean {
     .trim()
     .toLowerCase();
   return tipo === "match" || tipo === "desafio";
-}
-
-function isCancelamentoFlowMensagem(raw: string | null | undefined): boolean {
-  const msg = String(raw ?? "")
-    .trim()
-    .toLowerCase();
-  if (!msg) return false;
-  return msg.includes("cancelado") || msg.includes("cancelamento");
 }
 
 function IconBell({ className }: { className?: string }) {
@@ -108,6 +101,9 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   const [pedidosDesafioN, setPedidosDesafioN] = useState(0);
   const [sugestoesLiderN, setSugestoesLiderN] = useState(0);
   const [placarN, setPlacarN] = useState(0);
+  const [gestaoCancelN, setGestaoCancelN] = useState(0);
+  /** Notificações `agenda_status` não lidas (elenco: status cancelamento/agenda na /agenda). */
+  const [agendaStatusUnreadBell, setAgendaStatusUnreadBell] = useState(0);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
   const [limpandoTodas, setLimpandoTodas] = useState(false);
@@ -119,7 +115,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   const load = useCallback(async () => {
     if (!userId) return;
     const supabase = createClient();
-    const [notifRes, listRes, agRes, mRes, sRes, pRes] = await Promise.all([
+    const [notifRes, listRes, agRes, mRes, sRes, pRes, lidRes] = await Promise.all([
       supabase
         .from("notificacoes")
         .select("id, tipo, referencia_id, remetente_id")
@@ -149,15 +145,31 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId}`)
         .eq("status", "aguardando_confirmacao")
         .neq("lancado_por", userId),
+      supabase.from("times").select("id").eq("criador_id", userId),
     ]);
     const unreadRowsAll = (notifRes.data ?? []) as UnreadNotif[];
     const previewRowsAll = (listRes.data ?? []) as Preview[];
-    const cancelFlowNotifIds = new Set(
-      previewRowsAll
-        .filter((n) => isFlowActionNotif(n.tipo) && isCancelamentoFlowMensagem(n.mensagem))
-        .map((n) => Number(n.id))
-        .filter((id) => Number.isFinite(id) && id > 0)
-    );
+    const captainTimeIds = [
+      ...new Set(
+        (lidRes.data ?? [])
+          .map((t) => Number((t as { id?: number | null }).id ?? 0))
+          .filter((id) => Number.isFinite(id) && id > 0)
+      ),
+    ];
+    const matchGestaoOr =
+      captainTimeIds.length > 0
+        ? `usuario_id.eq.${userId},adversario_id.eq.${userId},desafiante_time_id.in.(${captainTimeIds.join(",")}),adversario_time_id.in.(${captainTimeIds.join(",")})`
+        : `usuario_id.eq.${userId},adversario_id.eq.${userId}`;
+    const { data: gestaoRows } = await supabase
+      .from("matches")
+      .select("status, cancel_requested_by, usuario_id, adversario_id, desafiante_time_id, adversario_time_id")
+      .eq("finalidade", "ranking")
+      .in("status", ["CancelamentoPendente", "ReagendamentoPendente"])
+      .or(matchGestaoOr);
+    let gestaoN = 0;
+    for (const row of gestaoRows ?? []) {
+      if (userMustActGestaoRankingCancel(row, userId, captainTimeIds)) gestaoN += 1;
+    }
     const flowRefIds = [
       ...new Set(
         [...unreadRowsAll, ...previewRowsAll]
@@ -198,9 +210,6 @@ export function NotificationBell({ userId }: { userId: string | null }) {
           .in("referencia_id", [...canceledMatchIds]);
       }
     }
-    if (cancelFlowNotifIds.size > 0) {
-      await supabase.from("notificacoes").delete().eq("usuario_id", userId).in("id", [...cancelFlowNotifIds]);
-    }
     const agendaRows = (agRes.data ?? []) as Array<{ id: number; match_id?: number | null }>;
     const agendaMatchIds = [
       ...new Set(
@@ -209,27 +218,30 @@ export function NotificationBell({ userId }: { userId: string | null }) {
           .filter((id) => Number.isFinite(id) && id > 0)
       ),
     ];
-    const agendaCancelados = new Set<number>();
+    const agendaMatchIdsExcluirResumo = new Set<number>();
     if (agendaMatchIds.length > 0) {
       const { data: agendaMatchRows } = await supabase.from("matches").select("id, status").in("id", agendaMatchIds);
       for (const row of agendaMatchRows ?? []) {
-        if (String(row.status ?? "").trim().toLowerCase() === "cancelado") {
-          agendaCancelados.add(Number(row.id));
+        const st = String(row.status ?? "").trim().toLowerCase();
+        if (
+          st === "cancelado" ||
+          st === "cancelamentopendente" ||
+          st === "reagendamentopendente"
+        ) {
+          agendaMatchIdsExcluirResumo.add(Number(row.id));
         }
       }
     }
     const agendaRowsVisiveis = agendaRows.filter((row) => {
       const mid = Number(row.match_id ?? 0);
-      return !(Number.isFinite(mid) && mid > 0 && agendaCancelados.has(mid));
+      return !(Number.isFinite(mid) && mid > 0 && agendaMatchIdsExcluirResumo.has(mid));
     });
     const unreadRows = unreadRowsAll.filter((n) => {
-      if (cancelFlowNotifIds.has(Number(n.id))) return false;
       if (!isFlowActionNotif(n.tipo)) return true;
       const refId = Number(n.referencia_id ?? 0);
       return !(Number.isFinite(refId) && refId > 0 && canceledMatchIds.has(refId));
     });
     const previewRows = previewRowsAll.filter((n) => {
-      if (cancelFlowNotifIds.has(Number(n.id))) return false;
       if (!isFlowActionNotif(n.tipo)) return true;
       const refId = Number(n.referencia_id ?? 0);
       return !(Number.isFinite(refId) && refId > 0 && canceledMatchIds.has(refId));
@@ -258,12 +270,15 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         }
       }
     }
-    const ag = agendaRowsVisiveis.length;
+    const agendaStatusUnreadN = unreadRows.filter(
+      (n) => String(n.tipo ?? "").trim().toLowerCase() === "agenda_status"
+    ).length;
+    const ag = agendaRowsVisiveis.length + agendaStatusUnreadN;
     const m = mRes.count ?? 0;
     const s = sRes.count ?? 0;
     const p = pRes.count ?? 0;
     const pLen = previewRows.length;
-    const resumoSig = `${ag}|${m}|${s}|${p}|${unreadGeneral}|${pLen}`;
+    const resumoSig = `${ag}|${m}|${s}|${p}|${gestaoN}|${unreadGeneral}|${pLen}`;
     const onComunidade = pathname === "/comunidade" || pathname.startsWith("/comunidade/");
     if (onComunidade) {
       const prev = comunidadeResumoSigRef.current;
@@ -275,10 +290,12 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       comunidadeResumoSigRef.current = null;
     }
     setAgendaN(ag);
+    setAgendaStatusUnreadBell(agendaStatusUnreadN);
     setPedidosDesafioN(m);
     setSugestoesLiderN(s);
     setPlacarN(p);
-    // Sininho: notificações não lidas (inclui tipo match: desafio pendente, aceite, etc.). Footer social continua com resumo de ações.
+    setGestaoCancelN(gestaoN);
+    // Sininho: notificações não lidas (inclui tipo match: desafio pendente, aceite, etc.).
     setTotal(unreadGeneral);
     setPreview(previewRows);
   }, [userId, pathname]);
@@ -529,10 +546,16 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                   <SummaryGlyph kind="agenda" />
                   <div>
                     <p className="text-[10px] font-bold text-eid-fg">Agenda</p>
-                    <p className="text-[9px] text-eid-text-secondary">Jogos agendados</p>
+                    <p className="text-[9px] text-eid-text-secondary">
+                      {agendaStatusUnreadBell > 0 ? "Agendar + status (referência)" : "Jogos agendados"}
+                    </p>
                   </div>
                 </div>
-                <Link href="/agenda" className="text-[18px] font-black leading-none text-eid-primary-500" onClick={() => setOpen(false)}>
+                <Link
+                  href={agendaStatusUnreadBell > 0 ? "/agenda#agenda-status-ranking" : "/agenda"}
+                  className="text-[18px] font-black leading-none text-eid-primary-500"
+                  onClick={() => setOpen(false)}
+                >
                   {agendaN}
                 </Link>
               </li>
@@ -541,11 +564,15 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                   <SummaryGlyph kind="social" />
                   <div>
                     <p className="text-[10px] font-bold text-eid-fg">Social</p>
-                    <p className="text-[9px] text-eid-text-secondary">Pedidos recebidos</p>
+                    <p className="text-[9px] text-eid-text-secondary">Desafio, equipe e cancelamento</p>
                   </div>
                 </div>
-                <Link href="/comunidade" className="text-[18px] font-black leading-none text-eid-action-500" onClick={() => setOpen(false)}>
-                  {pedidosDesafioN + sugestoesLiderN}
+                <Link
+                  href={gestaoCancelN > 0 ? "/comunidade#desafios-aceitos-gestao" : "/comunidade"}
+                  className="text-[18px] font-black leading-none text-eid-action-500"
+                  onClick={() => setOpen(false)}
+                >
+                  {pedidosDesafioN + sugestoesLiderN + gestaoCancelN}
                 </Link>
               </li>
               <li className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5">

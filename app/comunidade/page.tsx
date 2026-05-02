@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AgendaAceitosCancelaveis, type AceitosCancelaveisItem } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
 import {
@@ -32,6 +33,7 @@ import {
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
 import { userIsDesafioAgendaLeaderFromMap } from "@/lib/agenda/desafio-match-leadership";
+import { loadAceitosCancelaveisItems } from "@/lib/agenda/load-aceitos-cancelaveis-items";
 import {
   type AgendaPartidaCardRow,
   fetchPartidasAgendadasUsuario,
@@ -1115,6 +1117,7 @@ export default async function ComunidadePage() {
   let rescheduleAcceptedByDueloPainel = new Set<string>();
   let painelLocMap = new Map<number, string | null>();
   let painelTimesById = new Map<number, { nome: string | null; escudo: string | null; eid_time: number | null }>();
+  let painelAceitosCancelaveisItems: AceitosCancelaveisItem[] = [];
 
   function localLabelPainel(p: AgendaPartidaCardRow) {
     if (p.local_str?.trim()) return p.local_str.trim();
@@ -1147,6 +1150,12 @@ export default async function ComunidadePage() {
       fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel),
       fetchPlacarAguardandoConfirmacao(supabase, user.id, teamClausePainel),
     ]);
+    const { items: painelAceitosLoaded } = await loadAceitosCancelaveisItems(
+      supabase,
+      user.id,
+      (painelAgendadas ?? []) as AgendaPartidaCardRow[]
+    );
+    painelAceitosCancelaveisItems = painelAceitosLoaded;
     const painelPlacarPendenteBruto = painelPlacarFetch ?? [];
     const { data: painelPartidasStatusRows } = await supabase
       .from("partidas")
@@ -1332,7 +1341,10 @@ export default async function ComunidadePage() {
         return true;
       })
       .filter((row) => usuarioPodeGerenciarPartidaPainel(row as AgendaPartidaCardRow));
-    hasPartidasAcoes = painelPlacarPendente.length > 0 || painelAgendadasVisiveis.length > 0;
+    hasPartidasAcoes =
+      painelPlacarPendente.length > 0 ||
+      painelAgendadasVisiveis.length > 0 ||
+      painelAceitosCancelaveisItems.length > 0;
   }
 
   const hasDesafioAcoes = pedidosItems.length > 0 || pedidosEnviadosItems.length > 0;
@@ -1370,16 +1382,24 @@ export default async function ComunidadePage() {
           ) : null}
 
           {hasPartidasAcoes ? (
+          <>
+          {painelAceitosCancelaveisItems.length > 0 ? (
+            <div id="desafios-aceitos-gestao" className="scroll-mt-4 md:scroll-mt-6">
+              <AgendaAceitosCancelaveis items={painelAceitosCancelaveisItems} cadastrarLocalReturnBase="/comunidade" />
+            </div>
+          ) : null}
+          {(painelPlacarPendente.length > 0 || painelAgendadasVisiveis.length > 0) ? (
           <section id="resultados-partida" className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
             <div className="flex items-center justify-between gap-2 border-b border-transparent bg-eid-surface/40 px-3 py-2.5 md:px-4">
               <div>
                 <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Partidas e resultados</h2>
                 <p className="mt-0.5 hidden text-[11px] text-eid-text-secondary md:block">
-                  Lançamento de placar, revisão e confirmação. Na{" "}
+                  Lançamento de placar, revisão e confirmação. Cancelamento ou nova data em desafio aceito fica em{" "}
+                  <strong className="text-eid-fg">Desafios aceitos</strong> (neste painel, quando houver). Na{" "}
                   <Link href="/agenda" className="font-semibold text-eid-primary-300 hover:underline">
                     Agenda
                   </Link>{" "}
-                  você combina <strong className="text-eid-fg">data e local</strong>.
+                  você vê só <strong className="text-eid-fg">data e local</strong> como referência.
                 </p>
               </div>
               <span className="shrink-0 rounded-full border border-eid-action-500/30 bg-eid-action-500/12 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-action-400">
@@ -1483,6 +1503,8 @@ export default async function ComunidadePage() {
             </div>
             </div>
           </section>
+          ) : null}
+          </>
           ) : null}
 
           {hasDesafioAcoes ? (

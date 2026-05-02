@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useActionState } from "react";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
@@ -14,7 +15,7 @@ import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import { iniciaisFormacaoNome } from "@/lib/comunidade/iniciais-formacao";
 
-type Item = {
+export type AceitosCancelaveisItem = {
   id: number;
   nomeOponente: string;
   avatarOponente: string | null;
@@ -95,7 +96,19 @@ function addMinutesToDatetimeLocal(base: string, minutes: number): string {
   return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
 }
 
-export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
+type Props = {
+  items: AceitosCancelaveisItem[];
+  /** Na Agenda: só status e prazos; ações ficam no Painel social (Comunidade). */
+  somenteInformativo?: boolean;
+  /** Base para `return_to` ao cadastrar local no fluxo de recusar cancelamento (ex.: `/comunidade`). */
+  cadastrarLocalReturnBase?: string;
+};
+
+export function AgendaAceitosCancelaveis({
+  items,
+  somenteInformativo = false,
+  cadastrarLocalReturnBase = "/agenda",
+}: Props) {
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, initial);
   const [openRefuseByMatch, setOpenRefuseByMatch] = useState<Record<number, boolean>>({});
   const [clickedAction, setClickedAction] = useState<Record<number, "acceptCancel" | "rejectCancel" | "acceptOption" | "rejectOption">>({});
@@ -173,18 +186,28 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="mt-6 md:mt-10">
+    <section id="agenda-status-ranking" className="scroll-mt-4 mt-6 md:scroll-mt-6 md:mt-10">
       <div className="overflow-hidden rounded-xl border border-transparent bg-eid-card/55">
       <div className="flex items-center justify-between border-b border-transparent bg-eid-surface/45 px-3 py-2">
         <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Desafios aceitos</h2>
         <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
-          Gestão
+          {somenteInformativo ? "Status" : "Gestão social"}
         </span>
       </div>
       <p className="px-3 pt-2 text-[11px] text-eid-text-secondary md:text-xs">
-        {hasSpecialStatuses
-          ? "Se pedirem cancelamento ou nova data, responda no prazo."
-          : "Acompanhe o status dos desafios aceitos abaixo."}
+        {somenteInformativo ? (
+          <>
+            Aqui é só referência do status do ranking. Cancelamento e reagendamento de desafio tratamos no{" "}
+            <Link href="/comunidade#desafios-aceitos-gestao" className="font-bold text-eid-primary-300 hover:underline">
+              Painel social
+            </Link>
+            .
+          </>
+        ) : hasSpecialStatuses ? (
+          "Se pedirem cancelamento ou nova data, responda no prazo."
+        ) : (
+          "Acompanhe o status dos desafios aceitos abaixo."
+        )}
       </p>
       <div className="m-2.5 space-y-1.5 md:m-3 md:space-y-2">
         {okMsg ? (
@@ -281,14 +304,24 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
               ) : null}
             </div>
             <div className="mt-1.5 flex w-full flex-col gap-1.5 sm:w-auto md:mt-2 md:gap-2">
-              {m.gestaoSomenteLeitura && m.status === "Aceito" ? (
+              {somenteInformativo ? (
+                <p className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5 text-[10px] leading-snug text-eid-text-secondary md:text-[11px]">
+                  Alterações de desafio (cancelar, aceitar cancelamento, opções de data):{" "}
+                  <Link href="/comunidade#desafios-aceitos-gestao" className="font-semibold text-eid-primary-300 hover:underline">
+                    abrir na Comunidade
+                  </Link>
+                  .
+                </p>
+              ) : null}
+
+              {!somenteInformativo && m.gestaoSomenteLeitura && m.status === "Aceito" ? (
                 <p className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5 text-[10px] leading-snug text-eid-text-secondary md:text-[11px]">
                   Você integra o elenco: acompanhe o status aqui. <span className="font-semibold text-eid-fg">Só o líder</span>{" "}
                   combina data/local e lança o resultado no Painel.
                 </p>
               ) : null}
 
-              {m.gestaoSomenteLeitura && (m.status === "CancelamentoPendente" || m.status === "ReagendamentoPendente") ? (
+              {!somenteInformativo && m.gestaoSomenteLeitura && (m.status === "CancelamentoPendente" || m.status === "ReagendamentoPendente") ? (
                 <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1.5 text-[10px] font-semibold leading-snug text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)] md:text-[11px]">
                   {m.status === "CancelamentoPendente" ? (
                     <>
@@ -304,7 +337,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                 </p>
               ) : null}
 
-              {m.status === "CancelamentoPendente" && !m.isRequester && !m.gestaoSomenteLeitura ? (
+              {!somenteInformativo && m.status === "CancelamentoPendente" && !m.isRequester && !m.gestaoSomenteLeitura ? (
                 <>
                   <p className="text-[9px] font-semibold text-eid-text-secondary md:text-[10px]">
                     <span className="text-eid-fg">{m.nomeOponente}</span> solicitou cancelar este desafio. Você aceita?
@@ -387,7 +420,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                         className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
                       />
                       <CadastrarLocalOverlayTrigger
-                        href={`/locais/cadastrar?return_to=${encodeURIComponent(`/agenda?reag_match=${m.id}`)}`}
+                        href={`/locais/cadastrar?return_to=${encodeURIComponent(`${cadastrarLocalReturnBase}?reag_match=${m.id}${cadastrarLocalReturnBase.startsWith("/comunidade") ? "#desafios-aceitos-gestao" : ""}`)}`}
                         className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full rounded-xl text-center !min-h-[32px] !px-2 !text-[9px]`}
                       >
                         + Cadastrar local genérico
@@ -418,11 +451,11 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                 </>
               ) : null}
 
-              {m.status === "CancelamentoPendente" && m.isRequester && !m.gestaoSomenteLeitura ? (
+              {!somenteInformativo && m.status === "CancelamentoPendente" && m.isRequester && !m.gestaoSomenteLeitura ? (
                 <p className="text-[11px] text-eid-text-secondary md:text-xs">Você solicitou o cancelamento. Aguardando resposta do oponente.</p>
               ) : null}
 
-              {m.status === "ReagendamentoPendente" && m.isRequester && !m.gestaoSomenteLeitura ? (
+              {!somenteInformativo && m.status === "ReagendamentoPendente" && m.isRequester && !m.gestaoSomenteLeitura ? (
                 <div className="grid gap-2">
                   {m.options.map((op) => (
                     <div
@@ -465,7 +498,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                 </div>
               ) : null}
 
-              {m.status === "ReagendamentoPendente" && !m.isRequester && !m.gestaoSomenteLeitura ? (
+              {!somenteInformativo && m.status === "ReagendamentoPendente" && !m.isRequester && !m.gestaoSomenteLeitura ? (
                 <p className="text-[11px] text-eid-text-secondary md:text-xs">
                   Você recusou o cancelamento e sugeriu horários. Aguardando escolha do oponente.
                 </p>
