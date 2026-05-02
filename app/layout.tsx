@@ -25,8 +25,9 @@ import {
 import { EID_APP_CHROME_THEME_COLOR, EID_LOGO_AUTH_MARK_SRC } from "@/lib/branding";
 import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
 import { SiteFooterLoader } from "@/components/site-footer-loader";
+import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
 import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
-import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
+import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
 import "./globals.css";
 
 /* Barlow — família atlética, muito usada em apps esportivos premium */
@@ -111,13 +112,11 @@ export default async function RootLayout({
     cookieStore = ck;
     user = auth.user;
     if (user) {
-      papeis = await getCachedUsuarioPapeis(user.id);
-      const { supabase } = auth;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select(PROFILE_LEGAL_ACCEPTANCE_COLUMNS)
-        .eq("id", user.id)
-        .maybeSingle();
+      const [papeisResult, profile] = await Promise.all([
+        getCachedUsuarioPapeis(user.id),
+        getCachedProfileLegalRow(user.id),
+      ]);
+      papeis = papeisResult;
       canShowAuthenticatedChrome = legalAcceptanceIsCurrent(profile);
     }
   } catch {

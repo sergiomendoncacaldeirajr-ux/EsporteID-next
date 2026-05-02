@@ -1,18 +1,15 @@
 import { cache } from "react";
 import Link from "next/link";
+import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
-import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
+import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
 
-/** React.cache: no máximo uma leitura de `profiles` por request (via `LegalGateDeferred`). */
+/** React.cache: compartilha a mesma linha LGPD que o layout (`getCachedProfileLegalRow`). */
 export const getCachedShowLegalGate = cache(async (): Promise<boolean> => {
   try {
-    const { supabase, user } = await getServerAuth();
+    const { user } = await getServerAuth();
     if (!user) return false;
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select(PROFILE_LEGAL_ACCEPTANCE_COLUMNS)
-      .eq("id", user.id)
-      .maybeSingle();
+    const profile = await getCachedProfileLegalRow(user.id);
     return !legalAcceptanceIsCurrent(profile);
   } catch {
     return false;

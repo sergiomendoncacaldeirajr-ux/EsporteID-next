@@ -36,7 +36,8 @@ const nextConfig: NextConfig = {
     },
     /* Next 15: padrão dynamic=0 refaz RSC em toda navegação. Cache curto no cliente acelera voltar/reabrir rotas sem afetar realtime (Supabase). */
     staleTimes: {
-      dynamic: 45,
+      /* Mais segundos = menos refetch de RSC ao trocar de rota (shell já veio no layout). */
+      dynamic: 90,
       static: 300,
     },
     /* Tree-shake de imports amplo (ícones só entram se usados na rota). */
