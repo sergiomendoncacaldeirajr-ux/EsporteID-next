@@ -290,8 +290,17 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
 
               {m.gestaoSomenteLeitura && (m.status === "CancelamentoPendente" || m.status === "ReagendamentoPendente") ? (
                 <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1.5 text-[10px] font-semibold leading-snug text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)] md:text-[11px]">
-                  Fluxo de cancelamento ou reagendamento: <span className="text-eid-fg">somente o líder</span> da formação
-                  pode responder. Combine com o capitão.
+                  {m.status === "CancelamentoPendente" ? (
+                    <>
+                      Pedido de cancelamento em andamento. <span className="text-eid-fg">Só o líder</span> da sua formação
+                      pode aceitar ou recusar com opções de data. Você acompanha o status aqui e nas notificações.
+                    </>
+                  ) : (
+                    <>
+                      Reagendamento em andamento. <span className="text-eid-fg">Só o líder</span> da formação pode concluir
+                      as etapas. Acompanhe aqui e nas notificações.
+                    </>
+                  )}
                 </p>
               ) : null}
 

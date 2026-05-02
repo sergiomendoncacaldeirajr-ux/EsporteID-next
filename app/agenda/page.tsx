@@ -22,6 +22,10 @@ import {
 } from "@/lib/agenda/partidas-usuario";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { pickFormacaoLadoPartida } from "@/lib/agenda/partida-formacao-lado";
+import {
+  effectiveRankingMatchTeamIds,
+  timesDaPartidaPorMatchRows,
+} from "@/lib/agenda/ranking-match-effective-teams";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 
@@ -107,17 +111,57 @@ export default async function AgendaPage() {
     .order("id", { ascending: false })
     .limit(20);
 
-  const { data: aceitosCancelaveis } = await supabase
+  const aceitosSelect =
+    "id, usuario_id, adversario_id, desafiante_time_id, adversario_time_id, modalidade_confronto, esporte_id, status, cancel_requested_by, cancel_requested_at, cancel_response_deadline_at, reschedule_deadline_at, reschedule_selected_option, scheduled_for, scheduled_location, data_confirmacao";
+  const { data: aceitosCancelaveisRaw } = await supabase
     .from("matches")
-    .select(
-      "id, usuario_id, adversario_id, desafiante_time_id, adversario_time_id, modalidade_confronto, esporte_id, status, cancel_requested_by, cancel_requested_at, cancel_response_deadline_at, reschedule_deadline_at, reschedule_selected_option, scheduled_for, scheduled_location"
-    )
+    .select(aceitosSelect)
     .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
     .eq("finalidade", "ranking")
     .or(matchAceitosOr)
     .order("data_confirmacao", { ascending: false, nullsFirst: false })
     .order("id", { ascending: false })
     .limit(20);
+
+  let aceitosCancelaveis = [...(aceitosCancelaveisRaw ?? [])];
+  const aceitosIdsSeen = new Set(aceitosCancelaveis.map((m) => Number(m.id)).filter((n) => Number.isFinite(n) && n > 0));
+  if (agendaTeamIds.length > 0) {
+    const teamIn = agendaTeamIds.join(",");
+    const { data: partidasBridgeRows } = await supabase
+      .from("partidas")
+      .select("match_id")
+      .not("match_id", "is", null)
+      .or(`time1_id.in.(${teamIn}),time2_id.in.(${teamIn})`)
+      .in("status", ["agendada", "aguardando_aceite_agendamento", "aguardando_confirmacao"]);
+    const extraMatchIds = [
+      ...new Set(
+        (partidasBridgeRows ?? [])
+          .map((r) => Number((r as { match_id?: number | null }).match_id ?? 0))
+          .filter((n) => Number.isFinite(n) && n > 0 && !aceitosIdsSeen.has(n))
+      ),
+    ];
+    if (extraMatchIds.length > 0) {
+      const { data: aceitosExtra } = await supabase
+        .from("matches")
+        .select(aceitosSelect)
+        .in("id", extraMatchIds)
+        .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
+        .eq("finalidade", "ranking");
+      for (const row of aceitosExtra ?? []) {
+        const nid = Number((row as { id?: number }).id ?? 0);
+        if (!Number.isFinite(nid) || nid <= 0 || aceitosIdsSeen.has(nid)) continue;
+        aceitosIdsSeen.add(nid);
+        aceitosCancelaveis.push(row as (typeof aceitosCancelaveis)[number]);
+      }
+      aceitosCancelaveis.sort((a, b) => {
+        const da = String((a as { data_confirmacao?: string | null }).data_confirmacao ?? "");
+        const db = String((b as { data_confirmacao?: string | null }).data_confirmacao ?? "");
+        if (da !== db) return db.localeCompare(da);
+        return Number((b as { id?: number }).id ?? 0) - Number((a as { id?: number }).id ?? 0);
+      });
+      aceitosCancelaveis = aceitosCancelaveis.slice(0, 20);
+    }
+  }
   const { data: historicoCancelamentoRows } = await supabase
     .from("matches")
     .select("id, usuario_id, adversario_id, esporte_id, status")
@@ -144,10 +188,11 @@ export default async function AgendaPage() {
   const { data: partidasPorMatchRows } = matchIdsAceitos.length
     ? await supabase
         .from("partidas")
-        .select("id, match_id, status, status_ranking, data_partida, local_str, local_espaco_id")
+        .select("id, match_id, time1_id, time2_id, status, status_ranking, data_partida, local_str, local_espaco_id")
         .in("match_id", matchIdsAceitos)
         .order("id", { ascending: false })
     : { data: [] };
+  const timesPorMatchIdAgenda = timesDaPartidaPorMatchRows(partidasPorMatchRows ?? []);
   const partidaMaisRecentePorMatch = new Map<
     number,
     {
@@ -256,8 +301,16 @@ export default async function AgendaPage() {
   }
   const aceitosTimeIdSet = new Set<number>();
   for (const m of aceitosCancelaveis ?? []) {
-    const dt = Number((m as { desafiante_time_id?: number | null }).desafiante_time_id ?? 0);
-    const at = Number((m as { adversario_time_id?: number | null }).adversario_time_id ?? 0);
+    const eff = effectiveRankingMatchTeamIds(
+      {
+        id: m.id,
+        desafiante_time_id: (m as { desafiante_time_id?: number | null }).desafiante_time_id ?? null,
+        adversario_time_id: (m as { adversario_time_id?: number | null }).adversario_time_id ?? null,
+      },
+      timesPorMatchIdAgenda
+    );
+    const dt = Number(eff.desafiante_time_id ?? 0);
+    const at = Number(eff.adversario_time_id ?? 0);
     if (Number.isFinite(dt) && dt > 0) aceitosTimeIdSet.add(dt);
     if (Number.isFinite(at) && at > 0) aceitosTimeIdSet.add(at);
   }
@@ -331,7 +384,26 @@ export default async function AgendaPage() {
   }
 
   const aceitosItems = (aceitosCancelaveis ?? []).flatMap((m) => {
-      const opp = m.usuario_id === user.id ? m.adversario_id : m.usuario_id;
+      const effTeams = effectiveRankingMatchTeamIds(
+        {
+          id: m.id,
+          desafiante_time_id: (m as { desafiante_time_id?: number | null }).desafiante_time_id ?? null,
+          adversario_time_id: (m as { adversario_time_id?: number | null }).adversario_time_id ?? null,
+        },
+        timesPorMatchIdAgenda
+      );
+      const matchParaTimes = {
+        ...m,
+        desafiante_time_id: effTeams.desafiante_time_id,
+        adversario_time_id: effTeams.adversario_time_id,
+      };
+      let opp: string | null = m.usuario_id === user.id ? m.adversario_id : m.usuario_id;
+      if (effTeams.desafiante_time_id && effTeams.adversario_time_id) {
+        const myDesaf = agendaTeamIdSet.has(effTeams.desafiante_time_id);
+        const myAdv = agendaTeamIdSet.has(effTeams.adversario_time_id);
+        if (myDesaf && !myAdv) opp = m.adversario_id;
+        else if (myAdv && !myDesaf) opp = m.usuario_id;
+      }
       const status = String(m.status ?? "Aceito");
       const keyDuelo = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
       const keyDueloNoSport = dueloKeyNoSport(m.usuario_id, m.adversario_id);
@@ -345,8 +417,8 @@ export default async function AgendaPage() {
         {
           usuario_id: m.usuario_id,
           adversario_id: m.adversario_id,
-          desafiante_time_id: (m as { desafiante_time_id?: number | null }).desafiante_time_id ?? null,
-          adversario_time_id: (m as { adversario_time_id?: number | null }).adversario_time_id ?? null,
+          desafiante_time_id: effTeams.desafiante_time_id,
+          adversario_time_id: effTeams.adversario_time_id,
           modalidade_confronto: m.modalidade_confronto ?? null,
         },
         criadorPorTimeIdAgenda
@@ -389,7 +461,7 @@ export default async function AgendaPage() {
         }
       }
       const isRequester = String(m.cancel_requested_by ?? "") === user.id;
-      const tidOpp = resolveOponenteTimeIdAceitos(m);
+      const tidOpp = resolveOponenteTimeIdAceitos(matchParaTimes);
       const timeRow = tidOpp != null ? aceitosTimesById.get(tidOpp) : undefined;
       const nomePerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.nome : null) ?? "Oponente";
       const avatarPerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.avatarUrl : null) ?? null;
@@ -404,7 +476,7 @@ export default async function AgendaPage() {
           oponenteAvatarEhTime: Boolean(tidOpp && nomeTime),
           localizacaoOponente: tidOpp && timeRow?.localizacao?.trim() ? timeRow.localizacao.trim() : locPerfilOpp,
           notaEidOponente: tidOpp && timeRow ? Number(timeRow.eid_time ?? 0) : opp ? (notaEidByUserSport.get(`${opp}:${Number(m.esporte_id ?? 0)}`) ?? 0) : 0,
-          oponenteId: opp ?? "",
+          oponenteId: opp ?? m.adversario_id ?? m.usuario_id ?? "",
           esporte: (m.esporte_id ? espMapAceitos.get(m.esporte_id) : null) ?? "Esporte",
           modalidade: m.modalidade_confronto ?? "individual",
           status,
