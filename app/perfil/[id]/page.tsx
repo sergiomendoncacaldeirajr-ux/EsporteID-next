@@ -24,10 +24,7 @@ import {
   waMeHref,
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
-import {
-  computeDisponivelAmistosoEffective,
-  expireDisponivelAmistosoProfileIfNeeded,
-} from "@/lib/perfil/disponivel-amistoso";
+import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { partidaEncerradaParaHistorico, resultadoPartidaIndividual } from "@/lib/perfil/formacao-eid-stats";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
@@ -71,8 +68,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const isSelf = user.id === id;
   let disponivelAmistosoVal = perfil.disponivel_amistoso;
   let disponivelAmistosoAteVal = perfil.disponivel_amistoso_ate as string | null | undefined;
-
-  await expireDisponivelAmistosoProfileIfNeeded(supabase, user.id);
 
   const emptySet = new Set<number>();
   const [

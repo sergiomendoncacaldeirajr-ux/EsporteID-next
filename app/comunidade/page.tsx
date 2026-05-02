@@ -540,22 +540,23 @@ async function ComunidadePageContent() {
       };
     }
 
-  const { data: sugestoesRaw } = await supabase
-    .from("match_sugestoes")
-    .select("id, sugeridor_id, sugeridor_time_id, alvo_time_id, esporte_id, modalidade, mensagem, criado_em")
-    .eq("alvo_dono_id", user.id)
-    .eq("status", "pendente")
-    .order("id", { ascending: false })
-    .limit(25);
-  const { data: sugestoesEnviadasRaw } = await supabase
-    .from("match_sugestoes")
-    .select("id, sugeridor_id, sugeridor_time_id, alvo_time_id, esporte_id, modalidade, mensagem, status, criado_em, respondido_em, oculto_sugeridor")
-    .eq("sugeridor_id", user.id)
-    .neq("oculto_sugeridor", true)
-    .order("id", { ascending: false })
-    .limit(40);
-
-  const cooldownMesesSug = await getMatchRankCooldownMeses(supabase);
+  const [{ data: sugestoesRaw }, { data: sugestoesEnviadasRaw }, cooldownMesesSug] = await Promise.all([
+    supabase
+      .from("match_sugestoes")
+      .select("id, sugeridor_id, sugeridor_time_id, alvo_time_id, esporte_id, modalidade, mensagem, criado_em")
+      .eq("alvo_dono_id", user.id)
+      .eq("status", "pendente")
+      .order("id", { ascending: false })
+      .limit(25),
+    supabase
+      .from("match_sugestoes")
+      .select("id, sugeridor_id, sugeridor_time_id, alvo_time_id, esporte_id, modalidade, mensagem, status, criado_em, respondido_em, oculto_sugeridor")
+      .eq("sugeridor_id", user.id)
+      .neq("oculto_sugeridor", true)
+      .order("id", { ascending: false })
+      .limit(40),
+    getMatchRankCooldownMeses(supabase),
+  ]);
 
   const sugSugIds = [...new Set((sugestoesRaw ?? []).map((s) => s.sugeridor_id).filter(Boolean))] as string[];
   const sugTimeIds = [
@@ -563,9 +564,18 @@ async function ComunidadePageContent() {
       (sugestoesRaw ?? []).flatMap((s) => [s.sugeridor_time_id, s.alvo_time_id].filter((x): x is number => x != null))
     ),
   ];
-  const { data: sugPerfis } = sugSugIds.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", sugSugIds)
-    : { data: [] };
+  const sugEspIds = [...new Set((sugestoesRaw ?? []).map((s) => s.esporte_id).filter(Boolean))] as number[];
+  const [{ data: sugPerfis }, { data: sugTimes }, { data: sugEsportes }] = await Promise.all([
+    sugSugIds.length
+      ? supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", sugSugIds)
+      : Promise.resolve({ data: [] as Array<{ id: string; nome: string | null; avatar_url: string | null; localizacao: string | null }> }),
+    sugTimeIds.length
+      ? supabase.from("times").select("id, nome, criador_id, escudo, eid_time, localizacao").in("id", sugTimeIds)
+      : Promise.resolve({ data: [] as Array<{ id: number; nome: string | null; criador_id: string | null; escudo: string | null; eid_time: number | null; localizacao: string | null }> }),
+    sugEspIds.length
+      ? supabase.from("esportes").select("id, nome").in("id", sugEspIds)
+      : Promise.resolve({ data: [] as Array<{ id: number; nome: string | null }> }),
+  ]);
   const sugPerfilMap = new Map((sugPerfis ?? []).map((p) => [p.id, p.nome]));
   const sugPerfilAvatarMap = new Map(
     (sugPerfis ?? []).map((p) => [p.id, String((p as { avatar_url?: string | null }).avatar_url ?? "")])
@@ -576,18 +586,11 @@ async function ComunidadePageContent() {
       return [p.id, loc || null];
     })
   );
-  const { data: sugTimes } = sugTimeIds.length
-    ? await supabase.from("times").select("id, nome, criador_id, escudo, eid_time, localizacao").in("id", sugTimeIds)
-    : { data: [] };
   const sugTimeMap = new Map((sugTimes ?? []).map((t) => [t.id, t.nome]));
   const sugTimeAvatarMap = new Map((sugTimes ?? []).map((t) => [Number(t.id), String((t as { escudo?: string | null }).escudo ?? "")]));
   const sugTimeEidMap = new Map((sugTimes ?? []).map((t) => [Number(t.id), Number((t as { eid_time?: number | null }).eid_time ?? 0)]));
   const sugTimeLocMap = new Map((sugTimes ?? []).map((t) => [Number(t.id), String((t as { localizacao?: string | null }).localizacao ?? "")]));
   const sugTimeOwnerMap = new Map((sugTimes ?? []).map((t) => [Number(t.id), String((t as { criador_id?: string | null }).criador_id ?? "")]));
-  const sugEspIds = [...new Set((sugestoesRaw ?? []).map((s) => s.esporte_id).filter(Boolean))] as number[];
-  const { data: sugEsportes } = sugEspIds.length
-    ? await supabase.from("esportes").select("id, nome").in("id", sugEspIds)
-    : { data: [] };
   const sugEspMap = new Map((sugEsportes ?? []).map((e) => [e.id, e.nome]));
 
   const cutoffSug = new Date();
@@ -683,12 +686,14 @@ async function ComunidadePageContent() {
     ),
   ];
   const sugEnvEspIds = [...new Set((sugestoesEnviadasRaw ?? []).map((s) => Number(s.esporte_id ?? 0)).filter((n) => Number.isFinite(n) && n > 0))];
-  const { data: sugEnvTimes } = sugEnvTimeIds.length
-    ? await supabase.from("times").select("id, nome, escudo, eid_time, localizacao").in("id", sugEnvTimeIds)
-    : { data: [] };
-  const { data: sugEnvEsportes } = sugEnvEspIds.length
-    ? await supabase.from("esportes").select("id, nome").in("id", sugEnvEspIds)
-    : { data: [] };
+  const [{ data: sugEnvTimes }, { data: sugEnvEsportes }] = await Promise.all([
+    sugEnvTimeIds.length
+      ? supabase.from("times").select("id, nome, escudo, eid_time, localizacao").in("id", sugEnvTimeIds)
+      : Promise.resolve({ data: [] as Array<{ id: number; nome: string | null; escudo: string | null; eid_time: number | null; localizacao: string | null }> }),
+    sugEnvEspIds.length
+      ? supabase.from("esportes").select("id, nome").in("id", sugEnvEspIds)
+      : Promise.resolve({ data: [] as Array<{ id: number; nome: string | null }> }),
+  ]);
   const sugEnvTimesMap = new Map((sugEnvTimes ?? []).map((t) => [Number(t.id), t]));
   const sugEnvEspMap = new Map((sugEnvEsportes ?? []).map((e) => [Number(e.id), String(e.nome ?? "Esporte")]));
   const sugestoesEnviadasItems: SugestaoEnviadaMatchItem[] = (sugestoesEnviadasRaw ?? [])

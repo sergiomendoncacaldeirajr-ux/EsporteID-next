@@ -3,6 +3,7 @@ import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import { MatchPageShell } from "@/components/match/match-page-shell";
 import { MatchRadarApp } from "@/components/match/match-radar-app";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { getEsportesConfrontoCached } from "@/lib/match/esportes-confronto";
 import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
@@ -15,11 +16,8 @@ import {
   type SortBy,
 } from "@/lib/match/radar-snapshot";
 import { safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
-import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
-import {
-  computeDisponivelAmistosoEffective,
-  expireDisponivelAmistosoProfileIfNeeded,
-} from "@/lib/perfil/disponivel-amistoso";
+import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
+import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 
 type Search = {
   tipo?: string;
@@ -90,15 +88,17 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   const { supabase, user } = await getServerAuth();
   if (!user) redirect("/login?next=/match");
 
-  const { data: me } = await supabase
-    .from("profiles")
-    .select(
-      `id, lat, lng, genero, perfil_completo, disponivel_amistoso, disponivel_amistoso_ate, match_maioridade_confirmada, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
-    )
-    .eq("id", user.id)
-    .maybeSingle();
-  if (!me || !legalAcceptanceIsCurrent(me)) redirect("/conta/aceitar-termos");
-  if (!me.perfil_completo) redirect("/onboarding");
+  const [gate, { data: me }] = await Promise.all([
+    getCachedProfileLegalRow(user.id),
+    supabase
+      .from("profiles")
+      .select("id, lat, lng, genero, disponivel_amistoso, disponivel_amistoso_ate, match_maioridade_confirmada")
+      .eq("id", user.id)
+      .maybeSingle(),
+  ]);
+  if (!gate || !legalAcceptanceIsCurrent(gate)) redirect("/conta/aceitar-termos");
+  if (!gate.perfil_completo) redirect("/onboarding");
+  if (!me) redirect("/onboarding");
 
   const qs = new URLSearchParams();
   if (sp.tipo) qs.set("tipo", sp.tipo);
@@ -111,7 +111,6 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   if (!(me as { match_maioridade_confirmada?: boolean }).match_maioridade_confirmada) {
     redirect(`/conta/confirmar-maioridade-match?next=${encodeURIComponent(matchNext)}`);
   }
-  await expireDisponivelAmistosoProfileIfNeeded(supabase, user.id);
   const viewerAmistosoOn = computeDisponivelAmistosoEffective(
     me.disponivel_amistoso,
     me.disponivel_amistoso_ate
