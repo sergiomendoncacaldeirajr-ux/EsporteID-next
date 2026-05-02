@@ -182,14 +182,21 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
       {confirmId ? (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/55 p-3 sm:items-center">
           <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-0 shadow-xl">
-            <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Confirmação</p>
-              <span className="rounded-full border border-red-400/35 bg-red-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-red-200">
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2.5">
+              <p className="min-w-0 text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">
+                Confirmação
+              </p>
+              <span
+                className="shrink-0 rounded-full border border-red-400/80 bg-[color:color-mix(in_srgb,#ef4444_10%,white_90%)] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-red-800 eid-dark:border-red-400/40 eid-dark:bg-red-500/15 eid-dark:text-red-200"
+                aria-hidden
+              >
                 Cancelar pedido
               </span>
             </div>
             <div className="p-4">
-              <p className="text-sm font-black uppercase tracking-[0.08em] text-eid-primary-300">Confirmar cancelamento</p>
+              <p className="text-sm font-black uppercase tracking-[0.08em] text-eid-primary-700 eid-dark:text-eid-primary-300">
+                Confirmar cancelamento
+              </p>
               <p className="mt-2 text-sm text-eid-text-secondary">Tem certeza que deseja cancelar este pedido de desafio?</p>
               <div className="mt-4 flex gap-2">
                 <button
@@ -199,12 +206,12 @@ export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
                 >
                   Voltar
                 </button>
-                <form action={formAction} className="flex-1">
+                <form action={formAction} className="min-w-0 flex-1">
                   <input type="hidden" name="match_id" value={String(confirmId)} />
                   <button
                     type="submit"
                     disabled={pending}
-                    className="inline-flex min-h-[32px] w-full items-center justify-center rounded-lg border border-red-700 bg-red-700 px-3 text-xs font-black text-white"
+                    className="inline-flex min-h-[40px] w-full items-center justify-center whitespace-normal rounded-lg border border-red-700 bg-red-700 px-2 py-2 text-center text-[11px] font-black leading-snug text-white sm:min-h-[36px] sm:text-xs"
                   >
                     {pending ? "Cancelando..." : "Confirmar cancelamento"}
                   </button>

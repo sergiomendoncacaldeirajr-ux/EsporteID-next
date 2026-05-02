@@ -1,3 +1,5 @@
+import { isAmistosoAceiteInformativoNotif } from "@/lib/notificacoes/amistoso-aceite-informativo";
+
 export type NotificationRouteInput = {
   tipo?: string | null;
   mensagem?: string | null;
@@ -8,6 +10,9 @@ export function resolveNotificationHref({ tipo, mensagem }: NotificationRouteInp
   const msgNorm = String(mensagem ?? "").trim().toLowerCase();
 
   if (tipoNorm === "match" || tipoNorm === "desafio") {
+    if (isAmistosoAceiteInformativoNotif(tipoNorm, msgNorm)) {
+      return "/comunidade#notificacoes";
+    }
     if (msgNorm.includes("placar") || msgNorm.includes("resultado")) {
       return "/comunidade#resultados-partida";
     }

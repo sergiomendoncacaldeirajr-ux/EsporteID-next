@@ -151,7 +151,7 @@ async function getActiveTeamMemberIds(
     .from("membros_time")
     .select("usuario_id")
     .in("time_id", ids)
-    .eq("status", "ativo");
+    .in("status", ["ativo", "aceito", "aprovado"]);
   return [...new Set((data ?? []).map((r) => String((r as { usuario_id?: string | null }).usuario_id ?? "")).filter(Boolean))];
 }
 
@@ -331,10 +331,26 @@ async function ensurePartidaAgendadaFromMatch(
 
   const msg =
     "Desafio aceito e partida criada. Combine data e local na Agenda; lançamento do resultado no Painel (Partidas e resultados).";
+  const partidaIdNum = Number(novaPartida.id);
+  const capSet = new Set(
+    [matchRow.usuario_id, matchRow.adversario_id].map((v) => String(v ?? "").trim()).filter(Boolean),
+  );
   await Promise.all([
-    notify(supabase, matchRow.usuario_id, msg, Number(novaPartida.id), actorUserId),
-    notify(supabase, matchRow.adversario_id, msg, Number(novaPartida.id), actorUserId),
+    notify(supabase, matchRow.usuario_id, msg, partidaIdNum, actorUserId),
+    notify(supabase, matchRow.adversario_id, msg, partidaIdNum, actorUserId),
   ]);
+
+  if (isColetivo && time1Id && time2Id) {
+    const { data: membrosPartida } = await supabase
+      .from("membros_time")
+      .select("usuario_id")
+      .in("time_id", [time1Id, time2Id])
+      .in("status", ["ativo", "aceito", "aprovado"]);
+    const extra = [...new Set((membrosPartida ?? []).map((r) => String((r as { usuario_id?: string | null }).usuario_id ?? "").trim()).filter(Boolean))].filter(
+      (uid) => !capSet.has(uid),
+    );
+    await Promise.all(extra.map((uid) => notify(supabase, uid, msg, partidaIdNum, actorUserId)));
+  }
 }
 
 async function getRankPendingLimit(
@@ -414,7 +430,7 @@ export async function responderPedidoMatch(
 
   const { data: participantsRow } = await supabase
     .from("matches")
-    .select("usuario_id, adversario_id, adversario_time_id")
+    .select("usuario_id, adversario_id, adversario_time_id, desafiante_time_id")
     .eq("id", matchId)
     .maybeSingle();
 
@@ -439,13 +455,16 @@ export async function responderPedidoMatch(
     participantsRow?.usuario_id,
     participantsRow?.adversario_id,
   ];
-  if (aceitar && participantsRow?.adversario_time_id != null) {
-    const tid = Number(participantsRow.adversario_time_id);
-    if (Number.isFinite(tid) && tid > 0) {
+  if (aceitar) {
+    const teamIds = [participantsRow?.adversario_time_id, participantsRow?.desafiante_time_id]
+      .map((v) => Number(v ?? 0))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    const uniqTids = [...new Set(teamIds)];
+    if (uniqTids.length) {
       const { data: mems } = await supabase
         .from("membros_time")
         .select("usuario_id")
-        .eq("time_id", tid)
+        .in("time_id", uniqTids)
         .in("status", ["ativo", "aceito", "aprovado"]);
       for (const r of mems ?? []) {
         pushUserIds.push(String((r as { usuario_id?: string | null }).usuario_id ?? ""));
@@ -1095,6 +1114,23 @@ export async function marcarNotificacaoLida(formData: FormData) {
   if (!user) return;
 
   await supabase.from("notificacoes").update({ lida: true }).eq("id", id).eq("usuario_id", user.id);
+
+  revalidatePath("/comunidade");
+  revalidatePath("/dashboard");
+}
+
+export async function apagarNotificacao(formData: FormData) {
+  const raw = formData.get("notif_id");
+  const id = Number(raw);
+  if (!Number.isFinite(id) || id < 1) return;
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.from("notificacoes").delete().eq("id", id).eq("usuario_id", user.id);
 
   revalidatePath("/comunidade");
   revalidatePath("/dashboard");

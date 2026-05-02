@@ -38,6 +38,7 @@ import {
   firstOfRelation,
   getAgendaTeamContext,
 } from "@/lib/agenda/partidas-usuario";
+import { pickFormacaoLadoPartida } from "@/lib/agenda/partida-formacao-lado";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { splitCityState } from "@/lib/geo/split-city-state";
@@ -129,6 +130,15 @@ export default async function ComunidadePage() {
   const hasMyCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
   const uidEq = user.id;
+  const { teamIds: comunidadeAgendaTeamIds, teamClause: comunidadeAgendaTeamClause } = await getAgendaTeamContext(
+    supabase,
+    uidEq,
+  );
+  const matchRankFlowOr =
+    comunidadeAgendaTeamIds.length > 0
+      ? `usuario_id.eq.${uidEq},adversario_id.eq.${uidEq},desafiante_time_id.in.(${comunidadeAgendaTeamIds.join(",")}),adversario_time_id.in.(${comunidadeAgendaTeamIds.join(",")})`
+      : `usuario_id.eq.${uidEq},adversario_id.eq.${uidEq}`;
+  const partidasPainelCountOr = `jogador1_id.eq.${uidEq},jogador2_id.eq.${uidEq},usuario_id.eq.${uidEq}${comunidadeAgendaTeamClause}`;
   const { data: meusTimesLider } = await supabase.from("times").select("id").eq("criador_id", uidEq);
   const meusTimeIdsLider = [
     ...new Set(
@@ -174,17 +184,17 @@ export default async function ComunidadePage() {
     supabase
       .from("partidas")
       .select("id", { count: "exact", head: true })
-      .or(`jogador1_id.eq.${uidEq},jogador2_id.eq.${uidEq},usuario_id.eq.${uidEq}`)
+      .or(partidasPainelCountOr)
       .eq("status", "aguardando_confirmacao"),
     supabase
       .from("partidas")
       .select("id", { count: "exact", head: true })
-      .or(`jogador1_id.eq.${uidEq},jogador2_id.eq.${uidEq}`)
+      .or(partidasPainelCountOr)
       .eq("status", "agendada"),
     supabase
       .from("matches")
       .select("id", { count: "exact", head: true })
-      .or(`usuario_id.eq.${uidEq},adversario_id.eq.${uidEq}`)
+      .or(matchRankFlowOr)
       .eq("finalidade", "ranking")
       .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]),
   ]);
@@ -1100,6 +1110,7 @@ export default async function ComunidadePage() {
   let cancelMatchIdByDueloPainel = new Map<string, number>();
   let rescheduleAcceptedByDueloPainel = new Set<string>();
   let painelLocMap = new Map<number, string | null>();
+  let painelTimesById = new Map<number, { nome: string | null; escudo: string | null; eid_time: number | null }>();
 
   function localLabelPainel(p: AgendaPartidaCardRow) {
     if (p.local_str?.trim()) return p.local_str.trim();
@@ -1108,22 +1119,25 @@ export default async function ComunidadePage() {
   }
 
   if (needPartidas) {
+    const { teamIds: painelTeamIds, teamClause: teamClausePainel } = await getAgendaTeamContext(supabase, user.id);
+    const matchPainelOr =
+      painelTeamIds.length > 0
+        ? `usuario_id.eq.${user.id},adversario_id.eq.${user.id},desafiante_time_id.in.(${painelTeamIds.join(",")}),adversario_time_id.in.(${painelTeamIds.join(",")})`
+        : `usuario_id.eq.${user.id},adversario_id.eq.${user.id}`;
     const { data: aceitosCancelaveisPainel } = await supabase
       .from("matches")
       .select("id, usuario_id, adversario_id, esporte_id, status, reschedule_selected_option")
-      .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+      .or(matchPainelOr)
       .eq("finalidade", "ranking")
       .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
     const { data: historicoCancelamentoPainelRows } = await supabase
       .from("matches")
       .select("id, usuario_id, adversario_id, esporte_id, status")
-      .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+      .or(matchPainelOr)
       .eq("finalidade", "ranking")
       .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente", "Cancelado"])
       .order("id", { ascending: false })
       .limit(120);
-
-    const { teamClause: teamClausePainel } = await getAgendaTeamContext(supabase, user.id);
     await processarPendenciasAgendamentoAceite(supabase, user.id, teamClausePainel);
     const [{ data: painelAgendadas }, { data: painelPlacarFetch }] = await Promise.all([
       fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel),
@@ -1138,6 +1152,28 @@ export default async function ComunidadePage() {
       .order("id", { ascending: false })
       .limit(120);
     const painelPartidasAll = [...(painelAgendadas ?? []), ...painelPlacarPendente];
+    const painelTimeIdsSet = new Set<number>();
+    for (const p of painelPartidasAll) {
+      const r = p as AgendaPartidaCardRow;
+      for (const t of [r.time1_id, r.time2_id]) {
+        const n = Number(t);
+        if (Number.isFinite(n) && n > 0) painelTimeIdsSet.add(n);
+      }
+    }
+    const painelTimeIds = [...painelTimeIdsSet];
+    const { data: painelTimesRows } = painelTimeIds.length
+      ? await supabase.from("times").select("id, nome, escudo, eid_time").in("id", painelTimeIds)
+      : { data: [] };
+    painelTimesById = new Map<number, { nome: string | null; escudo: string | null; eid_time: number | null }>();
+    for (const t of painelTimesRows ?? []) {
+      const id = Number((t as { id: number }).id);
+      if (!Number.isFinite(id) || id <= 0) continue;
+      painelTimesById.set(id, {
+        nome: (t as { nome?: string | null }).nome ?? null,
+        escudo: (t as { escudo?: string | null }).escudo ?? null,
+        eid_time: (t as { eid_time?: number | null }).eid_time ?? null,
+      });
+    }
     const painelLocalIds = [
       ...new Set(
         painelPartidasAll.map((p) => p.local_espaco_id).filter((x): x is number => typeof x === "number" && x > 0)
@@ -1338,6 +1374,8 @@ export default async function ComunidadePage() {
                           j2AvatarUrl={pr.jogador2_id ? painelPerfilMap.get(pr.jogador2_id)?.avatar_url ?? null : null}
                           j1NotaEid={pr.jogador1_id ? painelNotaEidByUserSport.get(`${pr.jogador1_id}:${esporteIdCard}`) ?? 0 : 0}
                           j2NotaEid={pr.jogador2_id ? painelNotaEidByUserSport.get(`${pr.jogador2_id}:${esporteIdCard}`) ?? 0 : 0}
+                          formacaoJ1={pickFormacaoLadoPartida(pr, 1, painelTimesById)}
+                          formacaoJ2={pickFormacaoLadoPartida(pr, 2, painelTimesById)}
                           esporteId={esporteIdCard}
                           dataRef={pr.data_partida ?? pr.data_registro}
                           localLabel={localLabelPainel(pr)}
@@ -1345,6 +1383,7 @@ export default async function ComunidadePage() {
                           ctaFullscreen
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
                           ctaLabel="Revisar resultado"
+                          perfilEidFrom="/comunidade"
                         />
                       );
                     })}
@@ -1377,6 +1416,8 @@ export default async function ComunidadePage() {
                           j2AvatarUrl={pr.jogador2_id ? painelPerfilMap.get(pr.jogador2_id)?.avatar_url ?? null : null}
                           j1NotaEid={pr.jogador1_id ? painelNotaEidByUserSport.get(`${pr.jogador1_id}:${esporteIdCard}`) ?? 0 : 0}
                           j2NotaEid={pr.jogador2_id ? painelNotaEidByUserSport.get(`${pr.jogador2_id}:${esporteIdCard}`) ?? 0 : 0}
+                          formacaoJ1={pickFormacaoLadoPartida(pr, 1, painelTimesById)}
+                          formacaoJ2={pickFormacaoLadoPartida(pr, 2, painelTimesById)}
                           esporteId={esporteIdCard}
                           dataRef={pr.data_partida ?? pr.data_registro}
                           localLabel={localLabelPainel(pr)}
@@ -1390,7 +1431,7 @@ export default async function ComunidadePage() {
                           }
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
                           ctaLabel="Lançar resultado"
-                          topActionShiftXPx={24}
+                          perfilEidFrom="/comunidade"
                         />
                       );
                     })}

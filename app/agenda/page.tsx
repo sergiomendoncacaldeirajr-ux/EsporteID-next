@@ -17,6 +17,7 @@ import {
   loadUserTimeIdsOnTeams,
 } from "@/lib/agenda/partidas-usuario";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
+import { pickFormacaoLadoPartida } from "@/lib/agenda/partida-formacao-lado";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 
@@ -40,7 +41,13 @@ export default async function AgendaPage() {
   if (!profile || !legalAcceptanceIsCurrent(profile)) redirect("/conta/aceitar-termos");
   if (!profile.perfil_completo) redirect("/onboarding");
 
-  const { teamClause } = await getAgendaTeamContext(supabase, user.id);
+  const agendaUserId = user.id;
+
+  const { teamIds: agendaTeamIds, teamClause } = await getAgendaTeamContext(supabase, user.id);
+  const matchAceitosOr =
+    agendaTeamIds.length > 0
+      ? `usuario_id.eq.${user.id},adversario_id.eq.${user.id},desafiante_time_id.in.(${agendaTeamIds.join(",")}),adversario_time_id.in.(${agendaTeamIds.join(",")})`
+      : `usuario_id.eq.${user.id},adversario_id.eq.${user.id}`;
   await processarPendenciasAgendamentoAceite(supabase, user.id, teamClause);
 
   const { data: partidasAgendadas } = await fetchPartidasAgendadasUsuario(supabase, user.id, teamClause);
@@ -99,11 +106,11 @@ export default async function AgendaPage() {
   const { data: aceitosCancelaveis } = await supabase
     .from("matches")
     .select(
-      "id, usuario_id, adversario_id, modalidade_confronto, esporte_id, status, cancel_requested_by, cancel_requested_at, cancel_response_deadline_at, reschedule_deadline_at, reschedule_selected_option, scheduled_for, scheduled_location"
+      "id, usuario_id, adversario_id, desafiante_time_id, adversario_time_id, modalidade_confronto, esporte_id, status, cancel_requested_by, cancel_requested_at, cancel_response_deadline_at, reschedule_deadline_at, reschedule_selected_option, scheduled_for, scheduled_location"
     )
     .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
     .eq("finalidade", "ranking")
-    .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+    .or(matchAceitosOr)
     .order("data_confirmacao", { ascending: false, nullsFirst: false })
     .order("id", { ascending: false })
     .limit(20);
@@ -112,7 +119,7 @@ export default async function AgendaPage() {
     .select("id, usuario_id, adversario_id, esporte_id, status")
     .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente", "Cancelado"])
     .eq("finalidade", "ranking")
-    .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+    .or(matchAceitosOr)
     .order("id", { ascending: false })
     .limit(120);
 
@@ -149,7 +156,7 @@ export default async function AgendaPage() {
   const { data: partidasStatusRows } = await supabase
     .from("partidas")
     .select("id, esporte_id, jogador1_id, jogador2_id, status, status_ranking")
-    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id}${teamClause}`)
+    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}${teamClause}`)
     .in("status", ["agendada", "aguardando_confirmacao"])
     .order("id", { ascending: false })
     .limit(80);
@@ -223,6 +230,54 @@ export default async function AgendaPage() {
       { nome: p.nome ?? "Oponente", avatarUrl: p.avatar_url ?? null, localizacao: p.localizacao ?? null },
     ])
   );
+  const aceitosTimeIdSet = new Set<number>();
+  for (const m of aceitosCancelaveis ?? []) {
+    const dt = Number((m as { desafiante_time_id?: number | null }).desafiante_time_id ?? 0);
+    const at = Number((m as { adversario_time_id?: number | null }).adversario_time_id ?? 0);
+    if (Number.isFinite(dt) && dt > 0) aceitosTimeIdSet.add(dt);
+    if (Number.isFinite(at) && at > 0) aceitosTimeIdSet.add(at);
+  }
+  const aceitosTimeIds = [...aceitosTimeIdSet];
+  const { data: aceitosTimesRows } = aceitosTimeIds.length
+    ? await supabase.from("times").select("id, nome, escudo, eid_time, localizacao").in("id", aceitosTimeIds)
+    : { data: [] };
+  const aceitosTimesById = new Map<
+    number,
+    { nome: string | null; escudo: string | null; eid_time: number | null; localizacao: string | null }
+  >();
+  for (const t of aceitosTimesRows ?? []) {
+    const id = Number((t as { id: number }).id);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    aceitosTimesById.set(id, {
+      nome: (t as { nome?: string | null }).nome ?? null,
+      escudo: (t as { escudo?: string | null }).escudo ?? null,
+      eid_time: (t as { eid_time?: number | null }).eid_time ?? null,
+      localizacao: (t as { localizacao?: string | null }).localizacao ?? null,
+    });
+  }
+  const agendaTeamIdSet = new Set(agendaTeamIds);
+  function resolveOponenteTimeIdAceitos(m: {
+    usuario_id?: string | null;
+    adversario_id?: string | null;
+    modalidade_confronto?: string | null;
+    desafiante_time_id?: number | null;
+    adversario_time_id?: number | null;
+  }): number | null {
+    const mod = String((m as { modalidade_confronto?: string | null }).modalidade_confronto ?? "")
+      .trim()
+      .toLowerCase();
+    if (mod !== "dupla" && mod !== "time") return null;
+    const dti = Number((m as { desafiante_time_id?: number | null }).desafiante_time_id ?? 0);
+    const ati = Number((m as { adversario_time_id?: number | null }).adversario_time_id ?? 0);
+    if (!Number.isFinite(dti) || dti <= 0 || !Number.isFinite(ati) || ati <= 0) return null;
+    const uid = String((m as { usuario_id?: string | null }).usuario_id ?? "");
+    const aid = String((m as { adversario_id?: string | null }).adversario_id ?? "");
+    if (agendaUserId === uid) return ati;
+    if (agendaUserId === aid) return dti;
+    if (agendaTeamIdSet.has(dti)) return ati;
+    if (agendaTeamIdSet.has(ati)) return dti;
+    return null;
+  }
   const matchIdsCancel = (aceitosCancelaveis ?? []).map((m) => Number(m.id)).filter((v) => Number.isFinite(v) && v > 0);
   const { data: opcoesCancelRows } = matchIdsCancel.length
     ? await supabase
@@ -269,12 +324,20 @@ export default async function AgendaPage() {
       }
     }
     const isRequester = String(m.cancel_requested_by ?? "") === user.id;
+    const tidOpp = resolveOponenteTimeIdAceitos(m);
+    const timeRow = tidOpp != null ? aceitosTimesById.get(tidOpp) : undefined;
+    const nomePerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.nome : null) ?? "Oponente";
+    const avatarPerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.avatarUrl : null) ?? null;
+    const locPerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.localizacao : null) ?? null;
+    const nomeTime = timeRow?.nome != null && String(timeRow.nome).trim() ? String(timeRow.nome).trim() : null;
+    const escudoTime = timeRow?.escudo != null && String(timeRow.escudo).trim() ? String(timeRow.escudo).trim() : null;
     return {
       id: Number(m.id),
-      nomeOponente: (opp ? oponenteMapAceitos.get(opp)?.nome : null) ?? "Oponente",
-      avatarOponente: (opp ? oponenteMapAceitos.get(opp)?.avatarUrl : null) ?? null,
-      localizacaoOponente: (opp ? oponenteMapAceitos.get(opp)?.localizacao : null) ?? null,
-      notaEidOponente: opp ? notaEidByUserSport.get(`${opp}:${Number(m.esporte_id ?? 0)}`) ?? 0 : 0,
+      nomeOponente: nomeTime ?? nomePerfilOpp,
+      avatarOponente: escudoTime ?? avatarPerfilOpp,
+      oponenteAvatarEhTime: Boolean(tidOpp && nomeTime),
+      localizacaoOponente: tidOpp && timeRow?.localizacao?.trim() ? timeRow.localizacao.trim() : locPerfilOpp,
+      notaEidOponente: tidOpp && timeRow ? Number(timeRow.eid_time ?? 0) : opp ? (notaEidByUserSport.get(`${opp}:${Number(m.esporte_id ?? 0)}`) ?? 0) : 0,
       oponenteId: opp ?? "",
       esporte: (m.esporte_id ? espMapAceitos.get(m.esporte_id) : null) ?? "Esporte",
       modalidade: m.modalidade_confronto ?? "individual",
@@ -331,6 +394,29 @@ export default async function AgendaPage() {
     if (latestStatus === "cancelado") return false;
     return true;
   });
+
+  const agendaTimesCardIdSet = new Set<number>();
+  for (const row of partidasAgendadasVisiveis) {
+    const r = row as AgendaPartidaCardRow;
+    for (const t of [r.time1_id, r.time2_id]) {
+      const n = Number(t);
+      if (Number.isFinite(n) && n > 0) agendaTimesCardIdSet.add(n);
+    }
+  }
+  const agendaTimesCardIds = [...agendaTimesCardIdSet];
+  const { data: agendaTimesCardRows } = agendaTimesCardIds.length
+    ? await supabase.from("times").select("id, nome, escudo, eid_time").in("id", agendaTimesCardIds)
+    : { data: [] };
+  const agendaTimesCardById = new Map<number, { nome: string | null; escudo: string | null; eid_time: number | null }>();
+  for (const t of agendaTimesCardRows ?? []) {
+    const id = Number((t as { id: number }).id);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    agendaTimesCardById.set(id, {
+      nome: (t as { nome?: string | null }).nome ?? null,
+      escudo: (t as { escudo?: string | null }).escudo ?? null,
+      eid_time: (t as { eid_time?: number | null }).eid_time ?? null,
+    });
+  }
 
   const timeIdsAceiteAgendamento: number[] = [];
   for (const row of partidasAgendadasVisiveis) {
@@ -426,6 +512,8 @@ export default async function AgendaPage() {
                   j2AvatarUrl={pr.jogador2_id ? perfilMap.get(pr.jogador2_id)?.avatar_url ?? null : null}
                   j1NotaEid={pr.jogador1_id ? notaEidByUserSport.get(`${pr.jogador1_id}:${esporteIdCard}`) ?? 0 : 0}
                   j2NotaEid={pr.jogador2_id ? notaEidByUserSport.get(`${pr.jogador2_id}:${esporteIdCard}`) ?? 0 : 0}
+                  formacaoJ1={pickFormacaoLadoPartida(pr, 1, agendaTimesCardById)}
+                  formacaoJ2={pickFormacaoLadoPartida(pr, 2, agendaTimesCardById)}
                   esporteId={esporteIdCard}
                   dataRef={effectiveDataRef}
                   localLabel={effectiveLocalLabel}
@@ -446,7 +534,6 @@ export default async function AgendaPage() {
                         ) ?? null
                       : null
                   }
-                  topActionShiftXPx={24}
                   agendamentoPendente={schedulePending}
                   agendamentoPodeResponder={scheduleCanRespond}
                   agendamentoDeadline={pr.agendamento_aceite_deadline ?? null}

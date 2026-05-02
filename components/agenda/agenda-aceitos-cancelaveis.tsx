@@ -12,11 +12,14 @@ import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { EidAcceptedBadge } from "@/components/ui/eid-accepted-badge";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
+import { iniciaisFormacaoNome } from "@/lib/comunidade/iniciais-formacao";
 
 type Item = {
   id: number;
   nomeOponente: string;
   avatarOponente: string | null;
+  /** Logo de time/dupla (bordas arredondadas), senão avatar de perfil (circular). */
+  oponenteAvatarEhTime?: boolean;
   localizacaoOponente?: string | null;
   notaEidOponente?: number | null;
   oponenteId: string;
@@ -203,11 +206,19 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                   <img
                     src={m.avatarOponente}
                     alt=""
-                    className="h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
+                    className={
+                      m.oponenteAvatarEhTime
+                        ? "h-9 w-9 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
+                        : "h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
+                    }
                   />
                 ) : (
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 md:h-10 md:w-10 md:text-xs">
-                    {m.nomeOponente.trim().slice(0, 1).toUpperCase() || "O"}
+                  <span
+                    className={`inline-flex h-9 w-9 items-center justify-center border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 md:h-10 md:w-10 md:text-xs ${
+                      m.oponenteAvatarEhTime ? "rounded-xl" : "rounded-full"
+                    }`}
+                  >
+                    {iniciaisFormacaoNome(m.nomeOponente).slice(0, 2) || "O"}
                   </span>
                 )}
                 <div className="mt-1">

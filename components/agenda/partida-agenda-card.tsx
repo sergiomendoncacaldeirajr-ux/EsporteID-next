@@ -16,6 +16,10 @@ import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/
 import { createPortal } from "react-dom";
 import { EidCancelButton } from "@/components/ui/eid-cancel-button";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
+import type { PartidaAgendaFormacaoLado } from "@/lib/agenda/partida-formacao-lado";
+import { iniciaisFormacaoNome } from "@/lib/comunidade/iniciais-formacao";
+
+export type { PartidaAgendaFormacaoLado } from "@/lib/agenda/partida-formacao-lado";
 
 type Props = {
   id: number;
@@ -28,6 +32,9 @@ type Props = {
   j2AvatarUrl?: string | null;
   j1NotaEid?: number | null;
   j2NotaEid?: number | null;
+  /** Em dupla/time: exibir formação (nome + escudo + EID do time), não o capitão. */
+  formacaoJ1?: PartidaAgendaFormacaoLado;
+  formacaoJ2?: PartidaAgendaFormacaoLado;
   esporteId?: number | null;
   dataRef: string | null;
   localLabel: string | null;
@@ -39,10 +46,11 @@ type Props = {
   ctaFullscreen?: boolean;
   ctaHidden?: boolean;
   desistMatchId?: number | null;
-  topActionShiftXPx?: number;
   agendamentoPendente?: boolean;
   agendamentoPodeResponder?: boolean;
   agendamentoDeadline?: string | null;
+  /** Query `from=` nos links de EID (ex.: `/comunidade` no painel). */
+  perfilEidFrom?: string;
 };
 
 const cancelInitial: GerenciarCancelamentoState = { ok: false, message: "" };
@@ -85,6 +93,8 @@ export function PartidaAgendaCard({
   j2AvatarUrl,
   j1NotaEid,
   j2NotaEid,
+  formacaoJ1,
+  formacaoJ2,
   esporteId,
   dataRef,
   localLabel,
@@ -95,10 +105,10 @@ export function PartidaAgendaCard({
   ctaFullscreen = false,
   ctaHidden = false,
   desistMatchId = null,
-  topActionShiftXPx = 0,
   agendamentoPendente = false,
   agendamentoPodeResponder = false,
   agendamentoDeadline = null,
+  perfilEidFrom = "/agenda",
 }: Props) {
   const isPlacar = variant === "placar";
   const [openCancel, setOpenCancel] = useState(false);
@@ -121,6 +131,81 @@ export function PartidaAgendaCard({
     href ??
     (isPlacar ? `/registrar-placar/${id}?from=/comunidade` : `/registrar-placar/${id}?modo=agenda`);
   const ctaText = ctaLabel ?? (isPlacar ? "Revisar resultado" : "Agendar data e local");
+  const fromPath = perfilEidFrom;
+
+  function tituloLado(formacao: PartidaAgendaFormacaoLado | undefined, nomePerfil: string | null) {
+    if (formacao?.nome) return formacao.nome;
+    return primeiroNome(nomePerfil);
+  }
+
+  function renderLadoCol(
+    formacao: PartidaAgendaFormacaoLado | undefined,
+    nomePerfil: string | null,
+    userId: string | null | undefined,
+    avatarUrl: string | null | undefined,
+    notaPerfil: number,
+  ) {
+    const statsHref = formacao
+      ? `/perfil-time/${formacao.timeId}/eid/${Number(esporteId ?? 0)}?from=${encodeURIComponent(fromPath)}`
+      : userId && esporteId
+        ? `/perfil/${userId}/eid/${esporteId}?from=${encodeURIComponent(fromPath)}`
+        : null;
+    const titulo = tituloLado(formacao, nomePerfil);
+    const notaEid = formacao ? formacao.eidNota : Number(notaPerfil ?? 0);
+    const isTime = Boolean(formacao);
+    return (
+      <div className="min-w-0 flex-1 text-center">
+        <p className="truncate text-sm font-black tracking-tight text-eid-fg md:text-base">{titulo}</p>
+        <div className="mt-1 flex justify-center">
+          {statsHref ? (
+            <div className="relative flex flex-col items-center">
+              <ProfileEditDrawerTrigger
+                href={statsHref}
+                title={formacao ? `Estatísticas EID da formação ${titulo}` : `Estatísticas EID de ${titulo}`}
+                fullscreen
+                topMode="backOnly"
+                className={`relative block appearance-none overflow-hidden border-0 bg-transparent p-0 shadow-none ${
+                  isTime ? "h-14 w-14 rounded-xl md:h-16 md:w-16" : "h-14 w-14 rounded-full md:h-16 md:w-16"
+                }`}
+              >
+                {formacao?.escudoUrl ? (
+                  <Image
+                    src={formacao.escudoUrl}
+                    alt=""
+                    fill
+                    unoptimized
+                    className={`h-full w-full border-0 !object-cover object-center shadow-none ${
+                      isTime ? "rounded-xl ring-1 ring-[color:var(--eid-border-subtle)]" : "rounded-full"
+                    }`}
+                  />
+                ) : !formacao && userId && avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt=""
+                    fill
+                    unoptimized
+                    className="h-full w-full rounded-full border-0 !object-cover object-center shadow-none"
+                  />
+                ) : (
+                  <div
+                    className={`flex h-full w-full items-center justify-center border-[3px] border-eid-card bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-[8px] font-black tracking-widest text-eid-primary-200 shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)] ${
+                      isTime ? "rounded-xl" : "rounded-full"
+                    }`}
+                  >
+                    {iniciaisFormacaoNome(isTime ? formacao?.nome : nomePerfil).slice(0, 2) || "?"}
+                  </div>
+                )}
+              </ProfileEditDrawerTrigger>
+              <div className="-mt-0.5">
+                <ProfileEidPerformanceSeal notaEid={notaEid} compact className="scale-150" />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <article
       className={`relative ${
@@ -129,38 +214,6 @@ export function PartidaAgendaCard({
           : cardBase
       }`}
     >
-      {cancelMatchId && !isPlacar && !desistMatchId ? (
-        <>
-          {showCancelHint ? (
-            <p
-              className="pointer-events-none absolute left-1/2 top-[2.2rem] z-[2] w-fit whitespace-nowrap rounded-full border border-eid-primary-500/35 bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-surface)_10%)] px-2 py-[2px] text-center text-[8px] font-semibold uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)] shadow-[0_6px_14px_-10px_rgba(15,23,42,0.45)] backdrop-blur-[1px] animate-[eid-vt-main-fade-in_.22s_ease-out] sm:text-[9px]"
-              style={{ transform: `translateX(calc(-50% + ${topActionShiftXPx}px))` }}
-            >
-              Sem acordo? Toque em &quot;Cancelar&quot;.
-            </p>
-          ) : null}
-          <EidCancelButton
-            type="button"
-            compact
-            className="absolute left-1/2 top-2.5 z-[3] !min-h-[22px] -translate-x-1/2 rounded-lg !px-2 text-[9px] active:scale-[0.98]"
-            style={{ transform: `translateX(${topActionShiftXPx}px)` }}
-            onClick={() => {
-              setShowCancelHint(false);
-              setOpenCancel(true);
-            }}
-          />
-        </>
-      ) : null}
-      {desistMatchId && !isPlacar ? (
-        <button
-          type="button"
-          onClick={() => setOpenDesist(true)}
-          className="absolute left-1/2 top-2.5 z-[3] inline-flex min-h-[26px] max-w-[min(100%,14rem)] items-center justify-center rounded-xl border border-amber-700/95 bg-amber-700 px-2 text-[8px] font-black uppercase leading-tight tracking-[0.05em] text-white shadow-[0_4px_14px_-4px_rgba(180,83,9,0.45)] transition hover:bg-amber-800 active:scale-[0.98] sm:text-[9px]"
-          style={{ transform: `translateX(calc(-50% + ${topActionShiftXPx}px))` }}
-        >
-          Cancelar e desistir
-        </button>
-      ) : null}
       <div className="flex flex-wrap items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary md:text-[10px] md:font-black">
         <span className="inline-flex items-center gap-1 text-eid-fg/90">
           <span aria-hidden>⏱</span>
@@ -172,77 +225,13 @@ export function PartidaAgendaCard({
       </div>
 
       <div className="relative mt-2.5 flex items-start justify-between gap-2 md:mt-4">
-        <div className="min-w-0 flex-1 pt-4 text-center">
-          <p className="truncate text-sm font-black tracking-tight text-eid-fg md:text-base">{primeiroNome(j1Nome)}</p>
-          <div className="mt-1 flex justify-center">
-            {j1Id && esporteId ? (
-              <div className="relative flex flex-col items-center">
-                <ProfileEditDrawerTrigger
-                  href={`/perfil/${j1Id}/eid/${esporteId}?from=${encodeURIComponent("/agenda")}`}
-                  title={`Estatísticas EID de ${primeiroNome(j1Nome)}`}
-                  fullscreen
-                  topMode="backOnly"
-                  className="relative block h-14 w-14 appearance-none overflow-hidden rounded-full border-0 bg-transparent p-0 shadow-none md:h-16 md:w-16"
-                >
-                  {j1AvatarUrl ? (
-                    <Image
-                      src={j1AvatarUrl}
-                      alt=""
-                      fill
-                      unoptimized
-                      className="h-full w-full rounded-full border-0 !object-cover object-center shadow-none"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center rounded-full border-[3px] border-eid-card bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-[8px] font-black tracking-widest text-eid-primary-200 shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]">
-                      {primeiroNome(j1Nome).slice(0, 1).toUpperCase() || "?"}
-                    </div>
-                  )}
-                </ProfileEditDrawerTrigger>
-                <div className="-mt-0.5">
-                  <ProfileEidPerformanceSeal notaEid={Number(j1NotaEid ?? 0)} compact className="scale-150" />
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </div>
+        {renderLadoCol(formacaoJ1, j1Nome, j1Id ?? null, j1AvatarUrl, Number(j1NotaEid ?? 0))}
         <div className="shrink-0 self-end pb-0.5 text-center">
           <span className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-eid-action-500/35 bg-eid-action-500/12 text-[9px] font-black uppercase tracking-[0.08em] text-eid-action-300 shadow-[0_6px_16px_-10px_rgba(249,115,22,0.6)] md:h-8 md:w-8 md:text-[10px]">
             VS
           </span>
         </div>
-        <div className="min-w-0 flex-1 pt-4 text-center">
-          <p className="truncate text-sm font-black tracking-tight text-eid-fg md:text-base">{primeiroNome(j2Nome)}</p>
-          <div className="mt-1 flex justify-center">
-            {j2Id && esporteId ? (
-              <div className="relative flex flex-col items-center">
-                <ProfileEditDrawerTrigger
-                  href={`/perfil/${j2Id}/eid/${esporteId}?from=${encodeURIComponent("/agenda")}`}
-                  title={`Estatísticas EID de ${primeiroNome(j2Nome)}`}
-                  fullscreen
-                  topMode="backOnly"
-                  className="relative block h-14 w-14 appearance-none overflow-hidden rounded-full border-0 bg-transparent p-0 shadow-none md:h-16 md:w-16"
-                >
-                  {j2AvatarUrl ? (
-                    <Image
-                      src={j2AvatarUrl}
-                      alt=""
-                      fill
-                      unoptimized
-                      className="h-full w-full rounded-full border-0 !object-cover object-center shadow-none"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center rounded-full border-[3px] border-eid-card bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-[8px] font-black tracking-widest text-eid-primary-200 shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]">
-                      {primeiroNome(j2Nome).slice(0, 1).toUpperCase() || "?"}
-                    </div>
-                  )}
-                </ProfileEditDrawerTrigger>
-                <div className="-mt-0.5">
-                  <ProfileEidPerformanceSeal notaEid={Number(j2NotaEid ?? 0)} compact className="scale-150" />
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </div>
+        {renderLadoCol(formacaoJ2, j2Nome, j2Id ?? null, j2AvatarUrl, Number(j2NotaEid ?? 0))}
       </div>
 
       {localLabel ? (
@@ -351,13 +340,47 @@ export function PartidaAgendaCard({
         </div>
       )}
 
+      {!isPlacar && (cancelMatchId || desistMatchId) ? (
+        <div className="mt-3 space-y-2 border-t border-transparent pt-2">
+          {showCancelHint && cancelMatchId && !desistMatchId ? (
+            <p className="text-center text-[8px] font-semibold uppercase tracking-[0.04em] text-eid-text-secondary sm:text-[9px]">
+              Sem acordo? Toque em cancelar para solicitar o fluxo de cancelamento.
+            </p>
+          ) : null}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {cancelMatchId && !desistMatchId ? (
+              <EidCancelButton
+                type="button"
+                compact
+                inline
+                label="Cancelar"
+                className="shrink-0 !min-h-[28px] rounded-lg !px-2.5 active:scale-[0.98]"
+                onClick={() => {
+                  setShowCancelHint(false);
+                  setOpenCancel(true);
+                }}
+              />
+            ) : null}
+            {desistMatchId ? (
+              <button
+                type="button"
+                onClick={() => setOpenDesist(true)}
+                className="inline-flex min-h-[28px] w-auto max-w-[11rem] shrink-0 items-center justify-center rounded-lg border border-amber-700/95 bg-amber-700 px-2.5 text-[8px] font-black uppercase leading-tight tracking-[0.05em] text-white shadow-sm transition hover:bg-amber-800 active:scale-[0.98] sm:text-[9px]"
+              >
+                Cancelar e desistir
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       {openCancel && cancelMatchId && typeof document !== "undefined"
         ? createPortal(
             <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[1.5px] sm:items-center">
               <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-0 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
                 <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
                   <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Confirmação</p>
-                  <span className="rounded-full border border-red-500/35 bg-red-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f87171_45%)]">
+                  <span className="shrink-0 rounded-full border border-red-400/80 bg-[color:color-mix(in_srgb,#ef4444_10%,white_90%)] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-red-800 eid-dark:border-red-400/40 eid-dark:bg-red-500/15 eid-dark:text-red-200">
                     Cancelamento
                   </span>
                 </div>
@@ -407,7 +430,7 @@ export function PartidaAgendaCard({
               <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-0 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
                 <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
                   <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Confirmação</p>
-                  <span className="rounded-full border border-amber-500/35 bg-amber-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)]">
+                  <span className="shrink-0 rounded-full border border-amber-400/85 bg-[color:color-mix(in_srgb,#d97706_12%,white_88%)] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-amber-950 eid-dark:border-amber-500/35 eid-dark:bg-amber-500/12 eid-dark:text-amber-100">
                     Desistência
                   </span>
                 </div>

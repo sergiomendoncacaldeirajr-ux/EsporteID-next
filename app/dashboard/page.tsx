@@ -16,6 +16,7 @@ import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens"
 import { EidSectionInfo } from "@/components/ui/eid-section-info";
 import { EidSealPill } from "@/components/ui/eid-seal-pill";
 import { FindChallengeCta } from "@/components/dashboard/find-challenge-cta";
+import { getAgendaTeamContext } from "@/lib/agenda/partidas-usuario";
 
 export const metadata = {
   title: "Painel",
@@ -285,11 +286,17 @@ export default async function DashboardPage({ searchParams }: Props) {
   const myLng = Number(profile.lng ?? NaN);
   const hasMyCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
+  const { teamIds: dashTeamIds, teamClause: dashTeamClause } = await getAgendaTeamContext(supabase, user.id);
+  const dashMatchOr =
+    dashTeamIds.length > 0
+      ? `usuario_id.eq.${user.id},adversario_id.eq.${user.id},desafiante_time_id.in.(${dashTeamIds.join(",")}),adversario_time_id.in.(${dashTeamIds.join(",")})`
+      : `usuario_id.eq.${user.id},adversario_id.eq.${user.id}`;
+  const partidasDashOr = `jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}${dashTeamClause}`;
   const [{ data: activeMatches }, { data: meusEsportes }] = await Promise.all([
     supabase
       .from("matches")
       .select("usuario_id, adversario_id, status")
-      .or(`usuario_id.eq.${user.id},adversario_id.eq.${user.id}`)
+      .or(dashMatchOr)
       .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"]),
     supabase
       .from("usuario_eid")
@@ -321,7 +328,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   const partidasAgendadasResumoPromise = supabase
     .from("partidas")
     .select("id, data_partida, data_registro, torneio_id, esportes(nome)")
-    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}`)
+    .or(partidasDashOr)
     .eq("status", "agendada")
     .order("data_partida", { ascending: true, nullsFirst: false })
     .limit(20);
@@ -329,7 +336,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   const placarPendenteResumoPromise = supabase
     .from("partidas")
     .select("id, data_partida, data_registro, torneio_id, esportes(nome)")
-    .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id}`)
+    .or(partidasDashOr)
     .eq("status", "aguardando_confirmacao")
     .neq("lancado_por", user.id)
     .order("data_registro", { ascending: false })

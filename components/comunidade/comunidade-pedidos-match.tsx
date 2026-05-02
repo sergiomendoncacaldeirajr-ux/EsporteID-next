@@ -24,6 +24,9 @@ import {
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
 import { PedidoMatchFinalidadeSeal } from "@/components/comunidade/pedido-match-finalidade-seal";
+import { iniciaisFormacaoNome } from "@/lib/comunidade/iniciais-formacao";
+
+export const iniciaisFormacao = iniciaisFormacaoNome;
 
 export type PedidoMatchItem = {
   id: number;
@@ -56,14 +59,6 @@ function firstNamePedido(value?: string | null): string {
   const clean = String(value ?? "").trim();
   if (!clean) return "Atleta";
   return clean.split(/\s+/)[0] ?? clean;
-}
-
-export function iniciaisFormacao(nome: string | null | undefined): string {
-  const n = String(nome ?? "").trim();
-  if (!n) return "?";
-  const parts = n.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) return (parts[0]![0]! + parts[1]![0]!).toUpperCase();
-  return n.slice(0, 2).toUpperCase();
 }
 
 const initial: ResponderMatchState = { ok: false, message: "" };
