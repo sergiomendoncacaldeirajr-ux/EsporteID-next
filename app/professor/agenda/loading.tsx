@@ -1,6 +1,8 @@
 import { SkBlock } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 export default function LoadingProfessorAgenda() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <div className="grid gap-4 xl:grid-cols-[1.1fr_1.2fr]">
       <section className="space-y-4">

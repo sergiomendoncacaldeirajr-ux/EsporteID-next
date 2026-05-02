@@ -1,6 +1,8 @@
 import { SkBlock } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 export default function LoadingProfessorPerfil() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <div className="space-y-6">
       {Array.from({ length: 4 }).map((_, i) => (

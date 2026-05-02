@@ -1,7 +1,9 @@
 import { SkBlock } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 /** Conteúdo abaixo do hero do `professor/layout` — resumo + coluna lateral. */
 export default function LoadingProfessorHome() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
       <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">

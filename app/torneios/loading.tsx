@@ -1,6 +1,8 @@
 import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 export default function LoadingTorneios() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <SkMain variant="wide5">
       <SkBlock className="h-10 w-40 rounded-xl" />

@@ -1,7 +1,9 @@
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { SkBlock } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 export default function LoadingRanking() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <div className="relative flex w-full min-w-0 flex-col" data-eid-ranking-page>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg" aria-hidden />

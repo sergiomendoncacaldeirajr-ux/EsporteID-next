@@ -1,7 +1,9 @@
 import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 /** Landing / home — alinhado ao `app/page.tsx` (max-w-4xl, hero + cards “Como funciona”). */
 export default function LoadingHome() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
       <SkMain variant="landing">

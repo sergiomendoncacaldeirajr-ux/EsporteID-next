@@ -1,7 +1,9 @@
 import { SkBlock } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 /** Conteúdo abaixo do hero do `espaco/layout`. */
 export default function LoadingEspacoHome() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
       <section className="space-y-4">

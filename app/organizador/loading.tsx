@@ -1,7 +1,9 @@
 import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 /** Painel organizador — hero laranja + KPIs + lista de eventos. */
 export default function LoadingOrganizador() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <SkMain variant="wide5">
       <div className="rounded-3xl border border-eid-action-500/25 bg-gradient-to-br from-eid-card via-eid-card to-eid-action-500/10 p-5 shadow-[0_24px_56px_-22px_rgba(249,115,22,0.32)]">

@@ -1,9 +1,11 @@
 import { SkBlock } from "@/components/loading/skeleton-primitives";
 import { MatchPageShell } from "@/components/match/match-page-shell";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 /** Skeleton alinhado ao shell refinado do Match (hero + filtros + resultados). */
 export default function LoadingMatchPage() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <MatchPageShell>
       <div

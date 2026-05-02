@@ -1,6 +1,8 @@
 import { SkBlock } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 export default function LoadingEspacoFinanceiro() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-3">

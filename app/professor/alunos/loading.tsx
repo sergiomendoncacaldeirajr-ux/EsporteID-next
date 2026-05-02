@@ -1,6 +1,8 @@
 import { SkBlock } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 export default function LoadingProfessorAlunos() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">

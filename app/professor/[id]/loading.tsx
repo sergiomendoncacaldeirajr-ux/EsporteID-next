@@ -1,7 +1,9 @@
 import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 /** Página pública do professor (visitante). */
 export default function LoadingProfessorPublico() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <SkMain variant="wide5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start">

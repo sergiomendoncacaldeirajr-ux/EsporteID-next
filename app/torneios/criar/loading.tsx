@@ -1,7 +1,9 @@
 import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 /** Formulário longo de criação de torneio. */
 export default function LoadingCriarTorneio() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <SkMain variant="wide5">
       <SkBlock className="h-8 w-48 rounded-lg" />

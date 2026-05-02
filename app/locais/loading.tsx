@@ -1,7 +1,9 @@
 import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 export default function LoadingLocais() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <div className="relative z-0 flex min-h-0 w-full flex-1 flex-col" data-eid-locais-page>
       <div

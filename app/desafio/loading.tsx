@@ -1,6 +1,8 @@
 import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 export default function LoadingDesafio() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <SkMain variant="narrow">
       <SkBlock className="h-7 w-40 rounded-lg" />

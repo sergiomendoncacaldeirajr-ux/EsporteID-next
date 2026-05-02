@@ -1,7 +1,9 @@
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 export default function LoadingDashboard() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <div data-eid-dashboard-page>
     <SkMain

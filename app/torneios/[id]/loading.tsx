@@ -1,7 +1,9 @@
 import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 /** Página pública do torneio — banner, título e blocos de ação. */
 export default function LoadingTorneioDetalhe() {
+  if (eidRouteSkeletonsDisabled()) return null;
   return (
     <SkMain variant="wide5">
       <SkBlock className="h-7 w-28 rounded-lg" />
