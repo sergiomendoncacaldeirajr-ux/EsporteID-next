@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useActionState } from "react";
 import { criarEquipe, convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
 import { emitEidSocialDataRefresh } from "@/lib/comunidade/social-panel-layout";
+import { AVISO_REGRA_LIMITE_FORMACAO_GLOBAL } from "@/lib/formacao/formacao-global-limit";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { EidInviteButton } from "@/components/ui/eid-invite-button";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
@@ -254,6 +255,11 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
           {convidarUsuarioIdAposCriar
             ? "Escudo obrigatório. Ao salvar, o convite vai para o atleta do perfil (Social)."
             : "Preencha os dados da formação e envie uma foto obrigatória para criar."}
+        </p>
+        <p
+          className={`${isCadastrarStyle ? "mt-2 rounded-[13px] border border-[#C9D8F6] bg-[#F8FAFC] px-3 py-2 text-[10px] font-medium leading-snug text-[#475569]" : "mt-2 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2.5 py-1.5 text-[10px] leading-snug text-eid-text-secondary"}`}
+        >
+          {AVISO_REGRA_LIMITE_FORMACAO_GLOBAL}
         </p>
         <form action={createAction} className={`${isCadastrarStyle ? "mt-2.5 grid min-w-0 gap-2.5 sm:grid-cols-2" : "mt-3 grid min-w-0 gap-2 sm:grid-cols-2"}`}>
           {convidarUsuarioIdAposCriar ? <input type="hidden" name="convidar_usuario_id" value={convidarUsuarioIdAposCriar} /> : null}
@@ -567,6 +573,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
   const inviteBody = isConvidarStyle ? (
     <div className="rounded-[16px] border border-[color:var(--eid-border-subtle)] bg-eid-card p-3">
       <p className="text-[13px] font-black text-eid-fg">Convidar atleta por @username</p>
+      <p className="mt-2 text-[10px] leading-snug text-[#64748B] dark:text-slate-400">{AVISO_REGRA_LIMITE_FORMACAO_GLOBAL}</p>
       <form action={inviteAction} className={`mt-3 grid gap-2 ${panelMode === "invite" ? "" : "mt-3"}`}>
         <input type="hidden" name="convidado_usuario_id" value={pickedInviteUserId ?? ""} />
         <label className="grid gap-1">
@@ -674,6 +681,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     </div>
   ) : (
     <form action={inviteAction} className={`grid gap-2 sm:grid-cols-[1fr_1fr_auto] ${panelMode === "invite" ? "" : "mt-3"}`}>
+      <p className="text-[10px] leading-snug text-eid-text-secondary sm:col-span-3">{AVISO_REGRA_LIMITE_FORMACAO_GLOBAL}</p>
       <select name="time_id" required className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg">
         <option value="">Selecione a equipe</option>
         {minhasEquipes.map((t) => (

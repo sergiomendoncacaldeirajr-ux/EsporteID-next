@@ -56,7 +56,7 @@ function MatchRadarGridMiniChallengeBlock({
   nomeCurto: string;
   avatarColumn: ReactNode;
   esporteNome: string;
-  modalidadeLabel: string | null;
+  modalidadeLabel: string;
   compact?: boolean;
   viewerEsportesComDupla: readonly number[];
   viewerEsportesComTime: readonly number[];
@@ -136,17 +136,17 @@ function MatchRadarGridMiniChallengeBlock({
           <SportGlyphIcon sportName={esporteNome} />
           <span className="truncate">{esporteNome}</span>
         </p>
-        {modalidadeLabel ? (
-          <p
-            className={cn(
-              "inline-flex max-w-full items-center gap-1 font-semibold uppercase tracking-[0.08em] text-eid-text-secondary",
-              compact ? "mt-0.5 text-[6.5px] min-[390px]:text-[7px]" : "mt-1 text-[7px] min-[390px]:text-[8px]"
-            )}
-          >
-            <ModalidadeGlyphIcon modalidade={card.modalidade === "dupla" ? "dupla" : "time"} />
-            {modalidadeLabel}
-          </p>
-        ) : null}
+        <p
+          className={cn(
+            "inline-flex max-w-full items-center gap-1 font-semibold uppercase tracking-[0.08em] text-eid-text-secondary",
+            compact ? "mt-0.5 text-[6.5px] min-[390px]:text-[7px]" : "mt-1 text-[7px] min-[390px]:text-[8px]"
+          )}
+        >
+          <ModalidadeGlyphIcon
+            modalidade={card.modalidade === "time" ? "time" : card.modalidade === "dupla" ? "dupla" : "individual"}
+          />
+          {modalidadeLabel}
+        </p>
         <div className={cn("flex w-full max-w-full items-center gap-1.5 px-0.5 min-[390px]:gap-2 min-[390px]:px-1", compact ? "mt-0.5" : "mt-1")} aria-hidden>
           <span className="h-px min-w-0 flex-1 bg-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,transparent)]" />
           <span className="shrink-0 text-[9px] text-[color:color-mix(in_srgb,var(--eid-primary-500)_55%,var(--eid-text-secondary)_45%)] min-[390px]:text-[10px]">
@@ -214,7 +214,8 @@ function MatchRadarStickerCard({
       .trim()
       .split(/\s+/u)[0]?.[0]
       ?.toUpperCase() ?? "?";
-  const modalidadeLabel = card.modalidade === "individual" ? null : card.modalidade === "dupla" ? "Dupla" : "Time";
+  const modalidadeLabel =
+    card.modalidade === "individual" ? "Individual" : card.modalidade === "dupla" ? "Dupla" : "Time";
   const esporteIdStats = /^\d+$/.test(esporteParam) ? Number(esporteParam) : card.esporteId;
   const eidStatsHref =
     esporteIdStats > 0

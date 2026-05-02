@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-fullscreen-shell";
+import { ExcluirFormacaoButton } from "@/components/times/excluir-formacao-button";
+import { podeExcluirFormacaoComoLider } from "@/lib/formacao/pode-excluir-formacao-lider";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -25,6 +27,13 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
   const from = typeof sp.from === "string" && sp.from.startsWith("/") ? sp.from : `/perfil/${user.id}`;
   const isEmbed = sp.embed === "1";
   const equipesRouteWithOrigin = `/editar/equipes?from=${encodeURIComponent(from)}${isEmbed ? "&embed=1" : ""}`;
+
+  const podeExcluirPorTime = new Map<number, boolean>();
+  for (const row of timesRows ?? []) {
+    const tid = Number(row.id);
+    if (!Number.isFinite(tid) || tid < 1) continue;
+    podeExcluirPorTime.set(tid, await podeExcluirFormacaoComoLider(supabase, tid, user.id));
+  }
 
   return (
     <ProfileEditFullscreenShell
@@ -77,29 +86,47 @@ export default async function EditarEquipesFullscreenPage({ searchParams }: Prop
             <div className="mt-2 grid gap-2">
               {(timesRows ?? []).map((t) => {
                 const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
+                const tipoF = String(t.tipo ?? "time").trim().toLowerCase() === "dupla" ? "dupla" : "time";
+                const hrefEditar = `/editar/time/${t.id}?from=${encodeURIComponent(from)}${isEmbed ? "&embed=1" : ""}`;
+                const podeExcluirLinha = podeExcluirPorTime.get(Number(t.id)) === true;
                 return (
-                  <Link
+                  <div
                     key={`t-${t.id}`}
-                    href={`/editar/time/${t.id}?from=${encodeURIComponent(from)}${isEmbed ? "&embed=1" : ""}`}
                     className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-card/55 p-2 transition-all duration-200 hover:border-eid-primary-500/30"
                   >
-                    {t.escudo ? (
-                      <img src={t.escudo} alt="" className="h-10 w-10 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
-                    ) : (
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
-                        EQ
+                    <Link href={hrefEditar} className="flex min-w-0 flex-1 items-center gap-2">
+                      {t.escudo ? (
+                        <img src={t.escudo} alt="" className="h-10 w-10 rounded-full border border-[color:var(--eid-border-subtle)] object-cover" />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300">
+                          EQ
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate text-[11px] font-bold text-eid-fg">{t.nome}</p>
+                        <p className="truncate text-[9px] text-eid-text-secondary">{`${(t.tipo ?? "time").toUpperCase()} · ${esp?.nome ?? "Esporte"}`}</p>
                       </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate text-[11px] font-bold text-eid-fg">{t.nome}</p>
-                      <p className="truncate text-[9px] text-eid-text-secondary">{`${(t.tipo ?? "time").toUpperCase()} · ${esp?.nome ?? "Esporte"}`}</p>
-                    </div>
-                    <span className="ml-auto inline-flex h-5 w-5 items-center justify-center text-eid-text-secondary" aria-hidden>
-                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2">
+                    </Link>
+                    {podeExcluirLinha ? (
+                      <ExcluirFormacaoButton
+                        timeId={Number(t.id)}
+                        formationName={t.nome ?? "Formação"}
+                        formacaoTipo={tipoF}
+                        redirectAfter={equipesRouteWithOrigin}
+                        variant="inline"
+                        className="shrink-0"
+                      />
+                    ) : null}
+                    <Link
+                      href={hrefEditar}
+                      className="inline-flex h-5 w-5 shrink-0 items-center justify-center text-eid-text-secondary"
+                      aria-label={`Abrir ${t.nome ?? "equipe"}`}
+                    >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
                         <path d="m9 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                    </span>
-                  </Link>
+                    </Link>
+                  </div>
                 );
               })}
             </div>

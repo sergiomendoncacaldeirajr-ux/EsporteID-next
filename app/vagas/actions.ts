@@ -1,6 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import {
+  getFormacaoSlotsUsadosPorUsuario,
+  mensagemBloqueioAceitarCandidatura,
+  mensagemBloqueioCandidatura,
+  violacaoLimiteGlobalAoIngressar,
+} from "@/lib/formacao/formacao-global-limit";
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { createClient } from "@/lib/supabase/server";
 
@@ -97,6 +103,11 @@ export async function candidatarEmVagaAction(
     .eq("status", "ativo")
     .maybeSingle();
   if (membro) return { ok: false, message: "Você já faz parte desta formação." };
+
+  const slotsCand = await getFormacaoSlotsUsadosPorUsuario(supabase, user.id);
+  if (violacaoLimiteGlobalAoIngressar(slotsCand, team.tipo, timeId)) {
+    return { ok: false, message: mensagemBloqueioCandidatura(team.tipo) };
+  }
 
   const { error: upsertErr } = await supabase.from("time_candidaturas").upsert(
     {
@@ -208,6 +219,11 @@ export async function responderCandidaturaAction(
   if (row.status !== "pendente") return { ok: false, message: "Essa candidatura já foi respondida." };
 
   if (aceitar) {
+    const slotsAceite = await getFormacaoSlotsUsadosPorUsuario(supabase, row.candidato_usuario_id);
+    if (violacaoLimiteGlobalAoIngressar(slotsAceite, (team as { tipo?: string | null }).tipo, row.time_id)) {
+      return { ok: false, message: mensagemBloqueioAceitarCandidatura((team as { tipo?: string | null }).tipo) };
+    }
+
     const esporteId = Number((team as { esporte_id?: number | null }).esporte_id ?? 0);
     if (Number.isFinite(esporteId) && esporteId > 0) {
       const { data: candidatoEsporte } = await supabase

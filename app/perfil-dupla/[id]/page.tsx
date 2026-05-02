@@ -38,8 +38,10 @@ import {
 } from "@/lib/perfil/formacao-eid-stats";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { createClient } from "@/lib/supabase/server";
+import { ExcluirFormacaoButton } from "@/components/times/excluir-formacao-button";
 import { TeamPublicInviteBlock, type TeamPublicPendingInvite } from "@/components/times/team-public-invite-block";
 import { FormacaoTransferirLiderancaForm } from "@/components/times/formacao-transferir-lideranca-form";
+import { podeExcluirFormacaoComoLider } from "@/lib/formacao/pode-excluir-formacao-lider";
 import { BarChart3, ChevronRight } from "lucide-react";
 
 type Props = {
@@ -321,6 +323,12 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   const fromPublicDupla = `/perfil-dupla/${id}`;
   const editarDuplaHref = `/editar/dupla/${id}?from=${encodeURIComponent(fromPublicDupla)}`;
 
+  const podeExcluirPerfilDuplaTime =
+    isLiderTimeDupla &&
+    timeResolvidoId != null &&
+    (await podeExcluirFormacaoComoLider(supabase, timeResolvidoId, user.id));
+  const excluirDuplaRedirectPara = `/editar/equipes?from=${encodeURIComponent(`/perfil/${user.id}`)}`;
+
   const nomeExibicao = timeResolvido?.nome ?? `Dupla registrada #${id}`;
   const localExibicao =
     timeResolvido?.localizacao?.trim() ||
@@ -333,6 +341,17 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   return (
     <main data-eid-formacao-page className={PROFILE_PUBLIC_MAIN_CLASS}>
         <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 sm:p-4`}>
+          {podeExcluirPerfilDuplaTime && timeResolvidoId ? (
+            <div className="absolute right-2 top-2 z-10 sm:right-3 sm:top-3">
+              <ExcluirFormacaoButton
+                timeId={timeResolvidoId}
+                formationName={nomeExibicao}
+                formacaoTipo="dupla"
+                redirectAfter={excluirDuplaRedirectPara}
+                variant="compact"
+              />
+            </div>
+          ) : null}
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-5">
               <div className="flex shrink-0 flex-col items-center sm:items-start">
               {timeResolvido?.escudo ? (

@@ -1,11 +1,24 @@
 "use server";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { revalidatePath } from "next/cache";
 import { revalidateAfterTimeRosterOrConviteChange } from "@/lib/comunidade/revalidate-time-social-paths";
+import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
+import {
+  getFormacaoSlotsUsadosPorUsuario,
+  mensagemBloqueioConviteParaLider,
+  MSG_CRIAR_FORMACAO_BLOQUEADA_DUPLA,
+  MSG_CRIAR_FORMACAO_BLOQUEADA_TIME,
+  violacaoLimiteGlobalAoIngressar,
+} from "@/lib/formacao/formacao-global-limit";
 import { createClient } from "@/lib/supabase/server";
 
 export type TeamActionState =
   | { ok: true; message: string; createdTimeId?: number; inviteAutoSent?: boolean }
+  | { ok: false; message: string };
+
+export type ExcluirFormacaoLiderState =
+  | { ok: true; message: string; redirectTo: string }
   | { ok: false; message: string };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -99,6 +112,11 @@ async function conviteUsuarioParaTimeCore(
     }
   }
 
+  const slotsAlvo = await getFormacaoSlotsUsadosPorUsuario(supabase, targetProfileId);
+  if (violacaoLimiteGlobalAoIngressar(slotsAlvo, timeRow.tipo, timeId)) {
+    return { ok: false, message: mensagemBloqueioConviteParaLider(timeRow.tipo) };
+  }
+
   const { error } = await supabase.rpc("convidar_para_time", {
     p_time_id: timeId,
     p_username: usernameParaRpc,
@@ -166,6 +184,15 @@ export async function criarEquipe(
         "Você só pode criar dupla/time em esportes que já estão no seu perfil EID. Adicione esse esporte em Editar Performance EID e tente novamente.",
     };
   }
+
+  const slotsCriar = await getFormacaoSlotsUsadosPorUsuario(supabase, user.id);
+  if (tipo === "dupla" && slotsCriar.duplaTimeIds.length > 0) {
+    return { ok: false, message: MSG_CRIAR_FORMACAO_BLOQUEADA_DUPLA };
+  }
+  if (tipo === "time" && slotsCriar.timeTimeIds.length > 0) {
+    return { ok: false, message: MSG_CRIAR_FORMACAO_BLOQUEADA_TIME };
+  }
+
   if (username && !/^[a-z0-9_]{3,24}$/.test(username)) {
     return { ok: false, message: "Username inválido. Use 3-24 caracteres [a-z0-9_]." };
   }
@@ -513,10 +540,80 @@ export async function transferirLiderancaDaEquipe(
   });
   if (transferErr) return { ok: false, message: transferErr.message };
 
+  const { data: notifLider } = await supabase
+    .from("notificacoes")
+    .select("id")
+    .eq("usuario_id", novoLiderId)
+    .eq("tipo", "lideranca_time")
+    .eq("referencia_id", timeId)
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const notifId = Number(notifLider?.id ?? 0);
+  if (notifId > 0) {
+    await triggerPushForNotificationIdsBestEffort([notifId], { source: "times/actions.transferirLideranca" });
+  }
+
   await revalidateAfterTimeRosterOrConviteChange(supabase, {
     timeId,
     leaderId: user.id,
     affectedProfileIds: [novoLiderId],
   });
   return { ok: true, message: "Liderança transferida com sucesso." };
+}
+
+export async function excluirFormacaoLiderAction(
+  _prev: ExcluirFormacaoLiderState | undefined,
+  formData: FormData
+): Promise<ExcluirFormacaoLiderState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada." };
+
+  const timeId = Number(formData.get("time_id") ?? 0);
+  if (!Number.isInteger(timeId) || timeId < 1) return { ok: false, message: "Formação inválida." };
+
+  const fromRaw = String(formData.get("from") ?? "").trim();
+  const redirectTo = fromRaw.startsWith("/") ? fromRaw : "/editar/equipes";
+
+  const { data: teamBefore } = await supabase
+    .from("times")
+    .select("esporte_id, tipo, criador_id")
+    .eq("id", timeId)
+    .maybeSingle();
+  if (!teamBefore || teamBefore.criador_id !== user.id) {
+    return { ok: false, message: "Sem permissão para excluir esta formação." };
+  }
+
+  let duplaLegacyId: number | null = null;
+  if (String(teamBefore.tipo ?? "").trim().toLowerCase() === "dupla" && teamBefore.esporte_id != null) {
+    const esp = Number(teamBefore.esporte_id);
+    const criador = String(teamBefore.criador_id);
+    const { data: dupRow } = await supabase
+      .from("duplas")
+      .select("id")
+      .eq("esporte_id", esp)
+      .or(`player1_id.eq.${criador},player2_id.eq.${criador}`)
+      .limit(1)
+      .maybeSingle();
+    const did = Number(dupRow?.id ?? 0);
+    if (Number.isFinite(did) && did > 0) duplaLegacyId = did;
+  }
+
+  const { error } = await supabase.rpc("excluir_formacao_time_lider", { p_time_id: timeId });
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/editar/equipes");
+  revalidatePath(`/perfil-time/${timeId}`);
+  revalidatePath("/comunidade");
+  revalidatePath("/times");
+  revalidatePath("/dashboard");
+  revalidatePath(`/perfil/${user.id}`);
+  revalidatePath(`/editar/time/${timeId}`);
+  revalidatePath(`/conta/formacao/time/${timeId}`);
+  if (duplaLegacyId != null) revalidatePath(`/perfil-dupla/${duplaLegacyId}`);
+
+  return { ok: true, message: "Perfil da formação excluído.", redirectTo };
 }

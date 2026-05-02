@@ -40,8 +40,10 @@ import { TeamPublicInviteBlock, type TeamPublicPendingInvite } from "@/component
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { FormacaoCandidaturaCta } from "@/components/times/formacao-candidatura-cta";
 import { FormacaoElencoCallout } from "@/components/times/formacao-elenco-callout";
+import { ExcluirFormacaoButton } from "@/components/times/excluir-formacao-button";
 import { SairDaEquipeExitButton } from "@/components/times/sair-da-equipe-exit-button";
 import { PerfilTimeMembroLiderAcoes } from "@/components/times/perfil-time-membro-lider-acoes";
+import { podeExcluirFormacaoComoLider } from "@/lib/formacao/pode-excluir-formacao-lider";
 import { BarChart3, ChevronRight } from "lucide-react";
 
 type Props = {
@@ -256,6 +258,9 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
     (canChallenge || canSugerirMatch);
   const fromPublic = `/perfil-time/${id}`;
   const editarTimeHref = `/editar/time/${id}?from=${encodeURIComponent(fromPublic)}`;
+  const podeExcluirPerfilFormacao =
+    isLeader && (await podeExcluirFormacaoComoLider(supabase, id, user.id));
+  const excluirRedirectPara = `/editar/equipes?from=${encodeURIComponent(`/perfil/${user.id}`)}`;
   const idsExcluirConvite = [
     ...new Set(
       [...(membros ?? []).map((m) => String(m.usuario_id)), String(t.criador_id ?? "")]
@@ -297,13 +302,24 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   return (
     <main data-eid-formacao-page className={PROFILE_PUBLIC_MAIN_CLASS}>
         <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 sm:p-4`}>
-          {canLeaveTeam ? (
-            <div className="absolute right-2 top-2 z-10 sm:right-3 sm:top-3">
-              <SairDaEquipeExitButton
-                leaveAction={sairEquipeAction}
-                formationName={t.nome ?? "Formação"}
-                formacaoTipo="time"
-              />
+          {canLeaveTeam || (isLeader && podeExcluirPerfilFormacao) ? (
+            <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1.5 sm:right-3 sm:top-3">
+              {isLeader && podeExcluirPerfilFormacao ? (
+                <ExcluirFormacaoButton
+                  timeId={id}
+                  formationName={t.nome ?? "Formação"}
+                  formacaoTipo={modalidade === "dupla" ? "dupla" : "time"}
+                  redirectAfter={excluirRedirectPara}
+                  variant="compact"
+                />
+              ) : null}
+              {canLeaveTeam ? (
+                <SairDaEquipeExitButton
+                  leaveAction={sairEquipeAction}
+                  formationName={t.nome ?? "Formação"}
+                  formacaoTipo={modalidade === "dupla" ? "dupla" : "time"}
+                />
+              ) : null}
             </div>
           ) : null}
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-5">

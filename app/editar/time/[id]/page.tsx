@@ -3,8 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { PerfilTimeEditForm } from "@/components/perfil/perfil-time-edit-form";
 import { ProfileEditFullscreenShell } from "@/components/perfil/profile-edit-fullscreen-shell";
+import { ExcluirFormacaoButton } from "@/components/times/excluir-formacao-button";
 import { TeamRosterManager } from "@/components/times/team-roster-manager";
 import { contaNextPath, requireContaPerfilPronto } from "@/lib/conta/require-perfil-pronto";
+import { podeExcluirFormacaoComoLider } from "@/lib/formacao/pode-excluir-formacao-lider";
 import { FormacaoCapIcon } from "@/lib/perfil/formacao-glyphs";
 import { createClient } from "@/lib/supabase/server";
 
@@ -54,6 +56,8 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
 
   const tipoFormacao = String(t.tipo ?? "time").trim().toLowerCase() === "dupla" ? "dupla" : "time";
   const rosterCap = tipoFormacao === "dupla" ? 2 : 18;
+  const podeExcluirNestaPagina = await podeExcluirFormacaoComoLider(supabase, id, user.id);
+  const excluirRedirectEditar = `/editar/equipes?from=${encodeURIComponent(from)}${isEmbed ? "&embed=1" : ""}`;
 
   const [{ data: membrosRows }, { data: convitesRows }, rosterHeadRes] = await Promise.all([
     supabase
@@ -133,16 +137,27 @@ export default async function EditarTimeFullscreenPage({ params, searchParams }:
                 </p>
               </div>
             </div>
-            <Link
-              href={`/perfil-time/${id}?from=${encodeURIComponent(`/editar/time/${id}`)}`}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#C9D8F6] bg-white px-2 py-[3px] text-[8px] font-black uppercase tracking-[0.02em] text-[#2563EB] transition hover:bg-[#EEF4FF]"
-            >
-              <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <circle cx="12" cy="12" r="3" />
-                <path d="M2 12s3.7-6 10-6 10 6 10 6-3.7 6-10 6-10-6-10-6Z" />
-              </svg>
-              Ver perfil público
-            </Link>
+            <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
+              {podeExcluirNestaPagina ? (
+                <ExcluirFormacaoButton
+                  timeId={id}
+                  formationName={t.nome ?? "Formação"}
+                  formacaoTipo={tipoFormacao}
+                  redirectAfter={excluirRedirectEditar}
+                  variant="inline"
+                />
+              ) : null}
+              <Link
+                href={`/perfil-time/${id}?from=${encodeURIComponent(`/editar/time/${id}`)}`}
+                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#C9D8F6] bg-white px-2 py-[3px] text-[8px] font-black uppercase tracking-[0.02em] text-[#2563EB] transition hover:bg-[#EEF4FF]"
+              >
+                <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M2 12s3.7-6 10-6 10 6 10 6-3.7 6-10 6-10-6-10-6Z" />
+                </svg>
+                Ver perfil público
+              </Link>
+            </div>
           </div>
         </div>
       </section>

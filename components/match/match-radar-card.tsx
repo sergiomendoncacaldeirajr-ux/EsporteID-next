@@ -12,7 +12,7 @@ import {
   MatchChallengeAction,
   MatchChallengeMissingFormationPrompt,
 } from "@/components/match/match-challenge-action";
-import { SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 
 function rowDesafioHref(row: MatchRadarCard, esporteContextId: string) {
   const esporteParam = row.esporteId > 0 ? String(row.esporteId) : esporteContextId;
@@ -310,6 +310,15 @@ export function MatchRadarCardView({
             {card.rank} pts
           </span>
         </div>
+        <p
+          className="inline-flex max-w-full items-center gap-1 px-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary"
+          title="Modalidade no ranking"
+        >
+          <ModalidadeGlyphIcon
+            modalidade={card.modalidade === "time" ? "time" : card.modalidade === "dupla" ? "dupla" : "individual"}
+          />
+          {card.modalidade === "individual" ? "Individual" : card.modalidade === "dupla" ? "Dupla" : "Time"}
+        </p>
       </div>
 
       {!suppressChallengeHint && !card.canChallenge && card.challengeHint ? (

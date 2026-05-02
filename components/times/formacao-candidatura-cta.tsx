@@ -1,6 +1,7 @@
 "use client";
 
 import { CandidatarNaVagaForm, CancelarCandidaturaForm } from "@/components/vagas/vagas-actions";
+import { AVISO_REGRA_LIMITE_FORMACAO_GLOBAL } from "@/lib/formacao/formacao-global-limit";
 
 /** Bloco de candidatura (vagas) — reutilizado no card de /times e na página pública da formação. */
 export function FormacaoCandidaturaCta({
@@ -58,5 +59,12 @@ export function FormacaoCandidaturaCta({
     );
   }
 
-  return <CandidatarNaVagaForm timeId={timeId} hideMessageField submitLabel={submitLabel ?? "Candidatar"} />;
+  return (
+    <div className="space-y-2">
+      <p className={`rounded-lg border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,var(--eid-primary-500)_15%)] bg-[color:color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-500)_4%)] px-2.5 py-2 text-[10px] font-medium leading-snug text-eid-text-secondary ${pAlign}`}>
+        {AVISO_REGRA_LIMITE_FORMACAO_GLOBAL}
+      </p>
+      <CandidatarNaVagaForm timeId={timeId} hideMessageField submitLabel={submitLabel ?? "Candidatar"} />
+    </div>
+  );
 }
