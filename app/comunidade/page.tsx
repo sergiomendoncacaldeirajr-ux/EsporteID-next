@@ -58,9 +58,6 @@ export const metadata = {
   description: "Central de ações pendentes no EsporteID: desafios, equipe e placar que precisam da sua resposta.",
 };
 
-/** Sempre dinâmico: pendentes vêm do Supabase e precisam refletir realtime/refresh sem cache velho. */
-export const dynamic = "force-dynamic";
-
 function primeiroNome(nome?: string | null) {
   const n = (nome ?? "").trim();
   return n ? n.split(/\s+/u)[0] : "Atleta";

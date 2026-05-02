@@ -68,6 +68,32 @@ type PartidaResumo = {
   esportes?: { nome?: string | null } | Array<{ nome?: string | null }> | null;
 };
 
+/** Linhas retornadas pelas queries de torneios / locais no painel (fallback `[]` tipado). */
+type DashboardTorneioListRow = {
+  id: number;
+  nome: string | null;
+  status: string | null;
+  data_inicio: string | null;
+  banner: string | null;
+  esporte_id: number | null;
+  lat: string | number | null;
+  lng: string | number | null;
+};
+
+type DashboardEspacoListRow = {
+  id: number;
+  slug: string | null;
+  nome_publico: string | null;
+  logo_arquivo: string | null;
+  localizacao: string | null;
+  lat: string | number | null;
+  lng: string | number | null;
+  esportes_ids: unknown;
+  aceita_socios: boolean | null;
+  modo_monetizacao: string | null;
+  modo_reserva: string | null;
+};
+
 function firstProfile(p: AtletaRow["profiles"]): ProfileMini | null {
   if (!p) return null;
   return Array.isArray(p) ? p[0] ?? null : p;
@@ -353,7 +379,64 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (esportePrincipalId != null) {
     atletasQuery = atletasQuery.eq("esporte_id", esportePrincipalId);
   }
-  const { data: atletasRaw } = await atletasQuery;
+
+  const esportesParaFiltro = Array.from(meusEsportesSet);
+  let torneiosQuery = supabase
+    .from("torneios")
+    .select("id, nome, status, data_inicio, banner, esporte_id, lat, lng")
+    .eq("status", "aberto")
+    .order("criado_em", { ascending: false })
+    .limit(36);
+  if (esportesParaFiltro.length) {
+    torneiosQuery = torneiosQuery.in("esporte_id", esportesParaFiltro);
+  }
+  let timesQuery = supabase
+    .from("times")
+    .select("id, nome, tipo, localizacao, escudo, esporte_id, vagas_abertas, aceita_pedidos, lat, lng, criador_id, pontos_ranking, eid_time, esportes(nome)")
+    .neq("criador_id", user.id)
+    .order("pontos_ranking", { ascending: false })
+    .limit(50);
+  if (esportesParaFiltro.length) {
+    timesQuery = timesQuery.in("esporte_id", esportesParaFiltro);
+  }
+  const dashTeamIdSet = new Set(dashTeamIds);
+  const myTeamsInClause = dashTeamIds.length > 0 ? dashTeamIds.join(",") : "";
+  const locaisScrollPromise = canSeeLocais
+    ? supabase
+        .from("espacos_genericos")
+        .select("id, slug, nome_publico, logo_arquivo, localizacao, lat, lng, esportes_ids, aceita_socios, modo_monetizacao, modo_reserva")
+        .eq("ativo_listagem", true)
+        .limit(80)
+    : Promise.resolve({ data: [] as DashboardEspacoListRow[] });
+
+  const [
+    { data: atletasRaw },
+    torneiosRes,
+    { data: partidasAgendadasResumo },
+    { data: placarPendenteResumo },
+    [{ data: timesRaw }, { data: minhasFormacoesMembro }, { data: pendingColetivoRows }],
+    { data: locaisScrollRaw },
+  ] = await Promise.all([
+    atletasQuery,
+    canSeeTorneios ? torneiosQuery : Promise.resolve({ data: [] as DashboardTorneioListRow[] }),
+    partidasAgendadasResumoPromise,
+    placarPendenteResumoPromise,
+    Promise.all([
+      timesQuery,
+      supabase.from("membros_time").select("time_id").eq("usuario_id", user.id).in("status", ["ativo", "aceito", "aprovado"]),
+      dashTeamIds.length > 0
+        ? supabase
+            .from("matches")
+            .select("desafiante_time_id, adversario_time_id")
+            .eq("status", "Pendente")
+            .eq("finalidade", "ranking")
+            .in("modalidade_confronto", ["dupla", "time"])
+            .or(`desafiante_time_id.in.(${myTeamsInClause}),adversario_time_id.in.(${myTeamsInClause})`)
+        : Promise.resolve({ data: [] as Array<{ desafiante_time_id?: number | null; adversario_time_id?: number | null }> }),
+    ]),
+    locaisScrollPromise,
+  ]);
+  const torneios = torneiosRes.data;
 
   const atletasRows = (atletasRaw ?? []) as AtletaRow[];
   const atletasRowsFiltered = atletasRows.filter((row) => {
@@ -390,17 +473,6 @@ export default async function DashboardPage({ searchParams }: Props) {
     })
     .slice(0, 12);
 
-  let torneiosQuery = supabase
-    .from("torneios")
-    .select("id, nome, status, data_inicio, banner, esporte_id, lat, lng")
-    .eq("status", "aberto")
-    .order("criado_em", { ascending: false })
-    .limit(36);
-  const esportesParaFiltro = Array.from(meusEsportesSet);
-  if (esportesParaFiltro.length) {
-    torneiosQuery = torneiosQuery.in("esporte_id", esportesParaFiltro);
-  }
-  const { data: torneios } = canSeeTorneios ? await torneiosQuery : { data: [] };
   const torneiosFiltrados = (torneios ?? [])
     .map((t) => {
       const dist = hasMyCoords ? distanciaKm(myLat, myLng, Number(t.lat ?? NaN), Number(t.lng ?? NaN)) : 99999;
@@ -413,30 +485,6 @@ export default async function DashboardPage({ searchParams }: Props) {
     .sort((a, b) => a.dist - b.dist)
     .slice(0, 12);
 
-  let timesQuery = supabase
-    .from("times")
-    .select("id, nome, tipo, localizacao, escudo, esporte_id, vagas_abertas, aceita_pedidos, lat, lng, criador_id, pontos_ranking, eid_time, esportes(nome)")
-    .neq("criador_id", user.id)
-    .order("pontos_ranking", { ascending: false })
-    .limit(50);
-  if (esportesParaFiltro.length) {
-    timesQuery = timesQuery.in("esporte_id", esportesParaFiltro);
-  }
-  const dashTeamIdSet = new Set(dashTeamIds);
-  const myTeamsInClause = dashTeamIds.length > 0 ? dashTeamIds.join(",") : "";
-  const [{ data: timesRaw }, { data: minhasFormacoesMembro }, { data: pendingColetivoRows }] = await Promise.all([
-    timesQuery,
-    supabase.from("membros_time").select("time_id").eq("usuario_id", user.id).in("status", ["ativo", "aceito", "aprovado"]),
-    dashTeamIds.length > 0
-      ? supabase
-          .from("matches")
-          .select("desafiante_time_id, adversario_time_id")
-          .eq("status", "Pendente")
-          .eq("finalidade", "ranking")
-          .in("modalidade_confronto", ["dupla", "time"])
-          .or(`desafiante_time_id.in.(${myTeamsInClause}),adversario_time_id.in.(${myTeamsInClause})`)
-      : Promise.resolve({ data: [] as Array<{ desafiante_time_id?: number | null; adversario_time_id?: number | null }> }),
-  ]);
   const timeIdsComDesafioRankingPendente = new Set<number>();
   for (const m of pendingColetivoRows ?? []) {
     const a = Number((m as { desafiante_time_id?: number | null }).desafiante_time_id ?? 0);
@@ -540,13 +588,6 @@ export default async function DashboardPage({ searchParams }: Props) {
   const duplaMaisProxima = timesComBusca.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "dupla");
   const timeMaisProximo = timesComBusca.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "time");
 
-  const { data: locaisScrollRaw } = canSeeLocais
-    ? await supabase
-        .from("espacos_genericos")
-        .select("id, slug, nome_publico, logo_arquivo, localizacao, lat, lng, esportes_ids, aceita_socios, modo_monetizacao, modo_reserva")
-        .eq("ativo_listagem", true)
-        .limit(80)
-    : { data: [] };
   const locaisScroll = (locaisScrollRaw ?? [])
     .map((loc) => {
       const esporteIds = parseNumericList(loc.esportes_ids);
@@ -605,11 +646,6 @@ export default async function DashboardPage({ searchParams }: Props) {
       ? `/reservar/${encodeURIComponent(String(espacosReservaRapida[0].slug))}`
       : "/reservar";
   const mostrarReservarRapido = espacosReservaRapida.length > 0;
-
-  const [{ data: partidasAgendadasResumo }, { data: placarPendenteResumo }] = await Promise.all([
-    partidasAgendadasResumoPromise,
-    placarPendenteResumoPromise,
-  ]);
 
   const agora = new Date();
   const agoraMs = agora.getTime();

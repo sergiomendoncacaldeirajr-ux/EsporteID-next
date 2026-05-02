@@ -191,8 +191,7 @@ export function RealtimePageRefresh({ userId }: Props) {
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    /** Sem `pathname`: evita desmontar e recriar ~15 canais a cada navegação (muito lento). `pathnameRef` cobre refresh/poll. */
-    const channelTag = `${userId}-${instanceId}-${elencoVersion}`;
+    const channelTag = `${userId}-${instanceId}-${pathname}-${elencoVersion}`;
 
     void (async () => {
       const [teamIds, ownedIds] = await Promise.all([
@@ -560,7 +559,7 @@ export function RealtimePageRefresh({ userId }: Props) {
       if (candidaturasPollId != null) window.clearInterval(candidaturasPollId);
       channels.forEach((c) => void supabase.removeChannel(c));
     };
-  }, [router, userId, elencoVersion, instanceId]);
+  }, [router, userId, pathname, elencoVersion, instanceId]);
 
   return null;
 }
