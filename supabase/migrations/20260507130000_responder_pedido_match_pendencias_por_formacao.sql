@@ -227,7 +227,7 @@ begin
         when v_fin = 'amistoso' then
           'Seu pedido de desafio amistoso foi aceito. Use o WhatsApp para combinar — sem pontos de ranking e sem agenda obrigatória.'
         else
-          'Seu pedido de desafio de ranking foi aceito. Se não houver acordo de data, vocês podem usar o fluxo de cancelamento com confirmação.'
+          'Seu pedido de desafio de ranking foi aceito. Sem acordo de data, podem pedir o cancelamento na agenda.'
       end,
       'match',
       p_match_id,

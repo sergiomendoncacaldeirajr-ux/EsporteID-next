@@ -183,7 +183,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
       </div>
       <p className="px-3 pt-2 text-[11px] text-eid-text-secondary md:text-xs">
         {hasSpecialStatuses
-          ? "Cancelamento com confirmação e reagendamento: responda dentro dos prazos para evitar cancelamento automático."
+          ? "Se pedirem cancelamento ou nova data, responda no prazo."
           : "Acompanhe o status dos desafios aceitos abaixo."}
       </p>
       <div className="m-2.5 space-y-1.5 md:m-3 md:space-y-2">

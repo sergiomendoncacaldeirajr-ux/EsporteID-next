@@ -116,16 +116,9 @@ export function PartidaAgendaCard({
   const isPlacar = variant === "placar";
   const [openCancel, setOpenCancel] = useState(false);
   const [openDesist, setOpenDesist] = useState(false);
-  const [showCancelHint, setShowCancelHint] = useState(Boolean(cancelMatchId) && !isPlacar);
   const [agendaActionClicked, setAgendaActionClicked] = useState<"accept" | "reject" | null>(null);
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, cancelInitial);
   const [agendaState, agendaAction, agendaPending] = useActionState(responderAgendamentoPartidaAction, agendaInitial);
-  useEffect(() => {
-    if (!showCancelHint) return;
-    const hideHint = () => setShowCancelHint(false);
-    window.addEventListener("pointerdown", hideHint, { once: true });
-    return () => window.removeEventListener("pointerdown", hideHint);
-  }, [showCancelHint]);
   useEffect(() => {
     if (state.ok) setOpenCancel(false);
     if (state.ok) setOpenDesist(false);
@@ -351,12 +344,7 @@ export function PartidaAgendaCard({
       )}
 
       {!isPlacar && (cancelMatchId || desistMatchId) && !somenteLeituraElenco ? (
-        <div className="mt-3 space-y-2 border-t border-transparent pt-2">
-          {showCancelHint && cancelMatchId && !desistMatchId ? (
-            <p className="text-center text-[8px] font-semibold uppercase tracking-[0.04em] text-eid-text-secondary sm:text-[9px]">
-              Sem acordo? Toque em cancelar para solicitar o fluxo de cancelamento.
-            </p>
-          ) : null}
+        <div className="mt-3 border-t border-transparent pt-2">
           <div className="flex flex-wrap items-center justify-end gap-2">
             {cancelMatchId && !desistMatchId ? (
               <EidCancelButton
@@ -365,10 +353,7 @@ export function PartidaAgendaCard({
                 inline
                 label="Cancelar"
                 className="shrink-0 !min-h-[28px] rounded-lg !px-2.5 active:scale-[0.98]"
-                onClick={() => {
-                  setShowCancelHint(false);
-                  setOpenCancel(true);
-                }}
+                onClick={() => setOpenCancel(true)}
               />
             ) : null}
             {desistMatchId ? (
@@ -388,18 +373,12 @@ export function PartidaAgendaCard({
         ? createPortal(
             <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[1.5px] sm:items-center">
               <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-0 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
-                <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Confirmação</p>
-                  <span className="shrink-0 rounded-full border border-red-400/80 bg-[color:color-mix(in_srgb,#ef4444_10%,white_90%)] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-red-800 eid-dark:border-red-400/40 eid-dark:bg-red-500/15 eid-dark:text-red-200">
-                    Cancelamento
-                  </span>
+                <div className="border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
+                  <p className="text-center text-[11px] font-black uppercase tracking-[0.1em] text-eid-fg">Cancelamento</p>
                 </div>
                 <div className="p-4">
-                <p className="text-sm font-black uppercase tracking-[0.08em] text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)]">
-                  Solicitar cancelamento
-                </p>
-                <p className="mt-2 text-sm text-eid-text-secondary">
-                  Sem acordo de data/local? Envie a solicitação e o oponente terá prazo para responder.
+                <p className="text-sm text-eid-text-secondary">
+                  Sem acordo de data ou local? Envie aqui e aguarde a resposta do oponente.
                 </p>
                 {state.ok ? <p className="mt-2 text-xs text-emerald-300">{state.message}</p> : null}
                 {!state.ok && state.message ? <p className="mt-2 text-xs text-red-300">{state.message}</p> : null}
