@@ -205,6 +205,27 @@ export function RealtimePageRefresh({ userId }: Props) {
       const ownedSet = new Set(ownedIds);
 
       if (teamFilter) {
+        /** Dupla/time: pedidos e recusas em `matches` não passam por `usuario_id`/`adversario_id` de todo o elenco. */
+        register(
+          supabase
+            .channel(`eid-refresh-match-des-time-${channelTag}`)
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "matches", filter: `desafiante_time_id=${teamFilter}` },
+              refresh
+            )
+            .subscribe()
+        );
+        register(
+          supabase
+            .channel(`eid-refresh-match-adv-time-${channelTag}`)
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "matches", filter: `adversario_time_id=${teamFilter}` },
+              refresh
+            )
+            .subscribe()
+        );
         register(
           supabase
             .channel(`eid-refresh-partida-t1-${channelTag}`)
@@ -410,10 +431,12 @@ export function RealtimePageRefresh({ userId }: Props) {
       // Fallback robusto (Social + Agenda + sino): detecta mudanças mesmo se canais realtime falharem.
       const buildInteractionSignature = async () => {
         const teamSlice = teamIds.slice(0, 100);
+        const teamInList = teamSlice.length > 0 ? teamSlice.join(",") : "";
         const [
           notifUnread,
           matchesAdvPend,
           matchesMinePend,
+          matchesTeamColetivoPend,
           sugAlvoPend,
           sugMinePend,
           partidasRows,
@@ -427,6 +450,13 @@ export function RealtimePageRefresh({ userId }: Props) {
           supabase.from("notificacoes").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("lida", false),
           supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", userId).eq("status", "Pendente"),
           supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("status", "Pendente"),
+          teamInList
+            ? supabase
+                .from("matches")
+                .select("id", { count: "exact", head: true })
+                .eq("status", "Pendente")
+                .or(`desafiante_time_id.in.(${teamInList}),adversario_time_id.in.(${teamInList})`)
+            : Promise.resolve({ count: 0 }),
           supabase.from("match_sugestoes").select("id", { count: "exact", head: true }).eq("alvo_dono_id", userId).eq("status", "pendente"),
           supabase
             .from("match_sugestoes")
@@ -492,6 +522,7 @@ export function RealtimePageRefresh({ userId }: Props) {
           String(notifUnread.count ?? 0),
           String(matchesAdvPend.count ?? 0),
           String(matchesMinePend.count ?? 0),
+          String(matchesTeamColetivoPend.count ?? 0),
           String(sugAlvoPend.count ?? 0),
           String(sugMinePend.count ?? 0),
           String(convMePend.count ?? 0),

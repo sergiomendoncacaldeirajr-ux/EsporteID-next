@@ -85,10 +85,10 @@ export const PEDIDO_MATCH_RECEBIDO_RECUSAR_BTN_CLASS =
  * Touch: `app/globals.css` (`data-eid-social-acao-btn`).
  */
 export const PEDIDO_MATCH_RECEBIDO_SOCIAL_ACEITAR_BTN_CLASS =
-  "flex min-h-[30px] w-full items-center justify-center gap-0.5 rounded-[8px] border border-orange-200/35 bg-[linear-gradient(180deg,#ffb14a_0%,#ff8d1c_48%,#ef6c00_100%)] px-0.5 text-[8.5px] font-black uppercase tracking-[0.05em] text-white shadow-[0_6px_14px_-10px_rgba(239,108,0,0.72)] transition hover:brightness-105 active:brightness-95 disabled:pointer-events-none disabled:opacity-50 sm:min-h-[32px] sm:gap-1 sm:px-1 sm:text-[9px]";
+  "flex min-h-[34px] w-full items-center justify-center gap-0.5 rounded-[8px] border border-orange-200/35 bg-[linear-gradient(180deg,#ffb14a_0%,#ff8d1c_48%,#ef6c00_100%)] px-0.5 text-[8.5px] font-black uppercase tracking-[0.05em] text-white shadow-[0_6px_14px_-10px_rgba(239,108,0,0.72)] transition hover:brightness-105 active:brightness-95 disabled:pointer-events-none disabled:opacity-50 sm:min-h-[36px] sm:gap-1 sm:px-1 sm:text-[9px]";
 
 export const PEDIDO_MATCH_RECEBIDO_SOCIAL_RECUSAR_BTN_CLASS =
-  "flex min-h-[30px] w-full items-center justify-center gap-0.5 rounded-[8px] border border-[#475569] bg-transparent px-0.5 text-[8.5px] font-black uppercase tracking-[0.05em] text-[#CBD5F5] shadow-none transition hover:border-[#ef4444] hover:bg-red-500/15 hover:text-red-100 active:border-[#ef4444] active:bg-red-500/22 active:text-white disabled:pointer-events-none disabled:opacity-50 sm:min-h-[32px] sm:gap-1 sm:px-1 sm:text-[9px] eid-light:border-[#475569] eid-light:text-[#475569]";
+  "flex min-h-[34px] w-full items-center justify-center gap-0.5 rounded-[8px] border border-[#475569] bg-transparent px-0.5 text-[8.5px] font-black uppercase tracking-[0.05em] text-[#CBD5F5] shadow-none transition hover:border-[#ef4444] hover:bg-red-500/15 hover:text-red-100 active:border-[#ef4444] active:bg-red-500/22 active:text-white disabled:pointer-events-none disabled:opacity-50 sm:min-h-[36px] sm:gap-1 sm:px-1 sm:text-[9px] eid-light:border-[#475569] eid-light:text-[#475569]";
 
 /** Anel do ícone Check / Loader dentro do botão Aceitar (chrome claro / escuro). */
 export const PEDIDO_SOCIAL_LIGHT_ICON_RING_ACEITAR =

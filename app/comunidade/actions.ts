@@ -402,20 +402,18 @@ export async function responderPedidoMatch(
     participantsRow?.usuario_id,
     participantsRow?.adversario_id,
   ];
-  if (aceitar) {
-    const teamIds = [participantsRow?.adversario_time_id, participantsRow?.desafiante_time_id]
-      .map((v) => Number(v ?? 0))
-      .filter((n) => Number.isFinite(n) && n > 0);
-    const uniqTids = [...new Set(teamIds)];
-    if (uniqTids.length) {
-      const { data: mems } = await supabase
-        .from("membros_time")
-        .select("usuario_id")
-        .in("time_id", uniqTids)
-        .in("status", ["ativo", "aceito", "aprovado"]);
-      for (const r of mems ?? []) {
-        pushUserIds.push(String((r as { usuario_id?: string | null }).usuario_id ?? ""));
-      }
+  const teamIdsPush = [participantsRow?.adversario_time_id, participantsRow?.desafiante_time_id]
+    .map((v) => Number(v ?? 0))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  const uniqTidsPush = [...new Set(teamIdsPush)];
+  if (uniqTidsPush.length) {
+    const { data: memsPush } = await supabase
+      .from("membros_time")
+      .select("usuario_id")
+      .in("time_id", uniqTidsPush)
+      .in("status", ["ativo", "aceito", "aprovado"]);
+    for (const r of memsPush ?? []) {
+      pushUserIds.push(String((r as { usuario_id?: string | null }).usuario_id ?? ""));
     }
   }
 
