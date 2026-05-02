@@ -31,7 +31,7 @@ import {
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { partidaEncerradaParaHistorico, resultadoPartidaIndividual } from "@/lib/perfil/formacao-eid-stats";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
-import { createClient } from "@/lib/supabase/server";
+import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
@@ -55,62 +55,111 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const { id } = await params;
   const sp = (await searchParams) ?? {};
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getServerAuth();
   if (!user) redirect(loginNextWithOptionalFrom(`/perfil/${id}`, sp));
-  const featureCfg = await getSystemFeatureConfig(supabase);
-  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
 
-  const { data: perfil } = await supabase
-    .from("profiles")
-    .select(
-      "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, disponivel_amistoso_ate, mostrar_historico_publico, estilo_jogo, bio"
-    )
-    .eq("id", id)
-    .maybeSingle();
+  const perfilSelect =
+    "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, disponivel_amistoso_ate, mostrar_historico_publico, estilo_jogo, bio";
+
+  const [featureCfg, { data: perfil }] = await Promise.all([
+    getSystemFeatureConfig(supabase),
+    supabase.from("profiles").select(perfilSelect).eq("id", id).maybeSingle(),
+  ]);
+  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
   if (!perfil) notFound();
 
   const isSelf = user.id === id;
   let disponivelAmistosoVal = perfil.disponivel_amistoso;
   let disponivelAmistosoAteVal = perfil.disponivel_amistoso_ate as string | null | undefined;
-  if (isSelf) {
-    await expireDisponivelAmistosoProfileIfNeeded(supabase, user.id);
-    const { data: amRow } = await supabase
-      .from("profiles")
-      .select("disponivel_amistoso, disponivel_amistoso_ate")
-      .eq("id", id)
-      .maybeSingle();
-    if (amRow) {
-      disponivelAmistosoVal = amRow.disponivel_amistoso;
-      disponivelAmistosoAteVal = amRow.disponivel_amistoso_ate;
-    }
+
+  await expireDisponivelAmistosoProfileIfNeeded(supabase, user.id);
+
+  const emptySet = new Set<number>();
+  const [
+    amRowRes,
+    viewerAmRowRes,
+    mgRowRes,
+    { data: papeisRows },
+    { data: timesLider },
+    { data: duplasCadastro },
+    { data: membershipsRows },
+    { data: eids },
+    { data: viewerEidRowsParaDesafio },
+    podeVerWhatsappAtleta,
+    esportesMatchAceito,
+    cooldownMeses,
+    { data: viewerLiderTimesData },
+  ] = await Promise.all([
+    isSelf
+      ? supabase.from("profiles").select("disponivel_amistoso, disponivel_amistoso_ate").eq("id", id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    !isSelf
+      ? supabase.from("profiles").select("disponivel_amistoso, disponivel_amistoso_ate").eq("id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    isSelf
+      ? supabase.from("profiles").select("match_idade_gate").eq("id", user.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase.from("usuario_papeis").select("papel").eq("usuario_id", id),
+    supabase
+      .from("times")
+      .select("id, nome, tipo, escudo, esporte_id, esportes(nome)")
+      .eq("criador_id", id)
+      .order("id", { ascending: false })
+      .limit(12),
+    supabase
+      .from("duplas")
+      .select("id, esporte_id, esportes(nome)")
+      .or(`player1_id.eq.${id},player2_id.eq.${id}`)
+      .limit(12),
+    supabase
+      .from("membros_time")
+      .select("status, times!inner(id, nome, tipo, escudo, esporte_id, criador_id, esportes(nome))")
+      .eq("usuario_id", id)
+      .in("status", ["ativo", "aceito", "aprovado"])
+      .order("id", { ascending: false })
+      .limit(24),
+    supabase
+      .from("usuario_eid")
+      .select(
+        "esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas, interesse_match, modalidade_match, posicao_rank, esportes(nome, tipo, permite_individual)"
+      )
+      .eq("usuario_id", id)
+      .order("pontos_ranking", { ascending: false }),
+    !isSelf
+      ? supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", user.id)
+      : Promise.resolve({ data: null as { esporte_id: number }[] | null }),
+    podeExibirWhatsappPerfilPublico(supabase, user.id, id, isSelf),
+    isSelf ? Promise.resolve(emptySet) : esporteIdsComMatchAceitoEntre(supabase, user.id, id),
+    getMatchRankCooldownMeses(supabase),
+    !isSelf
+      ? supabase
+          .from("times")
+          .select("id, nome, tipo, esporte_id, esportes(nome)")
+          .eq("criador_id", user.id)
+          .order("id", { ascending: false })
+      : Promise.resolve({ data: [] as unknown[] | null }),
+  ]);
+
+  if (isSelf && amRowRes.data) {
+    disponivelAmistosoVal = amRowRes.data.disponivel_amistoso;
+    disponivelAmistosoAteVal = amRowRes.data.disponivel_amistoso_ate;
   }
   const amistosoPerfilOn = computeDisponivelAmistosoEffective(disponivelAmistosoVal, disponivelAmistosoAteVal);
   const amistosoPerfilExpiresAt = amistosoPerfilOn && disponivelAmistosoAteVal ? String(disponivelAmistosoAteVal) : null;
 
   let viewerAmistosoOn = false;
-  if (!isSelf) {
-    await expireDisponivelAmistosoProfileIfNeeded(supabase, user.id);
-    const { data: viewerAmRow } = await supabase
-      .from("profiles")
-      .select("disponivel_amistoso, disponivel_amistoso_ate")
-      .eq("id", user.id)
-      .maybeSingle();
+  if (!isSelf && viewerAmRowRes.data) {
     viewerAmistosoOn = computeDisponivelAmistosoEffective(
-      viewerAmRow?.disponivel_amistoso,
-      viewerAmRow?.disponivel_amistoso_ate
+      viewerAmRowRes.data.disponivel_amistoso,
+      viewerAmRowRes.data.disponivel_amistoso_ate
     );
   }
 
   let viewerMatchIdadeGate = "ok";
-  if (isSelf) {
-    const { data: mgRow } = await supabase.from("profiles").select("match_idade_gate").eq("id", user.id).maybeSingle();
-    viewerMatchIdadeGate = String(mgRow?.match_idade_gate ?? "ok");
+  if (isSelf && mgRowRes.data) {
+    viewerMatchIdadeGate = String(mgRowRes.data.match_idade_gate ?? "ok");
   }
 
-  const { data: papeisRows } = await supabase.from("usuario_papeis").select("papel").eq("usuario_id", id);
   const papeis = (papeisRows ?? []).map((row) => row.papel);
   const hasProfessor = papeis.includes("professor");
   const hasOrganizador = papeis.includes("organizador");
@@ -136,33 +185,37 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
       ])
     : [{ data: null }, { data: [] }, { data: [] }];
 
-  const podeVerWhatsappAtleta = await podeExibirWhatsappPerfilPublico(supabase, user.id, id, isSelf);
   const podeVerWhatsappProfessor = hasProfessor
     ? await podeExibirWhatsappProfessor(supabase, user.id, id, isSelf)
     : false;
   const podeVerWhatsapp = podeVerWhatsappAtleta || podeVerWhatsappProfessor;
   const linkWpp = podeVerWhatsapp ? waMeHref(perfil.whatsapp) : null;
-  const esportesMatchAceito = isSelf
-    ? new Set<number>()
-    : await esporteIdsComMatchAceitoEntre(supabase, user.id, id);
 
-  const [{ data: eids }, { data: viewerEidRowsParaDesafio }] = await Promise.all([
-    supabase
-      .from("usuario_eid")
-      .select(
-        "esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas, interesse_match, modalidade_match, posicao_rank, esportes(nome, tipo, permite_individual)"
-      )
-      .eq("usuario_id", id)
-      .order("pontos_ranking", { ascending: false }),
-    !isSelf
-      ? supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", user.id)
-      : Promise.resolve({ data: null as { esporte_id: number }[] | null }),
-  ]);
   const viewerEsporteIdsParaDesafio = new Set(
     (viewerEidRowsParaDesafio ?? [])
       .map((r) => Number(r.esporte_id))
       .filter((n) => Number.isFinite(n) && n > 0)
   );
+
+  let minhasFormacoesLider: Array<{
+    id: number;
+    nome: string;
+    tipo: string | null;
+    esporte_id: number | null;
+    esporteNome: string;
+  }> = [];
+  if (!isSelf && viewerLiderTimesData && viewerLiderTimesData.length > 0) {
+    minhasFormacoesLider = (viewerLiderTimesData as Array<Record<string, unknown>>).map((t) => {
+      const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
+      return {
+        id: Number(t.id),
+        nome: String(t.nome ?? "").trim() || "Formação",
+        tipo: (t.tipo as string | null) ?? null,
+        esporte_id: t.esporte_id != null ? Number(t.esporte_id) : null,
+        esporteNome: (esp as { nome?: string | null } | null)?.nome ?? "Esporte",
+      };
+    });
+  }
 
   const principalEid =
     eids && eids.length > 0
@@ -176,27 +229,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   }
   const jogosT = vitT + derT;
   const winRate = jogosT > 0 ? Math.round((vitT / jogosT) * 100) : null;
-
-  const { data: timesLider } = await supabase
-    .from("times")
-    .select("id, nome, tipo, escudo, esporte_id, esportes(nome)")
-    .eq("criador_id", id)
-    .order("id", { ascending: false })
-    .limit(12);
-
-  const { data: duplasCadastro } = await supabase
-    .from("duplas")
-    .select("id, esporte_id, esportes(nome)")
-    .or(`player1_id.eq.${id},player2_id.eq.${id}`)
-    .limit(12);
-
-  const { data: membershipsRows } = await supabase
-    .from("membros_time")
-    .select("status, times!inner(id, nome, tipo, escudo, esporte_id, criador_id, esportes(nome))")
-    .eq("usuario_id", id)
-    .in("status", ["ativo", "aceito", "aprovado"])
-    .order("id", { ascending: false })
-    .limit(24);
   const timesParticipa: Array<{
     id: number;
     nome: string | null;
@@ -253,32 +285,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   /** Visitante vendo atleta sem formação: o bloco "Dupla ou time" cobre o vazio — não repetir seção Equipes. */
   const ocultarSecaoEquipesParaVisitante = !isSelf && alvoSemFormacao && semCardsEquipesPerfil;
 
-  let minhasFormacoesLider: Array<{
-    id: number;
-    nome: string;
-    tipo: string | null;
-    esporte_id: number | null;
-    esporteNome: string;
-  }> = [];
-
-  if (!isSelf) {
-    const { data: liderRows } = await supabase
-      .from("times")
-      .select("id, nome, tipo, esporte_id, esportes(nome)")
-      .eq("criador_id", user.id)
-      .order("id", { ascending: false });
-    minhasFormacoesLider = (liderRows ?? []).map((t) => {
-      const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
-      return {
-        id: Number(t.id),
-        nome: t.nome ?? "Formação",
-        tipo: t.tipo ?? null,
-        esporte_id: t.esporte_id != null ? Number(t.esporte_id) : null,
-        esporteNome: esp?.nome ?? "Esporte",
-      };
-    });
-  }
-
   const targetEsporteIdsParaConvite = new Set(
     (eids ?? []).map((e) => Number(e.esporte_id)).filter((n) => Number.isFinite(n) && n > 0)
   );
@@ -297,7 +303,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
       };
     })
     .filter((e) => Number.isFinite(e.esporteId) && e.esporteId > 0);
-  const cooldownMeses = await getMatchRankCooldownMeses(supabase);
   const esporteIdsPerfil = [...new Set(esportesDoPerfil.map((e) => Number(e.esporteId)).filter((n) => Number.isFinite(n) && n > 0))];
   const { data: confrontosComAlvo } = !isSelf && esporteIdsPerfil.length > 0
     ? await supabase

@@ -21,45 +21,41 @@ export async function podeExibirWhatsappPerfilPublico(
 ): Promise<boolean> {
   if (isSelf) return true;
 
-  const { data: aceitoA } = await supabase
-    .from("matches")
-    .select("id")
-    .eq("status", "Aceito")
-    .eq("usuario_id", visitanteId)
-    .eq("adversario_id", perfilId)
-    .limit(1);
-
-  const { data: aceitoB } = await supabase
-    .from("matches")
-    .select("id")
-    .eq("status", "Aceito")
-    .eq("usuario_id", perfilId)
-    .eq("adversario_id", visitanteId)
-    .limit(1);
+  const [{ data: aceitoA }, { data: aceitoB }, { data: t1 }, { data: t2 }] = await Promise.all([
+    supabase
+      .from("matches")
+      .select("id")
+      .eq("status", "Aceito")
+      .eq("usuario_id", visitanteId)
+      .eq("adversario_id", perfilId)
+      .limit(1),
+    supabase
+      .from("matches")
+      .select("id")
+      .eq("status", "Aceito")
+      .eq("usuario_id", perfilId)
+      .eq("adversario_id", visitanteId)
+      .limit(1),
+    supabase
+      .from("partidas")
+      .select("id")
+      .not("torneio_id", "is", null)
+      .gt("torneio_id", 0)
+      .eq("jogador1_id", visitanteId)
+      .eq("jogador2_id", perfilId)
+      .limit(1),
+    supabase
+      .from("partidas")
+      .select("id")
+      .not("torneio_id", "is", null)
+      .gt("torneio_id", 0)
+      .eq("jogador1_id", perfilId)
+      .eq("jogador2_id", visitanteId)
+      .limit(1),
+  ]);
 
   if ((aceitoA?.length ?? 0) > 0 || (aceitoB?.length ?? 0) > 0) return true;
-
-  const { data: t1 } = await supabase
-    .from("partidas")
-    .select("id")
-    .not("torneio_id", "is", null)
-    .gt("torneio_id", 0)
-    .eq("jogador1_id", visitanteId)
-    .eq("jogador2_id", perfilId)
-    .limit(1);
-
-  if ((t1?.length ?? 0) > 0) return true;
-
-  const { data: t2 } = await supabase
-    .from("partidas")
-    .select("id")
-    .not("torneio_id", "is", null)
-    .gt("torneio_id", 0)
-    .eq("jogador1_id", perfilId)
-    .eq("jogador2_id", visitanteId)
-    .limit(1);
-
-  return (t2?.length ?? 0) > 0;
+  return (t1?.length ?? 0) > 0 || (t2?.length ?? 0) > 0;
 }
 
 export async function podeExibirWhatsappProfessor(
@@ -112,21 +108,22 @@ export async function esporteIdsComMatchAceitoEntre(
 ): Promise<Set<number>> {
   const out = new Set<number>();
 
-  const { data: aParaB } = await supabase
-    .from("matches")
-    .select("esporte_id")
-    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
-    .eq("finalidade", "ranking")
-    .eq("usuario_id", visitanteId)
-    .eq("adversario_id", perfilId);
-
-  const { data: bParaA } = await supabase
-    .from("matches")
-    .select("esporte_id")
-    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
-    .eq("finalidade", "ranking")
-    .eq("usuario_id", perfilId)
-    .eq("adversario_id", visitanteId);
+  const [{ data: aParaB }, { data: bParaA }] = await Promise.all([
+    supabase
+      .from("matches")
+      .select("esporte_id")
+      .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
+      .eq("finalidade", "ranking")
+      .eq("usuario_id", visitanteId)
+      .eq("adversario_id", perfilId),
+    supabase
+      .from("matches")
+      .select("esporte_id")
+      .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
+      .eq("finalidade", "ranking")
+      .eq("usuario_id", perfilId)
+      .eq("adversario_id", visitanteId),
+  ]);
 
   for (const row of [...(aParaB ?? []), ...(bParaA ?? [])]) {
     const e = Number(row.esporte_id);
