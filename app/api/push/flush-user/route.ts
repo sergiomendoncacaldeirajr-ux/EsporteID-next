@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { dispatchPushForNotificationIds } from "@/lib/pwa/push-dispatch";
+import { dispatchPushForNotificationIds, isPushDispatchConfigured } from "@/lib/pwa/push-dispatch";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
@@ -9,6 +9,9 @@ export async function POST() {
   try {
     if (!hasServiceRoleConfig()) {
       return NextResponse.json({ ok: false, reason: "service_role_missing" }, { status: 200 });
+    }
+    if (!isPushDispatchConfigured()) {
+      return NextResponse.json({ ok: false, reason: "vapid_missing" }, { status: 200 });
     }
     const supabase = await createRouteHandlerClient();
     const {
@@ -32,9 +35,10 @@ export async function POST() {
     const result = await dispatchPushForNotificationIds(admin, ids);
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
+    /** Best-effort: nunca 500 — evita ruído vermelho no console do devtools (push é opcional). */
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : "push_flush_failed" },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }

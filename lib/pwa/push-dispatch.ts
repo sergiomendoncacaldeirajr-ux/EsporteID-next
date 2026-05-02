@@ -25,6 +25,13 @@ type PushDeliveryRow = {
 
 type DispatchAggregate = { sent: number; failed: number; scanned: number };
 
+/** Chaves VAPID no servidor (envio de push). Sem isso, `flush-user` não deve retornar 500 em dev. */
+export function isPushDispatchConfigured(): boolean {
+  const publicKey = String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim();
+  const privateKey = String(process.env.VAPID_PRIVATE_KEY ?? "").trim();
+  return Boolean(publicKey && privateKey);
+}
+
 function normalizePushConfig() {
   const publicKey = String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim();
   const privateKey = String(process.env.VAPID_PRIVATE_KEY ?? "").trim();
