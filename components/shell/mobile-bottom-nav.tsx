@@ -100,6 +100,17 @@ function NavBadge({ n }: { n: number }) {
   );
 }
 
+function scheduleAfterNavigationIdle(task: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const requestIdle = window.requestIdleCallback;
+  if (requestIdle) {
+    const id = requestIdle(task, { timeout: 3000 });
+    return () => window.cancelIdleCallback?.(id);
+  }
+  const id = window.setTimeout(task, 1000);
+  return () => window.clearTimeout(id);
+}
+
 export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
@@ -327,7 +338,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         return socialNext;
       });
     }
-    void load();
+    const cancelInitialLoad = scheduleAfterNavigationIdle(() => void load());
     /** Alinha com `RealtimePageRefresh` / sininho: o miolo já revalida, mas o estado do badge ficava só no próximo Realtime ou em até 20s. */
     const onEidRealtimeRefresh = () => void load();
     window.addEventListener("eid:realtime-refresh", onEidRealtimeRefresh as EventListener);
@@ -403,6 +414,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
+      cancelInitialLoad();
       window.clearInterval(t);
       window.removeEventListener("eid:realtime-refresh", onEidRealtimeRefresh as EventListener);
       void supabase.removeChannel(channel);
