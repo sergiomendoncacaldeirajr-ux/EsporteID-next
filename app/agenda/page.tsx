@@ -55,7 +55,42 @@ export default async function AgendaPage() {
       : `usuario_id.eq.${user.id},adversario_id.eq.${user.id}`;
   await processarPendenciasAgendamentoAceite(supabase, user.id, teamClause);
 
-  const { data: partidasAgendadas } = await fetchPartidasAgendadasUsuario(supabase, user.id, teamClause);
+  const [
+    { data: partidasAgendadas },
+    { data: pendentesEnvio },
+    { data: pendentesRankingElencoRows },
+    { data: historicoCancelamentoRows },
+  ] = await Promise.all([
+    fetchPartidasAgendadasUsuario(supabase, user.id, teamClause),
+    supabase
+      .from("matches")
+      .select("id, status, modalidade_confronto, data_solicitacao, data_registro, adversario_id, esporte_id")
+      .eq("usuario_id", user.id)
+      .eq("status", "Pendente")
+      .order("data_registro", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: false })
+      .limit(20),
+    supabase
+      .from("matches")
+      .select(
+        "id, usuario_id, adversario_id, desafiante_time_id, adversario_time_id, esporte_id, modalidade_confronto, data_solicitacao, data_registro"
+      )
+      .eq("status", "Pendente")
+      .eq("finalidade", "ranking")
+      .in("modalidade_confronto", ["dupla", "time"])
+      .or(matchAceitosOr)
+      .order("data_registro", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: false })
+      .limit(20),
+    supabase
+      .from("matches")
+      .select("id, usuario_id, adversario_id, esporte_id, status")
+      .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente", "Cancelado"])
+      .eq("finalidade", "ranking")
+      .or(matchAceitosOr)
+      .order("id", { ascending: false })
+      .limit(120),
+  ]);
 
   const allLocalIds = [
     ...new Set(
@@ -64,10 +99,6 @@ export default async function AgendaPage() {
         .filter((x): x is number => typeof x === "number" && x > 0)
     ),
   ];
-  const { data: locaisRows } = allLocalIds.length
-    ? await supabase.from("espacos_genericos").select("id, nome_publico").in("id", allLocalIds)
-    : { data: [] };
-  const locMap = new Map((locaisRows ?? []).map((l) => [l.id, l.nome_publico]));
 
   const allPlayerIds = new Set<string>();
   for (const p of partidasAgendadas ?? []) {
@@ -75,11 +106,6 @@ export default async function AgendaPage() {
     if (p.jogador2_id) allPlayerIds.add(p.jogador2_id);
   }
   const playerList = [...allPlayerIds];
-  const { data: nomeRows } = playerList.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url").in("id", playerList)
-    : { data: [] };
-  const perfilMap = new Map((nomeRows ?? []).map((r) => [r.id, r]));
-  const nomeMap = new Map((nomeRows ?? []).map((r) => [r.id, r.nome]));
 
   const esporteIdsPartidas = [
     ...new Set(
@@ -88,38 +114,30 @@ export default async function AgendaPage() {
         .filter((v) => Number.isFinite(v) && v > 0)
     ),
   ];
-  const { data: ueRows } = playerList.length && esporteIdsPartidas.length
-    ? await supabase
-        .from("usuario_eid")
-        .select("usuario_id, esporte_id, nota_eid")
-        .in("usuario_id", playerList)
-        .in("esporte_id", esporteIdsPartidas)
-    : { data: [] };
+
+  const [{ data: locaisRows }, { data: nomeRows }, { data: ueRows }, loadAceitosResult] = await Promise.all([
+    allLocalIds.length
+      ? supabase.from("espacos_genericos").select("id, nome_publico").in("id", allLocalIds)
+      : Promise.resolve({ data: [] as Array<{ id: number; nome_publico: string | null }> }),
+    playerList.length
+      ? supabase.from("profiles").select("id, nome, avatar_url").in("id", playerList)
+      : Promise.resolve({ data: [] as Array<{ id: string; nome: string | null; avatar_url: string | null }> }),
+    playerList.length && esporteIdsPartidas.length
+      ? supabase
+          .from("usuario_eid")
+          .select("usuario_id, esporte_id, nota_eid")
+          .in("usuario_id", playerList)
+          .in("esporte_id", esporteIdsPartidas)
+      : Promise.resolve({ data: [] as Array<{ usuario_id: string; esporte_id: number; nota_eid: number | null }> }),
+    loadAceitosCancelaveisItems(supabase, user.id, (partidasAgendadas ?? []) as AgendaPartidaCardRow[]),
+  ]);
+  const locMap = new Map((locaisRows ?? []).map((l) => [l.id, l.nome_publico]));
+  const perfilMap = new Map((nomeRows ?? []).map((r) => [r.id, r]));
+  const nomeMap = new Map((nomeRows ?? []).map((r) => [r.id, r.nome]));
   const notaEidByUserSport = new Map(
     (ueRows ?? []).map((r) => [`${String(r.usuario_id)}:${Number(r.esporte_id)}`, Number(r.nota_eid ?? 0)])
   );
-
-  const { data: pendentesEnvio } = await supabase
-    .from("matches")
-    .select("id, status, modalidade_confronto, data_solicitacao, data_registro, adversario_id, esporte_id")
-    .eq("usuario_id", user.id)
-    .eq("status", "Pendente")
-    .order("data_registro", { ascending: false, nullsFirst: false })
-    .order("id", { ascending: false })
-    .limit(20);
-
-  const { data: pendentesRankingElencoRows } = await supabase
-    .from("matches")
-    .select(
-      "id, usuario_id, adversario_id, desafiante_time_id, adversario_time_id, esporte_id, modalidade_confronto, data_solicitacao, data_registro"
-    )
-    .eq("status", "Pendente")
-    .eq("finalidade", "ranking")
-    .in("modalidade_confronto", ["dupla", "time"])
-    .or(matchAceitosOr)
-    .order("data_registro", { ascending: false, nullsFirst: false })
-    .order("id", { ascending: false })
-    .limit(20);
+  const { items: aceitosItems, aceitosMatches, criadorPorTimeIdAgenda } = loadAceitosResult;
 
   /** Elenco (não o líder desafiante): acompanhar pedido na Agenda; capitão adversário também entra aqui. */
   const pendentesRankingStatus = (pendentesRankingElencoRows ?? []).filter((m) => m.usuario_id !== user.id);
@@ -132,9 +150,25 @@ export default async function AgendaPage() {
         .filter((n) => Number.isFinite(n) && n > 0)
     ),
   ];
-  const { data: timesPendentesRanking } = pendentesRankingTimeIds.length
-    ? await supabase.from("times").select("id, nome, escudo, eid_time").in("id", pendentesRankingTimeIds)
-    : { data: [] };
+
+  /** Um único fetch de esportes para “pedidos enviados” + ranking em análise (menos round-trips). */
+  const espIdsAgendaPendentes = [
+    ...new Set(
+      [
+        ...(pendentesEnvio ?? []).map((m) => Number(m.esporte_id ?? 0)),
+        ...(pendentesRankingStatus ?? []).map((m) => Number(m.esporte_id ?? 0)),
+      ].filter((id) => Number.isFinite(id) && id > 0)
+    ),
+  ];
+
+  const [{ data: timesPendentesRanking }, { data: esportesAgendaPendentesRows }] = await Promise.all([
+    pendentesRankingTimeIds.length
+      ? supabase.from("times").select("id, nome, escudo, eid_time").in("id", pendentesRankingTimeIds)
+      : Promise.resolve({ data: [] as Array<{ id: number; nome: string | null; escudo?: string | null; eid_time?: number | null }> }),
+    espIdsAgendaPendentes.length
+      ? supabase.from("esportes").select("id, nome").in("id", espIdsAgendaPendentes)
+      : Promise.resolve({ data: [] as Array<{ id: number; nome: string | null }> }),
+  ]);
   const timeRowById = new Map<number, AgendaTimePendenteInfo>();
   for (const t of timesPendentesRanking ?? []) {
     const id = Number(t.id);
@@ -148,34 +182,7 @@ export default async function AgendaPage() {
     });
   }
 
-  /** Um único fetch de esportes para “pedidos enviados” + ranking em análise (menos round-trips). */
-  const espIdsAgendaPendentes = [
-    ...new Set(
-      [
-        ...(pendentesEnvio ?? []).map((m) => Number(m.esporte_id ?? 0)),
-        ...(pendentesRankingStatus ?? []).map((m) => Number(m.esporte_id ?? 0)),
-      ].filter((id) => Number.isFinite(id) && id > 0)
-    ),
-  ];
-  const { data: esportesAgendaPendentesRows } = espIdsAgendaPendentes.length
-    ? await supabase.from("esportes").select("id, nome").in("id", espIdsAgendaPendentes)
-    : { data: [] };
   const espMap = new Map((esportesAgendaPendentesRows ?? []).map((e) => [Number(e.id), String(e.nome ?? "Esporte")]));
-
-  const { items: aceitosItems, aceitosMatches, criadorPorTimeIdAgenda } = await loadAceitosCancelaveisItems(
-    supabase,
-    user.id,
-    (partidasAgendadas ?? []) as AgendaPartidaCardRow[]
-  );
-
-  const { data: historicoCancelamentoRows } = await supabase
-    .from("matches")
-    .select("id, usuario_id, adversario_id, esporte_id, status")
-    .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente", "Cancelado"])
-    .eq("finalidade", "ranking")
-    .or(matchAceitosOr)
-    .order("id", { ascending: false })
-    .limit(120);
 
   function dueloKey(a: string | null | undefined, b: string | null | undefined, esporteId: number | null | undefined): string | null {
     if (!a || !b || !Number.isFinite(Number(esporteId)) || Number(esporteId) <= 0) return null;
@@ -183,19 +190,20 @@ export default async function AgendaPage() {
     return `${Number(esporteId)}:${x}:${y}`;
   }
   const advIds = [...new Set((pendentesEnvio ?? []).map((m) => m.adversario_id).filter(Boolean))] as string[];
-  const { data: adversarios } = advIds.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", advIds)
-    : { data: [] };
-  const advMap = new Map((adversarios ?? []).map((p) => [p.id, p]));
   const advSportIds = [...new Set((pendentesEnvio ?? []).map((m) => Number(m.esporte_id ?? 0)).filter((id) => Number.isFinite(id) && id > 0))];
-  const { data: advEidRows } =
+  const [{ data: adversarios }, { data: advEidRows }] = await Promise.all([
+    advIds.length
+      ? supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", advIds)
+      : Promise.resolve({ data: [] as Array<{ id: string; nome: string | null; avatar_url: string | null; localizacao: string | null }> }),
     advIds.length > 0 && advSportIds.length > 0
-      ? await supabase
+      ? supabase
           .from("usuario_eid")
           .select("usuario_id, esporte_id, nota_eid")
           .in("usuario_id", advIds)
           .in("esporte_id", advSportIds)
-      : { data: [] };
+      : Promise.resolve({ data: [] as Array<{ usuario_id: string; esporte_id: number; nota_eid: number | null }> }),
+  ]);
+  const advMap = new Map((adversarios ?? []).map((p) => [p.id, p]));
   const advEidMap = new Map(
     (advEidRows ?? []).map((row) => [`${String(row.usuario_id)}:${Number(row.esporte_id)}`, Number(row.nota_eid ?? 0)])
   );

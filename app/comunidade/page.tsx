@@ -132,16 +132,13 @@ export default async function ComunidadePage() {
   const hasMyCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
   const uidEq = user.id;
-  const { teamIds: comunidadeAgendaTeamIds, teamClause: comunidadeAgendaTeamClause } = await getAgendaTeamContext(
-    supabase,
-    uidEq,
-  );
+  const [{ teamIds: comunidadeAgendaTeamIds, teamClause: comunidadeAgendaTeamClause }, { data: meusTimesLider }] =
+    await Promise.all([getAgendaTeamContext(supabase, uidEq), supabase.from("times").select("id").eq("criador_id", uidEq)]);
   const matchRankFlowOr =
     comunidadeAgendaTeamIds.length > 0
       ? `usuario_id.eq.${uidEq},adversario_id.eq.${uidEq},desafiante_time_id.in.(${comunidadeAgendaTeamIds.join(",")}),adversario_time_id.in.(${comunidadeAgendaTeamIds.join(",")})`
       : `usuario_id.eq.${uidEq},adversario_id.eq.${uidEq}`;
   const partidasPainelCountOr = `jogador1_id.eq.${uidEq},jogador2_id.eq.${uidEq},usuario_id.eq.${uidEq}${comunidadeAgendaTeamClause}`;
-  const { data: meusTimesLider } = await supabase.from("times").select("id").eq("criador_id", uidEq);
   const meusTimeIdsLider = [
     ...new Set(
       (meusTimesLider ?? [])
@@ -212,55 +209,49 @@ export default async function ComunidadePage() {
   const needPartidas =
     (cntPartAguarda ?? 0) > 0 || (cntPartAgend ?? 0) > 0 || (cntMatchRankFlow ?? 0) > 0;
 
-  const { data: recebidos } = await supabase
-    .from("matches")
-    .select("id, modalidade_confronto, data_solicitacao, data_registro, usuario_id, esporte_id, adversario_time_id, finalidade")
-    .eq("adversario_id", user.id)
-    .eq("status", "Pendente")
-    .order("data_registro", { ascending: false })
-    .limit(30);
+  const [{ data: recebidos }, { data: enviadosPendentes }] = await Promise.all([
+    supabase
+      .from("matches")
+      .select("id, modalidade_confronto, data_solicitacao, data_registro, usuario_id, esporte_id, adversario_time_id, finalidade")
+      .eq("adversario_id", user.id)
+      .eq("status", "Pendente")
+      .order("data_registro", { ascending: false })
+      .limit(30),
+    supabase
+      .from("matches")
+      .select("id, adversario_id, adversario_time_id, esporte_id, modalidade_confronto, data_solicitacao")
+      .eq("usuario_id", user.id)
+      .eq("status", "Pendente")
+      .order("data_solicitacao", { ascending: false })
+      .limit(20),
+  ]);
   const receivedSportIds = [
     ...new Set((recebidos ?? []).map((m) => Number(m.esporte_id ?? 0)).filter((id) => Number.isFinite(id) && id > 0)),
   ];
 
   const uids = [...new Set((recebidos ?? []).map((m) => m.usuario_id).filter(Boolean))] as string[];
-  const { data: desafiantes } = uids.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", uids)
-    : { data: [] };
-  const uMap = new Map((desafiantes ?? []).map((p) => [p.id, p]));
-  const { data: desafiantesEid } =
+  const [{ data: desafiantes }, { data: desafiantesEid }] = await Promise.all([
+    uids.length
+      ? supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", uids)
+      : Promise.resolve({ data: [] as Array<{ id: string; nome: string | null; avatar_url: string | null; localizacao: string | null }> }),
     uids.length > 0 && receivedSportIds.length > 0
-      ? await supabase
+      ? supabase
           .from("usuario_eid")
           .select("usuario_id, esporte_id, nota_eid")
           .in("usuario_id", uids)
           .in("esporte_id", receivedSportIds)
-      : { data: [] };
+      : Promise.resolve({ data: [] as Array<{ usuario_id: string; esporte_id: number; nota_eid: number | null }> }),
+  ]);
+  const uMap = new Map((desafiantes ?? []).map((p) => [p.id, p]));
   const desafianteEidMap = new Map(
     (desafiantesEid ?? []).map((row) => [`${String(row.usuario_id)}:${Number(row.esporte_id)}`, Number(row.nota_eid ?? 0)])
   );
 
-  const { data: enviadosPendentes } = await supabase
-    .from("matches")
-    .select("id, adversario_id, adversario_time_id, esporte_id, modalidade_confronto, data_solicitacao")
-    .eq("usuario_id", user.id)
-    .eq("status", "Pendente")
-    .order("data_solicitacao", { ascending: false })
-    .limit(20);
-
   const eidsRecebidos = (recebidos ?? []).map((m) => m.esporte_id).filter(Boolean) as number[];
   const eidsEnviados = (enviadosPendentes ?? []).map((m) => m.esporte_id).filter(Boolean) as number[];
   const eids = [...new Set([...eidsRecebidos, ...eidsEnviados])] as number[];
-  const { data: esportes } = eids.length
-    ? await supabase.from("esportes").select("id, nome").in("id", eids)
-    : { data: [] };
-  const espMap = new Map((esportes ?? []).map((e) => [e.id, e.nome]));
 
   const timeIds = [...new Set((recebidos ?? []).map((m) => m.adversario_time_id).filter(Boolean))] as number[];
-  const { data: timesRows } = timeIds.length
-    ? await supabase.from("times").select("id, nome").in("id", timeIds)
-    : { data: [] };
-  const timeMap = new Map((timesRows ?? []).map((t) => [t.id, t.nome]));
 
   /** Confronto dupla/time: desafiante é a formação (mesma regra que fetchPedidoRankingPreview), não o perfil individual do líder. */
   const coletivoRecebidos = (recebidos ?? []).filter((row) => {
@@ -273,14 +264,34 @@ export default async function ComunidadePage() {
       coletivoRecebidos.map((row) => Number(row.esporte_id ?? 0)).filter((n) => Number.isFinite(n) && n > 0)
     ),
   ];
-  const { data: formacoesDesafianteRows } =
+
+  const [{ data: esportes }, { data: timesRows }, { data: formacoesDesafianteRows }] = await Promise.all([
+    eids.length ? supabase.from("esportes").select("id, nome").in("id", eids) : Promise.resolve({ data: [] as Array<{ id: number; nome: string | null }> }),
+    timeIds.length
+      ? supabase.from("times").select("id, nome").in("id", timeIds)
+      : Promise.resolve({ data: [] as Array<{ id: number; nome: string | null }> }),
     chLiderUids.length > 0 && chEsporteIdsColetivo.length > 0
-      ? await supabase
+      ? supabase
           .from("times")
           .select("id, nome, escudo, localizacao, criador_id, esporte_id, tipo, eid_time, pontos_ranking")
           .in("criador_id", chLiderUids)
           .in("esporte_id", chEsporteIdsColetivo)
-      : { data: [] };
+      : Promise.resolve({
+          data: [] as Array<{
+            id?: number;
+            nome?: string | null;
+            escudo?: string | null;
+            localizacao?: string | null;
+            criador_id?: string | null;
+            esporte_id?: number | null;
+            tipo?: string | null;
+            eid_time?: number | null;
+            pontos_ranking?: number | null;
+          }>,
+        }),
+  ]);
+  const espMap = new Map((esportes ?? []).map((e) => [e.id, e.nome]));
+  const timeMap = new Map((timesRows ?? []).map((t) => [t.id, t.nome]));
   type FormacaoDesafiantePedido = {
     id: number;
     nome: string | null;
@@ -435,17 +446,18 @@ export default async function ComunidadePage() {
   const enviadosEsporteIds = [
     ...new Set((enviadosPendentes ?? []).map((m) => Number(m.esporte_id ?? 0)).filter((id) => Number.isFinite(id) && id > 0)),
   ];
-  const { data: enviadosPerfis } = enviadosAdversarioIds.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", enviadosAdversarioIds)
-    : { data: [] };
-  const { data: enviadosEids } =
+  const [{ data: enviadosPerfis }, { data: enviadosEids }] = await Promise.all([
+    enviadosAdversarioIds.length
+      ? supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", enviadosAdversarioIds)
+      : Promise.resolve({ data: [] as Array<{ id: string; nome: string | null; avatar_url: string | null; localizacao: string | null }> }),
     enviadosAdversarioIds.length > 0 && enviadosEsporteIds.length > 0
-      ? await supabase
+      ? supabase
           .from("usuario_eid")
           .select("usuario_id, esporte_id, nota_eid")
           .in("usuario_id", enviadosAdversarioIds)
           .in("esporte_id", enviadosEsporteIds)
-      : { data: [] };
+      : Promise.resolve({ data: [] as Array<{ usuario_id: string; esporte_id: number; nota_eid: number | null }> }),
+  ]);
   const enviadosPerfisMap = new Map((enviadosPerfis ?? []).map((p) => [p.id, p]));
   const enviadosEidMap = new Map(
     (enviadosEids ?? []).map((row) => [`${String(row.usuario_id)}:${Number(row.esporte_id)}`, Number(row.nota_eid ?? 0)])
