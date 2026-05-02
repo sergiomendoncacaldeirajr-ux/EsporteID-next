@@ -8,6 +8,8 @@ import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-perfo
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { EidCityState } from "@/components/ui/eid-city-state";
+import { AgendaPendenteFormacaoAvatar } from "@/components/agenda/agenda-pendente-formacao-avatar";
+import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { userIsDesafioAgendaLeaderFromMap } from "@/lib/agenda/desafio-match-leadership";
 import { loadAceitosCancelaveisItems } from "@/lib/agenda/load-aceitos-cancelaveis-items";
 import {
@@ -27,6 +29,8 @@ export const metadata = {
   title: "Agenda",
   description: "Jogos agendados e lembretes no EsporteID",
 };
+
+type AgendaTimePendenteInfo = { nome: string; escudo: string | null; eid_time: number };
 
 export default async function AgendaPage() {
   const supabase = await createClient();
@@ -128,21 +132,34 @@ export default async function AgendaPage() {
     ),
   ];
   const { data: timesPendentesRanking } = pendentesRankingTimeIds.length
-    ? await supabase.from("times").select("id, nome").in("id", pendentesRankingTimeIds)
+    ? await supabase.from("times").select("id, nome, escudo, eid_time").in("id", pendentesRankingTimeIds)
     : { data: [] };
-  const nomeTimePendenteById = new Map((timesPendentesRanking ?? []).map((t) => [Number(t.id), String(t.nome ?? "").trim() || "Formação"]));
+  const timeRowById = new Map<number, AgendaTimePendenteInfo>();
+  for (const t of timesPendentesRanking ?? []) {
+    const id = Number(t.id);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    const escRaw = (t as { escudo?: string | null }).escudo;
+    const escudo = escRaw != null && String(escRaw).trim() ? String(escRaw).trim() : null;
+    timeRowById.set(id, {
+      nome: String(t.nome ?? "").trim() || "Formação",
+      escudo,
+      eid_time: Number((t as { eid_time?: number | null }).eid_time ?? 0) || 0,
+    });
+  }
 
-  const eidsPendenteRanking = [
+  /** Um único fetch de esportes para “pedidos enviados” + ranking em análise (menos round-trips). */
+  const espIdsAgendaPendentes = [
     ...new Set(
-      (pendentesRankingStatus ?? [])
-        .map((m) => Number(m.esporte_id ?? 0))
-        .filter((id) => Number.isFinite(id) && id > 0)
+      [
+        ...(pendentesEnvio ?? []).map((m) => Number(m.esporte_id ?? 0)),
+        ...(pendentesRankingStatus ?? []).map((m) => Number(m.esporte_id ?? 0)),
+      ].filter((id) => Number.isFinite(id) && id > 0)
     ),
   ];
-  const { data: esportesPendenteRanking } = eidsPendenteRanking.length
-    ? await supabase.from("esportes").select("id, nome").in("id", eidsPendenteRanking)
+  const { data: esportesAgendaPendentesRows } = espIdsAgendaPendentes.length
+    ? await supabase.from("esportes").select("id, nome").in("id", espIdsAgendaPendentes)
     : { data: [] };
-  const espNomePendenteById = new Map((esportesPendenteRanking ?? []).map((e) => [Number(e.id), String(e.nome ?? "Esporte")]));
+  const espMap = new Map((esportesAgendaPendentesRows ?? []).map((e) => [Number(e.id), String(e.nome ?? "Esporte")]));
 
   const { items: aceitosItems, aceitosMatches, criadorPorTimeIdAgenda } = await loadAceitosCancelaveisItems(
     supabase,
@@ -181,12 +198,6 @@ export default async function AgendaPage() {
   const advEidMap = new Map(
     (advEidRows ?? []).map((row) => [`${String(row.usuario_id)}:${Number(row.esporte_id)}`, Number(row.nota_eid ?? 0)])
   );
-
-  const eids = [...new Set((pendentesEnvio ?? []).map((m) => m.esporte_id).filter(Boolean))] as number[];
-  const { data: esportes } = eids.length
-    ? await supabase.from("esportes").select("id, nome").in("id", eids)
-    : { data: [] };
-  const espMap = new Map((esportes ?? []).map((e) => [e.id, e.nome]));
 
   const cancelMatchIdByDuelo = new Map<string, number>();
   const cancelMatchIdByMatchId = new Map<number, number>();
@@ -435,9 +446,13 @@ export default async function AgendaPage() {
                 {pendentesRankingStatus.map((m) => {
                   const tid1 = Number(m.desafiante_time_id ?? 0);
                   const tid2 = Number(m.adversario_time_id ?? 0);
-                  const nome1 = Number.isFinite(tid1) && tid1 > 0 ? nomeTimePendenteById.get(tid1) ?? "Formação" : "Formação";
-                  const nome2 = Number.isFinite(tid2) && tid2 > 0 ? nomeTimePendenteById.get(tid2) ?? "Formação" : "Formação";
-                  const espNome = m.esporte_id ? espNomePendenteById.get(Number(m.esporte_id)) ?? "Esporte" : "Esporte";
+                  const row1 =
+                    Number.isFinite(tid1) && tid1 > 0 ? timeRowById.get(tid1) ?? null : null;
+                  const row2 =
+                    Number.isFinite(tid2) && tid2 > 0 ? timeRowById.get(tid2) ?? null : null;
+                  const nome1 = row1?.nome ?? "Formação";
+                  const nome2 = row2?.nome ?? "Formação";
+                  const espNome = m.esporte_id ? espMap.get(Number(m.esporte_id)) ?? "Esporte" : "Esporte";
                   const capitaoRecebedor = m.adversario_id === user.id;
                   const noTimeDesafiado =
                     Number.isFinite(tid2) &&
@@ -449,28 +464,87 @@ export default async function AgendaPage() {
                     : noTimeDesafiado
                       ? "Seu capitão deve aceitar ou recusar este pedido no Painel social."
                       : "Aguardando o capitão adversário aceitar ou recusar.";
+                  const mod =
+                    String(m.modalidade_confronto ?? "time").trim().toLowerCase() === "dupla"
+                      ? "dupla"
+                      : "time";
                   return (
                     <li
                       key={m.id}
-                      className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-3 py-2.5 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.18)] md:px-4 md:py-3"
+                      className="flex flex-col gap-2.5 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-3 py-3 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.18)] backdrop-blur-sm md:gap-3 md:px-4 md:py-3.5"
                     >
-                      <p className="text-[13px] font-bold text-eid-fg md:text-sm">
-                        {nome1} <span className="font-normal text-eid-text-secondary">vs</span> {nome2}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-eid-text-secondary md:text-xs">
-                        {espNome} · {m.modalidade_confronto ?? "time"}
-                      </p>
-                      <p className="mt-1.5 text-[11px] leading-relaxed text-eid-text-secondary md:text-xs">{sublinha}</p>
-                      {capitaoRecebedor ? (
-                        <p className="mt-2">
-                          <Link
-                            href="/comunidade#desafio-pedidos"
-                            className="text-[11px] font-bold text-eid-primary-300 hover:underline md:text-xs"
-                          >
-                            Abrir pedidos recebidos
-                          </Link>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1 pr-1">
+                          <p className="text-[11px] text-eid-text-secondary md:text-xs">
+                            <span className="inline-flex items-center gap-1">
+                              <SportGlyphIcon sportName={espNome} />
+                              <span>{espNome}</span>
+                            </span>
+                            <span className="mx-1 opacity-70">|</span>
+                            <span className="inline-flex items-center gap-1">
+                              <ModalidadeGlyphIcon modalidade={mod} />
+                              <span>{m.modalidade_confronto ?? "time"}</span>
+                            </span>
+                          </p>
+                          <p className="mt-2 text-[11px] leading-relaxed text-eid-text-secondary md:text-xs">
+                            {sublinha}
+                          </p>
+                          {capitaoRecebedor ? (
+                            <p className="mt-2">
+                              <Link
+                                href="/comunidade#desafio-pedidos"
+                                className="text-[11px] font-bold text-eid-primary-300 hover:underline md:text-xs"
+                              >
+                                Abrir pedidos recebidos
+                              </Link>
+                            </p>
+                          ) : null}
+                        </div>
+                        <EidPendingBadge label="Pendente" compact className="shrink-0 self-start" />
+                      </div>
+
+                      <div className="mt-1 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-2 gap-y-2 border-t border-[color:var(--eid-border-subtle)]/45 pt-3">
+                        <p
+                          className="col-start-1 row-start-1 line-clamp-2 min-h-[2.25rem] text-center text-[11px] font-bold leading-snug text-eid-fg md:min-h-[2.5rem] md:text-xs"
+                          title={nome1}
+                        >
+                          {nome1}
                         </p>
-                      ) : null}
+                        <p
+                          className="col-start-3 row-start-1 line-clamp-2 min-h-[2.25rem] text-center text-[11px] font-bold leading-snug text-eid-fg md:min-h-[2.5rem] md:text-xs"
+                          title={nome2}
+                        >
+                          {nome2}
+                        </p>
+                        <span
+                          className="col-start-2 row-span-2 row-start-1 self-center px-0.5 text-[9px] font-black uppercase tracking-[0.14em] text-eid-text-secondary"
+                          aria-hidden
+                        >
+                          vs
+                        </span>
+                        <div className="col-start-1 row-start-2 flex justify-center">
+                          {Number.isFinite(tid1) && tid1 > 0 ? (
+                            <AgendaPendenteFormacaoAvatar
+                              timeId={tid1}
+                              nome={nome1}
+                              escudoUrl={row1?.escudo ?? null}
+                              eidTime={row1?.eid_time ?? 0}
+                              fromPath="/agenda"
+                            />
+                          ) : null}
+                        </div>
+                        <div className="col-start-3 row-start-2 flex justify-center">
+                          {Number.isFinite(tid2) && tid2 > 0 ? (
+                            <AgendaPendenteFormacaoAvatar
+                              timeId={tid2}
+                              nome={nome2}
+                              escudoUrl={row2?.escudo ?? null}
+                              eidTime={row2?.eid_time ?? 0}
+                              fromPath="/agenda"
+                            />
+                          ) : null}
+                        </div>
+                      </div>
                     </li>
                   );
                 })}

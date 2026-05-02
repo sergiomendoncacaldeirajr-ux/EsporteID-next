@@ -11,6 +11,10 @@ import { fetchColetivoRankingPreview, fetchIndividualRankingPreview } from "@/li
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { computeRankingBlockedUntilColetivo } from "@/lib/match/coletivo-ranking-cooldown";
+import {
+  fetchPendingRankingOpponentTimeIdsForAlvo,
+  filterFormacoesSemParPendenteComAlvo,
+} from "@/lib/match/pending-ranking-opponents-of-alvo";
 import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
 import { getDesafioRankLockedSetFormat, getMatchUIConfig, type MatchUIConfig } from "@/lib/match-scoring";
 import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
@@ -833,7 +837,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   const canConfirmarRanking = (minhasLideradas ?? []).length > 0;
   const meuTimeGenero = (minhasLideradas?.[0] as { genero?: string | null } | undefined)?.genero ?? null;
   const rankGeneroColetivo = resolveColetivoRankGenero(meuTimeGenero, timeRow.genero);
-  const formacoesMembroNaoLider = (minhasMembroRows ?? [])
+  const formacoesMembroNaoLiderRaw = (minhasMembroRows ?? [])
     .map((row) => {
       const rel = Array.isArray((row as { times?: unknown }).times)
         ? (row as { times?: Array<{ id?: number | null; nome?: string | null; criador_id?: string | null; tipo?: string | null; esporte_id?: number | null }> }).times?.[0]
@@ -848,6 +852,12 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       id: Number(t.id),
       nome: desafioPrimeiroNome(t.nome, "Minha formação"),
     }));
+  const pendentesComAlvoDesafio = await fetchPendingRankingOpponentTimeIdsForAlvo(supabase, timeRow.id, esporteId);
+  const formacoesMembroNaoLider = filterFormacoesSemParPendenteComAlvo(
+    formacoesMembroNaoLiderRaw,
+    timeRow.id,
+    pendentesComAlvoDesafio
+  );
   const podeSugerirParaLider = !canConfirmarRanking && formacoesMembroNaoLider.length > 0;
 
   return (

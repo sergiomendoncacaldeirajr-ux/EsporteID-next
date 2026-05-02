@@ -18,6 +18,10 @@ import {
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { computeRankingBlockedUntilColetivo } from "@/lib/match/coletivo-ranking-cooldown";
+import {
+  fetchPendingRankingOpponentTimeIdsForAlvo,
+  filterFormacoesSemParPendenteComAlvo,
+} from "@/lib/match/pending-ranking-opponents-of-alvo";
 import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
@@ -180,7 +184,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
     }
   }
 
-  const formacoesMembroNaoLiderDupla: { id: number; nome: string }[] = [];
+  const formacoesMembroNaoLiderDuplaRaw: { id: number; nome: string }[] = [];
   if (!isMembroDupla && timeResolvidoId && d.esporte_id) {
     const { data: membroRowsDupla } = await supabase
       .from("membros_time")
@@ -194,9 +198,18 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
       if (Number(tm.esporte_id) !== espD) continue;
       if (String(tm.tipo ?? "").trim().toLowerCase() !== "dupla") continue;
       if (Number(tm.id) === timeResolvidoId) continue;
-      formacoesMembroNaoLiderDupla.push({ id: Number(tm.id), nome: tm.nome ?? "Dupla" });
+      formacoesMembroNaoLiderDuplaRaw.push({ id: Number(tm.id), nome: tm.nome ?? "Dupla" });
     }
   }
+  const pendentesComDuplaAlvo =
+    timeResolvidoId && d.esporte_id
+      ? await fetchPendingRankingOpponentTimeIdsForAlvo(supabase, timeResolvidoId, Number(d.esporte_id))
+      : new Set<number>();
+  const formacoesMembroNaoLiderDupla = filterFormacoesSemParPendenteComAlvo(
+    formacoesMembroNaoLiderDuplaRaw,
+    timeResolvidoId ?? 0,
+    pendentesComDuplaAlvo
+  );
   const { data: minhaFormacaoDupla } = await supabase
     .from("times")
     .select("id")

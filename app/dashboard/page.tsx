@@ -221,7 +221,7 @@ const dashboardSectionHead =
 
 const dashboardSectionBody = "px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-3";
 
-/** Mini-cards da grade “Atletas próximos” (3 colunas). */
+/** Mini-cards da grade “Confrontos próximos” (3 colunas). */
 const dashboardSpotlightLink =
   "group flex flex-col items-center overflow-hidden rounded-2xl border border-transparent bg-eid-surface/40 px-2 pb-2.5 pt-2 text-center shadow-none transition duration-200 hover:-translate-y-[2px] hover:border-eid-primary-500/30 hover:bg-eid-primary-500/10 active:translate-y-0";
 
@@ -422,10 +422,29 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (esportesParaFiltro.length) {
     timesQuery = timesQuery.in("esporte_id", esportesParaFiltro);
   }
-  const [{ data: timesRaw }, { data: minhasFormacoesMembro }] = await Promise.all([
+  const dashTeamIdSet = new Set(dashTeamIds);
+  const myTeamsInClause = dashTeamIds.length > 0 ? dashTeamIds.join(",") : "";
+  const [{ data: timesRaw }, { data: minhasFormacoesMembro }, { data: pendingColetivoRows }] = await Promise.all([
     timesQuery,
     supabase.from("membros_time").select("time_id").eq("usuario_id", user.id).in("status", ["ativo", "aceito", "aprovado"]),
+    dashTeamIds.length > 0
+      ? supabase
+          .from("matches")
+          .select("desafiante_time_id, adversario_time_id")
+          .eq("status", "Pendente")
+          .eq("finalidade", "ranking")
+          .in("modalidade_confronto", ["dupla", "time"])
+          .or(`desafiante_time_id.in.(${myTeamsInClause}),adversario_time_id.in.(${myTeamsInClause})`)
+      : Promise.resolve({ data: [] as Array<{ desafiante_time_id?: number | null; adversario_time_id?: number | null }> }),
   ]);
+  const timeIdsComDesafioRankingPendente = new Set<number>();
+  for (const m of pendingColetivoRows ?? []) {
+    const a = Number((m as { desafiante_time_id?: number | null }).desafiante_time_id ?? 0);
+    const b = Number((m as { adversario_time_id?: number | null }).adversario_time_id ?? 0);
+    if (!Number.isFinite(a) || !Number.isFinite(b) || a < 1 || b < 1) continue;
+    if (dashTeamIdSet.has(a)) timeIdsComDesafioRankingPendente.add(b);
+    if (dashTeamIdSet.has(b)) timeIdsComDesafioRankingPendente.add(a);
+  }
   const meusTimesMembroIds = new Set(
     (minhasFormacoesMembro ?? [])
       .map((row) => Number((row as { time_id?: number | null }).time_id ?? 0))
@@ -448,7 +467,8 @@ export default async function DashboardPage({ searchParams }: Props) {
     (t) =>
       !meusTimesMembroIds.has(Number(t.id ?? 0)) &&
       !activeOpponentIds.has(String(t.criador_id ?? "")) &&
-      criadoresComMaioridade.has(String(t.criador_id ?? ""))
+      criadoresComMaioridade.has(String(t.criador_id ?? "")) &&
+      !timeIdsComDesafioRankingPendente.has(Number(t.id ?? 0))
   );
   const timesComDist = timesSemAtivos.map((t) => {
     const lat = Number(t.lat ?? NaN);
@@ -856,8 +876,8 @@ export default async function DashboardPage({ searchParams }: Props) {
         <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>
           <div className={dashboardSectionHead}>
             <div className="flex items-center gap-1.5">
-              <h2 className={sectionTitleClass}>Atletas próximos</h2>
-              <EidSectionInfo sectionLabel="Atletas próximos">
+              <h2 className={sectionTitleClass}>Confrontos próximos</h2>
+              <EidSectionInfo sectionLabel="Confrontos próximos">
                 Destaques em <strong>individual</strong>, <strong>dupla</strong> e <strong>time</strong> pelo seu esporte
                 principal e proximidade.
               </EidSectionInfo>

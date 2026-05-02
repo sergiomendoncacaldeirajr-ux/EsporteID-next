@@ -17,6 +17,10 @@ import {
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { computeRankingBlockedUntilColetivo } from "@/lib/match/coletivo-ranking-cooldown";
+import {
+  fetchPendingRankingOpponentTimeIdsForAlvo,
+  filterFormacoesSemParPendenteComAlvo,
+} from "@/lib/match/pending-ranking-opponents-of-alvo";
 import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
@@ -174,15 +178,25 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   const tipoAlvoNorm = (t.tipo ?? "time").trim().toLowerCase();
   const espAlvo = t.esporte_id != null ? Number(t.esporte_id) : null;
 
-  const formacoesMembroNaoLider: { id: number; nome: string }[] = [];
+  const formacoesMembroNaoLiderRaw: { id: number; nome: string }[] = [];
   for (const row of membroOutrosTimes ?? []) {
     const tm = Array.isArray(row.times) ? row.times[0] : row.times;
     if (!tm || tm.criador_id === user.id) continue;
     if (espAlvo == null || Number(tm.esporte_id) !== espAlvo) continue;
     if (String(tm.tipo ?? "").trim().toLowerCase() !== tipoAlvoNorm) continue;
     if (Number(tm.id) === id) continue;
-    formacoesMembroNaoLider.push({ id: Number(tm.id), nome: tm.nome ?? "Formação" });
+    formacoesMembroNaoLiderRaw.push({ id: Number(tm.id), nome: tm.nome ?? "Formação" });
   }
+
+  const pendentesComEsteAlvo =
+    espAlvo != null
+      ? await fetchPendingRankingOpponentTimeIdsForAlvo(supabase, id, espAlvo)
+      : new Set<number>();
+  const formacoesMembroNaoLider = filterFormacoesSemParPendenteComAlvo(
+    formacoesMembroNaoLiderRaw,
+    id,
+    pendentesComEsteAlvo
+  );
 
   const canSugerirMatch =
     !isMember &&
