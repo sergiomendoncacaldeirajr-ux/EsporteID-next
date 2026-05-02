@@ -221,7 +221,10 @@ export function DashboardTopbar({
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
         <div className="flex items-center justify-between gap-2 py-2.5 sm:py-3">
           <Link href={getContextHomeHref(activeContext)} className="min-w-0 shrink transition hover:opacity-90">
-            <LogoWordmark className="h-10 max-w-[min(64vw,300px)] object-left sm:h-12 sm:max-w-[min(68vw,390px)]" />
+            <LogoWordmark
+              priority
+              className="h-10 max-w-[min(64vw,300px)] object-left sm:h-12 sm:max-w-[min(68vw,390px)]"
+            />
           </Link>
 
           <div className="flex shrink-0 items-center gap-2">

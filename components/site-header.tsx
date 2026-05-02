@@ -10,7 +10,7 @@ export function SiteHeader() {
           href="/"
           className="flex shrink-0 items-center py-2 transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-eid-bg"
         >
-          <LogoWordmark className="h-9 max-h-10 max-w-[min(44vw,220px)] sm:h-10" />
+          <LogoWordmark priority className="h-9 max-h-10 max-w-[min(44vw,220px)] sm:h-10" />
         </Link>
       </div>
     </header>
