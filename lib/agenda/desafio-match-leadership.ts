@@ -21,16 +21,19 @@ export function userIsDesafioAgendaLeaderFromMap(
   m: DesafioMatchLeadershipInput,
   criadorPorTimeId: ReadonlyMap<number, string>
 ): boolean {
-  if (!modalidadeColetivaRank(m.modalidade_confronto)) {
-    return userId === String(m.usuario_id ?? "").trim() || userId === String(m.adversario_id ?? "").trim();
-  }
   const dti = Number(m.desafiante_time_id ?? 0);
   const ati = Number(m.adversario_time_id ?? 0);
-  const ids = [dti, ati].filter((n) => Number.isFinite(n) && n > 0);
-  if (!ids.length) {
+  const teamIds = [dti, ati].filter((n) => Number.isFinite(n) && n > 0);
+  const coletivo =
+    teamIds.length > 0 || modalidadeColetivaRank(m.modalidade_confronto);
+
+  if (!coletivo) {
     return userId === String(m.usuario_id ?? "").trim() || userId === String(m.adversario_id ?? "").trim();
   }
-  for (const tid of ids) {
+  if (!teamIds.length) {
+    return userId === String(m.usuario_id ?? "").trim() || userId === String(m.adversario_id ?? "").trim();
+  }
+  for (const tid of teamIds) {
     if (criadorPorTimeId.get(tid) === userId) return true;
   }
   return false;

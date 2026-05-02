@@ -572,7 +572,7 @@ export async function gerenciarCancelamentoMatch(
   if (!user) return { ok: false, message: "Sessão expirada. Faça login novamente." };
   const { data: participantsRow } = await supabase
     .from("matches")
-    .select("usuario_id, adversario_id")
+    .select("usuario_id, adversario_id, desafiante_time_id, adversario_time_id, modalidade_confronto")
     .eq("id", matchId)
     .maybeSingle();
 
@@ -587,10 +587,23 @@ export async function gerenciarCancelamentoMatch(
       referenciaId: matchId,
       tipos: ["match", "desafio"],
     });
+    const mod = String(participantsRow?.modalidade_confronto ?? "").trim().toLowerCase();
+    const pushTargets = new Set<string>(
+      [participantsRow?.usuario_id, participantsRow?.adversario_id].map((v) => String(v ?? "").trim()).filter(Boolean),
+    );
+    if (mod === "dupla" || mod === "time") {
+      for (const uid of await getActiveTeamMemberIds(supabase, [
+        participantsRow?.desafiante_time_id,
+        participantsRow?.adversario_time_id,
+      ])) {
+        if (uid) pushTargets.add(uid);
+      }
+    }
+    pushTargets.delete(user.id);
     await triggerPushForMatchNotifications(
       supabase,
       matchId,
-      [participantsRow?.usuario_id, participantsRow?.adversario_id],
+      [...pushTargets],
       "comunidade/actions.gerenciarCancelamentoMatch.request_cancel"
     );
     revalidatePath("/agenda");

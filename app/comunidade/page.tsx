@@ -38,6 +38,7 @@ import {
   fetchPlacarAguardandoConfirmacao,
   firstOfRelation,
   getAgendaTeamContext,
+  resolveCancelMatchIdParaCard,
 } from "@/lib/agenda/partidas-usuario";
 import { pickFormacaoLadoPartida } from "@/lib/agenda/partida-formacao-lado";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
@@ -1109,6 +1110,8 @@ export default async function ComunidadePage() {
   let painelPerfilMap = new Map<string, { nome: string | null; avatar_url: string | null }>();
   let painelNotaEidByUserSport = new Map<string, number>();
   let cancelMatchIdByDueloPainel = new Map<string, number>();
+  let cancelMatchIdByMatchIdPainel = new Map<number, number>();
+  let rescheduleAcceptedMatchIdSetPainel = new Set<number>();
   let rescheduleAcceptedByDueloPainel = new Set<string>();
   let painelLocMap = new Map<number, string | null>();
   let painelTimesById = new Map<number, { nome: string | null; escudo: string | null; eid_time: number | null }>();
@@ -1261,17 +1264,29 @@ export default async function ComunidadePage() {
     }
 
     cancelMatchIdByDueloPainel = new Map();
+    cancelMatchIdByMatchIdPainel = new Map();
+    rescheduleAcceptedMatchIdSetPainel = new Set();
     rescheduleAcceptedByDueloPainel = new Set();
     const blockedDueloByCancelFlowPainel = new Set<string>();
+    const blockedMatchIdsByCancelFlowPainel = new Set<number>();
     for (const m of aceitosCancelaveisPainel ?? []) {
+      const mid = Number(m.id);
+      const st = String(m.status ?? "");
+      if (st === "CancelamentoPendente" || st === "ReagendamentoPendente") {
+        if (Number.isFinite(mid) && mid > 0) blockedMatchIdsByCancelFlowPainel.add(mid);
+      }
       const key = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
-      if (!key) continue;
-      if (String(m.status ?? "") === "Aceito") {
-        cancelMatchIdByDueloPainel.set(key, Number(m.id));
-        const selected = Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? 0);
-        if (Number.isFinite(selected) && selected > 0) rescheduleAcceptedByDueloPainel.add(key);
-      } else if (String(m.status ?? "") === "CancelamentoPendente" || String(m.status ?? "") === "ReagendamentoPendente") {
+      if (key && (st === "CancelamentoPendente" || st === "ReagendamentoPendente")) {
         blockedDueloByCancelFlowPainel.add(key);
+      }
+      if (st === "Aceito" && Number.isFinite(mid) && mid > 0) {
+        cancelMatchIdByMatchIdPainel.set(mid, mid);
+        if (key) cancelMatchIdByDueloPainel.set(key, mid);
+        const selected = Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? 0);
+        if (Number.isFinite(selected) && selected > 0) {
+          rescheduleAcceptedMatchIdSetPainel.add(mid);
+          if (key) rescheduleAcceptedByDueloPainel.add(key);
+        }
       }
     }
     const latestStatusByDueloPainel = new Map<string, string>();
@@ -1287,6 +1302,8 @@ export default async function ComunidadePage() {
     painelAgendadasVisiveis = (painelAgendadas ?? [])
       .filter((row) => {
         if (String((row as { status?: string | null }).status ?? "") !== "agendada") return false;
+        const midRow = Number((row as AgendaPartidaCardRow).match_id ?? 0);
+        if (Number.isFinite(midRow) && midRow > 0 && blockedMatchIdsByCancelFlowPainel.has(midRow)) return false;
         const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
         const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
         const keyNoSport = dueloKeyNoSport(row.jogador1_id, row.jogador2_id);
@@ -1421,7 +1438,17 @@ export default async function ComunidadePage() {
                       const esp = firstOfRelation(row.esportes);
                       const pr = row as AgendaPartidaCardRow;
                       const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
-                      const dueloCardKey = dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard) ?? "__";
+                      const dueloKeyCard = dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard);
+                      const midPartida = Number(pr.match_id ?? 0);
+                      const cancelMatchIdResolved = resolveCancelMatchIdParaCard(
+                        pr,
+                        cancelMatchIdByMatchIdPainel,
+                        cancelMatchIdByDueloPainel,
+                        dueloKeyCard
+                      );
+                      const rescheduleAceito =
+                        (Number.isFinite(midPartida) && midPartida > 0 && rescheduleAcceptedMatchIdSetPainel.has(midPartida)) ||
+                        (dueloKeyCard ? rescheduleAcceptedByDueloPainel.has(dueloKeyCard) : false);
                       return (
                         <PartidaAgendaCard
                           key={pr.id}
@@ -1442,12 +1469,8 @@ export default async function ComunidadePage() {
                           localLabel={localLabelPainel(pr)}
                           variant="agendada"
                           ctaFullscreen
-                          cancelMatchId={cancelMatchIdByDueloPainel.get(dueloCardKey) ?? null}
-                          desistMatchId={
-                            rescheduleAcceptedByDueloPainel.has(dueloCardKey)
-                              ? cancelMatchIdByDueloPainel.get(dueloCardKey) ?? null
-                              : null
-                          }
+                          cancelMatchId={cancelMatchIdResolved}
+                          desistMatchId={rescheduleAceito ? cancelMatchIdResolved : null}
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
                           ctaLabel="Lançar resultado"
                           perfilEidFrom="/comunidade"

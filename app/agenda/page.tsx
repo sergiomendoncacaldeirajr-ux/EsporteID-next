@@ -18,6 +18,7 @@ import {
   fetchPartidasAgendadasUsuario,
   firstOfRelation,
   getAgendaTeamContext,
+  resolveCancelMatchIdParaCard,
 } from "@/lib/agenda/partidas-usuario";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { pickFormacaoLadoPartida } from "@/lib/agenda/partida-formacao-lado";
@@ -418,17 +419,30 @@ export default async function AgendaPage() {
     });
 
   const cancelMatchIdByDuelo = new Map<string, number>();
+  const cancelMatchIdByMatchId = new Map<number, number>();
+  const rescheduleAcceptedMatchIdSet = new Set<number>();
+  const blockedMatchIdsByCancelFlow = new Set<number>();
   const acceptedScheduleByDuelo = new Map<string, { scheduledFor: string | null; scheduledLocation: string | null }>();
+  const acceptedScheduleByMatchId = new Map<number, { scheduledFor: string | null; scheduledLocation: string | null }>();
   const rescheduleAcceptedByDuelo = new Set<string>();
   const blockedDueloByCancelFlow = new Set<string>();
   for (const m of aceitosCancelaveis ?? []) {
+    const mid = Number(m.id);
+    const st = String(m.status ?? "");
+    if (st === "CancelamentoPendente" || st === "ReagendamentoPendente") {
+      if (Number.isFinite(mid) && mid > 0) blockedMatchIdsByCancelFlow.add(mid);
+    }
     const key = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
-    if (!key) continue;
-    if (String(m.status ?? "") === "Aceito") {
-      cancelMatchIdByDuelo.set(key, Number(m.id));
-      if (Number.isFinite(Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? NaN))) {
-        const selected = Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? 0);
-        if (selected > 0) {
+    if (key && (st === "CancelamentoPendente" || st === "ReagendamentoPendente")) {
+      blockedDueloByCancelFlow.add(key);
+    }
+    if (st === "Aceito" && Number.isFinite(mid) && mid > 0) {
+      cancelMatchIdByMatchId.set(mid, mid);
+      if (key) cancelMatchIdByDuelo.set(key, mid);
+      const selected = Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? 0);
+      if (selected > 0) {
+        rescheduleAcceptedMatchIdSet.add(mid);
+        if (key) {
           rescheduleAcceptedByDuelo.add(key);
           acceptedScheduleByDuelo.set(key, {
             scheduledFor: (m as { scheduled_for?: string | null }).scheduled_for ? String((m as { scheduled_for?: string | null }).scheduled_for) : null,
@@ -437,9 +451,13 @@ export default async function AgendaPage() {
               : null,
           });
         }
+        acceptedScheduleByMatchId.set(mid, {
+          scheduledFor: (m as { scheduled_for?: string | null }).scheduled_for ? String((m as { scheduled_for?: string | null }).scheduled_for) : null,
+          scheduledLocation: (m as { scheduled_location?: string | null }).scheduled_location
+            ? String((m as { scheduled_location?: string | null }).scheduled_location)
+            : null,
+        });
       }
-    } else if (String(m.status ?? "") === "CancelamentoPendente" || String(m.status ?? "") === "ReagendamentoPendente") {
-      blockedDueloByCancelFlow.add(key);
     }
   }
   const latestStatusByDuelo = new Map<string, string>();
@@ -453,6 +471,8 @@ export default async function AgendaPage() {
     latestStatusByDuelo.set(key, String((m as { status?: string | null }).status ?? "").trim());
   }
   const partidasAgendadasVisiveis = (partidasAgendadas ?? []).filter((row) => {
+    const midRow = Number((row as AgendaPartidaCardRow).match_id ?? 0);
+    if (Number.isFinite(midRow) && midRow > 0 && blockedMatchIdsByCancelFlow.has(midRow)) return false;
     const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
     const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
     if (!key) return true;
@@ -549,12 +569,19 @@ export default async function AgendaPage() {
               const esp = firstOfRelation(row.esportes);
               const pr = row as AgendaPartidaCardRow;
               const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
-              const dueloCardKey = dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard) ?? "__";
-              const acceptedSchedule = acceptedScheduleByDuelo.get(dueloCardKey) ?? null;
+              const dueloKeyCard = dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard);
+              const midPartida = Number(pr.match_id ?? 0);
+              const acceptedSchedule =
+                (Number.isFinite(midPartida) && midPartida > 0 ? acceptedScheduleByMatchId.get(midPartida) ?? null : null) ??
+                (dueloKeyCard ? acceptedScheduleByDuelo.get(dueloKeyCard) ?? null : null);
               const effectiveDataRef = acceptedSchedule?.scheduledFor ?? pr.data_partida ?? pr.data_registro;
               const effectiveLocalLabel = acceptedSchedule?.scheduledLocation ?? localLabel(pr);
               const hasScheduleDefined = Boolean((acceptedSchedule?.scheduledFor ?? pr.data_partida) && effectiveLocalLabel);
               const schedulePending = String(pr.status ?? "") === "aguardando_aceite_agendamento";
+              const cancelMatchIdResolved = resolveCancelMatchIdParaCard(pr, cancelMatchIdByMatchId, cancelMatchIdByDuelo, dueloKeyCard);
+              const rescheduleAceito =
+                (Number.isFinite(midPartida) && midPartida > 0 && rescheduleAcceptedMatchIdSet.has(midPartida)) ||
+                (dueloKeyCard ? rescheduleAcceptedByDuelo.has(dueloKeyCard) : false);
               const podeGerenciarPartida = userIsDesafioAgendaLeaderFromMap(
                 user.id,
                 {
@@ -588,24 +615,14 @@ export default async function AgendaPage() {
                   localLabel={effectiveLocalLabel}
                   variant="agendada"
                   ctaFullscreen
-                  cancelMatchId={
-                    cancelMatchIdByDuelo.get(
-                      dueloCardKey
-                    ) ?? null
-                  }
+                  cancelMatchId={cancelMatchIdResolved}
                   ctaHidden={
                     schedulePending ||
                     hasScheduleDefined ||
-                    rescheduleAcceptedByDuelo.has(dueloCardKey) ||
+                    rescheduleAceito ||
                     somenteLeituraElenco
                   }
-                  desistMatchId={
-                    rescheduleAcceptedByDuelo.has(dueloCardKey)
-                      ? cancelMatchIdByDuelo.get(
-                          dueloCardKey
-                        ) ?? null
-                      : null
-                  }
+                  desistMatchId={rescheduleAceito ? cancelMatchIdResolved : null}
                   agendamentoPendente={schedulePending}
                   agendamentoPodeResponder={scheduleCanRespond}
                   agendamentoDeadline={pr.agendamento_aceite_deadline ?? null}

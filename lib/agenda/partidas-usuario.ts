@@ -5,6 +5,8 @@ export type EspNome = { nome?: string | null };
 /** Linha retornada pelas queries de partidas da agenda / painel (cards). */
 export type AgendaPartidaCardRow = {
   id: number;
+  /** Vínculo com `matches.id` (ranking); preferir para localizar cancelamento/reagendamento. */
+  match_id?: number | null;
   esporte_id?: number | null;
   jogador1_id: string | null;
   jogador2_id: string | null;
@@ -168,7 +170,26 @@ export async function resolveOponenteLeaderUserIdForNotificacao(
 }
 
 const partidasSelect =
-  "id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, modalidade, data_registro, data_partida, local_str, local_espaco_id, status, status_ranking, lancado_por, agendamento_proposto_por, agendamento_aceite_deadline, esportes(nome)";
+  "id, match_id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, modalidade, data_registro, data_partida, local_str, local_espaco_id, status, status_ranking, lancado_por, agendamento_proposto_por, agendamento_aceite_deadline, esportes(nome)";
+
+/** Resolve o `matches.id` usado no fluxo de cancelamento quando a chave por duelo (jogadores) diverge da linha do match. */
+export function resolveCancelMatchIdParaCard(
+  pr: Pick<AgendaPartidaCardRow, "match_id" | "jogador1_id" | "jogador2_id" | "esporte_id">,
+  cancelMatchIdByMatchId: ReadonlyMap<number, number>,
+  cancelMatchIdByDuelo: ReadonlyMap<string, number>,
+  dueloKeyRaw: string | null
+): number | null {
+  const mid = Number(pr.match_id ?? 0);
+  if (Number.isFinite(mid) && mid > 0) {
+    const fromMatch = cancelMatchIdByMatchId.get(mid);
+    if (fromMatch != null) return fromMatch;
+  }
+  if (dueloKeyRaw) {
+    const fromDuelo = cancelMatchIdByDuelo.get(dueloKeyRaw);
+    if (fromDuelo != null) return fromDuelo;
+  }
+  return null;
+}
 
 export function fetchPartidasAgendadasUsuario(
   supabase: SupabaseClient,
