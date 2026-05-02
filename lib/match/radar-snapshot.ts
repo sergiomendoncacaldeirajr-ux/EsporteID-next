@@ -602,7 +602,7 @@ export async function fetchMatchRadarCards(
       challengeHint: Boolean(t.can_challenge)
         ? undefined
         : /^\d+$/.test(esporteSelecionado)
-          ? `Somente o proprietário (capitão) pode desafiar. Crie sua ${modalidadeFormacao} neste esporte como líder.`
+          ? `Somente o líder da formação pode desafiar. Crie sua ${modalidadeFormacao} neste esporte como líder.`
           : `Selecione um esporte e seja proprietário de uma ${modalidadeFormacao} para desafiar.`,
       avatarUrl: shieldByTeamId.get(Number(t.id)) ?? null,
       disponivelAmistoso: t.disponivel_amistoso === true,

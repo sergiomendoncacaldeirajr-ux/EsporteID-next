@@ -31,6 +31,7 @@ import {
   getSocialStatusPanelItemShell,
   formatSolicitacaoParts,
 } from "@/lib/comunidade/social-panel-layout";
+import { userIsDesafioAgendaLeaderFromMap } from "@/lib/agenda/desafio-match-leadership";
 import {
   type AgendaPartidaCardRow,
   fetchPartidasAgendadasUsuario,
@@ -1143,7 +1144,7 @@ export default async function ComunidadePage() {
       fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel),
       fetchPlacarAguardandoConfirmacao(supabase, user.id, teamClausePainel),
     ]);
-    painelPlacarPendente = painelPlacarFetch ?? [];
+    const painelPlacarPendenteBruto = painelPlacarFetch ?? [];
     const { data: painelPartidasStatusRows } = await supabase
       .from("partidas")
       .select("id, esporte_id, jogador1_id, jogador2_id, status, status_ranking, lancado_por")
@@ -1151,7 +1152,7 @@ export default async function ComunidadePage() {
       .in("status", ["agendada", "aguardando_confirmacao"])
       .order("id", { ascending: false })
       .limit(120);
-    const painelPartidasAll = [...(painelAgendadas ?? []), ...painelPlacarPendente];
+    const painelPartidasAll = [...(painelAgendadas ?? []), ...painelPlacarPendenteBruto];
     const painelTimeIdsSet = new Set<number>();
     for (const p of painelPartidasAll) {
       const r = p as AgendaPartidaCardRow;
@@ -1162,9 +1163,10 @@ export default async function ComunidadePage() {
     }
     const painelTimeIds = [...painelTimeIdsSet];
     const { data: painelTimesRows } = painelTimeIds.length
-      ? await supabase.from("times").select("id, nome, escudo, eid_time").in("id", painelTimeIds)
+      ? await supabase.from("times").select("id, nome, escudo, eid_time, criador_id").in("id", painelTimeIds)
       : { data: [] };
     painelTimesById = new Map<number, { nome: string | null; escudo: string | null; eid_time: number | null }>();
+    const criadorPorTimePainel = new Map<number, string>();
     for (const t of painelTimesRows ?? []) {
       const id = Number((t as { id: number }).id);
       if (!Number.isFinite(id) || id <= 0) continue;
@@ -1173,7 +1175,22 @@ export default async function ComunidadePage() {
         escudo: (t as { escudo?: string | null }).escudo ?? null,
         eid_time: (t as { eid_time?: number | null }).eid_time ?? null,
       });
+      const cid = String((t as { criador_id?: string | null }).criador_id ?? "").trim();
+      if (cid) criadorPorTimePainel.set(id, cid);
     }
+    const usuarioPodeGerenciarPartidaPainel = (row: AgendaPartidaCardRow) =>
+      userIsDesafioAgendaLeaderFromMap(
+        user.id,
+        {
+          usuario_id: row.jogador1_id,
+          adversario_id: row.jogador2_id,
+          desafiante_time_id: row.time1_id ?? null,
+          adversario_time_id: row.time2_id ?? null,
+          modalidade_confronto: row.modalidade ?? null,
+        },
+        criadorPorTimePainel
+      );
+    painelPlacarPendente = painelPlacarPendenteBruto.filter((row) => usuarioPodeGerenciarPartidaPainel(row as AgendaPartidaCardRow));
     const painelLocalIds = [
       ...new Set(
         painelPartidasAll.map((p) => p.local_espaco_id).filter((x): x is number => typeof x === "number" && x > 0)
@@ -1267,35 +1284,37 @@ export default async function ComunidadePage() {
       if (!key || latestStatusByDueloPainel.has(key)) continue;
       latestStatusByDueloPainel.set(key, String((m as { status?: string | null }).status ?? "").trim());
     }
-    painelAgendadasVisiveis = (painelAgendadas ?? []).filter((row) => {
-      if (String((row as { status?: string | null }).status ?? "") !== "agendada") return false;
-      const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
-      const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
-      const keyNoSport = dueloKeyNoSport(row.jogador1_id, row.jogador2_id);
-      const meta = (key ? partidaMaisRecentePorDueloPainel.get(key) ?? null : null) ??
-        (keyNoSport ? partidaMaisRecentePorDueloPainelNoSport.get(keyNoSport) ?? null : null);
-      const rowStatusRanking = String(meta?.status_ranking ?? (row as { status_ranking?: string | null }).status_ranking ?? "")
-        .trim()
-        .toLowerCase();
-      const rowLancadoPor = String(meta?.lancado_por ?? (row as { lancado_por?: string | null }).lancado_por ?? "").trim();
-      const isContestadoLegacy =
-        rowStatusRanking === "contestado" ||
-        rowStatusRanking === "resultado_contestado" ||
-        rowStatusRanking === "pendente_confirmacao_revisao" ||
-        rowStatusRanking === "em_analise_admin";
-      if (isContestadoLegacy) {
-        if (!rowLancadoPor) return false;
-        if (rowLancadoPor !== user.id) return false;
-      }
-      if (rowStatusRanking === "em_analise_admin") {
-        return false;
-      }
-      if (!key) return true;
-      if (blockedDueloByCancelFlowPainel.has(key)) return false;
-      const latestStatus = String(latestStatusByDueloPainel.get(key) ?? "").toLowerCase();
-      if (latestStatus === "cancelado") return false;
-      return true;
-    });
+    painelAgendadasVisiveis = (painelAgendadas ?? [])
+      .filter((row) => {
+        if (String((row as { status?: string | null }).status ?? "") !== "agendada") return false;
+        const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
+        const key = dueloKey(row.jogador1_id, row.jogador2_id, esporteIdCard);
+        const keyNoSport = dueloKeyNoSport(row.jogador1_id, row.jogador2_id);
+        const meta = (key ? partidaMaisRecentePorDueloPainel.get(key) ?? null : null) ??
+          (keyNoSport ? partidaMaisRecentePorDueloPainelNoSport.get(keyNoSport) ?? null : null);
+        const rowStatusRanking = String(meta?.status_ranking ?? (row as { status_ranking?: string | null }).status_ranking ?? "")
+          .trim()
+          .toLowerCase();
+        const rowLancadoPor = String(meta?.lancado_por ?? (row as { lancado_por?: string | null }).lancado_por ?? "").trim();
+        const isContestadoLegacy =
+          rowStatusRanking === "contestado" ||
+          rowStatusRanking === "resultado_contestado" ||
+          rowStatusRanking === "pendente_confirmacao_revisao" ||
+          rowStatusRanking === "em_analise_admin";
+        if (isContestadoLegacy) {
+          if (!rowLancadoPor) return false;
+          if (rowLancadoPor !== user.id) return false;
+        }
+        if (rowStatusRanking === "em_analise_admin") {
+          return false;
+        }
+        if (!key) return true;
+        if (blockedDueloByCancelFlowPainel.has(key)) return false;
+        const latestStatus = String(latestStatusByDueloPainel.get(key) ?? "").toLowerCase();
+        if (latestStatus === "cancelado") return false;
+        return true;
+      })
+      .filter((row) => usuarioPodeGerenciarPartidaPainel(row as AgendaPartidaCardRow));
     hasPartidasAcoes = painelPlacarPendente.length > 0 || painelAgendadasVisiveis.length > 0;
   }
 

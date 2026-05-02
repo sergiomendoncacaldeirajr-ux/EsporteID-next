@@ -353,36 +353,6 @@ async function ensurePartidaAgendadaFromMatch(
   }
 }
 
-async function getRankPendingLimit(
-  supabase: Awaited<ReturnType<typeof createClient>>
-): Promise<number> {
-  const { data: cfg } = await supabase
-    .from("app_config")
-    .select("value_json")
-    .eq("key", "match_rank_pending_result_limit")
-    .maybeSingle();
-  const raw = cfg?.value_json as unknown;
-  if (typeof raw === "number" && Number.isFinite(raw)) return Math.max(1, Math.min(20, Math.trunc(raw)));
-  if (raw && typeof raw === "object") {
-    const v = Number((raw as { limite?: unknown }).limite);
-    if (Number.isFinite(v)) return Math.max(1, Math.min(20, Math.trunc(v)));
-  }
-  return 2;
-}
-
-async function countRankingPendencias(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string
-): Promise<number> {
-  const { count } = await supabase
-    .from("matches")
-    .select("id", { count: "exact", head: true })
-    .eq("finalidade", "ranking")
-    .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"])
-    .or(`usuario_id.eq.${userId},adversario_id.eq.${userId}`);
-  return Number(count ?? 0);
-}
-
 export async function responderPedidoMatch(
   _prev: ResponderMatchState | undefined,
   formData: FormData
@@ -402,30 +372,6 @@ export async function responderPedidoMatch(
   } = await supabase.auth.getUser();
   if (!user) {
     return { ok: false, message: "Sessão expirada. Faça login novamente." };
-  }
-
-  if (aceitar) {
-    const { data: matchRow } = await supabase
-      .from("matches")
-      .select("id, usuario_id, adversario_id, finalidade, status")
-      .eq("id", matchId)
-      .maybeSingle();
-    const fin = String(matchRow?.finalidade ?? "ranking").trim().toLowerCase();
-    if (matchRow && fin === "ranking" && String(matchRow.status ?? "").trim() === "Pendente") {
-      const limite = await getRankPendingLimit(supabase);
-      const [minhas, doDesafiante] = await Promise.all([
-        countRankingPendencias(supabase, user.id),
-        countRankingPendencias(supabase, String(matchRow.usuario_id ?? "")),
-      ]);
-      // No aceite, este pedido já está na contagem como "Pendente" e continuará na contagem como "Aceito".
-      // Portanto, só bloqueamos quando já estiver acima do limite.
-      if (minhas > limite) {
-        return { ok: false, message: `Você atingiu o limite de ${limite} pendências de desafio/ranking.` };
-      }
-      if (doDesafiante > limite) {
-        return { ok: false, message: "O desafiante atingiu o limite de pendências de desafio/ranking." };
-      }
-    }
   }
 
   const { data: participantsRow } = await supabase
@@ -693,18 +639,18 @@ export async function gerenciarCancelamentoMatch(
         })
         .eq("id", matchId)
         .in("status", ["Aceito", "CancelamentoPendente"]);
-      await removerNotificacoesDoMatch(supabase, matchId, [participantsRow?.usuario_id, participantsRow?.adversario_id]);
+      // A RPC já substitui notificações do match e insere aviso ao elenco (keep_after_match_cancelled).
     }
     await marcarNotificacoesPorAcao(supabase, user.id, {
       referenciaId: matchId,
       tipos: ["match", "desafio"],
     });
-      await triggerPushForMatchNotifications(
-        supabase,
-        matchId,
-        [participantsRow?.usuario_id, participantsRow?.adversario_id],
-        "comunidade/actions.gerenciarCancelamentoMatch.respond_cancel"
-      );
+    await triggerPushForMatchNotifications(
+      supabase,
+      matchId,
+      aceitar ? [] : [participantsRow?.usuario_id, participantsRow?.adversario_id],
+      "comunidade/actions.gerenciarCancelamentoMatch.respond_cancel"
+    );
     revalidatePath("/agenda");
     revalidatePath("/comunidade");
     revalidatePath("/dashboard");
@@ -728,6 +674,8 @@ export async function gerenciarCancelamentoMatch(
       p_aceitar: aceitar,
     });
     if (error) return { ok: false, message: error.message };
+    const { data: statusRow } = await supabase.from("matches").select("status").eq("id", matchId).maybeSingle();
+    const canceladoPorRecusas = String(statusRow?.status ?? "") === "Cancelado";
     await marcarNotificacoesPorAcao(supabase, user.id, {
       referenciaId: matchId,
       tipos: ["match", "desafio"],
@@ -735,7 +683,7 @@ export async function gerenciarCancelamentoMatch(
     await triggerPushForMatchNotifications(
       supabase,
       matchId,
-      [participantsRow?.usuario_id, participantsRow?.adversario_id],
+      canceladoPorRecusas ? [] : [participantsRow?.usuario_id, participantsRow?.adversario_id],
       "comunidade/actions.gerenciarCancelamentoMatch.respond_option"
     );
     revalidatePath("/agenda");

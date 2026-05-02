@@ -17,6 +17,7 @@ import {
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
+import { computeRankingBlockedUntilColetivo } from "@/lib/match/coletivo-ranking-cooldown";
 import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
@@ -252,43 +253,22 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
 
   const cooldownMeses = await getMatchRankCooldownMeses(supabase);
   let rankingBlockedUntilDupla: string | null = null;
-  if (canChallengeDupla && timeResolvido?.criador_id && d.esporte_id != null) {
-    const cutoff = new Date();
-    cutoff.setMonth(cutoff.getMonth() - cooldownMeses);
-    const cutoffMs = cutoff.getTime();
-    const { data: cooldownRows } = await supabase
-      .from("partidas")
-      .select("status, status_ranking, data_resultado, data_partida, data_registro")
-      .eq("esporte_id", Number(d.esporte_id))
-      .is("torneio_id", null)
-      .eq("modalidade", "dupla")
-      .or(
-        `and(jogador1_id.eq.${user.id},jogador2_id.eq.${timeResolvido.criador_id}),and(jogador1_id.eq.${timeResolvido.criador_id},jogador2_id.eq.${user.id})`
-      )
-      .order("id", { ascending: false })
-      .limit(60);
-    for (const r of cooldownRows ?? []) {
-      const status = String((r as { status?: string | null }).status ?? "").trim().toLowerCase();
-      const statusRanking = String((r as { status_ranking?: string | null }).status_ranking ?? "").trim().toLowerCase();
-      const valid =
-        statusRanking === "validado" ||
-        ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
-      if (!valid) continue;
-      const dtRaw =
-        (r as { data_resultado?: string | null }).data_resultado ??
-        (r as { data_partida?: string | null }).data_partida ??
-        (r as { data_registro?: string | null }).data_registro ??
-        null;
-      if (!dtRaw) continue;
-      const base = new Date(dtRaw);
-      if (Number.isNaN(base.getTime()) || base.getTime() < cutoffMs) continue;
-      const until = new Date(base);
-      until.setMonth(until.getMonth() + cooldownMeses);
-      if (until.getTime() > Date.now()) {
-        rankingBlockedUntilDupla = until.toISOString();
-        break;
-      }
-    }
+  if (
+    canChallengeDupla &&
+    timeResolvido?.criador_id &&
+    d.esporte_id != null &&
+    meuTimeIdDupla != null &&
+    timeResolvidoId != null
+  ) {
+    rankingBlockedUntilDupla = await computeRankingBlockedUntilColetivo(supabase, {
+      esporteId: Number(d.esporte_id),
+      modalidade: "dupla",
+      meuTimeId: meuTimeIdDupla,
+      alvoTimeId: Number(timeResolvidoId),
+      cooldownMeses,
+      fallbackViewerId: user.id,
+      fallbackOpponentLeaderId: timeResolvido.criador_id,
+    });
   }
 
   const [{ data: eid1 }, { data: eid2 }] = await Promise.all([
@@ -651,7 +631,8 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     trailing={
                       <div className="flex flex-col gap-2">
                         <p className="text-[11px] font-semibold text-eid-primary-300 eid-light:text-sky-900">
-                          EID {i === 0 ? Number(eid1?.nota_eid ?? 0).toFixed(1) : Number(eid2?.nota_eid ?? 0).toFixed(1)}
+                          EID individual{" "}
+                          {i === 0 ? Number(eid1?.nota_eid ?? 0).toFixed(1) : Number(eid2?.nota_eid ?? 0).toFixed(1)}
                         </p>
                         {isLiderTimeDupla && timeResolvidoId && p.id !== user.id ? (
                           <FormacaoTransferirLiderancaForm

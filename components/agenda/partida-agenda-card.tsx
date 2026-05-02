@@ -49,6 +49,8 @@ type Props = {
   agendamentoPendente?: boolean;
   agendamentoPodeResponder?: boolean;
   agendamentoDeadline?: string | null;
+  /** Membro do elenco (não líder): só acompanha; não agenda nem cancela pelo card. */
+  somenteLeituraElenco?: boolean;
   /** Query `from=` nos links de EID (ex.: `/comunidade` no painel). */
   perfilEidFrom?: string;
 };
@@ -108,6 +110,7 @@ export function PartidaAgendaCard({
   agendamentoPendente = false,
   agendamentoPodeResponder = false,
   agendamentoDeadline = null,
+  somenteLeituraElenco = false,
   perfilEidFrom = "/agenda",
 }: Props) {
   const isPlacar = variant === "placar";
@@ -255,7 +258,12 @@ export function PartidaAgendaCard({
             </span>
           </div>
           <div className="p-2.5 md:p-3">
-            {agendamentoPodeResponder ? (
+            {somenteLeituraElenco ? (
+              <p className="text-center text-[11px] leading-snug text-eid-text-secondary">
+                Proposta de agendamento pendente. <span className="font-semibold text-eid-fg">Só o líder</span> da sua
+                formação pode aceitar ou recusar.
+              </p>
+            ) : agendamentoPodeResponder ? (
               <>
                 <p className="text-center text-[11px] leading-snug text-eid-text-secondary">
                   {formatDeadline(agendamentoDeadline)
@@ -333,14 +341,16 @@ export function PartidaAgendaCard({
       ) : (
         <div className="mt-2.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-2 text-center md:mt-4">
           <p className="text-[10px] font-semibold leading-snug text-eid-text-secondary md:text-xs">
-            {agendamentoPendente
-              ? "Agendamento enviado. Aguardando aceite do oponente."
-              : "Data, horário e local já definidos pelo reagendamento aceito."}
+            {somenteLeituraElenco
+              ? "Você acompanha como membro do elenco. O líder define data e local e lança o resultado no Painel."
+              : agendamentoPendente
+                ? "Agendamento enviado. Aguardando aceite do oponente."
+                : "Data, horário e local já definidos pelo reagendamento aceito."}
           </p>
         </div>
       )}
 
-      {!isPlacar && (cancelMatchId || desistMatchId) ? (
+      {!isPlacar && (cancelMatchId || desistMatchId) && !somenteLeituraElenco ? (
         <div className="mt-3 space-y-2 border-t border-transparent pt-2">
           {showCancelHint && cancelMatchId && !desistMatchId ? (
             <p className="text-center text-[8px] font-semibold uppercase tracking-[0.04em] text-eid-text-secondary sm:text-[9px]">

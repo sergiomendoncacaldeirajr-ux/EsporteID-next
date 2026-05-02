@@ -10,6 +10,7 @@ import { EidSectionInfo } from "@/components/ui/eid-section-info";
 import { fetchColetivoRankingPreview, fetchIndividualRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
+import { computeRankingBlockedUntilColetivo } from "@/lib/match/coletivo-ranking-cooldown";
 import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
 import { getDesafioRankLockedSetFormat, getMatchUIConfig, type MatchUIConfig } from "@/lib/match-scoring";
 import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
@@ -797,52 +798,8 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   }
 
   const cooldownMesesColetivo = await getMatchRankCooldownMeses(supabase);
-  const cutoffColetivo = new Date();
-  cutoffColetivo.setMonth(cutoffColetivo.getMonth() - cooldownMesesColetivo);
-  const cutoffColetivoMs = cutoffColetivo.getTime();
-  let rankingBlockedUntilColetivo: string | null = null;
-  const { data: cooldownRowsColetivo } = await supabase
-    .from("partidas")
-    .select("status, status_ranking, data_resultado, data_partida, data_registro")
-    .eq("esporte_id", esporteId)
-    .is("torneio_id", null)
-    .eq("modalidade", modalidade)
-    .or(
-      `and(jogador1_id.eq.${user.id},jogador2_id.eq.${timeRow.criador_id}),and(jogador1_id.eq.${timeRow.criador_id},jogador2_id.eq.${user.id}),and(desafiante_id.eq.${user.id},desafiado_id.eq.${timeRow.criador_id}),and(desafiante_id.eq.${timeRow.criador_id},desafiado_id.eq.${user.id})`
-    )
-    .order("id", { ascending: false })
-    .limit(80);
-  for (const r of cooldownRowsColetivo ?? []) {
-    const st = String((r as { status?: string | null }).status ?? "").trim().toLowerCase();
-    const sr = String((r as { status_ranking?: string | null }).status_ranking ?? "").trim().toLowerCase();
-    const valido =
-      sr === "validado" ||
-      ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(st);
-    if (!valido) continue;
-    const dtRaw =
-      (r as { data_resultado?: string | null }).data_resultado ??
-      (r as { data_partida?: string | null }).data_partida ??
-      (r as { data_registro?: string | null }).data_registro ??
-      null;
-    if (!dtRaw) continue;
-    const base = new Date(dtRaw);
-    if (Number.isNaN(base.getTime()) || base.getTime() < cutoffColetivoMs) continue;
-    const until = new Date(base);
-    until.setMonth(until.getMonth() + cooldownMesesColetivo);
-    const untilIso = until.toISOString();
-    if (untilIso > nowIso) {
-      rankingBlockedUntilColetivo = untilIso;
-      break;
-    }
-  }
 
-  const rankPrevCo = await fetchColetivoRankingPreview(supabase, {
-    viewerUserId: user.id,
-    opponentTeamId: timeRow.id,
-    esporteId,
-    modalidade: modalidade as "dupla" | "time",
-  });
-  const [{ data: minhasLideradas }, { data: minhasMembroRows }] = await Promise.all([
+  const [{ data: minhasLideradas }, { data: minhasMembroRows }, rankPrevCo] = await Promise.all([
     supabase
       .from("times")
       .select("id, genero")
@@ -855,7 +812,24 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       .select("time_id, times!inner(id, nome, criador_id, tipo, esporte_id)")
       .eq("usuario_id", user.id)
       .in("status", ["ativo", "aceito", "aprovado"]),
+    fetchColetivoRankingPreview(supabase, {
+      viewerUserId: user.id,
+      opponentTeamId: timeRow.id,
+      esporteId,
+      modalidade: modalidade as "dupla" | "time",
+    }),
   ]);
+
+  const meuTimeIdColetivo = Number(minhasLideradas?.[0]?.id ?? 0);
+  const rankingBlockedUntilColetivo = await computeRankingBlockedUntilColetivo(supabase, {
+    esporteId,
+    modalidade: modalidade as "dupla" | "time",
+    meuTimeId: Number.isFinite(meuTimeIdColetivo) && meuTimeIdColetivo > 0 ? meuTimeIdColetivo : null,
+    alvoTimeId: timeRow.id,
+    cooldownMeses: cooldownMesesColetivo,
+    fallbackViewerId: user.id,
+    fallbackOpponentLeaderId: timeRow.criador_id ?? undefined,
+  });
   const canConfirmarRanking = (minhasLideradas ?? []).length > 0;
   const meuTimeGenero = (minhasLideradas?.[0] as { genero?: string | null } | undefined)?.genero ?? null;
   const rankGeneroColetivo = resolveColetivoRankGenero(meuTimeGenero, timeRow.genero);

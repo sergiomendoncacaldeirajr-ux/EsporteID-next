@@ -36,6 +36,8 @@ type Item = {
     location: string | null;
     status: string;
   }>;
+  /** Membro do elenco (não líder): vê status, sem ações de cancelamento/reagendamento. */
+  gestaoSomenteLeitura?: boolean;
 };
 
 const initial: GerenciarCancelamentoState = { ok: false, message: "" };
@@ -252,6 +254,12 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
               </div>
               {String(m.status ?? "").includes("Pendente") ? (
                 <EidPendingBadge label={formatStatusLabel(m.statusLabel ?? m.status)} compact className="whitespace-nowrap md:text-[9px]" />
+              ) : String(m.statusLabel ?? "")
+                  .trim()
+                  .toLowerCase() === "agendado" ? (
+                <span className="whitespace-nowrap rounded-full border border-sky-500/35 bg-sky-500/12 px-2 py-0.5 text-left text-[8px] font-black uppercase tracking-[0.06em] text-sky-300 md:text-[9px]">
+                  Agendado
+                </span>
               ) : String(m.status ?? "").trim().toLowerCase() === "aceito" ? (
                 <EidAcceptedBadge label={formatStatusLabel(m.statusLabel ?? m.status)} compact className="whitespace-nowrap md:text-[9px]" />
               ) : (
@@ -273,8 +281,21 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
               ) : null}
             </div>
             <div className="mt-1.5 flex w-full flex-col gap-1.5 sm:w-auto md:mt-2 md:gap-2">
+              {m.gestaoSomenteLeitura && m.status === "Aceito" ? (
+                <p className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5 text-[10px] leading-snug text-eid-text-secondary md:text-[11px]">
+                  Você integra o elenco: acompanhe o status aqui. <span className="font-semibold text-eid-fg">Só o líder</span>{" "}
+                  combina data/local e lança o resultado no Painel.
+                </p>
+              ) : null}
 
-              {m.status === "CancelamentoPendente" && !m.isRequester ? (
+              {m.gestaoSomenteLeitura && (m.status === "CancelamentoPendente" || m.status === "ReagendamentoPendente") ? (
+                <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 px-2 py-1.5 text-[10px] font-semibold leading-snug text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)] md:text-[11px]">
+                  Fluxo de cancelamento ou reagendamento: <span className="text-eid-fg">somente o líder</span> da formação
+                  pode responder. Combine com o capitão.
+                </p>
+              ) : null}
+
+              {m.status === "CancelamentoPendente" && !m.isRequester && !m.gestaoSomenteLeitura ? (
                 <>
                   <p className="text-[9px] font-semibold text-eid-text-secondary md:text-[10px]">
                     <span className="text-eid-fg">{m.nomeOponente}</span> solicitou cancelar este desafio. Você aceita?
@@ -388,11 +409,11 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                 </>
               ) : null}
 
-              {m.status === "CancelamentoPendente" && m.isRequester ? (
+              {m.status === "CancelamentoPendente" && m.isRequester && !m.gestaoSomenteLeitura ? (
                 <p className="text-[11px] text-eid-text-secondary md:text-xs">Você solicitou o cancelamento. Aguardando resposta do oponente.</p>
               ) : null}
 
-              {m.status === "ReagendamentoPendente" && m.isRequester ? (
+              {m.status === "ReagendamentoPendente" && m.isRequester && !m.gestaoSomenteLeitura ? (
                 <div className="grid gap-2">
                   {m.options.map((op) => (
                     <div
@@ -435,7 +456,7 @@ export function AgendaAceitosCancelaveis({ items }: { items: Item[] }) {
                 </div>
               ) : null}
 
-              {m.status === "ReagendamentoPendente" && !m.isRequester ? (
+              {m.status === "ReagendamentoPendente" && !m.isRequester && !m.gestaoSomenteLeitura ? (
                 <p className="text-[11px] text-eid-text-secondary md:text-xs">
                   Você recusou o cancelamento e sugeriu horários. Aguardando escolha do oponente.
                 </p>

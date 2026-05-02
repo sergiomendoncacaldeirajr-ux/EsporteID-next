@@ -119,13 +119,13 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           .in("status", ["ativo", "aceito", "aprovado"]),
       ])
     : [{ data: [] as Array<{ id: number; criador_id: string | null; nome: string | null }> }, { data: [] as Array<{ time_id: number }> }];
-  const isTeamOwner = (ownerRows ?? []).some((t) => t.criador_id === user.id);
+  const isTeamLeader = (ownerRows ?? []).some((t) => t.criador_id === user.id);
   const isTeamMember = (memberRows ?? []).length > 0;
   const torneioAccess = p.torneio_id ? await getTorneioStaffAccess(supabase, Number(p.torneio_id), user.id) : null;
   const podeRegistrarTorneio = torneioAccess ? canLaunchTorneioScore(torneioAccess) : false;
   if (p.torneio_id) {
     if (!podeRegistrarTorneio && !isPlatformAdmin) notFound();
-  } else if (!(isPlatformAdmin || (isColetivo ? isTeamOwner || isTeamMember : participant))) {
+  } else if (!(isPlatformAdmin || (isColetivo ? isTeamLeader : participant))) {
     notFound();
   }
   const status = normStatus(p.status);
@@ -144,18 +144,18 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const podeLancar = !emAnaliseAdmin && (isPlatformAdmin || (p.torneio_id
     ? podeRegistrarTorneio
     : resultadoContestado
-      ? (isColetivo ? isTeamOwner : participant) &&
+      ? (isColetivo ? isTeamLeader : participant) &&
         p.lancado_por === user.id &&
         (status === "aguardando_confirmacao" || status === "agendada")
       : isColetivo
-        ? isTeamOwner && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id))
+        ? isTeamLeader && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id))
         : participant && (status === "agendada" || (aguardandoConfirmacao && p.lancado_por === user.id))));
   const podeConfirmarOuContestar =
-    !emAnaliseAdmin && !p.torneio_id && (isColetivo ? isTeamOwner : participant) && aguardandoConfirmacao && p.lancado_por !== user.id;
+    !emAnaliseAdmin && !p.torneio_id && (isColetivo ? isTeamLeader : participant) && aguardandoConfirmacao && p.lancado_por !== user.id;
   const podeAbrirMediacao =
     !p.torneio_id &&
     !emAnaliseAdmin &&
-    (isColetivo ? isTeamOwner : participant) &&
+    (isColetivo ? isTeamLeader : participant) &&
     aguardandoConfirmacao &&
     p.lancado_por !== user.id &&
     resultadoContestado;
@@ -303,7 +303,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
               Partida de torneio: o lançamento é restrito ao organizador e aos lançadores autorizados.
             </p>
           ) : null}
-          {isColetivo && !isTeamOwner ? (
+          {isColetivo && !isTeamLeader ? (
             <p className="mt-2 text-xs text-eid-text-secondary">
               Você é membro da formação: visualização liberada. Somente o dono da dupla/time pode agendar, lançar, confirmar ou contestar resultado.
             </p>

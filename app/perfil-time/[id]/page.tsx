@@ -16,6 +16,7 @@ import {
 } from "@/lib/perfil/whatsapp-visibility";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
+import { computeRankingBlockedUntilColetivo } from "@/lib/match/coletivo-ranking-cooldown";
 import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
@@ -211,41 +212,16 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
 
   const cooldownMeses = await getMatchRankCooldownMeses(supabase);
   let rankingBlockedUntilTime: string | null = null;
-  if (canChallenge && t.esporte_id != null && t.criador_id) {
-    const cutoff = new Date();
-    cutoff.setMonth(cutoff.getMonth() - cooldownMeses);
-    const cutoffMs = cutoff.getTime();
-    const { data: cooldownRows } = await supabase
-      .from("partidas")
-      .select("status, status_ranking, data_resultado, data_partida, data_registro")
-      .eq("esporte_id", Number(t.esporte_id))
-      .is("torneio_id", null)
-      .eq("modalidade", modalidade)
-      .or(`and(jogador1_id.eq.${user.id},jogador2_id.eq.${t.criador_id}),and(jogador1_id.eq.${t.criador_id},jogador2_id.eq.${user.id})`)
-      .order("id", { ascending: false })
-      .limit(60);
-    for (const r of cooldownRows ?? []) {
-      const status = String((r as { status?: string | null }).status ?? "").trim().toLowerCase();
-      const statusRanking = String((r as { status_ranking?: string | null }).status_ranking ?? "").trim().toLowerCase();
-      const valid =
-        statusRanking === "validado" ||
-        ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);
-      if (!valid) continue;
-      const dtRaw =
-        (r as { data_resultado?: string | null }).data_resultado ??
-        (r as { data_partida?: string | null }).data_partida ??
-        (r as { data_registro?: string | null }).data_registro ??
-        null;
-      if (!dtRaw) continue;
-      const base = new Date(dtRaw);
-      if (Number.isNaN(base.getTime()) || base.getTime() < cutoffMs) continue;
-      const until = new Date(base);
-      until.setMonth(until.getMonth() + cooldownMeses);
-      if (until.getTime() > Date.now()) {
-        rankingBlockedUntilTime = until.toISOString();
-        break;
-      }
-    }
+  if (canChallenge && t.esporte_id != null && meuTimeId != null) {
+    rankingBlockedUntilTime = await computeRankingBlockedUntilColetivo(supabase, {
+      esporteId: Number(t.esporte_id),
+      modalidade,
+      meuTimeId,
+      alvoTimeId: id,
+      cooldownMeses,
+      fallbackViewerId: user.id,
+      fallbackOpponentLeaderId: t.criador_id ?? undefined,
+    });
   }
 
   const temBlocoAcaoVisitante =

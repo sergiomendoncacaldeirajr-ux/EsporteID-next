@@ -228,7 +228,7 @@ export async function submitPlacarAction(formData: FormData) {
     isRankingStatus(p.status_ranking, "contestado") ||
     isRankingStatus(p.status_ranking, "resultado_contestado") ||
     isRankingStatus(p.status_ranking, "pendente_confirmacao_revisao");
-  const actorCanRegular = ctx.scope.isColetivo ? ctx.scope.isTeamOwner : ctx.scope.isParticipant;
+  const actorCanRegular = ctx.scope.isColetivo ? ctx.scope.isTeamLeader : ctx.scope.isParticipant;
   const canActRegular = p.torneio_id
     ? ctx.podeRegistrarTorneio
     : emFluxoContestado
@@ -329,7 +329,7 @@ export async function confirmarPlacarAction(formData: FormData) {
   const ctx = await loadPartidaContext(partidaId, user.id);
   if (!ctx.partida) go(partidaId, "erro", "Partida não encontrada.");
   const p = ctx.partida;
-  const canConfirm = ctx.scope.isColetivo ? ctx.scope.isTeamOwner : ctx.scope.isParticipant;
+  const canConfirm = ctx.scope.isColetivo ? ctx.scope.isTeamLeader : ctx.scope.isParticipant;
   if (!canConfirm || p.lancado_por === user.id || normStatus(p.status) !== "aguardando_confirmacao") {
     go(partidaId, "erro", "Esta partida não está disponível para confirmação por este usuário.");
   }
@@ -389,7 +389,7 @@ export async function contestarPlacarAction(formData: FormData) {
   const ctx = await loadPartidaContext(partidaId, user.id);
   if (!ctx.partida) go(partidaId, "erro", "Partida não encontrada.");
   const p = ctx.partida;
-  const canContest = ctx.scope.isColetivo ? ctx.scope.isTeamOwner : ctx.scope.isParticipant;
+  const canContest = ctx.scope.isColetivo ? ctx.scope.isTeamLeader : ctx.scope.isParticipant;
   if (!canContest || p.lancado_por === user.id || normStatus(p.status) !== "aguardando_confirmacao") {
     go(partidaId, "erro", "Esta partida não está disponível para contestação por este usuário.");
   }
@@ -480,7 +480,7 @@ export async function abrirMediacaoAdminAction(formData: FormData) {
   const ctx = await loadPartidaContext(partidaId, user.id);
   if (!ctx.partida) go(partidaId, "erro", "Partida não encontrada.");
   const p = ctx.partida;
-  const canMediate = ctx.scope.isColetivo ? ctx.scope.isTeamOwner : ctx.scope.isParticipant;
+  const canMediate = ctx.scope.isColetivo ? ctx.scope.isTeamLeader : ctx.scope.isParticipant;
   const status = normStatus(p.status);
   const emFluxoContestado =
     isRankingStatus(p.status_ranking, "contestado") ||
@@ -560,7 +560,7 @@ export async function salvarAgendamentoAction(formData: FormData) {
   const canSchedule = p.torneio_id
     ? ctx.podeRegistrarTorneio
     : ctx.scope.isColetivo
-      ? ctx.scope.isTeamOwner
+      ? ctx.scope.isTeamLeader
       : ctx.scope.isParticipant;
   if (!canSchedule) {
     salvarAgendaRedirect(partidaId, "erro", "Sem permissão para editar o agendamento desta partida.", modoAgenda);

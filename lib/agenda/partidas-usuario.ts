@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { fetchCriadoresPorTimeIds } from "@/lib/agenda/desafio-match-leadership";
 
 export type EspNome = { nome?: string | null };
 /** Linha retornada pelas queries de partidas da agenda / painel (cards). */
@@ -79,7 +80,7 @@ function modalidadeColetiva(modalidade: string | null | undefined, time1: number
 
 /**
  * Quem pode aceitar/recusar proposta de agendamento: no individual, qualquer um dos dois jogadores
- * (exceto quem propôs). Em dupla/time, qualquer membro ativo ou líder do time adversário ao proponente.
+ * (exceto quem propôs). Em dupla/time, só o líder atual (`times.criador_id`) do lado que não propôs.
  */
 export function computeAgendaPodeResponderProposta(
   p: Pick<
@@ -87,10 +88,10 @@ export function computeAgendaPodeResponderProposta(
     "status" | "jogador1_id" | "jogador2_id" | "time1_id" | "time2_id" | "modalidade" | "agendamento_proposto_por"
   >,
   userId: string,
-  userTimeIds: Set<number>
+  criadorPorTimeId: Map<number, string>
 ): boolean {
   if (String(p.status ?? "").trim().toLowerCase() !== "aguardando_aceite_agendamento") return false;
-  const proposer = p.agendamento_proposto_por;
+  const proposer = String(p.agendamento_proposto_por ?? "").trim();
   if (!proposer || proposer === userId) return false;
 
   const t1 = p.time1_id != null && Number(p.time1_id) > 0 ? Number(p.time1_id) : null;
@@ -98,15 +99,17 @@ export function computeAgendaPodeResponderProposta(
   if (!modalidadeColetiva(p.modalidade, t1, t2)) {
     return userId === p.jogador1_id || userId === p.jogador2_id;
   }
+  if (!t1 && !t2) {
+    return userId === p.jogador1_id || userId === p.jogador2_id;
+  }
 
-  if (proposer === p.jogador1_id) {
-    if (userId === p.jogador2_id) return true;
-    return t2 != null && userTimeIds.has(t2);
-  }
-  if (proposer === p.jogador2_id) {
-    if (userId === p.jogador1_id) return true;
-    return t1 != null && userTimeIds.has(t1);
-  }
+  const c1 = t1 ? criadorPorTimeId.get(t1) ?? "" : "";
+  const c2 = t2 ? criadorPorTimeId.get(t2) ?? "" : "";
+
+  if (proposer === c1 && c2) return userId === c2;
+  if (proposer === c2 && c1) return userId === c1;
+  if (proposer === String(p.jogador1_id ?? "").trim() && c2) return userId === c2;
+  if (proposer === String(p.jogador2_id ?? "").trim() && c1) return userId === c1;
   return false;
 }
 
@@ -124,7 +127,7 @@ export async function userMayRespondPropostaAgendamento(
   },
   userId: string
 ): Promise<boolean> {
-  const userTimeIds = await loadUserTimeIdsOnTeams(supabase, userId, [Number(p.time1_id), Number(p.time2_id)]);
+  const criadorPorTimeId = await fetchCriadoresPorTimeIds(supabase, [Number(p.time1_id), Number(p.time2_id)]);
   return computeAgendaPodeResponderProposta(
     {
       status: p.status,
@@ -136,7 +139,7 @@ export async function userMayRespondPropostaAgendamento(
       agendamento_proposto_por: p.agendamento_proposto_por,
     },
     userId,
-    userTimeIds
+    criadorPorTimeId
   );
 }
 

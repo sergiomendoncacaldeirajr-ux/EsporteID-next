@@ -27,7 +27,8 @@ export type PartidaCtx = {
 export type ActorScope = {
   isColetivo: boolean;
   isParticipant: boolean;
-  isTeamOwner: boolean;
+  /** Dupla/time: usuário é o líder atual (`times.criador_id`), não o criador original da formação. */
+  isTeamLeader: boolean;
   isTeamMember: boolean;
 };
 
@@ -41,10 +42,10 @@ export async function getActorScope(
     .toLowerCase();
   const isColetivo = modalidade === "dupla" || modalidade === "time" || Boolean(partida.time1_id || partida.time2_id);
   const isParticipant = partida.jogador1_id === userId || partida.jogador2_id === userId;
-  if (!isColetivo) return { isColetivo, isParticipant, isTeamOwner: false, isTeamMember: false };
+  if (!isColetivo) return { isColetivo, isParticipant, isTeamLeader: false, isTeamMember: false };
 
   const timeIds = [partida.time1_id, partida.time2_id].filter((v): v is number => typeof v === "number" && v > 0);
-  if (!timeIds.length) return { isColetivo, isParticipant, isTeamOwner: false, isTeamMember: false };
+  if (!timeIds.length) return { isColetivo, isParticipant, isTeamLeader: false, isTeamMember: false };
 
   const [{ data: ownerRows }, { data: memberRows }] = await Promise.all([
     supabase.from("times").select("id, criador_id").in("id", timeIds),
@@ -55,9 +56,9 @@ export async function getActorScope(
       .eq("usuario_id", userId)
       .in("status", ["ativo", "aceito", "aprovado"]),
   ]);
-  const isTeamOwner = (ownerRows ?? []).some((t) => t.criador_id === userId);
+  const isTeamLeader = (ownerRows ?? []).some((t) => t.criador_id === userId);
   const isTeamMember = (memberRows ?? []).length > 0;
-  return { isColetivo, isParticipant, isTeamOwner, isTeamMember };
+  return { isColetivo, isParticipant, isTeamLeader, isTeamMember };
 }
 
 export async function loadPartidaContext(partidaId: number, userId: string) {
@@ -74,7 +75,7 @@ export async function loadPartidaContext(partidaId: number, userId: string) {
       supabase,
       partida: null,
       podeRegistrarTorneio: false,
-      scope: { isColetivo: false, isParticipant: false, isTeamOwner: false, isTeamMember: false } as ActorScope,
+      scope: { isColetivo: false, isParticipant: false, isTeamLeader: false, isTeamMember: false } as ActorScope,
     };
   }
   const scope = await getActorScope(supabase, partida as PartidaCtx, userId);

@@ -9,12 +9,15 @@ import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens"
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import {
+  partidaRankingEncerradaParaResumo,
+  userIsDesafioAgendaLeaderFromMap,
+} from "@/lib/agenda/desafio-match-leadership";
+import {
   type AgendaPartidaCardRow,
   computeAgendaPodeResponderProposta,
   fetchPartidasAgendadasUsuario,
   firstOfRelation,
   getAgendaTeamContext,
-  loadUserTimeIdsOnTeams,
 } from "@/lib/agenda/partidas-usuario";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { pickFormacaoLadoPartida } from "@/lib/agenda/partida-formacao-lado";
@@ -140,17 +143,29 @@ export default async function AgendaPage() {
   const { data: partidasPorMatchRows } = matchIdsAceitos.length
     ? await supabase
         .from("partidas")
-        .select("id, match_id, status, status_ranking")
+        .select("id, match_id, status, status_ranking, data_partida, local_str, local_espaco_id")
         .in("match_id", matchIdsAceitos)
         .order("id", { ascending: false })
     : { data: [] };
-  const partidaMaisRecentePorMatch = new Map<number, { status: string | null; status_ranking: string | null }>();
+  const partidaMaisRecentePorMatch = new Map<
+    number,
+    {
+      status: string | null;
+      status_ranking: string | null;
+      data_partida: string | null;
+      local_str: string | null;
+      local_espaco_id: number | null;
+    }
+  >();
   for (const row of partidasPorMatchRows ?? []) {
     const mid = Number((row as { match_id?: number | null }).match_id ?? 0);
     if (!Number.isFinite(mid) || mid <= 0 || partidaMaisRecentePorMatch.has(mid)) continue;
     partidaMaisRecentePorMatch.set(mid, {
       status: (row as { status?: string | null }).status ?? null,
       status_ranking: (row as { status_ranking?: string | null }).status_ranking ?? null,
+      data_partida: (row as { data_partida?: string | null }).data_partida ?? null,
+      local_str: (row as { local_str?: string | null }).local_str ?? null,
+      local_espaco_id: (row as { local_espaco_id?: number | null }).local_espaco_id ?? null,
     });
   }
   const { data: partidasStatusRows } = await supabase
@@ -230,6 +245,14 @@ export default async function AgendaPage() {
       { nome: p.nome ?? "Oponente", avatarUrl: p.avatar_url ?? null, localizacao: p.localizacao ?? null },
     ])
   );
+  const partidasAgendaTimeIdSet = new Set<number>();
+  for (const row of partidasAgendadas ?? []) {
+    const r = row as AgendaPartidaCardRow;
+    for (const t of [r.time1_id, r.time2_id]) {
+      const n = Number(t);
+      if (Number.isFinite(n) && n > 0) partidasAgendaTimeIdSet.add(n);
+    }
+  }
   const aceitosTimeIdSet = new Set<number>();
   for (const m of aceitosCancelaveis ?? []) {
     const dt = Number((m as { desafiante_time_id?: number | null }).desafiante_time_id ?? 0);
@@ -237,14 +260,18 @@ export default async function AgendaPage() {
     if (Number.isFinite(dt) && dt > 0) aceitosTimeIdSet.add(dt);
     if (Number.isFinite(at) && at > 0) aceitosTimeIdSet.add(at);
   }
-  const aceitosTimeIds = [...aceitosTimeIdSet];
-  const { data: aceitosTimesRows } = aceitosTimeIds.length
-    ? await supabase.from("times").select("id, nome, escudo, eid_time, localizacao").in("id", aceitosTimeIds)
+  const allAgendaTimeIdsForCriadores = [...new Set([...aceitosTimeIdSet, ...partidasAgendaTimeIdSet])];
+  const { data: aceitosTimesRows } = allAgendaTimeIdsForCriadores.length
+    ? await supabase
+        .from("times")
+        .select("id, nome, escudo, eid_time, localizacao, criador_id")
+        .in("id", allAgendaTimeIdsForCriadores)
     : { data: [] };
   const aceitosTimesById = new Map<
     number,
     { nome: string | null; escudo: string | null; eid_time: number | null; localizacao: string | null }
   >();
+  const criadorPorTimeIdAgenda = new Map<number, string>();
   for (const t of aceitosTimesRows ?? []) {
     const id = Number((t as { id: number }).id);
     if (!Number.isFinite(id) || id <= 0) continue;
@@ -254,6 +281,8 @@ export default async function AgendaPage() {
       eid_time: (t as { eid_time?: number | null }).eid_time ?? null,
       localizacao: (t as { localizacao?: string | null }).localizacao ?? null,
     });
+    const cid = String((t as { criador_id?: string | null }).criador_id ?? "").trim();
+    if (cid) criadorPorTimeIdAgenda.set(id, cid);
   }
   const agendaTeamIdSet = new Set(agendaTeamIds);
   function resolveOponenteTimeIdAceitos(m: {
@@ -300,55 +329,93 @@ export default async function AgendaPage() {
     opcoesByMatch.set(key, list);
   }
 
-  const aceitosItems = (aceitosCancelaveis ?? []).map((m) => {
-    const opp = m.usuario_id === user.id ? m.adversario_id : m.usuario_id;
-    const status = String(m.status ?? "Aceito");
-    const keyDuelo = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
-    const keyDueloNoSport = dueloKeyNoSport(m.usuario_id, m.adversario_id);
-    const partidaRecente =
-      partidaMaisRecentePorMatch.get(Number(m.id)) ??
-      (keyDuelo ? partidaMaisRecentePorDuelo.get(keyDuelo) ?? null : null) ??
-      (keyDueloNoSport ? partidaMaisRecentePorDueloNoSport.get(keyDueloNoSport) ?? null : null);
-    const partidaStatus = String(partidaRecente?.status ?? "").trim().toLowerCase();
-    const partidaStatusRanking = String(partidaRecente?.status_ranking ?? "").trim().toLowerCase();
-    let statusLabel: string | null = null;
-    if (status === "Aceito") {
-      if (partidaStatusRanking === "contestado" || partidaStatusRanking === "resultado_contestado") {
-        statusLabel = "Resultado contestado";
-      } else if (partidaStatusRanking === "pendente_confirmacao_revisao") {
-        statusLabel = "Aguardando aprovação (revisão)";
-      } else if (partidaStatusRanking === "em_analise_admin") {
-        statusLabel = "Em análise do admin";
-      } else if (partidaStatus === "aguardando_confirmacao") {
-        statusLabel = "Aguardando aprovação";
+  const aceitosItems = (aceitosCancelaveis ?? []).flatMap((m) => {
+      const opp = m.usuario_id === user.id ? m.adversario_id : m.usuario_id;
+      const status = String(m.status ?? "Aceito");
+      const keyDuelo = dueloKey(m.usuario_id, m.adversario_id, Number(m.esporte_id ?? 0));
+      const keyDueloNoSport = dueloKeyNoSport(m.usuario_id, m.adversario_id);
+      const partidaRecente =
+        partidaMaisRecentePorMatch.get(Number(m.id)) ??
+        (keyDuelo ? partidaMaisRecentePorDuelo.get(keyDuelo) ?? null : null) ??
+        (keyDueloNoSport ? partidaMaisRecentePorDueloNoSport.get(keyDueloNoSport) ?? null : null);
+
+      const isLeader = userIsDesafioAgendaLeaderFromMap(
+        user.id,
+        {
+          usuario_id: m.usuario_id,
+          adversario_id: m.adversario_id,
+          desafiante_time_id: (m as { desafiante_time_id?: number | null }).desafiante_time_id ?? null,
+          adversario_time_id: (m as { adversario_time_id?: number | null }).adversario_time_id ?? null,
+          modalidade_confronto: m.modalidade_confronto ?? null,
+        },
+        criadorPorTimeIdAgenda
+      );
+
+      if (!isLeader && partidaRankingEncerradaParaResumo(partidaRecente)) {
+        return [];
       }
-    }
-    const isRequester = String(m.cancel_requested_by ?? "") === user.id;
-    const tidOpp = resolveOponenteTimeIdAceitos(m);
-    const timeRow = tidOpp != null ? aceitosTimesById.get(tidOpp) : undefined;
-    const nomePerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.nome : null) ?? "Oponente";
-    const avatarPerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.avatarUrl : null) ?? null;
-    const locPerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.localizacao : null) ?? null;
-    const nomeTime = timeRow?.nome != null && String(timeRow.nome).trim() ? String(timeRow.nome).trim() : null;
-    const escudoTime = timeRow?.escudo != null && String(timeRow.escudo).trim() ? String(timeRow.escudo).trim() : null;
-    return {
-      id: Number(m.id),
-      nomeOponente: nomeTime ?? nomePerfilOpp,
-      avatarOponente: escudoTime ?? avatarPerfilOpp,
-      oponenteAvatarEhTime: Boolean(tidOpp && nomeTime),
-      localizacaoOponente: tidOpp && timeRow?.localizacao?.trim() ? timeRow.localizacao.trim() : locPerfilOpp,
-      notaEidOponente: tidOpp && timeRow ? Number(timeRow.eid_time ?? 0) : opp ? (notaEidByUserSport.get(`${opp}:${Number(m.esporte_id ?? 0)}`) ?? 0) : 0,
-      oponenteId: opp ?? "",
-      esporte: (m.esporte_id ? espMapAceitos.get(m.esporte_id) : null) ?? "Esporte",
-      modalidade: m.modalidade_confronto ?? "individual",
-      status,
-      statusLabel,
-      isRequester,
-      cancelResponseDeadlineAt: m.cancel_response_deadline_at ? String(m.cancel_response_deadline_at) : null,
-      rescheduleDeadlineAt: m.reschedule_deadline_at ? String(m.reschedule_deadline_at) : null,
-      options: opcoesByMatch.get(Number(m.id)) ?? [],
-    };
-  });
+
+      const partidaStatus = String(partidaRecente?.status ?? "").trim().toLowerCase();
+      const partidaStatusRanking = String(partidaRecente?.status_ranking ?? "").trim().toLowerCase();
+      const metaExt = partidaRecente as {
+        data_partida?: string | null;
+        local_str?: string | null;
+        local_espaco_id?: number | null;
+      } | null;
+      const hasLocalPartida =
+        Boolean(String(metaExt?.local_str ?? "").trim()) || (Number(metaExt?.local_espaco_id ?? 0) > 0);
+      const reagSelecionado = Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? 0) > 0;
+      const matchTemHorarioReag = Boolean(String((m as { scheduled_for?: string | null }).scheduled_for ?? "").trim());
+
+      let statusLabel: string | null = null;
+      if (status === "Aceito") {
+        if (partidaStatusRanking === "contestado" || partidaStatusRanking === "resultado_contestado") {
+          statusLabel = "Resultado contestado";
+        } else if (partidaStatusRanking === "pendente_confirmacao_revisao") {
+          statusLabel = "Aguardando aprovação (revisão)";
+        } else if (partidaStatusRanking === "em_analise_admin") {
+          statusLabel = "Em análise do admin";
+        } else if (partidaStatus === "aguardando_confirmacao") {
+          statusLabel = "Aguardando aprovação";
+        } else if (
+          partidaStatus === "agendada" &&
+          Boolean(String(metaExt?.data_partida ?? "").trim()) &&
+          (hasLocalPartida || (reagSelecionado && matchTemHorarioReag))
+        ) {
+          statusLabel = "Agendado";
+        } else if (reagSelecionado && matchTemHorarioReag) {
+          statusLabel = "Agendado";
+        }
+      }
+      const isRequester = String(m.cancel_requested_by ?? "") === user.id;
+      const tidOpp = resolveOponenteTimeIdAceitos(m);
+      const timeRow = tidOpp != null ? aceitosTimesById.get(tidOpp) : undefined;
+      const nomePerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.nome : null) ?? "Oponente";
+      const avatarPerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.avatarUrl : null) ?? null;
+      const locPerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.localizacao : null) ?? null;
+      const nomeTime = timeRow?.nome != null && String(timeRow.nome).trim() ? String(timeRow.nome).trim() : null;
+      const escudoTime = timeRow?.escudo != null && String(timeRow.escudo).trim() ? String(timeRow.escudo).trim() : null;
+      return [
+        {
+          id: Number(m.id),
+          nomeOponente: nomeTime ?? nomePerfilOpp,
+          avatarOponente: escudoTime ?? avatarPerfilOpp,
+          oponenteAvatarEhTime: Boolean(tidOpp && nomeTime),
+          localizacaoOponente: tidOpp && timeRow?.localizacao?.trim() ? timeRow.localizacao.trim() : locPerfilOpp,
+          notaEidOponente: tidOpp && timeRow ? Number(timeRow.eid_time ?? 0) : opp ? (notaEidByUserSport.get(`${opp}:${Number(m.esporte_id ?? 0)}`) ?? 0) : 0,
+          oponenteId: opp ?? "",
+          esporte: (m.esporte_id ? espMapAceitos.get(m.esporte_id) : null) ?? "Esporte",
+          modalidade: m.modalidade_confronto ?? "individual",
+          status,
+          statusLabel,
+          isRequester,
+          cancelResponseDeadlineAt: m.cancel_response_deadline_at ? String(m.cancel_response_deadline_at) : null,
+          rescheduleDeadlineAt: m.reschedule_deadline_at ? String(m.reschedule_deadline_at) : null,
+          options: opcoesByMatch.get(Number(m.id)) ?? [],
+          gestaoSomenteLeitura: !isLeader,
+        },
+      ];
+    });
 
   const cancelMatchIdByDuelo = new Map<string, number>();
   const acceptedScheduleByDuelo = new Map<string, { scheduledFor: string | null; scheduledLocation: string | null }>();
@@ -418,16 +485,6 @@ export default async function AgendaPage() {
     });
   }
 
-  const timeIdsAceiteAgendamento: number[] = [];
-  for (const row of partidasAgendadasVisiveis) {
-    if (String(row.status ?? "").trim().toLowerCase() !== "aguardando_aceite_agendamento") continue;
-    const r = row as AgendaPartidaCardRow;
-    for (const t of [r.time1_id, r.time2_id]) {
-      const n = Number(t);
-      if (Number.isFinite(n) && n > 0) timeIdsAceiteAgendamento.push(n);
-    }
-  }
-  const userTimeIdsParaAceite = await loadUserTimeIdsOnTeams(supabase, user.id, timeIdsAceiteAgendamento);
 
   function localLabel(p: AgendaPartidaCardRow) {
     if (p.local_str?.trim()) return p.local_str.trim();
@@ -498,7 +555,19 @@ export default async function AgendaPage() {
               const effectiveLocalLabel = acceptedSchedule?.scheduledLocation ?? localLabel(pr);
               const hasScheduleDefined = Boolean((acceptedSchedule?.scheduledFor ?? pr.data_partida) && effectiveLocalLabel);
               const schedulePending = String(pr.status ?? "") === "aguardando_aceite_agendamento";
-              const scheduleCanRespond = computeAgendaPodeResponderProposta(pr, user.id, userTimeIdsParaAceite);
+              const podeGerenciarPartida = userIsDesafioAgendaLeaderFromMap(
+                user.id,
+                {
+                  usuario_id: pr.jogador1_id,
+                  adversario_id: pr.jogador2_id,
+                  desafiante_time_id: pr.time1_id ?? null,
+                  adversario_time_id: pr.time2_id ?? null,
+                  modalidade_confronto: pr.modalidade ?? null,
+                },
+                criadorPorTimeIdAgenda
+              );
+              const scheduleCanRespond = computeAgendaPodeResponderProposta(pr, user.id, criadorPorTimeIdAgenda);
+              const somenteLeituraElenco = !podeGerenciarPartida;
               return (
                 <PartidaAgendaCard
                   key={pr.id}
@@ -525,7 +594,10 @@ export default async function AgendaPage() {
                     ) ?? null
                   }
                   ctaHidden={
-                    schedulePending || hasScheduleDefined || rescheduleAcceptedByDuelo.has(dueloCardKey)
+                    schedulePending ||
+                    hasScheduleDefined ||
+                    rescheduleAcceptedByDuelo.has(dueloCardKey) ||
+                    somenteLeituraElenco
                   }
                   desistMatchId={
                     rescheduleAcceptedByDuelo.has(dueloCardKey)
@@ -537,6 +609,7 @@ export default async function AgendaPage() {
                   agendamentoPendente={schedulePending}
                   agendamentoPodeResponder={scheduleCanRespond}
                   agendamentoDeadline={pr.agendamento_aceite_deadline ?? null}
+                  somenteLeituraElenco={somenteLeituraElenco}
                 />
               );
             })}
