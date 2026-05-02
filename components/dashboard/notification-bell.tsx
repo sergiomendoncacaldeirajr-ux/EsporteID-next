@@ -9,6 +9,7 @@ import {
   enablePushNotifications,
   hasActivePushSubscription,
 } from "@/lib/pwa/push-client";
+import { isAmistosoAceiteInformativoNotif } from "@/lib/notificacoes/amistoso-aceite-informativo";
 import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
 import { limparTodasNotificacoes } from "@/app/comunidade/actions";
 
@@ -421,6 +422,23 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     [router, userId]
   );
 
+  const onLimparPreviewAmistoso = useCallback(
+    async (n: Preview) => {
+      if (!userId) return;
+      const supabase = createClient();
+      const { error } = await supabase.from("notificacoes").delete().eq("id", n.id).eq("usuario_id", userId);
+      if (error) return;
+      setPreview((prev) => prev.filter((item) => item.id !== n.id));
+      if (n.lida !== true) {
+        setTotal((prev) => Math.max(0, prev - 1));
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+      }
+    },
+    [userId]
+  );
+
   const onLimparTodasNotificacoes = useCallback(async () => {
     if (!userId || limpandoTodas) return;
     if (preview.length === 0 && total === 0) return;
@@ -557,18 +575,39 @@ export function NotificationBell({ userId }: { userId: string | null }) {
               </div>
             ) : (
               <ul className="mt-1.5 max-h-40 space-y-1.5 overflow-y-auto pr-1">
-                {preview.slice(0, PREVIEW_LIMIT).map((n) => (
-                  <li key={n.id}>
-                    <button
-                      type="button"
-                      onClick={() => void onPreviewClick(n)}
-                      className="block w-full rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2 py-1.5 text-left transition hover:border-eid-primary-500/35"
-                    >
-                      <p className={`line-clamp-2 text-[10px] ${n.lida ? "text-eid-text-secondary" : "font-semibold text-eid-fg"}`}>{n.mensagem}</p>
-                      <p className="mt-1 text-[9px] text-eid-text-secondary">{formatShort(n.data_criacao ?? n.criada_em)}</p>
-                    </button>
-                  </li>
-                ))}
+                {preview.slice(0, PREVIEW_LIMIT).map((n) => {
+                  const amistosoInfo = isAmistosoAceiteInformativoNotif(n.tipo, n.mensagem);
+                  return (
+                    <li key={n.id}>
+                      <div
+                        className={`flex gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2 py-1.5 transition hover:border-eid-primary-500/35 ${amistosoInfo ? "items-start" : ""}`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => void onPreviewClick(n)}
+                          className={`min-w-0 text-left ${amistosoInfo ? "flex-1 py-0" : "block w-full"}`}
+                        >
+                          <p className={`line-clamp-2 text-[10px] ${n.lida ? "text-eid-text-secondary" : "font-semibold text-eid-fg"}`}>
+                            {n.mensagem}
+                          </p>
+                          <p className="mt-1 text-[9px] text-eid-text-secondary">{formatShort(n.data_criacao ?? n.criada_em)}</p>
+                        </button>
+                        {amistosoInfo ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void onLimparPreviewAmistoso(n);
+                            }}
+                            className="shrink-0 self-center rounded-md border border-eid-action-500/30 bg-eid-action-500/10 px-1.5 py-1 text-[7px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/45"
+                          >
+                            Limpar
+                          </button>
+                        ) : null}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             )}
 

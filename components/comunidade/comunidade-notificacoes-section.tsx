@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { marcarNotificacaoLida, marcarTodasNotificacoesLidas } from "@/app/comunidade/actions";
+import { apagarNotificacao, marcarNotificacaoLida, marcarTodasNotificacoesLidas } from "@/app/comunidade/actions";
 import { EidNotificacaoRow } from "@/components/ui/eid-notificacao-row";
+import { isAmistosoAceiteInformativoNotif } from "@/lib/notificacoes/amistoso-aceite-informativo";
 import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
 
 export type NotifRow = {
@@ -82,7 +83,19 @@ export function ComunidadeNotificacoesSection({ items }: { items: NotifRow[] }) 
                       <p className="mt-2 text-[11px] text-eid-text-secondary">{notifDate(n)}</p>
                     ) : null}
                   </Link>
-                  {n.lida !== true ? (
+                  {isAmistosoAceiteInformativoNotif(n.tipo, n.mensagem) ? (
+                    <form action={apagarNotificacao} className="shrink-0">
+                      <input type="hidden" name="notif_id" value={String(n.id)} />
+                      <button
+                        type="submit"
+                        data-eid-compact-chip-btn="true"
+                        className="rounded-lg border border-eid-action-500/35 bg-eid-action-500/10 px-3 py-1.5 text-[11px] font-bold text-eid-action-400 transition hover:border-eid-action-500/50 hover:bg-eid-action-500/15"
+                      >
+                        Limpar
+                      </button>
+                    </form>
+                  ) : null}
+                  {!isAmistosoAceiteInformativoNotif(n.tipo, n.mensagem) && n.lida !== true ? (
                     <form action={marcarNotificacaoLida} className="shrink-0">
                       <input type="hidden" name="notif_id" value={String(n.id)} />
                       <button

@@ -17,8 +17,6 @@ create policy "partidas_select_access"
         from public.torneio_staff ts
         where ts.torneio_id = partidas.torneio_id
           and ts.usuario_id = auth.uid()
-          and ts.papel = 'lancador_placar'
-          and ts.status = 'ativo'
       )
     )
   );
@@ -48,8 +46,6 @@ create policy "partidas_write_tournament_staff"
         from public.torneio_staff ts
         where ts.torneio_id = partidas.torneio_id
           and ts.usuario_id = auth.uid()
-          and ts.papel = 'lancador_placar'
-          and ts.status = 'ativo'
       )
     )
   )
@@ -63,8 +59,6 @@ create policy "partidas_write_tournament_staff"
         from public.torneio_staff ts
         where ts.torneio_id = partidas.torneio_id
           and ts.usuario_id = auth.uid()
-          and ts.papel = 'lancador_placar'
-          and ts.status = 'ativo'
       )
     )
   );
