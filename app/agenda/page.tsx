@@ -1,6 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { AgendaPageSkeleton } from "@/components/loading/agenda-page-skeleton";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 import { AgendaBackgroundSync } from "@/components/agenda/agenda-background-sync";
 import { AgendaAceitosCancelaveis } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
@@ -33,7 +36,15 @@ export const metadata = {
 
 type AgendaTimePendenteInfo = { nome: string; escudo: string | null; eid_time: number };
 
-export default async function AgendaPage() {
+export default function AgendaPage() {
+  return (
+    <Suspense fallback={eidRouteSkeletonsDisabled() ? null : <AgendaPageSkeleton />}>
+      <AgendaPageContent />
+    </Suspense>
+  );
+}
+
+async function AgendaPageContent() {
   const supabase = await createClient();
   const {
     data: { user },

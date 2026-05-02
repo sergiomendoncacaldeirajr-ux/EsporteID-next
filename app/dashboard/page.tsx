@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { DashboardPageSkeleton } from "@/components/loading/dashboard-page-skeleton";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { createClient } from "@/lib/supabase/server";
 import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
@@ -269,7 +272,15 @@ const dashboardEmptyWide =
 const dashboardAppNavClass =
   "eid-dashboard-app-nav rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_42%,var(--eid-bg)_58%)] p-1 shadow-none sm:rounded-[1.35rem] sm:p-1.5";
 
-export default async function DashboardPage({ searchParams }: Props) {
+export default function DashboardPage(props: Props) {
+  return (
+    <Suspense fallback={eidRouteSkeletonsDisabled() ? null : <DashboardPageSkeleton />}>
+      <DashboardPageContent {...props} />
+    </Suspense>
+  );
+}
+
+async function DashboardPageContent({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const q = (sp.q ?? "").trim().toLowerCase();
   const contextState = await getAuthContextState();

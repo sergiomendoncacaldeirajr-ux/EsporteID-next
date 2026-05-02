@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { ComunidadeSocialSkeleton } from "@/components/loading/comunidade-social-skeleton";
+import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 import { AgendaAceitosCancelaveis, type AceitosCancelaveisItem } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { PartidaAgendaCard } from "@/components/agenda/partida-agenda-card";
 import { ComunidadeConvitesTime, type ConviteTimeItem } from "@/components/comunidade/comunidade-convites-time";
@@ -113,7 +116,15 @@ function PedidoElencoEidSeal({ notaEid }: { notaEid: number }) {
   );
 }
 
-export default async function ComunidadePage() {
+export default function ComunidadePage() {
+  return (
+    <Suspense fallback={eidRouteSkeletonsDisabled() ? null : <ComunidadeSocialSkeleton />}>
+      <ComunidadePageContent />
+    </Suspense>
+  );
+}
+
+async function ComunidadePageContent() {
   const supabase = await createClient();
   const {
     data: { user },
