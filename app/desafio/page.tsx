@@ -29,6 +29,7 @@ import {
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
+import { MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER } from "@/lib/match/viewer-esporte-confronto";
 import { createClient } from "@/lib/supabase/server";
 
 type Params = {
@@ -443,10 +444,17 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         <main className={DESAFIO_PAGE_MAIN_CLASS}>
           <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
           <p className="mt-2 text-sm text-eid-text-secondary">
-            Você não tem <span className="font-semibold text-eid-fg">{esporteNome}</span> no perfil. O desafio precisa ser
-            no mesmo esporte para os dois — adicione o esporte ou escolha outro oponente/esporte.
+            {MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER}{" "}
+            <span className="font-semibold text-eid-fg">({esporteNome})</span>
           </p>
-          <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4`}>
+          <Link
+            href="/conta/esportes-eid"
+            {...exitEmbedProps(isEmbed)}
+            className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4 inline-block`}
+          >
+            Esportes e EID na conta
+          </Link>
+          <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-2 block`}>
             Voltar ao radar
           </Link>
         </main>
@@ -801,6 +809,34 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     );
   }
 
+  const { data: viewerEidColetivoGate } = await supabase
+    .from("usuario_eid")
+    .select("esporte_id")
+    .eq("usuario_id", user.id)
+    .eq("esporte_id", esporteId)
+    .maybeSingle();
+  if (!viewerEidColetivoGate) {
+    return (
+      <main className={DESAFIO_PAGE_MAIN_CLASS}>
+        <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
+        <p className="mt-2 text-sm text-eid-text-secondary">
+          {MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER}{" "}
+          <span className="font-semibold text-eid-fg">({esporteNome})</span>
+        </p>
+        <Link
+          href="/conta/esportes-eid"
+          {...exitEmbedProps(isEmbed)}
+          className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-4 inline-block`}
+        >
+          Esportes e EID na conta
+        </Link>
+        <Link href="/match" {...exitEmbedProps(isEmbed)} className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-2 block`}>
+          Voltar ao radar
+        </Link>
+      </main>
+    );
+  }
+
   const cooldownMesesColetivo = await getMatchRankCooldownMeses(supabase);
 
   const [{ data: minhasLideradas }, { data: minhasMembroRows }, rankPrevCo] = await Promise.all([
@@ -902,11 +938,11 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         </div>
         <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:p-4">
           <div className="flex items-center gap-3">
-            <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[14px] border-2 border-eid-primary-500/50 bg-eid-surface shadow-[0_8px_18px_-12px_rgba(37,99,235,0.32)]">
               {timeRow.escudo ? (
                 <Image src={timeRow.escudo} alt="" fill unoptimized className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-base font-black text-eid-primary-300">
+                <div className="flex h-full w-full items-center justify-center text-base font-black text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
                   {desafioPrimeiroNome(timeRow.nome, "F").slice(0, 1).toUpperCase()}
                 </div>
               )}

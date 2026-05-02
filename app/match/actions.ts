@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import {
   fetchMatchRadarCards,
+  fetchMatchRadarCardsMultiSameTipo,
+  fetchMatchRadarCardsTodasMerged,
   type MatchRadarCard,
   type MatchRadarFinalidade,
   type RadarSnapshotInput,
@@ -53,6 +55,10 @@ export async function refreshMatchRadarAction(input: {
   esporteSelecionado: string;
   finalidade: MatchRadarFinalidade;
   includeActiveOpponents?: boolean;
+  /** Com `tipo: todas` e esporte `all`, lista de ids numéricos (união das modalidades do perfil). */
+  esporteIdsUnion?: string[];
+  /** Com `tipo` atleta/dupla/time e esporte `all`, ids do perfil naquela modalidade (evita RPC sem `p_esporte_id`). */
+  esporteIdsExpandAll?: string[];
 }): Promise<RefreshMatchRadarResult> {
   const { supabase, user } = await getServerAuth();
   if (!user) return { ok: false, error: "auth" };
@@ -73,12 +79,59 @@ export async function refreshMatchRadarAction(input: {
     return { ok: false, error: "no_location" };
   }
 
+  if (input.tipo === "todas") {
+    const ids =
+      input.esporteSelecionado !== "all" && /^\d+$/.test(input.esporteSelecionado)
+        ? [input.esporteSelecionado]
+        : (input.esporteIdsUnion ?? []).filter((id) => /^\d+$/.test(id));
+    if (ids.length === 0) {
+      return { ok: true, cards: [] };
+    }
+    const cards = await fetchMatchRadarCardsTodasMerged(supabase, {
+      viewerId: user.id,
+      sortBy: input.sortBy,
+      raio: input.raio,
+      esporteIds: ids,
+      lat,
+      lng,
+      finalidade: input.finalidade,
+    });
+    return { ok: true, cards };
+  }
+
+  const expand =
+    input.esporteSelecionado === "all"
+      ? [...new Set((input.esporteIdsExpandAll ?? []).filter((id) => /^\d+$/.test(id)))]
+      : [];
+  if (input.esporteSelecionado === "all") {
+    if (expand.length === 0) {
+      return { ok: true, cards: [] };
+    }
+    if (expand.length > 1) {
+      const cards = await fetchMatchRadarCardsMultiSameTipo(supabase, {
+        viewerId: user.id,
+        tipo: input.tipo,
+        sortBy: input.sortBy,
+        raio: input.raio,
+        esporteIds: expand,
+        lat,
+        lng,
+        finalidade: input.finalidade,
+        includeActiveOpponents: input.includeActiveOpponents === true,
+      });
+      return { ok: true, cards };
+    }
+  }
+
+  const esporteOne =
+    input.esporteSelecionado === "all" && expand.length === 1 ? expand[0]! : input.esporteSelecionado;
+
   const snap: RadarSnapshotInput = {
     viewerId: user.id,
     tipo: input.tipo,
     sortBy: input.sortBy,
     raio: input.raio,
-    esporteSelecionado: input.esporteSelecionado,
+    esporteSelecionado: esporteOne,
     lat,
     lng,
     finalidade: input.finalidade,

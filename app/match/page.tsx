@@ -8,6 +8,8 @@ import { getEsportesConfrontoCached } from "@/lib/match/esportes-confronto";
 import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
 import {
   fetchMatchRadarCards,
+  fetchMatchRadarCardsMultiSameTipo,
+  fetchMatchRadarCardsTodasMerged,
   type MatchRadarFinalidade,
   type RadarTipo,
   type SortBy,
@@ -34,7 +36,9 @@ type RadarViewMode = "full" | "grid";
 type RadarGeneroFiltro = "all" | "masculino" | "feminino" | "outro";
 
 function toTipo(v: string | undefined): RadarTipo {
-  return v === "dupla" || v === "time" ? v : "atleta";
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s === "dupla" || s === "time" || s === "todas") return s;
+  return "atleta";
 }
 
 function toSortBy(v: string | undefined): SortBy {
@@ -70,7 +74,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   const tipo = toTipo(sp.tipo);
   const matchFinalidade = toMatchFinalidade(sp.finalidade);
   const initialView = toViewMode(sp.view);
-  if (initialView !== "full" && matchFinalidade === "amistoso" && tipo !== "atleta") {
+  if (initialView !== "full" && matchFinalidade === "amistoso" && tipo !== "atleta" && tipo !== "todas") {
     const q = new URLSearchParams();
     for (const [k, v] of Object.entries(sp)) {
       if (typeof v === "string" && v.length > 0) q.set(k, v);
@@ -254,24 +258,34 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   );
 
   const esporteDefault =
-    tipo === "atleta"
+    tipo === "todas"
       ? viewerEsportesIndividualDedup.length > 0
         ? String(viewerEsportesIndividualDedup[0])
-        : "all"
-      : tipo === "dupla"
-        ? viewerEsportesComDuplaDedup.length > 0
+        : viewerEsportesComDuplaDedup.length > 0
           ? String(viewerEsportesComDuplaDedup[0])
+          : viewerEsportesComTimeDedup.length > 0
+            ? String(viewerEsportesComTimeDedup[0])
+            : "all"
+      : tipo === "atleta"
+        ? viewerEsportesIndividualDedup.length > 0
+          ? String(viewerEsportesIndividualDedup[0])
           : "all"
-        : viewerEsportesComTimeDedup.length > 0
-          ? String(viewerEsportesComTimeDedup[0])
-          : "all";
+        : tipo === "dupla"
+          ? viewerEsportesComDuplaDedup.length > 0
+            ? String(viewerEsportesComDuplaDedup[0])
+            : "all"
+          : viewerEsportesComTimeDedup.length > 0
+            ? String(viewerEsportesComTimeDedup[0])
+            : "all";
 
   const allowedEsporteIdsForTipo = new Set(
-    (tipo === "atleta"
-      ? viewerEsportesIndividualDedup
-      : tipo === "dupla"
-        ? viewerEsportesComDuplaDedup
-        : viewerEsportesComTimeDedup
+    (tipo === "todas"
+      ? [...viewerEsportesIndividualDedup, ...viewerEsportesComDuplaDedup, ...viewerEsportesComTimeDedup]
+      : tipo === "atleta"
+        ? viewerEsportesIndividualDedup
+        : tipo === "dupla"
+          ? viewerEsportesComDuplaDedup
+          : viewerEsportesComTimeDedup
     ).map(String)
   );
 
@@ -295,9 +309,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
       ? fullRadarEsporteIds
       : /^\d+$/.test(esporteSelecionado)
         ? [esporteSelecionado]
-        : esportes[0]
-          ? [String(esportes[0].id)]
-          : [];
+        : [];
   const fullRadarUnionNums = [
     ...new Set([
       ...viewerEsportesIndividualDedup,
@@ -314,11 +326,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   const fullRadarFetchEsporteIds =
     fullRadarFetchMergedNums.length > 0
       ? fullRadarFetchMergedNums.map(String)
-      : fullRadarEsporteIdsResolved.length > 0
-        ? fullRadarEsporteIdsResolved
-        : esportes[0]
-          ? [String(esportes[0].id)]
-          : [];
+      : fullRadarEsporteIdsResolved.filter((id) => /^\d+$/.test(id));
   const initialGeneroFiltro = toGeneroFiltro(sp.genero);
 
   const latN = Number(me.lat);
@@ -394,19 +402,75 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
     return Array.from(byKey.values());
   }
 
+  const initialTodasEsporteIds: string[] =
+    tipo === "todas" && initialView !== "full"
+      ? esporteSelecionado !== "all" && /^\d+$/.test(esporteSelecionado)
+        ? [esporteSelecionado]
+        : fullRadarFetchMergedNums.length > 0
+          ? fullRadarFetchMergedNums.map(String)
+          : /^\d+$/.test(String(esporteSelecionado))
+            ? [String(esporteSelecionado)]
+            : []
+      : [];
+
+  /** Grade (não “todas”): só esportes permitidos para a aba; nunca RPC com esporte null. */
+  const gridFetchIds: string[] =
+    tipo === "todas" || initialView === "full"
+      ? []
+      : (() => {
+          const paramDigit = esporteParam !== "all" && /^\d+$/.test(esporteParam);
+          const allowedEmpty = allowedEsporteIdsForTipo.size === 0;
+          if (
+            paramDigit &&
+            (allowedEmpty || allowedEsporteIdsForTipo.has(esporteParam))
+          ) {
+            return [esporteParam];
+          }
+          const sel = esporteSelecionado;
+          if (sel !== "all" && /^\d+$/.test(sel) && (allowedEmpty || allowedEsporteIdsForTipo.has(sel))) {
+            return [sel];
+          }
+          return [...allowedEsporteIdsForTipo].filter((id) => /^\d+$/.test(id));
+        })();
+
   const initialCards =
     initialView === "full"
       ? await mergeFullRadarForEsportes(fullRadarFetchEsporteIds)
-      : await fetchMatchRadarCards(supabase, {
-          viewerId: user.id,
-          tipo,
-          sortBy,
-          raio,
-          esporteSelecionado,
-          lat: Number(me.lat),
-          lng: Number(me.lng),
-          finalidade: matchFinalidade,
-        });
+      : tipo === "todas"
+        ? initialTodasEsporteIds.length > 0
+          ? await fetchMatchRadarCardsTodasMerged(supabase, {
+              viewerId: user.id,
+              sortBy,
+              raio,
+              esporteIds: initialTodasEsporteIds,
+              lat: latN,
+              lng: lngN,
+              finalidade: matchFinalidade,
+            })
+          : []
+        : gridFetchIds.length === 0
+          ? []
+          : gridFetchIds.length === 1
+            ? await fetchMatchRadarCards(supabase, {
+                viewerId: user.id,
+                tipo,
+                sortBy,
+                raio,
+                esporteSelecionado: gridFetchIds[0]!,
+                lat: Number(me.lat),
+                lng: Number(me.lng),
+                finalidade: matchFinalidade,
+              })
+            : await fetchMatchRadarCardsMultiSameTipo(supabase, {
+                viewerId: user.id,
+                tipo,
+                sortBy,
+                raio,
+                esporteIds: gridFetchIds,
+                lat: Number(me.lat),
+                lng: Number(me.lng),
+                finalidade: matchFinalidade,
+              });
   const initialViewResolved: RadarViewMode =
     initialView === "full" && initialCards.length === 0 ? "grid" : initialView;
 

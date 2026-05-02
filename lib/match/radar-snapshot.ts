@@ -3,7 +3,7 @@ import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown"
 import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 
-export type RadarTipo = "atleta" | "dupla" | "time";
+export type RadarTipo = "atleta" | "dupla" | "time" | "todas";
 export type SortBy = "eid_score" | "match_ranking_points";
 
 export type MatchRadarCard = {
@@ -232,7 +232,14 @@ export async function fetchMatchRadarCards(
   input: RadarSnapshotInput
 ): Promise<MatchRadarCard[]> {
   const { viewerId, tipo, sortBy, raio, esporteSelecionado, lat, lng, finalidade, includeActiveOpponents } = input;
+  if (tipo === "todas") {
+    return [];
+  }
   const esporteId = /^\d+$/.test(esporteSelecionado) ? Number(esporteSelecionado) : null;
+  /** `p_esporte_id` null no RPC lista todos os esportes — nunca usar sem filtrar pelo perfil do viewer. */
+  if (esporteId == null || !Number.isFinite(esporteId) || esporteId <= 0) {
+    return [];
+  }
 
   let cards: MatchRadarCard[] = [];
 
@@ -246,12 +253,19 @@ export async function fetchMatchRadarCards(
 
   const { data: activeMatches } = await supabase
     .from("matches")
-    .select("usuario_id, adversario_id, adversario_time_id, desafiante_time_id, esporte_id, status")
+    .select(
+      "usuario_id, adversario_id, adversario_time_id, desafiante_time_id, esporte_id, status, modalidade_confronto"
+    )
     .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
   const activeOpponentIds = new Set<string>();
   /** Times adversários a ocultar (lado desafiante) ou times desafiantes a ocultar (lado desafiado). */
   const blockedFormationTeamIdsFromMatches = new Set<number>();
   const activeStatuses = new Set(["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
+  /**
+   * Só esconde dupla/time no radar por `matches` em fluxo “vale confronto”: pedido pendente, aceito ou reagendamento.
+   * `CancelamentoPendente`: cancelamento em andamento — não bloqueia sugestão (alinhado à SQL `buscar_match_formacoes`, só `Pendente`).
+   */
+  const formationMatchBlockStatuses = new Set(["Pendente", "Aceito", "ReagendamentoPendente"]);
 
   for (const m of activeMatches ?? []) {
     const st = String((m as { status?: string | null }).status ?? "");
@@ -266,35 +280,39 @@ export async function fetchMatchRadarCards(
     const advT = Number(advTimeRaw ?? 0);
     const desT = Number(desTimeRaw ?? 0);
 
-    if (
-      modalidadeFormacaoEarly != null &&
-      eidNumForMineEarly != null &&
-      mEsporte === eidNumForMineEarly &&
-      Number.isFinite(advT) &&
-      advT > 0
-    ) {
-      const viewerIsChallengerCaptain = usuarioId === viewerId;
-      const viewerInChallengerTeam = Number.isFinite(desT) && desT > 0 && viewerFormationTimeIdsForBlock.has(desT);
-      if (viewerIsChallengerCaptain || viewerInChallengerTeam) {
-        blockedFormationTeamIdsFromMatches.add(advT);
+    if (formationMatchBlockStatuses.has(st)) {
+      if (
+        modalidadeFormacaoEarly != null &&
+        eidNumForMineEarly != null &&
+        mEsporte === eidNumForMineEarly &&
+        Number.isFinite(advT) &&
+        advT > 0
+      ) {
+        const viewerIsChallengerCaptain = usuarioId === viewerId;
+        const viewerInChallengerTeam = Number.isFinite(desT) && desT > 0 && viewerFormationTimeIdsForBlock.has(desT);
+        if (viewerIsChallengerCaptain || viewerInChallengerTeam) {
+          blockedFormationTeamIdsFromMatches.add(advT);
+        }
       }
-    }
 
-    if (
-      modalidadeFormacaoEarly != null &&
-      eidNumForMineEarly != null &&
-      mEsporte === eidNumForMineEarly &&
-      Number.isFinite(desT) &&
-      desT > 0
-    ) {
-      const viewerIsChallengedCaptain = adversarioId === viewerId;
-      const viewerInChallengedTeam = Number.isFinite(advT) && advT > 0 && viewerFormationTimeIdsForBlock.has(advT);
-      if (viewerIsChallengedCaptain || viewerInChallengedTeam) {
-        blockedFormationTeamIdsFromMatches.add(desT);
+      if (
+        modalidadeFormacaoEarly != null &&
+        eidNumForMineEarly != null &&
+        mEsporte === eidNumForMineEarly &&
+        Number.isFinite(desT) &&
+        desT > 0
+      ) {
+        const viewerIsChallengedCaptain = adversarioId === viewerId;
+        const viewerInChallengedTeam = Number.isFinite(advT) && advT > 0 && viewerFormationTimeIdsForBlock.has(advT);
+        if (viewerIsChallengedCaptain || viewerInChallengedTeam) {
+          blockedFormationTeamIdsFromMatches.add(desT);
+        }
       }
     }
 
     if (!includeActiveOpponents) {
+      const modRaw = String((m as { modalidade_confronto?: string | null }).modalidade_confronto ?? "").trim().toLowerCase();
+      if (modRaw && modRaw !== "individual") continue;
       if (usuarioId === viewerId && adversarioId) activeOpponentIds.add(adversarioId);
       else if (adversarioId === viewerId && usuarioId) activeOpponentIds.add(usuarioId);
     }
@@ -523,13 +541,6 @@ export async function fetchMatchRadarCards(
     for (const tid of blockedFormationTeamIdsFromMatches) {
       if (Number.isFinite(tid) && tid > 0) blockedTeamIds.add(tid);
     }
-    if (teamRowsNotMine.length > 0 && activeOpponentIds.size > 0) {
-      for (const row of ownersAll ?? []) {
-        if (!activeOpponentIds.has(String((row as { criador_id?: string | null }).criador_id ?? ""))) continue;
-        const id = Number((row as { id?: number | null }).id ?? 0);
-        if (Number.isFinite(id) && id > 0) blockedTeamIds.add(id);
-      }
-    }
     const teamRowsVisible = teamRowsNotMine.filter((t) => !blockedTeamIds.has(Number(t.id)));
     let eligibleTeamIds = new Set<number>(teamRowsVisible.map((t) => Number(t.id)));
     if (teamRowsVisible.length > 0) {
@@ -559,16 +570,7 @@ export async function fetchMatchRadarCards(
     }
     let teamRowsByCooldown = teamRowsVisible;
     if (finalidade === "ranking") {
-      const ownersVisible = (ownersAll ?? []).filter((r) =>
-        teamRowsVisible.some((t) => Number(t.id) === Number((r as { id?: number | null }).id ?? 0))
-      );
       const blockedTeamIdsByCooldown = new Set<number>();
-      for (const o of ownersVisible) {
-        if (blockedOpponentUsersByCooldown.has(String((o as { criador_id?: string | null }).criador_id ?? ""))) {
-          const id = Number((o as { id?: number | null }).id ?? 0);
-          if (Number.isFinite(id) && id > 0) blockedTeamIdsByCooldown.add(id);
-        }
-      }
       for (const tid of blockedOpponentTeamIdsByCooldown) {
         if (Number.isFinite(tid) && tid > 0) blockedTeamIdsByCooldown.add(tid);
       }
@@ -617,6 +619,151 @@ export async function fetchMatchRadarCards(
   }
 
   return filterAndSortRadarCards(cards, { sortBy, raio, finalidade });
+}
+
+/**
+ * Vários esportes na mesma aba (ex.: chip “Todos” com tênis e futebol no perfil) sem chamar RPC com `p_esporte_id` null.
+ */
+export async function fetchMatchRadarCardsMultiSameTipo(
+  supabase: SupabaseClient,
+  input: {
+    viewerId: string;
+    tipo: Exclude<RadarTipo, "todas">;
+    sortBy: SortBy;
+    raio: number;
+    esporteIds: string[];
+    lat: number;
+    lng: number;
+    finalidade: MatchRadarFinalidade;
+    includeActiveOpponents?: boolean;
+  }
+): Promise<MatchRadarCard[]> {
+  const ids = [...new Set(input.esporteIds.filter((id) => /^\d+$/.test(id)))];
+  if (ids.length === 0) return [];
+  const { viewerId, tipo, sortBy, raio, lat, lng, finalidade, includeActiveOpponents } = input;
+  const perSport = await Promise.all(
+    ids.map((eid) =>
+      fetchMatchRadarCards(supabase, {
+        viewerId,
+        tipo,
+        sortBy,
+        raio,
+        esporteSelecionado: eid,
+        lat,
+        lng,
+        finalidade,
+        includeActiveOpponents: includeActiveOpponents === true,
+      })
+    )
+  );
+  return dedupeMatchRadarCardsMerged(perSport.flat());
+}
+
+function dedupeMatchRadarCardsMerged(cards: MatchRadarCard[]): MatchRadarCard[] {
+  const byKey = new Map<string, MatchRadarCard>();
+  for (const card of cards) {
+    const key = `${card.modalidade}:${card.id}:${card.esporteId}`;
+    const prev = byKey.get(key);
+    if (!prev) {
+      byKey.set(key, card);
+      continue;
+    }
+    if (prev.interesseMatch !== "ranking_e_amistoso" && card.interesseMatch === "ranking_e_amistoso") {
+      byKey.set(key, card);
+    }
+  }
+  return Array.from(byKey.values());
+}
+
+/**
+ * Grade do /match com modalidade "todas": mesma mistura da dashboard (individual + dupla + time) por esporte(s).
+ */
+export async function fetchMatchRadarCardsTodasMerged(
+  supabase: SupabaseClient,
+  input: {
+    viewerId: string;
+    sortBy: SortBy;
+    raio: number;
+    esporteIds: string[];
+    lat: number;
+    lng: number;
+    finalidade: MatchRadarFinalidade;
+  }
+): Promise<MatchRadarCard[]> {
+  const { viewerId, sortBy, raio, esporteIds, lat, lng, finalidade } = input;
+  const ids = [...new Set(esporteIds.filter((id) => /^\d+$/.test(id)))];
+  if (ids.length === 0) return [];
+
+  if (finalidade === "amistoso") {
+    const perSport = await Promise.all(
+      ids.map((eid) =>
+        fetchMatchRadarCards(supabase, {
+          viewerId,
+          tipo: "atleta",
+          sortBy,
+          raio,
+          esporteSelecionado: eid,
+          lat,
+          lng,
+          finalidade: "amistoso",
+          includeActiveOpponents: true,
+        })
+      )
+    );
+    return dedupeMatchRadarCardsMerged(perSport.flat());
+  }
+
+  const perSport = await Promise.all(
+    ids.map((eid) =>
+      Promise.all([
+        fetchMatchRadarCards(supabase, {
+          viewerId,
+          tipo: "atleta",
+          sortBy,
+          raio,
+          esporteSelecionado: eid,
+          lat,
+          lng,
+          finalidade: "ranking",
+          includeActiveOpponents: true,
+        }),
+        fetchMatchRadarCards(supabase, {
+          viewerId,
+          tipo: "atleta",
+          sortBy,
+          raio,
+          esporteSelecionado: eid,
+          lat,
+          lng,
+          finalidade: "amistoso",
+          includeActiveOpponents: true,
+        }),
+        fetchMatchRadarCards(supabase, {
+          viewerId,
+          tipo: "dupla",
+          sortBy,
+          raio,
+          esporteSelecionado: eid,
+          lat,
+          lng,
+          finalidade: "ranking",
+          includeActiveOpponents: true,
+        }),
+        fetchMatchRadarCards(supabase, {
+          viewerId,
+          tipo: "time",
+          sortBy,
+          raio,
+          esporteSelecionado: eid,
+          lat,
+          lng,
+          finalidade: "ranking",
+          includeActiveOpponents: true,
+        }),
+      ])
+    )
+  );
+  return dedupeMatchRadarCardsMerged(perSport.flat(2));
 }
 
 export function filterAndSortRadarCards(

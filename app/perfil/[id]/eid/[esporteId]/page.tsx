@@ -22,6 +22,10 @@ import {
 } from "@/lib/perfil/formacao-eid-stats";
 import { sportIconEmoji } from "@/lib/perfil/sport-icon-emoji";
 import { resolverTimeIdParaDuplaRegistrada } from "@/lib/perfil/whatsapp-visibility";
+import {
+  MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER,
+  viewerTemUsuarioEidNoEsporte,
+} from "@/lib/match/viewer-esporte-confronto";
 import { createClient } from "@/lib/supabase/server";
 
 type Props = {
@@ -79,6 +83,12 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
     .eq("id", profileId)
     .maybeSingle();
   if (!perfil) notFound();
+
+  const isVisitante = profileId !== user.id;
+  const viewerTemEidNesteEsporte =
+    isVisitante && esporteId != null
+      ? await viewerTemUsuarioEidNoEsporte(supabase, user.id, esporteId)
+      : true;
 
   const { data: ue } = await supabase
     .from("usuario_eid")
@@ -567,6 +577,21 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
   return (
       <main className={PROFILE_PUBLIC_MAIN_CLASS}>
         {!isEmbed ? <PerfilBackLink href={backHref} label="Voltar ao perfil" /> : null}
+
+        {isVisitante && !viewerTemEidNesteEsporte ? (
+          <div
+            className={`mt-3 overflow-hidden ${PROFILE_CARD_BASE} border-amber-500/35 bg-amber-500/10 px-3 py-2.5 sm:px-4`}
+            role="status"
+          >
+            <p className="text-[11px] leading-relaxed text-eid-text-secondary">{MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER}</p>
+            <Link
+              href="/conta/esportes-eid"
+              className="mt-2 inline-flex text-[11px] font-semibold text-eid-primary-300 underline-offset-2 hover:underline"
+            >
+              Configurar esportes no perfil →
+            </Link>
+          </div>
+        ) : null}
 
         <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS}`}>
           <div className="px-3 py-3 sm:px-4 sm:py-4">

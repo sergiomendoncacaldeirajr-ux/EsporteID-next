@@ -23,6 +23,7 @@ import { EidSectionInfo } from "@/components/ui/eid-section-info";
 import {
   PROFILE_HERO_PANEL_CLASS,
   PROFILE_PUBLIC_AVATAR_RING_CLASS,
+  PROFILE_PUBLIC_FORMACAO_ESCUDO_CLASS,
 } from "@/components/perfil/profile-ui-tokens";
 import { matchCardEidStatsHref } from "@/lib/match/radar-snapshot";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
@@ -206,6 +207,13 @@ function MatchRadarStickerCard({
     card.modalidade !== "individual" ? "ranking" : card.interesseMatch === "amistoso" ? "amistoso" : "ranking";
   const desafioHref = `/desafio?id=${encodeURIComponent(card.id)}&tipo=${encodeURIComponent(card.modalidade)}&esporte=${encodeURIComponent(esporteParam)}&finalidade=${encodeURIComponent(cardFinalidade)}`;
   const nomeCurto = compactCardName(card.nome);
+  const isStickerIndividual = card.modalidade === "individual";
+  const stickerAvatarShape = isStickerIndividual ? "rounded-full" : "rounded-[14px]";
+  const escudoPlaceholderInitial =
+    card.nome
+      .trim()
+      .split(/\s+/u)[0]?.[0]
+      ?.toUpperCase() ?? "?";
   const modalidadeLabel = card.modalidade === "individual" ? null : card.modalidade === "dupla" ? "Dupla" : "Time";
   const esporteIdStats = /^\d+$/.test(esporteParam) ? Number(esporteParam) : card.esporteId;
   const eidStatsHref =
@@ -221,11 +229,21 @@ function MatchRadarStickerCard({
       alt=""
       fill
       unoptimized
-      className={`h-full w-full ${PROFILE_PUBLIC_AVATAR_RING_CLASS} !object-cover object-center`}
+      className={cn(
+        "h-full w-full !object-cover object-center",
+        isStickerIndividual ? PROFILE_PUBLIC_AVATAR_RING_CLASS : PROFILE_PUBLIC_FORMACAO_ESCUDO_CLASS
+      )}
     />
   ) : (
-    <div className="flex h-full w-full items-center justify-center rounded-full bg-eid-surface text-[10px] font-black text-eid-primary-300">
-      EID
+    <div
+      className={cn(
+        "flex h-full w-full items-center justify-center text-[10px] font-black",
+        isStickerIndividual
+          ? "rounded-full bg-eid-surface text-eid-primary-300"
+          : "rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]"
+      )}
+    >
+      {isStickerIndividual ? "EID" : escudoPlaceholderInitial}
     </div>
   );
 
@@ -237,14 +255,17 @@ function MatchRadarStickerCard({
         fullscreen
         topMode="backOnly"
         className={cn(
-          "relative block overflow-hidden rounded-full border-2 border-orange-200/65 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,white_4%),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_0_0_3px_color-mix(in_srgb,var(--eid-surface)_86%,white_14%),0_10px_26px_-16px_rgba(239,108,0,0.55)]",
+          "relative block overflow-hidden",
+          isStickerIndividual
+            ? "rounded-full border-2 border-orange-200/65 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,white_4%),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] shadow-[0_0_0_3px_color-mix(in_srgb,var(--eid-surface)_86%,white_14%),0_10px_26px_-16px_rgba(239,108,0,0.55)]"
+            : "rounded-[14px] border-0 bg-eid-surface/50 shadow-[0_8px_18px_-12px_rgba(37,99,235,0.32)]",
           compact ? "h-[3.9rem] w-[3.9rem]" : "h-[5.1rem] w-[5.1rem]"
         )}
       >
         {avatarBlock}
       </ProfileEditDrawerTrigger>
       <span
-        className={`pointer-events-none absolute inset-0 rounded-full border-2 motion-safe:animate-pulse ${
+        className={`pointer-events-none absolute inset-0 ${stickerAvatarShape} border-2 motion-safe:animate-pulse ${
           card.disponivelAmistoso
             ? "border-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.45),0_0_12px_rgba(16,185,129,0.75)]"
             : "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.45),0_0_12px_rgba(239,68,68,0.72)]"
@@ -460,6 +481,12 @@ export function MatchRadarApp({
     [viewMode, generoFiltro]
   );
 
+  const esporteIdsUnion = useMemo(
+    () =>
+      [...new Set([...viewerEsportesIndividual, ...viewerEsportesComDupla, ...viewerEsportesComTime])].map(String),
+    [viewerEsportesIndividual, viewerEsportesComDupla, viewerEsportesComTime]
+  );
+
   const runRefresh = useCallback(
     (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
       startTransition(async () => {
@@ -469,6 +496,15 @@ export function MatchRadarApp({
           raio: next.raio,
           esporteSelecionado: next.esporte,
           finalidade: next.finalidade,
+          esporteIdsUnion: next.tipo === "todas" && next.esporte === "all" ? esporteIdsUnion : undefined,
+          esporteIdsExpandAll:
+            next.tipo !== "todas" && next.esporte === "all"
+              ? next.tipo === "atleta"
+                ? viewerEsportesIndividual.map(String)
+                : next.tipo === "dupla"
+                  ? viewerEsportesComDupla.map(String)
+                  : viewerEsportesComTime.map(String)
+              : undefined,
         });
         if (res.ok) {
           setCards(res.cards);
@@ -484,7 +520,7 @@ export function MatchRadarApp({
         }
       });
     },
-    []
+    [esporteIdsUnion, viewerEsportesIndividual, viewerEsportesComDupla, viewerEsportesComTime]
   );
 
   const runRefreshFull = useCallback(
@@ -565,7 +601,7 @@ export function MatchRadarApp({
     (patch: Partial<{ tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }>) => {
       const nextFinalidade = patch.finalidade ?? finalidade;
       let nextTipo = patch.tipo ?? tipo;
-      if (nextFinalidade === "amistoso" && nextTipo !== "atleta") {
+      if (nextFinalidade === "amistoso" && nextTipo !== "atleta" && nextTipo !== "todas") {
         nextTipo = "atleta";
       }
       const next = {
@@ -582,11 +618,17 @@ export function MatchRadarApp({
               ...viewerEsportesComDupla.map(String),
               ...viewerEsportesComTime.map(String),
             ])
-          : next.tipo === "atleta"
-            ? new Set(viewerEsportesIndividual.map(String))
-            : next.tipo === "dupla"
-              ? new Set(viewerEsportesComDupla.map(String))
-              : new Set(viewerEsportesComTime.map(String));
+          : next.tipo === "todas"
+            ? new Set([
+                ...viewerEsportesIndividual.map(String),
+                ...viewerEsportesComDupla.map(String),
+                ...viewerEsportesComTime.map(String),
+              ])
+            : next.tipo === "atleta"
+              ? new Set(viewerEsportesIndividual.map(String))
+              : next.tipo === "dupla"
+                ? new Set(viewerEsportesComDupla.map(String))
+                : new Set(viewerEsportesComTime.map(String));
       if (next.esporte !== "all" && !allowedForTipo.has(String(next.esporte))) {
         next.esporte = "all";
       }
@@ -622,11 +664,17 @@ export function MatchRadarApp({
           ...viewerEsportesComDupla.map(String),
           ...viewerEsportesComTime.map(String),
         ])
-      : tipo === "atleta"
-        ? new Set(viewerEsportesIndividual.map(String))
-        : tipo === "dupla"
-          ? new Set(viewerEsportesComDupla.map(String))
-          : new Set(viewerEsportesComTime.map(String));
+      : tipo === "todas"
+        ? new Set([
+            ...viewerEsportesIndividual.map(String),
+            ...viewerEsportesComDupla.map(String),
+            ...viewerEsportesComTime.map(String),
+          ])
+        : tipo === "atleta"
+          ? new Set(viewerEsportesIndividual.map(String))
+          : tipo === "dupla"
+            ? new Set(viewerEsportesComDupla.map(String))
+            : new Set(viewerEsportesComTime.map(String));
     const list = esportes.filter((e) => allowed.has(String(e.id)));
     return [{ id: "all", nome: "Todos" }, ...list.map((e) => ({ id: String(e.id), nome: e.nome ?? "" }))];
   }, [esportes, tipo, isFullView, viewerEsportesIndividual, viewerEsportesComDupla, viewerEsportesComTime]);
@@ -645,11 +693,17 @@ export function MatchRadarApp({
       esporteForUrl = "all";
     } else {
       const allowedForGrid =
-        tipo === "atleta"
-          ? new Set(viewerEsportesIndividual.map(String))
-          : tipo === "dupla"
-            ? new Set(viewerEsportesComDupla.map(String))
-            : new Set(viewerEsportesComTime.map(String));
+        tipo === "todas"
+          ? new Set([
+              ...viewerEsportesIndividual.map(String),
+              ...viewerEsportesComDupla.map(String),
+              ...viewerEsportesComTime.map(String),
+            ])
+          : tipo === "atleta"
+            ? new Set(viewerEsportesIndividual.map(String))
+            : tipo === "dupla"
+              ? new Set(viewerEsportesComDupla.map(String))
+              : new Set(viewerEsportesComTime.map(String));
       if (esporte !== "all" && !allowedForGrid.has(String(esporte))) {
         setEsporte("all");
         esporteForUrl = "all";
@@ -721,7 +775,8 @@ export function MatchRadarApp({
   // - Gênero só filtra no individual (atleta).
   // - Em dupla/time, nunca filtra por gênero.
   // - Em fullscreen, também não filtra por gênero.
-  const generoFiltroEfetivo = isFullView || tipo !== "atleta" ? "all" : generoFiltro;
+  const generoFiltroEfetivo =
+    isFullView || (tipo !== "atleta" && tipo !== "todas") ? "all" : generoFiltro;
   const fullOrderedCards = useMemo(() => {
     type Bucket = "amistoso" | "ranking" | "dupla" | "time";
     const buckets: Record<Bucket, MatchRadarCard[]> = {
@@ -795,6 +850,7 @@ export function MatchRadarApp({
       if (tipo === "atleta" && c.modalidade !== "individual") return false;
       if (tipo === "dupla" && c.modalidade !== "dupla") return false;
       if (tipo === "time" && c.modalidade !== "time") return false;
+      /* tipo "todas": não filtra por modalidade */
       if (finalidade === "amistoso" && c.modalidade !== "individual") return false;
       if (finalidade === "amistoso" && (!c.disponivelAmistoso || c.interesseMatch === "ranking")) return false;
       if (finalidade === "ranking" && c.interesseMatch === "amistoso") return false;
@@ -1051,23 +1107,34 @@ export function MatchRadarApp({
             >
               {(
                 [
+                  ["todas", "Todos"],
                   ["atleta", "Individual"],
                   ["dupla", "Duplas"],
                   ["time", "Times"],
                 ] as const
               ).map(([value, label]) => {
                 const active = tipo === value;
-                const bloqueadoAmistoso = finalidade === "amistoso" && value !== "atleta";
+                const bloqueadoAmistoso = finalidade === "amistoso" && value !== "atleta" && value !== "todas";
                 return (
                   <button
                     key={value}
                     type="button"
                     disabled={isPending || bloqueadoAmistoso}
-                    title={bloqueadoAmistoso ? "Desafio amistoso no radar é só no individual." : undefined}
+                    title={
+                      bloqueadoAmistoso
+                        ? "Desafio amistoso no radar é só no individual (aba Individual ou Todos)."
+                        : undefined
+                    }
                     onClick={() => applyFilters({ tipo: value })}
                     className={segmentTab(active, isPending)}
                   >
-                    <ModalidadeGlyphIcon modalidade={value === "atleta" ? "individual" : value === "dupla" ? "dupla" : "time"} />
+                    {value === "todas" ? (
+                      <Grid2x2 className="h-2.5 w-2.5 shrink-0 text-eid-primary-300" strokeWidth={2.25} aria-hidden />
+                    ) : (
+                      <ModalidadeGlyphIcon
+                        modalidade={value === "atleta" ? "individual" : value === "dupla" ? "dupla" : "time"}
+                      />
+                    )}
                     <span className="truncate">{label}</span>
                   </button>
                 );

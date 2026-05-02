@@ -6,6 +6,7 @@ import { getMatchRankMonthlyLimitPerSport } from "@/lib/app-config/match-rank-mo
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
+import { MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER } from "@/lib/match/viewer-esporte-confronto";
 import { createClient } from "@/lib/supabase/server";
 
 export type SolicitarDesafioState =
@@ -311,10 +312,7 @@ export async function solicitarDesafioMatch(
       supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", p_alvo_usuario_id).eq("esporte_id", p_esporte_id).maybeSingle(),
     ]);
     if (!ueSelf) {
-      return {
-        ok: false,
-        message: "Você não tem este esporte no perfil. O desafio precisa ser no mesmo esporte para os dois.",
-      };
+      return { ok: false, message: MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER };
     }
     if (!ueOpp) {
       return {
@@ -338,6 +336,15 @@ export async function solicitarDesafioMatch(
         ok: false,
         message: "Você não pode desafiar a própria formação (outro líder precisa estar à frente da dupla/time).",
       };
+    }
+    const { data: ueSelfColetivo } = await supabase
+      .from("usuario_eid")
+      .select("esporte_id")
+      .eq("usuario_id", user.id)
+      .eq("esporte_id", p_esporte_id)
+      .maybeSingle();
+    if (!ueSelfColetivo) {
+      return { ok: false, message: MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER };
     }
   }
 

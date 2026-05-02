@@ -23,6 +23,10 @@ import {
   filterFormacoesSemParPendenteComAlvo,
 } from "@/lib/match/pending-ranking-opponents-of-alvo";
 import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
+import {
+  MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER,
+  viewerTemUsuarioEidNoEsporte,
+} from "@/lib/match/viewer-esporte-confronto";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
@@ -103,6 +107,8 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   }
 
   const espIdNum = d.esporte_id != null ? Number(d.esporte_id) : 0;
+  const viewerPodeConfrontarNesteEsporteDupla =
+    espIdNum > 0 ? await viewerTemUsuarioEidNoEsporte(supabase, user.id, espIdNum) : false;
   const partidasColetivasDupla =
     timeResolvidoId && espIdNum > 0
       ? await carregarPartidasColetivasDoTime(supabase, timeResolvidoId, espIdNum, user.id)
@@ -232,6 +238,13 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
     timeResolvidoId != null &&
     !canChallengeDupla;
 
+  const mostrarAvisoSemEidNoEsporteDupla =
+    !isDonoDupla &&
+    !isMembroDupla &&
+    espIdNum > 0 &&
+    !viewerPodeConfrontarNesteEsporteDupla &&
+    (canChallengeDupla || canSugerirMatchDupla);
+
   let linkWpp: string | null = null;
   if (!isMembroDupla && timeResolvidoId && timeResolvido?.criador_id && liderDupla) {
     const podeWa = await podeExibirWhatsappPerfilFormacao(
@@ -309,7 +322,6 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   const editarDuplaHref = `/editar/dupla/${id}?from=${encodeURIComponent(fromPublicDupla)}`;
 
   const nomeExibicao = timeResolvido?.nome ?? `Dupla registrada #${id}`;
-  const usernameExibicao = timeResolvido?.username ?? d.username;
   const localExibicao =
     timeResolvido?.localizacao?.trim() ||
     [p1?.localizacao, p2?.localizacao]
@@ -321,8 +333,8 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   return (
     <main data-eid-formacao-page className={PROFILE_PUBLIC_MAIN_CLASS}>
         <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 sm:p-4`}>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
-            <div className="flex shrink-0 flex-col items-center sm:items-start">
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-5">
+              <div className="flex shrink-0 flex-col items-center sm:items-start">
               {timeResolvido?.escudo ? (
                 <img
                   src={timeResolvido.escudo}
@@ -335,7 +347,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                 </div>
               )}
             </div>
-            <div className="min-w-0 flex-1 space-y-2 text-center sm:text-left">
+            <div className="flex w-full min-w-0 flex-1 flex-col items-center space-y-2 text-center sm:items-start sm:text-left">
               <span className="inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
                 <span className="inline-flex items-center gap-1.5">
                   <span className="inline-flex items-center gap-1">
@@ -350,10 +362,10 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                 </span>
               </span>
               <h1 className="text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{nomeExibicao}</h1>
-              {usernameExibicao ? (
-                <p className="block w-full text-center text-xs font-medium text-eid-primary-300">@{usernameExibicao}</p>
-              ) : null}
-              <div className="flex justify-center px-2 sm:justify-start sm:px-0">
+              <div className="flex w-full justify-center sm:hidden">
+                <EidCityState location={localExibicao} align="center" />
+              </div>
+              <div className="hidden w-full sm:block">
                 <EidCityState location={localExibicao} align="start" />
               </div>
             </div>
@@ -418,6 +430,18 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
             </div>
             {!isMembroDupla ? (
               <div className="grid gap-3">
+                {mostrarAvisoSemEidNoEsporteDupla ? (
+                  <p className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+                    {MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER}{" "}
+                    <Link
+                      href="/conta/esportes-eid"
+                      className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline"
+                    >
+                      Abrir Esportes e EID
+                    </Link>
+                    .
+                  </p>
+                ) : null}
                 {linkWpp ? (
                   <a
                     href={linkWpp}
@@ -432,7 +456,11 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     Chamar no WhatsApp
                   </a>
                 ) : null}
-                {canChallengeDupla && !hasAceitoRankDupla && timeResolvidoId && !rankingBlockedUntilDupla ? (
+                {canChallengeDupla &&
+                viewerPodeConfrontarNesteEsporteDupla &&
+                !hasAceitoRankDupla &&
+                timeResolvidoId &&
+                !rankingBlockedUntilDupla ? (
                   <ProfilePrimaryCta
                     href={`/desafio?id=${timeResolvidoId}&tipo=dupla&esporte=${d.esporte_id}`}
                     label={linkWpp ? "⚡ Desafio no ranking" : undefined}
@@ -447,7 +475,10 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     label="Duplas no radar"
                   />
                 ) : null}
-                {canChallengeDupla && !hasAceitoRankDupla && rankingBlockedUntilDupla ? (
+                {canChallengeDupla &&
+                viewerPodeConfrontarNesteEsporteDupla &&
+                !hasAceitoRankDupla &&
+                rankingBlockedUntilDupla ? (
                   <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2 text-[11px] text-eid-text-secondary">
                     Carência ativa para novo desafio de ranking nesta dupla até{" "}
                     <span className="font-semibold text-eid-fg">
@@ -457,7 +488,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
                     <span className="font-semibold text-eid-fg">{formatCooldownRemaining(rankingBlockedUntilDupla)}</span>
                   </p>
                 ) : null}
-                {canSugerirMatchDupla && timeResolvidoId ? (
+                {canSugerirMatchDupla && viewerPodeConfrontarNesteEsporteDupla && timeResolvidoId ? (
                   <SugerirMatchLiderForm
                     alvoTimeId={timeResolvidoId}
                     alvoNome={timeResolvido?.nome ?? "Dupla no radar"}

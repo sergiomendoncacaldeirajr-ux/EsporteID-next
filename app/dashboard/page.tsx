@@ -119,7 +119,7 @@ function rosterCapForTipo(tipo: string | null | undefined): number {
 
 function vagasAbertasLabel(tipo: string | null | undefined, rosterCount: number | null | undefined): string {
   const cap = rosterCapForTipo(tipo);
-  const ocupacao = Number.isFinite(Number(rosterCount)) ? Math.max(1, Number(rosterCount)) : 1;
+  const ocupacao = Number.isFinite(Number(rosterCount)) ? Math.max(0, Number(rosterCount)) : 0;
   const vagas = Math.max(0, cap - ocupacao);
   return vagas === 1 ? "1 vaga" : `${vagas} vagas`;
 }
@@ -496,19 +496,32 @@ export default async function DashboardPage({ searchParams }: Props) {
   ];
   const teamRosterMap = new Map<number, number>();
   if (teamRosterIds.length > 0) {
-    const { data: rosterRows } = await supabase
-      .from("membros_time")
-      .select("time_id")
-      .in("time_id", teamRosterIds)
-      .in("status", ["ativo", "aceito", "aprovado"]);
-    for (const row of rosterRows ?? []) {
-      const timeId = Number((row as { time_id?: number | null }).time_id ?? 0);
-      if (!Number.isFinite(timeId) || timeId <= 0) continue;
-      teamRosterMap.set(timeId, (teamRosterMap.get(timeId) ?? 0) + 1);
+    const { data: headBatch, error: headBatchErr } = await supabase.rpc("time_roster_headcount_many", {
+      p_time_ids: teamRosterIds,
+    });
+    if (!headBatchErr && Array.isArray(headBatch)) {
+      for (const row of headBatch as Array<{ time_id?: number | null; headcount?: number | null }>) {
+        const timeId = Number(row.time_id ?? 0);
+        const hc = Number(row.headcount ?? 0);
+        if (Number.isFinite(timeId) && timeId > 0) {
+          teamRosterMap.set(timeId, Number.isFinite(hc) ? Math.max(0, hc) : 0);
+        }
+      }
+    } else {
+      const { data: rosterRows } = await supabase
+        .from("membros_time")
+        .select("time_id")
+        .in("time_id", teamRosterIds)
+        .in("status", ["ativo", "aceito", "aprovado"]);
+      for (const row of rosterRows ?? []) {
+        const timeId = Number((row as { time_id?: number | null }).time_id ?? 0);
+        if (!Number.isFinite(timeId) || timeId <= 0) continue;
+        teamRosterMap.set(timeId, (teamRosterMap.get(timeId) ?? 0) + 1);
+      }
     }
-  }
-  for (const timeId of teamRosterIds) {
-    teamRosterMap.set(timeId, Math.max(1, teamRosterMap.get(timeId) ?? 0));
+    for (const timeId of teamRosterIds) {
+      if (!teamRosterMap.has(timeId)) teamRosterMap.set(timeId, 0);
+    }
   }
   const vagasDisponiveisMap = new Map<number, number>(
     timesComBusca.map(({ t }) => {
@@ -630,8 +643,8 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   const matchHref =
     esportePrincipalId != null
-      ? `/match?esporte=${encodeURIComponent(String(esportePrincipalId))}&tipo=atleta`
-      : "/match";
+      ? `/match?esporte=${encodeURIComponent(String(esportePrincipalId))}&tipo=todas`
+      : "/match?tipo=todas";
 
   const matchIdadeGate = String(profile.match_idade_gate ?? "ok");
 

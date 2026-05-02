@@ -135,7 +135,7 @@ export default async function TimesPage({ searchParams }: Props) {
     for (const row of rosterBatchRows as RosterHeadcountBatchRow[]) {
       const tid = Number(row.time_id);
       const head = Number(row.headcount);
-      if (Number.isFinite(tid) && tid > 0) headcountByTime.set(tid, Number.isFinite(head) ? Math.max(1, head) : 1);
+      if (Number.isFinite(tid) && tid > 0) headcountByTime.set(tid, Number.isFinite(head) ? Math.max(0, head) : 0);
     }
   }
   const rosterEntries = await Promise.all(
@@ -144,7 +144,7 @@ export default async function TimesPage({ searchParams }: Props) {
       let rosterCount = headcountByTime.get(t.id) ?? null;
       if (rosterCount == null) {
         const { data: headRaw, error: headErr } = await supabase.rpc("time_roster_headcount", { p_time_id: t.id });
-        rosterCount = !headErr && headRaw != null && Number.isFinite(Number(headRaw)) ? Math.max(1, Number(headRaw)) : 1;
+        rosterCount = !headErr && headRaw != null && Number.isFinite(Number(headRaw)) ? Math.max(0, Number(headRaw)) : 1;
       }
       return [t.id, Math.max(0, cap - rosterCount)] as const;
     })

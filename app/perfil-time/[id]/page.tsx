@@ -22,6 +22,10 @@ import {
   filterFormacoesSemParPendenteComAlvo,
 } from "@/lib/match/pending-ranking-opponents-of-alvo";
 import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
+import {
+  MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER,
+  viewerTemUsuarioEidNoEsporte,
+} from "@/lib/match/viewer-esporte-confronto";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
@@ -150,7 +154,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   const rosterCap = modalidade === "dupla" ? 2 : 18;
   const { data: rosterHeadRaw, error: rosterHeadErr } = await supabase.rpc("time_roster_headcount", { p_time_id: id });
   const rosterHeadCount =
-    !rosterHeadErr && rosterHeadRaw != null && Number.isFinite(Number(rosterHeadRaw)) ? Math.max(1, Number(rosterHeadRaw)) : 1;
+    !rosterHeadErr && rosterHeadRaw != null && Number.isFinite(Number(rosterHeadRaw)) ? Math.max(0, Number(rosterHeadRaw)) : 1;
   const vagasDisponiveis = Math.max(0, rosterCap - rosterHeadCount);
 
   const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
@@ -177,6 +181,10 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
 
   const tipoAlvoNorm = (t.tipo ?? "time").trim().toLowerCase();
   const espAlvo = t.esporte_id != null ? Number(t.esporte_id) : null;
+  const viewerPodeConfrontarNesteEsporte =
+    espAlvo != null && Number.isFinite(espAlvo) && espAlvo > 0
+      ? await viewerTemUsuarioEidNoEsporte(supabase, user.id, espAlvo)
+      : false;
 
   const formacoesMembroNaoLiderRaw: { id: number; nome: string }[] = [];
   for (const row of membroOutrosTimes ?? []) {
@@ -239,7 +247,13 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   }
 
   const temBlocoAcaoVisitante =
-    linkWpp || (canChallenge && !hasAceitoRank && Boolean(t.esporte_id));
+    linkWpp ||
+    (canChallenge && viewerPodeConfrontarNesteEsporte && !hasAceitoRank && Boolean(t.esporte_id));
+  const mostrarAvisoSemEidNoEsporte =
+    !isLeader &&
+    espAlvo != null &&
+    !viewerPodeConfrontarNesteEsporte &&
+    (canChallenge || canSugerirMatch);
   const fromPublic = `/perfil-time/${id}`;
   const editarTimeHref = `/editar/time/${id}?from=${encodeURIComponent(fromPublic)}`;
   const idsExcluirConvite = [
@@ -292,8 +306,8 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
               />
             </div>
           ) : null}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
-            <div className="flex shrink-0 flex-col items-center sm:items-start">
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-5">
+              <div className="flex shrink-0 flex-col items-center sm:items-start">
               {t.escudo ? (
                 <img
                   src={t.escudo}
@@ -307,7 +321,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
               )}
             </div>
             <div
-              className={`min-w-0 flex-1 space-y-2 text-center sm:text-left ${canLeaveTeam ? "pr-10 sm:pr-12" : ""}`}
+              className={`flex w-full min-w-0 flex-1 flex-col items-center space-y-2 text-center sm:items-start sm:text-left ${canLeaveTeam ? "pr-10 sm:pr-12" : ""}`}
             >
               <span className="inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
                 <span className="inline-flex items-center gap-1.5">
@@ -323,10 +337,10 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 </span>
               </span>
               <h1 className="text-xl font-bold uppercase tracking-tight text-eid-fg sm:text-2xl">{t.nome ?? "Formação"}</h1>
-              {t.username ? (
-                <p className="block w-full text-center text-xs font-medium text-eid-primary-300">@{t.username}</p>
-              ) : null}
-              <div className="flex justify-center px-2 sm:justify-start sm:px-0">
+              <div className="flex w-full justify-center sm:hidden">
+                <EidCityState location={t.localizacao} align="center" />
+              </div>
+              <div className="hidden w-full sm:block">
                 <EidCityState location={t.localizacao} align="start" />
               </div>
             </div>
@@ -405,6 +419,15 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 Desafio
               </span>
             </div>
+            {mostrarAvisoSemEidNoEsporte ? (
+              <p className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+                {MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER}{" "}
+                <Link href="/conta/esportes-eid" className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">
+                  Abrir Esportes e EID
+                </Link>
+                .
+              </p>
+            ) : null}
             {temBlocoAcaoVisitante ? (
               <div className="grid gap-3">
                 {linkWpp ? (
@@ -421,13 +444,20 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                     Chamar no WhatsApp (líder)
                   </a>
                 ) : null}
-                {canChallenge && !hasAceitoRank && t.esporte_id && !rankingBlockedUntilTime ? (
+                {canChallenge &&
+                viewerPodeConfrontarNesteEsporte &&
+                !hasAceitoRank &&
+                t.esporte_id &&
+                !rankingBlockedUntilTime ? (
                   <ProfilePrimaryCta
                     href={`/desafio?id=${id}&tipo=${encodeURIComponent(modalidade)}&esporte=${t.esporte_id}`}
                     label={linkWpp ? "⚡ Desafio no ranking" : undefined}
                   />
                 ) : null}
-                {canChallenge && !hasAceitoRank && rankingBlockedUntilTime ? (
+                {canChallenge &&
+                viewerPodeConfrontarNesteEsporte &&
+                !hasAceitoRank &&
+                rankingBlockedUntilTime ? (
                   <p className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2 text-[11px] text-eid-text-secondary">
                     Carência ativa para novo desafio de ranking nesta formação até{" "}
                     <span className="font-semibold text-eid-fg">
@@ -448,7 +478,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
                 se você já faz parte de uma formação.
               </p>
             )}
-            {canSugerirMatch ? (
+            {canSugerirMatch && viewerPodeConfrontarNesteEsporte ? (
               <div className="mt-3">
                 <SugerirMatchLiderForm
                   alvoTimeId={id}

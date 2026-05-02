@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
+import { MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER } from "@/lib/match/viewer-esporte-confronto";
 import { createClient } from "@/lib/supabase/server";
 
 export type ResponderMatchState = { ok: true } | { ok: false; message: string };
@@ -843,6 +844,25 @@ export async function sugerirMatchParaLider(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Sessão expirada." };
+
+  const [{ data: alvoTimeMeta }, { data: sugTimeMeta }] = await Promise.all([
+    supabase.from("times").select("esporte_id").eq("id", alvo).maybeSingle(),
+    supabase.from("times").select("esporte_id").eq("id", sug).maybeSingle(),
+  ]);
+  const espAlvo = Number((alvoTimeMeta as { esporte_id?: number | null } | null)?.esporte_id ?? 0);
+  const espSug = Number((sugTimeMeta as { esporte_id?: number | null } | null)?.esporte_id ?? 0);
+  if (!Number.isFinite(espAlvo) || espAlvo < 1 || espAlvo !== espSug) {
+    return { ok: false, message: "Formações inválidas ou esportes diferentes entre si." };
+  }
+  const { data: viewerEidSug } = await supabase
+    .from("usuario_eid")
+    .select("esporte_id")
+    .eq("usuario_id", user.id)
+    .eq("esporte_id", espAlvo)
+    .maybeSingle();
+  if (!viewerEidSug) {
+    return { ok: false, message: MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER };
+  }
 
   const { data: existentePar } = await supabase
     .from("match_sugestoes")

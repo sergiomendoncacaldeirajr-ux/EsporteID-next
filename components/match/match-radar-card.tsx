@@ -6,7 +6,7 @@ import { Trophy } from "lucide-react";
 import { matchCardEidStatsHref, type MatchRadarCard, type MatchRadarFinalidade } from "@/lib/match/radar-snapshot";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
-import { PROFILE_CARD_BASE } from "@/components/perfil/profile-ui-tokens";
+import { PROFILE_CARD_BASE, PROFILE_PUBLIC_FORMACAO_ESCUDO_CLASS } from "@/components/perfil/profile-ui-tokens";
 import {
   isMatchChallengeBlockedByMissingFormation,
   MatchChallengeAction,
@@ -159,29 +159,41 @@ export function MatchRadarCardView({
     .map((p) => p[0]?.toUpperCase() ?? "")
     .join("") || "?";
   const displayName = compactCardName(card.nome);
+  const isIndividual = card.modalidade === "individual";
+  const avatarShape = isIndividual ? "rounded-full" : "rounded-[14px]";
 
   const avatarSize = "h-[3.6rem] w-[3.6rem] min-[390px]:h-[4.2rem] min-[390px]:w-[4.2rem] sm:h-[4.4rem] sm:w-[4.4rem]";
   const matchCtaTitle =
     matchFinalidade === "amistoso" ? "Solicitar desafio amistoso" : "Solicitar desafio ranking";
   const quickViewHref = eidStatsHref ?? card.href;
 
-  const avatarRingShell =
+  const avatarRingShellIndividual =
     "rounded-full border-[3px] border-eid-card shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]";
 
   const avatarInner = card.avatarUrl ? (
-    <div className={`relative h-full w-full overflow-hidden bg-eid-card ${avatarRingShell}`}>
+    <div
+      className={
+        isIndividual
+          ? `relative h-full w-full overflow-hidden bg-eid-card ${avatarRingShellIndividual}`
+          : `relative h-full w-full overflow-hidden bg-eid-card ${PROFILE_PUBLIC_FORMACAO_ESCUDO_CLASS}`
+      }
+    >
       <Image
         src={card.avatarUrl}
         alt=""
         fill
         sizes="(max-width: 390px) 3.6rem, 4.4rem"
         unoptimized
-        className="object-contain object-center p-[10%]"
+        className={isIndividual ? "object-contain object-center p-[10%]" : "object-cover object-center"}
       />
     </div>
   ) : (
     <div
-      className={`flex h-full w-full items-center justify-center rounded-full border-[3px] border-eid-card bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-xs font-black tracking-widest text-eid-primary-200 shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)] sm:text-sm`}
+      className={
+        isIndividual
+          ? `flex h-full w-full items-center justify-center rounded-full border-[3px] border-eid-card bg-gradient-to-br from-eid-primary-700 to-eid-primary-900 text-xs font-black tracking-widest text-eid-primary-200 shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)] sm:text-sm`
+          : `flex h-full w-full items-center justify-center rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface text-xs font-black text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)] sm:text-sm`
+      }
     >
       {initials}
     </div>
@@ -226,12 +238,12 @@ export function MatchRadarCardView({
             title={`Estatísticas EID de ${card.nome}`}
             fullscreen
             topMode="backOnly"
-            className="relative block size-full overflow-hidden rounded-full p-0 outline-none ring-offset-2 ring-offset-eid-card transition hover:opacity-95 focus-visible:ring-2 focus-visible:ring-eid-primary-400"
+            className={`relative block size-full overflow-hidden ${avatarShape} p-0 outline-none ring-offset-2 ring-offset-eid-card transition hover:opacity-95 focus-visible:ring-2 focus-visible:ring-eid-primary-400`}
           >
             {avatarInner}
           </ProfileEditDrawerTrigger>
           <span
-            className={`pointer-events-none absolute inset-0 z-[1] rounded-full border-2 motion-safe:animate-pulse ${
+            className={`pointer-events-none absolute inset-0 z-[1] ${avatarShape} border-2 motion-safe:animate-pulse ${
               card.disponivelAmistoso
                 ? "border-emerald-400 shadow-[0_0_0_1px_rgba(16,185,129,0.45),0_0_12px_rgba(16,185,129,0.75)]"
                 : "border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.45),0_0_12px_rgba(239,68,68,0.72)]"

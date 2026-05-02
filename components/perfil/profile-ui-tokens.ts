@@ -14,6 +14,10 @@ export const PROFILE_HERO_PANEL_CLASS =
 export const PROFILE_PUBLIC_AVATAR_RING_CLASS =
   "rounded-full border-[3px] border-eid-card object-cover shadow-[0_0_0_2px_rgba(249,115,22,0.55),0_6px_20px_rgba(0,0,0,0.5)]";
 
+/** Escudo de time/dupla (squircle) — alinhado ao spotlight da dashboard. */
+export const PROFILE_PUBLIC_FORMACAO_ESCUDO_CLASS =
+  "rounded-[14px] border-2 border-eid-primary-500/50 object-cover shadow-[0_8px_18px_-12px_rgba(37,99,235,0.38)]";
+
 export const PROFILE_CARD_BASE =
   "eid-surface-panel rounded-xl border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_10px_24px_-18px_rgba(15,23,42,0.42),0_0_18px_-16px_rgba(37,99,235,0.45)]";
 export const PROFILE_CARD_PAD_MD = "p-2.5";
