@@ -40,6 +40,7 @@ import {
   fetchPlacarAguardandoConfirmacao,
   firstOfRelation,
   getAgendaTeamContext,
+  mergeAgendaLocalDisplayed,
   resolveCancelMatchIdParaCard,
 } from "@/lib/agenda/partidas-usuario";
 import { pickFormacaoLadoPartida } from "@/lib/agenda/partida-formacao-lado";
@@ -1118,12 +1119,11 @@ export default async function ComunidadePage() {
   let painelLocMap = new Map<number, string | null>();
   let painelTimesById = new Map<number, { nome: string | null; escudo: string | null; eid_time: number | null }>();
   let painelAceitosCancelaveisItems: AceitosCancelaveisItem[] = [];
-
-  function localLabelPainel(p: AgendaPartidaCardRow) {
-    if (p.local_str?.trim()) return p.local_str.trim();
-    if (p.local_espaco_id) return painelLocMap.get(p.local_espaco_id) ?? null;
-    return null;
-  }
+  /** Mesmo critério da /agenda: data/local vindos de `matches` após reagendamento + fallback na partida. */
+  let painelAcceptedScheduleByMatchId = new Map<
+    number,
+    { scheduledFor: string | null; scheduledLocation: string | null }
+  >();
 
   if (needPartidas) {
     const { teamIds: painelTeamIds, teamClause: teamClausePainel } = await getAgendaTeamContext(supabase, user.id);
@@ -1133,7 +1133,7 @@ export default async function ComunidadePage() {
         : `usuario_id.eq.${user.id},adversario_id.eq.${user.id}`;
     const { data: aceitosCancelaveisPainel } = await supabase
       .from("matches")
-      .select("id, usuario_id, adversario_id, esporte_id, status, reschedule_selected_option")
+      .select("id, usuario_id, adversario_id, esporte_id, status, reschedule_selected_option, scheduled_for, scheduled_location")
       .or(matchPainelOr)
       .eq("finalidade", "ranking")
       .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
@@ -1292,9 +1292,16 @@ export default async function ComunidadePage() {
         cancelMatchIdByMatchIdPainel.set(mid, mid);
         if (key) cancelMatchIdByDueloPainel.set(key, mid);
         const selected = Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? 0);
+        const sfRaw = (m as { scheduled_for?: string | null }).scheduled_for;
+        const slRaw = (m as { scheduled_location?: string | null }).scheduled_location;
+        const scheduledFor = sfRaw ? String(sfRaw) : null;
+        const scheduledLocation = slRaw && String(slRaw).trim() ? String(slRaw).trim() : null;
         if (Number.isFinite(selected) && selected > 0) {
           rescheduleAcceptedMatchIdSetPainel.add(mid);
           if (key) rescheduleAcceptedByDueloPainel.add(key);
+        }
+        if (selected > 0 || scheduledFor || scheduledLocation) {
+          painelAcceptedScheduleByMatchId.set(mid, { scheduledFor, scheduledLocation });
         }
       }
     }
@@ -1417,6 +1424,11 @@ export default async function ComunidadePage() {
                       const esp = firstOfRelation(row.esportes);
                       const pr = row as AgendaPartidaCardRow;
                       const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
+                      const midPartida = Number(pr.match_id ?? 0);
+                      const sched =
+                        Number.isFinite(midPartida) && midPartida > 0
+                          ? painelAcceptedScheduleByMatchId.get(midPartida) ?? null
+                          : null;
                       return (
                         <PartidaAgendaCard
                           key={pr.id}
@@ -1433,8 +1445,13 @@ export default async function ComunidadePage() {
                           formacaoJ1={pickFormacaoLadoPartida(pr, 1, painelTimesById)}
                           formacaoJ2={pickFormacaoLadoPartida(pr, 2, painelTimesById)}
                           esporteId={esporteIdCard}
-                          dataRef={pr.data_partida ?? pr.data_registro}
-                          localLabel={localLabelPainel(pr)}
+                          dataRef={sched?.scheduledFor ?? pr.data_partida ?? pr.data_registro}
+                          localLabel={mergeAgendaLocalDisplayed(
+                            sched?.scheduledLocation,
+                            pr.local_str,
+                            pr.local_espaco_id,
+                            pr.local_espaco_id ? painelLocMap.get(pr.local_espaco_id) ?? null : null
+                          )}
                           variant="placar"
                           ctaFullscreen
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
@@ -1460,6 +1477,10 @@ export default async function ComunidadePage() {
                       const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
                       const dueloKeyCard = dueloKey(pr.jogador1_id, pr.jogador2_id, esporteIdCard);
                       const midPartida = Number(pr.match_id ?? 0);
+                      const sched =
+                        Number.isFinite(midPartida) && midPartida > 0
+                          ? painelAcceptedScheduleByMatchId.get(midPartida) ?? null
+                          : null;
                       const cancelMatchIdResolved = resolveCancelMatchIdParaCard(
                         pr,
                         cancelMatchIdByMatchIdPainel,
@@ -1485,8 +1506,13 @@ export default async function ComunidadePage() {
                           formacaoJ1={pickFormacaoLadoPartida(pr, 1, painelTimesById)}
                           formacaoJ2={pickFormacaoLadoPartida(pr, 2, painelTimesById)}
                           esporteId={esporteIdCard}
-                          dataRef={pr.data_partida ?? pr.data_registro}
-                          localLabel={localLabelPainel(pr)}
+                          dataRef={sched?.scheduledFor ?? pr.data_partida ?? pr.data_registro}
+                          localLabel={mergeAgendaLocalDisplayed(
+                            sched?.scheduledLocation,
+                            pr.local_str,
+                            pr.local_espaco_id,
+                            pr.local_espaco_id ? painelLocMap.get(pr.local_espaco_id) ?? null : null
+                          )}
                           variant="agendada"
                           ctaFullscreen
                           cancelMatchId={cancelMatchIdResolved}

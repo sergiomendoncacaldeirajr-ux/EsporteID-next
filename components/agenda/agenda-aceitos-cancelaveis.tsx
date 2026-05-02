@@ -14,6 +14,12 @@ import { EidAcceptedBadge } from "@/components/ui/eid-accepted-badge";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import { iniciaisFormacaoNome } from "@/lib/comunidade/iniciais-formacao";
+import {
+  clampDatetimeLocalBetweenMinMax,
+  CONFRONTO_AGENDAMENTO_JANELA_HORAS,
+  maxDatetimeLocalValueHorasAFrente,
+  minDatetimeLocalValue,
+} from "@/lib/agenda/confronto-agendamento-janela";
 
 export type AceitosCancelaveisItem = {
   id: number;
@@ -61,28 +67,6 @@ function formatStatusLabel(status: string): string {
     .toUpperCase();
 }
 
-function minDatetimeLocalNow(): string {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const yyyy = now.getFullYear();
-  const mm = pad(now.getMonth() + 1);
-  const dd = pad(now.getDate());
-  const hh = pad(now.getHours());
-  const mi = pad(now.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-}
-
-function maxDatetimeLocal72h(): string {
-  const dt = new Date(Date.now() + 72 * 60 * 60 * 1000);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const yyyy = dt.getFullYear();
-  const mm = pad(dt.getMonth() + 1);
-  const dd = pad(dt.getDate());
-  const hh = pad(dt.getHours());
-  const mi = pad(dt.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
-}
-
 function addMinutesToDatetimeLocal(base: string, minutes: number): string {
   const t = new Date(base).getTime();
   if (Number.isNaN(t)) return base;
@@ -114,8 +98,10 @@ export function AgendaAceitosCancelaveis({
   const [clickedAction, setClickedAction] = useState<Record<number, "acceptCancel" | "rejectCancel" | "acceptOption" | "rejectOption">>({});
   const [localPrefillByMatch, setLocalPrefillByMatch] = useState<Record<number, string>>({});
   const [datetimeValueByField, setDatetimeValueByField] = useState<Record<string, string>>({});
-  const [minDateTimeLocal] = useState<string>(() => minDatetimeLocalNow());
-  const [maxDateTimeLocal] = useState<string>(() => maxDatetimeLocal72h());
+  const [minDateTimeLocal] = useState<string>(() => minDatetimeLocalValue());
+  const [maxDateTimeLocal] = useState<string>(() =>
+    maxDatetimeLocalValueHorasAFrente(CONFRONTO_AGENDAMENTO_JANELA_HORAS)
+  );
   const err = !state.ok ? state.message : null;
   const okMsg = state.ok ? state.message : null;
   const hasSpecialStatuses = useMemo(
@@ -143,15 +129,8 @@ export function AgendaAceitosCancelaveis({
     window.history.replaceState(null, "", nextUrl);
   }, []);
 
-  const minMs = useMemo(() => new Date(minDateTimeLocal).getTime(), [minDateTimeLocal]);
-  const maxMs = useMemo(() => new Date(maxDateTimeLocal).getTime(), [maxDateTimeLocal]);
-
   function clampDatetimeValue(raw: string): string {
-    const t = new Date(raw).getTime();
-    if (Number.isNaN(t)) return raw;
-    if (t < minMs) return minDateTimeLocal;
-    if (t > maxMs) return maxDateTimeLocal;
-    return raw;
+    return clampDatetimeLocalBetweenMinMax(raw, minDateTimeLocal, maxDateTimeLocal);
   }
 
   function handleDatetimeChange(matchId: number, optionIdx: 1 | 2 | 3, event: ChangeEvent<HTMLInputElement>) {
@@ -160,7 +139,9 @@ export function AgendaAceitosCancelaveis({
     const clamped = clampDatetimeValue(nextRaw);
     if (clamped !== nextRaw) {
       event.target.value = clamped;
-      event.target.setCustomValidity("Escolha um horário entre agora e 72 horas.");
+      event.target.setCustomValidity(
+        `Escolha um horário entre agora e ${CONFRONTO_AGENDAMENTO_JANELA_HORAS} horas.`
+      );
       event.target.reportValidity();
     } else {
       event.target.setCustomValidity("");
@@ -429,7 +410,7 @@ export function AgendaAceitosCancelaveis({
                         disabled={pending}
                         className="inline-flex min-h-[34px] w-full items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/15 px-3 text-[9px] font-black uppercase tracking-wide text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] shadow-[0_4px_14px_-6px_rgba(37,99,235,0.25)] transition hover:bg-eid-primary-500/22 disabled:opacity-50 md:text-[10px]"
                       >
-                        Enviar 3 opções (janela 72h)
+                        Enviar 3 opções (janela {CONFRONTO_AGENDAMENTO_JANELA_HORAS}h)
                       </button>
                     </form>
                   ) : null}

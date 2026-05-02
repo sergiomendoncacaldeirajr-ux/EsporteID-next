@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER } from "@/lib/match/viewer-esporte-confronto";
 import { createClient } from "@/lib/supabase/server";
+import { CONFRONTO_AGENDAMENTO_JANELA_HORAS } from "@/lib/agenda/confronto-agendamento-janela";
 
 export type ResponderMatchState = { ok: true } | { ok: false; message: string };
 export type ResponderConviteState = { ok: true } | { ok: false; message: string };
@@ -537,11 +538,11 @@ function isPastDateTime(iso: string | null): boolean {
   return t < Date.now();
 }
 
-function isBeyond72hDateTime(iso: string | null): boolean {
+function isBeyondAgendamentoJanelaDateTime(iso: string | null): boolean {
   if (!iso) return true;
   const t = new Date(iso).getTime();
   if (Number.isNaN(t)) return true;
-  const max = Date.now() + 72 * 60 * 60 * 1000;
+  const max = Date.now() + CONFRONTO_AGENDAMENTO_JANELA_HORAS * 60 * 60 * 1000;
   return t > max;
 }
 
@@ -621,8 +622,15 @@ export async function gerenciarCancelamentoMatch(
       if (isPastDateTime(op1) || isPastDateTime(op2) || isPastDateTime(op3)) {
         return { ok: false, message: "As opções de data e hora devem ser de agora em diante." };
       }
-      if (isBeyond72hDateTime(op1) || isBeyond72hDateTime(op2) || isBeyond72hDateTime(op3)) {
-        return { ok: false, message: "As opções de data e hora devem estar dentro de 72 horas." };
+      if (
+        isBeyondAgendamentoJanelaDateTime(op1) ||
+        isBeyondAgendamentoJanelaDateTime(op2) ||
+        isBeyondAgendamentoJanelaDateTime(op3)
+      ) {
+        return {
+          ok: false,
+          message: `As opções de data e hora devem estar dentro de ${CONFRONTO_AGENDAMENTO_JANELA_HORAS} horas.`,
+        };
       }
       if (hasDuplicateDateTimeOptions([op1, op2, op3])) {
         return { ok: false, message: "As 3 opções precisam ser diferentes entre si." };
@@ -670,7 +678,7 @@ export async function gerenciarCancelamentoMatch(
       ok: true,
       message: aceitar
         ? "Cancelamento aceito. O desafio foi cancelado."
-        : "Cancelamento recusado com opções de data/hora. A outra parte deve escolher em até 72h.",
+        : `Cancelamento recusado com opções de data/hora. A outra parte deve escolher em até ${CONFRONTO_AGENDAMENTO_JANELA_HORAS}h.`,
     };
   }
 

@@ -142,7 +142,7 @@ function getSportDefaultsByName(sportName?: string | null): Partial<MatchUIConfi
   if (name.includes("futebol") || name.includes("handebol")) {
     return {
       type: "gols",
-      hasOvertime: true,
+      hasOvertime: false,
       hasPenalties: true,
       pointsLimit: null,
     };
@@ -186,6 +186,14 @@ export function getMatchUIConfig(match: BaseMatchCtx): MatchUIConfig {
   const pointsLimit =
     Number.isFinite(pointsLimitRaw) && pointsLimitRaw > 0 ? Math.floor(pointsLimitRaw) : (sportDefaults?.pointsLimit ?? null);
   const sets = Math.max(setsToWin * 2 - 1, 1);
+  let hasOvertime = toBool(format.has_overtime, sportDefaults?.hasOvertime ?? false);
+  /** Esporte por gols: pênaltis em empate é o padrão (só desliga se o formato marcar has_penalties explicitamente como false). */
+  const hasPenaltiesDefault = type === "gols" ? (sportDefaults?.hasPenalties ?? true) : (sportDefaults?.hasPenalties ?? false);
+  const hasPenalties = toBool(format.has_penalties, hasPenaltiesDefault);
+  /** Gols com pênaltis: só tempo regulamentar + disputa nos pênaltis em empate (sem prorrogação no lançador). */
+  if (type === "gols" && hasPenalties) {
+    hasOvertime = false;
+  }
   return {
     type,
     sets,
@@ -197,8 +205,8 @@ export function getMatchUIConfig(match: BaseMatchCtx): MatchUIConfig {
     finalSetTargetPoints: toInt(format.final_set_target_points, sportDefaults?.finalSetTargetPoints ?? 10) || 10,
     winByTwo: toBool(format.win_by_two, sportDefaults?.winByTwo ?? false),
     pointsLimit,
-    hasOvertime: toBool(format.has_overtime, sportDefaults?.hasOvertime ?? false),
-    hasPenalties: toBool(format.has_penalties, sportDefaults?.hasPenalties ?? false),
+    hasOvertime,
+    hasPenalties,
     maxRounds: toInt(format.max_rounds, sportDefaults?.maxRounds ?? 3) || 3,
   };
 }
@@ -493,6 +501,43 @@ export function maxGamesProSet8(set: SetPayload, side: "a" | "b", gamesPerSet: n
   return g;
 }
 
+/** Totais após tempo regulamentar + prorrogação (somente se empatados na regulação), antes dos pênaltis. */
+export function goalsTotalsAfterRegulationAndOvertime(
+  score: { a?: number; b?: number; overtimeA?: number; overtimeB?: number } | undefined,
+  hasOvertime: boolean
+): { a: number; b: number } {
+  let a = toInt(score?.a, 0);
+  let b = toInt(score?.b, 0);
+  if (a === b && hasOvertime) {
+    a += toInt(score?.overtimeA, 0);
+    b += toInt(score?.overtimeB, 0);
+  }
+  return { a, b };
+}
+
+/** Formato com pênaltis e placar (após OT se houver) empatado — exibir lançador de pênaltis na UI. */
+export function goalsRequiresPenaltyShootoutSection(
+  config: Pick<MatchUIConfig, "hasOvertime" | "hasPenalties">,
+  score: { a?: number; b?: number; overtimeA?: number; overtimeB?: number } | undefined
+): boolean {
+  if (!config.hasPenalties) return false;
+  const { a, b } = goalsTotalsAfterRegulationAndOvertime(score, config.hasOvertime);
+  return a === b;
+}
+
+/** Totais finais usados na validação e em placar_1/placar_2 (inclui pênaltis só se ainda empatado após OT). */
+export function goalsFinalTotalsForValidation(
+  config: Pick<MatchUIConfig, "hasOvertime" | "hasPenalties">,
+  score: { a?: number; b?: number; overtimeA?: number; overtimeB?: number; penaltiesA?: number; penaltiesB?: number } | undefined
+): { a: number; b: number } {
+  let { a, b } = goalsTotalsAfterRegulationAndOvertime(score, config.hasOvertime);
+  if (a === b && config.hasPenalties) {
+    a += toInt(score?.penaltiesA, 0);
+    b += toInt(score?.penaltiesB, 0);
+  }
+  return { a, b };
+}
+
 export function validateMatchScorePayload(
   config: MatchUIConfig,
   payload: MatchScorePayload
@@ -503,20 +548,7 @@ export function validateMatchScorePayload(
     const score = payload.goals;
     if (!score) return { valid: false, message: "Placar de gols ausente." };
     if (score.a < 0 || score.b < 0) return { valid: false, message: "Placar inválido." };
-    const overtimeA = toInt(score.overtimeA, 0);
-    const overtimeB = toInt(score.overtimeB, 0);
-    const penaltiesA = toInt(score.penaltiesA, 0);
-    const penaltiesB = toInt(score.penaltiesB, 0);
-    let a = toInt(score.a, 0);
-    let b = toInt(score.b, 0);
-    if (a === b && config.hasOvertime) {
-      a += overtimeA;
-      b += overtimeB;
-    }
-    if (a === b && config.hasPenalties) {
-      a += penaltiesA;
-      b += penaltiesB;
-    }
+    const { a, b } = goalsFinalTotalsForValidation(config, score);
     if (a === b) return { valid: false, message: "Empate final inválido para este formato." };
     return { valid: true, placar1: a, placar2: b };
   }

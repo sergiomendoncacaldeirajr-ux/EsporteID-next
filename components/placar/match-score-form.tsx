@@ -20,6 +20,9 @@ type Props = {
   sideBLabel: string;
   sideAAvatarUrl?: string | null;
   sideBAvatarUrl?: string | null;
+  /** Escudo de time/dupla (bordas menos circulares que avatar de perfil). */
+  sideAAvatarEhFormacao?: boolean;
+  sideBAvatarEhFormacao?: boolean;
   isTorneio: boolean;
 };
 
@@ -70,6 +73,8 @@ export function MatchScoreForm({
   sideBLabel,
   sideAAvatarUrl,
   sideBAvatarUrl,
+  sideAAvatarEhFormacao = false,
+  sideBAvatarEhFormacao = false,
   isTorneio,
 }: Props) {
   const initialSelectedSetFormatKey = config.type === "sets" ? (initialSetFormatKey ?? null) : null;
@@ -95,8 +100,8 @@ export function MatchScoreForm({
     validation.placar2 != null &&
     validation.placar1 !== validation.placar2
       ? validation.placar1 > validation.placar2
-        ? { label: sideALabel, avatarUrl: sideAAvatarUrl }
-        : { label: sideBLabel, avatarUrl: sideBAvatarUrl }
+        ? { label: sideALabel, avatarUrl: sideAAvatarUrl, avatarEhFormacao: sideAAvatarEhFormacao }
+        : { label: sideBLabel, avatarUrl: sideBAvatarUrl, avatarEhFormacao: sideBAvatarEhFormacao }
       : null;
 
   return (
@@ -164,6 +169,10 @@ export function MatchScoreForm({
           onChange={(goals) => setPayload({ type: "gols", goals })}
           sideALabel={sideALabel}
           sideBLabel={sideBLabel}
+          sideAAvatarUrl={sideAAvatarUrl}
+          sideBAvatarUrl={sideBAvatarUrl}
+          sideAAvatarEhFormacao={sideAAvatarEhFormacao}
+          sideBAvatarEhFormacao={sideBAvatarEhFormacao}
           hasOvertime={config.hasOvertime}
           hasPenalties={config.hasPenalties}
         />
@@ -205,7 +214,11 @@ export function MatchScoreForm({
           />
           <p className="relative text-[10px] font-black uppercase tracking-[0.14em] text-eid-action-400">Vencedor da partida</p>
           <div className="relative mt-3 flex items-center gap-3">
-            <span className="relative inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-eid-action-400/80 bg-eid-surface text-sm font-black text-eid-fg shadow-[0_0_20px_-4px_color-mix(in_srgb,var(--eid-action-500)_70%,transparent)] ring-2 ring-[color:color-mix(in_srgb,var(--eid-action-500)_35%,transparent)] ring-offset-2 ring-offset-[color-mix(in_srgb,var(--eid-card)_92%,transparent)]">
+            <span
+              className={`relative inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden border-2 border-eid-action-400/80 bg-eid-surface text-sm font-black text-eid-fg shadow-[0_0_20px_-4px_color-mix(in_srgb,var(--eid-action-500)_70%,transparent)] ring-2 ring-[color:color-mix(in_srgb,var(--eid-action-500)_35%,transparent)] ring-offset-2 ring-offset-[color-mix(in_srgb,var(--eid-card)_92%,transparent)] ${
+                matchWinner.avatarEhFormacao ? "rounded-2xl" : "rounded-full"
+              }`}
+            >
               {matchWinner.avatarUrl ? (
                 <img src={matchWinner.avatarUrl} alt="" className="h-full w-full object-cover" />
               ) : (

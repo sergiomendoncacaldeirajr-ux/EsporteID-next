@@ -58,14 +58,21 @@ async function notificarElencoAgendamentoConfirmado(
   }
   const teamIds = [Number(row.time1_id ?? 0), Number(row.time2_id ?? 0)].filter((n) => Number.isFinite(n) && n > 0);
   if (teamIds.length) {
-    const { data: mems } = await supabase
-      .from("membros_time")
-      .select("usuario_id")
-      .in("time_id", teamIds)
-      .in("status", ["ativo", "aceito", "aprovado"]);
+    const [{ data: mems }, { data: times }] = await Promise.all([
+      supabase
+        .from("membros_time")
+        .select("usuario_id")
+        .in("time_id", teamIds)
+        .in("status", ["ativo", "aceito", "aprovado"]),
+      supabase.from("times").select("criador_id").in("id", teamIds),
+    ]);
     for (const m of mems ?? []) {
       const u = String((m as { usuario_id?: string | null }).usuario_id ?? "").trim();
       if (u) recipients.add(u);
+    }
+    for (const t of times ?? []) {
+      const c = String((t as { criador_id?: string | null }).criador_id ?? "").trim();
+      if (c) recipients.add(c);
     }
   }
 
@@ -74,6 +81,8 @@ async function notificarElencoAgendamentoConfirmado(
     : "data a combinar";
   const where = String(row.local_str ?? "").trim() || "local a combinar";
   const msg = `Desafio agendado: ${when} · ${where}. Confira na Agenda e no Painel (Partidas e resultados).`;
+
+  recipients.delete(String(remetenteId ?? "").trim());
 
   const rows = [...recipients].map((usuario_id) => ({
     usuario_id,

@@ -8,7 +8,15 @@ import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { sanitizeOptionalUserText, sanitizeUserText } from "@/lib/security/sanitize-input";
 import { createClient } from "@/lib/supabase/server";
-import { resolveOponenteLeaderUserIdForNotificacao } from "@/lib/agenda/partidas-usuario";
+import {
+  loadPartidaLadosUsuarioIds,
+  resolveOponenteLeaderUserIdForNotificacao,
+  usuarioEmQualLadoPartida,
+} from "@/lib/agenda/partidas-usuario";
+import {
+  agendamentoRankingDentroDaJanelaUtc,
+  CONFRONTO_AGENDAMENTO_JANELA_HORAS,
+} from "@/lib/agenda/confronto-agendamento-janela";
 import { loadPartidaContext, revalidateAfterPartidaPlacarChange } from "@/lib/torneios/lancar-resultado-partida";
 
 function toInt(v: FormDataEntryValue | null): number | null {
@@ -58,6 +66,38 @@ async function notifyUser(
   const notifId = Number((data?.[0] as { id?: number } | undefined)?.id ?? 0);
   if (Number.isFinite(notifId) && notifId > 0) {
     await triggerPushForNotificationIdsBestEffort([notifId], { source: "registrar-placar/actions.notifyUser" });
+  }
+}
+
+/** Vários destinatários (ex.: elenco dos dois lados ao registrar data/local). */
+async function notifyAgendamentoVarios(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  destinos: Array<{ usuario_id: string; mensagem: string }>,
+  remetenteId: string,
+  referenciaPartidaId: number
+) {
+  const byUser = new Map<string, string>();
+  for (const d of destinos) {
+    const uid = String(d.usuario_id ?? "").trim();
+    if (!uid || uid === remetenteId) continue;
+    byUser.set(uid, d.mensagem);
+  }
+  const rows = [...byUser.entries()].map(([usuario_id, mensagem]) => ({
+    usuario_id,
+    mensagem,
+    tipo: "desafio" as const,
+    referencia_id: referenciaPartidaId,
+    lida: false,
+    remetente_id: remetenteId,
+    data_criacao: new Date().toISOString(),
+  }));
+  if (!rows.length) return;
+  const { data } = await supabase.from("notificacoes").insert(rows).select("id");
+  const ids = (data ?? [])
+    .map((r) => Number((r as { id?: number }).id ?? 0))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (ids.length) {
+    await triggerPushForNotificationIdsBestEffort(ids, { source: "registrar-placar/actions.notifyAgendamentoVarios" });
   }
 }
 
@@ -582,6 +622,14 @@ export async function salvarAgendamentoAction(formData: FormData) {
     if (Number.isNaN(dt.getTime())) {
       salvarAgendaRedirect(partidaId, "erro", "Data/hora de agendamento inválida.", modoAgenda);
     }
+    if (!p.torneio_id && !agendamentoRankingDentroDaJanelaUtc(dt)) {
+      salvarAgendaRedirect(
+        partidaId,
+        "erro",
+        `Data e hora do confronto devem estar entre agora e as próximas ${CONFRONTO_AGENDAMENTO_JANELA_HORAS} horas (individual, dupla e time).`,
+        modoAgenda
+      );
+    }
     payload.data_partida = dt.toISOString();
   }
 
@@ -599,16 +647,47 @@ export async function salvarAgendamentoAction(formData: FormData) {
   if (error) salvarAgendaRedirect(partidaId, "erro", "Não foi possível salvar o agendamento.", modoAgenda);
 
   if (!p.torneio_id) {
-    const oponenteId = await resolveOponenteLeaderUserIdForNotificacao(ctx.supabase, p, user.id);
     const when = payload.data_partida ? new Date(payload.data_partida).toLocaleString("pt-BR") : "data a combinar";
     const where = payload.local_str ? String(payload.local_str) : "local a combinar";
-    await notifyUser(
-      ctx.supabase,
-      oponenteId,
-      user.id,
-      partidaId,
-      `Seu oponente propôs agendamento: ${when} • ${where}. Acesse a Agenda para aceitar em até 24h.`
-    );
+    const msgPropriaFormacao = `Agendamento proposto para o desafio: ${when} • ${where}. Aguardando aceite do oponente (até 24h).`;
+    const msgAdversario = `O adversário propôs agendamento: ${when} • ${where}. Acesse a Agenda para aceitar em até 24h.`;
+    const msgAtualizado = `Agendamento atualizado: ${when} • ${where}. Confira na Agenda.`;
+
+    const { lado1, lado2 } = await loadPartidaLadosUsuarioIds(ctx.supabase, p);
+    const destinos: Array<{ usuario_id: string; mensagem: string }> = [];
+
+    if (agendamentoPendenteAceite) {
+      const ladoQuemPropoe = usuarioEmQualLadoPartida(user.id, lado1, lado2);
+      if (ladoQuemPropoe === 1) {
+        for (const uid of lado1) {
+          if (uid !== user.id) destinos.push({ usuario_id: uid, mensagem: msgPropriaFormacao });
+        }
+        for (const uid of lado2) destinos.push({ usuario_id: uid, mensagem: msgAdversario });
+      } else if (ladoQuemPropoe === 2) {
+        for (const uid of lado2) {
+          if (uid !== user.id) destinos.push({ usuario_id: uid, mensagem: msgPropriaFormacao });
+        }
+        for (const uid of lado1) destinos.push({ usuario_id: uid, mensagem: msgAdversario });
+      } else {
+        const oponenteId = await resolveOponenteLeaderUserIdForNotificacao(ctx.supabase, p, user.id);
+        await notifyUser(
+          ctx.supabase,
+          oponenteId,
+          user.id,
+          partidaId,
+          `Seu oponente propôs agendamento: ${when} • ${where}. Acesse a Agenda para aceitar em até 24h.`
+        );
+      }
+    } else {
+      for (const uid of lado1) {
+        if (uid !== user.id) destinos.push({ usuario_id: uid, mensagem: msgAtualizado });
+      }
+      for (const uid of lado2) {
+        if (uid !== user.id) destinos.push({ usuario_id: uid, mensagem: msgAtualizado });
+      }
+    }
+
+    if (destinos.length) await notifyAgendamentoVarios(ctx.supabase, destinos, user.id, partidaId);
   }
 
   revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);

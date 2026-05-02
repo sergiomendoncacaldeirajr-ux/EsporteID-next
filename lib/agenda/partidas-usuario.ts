@@ -169,8 +169,86 @@ export async function resolveOponenteLeaderUserIdForNotificacao(
   return creators.find((id) => id !== atorUserId) ?? null;
 }
 
+/**
+ * Lado 1 = jogador1 + time1 (criador + membros ativos). Lado 2 = jogador2 + time2.
+ * Usado para notificar todo o elenco quando data/local do desafio é proposto ou confirmado.
+ */
+export async function loadPartidaLadosUsuarioIds(
+  supabase: SupabaseClient,
+  p: {
+    jogador1_id: string | null;
+    jogador2_id: string | null;
+    time1_id?: number | null;
+    time2_id?: number | null;
+  }
+): Promise<{ lado1: Set<string>; lado2: Set<string> }> {
+  const lado1 = new Set<string>();
+  const lado2 = new Set<string>();
+  const j1 = String(p.jogador1_id ?? "").trim();
+  const j2 = String(p.jogador2_id ?? "").trim();
+  if (j1) lado1.add(j1);
+  if (j2) lado2.add(j2);
+  const t1 = Number(p.time1_id ?? 0);
+  const t2 = Number(p.time2_id ?? 0);
+  const teamIds = [t1, t2].filter((n) => Number.isFinite(n) && n > 0);
+  if (!teamIds.length) return { lado1, lado2 };
+
+  const [{ data: mems }, { data: times }] = await Promise.all([
+    supabase
+      .from("membros_time")
+      .select("time_id, usuario_id")
+      .in("time_id", teamIds)
+      .in("status", ["ativo", "aceito", "aprovado"]),
+    supabase.from("times").select("id, criador_id").in("id", teamIds),
+  ]);
+
+  for (const row of times ?? []) {
+    const tid = Number((row as { id?: number }).id ?? 0);
+    const c = String((row as { criador_id?: string | null }).criador_id ?? "").trim();
+    if (!c || !Number.isFinite(tid) || tid <= 0) continue;
+    if (tid === t1) lado1.add(c);
+    else if (tid === t2) lado2.add(c);
+  }
+  for (const m of mems ?? []) {
+    const tid = Number((m as { time_id?: number }).time_id ?? 0);
+    const u = String((m as { usuario_id?: string | null }).usuario_id ?? "").trim();
+    if (!u || !Number.isFinite(tid) || tid <= 0) continue;
+    if (tid === t1) lado1.add(u);
+    else if (tid === t2) lado2.add(u);
+  }
+  return { lado1, lado2 };
+}
+
+/** Em qual lado da partida está o usuário (1 = jogador1/time1, 2 = jogador2/time2). */
+export function usuarioEmQualLadoPartida(userId: string, lado1: Set<string>, lado2: Set<string>): 1 | 2 | null {
+  if (lado1.has(userId)) return 1;
+  if (lado2.has(userId)) return 2;
+  return null;
+}
+
 const partidasSelect =
   "id, match_id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, modalidade, data_registro, data_partida, local_str, local_espaco_id, status, status_ranking, lancado_por, agendamento_proposto_por, agendamento_aceite_deadline, esportes(nome)";
+
+/**
+ * Local na agenda para qualquer membro (líder ou elenco): texto do match (reagendamento), senão `local_str`, senão nome do espaço genérico.
+ */
+export function mergeAgendaLocalDisplayed(
+  scheduledLocationFromMatch: string | null | undefined,
+  partidaLocalStr: string | null | undefined,
+  localEspacoId: number | null | undefined,
+  nomeEspacoGenerico: string | null | undefined
+): string | null {
+  const fromMatch = String(scheduledLocationFromMatch ?? "").trim();
+  if (fromMatch) return fromMatch;
+  const fromStr = String(partidaLocalStr ?? "").trim();
+  if (fromStr) return fromStr;
+  const id = Number(localEspacoId ?? 0);
+  if (Number.isFinite(id) && id > 0) {
+    const nome = String(nomeEspacoGenerico ?? "").trim();
+    return nome || null;
+  }
+  return null;
+}
 
 /** Resolve o `matches.id` usado no fluxo de cancelamento quando a chave por duelo (jogadores) diverge da linha do match. */
 export function resolveCancelMatchIdParaCard(

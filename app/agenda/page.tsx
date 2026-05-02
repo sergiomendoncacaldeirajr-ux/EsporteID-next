@@ -18,6 +18,7 @@ import {
   fetchPartidasAgendadasUsuario,
   firstOfRelation,
   getAgendaTeamContext,
+  mergeAgendaLocalDisplayed,
   resolveCancelMatchIdParaCard,
 } from "@/lib/agenda/partidas-usuario";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
@@ -221,23 +222,19 @@ export default async function AgendaPage() {
       cancelMatchIdByMatchId.set(mid, mid);
       if (key) cancelMatchIdByDuelo.set(key, mid);
       const selected = Number((m as { reschedule_selected_option?: number | null }).reschedule_selected_option ?? 0);
+      const sfRaw = (m as { scheduled_for?: string | null }).scheduled_for;
+      const slRaw = (m as { scheduled_location?: string | null }).scheduled_location;
+      const scheduledFor = sfRaw ? String(sfRaw) : null;
+      const scheduledLocation = slRaw && String(slRaw).trim() ? String(slRaw).trim() : null;
       if (selected > 0) {
         rescheduleAcceptedMatchIdSet.add(mid);
-        if (key) {
-          rescheduleAcceptedByDuelo.add(key);
-          acceptedScheduleByDuelo.set(key, {
-            scheduledFor: (m as { scheduled_for?: string | null }).scheduled_for ? String((m as { scheduled_for?: string | null }).scheduled_for) : null,
-            scheduledLocation: (m as { scheduled_location?: string | null }).scheduled_location
-              ? String((m as { scheduled_location?: string | null }).scheduled_location)
-              : null,
-          });
-        }
-        acceptedScheduleByMatchId.set(mid, {
-          scheduledFor: (m as { scheduled_for?: string | null }).scheduled_for ? String((m as { scheduled_for?: string | null }).scheduled_for) : null,
-          scheduledLocation: (m as { scheduled_location?: string | null }).scheduled_location
-            ? String((m as { scheduled_location?: string | null }).scheduled_location)
-            : null,
-        });
+        if (key) rescheduleAcceptedByDuelo.add(key);
+      }
+      /** Dados em `matches` para data/local (todos os membros enxergam o mesmo, inclusive elenco). */
+      if (selected > 0 || scheduledFor || scheduledLocation) {
+        const payload = { scheduledFor, scheduledLocation };
+        if (key) acceptedScheduleByDuelo.set(key, payload);
+        acceptedScheduleByMatchId.set(mid, payload);
       }
     }
   }
@@ -286,12 +283,6 @@ export default async function AgendaPage() {
     });
   }
 
-
-  function localLabel(p: AgendaPartidaCardRow) {
-    if (p.local_str?.trim()) return p.local_str.trim();
-    if (p.local_espaco_id) return locMap.get(p.local_espaco_id) ?? null;
-    return null;
-  }
 
   return (
     <main
@@ -364,7 +355,12 @@ export default async function AgendaPage() {
                 (Number.isFinite(midPartida) && midPartida > 0 ? acceptedScheduleByMatchId.get(midPartida) ?? null : null) ??
                 (dueloKeyCard ? acceptedScheduleByDuelo.get(dueloKeyCard) ?? null : null);
               const effectiveDataRef = acceptedSchedule?.scheduledFor ?? pr.data_partida ?? pr.data_registro;
-              const effectiveLocalLabel = acceptedSchedule?.scheduledLocation ?? localLabel(pr);
+              const effectiveLocalLabel = mergeAgendaLocalDisplayed(
+                acceptedSchedule?.scheduledLocation,
+                pr.local_str,
+                pr.local_espaco_id,
+                pr.local_espaco_id ? locMap.get(pr.local_espaco_id) ?? null : null
+              );
               const hasScheduleDefined = Boolean((acceptedSchedule?.scheduledFor ?? pr.data_partida) && effectiveLocalLabel);
               const schedulePending = String(pr.status ?? "") === "aguardando_aceite_agendamento";
               const cancelMatchIdResolved = resolveCancelMatchIdParaCard(pr, cancelMatchIdByMatchId, cancelMatchIdByDuelo, dueloKeyCard);

@@ -43,6 +43,29 @@ export function ProfileEditDrawerTrigger({
   const [chromeCompact, setChromeCompact] = useState(false);
   const frameRef = useRef<HTMLIFrameElement | null>(null);
 
+  /** Overlay dentro de iframe (ex.: /registrar-placar?embed=1): portal no `body` do topo cobre a tela inteira. */
+  function resolvePortalContainer(): HTMLElement | null {
+    if (typeof window === "undefined" || typeof document === "undefined") return null;
+    try {
+      if (window.self !== window.top) {
+        const topBody = window.top?.document?.body;
+        if (topBody) return topBody;
+      }
+    } catch {
+      /* top cross-origin */
+    }
+    return document.body;
+  }
+
+  function portalUsesTopWindow(): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.self !== window.top && !!window.top?.document?.body;
+    } catch {
+      return false;
+    }
+  }
+
   const frameSrc = useMemo(() => {
     const sep = href.includes("?") ? "&" : "?";
     return `${href}${sep}embed=1&theme=${theme}&open_nonce=${openNonce}`;
@@ -136,7 +159,9 @@ export function ProfileEditDrawerTrigger({
       </button>
       {open && typeof document !== "undefined"
         ? createPortal(
-            <div className="fixed inset-0 z-[999] isolate">
+            <div
+              className={`fixed inset-0 isolate ${portalUsesTopWindow() ? "z-[1200]" : "z-[999]"}`}
+            >
               {!fullscreen ? (
                 <button
                   type="button"
@@ -152,7 +177,7 @@ export function ProfileEditDrawerTrigger({
                 folha + piso (~44px) garante o Voltar abaixo do relógio/notch mesmo quando env() falha.
               */}
               <aside
-                className={`fixed bottom-0 right-0 top-0 z-[1] flex min-h-0 w-full flex-col ${
+                className={`fixed bottom-0 left-0 right-0 top-0 z-[1] flex min-h-0 w-full flex-col ${
                   fullscreen ? "max-w-none border-0" : "max-w-[min(100vw,460px)] border-l"
                 } border-[color:var(--eid-border-subtle)] bg-eid-bg ${
                   fullscreen ? "" : "shadow-[0_0_0_1px_rgba(148,163,184,0.12),-20px_0_40px_-20px_rgba(2,6,23,0.8)]"
@@ -225,7 +250,7 @@ export function ProfileEditDrawerTrigger({
                 ) : null}
               </aside>
             </div>,
-            document.body
+            resolvePortalContainer() ?? document.body
           )
         : null}
     </>

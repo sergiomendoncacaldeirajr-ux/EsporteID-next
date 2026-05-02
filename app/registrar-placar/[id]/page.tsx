@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { DismissibleTapAwayHint } from "@/components/agenda/dismissible-tapaway-hint";
+import { RankingConfrontoDatetimeInput } from "@/components/agenda/ranking-confronto-datetime-input";
+import { CONFRONTO_AGENDAMENTO_JANELA_HORAS } from "@/lib/agenda/confronto-agendamento-janela";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import { MatchScoreForm } from "@/components/placar/match-score-form";
@@ -21,6 +23,13 @@ function normStatus(v: string | null | undefined): string {
   return String(v ?? "")
     .trim()
     .toLowerCase();
+}
+
+function iniciaisConfronto(label: string): string {
+  const parts = label.trim().split(/\s+/u).filter(Boolean);
+  if (!parts.length) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
 }
 
 function toRulesConfig(v: unknown): ScoreRulesConfig {
@@ -110,7 +119,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const timeIds = [p.time1_id, p.time2_id].filter((v): v is number => typeof v === "number" && v > 0);
   const [{ data: ownerRows }, { data: memberRows }] = timeIds.length
     ? await Promise.all([
-        supabase.from("times").select("id, criador_id, nome").in("id", timeIds),
+        supabase.from("times").select("id, criador_id, nome, escudo").in("id", timeIds),
         supabase
           .from("membros_time")
           .select("time_id, usuario_id, status")
@@ -118,7 +127,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           .eq("usuario_id", user.id)
           .in("status", ["ativo", "aceito", "aprovado"]),
       ])
-    : [{ data: [] as Array<{ id: number; criador_id: string | null; nome: string | null }> }, { data: [] as Array<{ time_id: number }> }];
+    : [{ data: [] as Array<{ id: number; criador_id: string | null; nome: string | null; escudo: string | null }> }, { data: [] as Array<{ time_id: number }> }];
   const isTeamLeader = (ownerRows ?? []).some((t) => t.criador_id === user.id);
   const isTeamMember = (memberRows ?? []).length > 0;
   const torneioAccess = p.torneio_id ? await getTorneioStaffAccess(supabase, Number(p.torneio_id), user.id) : null;
@@ -173,6 +182,25 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const { data: j2 } = p.jogador2_id
     ? await supabase.from("profiles").select("nome, avatar_url").eq("id", p.jogador2_id).maybeSingle()
     : { data: null };
+  const timeRow1 =
+    typeof p.time1_id === "number" && p.time1_id > 0
+      ? (ownerRows ?? []).find((t) => t.id === p.time1_id) ?? null
+      : null;
+  const timeRow2 =
+    typeof p.time2_id === "number" && p.time2_id > 0
+      ? (ownerRows ?? []).find((t) => t.id === p.time2_id) ?? null
+      : null;
+  /** Lançador de placar: time/dupla usa nome e escudo da formação, não do líder. */
+  const placarSideA = {
+    label: (timeRow1?.nome ?? j1?.nome ?? "Jogador 1").trim() || "Jogador 1",
+    avatarUrl: timeRow1 ? (timeRow1.escudo?.trim() || null) : (j1?.avatar_url ?? null),
+    avatarEhFormacao: Boolean(timeRow1),
+  };
+  const placarSideB = {
+    label: (timeRow2?.nome ?? j2?.nome ?? "Jogador 2").trim() || "Jogador 2",
+    avatarUrl: timeRow2 ? (timeRow2.escudo?.trim() || null) : (j2?.avatar_url ?? null),
+    avatarEhFormacao: Boolean(timeRow2),
+  };
   const { data: novoLocal } =
     Number.isFinite(novoLocalId) && novoLocalId > 0
       ? await supabase
@@ -216,7 +244,6 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
       points_limit: null,
       win_by_two: false,
       has_overtime: false,
-      has_penalties: false,
       max_rounds: 3,
     },
   });
@@ -317,15 +344,28 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             }
           >
             <div className="min-w-0 flex-1 text-center">
-              <p
-                className={
-                  agendaSomente
-                    ? "truncate text-sm font-black text-eid-fg"
-                    : "truncate text-sm font-bold text-eid-fg md:font-black"
-                }
-              >
-                {j1?.nome ?? "Jogador 1"}
-              </p>
+              <div className="flex flex-col items-center gap-1.5">
+                <span
+                  className={`inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-fg ${
+                    placarSideA.avatarEhFormacao ? "rounded-xl" : "rounded-full"
+                  }`}
+                >
+                  {placarSideA.avatarUrl ? (
+                    <img src={placarSideA.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    iniciaisConfronto(placarSideA.label)
+                  )}
+                </span>
+                <p
+                  className={
+                    agendaSomente
+                      ? "w-full truncate text-sm font-black text-eid-fg"
+                      : "w-full truncate text-sm font-bold text-eid-fg md:font-black"
+                  }
+                >
+                  {placarSideA.label}
+                </p>
+              </div>
             </div>
             {agendaSomente ? (
               <div className="flex shrink-0 flex-col items-center justify-center self-center">
@@ -349,15 +389,28 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
               </div>
             )}
             <div className="min-w-0 flex-1 text-center">
-              <p
-                className={
-                  agendaSomente
-                    ? "truncate text-sm font-black text-eid-fg"
-                    : "truncate text-sm font-bold text-eid-fg md:font-black"
-                }
-              >
-                {j2?.nome ?? "Jogador 2"}
-              </p>
+              <div className="flex flex-col items-center gap-1.5">
+                <span
+                  className={`inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-fg ${
+                    placarSideB.avatarEhFormacao ? "rounded-xl" : "rounded-full"
+                  }`}
+                >
+                  {placarSideB.avatarUrl ? (
+                    <img src={placarSideB.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    iniciaisConfronto(placarSideB.label)
+                  )}
+                </span>
+                <p
+                  className={
+                    agendaSomente
+                      ? "w-full truncate text-sm font-black text-eid-fg"
+                      : "w-full truncate text-sm font-bold text-eid-fg md:font-black"
+                  }
+                >
+                  {placarSideB.label}
+                </p>
+              </div>
             </div>
           </div>
 
@@ -396,10 +449,20 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   >
                     <div className="border-b border-r border-[color:var(--eid-border-subtle)] px-1.5 py-1">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg">
-                          {j1?.avatar_url ? <img src={j1.avatar_url} alt="" className="h-full w-full object-cover" /> : (j1?.nome ?? "J1").slice(0, 2)}
+                        <span
+                          className={`inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg ${
+                            placarSideA.avatarEhFormacao ? "rounded-md" : "rounded-full"
+                          }`}
+                        >
+                          {placarSideA.avatarUrl ? (
+                            <img src={placarSideA.avatarUrl} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            iniciaisConfronto(placarSideA.label)
+                          )}
                         </span>
-                        <span className="truncate text-[10px] font-black uppercase tracking-[0.02em] text-eid-fg">{j1?.nome ?? "Jogador 1"}</span>
+                        <span className="truncate text-[10px] font-black uppercase tracking-[0.02em] text-eid-fg">
+                          {placarSideA.label}
+                        </span>
                       </div>
                     </div>
                     {placarSets.map((set, idx) => {
@@ -418,10 +481,20 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                     })}
                     <div className="border-r border-[color:var(--eid-border-subtle)] px-1.5 py-1">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg">
-                          {j2?.avatar_url ? <img src={j2.avatar_url} alt="" className="h-full w-full object-cover" /> : (j2?.nome ?? "J2").slice(0, 2)}
+                        <span
+                          className={`inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg ${
+                            placarSideB.avatarEhFormacao ? "rounded-md" : "rounded-full"
+                          }`}
+                        >
+                          {placarSideB.avatarUrl ? (
+                            <img src={placarSideB.avatarUrl} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            iniciaisConfronto(placarSideB.label)
+                          )}
                         </span>
-                        <span className="truncate text-[10px] font-black uppercase tracking-[0.02em] text-eid-fg">{j2?.nome ?? "Jogador 2"}</span>
+                        <span className="truncate text-[10px] font-black uppercase tracking-[0.02em] text-eid-fg">
+                          {placarSideB.label}
+                        </span>
                       </div>
                     </div>
                     {placarSets.map((set, idx) => {
@@ -469,13 +542,22 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   <div className="grid gap-2 sm:grid-cols-2">
                     <label className="grid gap-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Data e hora</span>
-                      <input
-                        type="datetime-local"
-                        name="data_partida"
-                        defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
-                        className="eid-input-dark h-10 rounded-xl px-3 !text-[14px] text-eid-fg placeholder:!text-[12px]"
-                        style={{ fontSize: "14px" }}
-                      />
+                      {p.torneio_id ? (
+                        <input
+                          type="datetime-local"
+                          name="data_partida"
+                          defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
+                          className="eid-input-dark h-10 rounded-xl px-3 !text-[14px] text-eid-fg placeholder:!text-[12px]"
+                          style={{ fontSize: "14px" }}
+                        />
+                      ) : (
+                        <RankingConfrontoDatetimeInput
+                          name="data_partida"
+                          defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
+                          className="eid-input-dark h-10 rounded-xl px-3 !text-[14px] text-eid-fg placeholder:!text-[12px]"
+                          style={{ fontSize: "14px" }}
+                        />
+                      )}
                     </label>
                     <label className="grid gap-1.5">
                       <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Local</span>
@@ -505,9 +587,12 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   >
                     Salvar agendamento
                   </button>
-                  {agendaSomente ? (
+                  {!p.torneio_id ? (
                     <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary md:text-[11px]">
-                      Defina data e local aqui. Para registrar o placar após o jogo, use o Painel de controle.
+                      {agendaSomente ? "Defina data e local aqui." : "Agendamento opcional."} Confronto de ranking (individual,
+                      dupla ou time): data entre agora e as próximas {CONFRONTO_AGENDAMENTO_JANELA_HORAS} horas, como nas opções de
+                      reagendamento.
+                      {agendaSomente ? " Para o placar após o jogo, use o Painel de controle." : ""}
                     </p>
                   ) : null}
                 </form>
@@ -539,10 +624,12 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                 config={matchScoreFormConfig}
                 setFormatOptions={setFormatOptions}
                 initialSetFormatKey={matchScoreInitialSetFormatKey}
-                sideALabel={j1?.nome ?? "Jogador 1"}
-                sideBLabel={j2?.nome ?? "Jogador 2"}
-                sideAAvatarUrl={j1?.avatar_url ?? null}
-                sideBAvatarUrl={j2?.avatar_url ?? null}
+                sideALabel={placarSideA.label}
+                sideBLabel={placarSideB.label}
+                sideAAvatarUrl={placarSideA.avatarUrl}
+                sideBAvatarUrl={placarSideB.avatarUrl}
+                sideAAvatarEhFormacao={placarSideA.avatarEhFormacao}
+                sideBAvatarEhFormacao={placarSideB.avatarEhFormacao}
                 isTorneio={Boolean(p.torneio_id)}
               />
               </div>
