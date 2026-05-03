@@ -94,7 +94,11 @@ async function PerfilPublicoPageContent({ params, searchParams }: Props) {
   if ((principalEid?.nota_eid ?? 0) >= 7) conquistas.push("EID Elite");
 
   return (
-    <main id="perfil-public-main" data-eid-perfil-page className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main
+      id="perfil-public-main"
+      data-eid-perfil-page
+      className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-progressive-enter`}
+    >
       <PerfilPublicoHero
         perfil={perfil as PerfilPublicoProfileRow}
         profileId={id}
