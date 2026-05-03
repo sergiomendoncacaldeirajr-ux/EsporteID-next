@@ -48,7 +48,7 @@ export function AgendaPageSkeleton() {
             {Array.from({ length: 2 }).map((_, i) => (
               <article
                 key={i}
-                className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2.5 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] backdrop-blur-sm md:p-4"
+                className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2.5 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.24)] md:p-4"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <SkBlock className="h-2.5 w-28 rounded-md" />

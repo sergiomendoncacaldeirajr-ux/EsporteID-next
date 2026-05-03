@@ -26,14 +26,14 @@ export default function LoadingRanking() {
               <SkBlock className="h-5 w-14 rounded-full" />
             </div>
             <div className="space-y-2 p-2.5 sm:p-3">
-              <div className="rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1 backdrop-blur-sm">
+              <div className="rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_40%,var(--eid-bg)_60%),color-mix(in_srgb,var(--eid-surface)_34%,var(--eid-bg)_66%))] p-1">
                 <SkBlock className="h-[1.5rem] w-full rounded-md" />
               </div>
-              <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm">
+              <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1">
                 <SkBlock className="h-[1.38rem] rounded-md" />
                 <SkBlock className="h-[1.38rem] rounded-md" />
               </div>
-              <div className="rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1 backdrop-blur-sm">
+              <div className="rounded-lg bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_94%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-1">
                 <div className="flex min-w-0 items-center gap-1.5 overflow-hidden pb-0.5 pr-0.5">
                   {Array.from({ length: 7 }).map((_, i) => (
                     <SkBlock key={i} className="h-[1.38rem] w-16 shrink-0 rounded-md" />

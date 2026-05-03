@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** Bloco com shimmer — mesmo estilo visual dos skeletons antigos do onboarding/auth. */
+/** Bloco de placeholder — pulsação leve de opacidade (`eid-loading-skeleton-block` em `globals.css`). */
 export function SkBlock({ className }: { className?: string }) {
   return <div className={`eid-loading-skeleton-block ${className ?? ""}`} aria-hidden />;
 }
