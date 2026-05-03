@@ -64,17 +64,28 @@ export async function enablePushNotifications(vapidPublicKey: string) {
 }
 
 export async function disablePushNotifications() {
+  /** Impede que `ensurePushReady` / `syncExistingPushSubscription` voltem a registrar no servidor antes do unsubscribe terminar. */
+  setPushClientOptOut(true);
   if (!("serviceWorker" in navigator)) return;
   const reg = await navigator.serviceWorker.ready;
   const sub = await reg.pushManager.getSubscription();
   if (!sub) return;
 
-  await fetch("/api/push/unsubscribe", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ endpoint: sub.endpoint }),
-  });
-  await sub.unsubscribe();
+  const endpoint = sub.endpoint;
+  try {
+    await sub.unsubscribe();
+  } catch {
+    /* ignore */
+  }
+  try {
+    await fetch("/api/push/unsubscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint }),
+    });
+  } catch {
+    /* ignore */
+  }
 }
 
 export async function hasActivePushSubscription() {

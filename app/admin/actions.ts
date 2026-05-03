@@ -60,12 +60,16 @@ export async function adminDispararPushTesteParaUsuario(formData: FormData) {
       source: "adminDispararPushTesteParaUsuario",
     });
     const psk = pushResult.skipReason === null ? "ok" : pushResult.skipReason;
+    const pde =
+      pushResult.skipReason === "dispatch_threw" && pushResult.dispatchError
+        ? `&pde=${encodeURIComponent(pushResult.dispatchError)}`
+        : "";
 
     revalidatePath("/admin");
     revalidatePath("/dashboard");
     revalidatePath("/comunidade");
     redirect(
-      `${retBase}&adm_flash=push_teste_ok&pds=${pushResult.sent}&pdf=${pushResult.failed}&pdn=${pushResult.noDevice}&pda=${pushResult.dispatchAttempted ? 1 : 0}&psk=${encodeURIComponent(psk)}`
+      `${retBase}&adm_flash=push_teste_ok&pds=${pushResult.sent}&pdf=${pushResult.failed}&pdn=${pushResult.noDevice}&pda=${pushResult.dispatchAttempted ? 1 : 0}&psk=${encodeURIComponent(psk)}${pde}`
     );
   } catch (error) {
     if (isRedirectError(error)) throw error;

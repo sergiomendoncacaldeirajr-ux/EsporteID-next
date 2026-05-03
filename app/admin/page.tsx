@@ -36,6 +36,7 @@ function parseAdminPushDebug(sp: Record<string, string | string[] | undefined>) 
     noDevice: num("pdn"),
     attempted: num("pda") === 1,
     skip: str("psk") || "ok",
+    errDetail: str("pde") || null,
   };
 }
 
@@ -44,7 +45,8 @@ export default async function AdminHomePage({ searchParams }: Props) {
   const flash = typeof sp.adm_flash === "string" ? sp.adm_flash : "";
   const pushUserId = typeof sp.push_user === "string" ? sp.push_user.trim() : "";
   const pushDbg =
-    flash === "push_teste_ok" && ["pds", "pdf", "pdn", "pda", "psk"].some((k) => typeof sp[k] === "string")
+    flash === "push_teste_ok" &&
+    ["pds", "pdf", "pdn", "pda", "psk", "pde"].some((k) => typeof sp[k] === "string")
       ? parseAdminPushDebug(sp)
       : null;
   let counts: Record<string, number | null> = {
@@ -294,7 +296,16 @@ export default async function AdminHomePage({ searchParams }: Props) {
                   <p className="mt-2 font-semibold text-amber-200">VAPID incompleto neste servidor — nenhum envio ao FCM foi feito.</p>
                 ) : null}
                 {pushDbg.skip === "dispatch_threw" ? (
-                  <p className="mt-2 font-semibold text-rose-200">Erro ao despachar push (veja o terminal / logs do servidor).</p>
+                  <div className="mt-2 space-y-1">
+                    <p className="font-semibold text-rose-200">
+                      Erro ao despachar push no servidor. Em desenvolvimento: terminal onde roda <code className="rounded bg-eid-bg/80 px-1 font-mono text-[10px]">npm run dev</code>
+                      . Em produção: painel do host (ex. Vercel → projeto → Logs). Procure por{" "}
+                      <code className="rounded bg-eid-bg/80 px-1 font-mono text-[10px]">[push-imediato]</code>.
+                    </p>
+                    {pushDbg.errDetail ? (
+                      <p className="rounded-md border border-rose-500/30 bg-rose-500/10 px-2 py-1.5 font-mono text-[10px] text-rose-100">{pushDbg.errDetail}</p>
+                    ) : null}
+                  </div>
                 ) : null}
                 {pushDbg.skip === "ok" && pushDbg.attempted && pushDbg.noDevice >= 1 && pushDbg.sent === 0 && pushDbg.failed === 0 ? (
                   <p className="mt-2 font-semibold text-amber-100">

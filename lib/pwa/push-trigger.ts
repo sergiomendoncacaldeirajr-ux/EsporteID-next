@@ -13,6 +13,8 @@ export type PushBestEffortResult = DispatchAggregate & {
   /** `false` quando não chegou a concluir o envio ao FCM (sem service role, VAPID incompleto, exceção, etc.). */
   dispatchAttempted: boolean;
   skipReason: null | "no_ids" | "no_service_role" | "vapid_incomplete" | "dispatch_threw";
+  /** Preenchido quando `skipReason === "dispatch_threw"` (mensagem curta para diagnóstico). */
+  dispatchError?: string;
 };
 
 export async function triggerPushForNotificationIdsBestEffort(
@@ -71,10 +73,16 @@ export async function triggerPushForNotificationIdsBestEffort(
       skipReason: null,
     };
   } catch (error) {
+    const msg =
+      error instanceof Error
+        ? error.message
+        : error && typeof error === "object" && "body" in error
+          ? String((error as { body?: string }).body ?? error)
+          : String(error);
     console.warn("[push-imediato] falha best-effort", {
       source,
       notificationIds: uniq.length,
-      error: error instanceof Error ? error.message : "unknown_error",
+      error: msg,
     });
     return {
       sent: 0,
@@ -83,6 +91,7 @@ export async function triggerPushForNotificationIdsBestEffort(
       noDevice: 0,
       dispatchAttempted: false,
       skipReason: "dispatch_threw",
+      dispatchError: msg.slice(0, 400),
     };
   }
 }

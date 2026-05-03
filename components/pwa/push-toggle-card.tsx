@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   disablePushNotifications,
   enablePushNotifications,
+  getPushClientOptOut,
   hasActivePushSubscription,
 } from "@/lib/pwa/push-client";
 
@@ -20,7 +21,7 @@ export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boo
       if (!active) return;
       setEnabled(hasSub);
 
-      if (!hasSub && defaultEnabled) {
+      if (!hasSub && defaultEnabled && !getPushClientOptOut()) {
         try {
           setBusy(true);
           await enablePushNotifications(vapidPublicKey);
