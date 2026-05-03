@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 import { ProfileAvatarControl } from "@/components/perfil/profile-avatar-control";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileCoverControl } from "@/components/perfil/profile-cover-control";
@@ -32,6 +33,7 @@ import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
+import Loading from "./loading";
 
 function iniciais(nome?: string | null) {
   const n = (nome ?? "").trim();
@@ -48,7 +50,15 @@ type Props = {
   searchParams?: Promise<{ from?: string }>;
 };
 
-export default async function PerfilPublicoPage({ params, searchParams }: Props) {
+export default function PerfilPublicoPage(props: Props) {
+  return (
+    <Suspense fallback={<Loading />}>
+      <PerfilPublicoPageContent {...props} />
+    </Suspense>
+  );
+}
+
+async function PerfilPublicoPageContent({ params, searchParams }: Props) {
   const { id } = await params;
   const sp = (await searchParams) ?? {};
 
