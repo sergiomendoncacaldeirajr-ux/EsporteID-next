@@ -217,7 +217,7 @@ async function ComunidadePageContent() {
     (cntCandLider ?? 0) > 0 ||
     (cntCandMine ?? 0) > 0;
   const needPartidas =
-    (cntPartAguarda ?? 0) > 0 || (cntPartAgend ?? 0) > 0 || (cntMatchRankFlow ?? 0) > 0;
+    (cntPartAguarda ?? 0) > 0 || (cntMatchRankFlow ?? 0) > 0;
 
   const [{ data: recebidos }, { data: enviadosPendentes }] = await Promise.all([
     supabase
@@ -1398,7 +1398,7 @@ async function ComunidadePageContent() {
       data-eid-comunidade-panel
       data-eid-touch-ui
       data-eid-touch-ui-compact="true"
-      className="mx-auto w-full max-w-3xl px-2.5 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-6xl sm:px-5 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+      className="eid-progressive-enter mx-auto w-full max-w-3xl px-2.5 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-6xl sm:px-5 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
       <ComunidadeBackgroundSync />
       <div className="mb-3 md:mb-4">

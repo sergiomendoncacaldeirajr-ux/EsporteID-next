@@ -273,6 +273,33 @@ async function AgendaPageContent() {
     return true;
   });
 
+  const partidasAgendadasComAcao = partidasAgendadasVisiveis.filter((row) => {
+    const r = row as AgendaPartidaCardRow;
+    const status = String(r.status ?? "").trim().toLowerCase();
+    if (status === "aguardando_aceite_agendamento") {
+      return computeAgendaPodeResponderProposta(r, user.id, criadorPorTimeIdAgenda);
+    }
+    const esporteIdCard = Number((r as { esporte_id?: number | null }).esporte_id ?? 0);
+    const key = dueloKey(r.jogador1_id, r.jogador2_id, esporteIdCard);
+    const mid = Number(r.match_id ?? 0);
+    const acceptedSchedule =
+      (Number.isFinite(mid) && mid > 0 ? acceptedScheduleByMatchId.get(mid) ?? null : null) ??
+      (key ? acceptedScheduleByDuelo.get(key) ?? null : null);
+    const hasScheduleDefined = Boolean((acceptedSchedule?.scheduledFor ?? r.data_partida) && (acceptedSchedule?.scheduledLocation ?? r.local_str ?? r.local_espaco_id));
+    const podeGerenciarPartida = userIsDesafioAgendaLeaderFromMap(
+      user.id,
+      {
+        usuario_id: r.jogador1_id,
+        adversario_id: r.jogador2_id,
+        desafiante_time_id: r.time1_id ?? null,
+        adversario_time_id: r.time2_id ?? null,
+        modalidade_confronto: r.modalidade ?? null,
+      },
+      criadorPorTimeIdAgenda
+    );
+    return podeGerenciarPartida && !hasScheduleDefined;
+  });
+
   const agendaTimesCardIdSet = new Set<number>();
   for (const row of partidasAgendadasVisiveis) {
     const r = row as AgendaPartidaCardRow;
@@ -301,7 +328,7 @@ async function AgendaPageContent() {
     <main
       data-eid-agenda-page
       data-eid-touch-ui
-      className="mx-auto w-full max-w-lg px-3 pt-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+      className="eid-progressive-enter mx-auto w-full max-w-lg px-3 pt-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
     >
       <AgendaBackgroundSync />
       <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-4 py-4 sm:px-6 sm:py-5`}>
@@ -351,14 +378,14 @@ async function AgendaPageContent() {
             </Link>
             .
           </p>
-        {partidasAgendadasVisiveis.length === 0 ? (
+        {partidasAgendadasComAcao.length === 0 ? (
           <div className="eid-list-item m-3 rounded-[18px] border-2 border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/45 py-8 text-center shadow-[0_8px_18px_-14px_rgba(15,23,42,0.12)]">
             <p className="text-sm font-bold text-eid-fg">Nenhuma pendência</p>
             <p className="mt-1 text-[11px] text-eid-text-secondary md:text-xs">Sua agenda está em dia. Combine um desafio no radar.</p>
           </div>
         ) : (
           <div className="mt-3 space-y-4 px-2.5 pb-2.5">
-            {partidasAgendadasVisiveis.map((row) => {
+            {partidasAgendadasComAcao.map((row) => {
               const esp = firstOfRelation(row.esportes);
               const pr = row as AgendaPartidaCardRow;
               const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
