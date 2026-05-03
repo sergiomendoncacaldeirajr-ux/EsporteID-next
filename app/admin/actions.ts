@@ -64,7 +64,8 @@ export async function adminDispararPushTesteParaUsuario(formData: FormData) {
     revalidatePath("/dashboard");
     revalidatePath("/comunidade");
     redirect(`${retBase}&adm_flash=push_teste_ok`);
-  } catch {
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
     redirect("/admin?adm_flash=push_teste_erro");
   }
 }
