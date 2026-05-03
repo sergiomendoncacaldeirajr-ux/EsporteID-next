@@ -345,7 +345,13 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notificacoes", filter: `usuario_id=eq.${userId}` },
-        () => void load()
+        (payload) => {
+          void load();
+          /** Notificações criadas no banco (ex.: via trigger) não passam por `triggerPush*` no Node — pede envio push aqui. */
+          if (payload.eventType === "INSERT") {
+            void fetch("/api/push/flush-user", { method: "POST", credentials: "same-origin" }).catch(() => {});
+          }
+        }
       )
       .on(
         "postgres_changes",

@@ -41,11 +41,15 @@ self.addEventListener("notificationclick", (event) => {
   const fallback = (event.notification && event.notification.data && event.notification.data.url) || "/comunidade";
   const url = action === "open_agenda" ? "/agenda" : action === "open_social" ? "/comunidade" : fallback;
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (clients) => {
       for (const client of clients) {
-        if ("focus" in client) {
-          client.navigate(url);
-          return client.focus();
+        try {
+          if ("navigate" in client && typeof client.navigate === "function") {
+            await client.navigate(url);
+          }
+          if ("focus" in client) return client.focus();
+        } catch {
+          /* tenta próximo client */
         }
       }
       if (self.clients.openWindow) return self.clients.openWindow(url);
