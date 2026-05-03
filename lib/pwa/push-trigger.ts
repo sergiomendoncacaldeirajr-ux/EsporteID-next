@@ -1,17 +1,57 @@
-import { dispatchPushForNotificationIds, isPushDispatchConfigured } from "@/lib/pwa/push-dispatch";
+import {
+  dispatchPushForNotificationIds,
+  isPushDispatchConfigured,
+  type DispatchAggregate,
+} from "@/lib/pwa/push-dispatch";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 type PushTriggerMeta = {
   source?: string;
 };
 
-export async function triggerPushForNotificationIdsBestEffort(ids: number[], meta?: PushTriggerMeta) {
+export type PushBestEffortResult = DispatchAggregate & {
+  /** `false` quando não chegou a concluir o envio ao FCM (sem service role, VAPID incompleto, exceção, etc.). */
+  dispatchAttempted: boolean;
+  skipReason: null | "no_ids" | "no_service_role" | "vapid_incomplete" | "dispatch_threw";
+};
+
+export async function triggerPushForNotificationIdsBestEffort(
+  ids: number[],
+  meta?: PushTriggerMeta
+): Promise<PushBestEffortResult> {
   const uniq = [...new Set(ids.filter((v) => Number.isFinite(v) && v > 0).map((v) => Math.floor(v)))];
-  if (!uniq.length) return;
-  if (!hasServiceRoleConfig()) return;
+  if (!uniq.length) {
+    return {
+      sent: 0,
+      failed: 0,
+      scanned: 0,
+      noDevice: 0,
+      dispatchAttempted: false,
+      skipReason: "no_ids",
+    };
+  }
+  if (!hasServiceRoleConfig()) {
+    return {
+      sent: 0,
+      failed: 0,
+      scanned: uniq.length,
+      noDevice: 0,
+      dispatchAttempted: false,
+      skipReason: "no_service_role",
+    };
+  }
   if (!isPushDispatchConfigured()) {
-    console.warn("[push-imediato] VAPID incompleto — não envia Web Push (notificação in-app pode existir).", { source: String(meta?.source ?? "unknown") });
-    return;
+    console.warn("[push-imediato] VAPID incompleto — não envia Web Push (notificação in-app pode existir).", {
+      source: String(meta?.source ?? "unknown"),
+    });
+    return {
+      sent: 0,
+      failed: 0,
+      scanned: uniq.length,
+      noDevice: 0,
+      dispatchAttempted: false,
+      skipReason: "vapid_incomplete",
+    };
   }
   const source = String(meta?.source ?? "unknown");
   try {
@@ -23,13 +63,26 @@ export async function triggerPushForNotificationIdsBestEffort(ids: number[], met
       scanned: result.scanned,
       sent: result.sent,
       failed: result.failed,
+      noDevice: result.noDevice,
     });
+    return {
+      ...result,
+      dispatchAttempted: true,
+      skipReason: null,
+    };
   } catch (error) {
     console.warn("[push-imediato] falha best-effort", {
       source,
       notificationIds: uniq.length,
       error: error instanceof Error ? error.message : "unknown_error",
     });
-    // best-effort: fallback permanece no cron.
+    return {
+      sent: 0,
+      failed: 0,
+      scanned: uniq.length,
+      noDevice: 0,
+      dispatchAttempted: false,
+      skipReason: "dispatch_threw",
+    };
   }
 }

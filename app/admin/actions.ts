@@ -56,14 +56,17 @@ export async function adminDispararPushTesteParaUsuario(formData: FormData) {
       redirect(`${retBase}&adm_flash=push_teste_insert_erro`);
     }
 
-    await triggerPushForNotificationIdsBestEffort([Number(notif.id)], {
+    const pushResult = await triggerPushForNotificationIdsBestEffort([Number(notif.id)], {
       source: "adminDispararPushTesteParaUsuario",
     });
+    const psk = pushResult.skipReason === null ? "ok" : pushResult.skipReason;
 
     revalidatePath("/admin");
     revalidatePath("/dashboard");
     revalidatePath("/comunidade");
-    redirect(`${retBase}&adm_flash=push_teste_ok`);
+    redirect(
+      `${retBase}&adm_flash=push_teste_ok&pds=${pushResult.sent}&pdf=${pushResult.failed}&pdn=${pushResult.noDevice}&pda=${pushResult.dispatchAttempted ? 1 : 0}&psk=${encodeURIComponent(psk)}`
+    );
   } catch (error) {
     if (isRedirectError(error)) throw error;
     redirect("/admin?adm_flash=push_teste_erro");

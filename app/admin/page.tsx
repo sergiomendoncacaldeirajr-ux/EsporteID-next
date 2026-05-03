@@ -17,10 +17,36 @@ type Props = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+function parseAdminPushDebug(sp: Record<string, string | string[] | undefined>) {
+  const num = (key: string) => {
+    const raw = sp[key];
+    const s0 = Array.isArray(raw) ? raw[0] : raw;
+    const s = typeof s0 === "string" ? s0.trim() : "";
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  };
+  const str = (key: string) => {
+    const v = sp[key];
+    const s = Array.isArray(v) ? v[0] : v;
+    return typeof s === "string" ? s : "";
+  };
+  return {
+    sent: num("pds"),
+    failed: num("pdf"),
+    noDevice: num("pdn"),
+    attempted: num("pda") === 1,
+    skip: str("psk") || "ok",
+  };
+}
+
 export default async function AdminHomePage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const flash = typeof sp.adm_flash === "string" ? sp.adm_flash : "";
   const pushUserId = typeof sp.push_user === "string" ? sp.push_user.trim() : "";
+  const pushDbg =
+    flash === "push_teste_ok" && ["pds", "pdf", "pdn", "pda", "psk"].some((k) => typeof sp[k] === "string")
+      ? parseAdminPushDebug(sp)
+      : null;
   let counts: Record<string, number | null> = {
     profiles: null,
     torneios: null,
@@ -236,10 +262,58 @@ export default async function AdminHomePage({ searchParams }: Props) {
           Dispara uma notificação de teste para um usuário específico (via service role), para validar entrega no aparelho. Busque pelo nome ou{" "}
           <span className="whitespace-nowrap">@username</span> — não precisa colar o UUID inteiro.
         </p>
-        {flash === "push_teste_ok" ? (
-          <p className="mt-3 rounded-lg border border-emerald-500/35 bg-emerald-500/12 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-success-600)_80%,var(--eid-fg)_20%)]">
-            Notificação criada (sininho). Se o alerta nativo do sistema não apareceu, confira o diagnóstico rápido abaixo: subscription ativa, VAPID e o mesmo navegador em que o usuário ativou o push.
+        <p className="mt-2 text-[11px] leading-relaxed text-eid-text-secondary">
+          O <span className="font-semibold text-eid-fg">sininho</span> reflete a linha no banco (Realtime). O{" "}
+          <span className="font-semibold text-eid-fg">alerta do Windows/Android</span> só aparece se existir subscription Web Push para o mesmo usuário e o mesmo{" "}
+          <span className="font-semibold text-eid-fg">host</span> (não misture <code className="rounded bg-eid-bg/80 px-1 font-mono text-[10px]">localhost</code> com{" "}
+          <code className="rounded bg-eid-bg/80 px-1 font-mono text-[10px]">127.0.0.1</code>).
+        </p>
+        {!isPushDispatchConfigured() ? (
+          <p className="mt-2 rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100">
+            Neste deploy o par VAPID está incompleto — nenhum Web Push será enviado. Veja{" "}
+            <a className="font-semibold underline" href="/admin/push">
+              Admin → Push
+            </a>
+            .
           </p>
+        ) : null}
+        {flash === "push_teste_ok" ? (
+          <div className="mt-3 space-y-2">
+            <p className="rounded-lg border border-emerald-500/35 bg-emerald-500/12 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-success-600)_80%,var(--eid-fg)_20%)]">
+              Notificação criada (sininho). Abaixo: resultado do envio Web Push neste disparo.
+            </p>
+            {pushDbg ? (
+              <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2 text-[11px] text-eid-text-secondary">
+                <p>
+                  Servidor: <span className="font-semibold text-eid-fg">{pushDbg.sent}</span> envio(s) aceito(s) pelo push service ·{" "}
+                  <span className="font-semibold text-eid-fg">{pushDbg.failed}</span> falha(s) · notif. sem aparelho inscrito:{" "}
+                  <span className="font-semibold text-eid-fg">{pushDbg.noDevice}</span>
+                  {pushDbg.attempted ? "" : " · despacho não concluído"}
+                </p>
+                {pushDbg.skip === "vapid_incomplete" ? (
+                  <p className="mt-2 font-semibold text-amber-200">VAPID incompleto neste servidor — nenhum envio ao FCM foi feito.</p>
+                ) : null}
+                {pushDbg.skip === "dispatch_threw" ? (
+                  <p className="mt-2 font-semibold text-rose-200">Erro ao despachar push (veja o terminal / logs do servidor).</p>
+                ) : null}
+                {pushDbg.skip === "ok" && pushDbg.attempted && pushDbg.noDevice >= 1 && pushDbg.sent === 0 && pushDbg.failed === 0 ? (
+                  <p className="mt-2 font-semibold text-amber-100">
+                    Este usuário não tem subscription ativa no banco para receber Web Push neste ambiente. No aparelho dele: abrir o site pelo mesmo endereço que você usa no admin, entrar na conta dele e ativar notificações no sininho (permissão do navegador).
+                  </p>
+                ) : null}
+                {pushDbg.skip === "ok" && pushDbg.attempted && pushDbg.failed >= 1 ? (
+                  <p className="mt-2 font-semibold text-amber-100">
+                    O push service recusou ou falhou — confira em Diagnóstico rápido o campo último_erro (ex.: subscription expirada, chave VAPID trocada sem nova inscrição).
+                  </p>
+                ) : null}
+                {pushDbg.skip === "ok" && pushDbg.sent >= 1 ? (
+                  <p className="mt-2 text-eid-fg">
+                    O servidor recebeu confirmação do envio. Se o sistema não mostrou o banner: janela em primeiro plano, modo Não perturbar, ou bloqueio de notificações do site no Chrome/Edge (ícone de cadeado → notificações).
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         ) : null}
         {flash === "push_teste_param_invalido" ||
         flash === "push_teste_usuario_nao_encontrado" ||

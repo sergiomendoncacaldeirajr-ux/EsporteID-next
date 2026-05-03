@@ -23,7 +23,13 @@ type PushDeliveryRow = {
   status: string;
 };
 
-type DispatchAggregate = { sent: number; failed: number; scanned: number };
+export type DispatchAggregate = {
+  sent: number;
+  failed: number;
+  scanned: number;
+  /** Notificações cujo usuário não tinha nenhuma subscription ativa (nada foi enviado ao FCM). */
+  noDevice: number;
+};
 
 /** Chaves VAPID no servidor (envio de push). Sem isso, `flush-user` não deve retornar 500 em dev. */
 export function isPushDispatchConfigured(): boolean {
@@ -67,7 +73,7 @@ async function dispatchNotificationsToSubscriptions(
   admin: SupabaseClient,
   list: NotificacaoRow[]
 ): Promise<DispatchAggregate> {
-  if (!list.length) return { sent: 0, failed: 0, scanned: 0 };
+  if (!list.length) return { sent: 0, failed: 0, scanned: 0, noDevice: 0 };
 
   const userIds = [...new Set(list.map((n) => n.usuario_id).filter(Boolean))];
   const notifIds = list.map((n) => n.id);
@@ -100,9 +106,14 @@ async function dispatchNotificationsToSubscriptions(
 
   let sent = 0;
   let failed = 0;
+  let noDevice = 0;
+  const sendOpts = { TTL: 86_400, urgency: "high" as const };
   for (const n of list) {
     const userSubs = subByUser.get(n.usuario_id) ?? [];
-    if (!userSubs.length) continue;
+    if (!userSubs.length) {
+      noDevice += 1;
+      continue;
+    }
     const payload = buildNotificationPayload(n);
     for (const s of userSubs) {
       const key = `${n.id}:${s.id}`;
@@ -113,7 +124,8 @@ async function dispatchNotificationsToSubscriptions(
             endpoint: s.endpoint,
             keys: { p256dh: s.p256dh, auth: s.auth },
           },
-          payload
+          payload,
+          sendOpts
         );
         sent += 1;
         await admin.from("push_entregas_notificacao").upsert(
@@ -176,7 +188,7 @@ export async function dispatchPushForNotificationIds(
 ): Promise<DispatchAggregate> {
   normalizePushConfig();
   const ids = [...new Set(notificationIds.filter((v) => Number.isFinite(v) && v > 0).map((v) => Math.floor(v)))];
-  if (!ids.length) return { sent: 0, failed: 0, scanned: 0 };
+  if (!ids.length) return { sent: 0, failed: 0, scanned: 0, noDevice: 0 };
   const { data: notificacoes, error: notifErr } = await admin
     .from("notificacoes")
     .select("id, usuario_id, mensagem, tipo, referencia_id")
