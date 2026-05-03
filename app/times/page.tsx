@@ -1,14 +1,12 @@
-import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SearchFilterForm } from "@/components/search/search-filter-form";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { TeamManagementPanel } from "@/components/times/team-management-panel";
-import type { TimesVagaCardData } from "@/components/times/times-vaga-recrutamento-card";
-import { TimesRecrutamentoVagasList } from "@/components/times/times-recrutamento-vagas-list";
-import { CandidaturaResponseActions } from "@/components/vagas/candidatura-response-actions";
-import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
-import { EidCollapsiblePanel } from "@/components/ui/eid-collapsible-panel";
+import { EidStreamSection } from "@/components/eid-stream-section";
+import { TimesVagasListaSkeleton, TimesVagasPedidosSkeleton } from "@/components/loading/times-vagas-stream-skeletons";
+import { timesEmbedReturnHref, type MinhasTimeShellRow } from "./times-vagas-shared";
+import { TimesStreamListaVagas } from "./times-stream-lista";
+import { TimesStreamPedidos } from "./times-stream-pedidos";
 
 export const metadata = {
   title: "Times",
@@ -24,64 +22,6 @@ type Props = {
   }>;
 };
 
-/** Caminho com a mesma busca para `from` nos fluxos em tela cheia (`embed=1`). */
-function timesEmbedReturnHref(sp: { q?: string; create?: string; convidar?: string }) {
-  const p = new URLSearchParams();
-  const qv = (sp.q ?? "").trim();
-  if (qv) p.set("q", qv);
-  if (sp.create === "1") p.set("create", "1");
-  const conv = String(sp.convidar ?? "").trim();
-  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(conv)) p.set("convidar", conv);
-  const s = p.toString();
-  return s ? `/times?${s}` : "/times";
-}
-
-/** Limite de formações carregadas para a lista (sem paginação por URL). */
-const RECRUTAMENTO_VAGAS_FETCH_LIMIT = 300;
-
-type TimeListRow = {
-  id: number;
-  nome: string | null;
-  localizacao: string | null;
-  vagas_abertas: boolean | null;
-  aceita_pedidos: boolean | null;
-  eid_time: number | null;
-  nivel_procurado: string | null;
-  escudo: string | null;
-  tipo: string | null;
-  criador_id: string;
-  esportes: { nome: string | null } | { nome: string | null }[] | null;
-};
-
-type RosterHeadcountBatchRow = {
-  time_id: number;
-  headcount: number;
-};
-
-function esporteNomeFromRow(row: TimeListRow): string | null {
-  const esp = row.esportes;
-  if (Array.isArray(esp)) return esp[0]?.nome ?? null;
-  if (esp && typeof esp === "object" && "nome" in esp) return esp.nome ?? null;
-  return null;
-}
-
-function rowToCardData(row: TimeListRow): TimesVagaCardData {
-  return {
-    id: row.id,
-    nome: row.nome,
-    localizacao: row.localizacao,
-    escudo: row.escudo,
-    eid_time: row.eid_time,
-    nivel_procurado: row.nivel_procurado,
-    tipo: row.tipo,
-    esporteNome: esporteNomeFromRow(row),
-    vagas_abertas: Boolean(row.vagas_abertas),
-    aceita_pedidos: Boolean(row.aceita_pedidos),
-    vagas_disponiveis: null,
-    criador_id: row.criador_id,
-  };
-}
-
 export default async function TimesPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const q = (sp.q ?? "").trim().toLowerCase();
@@ -90,91 +30,14 @@ export default async function TimesPage({ searchParams }: Props) {
   const { supabase, user } = await getServerAuth();
   if (!user) redirect("/login?next=/times");
 
-  let timesListQuery = supabase
+  const { data: minhas } = await supabase
     .from("times")
-    .select("id, nome, localizacao, vagas_abertas, aceita_pedidos, eid_time, nivel_procurado, escudo, tipo, criador_id, esportes(nome)")
-    .eq("vagas_abertas", true)
-    .eq("aceita_pedidos", true)
+    .select("id, nome, tipo, esportes(nome)")
+    .eq("criador_id", user.id)
     .order("id", { ascending: false })
-    .limit(RECRUTAMENTO_VAGAS_FETCH_LIMIT);
-  if (q) {
-    timesListQuery = timesListQuery.or(`nome.ilike.%${q}%,localizacao.ilike.%${q}%`);
-  }
+    .limit(20);
 
-  const [{ data: minhas }, { data: filtrados }, { data: minhasCandidaturas }, { data: meusMembros }, { data: pedidosRaw }] =
-    await Promise.all([
-    supabase
-      .from("times")
-      .select("id, nome, tipo, esportes(nome)")
-      .eq("criador_id", user.id)
-      .order("id", { ascending: false })
-      .limit(20),
-    timesListQuery,
-    supabase.from("time_candidaturas").select("id, time_id").eq("candidato_usuario_id", user.id).eq("status", "pendente"),
-    supabase.from("membros_time").select("time_id").eq("usuario_id", user.id).in("status", ["ativo", "aceito", "aprovado"]),
-      supabase
-        .from("time_candidaturas")
-        .select("id, time_id, mensagem, criado_em, candidato_usuario_id, times!inner(id, nome, criador_id)")
-        .eq("status", "pendente")
-        .eq("times.criador_id", user.id)
-        .order("criado_em", { ascending: false })
-        .limit(40),
-    ]);
-
-  const lista = (filtrados ?? []) as TimeListRow[];
-  const timeIds = lista.map((t) => Number(t.id)).filter((id) => Number.isFinite(id) && id > 0);
-  const { data: rosterBatchRows, error: rosterBatchErr } =
-    timeIds.length > 0
-      ? await supabase.rpc("time_roster_headcount_many", { p_time_ids: timeIds })
-      : { data: [] as RosterHeadcountBatchRow[], error: null };
-  const headcountByTime = new Map<number, number>();
-  if (!rosterBatchErr && Array.isArray(rosterBatchRows)) {
-    for (const row of rosterBatchRows as RosterHeadcountBatchRow[]) {
-      const tid = Number(row.time_id);
-      const head = Number(row.headcount);
-      if (Number.isFinite(tid) && tid > 0) headcountByTime.set(tid, Number.isFinite(head) ? Math.max(0, head) : 0);
-    }
-  }
-  const rosterEntries = await Promise.all(
-    lista.map(async (t) => {
-      const cap = String(t.tipo ?? "").trim().toLowerCase() === "dupla" ? 2 : 18;
-      let rosterCount = headcountByTime.get(t.id) ?? null;
-      if (rosterCount == null) {
-        const { data: headRaw, error: headErr } = await supabase.rpc("time_roster_headcount", { p_time_id: t.id });
-        rosterCount = !headErr && headRaw != null && Number.isFinite(Number(headRaw)) ? Math.max(0, Number(headRaw)) : 1;
-      }
-      return [t.id, Math.max(0, cap - rosterCount)] as const;
-    })
-  );
-  const vagasDisponiveisMap = new Map<number, number>(rosterEntries);
-  const listaComVagas = lista.filter((t) => (vagasDisponiveisMap.get(t.id) ?? 0) > 0);
-  const pendentePorTime = new Map((minhasCandidaturas ?? []).map((c) => [c.time_id as number, c.id as number]));
-  const timesSouMembro = new Set((meusMembros ?? []).map((m) => Number(m.time_id)));
-
-  const meuTimeIds = new Set<number>();
-  for (const row of minhas ?? []) {
-    const id = Number((row as { id?: number }).id);
-    if (Number.isFinite(id) && id > 0) meuTimeIds.add(id);
-  }
-  for (const row of meusMembros ?? []) {
-    const id = Number((row as { time_id?: number }).time_id);
-    if (Number.isFinite(id) && id > 0) meuTimeIds.add(id);
-  }
-  const listaRecrutamentoPublico = listaComVagas.filter((t) => !meuTimeIds.has(Number(t.id)));
-
-  const pedidos = pedidosRaw ?? [];
-  const candIds = [...new Set(pedidos.map((p) => p.candidato_usuario_id as string))];
-  const { data: candProfiles } =
-    candIds.length > 0
-      ? await supabase.from("profiles").select("id, nome, username, avatar_url").in("id", candIds)
-      : { data: [] as { id: string; nome: string | null; username: string | null; avatar_url: string | null }[] };
-  const profileMap = new Map((candProfiles ?? []).map((r) => [r.id, r]));
-
-  const vagasListItems = listaRecrutamentoPublico.map((t) => ({
-    team: { ...rowToCardData(t), vagas_disponiveis: vagasDisponiveisMap.get(t.id) ?? null },
-    minhaCandidaturaPendenteId: pendentePorTime.get(t.id) ?? null,
-    jaSouMembro: timesSouMembro.has(t.id),
-  }));
+  const minhasCriadorTimes = (minhas ?? []) as MinhasTimeShellRow[];
 
   return (
     <div
@@ -189,7 +52,7 @@ export default async function TimesPage({ searchParams }: Props) {
               Vagas em times e duplas
             </h1>
             <p className="mt-2 max-w-[56ch] text-[10px] leading-relaxed text-eid-text-secondary sm:mt-2.5 sm:text-[13px]">
-              Encontre uma formação no seu esporte, candidate-se com um toque (estilo desafio) e acompanhe pelo sino. O líder aprova ou recusa  -  se
+              Encontre uma formação no seu esporte, candidate-se com um toque (estilo desafio) e acompanhe pelo sino. O líder aprova ou recusa — se
               aceitar, você entra no elenco e recebe notificação.
             </p>
           </div>
@@ -213,103 +76,18 @@ export default async function TimesPage({ searchParams }: Props) {
           <TeamManagementPanel
             fullscreenLaunchers={{
               fromHref: timesEmbedReturnHref(sp),
-              hasEquipes: (minhas ?? []).length > 0,
+              hasEquipes: minhasCriadorTimes.length > 0,
               convidarUsuarioId: convidarOk ? convidar : undefined,
             }}
           />
         </div>
       </div>
 
-      <section id="pedidos-elenco" className="mb-4 scroll-mt-24">
-        <EidCollapsiblePanel
-          title="Pedidos para o seu elenco"
-          defaultOpen={false}
-          summaryRight={
-            pedidos.length > 0 ? (
-              <span className="inline-flex shrink-0 rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-eid-action-400">
-                {pedidos.length} pendente{pedidos.length > 1 ? "s" : ""}
-              </span>
-            ) : (
-              <span className="inline-flex shrink-0 rounded-full border border-transparent bg-eid-surface/50 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.06em] text-eid-text-secondary">
-                sem pendências
-              </span>
-            )
-          }
-        >
-          {pedidos.length > 0 ? (
-            <>
-              <p className="px-1 text-xs text-eid-text-secondary">
-                Quem pediu para entrar nas suas formações. Aprovar adiciona a pessoa ao elenco e recusar avisa o candidato.
-              </p>
-              <ul className="space-y-3">
-                {pedidos.map((raw) => {
-                  const p = raw as {
-                    id: number;
-                    time_id: number;
-                    mensagem: string | null;
-                    criado_em: string;
-                    candidato_usuario_id: string;
-                    times: { id: number; nome: string | null; criador_id: string } | { id: number; nome: string | null; criador_id: string }[];
-                  };
-                  const team = Array.isArray(p.times) ? p.times[0] : p.times;
-                  const prof = profileMap.get(p.candidato_usuario_id);
-                  const label = prof?.nome?.trim() || prof?.username?.trim() || "Atleta";
-                  const sub = prof?.username?.trim() && prof?.username !== prof?.nome ? `@${prof.username}` : null;
-                  return (
-                    <li
-                      key={p.id}
-                      className="rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-card)_92%,var(--eid-surface)_8%)] p-3 sm:flex sm:items-stretch sm:gap-3 sm:p-4"
-                    >
-                      <div className="flex shrink-0 items-center gap-3">
-                        <ProfileEditDrawerTrigger
-                          href={`/perfil/${p.candidato_usuario_id}?from=/times`}
-                          title={label}
-                          fullscreen
-                          topMode="backOnly"
-                          className="block rounded-xl border border-transparent transition hover:border-eid-primary-500/35"
-                        >
-                          <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-eid-primary-500/30 bg-eid-surface">
-                            {prof?.avatar_url ? (
-                              <Image src={prof.avatar_url} alt="" width={48} height={48} unoptimized className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-sm font-black text-eid-primary-300">
-                                {label.slice(0, 1).toUpperCase()}
-                              </div>
-                            )}
-                          </div>
-                        </ProfileEditDrawerTrigger>
-                        <div className="min-w-0 sm:hidden">
-                          <p className="text-sm font-bold text-eid-fg">{label}</p>
-                          {sub ? <p className="text-[11px] text-eid-text-secondary">{sub}</p> : null}
-                        </div>
-                      </div>
-                      <div className="mt-3 min-w-0 flex-1 sm:mt-0">
-                        <div className="hidden items-center gap-2 sm:flex">
-                          <Link href={`/perfil/${p.candidato_usuario_id}?from=/times`} className="text-sm font-bold text-eid-fg hover:text-eid-primary-300">
-                            {label}
-                          </Link>
-                          {sub ? <span className="text-[11px] text-eid-text-secondary">{sub}</span> : null}
-                        </div>
-                        <p className="mt-1 text-[11px] text-eid-text-secondary">
-                          Quer entrar em <span className="font-semibold text-eid-fg">{team?.nome ?? "sua formação"}</span>
-                        </p>
-                        {p.mensagem?.trim() ? (
-                          <p className="mt-2 rounded-lg border border-transparent bg-eid-surface/40 px-2.5 py-2 text-[11px] italic text-eid-text-secondary">
-                            “{p.mensagem.trim()}”
-                          </p>
-                        ) : null}
-                        <CandidaturaResponseActions candidaturaId={p.id} className="mt-2 gap-1.5" />
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
-          ) : (
-            <p className="px-1 py-1 text-xs text-eid-text-secondary">Nenhum pedido pendente no momento.</p>
-          )}
-        </EidCollapsiblePanel>
-      </section>
+      <div className="eid-progressive-enter space-y-0">
+        <EidStreamSection fallback={<TimesVagasPedidosSkeleton />}>
+          <TimesStreamPedidos supabase={supabase} userId={user.id} />
+        </EidStreamSection>
+      </div>
 
       <section className="mb-4 rounded-[20px] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,white_12%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,white_3%),color-mix(in_srgb,var(--eid-surface)_94%,white_6%))] px-3 py-2.5 sm:px-4 sm:py-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -341,12 +119,10 @@ export default async function TimesPage({ searchParams }: Props) {
         </p>
       ) : null}
 
-      <div id="vagas-recrutamento" className="scroll-mt-24">
-        <TimesRecrutamentoVagasList
-          key={`${(sp.q ?? "").trim()}:${vagasListItems.map((i) => i.team.id).join(",")}`}
-          viewerUserId={user.id}
-          items={vagasListItems}
-        />
+      <div className="eid-progressive-enter space-y-0">
+        <EidStreamSection fallback={<TimesVagasListaSkeleton />}>
+          <TimesStreamListaVagas supabase={supabase} userId={user.id} q={q} minhasCriadorTimes={minhasCriadorTimes} />
+        </EidStreamSection>
       </div>
     </div>
   );
