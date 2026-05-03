@@ -1,4 +1,4 @@
-import { dispatchPushForNotificationIds } from "@/lib/pwa/push-dispatch";
+import { dispatchPushForNotificationIds, isPushDispatchConfigured } from "@/lib/pwa/push-dispatch";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 type PushTriggerMeta = {
@@ -9,6 +9,10 @@ export async function triggerPushForNotificationIdsBestEffort(ids: number[], met
   const uniq = [...new Set(ids.filter((v) => Number.isFinite(v) && v > 0).map((v) => Math.floor(v)))];
   if (!uniq.length) return;
   if (!hasServiceRoleConfig()) return;
+  if (!isPushDispatchConfigured()) {
+    console.warn("[push-imediato] VAPID incompleto — não envia Web Push (notificação in-app pode existir).", { source: String(meta?.source ?? "unknown") });
+    return;
+  }
   const source = String(meta?.source ?? "unknown");
   try {
     const admin = createServiceRoleClient();

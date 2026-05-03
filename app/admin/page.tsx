@@ -1,5 +1,6 @@
 import { adminDispararPushTesteParaUsuario, adminMarcarAlertaLido } from "@/app/admin/actions";
 import { AdminPushUsuarioPicker } from "@/components/admin/admin-push-usuario-picker";
+import { isPushDispatchConfigured } from "@/lib/pwa/push-dispatch";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 type Alerta = {
@@ -93,24 +94,25 @@ export default async function AdminHomePage({ searchParams }: Props) {
       };
       alertas = (al.data ?? []) as Alerta[];
       if (pushUserId) {
-        const [{ data: subsRows }, { data: entregaRows }] = await Promise.all([
-          db
-            .from("push_subscriptions")
-            .select("id, ativo")
-            .eq("usuario_id", pushUserId)
-            .order("id", { ascending: false })
-            .limit(40),
-          db
-            .from("push_entregas_notificacao")
-            .select("notificacao_id, status, ultimo_erro, enviado_em, subscription_id")
-            .order("notificacao_id", { ascending: false })
-            .limit(120),
-        ]);
+        const { data: subsRows } = await db
+          .from("push_subscriptions")
+          .select("id, ativo")
+          .eq("usuario_id", pushUserId)
+          .order("id", { ascending: false })
+          .limit(40);
         const subs = (subsRows ?? []) as Array<{ id: number; ativo?: boolean | null }>;
         const subIds = new Set(subs.map((s) => Number(s.id)).filter((n) => Number.isFinite(n) && n > 0));
-        const entregas = (entregaRows ?? [])
-          .filter((r) => subIds.has(Number((r as { subscription_id?: number | null }).subscription_id ?? 0)))
-          .map((r) => ({
+        const subIdList = [...subIds];
+        const { data: entregaRows } =
+          subIdList.length > 0
+            ? await db
+                .from("push_entregas_notificacao")
+                .select("notificacao_id, status, ultimo_erro, enviado_em, subscription_id")
+                .in("subscription_id", subIdList)
+                .order("id", { ascending: false })
+                .limit(80)
+            : { data: [] as unknown[] };
+        const entregas = (entregaRows ?? []).map((r) => ({
             status: (r as { status?: string | null }).status ?? null,
             erro: (r as { ultimo_erro?: string | null }).ultimo_erro ?? null,
             enviadoEm: (r as { enviado_em?: string | null }).enviado_em ?? null,
@@ -123,6 +125,11 @@ export default async function AdminHomePage({ searchParams }: Props) {
           return er.includes("410") || er.includes("404");
         });
         const checklist: string[] = [];
+        if (!isPushDispatchConfigured()) {
+          checklist.push(
+            "Chaves VAPID incompletas neste servidor (NEXT_PUBLIC_VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY) — o envio Web Push não roda; o sininho ainda pode atualizar pelo banco."
+          );
+        }
         if (subs.length === 0) checklist.push("Sem subscription cadastrada para este usuário (precisa ativar push no aparelho).");
         if (subs.length > 0 && subs.filter((s) => s.ativo !== false).length === 0) {
           checklist.push("Subscriptions existem, mas nenhuma está ativa (reativar push no app).");
@@ -231,7 +238,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
         </p>
         {flash === "push_teste_ok" ? (
           <p className="mt-3 rounded-lg border border-emerald-500/35 bg-emerald-500/12 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-success-600)_80%,var(--eid-fg)_20%)]">
-            Push de teste disparado. Se não chegou no aparelho, valide assinatura ativa e permissões de notificação.
+            Notificação criada (sininho). Se o alerta nativo do sistema não apareceu, confira o diagnóstico rápido abaixo: subscription ativa, VAPID e o mesmo navegador em que o usuário ativou o push.
           </p>
         ) : null}
         {flash === "push_teste_param_invalido" ||
