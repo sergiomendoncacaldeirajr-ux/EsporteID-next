@@ -166,7 +166,7 @@ export default async function RootLayout({
               id="eid-app-shell-main-wrap"
               className="flex min-h-0 w-full min-w-0 flex-1 flex-col"
             >
-              <div id="app-main-column" className="flex min-h-0 flex-1 flex-col">
+              <div id="app-main-column" className="eid-progressive-enter flex min-h-0 flex-1 flex-col">
                 {children}
               </div>
             </div>
@@ -182,10 +182,10 @@ export default async function RootLayout({
             id="app-main-column"
             className={
               onboardingMinimalChrome
-                ? "flex min-h-0 flex-1 flex-col pt-[calc(3.25rem+env(safe-area-inset-top))]"
+                ? "eid-progressive-enter flex min-h-0 flex-1 flex-col pt-[calc(3.25rem+env(safe-area-inset-top))]"
                 : hideAppShell
-                  ? "flex min-h-0 flex-1 flex-col"
-                  : "flex flex-1 flex-col pb-8 md:pb-28"
+                  ? "eid-progressive-enter flex min-h-0 flex-1 flex-col"
+                  : "eid-progressive-enter flex flex-1 flex-col pb-8 md:pb-28"
             }
           >
             {children}

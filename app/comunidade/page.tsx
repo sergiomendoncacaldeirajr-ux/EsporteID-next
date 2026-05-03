@@ -217,7 +217,7 @@ async function ComunidadePageContent() {
     (cntCandLider ?? 0) > 0 ||
     (cntCandMine ?? 0) > 0;
   const needPartidas =
-    (cntPartAguarda ?? 0) > 0 || (cntMatchRankFlow ?? 0) > 0;
+    (cntPartAguarda ?? 0) > 0 || (cntPartAgend ?? 0) > 0 || (cntMatchRankFlow ?? 0) > 0;
 
   const [{ data: recebidos }, { data: enviadosPendentes }] = await Promise.all([
     supabase
