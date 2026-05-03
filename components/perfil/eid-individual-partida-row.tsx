@@ -108,6 +108,7 @@ export function EidIndividualPartidaRow({
       local={p.local_str ?? null}
       localHref={p.local_espaco_id != null && Number(p.local_espaco_id) > 0 ? `/local/${Number(p.local_espaco_id)}` : null}
       placarBase={placarTxt}
+      sportLabel={esporteLabel ?? null}
       mensagem={p.mensagem ?? null}
       totalConfrontos={totalConfrontos}
       saldoResumo={saldoResumo}

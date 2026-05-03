@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { createPortal } from "react-dom";
 import { Calendar, MapPin, X } from "lucide-react";
 import Link from "next/link";
+import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
+import { goalsPayloadHasAny } from "@/lib/match-scoring";
 
 const MODAL_CARD =
   "overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,var(--eid-primary-500)_18%)] bg-[linear-gradient(165deg,color-mix(in_srgb,var(--eid-card)_96%,transparent)_0%,color-mix(in_srgb,var(--eid-surface)_52%,transparent)_100%)] shadow-[0_10px_36px_-18px_rgba(15,23,42,0.42)]";
@@ -53,6 +55,8 @@ type Props = {
   children: ReactNode;
   asListItem?: boolean;
   rowClassName?: string;
+  /** Nome do esporte (placar estilizado em jogos por gols + pênaltis). */
+  sportLabel?: string | null;
 };
 
 function parseScorePayloadFromMessage(message: string | null | undefined): ScorePayload | null {
@@ -303,6 +307,7 @@ export function EidConfrontoResumoModal({
   children,
   asListItem = false,
   rowClassName,
+  sportLabel,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -485,19 +490,30 @@ export function EidConfrontoResumoModal({
                   </div>
                 </div>
 
-                <div className="relative mt-5 overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_32%,var(--eid-border-subtle)_68%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-surface)_88%)_0%,color-mix(in_srgb,var(--eid-card)_96%,transparent)_100%)] px-3 py-2.5 text-center shadow-[0_0_28px_-6px_color-mix(in_srgb,var(--eid-primary-500)_42%,transparent),0_6px_22px_-14px_rgba(37,99,235,0.28),inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-4 sm:py-3">
-                  <div
-                    className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_95%_70%_at_50%_-30%,color-mix(in_srgb,var(--eid-primary-400)_38%,transparent),transparent_62%)] opacity-90 dark:opacity-100"
-                    aria-hidden
-                  />
-                  <div className="pointer-events-none absolute -left-1/4 top-1/2 h-[140%] w-1/2 -translate-y-1/2 rotate-12 bg-[linear-gradient(105deg,transparent_40%,rgba(255,255,255,0.14)_50%,transparent_60%)] dark:bg-[linear-gradient(105deg,transparent_40%,rgba(255,255,255,0.08)_50%,transparent_60%)]" aria-hidden />
-                  <div className="relative z-[1]">
-                    <p className="text-[8px] font-black uppercase tracking-[0.14em] text-eid-primary-300">Placar final</p>
-                    <div className="mt-1">
-                      <PlacarNumerosInline placar={placarBase} size="md" />
+                {payload?.type === "gols" && payload.goals && goalsPayloadHasAny(payload.goals) ? (
+                  <div className="relative mt-5 text-center">
+                    <GoalsScoreboardSummary
+                      variant="hero"
+                      goals={payload.goals}
+                      sportName={sportLabel ?? null}
+                      className="shadow-[0_0_28px_-6px_rgba(0,0,0,0.35),0_6px_22px_-14px_rgba(15,23,42,0.25)]"
+                    />
+                  </div>
+                ) : (
+                  <div className="relative mt-5 overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_32%,var(--eid-border-subtle)_68%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-surface)_88%)_0%,color-mix(in_srgb,var(--eid-card)_96%,transparent)_100%)] px-3 py-2.5 text-center shadow-[0_0_28px_-6px_color-mix(in_srgb,var(--eid-primary-500)_42%,transparent),0_6px_22px_-14px_rgba(37,99,235,0.28),inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-4 sm:py-3">
+                    <div
+                      className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_95%_70%_at_50%_-30%,color-mix(in_srgb,var(--eid-primary-400)_38%,transparent),transparent_62%)] opacity-90 dark:opacity-100"
+                      aria-hidden
+                    />
+                    <div className="pointer-events-none absolute -left-1/4 top-1/2 h-[140%] w-1/2 -translate-y-1/2 rotate-12 bg-[linear-gradient(105deg,transparent_40%,rgba(255,255,255,0.14)_50%,transparent_60%)] dark:bg-[linear-gradient(105deg,transparent_40%,rgba(255,255,255,0.08)_50%,transparent_60%)]" aria-hidden />
+                    <div className="relative z-[1]">
+                      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-eid-primary-300">Placar final</p>
+                      <div className="mt-1">
+                        <PlacarNumerosInline placar={placarBase} size="md" />
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -511,44 +527,6 @@ export function EidConfrontoResumoModal({
                 ladoAProfileHref={ladoAProfileHref}
                 ladoBProfileHref={ladoBProfileHref}
               />
-            ) : null}
-
-            {payload?.type === "gols" && payload.goals ? (
-              <div className={MODAL_CARD}>
-                <div className={MODAL_CARD_HEAD}>
-                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-action-300">Placar detalhado</p>
-                  <span className="rounded-full border border-eid-action-500/40 bg-gradient-to-br from-eid-action-500/22 to-eid-action-500/8 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-eid-action-200">
-                    Gols
-                  </span>
-                </div>
-                <div className="space-y-2 p-4 sm:p-5">
-                  <p className="text-sm font-bold text-eid-fg">
-                    <span className="font-black tabular-nums text-eid-fg">
-                      {ladoA} {Number(payload.goals.a ?? 0)}
-                    </span>
-                    <span className="mx-1.5 text-eid-text-secondary">×</span>
-                    <span className="font-black tabular-nums text-eid-fg">
-                      {Number(payload.goals.b ?? 0)} {ladoB}
-                    </span>
-                  </p>
-                  {Number(payload.goals.overtimeA ?? 0) > 0 || Number(payload.goals.overtimeB ?? 0) > 0 ? (
-                    <p className="text-[11px] text-eid-text-secondary">
-                      Prorrogação:{" "}
-                      <span className="font-semibold tabular-nums text-eid-fg">
-                        {Number(payload.goals.overtimeA ?? 0)} × {Number(payload.goals.overtimeB ?? 0)}
-                      </span>
-                    </p>
-                  ) : null}
-                  {Number(payload.goals.penaltiesA ?? 0) > 0 || Number(payload.goals.penaltiesB ?? 0) > 0 ? (
-                    <p className="text-[11px] text-eid-text-secondary">
-                      Pênaltis:{" "}
-                      <span className="font-semibold tabular-nums text-eid-fg">
-                        {Number(payload.goals.penaltiesA ?? 0)} × {Number(payload.goals.penaltiesB ?? 0)}
-                      </span>
-                    </p>
-                  ) : null}
-                </div>
-              </div>
             ) : null}
 
             {payload?.type === "pontos" && payload.points ? (

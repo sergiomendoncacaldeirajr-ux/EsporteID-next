@@ -285,6 +285,23 @@ export function fetchPartidasAgendadasUsuario(
     .limit(40);
 }
 
+/**
+ * Após contestar o placar do oponente, o status continua `aguardando_confirmacao` e quem contestou vira `lancado_por`.
+ * Essas linhas não aparecem em `fetchPartidasAgendadasUsuario` (só `agendada`); o painel social precisa listá-las para reenvio.
+ */
+export function fetchPartidasRelancamentoAposContestacao(supabase: SupabaseClient, userId: string, teamClause: string) {
+  return supabase
+    .from("partidas")
+    .select(partidasSelect)
+    .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId},usuario_id.eq.${userId}${teamClause}`)
+    .eq("status", "aguardando_confirmacao")
+    .eq("lancado_por", userId)
+    .eq("status_ranking", "resultado_contestado")
+    .order("data_registro", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(40);
+}
+
 export function fetchPlacarAguardandoConfirmacao(
   supabase: SupabaseClient,
   userId: string,

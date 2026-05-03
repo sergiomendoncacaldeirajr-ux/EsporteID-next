@@ -979,6 +979,7 @@ export default async function PerfilEidEsportePage({ params, searchParams }: Pro
                                   : null
                               }
                               placarBase={`${Number(p.placar_1 ?? 0)} × ${Number(p.placar_2 ?? 0)}`}
+                              sportLabel={nomeEsporte}
                               mensagem={p.mensagem ?? null}
                               totalConfrontos={confrontosMesmos.length}
                               saldoResumo={saldoResumo}

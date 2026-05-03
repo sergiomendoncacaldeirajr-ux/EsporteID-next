@@ -165,7 +165,14 @@ export function MatchScoreForm({
       ) : null}
       {config.type === "gols" ? (
         <GoalsScore
-          score={payload.goals ?? { a: 0, b: 0 }}
+          score={{
+            a: payload.goals?.a ?? 0,
+            b: payload.goals?.b ?? 0,
+            overtimeA: payload.goals?.overtimeA ?? 0,
+            overtimeB: payload.goals?.overtimeB ?? 0,
+            penaltiesA: payload.goals?.penaltiesA ?? 0,
+            penaltiesB: payload.goals?.penaltiesB ?? 0,
+          }}
           onChange={(goals) => setPayload({ type: "gols", goals })}
           sideALabel={sideALabel}
           sideBLabel={sideBLabel}

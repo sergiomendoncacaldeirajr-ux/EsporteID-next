@@ -9,13 +9,15 @@ import { MatchScoreForm } from "@/components/placar/match-score-form";
 import { StatusSubmitButton } from "@/components/placar/status-submit-button";
 import { type ScoreRulesConfig } from "@/lib/desafio/score-rules";
 import { DESAFIO_FLOW_CTA_BLOCK_CLASS, DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
-import { type MatchScorePayload } from "@/lib/match-scoring";
+import { goalsPayloadHasAny, type MatchScorePayload } from "@/lib/match-scoring";
 import { buildSetFormatOptions, getDesafioRankLockedSetFormat, getMatchUIConfig } from "@/lib/match-scoring";
+import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
 import { createClient } from "@/lib/supabase/server";
 import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
-import { abrirMediacaoAdminAction, confirmarPlacarAction, contestarPlacarAction, salvarAgendamentoAction } from "./actions";
+import { ContestarPlacarForm } from "@/components/placar/contestar-placar-form";
+import { abrirMediacaoAdminAction, confirmarPlacarAction, salvarAgendamentoAction } from "./actions";
 
 type Props = { params: Promise<{ id: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> };
 
@@ -277,13 +279,22 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const scorePayload = parseScorePayloadFromMessage(p.mensagem);
   const cleanMensagem = stripScorePayloadFromMessage(p.mensagem);
   const placarSets = scorePayload?.type === "sets" ? meaningfulSets(scorePayload.sets) : [];
+  const placarGols =
+    scorePayload?.type === "gols" && scorePayload.goals && goalsPayloadHasAny(scorePayload.goals) ? scorePayload.goals : null;
   const resultadoTemPlacar =
     p.data_resultado != null ||
     p.placar_1 != null ||
     p.placar_2 != null ||
-    (scorePayload?.type === "sets" && placarSets.length > 0);
+    (scorePayload?.type === "sets" && placarSets.length > 0) ||
+    placarGols != null;
   const resultadoEnviadoAguardando =
     status === "aguardando_confirmacao" && p.lancado_por === user.id && resultadoTemPlacar && !agendaSomente;
+  /** Evita formulário de lançamento junto da revisão (ex.: Enter não envia placar vazio enquanto o líder confirma/contesta). */
+  const exibirLancamentoPlacar =
+    podeLancar &&
+    !agendaSomente &&
+    !resultadoEnviadoAguardando &&
+    !(podeConfirmarOuContestar && resultadoTemPlacar);
 
   return (
     <main
@@ -438,7 +449,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
             </p>
           ) : null}
 
-          {!agendaSomente && (p.placar_1 != null || p.placar_2 != null) && (
+          {!agendaSomente && (p.placar_1 != null || p.placar_2 != null || placarGols != null) && (
             <div className="mt-4 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2.5 py-2.5">
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Placar atual</p>
               {placarSets.length > 0 ? (
@@ -512,6 +523,15 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                       );
                     })}
                   </div>
+                </div>
+              ) : placarGols ? (
+                <div className="mt-2">
+                  <GoalsScoreboardSummary
+                    goals={placarGols}
+                    sportName={(esp as { nome?: string } | null)?.nome ?? sportNameForFormats}
+                    variant="card"
+                    caption={null}
+                  />
                 </div>
               ) : (
                 <p className="mt-1 text-lg font-black text-eid-fg">
@@ -599,13 +619,13 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
               </div>
             </details>
           ) : null}
-          {podeLancar && !agendaSomente && !resultadoEnviadoAguardando ? (
+          {exibirLancamentoPlacar ? (
             <DismissibleTapAwayHint className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] text-eid-text-secondary">
               Se já combinaram fora do app, você pode pular o agendamento e lançar o resultado direto abaixo.
             </DismissibleTapAwayHint>
           ) : null}
 
-          {podeLancar && !agendaSomente && !resultadoEnviadoAguardando ? (
+          {exibirLancamentoPlacar ? (
             <div className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
               <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Lançamento de resultado</p>
@@ -659,16 +679,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   className={`${DESAFIO_FLOW_CTA_BLOCK_CLASS} disabled:opacity-60`}
                 />
               </form>
-              {!resultadoContestado ? (
-                <form action={contestarPlacarAction}>
-                  <input type="hidden" name="partida_id" value={id} />
-                  <StatusSubmitButton
-                    idleLabel="Contestar resultado"
-                    pendingLabel="Contestando..."
-                    className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full rounded-xl hover:border-amber-500/45 hover:text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)] disabled:opacity-60`}
-                  />
-                </form>
-              ) : null}
+              {!resultadoContestado ? <ContestarPlacarForm partidaId={id} /> : null}
               </div>
             </div>
           ) : null}

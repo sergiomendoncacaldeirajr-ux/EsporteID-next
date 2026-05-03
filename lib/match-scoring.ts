@@ -42,9 +42,19 @@ type BaseMatchCtx = {
 type SetPayload = { a: number; b: number; tiebreakA?: number; tiebreakB?: number };
 type RoundsPayload = { a?: number; b?: number; winner?: "a" | "b" | null };
 
+/** Fragmento de placar por gols (regulação, prorrogação, pênaltis). Campos opcionais para JSON parseado na UI. */
+export type GoalsScoreFields = {
+  a?: number;
+  b?: number;
+  overtimeA?: number;
+  overtimeB?: number;
+  penaltiesA?: number;
+  penaltiesB?: number;
+};
+
 export type MatchScorePayload = {
   type: ScoringType;
-  goals?: { a: number; b: number; overtimeA?: number; overtimeB?: number; penaltiesA?: number; penaltiesB?: number };
+  goals?: GoalsScoreFields;
   points?: { a: number; b: number; overtimeA?: number; overtimeB?: number };
   sets?: SetPayload[];
   rounds?: { method: "decision" | "ko" | "tko" | "submission"; winner: "a" | "b"; items: RoundsPayload[] };
@@ -501,6 +511,56 @@ export function maxGamesProSet8(set: SetPayload, side: "a" | "b", gamesPerSet: n
   return g;
 }
 
+/**
+ * Totais exibidos como “placar antes dos pênaltis”: regulação + prorrogação quando havia empate na regulação
+ * e existem gols de prorrogação. Usado na UI (independe de has_overtime no formato, para não esconder OT legada).
+ */
+export function goalsTotalsBeforePenaltiesDisplay(
+  score: { a?: number; b?: number; overtimeA?: number; overtimeB?: number } | undefined
+): { a: number; b: number } {
+  let a = toInt(score?.a, 0);
+  let b = toInt(score?.b, 0);
+  const ota = toInt(score?.overtimeA, 0);
+  const otb = toInt(score?.overtimeB, 0);
+  if (a === b && (ota > 0 || otb > 0)) {
+    a += ota;
+    b += otb;
+  }
+  return { a, b };
+}
+
+export function goalsPayloadHasAny(goals: GoalsScoreFields | undefined | null): boolean {
+  if (!goals) return false;
+  return (
+    toInt(goals.a, 0) > 0 ||
+    toInt(goals.b, 0) > 0 ||
+    toInt(goals.overtimeA, 0) > 0 ||
+    toInt(goals.overtimeB, 0) > 0 ||
+    toInt(goals.penaltiesA, 0) > 0 ||
+    toInt(goals.penaltiesB, 0) > 0
+  );
+}
+
+export type GoalsScoreboardVisualStyle = "football" | "ice_hockey" | "handball" | "default";
+
+/** Estética do placar (gols + pênaltis) conforme o esporte — só afeta apresentação. */
+export function resolveGoalsScoreboardVisualStyle(sportName?: string | null): GoalsScoreboardVisualStyle {
+  const name = normalizeName(String(sportName ?? ""));
+  if (!name) return "default";
+  if (name.includes("hockey") || name.includes("hoquei") || name.includes("hóquei")) return "ice_hockey";
+  if (name.includes("handebol") || name.includes("handball")) return "handball";
+  if (
+    name.includes("futebol") ||
+    name.includes("futsal") ||
+    name.includes("society") ||
+    name.includes("soccer") ||
+    (name.includes("campo") && name.includes("fute"))
+  ) {
+    return "football";
+  }
+  return "default";
+}
+
 /** Totais após tempo regulamentar + prorrogação (somente se empatados na regulação), antes dos pênaltis. */
 export function goalsTotalsAfterRegulationAndOvertime(
   score: { a?: number; b?: number; overtimeA?: number; overtimeB?: number } | undefined,
@@ -547,7 +607,7 @@ export function validateMatchScorePayload(
   if (config.type === "gols") {
     const score = payload.goals;
     if (!score) return { valid: false, message: "Placar de gols ausente." };
-    if (score.a < 0 || score.b < 0) return { valid: false, message: "Placar inválido." };
+    if (toInt(score.a, -1) < 0 || toInt(score.b, -1) < 0) return { valid: false, message: "Placar inválido." };
     const { a, b } = goalsFinalTotalsForValidation(config, score);
     if (a === b) return { valid: false, message: "Empate final inválido para este formato." };
     return { valid: true, placar1: a, placar2: b };

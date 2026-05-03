@@ -40,6 +40,7 @@ import { loadAceitosCancelaveisItems } from "@/lib/agenda/load-aceitos-cancelave
 import {
   type AgendaPartidaCardRow,
   fetchPartidasAgendadasUsuario,
+  fetchPartidasRelancamentoAposContestacao,
   fetchPlacarAguardandoConfirmacao,
   firstOfRelation,
   getAgendaTeamContext,
@@ -125,6 +126,34 @@ export default function ComunidadePage() {
   );
 }
 
+function mergeAgendaPartidasPorId(
+  a: AgendaPartidaCardRow[] | null | undefined,
+  b: AgendaPartidaCardRow[] | null | undefined
+): AgendaPartidaCardRow[] {
+  const m = new Map<number, AgendaPartidaCardRow>();
+  for (const r of a ?? []) {
+    const id = Number((r as { id?: number }).id ?? 0);
+    if (Number.isFinite(id) && id > 0) m.set(id, r);
+  }
+  for (const r of b ?? []) {
+    const id = Number((r as { id?: number }).id ?? 0);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    if (!m.has(id)) m.set(id, r);
+  }
+  return [...m.values()];
+}
+
+function partidaPainelEhRelancamentoPosContestacao(row: AgendaPartidaCardRow, viewerId: string): boolean {
+  const st = String((row as { status?: string | null }).status ?? "")
+    .trim()
+    .toLowerCase();
+  const sr = String((row as { status_ranking?: string | null }).status_ranking ?? "")
+    .trim()
+    .toLowerCase();
+  const lp = String((row as { lancado_por?: string | null }).lancado_por ?? "").trim();
+  return st === "aguardando_confirmacao" && sr === "resultado_contestado" && lp === viewerId;
+}
+
 async function ComunidadePageContent() {
   const { supabase, user } = await getServerAuth();
   if (!user) redirect("/login?next=/comunidade");
@@ -181,6 +210,7 @@ async function ComunidadePageContent() {
     { count: cntCandMine },
     { count: cntPartAguarda },
     { count: cntPartAgend },
+    { count: cntPartRelaunchPosContestacao },
     { count: cntMatchRankFlow },
   ] = await Promise.all([
     supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", uidEq).eq("status", "Pendente"),
@@ -206,6 +236,13 @@ async function ComunidadePageContent() {
       .or(partidasPainelCountOr)
       .eq("status", "agendada"),
     supabase
+      .from("partidas")
+      .select("id", { count: "exact", head: true })
+      .or(partidasPainelCountOr)
+      .eq("status", "aguardando_confirmacao")
+      .eq("lancado_por", uidEq)
+      .eq("status_ranking", "resultado_contestado"),
+    supabase
       .from("matches")
       .select("id", { count: "exact", head: true })
       .or(matchRankFlowOr)
@@ -222,7 +259,7 @@ async function ComunidadePageContent() {
     (cntCandLider ?? 0) > 0 ||
     (cntCandMine ?? 0) > 0;
   const needPlacarAguardando = (cntPartAguarda ?? 0) > 0;
-  const needAgendadaLaunch = (cntPartAgend ?? 0) > 0;
+  const needAgendadaLaunch = (cntPartAgend ?? 0) > 0 || (cntPartRelaunchPosContestacao ?? 0) > 0;
   const needMatchAceitosGestao = (cntMatchRankFlow ?? 0) > 0;
   const needPartidas = needPlacarAguardando || needAgendadaLaunch || needMatchAceitosGestao;
 
@@ -1180,7 +1217,10 @@ async function ComunidadePageContent() {
     }
 
     const painelAgendadasPromise = needAgendadaLaunch
-      ? fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel)
+      ? Promise.all([
+          fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel),
+          fetchPartidasRelancamentoAposContestacao(supabase, user.id, teamClausePainel),
+        ]).then(([ag, rel]) => ({ data: mergeAgendaPartidasPorId(ag.data, rel.data) }))
       : Promise.resolve({ data: [] as AgendaPartidaCardRow[] | null });
 
     const painelPlacarPromise = needPlacarAguardando
@@ -1394,7 +1434,11 @@ async function ComunidadePageContent() {
     }
     painelAgendadasVisiveis = (painelAgendadas ?? [])
       .filter((row) => {
-        if (String((row as { status?: string | null }).status ?? "") !== "agendada") return false;
+        const stRow = String((row as { status?: string | null }).status ?? "")
+          .trim()
+          .toLowerCase();
+        const relaunchRow = partidaPainelEhRelancamentoPosContestacao(row as AgendaPartidaCardRow, user.id);
+        if (stRow !== "agendada" && !relaunchRow) return false;
         const midRow = Number((row as AgendaPartidaCardRow).match_id ?? 0);
         if (Number.isFinite(midRow) && midRow > 0 && blockedMatchIdsByCancelFlowPainel.has(midRow)) return false;
         const esporteIdCard = Number((row as { esporte_id?: number | null }).esporte_id ?? 0);
@@ -1595,7 +1639,11 @@ async function ComunidadePageContent() {
                           cancelMatchId={cancelMatchIdResolved}
                           desistMatchId={rescheduleAceito ? cancelMatchIdResolved : null}
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
-                          ctaLabel="Lançar resultado"
+                          ctaLabel={
+                            partidaPainelEhRelancamentoPosContestacao(pr, user.id)
+                              ? "Enviar resultado contestado"
+                              : "Lançar resultado"
+                          }
                           perfilEidFrom="/comunidade"
                         />
                       );
