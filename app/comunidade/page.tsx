@@ -221,8 +221,10 @@ async function ComunidadePageContent() {
     (cntConvEnv ?? 0) > 0 ||
     (cntCandLider ?? 0) > 0 ||
     (cntCandMine ?? 0) > 0;
-  const needPartidas =
-    (cntPartAguarda ?? 0) > 0 || (cntPartAgend ?? 0) > 0 || (cntMatchRankFlow ?? 0) > 0;
+  const needPlacarAguardando = (cntPartAguarda ?? 0) > 0;
+  const needAgendadaLaunch = (cntPartAgend ?? 0) > 0;
+  const needMatchAceitosGestao = (cntMatchRankFlow ?? 0) > 0;
+  const needPartidas = needPlacarAguardando || needAgendadaLaunch || needMatchAceitosGestao;
 
   /** Pedidos recebidos/enviados: só carrega o miolo quando as contagens já indicam pendência (evita dezenas de queries e ranking por item). */
   const needDesafioPedidos = (cntMatchIn ?? 0) > 0 || (cntMatchOut ?? 0) > 0;
@@ -1169,39 +1171,76 @@ async function ComunidadePageContent() {
       painelTeamIds.length > 0
         ? `usuario_id.eq.${user.id},adversario_id.eq.${user.id},desafiante_time_id.in.(${painelTeamIds.join(",")}),adversario_time_id.in.(${painelTeamIds.join(",")})`
         : `usuario_id.eq.${user.id},adversario_id.eq.${user.id}`;
-    const { data: aceitosCancelaveisPainel } = await supabase
-      .from("matches")
-      .select("id, usuario_id, adversario_id, esporte_id, status, reschedule_selected_option, scheduled_for, scheduled_location")
-      .or(matchPainelOr)
-      .eq("finalidade", "ranking")
-      .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]);
-    const { data: historicoCancelamentoPainelRows } = await supabase
-      .from("matches")
-      .select("id, usuario_id, adversario_id, esporte_id, status")
-      .or(matchPainelOr)
-      .eq("finalidade", "ranking")
-      .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente", "Cancelado"])
-      .order("id", { ascending: false })
-      .limit(120);
-    await processarPendenciasAgendamentoAceite(supabase, user.id, teamClausePainel);
-    const [{ data: painelAgendadas }, { data: painelPlacarFetch }] = await Promise.all([
-      fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel),
-      fetchPlacarAguardandoConfirmacao(supabase, user.id, teamClausePainel),
+
+    /** Metadados de matches (bloqueio de duelo / reagendamento na lista) só quando há agendadas ou cartão “Desafios aceitos”. */
+    const needPainelMatchMeta = needAgendadaLaunch || needMatchAceitosGestao;
+
+    if (needPainelMatchMeta) {
+      await processarPendenciasAgendamentoAceite(supabase, user.id, teamClausePainel);
+    }
+
+    const painelAgendadasPromise = needAgendadaLaunch
+      ? fetchPartidasAgendadasUsuario(supabase, user.id, teamClausePainel)
+      : Promise.resolve({ data: [] as AgendaPartidaCardRow[] | null });
+
+    const painelPlacarPromise = needPlacarAguardando
+      ? fetchPlacarAguardandoConfirmacao(supabase, user.id, teamClausePainel)
+      : Promise.resolve({ data: [] as AgendaPartidaCardRow[] | null });
+
+    const painelMatchesMetaPromise = needPainelMatchMeta
+      ? Promise.all([
+          supabase
+            .from("matches")
+            .select(
+              "id, usuario_id, adversario_id, esporte_id, status, reschedule_selected_option, scheduled_for, scheduled_location",
+            )
+            .or(matchPainelOr)
+            .eq("finalidade", "ranking")
+            .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]),
+          supabase
+            .from("matches")
+            .select("id, usuario_id, adversario_id, esporte_id, status")
+            .or(matchPainelOr)
+            .eq("finalidade", "ranking")
+            .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente", "Cancelado"])
+            .order("id", { ascending: false })
+            .limit(120),
+        ])
+      : Promise.resolve(null);
+
+    const [agRes, plRes, metaPair] = await Promise.all([
+      painelAgendadasPromise,
+      painelPlacarPromise,
+      painelMatchesMetaPromise,
     ]);
-    const { items: painelAceitosLoaded } = await loadAceitosCancelaveisItems(
-      supabase,
-      user.id,
-      (painelAgendadas ?? []) as AgendaPartidaCardRow[],
-    );
-    painelAceitosCancelaveisItems = painelAceitosLoaded;
+
+    const painelAgendadas = agRes.data;
+    const painelPlacarFetch = plRes.data;
+    const aceitosCancelaveisPainel = metaPair ? metaPair[0].data : null;
+    const historicoCancelamentoPainelRows = metaPair ? metaPair[1].data : null;
+
+    if (needPainelMatchMeta) {
+      const { items: painelAceitosLoaded } = await loadAceitosCancelaveisItems(
+        supabase,
+        user.id,
+        (painelAgendadas ?? []) as AgendaPartidaCardRow[],
+      );
+      painelAceitosCancelaveisItems = painelAceitosLoaded;
+    } else {
+      painelAceitosCancelaveisItems = [];
+    }
+
     const painelPlacarPendenteBruto = painelPlacarFetch ?? [];
-    const { data: painelPartidasStatusRows } = await supabase
-      .from("partidas")
-      .select("id, esporte_id, jogador1_id, jogador2_id, status, status_ranking, lancado_por")
-      .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}${teamClausePainel}`)
-      .in("status", ["agendada", "aguardando_confirmacao"])
-      .order("id", { ascending: false })
-      .limit(120);
+
+    const { data: painelPartidasStatusRows } = needAgendadaLaunch
+      ? await supabase
+          .from("partidas")
+          .select("id, esporte_id, jogador1_id, jogador2_id, status, status_ranking, lancado_por")
+          .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id},usuario_id.eq.${user.id}${teamClausePainel}`)
+          .in("status", ["agendada", "aguardando_confirmacao"])
+          .order("id", { ascending: false })
+          .limit(120)
+      : { data: [] };
     const painelPartidasAll = [...(painelAgendadas ?? []), ...painelPlacarPendenteBruto];
     const painelTimeIdsSet = new Set<number>();
     for (const p of painelPartidasAll) {
