@@ -7,6 +7,53 @@ type Props = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type TimeRow = { id: number; nome?: string | null; escudo?: string | null; tipo?: string | null };
+
+function tipoFormacaoLabel(tipo: string | null | undefined): string {
+  const t = String(tipo ?? "")
+    .trim()
+    .toLowerCase();
+  if (t === "dupla") return "Dupla";
+  return "Time";
+}
+
+function ladoExibicaoAdmin(
+  row: {
+    jogador1_id?: string | null;
+    jogador2_id?: string | null;
+    time1_id?: number | null;
+    time2_id?: number | null;
+  },
+  side: 1 | 2,
+  profileMap: Map<string, { nome?: string | null; avatar_url?: string | null }>,
+  timeMap: Map<number, TimeRow>
+): { label: string; sub?: string; imageUrl: string | null; imageRounded: "full" | "xl" } | null {
+  const tid = side === 1 ? Number(row.time1_id ?? 0) : Number(row.time2_id ?? 0);
+  const uid = side === 1 ? row.jogador1_id : row.jogador2_id;
+  if (Number.isFinite(tid) && tid > 0) {
+    const t = timeMap.get(tid);
+    const nome = String(t?.nome ?? "").trim() || `Formação #${tid}`;
+    const tipoLb = tipoFormacaoLabel(t?.tipo ?? null);
+    return {
+      label: nome,
+      sub: tipoLb,
+      imageUrl: t?.escudo?.trim() || null,
+      imageRounded: "xl",
+    };
+  }
+  if (uid) {
+    const pf = profileMap.get(uid);
+    const nome = String(pf?.nome ?? "").trim() || uid;
+    return {
+      label: nome,
+      sub: undefined,
+      imageUrl: pf?.avatar_url?.trim() || null,
+      imageRounded: "full",
+    };
+  }
+  return null;
+}
+
 export default async function AdminPartidasPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const flash = typeof sp.adm_flash === "string" ? sp.adm_flash : "";
@@ -22,15 +69,29 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
   if (error) return <p className="text-sm text-red-300">{error.message}</p>;
   const rows = data ?? [];
   const userIds = [...new Set(rows.flatMap((r) => [r.jogador1_id, r.jogador2_id]).filter(Boolean))] as string[];
+  const timeIds = [
+    ...new Set(
+      rows
+        .flatMap((r) => [Number(r.time1_id ?? 0), Number(r.time2_id ?? 0)])
+        .filter((n) => Number.isFinite(n) && n > 0)
+    ),
+  ];
   const esporteIds = [...new Set(rows.map((r) => Number(r.esporte_id ?? 0)).filter((n) => Number.isFinite(n) && n > 0))];
-  const [{ data: profilesRows }, { data: esportesRows }] = await Promise.all([
+  const [{ data: profilesRows }, { data: esportesRows }, { data: timesRows }] = await Promise.all([
     userIds.length > 0 ? db.from("profiles").select("id, nome, avatar_url").in("id", userIds) : Promise.resolve({ data: [] }),
     esporteIds.length > 0 ? db.from("esportes").select("id, nome").in("id", esporteIds) : Promise.resolve({ data: [] }),
+    timeIds.length > 0 ? db.from("times").select("id, nome, escudo, tipo").in("id", timeIds) : Promise.resolve({ data: [] }),
   ]);
   const profileMap = new Map(
     (profilesRows ?? []).map((p) => [String((p as { id?: string }).id ?? ""), p as { nome?: string | null; avatar_url?: string | null }])
   );
   const esporteMap = new Map((esportesRows ?? []).map((e) => [Number((e as { id?: number }).id ?? 0), String((e as { nome?: string }).nome ?? "")]));
+  const timeMap = new Map<number, TimeRow>();
+  for (const t of timesRows ?? []) {
+    const id = Number((t as { id?: number }).id ?? 0);
+    if (!Number.isFinite(id) || id <= 0) continue;
+    timeMap.set(id, t as TimeRow);
+  }
 
   return (
     <div>
@@ -70,6 +131,8 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
             statusRanking === "validado";
           const podeLimpar = !jaCancelada;
           const podeDefinirResultado = !jaCancelada && !jaConcluida;
+          const lado1 = ladoExibicaoAdmin(p, 1, profileMap, timeMap);
+          const lado2 = ladoExibicaoAdmin(p, 2, profileMap, timeMap);
           return (
             <article key={p.id} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3">
               <div className="flex flex-wrap items-center gap-2 text-[11px]">
@@ -109,15 +172,28 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                {[p.jogador1_id, p.jogador2_id].map((uid, idx) => {
-                  if (!uid) return null;
-                  const pf = profileMap.get(uid);
+                {[lado1, lado2].map((lado, idx) => {
+                  if (!lado) return null;
+                  const rounded = lado.imageRounded === "xl" ? "rounded-xl" : "rounded-full";
                   return (
-                    <span key={`${p.id}-${uid}`} className="inline-flex items-center gap-1.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-0.5 text-[10px] text-eid-text-secondary">
-                      <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg">
-                        {pf?.avatar_url ? <img src={pf.avatar_url} alt="" className="h-full w-full object-cover" /> : String(pf?.nome ?? `J${idx + 1}`).slice(0, 1)}
+                    <span
+                      key={`${p.id}-lado-${idx + 1}`}
+                      className="inline-flex max-w-[min(100%,220px)] items-center gap-1.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-0.5 text-[10px] text-eid-text-secondary"
+                      title={lado.sub ? `${lado.label} · ${lado.sub}` : lado.label}
+                    >
+                      <span
+                        className={`inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg ${rounded}`}
+                      >
+                        {lado.imageUrl ? (
+                          <img src={lado.imageUrl} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          String(lado.label).slice(0, 1).toUpperCase()
+                        )}
                       </span>
-                      <span className="max-w-[150px] truncate text-eid-fg">{pf?.nome ?? uid}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-semibold text-eid-fg">{lado.label}</span>
+                        {lado.sub ? <span className="block truncate text-[9px] opacity-80">{lado.sub}</span> : null}
+                      </span>
                     </span>
                   );
                 })}
@@ -136,10 +212,10 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
                     <select
                       name="winner_side"
                       defaultValue="1"
-                      className="eid-input-dark rounded-md border border-[color:var(--eid-border-subtle)] px-1.5 py-1 text-[10px]"
+                      className="eid-input-dark max-w-[11rem] rounded-md border border-[color:var(--eid-border-subtle)] px-1.5 py-1 text-[10px]"
                     >
-                      <option value="1">Venceu lado 1</option>
-                      <option value="2">Venceu lado 2</option>
+                      <option value="1">Venceu: {lado1?.label ?? "lado 1"}</option>
+                      <option value="2">Venceu: {lado2?.label ?? "lado 2"}</option>
                     </select>
                     <input
                       type="number"

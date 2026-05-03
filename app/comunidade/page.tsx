@@ -42,6 +42,7 @@ import {
   fetchPartidasAgendadasUsuario,
   fetchPartidasRelancamentoAposContestacao,
   fetchPlacarAguardandoConfirmacao,
+  partidaRowTemResultadoParaRevisaoOponente,
   firstOfRelation,
   getAgendaTeamContext,
   mergeAgendaLocalDisplayed,
@@ -225,11 +226,16 @@ async function ComunidadePageContent() {
     supabase.from("time_convites").select("id", { count: "exact", head: true }).eq("convidado_usuario_id", uidEq).eq("status", "pendente"),
     supabase.from("time_convites").select("id", { count: "exact", head: true }).eq("convidado_por_usuario_id", uidEq).eq("status", "pendente"),
     supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).eq("candidato_usuario_id", uidEq).eq("status", "pendente"),
-    supabase
-      .from("partidas")
-      .select("id", { count: "exact", head: true })
-      .or(partidasPainelCountOr)
-      .eq("status", "aguardando_confirmacao"),
+    (async () => {
+      const { data: revisaoRows } = await supabase
+        .from("partidas")
+        .select("id,data_resultado,placar_1,placar_2")
+        .or(partidasPainelCountOr)
+        .eq("status", "aguardando_confirmacao")
+        .neq("lancado_por", uidEq)
+        .limit(120);
+      return { count: (revisaoRows ?? []).filter(partidaRowTemResultadoParaRevisaoOponente).length };
+    })(),
     supabase
       .from("partidas")
       .select("id", { count: "exact", head: true })

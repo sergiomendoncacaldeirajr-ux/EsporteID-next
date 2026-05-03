@@ -13,6 +13,7 @@ import { isAmistosoAceiteInformativoNotif } from "@/lib/notificacoes/amistoso-ac
 import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
 import { userMustActGestaoRankingCancel } from "@/lib/notificacoes/gestao-ranking-cancel";
 import { limparTodasNotificacoes } from "@/app/comunidade/actions";
+import { partidaRowTemResultadoParaRevisaoOponente } from "@/lib/agenda/partidas-usuario";
 
 type Preview = {
   id: number;
@@ -122,6 +123,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   /** Alinha miolo da /comunidade ao sino quando o resumo muda (ex.: convite → nova notificação). */
   const comunidadeResumoSigRef = useRef<string | null>(null);
   const pathnameRef = useRef(pathname);
+  const loadInFlightRef = useRef(false);
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -129,8 +131,11 @@ export function NotificationBell({ userId }: { userId: string | null }) {
 
   const load = useCallback(async () => {
     if (!userId) return;
+    if (loadInFlightRef.current) return;
+    loadInFlightRef.current = true;
+    try {
     const supabase = createClient();
-    const [notifRes, listRes, agRes, mRes, sRes, pRes, lidRes] = await Promise.all([
+    const [notifRes, listRes, agRes, mRes, sRes, partidasRevisaoRes, lidRes] = await Promise.all([
       supabase
         .from("notificacoes")
         .select("id, tipo, referencia_id, remetente_id")
@@ -156,10 +161,11 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         .eq("status", "pendente"),
       supabase
         .from("partidas")
-        .select("id", { count: "exact", head: true })
+        .select("id,data_resultado,placar_1,placar_2")
         .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId}`)
         .eq("status", "aguardando_confirmacao")
-        .neq("lancado_por", userId),
+        .neq("lancado_por", userId)
+        .limit(80),
       supabase.from("times").select("id").eq("criador_id", userId),
     ]);
     const unreadRowsAll = (notifRes.data ?? []) as UnreadNotif[];
@@ -291,7 +297,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     const ag = agendaRowsVisiveis.length + agendaStatusUnreadN;
     const m = mRes.count ?? 0;
     const s = sRes.count ?? 0;
-    const p = pRes.count ?? 0;
+    const p = (partidasRevisaoRes.data ?? []).filter(partidaRowTemResultadoParaRevisaoOponente).length;
     const pLen = previewRows.length;
     const resumoSig = `${ag}|${m}|${s}|${p}|${gestaoN}|${unreadGeneral}|${pLen}`;
     const currentPathname = pathnameRef.current ?? "";
@@ -314,6 +320,9 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     // Sininho: notificações não lidas (inclui tipo match: desafio pendente, aceite, etc.).
     setTotal(unreadGeneral);
     setPreview(previewRows);
+    } finally {
+      loadInFlightRef.current = false;
+    }
   }, [userId]);
 
   useEffect(() => {
@@ -335,6 +344,16 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("eid:realtime-refresh", onRealtimeRefresh as EventListener);
     };
+  }, [userId, load]);
+
+  /** Fallback quando Realtime não entrega (publicação RLS/offline); ~28s com aba visível. */
+  useEffect(() => {
+    if (!userId) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void load();
+    }, 28_000);
+    return () => window.clearInterval(id);
   }, [userId, load]);
 
   useEffect(() => {

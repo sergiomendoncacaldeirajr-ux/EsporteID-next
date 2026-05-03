@@ -126,10 +126,10 @@ export function GoalsScore({
         <div className={penaltyShootoutPanelClass}>
           <div className="flex items-center gap-1.5 text-eid-primary-300">
             <Trophy className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
-            <p className="text-[10px] font-bold uppercase tracking-[0.08em]">Disputa nos pênaltis</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em]">Disputa por pênaltis</p>
           </div>
           <p className="mt-1 text-[10px] font-medium leading-snug text-eid-text-secondary">
-            Placar empatado no tempo regulamentar. Informe os gols convertidos na cobrança para definir o vencedor (não pode
+            Placar empatado no tempo regulamentar. Informe os gols convertidos nos pênaltis para definir o vencedor (não pode
             empatar).
           </p>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">

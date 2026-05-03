@@ -144,7 +144,7 @@ export function GoalsScoreboardSummary({
         ) : null}
         {showPen ? (
           <p className={`mt-1 text-[9px] font-bold uppercase tracking-[0.12em] opacity-80 ${SUB_COLOR[style]}`}>
-            Disputa por cobranças
+            Disputa por pênaltis
           </p>
         ) : null}
       </div>

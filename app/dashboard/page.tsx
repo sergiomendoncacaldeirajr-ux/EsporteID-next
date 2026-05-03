@@ -20,7 +20,7 @@ import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens"
 import { EidSectionInfo } from "@/components/ui/eid-section-info";
 import { EidSealPill } from "@/components/ui/eid-seal-pill";
 import { FindChallengeCta } from "@/components/dashboard/find-challenge-cta";
-import { getAgendaTeamContext } from "@/lib/agenda/partidas-usuario";
+import { getAgendaTeamContext, partidaRowTemResultadoParaRevisaoOponente } from "@/lib/agenda/partidas-usuario";
 
 export const metadata = {
   title: "Painel",
@@ -375,12 +375,16 @@ async function DashboardPageContent({ searchParams }: Props) {
 
   const placarPendenteResumoPromise = supabase
     .from("partidas")
-    .select("id, data_partida, data_registro, torneio_id, esportes(nome)")
+    .select("id, data_partida, data_registro, torneio_id, esportes(nome), data_resultado, placar_1, placar_2")
     .or(partidasDashOr)
     .eq("status", "aguardando_confirmacao")
     .neq("lancado_por", user.id)
     .order("data_registro", { ascending: false })
-    .limit(20);
+    .limit(40)
+    .then(({ data, error }) => ({
+      data: (data ?? []).filter(partidaRowTemResultadoParaRevisaoOponente).slice(0, 20),
+      error,
+    }));
 
   let atletasQuery = supabase
     .from("usuario_eid")

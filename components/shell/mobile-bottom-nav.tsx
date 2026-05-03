@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { getContextHomeHref, type ActiveAppContext } from "@/lib/auth/active-context";
 import { createClient } from "@/lib/supabase/client";
+import { partidaRowTemResultadoParaRevisaoOponente } from "@/lib/agenda/partidas-usuario";
 import { userMustActGestaoRankingCancel } from "@/lib/notificacoes/gestao-ranking-cancel";
 import type { ReactNode } from "react";
 
@@ -188,9 +189,13 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     if (!resolvedUserId) return;
     const uid = resolvedUserId;
     let cancelled = false;
+    let loadInFlight = false;
     const supabase = createClient();
     async function load() {
-      const [agRes, pRes, mRecebidosRes, mEnviadosRes, sLiderRes, sEnviadasRes, conviteRecebidoRes, conviteEnviadoRes, candidaturaEnviadaRes, meusTimesRes] = await Promise.all([
+      if (loadInFlight) return;
+      loadInFlight = true;
+      try {
+      const [agRes, partidasRevisaoRes, mRecebidosRes, mEnviadosRes, sLiderRes, sEnviadasRes, conviteRecebidoRes, conviteEnviadoRes, candidaturaEnviadaRes, meusTimesRes] = await Promise.all([
         supabase
           .from("partidas")
           .select("id, match_id, status, data_partida, local_str, local_espaco_id, agendamento_proposto_por, agendamento_aceite_deadline")
@@ -198,10 +203,11 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
           .in("status", ["agendada", "aguardando_aceite_agendamento"]),
         supabase
           .from("partidas")
-          .select("id", { count: "exact", head: true })
+          .select("id,data_resultado,placar_1,placar_2")
           .or(`jogador1_id.eq.${uid},jogador2_id.eq.${uid}`)
           .eq("status", "aguardando_confirmacao")
-          .neq("lancado_por", uid),
+          .neq("lancado_por", uid)
+          .limit(80),
         supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", uid).eq("status", "Pendente"),
         supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", uid).eq("status", "Pendente"),
         supabase
@@ -283,7 +289,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         }
         return agendaNext;
       });
-      const placar = pRes.count ?? 0;
+      const placar = (partidasRevisaoRes.data ?? []).filter(partidaRowTemResultadoParaRevisaoOponente).length;
       const pedidosRecebidos = mRecebidosRes.count ?? 0;
       const pedidosEnviados = mEnviadosRes.count ?? 0;
       const sugestoesLider = sLiderRes.count ?? 0;
@@ -336,7 +342,14 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         }
         return socialNext;
       });
+      } finally {
+        loadInFlight = false;
+      }
     }
+    const pollId = window.setInterval(() => {
+      if (cancelled || document.visibilityState !== "visible") return;
+      void load();
+    }, 28_000);
     const cancelInitialLoad = scheduleAfterNavigationIdle(() => void load());
     /** Alinha com `RealtimePageRefresh` / sininho: o miolo já revalida, mas o estado do badge ficava só no próximo Realtime ou em até 20s. */
     const onEidRealtimeRefresh = () => void load();
@@ -346,7 +359,12 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notificacoes", filter: `usuario_id=eq.${resolvedUserId}` },
-        () => void load()
+        (payload) => {
+          void load();
+          if (payload.eventType === "INSERT") {
+            void fetch("/api/push/flush-user", { method: "POST", credentials: "same-origin" }).catch(() => {});
+          }
+        }
       )
       .on(
         "postgres_changes",
@@ -412,6 +430,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
+      window.clearInterval(pollId);
       cancelInitialLoad();
       window.removeEventListener("eid:realtime-refresh", onEidRealtimeRefresh as EventListener);
       void supabase.removeChannel(channel);

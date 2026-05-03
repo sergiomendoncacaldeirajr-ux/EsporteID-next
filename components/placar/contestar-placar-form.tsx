@@ -13,7 +13,7 @@ export function ContestarPlacarForm({ partidaId }: Props) {
     <form
       action={async (formData) => {
         const ok = window.confirm(
-          "A contestação anula o placar enviado pelo oponente. Nada é enviado para aprovação agora: depois você preenche e usa \"Enviar resultado\" (ou o botão equivalente no Painel). Deseja contestar?"
+          "A contestação anula o placar enviado pelo oponente. Nada é enviado para aprovação agora: depois você preenche e envia o novo resultado. O oponente só verá o placar para revisar após esse envio. Se houver nova divergência após o reenvio, o caso segue para mediação do admin. Deseja contestar?"
         );
         if (!ok) return;
         await contestarPlacarAction(formData);

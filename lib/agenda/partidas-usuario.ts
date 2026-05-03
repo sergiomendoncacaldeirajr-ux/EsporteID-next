@@ -229,6 +229,17 @@ export function usuarioEmQualLadoPartida(userId: string, lado1: Set<string>, lad
 const partidasSelect =
   "id, match_id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, modalidade, data_registro, data_partida, local_str, local_espaco_id, status, status_ranking, lancado_por, agendamento_proposto_por, agendamento_aceite_deadline, esportes(nome)";
 
+const partidasSelectComPlacarRevisao = `${partidasSelect},data_resultado,placar_1,placar_2`;
+
+/** Oponente só deve ver fluxo “revisar” quando há resultado persistido (contestação zera tudo até o reenvio). */
+export function partidaRowTemResultadoParaRevisaoOponente(p: {
+  data_resultado?: string | null;
+  placar_1?: number | null;
+  placar_2?: number | null;
+}): boolean {
+  return p.data_resultado != null || p.placar_1 != null || p.placar_2 != null;
+}
+
 /**
  * Local na agenda para qualquer membro (líder ou elenco): texto do match (reagendamento), senão `local_str`, senão nome do espaço genérico.
  */
@@ -302,18 +313,22 @@ export function fetchPartidasRelancamentoAposContestacao(supabase: SupabaseClien
     .limit(40);
 }
 
-export function fetchPlacarAguardandoConfirmacao(
+export async function fetchPlacarAguardandoConfirmacao(
   supabase: SupabaseClient,
   userId: string,
   teamClause: string
 ) {
-  return supabase
+  const { data, error } = await supabase
     .from("partidas")
-    .select(partidasSelect)
+    .select(partidasSelectComPlacarRevisao)
     .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId},usuario_id.eq.${userId}${teamClause}`)
     .eq("status", "aguardando_confirmacao")
     .neq("lancado_por", userId)
     .order("data_resultado", { ascending: false, nullsFirst: false })
     .order("id", { ascending: false })
-    .limit(20);
+    .limit(40);
+  const filtradas = (data ?? []).filter((row) =>
+    partidaRowTemResultadoParaRevisaoOponente(row as { data_resultado?: string | null; placar_1?: number | null; placar_2?: number | null })
+  );
+  return { data: filtradas.slice(0, 20) as AgendaPartidaCardRow[] | null, error };
 }
