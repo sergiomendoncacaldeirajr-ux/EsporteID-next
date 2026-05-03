@@ -240,7 +240,7 @@ export function ProfileEditDrawerTrigger({
                   src={frameSrc}
                   className="min-h-0 w-full flex-1 border-0 bg-eid-bg"
                 />
-                {frameLoading ? (
+                {frameLoading && !fullscreen ? (
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[88px] grid place-items-center bg-[color:color-mix(in_srgb,var(--eid-bg)_88%,transparent)]">
                     <div className="inline-flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/85 px-3 py-2 text-xs font-semibold text-eid-fg shadow-sm">
                       <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-eid-action-400" />

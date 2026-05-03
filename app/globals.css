@@ -489,6 +489,37 @@ body.eid-app-shell {
   color: #064e3b !important;
 }
 
+/* Telas fullscreen de edição: neutraliza classes claras hardcoded quando o app está no tema escuro. */
+[data-eid-theme="dark"] .eid-profile-edit-screen :where([class*="white_"]) {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--eid-card) 96%, transparent),
+    color-mix(in srgb, var(--eid-surface) 94%, transparent)
+  ) !important;
+}
+
+[data-eid-theme="dark"] .eid-profile-edit-screen :where(.bg-white, [class*="bg-[#F8FAFC]"], [class*="bg-[#F5F8FF]"], [class*="bg-[#EFF5FF]"], [class*="bg-[#EEF4FF]"], [class*="bg-[#fff3cd]"], [class*="bg-[#FFF2DF]"]) {
+  background-color: color-mix(in srgb, var(--eid-surface) 88%, var(--eid-primary-500) 12%) !important;
+}
+
+[data-eid-theme="dark"] .eid-profile-edit-screen :where([class*="border-[#C9D8F6]"], [class*="border-[#f5c56b]"], [class*="border-[#F5D8A6]"]) {
+  border-color: color-mix(in srgb, var(--eid-border-subtle) 72%, var(--eid-primary-500) 28%) !important;
+}
+
+[data-eid-theme="dark"] .eid-profile-edit-screen :where([class*="text-[#556987]"], [class*="text-[#475569]"], [class*="text-[#64748B]"], [class*="text-[#5a3200]"], [class*="text-[#2D58A6]"], [class*="text-[#B8791D]"]) {
+  color: var(--eid-text-secondary) !important;
+}
+
+[data-eid-theme="dark"] .eid-profile-edit-screen :where([class*="text-[#2563EB]"]) {
+  color: var(--eid-primary-300) !important;
+}
+
+[data-eid-theme="dark"] .eid-profile-edit-screen input[type="file"]::file-selector-button {
+  border-color: color-mix(in srgb, var(--eid-border-subtle) 72%, var(--eid-primary-500) 28%) !important;
+  background-color: color-mix(in srgb, var(--eid-surface) 88%, var(--eid-primary-500) 12%) !important;
+  color: var(--eid-primary-300) !important;
+}
+
 @theme inline {
   --color-background: var(--eid-bg);
   --color-foreground: var(--eid-fg);

@@ -5,6 +5,11 @@ import { useLayoutEffect } from "react";
 /** Sincroniza `data-eid-theme` no `<html>` com `localStorage` (evita flash após hidratação). */
 export function EidThemeHydration() {
   useLayoutEffect(() => {
+    const qsTheme = new URLSearchParams(window.location.search).get("theme");
+    if (qsTheme === "light" || qsTheme === "dark") {
+      document.documentElement.dataset.eidTheme = qsTheme;
+      return;
+    }
     const t = localStorage.getItem("theme");
     document.documentElement.dataset.eidTheme = t === "light" ? "light" : "dark";
   }, []);

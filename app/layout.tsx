@@ -136,8 +136,17 @@ export default async function RootLayout({
     <html
       lang="pt-BR"
       data-eid-theme="dark"
+      suppressHydrationWarning
       className={`${barlow.variable} ${barlowCondensed.variable} ${barlowSemiCondensed.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(()=>{try{const p=new URLSearchParams(location.search).get('theme');const s=localStorage.getItem('theme');const t=p==='light'||p==='dark'?p:s==='light'?'light':'dark';document.documentElement.dataset.eidTheme=t;}catch{}})();",
+          }}
+        />
+      </head>
       <body
         className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}
       >

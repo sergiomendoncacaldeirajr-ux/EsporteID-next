@@ -49,11 +49,13 @@ async function AgendaPageContent() {
   const { supabase, user } = await getServerAuth();
   if (!user) redirect("/login?next=/agenda");
 
-  const profile = await getCachedProfileLegalRow(user.id);
+  const [profile, { teamIds: agendaTeamIds, teamClause }] = await Promise.all([
+    getCachedProfileLegalRow(user.id),
+    getAgendaTeamContext(supabase, user.id),
+  ]);
   if (!profile || !legalAcceptanceIsCurrent(profile)) redirect("/conta/aceitar-termos");
   if (!profile.perfil_completo) redirect("/onboarding");
 
-  const { teamIds: agendaTeamIds, teamClause } = await getAgendaTeamContext(supabase, user.id);
   const matchAceitosOr =
     agendaTeamIds.length > 0
       ? `usuario_id.eq.${user.id},adversario_id.eq.${user.id},desafiante_time_id.in.(${agendaTeamIds.join(",")}),adversario_time_id.in.(${agendaTeamIds.join(",")})`

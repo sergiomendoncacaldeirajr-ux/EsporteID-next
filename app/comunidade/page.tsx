@@ -129,9 +129,17 @@ async function ComunidadePageContent() {
   const { supabase, user } = await getServerAuth();
   if (!user) redirect("/login?next=/comunidade");
 
-  const [gate, { data: profileExtra }] = await Promise.all([
+  const uidEq = user.id;
+  const [
+    gate,
+    { data: profileExtra },
+    { teamIds: comunidadeAgendaTeamIds, teamClause: comunidadeAgendaTeamClause },
+    { data: meusTimesLider },
+  ] = await Promise.all([
     getCachedProfileLegalRow(user.id),
     supabase.from("profiles").select("nome, avatar_url, localizacao, lat, lng").eq("id", user.id).maybeSingle(),
+    getAgendaTeamContext(supabase, uidEq),
+    supabase.from("times").select("id").eq("criador_id", uidEq),
   ]);
   if (!gate || !legalAcceptanceIsCurrent(gate)) redirect("/conta/aceitar-termos");
   if (!gate.perfil_completo) redirect("/onboarding");
@@ -141,9 +149,6 @@ async function ComunidadePageContent() {
   const myLng = Number((profile as { lng?: number | null }).lng ?? NaN);
   const hasMyCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
-  const uidEq = user.id;
-  const [{ teamIds: comunidadeAgendaTeamIds, teamClause: comunidadeAgendaTeamClause }, { data: meusTimesLider }] =
-    await Promise.all([getAgendaTeamContext(supabase, uidEq), supabase.from("times").select("id").eq("criador_id", uidEq)]);
   const matchRankFlowOr =
     comunidadeAgendaTeamIds.length > 0
       ? `usuario_id.eq.${uidEq},adversario_id.eq.${uidEq},desafiante_time_id.in.(${comunidadeAgendaTeamIds.join(",")}),adversario_time_id.in.(${comunidadeAgendaTeamIds.join(",")})`
@@ -1150,7 +1155,8 @@ async function ComunidadePageContent() {
   >();
 
   if (needPartidas) {
-    const { teamIds: painelTeamIds, teamClause: teamClausePainel } = await getAgendaTeamContext(supabase, user.id);
+    const painelTeamIds = comunidadeAgendaTeamIds;
+    const teamClausePainel = comunidadeAgendaTeamClause;
     const matchPainelOr =
       painelTeamIds.length > 0
         ? `usuario_id.eq.${user.id},adversario_id.eq.${user.id},desafiante_time_id.in.(${painelTeamIds.join(",")}),adversario_time_id.in.(${painelTeamIds.join(",")})`
