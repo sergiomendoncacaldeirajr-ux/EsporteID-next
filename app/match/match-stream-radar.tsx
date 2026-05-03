@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { MatchPageShell } from "@/components/match/match-page-shell";
 import { MatchRadarApp } from "@/components/match/match-radar-app";
 import { getEsportesConfrontoCached } from "@/lib/match/esportes-confronto";
 import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
@@ -34,9 +33,11 @@ export type MatchStreamRadarProps = {
   viewerId: string;
   me: MatchStreamRadarMe;
   sp: MatchPageSearch;
+  /** Hero em grade já montado na página (`/match`). */
+  hideHero?: boolean;
 };
 
-export async function MatchStreamRadar({ supabase, viewerId, me, sp }: MatchStreamRadarProps) {
+export async function MatchStreamRadar({ supabase, viewerId, me, sp, hideHero = false }: MatchStreamRadarProps) {
   const tipo = toTipo(sp.tipo);
   const matchFinalidade = toMatchFinalidade(sp.finalidade);
   const initialView = toViewMode(sp.view);
@@ -366,26 +367,25 @@ export async function MatchStreamRadar({ supabase, viewerId, me, sp }: MatchStre
         : esporteSelecionado;
 
   return (
-    <MatchPageShell fullBleed={initialViewResolved === "full"}>
-      <MatchRadarApp
-        viewerId={viewerId}
-        initialCards={initialCards}
-        esportes={esportes}
-        initialEsporteFiltro={initialEsporteFiltro}
-        fullRadarFetchEsporteIds={fullRadarFetchEsporteIds}
-        initialTipo={tipo}
-        initialSortBy={sortBy}
-        initialRaio={raio}
-        initialFinalidade={matchFinalidade}
-        initialView={initialViewResolved}
-        initialGeneroFiltro={initialGeneroFiltro}
-        viewerDisponivelAmistoso={viewerAmistosoOn}
-        viewerAmistosoExpiresAt={viewerAmistosoExpiresAt}
-        showSentBanner={sp.status === "enviado"}
-        viewerEsportesComDupla={viewerEsportesComDuplaDedup}
-        viewerEsportesComTime={viewerEsportesComTimeDedup}
-        viewerEsportesIndividual={viewerEsportesIndividualDedup}
-      />
-    </MatchPageShell>
+    <MatchRadarApp
+      viewerId={viewerId}
+      initialCards={initialCards}
+      esportes={esportes}
+      initialEsporteFiltro={initialEsporteFiltro}
+      fullRadarFetchEsporteIds={fullRadarFetchEsporteIds}
+      initialTipo={tipo}
+      initialSortBy={sortBy}
+      initialRaio={raio}
+      initialFinalidade={matchFinalidade}
+      initialView={initialViewResolved}
+      initialGeneroFiltro={initialGeneroFiltro}
+      viewerDisponivelAmistoso={viewerAmistosoOn}
+      viewerAmistosoExpiresAt={viewerAmistosoExpiresAt}
+      showSentBanner={sp.status === "enviado"}
+      viewerEsportesComDupla={viewerEsportesComDuplaDedup}
+      viewerEsportesComTime={viewerEsportesComTimeDedup}
+      viewerEsportesIndividual={viewerEsportesIndividualDedup}
+      hideHero={hideHero}
+    />
   );
 }

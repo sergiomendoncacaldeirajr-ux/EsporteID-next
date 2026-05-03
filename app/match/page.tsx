@@ -1,15 +1,22 @@
 import { redirect } from "next/navigation";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import { MatchPageShell } from "@/components/match/match-page-shell";
+import { MatchRadarGridHero } from "@/components/match/match-radar-grid-hero";
 import { EidStreamSection } from "@/components/eid-stream-section";
-import { MatchRadarStreamSkeleton } from "@/components/loading/match-radar-stream-skeleton";
+import { MatchRadarBodyStreamSkeleton } from "@/components/loading/match-radar-stream-skeleton";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
+import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { MatchStreamRadar } from "./match-stream-radar";
-import { redirectIfAmistosoViewInvalid, toViewMode, type MatchPageSearch } from "./match-search-params";
+import {
+  redirectIfAmistosoViewInvalid,
+  toMatchFinalidade,
+  toViewMode,
+  type MatchPageSearch,
+} from "./match-search-params";
 
 export default async function MatchPage({ searchParams }: { searchParams?: Promise<MatchPageSearch> }) {
   const sp = (await searchParams) ?? {};
@@ -44,6 +51,10 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   }
 
   const hasLocation = Number.isFinite(Number(me.lat)) && Number.isFinite(Number(me.lng));
+  const urlIsGridView = initialView === "grid";
+  const viewerAmistosoOn = computeDisponivelAmistosoEffective(me.disponivel_amistoso, me.disponivel_amistoso_ate);
+  const viewerAmistosoExpiresAt =
+    viewerAmistosoOn && me.disponivel_amistoso_ate ? String(me.disponivel_amistoso_ate) : null;
 
   if (!hasLocation) {
     return (
@@ -81,8 +92,20 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   }
 
   return (
-    <EidStreamSection fallback={<MatchRadarStreamSkeleton fullBleed={initialView === "full"} />}>
-      <MatchStreamRadar supabase={supabase} viewerId={user.id} me={me} sp={sp} />
-    </EidStreamSection>
+    <MatchPageShell fullBleed={initialView === "full"}>
+      {urlIsGridView ? (
+        <MatchRadarGridHero
+          viewerId={user.id}
+          finalidade={toMatchFinalidade(sp.finalidade)}
+          viewerDisponivelAmistoso={viewerAmistosoOn}
+          viewerAmistosoExpiresAt={viewerAmistosoExpiresAt}
+        />
+      ) : null}
+      <EidStreamSection
+        fallback={<MatchRadarBodyStreamSkeleton variant={initialView === "full" ? "full" : "grid"} />}
+      >
+        <MatchStreamRadar supabase={supabase} viewerId={user.id} me={me} sp={sp} hideHero={urlIsGridView} />
+      </EidStreamSection>
+    </MatchPageShell>
   );
 }

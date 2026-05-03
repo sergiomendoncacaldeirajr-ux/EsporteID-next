@@ -5,9 +5,11 @@ import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
 import { DesafioEsporteRegrasModal } from "@/components/desafio/desafio-esporte-regras-modal";
 import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
 import { SugerirMatchLiderForm } from "@/components/perfil/sugerir-match-lider-form";
+import { EidStreamSection } from "@/components/eid-stream-section";
+import { DesafioIndividualImpactStreamSkeleton } from "@/components/loading/desafio-stream-skeletons";
 import { EidCancelLink } from "@/components/ui/eid-cancel-link";
 import { EidSectionInfo } from "@/components/ui/eid-section-info";
-import { fetchColetivoRankingPreview, fetchIndividualRankingPreview } from "@/lib/desafio/fetch-impact-preview";
+import { fetchColetivoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { computeRankingBlockedUntilColetivo } from "@/lib/match/coletivo-ranking-cooldown";
@@ -31,6 +33,7 @@ import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-m
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER } from "@/lib/match/viewer-esporte-confronto";
 import { createClient } from "@/lib/supabase/server";
+import { DesafioStreamIndividualRankingImpact } from "./desafio-stream-individual-ranking-impact";
 
 type Params = {
   id?: string;
@@ -619,15 +622,6 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       );
     }
 
-    const rankPrevInd =
-      finalidadeEscolhida === "ranking" && !rankingBlockedUntil
-        ? await fetchIndividualRankingPreview(supabase, {
-            viewerId: user.id,
-            opponentId: perfil.id,
-            esporteId,
-          })
-        : null;
-
     return (
       <main className={DESAFIO_PAGE_MAIN_CLASS}>
           <h1 className="text-2xl font-bold tracking-tight text-eid-fg">Solicitar desafio</h1>
@@ -706,13 +700,16 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
               </div>
             </div>
           </div>
-          {finalidadeEscolhida === "ranking" && rankPrevInd ? (
-            <DesafioImpactoResumo
-              esporteNome={esporteNome}
-              regras={rankPrevInd.regras}
-              individual={rankPrevInd.perspective}
-              className="!mt-0"
-            />
+          {finalidadeEscolhida === "ranking" && !rankingBlockedUntil ? (
+            <EidStreamSection className="contents" fallback={<DesafioIndividualImpactStreamSkeleton />}>
+              <DesafioStreamIndividualRankingImpact
+                supabase={supabase}
+                viewerId={user.id}
+                opponentId={perfil.id}
+                esporteId={esporteId}
+                esporteNome={esporteNome}
+              />
+            </EidStreamSection>
           ) : null}
           {!rankingBlockedUntil || finalidadeEscolhida !== "ranking" ? (
             <DesafioEnviarForm
@@ -746,15 +743,6 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             />
           </div>
           </div>
-          {finalidadeEscolhida === "ranking" && rankPrevInd ? (
-            <DesafioEsporteRegrasModal
-              esporteId={esporteId}
-              esporteNome={esporteNome}
-              modalidade="individual"
-              pontosVitoria={rankPrevInd.regras.pontos_vitoria}
-              pontosDerrota={rankPrevInd.regras.pontos_derrota}
-            />
-          ) : null}
         </main>
     );
   }
