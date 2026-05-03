@@ -57,6 +57,18 @@ function formatShort(iso: string | null | undefined) {
 
 const PREVIEW_LIMIT = 5;
 const PREVIEW_FETCH = 80;
+const NOTIFICATION_REFRESH_MS = 30_000;
+
+function scheduleNotificationIdle(task: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const requestIdle = window.requestIdleCallback;
+  if (requestIdle) {
+    const id = requestIdle(task, { timeout: 3000 });
+    return () => window.cancelIdleCallback?.(id);
+  }
+  const id = window.setTimeout(task, 1000);
+  return () => window.clearTimeout(id);
+}
 
 function SummaryGlyph({ kind }: { kind: "agenda" | "social" | "placar" }) {
   const wrapClass =
@@ -111,6 +123,11 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   const vapidPublicKey = useMemo(() => String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim(), []);
   /** Alinha miolo da /comunidade ao sino quando o resumo muda (ex.: convite → nova notificação). */
   const comunidadeResumoSigRef = useRef<string | null>(null);
+  const pathnameRef = useRef(pathname);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -279,7 +296,8 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     const p = pRes.count ?? 0;
     const pLen = previewRows.length;
     const resumoSig = `${ag}|${m}|${s}|${p}|${gestaoN}|${unreadGeneral}|${pLen}`;
-    const onComunidade = pathname === "/comunidade" || pathname.startsWith("/comunidade/");
+    const currentPathname = pathnameRef.current ?? "";
+    const onComunidade = currentPathname === "/comunidade" || currentPathname.startsWith("/comunidade/");
     if (onComunidade) {
       const prev = comunidadeResumoSigRef.current;
       if (prev != null && prev !== resumoSig) {
@@ -298,18 +316,15 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     // Sininho: notificações não lidas (inclui tipo match: desafio pendente, aceite, etc.).
     setTotal(unreadGeneral);
     setPreview(previewRows);
-  }, [userId, pathname]);
+  }, [userId]);
 
   useEffect(() => {
-    const id = window.setTimeout(() => {
-      void load();
-    }, 0);
-    return () => window.clearTimeout(id);
-  }, [load, pathname]);
+    return scheduleNotificationIdle(() => void load());
+  }, [load]);
 
   useEffect(() => {
     if (!userId) return;
-    const t = window.setInterval(() => void load(), 6000);
+    const t = window.setInterval(() => void load(), NOTIFICATION_REFRESH_MS);
     const onFocus = () => void load();
     const onVisible = () => {
       if (document.visibilityState === "visible") void load();
