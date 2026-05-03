@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { getContextHomeHref, type ActiveAppContext } from "@/lib/auth/active-context";
 import { createClient } from "@/lib/supabase/client";
-import { EID_MOBILE_NAV_BADGE_POLL_MS } from "@/lib/realtime/eid-realtime-config";
 import { userMustActGestaoRankingCancel } from "@/lib/notificacoes/gestao-ranking-cancel";
 import type { ReactNode } from "react";
 
@@ -342,7 +341,6 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     /** Alinha com `RealtimePageRefresh` / sininho: o miolo já revalida, mas o estado do badge ficava só no próximo Realtime ou em até 20s. */
     const onEidRealtimeRefresh = () => void load();
     window.addEventListener("eid:realtime-refresh", onEidRealtimeRefresh as EventListener);
-    const t = window.setInterval(load, EID_MOBILE_NAV_BADGE_POLL_MS);
     const channel = supabase
       .channel(`eid-mobile-nav-${resolvedUserId}`)
       .on(
@@ -415,7 +413,6 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     return () => {
       cancelled = true;
       cancelInitialLoad();
-      window.clearInterval(t);
       window.removeEventListener("eid:realtime-refresh", onEidRealtimeRefresh as EventListener);
       void supabase.removeChannel(channel);
       window.removeEventListener("focus", onFocus);

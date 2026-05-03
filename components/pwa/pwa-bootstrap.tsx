@@ -53,15 +53,5 @@ export function PwaBootstrap() {
     };
   }, [vapidPublicKey]);
 
-  useEffect(() => {
-    if (!vapidPublicKey) return;
-    const timer = window.setInterval(() => {
-      if (document.visibilityState !== "visible") return;
-      void ensurePushReady(vapidPublicKey).catch(() => {});
-      void fetch("/api/push/flush-user", { method: "POST" }).catch(() => {});
-    }, 20000);
-    return () => window.clearInterval(timer);
-  }, [vapidPublicKey]);
-
   return null;
 }

@@ -57,8 +57,6 @@ function formatShort(iso: string | null | undefined) {
 
 const PREVIEW_LIMIT = 5;
 const PREVIEW_FETCH = 80;
-const NOTIFICATION_REFRESH_MS = 30_000;
-
 function scheduleNotificationIdle(task: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   const requestIdle = window.requestIdleCallback;
@@ -324,7 +322,6 @@ export function NotificationBell({ userId }: { userId: string | null }) {
 
   useEffect(() => {
     if (!userId) return;
-    const t = window.setInterval(() => void load(), NOTIFICATION_REFRESH_MS);
     const onFocus = () => void load();
     const onVisible = () => {
       if (document.visibilityState === "visible") void load();
@@ -334,7 +331,6 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("eid:realtime-refresh", onRealtimeRefresh as EventListener);
     return () => {
-      window.clearInterval(t);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("eid:realtime-refresh", onRealtimeRefresh as EventListener);

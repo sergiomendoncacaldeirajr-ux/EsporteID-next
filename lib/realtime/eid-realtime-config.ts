@@ -6,15 +6,6 @@
 /** Mínimo entre dois `router.refresh()` disparados pelo bridge Realtime (anti-tremor). */
 export const EID_REALTIME_REFRESH_THROTTLE_MS = 1500;
 
-/**
- * Poll leve que compara uma assinatura de pendências no banco — cobre atraso/falha do WebSocket.
- * Roda em (quase) toda rota autenticada; ver `eidShouldRunGlobalInteractionPoll`.
- */
-export const EID_REALTIME_SIGNATURE_POLL_MS = 2200;
-
-/** Rede de segurança dos badges do footer mobile (além de Realtime + `eid:realtime-refresh`). */
-export const EID_MOBILE_NAV_BADGE_POLL_MS = 20000;
-
 const AUTH_PATH_PREFIXES = [
   "/login",
   "/cadastro",

@@ -5,9 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   EID_REALTIME_REFRESH_THROTTLE_MS,
-  EID_REALTIME_SIGNATURE_POLL_MS,
   eidShouldPauseAutoRefreshFromLocation,
-  eidShouldRunGlobalInteractionPoll,
 } from "@/lib/realtime/eid-realtime-config";
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 
@@ -94,7 +92,6 @@ export function RealtimePageRefresh({ userId }: Props) {
     const supabase = createClient();
     let cancelled = false;
     const channels: RealtimeChannel[] = [];
-    let candidaturasPollId: number | null = null;
 
     const register = (ch: RealtimeChannel) => {
       if (cancelled) {
@@ -428,135 +425,11 @@ export function RealtimePageRefresh({ userId }: Props) {
           .subscribe()
       );
 
-      // Fallback robusto (Social + Agenda + sino): detecta mudanças mesmo se canais realtime falharem.
-      const buildInteractionSignature = async () => {
-        const teamSlice = teamIds.slice(0, 100);
-        const teamInList = teamSlice.length > 0 ? teamSlice.join(",") : "";
-        const [
-          notifUnread,
-          matchesAdvPend,
-          matchesMinePend,
-          matchesTeamColetivoPend,
-          sugAlvoPend,
-          sugMinePend,
-          partidasRows,
-          convMePend,
-          convOwnedPend,
-          candMePend,
-          candOwnedPend,
-          membrosOwnedActive,
-          timesLeadership,
-        ] = await Promise.all([
-          supabase.from("notificacoes").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("lida", false),
-          supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", userId).eq("status", "Pendente"),
-          supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", userId).eq("status", "Pendente"),
-          teamInList
-            ? supabase
-                .from("matches")
-                .select("id", { count: "exact", head: true })
-                .eq("status", "Pendente")
-                .or(`desafiante_time_id.in.(${teamInList}),adversario_time_id.in.(${teamInList})`)
-            : Promise.resolve({ count: 0 }),
-          supabase.from("match_sugestoes").select("id", { count: "exact", head: true }).eq("alvo_dono_id", userId).eq("status", "pendente"),
-          supabase
-            .from("match_sugestoes")
-            .select("id", { count: "exact", head: true })
-            .eq("sugeridor_id", userId)
-            .eq("status", "pendente")
-            .neq("oculto_sugeridor", true),
-          supabase.from("partidas").select("id, status, jogador1_id, jogador2_id, time1_id, time2_id").order("id", { ascending: false }).limit(120),
-          supabase.from("time_convites").select("id", { count: "exact", head: true }).eq("convidado_usuario_id", userId).eq("status", "pendente"),
-          ownedIds.length > 0
-            ? supabase.from("time_convites").select("id", { count: "exact", head: true }).in("time_id", ownedIds.slice(0, 100)).eq("status", "pendente")
-            : Promise.resolve({ count: 0 }),
-          supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).eq("candidato_usuario_id", userId).eq("status", "pendente"),
-          ownedIds.length > 0
-            ? supabase.from("time_candidaturas").select("id", { count: "exact", head: true }).in("time_id", ownedIds.slice(0, 100)).eq("status", "pendente")
-            : Promise.resolve({ count: 0 }),
-          ownedIds.length > 0
-            ? supabase
-                .from("membros_time")
-                .select("id", { count: "exact", head: true })
-                .in("time_id", ownedIds.slice(0, 100))
-                .in("status", ["ativo", "aceito", "aprovado"])
-            : Promise.resolve({ count: 0 }),
-          teamSlice.length > 0
-            ? supabase.from("times").select("id,criador_id").in("id", teamSlice).order("id", { ascending: true })
-            : Promise.resolve({ data: [] as { id?: number; criador_id?: string | null }[] }),
-        ]);
-
-        const teamSet = new Set(teamIds);
-        const agRows = (partidasRows.data ?? []) as Array<{
-          id?: number;
-          status?: string | null;
-          jogador1_id?: string | null;
-          jogador2_id?: string | null;
-          time1_id?: number | null;
-          time2_id?: number | null;
-        }>;
-        const agendaRelacionada = agRows.filter((r) => {
-          const j1 = String(r.jogador1_id ?? "");
-          const j2 = String(r.jogador2_id ?? "");
-          const t1 = Number(r.time1_id ?? 0);
-          const t2 = Number(r.time2_id ?? 0);
-          return j1 === userId || j2 === userId || teamSet.has(t1) || teamSet.has(t2);
-        });
-        const agendadaN = agendaRelacionada.filter((r) => String(r.status ?? "").trim().toLowerCase() === "agendada").length;
-        const aguardandoPlacarN = agendaRelacionada.filter(
-          (r) => String(r.status ?? "").trim().toLowerCase() === "aguardando_confirmacao"
-        ).length;
-        const latestPartidaId = Math.max(
-          0,
-          ...agendaRelacionada.map((r) => Number(r.id ?? 0)).filter((n) => Number.isFinite(n) && n > 0)
-        );
-
-        const liderancaTimesSig = (timesLeadership.data ?? [])
-          .map((r) => {
-            const id = Number((r as { id?: number }).id ?? 0);
-            const lid = String((r as { criador_id?: string | null }).criador_id ?? "").trim();
-            return `${id}:${lid}`;
-          })
-          .join(";");
-
-        return [
-          String(notifUnread.count ?? 0),
-          String(matchesAdvPend.count ?? 0),
-          String(matchesMinePend.count ?? 0),
-          String(matchesTeamColetivoPend.count ?? 0),
-          String(sugAlvoPend.count ?? 0),
-          String(sugMinePend.count ?? 0),
-          String(convMePend.count ?? 0),
-          String(convOwnedPend.count ?? 0),
-          String(candMePend.count ?? 0),
-          String(candOwnedPend.count ?? 0),
-          String(membrosOwnedActive.count ?? 0),
-          String(agendadaN),
-          String(aguardandoPlacarN),
-          String(latestPartidaId),
-          liderancaTimesSig,
-        ].join("|");
-      };
-
-      if (eidShouldRunGlobalInteractionPoll(pathnameRef.current)) {
-        let lastSig = await buildInteractionSignature();
-        candidaturasPollId = window.setInterval(async () => {
-          if (cancelled) return;
-          if (document.visibilityState !== "visible") return;
-          if (!eidShouldRunGlobalInteractionPoll(pathnameRef.current)) return;
-          if (shouldPauseAutoRefresh()) return;
-          const nextSig = await buildInteractionSignature();
-          if (nextSig !== lastSig) {
-            lastSig = nextSig;
-            refreshForced();
-          }
-        }, EID_REALTIME_SIGNATURE_POLL_MS);
-      }
     })();
 
     return () => {
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisibility);
-      if (candidaturasPollId != null) window.clearInterval(candidaturasPollId);
       channels.forEach((c) => void supabase.removeChannel(c));
     };
   }, [router, userId, pathname, elencoVersion, instanceId]);
