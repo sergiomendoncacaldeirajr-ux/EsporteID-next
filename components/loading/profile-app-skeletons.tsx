@@ -114,15 +114,33 @@ export function ProfilePublicRouteLoadingCompact() {
   return (
     <main className={MAIN_PROFILE}>
       <ProfilePublicHeroSkeleton />
-      <div className="mt-4 grid gap-2">
-        <SkBlock className="h-11 w-full rounded-xl" />
-        <SkBlock className="h-9 w-full rounded-xl" />
-        <section className="mt-2">
-          <SectionTitleSkeleton />
-          <SkBlock className="mt-2 h-28 w-full rounded-xl" />
-        </section>
-      </div>
+      <ProfilePublicBelowFoldSkeleton />
     </main>
+  );
+}
+
+/** Conteúdo abaixo do hero no perfil público (streaming / Suspense). */
+export function ProfilePublicBelowFoldSkeleton() {
+  return (
+    <div className="mt-4 grid gap-4 motion-reduce:animate-none" aria-hidden>
+      <SkBlock className="h-14 w-full rounded-2xl" />
+      <SkBlock className="h-28 w-full rounded-2xl" />
+      <SkBlock className="h-36 w-full rounded-2xl" />
+      <SkBlock className="h-32 w-full rounded-xl" />
+      <SkBlock className="h-40 w-full rounded-xl" />
+    </div>
+  );
+}
+
+/** Só a seção de histórico (terceiro estágio de streaming no perfil). */
+export function ProfilePublicHistoricoStreamSkeleton() {
+  return (
+    <div className="mt-0 space-y-2 motion-reduce:animate-none" aria-hidden>
+      <div className="flex justify-end">
+        <SkBlock className="h-7 w-36 rounded-full" />
+      </div>
+      <SkBlock className="h-44 w-full rounded-2xl" />
+    </div>
   );
 }
 
