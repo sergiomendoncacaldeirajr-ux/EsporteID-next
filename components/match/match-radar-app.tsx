@@ -985,7 +985,7 @@ export function MatchRadarApp({
       ) : null}
 
       {viewMode === "grid" ? (
-        <div className={cn(matchFilterCardClass, "mt-1.5 mb-2")}>
+        <div className={cn(matchFilterCardClass, "mt-1.5 mb-0")}>
           <div
             className={cn(matchSectionHeadClass, "cursor-pointer")}
             onClick={() => setFiltrosMinimizados((v) => !v)}
@@ -1243,7 +1243,7 @@ export function MatchRadarApp({
         </p>
       ) : null}
 
-      <section className="mt-3" aria-busy={isPending}>
+      <section className="mt-4 sm:mt-5" aria-busy={isPending}>
         {!isFullView ? (
           <div className={matchResultsCardClass}>
             <div className={matchSectionHeadClass}>

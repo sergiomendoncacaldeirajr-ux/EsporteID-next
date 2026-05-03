@@ -102,6 +102,7 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
         />
       ) : null}
       <EidStreamSection
+        className={urlIsGridView ? "mt-2 sm:mt-3" : undefined}
         fallback={<MatchRadarBodyStreamSkeleton variant={initialView === "full" ? "full" : "grid"} />}
       >
         <MatchStreamRadar supabase={supabase} viewerId={user.id} me={me} sp={sp} hideHero={urlIsGridView} />

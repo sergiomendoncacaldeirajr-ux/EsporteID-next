@@ -2,9 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
+  DashboardStreamConfrontosProximosSkeleton,
   DashboardStreamLocaisSkeleton,
-  DashboardStreamRadarSkeleton,
   DashboardStreamTorneiosSkeleton,
+  DashboardStreamVagasEquipesSkeleton,
 } from "@/components/loading/dashboard-stream-skeletons";
 import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
@@ -31,8 +32,9 @@ import {
   IconUsers,
 } from "./dashboard-icons";
 import { DashboardStreamLocais } from "./dashboard-stream-locais";
-import { DashboardStreamRadarTeams } from "./dashboard-stream-radar-teams";
+import { DashboardStreamConfrontosProximos } from "./dashboard-stream-confrontos-proximos";
 import { DashboardStreamTorneios } from "./dashboard-stream-torneios";
+import { DashboardStreamVagasEquipes } from "./dashboard-stream-vagas-equipes";
 
 export const metadata = {
   title: "Painel",
@@ -478,8 +480,26 @@ export default async function DashboardPage({ searchParams }: Props) {
       ) : null}
 
       <div className="eid-progressive-enter space-y-0">
-        <EidStreamSection fallback={<DashboardStreamRadarSkeleton />}>
-          <DashboardStreamRadarTeams
+        <EidStreamSection fallback={<DashboardStreamConfrontosProximosSkeleton />}>
+          <DashboardStreamConfrontosProximos
+            supabase={supabase}
+            userId={user.id}
+            q={q}
+            hasMyCoords={hasMyCoords}
+            myLat={myLat}
+            myLng={myLng}
+            activeOpponentIds={activeOpponentIds}
+            meusEsportesSet={meusEsportesSet}
+            esportePrincipalId={esportePrincipalId != null ? Number(esportePrincipalId) : null}
+            esporteCardNome={esporteCardNome}
+            dashTeamIds={dashTeamIds}
+            dashTeamIdSet={dashTeamIdSet}
+            myTeamsInClause={myTeamsInClause}
+            matchHref={matchHref}
+          />
+        </EidStreamSection>
+        <EidStreamSection fallback={<DashboardStreamVagasEquipesSkeleton />}>
+          <DashboardStreamVagasEquipes
             supabase={supabase}
             userId={user.id}
             q={q}
