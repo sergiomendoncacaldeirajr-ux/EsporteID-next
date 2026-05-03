@@ -548,3 +548,32 @@ export function PerfilHistoricoListaSkeleton({
     </main>
   );
 }
+
+/** Onboarding (shell global oculto): indicadores de passo + painel principal. */
+export function OnboardingStreamSkeleton() {
+  return (
+    <main className="mx-auto w-full max-w-lg px-3 pb-8 pt-4 sm:max-w-2xl sm:px-6" aria-hidden>
+      <div className="mb-4 flex gap-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <SkBlock key={i} className="h-2 flex-1 rounded-full" />
+        ))}
+      </div>
+      <SkBlock className="h-10 w-full max-w-md rounded-xl" />
+      <SkBlock className="mt-4 h-72 w-full rounded-2xl" />
+      <SkBlock className="mt-4 h-12 w-full rounded-xl" />
+    </main>
+  );
+}
+
+/** `/locais/cadastrar` — hero + grid formulário / lateral. */
+export function LocaisCadastrarStreamSkeleton() {
+  return (
+    <main className="mx-auto w-full max-w-4xl px-3 py-2 sm:px-6 sm:py-3" aria-hidden>
+      <SkBlock className="mb-5 h-28 w-full rounded-2xl sm:h-32" />
+      <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+        <SkBlock className="min-h-[260px] w-full rounded-xl" />
+        <SkBlock className="min-h-[180px] w-full rounded-xl" />
+      </div>
+    </main>
+  );
+}
