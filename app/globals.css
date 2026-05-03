@@ -1194,73 +1194,75 @@ label:has(input.sr-only):not(.eid-no-press):active {
  * Opt-out: data-eid-no-route-enter no filho direto (casos raros: fullscreen que não deve pulsar).
  */
 .eid-app-route-enter-children > *:not([data-eid-no-route-enter]) {
-  animation: eid-block-reveal 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  animation: eid-content-block-enter 680ms both;
 }
 
 /* Blocos dentro de um container: escalonar filhos diretos (use em <main> ou seções). */
 .eid-progressive-enter > * {
-  animation: eid-block-reveal-stagger 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  animation: eid-content-block-enter 600ms both;
 }
 
 .eid-progressive-enter > *:nth-child(1) {
   animation-delay: 0ms;
 }
 .eid-progressive-enter > *:nth-child(2) {
-  animation-delay: 42ms;
+  animation-delay: 52ms;
 }
 .eid-progressive-enter > *:nth-child(3) {
-  animation-delay: 84ms;
+  animation-delay: 104ms;
 }
 .eid-progressive-enter > *:nth-child(4) {
-  animation-delay: 126ms;
+  animation-delay: 156ms;
 }
 .eid-progressive-enter > *:nth-child(5) {
-  animation-delay: 168ms;
+  animation-delay: 208ms;
 }
 .eid-progressive-enter > *:nth-child(6) {
-  animation-delay: 210ms;
+  animation-delay: 260ms;
 }
 .eid-progressive-enter > *:nth-child(7) {
-  animation-delay: 248ms;
+  animation-delay: 308ms;
 }
 .eid-progressive-enter > *:nth-child(8) {
-  animation-delay: 286ms;
+  animation-delay: 356ms;
 }
 .eid-progressive-enter > *:nth-child(9) {
-  animation-delay: 324ms;
+  animation-delay: 404ms;
 }
 .eid-progressive-enter > *:nth-child(10) {
-  animation-delay: 362ms;
+  animation-delay: 452ms;
 }
 .eid-progressive-enter > *:nth-child(11) {
-  animation-delay: 400ms;
+  animation-delay: 500ms;
 }
 .eid-progressive-enter > *:nth-child(12) {
-  animation-delay: 438ms;
+  animation-delay: 548ms;
 }
 .eid-progressive-enter > *:nth-child(n + 13) {
-  animation-delay: 468ms;
+  animation-delay: 592ms;
 }
 
-@keyframes eid-block-reveal {
-  from {
+/**
+ * Entrada estilo app nativo: slide + leve escala, opacidade, micro “settle” (sem blur — melhor em mobile).
+ */
+@keyframes eid-content-block-enter {
+  0% {
     opacity: 0;
-    transform: translateY(14px) scale(0.988);
+    transform: translate3d(0, 26px, 0) scale(0.955);
+    animation-timing-function: cubic-bezier(0.2, 0.82, 0.15, 1);
   }
-  to {
+  70% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, -2px, 0) scale(1.004);
+    animation-timing-function: cubic-bezier(0.28, 1, 0.4, 1);
   }
-}
-
-@keyframes eid-block-reveal-stagger {
-  from {
-    opacity: 0;
-    transform: translateY(11px) scale(0.99);
-  }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
