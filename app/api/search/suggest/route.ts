@@ -4,7 +4,7 @@ import { createRouteHandlerClient } from "@/lib/supabase/server";
 
 export const preferredRegion = ["gru1"];
 
-type Scope = "global" | "times" | "torneios" | "locais" | "atletas";
+type Scope = "global" | "times" | "torneios" | "locais" | "atletas" | "admin_push_usuarios";
 
 type AtletaRow = { id: string; nome: string | null; username: string | null };
 type LocalRow = {
@@ -29,6 +29,30 @@ export async function GET(request: Request) {
   const q = String(searchParams.get("q") ?? "").trim();
   const scope = String(searchParams.get("scope") ?? "global") as Scope;
   if (q.length < 3) return NextResponse.json({ ok: true, items: [] });
+
+  if (scope === "admin_push_usuarios") {
+    const { data: adminRow } = await supabase.from("platform_admins").select("user_id").eq("user_id", user.id).maybeSingle();
+    if (!adminRow) return NextResponse.json({ ok: false, items: [] }, { status: 403 });
+    const { data, error } = await supabase.rpc("api_fold_search_atletas", {
+      p_search: q,
+      p_exclude_user: null,
+      p_limit: 15,
+    });
+    if (error) {
+      console.error("[search/suggest] admin_push_usuarios api_fold_search_atletas", error);
+      return NextResponse.json({ ok: true, items: [] });
+    }
+    const rows = (data ?? []) as AtletaRow[];
+    return NextResponse.json({
+      ok: true,
+      items: rows.map((row) => ({
+        id: String(row.id),
+        value: String(row.id),
+        title: row.nome?.trim() || row.username || "Atleta",
+        subtitle: row.username ? `@${row.username}` : null,
+      })),
+    });
+  }
 
   if (scope === "atletas") {
     const { data, error } = await supabase.rpc("api_fold_search_atletas", {

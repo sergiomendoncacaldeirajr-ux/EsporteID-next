@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-type SuggestItem = {
+export type SearchSuggestItem = {
   id: string;
   value: string;
   title: string;
@@ -19,8 +19,10 @@ type Props = {
   placeholder?: string;
   className?: string;
   minChars?: number;
-  scope?: "global" | "times" | "torneios" | "locais";
+  scope?: "global" | "times" | "torneios" | "locais" | "admin_push_usuarios";
   onPickValue?: (v: string) => void;
+  /** Quando definido, o clique na sugestão chama só este callback (útil para guardar UUID sem colar o texto no campo de busca). */
+  onPickItem?: (item: SearchSuggestItem) => void;
   withSearchIcon?: boolean;
 };
 
@@ -34,9 +36,10 @@ export function SearchSuggestInput({
   minChars = 3,
   scope = "global",
   onPickValue,
+  onPickItem,
   withSearchIcon = false,
 }: Props) {
-  const [items, setItems] = useState<SuggestItem[]>([]);
+  const [items, setItems] = useState<SearchSuggestItem[]>([]);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const ctrlRef = useRef<AbortController | null>(null);
@@ -62,7 +65,7 @@ export function SearchSuggestInput({
           cache: "no-store",
         });
         if (!res.ok) return;
-        const json = (await res.json()) as { items?: SuggestItem[] };
+        const json = (await res.json()) as { items?: SearchSuggestItem[] };
         setItems(json.items ?? []);
         setOpen(true);
       } catch {
@@ -108,7 +111,13 @@ export function SearchSuggestInput({
                   key={item.id}
                   href={item.href}
                   className="block rounded-lg px-2.5 py-2 hover:bg-eid-surface/70"
-                  onClick={() => {
+                  onClick={(e) => {
+                    if (onPickItem) {
+                      e.preventDefault();
+                      onPickItem(item);
+                      setOpen(false);
+                      return;
+                    }
                     onChange(item.value);
                     setOpen(false);
                   }}
@@ -121,6 +130,11 @@ export function SearchSuggestInput({
                   key={item.id}
                   type="button"
                   onClick={() => {
+                    if (onPickItem) {
+                      onPickItem(item);
+                      setOpen(false);
+                      return;
+                    }
                     const next = item.value;
                     onChange(next);
                     onPickValue?.(next);

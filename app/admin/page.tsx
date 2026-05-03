@@ -1,4 +1,5 @@
 import { adminDispararPushTesteParaUsuario, adminMarcarAlertaLido } from "@/app/admin/actions";
+import { AdminPushUsuarioPicker } from "@/components/admin/admin-push-usuario-picker";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 type Alerta = {
@@ -225,7 +226,8 @@ export default async function AdminHomePage({ searchParams }: Props) {
       <section id="admin-push-teste" className="mt-6 scroll-mt-24 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
         <h3 className="text-sm font-bold text-eid-fg">Teste manual de Push</h3>
         <p className="mt-1 text-xs text-eid-text-secondary">
-          Dispara uma notificação de teste para um usuário específico (via service role), para validar entrega no aparelho.
+          Dispara uma notificação de teste para um usuário específico (via service role), para validar entrega no aparelho. Busque pelo nome ou{" "}
+          <span className="whitespace-nowrap">@username</span> — não precisa colar o UUID inteiro.
         </p>
         {flash === "push_teste_ok" ? (
           <p className="mt-3 rounded-lg border border-emerald-500/35 bg-emerald-500/12 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-success-600)_80%,var(--eid-fg)_20%)]">
@@ -237,28 +239,24 @@ export default async function AdminHomePage({ searchParams }: Props) {
         flash === "push_teste_insert_erro" ||
         flash === "push_teste_erro" ? (
           <p className="mt-3 rounded-lg border border-rose-500/35 bg-rose-500/12 px-3 py-2 text-xs font-semibold text-[color:color-mix(in_srgb,var(--eid-danger-600)_82%,var(--eid-fg)_18%)]">
-            Não foi possível disparar o push de teste. Revise o UUID do usuário e a configuração de push.
+            Não foi possível disparar o push de teste. Confira se escolheu um usuário válido na busca (ou o ID da URL) e a configuração de push.
           </p>
         ) : null}
-        <form action={adminDispararPushTesteParaUsuario} className="mt-3 grid gap-2 sm:grid-cols-[1fr_2fr_auto]">
-          <input
-            name="user_id"
-            required
-            defaultValue={pushUserId}
-            placeholder="UUID do usuário"
-            className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2 text-xs text-eid-fg"
-          />
-          <input
-            name="mensagem"
-            placeholder="Mensagem do push (opcional)"
-            className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2 text-xs text-eid-fg"
-          />
-          <button
-            type="submit"
-            className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-3 py-2 text-xs font-bold uppercase tracking-wide text-eid-primary-300 hover:border-eid-primary-500/60"
-          >
-            Disparar push
-          </button>
+        <form action={adminDispararPushTesteParaUsuario} className="mt-3 grid gap-3">
+          <AdminPushUsuarioPicker initialUserId={pushUserId} />
+          <div className="grid gap-2 sm:grid-cols-[2fr_auto] sm:items-end">
+            <input
+              name="mensagem"
+              placeholder="Mensagem do push (opcional)"
+              className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2 text-xs text-eid-fg"
+            />
+            <button
+              type="submit"
+              className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/12 px-3 py-2 text-xs font-bold uppercase tracking-wide text-eid-primary-300 hover:border-eid-primary-500/60"
+            >
+              Disparar push
+            </button>
+          </div>
         </form>
         {pushDiag ? (
           <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-3">
