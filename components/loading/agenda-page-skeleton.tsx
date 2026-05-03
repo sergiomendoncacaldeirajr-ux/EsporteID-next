@@ -1,7 +1,7 @@
 import { SkBlock } from "@/components/loading/skeleton-primitives";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 
-/** Esqueleto fiel ao layout de `/agenda` (hero, conexões, confrontos, desafios aceitos, pedidos, rodapé). */
+/** Esqueleto fiel ao layout de `/agenda` (hero, confrontos em streaming, bloco inferior, rodapé). */
 export function AgendaPageSkeleton() {
   return (
     <main
@@ -9,32 +9,11 @@ export function AgendaPageSkeleton() {
       aria-busy="true"
       aria-label="Carregando agenda"
     >
-      <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}>
+      <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-4 py-4 sm:px-6 sm:py-5`}>
         <SkBlock className="h-2 w-24 rounded-md opacity-70" />
         <SkBlock className="mt-2 h-5 w-4/5 max-w-sm rounded-md" />
         <SkBlock className="mt-2 h-3 w-full max-w-md rounded-md opacity-80" />
       </div>
-
-      {/* ConexoesStrip (card) */}
-      <section className="mt-4 md:mt-8">
-        <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-            <SkBlock className="h-2.5 w-[7.5rem] rounded-md" />
-            <SkBlock className="h-5 w-16 rounded-full" />
-          </div>
-          <SkBlock className="mx-3 mt-2 h-3 w-full max-w-md rounded-md md:hidden" />
-          <div className="mt-2 flex gap-3 overflow-x-auto px-3 pb-2.5 [scrollbar-width:none] md:mt-3 md:gap-4 md:pb-3 [&::-webkit-scrollbar]:hidden">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex min-w-[68px] flex-col items-center text-center md:min-w-[76px]">
-                <div className="rounded-full p-[2px] md:p-[3px]">
-                  <SkBlock className="h-12 w-12 rounded-full border-2 border-eid-bg md:h-14 md:w-14" />
-                </div>
-                <SkBlock className="mt-1.5 h-2 w-12 rounded-md md:mt-2" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Confrontos (card + cards) */}
       <section className="mt-6 md:mt-10">

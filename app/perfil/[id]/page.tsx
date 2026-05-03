@@ -1,5 +1,4 @@
 import { notFound, redirect } from "next/navigation";
-import { Suspense } from "react";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
@@ -17,15 +16,7 @@ type Props = {
   searchParams?: Promise<{ from?: string }>;
 };
 
-export default function PerfilPublicoPage(props: Props) {
-  return (
-    <Suspense fallback={<Loading />}>
-      <PerfilPublicoPageContent {...props} />
-    </Suspense>
-  );
-}
-
-async function PerfilPublicoPageContent({ params, searchParams }: Props) {
+export default async function PerfilPublicoPage({ params, searchParams }: Props) {
   const { id } = await params;
   const sp = (await searchParams) ?? {};
 

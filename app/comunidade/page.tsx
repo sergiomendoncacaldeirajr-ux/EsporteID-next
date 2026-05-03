@@ -1,6 +1,4 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { ComunidadeSocialSkeleton } from "@/components/loading/comunidade-social-skeleton";
 import {
   ComunidadeStreamDesafioSkeleton,
   ComunidadeStreamEquipeSkeleton,
@@ -9,7 +7,6 @@ import {
 import { ComunidadeBackgroundSync } from "@/components/comunidade/comunidade-background-sync";
 import { PushToggleCard } from "@/components/pwa/push-toggle-card";
 import { EidStreamSection } from "@/components/eid-stream-section";
-import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 import { getAgendaTeamContext, partidaRowTemResultadoParaRevisaoOponente } from "@/lib/agenda/partidas-usuario";
 import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
@@ -23,15 +20,7 @@ export const metadata = {
   description: "Central de ações pendentes no EsporteID: desafios, equipe e placar que precisam da sua resposta.",
 };
 
-export default function ComunidadePage() {
-  return (
-    <Suspense fallback={eidRouteSkeletonsDisabled() ? null : <ComunidadeSocialSkeleton />}>
-      <ComunidadePageContent />
-    </Suspense>
-  );
-}
-
-async function ComunidadePageContent() {
+export default async function ComunidadePage() {
   const { supabase, user } = await getServerAuth();
   if (!user) redirect("/login?next=/comunidade");
 

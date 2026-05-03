@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
 import { MatchPageShell } from "@/components/match/match-page-shell";
 import { MatchRadarApp } from "@/components/match/match-radar-app";
@@ -19,8 +18,6 @@ import {
 import { safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
-import LoadingMatchPage from "./loading";
-
 type Search = {
   tipo?: string;
   esporte?: string;
@@ -69,15 +66,7 @@ function toGeneroFiltro(v: string | undefined): RadarGeneroFiltro {
   return "all";
 }
 
-export default function MatchPage(props: { searchParams?: Promise<Search> }) {
-  return (
-    <Suspense fallback={<LoadingMatchPage />}>
-      <MatchPageContent {...props} />
-    </Suspense>
-  );
-}
-
-async function MatchPageContent({ searchParams }: { searchParams?: Promise<Search> }) {
+export default async function MatchPage({ searchParams }: { searchParams?: Promise<Search> }) {
   const sp = (await searchParams) ?? {};
   const tipo = toTipo(sp.tipo);
   const matchFinalidade = toMatchFinalidade(sp.finalidade);
