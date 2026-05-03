@@ -160,7 +160,7 @@ async function dispatchNotificationsToSubscriptions(
     }
   }
 
-  return { sent, failed, scanned: list.length };
+  return { sent, failed, scanned: list.length, noDevice };
 }
 
 export async function dispatchPendingPushNotifications(
