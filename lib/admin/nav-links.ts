@@ -10,6 +10,7 @@ export const ADMIN_NAV_LINKS: { href: string; label: string; hint: string }[] = 
   { href: "/admin/partidas", label: "Partidas", hint: "Confrontos" },
   { href: "/admin/matches", label: "Pedidos de desafio", hint: "matches (tabela)" },
   { href: "/admin/operacoes-sociais", label: "Social & push", hint: "Notificações e convites" },
+  { href: "/admin/push", label: "Push (env)", hint: "Chaves e falhas" },
   { href: "/admin/denuncias", label: "Denúncias", hint: "Moderação" },
   { href: "/admin/professor", label: "Professor", hint: "Aulas e solicitações" },
   { href: "/admin/financeiro", label: "Financeiro", hint: "Taxas e promo" },

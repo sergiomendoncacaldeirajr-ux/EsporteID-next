@@ -222,7 +222,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
         </div>
       ) : null}
 
-      <section className="mt-6 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
+      <section id="admin-push-teste" className="mt-6 scroll-mt-24 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
         <h3 className="text-sm font-bold text-eid-fg">Teste manual de Push</h3>
         <p className="mt-1 text-xs text-eid-text-secondary">
           Dispara uma notificação de teste para um usuário específico (via service role), para validar entrega no aparelho.
