@@ -13,8 +13,8 @@ import {
 } from "@/components/comunidade/comunidade-convites-enviados-time";
 import { ComunidadeBackgroundSync } from "@/components/comunidade/comunidade-background-sync";
 import { ComunidadeQuadro } from "@/components/comunidade/comunidade-quadro";
-import { ComunidadePedidosEnviados } from "@/components/comunidade/comunidade-pedidos-enviados";
-import { ComunidadePedidosMatch } from "@/components/comunidade/comunidade-pedidos-match";
+import { ComunidadePedidosEnviados, type ComunidadePedidoEnviadoItem } from "@/components/comunidade/comunidade-pedidos-enviados";
+import { ComunidadePedidosMatch, type PedidoMatchItem } from "@/components/comunidade/comunidade-pedidos-match";
 import { PedidoMatchFinalidadeSeal } from "@/components/comunidade/pedido-match-finalidade-seal";
 import {
   ComunidadeSugestoesEnviadasMatch,
@@ -224,6 +224,12 @@ async function ComunidadePageContent() {
   const needPartidas =
     (cntPartAguarda ?? 0) > 0 || (cntPartAgend ?? 0) > 0 || (cntMatchRankFlow ?? 0) > 0;
 
+  /** Pedidos recebidos/enviados: só carrega o miolo quando as contagens já indicam pendência (evita dezenas de queries e ranking por item). */
+  const needDesafioPedidos = (cntMatchIn ?? 0) > 0 || (cntMatchOut ?? 0) > 0;
+  let pedidosItems: PedidoMatchItem[] = [];
+  let pedidosEnviadosItems: ComunidadePedidoEnviadoItem[] = [];
+
+  if (needDesafioPedidos) {
   const [{ data: recebidos }, { data: enviadosPendentes }] = await Promise.all([
     supabase
       .from("matches")
@@ -371,7 +377,7 @@ async function ComunidadePageContent() {
     };
   });
 
-  const pedidosItems = await Promise.all(
+  pedidosItems = await Promise.all(
     (() => {
       const rankingPosCache = new Map<string, Promise<number | null>>();
       const rankingPontosCache = new Map<string, Promise<number | null>>();
@@ -490,7 +496,7 @@ async function ComunidadePageContent() {
   const enviadosFormacaoMap = new Map(
     (enviadosFormacaoRows ?? []).map((t) => [Number((t as { id: number }).id), t])
   );
-  const pedidosEnviadosItems = (enviadosPendentes ?? []).map((m) => {
+  pedidosEnviadosItems = (enviadosPendentes ?? []).map((m) => {
     const mod = String(m.modalidade_confronto ?? "individual").toLowerCase();
     const normalizedMod = mod === "atleta" ? "individual" : mod;
     const advTimeId = Number((m as { adversario_time_id?: number | null }).adversario_time_id ?? 0);
@@ -532,6 +538,8 @@ async function ComunidadePageContent() {
       formacaoAdversaria,
     };
   });
+
+  }
 
   const equipeData = await (async () => {
     if (!needEquipe) {

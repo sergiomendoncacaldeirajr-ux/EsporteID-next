@@ -18,7 +18,7 @@ import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import Image from "next/image";
 
-type Item = {
+export type ComunidadePedidoEnviadoItem = {
   id: number;
   solicitadoEm?: string | null;
   adversarioId: string;
@@ -47,7 +47,7 @@ function firstName(value?: string | null): string {
   return clean.split(/\s+/)[0] ?? clean;
 }
 
-export function ComunidadePedidosEnviados({ items }: { items: Item[] }) {
+export function ComunidadePedidosEnviados({ items }: { items: ComunidadePedidoEnviadoItem[] }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(cancelarPedidoMatchPendente, initial);
   const [confirmId, setConfirmId] = useState<number | null>(null);
