@@ -13,13 +13,13 @@ values
   (
     'termos_uso',
     '1.5.0',
-    'Painel/dashboard, desafio dedicado e radar; reservas; tempo quase real; recrutamento e vagas em formações',
+    $n$Painel/dashboard, desafio dedicado e radar; reservas; tempo quase real; recrutamento e vagas em formações$n$,
     true
   ),
   (
     'politica_privacidade',
     '1.3.0',
-    'Realtime/eventos; dados do painel e sugestões; compartilhamento em equipes e notificações',
+    $n$Realtime/eventos; dados do painel e sugestões; compartilhamento em equipes e notificações$n$,
     true
   )
 on conflict (tipo, versao) do update set
