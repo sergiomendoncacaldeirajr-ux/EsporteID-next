@@ -1,12 +1,7 @@
 import type { ReactNode } from "react";
 import { SkBlock } from "@/components/loading/skeleton-primitives";
-import { PROFILE_HERO_PANEL_CLASS, PROFILE_SECTION_TITLE } from "@/components/perfil/profile-ui-tokens";
-
-const MAIN_PROFILE =
-  "mx-auto w-full max-w-lg px-2.5 pb-[calc(var(--eid-shell-footer-offset)+3.25rem)] pt-2 sm:max-w-2xl sm:px-5 sm:pb-[calc(var(--eid-shell-footer-offset)+2.75rem)] sm:pt-3";
-
-const HERO_PANEL =
-  "eid-surface-panel relative mt-2 overflow-hidden rounded-2xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_16px_32px_-20px_rgba(15,23,42,0.45),0_0_20px_-16px_rgba(37,99,235,0.48)]";
+import { PerfilMobileBottomPad } from "@/components/perfil/perfil-mobile-bottom-pad";
+import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS, PROFILE_SECTION_TITLE } from "@/components/perfil/profile-ui-tokens";
 
 /** Mesmas classes do `DashboardTopbar` (sticky, blur, safe-area). */
 export function DashboardTopbarSkeleton() {
@@ -55,16 +50,16 @@ function SectionTitleSkeleton({ className }: { className?: string }) {
 
 function ProfilePublicHeroSkeleton() {
   return (
-    <div className={HERO_PANEL}>
-      <div className="relative h-[6.75rem] w-full sm:h-[7.75rem]">
+    <div id="perfil-hero-panel" className={`${PROFILE_HERO_PANEL_CLASS} mt-0 sm:mt-1`}>
+      <div id="perfil-hero-cover" className="relative h-[6.75rem] w-full sm:h-[7.75rem]">
         <div
           className="h-full w-full opacity-90"
           style={{ background: "linear-gradient(135deg,#172554 0%,#0b1d2e 55%,#0b0f14 100%)" }}
         />
         <SkBlock className="absolute right-2 top-2 z-[3] h-7 w-20 rounded-lg" />
       </div>
-      <div className="px-3 pb-3 pt-0">
-        <div className="relative z-[3] -mt-6 flex items-end gap-3 sm:-mt-7">
+      <div className="px-3 pb-4 pt-1">
+        <div className="relative z-[3] -mt-2 flex min-h-[68px] items-end gap-3 sm:-mt-2.5">
           <SkBlock className="z-10 h-[68px] w-[68px] shrink-0 rounded-full shadow-[0_0_0_2px_rgba(249,115,22,0.55)]" />
           <div className="min-w-0 flex-1 space-y-2 pb-1">
             <div className="flex flex-wrap items-center gap-1.5">
@@ -112,7 +107,13 @@ function ProfilePublicHeroSkeleton() {
  */
 export function ProfilePublicRouteLoadingCompact() {
   return (
-    <main className={MAIN_PROFILE}>
+    <main
+      id="perfil-public-main"
+      data-eid-perfil-page
+      data-eid-no-route-enter
+      className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-progressive-enter`}
+    >
+      <PerfilMobileBottomPad />
       <ProfilePublicHeroSkeleton />
       <ProfilePublicBelowFoldSkeleton />
     </main>
@@ -147,7 +148,7 @@ export function ProfilePublicHistoricoStreamSkeleton() {
 /** Perfil público — hero, stats, ficha, ação, EID, equipes, histórico (sem bloco Professor para manter altura estável). */
 export function ProfilePublicPageSkeleton() {
   return (
-    <main className={MAIN_PROFILE}>
+    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
       <ProfilePublicHeroSkeleton />
 
       <div className="mt-4 grid gap-4">
@@ -484,7 +485,7 @@ export function FormacaoEidDetailsStreamSkeleton() {
 /** Página EID por esporte — card topo + métricas + seções. */
 export function PerfilEidEsporteSkeleton() {
   return (
-    <main className={MAIN_PROFILE}>
+    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
       <SkBlock className="h-4 w-24 rounded" />
       <div className="mt-3 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-[0_4px_24px_rgba(0,0,0,0.3)]">
         <div className="px-3 py-3 sm:px-4 sm:py-4">
@@ -575,7 +576,7 @@ export function PerfilHistoricoListaSkeleton({
   }
 
   return (
-    <main className={MAIN_PROFILE}>
+    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
       <SkBlock className="h-4 w-20 rounded" />
       <div className="mt-3 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-3 shadow-[0_4px_24px_rgba(0,0,0,0.3)] sm:px-4 sm:py-4">
         <SkBlock className="h-3 w-28 rounded" />
