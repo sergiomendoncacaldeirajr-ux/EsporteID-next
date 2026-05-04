@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { SkBlock } from "@/components/loading/skeleton-primitives";
-import { PROFILE_SECTION_TITLE } from "@/components/perfil/profile-ui-tokens";
+import { PROFILE_HERO_PANEL_CLASS, PROFILE_SECTION_TITLE } from "@/components/perfil/profile-ui-tokens";
 
 const MAIN_PROFILE =
   "mx-auto w-full max-w-lg px-2.5 pb-[calc(var(--eid-shell-footer-offset)+1rem)] pt-2 sm:max-w-2xl sm:px-5 sm:pb-8 sm:pt-3";
@@ -440,6 +440,44 @@ export function EditarTimeDuplaSkeleton() {
         </div>
       </div>
     </ProfileEditShellSkeleton>
+  );
+}
+
+/** Streaming bloco 1 — painel hero da página EID da formação (time/dupla). */
+export function FormacaoEidHeroStreamSkeleton() {
+  return (
+    <div className="space-y-3" aria-hidden>
+      <SkBlock className="h-4 w-28 rounded" />
+      <div className={`overflow-hidden ${PROFILE_HERO_PANEL_CLASS}`}>
+        <div className="flex flex-wrap gap-3 px-3 py-3 sm:px-4 sm:py-4">
+          <SkBlock className="h-16 w-16 shrink-0 rounded-2xl sm:h-20 sm:w-20" />
+          <div className="min-w-0 flex-1 space-y-2 pt-1">
+            <SkBlock className="h-3 w-24 rounded-full" />
+            <SkBlock className="h-5 w-48 max-w-full rounded-md" />
+            <SkBlock className="h-3 w-40 rounded" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 border-t border-[color:var(--eid-border-subtle)] px-3 py-3 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2 py-2">
+              <SkBlock className="mx-auto h-2 w-12 rounded" />
+              <SkBlock className="mx-auto mt-1 h-6 w-10 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Streaming bloco 2 — tendência, panorama e lista de partidas da formação. */
+export function FormacaoEidDetailsStreamSkeleton() {
+  return (
+    <div className="mt-3 space-y-3" aria-hidden>
+      <SkBlock className="h-36 w-full rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50" />
+      <SkBlock className="h-20 w-full rounded-2xl" />
+      <SkBlock className="h-52 w-full rounded-2xl border border-[color:var(--eid-border-subtle)]" />
+    </div>
   );
 }
 

@@ -1,15 +1,9 @@
+import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
-import { FormacaoEidEsporteView } from "@/components/perfil/formacao-eid-esporte-view";
 import { resolveBackHref } from "@/lib/perfil/back-href";
-import {
-  carregarHistoricoNotasColetivo,
-  carregarPartidasColetivasDoTime,
-  mapNomesTimesAdversarios,
-  mapTorneioNomes,
-} from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
 
-export type PerfilTimeEidStreamProps = {
+export type PerfilTimeEidRouteInput = {
   params: Promise<{ id: string; esporteId: string }>;
   searchParams?: Promise<{ from?: string; embed?: string }>;
 };
@@ -20,7 +14,27 @@ function parseEsporteId(raw: string): number | null {
   return Math.trunc(n);
 }
 
-export async function PerfilTimeEidEsporteStream({ params, searchParams }: PerfilTimeEidStreamProps) {
+export type PerfilTimeEidSession = {
+  timeId: number;
+  esporteId: number;
+  isEmbed: boolean;
+  backHref: string;
+  nextPath: string;
+  nomeEsporte: string;
+  tipoLabel: string;
+  posicao: number;
+  t: {
+    nome: string | null;
+    username: string | null;
+    tipo: string | null;
+    escudo: string | null;
+    eid_time: number | null;
+    pontos_ranking: number | null;
+  };
+  linkPerfil: string;
+};
+
+export const loadPerfilTimeEidSession = cache(async ({ params, searchParams }: PerfilTimeEidRouteInput): Promise<PerfilTimeEidSession> => {
   const { id: rawTime, esporteId: rawEsp } = await params;
   const timeId = Number(rawTime);
   if (!Number.isFinite(timeId) || timeId < 1) notFound();
@@ -61,36 +75,28 @@ export async function PerfilTimeEidEsporteStream({ params, searchParams }: Perfi
 
   const posicao = (acima ?? 0) + 1;
 
-  const partidas = await carregarPartidasColetivasDoTime(supabase, timeId, esporteId, user.id);
-  const historicoNotas = await carregarHistoricoNotasColetivo(supabase, timeId);
-  const torneioNome = await mapTorneioNomes(supabase, partidas);
-  const nomeOponenteTime = await mapNomesTimesAdversarios(supabase, timeId, partidas);
-
   const tipoFmt = String(t.tipo ?? "time").trim().toLowerCase();
   const tipoLabel = tipoFmt === "dupla" ? "Dupla" : tipoFmt === "time" ? "Time" : t.tipo ? String(t.tipo) : "Equipe";
 
   const linkPerfil = `/perfil-time/${timeId}${sp.from ? `?from=${encodeURIComponent(sp.from)}` : ""}`;
 
-  return (
-    <FormacaoEidEsporteView
-      backHref={backHref}
-      nextPath={nextPath}
-      nomeEsporte={nomeEsporte}
-      titulo={t.nome ?? "Formação"}
-      subtitulo={t.username ? `@${t.username}` : null}
-      escudoUrl={t.escudo}
-      escudoFallbackLetter={(t.tipo ?? "T").toUpperCase().slice(0, 1)}
-      tipoLabel={tipoLabel}
-      eidTime={Number(t.eid_time ?? 0)}
-      pontosRanking={Number(t.pontos_ranking ?? 0)}
-      posicaoRank={posicao}
-      partidas={partidas}
-      historicoNotas={historicoNotas}
-      torneioNome={torneioNome}
-      nomeOponenteTime={nomeOponenteTime}
-      timeId={timeId}
-      linkPerfilFormacao={linkPerfil}
-      showBackLink={!isEmbed}
-    />
-  );
-}
+  return {
+    timeId,
+    esporteId,
+    isEmbed,
+    backHref,
+    nextPath,
+    nomeEsporte,
+    tipoLabel,
+    posicao,
+    t: {
+      nome: t.nome,
+      username: t.username,
+      tipo: t.tipo,
+      escudo: t.escudo,
+      eid_time: t.eid_time,
+      pontos_ranking: t.pontos_ranking,
+    },
+    linkPerfil,
+  };
+});

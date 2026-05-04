@@ -362,12 +362,14 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
   ];
   const oponenteInfo = new Map<string, { nome: string; avatar_url: string | null; nota_eid: number | null }>();
   if (opponentIds.length > 0) {
-    const { data: opRows } = await supabase.from("profiles").select("id, nome, avatar_url").in("id", opponentIds);
-    const { data: opEidRows } = await supabase
-      .from("usuario_eid")
-      .select("usuario_id, nota_eid")
-      .eq("esporte_id", esporteId)
-      .in("usuario_id", opponentIds);
+    const [{ data: opRows }, { data: opEidRows }] = await Promise.all([
+      supabase.from("profiles").select("id, nome, avatar_url").in("id", opponentIds),
+      supabase
+        .from("usuario_eid")
+        .select("usuario_id, nota_eid")
+        .eq("esporte_id", esporteId)
+        .in("usuario_id", opponentIds),
+    ]);
     const opEidMap = new Map<string, number | null>();
     for (const eidRow of opEidRows ?? []) {
       if (!eidRow.usuario_id) continue;
