@@ -18,6 +18,9 @@ export type PartidaCtx = {
   lancado_por: string | null;
   placar_1: number | null;
   placar_2: number | null;
+  placar_desafiante: number | null;
+  placar_desafiado: number | null;
+  vencedor_id: number | null;
   time1_id: number | null;
   time2_id: number | null;
   modalidade: string | null;
@@ -66,7 +69,7 @@ export async function loadPartidaContext(partidaId: number, userId: string) {
   const { data: partida } = await supabase
     .from("partidas")
     .select(
-      "id, match_id, esporte_id, torneio_id, jogador1_id, jogador2_id, usuario_id, desafiante_id, desafiado_id, status, status_ranking, lancado_por, placar_1, placar_2, time1_id, time2_id, modalidade, esportes(nome)"
+      "id, match_id, esporte_id, torneio_id, jogador1_id, jogador2_id, usuario_id, desafiante_id, desafiado_id, status, status_ranking, lancado_por, placar_1, placar_2, placar_desafiante, placar_desafiado, vencedor_id, time1_id, time2_id, modalidade, esportes(nome)"
     )
     .eq("id", partidaId)
     .maybeSingle();

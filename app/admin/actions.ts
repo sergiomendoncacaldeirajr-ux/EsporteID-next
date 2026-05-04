@@ -174,6 +174,15 @@ export async function adminDefinirResultadoPartida(formData: FormData) {
         ? partida.time1_id ?? partida.jogador1_id ?? null
         : partida.time2_id ?? partida.jogador2_id ?? null;
 
+    let perdedorId: number | null = null;
+    if (partida.time1_id != null && partida.time2_id != null && vencedorId != null) {
+      const t1 = Number(partida.time1_id);
+      const t2 = Number(partida.time2_id);
+      const w = Number(vencedorId);
+      if (w === t1) perdedorId = t2;
+      else if (w === t2) perdedorId = t1;
+    }
+
     const { error } = await db
       .from("partidas")
       .update({
@@ -185,6 +194,7 @@ export async function adminDefinirResultadoPartida(formData: FormData) {
         placar_desafiado: null,
         placar: `${Math.trunc(placar1)}x${Math.trunc(placar2)}`,
         vencedor_id: vencedorId,
+        ...(perdedorId != null ? { perdedor_id: perdedorId } : {}),
         lancado_por: null,
         mensagem: "Resultado definido por mediação administrativa.",
         data_resultado: new Date().toISOString(),
@@ -253,6 +263,16 @@ export async function adminMediarResultadoDaDenuncia(formData: FormData) {
         winnerSide === "1"
           ? partida.time1_id ?? partida.jogador1_id ?? null
           : partida.time2_id ?? partida.jogador2_id ?? null;
+
+      let perdedorMed: number | null = null;
+      if (partida.time1_id != null && partida.time2_id != null && vencedorId != null) {
+        const t1 = Number(partida.time1_id);
+        const t2 = Number(partida.time2_id);
+        const w = Number(vencedorId);
+        if (w === t1) perdedorMed = t2;
+        else if (w === t2) perdedorMed = t1;
+      }
+
       await db
         .from("partidas")
         .update({
@@ -262,6 +282,7 @@ export async function adminMediarResultadoDaDenuncia(formData: FormData) {
           placar_2: winnerSide === "2" ? 1 : 0,
           placar: winnerSide === "1" ? "1x0" : "0x1",
           vencedor_id: vencedorId,
+          ...(perdedorMed != null ? { perdedor_id: perdedorMed } : {}),
           mensagem: "Resultado definido por mediação administrativa.",
           data_resultado: new Date().toISOString(),
           data_validacao: new Date().toISOString(),

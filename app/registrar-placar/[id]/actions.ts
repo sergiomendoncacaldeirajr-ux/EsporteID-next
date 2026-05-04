@@ -42,6 +42,33 @@ function normStatus(v: string | null | undefined): string {
     .toLowerCase();
 }
 
+/** Garante vencedor_id/perdedor_id como times para o trigger de EID em partidas coletivas. */
+function vencedorPerdedorTimesColetivo(p: {
+  time1_id?: number | null;
+  time2_id?: number | null;
+  vencedor_id?: number | null;
+  placar_1?: number | null;
+  placar_2?: number | null;
+  placar_desafiante?: number | null;
+  placar_desafiado?: number | null;
+}): { vencedorId: number; perdedorId: number } | null {
+  const t1 = p.time1_id != null ? Number(p.time1_id) : NaN;
+  const t2 = p.time2_id != null ? Number(p.time2_id) : NaN;
+  if (!Number.isFinite(t1) || !Number.isFinite(t2) || t1 < 1 || t2 < 1) return null;
+
+  const existing = p.vencedor_id != null ? Number(p.vencedor_id) : NaN;
+  if (Number.isFinite(existing) && (existing === t1 || existing === t2)) {
+    return { vencedorId: existing, perdedorId: existing === t1 ? t2 : t1 };
+  }
+
+  const s1 = Number(p.placar_1 ?? p.placar_desafiante ?? NaN);
+  const s2 = Number(p.placar_2 ?? p.placar_desafiado ?? NaN);
+  if (!Number.isFinite(s1) || !Number.isFinite(s2) || s1 === s2) return null;
+
+  if (s1 > s2) return { vencedorId: t1, perdedorId: t2 };
+  return { vencedorId: t2, perdedorId: t1 };
+}
+
 async function notifyUser(
   supabase: Awaited<ReturnType<typeof createClient>>,
   usuarioId: string | null | undefined,
@@ -384,6 +411,15 @@ export async function confirmarPlacarAction(formData: FormData) {
   }
 
   const now = new Date().toISOString();
+  const vp = vencedorPerdedorTimesColetivo({
+    time1_id: p.time1_id,
+    time2_id: p.time2_id,
+    vencedor_id: p.vencedor_id,
+    placar_1: p.placar_1,
+    placar_2: p.placar_2,
+    placar_desafiante: p.placar_desafiante,
+    placar_desafiado: p.placar_desafiado,
+  });
   const { error } = await ctx.supabase
     .from("partidas")
     .update({
@@ -391,6 +427,7 @@ export async function confirmarPlacarAction(formData: FormData) {
       status_ranking: "validado",
       data_validacao: now,
       data_resultado: now,
+      ...(vp ? { vencedor_id: vp.vencedorId, perdedor_id: vp.perdedorId } : {}),
     })
     .eq("id", partidaId);
   if (error) go(partidaId, "erro", "Não foi possível confirmar o placar.");
