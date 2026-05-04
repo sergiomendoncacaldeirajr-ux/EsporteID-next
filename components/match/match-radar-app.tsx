@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { Grid2x2, Handshake, Maximize2, Trophy, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -30,8 +31,9 @@ function cn(...xs: (string | false | undefined)[]) {
 
 /** Radar/desafio: só o primeiro nome (individual, dupla e time). */
 function compactCardName(fullName: string) {
-  const parts = fullName.trim().split(/\s+/u).filter(Boolean);
-  if (parts.length === 0) return fullName.trim() || "—";
+  const raw = String(fullName ?? "").trim();
+  const parts = raw.split(/\s+/u).filter(Boolean);
+  if (parts.length === 0) return raw || "—";
   return parts[0] ?? "—";
 }
 
@@ -424,6 +426,7 @@ export function MatchRadarApp({
   viewerEsportesIndividual,
   hideHero = false,
 }: Props) {
+  const router = useRouter();
   const [tipo, setTipo] = useState<RadarTipo>(initialTipo);
   const [sortBy, setSortBy] = useState<SortBy>(initialSortBy);
   const [raio, setRaio] = useState(initialRaio);
@@ -438,8 +441,15 @@ export function MatchRadarApp({
   const [filtrosMinimizados, setFiltrosMinimizados] = useState(true);
   const [radarFiltrosAbertos, setRadarFiltrosAbertos] = useState(false);
   const [amistosoLigado, setAmistosoLigado] = useState(viewerDisponivelAmistoso);
-  const [showEntryPrompt] = useState(() => {
-    if (typeof window === "undefined") return false;
+  const [entryError, setEntryError] = useState<string | null>(null);
+  const [hideOwnerChallengeHint, setHideOwnerChallengeHint] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const [showEntryPrompt, setShowEntryPrompt] = useState(false);
+  useEffect(() => {
     let skipPromptThisLoad = false;
     let declinedToday = false;
     try {
@@ -453,19 +463,18 @@ export function MatchRadarApp({
     } catch {
       declinedToday = false;
     }
-    return !skipPromptThisLoad && !viewerDisponivelAmistoso && !declinedToday;
-  });
-  const [showEntryInfo, setShowEntryInfo] = useState(() => {
-    if (typeof window === "undefined") return false;
+    setShowEntryPrompt(!skipPromptThisLoad && !viewerDisponivelAmistoso && !declinedToday);
+  }, [viewerDisponivelAmistoso]);
+
+  const [showEntryInfo, setShowEntryInfo] = useState(false);
+  useEffect(() => {
     try {
-      return window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY) !== "1";
+      setShowEntryInfo(window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY) !== "1");
     } catch {
-      return false;
+      setShowEntryInfo(false);
     }
-  });
-  const [entryError, setEntryError] = useState<string | null>(null);
-  const [hideOwnerChallengeHint, setHideOwnerChallengeHint] = useState(false);
-  const [mounted] = useState(() => typeof window !== "undefined");
+  }, []);
+
   const syncUrl = useCallback(
     (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
       const q = new URLSearchParams();
@@ -476,9 +485,9 @@ export function MatchRadarApp({
       q.set("finalidade", next.finalidade);
       q.set("view", viewMode);
       q.set("genero", generoFiltro);
-      window.history.replaceState(null, "", `/match?${q.toString()}`);
+      router.replace(`/match?${q.toString()}`, { scroll: false });
     },
-    [viewMode, generoFiltro]
+    [viewMode, generoFiltro, router]
   );
 
   const esporteIdsUnion = useMemo(
@@ -728,7 +737,7 @@ export function MatchRadarApp({
     q.set("finalidade", finalidade);
     q.set("view", next);
     q.set("genero", generoFiltro);
-    window.history.replaceState(null, "", `/match?${q.toString()}`);
+    router.replace(`/match?${q.toString()}`, { scroll: false });
     if (next === "full") {
       if (finalidade === "amistoso") {
         runRefresh({
@@ -1254,7 +1263,7 @@ export function MatchRadarApp({
                   q.set("finalidade", finalidade);
                   q.set("view", viewMode);
                   q.set("genero", key);
-                  window.history.replaceState(null, "", `/match?${q.toString()}`);
+                  router.replace(`/match?${q.toString()}`, { scroll: false });
                 }}
                 className={filterChip(generoFiltro === key, isPending)}
               >

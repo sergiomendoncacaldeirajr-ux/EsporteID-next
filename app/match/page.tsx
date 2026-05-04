@@ -1,7 +1,8 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { MatchLocationPrompt } from "@/components/match/match-location-prompt";
+import { MatchPageGridHero } from "@/components/match/match-page-grid-hero";
 import { MatchPageShell } from "@/components/match/match-page-shell";
-import { MatchRadarGridHero } from "@/components/match/match-radar-grid-hero";
 import { EidStreamSection } from "@/components/eid-stream-section";
 import { MatchRadarBodyStreamSkeleton } from "@/components/loading/match-radar-stream-skeleton";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
@@ -11,12 +12,7 @@ import { safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { MatchStreamRadar } from "./match-stream-radar";
-import {
-  redirectIfAmistosoViewInvalid,
-  toMatchFinalidade,
-  toViewMode,
-  type MatchPageSearch,
-} from "./match-search-params";
+import { redirectIfAmistosoViewInvalid, toViewMode, type MatchPageSearch } from "./match-search-params";
 
 export default async function MatchPage({ searchParams }: { searchParams?: Promise<MatchPageSearch> }) {
   const sp = (await searchParams) ?? {};
@@ -94,12 +90,20 @@ export default async function MatchPage({ searchParams }: { searchParams?: Promi
   return (
     <MatchPageShell fullBleed={initialView === "full"}>
       {urlIsGridView ? (
-        <MatchRadarGridHero
-          viewerId={user.id}
-          finalidade={toMatchFinalidade(sp.finalidade)}
-          viewerDisponivelAmistoso={viewerAmistosoOn}
-          viewerAmistosoExpiresAt={viewerAmistosoExpiresAt}
-        />
+        <Suspense
+          fallback={
+            <header
+              className={`eid-match-hero relative mb-3 mt-0 min-h-[7rem] overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}
+              aria-hidden
+            />
+          }
+        >
+          <MatchPageGridHero
+            viewerId={user.id}
+            viewerDisponivelAmistoso={viewerAmistosoOn}
+            viewerAmistosoExpiresAt={viewerAmistosoExpiresAt}
+          />
+        </Suspense>
       ) : null}
       <EidStreamSection
         className={urlIsGridView ? "mt-2 sm:mt-3" : undefined}

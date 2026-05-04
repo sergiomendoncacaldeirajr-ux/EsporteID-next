@@ -1,7 +1,7 @@
 "use client";
 
 import { Handshake, Loader2 } from "lucide-react";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { setViewerDisponivelAmistoso } from "@/app/match/actions";
 import {
   AMISTOSO_4H_AVISO_TEXTO,
@@ -47,6 +47,8 @@ export function MatchFriendlyToggle({
   const [showFirstUsePrompt, setShowFirstUsePrompt] = useState(false);
   const [pendingFirstUseActivate, setPendingFirstUseActivate] = useState(false);
   const [pendingDirection, setPendingDirection] = useState<"on" | "off" | null>(null);
+  const onStateChangeRef = useRef(onStateChange);
+  onStateChangeRef.current = onStateChange;
 
   useEffect(() => {
     const sb = createClient();
@@ -63,14 +65,14 @@ export function MatchFriendlyToggle({
           const eff = computeDisponivelAmistosoEffective(row.disponivel_amistoso, row.disponivel_amistoso_ate);
           setOn(eff);
           setExpiresAt(eff ? (row.disponivel_amistoso_ate ?? null) : null);
-          onStateChange?.(eff);
+          onStateChangeRef.current?.(eff);
         }
       )
       .subscribe();
     return () => {
       void sb.removeChannel(channel);
     };
-  }, [userId, onStateChange]);
+  }, [userId]);
 
   useEffect(() => {
     if (!on || !expiresAt) return;

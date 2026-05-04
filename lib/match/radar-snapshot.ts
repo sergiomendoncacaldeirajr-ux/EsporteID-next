@@ -797,7 +797,7 @@ export function filterAndSortRadarCards(
       if (a.dist !== b.dist) return a.dist - b.dist;
       if (sortBy === "match_ranking_points" && b.rank !== a.rank) return b.rank - a.rank;
       if (sortBy === "eid_score" && b.eid !== a.eid) return b.eid - a.eid;
-      return a.nome.localeCompare(b.nome, "pt-BR");
+      return String(a.nome ?? "").localeCompare(String(b.nome ?? ""), "pt-BR");
     })
     .slice(0, 40);
 }
