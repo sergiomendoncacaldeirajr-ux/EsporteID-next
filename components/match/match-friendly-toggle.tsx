@@ -2,6 +2,7 @@
 
 import { Handshake, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { setViewerDisponivelAmistoso } from "@/app/match/actions";
 import {
   AMISTOSO_4H_AVISO_TEXTO,
@@ -50,6 +51,7 @@ export function MatchFriendlyToggle({
   const [showFirstUsePrompt, setShowFirstUsePrompt] = useState(false);
   const [pendingFirstUseActivate, setPendingFirstUseActivate] = useState(false);
   const [pendingDirection, setPendingDirection] = useState<"on" | "off" | null>(null);
+  const [domReady, setDomReady] = useState(false);
   const onStateChangeRef = useRef(onStateChange);
   onStateChangeRef.current = onStateChange;
   const onAmistosoActivatedRef = useRef(onAmistosoActivated);
@@ -62,6 +64,10 @@ export function MatchFriendlyToggle({
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
   }
+
+  useEffect(() => {
+    setDomReady(true);
+  }, []);
 
   useEffect(() => {
     const sb = createClient();
@@ -107,20 +113,22 @@ export function MatchFriendlyToggle({
     setExpiresAt(next ? new Date(Date.now() + AMISTOSO_DURACAO_MS).toISOString() : null);
     onStateChangeRef.current?.(next);
     setPendingDirection(next ? "on" : "off");
-    startTransition(async () => {
-      try {
-        const res = await setViewerDisponivelAmistoso(next);
-        if (!res.ok) {
-          setOn(!next);
-          setExpiresAt(null);
-          onStateChangeRef.current?.(!next);
-        } else if (next) {
-          onAmistosoActivatedRef.current?.();
+    startTransition(() => {
+      void (async () => {
+        try {
+          const res = await setViewerDisponivelAmistoso(next);
+          if (!res.ok) {
+            setOn(!next);
+            setExpiresAt(null);
+            onStateChangeRef.current?.(!next);
+          } else if (next) {
+            onAmistosoActivatedRef.current?.();
+          }
+        } finally {
+          setPendingDirection(null);
+          setPendingFirstUseActivate(false);
         }
-      } finally {
-        setPendingDirection(null);
-        setPendingFirstUseActivate(false);
-      }
+      })();
     });
   }
 
@@ -175,93 +183,79 @@ export function MatchFriendlyToggle({
           <span>Amistoso off</span>
         )}
       </span>
-      {showFirstUsePrompt && !prominentActivate ? (
-        <span className="absolute inset-x-0 top-[calc(100%+6px)] z-20 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-2 text-left shadow-[0_14px_28px_-20px_rgba(2,6,23,0.9)]">
-          <span className="block text-[9px] font-semibold normal-case leading-relaxed tracking-normal text-eid-text-secondary">
-            {AMISTOSO_4H_AVISO_TEXTO}
-          </span>
-          <span className="mt-2 flex items-center justify-end gap-1.5">
-            <button
-              type="button"
-              className="rounded-md border border-[color:var(--eid-border-subtle)] px-2 py-1 text-[8px] font-bold uppercase tracking-[0.06em] text-eid-text-secondary"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (pendingFirstUseActivate) return;
-                setShowFirstUsePrompt(false);
-              }}
-            >
-              Não
-            </button>
-            <button
-              type="button"
-              className="inline-flex min-w-[78px] items-center justify-center gap-1 rounded-md border border-emerald-400/35 bg-emerald-500/12 px-2 py-1 text-[8px] font-bold uppercase tracking-[0.06em] text-emerald-300"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (pendingFirstUseActivate) return;
-                setPendingFirstUseActivate(true);
-                marcarAmistoso4hFirstUseWarningAceito();
-                setShowFirstUsePrompt(false);
-                applyToggle(true);
-              }}
-            >
-              {pendingFirstUseActivate ? <Loader2 className="h-[1em] w-[1em] animate-spin" aria-hidden /> : null}
-              {pendingFirstUseActivate ? "Ligando..." : "Sim"}
-            </button>
-          </span>
-        </span>
-      ) : null}
     </button>
   );
+
+  const firstUsePortal =
+    showFirstUsePrompt && domReady && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[820] flex items-end justify-center bg-black/55 px-2.5 pb-[calc(var(--eid-shell-footer-offset)+2.25rem)] pt-2.5 sm:items-center sm:p-4"
+            role="presentation"
+            onClick={(e) => {
+              if (e.target === e.currentTarget && !pendingFirstUseActivate) setShowFirstUsePrompt(false);
+            }}
+          >
+            <div
+              className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_20px_40px_-22px_rgba(2,6,23,0.7)] sm:p-4"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="match-friendly-firstuse-title"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p id="match-friendly-firstuse-title" className="text-sm font-black text-eid-fg">
+                Você quer jogar um amistoso hoje?
+              </p>
+              <p className="mt-1.5 text-[11px] leading-snug text-eid-text-secondary">
+                Amistoso são jogos amigáveis que não somam pontos no ranking. Se quiser ficar disponível para jogos rápidos
+                com pessoas próximas, toque em <span className="font-semibold text-eid-primary-300">Sim</span>.
+              </p>
+              <p className="mt-2 text-[11px] leading-snug text-eid-text-secondary">{AMISTOSO_4H_AVISO_TEXTO}</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  disabled={pendingFirstUseActivate}
+                  className="eid-btn-match-cta inline-flex min-h-[44px] items-center justify-center rounded-xl px-3 text-[12px] font-black uppercase tracking-[0.08em] disabled:opacity-55"
+                  onClick={() => {
+                    if (pendingFirstUseActivate) return;
+                    setPendingFirstUseActivate(true);
+                    marcarAmistoso4hFirstUseWarningAceito();
+                    setShowFirstUsePrompt(false);
+                    applyToggle(true);
+                  }}
+                >
+                  {pendingFirstUseActivate ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+                      Ativando…
+                    </span>
+                  ) : (
+                    "Sim"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  disabled={pendingFirstUseActivate}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-3 text-[12px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35 disabled:opacity-55"
+                  onClick={() => {
+                    if (pendingFirstUseActivate) return;
+                    setShowFirstUsePrompt(false);
+                  }}
+                >
+                  Não
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
 
   if (prominentActivate) {
     return (
       <div className="flex w-full min-w-0 flex-col gap-2.5">
         {compactToggle}
-        {showFirstUsePrompt ? (
-          <div
-            className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-3 text-left shadow-[0_14px_28px_-20px_rgba(2,6,23,0.9)]"
-            role="dialog"
-            aria-label="Confirmação modo amistoso"
-          >
-            <p className="text-[11px] font-semibold normal-case leading-relaxed tracking-normal text-eid-text-secondary sm:text-xs">
-              {AMISTOSO_4H_AVISO_TEXTO}
-            </p>
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                disabled={pendingFirstUseActivate}
-                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/80 px-3 text-[11px] font-bold uppercase tracking-[0.06em] text-eid-text-secondary transition hover:bg-eid-surface disabled:opacity-50"
-                onClick={() => {
-                  if (pendingFirstUseActivate) return;
-                  setShowFirstUsePrompt(false);
-                }}
-              >
-                Não
-              </button>
-              <button
-                type="button"
-                disabled={pendingFirstUseActivate}
-                className="eid-btn-primary inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 text-[11px] font-black uppercase tracking-[0.06em] disabled:opacity-55"
-                onClick={() => {
-                  if (pendingFirstUseActivate) return;
-                  setPendingFirstUseActivate(true);
-                  marcarAmistoso4hFirstUseWarningAceito();
-                  setShowFirstUsePrompt(false);
-                  applyToggle(true);
-                }}
-              >
-                {pendingFirstUseActivate ? (
-                  <>
-                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
-                    Ligando...
-                  </>
-                ) : (
-                  "Sim, ligar"
-                )}
-              </button>
-            </div>
-          </div>
-        ) : null}
+        {firstUsePortal}
         {!effectiveOn && !showFirstUsePrompt ? (
           <button
             type="button"
@@ -292,5 +286,10 @@ export function MatchFriendlyToggle({
     );
   }
 
-  return compactToggle;
+  return (
+    <>
+      {compactToggle}
+      {firstUsePortal}
+    </>
+  );
 }

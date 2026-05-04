@@ -2,7 +2,8 @@ import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { fetchDashboardRankingCooldownBlocklists } from "@/lib/match/dashboard-ranking-cooldown-blocklists";
-import { type AtletaRow, firstProfile } from "./dashboard-helpers";
+import { fetchMatchRadarCardsTodasMerged, type MatchRadarCard } from "@/lib/match/radar-snapshot";
+import { type AtletaRow, type ProfileMini } from "./dashboard-helpers";
 
 export type DashboardRadarTeamsArgs = {
   supabase: SupabaseClient;
@@ -39,7 +40,7 @@ export type TimeRadarRow = {
 };
 
 export type DashboardRadarSpotlightPayload = {
-  atletaMaisProximo: { row: AtletaRow; p: ReturnType<typeof firstProfile>; dist: number } | null;
+  atletaMaisProximo: { row: AtletaRow; p: ProfileMini | null; dist: number } | null;
   duplaMaisProxima: { t: TimeRadarRow; dist: number } | null;
   timeMaisProximo: { t: TimeRadarRow; dist: number } | null;
   esporteCardNome: string;
@@ -92,17 +93,42 @@ async function fetchTimeRosterHeadcountsMap(supabase: SupabaseClient, teamRoster
   return teamRosterMap;
 }
 
-/** Formação ainda com vaga / carência: não deve aparecer em “Confrontos próximos”. */
-function formacaoTemCarenciaOuRecrutando(t: TimeRadarRow, rosterMap: Map<number, number>): boolean {
-  const id = Number(t.id ?? 0);
-  if (!Number.isFinite(id) || id < 1) return true;
-  const tipo = String(t.tipo ?? "").trim().toLowerCase();
-  const cap = tipo === "dupla" ? 2 : 18;
-  const head = rosterMap.get(id) ?? 1;
-  const vagasDisponiveis = Math.max(0, cap - head);
-  if (vagasDisponiveis > 0) return true;
-  if (Boolean(t.vagas_abertas)) return true;
-  return false;
+/** Mesma origem que `/match?tipo=todas` (`includeActiveOpponents: true` + RPCs + filtro de carência). */
+function individualCardToAtletaSpotlight(c: MatchRadarCard): {
+  row: AtletaRow;
+  p: ProfileMini | null;
+  dist: number;
+} {
+  const p: ProfileMini = {
+    id: c.id,
+    nome: c.nome,
+    avatar_url: c.avatarUrl,
+    localizacao: c.localizacao,
+    disponivel_amistoso: c.disponivelAmistoso,
+    match_maioridade_confirmada: true,
+  };
+  return {
+    row: { nota_eid: c.eid, usuario_id: c.id, profiles: p },
+    p,
+    dist: c.dist,
+  };
+}
+
+function formationCardToTimeSpotlight(c: MatchRadarCard): { t: TimeRadarRow; dist: number } {
+  const tid = Number(c.id);
+  return {
+    t: {
+      id: Number.isFinite(tid) ? tid : null,
+      nome: c.nome,
+      tipo: c.modalidade === "dupla" ? "dupla" : "time",
+      localizacao: c.localizacao,
+      escudo: c.avatarUrl,
+      esporte_id: c.esporteId,
+      pontos_ranking: c.rank,
+      eid_time: c.eid,
+    },
+    dist: c.dist,
+  };
 }
 
 async function loadDashboardRadarSpotlightUncached(args: DashboardRadarTeamsArgs): Promise<DashboardRadarSpotlightPayload> {
@@ -123,18 +149,6 @@ async function loadDashboardRadarSpotlightUncached(args: DashboardRadarTeamsArgs
     matchHref,
   } = args;
 
-  let atletasQuery = supabase
-    .from("usuario_eid")
-    .select(
-      "nota_eid, usuario_id, profiles!inner(id, nome, avatar_url, localizacao, lat, lng, disponivel_amistoso, disponivel_amistoso_ate, match_maioridade_confirmada)",
-    )
-    .neq("usuario_id", userId)
-    .order("nota_eid", { ascending: false })
-    .limit(80);
-  if (esportePrincipalId != null) {
-    atletasQuery = atletasQuery.eq("esporte_id", esportePrincipalId);
-  }
-
   const esportesParaFiltro = Array.from(meusEsportesSet);
   let timesQuery = supabase
     .from("times")
@@ -146,70 +160,75 @@ async function loadDashboardRadarSpotlightUncached(args: DashboardRadarTeamsArgs
     timesQuery = timesQuery.in("esporte_id", esportesParaFiltro);
   }
 
-  const [
-    { data: atletasRaw },
-    { data: timesRaw },
-    { data: minhasFormacoesMembro },
-    { data: pendingColetivoRows },
-    { blockedUserIds: rankingCooldownUserIds, blockedTeamIds: rankingCooldownTeamIds },
-  ] = await Promise.all([
-    atletasQuery,
-    timesQuery,
-    supabase.from("membros_time").select("time_id").eq("usuario_id", userId).in("status", ["ativo", "aceito", "aprovado"]),
-    dashTeamIds.length > 0
-      ? supabase
-          .from("matches")
-          .select("desafiante_time_id, adversario_time_id")
-          .eq("status", "Pendente")
-          .eq("finalidade", "ranking")
-          .in("modalidade_confronto", ["dupla", "time"])
-          .or(`desafiante_time_id.in.(${myTeamsInClause}),adversario_time_id.in.(${myTeamsInClause})`)
-      : Promise.resolve({ data: [] as Array<{ desafiante_time_id?: number | null; adversario_time_id?: number | null }> }),
-    fetchDashboardRankingCooldownBlocklists(supabase, {
-      viewerId: userId,
-      esporteId: esportePrincipalId,
-      viewerTeamIds: dashTeamIds,
-    }),
-  ]);
+  const [{ data: timesRaw }, { data: minhasFormacoesMembro }, { data: pendingColetivoRows }, { blockedTeamIds: rankingCooldownTeamIds }] =
+    await Promise.all([
+      timesQuery,
+      supabase.from("membros_time").select("time_id").eq("usuario_id", userId).in("status", ["ativo", "aceito", "aprovado"]),
+      dashTeamIds.length > 0
+        ? supabase
+            .from("matches")
+            .select("desafiante_time_id, adversario_time_id")
+            .eq("status", "Pendente")
+            .eq("finalidade", "ranking")
+            .in("modalidade_confronto", ["dupla", "time"])
+            .or(`desafiante_time_id.in.(${myTeamsInClause}),adversario_time_id.in.(${myTeamsInClause})`)
+        : Promise.resolve({ data: [] as Array<{ desafiante_time_id?: number | null; adversario_time_id?: number | null }> }),
+      fetchDashboardRankingCooldownBlocklists(supabase, {
+        viewerId: userId,
+        esporteId: esportePrincipalId,
+        viewerTeamIds: dashTeamIds,
+      }),
+    ]);
 
-  const atletasRows = (atletasRaw ?? []) as AtletaRow[];
-  const atletasRowsFiltered = atletasRows.filter((row) => {
-    const p = firstProfile(row.profiles);
-    const id = String(p?.id ?? row.usuario_id ?? "");
-    const maioridadeOk = p?.match_maioridade_confirmada === true;
-    return id
-      ? !activeOpponentIds.has(id) && !rankingCooldownUserIds.has(id) && maioridadeOk
-      : false;
-  });
-  let atletasComDist: Array<{ row: AtletaRow; p: ReturnType<typeof firstProfile>; dist: number }> = atletasRowsFiltered.map(
-    (row) => {
-      const p = firstProfile(row.profiles);
-      const lat = Number(p?.lat ?? NaN);
-      const lng = Number(p?.lng ?? NaN);
-      const dist = hasMyCoords ? distanciaKm(myLat, myLng, lat, lng) : 99999;
-      return { row, p, dist };
-    },
-  );
-  atletasComDist.sort((a, b) => {
-    if (hasMyCoords) return a.dist - b.dist;
-    return Number(b.row.nota_eid ?? 0) - Number(a.row.nota_eid ?? 0);
-  });
-  const seenAtleta = new Set<string>();
-  atletasComDist = atletasComDist.filter(({ p }) => {
-    const id = String(p?.id ?? "");
-    if (!id) return false;
-    if (seenAtleta.has(id)) return false;
-    seenAtleta.add(id);
-    return true;
-  });
-  const atletasFiltrados = atletasComDist
-    .filter(({ p }) => {
-      if (!q) return true;
-      const nome = String(p?.nome ?? "").toLowerCase();
-      const loc = String(p?.localizacao ?? "").toLowerCase();
-      return nome.includes(q) || loc.includes(q);
-    })
-    .slice(0, 12);
+  const esporteIdsRadar =
+    esportePrincipalId != null && Number(esportePrincipalId) > 0
+      ? [String(esportePrincipalId)]
+      : [...meusEsportesSet].filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b).map(String);
+
+  let atletaMaisProximo: { row: AtletaRow; p: ProfileMini | null; dist: number } | null = null;
+  let duplaMaisProxima: { t: TimeRadarRow; dist: number } | null = null;
+  let timeMaisProximo: { t: TimeRadarRow; dist: number } | null = null;
+
+  if (esporteIdsRadar.length > 0) {
+    const latR = Number.isFinite(myLat) ? myLat : 0;
+    const lngR = Number.isFinite(myLng) ? myLng : 0;
+    const merged = await fetchMatchRadarCardsTodasMerged(supabase, {
+      viewerId: userId,
+      sortBy: "match_ranking_points",
+      raio: 30,
+      esporteIds: esporteIdsRadar,
+      lat: latR,
+      lng: lngR,
+      finalidade: "ranking",
+      viewerTeamIds: dashTeamIds,
+    });
+    let pool = [...merged].sort((a, b) => a.dist - b.dist);
+    if (meusEsportesSet.size > 0) {
+      pool = pool.filter((c) => meusEsportesSet.has(Number(c.esporteId ?? 0)));
+    }
+    if (q) {
+      const ql = q.toLowerCase();
+      pool = pool.filter(
+        (c) => String(c.nome ?? "").toLowerCase().includes(ql) || String(c.localizacao ?? "").toLowerCase().includes(ql),
+      );
+    }
+    const seen = new Set<string>();
+    pool = pool.filter((c) => {
+      const key = `${c.modalidade}:${c.id}:${c.esporteId}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    const cardInd = pool.find((c) => c.modalidade === "individual");
+    const cardDupla = pool.find((c) => c.modalidade === "dupla");
+    const cardTime = pool.find((c) => c.modalidade === "time");
+    if (cardInd) {
+      const s = individualCardToAtletaSpotlight(cardInd);
+      atletaMaisProximo = s.p ? { row: s.row, p: s.p, dist: s.dist } : null;
+    }
+    if (cardDupla) duplaMaisProxima = formationCardToTimeSpotlight(cardDupla);
+    if (cardTime) timeMaisProximo = formationCardToTimeSpotlight(cardTime);
+  }
 
   const timeIdsComDesafioRankingPendente = new Set<number>();
   for (const m of pendingColetivoRows ?? []) {
@@ -273,20 +292,6 @@ async function loadDashboardRadarSpotlightUncached(args: DashboardRadarTeamsArgs
       return String(t.nome ?? "").toLowerCase().includes(q) || String(t.localizacao ?? "").toLowerCase().includes(q);
     })
     .filter(({ t }) => meusEsportesSet.size === 0 || meusEsportesSet.has(Number(t.esporte_id ?? 0)));
-
-  const spotlightTeamIds = [
-    ...new Set(timesComBusca.map(({ t }) => Number(t.id ?? 0)).filter((id) => Number.isFinite(id) && id > 0)),
-  ];
-  const spotlightRosterMap = await fetchTimeRosterHeadcountsMap(supabase, spotlightTeamIds);
-  const timesComBuscaSemCarencia = timesComBusca.filter(
-    ({ t }) => !formacaoTemCarenciaOuRecrutando(t, spotlightRosterMap),
-  );
-
-  const atletaMaisProximo = atletasFiltrados[0] ?? null;
-  const duplaMaisProxima =
-    timesComBuscaSemCarencia.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "dupla") ?? null;
-  const timeMaisProximo =
-    timesComBuscaSemCarencia.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "time") ?? null;
 
   return {
     atletaMaisProximo,

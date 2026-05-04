@@ -8,6 +8,11 @@ import { Grid2x2, Handshake, Maximize2, Trophy, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { refreshMatchRadarAction, setViewerDisponivelAmistoso } from "@/app/match/actions";
+import {
+  AMISTOSO_4H_AVISO_TEXTO,
+  amistoso4hFirstUseWarningJaAceito,
+  marcarAmistoso4hFirstUseWarningAceito,
+} from "@/lib/perfil/amistoso-4h-first-warning";
 import type { EsporteConfrontoRow } from "@/lib/match/esportes-confronto";
 import type { MatchRadarCard, MatchRadarFinalidade, RadarTipo, SortBy } from "@/lib/match/radar-snapshot";
 import { MatchFriendlyToggle } from "@/components/match/match-friendly-toggle";
@@ -448,6 +453,18 @@ export function MatchRadarApp({
     setMounted(true);
   }, []);
 
+  /** Modal ao entrar na aba amistoso sem disponibilidade — mesmo texto da primeira visita ao Match. */
+  const [amistosoGatePending, setAmistosoGatePending] = useState(false);
+  const [amistosoGateError, setAmistosoGateError] = useState<string | null>(null);
+  const [amistosoGateShowInfo, setAmistosoGateShowInfo] = useState(false);
+  useEffect(() => {
+    try {
+      setAmistosoGateShowInfo(window.localStorage.getItem(MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY) !== "1");
+    } catch {
+      setAmistosoGateShowInfo(false);
+    }
+  }, []);
+
   const [showEntryPrompt, setShowEntryPrompt] = useState(false);
   useEffect(() => {
     let skipPromptThisLoad = false;
@@ -671,10 +688,17 @@ export function MatchRadarApp({
     ]
   );
 
-  /** Após ligar disponibilidade no servidor: garante filtro “desafio amistoso”, URL e lista atualizados. */
+  /**
+   * Após ligar disponibilidade no servidor: se já estamos na aba amistoso, só atualiza os cartões.
+   * Evita `applyFilters` redundante (router.replace + nova transição), que costumava “travar” a UI.
+   */
   const onAmistosoActivated = useCallback(() => {
-    applyFilters({ finalidade: "amistoso" });
-  }, [applyFilters]);
+    if (finalidade !== "amistoso") {
+      applyFilters({ finalidade: "amistoso" });
+      return;
+    }
+    runRefresh({ tipo, sortBy, raio, esporte, finalidade: "amistoso" });
+  }, [applyFilters, finalidade, runRefresh, tipo, sortBy, raio, esporte]);
 
   const esporteOptions = useMemo(() => {
     const allowed = isFullView
@@ -756,6 +780,37 @@ export function MatchRadarApp({
         runRefreshFull({ sortBy, raio, esporte: "all" });
       }
     }
+  }
+
+  async function handleAmistosoGateSim() {
+    setAmistosoGateError(null);
+    setAmistosoGatePending(true);
+    try {
+      try {
+        window.localStorage.setItem(MATCH_AMISTOSO_ENTRY_INFO_SEEN_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+      setAmistosoGateShowInfo(false);
+      if (!amistoso4hFirstUseWarningJaAceito()) {
+        marcarAmistoso4hFirstUseWarningAceito();
+      }
+      const res = await setViewerDisponivelAmistoso(true);
+      if (!res.ok) {
+        setAmistosoGateError("Não foi possível ativar o modo amistoso agora. Tente novamente.");
+        return;
+      }
+      setAmistosoLigado(true);
+      runRefresh({ tipo, sortBy, raio, esporte, finalidade: "amistoso" });
+    } finally {
+      setAmistosoGatePending(false);
+    }
+  }
+
+  function handleAmistosoGateNao() {
+    if (amistosoGatePending) return;
+    setAmistosoGateError(null);
+    applyFilters({ finalidade: "ranking" });
   }
 
   async function handleEntryChoice(wantsAmistoso: boolean) {
@@ -1377,23 +1432,57 @@ export function MatchRadarApp({
         ) : null}
         {finalidade === "amistoso" && !amistosoLigado && mounted
           ? createPortal(
-              <div className="fixed inset-0 z-[805] flex items-center justify-center bg-black/55 px-3">
-                <div className="w-full max-w-md rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-border-subtle)_66%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)_88%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-3 shadow-[0_16px_40px_-20px_rgba(2,6,23,0.78)] sm:p-4">
-                  <p className="text-[11px] leading-snug text-eid-fg sm:text-xs">
-                    Para funcionar no <span className="font-semibold text-eid-primary-300">modo amistoso</span>, ligue
-                    sua disponibilidade. Sempre que quiser jogo rapido e amigavel, basta ativar para que usuarios
-                    proximos possam te encontrar.
+              <div
+                className="fixed inset-0 z-[805] flex items-end justify-center bg-black/55 px-2.5 pb-[calc(var(--eid-shell-footer-offset)+2.25rem)] pt-2.5 sm:items-center sm:p-4"
+                role="presentation"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) handleAmistosoGateNao();
+                }}
+              >
+                <div
+                  className="w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_20px_40px_-22px_rgba(2,6,23,0.7)] sm:p-4"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="match-amistoso-gate-title"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <p id="match-amistoso-gate-title" className="text-sm font-black text-eid-fg">
+                    Você quer jogar um amistoso hoje?
                   </p>
-                  <div className="mt-2">
-                    <MatchFriendlyToggle
-                      initialOn={viewerDisponivelAmistoso}
-                      initialExpiresAt={viewerAmistosoExpiresAt}
-                      userId={viewerId}
-                      className="!max-w-full"
-                      onStateChange={setAmistosoLigado}
-                      onAmistosoActivated={onAmistosoActivated}
-                      prominentActivate
-                    />
+                  {amistosoGateShowInfo ? (
+                    <p className="mt-1.5 text-[11px] leading-snug text-eid-text-secondary">
+                      Amistoso são jogos amigáveis que não somam pontos no ranking. Se quiser ficar disponível para jogos
+                      rápidos com pessoas próximas, toque em <span className="font-semibold text-eid-primary-300">Sim</span>.
+                    </p>
+                  ) : null}
+                  {!amistoso4hFirstUseWarningJaAceito() ? (
+                    <p className="mt-2 text-[11px] leading-snug text-eid-text-secondary">{AMISTOSO_4H_AVISO_TEXTO}</p>
+                  ) : null}
+                  {amistosoGateError ? <p className="mt-1.5 text-[11px] text-red-300">{amistosoGateError}</p> : null}
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleAmistosoGateSim()}
+                      disabled={amistosoGatePending}
+                      className="eid-btn-match-cta inline-flex min-h-[44px] items-center justify-center rounded-xl px-3 text-[12px] font-black uppercase tracking-[0.08em] disabled:opacity-55"
+                    >
+                      {amistosoGatePending ? (
+                        <span className="inline-flex items-center gap-2">
+                          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-white/35 border-t-white" aria-hidden />
+                          Ativando…
+                        </span>
+                      ) : (
+                        "Sim"
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAmistosoGateNao}
+                      disabled={amistosoGatePending}
+                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-3 text-[12px] font-black uppercase tracking-[0.08em] text-eid-fg transition hover:border-eid-primary-500/35 disabled:opacity-55"
+                    >
+                      Não
+                    </button>
                   </div>
                 </div>
               </div>,
