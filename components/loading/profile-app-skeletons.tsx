@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { SkBlock } from "@/components/loading/skeleton-primitives";
-import { PerfilMobileBottomPad } from "@/components/perfil/perfil-mobile-bottom-pad";
 import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS, PROFILE_SECTION_TITLE } from "@/components/perfil/profile-ui-tokens";
 
 /** Mesmas classes do `DashboardTopbar` (sticky, blur, safe-area). */
@@ -113,7 +112,6 @@ export function ProfilePublicRouteLoadingCompact() {
       data-eid-no-route-enter
       className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-progressive-enter`}
     >
-      <PerfilMobileBottomPad />
       <ProfilePublicHeroSkeleton />
       <ProfilePublicBelowFoldSkeleton />
     </main>
