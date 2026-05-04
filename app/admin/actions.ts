@@ -9,6 +9,8 @@ import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger"
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { getPresetForSport } from "@/lib/desafio/score-rules";
+import { revalidateAfterTimeRosterOrConviteChange } from "@/lib/comunidade/revalidate-time-social-paths";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 function svc() {
   if (!hasServiceRoleConfig()) throw new Error("Service role não configurada.");
@@ -87,6 +89,85 @@ function revalidateAdminPartidaPaths(partidaId: number, torneioId: number, inclu
   if (Number.isFinite(torneioId) && torneioId > 0) {
     revalidatePath(`/torneios/${torneioId}`);
     revalidatePath(`/torneios/${torneioId}/operacao`);
+  }
+}
+
+function matchConfirmadoAdminUpdate() {
+  return {
+    status: "Concluido" as const,
+    data_confirmacao: new Date().toISOString(),
+    cancel_requested_by: null as string | null,
+    wo_auto_if_no_result: false,
+  };
+}
+
+type PartidaRowMatchesPar = {
+  match_id: number | null;
+  torneio_id: number | null;
+  esporte_id: number | null;
+  time1_id: number | null;
+  time2_id: number | null;
+  jogador1_id: string | null;
+  jogador2_id: string | null;
+};
+
+/** Fecha o `match_id` e demais desafios de ranking entre o mesmo par (exceto já cancelados), para carência e radar refletirem o resultado do admin. */
+async function fecharMatchesRankingParAdmin(db: SupabaseClient, partida: PartidaRowMatchesPar) {
+  const confirmPatch = matchConfirmadoAdminUpdate();
+  const matchId = Number(partida.match_id ?? 0);
+  if (Number.isFinite(matchId) && matchId > 0) {
+    await db.from("matches").update(confirmPatch).eq("id", matchId);
+  }
+
+  const torneioIdNum = Number(partida.torneio_id ?? 0);
+  const esporteIdNum = Number(partida.esporte_id ?? 0);
+  if (Number.isFinite(torneioIdNum) && torneioIdNum > 0) return;
+  if (!Number.isFinite(esporteIdNum) || esporteIdNum < 1) return;
+
+  const t1 = Number(partida.time1_id ?? 0);
+  const t2 = Number(partida.time2_id ?? 0);
+  if (Number.isFinite(t1) && Number.isFinite(t2) && t1 > 0 && t2 > 0) {
+    await db
+      .from("matches")
+      .update(confirmPatch)
+      .eq("esporte_id", esporteIdNum)
+      .eq("finalidade", "ranking")
+      .neq("status", "Cancelado")
+      .or(
+        `and(desafiante_time_id.eq.${t1},adversario_time_id.eq.${t2}),and(desafiante_time_id.eq.${t2},adversario_time_id.eq.${t1})`
+      );
+    return;
+  }
+
+  const j1 = String(partida.jogador1_id ?? "").trim();
+  const j2 = String(partida.jogador2_id ?? "").trim();
+  if (j1 && j2) {
+    await db
+      .from("matches")
+      .update(confirmPatch)
+      .eq("esporte_id", esporteIdNum)
+      .eq("finalidade", "ranking")
+      .neq("status", "Cancelado")
+      .or(`and(usuario_id.eq.${j1},adversario_id.eq.${j2}),and(usuario_id.eq.${j2},adversario_id.eq.${j1})`);
+  }
+}
+
+async function revalidatePerfisELigadosPartidaAdmin(db: SupabaseClient, partida: PartidaRowMatchesPar) {
+  const j1 = String(partida.jogador1_id ?? "").trim();
+  const j2 = String(partida.jogador2_id ?? "").trim();
+  if (j1) {
+    revalidatePath(`/perfil/${j1}`);
+    revalidatePath(`/perfil/${j1}/historico`);
+  }
+  if (j2) {
+    revalidatePath(`/perfil/${j2}`);
+    revalidatePath(`/perfil/${j2}/historico`);
+  }
+  for (const tid of [Number(partida.time1_id ?? 0), Number(partida.time2_id ?? 0)]) {
+    if (!Number.isFinite(tid) || tid < 1) continue;
+    const { data: team } = await db.from("times").select("criador_id").eq("id", tid).maybeSingle();
+    const leader = String(team?.criador_id ?? "").trim();
+    if (leader) await revalidateAfterTimeRosterOrConviteChange(db, { timeId: tid, leaderId: leader });
   }
 }
 
@@ -212,26 +293,20 @@ export async function adminDefinirResultadoPartida(formData: FormData) {
     const db = svc();
     const { data: partida } = await db
       .from("partidas")
-      .select("id, match_id, torneio_id, jogador1_id, jogador2_id, time1_id, time2_id")
+      .select("id, match_id, torneio_id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id")
       .eq("id", partidaId)
       .maybeSingle();
     if (!partida) {
       redirect("/admin/partidas?adm_flash=partida_resultado_invalido");
     }
 
-    const vencedorId =
-      winnerSide === "1"
-        ? partida.time1_id ?? partida.jogador1_id ?? null
-        : partida.time2_id ?? partida.jogador2_id ?? null;
-
-    let perdedorId: number | null = null;
-    if (partida.time1_id != null && partida.time2_id != null && vencedorId != null) {
-      const t1 = Number(partida.time1_id);
-      const t2 = Number(partida.time2_id);
-      const w = Number(vencedorId);
-      if (w === t1) perdedorId = t2;
-      else if (w === t2) perdedorId = t1;
-    }
+    const t1n = partida.time1_id != null ? Number(partida.time1_id) : null;
+    const t2n = partida.time2_id != null ? Number(partida.time2_id) : null;
+    const isColetivo =
+      t1n != null && t2n != null && Number.isFinite(t1n) && Number.isFinite(t2n) && t1n > 0 && t2n > 0;
+    const vencedorId = isColetivo ? (winnerSide === "1" ? t1n : t2n) : null;
+    const perdedorId =
+      isColetivo && vencedorId != null ? (vencedorId === t1n ? t2n : t1n) : null;
 
     const { error } = await db
       .from("partidas")
@@ -244,7 +319,7 @@ export async function adminDefinirResultadoPartida(formData: FormData) {
         placar_desafiado: null,
         placar: `${Math.trunc(placar1)}x${Math.trunc(placar2)}`,
         vencedor_id: vencedorId,
-        ...(perdedorId != null ? { perdedor_id: perdedorId } : {}),
+        perdedor_id: perdedorId,
         lancado_por: null,
         mensagem: "Resultado definido por mediação administrativa.",
         data_resultado: new Date().toISOString(),
@@ -255,19 +330,9 @@ export async function adminDefinirResultadoPartida(formData: FormData) {
       redirect("/admin/partidas?adm_flash=partida_resultado_erro");
     }
 
-    const matchId = Number(partida.match_id ?? 0);
-    if (Number.isFinite(matchId) && matchId > 0) {
-      await db
-        .from("matches")
-        .update({
-          status: "Concluido",
-          data_confirmacao: new Date().toISOString(),
-          cancel_requested_by: null,
-          wo_auto_if_no_result: false,
-        })
-        .eq("id", matchId);
-    }
+    await fecharMatchesRankingParAdmin(db, partida as PartidaRowMatchesPar);
     revalidateAdminPartidaPaths(partidaId, Number(partida.torneio_id ?? 0));
+    await revalidatePerfisELigadosPartidaAdmin(db, partida as PartidaRowMatchesPar);
     redirect("/admin/partidas?adm_flash=partida_resultado_ok");
   } catch (error) {
     if (isRedirectError(error)) throw error;
@@ -287,7 +352,7 @@ export async function adminMediarResultadoDaDenuncia(formData: FormData) {
     }
     const { data: partida } = await db
       .from("partidas")
-      .select("id, match_id, torneio_id, jogador1_id, jogador2_id, time1_id, time2_id")
+      .select("id, match_id, torneio_id, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id")
       .eq("id", partidaId)
       .maybeSingle();
     if (!partida) redirect("/admin/denuncias?adm_flash=mediacao_invalida");
@@ -309,19 +374,13 @@ export async function adminMediarResultadoDaDenuncia(formData: FormData) {
       }
     } else {
       const winnerSide = decision === "winner_1" ? "1" : "2";
-      const vencedorId =
-        winnerSide === "1"
-          ? partida.time1_id ?? partida.jogador1_id ?? null
-          : partida.time2_id ?? partida.jogador2_id ?? null;
-
-      let perdedorMed: number | null = null;
-      if (partida.time1_id != null && partida.time2_id != null && vencedorId != null) {
-        const t1 = Number(partida.time1_id);
-        const t2 = Number(partida.time2_id);
-        const w = Number(vencedorId);
-        if (w === t1) perdedorMed = t2;
-        else if (w === t2) perdedorMed = t1;
-      }
+      const t1n = partida.time1_id != null ? Number(partida.time1_id) : null;
+      const t2n = partida.time2_id != null ? Number(partida.time2_id) : null;
+      const isColetivo =
+        t1n != null && t2n != null && Number.isFinite(t1n) && Number.isFinite(t2n) && t1n > 0 && t2n > 0;
+      const vencedorId = isColetivo ? (winnerSide === "1" ? t1n : t2n) : null;
+      const perdedorMed =
+        isColetivo && vencedorId != null ? (vencedorId === t1n ? t2n : t1n) : null;
 
       await db
         .from("partidas")
@@ -332,31 +391,21 @@ export async function adminMediarResultadoDaDenuncia(formData: FormData) {
           placar_2: winnerSide === "2" ? 1 : 0,
           placar: winnerSide === "1" ? "1x0" : "0x1",
           vencedor_id: vencedorId,
-          ...(perdedorMed != null ? { perdedor_id: perdedorMed } : {}),
+          perdedor_id: perdedorMed,
           mensagem: "Resultado definido por mediação administrativa.",
           data_resultado: new Date().toISOString(),
           data_validacao: new Date().toISOString(),
           lancado_por: null,
         })
         .eq("id", partidaId);
-      const matchId = Number(partida.match_id ?? 0);
-      if (Number.isFinite(matchId) && matchId > 0) {
-        await db
-          .from("matches")
-          .update({
-            status: "Concluido",
-            data_confirmacao: new Date().toISOString(),
-            cancel_requested_by: null,
-            wo_auto_if_no_result: false,
-          })
-          .eq("id", matchId);
-      }
+      await fecharMatchesRankingParAdmin(db, partida as PartidaRowMatchesPar);
     }
 
     if (Number.isFinite(denunciaId) && denunciaId > 0) {
       await db.from("denuncias").update({ status: "resolvida" }).eq("id", denunciaId);
     }
     revalidateAdminPartidaPaths(partidaId, Number(partida.torneio_id ?? 0), true);
+    await revalidatePerfisELigadosPartidaAdmin(db, partida as PartidaRowMatchesPar);
     redirect("/admin/denuncias?adm_flash=mediacao_ok");
   } catch (error) {
     if (isRedirectError(error)) throw error;
