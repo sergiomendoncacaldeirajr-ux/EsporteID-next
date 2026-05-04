@@ -5,6 +5,7 @@ import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-fea
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { EidStreamSection } from "@/components/eid-stream-section";
 import { ProfilePublicBelowFoldSkeleton } from "@/components/loading/profile-app-skeletons";
+import { PerfilMobileBottomPad } from "@/components/perfil/perfil-mobile-bottom-pad";
 import { PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import Loading from "./loading";
 import { PerfilPublicoBelowFold } from "./perfil-public-below-fold";
@@ -92,6 +93,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
       data-eid-no-route-enter
       className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-progressive-enter`}
     >
+      <PerfilMobileBottomPad />
       <PerfilPublicoHero
         perfil={perfil as PerfilPublicoProfileRow}
         profileId={id}
