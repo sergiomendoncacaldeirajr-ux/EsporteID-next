@@ -41,6 +41,7 @@ export async function DashboardStreamLocais({
         .from("espacos_genericos")
         .select("id, slug, nome_publico, logo_arquivo, localizacao, lat, lng, esportes_ids, aceita_socios, modo_monetizacao, modo_reserva")
         .eq("ativo_listagem", true)
+        .eq("admin_suspenso", false)
         .limit(80)
     : Promise.resolve({ data: [] as DashboardEspacoListRow[] });
 

@@ -24,12 +24,12 @@ export default async function ReservarPage() {
   const [{ data: sociosAtivosRows }, { data: atalhosRows }] = await Promise.all([
     supabase
       .from("espaco_socios")
-      .select("espaco_generico_id, espacos_genericos!inner(id, slug, nome_publico, localizacao, ativo_listagem)")
+      .select("espaco_generico_id, espacos_genericos!inner(id, slug, nome_publico, localizacao, ativo_listagem, admin_suspenso)")
       .eq("usuario_id", user.id)
       .eq("status", "ativo"),
     supabase
       .from("espaco_reserva_atalhos")
-      .select("espaco_generico_id, espacos_genericos!inner(id, slug, nome_publico, localizacao, ativo_listagem)")
+      .select("espaco_generico_id, espacos_genericos!inner(id, slug, nome_publico, localizacao, ativo_listagem, admin_suspenso)")
       .eq("usuario_id", user.id),
   ]);
 
@@ -37,7 +37,7 @@ export default async function ReservarPage() {
   for (const row of [...(sociosAtivosRows ?? []), ...(atalhosRows ?? [])]) {
     const espacoRaw = Array.isArray(row.espacos_genericos) ? row.espacos_genericos[0] : row.espacos_genericos;
     const id = Number(espacoRaw?.id ?? row.espaco_generico_id ?? 0);
-    if (!Number.isFinite(id) || id < 1 || !espacoRaw?.ativo_listagem) continue;
+    if (!Number.isFinite(id) || id < 1 || !espacoRaw?.ativo_listagem || espacoRaw?.admin_suspenso) continue;
     if (map.has(id)) continue;
     map.set(id, {
       id,

@@ -2,7 +2,9 @@ import Link from "next/link";
 import { SearchSuggestGetForm } from "@/components/search/search-suggest-get-form";
 import {
   adminAplicarPlanoMensalAutomatico,
+  adminDeleteEspacoGenerico,
   adminReviewEspacoClaim,
+  adminSetEspacoAdminSuspenso,
   adminSetEspacoListagem,
   adminSetEspacoStatus,
   adminSetPaasAprovadoOperacaoSemGateway,
@@ -38,13 +40,15 @@ function brlDeCentavos(c: number) {
   return (Number(c || 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-type PageProps = { searchParams?: Promise<{ q?: string }> };
+type PageProps = { searchParams?: Promise<{ q?: string; adm_flash?: string; adm_detail?: string }> };
 
 export default async function AdminLocaisPage({ searchParams }: PageProps) {
   if (!hasServiceRoleConfig()) {
     return <p className="text-sm text-eid-text-secondary">Configure a service role para listar locais.</p>;
   }
   const sp = (await searchParams) ?? {};
+  const admFlash = typeof sp.adm_flash === "string" ? sp.adm_flash : "";
+  const admDetail = typeof sp.adm_detail === "string" ? sp.adm_detail : "";
   const rawQ = (sp.q ?? "").trim();
   const qSafe = sanitizeBusca(rawQ);
   const db = createServiceRoleClient();
@@ -77,7 +81,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
   let locaisQ = db
     .from("espacos_genericos")
     .select(
-      "id, slug, nome_publico, localizacao, status, operacao_status, aceita_socios, ativo_listagem, ownership_status, criado_em, categoria_mensalidade, modo_reserva, modo_monetizacao, taxa_reserva_plataforma_centavos, socios_mensalidade_espaco, clube_assinaturas_socios, paas_aprovado_operacao_sem_gateway, paas_primeiro_pagamento_mensal_recebido_em, operacao_suspeita_somente_reservas_gratis, operacao_suspeita_observacao"
+      "id, slug, nome_publico, localizacao, status, operacao_status, aceita_socios, ativo_listagem, admin_suspenso, ownership_status, criado_em, categoria_mensalidade, modo_reserva, modo_monetizacao, taxa_reserva_plataforma_centavos, socios_mensalidade_espaco, clube_assinaturas_socios, paas_aprovado_operacao_sem_gateway, paas_primeiro_pagamento_mensal_recebido_em, operacao_suspeita_somente_reservas_gratis, operacao_suspeita_observacao"
     )
     .order("id", { ascending: false });
 
@@ -139,8 +143,34 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
   );
   const signedUrlMap = new Map<number, string | null>(signedUrls);
 
+  const flashMsg =
+    admFlash === "delete_ok"
+      ? "Local excluído permanentemente do sistema."
+      : admFlash === "delete_erro"
+        ? "Não foi possível excluir o local."
+        : admFlash === "delete_confirm"
+          ? "Para excluir, digite exatamente EXCLUIR no campo de confirmação."
+          : admFlash === "delete_param"
+            ? "Parâmetros de exclusão inválidos."
+            : null;
+
   return (
     <div className="space-y-8">
+      {flashMsg ? (
+        <div
+          className={`rounded-xl border px-4 py-3 text-sm ${
+            admFlash === "delete_ok"
+              ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-100"
+              : "border-amber-500/35 bg-amber-500/10 text-amber-100"
+          }`}
+          role="status"
+        >
+          <p className="font-semibold">{flashMsg}</p>
+          {admDetail && admFlash === "delete_erro" ? (
+            <p className="mt-1 font-mono text-[11px] text-eid-text-secondary">{admDetail}</p>
+          ) : null}
+        </div>
+      ) : null}
       <div className="rounded-xl border border-eid-primary-500/20 bg-eid-primary-500/[0.04] p-4">
         <h2 className="text-sm font-bold text-eid-fg">Mensalidade (referência e bloqueio)</h2>
         <p className="mt-1 text-sm text-eid-text-secondary">
@@ -178,7 +208,9 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
           clearClassName="min-h-[40px] self-end rounded-xl border border-eid-text-secondary/30 px-3 py-2 text-sm font-bold text-eid-text-secondary"
         />
         <p className="mt-1 text-xs text-eid-text-muted">
-          Até 200 resultados.{" "}
+          Até 200 resultados. <strong className="text-eid-fg">Suspender</strong> oculta o local de todos (listagem, busca e
+          página pública); o dono ainda acessa o painel <span className="font-mono">/espaco</span>.{" "}
+          <strong className="text-eid-fg">Excluir</strong> remove o registro e vínculos (irreversível).{" "}
           <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/locais/suspeitas-mista">
             Relatório: reservas mista só gratuitas (suspeita)
           </Link>
@@ -192,6 +224,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
             const cat = (l as { categoria_mensalidade?: string | null }).categoria_mensalidade ?? "outro";
             const localRow = l as {
               id: number;
+              admin_suspenso?: boolean | null;
               modo_reserva?: string;
               modo_monetizacao?: string;
               taxa_reserva_plataforma_centavos?: number | null;
@@ -252,7 +285,12 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                   <div>
                     <p className="font-mono text-[10px] text-eid-text-secondary">ID {l.id}</p>
                     <p className="text-sm font-bold text-eid-fg">
-                      {l.nome_publico} {!l.ativo_listagem ? <span className="text-amber-200/90">(fora da listagem)</span> : null}
+                      {l.nome_publico}{" "}
+                      {localRow.admin_suspenso ? (
+                        <span className="text-red-200/95">(suspenso admin — invisível ao público)</span>
+                      ) : !l.ativo_listagem ? (
+                        <span className="text-amber-200/90">(fora da listagem)</span>
+                      ) : null}
                     </p>
                     <p className="text-[11px] text-eid-text-secondary">
                       {l.localizacao} · {l.slug ? `/${l.slug}` : "sem slug"} · categoria: {cat}
@@ -328,6 +366,52 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                     >
                       Abrir público
                     </Link>
+                    {localRow.admin_suspenso ? (
+                      <form action={adminSetEspacoAdminSuspenso} className="flex flex-col gap-1 border-t border-white/10 pt-2">
+                        <input type="hidden" name="id" value={l.id} />
+                        <input type="hidden" name="admin_suspenso" value="false" />
+                        <button
+                          type="submit"
+                          className="rounded border border-emerald-500/40 px-2 py-1 text-left text-[11px] font-bold text-emerald-200"
+                        >
+                          Encerrar suspensão (reativar visibilidade pública)
+                        </button>
+                      </form>
+                    ) : (
+                      <form action={adminSetEspacoAdminSuspenso} className="flex flex-col gap-1 border-t border-white/10 pt-2">
+                        <input type="hidden" name="id" value={l.id} />
+                        <input type="hidden" name="admin_suspenso" value="true" />
+                        <button
+                          type="submit"
+                          className="rounded border border-amber-500/45 px-2 py-1 text-left text-[11px] font-bold text-amber-200"
+                        >
+                          Suspender local (temporário — some para todos)
+                        </button>
+                      </form>
+                    )}
+                    <details className="rounded border border-red-500/35 bg-red-500/5 px-2 py-1.5">
+                      <summary className="cursor-pointer text-[11px] font-bold text-red-200">Excluir permanentemente</summary>
+                      <p className="mt-2 text-[10px] text-eid-text-secondary">
+                        Remove o espaço e dados vinculados (cascade). Digite <span className="font-mono text-eid-fg">EXCLUIR</span>{" "}
+                        para confirmar.
+                      </p>
+                      <form action={adminDeleteEspacoGenerico} className="mt-2 flex flex-col gap-2">
+                        <input type="hidden" name="id" value={l.id} />
+                        <input
+                          name="confirmar_exclusao"
+                          type="text"
+                          autoComplete="off"
+                          placeholder="EXCLUIR"
+                          className="eid-input-dark rounded px-2 py-1 text-xs"
+                        />
+                        <button
+                          type="submit"
+                          className="rounded border border-red-500/50 bg-red-500/15 px-2 py-1 text-[11px] font-bold text-red-200"
+                        >
+                          Excluir do sistema
+                        </button>
+                      </form>
+                    </details>
                   </div>
                 </div>
                 <details className="border-t border-[color:var(--eid-border-subtle)]/60 bg-eid-bg/20 p-3">

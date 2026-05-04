@@ -139,6 +139,7 @@ export default async function LocaisPage({ searchParams }: Props) {
       .from("espacos_genericos")
       .select("id, slug, nome_publico, localizacao, status, ownership_status, logo_arquivo, aceita_reserva, tipo_quadra, lat, lng")
       .eq("ativo_listagem", true)
+      .eq("admin_suspenso", false)
       .order("id", { ascending: false }),
   ]);
 

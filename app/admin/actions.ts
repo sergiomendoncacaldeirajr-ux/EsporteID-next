@@ -488,6 +488,53 @@ export async function adminSetEspacoListagem(formData: FormData) {
   }
 }
 
+/** Suspensão admin: some do público (listagem + slug); dono ainda vê no painel /espaco (RLS). */
+export async function adminSetEspacoAdminSuspenso(formData: FormData) {
+  try {
+    await guard();
+    const id = Number(formData.get("id"));
+    const suspenso = String(formData.get("admin_suspenso") ?? "") === "true";
+    if (!Number.isFinite(id) || id < 1) return;
+    const patch: Record<string, unknown> = { admin_suspenso: suspenso };
+    if (suspenso) patch.ativo_listagem = false;
+    const { error } = await svc().from("espacos_genericos").update(patch).eq("id", id);
+    if (error) return;
+    revalidatePath("/admin/locais");
+    revalidatePath("/locais");
+    revalidatePath("/dashboard");
+    revalidatePath("/espaco", "layout");
+  } catch {
+    return;
+  }
+}
+
+/** Exclusão permanente do espaço e vínculos em cascade (confirmação: campo = EXCLUIR). */
+export async function adminDeleteEspacoGenerico(formData: FormData) {
+  try {
+    await guard();
+    const id = Number(formData.get("id"));
+    const confirmar = String(formData.get("confirmar_exclusao") ?? "").trim();
+    if (!Number.isFinite(id) || id < 1) {
+      redirect(`/admin/locais?adm_flash=delete_param${adminQueryDetail("ID inválido.")}`);
+    }
+    if (confirmar !== "EXCLUIR") {
+      redirect("/admin/locais?adm_flash=delete_confirm");
+    }
+    const { error } = await svc().from("espacos_genericos").delete().eq("id", id);
+    if (error) {
+      redirect(`/admin/locais?adm_flash=delete_erro${adminQueryDetail(error.message)}`);
+    }
+    revalidatePath("/admin/locais");
+    revalidatePath("/locais");
+    revalidatePath("/dashboard");
+    revalidatePath("/espaco", "layout");
+    redirect("/admin/locais?adm_flash=delete_ok");
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirect(`/admin/locais?adm_flash=delete_erro${adminQueryDetail(String(error))}`);
+  }
+}
+
 export async function adminReviewEspacoClaim(formData: FormData) {
   try {
     await guard();

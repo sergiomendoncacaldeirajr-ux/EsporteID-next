@@ -31,6 +31,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
     )
     .eq("slug", slug)
     .eq("ativo_listagem", true)
+    .eq("admin_suspenso", false)
     .maybeSingle();
   if (!espaco) notFound();
   const regraAssociacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);

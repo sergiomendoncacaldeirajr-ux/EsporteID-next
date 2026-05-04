@@ -23,6 +23,7 @@ export default async function ReservarEspacoPage({ params }: Props) {
     .select("id, slug, nome_publico, localizacao, modo_reserva, ativo_listagem, lat, lng")
     .eq("slug", slug)
     .eq("ativo_listagem", true)
+    .eq("admin_suspenso", false)
     .maybeSingle();
   if (!espaco) notFound();
 

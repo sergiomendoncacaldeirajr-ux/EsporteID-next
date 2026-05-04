@@ -37,11 +37,12 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
   const { data: loc } = await supabase
     .from("espacos_genericos")
     .select(
-      "id, slug, nome_publico, logo_arquivo, localizacao, lat, lng, status, ownership_status, esportes_ids, tipo_quadra, aceita_reserva, ativo_listagem, fotos_json, comodidades_json, criado_por_usuario_id, responsavel_usuario_id"
+      "id, slug, nome_publico, logo_arquivo, localizacao, lat, lng, status, ownership_status, esportes_ids, tipo_quadra, aceita_reserva, ativo_listagem, admin_suspenso, fotos_json, comodidades_json, criado_por_usuario_id, responsavel_usuario_id"
     )
     .eq("id", id)
     .maybeSingle();
   if (!loc) notFound();
+  if (loc.admin_suspenso) notFound();
 
   if (loc.slug) {
     redirect(`/espaco/${loc.slug}`);

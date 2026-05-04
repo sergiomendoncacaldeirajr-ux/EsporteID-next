@@ -77,6 +77,7 @@ export default async function CriarTorneioPage({
     .from("espacos_genericos")
     .select("id, nome_publico, localizacao")
     .eq("ativo_listagem", true)
+    .eq("admin_suspenso", false)
     .order("nome_publico", { ascending: true })
     .limit(200);
 
