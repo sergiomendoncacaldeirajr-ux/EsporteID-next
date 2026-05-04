@@ -342,7 +342,7 @@ export async function loadAceitosCancelaveisItems(
       criadorPorTimeIdAgenda
     );
 
-    if (!isLeader && partidaRankingEncerradaParaResumo(partidaRecente)) {
+    if (partidaRankingEncerradaParaResumo(partidaRecente)) {
       return [];
     }
 

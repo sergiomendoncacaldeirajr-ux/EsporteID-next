@@ -141,6 +141,53 @@ async function notifyAgendamentoVarios(
  * - evita depender somente do trigger SQL;
  * - garante transbordo proporcional de dupla/time (incluindo lado derrotado).
  */
+const TIPOS_NOTIFICACAO_CONFRONTO = ["agenda_status", "desafio", "match"] as const;
+
+/** Remove avisos antigos do confronto (agendamento, desafio aceito, etc.) antes do aviso único de encerramento. */
+async function limparNotificacoesDoConfronto(partidaId: number, matchId: number | null | undefined): Promise<void> {
+  if (!hasServiceRoleConfig()) return;
+  const admin = createServiceRoleClient();
+  await admin.from("notificacoes").delete().eq("referencia_id", partidaId).in("tipo", [...TIPOS_NOTIFICACAO_CONFRONTO]);
+  const mid = matchId != null ? Number(matchId) : NaN;
+  if (Number.isFinite(mid) && mid > 0) {
+    await admin.from("notificacoes").delete().eq("referencia_id", mid).in("tipo", [...TIPOS_NOTIFICACAO_CONFRONTO]);
+  }
+}
+
+type PartidaCtxRow = NonNullable<Awaited<ReturnType<typeof loadPartidaContext>>["partida"]>;
+
+async function fecharMatchRankingAssociado(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  p: PartidaCtxRow,
+  nowIso: string
+): Promise<number | null> {
+  const p1 = p.desafiante_id ?? p.jogador1_id ?? p.usuario_id;
+  const p2 = p.desafiado_id ?? p.jogador2_id;
+  const midDirect = p.match_id != null ? Number(p.match_id) : NaN;
+  if (Number.isFinite(midDirect) && midDirect > 0) {
+    await supabase.from("matches").update({ status: "Concluido", data_confirmacao: nowIso }).eq("id", midDirect);
+    return midDirect;
+  }
+  if (!p.esporte_id || !p1 || !p2) return null;
+  const { data: matchRow } = await supabase
+    .from("matches")
+    .select("id")
+    .eq("status", "Aceito")
+    .eq("finalidade", "ranking")
+    .eq("esporte_id", p.esporte_id)
+    .or(`and(usuario_id.eq.${p1},adversario_id.eq.${p2}),and(usuario_id.eq.${p2},adversario_id.eq.${p1})`)
+    .order("data_confirmacao", { ascending: true, nullsFirst: false })
+    .order("id", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  const rid = matchRow?.id != null ? Number(matchRow.id) : NaN;
+  if (Number.isFinite(rid) && rid > 0) {
+    await supabase.from("matches").update({ status: "Concluido", data_confirmacao: nowIso }).eq("id", rid);
+    return rid;
+  }
+  return null;
+}
+
 async function ensurePartidaEidAndRankingProcessed(
   supabase: Awaited<ReturnType<typeof createClient>>,
   partidaId: number
@@ -398,16 +445,27 @@ export async function submitPlacarAction(formData: FormData) {
   const { error } = await ctx.supabase.from("partidas").update(updatePayload).eq("id", partidaId);
   if (error) go(partidaId, "erro", "Não foi possível salvar o placar.");
 
-  {
+  if (isTorneio) {
+    const resolvedMatchId = await fecharMatchRankingAssociado(ctx.supabase, p, now);
+    await limparNotificacoesDoConfronto(partidaId, resolvedMatchId ?? (p.match_id != null ? Number(p.match_id) : undefined));
+    await ensurePartidaEidAndRankingProcessed(ctx.supabase, partidaId);
+    const msgTodos = `Confronto concluído. Placar final: ${finalPlacar1} x ${finalPlacar2}. O resultado foi validado no ranking.`;
+    const { lado1, lado2 } = await loadPartidaLadosUsuarioIds(ctx.supabase, p);
+    const everyone = new Set<string>([...lado1, ...lado2]);
+    everyone.add(user.id);
+    const destinos = [...everyone].filter(Boolean).map((uid) => ({ usuario_id: uid, mensagem: msgTodos }));
+    if (destinos.length) {
+      await notifyAgendamentoVarios(ctx.supabase, destinos, user.id, partidaId, {
+        includeSender: true,
+        tipo: "agenda_status",
+      });
+    }
+  } else {
     const { lado1, lado2 } = await loadPartidaLadosUsuarioIds(ctx.supabase, p);
     const everyone = new Set<string>([...lado1, ...lado2]);
     const destinos: Array<{ usuario_id: string; mensagem: string }> = [];
-    const msgActor = isTorneio
-      ? `Você lançou o resultado (${finalPlacar1} x ${finalPlacar2}). Confronto concluído e resultado validado.`
-      : `Você lançou o resultado (${finalPlacar1} x ${finalPlacar2}). Aguardando validação do oponente.`;
-    const msgOthers = isTorneio
-      ? `Resultado lançado (${finalPlacar1} x ${finalPlacar2}). Confronto concluído e resultado validado.`
-      : `Resultado lançado (${finalPlacar1} x ${finalPlacar2}). Aguardando validação do oponente.`;
+    const msgActor = `Você lançou o resultado (${finalPlacar1} x ${finalPlacar2}). Aguardando validação do oponente.`;
+    const msgOthers = `Resultado lançado (${finalPlacar1} x ${finalPlacar2}). Aguardando validação do oponente.`;
     for (const uid of everyone) {
       if (!uid) continue;
       destinos.push({ usuario_id: uid, mensagem: uid === user.id ? msgActor : msgOthers });
@@ -467,47 +525,23 @@ export async function confirmarPlacarAction(formData: FormData) {
     .eq("id", partidaId);
   if (error) go(partidaId, "erro", "Não foi possível confirmar o placar.");
 
-  const p1 = p.desafiante_id ?? p.jogador1_id ?? p.usuario_id;
-  const p2 = p.desafiado_id ?? p.jogador2_id;
-  if (p.match_id) {
-    await ctx.supabase.from("matches").update({ status: "Concluido", data_confirmacao: now }).eq("id", p.match_id);
-  } else if (p.esporte_id && p1 && p2) {
-    const { data: matchRow } = await ctx.supabase
-      .from("matches")
-      .select("id")
-      .eq("status", "Aceito")
-      .eq("finalidade", "ranking")
-      .eq("esporte_id", p.esporte_id)
-      .or(`and(usuario_id.eq.${p1},adversario_id.eq.${p2}),and(usuario_id.eq.${p2},adversario_id.eq.${p1})`)
-      .order("data_confirmacao", { ascending: true, nullsFirst: false })
-      .order("id", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    if (matchRow?.id) {
-      await ctx.supabase
-        .from("matches")
-        .update({ status: "Concluido", data_confirmacao: now })
-        .eq("id", Number(matchRow.id));
-    }
-  }
+  const resolvedMatchId = await fecharMatchRankingAssociado(ctx.supabase, p, now);
+  await limparNotificacoesDoConfronto(partidaId, resolvedMatchId ?? (p.match_id != null ? Number(p.match_id) : undefined));
 
-  const msgConcluido =
-    "O placar foi aceito: o confronto foi concluído e o resultado está validado no ranking. Confira na Agenda ou no Painel (Partidas e resultados).";
-  const msgConcluidoQuemAprovou =
-    "Você aprovou o resultado: o confronto foi concluído e o placar está validado no ranking.";
+  const s1 = Number(p.placar_1 ?? 0);
+  const s2 = Number(p.placar_2 ?? 0);
+  const msgTodos = `Confronto concluído. Placar final: ${s1} x ${s2}. O resultado foi validado no ranking.`;
   const { lado1, lado2 } = await loadPartidaLadosUsuarioIds(ctx.supabase, p);
   const todos = new Set<string>([...lado1, ...lado2]);
-  const destinosConfirm: Array<{ usuario_id: string; mensagem: string }> = [];
-  for (const uid of todos) {
-    if (!uid) continue;
-    destinosConfirm.push({ usuario_id: uid, mensagem: uid === user.id ? msgConcluidoQuemAprovou : msgConcluido });
-  }
+  todos.add(user.id);
   const lanc = String(p.lancado_por ?? "").trim();
-  if (lanc && !todos.has(lanc)) {
-    destinosConfirm.push({ usuario_id: lanc, mensagem: msgConcluido });
-  }
+  if (lanc) todos.add(lanc);
+  const destinosConfirm = [...todos].filter(Boolean).map((uid) => ({ usuario_id: uid, mensagem: msgTodos }));
   if (destinosConfirm.length) {
-    await notifyAgendamentoVarios(ctx.supabase, destinosConfirm, user.id, partidaId, { includeSender: true });
+    await notifyAgendamentoVarios(ctx.supabase, destinosConfirm, user.id, partidaId, {
+      includeSender: true,
+      tipo: "agenda_status",
+    });
   }
 
   await ensurePartidaEidAndRankingProcessed(ctx.supabase, partidaId);
