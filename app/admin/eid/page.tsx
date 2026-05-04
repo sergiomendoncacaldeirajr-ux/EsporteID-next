@@ -11,10 +11,39 @@ function fmtDelta(value: number | null | undefined) {
   return `${num >= 0 ? "+" : ""}${num.toFixed(2)}`;
 }
 
-export default async function AdminEidPage() {
+type AdminEidPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function flashMessage(code: string | null): { tone: "ok" | "warn" | "error"; text: string } | null {
+  switch (code) {
+    case "eid_config_ok":
+      return { tone: "ok", text: "Configuração EID salva com sucesso." };
+    case "eid_recalc_ok":
+      return { tone: "ok", text: "Recálculo do histórico EID iniciado/concluído com sucesso." };
+    case "eid_reproc_ok":
+      return { tone: "ok", text: "Reprocessamento de partidas pendentes concluído." };
+    case "eid_reproc_sem_pendencias":
+      return { tone: "warn", text: "Nenhuma partida pendente encontrada para reprocessar." };
+    case "eid_config_invalida":
+      return { tone: "error", text: "Dados inválidos na configuração EID." };
+    case "eid_config_erro":
+    case "eid_recalc_erro":
+    case "eid_reproc_erro":
+      return { tone: "error", text: "Não foi possível concluir a ação. Verifique sua permissão de admin e tente novamente." };
+    default:
+      return null;
+  }
+}
+
+export default async function AdminEidPage({ searchParams }: AdminEidPageProps) {
   if (!hasServiceRoleConfig()) {
     return <p className="text-sm text-eid-text-secondary">Configure a service role para listar e recalcular o EID.</p>;
   }
+  const sp = (await searchParams) ?? {};
+  const flashCodeRaw = sp.adm_flash;
+  const flashCode = Array.isArray(flashCodeRaw) ? String(flashCodeRaw[0] ?? "") : String(flashCodeRaw ?? "");
+  const flash = flashMessage(flashCode || null);
 
   const db = createServiceRoleClient();
   const [configRes, atletasRes, timesRes, logsRes] = await Promise.all([
@@ -58,6 +87,19 @@ export default async function AdminEidPage() {
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4">
+        {flash ? (
+          <p
+            className={`mb-3 rounded-lg border px-3 py-2 text-xs font-semibold ${
+              flash.tone === "ok"
+                ? "border-emerald-500/35 bg-emerald-500/12 text-[color:color-mix(in_srgb,var(--eid-success-600)_80%,var(--eid-fg)_20%)]"
+                : flash.tone === "warn"
+                  ? "border-amber-500/35 bg-amber-500/12 text-[color:color-mix(in_srgb,#f59e0b_80%,var(--eid-fg)_20%)]"
+                  : "border-rose-500/35 bg-rose-500/12 text-[color:color-mix(in_srgb,var(--eid-danger-600)_82%,var(--eid-fg)_18%)]"
+            }`}
+          >
+            {flash.text}
+          </p>
+        ) : null}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-eid-fg">Motor EID</h2>

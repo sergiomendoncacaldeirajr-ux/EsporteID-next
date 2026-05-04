@@ -17,6 +17,10 @@ function svc() {
   return createServiceRoleClient();
 }
 
+function redirectAdminEidFlash(code: string): never {
+  redirect(`/admin/eid?adm_flash=${encodeURIComponent(code)}`);
+}
+
 async function guard() {
   if (!(await getIsPlatformAdmin())) throw new Error("Acesso negado.");
 }
@@ -1220,15 +1224,17 @@ export async function adminUpdateEidConfig(formData: FormData) {
     if (
       [row.win_base, row.loss_base, row.wo_bonus, row.score_gap_bonus, row.double_transfer_pct].some((value) => !Number.isFinite(value))
     ) {
-      return;
+      redirectAdminEidFlash("eid_config_invalida");
     }
 
     const { error } = await svc().from("eid_config").upsert(row, { onConflict: "id" });
-    if (error) return;
+    if (error) redirectAdminEidFlash("eid_config_erro");
 
     revalidatePath("/admin/eid");
-  } catch {
-    return;
+    redirectAdminEidFlash("eid_config_ok");
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirectAdminEidFlash("eid_config_erro");
   }
 }
 
@@ -1236,14 +1242,16 @@ export async function adminRecalcularEidHistorico() {
   try {
     await guard();
     const { error } = await svc().rpc("recalcular_eid_historico");
-    if (error) return;
+    if (error) redirectAdminEidFlash("eid_recalc_erro");
 
     revalidatePath("/admin/eid");
     revalidatePath("/ranking");
     revalidatePath("/dashboard");
     revalidatePath("/match");
-  } catch {
-    return;
+    redirectAdminEidFlash("eid_recalc_ok");
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirectAdminEidFlash("eid_recalc_erro");
   }
 }
 
@@ -1274,7 +1282,7 @@ export async function adminReprocessarPartidasEidPendentes(formData: FormData) {
     const { data: rows, error } = await query;
     if (error || !(rows?.length ?? 0)) {
       revalidatePath("/admin/eid");
-      return;
+      redirectAdminEidFlash("eid_reproc_sem_pendencias");
     }
 
     for (const row of rows ?? []) {
@@ -1289,8 +1297,10 @@ export async function adminReprocessarPartidasEidPendentes(formData: FormData) {
     revalidatePath("/dashboard");
     revalidatePath("/match");
     revalidatePath("/agenda");
-  } catch {
-    return;
+    redirectAdminEidFlash("eid_reproc_ok");
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirectAdminEidFlash("eid_reproc_erro");
   }
 }
 
