@@ -255,6 +255,8 @@ export async function PerfilPublicoHistoricoSection({ profileId, viewerId, perfi
                         placar: `${Number(hr.placar_1 ?? 0)} × ${Number(hr.placar_2 ?? 0)}`,
                         origem,
                         confronto: `${perfil.nome ?? "Atleta"} vs ${op?.nome ?? "Atleta"}`,
+                        mensagem: (hr as { mensagem?: string | null }).mensagem ?? null,
+                        sportLabel: esporteNome,
                       };
                     });
                     return (

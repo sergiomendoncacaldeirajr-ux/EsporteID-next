@@ -54,6 +54,9 @@ export async function PerfilTimeHistoricoCompletoStream({ params, searchParams }
             emptyText="Nenhuma partida em equipe concluída listada ainda para esta formação."
             selfLabel={idn.t.nome ?? "Equipe"}
             selfProfileHref={`/perfil-time/${idn.id}`}
+            selfTimeId={idn.id}
+            selfEscudoUrl={idn.t.escudo ?? null}
+            profileLinkFrom={`/perfil-time/${idn.id}/historico`}
             esporteLabel={idn.esp?.nome ?? "Esporte"}
             modalidadeLabel={idn.modalidade === "dupla" ? "Dupla" : "Time"}
           />

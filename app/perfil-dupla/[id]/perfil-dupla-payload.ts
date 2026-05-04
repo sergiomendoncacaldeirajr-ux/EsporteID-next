@@ -17,7 +17,7 @@ import { viewerTemUsuarioEidNoEsporte } from "@/lib/match/viewer-esporte-confron
 import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
 import {
   carregarPartidasColetivasDoTime,
-  mapNomesTimesAdversarios,
+  mapDetalhesTimesAdversarios,
   mapTorneioNomes,
 } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
@@ -153,11 +153,17 @@ async function loadPerfilDuplaPartidasBundleUncached(duplaId: number, viewerId: 
       ? await carregarPartidasColetivasDoTime(supabase, timeResolvidoId, espIdNum, viewerId)
       : [];
   const torneioNomeDupla = timeResolvidoId ? await mapTorneioNomes(supabase, partidasColetivasDupla) : new Map();
-  const nomeOponenteDupla = timeResolvidoId
-    ? await mapNomesTimesAdversarios(supabase, timeResolvidoId, partidasColetivasDupla)
+  const oponenteDetalhesDupla = timeResolvidoId
+    ? await mapDetalhesTimesAdversarios(supabase, timeResolvidoId, partidasColetivasDupla)
     : new Map();
   const bundleResultadosDupla = timeResolvidoId
-    ? buildFormacaoResultadosPerfil(partidasColetivasDupla, timeResolvidoId, nomeOponenteDupla, torneioNomeDupla)
+    ? buildFormacaoResultadosPerfil(
+        partidasColetivasDupla,
+        timeResolvidoId,
+        oponenteDetalhesDupla,
+        torneioNomeDupla,
+        "Dupla"
+      )
     : { items: [], totais: { vitorias: 0, derrotas: 0, empates: 0, rank: 0, torneio: 0 } };
   const vitoriasDupla = Number(bundleResultadosDupla.totais.vitorias ?? 0);
   const derrotasDupla = Number(bundleResultadosDupla.totais.derrotas ?? 0);

@@ -205,6 +205,8 @@ export async function PerfilHistoricoCompletoStream({ params, searchParams }: Pe
                   placar: `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`,
                   origem,
                   confronto: `${perfil.nome ?? "Atleta"} vs ${oponenteNome}`,
+                  mensagem: h.mensagem ?? null,
+                  sportLabel: esporteNome,
                 };
               });
               return (

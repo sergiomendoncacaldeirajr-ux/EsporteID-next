@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SkBlock } from "@/components/loading/skeleton-primitives";
+import { EidColetivoPartidaRow } from "@/components/perfil/eid-coletivo-partida-row";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
 import {
@@ -10,9 +11,9 @@ import {
 } from "@/components/perfil/profile-ui-tokens";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import {
-  fmtDataPtBr,
   resultadoColetivo,
   trendTripletFromNotas,
+  type OponenteTimeDetalhe,
   type PartidaColetivaRow,
 } from "@/lib/perfil/formacao-eid-stats";
 
@@ -152,10 +153,20 @@ export type FormacaoEidEsporteDetailsBlocksProps = {
   partidas: PartidaColetivaRow[];
   historicoNotas: number[];
   torneioNome: Map<number, string>;
-  nomeOponenteTime: Map<number, string>;
+  oponenteDetalhes: Map<number, OponenteTimeDetalhe>;
   timeId: number;
   nextPath: string;
+  linkPerfilFormacao: string;
+  formacaoEscudoUrl: string | null;
+  /** Ex.: "Dupla" ou "Time" quando `partidas.modalidade` vier vazio. */
+  formacaoTipoLabel?: string;
 };
+
+function modalidadeLinhaColetiva(raw: string | null | undefined, fallbackTipoLabel: string): string {
+  const m = String(raw ?? "").trim();
+  if (m) return m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
+  return fallbackTipoLabel;
+}
 
 export function FormacaoEidEsporteDetailsBlocks({
   nomeEsporte,
@@ -166,9 +177,12 @@ export function FormacaoEidEsporteDetailsBlocks({
   partidas,
   historicoNotas,
   torneioNome,
-  nomeOponenteTime,
+  oponenteDetalhes,
   timeId,
   nextPath,
+  linkPerfilFormacao,
+  formacaoEscudoUrl,
+  formacaoTipoLabel = "Equipe",
 }: FormacaoEidEsporteDetailsBlocksProps) {
   let cv = 0;
   let cd = 0;
@@ -243,60 +257,88 @@ export function FormacaoEidEsporteDetailsBlocks({
           </p>
         ) : (
           <ul className="mt-2 space-y-2">
-            {partidas.map((p) => {
+            {partidas.flatMap((p) => {
               const t1 = p.time1_id != null ? Number(p.time1_id) : null;
               const t2 = p.time2_id != null ? Number(p.time2_id) : null;
               const oppId = t1 === timeId ? t2 : t1;
-              const onome = oppId != null ? nomeOponenteTime.get(oppId) ?? `Equipe #${oppId}` : "—";
+              if (oppId == null) return [];
+              const det = oponenteDetalhes.get(oppId);
+              const onome = det?.nome ?? `Equipe #${oppId}`;
               const res = resultadoColetivo(timeId, p);
-              const when = fmtDataPtBr(p.data_resultado ?? p.data_registro);
               const torNome = p.torneio_id ? torneioNome.get(Number(p.torneio_id)) : null;
-              return (
-                <li
+              const origemLabel: "Ranking" | "Torneio" =
+                p.torneio_id != null || String(p.tipo_partida ?? "").toLowerCase() === "torneio"
+                  ? "Torneio"
+                  : "Ranking";
+              const confrontosMesmos = partidas.filter((h) => {
+                const h1 = h.time1_id != null ? Number(h.time1_id) : null;
+                const h2 = h.time2_id != null ? Number(h.time2_id) : null;
+                if (h1 == null || h2 == null) return false;
+                return (h1 === timeId && h2 === oppId) || (h2 === timeId && h1 === oppId);
+              });
+              let saldoV = 0;
+              let saldoD = 0;
+              let saldoE = 0;
+              for (const h of confrontosMesmos) {
+                const rr = resultadoColetivo(timeId, h).label;
+                if (rr === "V") saldoV += 1;
+                else if (rr === "D") saldoD += 1;
+                else if (rr === "E") saldoE += 1;
+              }
+              const saldoResumo =
+                `Saldo: ${titulo} ${saldoV}V · ${onome} ${saldoD}V` +
+                (saldoE > 0 ? ` · ${saldoE} empate${saldoE !== 1 ? "s" : ""}` : "");
+              const ultimosConfrontos = confrontosMesmos.slice(0, 5).map((h) => {
+                const hOrigem: "Ranking" | "Torneio" =
+                  h.torneio_id != null || String(h.tipo_partida ?? "").toLowerCase() === "torneio"
+                    ? "Torneio"
+                    : "Ranking";
+                const dataHora = new Intl.DateTimeFormat("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(new Date(h.data_partida ?? h.data_resultado ?? h.data_registro ?? Date.now()));
+                const placar = `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`;
+                return {
+                  id: h.id,
+                  dataHora,
+                  local: h.local_str ?? null,
+                  localHref:
+                    h.local_espaco_id != null && Number(h.local_espaco_id) > 0
+                      ? `/local/${Number(h.local_espaco_id)}`
+                      : null,
+                  placar,
+                  origem: hOrigem,
+                  confronto: `${titulo} vs ${onome}`,
+                  mensagem: h.mensagem ?? null,
+                  sportLabel: nomeEsporte,
+                };
+              });
+              return [
+                <EidColetivoPartidaRow
                   key={p.id}
-                  className={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} relative flex items-center gap-2`}
-                >
-                  <span className={`absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black ${res.tone} bg-eid-surface/90`}>
-                    {res.label}
-                  </span>
-                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300">
-                    {onome.trim().slice(0, 1).toUpperCase() || "E"}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate pr-7 text-[11px] font-bold text-eid-fg">
-                      vs{" "}
-                      {oppId != null ? (
-                        <Link
-                          href={`/perfil-time/${oppId}?from=${encodeURIComponent(nextPath)}`}
-                          className="text-eid-primary-400 hover:underline"
-                        >
-                          {onome}
-                        </Link>
-                      ) : (
-                        onome
-                      )}
-                    </p>
-                    <p className="text-[10px] text-eid-text-secondary">
-                      {p.modalidade ? `${p.modalidade} · ` : ""}
-                      {when}
-                      {torNome ? (
-                        <span className="text-eid-action-400"> · {torNome}</span>
-                      ) : p.torneio_id ? (
-                        <span className="text-eid-action-400"> · Torneio #{p.torneio_id}</span>
-                      ) : null}
-                      {p.tipo_partida ? ` · ${p.tipo_partida}` : ""}
-                    </p>
-                  </div>
-                  <div className="text-right pr-7">
-                    <p className="text-sm font-black tabular-nums text-eid-fg">
-                      {Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2))
-                        ? `${p.placar_1} × ${p.placar_2}`
-                        : "—"}
-                    </p>
-                    <p className="text-[9px] uppercase text-eid-text-secondary">{p.status ?? "—"}</p>
-                  </div>
-                </li>
-              );
+                  partida={p}
+                  selfTimeId={timeId}
+                  selfNome={titulo}
+                  selfEscudoUrl={formacaoEscudoUrl}
+                  selfProfileHref={linkPerfilFormacao}
+                  opponentTimeId={oppId}
+                  opponentNome={onome}
+                  opponentEscudoUrl={det?.escudo ?? null}
+                  opponentNotaEid={det != null && Number.isFinite(det.eid_time) ? det.eid_time : null}
+                  res={res}
+                  profileLinkFrom={nextPath}
+                  torneioLabel={torNome ?? (p.torneio_id ? `Torneio #${p.torneio_id}` : null)}
+                  origemLabel={origemLabel}
+                  esporteLabel={nomeEsporte}
+                  modalidadeLabel={modalidadeLinhaColetiva(p.modalidade, formacaoTipoLabel)}
+                  totalConfrontos={confrontosMesmos.length}
+                  saldoResumo={saldoResumo}
+                  ultimosConfrontos={ultimosConfrontos}
+                />,
+              ];
             })}
           </ul>
         )}
@@ -320,9 +362,10 @@ export type FormacaoEidEsporteViewProps = {
   partidas: PartidaColetivaRow[];
   historicoNotas: number[];
   torneioNome: Map<number, string>;
-  nomeOponenteTime: Map<number, string>;
+  oponenteDetalhes: Map<number, OponenteTimeDetalhe>;
   timeId: number;
   linkPerfilFormacao: string;
+  formacaoTipoLabel?: string;
   duplaRegistroLinks?: { id: number; href: string }[];
   avisoTopo?: string | null;
   /** Em iframe (embed=1), o painel já tem “Voltar”; esconde o link duplicado. */
@@ -344,9 +387,10 @@ export function FormacaoEidEsporteView({
   partidas,
   historicoNotas,
   torneioNome,
-  nomeOponenteTime,
+  oponenteDetalhes,
   timeId,
   linkPerfilFormacao,
+  formacaoTipoLabel,
   duplaRegistroLinks,
   avisoTopo,
   showBackLink = true,
@@ -378,9 +422,12 @@ export function FormacaoEidEsporteView({
         partidas={partidas}
         historicoNotas={historicoNotas}
         torneioNome={torneioNome}
-        nomeOponenteTime={nomeOponenteTime}
+        oponenteDetalhes={oponenteDetalhes}
         timeId={timeId}
         nextPath={nextPath}
+        linkPerfilFormacao={linkPerfilFormacao}
+        formacaoEscudoUrl={escudoUrl}
+        formacaoTipoLabel={formacaoTipoLabel ?? tipoLabel}
       />
     </main>
   );

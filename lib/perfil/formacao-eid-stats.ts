@@ -246,11 +246,14 @@ export async function mapTorneioNomes(
   return map;
 }
 
-export async function mapNomesTimesAdversarios(
-  supabase: SupabaseClient,
-  timeId: number,
-  partidas: PartidaColetivaRow[]
-): Promise<Map<number, string>> {
+export type OponenteTimeDetalhe = {
+  nome: string;
+  escudo: string | null;
+  eid_time: number;
+  tipo: string | null;
+};
+
+function collectOponenteTimeIds(timeId: number, partidas: PartidaColetivaRow[]): Set<number> {
   const opp = new Set<number>();
   for (const p of partidas) {
     const t1 = p.time1_id != null ? Number(p.time1_id) : null;
@@ -258,11 +261,39 @@ export async function mapNomesTimesAdversarios(
     if (t1 === timeId && t2 != null) opp.add(t2);
     else if (t2 === timeId && t1 != null) opp.add(t1);
   }
-  const map = new Map<number, string>();
+  return opp;
+}
+
+/** Nome, escudo, EID e tipo (`times`) dos adversários nas partidas listadas. */
+export async function mapDetalhesTimesAdversarios(
+  supabase: SupabaseClient,
+  timeId: number,
+  partidas: PartidaColetivaRow[]
+): Promise<Map<number, OponenteTimeDetalhe>> {
+  const opp = collectOponenteTimeIds(timeId, partidas);
+  const map = new Map<number, OponenteTimeDetalhe>();
   if (opp.size === 0) return map;
-  const { data } = await supabase.from("times").select("id, nome").in("id", [...opp]);
+  const { data } = await supabase.from("times").select("id, nome, escudo, eid_time, tipo").in("id", [...opp]);
   for (const r of data ?? []) {
-    if (r.id != null) map.set(Number(r.id), String(r.nome ?? `Equipe #${r.id}`));
+    if (r.id == null) continue;
+    const id = Number(r.id);
+    map.set(id, {
+      nome: String(r.nome ?? `Equipe #${id}`),
+      escudo: r.escudo ?? null,
+      eid_time: Number(r.eid_time ?? 0),
+      tipo: r.tipo ?? null,
+    });
   }
+  return map;
+}
+
+export async function mapNomesTimesAdversarios(
+  supabase: SupabaseClient,
+  timeId: number,
+  partidas: PartidaColetivaRow[]
+): Promise<Map<number, string>> {
+  const det = await mapDetalhesTimesAdversarios(supabase, timeId, partidas);
+  const map = new Map<number, string>();
+  det.forEach((v, k) => map.set(k, v.nome));
   return map;
 }

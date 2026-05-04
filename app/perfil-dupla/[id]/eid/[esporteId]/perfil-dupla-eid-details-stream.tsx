@@ -2,7 +2,7 @@ import { FormacaoEidEsporteDetailsBlocks } from "@/components/perfil/formacao-ei
 import {
   carregarHistoricoNotasColetivo,
   carregarPartidasColetivasDoTime,
-  mapNomesTimesAdversarios,
+  mapDetalhesTimesAdversarios,
   mapTorneioNomes,
 } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
@@ -22,7 +22,10 @@ export async function PerfilDuplaEidDetailsStream(props: PerfilDuplaEidRouteInpu
   const partidas = await carregarPartidasColetivasDoTime(supabase, s.timeId, s.esporteId, user.id);
   const historicoNotas = await carregarHistoricoNotasColetivo(supabase, s.timeId);
   const torneioNome = await mapTorneioNomes(supabase, partidas);
-  const nomeOponenteTime = await mapNomesTimesAdversarios(supabase, s.timeId, partidas);
+  const oponenteDetalhes = await mapDetalhesTimesAdversarios(supabase, s.timeId, partidas);
+  const linkPerfilFormacao = `/perfil-dupla/${s.duplaId}?from=${encodeURIComponent(s.nextPath)}`;
+  const tipoFmt = String(t.tipo ?? "dupla").trim().toLowerCase();
+  const formacaoTipoLabel = tipoFmt === "dupla" ? "Dupla" : tipoFmt === "time" ? "Time" : t.tipo ? String(t.tipo) : "Dupla";
 
   return (
     <FormacaoEidEsporteDetailsBlocks
@@ -34,9 +37,12 @@ export async function PerfilDuplaEidDetailsStream(props: PerfilDuplaEidRouteInpu
       partidas={partidas}
       historicoNotas={historicoNotas}
       torneioNome={torneioNome}
-      nomeOponenteTime={nomeOponenteTime}
+      oponenteDetalhes={oponenteDetalhes}
       timeId={s.timeId}
       nextPath={s.nextPath}
+      linkPerfilFormacao={linkPerfilFormacao}
+      formacaoEscudoUrl={t.escudo ?? null}
+      formacaoTipoLabel={formacaoTipoLabel}
     />
   );
 }

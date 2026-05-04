@@ -259,6 +259,9 @@ export async function PerfilDuplaBodyConfrontos({ duplaId, viewerId }: PerfilDup
           historicoCompletoHref={`/perfil-dupla/${idn.id}/historico?from=${encodeURIComponent(`/perfil-dupla/${idn.id}`)}`}
           selfLabel={idn.nomeExibicao}
           selfProfileHref={`/perfil-dupla/${idn.id}`}
+          selfTimeId={idn.timeResolvidoId ?? null}
+          selfEscudoUrl={idn.timeResolvido?.escudo ?? null}
+          profileLinkFrom={`/perfil-dupla/${idn.id}`}
           esporteLabel={idn.esp?.nome ?? "Esporte"}
           modalidadeLabel="Dupla"
         />

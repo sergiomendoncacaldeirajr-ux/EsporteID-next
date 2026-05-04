@@ -32,6 +32,9 @@ type ResumoHistoricoItem = {
   placar: string;
   origem: "Ranking" | "Torneio";
   confronto?: string | null;
+  /** Mesma `mensagem` da partida (incl. `score_payload:` para pênaltis / gols). */
+  mensagem?: string | null;
+  sportLabel?: string | null;
 };
 
 type Props = {
@@ -57,6 +60,11 @@ type Props = {
   rowClassName?: string;
   /** Nome do esporte (placar estilizado em jogos por gols + pênaltis). */
   sportLabel?: string | null;
+  /** Fallback de link quando `ladoAProfileHref` não vier preenchido (ex.: `/perfil-time/{id}`). */
+  ladoATimeId?: number | null;
+  ladoBTimeId?: number | null;
+  /** `formacao`: escudo time/dupla com cantos mais quadrados, alinhado ao restante do app. */
+  avatarVariant?: "circle" | "formacao";
 };
 
 function parseScorePayloadFromMessage(message: string | null | undefined): ScorePayload | null {
@@ -73,6 +81,29 @@ function parseScorePayloadFromMessage(message: string | null | undefined): Score
   } catch {
     return null;
   }
+}
+
+function HistoricoPlacarDisplay({
+  item,
+  sportFallback,
+}: {
+  item: ResumoHistoricoItem;
+  sportFallback: string | null;
+}) {
+  const payload = parseScorePayloadFromMessage(item.mensagem);
+  const sport = item.sportLabel ?? sportFallback;
+  if (payload?.type === "gols" && payload.goals && goalsPayloadHasAny(payload.goals)) {
+    return (
+      <GoalsScoreboardSummary
+        variant="card"
+        goals={payload.goals}
+        sportName={sport}
+        caption={null}
+        className="!px-2 !py-2 sm:!px-2.5 sm:!py-2.5"
+      />
+    );
+  }
+  return <PlacarNumerosInline placar={item.placar} size="sm" />;
 }
 
 /** Primeira palavra do nome (ex.: placar por sets em linha compacta). */
@@ -295,6 +326,9 @@ export function EidConfrontoResumoModal({
   ladoBAvatarUrl,
   ladoAProfileHref,
   ladoBProfileHref,
+  ladoATimeId,
+  ladoBTimeId,
+  avatarVariant = "circle",
   origem,
   dataHora,
   local,
@@ -313,6 +347,22 @@ export function EidConfrontoResumoModal({
   const [mounted, setMounted] = useState(false);
   const payload = useMemo(() => parseScorePayloadFromMessage(mensagem), [mensagem]);
   const [closing, setClosing] = useState(false);
+
+  const hrefA =
+    (ladoAProfileHref && String(ladoAProfileHref).trim()) ||
+    (ladoATimeId != null && Number.isFinite(ladoATimeId) && ladoATimeId > 0 ? `/perfil-time/${ladoATimeId}` : null);
+  const hrefB =
+    (ladoBProfileHref && String(ladoBProfileHref).trim()) ||
+    (ladoBTimeId != null && Number.isFinite(ladoBTimeId) && ladoBTimeId > 0 ? `/perfil-time/${ladoBTimeId}` : null);
+
+  const avatarImgClass =
+    avatarVariant === "formacao"
+      ? "h-12 w-12 shrink-0 rounded-2xl border-2 border-[color:color-mix(in_srgb,var(--eid-card)_70%,var(--eid-primary-500)_30%)] object-cover shadow-[0_4px_14px_-4px_rgba(15,23,42,0.45)]"
+      : AVATAR_LG;
+  const avatarFallbackClass =
+    avatarVariant === "formacao"
+      ? "inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border-2 border-[color:color-mix(in_srgb,var(--eid-card)_70%,var(--eid-primary-500)_30%)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_35%,var(--eid-surface)_65%),var(--eid-surface))] text-sm font-black text-eid-primary-200 shadow-[0_4px_14px_-4px_rgba(15,23,42,0.45)]"
+      : AVATAR_FALLBACK_LG;
 
   useEffect(() => {
     setMounted(true);
@@ -401,12 +451,18 @@ export function EidConfrontoResumoModal({
               <div className="p-4 sm:p-5">
                 <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-2 sm:gap-3">
                   <div className="min-w-0 flex flex-col items-center gap-2 text-center">
-                    {ladoAProfileHref ? (
-                      <Link href={ladoAProfileHref} data-no-modal="1" className="group flex min-w-0 flex-col items-center gap-2">
+                    {hrefA ? (
+                      <Link href={hrefA} data-no-modal="1" className="group flex min-w-0 flex-col items-center gap-2">
                         {ladoAAvatarUrl ? (
-                          <img src={ladoAAvatarUrl} alt="" className={`${AVATAR_LG} transition group-hover:ring-2 group-hover:ring-eid-primary-500/35`} />
+                          <img
+                            src={ladoAAvatarUrl}
+                            alt=""
+                            className={`${avatarImgClass} transition group-hover:ring-2 group-hover:ring-eid-primary-500/35`}
+                          />
                         ) : (
-                          <span className={`${AVATAR_FALLBACK_LG} transition group-hover:ring-2 group-hover:ring-eid-primary-500/35`}>
+                          <span
+                            className={`${avatarFallbackClass} transition group-hover:ring-2 group-hover:ring-eid-primary-500/35`}
+                          >
                             {ladoA.trim().slice(0, 1).toUpperCase() || "A"}
                           </span>
                         )}
@@ -417,9 +473,9 @@ export function EidConfrontoResumoModal({
                     ) : (
                       <div className="flex min-w-0 flex-col items-center gap-2">
                         {ladoAAvatarUrl ? (
-                          <img src={ladoAAvatarUrl} alt="" className={AVATAR_LG} />
+                          <img src={ladoAAvatarUrl} alt="" className={avatarImgClass} />
                         ) : (
-                          <span className={AVATAR_FALLBACK_LG}>{ladoA.trim().slice(0, 1).toUpperCase() || "A"}</span>
+                          <span className={avatarFallbackClass}>{ladoA.trim().slice(0, 1).toUpperCase() || "A"}</span>
                         )}
                         <span className="line-clamp-2 max-w-full text-[11px] font-bold leading-tight text-eid-fg sm:text-xs">{ladoA}</span>
                       </div>
@@ -431,12 +487,18 @@ export function EidConfrontoResumoModal({
                     </span>
                   </div>
                   <div className="min-w-0 flex flex-col items-center gap-2 text-center">
-                    {ladoBProfileHref ? (
-                      <Link href={ladoBProfileHref} data-no-modal="1" className="group flex min-w-0 flex-col items-center gap-2">
+                    {hrefB ? (
+                      <Link href={hrefB} data-no-modal="1" className="group flex min-w-0 flex-col items-center gap-2">
                         {ladoBAvatarUrl ? (
-                          <img src={ladoBAvatarUrl} alt="" className={`${AVATAR_LG} transition group-hover:ring-2 group-hover:ring-eid-primary-500/35`} />
+                          <img
+                            src={ladoBAvatarUrl}
+                            alt=""
+                            className={`${avatarImgClass} transition group-hover:ring-2 group-hover:ring-eid-primary-500/35`}
+                          />
                         ) : (
-                          <span className={`${AVATAR_FALLBACK_LG} transition group-hover:ring-2 group-hover:ring-eid-primary-500/35`}>
+                          <span
+                            className={`${avatarFallbackClass} transition group-hover:ring-2 group-hover:ring-eid-primary-500/35`}
+                          >
                             {ladoB.trim().slice(0, 1).toUpperCase() || "B"}
                           </span>
                         )}
@@ -447,9 +509,9 @@ export function EidConfrontoResumoModal({
                     ) : (
                       <div className="flex min-w-0 flex-col items-center gap-2">
                         {ladoBAvatarUrl ? (
-                          <img src={ladoBAvatarUrl} alt="" className={AVATAR_LG} />
+                          <img src={ladoBAvatarUrl} alt="" className={avatarImgClass} />
                         ) : (
-                          <span className={AVATAR_FALLBACK_LG}>{ladoB.trim().slice(0, 1).toUpperCase() || "B"}</span>
+                          <span className={avatarFallbackClass}>{ladoB.trim().slice(0, 1).toUpperCase() || "B"}</span>
                         )}
                         <span className="line-clamp-2 max-w-full text-[11px] font-bold leading-tight text-eid-fg sm:text-xs">{ladoB}</span>
                       </div>
@@ -524,8 +586,8 @@ export function EidConfrontoResumoModal({
                 ladoB={ladoB}
                 ladoAAvatarUrl={ladoAAvatarUrl}
                 ladoBAvatarUrl={ladoBAvatarUrl}
-                ladoAProfileHref={ladoAProfileHref}
-                ladoBProfileHref={ladoBProfileHref}
+                ladoAProfileHref={hrefA}
+                ladoBProfileHref={hrefB}
               />
             ) : null}
 
@@ -636,7 +698,7 @@ export function EidConfrontoResumoModal({
                           <p className="mt-1.5 text-center text-[10px] font-semibold leading-tight text-eid-fg">{item.confronto}</p>
                         ) : null}
                         <div className="mt-2 border-t border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_85%,transparent)] pt-2">
-                          <PlacarNumerosInline placar={item.placar} size="sm" />
+                          <HistoricoPlacarDisplay item={item} sportFallback={sportLabel ?? null} />
                         </div>
                         <p className="mt-1.5 text-center text-[9px] leading-snug text-eid-text-secondary">
                           {item.local?.trim() ? (

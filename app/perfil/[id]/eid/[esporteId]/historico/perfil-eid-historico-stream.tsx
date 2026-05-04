@@ -163,6 +163,8 @@ export async function PerfilEidEsporteHistoricoStream({ params, searchParams }: 
                   placar: `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`,
                   origem,
                   confronto: `${perfil.nome ?? "Atleta"} vs ${op?.nome ?? "Atleta"}`,
+                  mensagem: h.mensagem ?? null,
+                  sportLabel: nomeEsporte,
                 };
               });
               return (

@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
+import { EidColetivoPartidaRow } from "@/components/perfil/eid-coletivo-partida-row";
 import { EidConfrontoResumoModal } from "@/components/perfil/eid-confronto-resumo-modal";
 import { PROFILE_CARD_BASE } from "@/components/perfil/profile-ui-tokens";
+import type { PartidaColetivaRow } from "@/lib/perfil/formacao-eid-stats";
 
 export type FormacaoResultadoItem = {
   id: string;
@@ -20,6 +22,11 @@ export type FormacaoResultadoItem = {
   local?: string | null;
   localHref?: string | null;
   mensagem?: string | null;
+  partida?: PartidaColetivaRow;
+  opponentTimeId?: number;
+  opponentEscudoUrl?: string | null;
+  opponentNotaEid?: number | null;
+  modalidadeLinha?: string | null;
 };
 
 type Filtro = "todos" | "rank" | "torneio";
@@ -32,8 +39,13 @@ type Props = {
   historicoCompletoHref?: string;
   selfLabel?: string;
   selfProfileHref?: string | null;
+  selfEscudoUrl?: string | null;
+  /** Base para `?from=` nos links do card (ex.: `/perfil-time/12`). */
+  profileLinkFrom?: string | null;
   esporteLabel?: string | null;
   modalidadeLabel?: string | null;
+  /** `times.id` da formação (modal / link fallback). */
+  selfTimeId?: number | null;
 };
 
 export function ProfileFormacaoResultados({
@@ -44,8 +56,11 @@ export function ProfileFormacaoResultados({
   historicoCompletoHref,
   selfLabel = "Formação",
   selfProfileHref = null,
+  selfEscudoUrl = null,
+  profileLinkFrom = null,
   esporteLabel = null,
   modalidadeLabel = null,
+  selfTimeId = null,
 }: Props) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [expandido, setExpandido] = useState(false);
@@ -141,6 +156,102 @@ export function ProfileFormacaoResultados({
 
       <ul className="mt-1 grid gap-1.5">
         {visiveis.map((item) => {
+          const fromQ = profileLinkFrom ?? selfProfileHref ?? "/";
+          const selfHrefComFrom =
+            selfProfileHref != null && selfProfileHref.length > 0
+              ? `${selfProfileHref.split("?")[0]}?from=${encodeURIComponent(fromQ)}`
+              : null;
+          if (
+            item.partida &&
+            item.opponentTimeId != null &&
+            Number.isFinite(item.opponentTimeId) &&
+            item.opponentTimeId > 0
+          ) {
+            const p = item.partida;
+            const origemLabel: "Ranking" | "Torneio" = item.origem === "Torneio" ? "Torneio" : "Ranking";
+            const confrontosMesmos = items.filter(
+              (h) => h.opponentTimeId === item.opponentTimeId && h.partida != null
+            );
+            let saldoV = 0;
+            let saldoD = 0;
+            let saldoE = 0;
+            for (const h of confrontosMesmos) {
+              if (h.resultado === "V") saldoV += 1;
+              else if (h.resultado === "D") saldoD += 1;
+              else if (h.resultado === "E") saldoE += 1;
+            }
+            const saldoResumo =
+              `Saldo: ${selfLabel} ${saldoV}V · ${item.adversarioLabel} ${saldoD}V` +
+              (saldoE > 0 ? ` · ${saldoE} empate${saldoE !== 1 ? "s" : ""}` : "");
+            const ultimosConfrontos = confrontosMesmos.slice(0, 5).map((h) => {
+              const hp = h.partida!;
+              const hOrigem: "Ranking" | "Torneio" =
+                h.origem === "Torneio" ? "Torneio" : "Ranking";
+              const dataHora = new Intl.DateTimeFormat("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              }).format(new Date(hp.data_partida ?? hp.data_resultado ?? hp.data_registro ?? Date.now()));
+              const [pa, pb] = h.placar.split(/[x×]/i).map((x) => Number(String(x).trim()));
+              const placar = Number.isFinite(pa) && Number.isFinite(pb) ? `${pa} × ${pb}` : h.placar.replace("x", " × ");
+              return {
+                id: h.id,
+                dataHora,
+                local: h.local ?? null,
+                localHref: h.localHref ?? null,
+                placar,
+                origem: hOrigem,
+                confronto: `${selfLabel} vs ${item.adversarioLabel}`,
+                mensagem: hp.mensagem ?? null,
+                sportLabel: esporteLabel ?? null,
+              };
+            });
+            const tSelf =
+              selfTimeId != null && selfTimeId > 0
+                ? selfTimeId
+                : (() => {
+                    const t1 = p.time1_id != null ? Number(p.time1_id) : null;
+                    const t2 = p.time2_id != null ? Number(p.time2_id) : null;
+                    const opp = item.opponentTimeId;
+                    if (t1 === opp) return t2 ?? 0;
+                    if (t2 === opp) return t1 ?? 0;
+                    return 0;
+                  })();
+            const resTone =
+              item.tone === "positive"
+                ? "text-emerald-400"
+                : item.tone === "negative"
+                  ? "text-rose-400"
+                  : "text-eid-primary-300";
+            return (
+              <EidColetivoPartidaRow
+                key={item.id}
+                partida={p}
+                selfTimeId={tSelf > 0 ? tSelf : null}
+                selfNome={selfLabel}
+                selfEscudoUrl={selfEscudoUrl ?? null}
+                selfProfileHref={selfHrefComFrom ?? selfProfileHref ?? "/"}
+                opponentTimeId={item.opponentTimeId}
+                opponentNome={item.adversarioLabel}
+                opponentEscudoUrl={item.opponentEscudoUrl ?? null}
+                opponentNotaEid={item.opponentNotaEid ?? null}
+                res={{ label: item.resultado === "—" ? "—" : item.resultado, tone: resTone }}
+                profileLinkFrom={fromQ}
+                torneioLabel={
+                  item.torneioLabel ?? (p.torneio_id ? `Torneio #${p.torneio_id}` : null)
+                }
+                origemLabel={origemLabel}
+                esporteLabel={esporteLabel ?? null}
+                modalidadeLabel={item.modalidadeLinha ?? modalidadeLabel ?? null}
+                totalConfrontos={confrontosMesmos.length}
+                saldoResumo={saldoResumo}
+                ultimosConfrontos={ultimosConfrontos}
+              />
+            );
+          }
+
           const confrontoLabel = `${selfLabel} vs ${item.adversarioLabel}`;
           const confrontoHistorico = items
             .filter((h) => h.adversarioLabel === item.adversarioLabel)
@@ -153,6 +264,8 @@ export function ProfileFormacaoResultados({
               placar: h.placar,
               origem: (h.origem === "Torneio" ? "Torneio" : "Ranking") as "Torneio" | "Ranking",
               confronto: confrontoLabel,
+              mensagem: h.partida?.mensagem ?? null,
+              sportLabel: esporteLabel ?? null,
             }));
           return (
             <EidConfrontoResumoModal

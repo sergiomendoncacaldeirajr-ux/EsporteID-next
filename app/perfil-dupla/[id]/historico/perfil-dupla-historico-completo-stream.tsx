@@ -56,6 +56,9 @@ export async function PerfilDuplaHistoricoCompletoStream({
               emptyText="Nenhuma partida em dupla concluída listada ainda."
               selfLabel={idn.nomeExibicao}
               selfProfileHref={`/perfil-dupla/${idn.id}`}
+              selfTimeId={idn.timeResolvidoId ?? null}
+              selfEscudoUrl={idn.timeResolvido?.escudo ?? null}
+              profileLinkFrom={`/perfil-dupla/${idn.id}/historico`}
               esporteLabel={idn.esp?.nome ?? "Esporte"}
               modalidadeLabel="Dupla"
             />

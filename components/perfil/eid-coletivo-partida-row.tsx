@@ -3,41 +3,26 @@
 import Link from "next/link";
 import { EidConfrontoResumoModal } from "@/components/perfil/eid-confronto-resumo-modal";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
-import { fmtDataPtBr } from "@/lib/perfil/formacao-eid-stats";
+import { fmtDataPtBr, type PartidaColetivaRow } from "@/lib/perfil/formacao-eid-stats";
 import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
 
-export type EidPartidaIndividualRow = {
-  id: number | string;
-  jogador1_id: string | null;
-  jogador2_id: string | null;
-  placar_1: number | null;
-  placar_2: number | null;
-  torneio_id?: number | null;
-  local_espaco_id?: number | null;
-  local_str?: string | null;
-  data_partida?: string | null;
-  mensagem?: string | null;
-  tipo_partida?: string | null;
-  data_resultado: string | null;
-  data_registro: string | null;
-  status?: string | null;
-};
-
 type Props = {
-  partida: EidPartidaIndividualRow;
+  partida: PartidaColetivaRow;
+  /** `times.id` da própria formação (link fallback no modal). */
+  selfTimeId?: number | null;
   selfNome: string;
-  selfAvatarUrl?: string | null;
-  selfProfileHref?: string | null;
-  opponentId: string;
+  selfEscudoUrl: string | null;
+  selfProfileHref: string;
+  opponentTimeId: number;
   opponentNome: string;
-  opponentAvatarUrl: string | null;
+  opponentEscudoUrl: string | null;
+  opponentNotaEid: number | null;
   res: { label: "V" | "D" | "E" | "—"; tone: string };
   profileLinkFrom: string;
   torneioLabel?: string | null;
   origemLabel?: "Ranking" | "Torneio";
   esporteLabel?: string | null;
   modalidadeLabel?: string | null;
-  opponentNotaEid?: number | null;
   totalConfrontos: number;
   saldoResumo?: string | null;
   ultimosConfrontos: Array<{
@@ -53,21 +38,27 @@ type Props = {
   }>;
 };
 
-export function EidIndividualPartidaRow({
+const AVATAR_COLETIVO =
+  "h-11 w-11 rounded-2xl border border-[color:var(--eid-border-subtle)] object-cover shadow-[0_2px_10px_-4px_rgba(15,23,42,0.35)]";
+const AVATAR_FALLBACK_COLETIVO =
+  "inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface text-sm font-black text-eid-primary-300";
+
+export function EidColetivoPartidaRow({
   partida: p,
+  selfTimeId: selfTimeIdProp,
   selfNome,
-  selfAvatarUrl,
+  selfEscudoUrl,
   selfProfileHref,
-  opponentId,
+  opponentTimeId,
   opponentNome,
-  opponentAvatarUrl,
+  opponentEscudoUrl,
+  opponentNotaEid,
   res,
   profileLinkFrom,
   torneioLabel,
   origemLabel = "Ranking",
   esporteLabel,
   modalidadeLabel,
-  opponentNotaEid,
   totalConfrontos,
   saldoResumo,
   ultimosConfrontos,
@@ -80,11 +71,15 @@ export function EidIndividualPartidaRow({
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(p.data_partida ?? p.data_resultado ?? p.data_registro ?? Date.now()));
-  const placarOk =
-    Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2));
+  const placarOk = Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2));
   const placarTxt = placarOk ? `${p.placar_1} × ${p.placar_2}` : "—";
-  const perfilHref = `/perfil/${encodeURIComponent(opponentId)}?from=${encodeURIComponent(profileLinkFrom)}`;
+  const perfilOponenteHref = `/perfil-time/${encodeURIComponent(opponentTimeId)}?from=${encodeURIComponent(profileLinkFrom)}`;
   const origemLinha = origemLabel === "Ranking" ? "Rank" : origemLabel;
+  const localStr = String(p.local_str ?? "").trim();
+  const selfTimeId =
+    selfTimeIdProp != null && Number.isFinite(Number(selfTimeIdProp)) && Number(selfTimeIdProp) > 0
+      ? Number(selfTimeIdProp)
+      : null;
 
   const resultadoClass =
     res.label === "V"
@@ -101,10 +96,13 @@ export function EidIndividualPartidaRow({
       subtitulo={modalidadeLabel ? `Modalidade: ${modalidadeLabel}` : undefined}
       ladoA={selfNome}
       ladoB={opponentNome}
-      ladoAAvatarUrl={selfAvatarUrl ?? null}
-      ladoBAvatarUrl={opponentAvatarUrl ?? null}
-      ladoAProfileHref={selfProfileHref ?? null}
-      ladoBProfileHref={perfilHref}
+      ladoAAvatarUrl={selfEscudoUrl ?? null}
+      ladoBAvatarUrl={opponentEscudoUrl ?? null}
+      ladoAProfileHref={selfProfileHref}
+      ladoBProfileHref={perfilOponenteHref}
+      ladoATimeId={selfTimeId}
+      ladoBTimeId={opponentTimeId > 0 ? opponentTimeId : null}
+      avatarVariant="formacao"
       origem={origemLabel}
       dataHora={whenWithTime}
       local={p.local_str ?? null}
@@ -126,46 +124,38 @@ export function EidIndividualPartidaRow({
       </span>
       <div className="flex shrink-0 flex-col items-center justify-center">
         <Link
-          href={perfilHref}
+          href={perfilOponenteHref}
           data-no-modal="1"
-          className="rounded-full ring-2 ring-transparent transition hover:ring-eid-primary-500/40"
-          aria-label={`Perfil de ${opponentNome}`}
+          className="rounded-2xl ring-2 ring-transparent transition hover:ring-eid-primary-500/40"
+          aria-label={`Perfil da formação ${opponentNome}`}
         >
-          {opponentAvatarUrl ? (
-            <img
-              src={opponentAvatarUrl}
-              alt=""
-              className="h-11 w-11 rounded-full border border-[color:var(--eid-border-subtle)] object-cover"
-            />
+          {opponentEscudoUrl ? (
+            <img src={opponentEscudoUrl} alt="" className={AVATAR_COLETIVO} />
           ) : (
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-sm font-black text-eid-primary-300">
-              {opponentNome.trim().slice(0, 1).toUpperCase() || "A"}
-            </span>
+            <span className={AVATAR_FALLBACK_COLETIVO}>{opponentNome.trim().slice(0, 1).toUpperCase() || "E"}</span>
           )}
         </Link>
-        {typeof opponentNotaEid === "number" ? (
+        {typeof opponentNotaEid === "number" && Number.isFinite(opponentNotaEid) ? (
           <ProfileEidPerformanceSeal notaEid={opponentNotaEid} compact className="-mt-0.5 scale-110" />
         ) : null}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pr-8">
           <Link
-            href={perfilHref}
+            href={perfilOponenteHref}
             data-no-modal="1"
             className="truncate text-[12px] font-bold text-eid-fg hover:text-eid-primary-300 hover:underline"
           >
             {opponentNome}
           </Link>
         </div>
-        <p className="mt-0.5 text-[10px] text-eid-text-secondary">
+        <p className="mt-0.5 text-[10px] leading-snug text-eid-text-secondary">
           {esporteLabel ?? "Esporte"}
           {modalidadeLabel ? ` · ${modalidadeLabel}` : ""}
           <span className="mx-1">·</span>
           <span
             className={
-              origemLabel === "Torneio"
-                ? "font-bold text-eid-action-400"
-                : "font-bold text-eid-primary-300"
+              origemLabel === "Torneio" ? "font-bold text-eid-action-400" : "font-bold text-eid-primary-300"
             }
           >
             {origemLinha}
@@ -183,6 +173,22 @@ export function EidIndividualPartidaRow({
             <>
               <span className="mx-1">·</span>
               <span className="text-eid-action-400">{torneioLabel}</span>
+            </>
+          ) : null}
+          {localStr ? (
+            <>
+              <span className="mx-1 text-eid-text-secondary">·</span>
+              {p.local_espaco_id != null && Number(p.local_espaco_id) > 0 ? (
+                <Link
+                  href={`/local/${Number(p.local_espaco_id)}`}
+                  data-no-modal="1"
+                  className="text-eid-primary-400 hover:underline"
+                >
+                  {localStr}
+                </Link>
+              ) : (
+                <span className="text-eid-text-secondary">{localStr}</span>
+              )}
             </>
           ) : null}
         </p>

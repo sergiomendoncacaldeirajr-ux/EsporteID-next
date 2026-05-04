@@ -19,7 +19,7 @@ import { viewerTemUsuarioEidNoEsporte } from "@/lib/match/viewer-esporte-confron
 import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
 import {
   carregarPartidasColetivasDoTime,
-  mapNomesTimesAdversarios,
+  mapDetalhesTimesAdversarios,
   mapTorneioNomes,
 } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
@@ -100,8 +100,17 @@ async function loadPerfilTimePartidasBundleUncached(timeId: number, viewerId: st
   const partidasColetivas =
     esporteIdNum > 0 ? await carregarPartidasColetivasDoTime(supabase, id, esporteIdNum, viewerId) : [];
   const torneioNomeMap = await mapTorneioNomes(supabase, partidasColetivas);
-  const nomeOponenteMap = await mapNomesTimesAdversarios(supabase, id, partidasColetivas);
-  const bundleResultados = buildFormacaoResultadosPerfil(partidasColetivas, id, nomeOponenteMap, torneioNomeMap);
+  const oponenteDetalhes = await mapDetalhesTimesAdversarios(supabase, id, partidasColetivas);
+  const tipoFmt = String(t.tipo ?? "time").trim().toLowerCase();
+  const formacaoTipoFallback =
+    tipoFmt === "dupla" ? "Dupla" : tipoFmt === "time" ? "Time" : "Equipe";
+  const bundleResultados = buildFormacaoResultadosPerfil(
+    partidasColetivas,
+    id,
+    oponenteDetalhes,
+    torneioNomeMap,
+    formacaoTipoFallback
+  );
   const vitoriasTime = Number(bundleResultados.totais.vitorias ?? 0);
   const derrotasTime = Number(bundleResultados.totais.derrotas ?? 0);
   const jogosTime = vitoriasTime + derrotasTime;

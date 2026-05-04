@@ -1,5 +1,16 @@
 import type { FormacaoResultadoItem } from "@/components/perfil/profile-formacao-resultados";
-import { fmtDataPtBr, resultadoColetivo, type PartidaColetivaRow } from "@/lib/perfil/formacao-eid-stats";
+import {
+  fmtDataPtBr,
+  resultadoColetivo,
+  type OponenteTimeDetalhe,
+  type PartidaColetivaRow,
+} from "@/lib/perfil/formacao-eid-stats";
+
+function modalidadeExibicao(raw: string | null | undefined, fallback: string): string {
+  const m = String(raw ?? "").trim();
+  if (m) return m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
+  return fallback;
+}
 
 export type FormacaoResultadosBundle = {
   items: FormacaoResultadoItem[];
@@ -9,8 +20,9 @@ export type FormacaoResultadosBundle = {
 export function buildFormacaoResultadosPerfil(
   partidas: PartidaColetivaRow[],
   timeId: number,
-  nomeOponente: Map<number, string>,
-  torneioNome: Map<number, string>
+  oponenteDetalhes: Map<number, OponenteTimeDetalhe>,
+  torneioNome: Map<number, string>,
+  formacaoTipoFallback = "Equipe"
 ): FormacaoResultadosBundle {
   const totais = { vitorias: 0, derrotas: 0, empates: 0, rank: 0, torneio: 0 };
   const items: FormacaoResultadoItem[] = [];
@@ -20,7 +32,8 @@ export function buildFormacaoResultadosPerfil(
     const t1 = p.time1_id != null ? Number(p.time1_id) : null;
     const t2 = p.time2_id != null ? Number(p.time2_id) : null;
     const oppId = t1 === timeId ? t2 : t1;
-    const adversarioLabel = oppId != null ? nomeOponente.get(oppId) ?? `Equipe #${oppId}` : "—";
+    const det = oppId != null ? oponenteDetalhes.get(oppId) : undefined;
+    const adversarioLabel = det?.nome ?? (oppId != null ? `Equipe #${oppId}` : "—");
 
     const s1 = Number(p.placar_1 ?? 0);
     const s2 = Number(p.placar_2 ?? 0);
@@ -57,6 +70,11 @@ export function buildFormacaoResultadosPerfil(
       local: String(p.local_str ?? "").trim() || null,
       localHref: p.local_espaco_id != null && Number(p.local_espaco_id) > 0 ? `/local/${Number(p.local_espaco_id)}` : null,
       mensagem: p.mensagem ?? null,
+      partida: p,
+      opponentTimeId: oppId ?? undefined,
+      opponentEscudoUrl: det?.escudo ?? null,
+      opponentNotaEid: det != null && Number.isFinite(det.eid_time) ? det.eid_time : null,
+      modalidadeLinha: modalidadeExibicao(p.modalidade, formacaoTipoFallback),
     });
   }
 
