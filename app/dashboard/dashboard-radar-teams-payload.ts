@@ -150,6 +150,13 @@ async function loadDashboardRadarSpotlightUncached(args: DashboardRadarTeamsArgs
   } = args;
 
   const esportesParaFiltro = Array.from(meusEsportesSet);
+  const eidsParaCarência =
+    meusEsportesSet.size > 0
+      ? [...meusEsportesSet].filter((n) => Number.isFinite(n) && n > 0)
+      : esportePrincipalId != null && Number.isFinite(Number(esportePrincipalId)) && Number(esportePrincipalId) > 0
+        ? [Number(esportePrincipalId)]
+        : [];
+
   let timesQuery = supabase
     .from("times")
     .select("id, nome, tipo, localizacao, escudo, esporte_id, vagas_abertas, aceita_pedidos, lat, lng, criador_id, pontos_ranking, eid_time, esportes(nome)")
@@ -160,30 +167,43 @@ async function loadDashboardRadarSpotlightUncached(args: DashboardRadarTeamsArgs
     timesQuery = timesQuery.in("esporte_id", esportesParaFiltro);
   }
 
-  const [{ data: timesRaw }, { data: minhasFormacoesMembro }, { data: pendingColetivoRows }, { blockedTeamIds: rankingCooldownTeamIds }] =
-    await Promise.all([
-      timesQuery,
-      supabase.from("membros_time").select("time_id").eq("usuario_id", userId).in("status", ["ativo", "aceito", "aprovado"]),
-      dashTeamIds.length > 0
-        ? supabase
-            .from("matches")
-            .select("desafiante_time_id, adversario_time_id")
-            .eq("status", "Pendente")
-            .eq("finalidade", "ranking")
-            .in("modalidade_confronto", ["dupla", "time"])
-            .or(`desafiante_time_id.in.(${myTeamsInClause}),adversario_time_id.in.(${myTeamsInClause})`)
-        : Promise.resolve({ data: [] as Array<{ desafiante_time_id?: number | null; adversario_time_id?: number | null }> }),
+  const [timesRes, membrosRes, pendingRes, ...cooldownResList] = await Promise.all([
+    timesQuery,
+    supabase.from("membros_time").select("time_id").eq("usuario_id", userId).in("status", ["ativo", "aceito", "aprovado"]),
+    dashTeamIds.length > 0
+      ? supabase
+          .from("matches")
+          .select("desafiante_time_id, adversario_time_id")
+          .eq("status", "Pendente")
+          .eq("finalidade", "ranking")
+          .in("modalidade_confronto", ["dupla", "time"])
+          .or(`desafiante_time_id.in.(${myTeamsInClause}),adversario_time_id.in.(${myTeamsInClause})`)
+      : Promise.resolve({ data: [] as Array<{ desafiante_time_id?: number | null; adversario_time_id?: number | null }> }),
+    ...eidsParaCarência.map((eid) =>
       fetchDashboardRankingCooldownBlocklists(supabase, {
         viewerId: userId,
-        esporteId: esportePrincipalId,
+        esporteId: eid,
         viewerTeamIds: dashTeamIds,
-      }),
-    ]);
+      })
+    ),
+  ]);
 
+  const { data: timesRaw } = timesRes;
+  const { data: minhasFormacoesMembro } = membrosRes;
+  const { data: pendingColetivoRows } = pendingRes;
+
+  const rankingCooldownTeamIds = new Set<number>();
+  for (const bl of cooldownResList as Array<{ blockedTeamIds: Set<number> }>) {
+    for (const tid of bl.blockedTeamIds) rankingCooldownTeamIds.add(tid);
+  }
+
+  /** Mesmo espírito do `/match?tipo=todas`: mesclar todos os esportes do perfil (`usuario_eid`), não só o “principal”. */
   const esporteIdsRadar =
-    esportePrincipalId != null && Number(esportePrincipalId) > 0
-      ? [String(esportePrincipalId)]
-      : [...meusEsportesSet].filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b).map(String);
+    meusEsportesSet.size > 0
+      ? [...meusEsportesSet].filter((n) => Number.isFinite(n) && n > 0).sort((a, b) => a - b).map(String)
+      : esportePrincipalId != null && Number(esportePrincipalId) > 0
+        ? [String(esportePrincipalId)]
+        : [];
 
   let atletaMaisProximo: { row: AtletaRow; p: ProfileMini | null; dist: number } | null = null;
   let duplaMaisProxima: { t: TimeRadarRow; dist: number } | null = null;
@@ -258,17 +278,7 @@ async function loadDashboardRadarSpotlightUncached(args: DashboardRadarTeamsArgs
   );
   const timeNoRankingCooldown = (t: TimeRadarRow) => {
     const tid = Number(t.id ?? 0);
-    const eid = Number(t.esporte_id ?? 0);
-    if (
-      esportePrincipalId != null &&
-      Number.isFinite(esportePrincipalId) &&
-      esportePrincipalId > 0 &&
-      Number.isFinite(eid) &&
-      eid === esportePrincipalId &&
-      rankingCooldownTeamIds.has(tid)
-    ) {
-      return false;
-    }
+    if (Number.isFinite(tid) && tid > 0 && rankingCooldownTeamIds.has(tid)) return false;
     return true;
   };
   const timesSemAtivos = (timesRaw ?? []).filter(

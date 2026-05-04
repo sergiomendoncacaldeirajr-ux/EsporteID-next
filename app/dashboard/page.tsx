@@ -136,7 +136,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       .select("esporte_id, esportes(nome)")
       .eq("usuario_id", user.id)
       .order("esporte_id", { ascending: true })
-      .limit(3),
+      .limit(40),
     partidasAgendadasResumoPromise,
     placarPendenteResumoPromise,
     canSeeLocais
