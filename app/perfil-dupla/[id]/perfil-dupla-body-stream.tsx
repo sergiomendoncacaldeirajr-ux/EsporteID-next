@@ -9,7 +9,7 @@ import {
   PerfilFormacaoBodyGestaoSkeleton,
   PerfilFormacaoBodyVisitanteStackSkeleton,
 } from "@/components/loading/perfil-formacao-stream-skeleton";
-import { ProfileAchievementsShelf, ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
+import { ProfileAchievementsShelf } from "@/components/perfil/profile-history-widgets";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
@@ -202,17 +202,6 @@ export async function PerfilDuplaBodyEid({ duplaId, viewerId }: PerfilDuplaBodyS
               />
             </div>
           </div>
-          <ProfileCompactTimeline
-            title="Histórico de notas EID"
-            emptyText="Sem histórico recente de EID."
-            items={[...(histDupla ?? [])]
-              .reverse()
-              .map((row, i) => ({
-                id: `${row.data_alteracao ?? "sem-data"}-${i}`,
-                label: `${Number(row.nota_nova).toFixed(1)} ${row.data_alteracao ? new Date(row.data_alteracao).toLocaleDateString("pt-BR") : ""}`.trim(),
-                tone: "neutral" as const,
-              }))}
-          />
         </>
       ) : (
         <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-3`}>

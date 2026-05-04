@@ -228,6 +228,22 @@ function normalizeName(input: string): string {
     .toLowerCase();
 }
 
+/** Basquete (nome do esporte na plataforma) — regras de formato e placar acumulado. */
+export function sportLooksLikeBasquete(sportName?: string | null): boolean {
+  const n = normalizeName(String(sportName ?? ""));
+  return n.includes("basquete") || n.includes("basket");
+}
+
+/** Total exibido em listagens “estilo basquete”: regulação + prorrogação somados. */
+export function pointsTotalsAccumulatedForDisplay(
+  pts: { a?: number; b?: number; overtimeA?: number; overtimeB?: number } | undefined
+): { a: number; b: number } {
+  return {
+    a: toInt(pts?.a, 0) + toInt(pts?.overtimeA, 0),
+    b: toInt(pts?.b, 0) + toInt(pts?.overtimeB, 0),
+  };
+}
+
 export function buildSetFormatOptions(params: {
   sportName?: string | null;
   baseConfig: MatchUIConfig;

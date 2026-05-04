@@ -5,7 +5,12 @@ import { createPortal } from "react-dom";
 import { Calendar, MapPin, X } from "lucide-react";
 import Link from "next/link";
 import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
-import { goalsPayloadHasAny, type MatchScorePayload } from "@/lib/match-scoring";
+import {
+  goalsPayloadHasAny,
+  pointsTotalsAccumulatedForDisplay,
+  sportLooksLikeBasquete,
+  type MatchScorePayload,
+} from "@/lib/match-scoring";
 import { parseScorePayloadFromPartidaMensagem } from "@/lib/perfil/parse-partida-score-payload";
 
 const MODAL_CARD =
@@ -538,6 +543,27 @@ export function EidConfrontoResumoModal({
                       className="shadow-[0_0_28px_-6px_rgba(0,0,0,0.35),0_6px_22px_-14px_rgba(15,23,42,0.25)]"
                     />
                   </div>
+                ) : payload?.type === "pontos" && payload.points && sportLooksLikeBasquete(sportLabel) ? (
+                  <div className="relative mt-5 overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_32%,var(--eid-border-subtle)_68%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-surface)_88%)_0%,color-mix(in_srgb,var(--eid-card)_96%,transparent)_100%)] px-3 py-2.5 text-center shadow-[0_0_28px_-6px_color-mix(in_srgb,var(--eid-primary-500)_42%,transparent),0_6px_22px_-14px_rgba(37,99,235,0.28),inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-4 sm:py-3">
+                    <div
+                      className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_95%_70%_at_50%_-30%,color-mix(in_srgb,var(--eid-primary-400)_38%,transparent),transparent_62%)] opacity-90 dark:opacity-100"
+                      aria-hidden
+                    />
+                    <div className="pointer-events-none absolute -left-1/4 top-1/2 h-[140%] w-1/2 -translate-y-1/2 rotate-12 bg-[linear-gradient(105deg,transparent_40%,rgba(255,255,255,0.14)_50%,transparent_60%)] dark:bg-[linear-gradient(105deg,transparent_40%,rgba(255,255,255,0.08)_50%,transparent_60%)]" aria-hidden />
+                    <div className="relative z-[1]">
+                      <p className="text-[8px] font-black uppercase tracking-[0.14em] text-eid-primary-300">Placar final</p>
+                      <p className="mt-1 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 text-xl font-black tabular-nums tracking-tight text-eid-fg sm:text-2xl">
+                        <span className="text-[10px] font-black tracking-wide text-eid-primary-200 sm:text-xs">FINAL:</span>
+                        <span className="max-w-[42%] truncate sm:max-w-none">{ladoA}</span>
+                        <span>{pointsTotalsAccumulatedForDisplay(payload.points).a}</span>
+                        <span className="select-none text-xs font-extrabold text-eid-text-secondary/75 sm:text-sm" aria-hidden>
+                          ×
+                        </span>
+                        <span>{pointsTotalsAccumulatedForDisplay(payload.points).b}</span>
+                        <span className="max-w-[42%] truncate sm:max-w-none">{ladoB}</span>
+                      </p>
+                    </div>
+                  </div>
                 ) : (
                   <div className="relative mt-5 overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_32%,var(--eid-border-subtle)_68%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-surface)_88%)_0%,color-mix(in_srgb,var(--eid-card)_96%,transparent)_100%)] px-3 py-2.5 text-center shadow-[0_0_28px_-6px_color-mix(in_srgb,var(--eid-primary-500)_42%,transparent),0_6px_22px_-14px_rgba(37,99,235,0.28),inset_0_1px_0_rgba(255,255,255,0.08)] sm:px-4 sm:py-3">
                     <div
@@ -577,21 +603,38 @@ export function EidConfrontoResumoModal({
                   </span>
                 </div>
                 <div className="space-y-2 p-4 sm:p-5">
-                  <p className="text-sm font-bold text-eid-fg">
-                    <span className="font-black tabular-nums">{ladoA}</span>{" "}
-                    <span className="font-black tabular-nums text-eid-fg">{Number(payload.points.a ?? 0)}</span>
-                    <span className="mx-1.5 text-eid-text-secondary">×</span>
-                    <span className="font-black tabular-nums text-eid-fg">{Number(payload.points.b ?? 0)}</span>{" "}
-                    <span className="font-black tabular-nums">{ladoB}</span>
-                  </p>
-                  {Number(payload.points.overtimeA ?? 0) > 0 || Number(payload.points.overtimeB ?? 0) > 0 ? (
-                    <p className="text-[11px] text-eid-text-secondary">
-                      Overtime:{" "}
-                      <span className="font-semibold tabular-nums text-eid-fg">
-                        {Number(payload.points.overtimeA ?? 0)} × {Number(payload.points.overtimeB ?? 0)}
+                  {sportLooksLikeBasquete(sportLabel) ? (
+                    <p className="text-sm font-bold text-eid-fg">
+                      <span className="text-[11px] font-black tracking-wide text-eid-text-secondary">FINAL: </span>
+                      <span className="font-black tabular-nums">{ladoA}</span>{" "}
+                      <span className="font-black tabular-nums text-eid-fg">
+                        {pointsTotalsAccumulatedForDisplay(payload.points).a}
                       </span>
+                      <span className="mx-1.5 text-eid-text-secondary">×</span>
+                      <span className="font-black tabular-nums text-eid-fg">
+                        {pointsTotalsAccumulatedForDisplay(payload.points).b}
+                      </span>{" "}
+                      <span className="font-black tabular-nums">{ladoB}</span>
                     </p>
-                  ) : null}
+                  ) : (
+                    <>
+                      <p className="text-sm font-bold text-eid-fg">
+                        <span className="font-black tabular-nums">{ladoA}</span>{" "}
+                        <span className="font-black tabular-nums text-eid-fg">{Number(payload.points.a ?? 0)}</span>
+                        <span className="mx-1.5 text-eid-text-secondary">×</span>
+                        <span className="font-black tabular-nums text-eid-fg">{Number(payload.points.b ?? 0)}</span>{" "}
+                        <span className="font-black tabular-nums">{ladoB}</span>
+                      </p>
+                      {Number(payload.points.overtimeA ?? 0) > 0 || Number(payload.points.overtimeB ?? 0) > 0 ? (
+                        <p className="text-[11px] text-eid-text-secondary">
+                          Overtime:{" "}
+                          <span className="font-semibold tabular-nums text-eid-fg">
+                            {Number(payload.points.overtimeA ?? 0)} × {Number(payload.points.overtimeB ?? 0)}
+                          </span>
+                        </p>
+                      ) : null}
+                    </>
+                  )}
                 </div>
               </div>
             ) : null}

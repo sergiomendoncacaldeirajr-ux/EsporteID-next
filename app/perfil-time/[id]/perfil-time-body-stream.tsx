@@ -8,7 +8,6 @@ import {
   PerfilFormacaoBodyGestaoSkeleton,
   PerfilFormacaoBodyVisitanteStackSkeleton,
 } from "@/components/loading/perfil-formacao-stream-skeleton";
-import { ProfileCompactTimeline } from "@/components/perfil/profile-history-widgets";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSportsMetricsCard } from "@/components/perfil/profile-sports-metrics-card";
 import { ProfileMemberCard } from "@/components/perfil/profile-team-members-cards";
@@ -223,17 +222,6 @@ export async function PerfilTimeBodyEid({ timeId, viewerId }: { timeId: number; 
           />
         </div>
       </div>
-      <ProfileCompactTimeline
-        title="Histórico de notas EID"
-        emptyText="Sem histórico recente de EID."
-        items={[...(hist ?? [])]
-          .reverse()
-          .map((h, i) => ({
-            id: `${h.data_alteracao ?? "sem-data"}-${i}`,
-            label: `${Number(h.nota_nova).toFixed(1)} ${h.data_alteracao ? new Date(h.data_alteracao).toLocaleDateString("pt-BR") : ""}`.trim(),
-            tone: "neutral" as const,
-          }))}
-      />
     </ProfileSection>
   );
 }

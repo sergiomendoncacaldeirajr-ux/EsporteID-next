@@ -18,7 +18,12 @@ import {
   filterFormacoesSemParPendenteComAlvo,
 } from "@/lib/match/pending-ranking-opponents-of-alvo";
 import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
-import { getDesafioRankLockedSetFormat, getMatchUIConfig, type MatchUIConfig } from "@/lib/match-scoring";
+import {
+  getDesafioRankLockedSetFormat,
+  getMatchUIConfig,
+  sportLooksLikeBasquete,
+  type MatchUIConfig,
+} from "@/lib/match-scoring";
 import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import {
@@ -54,7 +59,15 @@ function exitEmbedProps(isEmbed: boolean): { target?: "_parent" } {
   return isEmbed ? { target: "_parent" } : {};
 }
 
-function resumoFormaDisputa(cfg: MatchUIConfig): string {
+const TEXTO_FORMATO_BASQUETE_CAIXA_INFO = `Duração: 4 quartos de 10 minutos (tempo corrido).
+Intervalo: 2 min entre quartos | 5 min no intervalo (HT).
+Vitória: placar acumulado. 1 ponto de diferença define o vencedor.
+Empate: prorrogação de 5 minutos até haver um vencedor.`;
+
+function resumoFormaDisputa(cfg: MatchUIConfig, sportName?: string | null): string {
+  if (sportLooksLikeBasquete(sportName)) {
+    return TEXTO_FORMATO_BASQUETE_CAIXA_INFO;
+  }
   if (cfg.type === "sets") {
     const melhorDe = cfg.setsToWin * 2 - 1;
     const setTxt = `Melhor de ${melhorDe} sets`;
@@ -72,7 +85,9 @@ function resumoFormaDisputa(cfg: MatchUIConfig): string {
     return `Disputa por gols${cfg.hasOvertime ? ", com prorrogação" : ""}${cfg.hasPenalties ? " e pênaltis se necessário" : ""}.`;
   }
   if (cfg.type === "pontos") {
-    return `Disputa por pontos${cfg.pointsLimit ? ` até ${cfg.pointsLimit}` : ""}${cfg.winByTwo ? ", com vantagem mínima de 2" : ""}.`;
+    return `Disputa por pontos${cfg.pointsLimit ? ` até ${cfg.pointsLimit}` : ""}${cfg.winByTwo ? ", com vantagem mínima de 2" : ""}${
+      cfg.hasOvertime ? " Empate: prorrogação até haver vencedor." : ""
+    }`;
   }
   return `Disputa por rounds (até ${cfg.maxRounds} round${cfg.maxRounds > 1 ? "s" : ""}).`;
 }
@@ -189,6 +204,7 @@ function DesafioRankingRuleIcon() {
 }
 
 function DesafioRuleSummaryCard({ formaDisputaResumo }: { formaDisputaResumo: string }) {
+  const multiline = formaDisputaResumo.includes("\n");
   return (
     <div className="rounded-2xl border border-transparent bg-eid-primary-500/8 px-3 py-2.5 text-[12px] leading-relaxed text-eid-text-secondary">
       <p className="inline-flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-primary-300">
@@ -196,7 +212,7 @@ function DesafioRuleSummaryCard({ formaDisputaResumo }: { formaDisputaResumo: st
         Forma de disputa deste esporte
       </p>
       <p className="mt-1">
-        <span className="font-semibold text-eid-fg">{formaDisputaResumo}</span>
+        <span className={`font-semibold text-eid-fg${multiline ? " block whitespace-pre-line" : ""}`}>{formaDisputaResumo}</span>
       </p>
     </div>
   );
@@ -403,7 +419,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     sportName: esporteNome,
     rules: (esporteRow as { desafio_regras_placar_json?: unknown } | null)?.desafio_regras_placar_json ?? {},
   });
-  const formaDisputaResumo = resumoFormaDisputa(desafioLockedCfg?.config ?? baseMatchCfg);
+  const formaDisputaResumo = resumoFormaDisputa(desafioLockedCfg?.config ?? baseMatchCfg, esporteNome);
 
   if (modalidade === "individual") {
     if (!UUID_RE.test(alvoKey)) {
@@ -549,7 +565,12 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
               <span className="text-eid-fg">{desafioPrimeiroNome(perfil.nome, "Atleta")}</span> · {esporteNome} (individual). Escolha o tipo de confronto.
             </p>
             <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
-              Forma de disputa deste esporte: <span className="font-semibold text-eid-fg">{formaDisputaResumo}</span>
+              Forma de disputa deste esporte:{" "}
+              <span
+                className={`font-semibold text-eid-fg${formaDisputaResumo.includes("\n") ? " block whitespace-pre-line" : ""}`}
+              >
+                {formaDisputaResumo}
+              </span>
             </div>
             <div className="mt-2 rounded-xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)_93%)] px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
               <p className="inline-flex items-center gap-1.5 font-semibold text-eid-fg">
