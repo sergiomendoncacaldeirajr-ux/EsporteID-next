@@ -93,11 +93,13 @@ export function DashboardTopbar({
 
     const apply = () => {
       const raw = el.getBoundingClientRect().height;
+      const mobile = window.matchMedia("(max-width: 767px)").matches;
       /*
-       * A medida costuma ficar 2–8px acima do “encaixe” visual (borda/sombra/subpixel),
-       * gerando faixa de `--eid-bg` entre a busca e o conteúdo. Compensamos sem encostar no mínimo real.
+       * Desktop: pequeno desconto evita faixa de `--eid-bg` entre busca e conteúdo.
+       * Mobile: sem desconto — o header é fixo (não ocupa fluxo); subtrair px fazia a capa
+       * do perfil subir por baixo da barra de busca.
        */
-      let pad = Math.ceil(raw) - 5;
+      let pad = Math.ceil(raw) - (mobile ? 0 : 5);
       if (pad < 82) pad = 82;
       if (pad > 0) {
         wrap.style.paddingTop = `${pad}px`;

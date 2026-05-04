@@ -949,6 +949,8 @@ header#eid-persistent-topbar textarea {
 @media (max-width: 767px) {
   #perfil-public-main[data-eid-perfil-page] {
     scroll-padding-bottom: calc(var(--eid-shell-footer-offset-measured, var(--eid-shell-footer-offset)) + 0.75rem);
+    /* Espaço entre busca do topbar (fixo) e o painel da capa — evita “encostar” por baixo do header. */
+    padding-top: max(10px, 0.65rem);
   }
 
   #perfil-public-main[data-eid-perfil-page] #perfil-hero-panel {
