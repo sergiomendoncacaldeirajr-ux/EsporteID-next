@@ -57,6 +57,54 @@ export type DashboardRadarVagasPayload = DashboardRadarSpotlightPayload & {
   vagasDisponiveisMap: Map<number, number>;
 };
 
+/** Contagem de integrantes (mesma lógica da seção de vagas no dashboard). */
+async function fetchTimeRosterHeadcountsMap(supabase: SupabaseClient, teamRosterIds: number[]): Promise<Map<number, number>> {
+  const teamRosterMap = new Map<number, number>();
+  const ids = [...new Set(teamRosterIds.filter((id) => Number.isFinite(id) && id > 0))];
+  if (ids.length === 0) return teamRosterMap;
+
+  const { data: headBatch, error: headBatchErr } = await supabase.rpc("time_roster_headcount_many", {
+    p_time_ids: ids,
+  });
+  if (!headBatchErr && Array.isArray(headBatch)) {
+    for (const row of headBatch as Array<{ time_id?: number | null; headcount?: number | null }>) {
+      const timeId = Number(row.time_id ?? 0);
+      const hc = Number(row.headcount ?? 0);
+      if (Number.isFinite(timeId) && timeId > 0) {
+        teamRosterMap.set(timeId, Number.isFinite(hc) ? Math.max(0, hc) : 0);
+      }
+    }
+  } else {
+    const { data: rosterRows } = await supabase
+      .from("membros_time")
+      .select("time_id")
+      .in("time_id", ids)
+      .in("status", ["ativo", "aceito", "aprovado"]);
+    for (const row of rosterRows ?? []) {
+      const timeId = Number((row as { time_id?: number | null }).time_id ?? 0);
+      if (!Number.isFinite(timeId) || timeId <= 0) continue;
+      teamRosterMap.set(timeId, (teamRosterMap.get(timeId) ?? 0) + 1);
+    }
+  }
+  for (const timeId of ids) {
+    if (!teamRosterMap.has(timeId)) teamRosterMap.set(timeId, 0);
+  }
+  return teamRosterMap;
+}
+
+/** Formação ainda com vaga / carência: não deve aparecer em “Confrontos próximos”. */
+function formacaoTemCarenciaOuRecrutando(t: TimeRadarRow, rosterMap: Map<number, number>): boolean {
+  const id = Number(t.id ?? 0);
+  if (!Number.isFinite(id) || id < 1) return true;
+  const tipo = String(t.tipo ?? "").trim().toLowerCase();
+  const cap = tipo === "dupla" ? 2 : 18;
+  const head = rosterMap.get(id) ?? 1;
+  const vagasDisponiveis = Math.max(0, cap - head);
+  if (vagasDisponiveis > 0) return true;
+  if (Boolean(t.vagas_abertas)) return true;
+  return false;
+}
+
 async function loadDashboardRadarSpotlightUncached(args: DashboardRadarTeamsArgs): Promise<DashboardRadarSpotlightPayload> {
   const {
     supabase,
@@ -225,9 +273,20 @@ async function loadDashboardRadarSpotlightUncached(args: DashboardRadarTeamsArgs
       return String(t.nome ?? "").toLowerCase().includes(q) || String(t.localizacao ?? "").toLowerCase().includes(q);
     })
     .filter(({ t }) => meusEsportesSet.size === 0 || meusEsportesSet.has(Number(t.esporte_id ?? 0)));
+
+  const spotlightTeamIds = [
+    ...new Set(timesComBusca.map(({ t }) => Number(t.id ?? 0)).filter((id) => Number.isFinite(id) && id > 0)),
+  ];
+  const spotlightRosterMap = await fetchTimeRosterHeadcountsMap(supabase, spotlightTeamIds);
+  const timesComBuscaSemCarencia = timesComBusca.filter(
+    ({ t }) => !formacaoTemCarenciaOuRecrutando(t, spotlightRosterMap),
+  );
+
   const atletaMaisProximo = atletasFiltrados[0] ?? null;
-  const duplaMaisProxima = timesComBusca.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "dupla") ?? null;
-  const timeMaisProximo = timesComBusca.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "time") ?? null;
+  const duplaMaisProxima =
+    timesComBuscaSemCarencia.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "dupla") ?? null;
+  const timeMaisProximo =
+    timesComBuscaSemCarencia.find(({ t }) => String(t.tipo ?? "").toLowerCase() === "time") ?? null;
 
   return {
     atletaMaisProximo,
@@ -255,35 +314,7 @@ async function loadDashboardRadarVagasUncached(args: DashboardRadarTeamsArgs): P
   const teamRosterIds = [
     ...new Set([...timesComBusca.map(({ t }) => Number(t.id ?? 0))].filter((id) => Number.isFinite(id) && id > 0)),
   ];
-  const teamRosterMap = new Map<number, number>();
-  if (teamRosterIds.length > 0) {
-    const { data: headBatch, error: headBatchErr } = await supabase.rpc("time_roster_headcount_many", {
-      p_time_ids: teamRosterIds,
-    });
-    if (!headBatchErr && Array.isArray(headBatch)) {
-      for (const row of headBatch as Array<{ time_id?: number | null; headcount?: number | null }>) {
-        const timeId = Number(row.time_id ?? 0);
-        const hc = Number(row.headcount ?? 0);
-        if (Number.isFinite(timeId) && timeId > 0) {
-          teamRosterMap.set(timeId, Number.isFinite(hc) ? Math.max(0, hc) : 0);
-        }
-      }
-    } else {
-      const { data: rosterRows } = await supabase
-        .from("membros_time")
-        .select("time_id")
-        .in("time_id", teamRosterIds)
-        .in("status", ["ativo", "aceito", "aprovado"]);
-      for (const row of rosterRows ?? []) {
-        const timeId = Number((row as { time_id?: number | null }).time_id ?? 0);
-        if (!Number.isFinite(timeId) || timeId <= 0) continue;
-        teamRosterMap.set(timeId, (teamRosterMap.get(timeId) ?? 0) + 1);
-      }
-    }
-    for (const timeId of teamRosterIds) {
-      if (!teamRosterMap.has(timeId)) teamRosterMap.set(timeId, 0);
-    }
-  }
+  const teamRosterMap = await fetchTimeRosterHeadcountsMap(supabase, teamRosterIds);
   const vagasDisponiveisMap = new Map<number, number>(
     timesComBusca.map(({ t }) => {
       const cap = String(t.tipo ?? "").trim().toLowerCase() === "dupla" ? 2 : 18;

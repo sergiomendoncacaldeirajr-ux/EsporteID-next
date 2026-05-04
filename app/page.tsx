@@ -37,6 +37,84 @@ function IconShield() {
   );
 }
 
+function IconHome() {
+  return (
+    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z" />
+    </svg>
+  );
+}
+
+function IconCalendar() {
+  return (
+    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
+    </svg>
+  );
+}
+
+function IconRadar() {
+  return (
+    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" />
+    </svg>
+  );
+}
+
+function IconMap() {
+  return (
+    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z" />
+    </svg>
+  );
+}
+
+function IconSearch() {
+  return (
+    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+    </svg>
+  );
+}
+
+function IconPerson() {
+  return (
+    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+    </svg>
+  );
+}
+
+type DesktopAreaIcon = "home" | "calendar" | "radar" | "spark" | "users" | "trophy" | "map" | "search" | "person" | "shield";
+
+function DesktopAreaIconGlyph({ name }: { name: DesktopAreaIcon }) {
+  const cls = "text-eid-primary-400";
+  switch (name) {
+    case "home":
+      return <IconHome />;
+    case "calendar":
+      return <IconCalendar />;
+    case "radar":
+      return <IconRadar />;
+    case "spark":
+      return <IconSpark />;
+    case "users":
+      return <IconUsers />;
+    case "trophy":
+      return <IconTrophy />;
+    case "map":
+      return <IconMap />;
+    case "search":
+      return <IconSearch />;
+    case "person":
+      return <IconPerson />;
+    case "shield":
+      return <IconShield />;
+    default:
+      return <IconSpark />;
+  }
+}
+
 export default async function Home() {
   const supabase = await createClient();
   const {
@@ -63,6 +141,9 @@ export default async function Home() {
   const linkCard =
     "rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 py-2.5 text-sm font-medium text-eid-fg transition hover:border-eid-primary-500/40 hover:text-eid-primary-500";
 
+  const desktopExploreCard =
+    "group flex h-full min-h-[5.75rem] gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-left transition hover:-translate-y-0.5 hover:border-eid-primary-500/45 hover:shadow-lg hover:shadow-eid-primary-500/10";
+
   const ctaPairBaseClass =
     "inline-flex h-14 w-full items-center justify-center rounded-2xl px-8 text-lg font-bold transition active:scale-[0.98] sm:max-w-md sm:text-xl";
 
@@ -83,7 +164,7 @@ export default async function Home() {
         aria-hidden
       />
 
-      <main className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 pb-16 pt-6 sm:px-8 sm:pb-20 sm:pt-12">
+      <main className="relative mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 pb-16 pt-6 sm:px-8 sm:pb-20 sm:pt-12 lg:max-w-6xl">
         {user ? (
           <div className="mb-4 flex items-center justify-end gap-2 sm:mb-6">
             <Link
@@ -95,75 +176,199 @@ export default async function Home() {
             <EidThemeToggle variant="toolbar" />
           </div>
         ) : null}
-        <LogoFull size="hero" className="mb-6 flex justify-center sm:mb-8" />
+        <LogoFull size="hero" className="mb-6 flex justify-center sm:mb-8 lg:mb-10" />
 
-        <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-eid-primary-500 sm:text-left">
-          Plataforma esportiva
-        </p>
+        <div className="lg:grid lg:grid-cols-[minmax(0,1.12fr)_minmax(280px,380px)] lg:items-center lg:gap-10 xl:gap-14">
+          <div>
+            <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-eid-primary-500 sm:text-left">
+              Plataforma esportiva
+            </p>
 
-        <h1 className="mt-3 text-center text-2xl font-bold leading-tight tracking-tight text-eid-fg sm:text-left sm:text-3xl">
-          EsporteID —{" "}
-          <span className="text-eid-action-500">A plataforma de desafios dos esportes</span>
-        </h1>
+            <h1 className="mt-3 text-center text-2xl font-bold leading-tight tracking-tight text-eid-fg sm:text-left sm:text-3xl xl:text-4xl xl:leading-tight">
+              EsporteID —{" "}
+              <span className="text-eid-action-500">A plataforma de desafios dos esportes</span>
+            </h1>
 
-        <p className="mt-4 max-w-2xl text-center text-base leading-relaxed text-eid-text-secondary sm:text-left sm:text-lg">
-          Descubra quem joga perto de você, combine partidas em poucos toques e suba no ranking EID.
-          Atletas, espaços e organizadores no mesmo lugar: menos burocracia, mais jogo — com privacidade
-          e LGPD de verdade.
-        </p>
+            <p className="mt-4 max-w-2xl text-center text-base leading-relaxed text-eid-text-secondary sm:text-left sm:text-lg">
+              Descubra quem joga perto de você, combine partidas em poucos toques e suba no ranking EID.
+              Atletas, espaços e organizadores no mesmo lugar: menos burocracia, mais jogo — com privacidade
+              e LGPD de verdade.
+            </p>
 
-        <ul className="mt-6 flex flex-wrap justify-center gap-2 sm:justify-start">
-          {["Ranking & EID", "Torneios", "Partidas", "Espaços e locais"].map((label) => (
-            <li key={label} className={pillClass}>
-              {label}
-            </li>
-          ))}
-        </ul>
+            <ul className="mt-6 flex flex-wrap justify-center gap-2 sm:justify-start">
+              {["Painel inteligente", "Ranking & EID", "Torneios", "Radar e desafios", "Espaços e locais"].map(
+                (label) => (
+                  <li key={label} className={pillClass}>
+                    {label}
+                  </li>
+                )
+              )}
+            </ul>
+          </div>
+
+          <aside
+            className="mt-8 hidden lg:mt-0 lg:block"
+            aria-label="Atalhos para o uso no computador"
+          >
+            <div className="rounded-3xl border border-eid-primary-500/25 bg-gradient-to-br from-eid-primary-500/12 via-eid-card to-eid-card p-6 shadow-[0_20px_60px_-24px_rgba(0,0,0,0.45)]">
+              <p className="text-xs font-bold uppercase tracking-wider text-eid-primary-500">No PC</p>
+              <p className="mt-2 text-base font-semibold text-eid-fg">Atalhos para quem já usa o EsporteID</p>
+              <p className="mt-1 text-sm leading-relaxed text-eid-text-secondary">
+                Mesmo login do celular: painel com resumo, notificações em tempo quase real e todas as rotas
+                abaixo.
+              </p>
+              <nav className="mt-5 flex flex-col gap-2" aria-label="Links rápidos">
+                {(
+                  [
+                    { href: "/dashboard", label: "Painel", sub: "Resumo e busca integrada" },
+                    { href: "/desafio", label: "Desafio", sub: "Pedidos ranking ou amistoso" },
+                    { href: "/match", label: "Radar Match", sub: "Mapa e filtros por esporte" },
+                    { href: "/torneios", label: "Torneios", sub: "Inscrições e chaves" },
+                  ] as const
+                ).map((item) => {
+                  const href = user ? item.href : `/login?next=${encodeURIComponent(item.href)}`;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={href}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/80 px-4 py-3 text-sm font-semibold text-eid-fg transition hover:border-eid-primary-500/40 hover:bg-eid-primary-500/10"
+                    >
+                      <span>{item.label}</span>
+                      <span className="text-xs font-normal text-eid-text-muted">{item.sub}</span>
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+          </aside>
+        </div>
 
         <section
-          className="mt-10 hidden md:mt-12 md:block"
+          className="mt-10 hidden md:mt-14 md:block"
           aria-labelledby="areas-plataforma-desktop"
         >
-          <h2 id="areas-plataforma-desktop" className="text-lg font-bold text-eid-fg">
-            Tudo o que o EsporteID oferece
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-eid-text-secondary">
-            No computador você usa o mesmo login do celular: painel com busca, radar de desafios, agenda de
-            partidas, comunidade, torneios, times, locais, ranking EID, performance e área de conta — além de
-            modos <span className="text-eid-fg">Professor</span>, <span className="text-eid-fg">Organizador</span> e{" "}
-            <span className="text-eid-fg">Espaço</span> após o onboarding.
-          </p>
-          <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-3 border-b border-[color:var(--eid-border-subtle)] pb-6 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h2 id="areas-plataforma-desktop" className="text-xl font-bold tracking-tight text-eid-fg">
+                Tudo o que o EsporteID oferece
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-relaxed text-eid-text-secondary lg:text-base">
+                No computador você usa o mesmo login do celular: painel com resumo e sugestões, radar, fluxo de
+                desafio, agenda, comunidade com notificações em tempo quase real, torneios, times e duplas,
+                locais, reservas quando disponíveis, ranking EID, performance e conta — além dos modos{" "}
+                <span className="text-eid-fg">Professor</span>, <span className="text-eid-fg">Organizador</span> e{" "}
+                <span className="text-eid-fg">Espaço</span> após o onboarding.
+              </p>
+            </div>
+          </div>
+          <ul className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {(
               [
-                { href: "/dashboard", title: "Painel", body: "Resumo, atalhos e busca integrada." },
-                { href: "/agenda", title: "Agenda", body: "Partidas aceitas, horários e confirmações." },
-                { href: "/match", title: "Desafio (radar)", body: "Pedidos ranking ou amistoso por esporte e raio." },
-                { href: "/comunidade", title: "Social", body: "Notificações, convites e pedidos em um lugar." },
-                { href: "/torneios", title: "Torneios", body: "Eventos, inscrições e chaves." },
-                { href: "/times", title: "Times e duplas", body: "Formação, convites e EID coletivo." },
-                { href: "/locais", title: "Locais", body: "Quadras, academias e espaços parceiros." },
-                { href: "/ranking", title: "Ranking EID", body: "Posições e regras por esporte." },
-                { href: "/performance", title: "Performance", body: "Indicadores e histórico de jogo." },
-                { href: "/buscar", title: "Buscar", body: "Atletas, locais, times e torneios." },
-                { href: "/conta/perfil", title: "Conta e perfil", body: "Dados, esportes, EID e privacidade." },
-                { href: "/conta/dados-lgpd", title: "Seus dados (LGPD)", body: "Exportação, correção e consentimentos." },
+                {
+                  href: "/dashboard",
+                  title: "Painel",
+                  body: "Resumo, atalhos, busca e confrontos próximos.",
+                  icon: "home" as const,
+                },
+                {
+                  href: "/desafio",
+                  title: "Desafio",
+                  body: "Enviar e acompanhar pedidos ranking ou amistoso.",
+                  icon: "spark" as const,
+                },
+                {
+                  href: "/match",
+                  title: "Radar Match",
+                  body: "Descoberta no mapa ou lista por esporte e raio.",
+                  icon: "radar" as const,
+                },
+                {
+                  href: "/agenda",
+                  title: "Agenda",
+                  body: "Partidas aceitas, horários e confirmações.",
+                  icon: "calendar" as const,
+                },
+                {
+                  href: "/comunidade",
+                  title: "Comunidade",
+                  body: "Convites, pedidos e alertas em um só lugar.",
+                  icon: "users" as const,
+                },
+                {
+                  href: "/torneios",
+                  title: "Torneios",
+                  body: "Eventos, inscrições e chaves.",
+                  icon: "trophy" as const,
+                },
+                {
+                  href: "/times",
+                  title: "Times e duplas",
+                  body: "Formação, vagas, convites e EID coletivo.",
+                  icon: "users" as const,
+                },
+                {
+                  href: "/locais",
+                  title: "Locais",
+                  body: "Quadras, academias e espaços parceiros.",
+                  icon: "map" as const,
+                },
+                {
+                  href: "/reservar",
+                  title: "Reservar",
+                  body: "Horários em espaços com reserva online ativa.",
+                  icon: "calendar" as const,
+                },
+                {
+                  href: "/ranking",
+                  title: "Ranking EID",
+                  body: "Posições e regras por esporte.",
+                  icon: "trophy" as const,
+                },
+                {
+                  href: "/performance",
+                  title: "Performance",
+                  body: "Indicadores e histórico de jogo.",
+                  icon: "spark" as const,
+                },
+                {
+                  href: "/buscar",
+                  title: "Buscar",
+                  body: "Atletas, locais, times e torneios.",
+                  icon: "search" as const,
+                },
+                {
+                  href: "/conta/perfil",
+                  title: "Conta e perfil",
+                  body: "Dados, esportes, EID e preferências.",
+                  icon: "person" as const,
+                },
+                {
+                  href: "/conta/dados-lgpd",
+                  title: "Seus dados (LGPD)",
+                  body: "Exportação, correção e consentimentos.",
+                  icon: "shield" as const,
+                },
               ] as const
             ).map((item) => {
               const href = user ? item.href : `/login?next=${encodeURIComponent(item.href)}`;
               return (
                 <li key={item.href}>
-                  <Link href={href} className={`${linkCard} flex h-full min-h-[5.5rem] flex-col justify-center`}>
-                    <span className="font-semibold text-eid-fg">{item.title}</span>
-                    <span className="mt-1 text-xs leading-snug text-eid-text-secondary">{item.body}</span>
+                  <Link href={href} className={desktopExploreCard}>
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-eid-primary-500/12 text-eid-primary-400 transition group-hover:bg-eid-primary-500/20">
+                      <DesktopAreaIconGlyph name={item.icon} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-semibold text-eid-fg">{item.title}</span>
+                      <span className="mt-1 block text-xs leading-snug text-eid-text-secondary">{item.body}</span>
+                    </span>
                   </Link>
                 </li>
               );
             })}
           </ul>
-          <p className="mt-4 text-xs text-eid-text-muted">
-            Papéis de professor, organizador e gestão de espaço aparecem no app após você marcar no cadastro
-            (onboarding) — os atalhos do painel mudam conforme o contexto ativo.
+          <p className="mt-6 text-xs leading-relaxed text-eid-text-muted">
+            Papéis de professor, organizador e gestão de espaço aparecem após você marcar no cadastro
+            (onboarding) — o painel adapta atalhos ao seu contexto.
           </p>
         </section>
 

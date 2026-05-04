@@ -64,7 +64,10 @@ export default function PrivacidadePage() {
           <li>
             <strong>Dados de relacionamento na Plataforma:</strong> pedidos e aceites de desafio, partidas,
             placares, mensagens operacionais, convites, sugestões de desafio, notificações in-app, histórico de
-            ranking e torneios — incluindo identificação de oponentes e formações envolvidas.
+            ranking e torneios — incluindo identificação de oponentes e formações envolvidas. Dados exibidos no{" "}
+            <strong className="text-eid-fg">painel (dashboard)</strong>, como resumos de agenda ou sugestões de
+            confrontos, são derivados dessas informações e de preferências (esporte, localização, disponibilidade
+            para amistoso, modo individual/dupla/time), conforme as telas que você utiliza.
           </li>
           <li>
             <strong>Dados técnicos e de segurança:</strong> endereço IP, agente de usuário (navegador),
@@ -86,6 +89,13 @@ export default function PrivacidadePage() {
             inscrição push (URL do endpoint, chaves <em>p256dh</em> e <em>auth</em>), estado ativo/inativo,
             <em>user agent</em> quando disponível e datas de criação/atualização, para entrega de alertas no
             navegador ou PWA.
+          </li>
+          <li>
+            <strong>Conexões em tempo quase real (Realtime):</strong> para atualizar notificações e certos dados
+            na interface sem recarregar a página, o navegador pode manter uma conexão assinada a canais do
+            provedor de infraestrutura (por exemplo, serviços da Supabase). Tratamos o necessário para autenticar
+            a sessão e entregar eventos; o conteúdo visível continua sujeito às permissões da sua conta e às
+            políticas de cada tabela ou recurso.
           </li>
           <li>
             <strong>Pagamentos:</strong> dados financeiros completos (cartão etc.) em geral são tratados pelo
@@ -124,7 +134,9 @@ export default function PrivacidadePage() {
           serviços de nuvem e análise de imagem quando ativados. Esses parceiros devem tratar os dados conforme
           instruções contratuais compatíveis com a LGPD. <strong className="text-eid-fg">Outros usuários</strong>{" "}
           podem ver informações que você torna públicas no perfil ou que aparecem em fluxos de desafio, partida
-          ou equipe. Transferências internacionais, se ocorrerem, observarão salvaguardas legais aplicáveis.
+          ou equipe — inclusive líderes e membros de duplas/times que recebem convites, sugestões ou dados de
+          placar vinculados à formação. Transferências internacionais, se ocorrerem, observarão salvaguardas
+          legais aplicáveis.
         </p>
       </section>
 

@@ -159,7 +159,31 @@ export default function TermosPage() {
           <li>
             <strong className="text-eid-fg">Notificações:</strong> alertas in-app e, se você ativar,{" "}
             <strong className="text-eid-fg">notificações push</strong> via navegador (Web Push), com
-            armazenamento de dados da inscrição conforme a Política de Privacidade.
+            armazenamento de dados da inscrição conforme a Política de Privacidade. Quando ativo, parte das
+            atualizações pode ser entregue em <strong className="text-eid-fg">tempo quase real</strong> (canais
+            de assinatura via infraestrutura do serviço), para refletir convites, desafios e alertas sem que
+            você precise recarregar a página manualmente.
+          </li>
+          <li>
+            <strong className="text-eid-fg">Dashboard (painel):</strong> visão personalizada após o login, com
+            atalhos, resumo da sua agenda, indicadores de EID ou performance quando disponíveis, e sugestões
+            operacionais (por exemplo confrontos ou formações próximas) calculadas com base em localização,
+            esporte, disponibilidade e regras internas do produto — sempre sujeitas a mudança de critério ou
+            indisponibilidade temporária. O painel pode apontar{" "}
+            <strong className="text-eid-fg">duplas, times ou vagas em recrutamento</strong> conforme dados
+            públicos ou da sua rede na Plataforma.
+          </li>
+          <li>
+            <strong className="text-eid-fg">Desafio e radar (Match):</strong> além do{" "}
+            <strong className="text-eid-fg">radar</strong> para descobrir oponentes e formações no mapa ou
+            lista (filtros por esporte, distância e finalidade), existe fluxo dedicado de{" "}
+            <strong className="text-eid-fg">Desafio</strong> para enviar e acompanhar pedidos de ranking ou
+            amistoso, com regras de esporte, cooldown e permissões de líderes/membros quando aplicável.
+          </li>
+          <li>
+            <strong className="text-eid-fg">Reservas em espaços:</strong> quando o espaço (academia, quadra
+            etc.) disponibilizar o módulo, você pode solicitar ou gerenciar reservas de horários, sujeito às
+            políticas do estabelecimento e a integrações de pagamento quando ativas.
           </li>
           <li>
             <strong className="text-eid-fg">Denúncias:</strong> canal para relatar condutas ou conteúdos; a
@@ -172,9 +196,10 @@ export default function TermosPage() {
         </ul>
         <p className="text-sm leading-relaxed">
           Funcionalidades podem mudar, ser descontinuadas ou ficar temporariamente indisponíveis por manutenção
-          ou força maior. Resultados esportivos, rankings e placares têm caráter informativo no ecossistema da
-          Plataforma; organizadores, atletas e espaços são responsáveis pela conferência em campo e pelo
-          cumprimento de regulamentos aplicáveis.
+          ou força maior. Sugestões automáticas (incluindo no painel ou no radar) são auxiliares e não garantem
+          disponibilidade de adversários, vagas ou horários. Resultados esportivos, rankings e placares têm
+          caráter informativo no ecossistema da Plataforma; organizadores, atletas e espaços são responsáveis
+          pela conferência em campo e pelo cumprimento de regulamentos aplicáveis.
         </p>
       </section>
 
