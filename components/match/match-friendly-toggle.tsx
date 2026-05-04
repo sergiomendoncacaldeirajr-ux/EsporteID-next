@@ -17,6 +17,8 @@ type Props = {
   userId: string;
   className?: string;
   onStateChange?: (nextOn: boolean) => void;
+  /** Ex.: modal do Match — botão grande “Ligar modo amistoso” além do controle compacto. */
+  prominentActivate?: boolean;
 };
 
 function formatoRestante(ms: number): string {
@@ -30,17 +32,21 @@ function formatoRestante(ms: number): string {
 }
 
 /** Modo amistoso: liga por até 4 h; desliga sozinho se não renovar. Controle compacto (mesma escala do botão de localização). */
-export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, className, onStateChange }: Props) {
+export function MatchFriendlyToggle({
+  initialOn,
+  initialExpiresAt,
+  userId,
+  className,
+  onStateChange,
+  prominentActivate = false,
+}: Props) {
   const [on, setOn] = useState(initialOn);
   const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [pending, startTransition] = useTransition();
   const [showFirstUsePrompt, setShowFirstUsePrompt] = useState(false);
   const [pendingFirstUseActivate, setPendingFirstUseActivate] = useState(false);
-
-  useEffect(() => {
-    onStateChange?.(initialOn);
-  }, [initialOn, onStateChange]);
+  const [pendingDirection, setPendingDirection] = useState<"on" | "off" | null>(null);
 
   useEffect(() => {
     const sb = createClient();
@@ -85,14 +91,19 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
     setOn(next);
     setExpiresAt(next ? new Date(Date.now() + AMISTOSO_DURACAO_MS).toISOString() : null);
     onStateChange?.(next);
+    setPendingDirection(next ? "on" : "off");
     startTransition(async () => {
-      const res = await setViewerDisponivelAmistoso(next);
-      if (!res.ok) {
-        setOn(!next);
-        setExpiresAt(null);
-        onStateChange?.(!next);
+      try {
+        const res = await setViewerDisponivelAmistoso(next);
+        if (!res.ok) {
+          setOn(!next);
+          setExpiresAt(null);
+          onStateChange?.(!next);
+        }
+      } finally {
+        setPendingDirection(null);
+        setPendingFirstUseActivate(false);
       }
-      setPendingFirstUseActivate(false);
     });
   }
 
@@ -111,7 +122,10 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
       : "Disponível para amistoso. Toque para desligar."
     : "Indisponível. Toque para ligar (até 4 horas ou até desligar).";
 
-  return (
+  const busy = pending || pendingFirstUseActivate;
+  const ligandoUi = busy && (pendingDirection === "on" || pendingFirstUseActivate);
+
+  const compactToggle = (
     <button
       type="button"
       disabled={pending || pendingFirstUseActivate}
@@ -121,7 +135,7 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
       aria-label={
         effectiveOn ? "Modo amistoso ativado. Toque para desligar." : "Modo amistoso desligado. Toque para ativar."
       }
-      className={`inline-flex max-w-[min(100%,9.8rem)] touch-manipulation items-center gap-0.5 rounded-lg border px-1.25 py-0.75 text-left text-[5.5px] font-black uppercase leading-none tracking-[0.045em] transition active:scale-[0.99] disabled:opacity-50 sm:max-w-[11rem] sm:gap-1 sm:px-1.75 sm:py-1 sm:text-[6.5px] sm:tracking-[0.055em] dark:border-2 ${
+      className={`relative inline-flex max-w-[min(100%,9.8rem)] touch-manipulation items-center gap-0.5 rounded-lg border px-1.25 py-0.75 text-left text-[5.5px] font-black uppercase leading-none tracking-[0.045em] transition active:scale-[0.99] disabled:opacity-50 sm:max-w-[11rem] sm:gap-1 sm:px-1.75 sm:py-1 sm:text-[6.5px] sm:tracking-[0.055em] dark:border-2 ${
         effectiveOn
           ? "border-emerald-700/80 bg-emerald-200 text-emerald-950 shadow-[0_1px_2px_rgba(6,95,70,0.2)] ring-1 ring-emerald-700/25 hover:border-emerald-800 hover:bg-emerald-300 dark:border-emerald-400/65 dark:bg-emerald-950/55 dark:text-emerald-100 dark:shadow-[0_2px_8px_-4px_rgba(15,23,42,0.35)] dark:ring-1 dark:ring-emerald-400/20 dark:hover:bg-emerald-900/50"
           : "border-rose-700/75 bg-rose-200 text-rose-950 shadow-[0_1px_2px_rgba(190,18,60,0.18)] ring-1 ring-rose-700/20 hover:border-rose-800 hover:bg-rose-300 dark:border-red-400/55 dark:bg-red-950/45 dark:text-red-100 dark:shadow-[0_2px_8px_-4px_rgba(15,23,42,0.35)] dark:ring-1 dark:ring-red-400/15 dark:hover:bg-red-950/70"
@@ -133,15 +147,10 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
         aria-hidden
       />
       <span className="min-w-0 flex-1 whitespace-nowrap">
-        {pendingFirstUseActivate ? (
+        {busy ? (
           <span className="inline-flex items-center gap-1">
             <Loader2 className="h-[1em] w-[1em] animate-spin" aria-hidden />
-            <span>Ligando...</span>
-          </span>
-        ) : pending ? (
-          <span className="inline-flex items-center gap-1">
-            <Loader2 className="h-[1em] w-[1em] animate-spin" aria-hidden />
-            <span>Aguarde...</span>
+            <span>{ligandoUi ? "Ligando..." : "Desligando..."}</span>
           </span>
         ) : effectiveOn ? (
           <span>Amistoso ativo</span>
@@ -186,4 +195,35 @@ export function MatchFriendlyToggle({ initialOn, initialExpiresAt, userId, class
       ) : null}
     </button>
   );
+
+  if (prominentActivate) {
+    return (
+      <div className="flex w-full min-w-0 flex-col gap-2.5">
+        {compactToggle}
+        {!effectiveOn ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggle(true);
+            }}
+            className="eid-btn-primary inline-flex min-h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-black uppercase tracking-[0.04em] disabled:cursor-not-allowed disabled:opacity-55"
+          >
+            {ligandoUi ? (
+              <>
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+                Ligando...
+              </>
+            ) : (
+              "Ligar modo amistoso"
+            )}
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
+  return compactToggle;
 }

@@ -1375,6 +1375,7 @@ export function MatchRadarApp({
                       userId={viewerId}
                       className="!max-w-full"
                       onStateChange={setAmistosoLigado}
+                      prominentActivate
                     />
                   </div>
                 </div>

@@ -41,7 +41,7 @@ export function PerfilPublicoHero({
   const id = profileId;
   return (
     <div id="perfil-hero-panel" className={`${PROFILE_HERO_PANEL_CLASS} mt-0 sm:mt-1`}>
-      <div id="perfil-hero-cover" className="relative h-24 w-full sm:h-28">
+      <div id="perfil-hero-cover" className="relative h-[6.75rem] w-full sm:h-[7.75rem]">
         {perfil.foto_capa ? (
           <>
             <img src={perfil.foto_capa} alt="" className="h-full w-full object-cover object-center" />
@@ -89,8 +89,8 @@ export function PerfilPublicoHero({
         ) : null}
       </div>
 
-      <div className="px-3 pb-4 pt-0">
-        <div className="relative z-[3] -mt-3 min-h-[68px] sm:-mt-4">
+      <div className="px-3 pb-4 pt-1">
+        <div className="relative z-[3] -mt-2 min-h-[68px] sm:-mt-2.5">
           <div className="absolute left-0 top-0 z-10 h-[68px] w-[68px]">
             {perfil.avatar_url ? (
               <img

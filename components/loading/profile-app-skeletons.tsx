@@ -56,7 +56,7 @@ function SectionTitleSkeleton({ className }: { className?: string }) {
 function ProfilePublicHeroSkeleton() {
   return (
     <div className={HERO_PANEL}>
-      <div className="relative h-24 w-full sm:h-28">
+      <div className="relative h-[6.75rem] w-full sm:h-[7.75rem]">
         <div
           className="h-full w-full opacity-90"
           style={{ background: "linear-gradient(135deg,#172554 0%,#0b1d2e 55%,#0b0f14 100%)" }}
