@@ -1,0 +1,558 @@
+-- Dupla: parceiro pode estar só em `public.duplas` (sem `membros_time`), como no headcount de elenco.
+-- O transbordo de EID e de pontos de ranking por membro ignorava esse jogador — nota EID individual e
+-- efeitos do confronto ficavam errados para a dupla perdedora (e vencedora) nesse modelo.
+
+create or replace function public.time_usuarios_transbordo_eid(p_time_id bigint)
+returns table (usuario_id uuid)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select s.uid
+  from (
+    select t.criador_id as uid
+    from public.times t
+    where t.id = p_time_id
+    union
+    select mt.usuario_id
+    from public.membros_time mt
+    where mt.time_id = p_time_id
+      and lower(trim(coalesce(mt.status, ''))) in ('ativo', 'aceito', 'aprovado')
+    union
+    select d.player1_id
+    from public.duplas d
+    join public.times t on t.id = p_time_id
+      and t.esporte_id = d.esporte_id
+      and lower(trim(coalesce(t.tipo, ''))) = 'dupla'
+    where d.player1_id is not null
+      and (d.player1_id = t.criador_id or d.player2_id = t.criador_id)
+    union
+    select d.player2_id
+    from public.duplas d
+    join public.times t on t.id = p_time_id
+      and t.esporte_id = d.esporte_id
+      and lower(trim(coalesce(t.tipo, ''))) = 'dupla'
+    where d.player2_id is not null
+      and (d.player1_id = t.criador_id or d.player2_id = t.criador_id)
+  ) s(uid)
+  where s.uid is not null;
+$$;
+
+revoke all on function public.time_usuarios_transbordo_eid(bigint) from public;
+grant execute on function public.time_usuarios_transbordo_eid(bigint) to service_role;
+
+create or replace function public.processar_eid_partida_by_id(
+  p_partida_id bigint,
+  p_force boolean default false
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_partida public.partidas%rowtype;
+  v_cfg public.eid_config%rowtype;
+  v_modalidade text;
+  v_is_final boolean;
+  v_is_collective boolean;
+  v_is_wo boolean;
+  v_has_gap_bonus boolean;
+  v_side_1_score integer;
+  v_side_2_score integer;
+  v_winner_user uuid;
+  v_loser_user uuid;
+  v_winner_team bigint;
+  v_loser_team bigint;
+  v_winner_score numeric(8, 2);
+  v_loser_score numeric(8, 2);
+  v_gap numeric(10, 4);
+  v_delta_win numeric(10, 4);
+  v_delta_loss numeric(10, 4);
+  v_transfer_delta_win numeric(10, 4);
+  v_transfer_delta_loss numeric(10, 4);
+  v_reason_win text;
+  v_reason_loss text;
+  v_now timestamptz := now();
+  v_member uuid;
+begin
+  select *
+  into v_partida
+  from public.partidas
+  where id = p_partida_id
+  for update;
+
+  if v_partida.id is null then
+    return false;
+  end if;
+
+  if not p_force and v_partida.eid_processado_em is not null then
+    return false;
+  end if;
+
+  v_is_final := public.eid_status_finalizado(v_partida.status);
+  if not v_is_final or v_partida.esporte_id is null then
+    return false;
+  end if;
+
+  select *
+  into v_cfg
+  from public.eid_config
+  where id = 1;
+
+  if v_cfg.id is null then
+    insert into public.eid_config (id) values (1)
+    on conflict (id) do nothing;
+
+    select *
+    into v_cfg
+    from public.eid_config
+    where id = 1;
+  end if;
+
+  v_modalidade := lower(coalesce(v_partida.modalidade, v_partida.tipo_competidor, 'individual'));
+  v_is_collective := v_modalidade in ('dupla', 'time')
+    or (v_partida.time1_id is not null and v_partida.time2_id is not null);
+
+  v_side_1_score := coalesce(v_partida.placar_1, v_partida.placar_desafiante);
+  v_side_2_score := coalesce(v_partida.placar_2, v_partida.placar_desafiado);
+  v_is_wo := public.eid_is_wo(
+    v_partida.tipo_partida,
+    v_partida.status_ranking,
+    v_partida.mensagem,
+    v_partida.resultado_json,
+    v_partida.placar
+  );
+  v_has_gap_bonus := not v_is_wo and public.eid_has_score_gap_bonus(
+    v_partida.placar_1,
+    v_partida.placar_2,
+    v_partida.placar,
+    v_partida.resultado_json
+  );
+
+  if v_is_collective then
+    if v_partida.time1_id is null or v_partida.time2_id is null then
+      return false;
+    end if;
+
+    if v_partida.vencedor_id in (v_partida.time1_id, v_partida.time2_id) then
+      v_winner_team := v_partida.vencedor_id;
+      v_loser_team := case when v_partida.time1_id = v_winner_team then v_partida.time2_id else v_partida.time1_id end;
+    elsif v_side_1_score is not null and v_side_2_score is not null and v_side_1_score <> v_side_2_score then
+      v_winner_team := case when v_side_1_score > v_side_2_score then v_partida.time1_id else v_partida.time2_id end;
+      v_loser_team := case when v_side_1_score > v_side_2_score then v_partida.time2_id else v_partida.time1_id end;
+    else
+      return false;
+    end if;
+
+    select eid_time into v_winner_score from public.times where id = v_winner_team;
+    select eid_time into v_loser_score from public.times where id = v_loser_team;
+    v_winner_score := coalesce(v_winner_score, 0.00);
+    v_loser_score := coalesce(v_loser_score, 0.00);
+
+    v_gap := greatest(0, v_loser_score - v_winner_score);
+    v_delta_win := case
+      when v_is_wo then coalesce(v_cfg.wo_bonus, 0.10)
+      else coalesce(v_cfg.win_base, 0.25) + (v_gap * 0.10) + case when v_has_gap_bonus then coalesce(v_cfg.score_gap_bonus, 0.05) else 0 end
+    end;
+
+    v_gap := greatest(0, v_winner_score - v_loser_score);
+    v_delta_loss := -1 * (
+      coalesce(v_cfg.loss_base, 0.15)
+      + (v_gap * 0.05)
+    );
+
+    v_reason_win := case
+      when v_is_wo then 'Vitória por W.O.'
+      when v_has_gap_bonus then 'Vitória com bônus de ampla vantagem'
+      when v_loser_score > v_winner_score then 'Vitória contra oponente com EID maior'
+      else 'Vitória simples'
+    end;
+
+    v_reason_loss := case
+      when v_winner_score < v_loser_score then 'Derrota para oponente com EID menor'
+      else 'Derrota simples'
+    end;
+
+    perform public.eid_apply_time_delta(
+      v_winner_team,
+      v_partida.esporte_id,
+      v_partida.id,
+      v_delta_win,
+      v_reason_win,
+      jsonb_build_object('modalidade', v_modalidade, 'transferencia', false, 'wo', v_is_wo, 'bonus_larga_vantagem', v_has_gap_bonus)
+    );
+
+    perform public.eid_apply_time_delta(
+      v_loser_team,
+      v_partida.esporte_id,
+      v_partida.id,
+      v_delta_loss,
+      v_reason_loss,
+      jsonb_build_object('modalidade', v_modalidade, 'transferencia', false, 'wo', v_is_wo, 'bonus_larga_vantagem', false)
+    );
+
+    v_transfer_delta_win := round(v_delta_win * coalesce(v_cfg.double_transfer_pct, 0.15), 4);
+    v_transfer_delta_loss := round(v_delta_loss * coalesce(v_cfg.double_transfer_pct, 0.15), 4);
+
+    for v_member in
+      select u.usuario_id from public.time_usuarios_transbordo_eid(v_winner_team) u
+    loop
+      perform public.eid_apply_usuario_delta(
+        v_member,
+        v_partida.esporte_id,
+        v_partida.id,
+        v_transfer_delta_win,
+        'vitoria',
+        format('Transbordo da %s vencedora', case when v_modalidade = 'dupla' then 'dupla' else 'equipe' end),
+        jsonb_build_object(
+          'modalidade', v_modalidade,
+          'transferencia', true,
+          'source_team_id', v_winner_team,
+          'transfer_pct', coalesce(v_cfg.double_transfer_pct, 0.15),
+          'base_delta', v_delta_win
+        )
+      );
+    end loop;
+
+    for v_member in
+      select u.usuario_id from public.time_usuarios_transbordo_eid(v_loser_team) u
+    loop
+      perform public.eid_apply_usuario_delta(
+        v_member,
+        v_partida.esporte_id,
+        v_partida.id,
+        v_transfer_delta_loss,
+        'derrota',
+        format('Transbordo da %s derrotada', case when v_modalidade = 'dupla' then 'dupla' else 'equipe' end),
+        jsonb_build_object(
+          'modalidade', v_modalidade,
+          'transferencia', true,
+          'source_team_id', v_loser_team,
+          'transfer_pct', coalesce(v_cfg.double_transfer_pct, 0.15),
+          'base_delta', v_delta_loss
+        )
+      );
+    end loop;
+
+    update public.partidas
+    set
+      impacto_eid_1 = case when v_partida.time1_id = v_winner_team then round(v_delta_win, 4) else round(v_delta_loss, 4) end,
+      impacto_eid_2 = case when v_partida.time2_id = v_winner_team then round(v_delta_win, 4) else round(v_delta_loss, 4) end,
+      eid_processado_em = v_now,
+      eid_transbordo_processado_em = v_now
+    where id = v_partida.id;
+
+    return true;
+  end if;
+
+  v_winner_user := v_partida.jogador1_id;
+  v_loser_user := v_partida.jogador2_id;
+
+  if v_winner_user is null or v_loser_user is null then
+    return false;
+  end if;
+
+  if v_side_1_score is not null and v_side_2_score is not null and v_side_1_score <> v_side_2_score then
+    if v_side_2_score > v_side_1_score then
+      v_winner_user := v_partida.jogador2_id;
+      v_loser_user := v_partida.jogador1_id;
+    end if;
+  else
+    return false;
+  end if;
+
+  select nota_eid into v_winner_score
+  from public.usuario_eid
+  where usuario_id = v_winner_user
+    and esporte_id = v_partida.esporte_id;
+
+  select nota_eid into v_loser_score
+  from public.usuario_eid
+  where usuario_id = v_loser_user
+    and esporte_id = v_partida.esporte_id;
+
+  v_winner_score := coalesce(v_winner_score, 0.00);
+  v_loser_score := coalesce(v_loser_score, 0.00);
+
+  v_gap := greatest(0, v_loser_score - v_winner_score);
+  v_delta_win := case
+    when v_is_wo then coalesce(v_cfg.wo_bonus, 0.10)
+    else coalesce(v_cfg.win_base, 0.25) + (v_gap * 0.10) + case when v_has_gap_bonus then coalesce(v_cfg.score_gap_bonus, 0.05) else 0 end
+  end;
+
+  v_gap := greatest(0, v_winner_score - v_loser_score);
+  v_delta_loss := -1 * (
+    coalesce(v_cfg.loss_base, 0.15)
+    + (v_gap * 0.05)
+  );
+
+  v_reason_win := case
+    when v_is_wo then 'Vitória por W.O.'
+    when v_has_gap_bonus then 'Vitória com bônus de ampla vantagem'
+    when v_loser_score > v_winner_score then 'Vitória contra oponente com EID maior'
+    else 'Vitória simples'
+  end;
+
+  v_reason_loss := case
+    when v_winner_score < v_loser_score then 'Derrota para oponente com EID menor'
+    else 'Derrota simples'
+  end;
+
+  perform public.eid_apply_usuario_delta(
+    v_winner_user,
+    v_partida.esporte_id,
+    v_partida.id,
+    v_delta_win,
+    'vitoria',
+    v_reason_win,
+    jsonb_build_object('modalidade', v_modalidade, 'transferencia', false, 'wo', v_is_wo, 'bonus_larga_vantagem', v_has_gap_bonus)
+  );
+
+  perform public.eid_apply_usuario_delta(
+    v_loser_user,
+    v_partida.esporte_id,
+    v_partida.id,
+    v_delta_loss,
+    'derrota',
+    v_reason_loss,
+    jsonb_build_object('modalidade', v_modalidade, 'transferencia', false, 'wo', v_is_wo, 'bonus_larga_vantagem', false)
+  );
+
+  update public.partidas
+  set
+    impacto_eid_1 = case when v_partida.jogador1_id = v_winner_user then round(v_delta_win, 4) else round(v_delta_loss, 4) end,
+    impacto_eid_2 = case when v_partida.jogador2_id = v_winner_user then round(v_delta_win, 4) else round(v_delta_loss, 4) end,
+    eid_processado_em = v_now
+  where id = v_partida.id;
+
+  return true;
+end;
+$$;
+
+create or replace function public.aplicar_pontos_ranking_match_desafio(p_partida_id bigint)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row public.partidas%rowtype;
+  v_pv int;
+  v_pd int;
+  v_modalidade text;
+  v_collective boolean;
+  v_s1 int;
+  v_s2 int;
+  v_winner_team bigint;
+  v_loser_team bigint;
+  v_winner_user uuid;
+  v_loser_user uuid;
+  v_w_pts int;
+  v_l_pts int;
+  v_upset int;
+  v_upset_cap int;
+  v_win_pts int;
+  v_lose_pts int;
+  v_n int;
+  v_transfer_pct numeric(8, 4);
+  v_pts_membro_w int;
+  v_pts_membro_l int;
+  v_member uuid;
+begin
+  select *
+  into v_row
+  from public.partidas
+  where id = p_partida_id
+  for update;
+
+  if v_row.id is null then
+    return;
+  end if;
+
+  if v_row.ranking_match_pontos_em is not null then
+    return;
+  end if;
+
+  if v_row.eid_processado_em is null then
+    return;
+  end if;
+
+  if v_row.torneio_id is not null then
+    return;
+  end if;
+
+  if lower(coalesce(v_row.tipo_partida, '')) is distinct from 'ranking' then
+    return;
+  end if;
+
+  if not public.eid_status_finalizado(v_row.status) then
+    return;
+  end if;
+
+  select coalesce(rrm.pontos_vitoria, 10)::int
+  into v_pv
+  from public.regras_ranking_match rrm
+  where rrm.esporte_id = v_row.esporte_id;
+
+  if not found then
+    v_pv := 10;
+  end if;
+  v_pd := 4;
+
+  v_upset_cap := greatest(0, floor(v_pv * 0.2)::int);
+
+  v_modalidade := lower(coalesce(v_row.modalidade, v_row.tipo_competidor, 'individual'));
+  v_collective := v_modalidade in ('dupla', 'time')
+    or (v_row.time1_id is not null and v_row.time2_id is not null);
+
+  v_s1 := coalesce(v_row.placar_1, v_row.placar_desafiante);
+  v_s2 := coalesce(v_row.placar_2, v_row.placar_desafiado);
+
+  if v_collective then
+    if v_row.time1_id is null or v_row.time2_id is null then
+      return;
+    end if;
+
+    if v_row.vencedor_id in (v_row.time1_id, v_row.time2_id) then
+      v_winner_team := v_row.vencedor_id;
+      v_loser_team := case when v_row.time1_id = v_winner_team then v_row.time2_id else v_row.time1_id end;
+    elsif v_s1 is not null and v_s2 is not null and v_s1 <> v_s2 then
+      v_winner_team := case when v_s1 > v_s2 then v_row.time1_id else v_row.time2_id end;
+      v_loser_team := case when v_s1 > v_s2 then v_row.time2_id else v_row.time1_id end;
+    else
+      return;
+    end if;
+
+    select coalesce(t.pontos_ranking, 0)::int into v_w_pts from public.times t where t.id = v_winner_team;
+    select coalesce(t.pontos_ranking, 0)::int into v_l_pts from public.times t where t.id = v_loser_team;
+    v_w_pts := coalesce(v_w_pts, 0);
+    v_l_pts := coalesce(v_l_pts, 0);
+
+    v_upset := case
+      when v_l_pts > v_w_pts then v_upset_cap
+      else 0
+    end;
+    v_win_pts := v_pv + v_upset;
+    v_lose_pts := v_pd;
+
+    update public.times
+    set
+      pontos_ranking = coalesce(pontos_ranking, 0) + v_win_pts,
+      vitorias = coalesce(vitorias, 0) + 1
+    where id = v_winner_team;
+
+    update public.times
+    set
+      pontos_ranking = coalesce(pontos_ranking, 0) + v_lose_pts,
+      derrotas = coalesce(derrotas, 0) + 1
+    where id = v_loser_team;
+
+    select coalesce(ec.double_transfer_pct, 0.15)::numeric(8, 4)
+    into v_transfer_pct
+    from public.eid_config ec
+    where ec.id = 1;
+
+    if not found then
+      v_transfer_pct := 0.15;
+    end if;
+
+    v_pts_membro_w := greatest(0, round(v_win_pts::numeric * v_transfer_pct)::int);
+    v_pts_membro_l := greatest(0, round(v_lose_pts::numeric * v_transfer_pct)::int);
+
+    for v_member in
+      select u.usuario_id from public.time_usuarios_transbordo_eid(v_winner_team) u
+    loop
+      if v_pts_membro_w > 0 then
+        update public.usuario_eid
+        set pontos_ranking = coalesce(pontos_ranking, 0) + v_pts_membro_w
+        where usuario_id = v_member and esporte_id = v_row.esporte_id;
+        get diagnostics v_n = row_count;
+        if v_n = 0 then
+          insert into public.usuario_eid (usuario_id, esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas)
+          values (v_member, v_row.esporte_id, 0, 0, 0, v_pts_membro_w, 0);
+        end if;
+      end if;
+    end loop;
+
+    for v_member in
+      select u.usuario_id from public.time_usuarios_transbordo_eid(v_loser_team) u
+    loop
+      if v_pts_membro_l > 0 then
+        update public.usuario_eid
+        set pontos_ranking = coalesce(pontos_ranking, 0) + v_pts_membro_l
+        where usuario_id = v_member and esporte_id = v_row.esporte_id;
+        get diagnostics v_n = row_count;
+        if v_n = 0 then
+          insert into public.usuario_eid (usuario_id, esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas)
+          values (v_member, v_row.esporte_id, 0, 0, 0, v_pts_membro_l, 0);
+        end if;
+      end if;
+    end loop;
+
+  else
+    v_winner_user := v_row.jogador1_id;
+    v_loser_user := v_row.jogador2_id;
+
+    if v_winner_user is null or v_loser_user is null then
+      return;
+    end if;
+
+    if v_s1 is not null and v_s2 is not null and v_s1 <> v_s2 then
+      if v_s2 > v_s1 then
+        v_winner_user := v_row.jogador2_id;
+        v_loser_user := v_row.jogador1_id;
+      end if;
+    else
+      return;
+    end if;
+
+    select coalesce(ue.pontos_ranking, 0)::int into v_w_pts
+    from public.usuario_eid ue
+    where ue.usuario_id = v_winner_user and ue.esporte_id = v_row.esporte_id;
+
+    select coalesce(ue.pontos_ranking, 0)::int into v_l_pts
+    from public.usuario_eid ue
+    where ue.usuario_id = v_loser_user and ue.esporte_id = v_row.esporte_id;
+
+    v_w_pts := coalesce(v_w_pts, 0);
+    v_l_pts := coalesce(v_l_pts, 0);
+
+    v_upset := case
+      when v_l_pts > v_w_pts then v_upset_cap
+      else 0
+    end;
+    v_win_pts := v_pv + v_upset;
+    v_lose_pts := v_pd;
+
+    update public.usuario_eid
+    set pontos_ranking = coalesce(pontos_ranking, 0) + v_win_pts
+    where usuario_id = v_winner_user and esporte_id = v_row.esporte_id;
+    get diagnostics v_n = row_count;
+    if v_n = 0 then
+      insert into public.usuario_eid (usuario_id, esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas)
+      values (v_winner_user, v_row.esporte_id, 0, 0, 0, v_win_pts, 0);
+    end if;
+
+    update public.usuario_eid
+    set pontos_ranking = coalesce(pontos_ranking, 0) + v_lose_pts
+    where usuario_id = v_loser_user and esporte_id = v_row.esporte_id;
+    get diagnostics v_n = row_count;
+    if v_n = 0 then
+      insert into public.usuario_eid (usuario_id, esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas)
+      values (v_loser_user, v_row.esporte_id, 0, 0, 0, v_lose_pts, 0);
+    end if;
+  end if;
+
+  update public.partidas
+  set ranking_match_pontos_em = now()
+  where id = p_partida_id;
+end;
+$$;
+
+revoke all on function public.aplicar_pontos_ranking_match_desafio(bigint) from public;
+grant execute on function public.aplicar_pontos_ranking_match_desafio(bigint) to service_role;
+
+revoke all on function public.processar_eid_partida_by_id(bigint, boolean) from public;
+grant execute on function public.processar_eid_partida_by_id(bigint, boolean) to service_role;
