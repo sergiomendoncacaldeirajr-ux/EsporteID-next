@@ -884,7 +884,7 @@ export function MatchRadarApp({
         buckets.time.push(c);
         continue;
       }
-      const isAmistosoCandidate = c.disponivelAmistoso && c.interesseMatch !== "ranking";
+      const isAmistosoCandidate = c.disponivelAmistoso;
       if (isAmistosoCandidate) buckets.amistoso.push(c);
       else buckets.ranking.push(c);
     }
@@ -941,7 +941,7 @@ export function MatchRadarApp({
       if (tipo === "time" && c.modalidade !== "time") return false;
       /* tipo "todas": não filtra por modalidade */
       if (finalidade === "amistoso" && c.modalidade !== "individual") return false;
-      if (finalidade === "amistoso" && (!c.disponivelAmistoso || c.interesseMatch === "ranking")) return false;
+      if (finalidade === "amistoso" && !c.disponivelAmistoso) return false;
       if (finalidade === "ranking" && c.interesseMatch === "amistoso") return false;
       return true;
     });
@@ -967,12 +967,7 @@ export function MatchRadarApp({
     // Em amistoso, mesma regra da grade (só individual disponível para amistoso).
     let ordered = fullOrderedCardsPerfil;
     if (finalidade === "amistoso") {
-      ordered = ordered.filter(
-        (c) =>
-          c.modalidade === "individual" &&
-          c.disponivelAmistoso &&
-          c.interesseMatch !== "ranking"
-      );
+      ordered = ordered.filter((c) => c.modalidade === "individual" && c.disponivelAmistoso);
     } else if (finalidade === "ranking") {
       ordered = ordered.filter((c) => c.interesseMatch !== "amistoso");
     }

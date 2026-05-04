@@ -789,7 +789,9 @@ export function filterAndSortRadarCards(
   if (finalidade === "ranking") {
     list = list.filter((c) => c.interesseMatch !== "amistoso");
   } else {
-    list = list.filter((c) => c.interesseMatch !== "ranking" && c.disponivelAmistoso);
+    // Janela ativa (`disponivel_amistoso` + `ate` no banco) já vem resolvida na RPC; não excluir por
+    // `interesse_match = ranking`, pois o toggle de amistoso é o sinal explícito de disponibilidade.
+    list = list.filter((c) => c.disponivelAmistoso);
   }
 
   return list

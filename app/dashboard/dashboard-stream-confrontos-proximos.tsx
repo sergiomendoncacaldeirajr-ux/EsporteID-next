@@ -48,10 +48,13 @@ export async function DashboardStreamConfrontosProximos(props: DashboardStreamCo
             {atletaMaisProximo ? (
               (() => {
                 const { row, p } = atletaMaisProximo;
-                const atletaAmistosoOn = computeDisponivelAmistosoEffective(
-                  p?.disponivel_amistoso,
-                  p?.disponivel_amistoso_ate,
-                );
+                // O spotlight usa o mesmo payload do radar (`individualCardToAtletaSpotlight`), onde
+                // `disponivel_amistoso` já reflete a janela ativa no servidor. Sem `ate` no mini-perfil,
+                // `computeDisponivelAmistosoEffective` zerava e o aro ficava vermelho incorretamente.
+                const atletaAmistosoOn =
+                  p?.disponivel_amistoso_ate != null && String(p.disponivel_amistoso_ate).trim() !== ""
+                    ? computeDisponivelAmistosoEffective(p?.disponivel_amistoso, p.disponivel_amistoso_ate)
+                    : Boolean(p?.disponivel_amistoso);
                 return (
                   <Link
                     key={p?.id ?? "atleta-individual"}
