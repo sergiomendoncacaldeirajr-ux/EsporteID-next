@@ -49,11 +49,19 @@ export function MatchFriendlyToggle({
   const [pendingDirection, setPendingDirection] = useState<"on" | "off" | null>(null);
   const onStateChangeRef = useRef(onStateChange);
   onStateChangeRef.current = onStateChange;
+  /** Nome de canal único por montagem: o cliente Supabase reaproveita o mesmo canal pelo topic; dois toggles na /match quebravam com "cannot add postgres_changes after subscribe()". */
+  const realtimeTopicRef = useRef<string | null>(null);
+  if (realtimeTopicRef.current == null) {
+    realtimeTopicRef.current =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+  }
 
   useEffect(() => {
     const sb = createClient();
     const channel = sb
-      .channel(`match-profile-${userId}`)
+      .channel(`match-profile-${userId}-${realtimeTopicRef.current}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${userId}` },
