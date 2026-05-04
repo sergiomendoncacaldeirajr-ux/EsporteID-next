@@ -290,11 +290,10 @@ export async function RankingStreamBody({
       rankingAll = rows
         .filter((r) => {
           if (stateComGenero.rank !== "match") return true;
-          const teamGenero = generoByTeam.get(Number(r.id)) ?? "misto";
-          if (stateComGenero.genero === "misto") return teamGenero === "misto";
-          if (stateComGenero.genero === "masculino" || stateComGenero.genero === "feminino")
-            return teamGenero === stateComGenero.genero;
-          return true;
+          const tid = Number(r.id);
+          const rec = pontosByTeamBucket.get(tid);
+          const bucket = stateComGenero.genero as GeneroBucket;
+          return (rec?.[bucket] ?? 0) > 0;
         })
         .map((r) => ({
           key: `t-${r.id}-${r.esporte_id ?? 0}`,

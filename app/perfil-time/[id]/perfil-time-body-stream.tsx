@@ -239,7 +239,10 @@ export async function PerfilTimeBodyEid({ timeId, viewerId }: { timeId: number; 
 }
 
 export async function PerfilTimeBodyConfrontos({ timeId, viewerId }: { timeId: number; viewerId: string }) {
-  const { bundleResultados } = await getPerfilTimePartidasBundle(timeId, viewerId);
+  const [idn, { bundleResultados }] = await Promise.all([
+    getPerfilTimeIdentity(timeId, viewerId),
+    getPerfilTimePartidasBundle(timeId, viewerId),
+  ]);
 
   return (
     <ProfileSection
@@ -250,6 +253,11 @@ export async function PerfilTimeBodyConfrontos({ timeId, viewerId }: { timeId: n
         totais={bundleResultados.totais}
         items={bundleResultados.items}
         emptyText="Nenhuma partida em equipe concluída listada ainda para esta formação."
+        historicoCompletoHref={`/perfil-time/${idn.id}/historico?from=${encodeURIComponent(`/perfil-time/${idn.id}`)}`}
+        selfLabel={idn.t.nome ?? "Equipe"}
+        selfProfileHref={`/perfil-time/${idn.id}`}
+        esporteLabel={idn.esp?.nome ?? "Esporte"}
+        modalidadeLabel={idn.modalidade === "dupla" ? "Dupla" : "Time"}
       />
     </ProfileSection>
   );

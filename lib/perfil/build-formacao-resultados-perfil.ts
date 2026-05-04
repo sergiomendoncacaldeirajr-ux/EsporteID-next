@@ -33,6 +33,7 @@ export function buildFormacaoResultadosPerfil(
     else totais.rank += 1;
 
     const dataIso = p.data_resultado ?? p.data_registro;
+    const dataHoraIso = p.data_partida ?? p.data_resultado ?? p.data_registro;
     const torneioLabel = torId ? torneioNome.get(torId) ?? null : null;
 
     items.push({
@@ -41,9 +42,21 @@ export function buildFormacaoResultadosPerfil(
       origem: torId ? "Torneio" : "Rank",
       placar: `${s1}x${s2}`,
       dataFmt: dataIso ? fmtDataPtBr(dataIso) : "—",
+      dataHora: dataHoraIso
+        ? new Intl.DateTimeFormat("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }).format(new Date(dataHoraIso))
+        : "—",
       tone: res.label === "V" ? "positive" : res.label === "D" ? "negative" : "neutral",
       adversarioLabel,
       torneioLabel,
+      local: String(p.local_str ?? "").trim() || null,
+      localHref: p.local_espaco_id != null && Number(p.local_espaco_id) > 0 ? `/local/${Number(p.local_espaco_id)}` : null,
+      mensagem: p.mensagem ?? null,
     });
   }
 

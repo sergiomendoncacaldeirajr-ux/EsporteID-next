@@ -256,6 +256,11 @@ export async function PerfilDuplaBodyConfrontos({ duplaId, viewerId }: PerfilDup
           totais={b.bundleResultadosDupla.totais}
           items={b.bundleResultadosDupla.items}
           emptyText="Nenhuma partida em dupla concluída listada ainda."
+          historicoCompletoHref={`/perfil-dupla/${idn.id}/historico?from=${encodeURIComponent(`/perfil-dupla/${idn.id}`)}`}
+          selfLabel={idn.nomeExibicao}
+          selfProfileHref={`/perfil-dupla/${idn.id}`}
+          esporteLabel={idn.esp?.nome ?? "Esporte"}
+          modalidadeLabel="Dupla"
         />
       ) : (
         <p className="mt-2 text-xs text-eid-text-secondary">
