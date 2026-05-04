@@ -158,7 +158,8 @@ body.eid-app-shell {
   /* Recuo do header fica no wrapper `#eid-app-shell-main-wrap` — `padding-top` no `body` + flex no iOS
    * (Safari / PWA) costuma ignorar ou combinar mal com o conteúdo sob o Dynamic Island. */
   padding-top: 0;
-  padding-bottom: var(--eid-shell-footer-offset);
+  /* MobileBottomNav mede `#eid-mobile-bottom-nav` + botão Rank e define `--eid-shell-footer-offset-measured` (px). */
+  padding-bottom: var(--eid-shell-footer-offset-measured, var(--eid-shell-footer-offset));
   background-image: none;
 }
 
@@ -174,7 +175,7 @@ body.eid-app-shell {
     /* Mesmo recuo que as páginas usam em `pb-[calc(var(--eid-shell-footer-offset)-…)]` */
     --eid-shell-footer-offset: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 2.7rem);
     /* Reserva a faixa da nav fixa para o flex não “subir” por baixo dela. */
-    padding-bottom: var(--eid-shell-footer-offset);
+    padding-bottom: var(--eid-shell-footer-offset-measured, var(--eid-shell-footer-offset));
     min-height: 100lvh;
     overflow-x: clip;
   }
@@ -939,27 +940,15 @@ header#eid-persistent-topbar textarea {
 }
 
 /*
- * Perfil público do atleta: a nav fixa (pill + safe-area + botão Rank acima da barra)
- * costuma ser mais alta que `--eid-shell-footer-offset`; sem folga extra a última
- * área visível “encosta” na nav e parece que a capa/hero fica por baixo.
+ * Perfil público do atleta: `scroll-padding` usa o mesmo recuo medido da nav (MobileBottomNav).
  */
 @media (max-width: 767px) {
   #perfil-public-main[data-eid-perfil-page] {
-    padding-bottom: max(
-      calc(var(--eid-shell-footer-offset) + 5.75rem),
-      calc(env(safe-area-inset-bottom, 0px) + 7.5rem)
-    ) !important;
-    scroll-padding-bottom: calc(var(--eid-shell-footer-offset) + 1.25rem);
+    scroll-padding-bottom: calc(var(--eid-shell-footer-offset-measured, var(--eid-shell-footer-offset)) + 0.75rem);
   }
 
   #perfil-public-main[data-eid-perfil-page] #perfil-hero-panel {
     margin-bottom: 0.75rem;
-  }
-}
-
-@media (min-width: 768px) {
-  #perfil-public-main[data-eid-perfil-page] {
-    padding-bottom: calc(var(--eid-shell-footer-offset) + 2.75rem) !important;
   }
 }
 

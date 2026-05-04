@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { getContextHomeHref, type ActiveAppContext } from "@/lib/auth/active-context";
 import { createClient } from "@/lib/supabase/client";
 import { partidaRowTemResultadoParaRevisaoOponente } from "@/lib/agenda/partidas-usuario";
@@ -120,6 +120,85 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const [socialBadge, setSocialBadge] = useState(0);
   const pendingHrefRef = useRef<string | null>(null);
   const releaseTimerRef = useRef<number | undefined>(undefined);
+
+  const onAuthPage = AUTH_PATH_PREFIXES.some((p) =>
+    p.endsWith("/") ? pathname.startsWith(p) : pathname === p || pathname.startsWith(p + "/")
+  );
+  const showBottomChrome =
+    Boolean(resolvedUserId) && !onAuthPage && !pathname.startsWith("/admin");
+
+  /** Altura real da nav fixa (pill + Rank acima + safe-area) → `--eid-shell-footer-offset-measured` no :root. */
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    const ROOT_VAR = "--eid-shell-footer-offset-measured";
+
+    if (!showBottomChrome) {
+      document.documentElement.style.removeProperty(ROOT_VAR);
+      return;
+    }
+
+    const mq = window.matchMedia("(min-width: 768px)");
+
+    const apply = () => {
+      if (mq.matches) {
+        document.documentElement.style.removeProperty(ROOT_VAR);
+        return;
+      }
+      if (!document.body.classList.contains("eid-app-shell")) {
+        document.documentElement.style.removeProperty(ROOT_VAR);
+        return;
+      }
+      const shell = document.getElementById("eid-mobile-bottom-nav");
+      if (!shell) {
+        document.documentElement.style.removeProperty(ROOT_VAR);
+        return;
+      }
+
+      const vv = window.visualViewport;
+      const vh = vv?.height ?? window.innerHeight;
+      const vTop = vv?.offsetTop ?? 0;
+      const bottomEdge = vTop + vh;
+
+      const rect = shell.getBoundingClientRect();
+      let inset = Math.max(0, bottomEdge - rect.top);
+
+      const rank = shell.querySelector('[aria-label="Rank"]');
+      if (rank) {
+        const rr = rank.getBoundingClientRect();
+        if (rr.top < rect.top) {
+          inset = Math.max(inset, bottomEdge - rr.top);
+        }
+      }
+
+      const px = Math.max(Math.ceil(inset + 14), 72);
+      document.documentElement.style.setProperty(ROOT_VAR, `${px}px`);
+    };
+
+    apply();
+    const shell = document.getElementById("eid-mobile-bottom-nav");
+    const vv = window.visualViewport;
+    const ro = new ResizeObserver(apply);
+    if (shell) ro.observe(shell);
+    mq.addEventListener("change", apply);
+    window.addEventListener("orientationchange", apply);
+    vv?.addEventListener("resize", apply);
+    vv?.addEventListener("scroll", apply);
+    const t0 = window.setTimeout(apply, 0);
+    const t1 = window.setTimeout(apply, 160);
+    const t2 = window.setTimeout(apply, 520);
+
+    return () => {
+      ro.disconnect();
+      mq.removeEventListener("change", apply);
+      window.removeEventListener("orientationchange", apply);
+      vv?.removeEventListener("resize", apply);
+      vv?.removeEventListener("scroll", apply);
+      window.clearTimeout(t0);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      document.documentElement.style.removeProperty(ROOT_VAR);
+    };
+  }, [showBottomChrome, pathname]);
 
   function onNavLinkClickCapture(ev: React.MouseEvent<HTMLAnchorElement>, href: string) {
     if (pendingHrefRef.current === href) {
@@ -438,10 +517,6 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   }, [resolvedUserId, router]);
 
   if (!resolvedUserId) return null;
-
-  const onAuthPage = AUTH_PATH_PREFIXES.some((p) =>
-    p.endsWith("/") ? pathname.startsWith(p) : pathname === p || pathname.startsWith(p + "/")
-  );
 
   if (onAuthPage) return null;
 
