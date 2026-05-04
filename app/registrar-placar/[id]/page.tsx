@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { DismissibleTapAwayHint } from "@/components/agenda/dismissible-tapaway-hint";
+import { AgendamentoSubmitButton } from "@/components/agenda/agendamento-submit-button";
 import { RankingConfrontoDatetimeInput } from "@/components/agenda/ranking-confronto-datetime-input";
 import { CONFRONTO_AGENDAMENTO_JANELA_HORAS } from "@/lib/agenda/confronto-agendamento-janela";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
@@ -597,16 +598,15 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   >
                     + Cadastrar local genérico
                   </CadastrarLocalOverlayTrigger>
-                  <button
-                    type="submit"
+                  <AgendamentoSubmitButton
+                    idleLabel="Salvar agendamento"
+                    pendingLabel="Salvando agendamento..."
                     className={
                       agendaSomente
-                        ? "mt-3 inline-flex min-h-[40px] w-full items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/15 px-3 text-[10px] font-black uppercase tracking-wide text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] shadow-[0_4px_14px_-6px_rgba(37,99,235,0.25)] transition hover:bg-eid-primary-500/22 md:text-[11px]"
-                        : `${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full rounded-xl !min-h-[36px]`
+                        ? "mt-3 inline-flex min-h-[40px] w-full items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/15 px-3 text-[10px] font-black uppercase tracking-wide text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] shadow-[0_4px_14px_-6px_rgba(37,99,235,0.25)] transition hover:bg-eid-primary-500/22 disabled:cursor-not-allowed disabled:opacity-70 md:text-[11px]"
+                        : `${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full rounded-xl !min-h-[36px] disabled:cursor-not-allowed disabled:opacity-70`
                     }
-                  >
-                    Salvar agendamento
-                  </button>
+                  />
                   {!p.torneio_id ? (
                     <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary md:text-[11px]">
                       {agendaSomente ? "Defina data e local aqui." : "Agendamento opcional."} Confronto de ranking (individual,

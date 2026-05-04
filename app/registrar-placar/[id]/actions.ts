@@ -7,6 +7,7 @@ import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger"
 import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 import { sanitizeOptionalUserText, sanitizeUserText } from "@/lib/security/sanitize-input";
+import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { createClient } from "@/lib/supabase/server";
 import {
   loadPartidaLadosUsuarioIds,
@@ -77,7 +78,8 @@ async function notifyUser(
   mensagem: string
 ) {
   if (!usuarioId) return;
-  const { data } = await supabase
+  const writer = hasServiceRoleConfig() ? createServiceRoleClient() : supabase;
+  const { data } = await writer
     .from("notificacoes")
     .insert({
       usuario_id: usuarioId,
@@ -101,12 +103,15 @@ async function notifyAgendamentoVarios(
   supabase: Awaited<ReturnType<typeof createClient>>,
   destinos: Array<{ usuario_id: string; mensagem: string }>,
   remetenteId: string,
-  referenciaPartidaId: number
+  referenciaPartidaId: number,
+  opts?: { includeSender?: boolean }
 ) {
+  const includeSender = Boolean(opts?.includeSender);
+  const writer = hasServiceRoleConfig() ? createServiceRoleClient() : supabase;
   const byUser = new Map<string, string>();
   for (const d of destinos) {
     const uid = String(d.usuario_id ?? "").trim();
-    if (!uid || uid === remetenteId) continue;
+    if (!uid || (!includeSender && uid === remetenteId)) continue;
     byUser.set(uid, d.mensagem);
   }
   const rows = [...byUser.entries()].map(([usuario_id, mensagem]) => ({
@@ -119,12 +124,34 @@ async function notifyAgendamentoVarios(
     data_criacao: new Date().toISOString(),
   }));
   if (!rows.length) return;
-  const { data } = await supabase.from("notificacoes").insert(rows).select("id");
+  const { data } = await writer.from("notificacoes").insert(rows).select("id");
   const ids = (data ?? [])
     .map((r) => Number((r as { id?: number }).id ?? 0))
     .filter((id) => Number.isFinite(id) && id > 0);
   if (ids.length) {
     await triggerPushForNotificationIdsBestEffort(ids, { source: "registrar-placar/actions.notifyAgendamentoVarios" });
+  }
+}
+
+/**
+ * Reforço de processamento de EID/ranking da partida:
+ * - evita depender somente do trigger SQL;
+ * - garante transbordo proporcional de dupla/time (incluindo lado derrotado).
+ */
+async function ensurePartidaEidAndRankingProcessed(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  partidaId: number
+) {
+  const caller = hasServiceRoleConfig() ? createServiceRoleClient() : supabase;
+  try {
+    await caller.rpc("processar_eid_partida_by_id", { p_partida_id: partidaId, p_force: false });
+  } catch {
+    // Best-effort: trigger SQL já tenta processar automaticamente.
+  }
+  try {
+    await caller.rpc("aplicar_pontos_ranking_match_desafio", { p_partida_id: partidaId });
+  } catch {
+    // Best-effort: quando indisponível, mantém fluxo principal de confirmação.
   }
 }
 
@@ -458,18 +485,24 @@ export async function confirmarPlacarAction(formData: FormData) {
 
   const msgConcluido =
     "O placar foi aceito: o confronto foi concluído e o resultado está validado no ranking. Confira na Agenda ou no Painel (Partidas e resultados).";
+  const msgConcluidoQuemAprovou =
+    "Você aprovou o resultado: o confronto foi concluído e o placar está validado no ranking.";
   const { lado1, lado2 } = await loadPartidaLadosUsuarioIds(ctx.supabase, p);
   const todos = new Set<string>([...lado1, ...lado2]);
   const destinosConfirm: Array<{ usuario_id: string; mensagem: string }> = [];
   for (const uid of todos) {
-    if (!uid || uid === user.id) continue;
-    destinosConfirm.push({ usuario_id: uid, mensagem: msgConcluido });
+    if (!uid) continue;
+    destinosConfirm.push({ usuario_id: uid, mensagem: uid === user.id ? msgConcluidoQuemAprovou : msgConcluido });
   }
   const lanc = String(p.lancado_por ?? "").trim();
-  if (lanc && lanc !== user.id && !todos.has(lanc)) {
+  if (lanc && !todos.has(lanc)) {
     destinosConfirm.push({ usuario_id: lanc, mensagem: msgConcluido });
   }
-  if (destinosConfirm.length) await notifyAgendamentoVarios(ctx.supabase, destinosConfirm, user.id, partidaId);
+  if (destinosConfirm.length) {
+    await notifyAgendamentoVarios(ctx.supabase, destinosConfirm, user.id, partidaId, { includeSender: true });
+  }
+
+  await ensurePartidaEidAndRankingProcessed(ctx.supabase, partidaId);
 
   revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
   go(partidaId, "ok", "Resultado confirmado com sucesso.");
@@ -708,9 +741,10 @@ export async function salvarAgendamentoAction(formData: FormData) {
   if (!p.torneio_id) {
     const when = payload.data_partida ? new Date(payload.data_partida).toLocaleString("pt-BR") : "data a combinar";
     const where = payload.local_str ? String(payload.local_str) : "local a combinar";
+    const msgQuemPropoe = `Você agendou o confronto para ${when} • ${where}.`;
     const msgPropriaFormacao = `Agendamento proposto para o desafio: ${when} • ${where}. Aguardando aceite do oponente (até 24h).`;
     const msgAdversario = `O adversário propôs agendamento: ${when} • ${where}. Acesse a Agenda para aceitar em até 24h.`;
-    const msgAtualizado = `Agendamento atualizado: ${when} • ${where}. Confira na Agenda.`;
+    const msgAtualizado = `Horário do confronto atualizado: ${when} • ${where}. Confira na Agenda.`;
 
     const { lado1, lado2 } = await loadPartidaLadosUsuarioIds(ctx.supabase, p);
     const destinos: Array<{ usuario_id: string; mensagem: string }> = [];
@@ -718,24 +752,27 @@ export async function salvarAgendamentoAction(formData: FormData) {
     if (agendamentoPendenteAceite) {
       const ladoQuemPropoe = usuarioEmQualLadoPartida(user.id, lado1, lado2);
       if (ladoQuemPropoe === 1) {
+        destinos.push({ usuario_id: user.id, mensagem: msgQuemPropoe });
         for (const uid of lado1) {
           if (uid !== user.id) destinos.push({ usuario_id: uid, mensagem: msgPropriaFormacao });
         }
         for (const uid of lado2) destinos.push({ usuario_id: uid, mensagem: msgAdversario });
       } else if (ladoQuemPropoe === 2) {
+        destinos.push({ usuario_id: user.id, mensagem: msgQuemPropoe });
         for (const uid of lado2) {
           if (uid !== user.id) destinos.push({ usuario_id: uid, mensagem: msgPropriaFormacao });
         }
         for (const uid of lado1) destinos.push({ usuario_id: uid, mensagem: msgAdversario });
       } else {
         const everyone = new Set<string>([...lado1, ...lado2]);
-        everyone.delete(user.id);
+        everyone.add(user.id);
         const msgNeutro = `Agendamento proposto: ${when} • ${where}. Confira na Agenda para aceitar ou acompanhar (prazo de 24h).`;
         for (const uid of everyone) {
           if (uid) destinos.push({ usuario_id: uid, mensagem: msgNeutro });
         }
       }
     } else {
+      destinos.push({ usuario_id: user.id, mensagem: `Você atualizou o horário do confronto para ${when} • ${where}.` });
       for (const uid of lado1) {
         if (uid !== user.id) destinos.push({ usuario_id: uid, mensagem: msgAtualizado });
       }
@@ -744,7 +781,9 @@ export async function salvarAgendamentoAction(formData: FormData) {
       }
     }
 
-    if (destinos.length) await notifyAgendamentoVarios(ctx.supabase, destinos, user.id, partidaId);
+    if (destinos.length) {
+      await notifyAgendamentoVarios(ctx.supabase, destinos, user.id, partidaId, { includeSender: true });
+    }
   }
 
   revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);

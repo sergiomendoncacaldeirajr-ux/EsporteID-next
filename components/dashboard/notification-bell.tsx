@@ -284,6 +284,13 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         if (!(Number.isFinite(refId) && refId > 0 && canceledMatchIds.has(refId))) {
           unreadGeneral += 1;
         }
+      } else if (tipoLower === "desafio") {
+        /**
+         * `desafio` também é fluxo válido do sininho (ex.: agendamento/placar).
+         * Não condicionar ao status de `match_sugestoes`, pois nem toda notificação
+         * de desafio referencia uma sugestão.
+         */
+        unreadGeneral += 1;
       } else {
         const refId = Number(n.referencia_id ?? 0);
         if (Number.isFinite(refId) && refId > 0 && suggestionResolvedRefIds.has(refId)) {

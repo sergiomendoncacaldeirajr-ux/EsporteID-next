@@ -252,9 +252,6 @@ export function PartidaAgendaCard({
         <div className="mt-3 overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_40%,var(--eid-border-subtle)_60%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)_88%)] p-0">
           <div className="flex items-center justify-between gap-2 border-b border-[color:color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-border-subtle)_70%)] bg-eid-surface/45 px-3 py-2">
             <EidPendingBadge label="Agendamento pendente" />
-            <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
-              {ocultarFluxoAgendamento ? "Status" : "Responder"}
-            </span>
           </div>
           <div className="p-2.5 md:p-3">
             {ocultarFluxoAgendamento ? (

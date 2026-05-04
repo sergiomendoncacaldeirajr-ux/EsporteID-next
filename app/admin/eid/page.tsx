@@ -1,4 +1,4 @@
-import { adminRecalcularEidHistorico, adminUpdateEidConfig } from "@/app/admin/actions";
+import { adminRecalcularEidHistorico, adminReprocessarPartidasEidPendentes, adminUpdateEidConfig } from "@/app/admin/actions";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 function firstOf<T>(value: T | T[] | null | undefined): T | null {
@@ -71,6 +71,24 @@ export default async function AdminEidPage() {
               className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-xs font-bold uppercase tracking-wide text-amber-200 transition hover:border-amber-400/55 hover:bg-amber-500/15"
             >
               Recalcular histórico
+            </button>
+          </form>
+          <form action={adminReprocessarPartidasEidPendentes} className="flex flex-wrap items-center gap-2 rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/8 px-2 py-1.5">
+            <input type="hidden" name="somente_coletivo" value="1" />
+            <input
+              name="limite"
+              type="number"
+              min="1"
+              max="1000"
+              defaultValue={300}
+              className="eid-input-dark w-20 rounded-lg px-2 py-1 text-xs"
+              aria-label="Limite de partidas para reprocessar"
+            />
+            <button
+              type="submit"
+              className="rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/14 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-eid-primary-200 transition hover:bg-eid-primary-500/22"
+            >
+              Reprocessar pendentes (dupla/time)
             </button>
           </form>
         </div>

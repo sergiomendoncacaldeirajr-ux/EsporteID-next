@@ -1247,6 +1247,53 @@ export async function adminRecalcularEidHistorico() {
   }
 }
 
+/**
+ * Reprocessa partidas concluídas que ficaram sem EID/ranking aplicado
+ * (contingência para falhas de trigger em produção).
+ */
+export async function adminReprocessarPartidasEidPendentes(formData: FormData) {
+  try {
+    await guard();
+    const raw = Number(formData.get("limite"));
+    const limite = Number.isFinite(raw) ? Math.max(1, Math.min(1000, Math.floor(raw))) : 300;
+    const somenteColetivo = String(formData.get("somente_coletivo") ?? "") === "1";
+    const db = svc();
+
+    let query = db
+      .from("partidas")
+      .select("id, modalidade, time1_id, time2_id")
+      .eq("status", "concluida")
+      .not("esporte_id", "is", null)
+      .or("eid_processado_em.is.null,ranking_match_pontos_em.is.null")
+      .order("id", { ascending: true })
+      .limit(limite);
+    if (somenteColetivo) {
+      query = query.or("modalidade.eq.dupla,modalidade.eq.time,time1_id.not.is.null,time2_id.not.is.null");
+    }
+
+    const { data: rows, error } = await query;
+    if (error || !(rows?.length ?? 0)) {
+      revalidatePath("/admin/eid");
+      return;
+    }
+
+    for (const row of rows ?? []) {
+      const partidaId = Number((row as { id?: number }).id ?? 0);
+      if (!Number.isFinite(partidaId) || partidaId < 1) continue;
+      await db.rpc("processar_eid_partida_by_id", { p_partida_id: partidaId, p_force: false });
+      await db.rpc("aplicar_pontos_ranking_match_desafio", { p_partida_id: partidaId });
+    }
+
+    revalidatePath("/admin/eid");
+    revalidatePath("/ranking");
+    revalidatePath("/dashboard");
+    revalidatePath("/match");
+    revalidatePath("/agenda");
+  } catch {
+    return;
+  }
+}
+
 /** Carência mínima (meses) entre confrontos de ranking válidos para o mesmo par de atletas no mesmo esporte. */
 export async function adminSetMatchRankCooldownMeses(formData: FormData) {
   try {
