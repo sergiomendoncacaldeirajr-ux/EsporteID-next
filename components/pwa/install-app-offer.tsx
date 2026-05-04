@@ -9,6 +9,7 @@ type BeforeInstallPromptEvent = Event & {
 
 const IOS_DISMISS_SESSION_KEY = "eid-ios-add-home-dismissed";
 const INSTALL_OFFER_LAST_SHOWN_DAY_KEY = "eid-install-offer-last-shown-day";
+const ANDROID_PLAY_URL = "https://play.google.com/store/apps/details?id=com.esporteid.app";
 
 function dayStampNow() {
   return new Date().toISOString().slice(0, 10);
@@ -45,6 +46,11 @@ function isIOSLike() {
   const iPadUA = /iPad/.test(ua);
   const iPadOS13Plus = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
   return iPhoneiPod || iPadUA || iPadOS13Plus;
+}
+
+function isAndroidLike() {
+  if (typeof navigator === "undefined") return false;
+  return /Android/i.test(navigator.userAgent);
 }
 
 function IconShareIOS({ className }: { className?: string }) {
@@ -126,6 +132,7 @@ export function InstallAppOffer() {
     /* iOS não dispara beforeinstallprompt: oferecemos instruções após um breve delay.
      * Em browser o id do timer é `number`; com @types/node, `setTimeout` vira `NodeJS.Timeout` — evitamos o conflito. */
     let iosOpenTimer: number | undefined;
+    let androidOpenTimer: number | undefined;
     if (isIOSLike() && !dismissed && canShowInstallOfferToday()) {
       iosOpenTimer = window.setTimeout(() => {
         markInstallOfferShownToday();
@@ -133,11 +140,19 @@ export function InstallAppOffer() {
         setIosOpen(true);
       }, 900);
     }
+    if (isAndroidLike() && canShowInstallOfferToday()) {
+      androidOpenTimer = window.setTimeout(() => {
+        markInstallOfferShownToday();
+        setCanShowToday(false);
+        setAndroidOpen(true);
+      }, 900);
+    }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
       window.removeEventListener("appinstalled", onAppInstalled);
       if (iosOpenTimer !== undefined) window.clearTimeout(iosOpenTimer);
+      if (androidOpenTimer !== undefined) window.clearTimeout(androidOpenTimer);
     };
   }, [iosDismissed]);
 
@@ -151,7 +166,7 @@ export function InstallAppOffer() {
     }
   }
 
-  const showAndroidModal = androidOpen && Boolean(installEvt);
+  const showAndroidModal = androidOpen && isAndroidLike() && !isStandaloneMode();
   const showIosModal = iosOpen && isIOSLike() && !isStandaloneMode();
 
   return (
@@ -166,19 +181,27 @@ export function InstallAppOffer() {
             >
               Fechar
             </button>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-300">Aplicativo EsporteID</p>
-            <h2 className="mt-2 text-xl font-black text-eid-fg">Instale o app para uma experiência completa</h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-300">EsporteID na Google Play</p>
+            <h2 className="mt-2 text-xl font-black text-eid-fg">Jogue mais rápido com o app oficial</h2>
             <p className="mt-2 text-sm text-eid-text-secondary">
-              Acesso rápido, visual de app no celular e melhor entrega de notificações importantes.
+              Abra partidas e torneios em poucos toques, com melhor estabilidade e experiência de app no seu Android.
             </p>
             <div className="mt-4 flex gap-2">
-              <button
-                type="button"
-                onClick={onInstallNow}
-                className="eid-btn-primary min-h-[44px] flex-1 rounded-xl px-4 text-sm font-black"
+              <a
+                href={ANDROID_PLAY_URL}
+                className="eid-btn-primary min-h-[44px] flex-1 rounded-xl px-4 py-2 text-center text-sm font-black"
               >
-                Instalar agora
-              </button>
+                Instalar na Google Play
+              </a>
+              {installEvt ? (
+                <button
+                  type="button"
+                  onClick={onInstallNow}
+                  className="min-h-[44px] rounded-xl border border-eid-primary-500/35 px-4 text-sm font-black text-eid-primary-200"
+                >
+                  Instalar PWA
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
