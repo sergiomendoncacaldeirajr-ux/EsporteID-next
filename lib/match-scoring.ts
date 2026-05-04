@@ -369,6 +369,18 @@ export function isProSet8Format(config: MatchUIConfig): boolean {
   );
 }
 
+/**
+ * Set em games a 6 com tiebreak em 6×6 (tênis, padel, beach tênis, etc.).
+ * Vitória válida: até 6 com 2 de vantagem, 7×5 (ou 5×7), ou 7×6 / 6×7 com TB — nunca 7×4 etc.
+ * Não aplica ao último set decidido só por super tiebreak em pontos.
+ */
+function isClassicSixGameSetWithSixSixTiebreak(config: MatchUIConfig, isLastPossibleSet: boolean): boolean {
+  if (config.type !== "sets") return false;
+  if (isProSet8Format(config)) return false;
+  if (config.finalSetSuperTiebreak && isLastPossibleSet) return false;
+  return config.gamesPerSet === 6 && config.tiebreak === true;
+}
+
 function validateSet(
   set: SetPayload,
   config: MatchUIConfig,
@@ -420,12 +432,7 @@ function validateSet(
 
   const limit = config.pointsLimit ?? config.gamesPerSet;
   const needsTwo = config.winByTwo || config.type === "sets";
-  const melhorDe3SetComum =
-    config.type === "sets" &&
-    config.setsToWin === 2 &&
-    config.gamesPerSet === 6 &&
-    config.finalSetSuperTiebreak &&
-    !isLastPossibleSet;
+  const classicSixSixTb = isClassicSixGameSetWithSixSixTiebreak(config, isLastPossibleSet);
 
   if (winnerScore === limit && (!needsTwo || winnerScore - loserScore >= 2)) {
     return { ok: true, winner, requiresTb: false };
@@ -444,7 +451,11 @@ function validateSet(
   }
 
   if (needsTwo && winnerScore > limit) {
-    if (melhorDe3SetComum && loserScore < limit) {
+    if (classicSixSixTb && loserScore < limit) {
+      // 7×5 / 5×7: após 5×5, break + confirmação — vitória por 2 games sem tiebreak (6×6 é que abre o TB).
+      if (winnerScore === limit + 1 && loserScore === limit - 1) {
+        return { ok: true, winner, requiresTb: false };
+      }
       return { ok: false, winner: null, requiresTb: false };
     }
     if (winnerScore - loserScore >= 2 && (!config.pointsLimit || winnerScore <= config.pointsLimit)) {
@@ -493,11 +504,12 @@ export function syncSetGamesFromTiebreak(
 }
 
 /**
- * Melhor de 3 (sets 1 e 2): no contador manual o teto é sempre 6 games.
- * O 7×6 / 6×7 só entra pelo sistema após tiebreak válido (syncSetGamesFromTiebreak).
+ * Sets a 6 games com TB em 6×6 (tênis, padel, beach tênis no formato melhor-de-3 + super TB):
+ * teto 6 até 6×6; 7×6 / 6×7 via tiebreak (`syncSetGamesFromTiebreak`); 7×5 / 5×7 sem TB.
+ * Mesma lógica de teto incremental que o pro set (vantagem de 2 games).
  */
-export function maxGamesMelhorDe3RegularSet(_set: SetPayload, _side: "a" | "b", gamesPerSet: number): number {
-  return gamesPerSet;
+export function maxGamesMelhorDe3RegularSet(set: SetPayload, side: "a" | "b", gamesPerSet: number): number {
+  return maxGamesProSet8(set, side, gamesPerSet);
 }
 
 /**

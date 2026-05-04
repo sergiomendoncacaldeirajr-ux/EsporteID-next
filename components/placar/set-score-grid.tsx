@@ -71,6 +71,13 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
 
   const cfgNoFinalTb = { ...config, finalSetSuperTiebreak: false };
   const isPro8 = isProSet8Format(config);
+  /** Tênis, padel, beach tênis etc.: 6×6 → TB; 7×5 válido; teto incremental igual ao layout melhor-de-3. */
+  const capClassicSixGames =
+    !isMelhorDe3SuperTb &&
+    config.type === "sets" &&
+    config.gamesPerSet === 6 &&
+    config.tiebreak &&
+    !isPro8;
   const showGlobalTiebreakSection =
     !isMelhorDe3SuperTb &&
     config.tiebreak &&
@@ -96,13 +103,17 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
         ? maxGamesMelhorDe3RegularSet(set, "a", config.gamesPerSet)
         : isPro8 && !isSuperTb
           ? maxGamesProSet8(set, "a", config.gamesPerSet)
-          : undefined;
+          : capClassicSixGames && !isSuperTb
+            ? maxGamesMelhorDe3RegularSet(set, "a", config.gamesPerSet)
+            : undefined;
     const maxB =
       isMelhorDe3SuperTb && !isSuperTb
         ? maxGamesMelhorDe3RegularSet(set, "b", config.gamesPerSet)
         : isPro8 && !isSuperTb
           ? maxGamesProSet8(set, "b", config.gamesPerSet)
-          : undefined;
+          : capClassicSixGames && !isSuperTb
+            ? maxGamesMelhorDe3RegularSet(set, "b", config.gamesPerSet)
+            : undefined;
     return (
       <div key={`set-${idx}`} className={isSuperTb ? superTiebreakCardShellClass : setCardShellClass}>
         {isSuperTb ? (
