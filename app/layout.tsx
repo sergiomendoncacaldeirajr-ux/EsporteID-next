@@ -184,7 +184,7 @@ export default async function RootLayout({
             </div>
             <div
               id="eid-mobile-bottom-nav"
-              className="pointer-events-none fixed inset-x-0 bottom-0 z-[100] md:hidden"
+              className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] md:hidden"
             >
               <MobileBottomNav userId={user!.id} activeContext={activeContext} />
             </div>

@@ -127,7 +127,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const showBottomChrome =
     Boolean(resolvedUserId) && !onAuthPage && !pathname.startsWith("/admin");
 
-  /** Altura real da nav fixa (pill + Rank acima + safe-area) → `--eid-shell-footer-offset-measured` no :root. */
+  /** Altura da barra inferior fixa (#eid-mobile-bottom-nav) → `--eid-shell-footer-offset-measured` no :root. */
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
     const ROOT_VAR = "--eid-shell-footer-offset-measured";
@@ -161,17 +161,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
 
       const rect = shell.getBoundingClientRect();
       let inset = Math.max(0, bottomEdge - rect.top);
-      // Shell ainda sem altura útil (1º frame): não subestimar — pill + Rank + safe-area costuma ser ~88–112px.
       if (rect.height < 36) {
         inset = Math.max(inset, 96);
-      }
-
-      const rank = shell.querySelector('[aria-label="Rank"]');
-      if (rank) {
-        const rr = rank.getBoundingClientRect();
-        if (rr.top < rect.top) {
-          inset = Math.max(inset, bottomEdge - rr.top);
-        }
       }
 
       const px = Math.max(Math.ceil(inset + 14), 72);
