@@ -938,6 +938,31 @@ header#eid-persistent-topbar textarea {
   }
 }
 
+/*
+ * Perfil público do atleta: a nav fixa (pill + safe-area + botão Rank acima da barra)
+ * costuma ser mais alta que `--eid-shell-footer-offset`; sem folga extra a última
+ * área visível “encosta” na nav e parece que a capa/hero fica por baixo.
+ */
+@media (max-width: 767px) {
+  #perfil-public-main[data-eid-perfil-page] {
+    padding-bottom: max(
+      calc(var(--eid-shell-footer-offset) + 5.75rem),
+      calc(env(safe-area-inset-bottom, 0px) + 7.5rem)
+    ) !important;
+    scroll-padding-bottom: calc(var(--eid-shell-footer-offset) + 1.25rem);
+  }
+
+  #perfil-public-main[data-eid-perfil-page] #perfil-hero-panel {
+    margin-bottom: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  #perfil-public-main[data-eid-perfil-page] {
+    padding-bottom: calc(var(--eid-shell-footer-offset) + 2.75rem) !important;
+  }
+}
+
 button,
 input[type="button"],
 input[type="submit"],
