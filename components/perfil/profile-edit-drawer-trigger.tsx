@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
+import { ProfileEditIframeLoadingSkeleton } from "@/components/loading/profile-app-skeletons";
 
 type Props = {
   href: string;
@@ -238,14 +239,15 @@ export function ProfileEditDrawerTrigger({
                   onLoad={handleFrameLoad}
                   title={title}
                   src={frameSrc}
-                  className="min-h-0 w-full flex-1 border-0 bg-eid-bg"
+                  className="relative z-0 min-h-0 w-full flex-1 border-0 bg-eid-bg"
                 />
-                {frameLoading && !fullscreen ? (
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[88px] grid place-items-center bg-[color:color-mix(in_srgb,var(--eid-bg)_88%,transparent)]">
-                    <div className="inline-flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/85 px-3 py-2 text-xs font-semibold text-eid-fg shadow-sm">
-                      <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-eid-action-400" />
-                      Carregando...
-                    </div>
+                {frameLoading ? (
+                  <div
+                    className={`pointer-events-none absolute inset-x-0 bottom-0 z-[2] bg-[color:color-mix(in_srgb,var(--eid-bg)_92%,transparent)] ${
+                      fullscreen ? "top-0" : "top-[88px]"
+                    }`}
+                  >
+                    <ProfileEditIframeLoadingSkeleton />
                   </div>
                 ) : null}
               </aside>

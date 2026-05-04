@@ -478,6 +478,20 @@ export function PerfilEidEsporteSkeleton() {
   );
 }
 
+/** Enquanto o iframe do painel de edição (drawer ou fullscreen) carrega a rota `embed=1`. */
+export function ProfileEditIframeLoadingSkeleton() {
+  return (
+    <div className="flex min-h-[55vh] flex-col gap-3 px-3 pt-2 sm:px-5" aria-hidden>
+      <div className="flex gap-2">
+        <SkBlock className="h-9 w-24 rounded-xl" />
+      </div>
+      <SkBlock className="h-36 w-full rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50" />
+      <SkBlock className="h-28 w-full rounded-2xl" />
+      <SkBlock className="h-40 w-full rounded-2xl" />
+    </div>
+  );
+}
+
 const MAIN_HIST_PERFIL = "mx-auto w-full max-w-lg px-2.5 pb-6 pt-2 sm:max-w-2xl sm:px-5 sm:pb-8 sm:pt-3";
 
 function HistoricoLinhaSkeleton() {
