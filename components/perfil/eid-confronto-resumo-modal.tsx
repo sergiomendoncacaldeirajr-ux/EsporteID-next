@@ -5,7 +5,8 @@ import { createPortal } from "react-dom";
 import { Calendar, MapPin, X } from "lucide-react";
 import Link from "next/link";
 import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
-import { goalsPayloadHasAny } from "@/lib/match-scoring";
+import { goalsPayloadHasAny, type MatchScorePayload } from "@/lib/match-scoring";
+import { parseScorePayloadFromPartidaMensagem } from "@/lib/perfil/parse-partida-score-payload";
 
 const MODAL_CARD =
   "overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_82%,var(--eid-primary-500)_18%)] bg-[linear-gradient(165deg,color-mix(in_srgb,var(--eid-card)_96%,transparent)_0%,color-mix(in_srgb,var(--eid-surface)_52%,transparent)_100%)] shadow-[0_10px_36px_-18px_rgba(15,23,42,0.42)]";
@@ -15,14 +16,6 @@ const AVATAR_LG =
   "h-11 w-11 shrink-0 rounded-full border-2 border-[color:color-mix(in_srgb,var(--eid-card)_70%,var(--eid-primary-500)_30%)] object-cover shadow-[0_4px_14px_-4px_rgba(15,23,42,0.45)]";
 const AVATAR_FALLBACK_LG =
   "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[color:color-mix(in_srgb,var(--eid-card)_70%,var(--eid-primary-500)_30%)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_35%,var(--eid-surface)_65%),var(--eid-surface))] text-sm font-black text-eid-primary-200 shadow-[0_4px_14px_-4px_rgba(15,23,42,0.45)]";
-
-type ScorePayload = {
-  type?: "sets" | "gols" | "pontos" | "rounds";
-  sets?: Array<{ a?: number; b?: number; tiebreakA?: number; tiebreakB?: number }>;
-  goals?: { a?: number; b?: number; overtimeA?: number; overtimeB?: number; penaltiesA?: number; penaltiesB?: number };
-  points?: { a?: number; b?: number; overtimeA?: number; overtimeB?: number };
-  rounds?: { method?: string; winner?: "a" | "b"; items?: Array<{ a?: number; b?: number; winner?: "a" | "b" | null }> };
-};
 
 type ResumoHistoricoItem = {
   id: number | string;
@@ -67,22 +60,6 @@ type Props = {
   avatarVariant?: "circle" | "formacao";
 };
 
-function parseScorePayloadFromMessage(message: string | null | undefined): ScorePayload | null {
-  const raw = String(message ?? "").trim();
-  if (!raw) return null;
-  const marker = "score_payload:";
-  const idx = raw.indexOf(marker);
-  if (idx < 0) return null;
-  const jsonRaw = raw.slice(idx + marker.length).trim();
-  if (!jsonRaw) return null;
-  try {
-    const parsed = JSON.parse(jsonRaw) as ScorePayload;
-    return parsed && typeof parsed === "object" ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
 function HistoricoPlacarDisplay({
   item,
   sportFallback,
@@ -90,7 +67,7 @@ function HistoricoPlacarDisplay({
   item: ResumoHistoricoItem;
   sportFallback: string | null;
 }) {
-  const payload = parseScorePayloadFromMessage(item.mensagem);
+  const payload = parseScorePayloadFromPartidaMensagem(item.mensagem);
   const sport = item.sportLabel ?? sportFallback;
   if (payload?.type === "gols" && payload.goals && goalsPayloadHasAny(payload.goals)) {
     return (
@@ -224,7 +201,7 @@ function SetsScoreboardTable({
   ladoAProfileHref,
   ladoBProfileHref,
 }: {
-  sets: NonNullable<ScorePayload["sets"]>;
+  sets: NonNullable<MatchScorePayload["sets"]>;
   ladoA: string;
   ladoB: string;
   ladoAAvatarUrl?: string | null;
@@ -345,7 +322,7 @@ export function EidConfrontoResumoModal({
 }: Props) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const payload = useMemo(() => parseScorePayloadFromMessage(mensagem), [mensagem]);
+  const payload = useMemo(() => parseScorePayloadFromPartidaMensagem(mensagem), [mensagem]);
   const [closing, setClosing] = useState(false);
 
   const hrefA =

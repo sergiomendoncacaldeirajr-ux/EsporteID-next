@@ -17,6 +17,8 @@ type Props = {
   userId: string;
   className?: string;
   onStateChange?: (nextOn: boolean) => void;
+  /** Chamado após o servidor confirmar disponibilidade ligada (ex.: aplicar filtro “desafio amistoso” e recarregar lista). */
+  onAmistosoActivated?: () => void;
   /** Ex.: modal do Match — botão grande “Ligar modo amistoso” além do controle compacto. */
   prominentActivate?: boolean;
 };
@@ -38,6 +40,7 @@ export function MatchFriendlyToggle({
   userId,
   className,
   onStateChange,
+  onAmistosoActivated,
   prominentActivate = false,
 }: Props) {
   const [on, setOn] = useState(initialOn);
@@ -49,6 +52,8 @@ export function MatchFriendlyToggle({
   const [pendingDirection, setPendingDirection] = useState<"on" | "off" | null>(null);
   const onStateChangeRef = useRef(onStateChange);
   onStateChangeRef.current = onStateChange;
+  const onAmistosoActivatedRef = useRef(onAmistosoActivated);
+  onAmistosoActivatedRef.current = onAmistosoActivated;
   /** Nome de canal único por montagem: o cliente Supabase reaproveita o mesmo canal pelo topic; dois toggles na /match quebravam com "cannot add postgres_changes after subscribe()". */
   const realtimeTopicRef = useRef<string | null>(null);
   if (realtimeTopicRef.current == null) {
@@ -100,7 +105,7 @@ export function MatchFriendlyToggle({
   function applyToggle(next: boolean) {
     setOn(next);
     setExpiresAt(next ? new Date(Date.now() + AMISTOSO_DURACAO_MS).toISOString() : null);
-    onStateChange?.(next);
+    onStateChangeRef.current?.(next);
     setPendingDirection(next ? "on" : "off");
     startTransition(async () => {
       try {
@@ -108,7 +113,9 @@ export function MatchFriendlyToggle({
         if (!res.ok) {
           setOn(!next);
           setExpiresAt(null);
-          onStateChange?.(!next);
+          onStateChangeRef.current?.(!next);
+        } else if (next) {
+          onAmistosoActivatedRef.current?.();
         }
       } finally {
         setPendingDirection(null);
@@ -168,7 +175,7 @@ export function MatchFriendlyToggle({
           <span>Amistoso off</span>
         )}
       </span>
-      {showFirstUsePrompt ? (
+      {showFirstUsePrompt && !prominentActivate ? (
         <span className="absolute inset-x-0 top-[calc(100%+6px)] z-20 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-2 text-left shadow-[0_14px_28px_-20px_rgba(2,6,23,0.9)]">
           <span className="block text-[9px] font-semibold normal-case leading-relaxed tracking-normal text-eid-text-secondary">
             {AMISTOSO_4H_AVISO_TEXTO}
@@ -210,21 +217,71 @@ export function MatchFriendlyToggle({
     return (
       <div className="flex w-full min-w-0 flex-col gap-2.5">
         {compactToggle}
-        {!effectiveOn ? (
+        {showFirstUsePrompt ? (
+          <div
+            className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/95 p-3 text-left shadow-[0_14px_28px_-20px_rgba(2,6,23,0.9)]"
+            role="dialog"
+            aria-label="Confirmação modo amistoso"
+          >
+            <p className="text-[11px] font-semibold normal-case leading-relaxed tracking-normal text-eid-text-secondary sm:text-xs">
+              {AMISTOSO_4H_AVISO_TEXTO}
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                disabled={pendingFirstUseActivate}
+                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/80 px-3 text-[11px] font-bold uppercase tracking-[0.06em] text-eid-text-secondary transition hover:bg-eid-surface disabled:opacity-50"
+                onClick={() => {
+                  if (pendingFirstUseActivate) return;
+                  setShowFirstUsePrompt(false);
+                }}
+              >
+                Não
+              </button>
+              <button
+                type="button"
+                disabled={pendingFirstUseActivate}
+                className="eid-btn-primary inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 text-[11px] font-black uppercase tracking-[0.06em] disabled:opacity-55"
+                onClick={() => {
+                  if (pendingFirstUseActivate) return;
+                  setPendingFirstUseActivate(true);
+                  marcarAmistoso4hFirstUseWarningAceito();
+                  setShowFirstUsePrompt(false);
+                  applyToggle(true);
+                }}
+              >
+                {pendingFirstUseActivate ? (
+                  <>
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+                    Ligando...
+                  </>
+                ) : (
+                  "Sim, ligar"
+                )}
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {!effectiveOn && !showFirstUsePrompt ? (
           <button
             type="button"
             disabled={busy}
+            aria-busy={ligandoUi}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               toggle(true);
             }}
-            className="eid-btn-primary inline-flex min-h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[13px] font-black uppercase tracking-[0.04em] disabled:cursor-not-allowed disabled:opacity-55"
+            className={`eid-btn-primary relative inline-flex min-h-12 w-full touch-manipulation items-center justify-center gap-2 overflow-hidden rounded-xl px-4 py-3 text-[13px] font-black uppercase tracking-[0.04em] transition disabled:cursor-not-allowed disabled:opacity-55 motion-safe:transition-[transform,box-shadow] active:scale-[0.98] ${
+              ligandoUi
+                ? "motion-safe:animate-pulse shadow-[0_0_0_3px_color-mix(in_srgb,var(--eid-primary-500)_35%,transparent),0_8px_24px_-8px_rgba(37,99,235,0.45)]"
+                : ""
+            }`}
           >
             {ligandoUi ? (
               <>
-                <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
-                Ligando...
+                <Loader2 className="relative h-5 w-5 shrink-0 animate-spin" aria-hidden />
+                <span className="relative">Ligando…</span>
               </>
             ) : (
               "Ligar modo amistoso"

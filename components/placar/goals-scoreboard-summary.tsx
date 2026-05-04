@@ -62,7 +62,7 @@ function NumWithPenSup({
 export type GoalsScoreboardSummaryProps = {
   goals: GoalsScoreFields;
   sportName?: string | null;
-  variant?: "card" | "hero";
+  variant?: "card" | "hero" | "micro";
   /** Rótulo superior (ex.: "Placar final"). Omitir no card embutido em "Placar atual". */
   caption?: string | null;
   className?: string;
@@ -85,6 +85,20 @@ export function GoalsScoreboardSummary({
   const beforePens = goalsTotalsBeforePenaltiesDisplay(goals);
   const showOt = otA > 0 || otB > 0;
   const showPen = penA > 0 || penB > 0;
+
+  if (variant === "micro") {
+    const numClsMicro = "text-[11px] font-black tabular-nums tracking-tight text-inherit";
+    const xClsMicro = "select-none text-[10px] font-extrabold opacity-75 translate-y-px";
+    return (
+      <span className={`inline-flex items-baseline justify-center gap-1 ${className}`.trim()}>
+        <NumWithPenSup main={beforePens.a} pens={penA} showPens={showPen} numClassName={numClsMicro} />
+        <span className={xClsMicro} aria-hidden>
+          ×
+        </span>
+        <NumWithPenSup main={beforePens.b} pens={penB} showPens={showPen} numClassName={numClsMicro} />
+      </span>
+    );
+  }
 
   const numCls =
     variant === "hero"

@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
 import { EidConfrontoResumoModal } from "@/components/perfil/eid-confronto-resumo-modal";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { fmtDataPtBr, type PartidaColetivaRow } from "@/lib/perfil/formacao-eid-stats";
+import { parseScorePayloadFromPartidaMensagem } from "@/lib/perfil/parse-partida-score-payload";
+import { goalsPayloadHasAny } from "@/lib/match-scoring";
 import { PROFILE_CARD_BASE, PROFILE_CARD_PAD_MD } from "@/components/perfil/profile-ui-tokens";
 
 type Props = {
@@ -73,6 +76,9 @@ export function EidColetivoPartidaRow({
   }).format(new Date(p.data_partida ?? p.data_resultado ?? p.data_registro ?? Date.now()));
   const placarOk = Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2));
   const placarTxt = placarOk ? `${p.placar_1} × ${p.placar_2}` : "—";
+  const scorePayload = parseScorePayloadFromPartidaMensagem(p.mensagem);
+  const placarComGolsDetalhado =
+    scorePayload?.type === "gols" && scorePayload.goals && goalsPayloadHasAny(scorePayload.goals);
   const perfilOponenteHref = `/perfil-time/${encodeURIComponent(opponentTimeId)}?from=${encodeURIComponent(profileLinkFrom)}`;
   const origemLinha = origemLabel === "Ranking" ? "Rank" : origemLabel;
   const localStr = String(p.local_str ?? "").trim();
@@ -165,7 +171,15 @@ export function EidColetivoPartidaRow({
             className="inline-flex items-center rounded-md border border-eid-primary-500/30 bg-eid-primary-500/[0.1] px-1.5 py-0.5 text-[11px] font-black tabular-nums tracking-tight text-eid-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ring-1 ring-inset ring-eid-primary-500/10"
             title="Placar"
           >
-            {placarTxt}
+            {placarComGolsDetalhado ? (
+              <GoalsScoreboardSummary
+                variant="micro"
+                goals={scorePayload.goals!}
+                sportName={esporteLabel ?? null}
+              />
+            ) : (
+              placarTxt
+            )}
           </span>
           <span className="mx-1 text-eid-text-secondary">·</span>
           {when}

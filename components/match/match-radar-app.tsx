@@ -671,6 +671,11 @@ export function MatchRadarApp({
     ]
   );
 
+  /** Após ligar disponibilidade no servidor: garante filtro “desafio amistoso”, URL e lista atualizados. */
+  const onAmistosoActivated = useCallback(() => {
+    applyFilters({ finalidade: "amistoso" });
+  }, [applyFilters]);
+
   const esporteOptions = useMemo(() => {
     const allowed = isFullView
       ? new Set([
@@ -1317,6 +1322,7 @@ export function MatchRadarApp({
                   userId={viewerId}
                   className="!max-w-full"
                   onStateChange={setAmistosoLigado}
+                  onAmistosoActivated={onAmistosoActivated}
                 />
               </div>
             ) : null}
@@ -1365,6 +1371,7 @@ export function MatchRadarApp({
               userId={viewerId}
               className="!max-w-full"
               onStateChange={setAmistosoLigado}
+              onAmistosoActivated={onAmistosoActivated}
             />
           </div>
         ) : null}
@@ -1384,6 +1391,7 @@ export function MatchRadarApp({
                       userId={viewerId}
                       className="!max-w-full"
                       onStateChange={setAmistosoLigado}
+                      onAmistosoActivated={onAmistosoActivated}
                       prominentActivate
                     />
                   </div>
