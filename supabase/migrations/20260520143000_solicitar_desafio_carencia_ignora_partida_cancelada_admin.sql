@@ -37,7 +37,7 @@ begin
 
   v_fin := lower(trim(coalesce(p_finalidade, 'ranking')));
   if v_fin not in ('ranking', 'amistoso') then
-    raise exception 'Finalidade de match inválida';
+    raise exception 'Finalidade de desafio inválida';
   end if;
 
   v_mod := lower(trim(coalesce(p_modalidade, '')));
@@ -144,7 +144,7 @@ begin
         and p.disponivel_amistoso_ate is not null
         and p.disponivel_amistoso_ate > now()
     ) then
-      raise exception 'Ative o modo amistoso no seu perfil para solicitar match amistoso.';
+      raise exception 'Ative o modo amistoso no seu perfil para solicitar desafio amistoso.';
     end if;
     if not exists (
       select 1 from public.profiles p
@@ -472,7 +472,7 @@ begin
           or (m.usuario_id = v_adv and m.adversario_id = v_uid)
         )
     ) then
-      raise exception 'Já existe um pedido de match de ranking pendente com este oponente neste esporte.';
+      raise exception 'Já existe um pedido de desafio de ranking pendente com este oponente neste esporte.';
     end if;
 
     if exists (
@@ -494,7 +494,7 @@ begin
     ) then
       raise exception
         using message = format(
-          'Neste esporte, só é possível um novo match de ranking com este oponente após %s meses do último confronto válido.',
+          'Neste esporte, só é possível um novo desafio de ranking com este oponente após %s meses do último confronto válido.',
           v_meses
         );
     end if;
@@ -527,7 +527,7 @@ begin
           )
         )
     ) then
-      raise exception 'Já existe um pedido de match de ranking pendente entre estas formações neste esporte.';
+      raise exception 'Já existe um pedido de desafio de ranking pendente entre estas formações neste esporte.';
     end if;
 
     if exists (
@@ -558,7 +558,7 @@ begin
     ) then
       raise exception
         using message = format(
-          'Neste esporte, só é possível um novo match de ranking entre estas formações após %s meses do último confronto válido.',
+          'Neste esporte, só é possível um novo desafio de ranking entre estas formações após %s meses do último confronto válido.',
           v_meses
         );
     end if;
@@ -592,7 +592,7 @@ begin
     ) then
       raise exception
         using message = format(
-          'Neste esporte, só é possível um novo match de ranking entre estas formações após %s meses do último confronto válido.',
+          'Neste esporte, só é possível um novo desafio de ranking entre estas formações após %s meses do último confronto válido.',
           v_meses
         );
     end if;
@@ -622,7 +622,7 @@ begin
     ) then
       raise exception
         using message = format(
-          'Neste esporte, só é possível um novo match de ranking entre estas formações após %s meses do último confronto válido.',
+          'Neste esporte, só é possível um novo desafio de ranking entre estas formações após %s meses do último confronto válido.',
           v_meses
         );
     end if;
@@ -679,13 +679,13 @@ begin
         case
           when v_challenger_nome is not null and length(trim(v_challenger_nome)) > 0
           then 'Pedido de Match amistoso de ' || trim(v_challenger_nome) || ' (sem pontos de ranking).'
-          else 'Você recebeu um pedido de Match amistoso.'
+          else 'Você recebeu um pedido de desafio amistoso.'
         end
       else
         case
           when v_challenger_nome is not null and length(trim(v_challenger_nome)) > 0
-          then 'Você recebeu um novo pedido de Match de ranking de ' || trim(v_challenger_nome) || '.'
-          else 'Você recebeu um novo pedido de Match de ranking.'
+          then 'Você recebeu um novo pedido de desafio de ranking de ' || trim(v_challenger_nome) || '.'
+          else 'Você recebeu um novo pedido de desafio de ranking.'
         end
     end,
     'match',

@@ -11,7 +11,6 @@ import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/se
 import { createClient } from "@/lib/supabase/server";
 import {
   loadPartidaLadosUsuarioIds,
-  resolveOponenteLeaderUserIdForNotificacao,
   usuarioEmQualLadoPartida,
 } from "@/lib/agenda/partidas-usuario";
 import {
@@ -75,16 +74,17 @@ async function notifyUser(
   usuarioId: string | null | undefined,
   remetenteId: string,
   referenciaId: number,
-  mensagem: string
+  mensagem: string,
+  tipo: "desafio" | "agenda_status" = "desafio"
 ) {
   if (!usuarioId) return;
   const writer = hasServiceRoleConfig() ? createServiceRoleClient() : supabase;
-  const { data } = await writer
+  const { data, error } = await writer
     .from("notificacoes")
     .insert({
       usuario_id: usuarioId,
       mensagem,
-      tipo: "desafio",
+      tipo,
       referencia_id: referenciaId,
       lida: false,
       remetente_id: remetenteId,
@@ -92,6 +92,7 @@ async function notifyUser(
     })
     .select("id")
     .limit(1);
+  if (error) return;
   const notifId = Number((data?.[0] as { id?: number } | undefined)?.id ?? 0);
   if (Number.isFinite(notifId) && notifId > 0) {
     await triggerPushForNotificationIdsBestEffort([notifId], { source: "registrar-placar/actions.notifyUser" });
@@ -104,9 +105,10 @@ async function notifyAgendamentoVarios(
   destinos: Array<{ usuario_id: string; mensagem: string }>,
   remetenteId: string,
   referenciaPartidaId: number,
-  opts?: { includeSender?: boolean }
+  opts?: { includeSender?: boolean; tipo?: "desafio" | "agenda_status" }
 ) {
   const includeSender = Boolean(opts?.includeSender);
+  const tipo = opts?.tipo ?? "desafio";
   const writer = hasServiceRoleConfig() ? createServiceRoleClient() : supabase;
   const byUser = new Map<string, string>();
   for (const d of destinos) {
@@ -117,14 +119,15 @@ async function notifyAgendamentoVarios(
   const rows = [...byUser.entries()].map(([usuario_id, mensagem]) => ({
     usuario_id,
     mensagem,
-    tipo: "desafio" as const,
+    tipo,
     referencia_id: referenciaPartidaId,
     lida: false,
     remetente_id: remetenteId,
     data_criacao: new Date().toISOString(),
   }));
   if (!rows.length) return;
-  const { data } = await writer.from("notificacoes").insert(rows).select("id");
+  const { data, error } = await writer.from("notificacoes").insert(rows).select("id");
+  if (error) return;
   const ids = (data ?? [])
     .map((r) => Number((r as { id?: number }).id ?? 0))
     .filter((id) => Number.isFinite(id) && id > 0);
@@ -395,24 +398,29 @@ export async function submitPlacarAction(formData: FormData) {
   const { error } = await ctx.supabase.from("partidas").update(updatePayload).eq("id", partidaId);
   if (error) go(partidaId, "erro", "Não foi possível salvar o placar.");
 
-  if (!isTorneio) {
-    const msgResultado = `Foi lançado o placar (${finalPlacar1} x ${finalPlacar2}) neste confronto. Acesse a Agenda ou o Painel (Partidas e resultados) para confirmar ou contestar.`;
+  {
     const { lado1, lado2 } = await loadPartidaLadosUsuarioIds(ctx.supabase, p);
-    const ladoAtor = usuarioEmQualLadoPartida(user.id, lado1, lado2);
+    const everyone = new Set<string>([...lado1, ...lado2]);
     const destinos: Array<{ usuario_id: string; mensagem: string }> = [];
-    if (ladoAtor === 1) {
-      for (const uid of lado2) {
-        if (uid !== user.id) destinos.push({ usuario_id: uid, mensagem: msgResultado });
-      }
-    } else if (ladoAtor === 2) {
-      for (const uid of lado1) {
-        if (uid !== user.id) destinos.push({ usuario_id: uid, mensagem: msgResultado });
-      }
-    } else {
-      const oponenteId = await resolveOponenteLeaderUserIdForNotificacao(ctx.supabase, p, user.id);
-      if (oponenteId) destinos.push({ usuario_id: oponenteId, mensagem: msgResultado });
+    const msgActor = isTorneio
+      ? `Você lançou o resultado (${finalPlacar1} x ${finalPlacar2}). Confronto concluído e resultado validado.`
+      : `Você lançou o resultado (${finalPlacar1} x ${finalPlacar2}). Aguardando validação do oponente.`;
+    const msgOthers = isTorneio
+      ? `Resultado lançado (${finalPlacar1} x ${finalPlacar2}). Confronto concluído e resultado validado.`
+      : `Resultado lançado (${finalPlacar1} x ${finalPlacar2}). Aguardando validação do oponente.`;
+    for (const uid of everyone) {
+      if (!uid) continue;
+      destinos.push({ usuario_id: uid, mensagem: uid === user.id ? msgActor : msgOthers });
     }
-    if (destinos.length) await notifyAgendamentoVarios(ctx.supabase, destinos, user.id, partidaId);
+    if (!everyone.has(user.id)) {
+      destinos.push({ usuario_id: user.id, mensagem: msgActor });
+    }
+    if (destinos.length) {
+      await notifyAgendamentoVarios(ctx.supabase, destinos, user.id, partidaId, {
+        includeSender: true,
+        tipo: "agenda_status",
+      });
+    }
   }
 
   revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
@@ -782,7 +790,10 @@ export async function salvarAgendamentoAction(formData: FormData) {
     }
 
     if (destinos.length) {
-      await notifyAgendamentoVarios(ctx.supabase, destinos, user.id, partidaId, { includeSender: true });
+      await notifyAgendamentoVarios(ctx.supabase, destinos, user.id, partidaId, {
+        includeSender: true,
+        tipo: "agenda_status",
+      });
     }
   }
 

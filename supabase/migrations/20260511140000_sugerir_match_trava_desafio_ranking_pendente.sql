@@ -44,7 +44,7 @@ begin
   end if;
 
   if v_alvo.criador_id = v_uid then
-    raise exception 'Líderes enviam pedido de match direto pelo fluxo habitual';
+    raise exception 'Líderes enviam pedido de desafio direto pelo fluxo habitual';
   end if;
 
   select t.id, t.criador_id, t.esporte_id, lower(trim(coalesce(t.tipo, ''))) as tipo
@@ -57,7 +57,7 @@ begin
   end if;
 
   if v_sug.criador_id = v_uid then
-    raise exception 'Como líder, use o pedido de match normal';
+    raise exception 'Como líder, use o pedido de desafio normal';
   end if;
 
   if v_sug.esporte_id is distinct from v_alvo.esporte_id or v_sug.tipo is distinct from v_alvo.tipo then

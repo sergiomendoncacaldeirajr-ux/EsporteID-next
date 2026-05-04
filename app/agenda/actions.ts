@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { userMayRespondPropostaAgendamento } from "@/lib/agenda/partidas-usuario";
+import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { createClient } from "@/lib/supabase/server";
 
 export type ResponderAgendamentoState = { ok: true; message: string } | { ok: false; message: string };
@@ -12,15 +13,17 @@ async function notify(
   usuarioId: string | null | undefined,
   remetenteId: string,
   referenciaId: number,
-  mensagem: string
+  mensagem: string,
+  tipo: "desafio" | "agenda_status" = "agenda_status"
 ) {
   if (!usuarioId) return;
-  const { data } = await supabase
+  const writer = hasServiceRoleConfig() ? createServiceRoleClient() : supabase;
+  const { data, error } = await writer
     .from("notificacoes")
     .insert({
       usuario_id: usuarioId,
       mensagem,
-      tipo: "desafio",
+      tipo,
       referencia_id: referenciaId,
       lida: false,
       remetente_id: remetenteId,
@@ -28,14 +31,15 @@ async function notify(
     })
     .select("id")
     .limit(1);
+  if (error) return;
   const notifId = Number((data?.[0] as { id?: number } | undefined)?.id ?? 0);
   if (Number.isFinite(notifId) && notifId > 0) {
     await triggerPushForNotificationIdsBestEffort([notifId], { source: "agenda/actions.responderAgendamentoPartidaAction" });
   }
 }
 
-/** Após aceite do agendamento: avisa capitães + elenco dos dois times (ranking). */
-async function notificarElencoAgendamentoConfirmado(
+/** Após resposta da proposta: avisa capitães + elenco dos dois lados (ranking). */
+async function notificarElencoAgendamentoStatus(
   supabase: Awaited<ReturnType<typeof createClient>>,
   row: {
     match_id?: number | null;
@@ -47,11 +51,13 @@ async function notificarElencoAgendamentoConfirmado(
     local_str?: string | null;
   },
   remetenteId: string,
-  partidaId: number
+  partidaId: number,
+  status: "aceito" | "recusado"
 ) {
   const matchId = Number(row.match_id ?? 0);
   const referenciaId = Number.isFinite(matchId) && matchId > 0 ? matchId : partidaId;
   if (!Number.isFinite(referenciaId) || referenciaId < 1) return;
+  const writer = hasServiceRoleConfig() ? createServiceRoleClient() : supabase;
 
   const recipients = new Set<string>();
   for (const uid of [row.jogador1_id, row.jogador2_id]) {
@@ -82,21 +88,25 @@ async function notificarElencoAgendamentoConfirmado(
     ? new Date(String(row.data_partida)).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })
     : "data a combinar";
   const where = String(row.local_str ?? "").trim() || "local a combinar";
-  const msg = `Desafio agendado: ${when} · ${where}. Confira na Agenda e no Painel (Partidas e resultados).`;
+  const msg =
+    status === "aceito"
+      ? `Agendamento aprovado: ${when} · ${where}. Confira na Agenda e no Painel (Partidas e resultados).`
+      : `Proposta de agendamento recusada (${when} · ${where}). Definam uma nova data/local na Agenda.`;
 
   recipients.delete(String(remetenteId ?? "").trim());
 
   const rows = [...recipients].map((usuario_id) => ({
     usuario_id,
     mensagem: msg,
-    tipo: "match" as const,
+    tipo: "agenda_status" as const,
     referencia_id: referenciaId,
     lida: false,
     remetente_id: remetenteId,
     data_criacao: new Date().toISOString(),
   }));
   if (!rows.length) return;
-  const { data: inserted } = await supabase.from("notificacoes").insert(rows).select("id");
+  const { data: inserted, error } = await writer.from("notificacoes").insert(rows).select("id");
+  if (error) return;
   const ids = (inserted ?? [])
     .map((r) => Number((r as { id?: number }).id ?? 0))
     .filter((id) => Number.isFinite(id) && id > 0);
@@ -155,10 +165,11 @@ export async function responderAgendamentoPartidaAction(
       p.agendamento_proposto_por,
       user.id,
       partidaId,
-      "Seu agendamento foi aceito pelo oponente."
+      "Seu agendamento foi aceito pelo oponente.",
+      "agenda_status"
     );
     if (!p.torneio_id) {
-      await notificarElencoAgendamentoConfirmado(supabase, p, user.id, partidaId);
+      await notificarElencoAgendamentoStatus(supabase, p, user.id, partidaId, "aceito");
     }
   } else {
     const { error } = await supabase
@@ -179,8 +190,12 @@ export async function responderAgendamentoPartidaAction(
       p.agendamento_proposto_por,
       user.id,
       partidaId,
-      "Seu agendamento foi recusado. Proponha uma nova data e local."
+      "Seu agendamento foi recusado. Proponha uma nova data e local.",
+      "agenda_status"
     );
+    if (!p.torneio_id) {
+      await notificarElencoAgendamentoStatus(supabase, p, user.id, partidaId, "recusado");
+    }
   }
 
   revalidatePath("/agenda");
