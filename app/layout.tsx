@@ -25,6 +25,11 @@ import {
 import { EID_APP_CHROME_THEME_COLOR, EID_LOGO_AUTH_MARK_SRC } from "@/lib/branding";
 import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
 import { SupportCenterFloat } from "@/components/support/support-center-float";
+import {
+  ALL_SYSTEM_FEATURE_KEYS,
+  getSystemFeatureConfig,
+  type SystemFeatureKey,
+} from "@/lib/system-features";
 import { SiteFooterLoader } from "@/components/site-footer-loader";
 import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
 import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
@@ -105,6 +110,7 @@ export default async function RootLayout({
   let canShowAuthenticatedChrome = false;
   let papeis: string[] = [];
   let activeContext: ActiveAppContext = "atleta";
+  let supportModulosEmBreve: SystemFeatureKey[] = [];
   let hdrs: Awaited<ReturnType<typeof headers>>;
   let cookieStore: Awaited<ReturnType<typeof cookies>>;
   try {
@@ -119,6 +125,8 @@ export default async function RootLayout({
       ]);
       papeis = papeisResult;
       canShowAuthenticatedChrome = legalAcceptanceIsCurrent(profile);
+      const cfg = await getSystemFeatureConfig(auth.supabase);
+      supportModulosEmBreve = ALL_SYSTEM_FEATURE_KEYS.filter((k) => cfg[k].mode === "em_breve");
     }
   } catch {
     hdrs = await headers();
@@ -126,6 +134,7 @@ export default async function RootLayout({
     user = null;
     canShowAuthenticatedChrome = false;
     papeis = [];
+    supportModulosEmBreve = [];
   }
   const hideAppShell = hdrs.get(EID_HIDE_APP_SHELL_HEADER) === "1";
   const showOnboardingChrome = hdrs.get(EID_SHOW_ONBOARDING_CHROME_HEADER) === "1";
@@ -216,7 +225,7 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <LegalGateDeferred />
         </Suspense>
-        {user ? <SupportCenterFloat /> : null}
+        {user ? <SupportCenterFloat modulosEmBreve={supportModulosEmBreve} /> : null}
       </body>
     </html>
   );

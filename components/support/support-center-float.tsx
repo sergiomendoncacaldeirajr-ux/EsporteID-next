@@ -2,10 +2,17 @@
 
 import { Headset, X } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { submitSupportChamado, type SupportChamadoSubmitState } from "@/app/support/actions";
-import { SUPPORT_CHAMADO_AREAS, SUPPORT_FAQ_ITEMS } from "@/lib/support/support-areas";
+import {
+  SUPPORT_CHAMADO_AREAS,
+  SUPPORT_FAQ_ITEMS,
+  SUPPORT_PERFIL_FORMACOES_FAQ,
+  supportFaqVisivelEmProducao,
+  type SupportFaqItem,
+} from "@/lib/support/support-areas";
+import type { SystemFeatureKey } from "@/lib/system-features";
 
 const initialSubmit: SupportChamadoSubmitState = { ok: false, message: "" };
 
@@ -14,14 +21,66 @@ function pathOcultaSuporte(pathname: string): boolean {
   return p.startsWith("/admin") || p.startsWith("/api/");
 }
 
-export function SupportCenterFloat() {
+function renderFaqAccordion(
+  items: SupportFaqItem[],
+  faqAbertoId: string | null,
+  setFaqAbertoId: (id: string | null) => void
+) {
+  if (!items.length) {
+    return (
+      <p className="text-[11px] leading-snug text-eid-text-secondary">
+        Nada listado aqui no momento — use <strong>Abrir chamado</strong> se precisar da equipe.
+      </p>
+    );
+  }
+  return (
+    <ul className="space-y-2">
+      {items.map((item) => {
+        const open = faqAbertoId === item.id;
+        return (
+          <li key={item.id} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-bg/40">
+            <button
+              type="button"
+              className="flex w-full items-start justify-between gap-2 px-2.5 py-2 text-left text-xs font-semibold text-eid-fg"
+              aria-expanded={open}
+              onClick={() => setFaqAbertoId(open ? null : item.id)}
+            >
+              <span>{item.pergunta}</span>
+              <span className="shrink-0 text-[10px] text-eid-text-secondary">{open ? "−" : "+"}</span>
+            </button>
+            {open ? (
+              <p className="border-t border-[color:var(--eid-border-subtle)]/60 px-2.5 pb-2.5 pt-1.5 text-[11px] leading-relaxed text-eid-text-secondary">
+                {item.resposta}
+              </p>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+export type SupportCenterFloatProps = {
+  modulosEmBreve?: readonly SystemFeatureKey[];
+};
+
+export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatProps) {
   const pathname = usePathname() ?? "";
   const [aberto, setAberto] = useState(false);
-  const [aba, setAba] = useState<"ajuda" | "chamado">("ajuda");
-  const [faqAberto, setFaqAberto] = useState<number | null>(0);
+  const [aba, setAba] = useState<"ajuda" | "perfil" | "chamado">("ajuda");
+  const [faqAbertoId, setFaqAbertoId] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
 
   const [submitState, formAction, submitPending] = useActionState(submitSupportChamado, initialSubmit);
+
+  const faqAjuda = useMemo(
+    () => SUPPORT_FAQ_ITEMS.filter((x) => supportFaqVisivelEmProducao(x, modulosEmBreve)),
+    [modulosEmBreve]
+  );
+  const faqPerfil = useMemo(
+    () => SUPPORT_PERFIL_FORMACOES_FAQ.filter((x) => supportFaqVisivelEmProducao(x, modulosEmBreve)),
+    [modulosEmBreve]
+  );
 
   useEffect(() => {
     if (!submitState.ok || !submitState.message) return;
@@ -39,33 +98,60 @@ export function SupportCenterFloat() {
 
   if (pathOcultaSuporte(pathname)) return null;
 
+  const abrirPainel = () => {
+    setAberto(true);
+    const list = aba === "ajuda" ? faqAjuda : aba === "perfil" ? faqPerfil : [];
+    setFaqAbertoId(list[0]?.id ?? null);
+  };
+
+  const irAjuda = () => {
+    setAba("ajuda");
+    setFaqAbertoId(faqAjuda[0]?.id ?? null);
+  };
+
+  const irPerfil = () => {
+    setAba("perfil");
+    setFaqAbertoId(faqPerfil[0]?.id ?? null);
+  };
+
+  const irChamado = () => {
+    setAba("chamado");
+    setFaqAbertoId(null);
+  };
+
   return (
     <>
-      <button
-        type="button"
-        aria-expanded={aberto}
-        aria-controls="eid-support-panel"
-        aria-label="Abrir central de suporte"
-        onClick={() => setAberto((v) => !v)}
-        className="fixed bottom-[max(5.5rem,calc(4.5rem+env(safe-area-inset-bottom)))] right-3 z-[58] flex h-12 w-12 items-center justify-center rounded-full border border-eid-primary-500/50 bg-eid-primary-500/25 text-eid-fg shadow-lg shadow-black/25 backdrop-blur-sm transition hover:border-eid-primary-500/70 hover:bg-eid-primary-500/35 md:bottom-8 md:right-5 md:h-11 md:w-11"
-      >
-        <Headset className="h-5 w-5 md:h-[1.15rem] md:w-[1.15rem]" aria-hidden />
-      </button>
-
       {aberto ? (
-        <>
-          <button
-            type="button"
-            aria-label="Fechar suporte"
-            className="fixed inset-0 z-[56] bg-black/45 md:bg-black/35"
-            onClick={() => setAberto(false)}
-          />
+        <button
+          type="button"
+          aria-label="Fechar suporte"
+          className="fixed inset-0 z-[56] bg-black/45 md:bg-black/35"
+          onClick={() => setAberto(false)}
+        />
+      ) : null}
+
+      <div className="pointer-events-none fixed bottom-[max(5.5rem,calc(4.5rem+env(safe-area-inset-bottom)))] right-3 z-[58] flex flex-col-reverse items-end gap-2 md:bottom-8 md:right-5">
+        <button
+          type="button"
+          aria-expanded={aberto}
+          aria-controls={aberto ? "eid-support-panel" : undefined}
+          aria-label="Abrir central de suporte"
+          onClick={() => {
+            if (aberto) setAberto(false);
+            else abrirPainel();
+          }}
+          className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border border-eid-primary-500/50 bg-eid-primary-500/25 text-eid-fg shadow-lg shadow-black/25 backdrop-blur-sm transition hover:border-eid-primary-500/70 hover:bg-eid-primary-500/35 md:h-11 md:w-11"
+        >
+          <Headset className="h-5 w-5 md:h-[1.15rem] md:w-[1.15rem]" aria-hidden />
+        </button>
+
+        {aberto ? (
           <div
             id="eid-support-panel"
             role="dialog"
             aria-modal="true"
             aria-labelledby="eid-support-title"
-            className="fixed bottom-[max(4.75rem,calc(4rem+env(safe-area-inset-bottom))] right-3 z-[57] flex max-h-[min(78vh,28rem)] w-[min(100vw-1.5rem,22rem)] flex-col overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl md:bottom-24 md:right-5 md:max-h-[min(82vh,32rem)] md:w-[24rem]"
+            className="pointer-events-auto flex max-h-[min(52svh,22rem)] w-[min(100vw-1.5rem,22rem)] flex-col overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl md:max-h-[min(58svh,26rem)] md:w-[24rem]"
           >
             <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-3 py-2.5">
               <h2 id="eid-support-title" className="text-sm font-bold text-eid-fg">
@@ -81,11 +167,11 @@ export function SupportCenterFloat() {
               </button>
             </div>
 
-            <div className="flex shrink-0 gap-1 border-b border-[color:var(--eid-border-subtle)] px-2 py-1.5">
+            <div className="grid shrink-0 grid-cols-3 gap-0.5 border-b border-[color:var(--eid-border-subtle)] px-1 py-1.5">
               <button
                 type="button"
-                onClick={() => setAba("ajuda")}
-                className={`flex-1 rounded-lg px-2 py-1.5 text-[11px] font-bold uppercase tracking-wide ${
+                onClick={irAjuda}
+                className={`rounded-lg px-1 py-1.5 text-[10px] font-bold uppercase leading-tight tracking-wide ${
                   aba === "ajuda" ? "bg-eid-primary-500/20 text-eid-fg" : "text-eid-text-secondary hover:bg-eid-bg/80"
                 }`}
               >
@@ -93,12 +179,21 @@ export function SupportCenterFloat() {
               </button>
               <button
                 type="button"
-                onClick={() => setAba("chamado")}
-                className={`flex-1 rounded-lg px-2 py-1.5 text-[11px] font-bold uppercase tracking-wide ${
+                onClick={irPerfil}
+                className={`rounded-lg px-1 py-1.5 text-[10px] font-bold uppercase leading-tight tracking-wide ${
+                  aba === "perfil" ? "bg-eid-primary-500/20 text-eid-fg" : "text-eid-text-secondary hover:bg-eid-bg/80"
+                }`}
+              >
+                Perfil, dupla e time
+              </button>
+              <button
+                type="button"
+                onClick={irChamado}
+                className={`rounded-lg px-1 py-1.5 text-[10px] font-bold uppercase leading-tight tracking-wide ${
                   aba === "chamado" ? "bg-eid-primary-500/20 text-eid-fg" : "text-eid-text-secondary hover:bg-eid-bg/80"
                 }`}
               >
-                Abrir chamado
+                Chamado
               </button>
             </div>
 
@@ -106,34 +201,28 @@ export function SupportCenterFloat() {
               {aba === "ajuda" ? (
                 <div className="space-y-3">
                   <p className="text-[11px] leading-snug text-eid-text-secondary">
-                    Veja dúvidas frequentes. Se não resolver, use a aba <strong>Abrir chamado</strong> — enviamos para a equipe com o WhatsApp do seu perfil.
+                    Dúvidas frequentes do que está no ar. Itens de módulos ainda em <strong>Em breve</strong> não aparecem
+                    aqui. Se precisar, use <strong>Chamado</strong> — enviamos para a equipe com o WhatsApp do seu perfil.
                   </p>
-                  <ul className="space-y-2">
-                    {SUPPORT_FAQ_ITEMS.map((item, i) => {
-                      const open = faqAberto === i;
-                      return (
-                        <li key={item.pergunta} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-bg/40">
-                          <button
-                            type="button"
-                            className="flex w-full items-start justify-between gap-2 px-2.5 py-2 text-left text-xs font-semibold text-eid-fg"
-                            aria-expanded={open}
-                            onClick={() => setFaqAberto(open ? null : i)}
-                          >
-                            <span>{item.pergunta}</span>
-                            <span className="shrink-0 text-[10px] text-eid-text-secondary">{open ? "−" : "+"}</span>
-                          </button>
-                          {open ? (
-                            <p className="border-t border-[color:var(--eid-border-subtle)]/60 px-2.5 pb-2.5 pt-1.5 text-[11px] leading-relaxed text-eid-text-secondary">
-                              {item.resposta}
-                            </p>
-                          ) : null}
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  {renderFaqAccordion(faqAjuda, faqAbertoId, setFaqAbertoId)}
                   <button
                     type="button"
-                    onClick={() => setAba("chamado")}
+                    onClick={irChamado}
+                    className="mt-1 w-full rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/15 py-2.5 text-xs font-bold text-eid-fg"
+                  >
+                    Não resolveu — abrir chamado
+                  </button>
+                </div>
+              ) : aba === "perfil" ? (
+                <div className="space-y-3">
+                  <p className="text-[11px] leading-snug text-eid-text-secondary">
+                    Perfil <strong>individual</strong>, <strong>dupla</strong> e <strong>time</strong>: como se encaixam no
+                    ranking e quem manda em cada formação.
+                  </p>
+                  {renderFaqAccordion(faqPerfil, faqAbertoId, setFaqAbertoId)}
+                  <button
+                    type="button"
+                    onClick={irChamado}
                     className="mt-1 w-full rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/15 py-2.5 text-xs font-bold text-eid-fg"
                   >
                     Não resolveu — abrir chamado
@@ -205,8 +294,8 @@ export function SupportCenterFloat() {
               )}
             </div>
           </div>
-        </>
-      ) : null}
+        ) : null}
+      </div>
     </>
   );
 }
