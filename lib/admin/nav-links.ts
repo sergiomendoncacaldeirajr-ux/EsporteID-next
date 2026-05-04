@@ -12,6 +12,7 @@ export const ADMIN_NAV_LINKS: { href: string; label: string; hint: string }[] = 
   { href: "/admin/operacoes-sociais", label: "Social & push", hint: "Notificações e convites" },
   { href: "/admin/push", label: "Push (env)", hint: "Chaves e falhas" },
   { href: "/admin/denuncias", label: "Denúncias", hint: "Moderação" },
+  { href: "/admin/suporte", label: "Suporte", hint: "Chamados dos usuários" },
   { href: "/admin/professor", label: "Professor", hint: "Aulas e solicitações" },
   { href: "/admin/financeiro", label: "Financeiro", hint: "Taxas e promo" },
   { href: "/admin/integracoes-pagamento", label: "Pagamentos", hint: "Asaas" },

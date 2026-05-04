@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { TorneiosSearchForm } from "@/components/search/torneios-search-form";
-import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig, getViewerSandboxFeatureFlags } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 import { usuarioPodeCriarTorneio } from "@/lib/torneios/organizador";
 
@@ -34,8 +34,11 @@ export default async function TorneiosPage({ searchParams }: Props) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/torneios");
-  const featureCfg = await getSystemFeatureConfig(supabase);
-  if (!canAccessSystemFeature(featureCfg, "torneios", user.id)) {
+  const [featureCfg, sandbox] = await Promise.all([
+    getSystemFeatureConfig(supabase),
+    getViewerSandboxFeatureFlags(supabase, user.id),
+  ]);
+  if (!canAccessSystemFeature(featureCfg, "torneios", user.id, false, sandbox.perfilModoTeste, sandbox.perfilModoTesteModulos)) {
     redirect("/dashboard");
   }
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { requireOrganizerContext } from "@/lib/auth/active-context-server";
-import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig, getViewerSandboxFeatureFlags } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 import { formatTorneioCategorias, parseTorneioCategorias } from "@/lib/torneios/categorias";
 
@@ -20,11 +20,14 @@ export default async function OrganizadorPage({
   const sp = (await searchParams) ?? {};
   const q = (sp.q ?? "").trim().toLowerCase();
   const supabase = await createClient();
-  const featureCfg = await getSystemFeatureConfig(supabase);
-  if (!canAccessSystemFeature(featureCfg, "organizador_torneios", user.id)) {
+  const [featureCfg, sandbox] = await Promise.all([
+    getSystemFeatureConfig(supabase),
+    getViewerSandboxFeatureFlags(supabase, user.id),
+  ]);
+  if (!canAccessSystemFeature(featureCfg, "organizador_torneios", user.id, false, sandbox.perfilModoTeste, sandbox.perfilModoTesteModulos)) {
     redirect("/dashboard");
   }
-  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
+  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id, false, sandbox.perfilModoTeste, sandbox.perfilModoTesteModulos);
 
   const [{ count: torneiosCount }, { count: locaisCount }, { data: meusTorneios }, { data: meusLocais }] = await Promise.all([
     supabase.from("torneios").select("id", { count: "exact", head: true }).eq("criador_id", user.id),

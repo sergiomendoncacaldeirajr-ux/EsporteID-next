@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { getIsPlatformAdmin } from "@/lib/auth/platform-admin";
-import type { SystemFeatureKey, SystemFeatureMode } from "@/lib/system-features";
+import {
+  ALL_SYSTEM_FEATURE_KEYS,
+  getSystemFeatureConfig,
+  type SystemFeatureKey,
+  type SystemFeatureMode,
+} from "@/lib/system-features";
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
@@ -1057,14 +1062,6 @@ export async function adminRemovePlatformAdmin(formData: FormData) {
   }
 }
 
-const ALL_SYSTEM_FEATURE_KEYS: SystemFeatureKey[] = [
-  "marketplace",
-  "locais",
-  "torneios",
-  "professores",
-  "organizador_torneios",
-];
-
 function normalizeTestersArray(v: unknown): string[] {
   if (!Array.isArray(v)) return [];
   return [...new Set(v.map((x) => String(x ?? "").trim()).filter(Boolean))];
@@ -1814,6 +1811,55 @@ export async function adminDeleteDesafioScoreVariant(formData: FormData) {
 
 // --- Perfil e EID (admin) ---
 
+export async function adminSetPerfilModoTeste(formData: FormData) {
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const base = userId ? `/admin/usuarios/${encodeURIComponent(userId)}` : "/admin/usuarios";
+  try {
+    await guard();
+    if (!userId) redirect(`${base}?adm_flash=usuario_perfil_sem_id`);
+    const on = formData.get("perfil_modo_teste") === "on";
+    const db = svc();
+    const cfg = await getSystemFeatureConfig(db);
+    const chavesGlobaisEmTeste = ALL_SYSTEM_FEATURE_KEYS.filter((k) => cfg[k].mode === "teste");
+    const permitido = new Set(chavesGlobaisEmTeste);
+    const picked = formData
+      .getAll("perfil_modo_teste_modulos")
+      .map((x) => String(x ?? "").trim())
+      .filter((s): s is SystemFeatureKey => ALL_SYSTEM_FEATURE_KEYS.includes(s as SystemFeatureKey) && permitido.has(s as SystemFeatureKey));
+
+    let perfil_modo_teste_modulos: SystemFeatureKey[] | null = null;
+    if (on && chavesGlobaisEmTeste.length > 0) {
+      if (picked.length === 0) {
+        perfil_modo_teste_modulos = [];
+      } else if (picked.length === chavesGlobaisEmTeste.length && chavesGlobaisEmTeste.every((k) => picked.includes(k))) {
+        perfil_modo_teste_modulos = null;
+      } else {
+        perfil_modo_teste_modulos = picked;
+      }
+    }
+
+    const { error } = await db
+      .from("profiles")
+      .update({
+        perfil_modo_teste: on,
+        perfil_modo_teste_modulos,
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq("id", userId);
+    if (error) redirect(`${base}?adm_flash=usuario_modo_teste_db_erro${adminQueryDetail(error.message)}`);
+    revalidatePath("/admin/usuarios");
+    revalidatePath(`/admin/usuarios/${userId}`);
+    revalidatePath(`/perfil/${userId}`);
+    revalidatePath("/dashboard");
+    revalidatePath("/match");
+    revalidatePath("/ranking");
+    redirect(`${base}?adm_flash=usuario_modo_teste_ok`);
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    redirect(`${base}?adm_flash=usuario_modo_teste_erro`);
+  }
+}
+
 /** Números vindos do formulário admin (pt-BR pode usar vírgula decimal). */
 function parseAdminFormNumber(raw: FormDataEntryValue | null): number {
   const s = String(raw ?? "")
@@ -2020,5 +2066,26 @@ export async function adminDeleteAuthUserCompletamente(formData: FormData) {
   } catch (e) {
     if (isRedirectError(e)) throw e;
     redirect(`${base}?adm_flash=usuario_delete_erro`);
+  }
+}
+
+export async function adminSupportChamadoMarcarStatus(formData: FormData) {
+  try {
+    await guard();
+    const id = Number(formData.get("id"));
+    if (!Number.isFinite(id) || id < 1) redirect("/admin/suporte?adm_flash=support_param");
+    const status = String(formData.get("status") ?? "").trim();
+    if (!["aberto", "resolvido"].includes(status)) redirect("/admin/suporte?adm_flash=support_param");
+    const patch =
+      status === "resolvido"
+        ? { status, resolvido_em: new Date().toISOString() }
+        : { status, resolvido_em: null as string | null };
+    const { error } = await svc().from("support_chamados").update(patch).eq("id", id);
+    if (error) redirect(`/admin/suporte?adm_flash=support_db_erro${adminQueryDetail(error.message)}`);
+    revalidatePath("/admin/suporte");
+    redirect("/admin/suporte?adm_flash=support_status_ok");
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    redirect("/admin/suporte?adm_flash=support_erro");
   }
 }

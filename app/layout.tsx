@@ -24,6 +24,7 @@ import {
 } from "@/lib/auth/active-context";
 import { EID_APP_CHROME_THEME_COLOR, EID_LOGO_AUTH_MARK_SRC } from "@/lib/branding";
 import { EID_HIDE_APP_SHELL_HEADER, EID_SHOW_ONBOARDING_CHROME_HEADER } from "@/lib/eid-app-shell";
+import { SupportCenterFloat } from "@/components/support/support-center-float";
 import { SiteFooterLoader } from "@/components/site-footer-loader";
 import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
 import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
@@ -215,6 +216,7 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <LegalGateDeferred />
         </Suspense>
+        {user ? <SupportCenterFloat /> : null}
       </body>
     </html>
   );

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type SystemFeatureKey =
@@ -20,6 +21,35 @@ export const SYSTEM_FEATURE_LABEL: Record<SystemFeatureKey, string> = {
   torneios: "Torneios",
   professores: "Professores",
   organizador_torneios: "Organizador de torneios",
+};
+
+export const ALL_SYSTEM_FEATURE_KEYS: SystemFeatureKey[] = [
+  "marketplace",
+  "locais",
+  "torneios",
+  "professores",
+  "organizador_torneios",
+];
+
+function isSystemFeatureKey(s: string): s is SystemFeatureKey {
+  return (ALL_SYSTEM_FEATURE_KEYS as string[]).includes(s);
+}
+
+/** `null` no banco = sem lista (todos os módulos elegíveis ao sandbox). Array vazio = nenhum módulo pela lista. */
+export function parsePerfilModoTesteModulosJson(raw: unknown): SystemFeatureKey[] | null {
+  if (raw == null) return null;
+  if (!Array.isArray(raw)) return null;
+  const out: SystemFeatureKey[] = [];
+  for (const x of raw) {
+    const s = String(x ?? "").trim();
+    if (isSystemFeatureKey(s)) out.push(s);
+  }
+  return out;
+}
+
+export type ViewerSandboxFlags = {
+  perfilModoTeste: boolean;
+  perfilModoTesteModulos: SystemFeatureKey[] | null;
 };
 
 const DEFAULT_MODE: Record<SystemFeatureKey, SystemFeatureMode> = {
@@ -74,15 +104,39 @@ export async function getSystemFeatureConfig(
   return base;
 }
 
+/** Sandbox: `perfil_modo_teste` + lista opcional de módulos (`perfil_modo_teste_modulos`). */
+export const getViewerSandboxFeatureFlags = cache(async (supabase: SupabaseClient, userId: string): Promise<ViewerSandboxFlags> => {
+  const { data } = await supabase
+    .from("profiles")
+    .select("perfil_modo_teste, perfil_modo_teste_modulos")
+    .eq("id", userId)
+    .maybeSingle();
+  const row = data as { perfil_modo_teste?: boolean | null; perfil_modo_teste_modulos?: unknown } | null;
+  return {
+    perfilModoTeste: row?.perfil_modo_teste === true,
+    perfilModoTesteModulos: parsePerfilModoTesteModulosJson(row?.perfil_modo_teste_modulos ?? null),
+  };
+});
+
 export function canAccessSystemFeature(
   cfg: Record<SystemFeatureKey, FeatureEntry>,
   feature: SystemFeatureKey,
   userId: string | null | undefined,
-  isPlatformAdmin = false
+  isPlatformAdmin = false,
+  perfilModoTeste = false,
+  perfilModoTesteModulos: SystemFeatureKey[] | null = null
 ): boolean {
   if (isPlatformAdmin) return true;
   const row = cfg[feature] ?? defaultEntry(feature);
   if (row.mode === "ativo") return true;
+  if (perfilModoTeste) {
+    if (row.mode === "em_breve") return false;
+    if (perfilModoTesteModulos != null) {
+      if (perfilModoTesteModulos.length === 0) return false;
+      if (!perfilModoTesteModulos.includes(feature)) return false;
+    }
+    return true;
+  }
   if (row.mode === "teste") return Boolean(userId) && row.testers.includes(String(userId));
   return false;
 }

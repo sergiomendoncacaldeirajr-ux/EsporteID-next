@@ -13,7 +13,11 @@ import {
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
-import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
+import {
+  canAccessSystemFeature,
+  getSystemFeatureConfig,
+  parsePerfilModoTesteModulosJson,
+} from "@/lib/system-features";
 import { OnboardingWizard } from "./onboarding-wizard";
 
 type Step = "papeis" | "esportes" | "extras" | "perfil";
@@ -34,7 +38,7 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      `id, nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, onboarding_etapa, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
+      `id, nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, onboarding_etapa, perfil_modo_teste, perfil_modo_teste_modulos, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
     )
     .eq("id", viewerId)
     .maybeSingle();
@@ -146,10 +150,14 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
     .limit(80);
 
   const featureCfg = await getSystemFeatureConfig(supabase);
+  const perfilModoTeste = profile.perfil_modo_teste === true;
+  const perfilModoTesteModulos = parsePerfilModoTesteModulosJson(
+    (profile as { perfil_modo_teste_modulos?: unknown }).perfil_modo_teste_modulos
+  );
   const roleModes = {
-    professor: canAccessSystemFeature(featureCfg, "professores", viewerId),
-    organizador: canAccessSystemFeature(featureCfg, "organizador_torneios", viewerId),
-    espaco: canAccessSystemFeature(featureCfg, "locais", viewerId),
+    professor: canAccessSystemFeature(featureCfg, "professores", viewerId, false, perfilModoTeste, perfilModoTesteModulos),
+    organizador: canAccessSystemFeature(featureCfg, "organizador_torneios", viewerId, false, perfilModoTeste, perfilModoTesteModulos),
+    espaco: canAccessSystemFeature(featureCfg, "locais", viewerId, false, perfilModoTeste, perfilModoTesteModulos),
   };
   const roleFeatureModes = {
     professor: featureCfg.professores.mode,

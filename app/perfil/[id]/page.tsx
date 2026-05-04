@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
-import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig, getViewerSandboxFeatureFlags } from "@/lib/system-features";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { EidStreamSection } from "@/components/eid-stream-section";
 import { ProfilePublicBelowFoldSkeleton } from "@/components/loading/profile-app-skeletons";
@@ -32,6 +32,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     { data: papeisRows },
     { data: eids },
     amRowRes,
+    sandboxFlags,
   ] = await Promise.all([
     getSystemFeatureConfig(supabase),
     supabase.from("profiles").select(perfilSelect).eq("id", id).maybeSingle(),
@@ -47,9 +48,17 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     user.id === id
       ? supabase.from("profiles").select("disponivel_amistoso, disponivel_amistoso_ate").eq("id", id).maybeSingle()
       : Promise.resolve({ data: null }),
+    getViewerSandboxFeatureFlags(supabase, user.id),
   ]);
 
-  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id);
+  const canOpenLocais = canAccessSystemFeature(
+    featureCfg,
+    "locais",
+    user.id,
+    false,
+    sandboxFlags.perfilModoTeste,
+    sandboxFlags.perfilModoTesteModulos
+  );
   if (!perfil) notFound();
 
   const isSelf = user.id === id;

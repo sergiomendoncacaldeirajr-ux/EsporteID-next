@@ -11,7 +11,7 @@ import {
 } from "@/components/perfil/profile-ui-tokens";
 import { ProfessorRequestLessonCard } from "@/components/professor/request-lesson-card";
 import { descreverPoliticaCancelamentoProfessor } from "@/lib/professor/cancellation";
-import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig, getViewerSandboxFeatureFlags } from "@/lib/system-features";
 import { podeExibirWhatsappProfessor } from "@/lib/perfil/whatsapp-visibility";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,8 +31,11 @@ export default async function ProfessorPublicPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (user) {
-    const featureCfg = await getSystemFeatureConfig(supabase);
-    if (!canAccessSystemFeature(featureCfg, "professores", user.id)) {
+    const [featureCfg, sandbox] = await Promise.all([
+      getSystemFeatureConfig(supabase),
+      getViewerSandboxFeatureFlags(supabase, user.id),
+    ]);
+    if (!canAccessSystemFeature(featureCfg, "professores", user.id, false, sandbox.perfilModoTeste, sandbox.perfilModoTesteModulos)) {
       redirect("/dashboard");
     }
   }

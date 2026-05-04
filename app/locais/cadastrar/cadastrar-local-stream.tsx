@@ -6,7 +6,7 @@ import { distanciaKm } from "@/lib/geo/distance-km";
 import { usuarioJaGerenciaEspaco } from "@/lib/espacos/server";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
-import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig, getViewerSandboxFeatureFlags } from "@/lib/system-features";
 import { cadastrarLocalGenerico } from "./actions";
 
 export type CadastrarLocalStreamProps = {
@@ -48,8 +48,11 @@ export async function CadastrarLocalStream({ searchParams }: CadastrarLocalStrea
       ? `Local cadastrado com sucesso${sp.novo_local_nome ? `: ${sp.novo_local_nome}` : ""}.`
       : null;
 
-  const featureCfg = await getSystemFeatureConfig(supabase);
-  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", viewerId);
+  const [featureCfg, sandbox] = await Promise.all([
+    getSystemFeatureConfig(supabase),
+    getViewerSandboxFeatureFlags(supabase, viewerId),
+  ]);
+  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", viewerId, false, sandbox.perfilModoTeste, sandbox.perfilModoTesteModulos);
 
   const duplicateId = Number(sp.erro === "duplicado" ? sp.id : "");
   const [{ data: profile }, { data: locaisRaw }, { data: localDuplicado }] = await Promise.all([
