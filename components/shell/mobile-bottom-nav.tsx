@@ -354,16 +354,14 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     /** Alinha com `RealtimePageRefresh` / sininho: o miolo já revalida, mas o estado do badge ficava só no próximo Realtime ou em até 20s. */
     const onEidRealtimeRefresh = () => void load();
     window.addEventListener("eid:realtime-refresh", onEidRealtimeRefresh as EventListener);
+    /* Push pós-INSERT fica no sininho (`notification-bell`); aqui só atualizamos o badge. */
     const channel = supabase
       .channel(`eid-mobile-nav-${resolvedUserId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "notificacoes", filter: `usuario_id=eq.${resolvedUserId}` },
-        (payload) => {
+        () => {
           void load();
-          if (payload.eventType === "INSERT") {
-            void fetch("/api/push/flush-user", { method: "POST", credentials: "same-origin" }).catch(() => {});
-          }
         }
       )
       .on(

@@ -48,6 +48,52 @@ function normalizePushConfig() {
   webpush.setVapidDetails(subject, publicKey, privateKey);
 }
 
+function isUniqueViolation(error: unknown): boolean {
+  return typeof error === "object" && error !== null && (error as { code?: string }).code === "23505";
+}
+
+/**
+ * Garante que só um worker envia push para o par (notificação, subscription).
+ * Duas requisições paralelas (ex.: sininho + rodapé, ou webhook + flush) não devem
+ * passar ambas pelo envio antes de existir linha em `push_entregas_notificacao`.
+ */
+async function claimPushDeliveryRow(
+  admin: SupabaseClient,
+  notificacaoId: number,
+  subscriptionId: number
+): Promise<boolean> {
+  const { error: insErr } = await admin.from("push_entregas_notificacao").insert({
+    notificacao_id: notificacaoId,
+    subscription_id: subscriptionId,
+    status: "sending",
+    tentativas: 0,
+    ultimo_erro: null,
+    enviado_em: null,
+  });
+  if (!insErr) return true;
+  if (!isUniqueViolation(insErr)) throw new Error(`Falha ao reservar entrega push: ${insErr.message}`);
+
+  const { data: row, error: selErr } = await admin
+    .from("push_entregas_notificacao")
+    .select("status")
+    .eq("notificacao_id", notificacaoId)
+    .eq("subscription_id", subscriptionId)
+    .maybeSingle();
+  if (selErr) throw new Error(`Falha ao ler entrega push: ${selErr.message}`);
+  const st = String((row as { status?: string } | null)?.status ?? "").toLowerCase();
+  if (st === "success" || st === "sending") return false;
+
+  const { data: claimed, error: updErr } = await admin
+    .from("push_entregas_notificacao")
+    .update({ status: "sending", ultimo_erro: null })
+    .eq("notificacao_id", notificacaoId)
+    .eq("subscription_id", subscriptionId)
+    .in("status", ["failed", "pendente"])
+    .select("id");
+  if (updErr) throw new Error(`Falha ao re-reservar entrega push: ${updErr.message}`);
+  return (claimed ?? []).length > 0;
+}
+
 function buildNotificationPayload(n: NotificacaoRow): string {
   const tipo = String(n.tipo ?? "").toLowerCase();
   const title = tipo.includes("professor")
@@ -118,6 +164,8 @@ async function dispatchNotificationsToSubscriptions(
     for (const s of userSubs) {
       const key = `${n.id}:${s.id}`;
       if (delivered.has(key)) continue;
+      const claimed = await claimPushDeliveryRow(admin, n.id, s.id);
+      if (!claimed) continue;
       try {
         await webpush.sendNotification(
           {
@@ -128,6 +176,7 @@ async function dispatchNotificationsToSubscriptions(
           sendOpts
         );
         sent += 1;
+        delivered.add(key);
         await admin.from("push_entregas_notificacao").upsert(
           {
             notificacao_id: n.id,
