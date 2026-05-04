@@ -177,7 +177,11 @@ body.eid-app-shell {
     /* Reserva a faixa da nav fixa para o flex não “subir” por baixo dela. */
     padding-bottom: var(--eid-shell-footer-offset-measured, var(--eid-shell-footer-offset));
     min-height: 100lvh;
-    overflow-x: clip;
+    /*
+     * Evitar `overflow-x: clip` no body: em WebKit isso pode emparelhar o eixo vertical e
+     * transformar o body num scrollport “curto”, com o conteúdo ficando por baixo da nav fixa.
+     * O recorte horizontal fica no `html` (iOS) ou nos próprios painéis quando necessário.
+     */
   }
 }
 

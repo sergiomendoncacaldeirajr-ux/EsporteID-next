@@ -9,12 +9,21 @@ function isPerfilPublicoRaiz(pathname: string): boolean {
   return /^\/perfil\/[^/]+$/.test(p);
 }
 
-/** Altura da faixa fixa inferior (nav do app) até o fim da viewport, em px. */
+/** Mesma base que `MobileBottomNav` (`--eid-shell-footer-offset-measured`), + folga extra no perfil. */
 function bottomBarClearancePx(): number {
   const shell = document.getElementById("eid-mobile-bottom-nav");
   if (!shell) return 120;
+  const vv = window.visualViewport;
+  const vh = vv?.height ?? window.innerHeight;
+  const vTop = vv?.offsetTop ?? 0;
+  const bottomEdge = vTop + vh;
   const rect = shell.getBoundingClientRect();
-  return Math.max(Math.ceil(window.innerHeight - rect.top + 20), 104);
+  let inset = Math.max(0, bottomEdge - rect.top);
+  if (rect.height < 36) {
+    inset = Math.max(inset, 96);
+  }
+  /* Nav usa +14 no body; aqui +22 dá respiro a mais para capa/CTA acima da barra fixa. */
+  return Math.max(Math.ceil(inset + 22), 104);
 }
 
 /**
@@ -50,8 +59,10 @@ export function PerfilMobileBottomPad() {
     window.addEventListener("resize", apply);
     const vv = window.visualViewport;
     vv?.addEventListener("resize", apply);
+    vv?.addEventListener("scroll", apply);
     const t0 = window.setTimeout(apply, 0);
-    const t1 = window.setTimeout(apply, 250);
+    const t1 = window.setTimeout(apply, 160);
+    const t2 = window.setTimeout(apply, 520);
 
     return () => {
       ro.disconnect();
@@ -59,8 +70,10 @@ export function PerfilMobileBottomPad() {
       window.removeEventListener("orientationchange", apply);
       window.removeEventListener("resize", apply);
       vv?.removeEventListener("resize", apply);
+      vv?.removeEventListener("scroll", apply);
       window.clearTimeout(t0);
       window.clearTimeout(t1);
+      window.clearTimeout(t2);
       main.style.removeProperty("margin-bottom");
     };
   }, [pathname]);
