@@ -46,10 +46,12 @@ async function notificarElencoAgendamentoConfirmado(
     data_partida?: string | null;
     local_str?: string | null;
   },
-  remetenteId: string
+  remetenteId: string,
+  partidaId: number
 ) {
   const matchId = Number(row.match_id ?? 0);
-  if (!Number.isFinite(matchId) || matchId < 1) return;
+  const referenciaId = Number.isFinite(matchId) && matchId > 0 ? matchId : partidaId;
+  if (!Number.isFinite(referenciaId) || referenciaId < 1) return;
 
   const recipients = new Set<string>();
   for (const uid of [row.jogador1_id, row.jogador2_id]) {
@@ -88,7 +90,7 @@ async function notificarElencoAgendamentoConfirmado(
     usuario_id,
     mensagem: msg,
     tipo: "match" as const,
-    referencia_id: matchId,
+    referencia_id: referenciaId,
     lida: false,
     remetente_id: remetenteId,
     data_criacao: new Date().toISOString(),
@@ -156,7 +158,7 @@ export async function responderAgendamentoPartidaAction(
       "Seu agendamento foi aceito pelo oponente."
     );
     if (!p.torneio_id) {
-      await notificarElencoAgendamentoConfirmado(supabase, p, user.id);
+      await notificarElencoAgendamentoConfirmado(supabase, p, user.id, partidaId);
     }
   } else {
     const { error } = await supabase

@@ -638,8 +638,13 @@ export function MatchRadarApp({
       setEsporte(next.esporte);
       setFinalidade(next.finalidade);
       syncUrl(next);
-      if (viewMode === "full") runRefreshFull({ sortBy: next.sortBy, raio: next.raio, esporte: next.esporte });
-      else runRefresh(next);
+      if (viewMode === "full") {
+        // Tela cheia com merge multi-modalidade só faz sentido para ranking. Amistoso no radar é só individual.
+        if (next.finalidade === "amistoso") runRefresh(next);
+        else runRefreshFull({ sortBy: next.sortBy, raio: next.raio, esporte: next.esporte });
+      } else {
+        runRefresh(next);
+      }
     },
     [
       tipo,
@@ -688,9 +693,14 @@ export function MatchRadarApp({
     setViewMode(next);
 
     let esporteForUrl = esporte;
+    let tipoForUrl = tipo;
     if (next === "full") {
       setEsporte("all");
       esporteForUrl = "all";
+      if (finalidade === "amistoso" && tipo !== "atleta" && tipo !== "todas") {
+        tipoForUrl = "atleta";
+        setTipo("atleta");
+      }
     } else {
       const allowedForGrid =
         tipo === "todas"
@@ -711,7 +721,7 @@ export function MatchRadarApp({
     }
 
     const q = new URLSearchParams();
-    q.set("tipo", tipo);
+    q.set("tipo", tipoForUrl);
     q.set("esporte", /^\d+$/.test(esporteForUrl) ? esporteForUrl : "all");
     q.set("raio", String(raio));
     q.set("sort_by", sortBy);
@@ -720,7 +730,17 @@ export function MatchRadarApp({
     q.set("genero", generoFiltro);
     window.history.replaceState(null, "", `/match?${q.toString()}`);
     if (next === "full") {
-      runRefreshFull({ sortBy, raio, esporte: "all" });
+      if (finalidade === "amistoso") {
+        runRefresh({
+          tipo: tipoForUrl,
+          sortBy,
+          raio,
+          esporte: "all",
+          finalidade: "amistoso",
+        });
+      } else {
+        runRefreshFull({ sortBy, raio, esporte: "all" });
+      }
     }
   }
 
@@ -874,16 +894,27 @@ export function MatchRadarApp({
     });
   }, [challengeableCards, generoFiltroEfetivo]);
   const fullOrderedChallengeableCards = useMemo(() => {
-    // No modo tela cheia, mostramos todas as modalidades; o chip de esporte só restringe a lista na UI.
+    // No modo tela cheia em ranking, mostramos todas as modalidades; o chip de esporte só restringe a lista na UI.
+    // Em amistoso, mesma regra da grade (só individual disponível para amistoso).
     let ordered = fullOrderedCardsPerfil;
+    if (finalidade === "amistoso") {
+      ordered = ordered.filter(
+        (c) =>
+          c.modalidade === "individual" &&
+          c.disponivelAmistoso &&
+          c.interesseMatch !== "ranking"
+      );
+    } else if (finalidade === "ranking") {
+      ordered = ordered.filter((c) => c.interesseMatch !== "amistoso");
+    }
     if (isFullView && esporte !== "all" && /^\d+$/.test(String(esporte))) {
       const sid = Number(esporte);
       if (Number.isFinite(sid)) {
-        ordered = fullOrderedCardsPerfil.filter((c) => c.esporteId === sid);
+        ordered = ordered.filter((c) => c.esporteId === sid);
       }
     }
     return ordered;
-  }, [fullOrderedCardsPerfil, isFullView, esporte]);
+  }, [fullOrderedCardsPerfil, isFullView, esporte, finalidade]);
   const gridCardsWithoutDuplicates = useMemo(() => {
     const byKey = new Map<string, MatchRadarCard>();
     for (const card of cardsFiltradosGeneroChallengeable) {

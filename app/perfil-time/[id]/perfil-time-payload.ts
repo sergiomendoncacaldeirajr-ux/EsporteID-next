@@ -6,7 +6,11 @@ import {
   waMeHref,
 } from "@/lib/perfil/whatsapp-visibility";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
-import { computeRankingBlockedUntilColetivo } from "@/lib/match/coletivo-ranking-cooldown";
+import {
+  computeLatestActiveRankingCooldownEndForTeamInSport,
+  computeRankingBlockedUntilColetivo,
+} from "@/lib/match/coletivo-ranking-cooldown";
+import { fetchDashboardRankingCooldownBlocklists } from "@/lib/match/dashboard-ranking-cooldown-blocklists";
 import {
   fetchPendingRankingOpponentTimeIdsForAlvo,
   filterFormacoesSemParPendenteComAlvo,
@@ -216,11 +220,25 @@ async function loadPerfilTimeVisitorMatchPackUncached(timeId: number, viewerId: 
 
   const pendentesComEsteAlvo =
     espAlvo != null ? await fetchPendingRankingOpponentTimeIdsForAlvo(supabase, id, espAlvo) : new Set<number>();
-  const formacoesMembroNaoLider = filterFormacoesSemParPendenteComAlvo(
-    formacoesMembroNaoLiderRaw,
-    id,
-    pendentesComEsteAlvo,
-  );
+  const semCarenciaVsAlvo: { id: number; nome: string }[] = [];
+  if (espAlvo != null && formacoesMembroNaoLiderRaw.length > 0) {
+    const blocos = await Promise.all(
+      formacoesMembroNaoLiderRaw.map(async (f) => {
+        const { blockedTeamIds } = await fetchDashboardRankingCooldownBlocklists(supabase, {
+          viewerId,
+          esporteId: espAlvo,
+          viewerTeamIds: [f.id],
+        });
+        return { f, bloqueado: blockedTeamIds.has(id) };
+      })
+    );
+    for (const { f, bloqueado } of blocos) {
+      if (!bloqueado) semCarenciaVsAlvo.push(f);
+    }
+  }
+  const candidatosSugerir =
+    espAlvo != null && formacoesMembroNaoLiderRaw.length > 0 ? semCarenciaVsAlvo : formacoesMembroNaoLiderRaw;
+  const formacoesMembroNaoLider = filterFormacoesSemParPendenteComAlvo(candidatosSugerir, id, pendentesComEsteAlvo);
 
   const canSugerirMatch =
     !isMember &&
@@ -313,6 +331,23 @@ async function loadPerfilTimeVisitorMatchPackUncached(timeId: number, viewerId: 
 }
 
 export const getPerfilTimeVisitorMatchPack = cache(loadPerfilTimeVisitorMatchPackUncached);
+
+/** Carência de ranking vigente para a formação (líder e membros veem no perfil). */
+export const getPerfilTimeColetivoCooldownBanner = cache(async (timeId: number, viewerId: string) => {
+  const identity = await getPerfilTimeIdentity(timeId, viewerId);
+  if (!(identity.isMember || identity.isLeader) || !identity.t.esporte_id) {
+    return { coletivoCooldownBannerUntilIso: null as string | null };
+  }
+  const supabase = await createClient();
+  const cooldownMeses = await getMatchRankCooldownMeses(supabase);
+  const coletivoCooldownBannerUntilIso = await computeLatestActiveRankingCooldownEndForTeamInSport(supabase, {
+    teamId: identity.id,
+    esporteId: Number(identity.t.esporte_id),
+    modalidade: identity.modalidade,
+    cooldownMeses,
+  });
+  return { coletivoCooldownBannerUntilIso };
+});
 
 export type PerfilTimePayload = Awaited<ReturnType<typeof loadPerfilTimePayloadMerged>>;
 

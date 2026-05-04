@@ -24,6 +24,7 @@ import { FormacaoElencoCallout } from "@/components/times/formacao-elenco-callou
 import { PerfilTimeMembroLiderAcoes } from "@/components/times/perfil-time-membro-lider-acoes";
 import { BarChart3, ChevronRight } from "lucide-react";
 import {
+  getPerfilTimeColetivoCooldownBanner,
   getPerfilTimeIdentity,
   getPerfilTimeMembrosHistPack,
   getPerfilTimePartidasBundle,
@@ -142,6 +143,7 @@ export async function PerfilTimeBodyVisitanteStack({ timeId, viewerId }: { timeI
 export async function PerfilTimeBodyEid({ timeId, viewerId }: { timeId: number; viewerId: string }) {
   const idn = await getPerfilTimeIdentity(timeId, viewerId);
   const pack = await getPerfilTimeMembrosHistPack(timeId, viewerId);
+  const { coletivoCooldownBannerUntilIso } = await getPerfilTimeColetivoCooldownBanner(timeId, viewerId);
   const { id, t, posicao, esp, fromPublic } = idn;
   const { hist, eidLogs } = pack;
 
@@ -151,6 +153,16 @@ export async function PerfilTimeBodyEid({ timeId, viewerId }: { timeId: number; 
       info="Nota e métricas do time neste esporte: ranking, jogos e desempenho coletivo."
     >
       <div className={`${PROFILE_CARD_BASE} mt-2 overflow-hidden p-3 sm:rounded-2xl sm:p-4`}>
+        {coletivoCooldownBannerUntilIso ? (
+          <p className="mb-3 rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+            <span className="font-semibold text-eid-fg">Carência de ranking</span> em relação a adversários já
+            enfrentados: restrições ativas até{" "}
+            <span className="font-semibold text-eid-fg">
+              {new Date(coletivoCooldownBannerUntilIso).toLocaleDateString("pt-BR")}
+            </span>
+            . <span className="font-semibold text-eid-fg">{formatCooldownRemaining(coletivoCooldownBannerUntilIso)}</span>
+          </p>
+        ) : null}
         <p className="text-[11px] font-semibold leading-snug sm:text-[12px]">
           <span className="text-eid-text-secondary">Esporte: </span>
           <span className="font-bold text-eid-primary-300">{esp?.nome ?? "Esporte não definido"}</span>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
 import { MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER } from "@/lib/match/viewer-esporte-confronto";
+import { fetchDashboardRankingCooldownBlocklists } from "@/lib/match/dashboard-ranking-cooldown-blocklists";
 import { createClient } from "@/lib/supabase/server";
 import { CONFRONTO_AGENDAMENTO_JANELA_HORAS } from "@/lib/agenda/confronto-agendamento-janela";
 
@@ -868,6 +869,19 @@ export async function sugerirMatchParaLider(
     .maybeSingle();
   if (!viewerEidSug) {
     return { ok: false, message: MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER };
+  }
+
+  const { blockedTeamIds } = await fetchDashboardRankingCooldownBlocklists(supabase, {
+    viewerId: user.id,
+    esporteId: espAlvo,
+    viewerTeamIds: [sug],
+  });
+  if (blockedTeamIds.has(alvo)) {
+    return {
+      ok: false,
+      message:
+        "Esta combinação está em carência de ranking (último confronto válido recente). Não é possível sugerir novo desafio entre essas formações agora.",
+    };
   }
 
   const { data: existentePar } = await supabase

@@ -342,14 +342,23 @@ export async function submitPlacarAction(formData: FormData) {
   if (error) go(partidaId, "erro", "Não foi possível salvar o placar.");
 
   if (!isTorneio) {
-    const oponenteId = await resolveOponenteLeaderUserIdForNotificacao(ctx.supabase, p, user.id);
-    await notifyUser(
-      ctx.supabase,
-      oponenteId,
-      user.id,
-      partidaId,
-      `Seu oponente lançou o resultado (${finalPlacar1} x ${finalPlacar2}). Acesse o Painel (Partidas e resultados) ou a Agenda para confirmar ou contestar.`
-    );
+    const msgResultado = `Foi lançado o placar (${finalPlacar1} x ${finalPlacar2}) neste confronto. Acesse a Agenda ou o Painel (Partidas e resultados) para confirmar ou contestar.`;
+    const { lado1, lado2 } = await loadPartidaLadosUsuarioIds(ctx.supabase, p);
+    const ladoAtor = usuarioEmQualLadoPartida(user.id, lado1, lado2);
+    const destinos: Array<{ usuario_id: string; mensagem: string }> = [];
+    if (ladoAtor === 1) {
+      for (const uid of lado2) {
+        if (uid !== user.id) destinos.push({ usuario_id: uid, mensagem: msgResultado });
+      }
+    } else if (ladoAtor === 2) {
+      for (const uid of lado1) {
+        if (uid !== user.id) destinos.push({ usuario_id: uid, mensagem: msgResultado });
+      }
+    } else {
+      const oponenteId = await resolveOponenteLeaderUserIdForNotificacao(ctx.supabase, p, user.id);
+      if (oponenteId) destinos.push({ usuario_id: oponenteId, mensagem: msgResultado });
+    }
+    if (destinos.length) await notifyAgendamentoVarios(ctx.supabase, destinos, user.id, partidaId);
   }
 
   revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
@@ -410,7 +419,20 @@ export async function confirmarPlacarAction(formData: FormData) {
     }
   }
 
-  await notifyUser(ctx.supabase, p.lancado_por, user.id, partidaId, "Seu resultado foi confirmado e a partida foi concluída.");
+  const msgConcluido =
+    "O placar foi aceito: o confronto foi concluído e o resultado está validado no ranking. Confira na Agenda ou no Painel (Partidas e resultados).";
+  const { lado1, lado2 } = await loadPartidaLadosUsuarioIds(ctx.supabase, p);
+  const todos = new Set<string>([...lado1, ...lado2]);
+  const destinosConfirm: Array<{ usuario_id: string; mensagem: string }> = [];
+  for (const uid of todos) {
+    if (!uid || uid === user.id) continue;
+    destinosConfirm.push({ usuario_id: uid, mensagem: msgConcluido });
+  }
+  const lanc = String(p.lancado_por ?? "").trim();
+  if (lanc && lanc !== user.id && !todos.has(lanc)) {
+    destinosConfirm.push({ usuario_id: lanc, mensagem: msgConcluido });
+  }
+  if (destinosConfirm.length) await notifyAgendamentoVarios(ctx.supabase, destinosConfirm, user.id, partidaId);
 
   revalidateAfterPartidaPlacarChange(partidaId, p.torneio_id);
   go(partidaId, "ok", "Resultado confirmado com sucesso.");
@@ -669,14 +691,12 @@ export async function salvarAgendamentoAction(formData: FormData) {
         }
         for (const uid of lado1) destinos.push({ usuario_id: uid, mensagem: msgAdversario });
       } else {
-        const oponenteId = await resolveOponenteLeaderUserIdForNotificacao(ctx.supabase, p, user.id);
-        await notifyUser(
-          ctx.supabase,
-          oponenteId,
-          user.id,
-          partidaId,
-          `Seu oponente propôs agendamento: ${when} • ${where}. Acesse a Agenda para aceitar em até 24h.`
-        );
+        const everyone = new Set<string>([...lado1, ...lado2]);
+        everyone.delete(user.id);
+        const msgNeutro = `Agendamento proposto: ${when} • ${where}. Confira na Agenda para aceitar ou acompanhar (prazo de 24h).`;
+        for (const uid of everyone) {
+          if (uid) destinos.push({ usuario_id: uid, mensagem: msgNeutro });
+        }
       }
     } else {
       for (const uid of lado1) {
