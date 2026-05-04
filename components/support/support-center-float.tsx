@@ -81,6 +81,10 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
     () => SUPPORT_PERFIL_FORMACOES_FAQ.filter((x) => supportFaqVisivelEmProducao(x, modulosEmBreve)),
     [modulosEmBreve]
   );
+  const chamadoAreasVisiveis = useMemo(
+    () => SUPPORT_CHAMADO_AREAS.filter((a) => supportFaqVisivelEmProducao(a, modulosEmBreve)),
+    [modulosEmBreve]
+  );
 
   useEffect(() => {
     if (!submitState.ok || !submitState.message) return;
@@ -151,7 +155,7 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
             role="dialog"
             aria-modal="true"
             aria-labelledby="eid-support-title"
-            className="pointer-events-auto flex max-h-[min(52svh,22rem)] w-[min(100vw-1.5rem,22rem)] flex-col overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl md:max-h-[min(58svh,26rem)] md:w-[24rem]"
+            className="pointer-events-auto flex max-h-[min(72svh,32rem)] w-[min(100vw-1.5rem,22rem)] flex-col overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl md:max-h-[min(78svh,38rem)] md:w-[24rem]"
           >
             <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-3 py-2.5">
               <h2 id="eid-support-title" className="text-sm font-bold text-eid-fg">
@@ -241,7 +245,7 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
                       <option value="" disabled>
                         Selecione a área
                       </option>
-                      {SUPPORT_CHAMADO_AREAS.map((a) => (
+                      {chamadoAreasVisiveis.map((a) => (
                         <option key={a.value} value={a.value}>
                           {a.label}
                         </option>

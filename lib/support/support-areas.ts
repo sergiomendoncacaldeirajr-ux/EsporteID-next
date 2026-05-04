@@ -12,14 +12,25 @@ export type SupportChamadoArea =
   | "conta"
   | "outro";
 
-export const SUPPORT_CHAMADO_AREAS: { value: SupportChamadoArea; label: string }[] = [
+export type SupportChamadoAreaEntry = {
+  value: SupportChamadoArea;
+  label: string;
+  /** Área some do select de chamado se algum destes módulos estiver `em_breve`. */
+  ocultarSeModulosEmBreve?: SystemFeatureKey[];
+};
+
+export const SUPPORT_CHAMADO_AREAS: SupportChamadoAreaEntry[] = [
   { value: "dashboard", label: "Dashboard" },
   { value: "desafio_match", label: "Desafio" },
   { value: "ranking", label: "Ranking" },
   { value: "vagas", label: "Vagas / Times / Elenco" },
   { value: "perfil", label: "Perfil público / EID" },
-  { value: "torneios", label: "Torneios" },
-  { value: "locais", label: "Locais / Reservas" },
+  {
+    value: "torneios",
+    label: "Torneios",
+    ocultarSeModulosEmBreve: ["torneios", "organizador_torneios"],
+  },
+  { value: "locais", label: "Locais / Reservas", ocultarSeModulosEmBreve: ["locais"] },
   { value: "comunidade", label: "Comunidade / Social" },
   { value: "conta", label: "Conta / login / termos" },
   { value: "outro", label: "Outro" },
@@ -39,9 +50,9 @@ export type SupportFaqItem = {
   ocultarSeModulosEmBreve?: SystemFeatureKey[];
 };
 
-/** Itens cuja dúvida depende de módulo ainda não liberado somem quando o módulo está `em_breve`. */
+/** FAQ ou área de chamado some quando algum módulo listado está `em_breve` na config global. */
 export function supportFaqVisivelEmProducao(
-  item: Pick<SupportFaqItem, "ocultarSeModulosEmBreve">,
+  item: { ocultarSeModulosEmBreve?: SystemFeatureKey[] },
   modulosEmBreve: readonly SystemFeatureKey[]
 ): boolean {
   const keys = item.ocultarSeModulosEmBreve;
