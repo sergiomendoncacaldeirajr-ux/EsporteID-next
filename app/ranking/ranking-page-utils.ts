@@ -1,5 +1,65 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PodiumSlot } from "@/components/ranking/ranking-compact";
 import type { RankingSearchState } from "@/lib/ranking/ranking-href";
+
+/** Limite alto para não truncar histórico antes de achar o evento mais recente por time (PostgREST). */
+const COLETIVO_EID_EVENTS_LIMIT = 30_000;
+
+/**
+ * Última nota EID conhecida por `times.id`, unindo `historico_eid_coletivo` e `eid_logs` (mais recente por data).
+ * Usado no ranking coletivo quando `rank=eid` — evita depender só de `times.eid_time` se estiver defasado.
+ */
+export async function fetchLatestColetivoEidByTimeId(
+  supabase: SupabaseClient,
+  teamIds: number[],
+): Promise<Map<number, number>> {
+  const out = new Map<number, number>();
+  if (teamIds.length === 0) return out;
+
+  const [{ data: histRows }, { data: logRows }] = await Promise.all([
+    supabase
+      .from("historico_eid_coletivo")
+      .select("time_id, nota_nova, data_alteracao")
+      .in("time_id", teamIds)
+      .order("data_alteracao", { ascending: false })
+      .limit(COLETIVO_EID_EVENTS_LIMIT),
+    supabase
+      .from("eid_logs")
+      .select("entity_time_id, new_score, created_at")
+      .eq("entity_kind", "time")
+      .in("entity_time_id", teamIds)
+      .order("created_at", { ascending: false })
+      .limit(COLETIVO_EID_EVENTS_LIMIT),
+  ]);
+
+  type Ev = { tid: number; score: number; ts: number };
+  const events: Ev[] = [];
+
+  for (const h of histRows ?? []) {
+    const tid = Number(h.time_id ?? 0);
+    if (!tid) continue;
+    const score = Number(h.nota_nova);
+    const ts = new Date(String(h.data_alteracao ?? "")).getTime();
+    if (!Number.isFinite(score) || !Number.isFinite(ts)) continue;
+    events.push({ tid, score, ts });
+  }
+
+  for (const lg of logRows ?? []) {
+    const tid = Number(lg.entity_time_id ?? 0);
+    if (!tid) continue;
+    const score = Number(lg.new_score);
+    const ts = new Date(String(lg.created_at ?? "")).getTime();
+    if (!Number.isFinite(score) || !Number.isFinite(ts)) continue;
+    events.push({ tid, score, ts });
+  }
+
+  events.sort((a, b) => b.ts - a.ts);
+  for (const e of events) {
+    if (!out.has(e.tid)) out.set(e.tid, e.score);
+  }
+
+  return out;
+}
 
 export type ProfileMini = { nome?: string | null; avatar_url?: string | null; localizacao?: string | null; genero?: string | null };
 export type SportMini = { nome?: string | null };
