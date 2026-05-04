@@ -7,7 +7,7 @@ export function DashboardPageSkeleton() {
     <div data-eid-dashboard-page>
       <SkMain
         variant="narrow"
-        className="relative z-0 min-w-0 px-3 py-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:py-0 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+        className="relative z-0 min-w-0 px-3 py-0 pb-[var(--eid-shell-content-bottom-pad)] sm:max-w-2xl sm:px-6 sm:py-0 sm:pt-1 sm:pb-[var(--eid-shell-content-bottom-pad)]"
       >
         <div className={`eid-dashboard-hero mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}>
           <div className="flex items-center gap-4">

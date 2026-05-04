@@ -13,7 +13,7 @@ export default function LoadingRanking() {
         aria-hidden
       />
 
-      <main className="relative mx-auto flex w-full max-w-lg flex-col px-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] pt-0 sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]">
+      <main className="relative mx-auto flex w-full max-w-lg flex-col px-3 pb-[var(--eid-shell-content-bottom-pad)] pt-0 sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[var(--eid-shell-content-bottom-pad)]">
         <div className={`eid-ranking-hero mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}>
           <SkBlock className="h-3 w-24 rounded-md" />
           <SkBlock className="mt-2 h-6 w-4/5 max-w-[14rem] rounded-md" />

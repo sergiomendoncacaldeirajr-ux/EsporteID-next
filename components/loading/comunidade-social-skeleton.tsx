@@ -3,7 +3,7 @@ import { SkBlock } from "@/components/loading/skeleton-primitives";
 /** Esqueleto fiel ao layout de `/comunidade` (painel social / “Painel de controle”). */
 export function ComunidadeSocialSkeleton() {
   return (
-    <main className="mx-auto w-full max-w-lg px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]">
+    <main className="mx-auto w-full max-w-lg px-3 py-3 pb-[var(--eid-shell-content-bottom-pad)] sm:max-w-2xl sm:px-6 sm:py-4 sm:pb-[var(--eid-shell-content-bottom-pad)]">
       <div
         className="eid-surface-panel relative rounded-xl p-2.5 md:overflow-hidden md:rounded-3xl md:border-eid-primary-500/20 md:bg-gradient-to-br md:from-eid-card md:via-eid-card md:to-eid-primary-500/[0.12] md:p-6 md:shadow-xl md:shadow-black/20"
         aria-busy="true"

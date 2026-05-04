@@ -292,7 +292,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
       data-eid-desafio-ui
       className={
         agendaSomente
-          ? "mx-auto w-full max-w-lg px-3 pt-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+          ? "mx-auto w-full max-w-lg px-3 pt-0 pb-[var(--eid-shell-content-bottom-pad)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[var(--eid-shell-content-bottom-pad)]"
           : "mx-auto w-full max-w-lg px-3 py-3 sm:max-w-xl sm:px-4 sm:py-5"
       }
     >

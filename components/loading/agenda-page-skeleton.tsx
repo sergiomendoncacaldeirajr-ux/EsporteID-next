@@ -5,7 +5,7 @@ import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens"
 export function AgendaPageSkeleton() {
   return (
     <main
-      className="mx-auto w-full max-w-lg px-3 pt-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+      className="mx-auto w-full max-w-lg px-3 pt-0 pb-[var(--eid-shell-content-bottom-pad)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[var(--eid-shell-content-bottom-pad)]"
       aria-busy="true"
       aria-label="Carregando agenda"
     >

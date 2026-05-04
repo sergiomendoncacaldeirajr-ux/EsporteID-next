@@ -689,7 +689,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
 
   return (
     <>
-      {/* Padding do conteúdo: #app-main-column (--eid-shell-footer-offset). Espaçador removido para não duplicar folga. */}
+      {/* Nav fixa; folga de rolagem no `body` + `var(--eid-shell-content-bottom-pad)` nos mains. */}
       <nav
         className="pointer-events-auto w-full bg-transparent px-2.5"
         style={{

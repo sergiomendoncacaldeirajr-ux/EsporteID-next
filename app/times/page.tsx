@@ -42,7 +42,7 @@ export default async function TimesPage({ searchParams }: Props) {
   return (
     <div
       data-eid-vagas-page="true"
-      className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 pb-[calc(var(--eid-shell-footer-offset,0px)+2rem)] sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset,0px)+2.25rem)]"
+      className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 pb-[var(--eid-shell-content-bottom-pad)] sm:px-6 sm:py-4 sm:pb-[var(--eid-shell-content-bottom-pad)]"
     >
       <div className="relative mb-4 overflow-hidden rounded-3xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(155deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-4 shadow-[0_16px_40px_-28px_rgba(37,99,235,0.26)] sm:p-6">
         <div className="relative grid grid-cols-[minmax(0,1fr)_110px] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_190px] sm:gap-6">

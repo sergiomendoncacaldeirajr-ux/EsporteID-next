@@ -136,7 +136,7 @@ export default async function ComunidadePage() {
       data-eid-comunidade-panel
       data-eid-touch-ui
       data-eid-touch-ui-compact="true"
-      className="mx-auto w-full max-w-3xl px-2.5 py-3 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-6xl sm:px-5 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+      className="mx-auto w-full max-w-3xl px-2.5 py-3 pb-[var(--eid-shell-content-bottom-pad)] sm:max-w-6xl sm:px-5 sm:py-4 sm:pb-[var(--eid-shell-content-bottom-pad)]"
     >
       <ComunidadeBackgroundSync />
       <div className="mb-3 md:mb-4">

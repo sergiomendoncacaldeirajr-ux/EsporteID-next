@@ -215,7 +215,7 @@ export default async function LocaisPage({ searchParams }: Props) {
       />
       <main
         data-eid-touch-ui
-        className="relative z-[1] mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+0.75rem)] sm:px-6 sm:py-4 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+        className="relative z-[1] mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 pb-[var(--eid-shell-content-bottom-pad)] sm:px-6 sm:py-4 sm:pb-[var(--eid-shell-content-bottom-pad)]"
       >
         <header className={locaisHeroClass}>
           <div

@@ -107,4 +107,4 @@ export const CANDIDATURA_ACOES_ROW_CLASS = "mt-3 flex items-center justify-end g
 
 /** Container do fluxo /desafio no app logado: folga extra acima do footer + nav inferior. */
 export const DESAFIO_PAGE_MAIN_CLASS =
-  "eid-touch-ui-scope eid-desafio-ui mx-auto w-full max-w-3xl px-3 py-3 pb-[calc(var(--eid-shell-footer-offset)+2.5rem)] sm:px-6 sm:py-4 sm:pb-12";
+  "eid-touch-ui-scope eid-desafio-ui mx-auto w-full max-w-3xl px-3 py-3 pb-[var(--eid-shell-content-bottom-pad)] sm:px-6 sm:py-4 sm:pb-[var(--eid-shell-content-bottom-pad)]";

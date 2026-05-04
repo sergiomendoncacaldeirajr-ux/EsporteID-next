@@ -34,7 +34,7 @@ export default async function AgendaPage() {
     <main
       data-eid-agenda-page
       data-eid-touch-ui
-      className="mx-auto w-full max-w-lg px-3 pt-0 pb-[calc(var(--eid-shell-footer-offset)+1rem)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+      className="mx-auto w-full max-w-lg px-3 pt-0 pb-[var(--eid-shell-content-bottom-pad)] sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[var(--eid-shell-content-bottom-pad)]"
     >
       <AgendaBackgroundSync />
       <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-4 py-4 sm:px-6 sm:py-5`}>

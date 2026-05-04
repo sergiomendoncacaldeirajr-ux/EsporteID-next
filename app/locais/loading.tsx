@@ -12,7 +12,7 @@ export default function LoadingLocais() {
       />
       <SkMain
         variant="wide5"
-        className="relative z-[1] pb-[calc(var(--eid-shell-footer-offset)+0.75rem)] sm:pb-[calc(var(--eid-shell-footer-offset)+1rem)]"
+        className="relative z-[1] pb-[var(--eid-shell-content-bottom-pad)] sm:pb-[var(--eid-shell-content-bottom-pad)]"
       >
         <div className={`eid-locais-hero relative mb-4 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-5 md:mb-6`}>
           <SkBlock className="h-2.5 w-28 rounded-full" />
