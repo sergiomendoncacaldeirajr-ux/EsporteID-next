@@ -115,7 +115,7 @@ export function RankingFilterBar({
         </Link>
       }
     >
-        <div className="rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+        <div className="eid-ranking-select-anim rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
           <div className="grid grid-cols-3 gap-1">
             <Link href={href({ tipo: "individual", page: 1 })} className={filterBarSegmentButton(state.tipo === "individual")}>
               <IconSingle className="h-4 w-4 shrink-0" />
@@ -132,7 +132,7 @@ export function RankingFilterBar({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-1 rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+        <div className="eid-ranking-select-anim grid grid-cols-2 gap-1 rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
           <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
             <IconPin className="h-4 w-4 shrink-0" />
             <span className="min-w-0 truncate">
@@ -157,7 +157,7 @@ export function RankingFilterBar({
         ) : null}
 
         {todosEsportes.length > 0 ? (
-          <div className="rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+          <div className="eid-ranking-select-anim rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
             <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overscroll-x-contain scroll-smooth whitespace-nowrap pb-0.5 pr-0.5 select-none [-ms-overflow-style:none] [scrollbar-width:none] cursor-grab active:cursor-grabbing [&::-webkit-scrollbar]:hidden">
               <div className="flex min-w-max flex-nowrap items-center gap-1.5">
               {todosEsportes.map((opt) => {
@@ -208,7 +208,7 @@ export function RankingPeriodToggle({
   const href = (next: Parameters<typeof rankingHref>[0]) => rankingHref(next, state, principalEsporteId);
   return (
     <div className="flex justify-end [&_a]:[-webkit-tap-highlight-color:transparent]">
-      <div className="w-full max-w-[8.4rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+      <div className="eid-ranking-select-anim w-full max-w-[8.4rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
         <div className="grid grid-cols-2 gap-1">
           <Link href={href({ periodo: "ano", page: 1 })} className={tipoSegmentButton(state.periodo === "ano")}>
             Ano
@@ -235,7 +235,7 @@ export function RankingGenderToggle({
   const isMisto = state.genero === "misto";
   return (
     <div className="flex w-full justify-center px-0.5 [&_a]:[-webkit-tap-highlight-color:transparent]">
-      <div className="w-full max-w-[17.5rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+      <div className="eid-ranking-select-anim w-full max-w-[17.5rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
         <div className="grid grid-cols-3 gap-1">
           <Link href={href({ genero: "masculino", page: 1 })} className={tipoSegmentButton(isMasc)}>
             Masculino
@@ -263,7 +263,7 @@ export function RankingRankToggle({
   const rankIsMatch = state.rank === "match";
   return (
     <div className="flex justify-start [&_a]:[-webkit-tap-highlight-color:transparent]">
-      <div className="w-full max-w-[8.4rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
+      <div className="eid-ranking-select-anim w-full max-w-[8.4rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
         <div className="grid grid-cols-2 gap-1">
           <Link href={href({ rank: "match", page: 1 })} className={tipoSegmentButton(rankIsMatch)}>
             Desafio

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { MatchRadarApp } from "@/components/match/match-radar-app";
 import { getEsportesConfrontoCached } from "@/lib/match/esportes-confronto";
 import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
+import { filterMatchRadarCardsByRankingCooldown } from "@/lib/match/dashboard-ranking-cooldown-blocklists";
 import {
   fetchMatchRadarCards,
   fetchMatchRadarCardsMultiSameTipo,
@@ -116,6 +117,9 @@ export async function MatchStreamRadar({ supabase, viewerId, me, sp, hideHero = 
     }
   }
   const allViewerTimes = Array.from(byTimeId.values());
+  const viewerTeamIdsForCooldown = [
+    ...new Set(allViewerTimes.map((t) => Number(t.id)).filter((id) => Number.isFinite(id) && id > 0)),
+  ];
   const viewerEsportesComDupla: number[] = [];
   const viewerEsportesComTime: number[] = [];
   for (const t of allViewerTimes) {
@@ -287,7 +291,13 @@ export async function MatchStreamRadar({ supabase, viewerId, me, sp, hideHero = 
         byKey.set(key, card);
       }
     }
-    return Array.from(byKey.values());
+    const dedupedFull = Array.from(byKey.values());
+    return filterMatchRadarCardsByRankingCooldown(supabase, {
+      viewerId,
+      viewerTeamIds: viewerTeamIdsForCooldown,
+      finalidade: matchFinalidade,
+      cards: dedupedFull,
+    });
   }
 
   const initialTodasEsporteIds: string[] =
@@ -330,6 +340,7 @@ export async function MatchStreamRadar({ supabase, viewerId, me, sp, hideHero = 
               lat: latN,
               lng: lngN,
               finalidade: matchFinalidade,
+              viewerTeamIds: viewerTeamIdsForCooldown,
             })
           : []
         : gridFetchIds.length === 0

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
+import { filterMatchRadarCardsByRankingCooldown } from "@/lib/match/dashboard-ranking-cooldown-blocklists";
 import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-match-individual-policy";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 
@@ -688,9 +689,11 @@ export async function fetchMatchRadarCardsTodasMerged(
     lat: number;
     lng: number;
     finalidade: MatchRadarFinalidade;
+    /** Times do viewer (líder/membro) — necessário para filtrar carência no merge ranking+amistoso. */
+    viewerTeamIds?: number[];
   }
 ): Promise<MatchRadarCard[]> {
-  const { viewerId, sortBy, raio, esporteIds, lat, lng, finalidade } = input;
+  const { viewerId, sortBy, raio, esporteIds, lat, lng, finalidade, viewerTeamIds = [] } = input;
   const ids = [...new Set(esporteIds.filter((id) => /^\d+$/.test(id)))];
   if (ids.length === 0) return [];
 
@@ -763,7 +766,14 @@ export async function fetchMatchRadarCardsTodasMerged(
       ])
     )
   );
-  return dedupeMatchRadarCardsMerged(perSport.flat(2));
+  const dedupedRankingMerge = dedupeMatchRadarCardsMerged(perSport.flat(2));
+  if (finalidade !== "ranking") return dedupedRankingMerge;
+  return filterMatchRadarCardsByRankingCooldown(supabase, {
+    viewerId,
+    viewerTeamIds,
+    finalidade,
+    cards: dedupedRankingMerge,
+  });
 }
 
 export function filterAndSortRadarCards(

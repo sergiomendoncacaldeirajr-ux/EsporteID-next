@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
+import { fetchViewerAllTeamIds } from "@/lib/match/dashboard-ranking-cooldown-blocklists";
 import {
   fetchMatchRadarCards,
   fetchMatchRadarCardsMultiSameTipo,
@@ -87,6 +88,7 @@ export async function refreshMatchRadarAction(input: {
     if (ids.length === 0) {
       return { ok: true, cards: [] };
     }
+    const viewerTeamIds = await fetchViewerAllTeamIds(supabase, user.id);
     const cards = await fetchMatchRadarCardsTodasMerged(supabase, {
       viewerId: user.id,
       sortBy: input.sortBy,
@@ -95,6 +97,7 @@ export async function refreshMatchRadarAction(input: {
       lat,
       lng,
       finalidade: input.finalidade,
+      viewerTeamIds,
     });
     return { ok: true, cards };
   }

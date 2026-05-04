@@ -1,6 +1,7 @@
 import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { distanciaKm } from "@/lib/geo/distance-km";
+import { fetchDashboardRankingCooldownBlocklists } from "@/lib/match/dashboard-ranking-cooldown-blocklists";
 import { type AtletaRow, firstProfile } from "./dashboard-helpers";
 
 export type DashboardRadarTeamsArgs = {
@@ -97,28 +98,40 @@ async function loadDashboardRadarSpotlightUncached(args: DashboardRadarTeamsArgs
     timesQuery = timesQuery.in("esporte_id", esportesParaFiltro);
   }
 
-  const [{ data: atletasRaw }, { data: timesRaw }, { data: minhasFormacoesMembro }, { data: pendingColetivoRows }] =
-    await Promise.all([
-      atletasQuery,
-      timesQuery,
-      supabase.from("membros_time").select("time_id").eq("usuario_id", userId).in("status", ["ativo", "aceito", "aprovado"]),
-      dashTeamIds.length > 0
-        ? supabase
-            .from("matches")
-            .select("desafiante_time_id, adversario_time_id")
-            .eq("status", "Pendente")
-            .eq("finalidade", "ranking")
-            .in("modalidade_confronto", ["dupla", "time"])
-            .or(`desafiante_time_id.in.(${myTeamsInClause}),adversario_time_id.in.(${myTeamsInClause})`)
-        : Promise.resolve({ data: [] as Array<{ desafiante_time_id?: number | null; adversario_time_id?: number | null }> }),
-    ]);
+  const [
+    { data: atletasRaw },
+    { data: timesRaw },
+    { data: minhasFormacoesMembro },
+    { data: pendingColetivoRows },
+    { blockedUserIds: rankingCooldownUserIds, blockedTeamIds: rankingCooldownTeamIds },
+  ] = await Promise.all([
+    atletasQuery,
+    timesQuery,
+    supabase.from("membros_time").select("time_id").eq("usuario_id", userId).in("status", ["ativo", "aceito", "aprovado"]),
+    dashTeamIds.length > 0
+      ? supabase
+          .from("matches")
+          .select("desafiante_time_id, adversario_time_id")
+          .eq("status", "Pendente")
+          .eq("finalidade", "ranking")
+          .in("modalidade_confronto", ["dupla", "time"])
+          .or(`desafiante_time_id.in.(${myTeamsInClause}),adversario_time_id.in.(${myTeamsInClause})`)
+      : Promise.resolve({ data: [] as Array<{ desafiante_time_id?: number | null; adversario_time_id?: number | null }> }),
+    fetchDashboardRankingCooldownBlocklists(supabase, {
+      viewerId: userId,
+      esporteId: esportePrincipalId,
+      viewerTeamIds: dashTeamIds,
+    }),
+  ]);
 
   const atletasRows = (atletasRaw ?? []) as AtletaRow[];
   const atletasRowsFiltered = atletasRows.filter((row) => {
     const p = firstProfile(row.profiles);
     const id = String(p?.id ?? row.usuario_id ?? "");
     const maioridadeOk = p?.match_maioridade_confirmada === true;
-    return id ? !activeOpponentIds.has(id) && maioridadeOk : false;
+    return id
+      ? !activeOpponentIds.has(id) && !rankingCooldownUserIds.has(id) && maioridadeOk
+      : false;
   });
   let atletasComDist: Array<{ row: AtletaRow; p: ReturnType<typeof firstProfile>; dist: number }> = atletasRowsFiltered.map(
     (row) => {
@@ -176,12 +189,28 @@ async function loadDashboardRadarSpotlightUncached(args: DashboardRadarTeamsArgs
       .filter((p) => p.match_maioridade_confirmada === true)
       .map((p) => String(p.id)),
   );
+  const timeNoRankingCooldown = (t: TimeRadarRow) => {
+    const tid = Number(t.id ?? 0);
+    const eid = Number(t.esporte_id ?? 0);
+    if (
+      esportePrincipalId != null &&
+      Number.isFinite(esportePrincipalId) &&
+      esportePrincipalId > 0 &&
+      Number.isFinite(eid) &&
+      eid === esportePrincipalId &&
+      rankingCooldownTeamIds.has(tid)
+    ) {
+      return false;
+    }
+    return true;
+  };
   const timesSemAtivos = (timesRaw ?? []).filter(
     (t) =>
       !meusTimesMembroIds.has(Number(t.id ?? 0)) &&
       !activeOpponentIds.has(String(t.criador_id ?? "")) &&
       criadoresComMaioridade.has(String(t.criador_id ?? "")) &&
-      !timeIdsComDesafioRankingPendente.has(Number(t.id ?? 0)),
+      !timeIdsComDesafioRankingPendente.has(Number(t.id ?? 0)) &&
+      timeNoRankingCooldown(t),
   );
   const timesComDist = timesSemAtivos.map((t) => {
     const lat = Number(t.lat ?? NaN);

@@ -876,9 +876,25 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       id: Number(t.id),
       nome: desafioPrimeiroNome(t.nome, "Minha formação"),
     }));
+  const formacoesMembroSemCarenciaRanking = (
+    await Promise.all(
+      formacoesMembroNaoLiderRaw.map(async (f) => {
+        const until = await computeRankingBlockedUntilColetivo(supabase, {
+          esporteId,
+          modalidade: modalidade as "dupla" | "time",
+          meuTimeId: f.id,
+          alvoTimeId: timeRow.id,
+          cooldownMeses: cooldownMesesColetivo,
+          fallbackViewerId: user.id,
+          fallbackOpponentLeaderId: timeRow.criador_id ?? undefined,
+        });
+        return until == null ? f : null;
+      })
+    )
+  ).filter((f): f is { id: number; nome: string } => f != null);
   const pendentesComAlvoDesafio = await fetchPendingRankingOpponentTimeIdsForAlvo(supabase, timeRow.id, esporteId);
   const formacoesMembroNaoLider = filterFormacoesSemParPendenteComAlvo(
-    formacoesMembroNaoLiderRaw,
+    formacoesMembroSemCarenciaRanking,
     timeRow.id,
     pendentesComAlvoDesafio
   );

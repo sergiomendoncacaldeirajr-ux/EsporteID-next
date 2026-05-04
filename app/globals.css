@@ -2106,6 +2106,29 @@ input.eid-input-dark.eid-datetime-local-fix[type="datetime-local"]:required:inva
   }
 }
 
+/* Ranking: leve “respiro” no bloco do seletor ao navegar (SSR remonta os filtros). */
+@keyframes eid-ranking-selector-block {
+  0% {
+    opacity: 0.86;
+    transform: scale(0.985);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.012);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-eid-ranking-page] .eid-ranking-select-anim {
+    animation: eid-ranking-selector-block 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+    transform-origin: center;
+  }
+}
+
 /*
  * Página /ranking no tema claro: cartões brancos ganham borda, sombra suave e “wells” nos filtros
  * (evita tudo “lavado” quando --eid-card === --eid-surface).

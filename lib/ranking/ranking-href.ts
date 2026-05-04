@@ -59,7 +59,8 @@ export function rankingHref(
   if (merged.rank !== "match") u.set("rank", merged.rank);
   if (merged.local !== "cidade") u.set("local", merged.local);
   if (merged.periodo !== "ano") u.set("periodo", merged.periodo);
-  if (merged.tipo === "individual" && merged.rank === "match" && merged.genero) u.set("genero", merged.genero);
+  /** Gênero do ranking por pontos (match) vale para individual, dupla e time — URL precisa refletir o filtro. */
+  if (merged.rank === "match" && merged.genero) u.set("genero", merged.genero);
   const pe = principalEsporteId != null && principalEsporteId > 0 ? String(principalEsporteId) : "";
   if (merged.esporte && merged.esporte !== pe) u.set("esporte", merged.esporte);
   if (merged.page > 1) u.set("page", String(merged.page));

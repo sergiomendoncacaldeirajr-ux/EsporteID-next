@@ -563,8 +563,8 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
           trendFooterCount: historicoColetivoSelecionado.length,
           experienceLabel:
             selectedFormations.length > 0
-              ? `${selectedFormations.length} forma├º├úo(├Áes) em ${view} neste esporte`
-              : `Sem forma├º├Áes de ${view} neste esporte`,
+              ? `${selectedFormations.length} formação(ões) em ${view} neste esporte`
+              : `Sem formações de ${view} neste esporte`,
         };
 
   const trendPointsColetivo = (timeId: number, eidAtual: number): [number, number, number] => {
@@ -590,7 +590,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
               href="/conta/esportes-eid"
               className="mt-2 inline-flex text-[11px] font-semibold text-eid-primary-300 underline-offset-2 hover:underline"
             >
-              Configurar esportes no perfil ÔåÆ
+              Configurar esportes no perfil →
             </Link>
           </div>
         ) : null}
@@ -614,11 +614,11 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
               <div className="rounded-xl border border-eid-action-500/30 bg-eid-surface/55 px-2 py-2 text-center">
                 <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">{resumoAtivo.pointsLabel}</p>
                 <p className="mt-0.5 text-xl font-black tabular-nums text-eid-fg">
-                  {resumoAtivo.pontos == null ? "ÔÇö" : resumoAtivo.pontos}
+                  {resumoAtivo.pontos == null ? "—" : resumoAtivo.pontos}
                 </p>
               </div>
               <div className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-2 py-2 text-center">
-                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vit├│rias</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vitórias</p>
                 <p className="mt-0.5 text-lg font-black tabular-nums text-emerald-400">{resumoAtivo.vit}</p>
               </div>
               <div className="rounded-xl border border-rose-500/35 bg-rose-500/10 px-2 py-2 text-center">
@@ -631,9 +631,9 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
 
         <div className={`mt-3 overflow-hidden ${PROFILE_CARD_BASE}`}>
           <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Tend├¬ncia EID</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Tendência EID</p>
             <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-primary-300">
-              Hist├│rico
+              Histórico
             </span>
           </div>
           <ProfileSportsMetricsCard
@@ -643,13 +643,13 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
             eidLabel="Nota atual"
             rankLabel={resumoAtivo.pointsLabel}
             showScoreTiles={false}
-            trendLabel="Evolu├º├úo da nota (hist├│rico)"
+            trendLabel="Evolução da nota (histórico)"
             trendPoints={trendPointsAtivos}
             footer={
               (resumoAtivo.trendFooterCount ?? 0) === 0 ? (
-                <span>Sem registros em hist├│rico de EID para este esporte ÔÇö a linha reflete a nota atual.</span>
+                <span>Sem registros em histórico de EID para este esporte — a linha reflete a nota atual.</span>
               ) : (
-                <span>{resumoAtivo.trendFooterCount} altera├º├Áes registradas no hist├│rico.</span>
+                <span>{resumoAtivo.trendFooterCount} alterações registradas no histórico.</span>
               )
             }
           />
@@ -657,7 +657,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
 
         <div className={`mt-3 overflow-hidden ${PROFILE_CARD_BASE}`}>
           <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Ver estat├¡sticas</p>
+            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Ver estatísticas</p>
             <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
               Modalidade
             </span>
@@ -688,32 +688,32 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
         <ProfileSection
           title="Panorama"
           className="mt-4"
-          info="Vis├úo geral do desempenho neste esporte: nota EID, ranking, partidas e aproveitamento."
+          info="Visão geral do desempenho neste esporte: nota EID, ranking, partidas e aproveitamento."
         >
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <div className={`overflow-hidden ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
               <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Aproveitamento (V+D)</p>
               <div>
                 <p className="mt-1 text-2xl font-black text-eid-fg">
-                  {resumoAtivo.winRate != null ? `${resumoAtivo.winRate}%` : "ÔÇö"}
+                  {resumoAtivo.winRate != null ? `${resumoAtivo.winRate}%` : "—"}
                 </p>
                 <div className="mt-1 inline-flex items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[10px] font-bold">
                   <span className="text-emerald-400">{resumoAtivo.vit}V</span>
-                  <span className="mx-1 text-eid-text-secondary">┬À</span>
+                  <span className="mx-1 text-eid-text-secondary">·</span>
                   <span className="text-rose-400">{resumoAtivo.der}D</span>
-                  <span className="mx-1 text-eid-text-secondary">┬À</span>
+                  <span className="mx-1 text-eid-text-secondary">·</span>
                   <span className="text-eid-text-secondary">{resumoAtivo.jogos} jogos</span>
                 </div>
               </div>
             </div>
             <div className={`overflow-hidden ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Posi├º├úo no ranking</p>
+              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Posição no ranking</p>
               <div>
                 <p className="mt-1 text-2xl font-black text-eid-fg">
-                  {resumoAtivo.posicao != null ? `#${resumoAtivo.posicao}` : "ÔÇö"}
+                  {resumoAtivo.posicao != null ? `#${resumoAtivo.posicao}` : "—"}
                 </p>
                 <p className="mt-1 text-[10px] leading-relaxed font-semibold text-eid-text-secondary">
-                  {resumoAtivo.posicao != null ? "Posi├º├úo atual no esporte" : "Sem posi├º├úo dispon├¡vel"}
+                  {resumoAtivo.posicao != null ? "Posição atual no esporte" : "Sem posição disponível"}
                 </p>
               </div>
             </div>
@@ -732,13 +732,13 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
           <ProfileSection
             title="Equipes e duplas neste esporte"
             className="mt-4"
-            info="Forma├º├Áes em que o atleta joga esta modalidade, com nota EID da equipe quando dispon├¡vel."
+            info="Formações em que o atleta joga esta modalidade, com nota EID da equipe quando disponível."
           >
             {showDuplasSemTime ? (
               <div className={`mt-2 overflow-hidden ${PROFILE_CARD_BASE} space-y-2 p-3`}>
                 <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Duplas sem time ativo</p>
                 <p className="text-[10px] text-eid-text-secondary">
-                  Dupla registrada sem time ativo comum no ranking ÔÇö abra o perfil da dupla para ver detalhes.
+                  Dupla registrada sem time ativo comum no ranking — abra o perfil da dupla para ver detalhes.
                 </p>
                 <div className="flex flex-wrap gap-3">
                   {duplasSemTime.map((d) => (
@@ -763,7 +763,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                           href={`/perfil-dupla/${d.id}/eid/${esporteId}?from=${encodeURIComponent(nextPath)}`}
                           className="mt-0.5 block text-[10px] font-semibold text-eid-action-400 hover:underline"
                         >
-                          Estat├¡sticas neste esporte ÔåÆ
+                          Estatísticas neste esporte →
                         </Link>
                       </div>
                     </div>
@@ -807,7 +807,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                       <Link
                         href={hrefPerfilFormacao}
                         className="shrink-0 rounded-xl ring-2 ring-eid-action-500/40 transition hover:ring-eid-action-500/80 hover:brightness-110"
-                        aria-label={`Ver perfil da forma├º├úo ${f.nome}`}
+                        aria-label={`Ver perfil da formação ${f.nome}`}
                       >
                         {f.escudo ? (
                           <img
@@ -849,40 +849,40 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                           </Link>
                         </h3>
                         <p className="mt-0.5 text-[10px] text-eid-text-secondary">
-                          EID equipe {f.eid_time.toFixed(2)} ┬À {f.pontos_ranking} pts ranking
+                          EID equipe {f.eid_time.toFixed(2)} · {f.pontos_ranking} pts ranking
                           {decResultado > 0 ? (
                             <>
                               {" "}
-                              ┬À {wrCol}% aproveitamento (V+D) nas partidas listadas ÔÇö {cv}V {cd}D
-                              {ce > 0 ? ` ┬À ${ce} empate${ce !== 1 ? "s" : ""}` : ""}
+                              · {wrCol}% aproveitamento (V+D) nas partidas listadas — {cv}V {cd}D
+                              {ce > 0 ? ` · ${ce} empate${ce !== 1 ? "s" : ""}` : ""}
                             </>
                           ) : ce > 0 ? (
-                            <> ┬À {ce} empate{ce !== 1 ? "s" : ""} registrado{ce !== 1 ? "s" : ""}</>
+                            <> · {ce} empate{ce !== 1 ? "s" : ""} registrado{ce !== 1 ? "s" : ""}</>
                           ) : null}
                         </p>
                         <Link
                           href={hrefStatsFormacaoEsporte}
                           className="mt-1.5 inline-flex text-[10px] font-bold uppercase tracking-wide text-eid-action-400 hover:underline"
                         >
-                          Estat├¡sticas completas neste esporte ÔåÆ
+                          Estatísticas completas neste esporte →
                         </Link>
                       </div>
                     </div>
 
                     <div className="border-t border-[color:var(--eid-border-subtle)]">
                       <ProfileSportsMetricsCard
-                        sportName={`${nomeEsporte} ┬À ${f.nome}`}
+                        sportName={`${nomeEsporte} · ${f.nome}`}
                         eidValue={f.eid_time}
                         rankValue={f.pontos_ranking}
                         eidLabel="EID da equipe"
                         rankLabel="Pontos"
-                        trendLabel="Evolu├º├úo EID coletivo"
+                        trendLabel="Evolução EID coletivo"
                         trendPoints={trendPointsColetivo(f.id, f.eid_time)}
                         footer={
                           (notasColetivoPorTime.get(f.id)?.length ?? 0) === 0 ? (
-                            <span>Sem hist├│rico coletivo registrado ÔÇö tend├¬ncia igual ├á nota atual.</span>
+                            <span>Sem histórico coletivo registrado — tendência igual à nota atual.</span>
                           ) : (
-                            <span>{notasColetivoPorTime.get(f.id)?.length} registro(s) no hist├│rico.</span>
+                            <span>{notasColetivoPorTime.get(f.id)?.length} registro(s) no histórico.</span>
                           )
                         }
                       />
@@ -890,7 +890,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
 
                     {partidasForm.length === 0 ? (
                       <p className={`${PROFILE_CARD_PAD_MD} text-[11px] text-eid-text-secondary`}>
-                        Nenhuma partida de equipe listada para esta forma├º├úo neste esporte.
+                        Nenhuma partida de equipe listada para esta formação neste esporte.
                       </p>
                     ) : (
                       <ul className="space-y-2 px-2.5 pb-3">
@@ -898,7 +898,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                           const t1 = p.time1_id != null ? Number(p.time1_id) : null;
                           const t2 = p.time2_id != null ? Number(p.time2_id) : null;
                           const oppId = t1 === f.id ? t2 : t1;
-                          const onome = oppId != null ? nomeOponenteTime.get(oppId) ?? `Equipe #${oppId}` : "ÔÇö";
+                          const onome = oppId != null ? nomeOponenteTime.get(oppId) ?? `Equipe #${oppId}` : "—";
                           const res = resultadoColetivo(f.id, p);
                           const when = fmtDataPtBr(p.data_resultado ?? p.data_registro);
                           const torNome = p.torneio_id ? torneioNome.get(Number(p.torneio_id)) : null;
@@ -922,8 +922,8 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                             else if (rr === "E") saldoE += 1;
                           }
                           const saldoResumo =
-                            `Saldo: ${f.nome} ${saldoV}V ┬À ${onome} ${saldoD}V` +
-                            (saldoE > 0 ? ` ┬À ${saldoE} empate${saldoE !== 1 ? "s" : ""}` : "");
+                            `Saldo: ${f.nome} ${saldoV}V · ${onome} ${saldoD}V` +
+                            (saldoE > 0 ? ` · ${saldoE} empate${saldoE !== 1 ? "s" : ""}` : "");
                           const ultimosConfrontos = confrontosMesmos.slice(0, 5).map((h) => {
                             const hOrigem: "Ranking" | "Torneio" =
                               h.torneio_id != null || String(h.tipo_partida ?? "").toLowerCase() === "torneio"
@@ -936,7 +936,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                               hour: "2-digit",
                               minute: "2-digit",
                             }).format(new Date(h.data_partida ?? h.data_resultado ?? h.data_registro ?? Date.now()));
-                            const placar = `${Number(h.placar_1 ?? 0)} ├ù ${Number(h.placar_2 ?? 0)}`;
+                            const placar = `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`;
                             return {
                               id: h.id,
                               dataHora,
@@ -980,7 +980,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                                   ? `/local/${Number(p.local_espaco_id)}`
                                   : null
                               }
-                              placarBase={`${Number(p.placar_1 ?? 0)} ├ù ${Number(p.placar_2 ?? 0)}`}
+                              placarBase={`${Number(p.placar_1 ?? 0)} × ${Number(p.placar_2 ?? 0)}`}
                               sportLabel={nomeEsporte}
                               mensagem={p.mensagem ?? null}
                               totalConfrontos={confrontosMesmos.length}
@@ -1022,7 +1022,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                                   )}
                                 </p>
                                 <p className="text-[10px] text-eid-text-secondary">
-                                  {p.modalidade ? `${p.modalidade} ┬À ` : ""}
+                                  {p.modalidade ? `${p.modalidade} · ` : ""}
                                   <span
                                     className={
                                       origemLabel === "Torneio"
@@ -1032,23 +1032,23 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                                   >
                                     {origemLabel}
                                   </span>
-                                  {" ┬À "}
+                                  {" · "}
                                   {when}
                                   {torNome ? (
-                                    <span className="text-eid-action-400"> ┬À {torNome}</span>
+                                    <span className="text-eid-action-400"> · {torNome}</span>
                                   ) : p.torneio_id ? (
-                                    <span className="text-eid-action-400"> ┬À Torneio #{p.torneio_id}</span>
+                                    <span className="text-eid-action-400"> · Torneio #{p.torneio_id}</span>
                                   ) : null}
-                                  {p.tipo_partida ? ` ┬À ${p.tipo_partida}` : ""}
+                                  {p.tipo_partida ? ` · ${p.tipo_partida}` : ""}
                                 </p>
                               </div>
                               <div className="text-right pr-7">
                                 <p className="text-sm font-black tabular-nums text-eid-fg">
                                   {Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2))
-                                    ? `${p.placar_1} ├ù ${p.placar_2}`
-                                    : "ÔÇö"}
+                                    ? `${p.placar_1} × ${p.placar_2}`
+                                    : "—"}
                                 </p>
-                                <p className="text-[9px] uppercase text-eid-text-secondary">{p.status ?? "ÔÇö"}</p>
+                                <p className="text-[9px] uppercase text-eid-text-secondary">{p.status ?? "—"}</p>
                               </div>
                             </EidConfrontoResumoModal>
                           );
@@ -1064,14 +1064,14 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
 
         {showIndividual ? (
         <ProfileSection
-          title="Hist├│rico de partidas (individual)"
+          title="Histórico de partidas (individual)"
           className="mt-4"
-          info="Confrontos 1v1 (ou individual) neste esporte com placar e advers├írio, conforme registros do ranking."
+          info="Confrontos 1v1 (ou individual) neste esporte com placar e adversário, conforme registros do ranking."
         >
           {lista.length === 0 ? (
             <p className="mt-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-surface)_12%)] p-3 text-[11px] text-eid-text-secondary">
-              Sem partidas individuais para exibir neste esporte. Quando houver jogos v├ílidos no ranking, eles aparecem
-              aqui com placar e advers├írio.
+              Sem partidas individuais para exibir neste esporte. Quando houver jogos válidos no ranking, eles aparecem
+              aqui com placar e adversário.
             </p>
           ) : (
             <>
@@ -1104,8 +1104,8 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                     else if (rr === "E") saldoE += 1;
                   }
                   const saldoResumo =
-                    `Saldo: ${(perfil.nome ?? "Voc├¬")} ${saldoV}V ┬À ${(op?.nome ?? "Oponente")} ${saldoD}V` +
-                    (saldoE > 0 ? ` ┬À ${saldoE} empate${saldoE !== 1 ? "s" : ""}` : "");
+                    `Saldo: ${(perfil.nome ?? "Você")} ${saldoV}V · ${(op?.nome ?? "Oponente")} ${saldoD}V` +
+                    (saldoE > 0 ? ` · ${saldoE} empate${saldoE !== 1 ? "s" : ""}` : "");
                   const ultimosConfrontos = confrontosMesmos.slice(0, 5).map((h) => {
                     const hOrigem: "Ranking" | "Torneio" =
                       h.torneio_id != null || String(h.tipo_partida ?? "").toLowerCase() === "torneio"
@@ -1118,7 +1118,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                       hour: "2-digit",
                       minute: "2-digit",
                     }).format(new Date(h.data_partida ?? h.data_resultado ?? h.data_registro ?? Date.now()));
-                    const placar = `${Number(h.placar_1 ?? 0)} ├ù ${Number(h.placar_2 ?? 0)}`;
+                    const placar = `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`;
                     return {
                       id: h.id,
                       dataHora,
@@ -1174,7 +1174,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
         <ProfileSection
           title="Head-to-head"
           className="mt-4"
-          info="Confrontos diretos com oponentes frequentes neste esporte: vit├│rias, derrotas e ├║ltimos jogos."
+          info="Confrontos diretos com oponentes frequentes neste esporte: vitórias, derrotas e últimos jogos."
         >
           <div className="mt-2 space-y-3">
             {showIndividual ? (
@@ -1200,9 +1200,9 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                         </Link>
                         <span className="shrink-0 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold text-eid-fg">
                           <span className="text-emerald-400">{row.v}V</span>
-                          <span className="mx-1 text-eid-text-secondary">┬À</span>
+                          <span className="mx-1 text-eid-text-secondary">·</span>
                           <span className="text-rose-400">{row.d}D</span>
-                          <span className="mx-1 text-eid-text-secondary">┬À</span>
+                          <span className="mx-1 text-eid-text-secondary">·</span>
                           <span className="text-eid-primary-300">{row.e}E</span>
                           <span className="ml-1 text-eid-text-secondary">({row.jogos})</span>
                         </span>
@@ -1222,7 +1222,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                 <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
                   <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Dupla/Time</p>
                   <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
-                    Hist├│rico direto
+                    Histórico direto
                   </span>
                 </div>
                 {coletivoHeadRows.filter((r) => (r.modalidade === "dupla" ? showDupla : showTime)).length > 0 ? (
@@ -1257,9 +1257,9 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                           </div>
                           <span className="shrink-0 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold text-eid-fg">
                             <span className="text-emerald-400">{row.v}V</span>
-                            <span className="mx-1 text-eid-text-secondary">┬À</span>
+                            <span className="mx-1 text-eid-text-secondary">·</span>
                             <span className="text-rose-400">{row.d}D</span>
-                            <span className="mx-1 text-eid-text-secondary">┬À</span>
+                            <span className="mx-1 text-eid-text-secondary">·</span>
                             <span className="text-eid-primary-300">{row.e}E</span>
                             <span className="ml-1 text-eid-text-secondary">({row.jogos})</span>
                           </span>
