@@ -1,18 +1,37 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { NomeLocalInputSuggestions } from "@/components/locais/nome-local-input-suggestions";
 import { LocalSubmitButton } from "@/components/locais/local-submit-button";
 import { distanciaKm } from "@/lib/geo/distance-km";
+import { usuarioJaGerenciaEspaco } from "@/lib/espacos/server";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { cadastrarLocalGenerico } from "./actions";
 
 export type CadastrarLocalStreamProps = {
-  viewerId: string;
-  sp: { erro?: string; id?: string; return_to?: string; from?: string; sucesso?: string; novo_local_nome?: string };
+  searchParams?: Promise<{
+    erro?: string;
+    id?: string;
+    return_to?: string;
+    from?: string;
+    sucesso?: string;
+    novo_local_nome?: string;
+  }>;
 };
 
-export async function CadastrarLocalStream({ viewerId, sp }: CadastrarLocalStreamProps) {
+export async function CadastrarLocalStream({ searchParams }: CadastrarLocalStreamProps) {
+  const sp = (await searchParams) ?? {};
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/locais/cadastrar");
+  if (await usuarioJaGerenciaEspaco(user.id)) {
+    redirect("/espaco");
+  }
+  const viewerId = user.id;
+
   const returnTo = resolveBackHref(sp.return_to ?? sp.from, "/locais/cadastrar");
   const erroMsg =
     sp.erro === "nome"
@@ -29,7 +48,6 @@ export async function CadastrarLocalStream({ viewerId, sp }: CadastrarLocalStrea
       ? `Local cadastrado com sucesso${sp.novo_local_nome ? `: ${sp.novo_local_nome}` : ""}.`
       : null;
 
-  const supabase = await createClient();
   const featureCfg = await getSystemFeatureConfig(supabase);
   const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", viewerId);
 
