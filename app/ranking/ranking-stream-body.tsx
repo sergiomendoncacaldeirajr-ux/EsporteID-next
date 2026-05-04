@@ -206,6 +206,21 @@ export async function RankingStreamBody({
         ? baseRows.filter((r) => normalizeSearchText(r.localizacao ?? "").includes(cityNeedle))
         : baseRows;
       const teamIds = rows.map((r) => Number(r.id)).filter((id) => Number.isFinite(id));
+      const latestEidByTeam = new Map<number, number>();
+      if (stateComGenero.rank === "eid" && teamIds.length > 0) {
+        const { data: histRows } = await supabase
+          .from("historico_eid_coletivo")
+          .select("time_id, nota_nova, data_alteracao")
+          .in("time_id", teamIds)
+          .order("data_alteracao", { ascending: false });
+        for (const h of histRows ?? []) {
+          const tid = Number(h.time_id ?? 0);
+          if (!tid || latestEidByTeam.has(tid)) continue;
+          const nota = Number(h.nota_nova ?? NaN);
+          if (!Number.isFinite(nota)) continue;
+          latestEidByTeam.set(tid, nota);
+        }
+      }
       const { data: rosterRows } =
         teamIds.length > 0
           ? await supabase
@@ -304,7 +319,10 @@ export async function RankingStreamBody({
             stateComGenero.rank === "match"
               ? (pontosByTeamBucket.get(Number(r.id))?.[stateComGenero.genero as GeneroBucket] ?? 0)
               : Number(r.pontos_ranking ?? 0),
-          notaEid: Number(r.eid_time ?? 0),
+          notaEid:
+            stateComGenero.rank === "eid"
+              ? (latestEidByTeam.get(Number(r.id)) ?? Number(r.eid_time ?? 0))
+              : Number(r.eid_time ?? 0),
           vitorias:
             stateComGenero.rank === "match"
               ? (winsByTeamBucket.get(Number(r.id))?.[stateComGenero.genero as GeneroBucket] ?? 0)
