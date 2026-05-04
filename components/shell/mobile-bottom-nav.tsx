@@ -161,6 +161,10 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
 
       const rect = shell.getBoundingClientRect();
       let inset = Math.max(0, bottomEdge - rect.top);
+      // Shell ainda sem altura útil (1º frame): não subestimar — pill + Rank + safe-area costuma ser ~88–112px.
+      if (rect.height < 36) {
+        inset = Math.max(inset, 96);
+      }
 
       const rank = shell.querySelector('[aria-label="Rank"]');
       if (rank) {

@@ -170,6 +170,17 @@ body.eid-app-shell {
   background-color: var(--eid-bg);
 }
 
+/*
+ * Perfil do atleta: o `main` não recebe animação de entrada com transform (data-eid-no-route-enter),
+ * mas a coluna precisa de folga explícita — com flex no body o padding só do body às vezes não “empurra”
+ * o card da capa o suficiente acima da nav fixa em alguns Android/iOS.
+ */
+@media (max-width: 767px) {
+  #eid-app-shell-main-wrap:has(#perfil-public-main[data-eid-perfil-page]) {
+    padding-bottom: calc(var(--eid-shell-footer-offset-measured, var(--eid-shell-footer-offset)) + 1.25rem);
+  }
+}
+
 @media (max-width: 767px) {
   body.eid-app-shell {
     /* Mesmo recuo que as páginas usam em `pb-[calc(var(--eid-shell-footer-offset)-…)]` */

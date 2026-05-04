@@ -89,6 +89,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
     <main
       id="perfil-public-main"
       data-eid-perfil-page
+      data-eid-no-route-enter
       className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-progressive-enter`}
     >
       <PerfilPublicoHero
