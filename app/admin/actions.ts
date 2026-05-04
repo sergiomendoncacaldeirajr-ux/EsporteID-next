@@ -25,6 +25,16 @@ async function guard() {
   if (!(await getIsPlatformAdmin())) throw new Error("Acesso negado.");
 }
 
+/** Anexa mensagem de erro legível na URL do admin (flash). */
+function adminQueryDetail(message: string | null | undefined): string {
+  const m = String(message ?? "")
+    .replace(/[\r\n]+/g, " ")
+    .trim()
+    .slice(0, 480);
+  if (!m) return "";
+  return `&adm_detail=${encodeURIComponent(m)}`;
+}
+
 export async function adminDispararPushTesteParaUsuario(formData: FormData) {
   try {
     await guard();
@@ -1910,12 +1920,12 @@ export async function adminSetAuthUserBan(formData: FormData) {
     if (me.user?.id === userId) redirect(`${base}?adm_flash=usuario_ban_self`);
     if (acao === "banir") {
       const { error } = await svc().auth.admin.updateUserById(userId, { ban_duration: "2628000h" });
-      if (error) redirect(`${base}?adm_flash=usuario_ban_db_erro`);
+      if (error) redirect(`${base}?adm_flash=usuario_ban_db_erro${adminQueryDetail(error.message)}`);
     } else {
       const { error: e1 } = await svc().auth.admin.updateUserById(userId, { ban_duration: "none" });
       if (e1) {
         const { error: e2 } = await svc().auth.admin.updateUserById(userId, { ban_duration: "0" });
-        if (e2) redirect(`${base}?adm_flash=usuario_ban_db_erro`);
+        if (e2) redirect(`${base}?adm_flash=usuario_ban_db_erro${adminQueryDetail(`${e1.message} · ${e2.message}`)}`);
       }
     }
     revalidatePath("/admin/usuarios");
@@ -1940,10 +1950,26 @@ export async function adminDeleteAuthUserCompletamente(formData: FormData) {
     if (me.user?.id === userId) redirect(`${base}?adm_flash=usuario_delete_self`);
     const { data: u } = await svc().from("platform_admins").select("user_id").eq("user_id", userId).maybeSingle();
     if (u) redirect(`${base}?adm_flash=usuario_delete_admin`);
-    const { error } = await svc().auth.admin.deleteUser(userId);
-    if (error) redirect(`${base}?adm_flash=usuario_delete_db_erro`);
-    revalidatePath("/admin/usuarios");
-    redirect("/admin/usuarios?adm_flash=usuario_delete_ok");
+    const { error: apiDelErr } = await svc().auth.admin.deleteUser(userId);
+    if (!apiDelErr) {
+      revalidatePath("/admin/usuarios");
+      redirect("/admin/usuarios?adm_flash=usuario_delete_ok");
+    }
+
+    const { data: rpcRaw, error: rpcCallErr } = await svc().rpc("admin_delete_auth_user_by_id", { p_id: userId });
+    const rpc = rpcRaw as { ok?: boolean; message?: string; already_missing?: boolean } | null;
+    const rpcOk = Boolean(rpc && rpc.ok === true);
+    if (!rpcCallErr && rpcOk) {
+      revalidatePath("/admin/usuarios");
+      redirect("/admin/usuarios?adm_flash=usuario_delete_ok");
+    }
+
+    const rpcFailMsg =
+      rpc && rpc.ok === false && typeof rpc.message === "string"
+        ? rpc.message
+        : rpcCallErr?.message ?? "rpc_sem_resposta";
+    const combined = [apiDelErr.message, rpcFailMsg].filter(Boolean).join(" · ");
+    redirect(`${base}?adm_flash=usuario_delete_db_erro${adminQueryDetail(combined)}`);
   } catch (e) {
     if (isRedirectError(e)) throw e;
     redirect(`${base}?adm_flash=usuario_delete_erro`);

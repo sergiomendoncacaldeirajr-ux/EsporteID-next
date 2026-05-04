@@ -48,7 +48,10 @@ const USUARIO_ADMIN_FLASH: Record<string, { className: string; text: string }> =
   usuario_zerar_sem_id: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Requisição inválida: falta user_id." },
   usuario_ban_ok: { className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-100", text: "Estado de bloqueio da conta (auth) atualizado." },
   usuario_ban_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "Falha ao alterar bloqueio (exceção)." },
-  usuario_ban_db_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "A API de auth recusou banir/desbanir." },
+  usuario_ban_db_erro: {
+    className: "border-red-500/40 bg-red-500/10 text-red-100",
+    text: "A API de auth recusou banir/desbanir. Se houver detalhe abaixo, copie para diagnóstico.",
+  },
   usuario_ban_param: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Parâmetros de bloqueio inválidos." },
   usuario_ban_self: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Não é possível banir a própria conta por aqui." },
   usuario_delete_confirm_invalido: {
@@ -57,7 +60,10 @@ const USUARIO_ADMIN_FLASH: Record<string, { className: string; text: string }> =
   },
   usuario_delete_self: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Não é possível excluir a própria conta por aqui." },
   usuario_delete_admin: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Administradores de plataforma não podem ser excluídos por esta tela." },
-  usuario_delete_db_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "A API de auth recusou a exclusão (dependências ou política)." },
+  usuario_delete_db_erro: {
+    className: "border-red-500/40 bg-red-500/10 text-red-100",
+    text: "Exclusão recusada pela API de auth e pelo fallback no banco. Veja o detalhe técnico abaixo (constraint, permissão ou mensagem do Postgres).",
+  },
   usuario_delete_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "Falha na exclusão (exceção)." },
   usuario_delete_param: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Requisição de exclusão inválida." },
 };
@@ -73,6 +79,17 @@ export default async function AdminUsuarioDetalhePage({ params, searchParams }: 
   const admFlashRaw = sp.adm_flash;
   const admFlash = typeof admFlashRaw === "string" ? admFlashRaw.trim() : "";
   const flashMsg = admFlash ? (USUARIO_ADMIN_FLASH[admFlash] ?? null) : null;
+  const admDetailRaw = sp.adm_detail;
+  const admDetail =
+    typeof admDetailRaw === "string" && admDetailRaw.trim()
+      ? (() => {
+          try {
+            return decodeURIComponent(admDetailRaw.trim()).slice(0, 900);
+          } catch {
+            return admDetailRaw.trim().slice(0, 900);
+          }
+        })()
+      : null;
   if (!hasServiceRoleConfig()) {
     return <p className="text-sm text-eid-text-secondary">Configure a service role.</p>;
   }
@@ -117,16 +134,33 @@ export default async function AdminUsuarioDetalhePage({ params, searchParams }: 
         ← Voltar à lista
       </Link>
       {flashMsg ? (
-        <p
+        <div
           className={`mt-3 rounded-lg border px-3 py-2 text-sm font-semibold ${flashMsg.className}`}
           role="status"
         >
-          {flashMsg.text}
-        </p>
+          <p>{flashMsg.text}</p>
+          {admDetail ? (
+            <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-all rounded-md bg-black/35 px-2 py-1.5 font-mono text-[11px] font-normal leading-snug text-eid-fg/90">
+              {admDetail}
+            </pre>
+          ) : null}
+        </div>
       ) : admFlash ? (
-        <p className="mt-3 rounded-lg border border-eid-text-secondary/30 bg-eid-surface/40 px-3 py-2 text-sm text-eid-text-secondary" role="status">
-          Ação concluída (código: <span className="font-mono">{admFlash}</span>).
-        </p>
+        <div className="mt-3 rounded-lg border border-eid-text-secondary/30 bg-eid-surface/40 px-3 py-2 text-sm text-eid-text-secondary" role="status">
+          <p>
+            Ação concluída (código: <span className="font-mono">{admFlash}</span>).
+          </p>
+          {admDetail ? (
+            <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-all rounded-md bg-black/30 px-2 py-1.5 font-mono text-[11px] text-eid-fg/85">
+              {admDetail}
+            </pre>
+          ) : null}
+        </div>
+      ) : admDetail ? (
+        <div className="mt-3 rounded-lg border border-eid-text-secondary/30 bg-eid-surface/40 px-3 py-2 text-sm text-eid-text-secondary" role="status">
+          <p className="text-[10px] font-bold uppercase text-eid-text-secondary">Detalhe</p>
+          <pre className="mt-1 max-h-52 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] text-eid-fg/85">{admDetail}</pre>
+        </div>
       ) : null}
       <h2 className="mt-3 text-base font-bold text-eid-fg">{p.nome ?? "Perfil"}</h2>
       <p className="mt-1 font-mono text-xs text-eid-text-secondary">
