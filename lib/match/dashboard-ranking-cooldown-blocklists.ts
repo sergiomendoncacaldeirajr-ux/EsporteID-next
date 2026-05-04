@@ -12,6 +12,9 @@ function norm(v: string | null | undefined): string {
 function partidaDentroRankingCooldown(p: Record<string, unknown>, cutoffMs: number): boolean {
   const status = norm((p as { status?: string | null }).status);
   const statusRanking = norm((p as { status_ranking?: string | null }).status_ranking);
+  /** Alinhado à RPC `solicitar_desafio_match`: anulações admin não geram carência. */
+  if (statusRanking === "cancelado_admin" || statusRanking === "anulado_admin") return false;
+  if (status === "cancelada" || status === "cancelado" || status === "cancelada_admin") return false;
   const valid =
     statusRanking === "validado" ||
     ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(status);

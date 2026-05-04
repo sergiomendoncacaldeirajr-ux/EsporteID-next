@@ -111,6 +111,48 @@ type PartidaRowMatchesPar = {
   jogador2_id: string | null;
 };
 
+/** Cancela o `match_id` e todos os demais `matches` de ranking do mesmo par (Pendente, Aceito, Concluido, …), exceto já Cancelado. */
+async function cancelarMatchesRankingParAdmin(db: SupabaseClient, partida: PartidaRowMatchesPar) {
+  const voidMatchUpdate = {
+    status: "Cancelado" as const,
+    cancel_requested_by: null as string | null,
+    data_confirmacao: null as string | null,
+  };
+  const matchId = Number(partida.match_id ?? 0);
+  if (Number.isFinite(matchId) && matchId > 0) {
+    await db.from("matches").update(voidMatchUpdate).eq("id", matchId);
+  }
+  const torneioIdNum = Number(partida.torneio_id ?? 0);
+  const esporteIdNum = Number(partida.esporte_id ?? 0);
+  if (Number.isFinite(torneioIdNum) && torneioIdNum > 0) return;
+  if (!Number.isFinite(esporteIdNum) || esporteIdNum < 1) return;
+  const t1 = Number(partida.time1_id ?? 0);
+  const t2 = Number(partida.time2_id ?? 0);
+  if (Number.isFinite(t1) && Number.isFinite(t2) && t1 > 0 && t2 > 0) {
+    await db
+      .from("matches")
+      .update(voidMatchUpdate)
+      .eq("esporte_id", esporteIdNum)
+      .eq("finalidade", "ranking")
+      .neq("status", "Cancelado")
+      .or(
+        `and(desafiante_time_id.eq.${t1},adversario_time_id.eq.${t2}),and(desafiante_time_id.eq.${t2},adversario_time_id.eq.${t1})`
+      );
+    return;
+  }
+  const j1 = String(partida.jogador1_id ?? "").trim();
+  const j2 = String(partida.jogador2_id ?? "").trim();
+  if (j1 && j2) {
+    await db
+      .from("matches")
+      .update(voidMatchUpdate)
+      .eq("esporte_id", esporteIdNum)
+      .eq("finalidade", "ranking")
+      .neq("status", "Cancelado")
+      .or(`and(usuario_id.eq.${j1},adversario_id.eq.${j2}),and(usuario_id.eq.${j2},adversario_id.eq.${j1})`);
+  }
+}
+
 /** Fecha o `match_id` e demais desafios de ranking entre o mesmo par (exceto já cancelados), para carência e radar refletirem o resultado do admin. */
 async function fecharMatchesRankingParAdmin(db: SupabaseClient, partida: PartidaRowMatchesPar) {
   const confirmPatch = matchConfirmadoAdminUpdate();
@@ -210,61 +252,9 @@ export async function adminCancelarLimparPartida(formData: FormData) {
       redirect("/admin/partidas?adm_flash=partida_limpar_erro");
     }
 
-    /** Mesmos estados que a RPC usa para carência em `matches` (variantes de casing). */
-    const matchStatusesConcluidos = [
-      "Concluido",
-      "Concluído",
-      "Finalizado",
-      "Encerrado",
-      "concluido",
-      "concluído",
-      "finalizado",
-      "encerrado",
-    ];
-    const voidMatchUpdate = {
-      status: "Cancelado" as const,
-      cancel_requested_by: null as string | null,
-      data_confirmacao: null as string | null,
-    };
+    await cancelarMatchesRankingParAdmin(db, partida as PartidaRowMatchesPar);
 
-    const matchId = Number(partida.match_id ?? 0);
-    if (Number.isFinite(matchId) && matchId > 0) {
-      await db.from("matches").update(voidMatchUpdate).eq("id", matchId);
-    }
-
-    /** Carência de ranking usa também `matches` concluídos entre o mesmo par; cancela todos (ex.: match_id nulo ou duplicado). */
     const torneioIdNum = Number(partida.torneio_id ?? 0);
-    const esporteIdNum = Number(partida.esporte_id ?? 0);
-    if (!Number.isFinite(torneioIdNum) || torneioIdNum === 0) {
-      if (Number.isFinite(esporteIdNum) && esporteIdNum > 0) {
-        const t1 = Number(partida.time1_id ?? 0);
-        const t2 = Number(partida.time2_id ?? 0);
-        if (Number.isFinite(t1) && Number.isFinite(t2) && t1 > 0 && t2 > 0) {
-          await db
-            .from("matches")
-            .update(voidMatchUpdate)
-            .eq("esporte_id", esporteIdNum)
-            .eq("finalidade", "ranking")
-            .in("status", matchStatusesConcluidos)
-            .or(
-              `and(desafiante_time_id.eq.${t1},adversario_time_id.eq.${t2}),and(desafiante_time_id.eq.${t2},adversario_time_id.eq.${t1})`
-            );
-        } else {
-          const j1 = String(partida.jogador1_id ?? "").trim();
-          const j2 = String(partida.jogador2_id ?? "").trim();
-          if (j1 && j2) {
-            await db
-              .from("matches")
-              .update(voidMatchUpdate)
-              .eq("esporte_id", esporteIdNum)
-              .eq("finalidade", "ranking")
-              .in("status", matchStatusesConcluidos)
-              .or(`and(usuario_id.eq.${j1},adversario_id.eq.${j2}),and(usuario_id.eq.${j2},adversario_id.eq.${j1})`);
-          }
-        }
-      }
-    }
-
     const torneioId = torneioIdNum;
     revalidateAdminPartidaPaths(partidaId, torneioId);
     redirect("/admin/partidas?adm_flash=partida_limpar_ok");
@@ -368,10 +358,7 @@ export async function adminMediarResultadoDaDenuncia(formData: FormData) {
           data_validacao: new Date().toISOString(),
         })
         .eq("id", partidaId);
-      const matchId = Number(partida.match_id ?? 0);
-      if (Number.isFinite(matchId) && matchId > 0) {
-        await db.from("matches").update({ status: "Cancelado", cancel_requested_by: null }).eq("id", matchId);
-      }
+      await cancelarMatchesRankingParAdmin(db, partida as PartidaRowMatchesPar);
     } else {
       const winnerSide = decision === "winner_1" ? "1" : "2";
       const t1n = partida.time1_id != null ? Number(partida.time1_id) : null;
