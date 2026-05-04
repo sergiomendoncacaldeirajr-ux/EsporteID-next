@@ -98,7 +98,11 @@ export async function adminCancelarLimparPartida(formData: FormData) {
       redirect("/admin/partidas?adm_flash=partida_limpar_invalida");
     }
     const db = svc();
-    const { data: partida } = await db.from("partidas").select("id, match_id, torneio_id").eq("id", partidaId).maybeSingle();
+    const { data: partida } = await db
+      .from("partidas")
+      .select("id, match_id, torneio_id, esporte_id, time1_id, time2_id, jogador1_id, jogador2_id")
+      .eq("id", partidaId)
+      .maybeSingle();
     if (!partida) {
       redirect("/admin/partidas?adm_flash=partida_limpar_nao_encontrada");
     }
@@ -114,6 +118,8 @@ export async function adminCancelarLimparPartida(formData: FormData) {
         placar_desafiado: null,
         placar: null,
         lancado_por: null,
+        vencedor_id: null,
+        perdedor_id: null,
         mensagem: "Partida cancelada pelo admin para limpeza de fluxo.",
         data_resultado: null,
         data_validacao: null,
@@ -123,18 +129,62 @@ export async function adminCancelarLimparPartida(formData: FormData) {
       redirect("/admin/partidas?adm_flash=partida_limpar_erro");
     }
 
+    /** Mesmos estados que a RPC usa para carência em `matches` (variantes de casing). */
+    const matchStatusesConcluidos = [
+      "Concluido",
+      "Concluído",
+      "Finalizado",
+      "Encerrado",
+      "concluido",
+      "concluído",
+      "finalizado",
+      "encerrado",
+    ];
+    const voidMatchUpdate = {
+      status: "Cancelado" as const,
+      cancel_requested_by: null as string | null,
+      data_confirmacao: null as string | null,
+    };
+
     const matchId = Number(partida.match_id ?? 0);
     if (Number.isFinite(matchId) && matchId > 0) {
-      await db
-        .from("matches")
-        .update({
-          status: "Cancelado",
-          cancel_requested_by: null,
-        })
-        .eq("id", matchId);
+      await db.from("matches").update(voidMatchUpdate).eq("id", matchId);
     }
 
-    const torneioId = Number(partida.torneio_id ?? 0);
+    /** Carência de ranking usa também `matches` concluídos entre o mesmo par; cancela todos (ex.: match_id nulo ou duplicado). */
+    const torneioIdNum = Number(partida.torneio_id ?? 0);
+    const esporteIdNum = Number(partida.esporte_id ?? 0);
+    if (!Number.isFinite(torneioIdNum) || torneioIdNum === 0) {
+      if (Number.isFinite(esporteIdNum) && esporteIdNum > 0) {
+        const t1 = Number(partida.time1_id ?? 0);
+        const t2 = Number(partida.time2_id ?? 0);
+        if (Number.isFinite(t1) && Number.isFinite(t2) && t1 > 0 && t2 > 0) {
+          await db
+            .from("matches")
+            .update(voidMatchUpdate)
+            .eq("esporte_id", esporteIdNum)
+            .eq("finalidade", "ranking")
+            .in("status", matchStatusesConcluidos)
+            .or(
+              `and(desafiante_time_id.eq.${t1},adversario_time_id.eq.${t2}),and(desafiante_time_id.eq.${t2},adversario_time_id.eq.${t1})`
+            );
+        } else {
+          const j1 = String(partida.jogador1_id ?? "").trim();
+          const j2 = String(partida.jogador2_id ?? "").trim();
+          if (j1 && j2) {
+            await db
+              .from("matches")
+              .update(voidMatchUpdate)
+              .eq("esporte_id", esporteIdNum)
+              .eq("finalidade", "ranking")
+              .in("status", matchStatusesConcluidos)
+              .or(`and(usuario_id.eq.${j1},adversario_id.eq.${j2}),and(usuario_id.eq.${j2},adversario_id.eq.${j1})`);
+          }
+        }
+      }
+    }
+
+    const torneioId = torneioIdNum;
     revalidateAdminPartidaPaths(partidaId, torneioId);
     redirect("/admin/partidas?adm_flash=partida_limpar_ok");
   } catch (error) {

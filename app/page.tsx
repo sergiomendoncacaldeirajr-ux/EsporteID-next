@@ -222,7 +222,7 @@ export default async function Home() {
                   [
                     { href: "/dashboard", label: "Painel", sub: "Resumo e busca integrada" },
                     { href: "/desafio", label: "Desafio", sub: "Pedidos ranking ou amistoso" },
-                    { href: "/match", label: "Radar Match", sub: "Mapa e filtros por esporte" },
+                    { href: "/match", label: "Radar de desafios", sub: "Mapa e filtros por esporte" },
                     { href: "/torneios", label: "Torneios", sub: "Inscrições e chaves" },
                   ] as const
                 ).map((item) => {
@@ -278,7 +278,7 @@ export default async function Home() {
                 },
                 {
                   href: "/match",
-                  title: "Radar Match",
+                  title: "Radar de desafios",
                   body: "Descoberta no mapa ou lista por esporte e raio.",
                   icon: "radar" as const,
                 },

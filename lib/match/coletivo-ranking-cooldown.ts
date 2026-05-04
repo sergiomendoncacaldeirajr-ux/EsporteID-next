@@ -7,6 +7,15 @@ function norm(s: string | null | undefined): string {
 function partidaValidaRanking(status: string | null | undefined, statusRanking: string | null | undefined): boolean {
   const sr = norm(statusRanking);
   const st = norm(status);
+  if (
+    st === "cancelada" ||
+    st === "cancelado" ||
+    sr === "cancelado_admin" ||
+    sr === "anulado_admin" ||
+    sr === "cancelado"
+  ) {
+    return false;
+  }
   return (
     sr === "validado" ||
     ["concluida", "concluída", "concluido", "concluído", "finalizada", "encerrada", "validada"].includes(st)
