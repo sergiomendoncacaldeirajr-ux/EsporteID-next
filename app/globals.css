@@ -1326,6 +1326,16 @@ select,
   -webkit-touch-callout: default;
 }
 
+/*
+ * /admin: o body global usa user-select: none (sensação de app). Aqui liberamos seleção
+ * só no shell do painel para copiar UUID, e-mail, logs de auditoria, etc.
+ */
+[data-eid-admin] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 /* Mobile: fundo sólido e toque mais “app nativo” (menos ruído visual) */
 @media (max-width: 767px) {
   html {
