@@ -3,7 +3,7 @@ import { SkBlock } from "@/components/loading/skeleton-primitives";
 import { PROFILE_HERO_PANEL_CLASS, PROFILE_SECTION_TITLE } from "@/components/perfil/profile-ui-tokens";
 
 const MAIN_PROFILE =
-  "mx-auto w-full max-w-lg px-2.5 pb-[calc(var(--eid-shell-footer-offset)+1rem)] pt-2 sm:max-w-2xl sm:px-5 sm:pb-8 sm:pt-3";
+  "mx-auto w-full max-w-lg px-2.5 pb-[calc(var(--eid-shell-footer-offset)+3.25rem)] pt-2 sm:max-w-2xl sm:px-5 sm:pb-[calc(var(--eid-shell-footer-offset)+2.75rem)] sm:pt-3";
 
 const HERO_PANEL =
   "eid-surface-panel relative mt-2 overflow-hidden rounded-2xl bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_16px_32px_-20px_rgba(15,23,42,0.45),0_0_20px_-16px_rgba(37,99,235,0.48)]";

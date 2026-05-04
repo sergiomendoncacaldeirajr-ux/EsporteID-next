@@ -111,6 +111,17 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
     });
   }
 
+  function confirmRemoveSport(esporteId: number) {
+    const sport = sportsMap.get(esporteId);
+    const nome = sport?.nome ?? "este esporte";
+    const jaNoPerfil = savedEsporteIds.has(esporteId);
+    const msg = jaNoPerfil
+      ? `Remover "${nome}" do perfil?\n\nIsso apaga para sempre neste esporte: nota EID, histórico de evolução da nota, vitórias e derrotas no ranking de desafio e pontos acumulados. Não dá para desfazer.\n\nContinuar?`
+      : `Descartar "${nome}" da lista antes de salvar?`;
+    if (!window.confirm(msg)) return;
+    removeSport(esporteId);
+  }
+
   function toggleSavedExpanded(esporteId: number) {
     setExpandedSaved((prev) => ({ ...prev, [esporteId]: !prev[esporteId] }));
   }
@@ -274,7 +285,7 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
                       <div className="mb-2 flex justify-end">
                         <button
                           type="button"
-                          onClick={() => removeSport(item.esporteId)}
+                          onClick={() => confirmRemoveSport(item.esporteId)}
                           className="text-[10px] font-semibold uppercase text-eid-text-secondary hover:text-eid-fg"
                         >
                           Remover
@@ -312,7 +323,7 @@ export function ProfilePerformanceEditor({ sports, initialItems }: Props) {
                     </div>
                     <button
                       type="button"
-                      onClick={() => removeSport(item.esporteId)}
+                      onClick={() => confirmRemoveSport(item.esporteId)}
                       className="shrink-0 text-[10px] font-semibold uppercase text-eid-text-secondary hover:text-eid-fg"
                     >
                       Remover

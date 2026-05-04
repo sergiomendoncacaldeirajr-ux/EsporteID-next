@@ -347,13 +347,11 @@ export async function salvarEsportesOnboarding(
   );
   const salvarProfessor = finalIds.filter((eid) => esporteTemProfessorFn(eid));
 
-  if (remover.length > 0) {
-    const { error: delErr } = await supabase
-      .from("usuario_eid")
-      .delete()
-      .eq("usuario_id", user.id)
-      .in("esporte_id", remover);
-    if (delErr) return { ok: false, message: delErr.message };
+  for (const esporteId of remover) {
+    const { error: rpcErr } = await supabase.rpc("remover_usuario_eid_esporte", {
+      p_esporte_id: esporteId,
+    });
+    if (rpcErr) return { ok: false, message: rpcErr.message };
   }
 
   if (atualizar.length > 0) {

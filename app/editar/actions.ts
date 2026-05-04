@@ -148,6 +148,24 @@ export async function savePerformanceEidAction(formData: FormData): Promise<Save
 
   if (rows.length === 0) return { ok: false, message: "Nenhum esporte válido informado." };
 
+  const { data: existentes, error: exErr } = await supabase
+    .from("usuario_eid")
+    .select("esporte_id")
+    .eq("usuario_id", user.id);
+  if (exErr) return { ok: false, message: exErr.message };
+
+  const manter = new Set(rows.map((r) => Number(r.esporte_id)));
+  const remover = (existentes ?? [])
+    .map((r) => Number(r.esporte_id))
+    .filter((id) => Number.isFinite(id) && id > 0 && !manter.has(id));
+
+  for (const esporteId of remover) {
+    const { error: rpcErr } = await supabase.rpc("remover_usuario_eid_esporte", {
+      p_esporte_id: esporteId,
+    });
+    if (rpcErr) return { ok: false, message: rpcErr.message };
+  }
+
   const { error } = await supabase.from("usuario_eid").upsert(rows, {
     onConflict: "usuario_id,esporte_id",
   });
