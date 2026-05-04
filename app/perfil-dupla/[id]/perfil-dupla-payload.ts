@@ -13,10 +13,7 @@ import {
   fetchPendingRankingOpponentTimeIdsForAlvo,
   filterFormacoesSemParPendenteComAlvo,
 } from "@/lib/match/pending-ranking-opponents-of-alvo";
-import {
-  MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER,
-  viewerTemUsuarioEidNoEsporte,
-} from "@/lib/match/viewer-esporte-confronto";
+import { viewerTemUsuarioEidNoEsporte } from "@/lib/match/viewer-esporte-confronto";
 import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
 import {
   carregarPartidasColetivasDoTime,
@@ -27,9 +24,7 @@ import { createClient } from "@/lib/supabase/server";
 import { podeExcluirFormacaoComoLider } from "@/lib/formacao/pode-excluir-formacao-lider";
 import type { TeamPublicPendingInvite } from "@/components/times/team-public-invite-block";
 
-export type PerfilDuplaPayload = Awaited<ReturnType<typeof loadPerfilDuplaPayloadUncached>>;
-
-async function loadPerfilDuplaPayloadUncached(duplaId: number, viewerId: string) {
+async function loadPerfilDuplaIdentityUncached(duplaId: number, viewerId: string) {
   const id = duplaId;
   if (!Number.isFinite(id) || id < 1) notFound();
 
@@ -59,7 +54,7 @@ async function loadPerfilDuplaPayloadUncached(duplaId: number, viewerId: string)
     supabase,
     d.player1_id,
     d.player2_id,
-    d.esporte_id
+    d.esporte_id,
   );
 
   const { data: timeResolvido } = timeResolvidoId
@@ -81,9 +76,78 @@ async function loadPerfilDuplaPayloadUncached(duplaId: number, viewerId: string)
     posicaoDupla = (acimaD ?? 0) + 1;
   }
 
+  const { data: liderDupla } = timeResolvido?.criador_id
+    ? await supabase.from("profiles").select("id, nome, whatsapp, avatar_url").eq("id", timeResolvido.criador_id).maybeSingle()
+    : { data: null };
+
+  const isMembroDupla = viewerId === d.player1_id || viewerId === d.player2_id;
+  const donoDuplaId = d.criador_id ?? d.player1_id;
+  const isDonoDupla = viewerId === donoDuplaId;
+  const isLiderTimeDupla =
+    Boolean(timeResolvidoId) && timeResolvido != null && timeResolvido.criador_id === viewerId;
+
+  const idsExcluirConviteDupla = [
+    ...new Set([d.player1_id, d.player2_id, viewerId].map((x) => String(x ?? "").trim()).filter(Boolean)),
+  ];
+
+  const esp = Array.isArray(d.esportes) ? d.esportes[0] : d.esportes;
   const espIdNum = d.esporte_id != null ? Number(d.esporte_id) : 0;
-  const viewerPodeConfrontarNesteEsporteDupla =
-    espIdNum > 0 ? await viewerTemUsuarioEidNoEsporte(supabase, viewerId, espIdNum) : false;
+
+  const conquistas: string[] = [];
+  if ((Number(timeResolvido?.eid_time ?? 0) ?? 0) >= 7) conquistas.push("Dupla Elite");
+  if (Number(timeResolvido?.pontos_ranking ?? 0) >= 1200) conquistas.push("Rank Forte");
+  if ((p1?.id ? 1 : 0) + (p2?.id ? 1 : 0) === 2) conquistas.push("Dupla Completa");
+
+  const fromPublicDupla = `/perfil-dupla/${id}`;
+  const editarDuplaHref = `/editar/dupla/${id}?from=${encodeURIComponent(fromPublicDupla)}`;
+  const excluirDuplaRedirectPara = `/editar/equipes?from=${encodeURIComponent(`/perfil/${viewerId}`)}`;
+
+  const podeExcluirPerfilDuplaTime =
+    isLiderTimeDupla &&
+    timeResolvidoId != null &&
+    (await podeExcluirFormacaoComoLider(supabase, timeResolvidoId, viewerId));
+
+  const nomeExibicao = timeResolvido?.nome ?? `Dupla registrada #${id}`;
+  const localExibicao =
+    timeResolvido?.localizacao?.trim() ||
+    [p1?.localizacao, p2?.localizacao]
+      .map((x) => (x ? String(x).trim() : ""))
+      .filter(Boolean)
+      .join(" · ") ||
+    null;
+
+  return {
+    id,
+    viewerId,
+    d,
+    p1,
+    p2,
+    timeResolvidoId,
+    timeResolvido,
+    posicaoDupla,
+    espIdNum,
+    esp,
+    nomeExibicao,
+    localExibicao,
+    isMembroDupla,
+    isDonoDupla,
+    isLiderTimeDupla,
+    liderDupla,
+    idsExcluirConviteDupla,
+    conquistas,
+    fromPublicDupla,
+    editarDuplaHref,
+    excluirDuplaRedirectPara,
+    podeExcluirPerfilDuplaTime,
+  };
+}
+
+export const getPerfilDuplaIdentity = cache(loadPerfilDuplaIdentityUncached);
+
+async function loadPerfilDuplaPartidasBundleUncached(duplaId: number, viewerId: string) {
+  const { timeResolvidoId, espIdNum } = await getPerfilDuplaIdentity(duplaId, viewerId);
+  const supabase = await createClient();
+
   const partidasColetivasDupla =
     timeResolvidoId && espIdNum > 0
       ? await carregarPartidasColetivasDoTime(supabase, timeResolvidoId, espIdNum, viewerId)
@@ -100,42 +164,69 @@ async function loadPerfilDuplaPayloadUncached(duplaId: number, viewerId: string)
   const jogosDupla = vitoriasDupla + derrotasDupla;
   const winRateDupla = jogosDupla > 0 ? Math.round((vitoriasDupla / jogosDupla) * 100) : null;
 
-  const { data: eidLogsDupla } = timeResolvidoId
-    ? await supabase
-        .from("eid_logs")
-        .select("change_amount, reason, created_at, esportes(nome)")
-        .eq("entity_kind", "time")
-        .eq("entity_time_id", timeResolvidoId)
-        .order("created_at", { ascending: false })
-        .limit(3)
-    : { data: [] };
+  return {
+    partidasColetivasDupla,
+    bundleResultadosDupla,
+    vitoriasDupla,
+    derrotasDupla,
+    jogosDupla,
+    winRateDupla,
+  };
+}
 
-  const { data: histDupla } = timeResolvidoId
-    ? await supabase
-        .from("historico_eid_coletivo")
-        .select("nota_nova, data_alteracao")
-        .eq("time_id", timeResolvidoId)
-        .order("data_alteracao", { ascending: false })
-        .limit(12)
-    : { data: [] };
+export const getPerfilDuplaPartidasBundle = cache(loadPerfilDuplaPartidasBundleUncached);
 
-  const { data: liderDupla } = timeResolvido?.criador_id
-    ? await supabase.from("profiles").select("id, nome, whatsapp, avatar_url").eq("id", timeResolvido.criador_id).maybeSingle()
-    : { data: null };
+async function loadPerfilDuplaHistEidPlayersUncached(duplaId: number, viewerId: string) {
+  const { timeResolvidoId, d } = await getPerfilDuplaIdentity(duplaId, viewerId);
+  const supabase = await createClient();
 
-  const isMembroDupla = viewerId === d.player1_id || viewerId === d.player2_id;
-  const donoDuplaId = d.criador_id ?? d.player1_id;
-  const isDonoDupla = viewerId === donoDuplaId;
-  const isLiderTimeDupla =
-    Boolean(timeResolvidoId) && timeResolvido != null && timeResolvido.criador_id === viewerId;
+  const [{ data: eidLogsDupla }, { data: histDupla }, { data: eid1 }, { data: eid2 }] = await Promise.all([
+    timeResolvidoId
+      ? supabase
+          .from("eid_logs")
+          .select("change_amount, reason, created_at, esportes(nome)")
+          .eq("entity_kind", "time")
+          .eq("entity_time_id", timeResolvidoId)
+          .order("created_at", { ascending: false })
+          .limit(3)
+      : Promise.resolve({ data: null }),
+    timeResolvidoId
+      ? supabase
+          .from("historico_eid_coletivo")
+          .select("nota_nova, data_alteracao")
+          .eq("time_id", timeResolvidoId)
+          .order("data_alteracao", { ascending: false })
+          .limit(12)
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("usuario_eid")
+      .select("nota_eid, pontos_ranking")
+      .eq("usuario_id", d.player1_id)
+      .eq("esporte_id", d.esporte_id)
+      .maybeSingle(),
+    supabase
+      .from("usuario_eid")
+      .select("nota_eid, pontos_ranking")
+      .eq("usuario_id", d.player2_id)
+      .eq("esporte_id", d.esporte_id)
+      .maybeSingle(),
+  ]);
+
+  return { eidLogsDupla, histDupla, eid1, eid2 };
+}
+
+export const getPerfilDuplaHistEidPlayers = cache(loadPerfilDuplaHistEidPlayersUncached);
+
+async function loadPerfilDuplaVisitorMatchPackUncached(duplaId: number, viewerId: string) {
+  const idn = await getPerfilDuplaIdentity(duplaId, viewerId);
+  const { d, p1, p2, timeResolvidoId, timeResolvido, espIdNum, isMembroDupla, isDonoDupla, liderDupla } = idn;
+  const supabase = await createClient();
+
+  const viewerPodeConfrontarNesteEsporteDupla =
+    espIdNum > 0 ? await viewerTemUsuarioEidNoEsporte(supabase, viewerId, espIdNum) : false;
 
   let convitesPendentesDupla: TeamPublicPendingInvite[] = [];
-  const idsExcluirConviteDupla = [
-    ...new Set(
-      [d.player1_id, d.player2_id, viewerId].map((x) => String(x ?? "").trim()).filter(Boolean)
-    ),
-  ];
-  if (isDonoDupla && timeResolvidoId) {
+  if (idn.isDonoDupla && timeResolvidoId) {
     const { data: pendRowsDupla } = await supabase
       .from("time_convites")
       .select("id, convidado_usuario_id")
@@ -188,8 +279,9 @@ async function loadPerfilDuplaPayloadUncached(duplaId: number, viewerId: string)
   const formacoesMembroNaoLiderDupla = filterFormacoesSemParPendenteComAlvo(
     formacoesMembroNaoLiderDuplaRaw,
     timeResolvidoId ?? 0,
-    pendentesComDuplaAlvo
+    pendentesComDuplaAlvo,
   );
+
   const { data: minhaFormacaoDupla } = await supabase
     .from("times")
     .select("id")
@@ -226,7 +318,7 @@ async function loadPerfilDuplaPayloadUncached(duplaId: number, viewerId: string)
       viewerId,
       timeResolvido.criador_id,
       timeResolvidoId,
-      meuTimeIdDupla
+      meuTimeIdDupla,
     );
     linkWpp = podeWa ? waMeHref(liderDupla.whatsapp) : null;
   } else if (!isMembroDupla && p1?.id && p2?.id) {
@@ -248,7 +340,7 @@ async function loadPerfilDuplaPayloadUncached(duplaId: number, viewerId: string)
       timeResolvidoId,
       timeResolvido.criador_id,
       Number(d.esporte_id),
-      "dupla"
+      "dupla",
     ));
 
   const cooldownMeses = await getMatchRankCooldownMeses(supabase);
@@ -271,70 +363,9 @@ async function loadPerfilDuplaPayloadUncached(duplaId: number, viewerId: string)
     });
   }
 
-  const [{ data: eid1 }, { data: eid2 }] = await Promise.all([
-    supabase
-      .from("usuario_eid")
-      .select("nota_eid, pontos_ranking")
-      .eq("usuario_id", d.player1_id)
-      .eq("esporte_id", d.esporte_id)
-      .maybeSingle(),
-    supabase
-      .from("usuario_eid")
-      .select("nota_eid, pontos_ranking")
-      .eq("usuario_id", d.player2_id)
-      .eq("esporte_id", d.esporte_id)
-      .maybeSingle(),
-  ]);
-
-  const esp = Array.isArray(d.esportes) ? d.esportes[0] : d.esportes;
-  const conquistas: string[] = [];
-  if ((Number(timeResolvido?.eid_time ?? 0) ?? 0) >= 7) conquistas.push("Dupla Elite");
-  if (Number(timeResolvido?.pontos_ranking ?? 0) >= 1200) conquistas.push("Rank Forte");
-  if ((p1?.id ? 1 : 0) + (p2?.id ? 1 : 0) === 2) conquistas.push("Dupla Completa");
-
-  const fromPublicDupla = `/perfil-dupla/${id}`;
-  const editarDuplaHref = `/editar/dupla/${id}?from=${encodeURIComponent(fromPublicDupla)}`;
-
-  const podeExcluirPerfilDuplaTime =
-    isLiderTimeDupla &&
-    timeResolvidoId != null &&
-    (await podeExcluirFormacaoComoLider(supabase, timeResolvidoId, viewerId));
-  const excluirDuplaRedirectPara = `/editar/equipes?from=${encodeURIComponent(`/perfil/${viewerId}`)}`;
-
-  const nomeExibicao = timeResolvido?.nome ?? `Dupla registrada #${id}`;
-  const localExibicao =
-    timeResolvido?.localizacao?.trim() ||
-    [p1?.localizacao, p2?.localizacao]
-      .map((x) => (x ? String(x).trim() : ""))
-      .filter(Boolean)
-      .join(" · ") ||
-    null;
-
   return {
-    id,
-    viewerId,
-    d,
-    p1,
-    p2,
-    timeResolvidoId,
-    timeResolvido,
-    posicaoDupla,
-    espIdNum,
     viewerPodeConfrontarNesteEsporteDupla,
-    partidasColetivasDupla,
-    bundleResultadosDupla,
-    vitoriasDupla,
-    derrotasDupla,
-    jogosDupla,
-    winRateDupla,
-    eidLogsDupla,
-    histDupla,
-    liderDupla,
-    isMembroDupla,
-    isDonoDupla,
-    isLiderTimeDupla,
     convitesPendentesDupla,
-    idsExcluirConviteDupla,
     formacoesMembroNaoLiderDupla,
     meuTimeIdDupla,
     canChallengeDupla,
@@ -344,19 +375,21 @@ async function loadPerfilDuplaPayloadUncached(duplaId: number, viewerId: string)
     hasAceitoRankDupla,
     cooldownMeses,
     rankingBlockedUntilDupla,
-    eid1,
-    eid2,
-    esp,
-    conquistas,
-    fromPublicDupla,
-    editarDuplaHref,
-    podeExcluirPerfilDuplaTime,
-    excluirDuplaRedirectPara,
-    nomeExibicao,
-    localExibicao,
   };
 }
 
+export const getPerfilDuplaVisitorMatchPack = cache(loadPerfilDuplaVisitorMatchPackUncached);
+
+export type PerfilDuplaPayload = Awaited<ReturnType<typeof loadPerfilDuplaPayloadMerged>>;
+
+async function loadPerfilDuplaPayloadMerged(duplaId: number, viewerId: string) {
+  const identity = await getPerfilDuplaIdentity(duplaId, viewerId);
+  const partidas = await getPerfilDuplaPartidasBundle(duplaId, viewerId);
+  const histEid = await getPerfilDuplaHistEidPlayers(duplaId, viewerId);
+  const visitor = await getPerfilDuplaVisitorMatchPack(duplaId, viewerId);
+  return { ...identity, ...partidas, ...histEid, ...visitor };
+}
+
 export const getPerfilDuplaPayload = cache(async (duplaId: number, viewerId: string) =>
-  loadPerfilDuplaPayloadUncached(duplaId, viewerId)
+  loadPerfilDuplaPayloadMerged(duplaId, viewerId),
 );

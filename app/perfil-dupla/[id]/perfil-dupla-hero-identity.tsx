@@ -2,17 +2,16 @@ import Link from "next/link";
 import { ExcluirFormacaoButton } from "@/components/times/excluir-formacao-button";
 import { FormacaoCidadeAvisoLider } from "@/components/perfil/formacao-cidade-aviso-lider";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
-import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { EidCityState } from "@/components/ui/eid-city-state";
-import { getPerfilDuplaPayload } from "./perfil-dupla-payload";
+import { getPerfilDuplaIdentity } from "./perfil-dupla-payload";
 
-export type PerfilDuplaHeroBlockProps = {
+export type PerfilDuplaHeroIdentityProps = {
   duplaId: number;
   viewerId: string;
 };
 
-export async function PerfilDuplaHeroBlock({ duplaId, viewerId }: PerfilDuplaHeroBlockProps) {
-  const p = await getPerfilDuplaPayload(duplaId, viewerId);
+export async function PerfilDuplaHeroIdentity({ duplaId, viewerId }: PerfilDuplaHeroIdentityProps) {
+  const p = await getPerfilDuplaIdentity(duplaId, viewerId);
   const {
     id: duplaPublicId,
     d,
@@ -21,17 +20,12 @@ export async function PerfilDuplaHeroBlock({ duplaId, viewerId }: PerfilDuplaHer
     nomeExibicao,
     localExibicao,
     esp,
-    vitoriasDupla,
-    derrotasDupla,
-    winRateDupla,
-    jogosDupla,
-    liderDupla,
     podeExcluirPerfilDuplaTime,
     isDonoDupla,
   } = p;
 
   return (
-    <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 sm:p-4`}>
+    <>
       {podeExcluirPerfilDuplaTime && timeResolvidoId ? (
         <div className="absolute right-2 top-2 z-10 sm:right-3 sm:top-3">
           <ExcluirFormacaoButton
@@ -84,49 +78,32 @@ export async function PerfilDuplaHeroBlock({ duplaId, viewerId }: PerfilDuplaHer
       </div>
       {isDonoDupla && timeResolvidoId ? <FormacaoCidadeAvisoLider timeId={timeResolvidoId} /> : null}
       {d.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary sm:mt-3">{d.bio}</p> : null}
-      <div className="mt-4 grid grid-cols-4 divide-x divide-transparent rounded-xl border border-transparent bg-eid-surface/40 text-center shadow-none">
-        <div className="py-2">
-          <p className="text-sm font-black text-eid-fg">{vitoriasDupla}</p>
-          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vitórias</p>
-        </div>
-        <div className="py-2">
-          <p className="text-sm font-black text-eid-fg">{derrotasDupla}</p>
-          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Derrotas</p>
-        </div>
-        <div className="py-2">
-          <p className="text-sm font-black text-eid-action-500">{winRateDupla != null ? `${winRateDupla}%` : "—"}</p>
-          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Win Rate</p>
-        </div>
-        <div className="py-2">
-          <p className="text-sm font-black text-eid-primary-400">{jogosDupla}</p>
-          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Jogos</p>
-        </div>
-      </div>
-      {liderDupla ? (
+
+      {p.liderDupla ? (
         <div className="mt-4 flex w-full min-w-0 justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2.5">
           <Link
-            href={`/perfil/${liderDupla.id}?from=/perfil-dupla/${duplaPublicId}`}
+            href={`/perfil/${p.liderDupla.id}?from=/perfil-dupla/${duplaPublicId}`}
             className="inline-flex max-w-full min-w-0 items-center gap-3 rounded-lg text-left transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-eid-card"
-            aria-label={`Abrir perfil de ${liderDupla.nome ?? "líder"}`}
+            aria-label={`Abrir perfil de ${p.liderDupla.nome ?? "líder"}`}
           >
-            {liderDupla.avatar_url ? (
+            {p.liderDupla.avatar_url ? (
               <img
-                src={liderDupla.avatar_url}
+                src={p.liderDupla.avatar_url}
                 alt=""
                 className="h-9 w-9 shrink-0 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-10 sm:w-10"
               />
             ) : (
               <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 sm:h-10 sm:w-10">
-                {(liderDupla.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
+                {(p.liderDupla.nome ?? "L").trim().slice(0, 1).toUpperCase() || "L"}
               </span>
             )}
             <div className="min-w-0">
               <span className="block text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary/90">Líder</span>
-              <span className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">{liderDupla.nome ?? "—"}</span>
+              <span className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">{p.liderDupla.nome ?? "—"}</span>
             </div>
           </Link>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }

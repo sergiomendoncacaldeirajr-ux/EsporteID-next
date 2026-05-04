@@ -1,28 +1,23 @@
 import Link from "next/link";
 import { FormacaoCidadeAvisoLider } from "@/components/perfil/formacao-cidade-aviso-lider";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
-import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { ExcluirFormacaoButton } from "@/components/times/excluir-formacao-button";
 import { SairDaEquipeExitButton } from "@/components/times/sair-da-equipe-exit-button";
-import { getPerfilTimePayload } from "./perfil-time-payload";
+import { getPerfilTimeIdentity } from "./perfil-time-payload";
 
-export type PerfilTimeHeroBlockProps = {
+export type PerfilTimeHeroIdentityProps = {
   timeId: number;
   viewerId: string;
   sairEquipeAction: () => Promise<void>;
 };
 
-export async function PerfilTimeHeroBlock({ timeId, viewerId, sairEquipeAction }: PerfilTimeHeroBlockProps) {
-  const p = await getPerfilTimePayload(timeId, viewerId);
+export async function PerfilTimeHeroIdentity({ timeId, viewerId, sairEquipeAction }: PerfilTimeHeroIdentityProps) {
+  const p = await getPerfilTimeIdentity(timeId, viewerId);
   const {
     id,
     t,
     criador,
-    vitoriasTime,
-    derrotasTime,
-    winRateTime,
-    jogosTime,
     canLeaveTeam,
     isLeader,
     podeExcluirPerfilFormacao,
@@ -30,7 +25,7 @@ export async function PerfilTimeHeroBlock({ timeId, viewerId, sairEquipeAction }
   } = p;
 
   return (
-    <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 p-3 sm:p-4`}>
+    <>
       {canLeaveTeam || (isLeader && podeExcluirPerfilFormacao) ? (
         <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1.5 sm:right-3 sm:top-3">
           {isLeader && podeExcluirPerfilFormacao ? (
@@ -94,24 +89,6 @@ export async function PerfilTimeHeroBlock({ timeId, viewerId, sairEquipeAction }
       </div>
       {isLeader ? <FormacaoCidadeAvisoLider timeId={id} /> : null}
       {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary sm:mt-3">{t.bio}</p> : null}
-      <div className="mt-4 grid grid-cols-4 divide-x divide-transparent rounded-xl border border-transparent bg-eid-surface/40 text-center shadow-none">
-        <div className="py-2">
-          <p className="text-sm font-black text-eid-fg">{vitoriasTime}</p>
-          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vitórias</p>
-        </div>
-        <div className="py-2">
-          <p className="text-sm font-black text-eid-fg">{derrotasTime}</p>
-          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Derrotas</p>
-        </div>
-        <div className="py-2">
-          <p className="text-sm font-black text-eid-action-500">{winRateTime != null ? `${winRateTime}%` : "—"}</p>
-          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Win Rate</p>
-        </div>
-        <div className="py-2">
-          <p className="text-sm font-black text-eid-primary-400">{jogosTime}</p>
-          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Jogos</p>
-        </div>
-      </div>
 
       {criador ? (
         <div className="mt-4 flex w-full min-w-0 flex-col items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2.5">
@@ -138,6 +115,6 @@ export async function PerfilTimeHeroBlock({ timeId, viewerId, sairEquipeAction }
           </Link>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }

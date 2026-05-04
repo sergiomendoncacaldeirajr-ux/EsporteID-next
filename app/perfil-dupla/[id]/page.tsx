@@ -1,14 +1,9 @@
 import { notFound, redirect } from "next/navigation";
-import { EidStreamSection } from "@/components/eid-stream-section";
-import {
-  PerfilFormacaoBodyStreamSkeleton,
-  PerfilFormacaoHeroStreamSkeleton,
-} from "@/components/loading/perfil-formacao-stream-skeleton";
 import { PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { createClient } from "@/lib/supabase/server";
-import { PerfilDuplaBodyBlock } from "./perfil-dupla-body-block";
-import { PerfilDuplaHeroBlock } from "./perfil-dupla-hero-block";
+import { PerfilDuplaBodyStream } from "./perfil-dupla-body-stream";
+import { PerfilDuplaHeroStream } from "./perfil-dupla-hero-stream";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -30,12 +25,8 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
 
   return (
     <main data-eid-formacao-page className={PROFILE_PUBLIC_MAIN_CLASS}>
-      <EidStreamSection fallback={<PerfilFormacaoHeroStreamSkeleton />}>
-        <PerfilDuplaHeroBlock duplaId={id} viewerId={user.id} />
-      </EidStreamSection>
-      <EidStreamSection fallback={<PerfilFormacaoBodyStreamSkeleton />}>
-        <PerfilDuplaBodyBlock duplaId={id} viewerId={user.id} />
-      </EidStreamSection>
+      <PerfilDuplaHeroStream duplaId={id} viewerId={user.id} />
+      <PerfilDuplaBodyStream duplaId={id} viewerId={user.id} />
     </main>
   );
 }

@@ -11,9 +11,7 @@ import {
   fetchPendingRankingOpponentTimeIdsForAlvo,
   filterFormacoesSemParPendenteComAlvo,
 } from "@/lib/match/pending-ranking-opponents-of-alvo";
-import {
-  viewerTemUsuarioEidNoEsporte,
-} from "@/lib/match/viewer-esporte-confronto";
+import { viewerTemUsuarioEidNoEsporte } from "@/lib/match/viewer-esporte-confronto";
 import { buildFormacaoResultadosPerfil } from "@/lib/perfil/build-formacao-resultados-perfil";
 import {
   carregarPartidasColetivasDoTime,
@@ -24,9 +22,7 @@ import { createClient } from "@/lib/supabase/server";
 import { podeExcluirFormacaoComoLider } from "@/lib/formacao/pode-excluir-formacao-lider";
 import type { TeamPublicPendingInvite } from "@/components/times/team-public-invite-block";
 
-export type PerfilTimePayload = Awaited<ReturnType<typeof loadPerfilTimePayloadUncached>>;
-
-async function loadPerfilTimePayloadUncached(timeId: number, viewerId: string) {
+async function loadPerfilTimeIdentityUncached(timeId: number, viewerId: string) {
   const id = timeId;
   if (!Number.isFinite(id) || id < 1) notFound();
 
@@ -35,13 +31,13 @@ async function loadPerfilTimePayloadUncached(timeId: number, viewerId: string) {
   const { data: t } = await supabase
     .from("times")
     .select(
-      "id, nome, username, bio, tipo, localizacao, escudo, pontos_ranking, eid_time, esporte_id, criador_id, interesse_rank_match, disponivel_amistoso, disponivel_amistoso_ate, vagas_abertas, aceita_pedidos, interesse_torneio, nivel_procurado, esportes(nome)"
+      "id, nome, username, bio, tipo, localizacao, escudo, pontos_ranking, eid_time, esporte_id, criador_id, interesse_rank_match, disponivel_amistoso, disponivel_amistoso_ate, vagas_abertas, aceita_pedidos, interesse_torneio, nivel_procurado, esportes(nome)",
     )
     .eq("id", id)
     .maybeSingle();
   if (!t) notFound();
 
-  const [{ data: criador }, { count: acima }] = await Promise.all([
+  const [{ data: criador }, { count: acima }, { data: membroViewer }] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, nome, avatar_url, whatsapp")
@@ -53,10 +49,49 @@ async function loadPerfilTimePayloadUncached(timeId: number, viewerId: string) {
       .eq("esporte_id", t.esporte_id)
       .eq("tipo", t.tipo ?? "time")
       .gt("pontos_ranking", t.pontos_ranking ?? 0),
+    supabase
+      .from("membros_time")
+      .select("usuario_id")
+      .eq("time_id", id)
+      .eq("usuario_id", viewerId)
+      .eq("status", "ativo")
+      .maybeSingle(),
   ]);
 
   const posicao = (acima ?? 0) + 1;
+  const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
+  const modalidade: "dupla" | "time" = (t.tipo ?? "time") === "dupla" ? "dupla" : "time";
+  const isMember = Boolean(membroViewer);
+  const isLeader = t.criador_id === viewerId;
+  const canLeaveTeam = isMember && t.criador_id !== viewerId;
+  const podeExcluirPerfilFormacao = isLeader && (await podeExcluirFormacaoComoLider(supabase, id, viewerId));
+  const fromPublic = `/perfil-time/${id}`;
+  const editarTimeHref = `/editar/time/${id}?from=${encodeURIComponent(fromPublic)}`;
+  const excluirRedirectPara = `/editar/equipes?from=${encodeURIComponent(`/perfil/${viewerId}`)}`;
 
+  return {
+    id,
+    viewerId,
+    t,
+    criador,
+    posicao,
+    esp,
+    modalidade,
+    isLeader,
+    isMember,
+    canLeaveTeam,
+    podeExcluirPerfilFormacao,
+    fromPublic,
+    editarTimeHref,
+    excluirRedirectPara,
+  };
+}
+
+export const getPerfilTimeIdentity = cache(loadPerfilTimeIdentityUncached);
+
+async function loadPerfilTimePartidasBundleUncached(timeId: number, viewerId: string) {
+  const { id, t } = await getPerfilTimeIdentity(timeId, viewerId);
+  const supabase = await createClient();
   const esporteIdNum = t.esporte_id != null ? Number(t.esporte_id) : 0;
   const partidasColetivas =
     esporteIdNum > 0 ? await carregarPartidasColetivasDoTime(supabase, id, esporteIdNum, viewerId) : [];
@@ -67,6 +102,22 @@ async function loadPerfilTimePayloadUncached(timeId: number, viewerId: string) {
   const derrotasTime = Number(bundleResultados.totais.derrotas ?? 0);
   const jogosTime = vitoriasTime + derrotasTime;
   const winRateTime = jogosTime > 0 ? Math.round((vitoriasTime / jogosTime) * 100) : null;
+
+  return {
+    partidasColetivas,
+    bundleResultados,
+    vitoriasTime,
+    derrotasTime,
+    jogosTime,
+    winRateTime,
+  };
+}
+
+export const getPerfilTimePartidasBundle = cache(loadPerfilTimePartidasBundleUncached);
+
+async function loadPerfilTimeMembrosHistPackUncached(timeId: number, viewerId: string) {
+  const { id, t, modalidade } = await getPerfilTimeIdentity(timeId, viewerId);
+  const supabase = await createClient();
 
   const [{ data: hist }, { data: eidLogs }, { data: membros }, { data: minhaCandidaturaPendente }] =
     await Promise.all([
@@ -98,14 +149,36 @@ async function loadPerfilTimePayloadUncached(timeId: number, viewerId: string) {
         .eq("status", "pendente")
         .maybeSingle(),
     ]);
-  const modalidade = (t.tipo ?? "time") === "dupla" ? "dupla" : "time";
+
   const rosterCap = modalidade === "dupla" ? 2 : 18;
   const { data: rosterHeadRaw, error: rosterHeadErr } = await supabase.rpc("time_roster_headcount", { p_time_id: id });
   const rosterHeadCount =
     !rosterHeadErr && rosterHeadRaw != null && Number.isFinite(Number(rosterHeadRaw)) ? Math.max(0, Number(rosterHeadRaw)) : 1;
   const vagasDisponiveis = Math.max(0, rosterCap - rosterHeadCount);
 
-  const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
+  const idsExcluirConvite = [
+    ...new Set(
+      [...(membros ?? []).map((m) => String(m.usuario_id)), String(t.criador_id ?? "")]
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  return {
+    hist,
+    eidLogs,
+    membros,
+    minhaCandidaturaPendente,
+    vagasDisponiveis,
+    idsExcluirConvite,
+  };
+}
+
+export const getPerfilTimeMembrosHistPack = cache(loadPerfilTimeMembrosHistPackUncached);
+
+async function loadPerfilTimeVisitorMatchPackUncached(timeId: number, viewerId: string) {
+  const { id, t, criador, modalidade, isLeader, isMember } = await getPerfilTimeIdentity(timeId, viewerId);
+  const supabase = await createClient();
 
   const { data: minhaFormacao } = await supabase
     .from("times")
@@ -117,9 +190,6 @@ async function loadPerfilTimePayloadUncached(timeId: number, viewerId: string) {
 
   const canChallenge = (minhaFormacao?.length ?? 0) > 0 && t.criador_id !== viewerId;
   const meuTimeId = minhaFormacao?.[0]?.id ?? null;
-  const isMember = (membros ?? []).some((m) => m.usuario_id === viewerId);
-  const canLeaveTeam = isMember && t.criador_id !== viewerId;
-  const isLeader = t.criador_id === viewerId;
 
   const { data: membroOutrosTimes } = await supabase
     .from("membros_time")
@@ -149,7 +219,7 @@ async function loadPerfilTimePayloadUncached(timeId: number, viewerId: string) {
   const formacoesMembroNaoLider = filterFormacoesSemParPendenteComAlvo(
     formacoesMembroNaoLiderRaw,
     id,
-    pendentesComEsteAlvo
+    pendentesComEsteAlvo,
   );
 
   const canSugerirMatch =
@@ -175,7 +245,7 @@ async function loadPerfilTimePayloadUncached(timeId: number, viewerId: string) {
       id,
       t.criador_id,
       Number(t.esporte_id),
-      modalidade
+      modalidade,
     ));
 
   const cooldownMeses = await getMatchRankCooldownMeses(supabase);
@@ -193,21 +263,9 @@ async function loadPerfilTimePayloadUncached(timeId: number, viewerId: string) {
   }
 
   const temBlocoAcaoVisitante =
-    linkWpp ||
-    (canChallenge && viewerPodeConfrontarNesteEsporte && !hasAceitoRank && Boolean(t.esporte_id));
+    linkWpp || (canChallenge && viewerPodeConfrontarNesteEsporte && !hasAceitoRank && Boolean(t.esporte_id));
   const mostrarAvisoSemEidNoEsporte =
     !isLeader && espAlvo != null && !viewerPodeConfrontarNesteEsporte && (canChallenge || canSugerirMatch);
-  const fromPublic = `/perfil-time/${id}`;
-  const editarTimeHref = `/editar/time/${id}?from=${encodeURIComponent(fromPublic)}`;
-  const podeExcluirPerfilFormacao = isLeader && (await podeExcluirFormacaoComoLider(supabase, id, viewerId));
-  const excluirRedirectPara = `/editar/equipes?from=${encodeURIComponent(`/perfil/${viewerId}`)}`;
-  const idsExcluirConvite = [
-    ...new Set(
-      [...(membros ?? []).map((m) => String(m.usuario_id)), String(t.criador_id ?? "")]
-        .map((s) => s.trim())
-        .filter(Boolean)
-    ),
-  ];
 
   let convitesPendentesPublic: TeamPublicPendingInvite[] = [];
   if (isLeader) {
@@ -240,29 +298,8 @@ async function loadPerfilTimePayloadUncached(timeId: number, viewerId: string) {
   }
 
   return {
-    id,
-    viewerId,
-    t,
-    criador,
-    posicao,
-    partidasColetivas,
-    bundleResultados,
-    vitoriasTime,
-    derrotasTime,
-    jogosTime,
-    winRateTime,
-    hist,
-    eidLogs,
-    membros,
-    minhaCandidaturaPendente,
-    modalidade,
-    vagasDisponiveis,
-    esp,
     canChallenge,
     meuTimeId,
-    isMember,
-    canLeaveTeam,
-    isLeader,
     viewerPodeConfrontarNesteEsporte,
     formacoesMembroNaoLider,
     canSugerirMatch,
@@ -271,15 +308,22 @@ async function loadPerfilTimePayloadUncached(timeId: number, viewerId: string) {
     rankingBlockedUntilTime,
     temBlocoAcaoVisitante,
     mostrarAvisoSemEidNoEsporte,
-    fromPublic,
-    editarTimeHref,
-    podeExcluirPerfilFormacao,
-    excluirRedirectPara,
-    idsExcluirConvite,
     convitesPendentesPublic,
   };
 }
 
+export const getPerfilTimeVisitorMatchPack = cache(loadPerfilTimeVisitorMatchPackUncached);
+
+export type PerfilTimePayload = Awaited<ReturnType<typeof loadPerfilTimePayloadMerged>>;
+
+async function loadPerfilTimePayloadMerged(timeId: number, viewerId: string) {
+  const identity = await getPerfilTimeIdentity(timeId, viewerId);
+  const bundle = await getPerfilTimePartidasBundle(timeId, viewerId);
+  const pack = await getPerfilTimeMembrosHistPack(timeId, viewerId);
+  const visitor = await getPerfilTimeVisitorMatchPack(timeId, viewerId);
+  return { ...identity, ...bundle, ...pack, ...visitor };
+}
+
 export const getPerfilTimePayload = cache(async (timeId: number, viewerId: string) =>
-  loadPerfilTimePayloadUncached(timeId, viewerId)
+  loadPerfilTimePayloadMerged(timeId, viewerId),
 );

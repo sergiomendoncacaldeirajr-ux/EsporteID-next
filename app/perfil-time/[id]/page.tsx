@@ -1,15 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { EidStreamSection } from "@/components/eid-stream-section";
-import {
-  PerfilFormacaoBodyStreamSkeleton,
-  PerfilFormacaoHeroStreamSkeleton,
-} from "@/components/loading/perfil-formacao-stream-skeleton";
 import { PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { createClient } from "@/lib/supabase/server";
-import { PerfilTimeBodyBlock } from "./perfil-time-body-block";
-import { PerfilTimeHeroBlock } from "./perfil-time-hero-block";
+import { PerfilTimeBodyStream } from "./perfil-time-body-stream";
+import { PerfilTimeHeroStream } from "./perfil-time-hero-stream";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -53,12 +48,8 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
 
   return (
     <main data-eid-formacao-page className={PROFILE_PUBLIC_MAIN_CLASS}>
-      <EidStreamSection fallback={<PerfilFormacaoHeroStreamSkeleton />}>
-        <PerfilTimeHeroBlock timeId={id} viewerId={user.id} sairEquipeAction={sairEquipeAction} />
-      </EidStreamSection>
-      <EidStreamSection fallback={<PerfilFormacaoBodyStreamSkeleton />}>
-        <PerfilTimeBodyBlock timeId={id} viewerId={user.id} removerMembroAction={removerMembroAction} />
-      </EidStreamSection>
+      <PerfilTimeHeroStream timeId={id} viewerId={user.id} sairEquipeAction={sairEquipeAction} />
+      <PerfilTimeBodyStream timeId={id} viewerId={user.id} removerMembroAction={removerMembroAction} />
     </main>
   );
 }
