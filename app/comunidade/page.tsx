@@ -25,17 +25,12 @@ export default async function ComunidadePage() {
   if (!user) redirect("/login?next=/comunidade");
 
   const uidEq = user.id;
-  const [
-    gate,
-    { data: profileExtra },
-    { teamIds: comunidadeAgendaTeamIds, teamClause: comunidadeAgendaTeamClause },
-    { data: meusTimesLider },
-  ] = await Promise.all([
-    getCachedProfileLegalRow(user.id),
-    supabase.from("profiles").select("nome, avatar_url, localizacao, lat, lng").eq("id", user.id).maybeSingle(),
-    getAgendaTeamContext(supabase, uidEq),
-    supabase.from("times").select("id").eq("criador_id", uidEq),
-  ]);
+  const [gate, { data: profileExtra }, { teamIds: comunidadeAgendaTeamIds, teamClause: comunidadeAgendaTeamClause, ownedTeamIds: meusTimeIdsLider }] =
+    await Promise.all([
+      getCachedProfileLegalRow(user.id),
+      supabase.from("profiles").select("nome, avatar_url, localizacao, lat, lng").eq("id", user.id).maybeSingle(),
+      getAgendaTeamContext(supabase, uidEq),
+    ]);
   if (!gate || !legalAcceptanceIsCurrent(gate)) redirect("/conta/aceitar-termos");
   if (!gate.perfil_completo) redirect("/onboarding");
   if (!profileExtra) redirect("/onboarding");
@@ -49,22 +44,15 @@ export default async function ComunidadePage() {
       ? `usuario_id.eq.${uidEq},adversario_id.eq.${uidEq},desafiante_time_id.in.(${comunidadeAgendaTeamIds.join(",")}),adversario_time_id.in.(${comunidadeAgendaTeamIds.join(",")})`
       : `usuario_id.eq.${uidEq},adversario_id.eq.${uidEq}`;
   const partidasPainelCountOr = `jogador1_id.eq.${uidEq},jogador2_id.eq.${uidEq},usuario_id.eq.${uidEq}${comunidadeAgendaTeamClause}`;
-  const meusTimeIdsLider = [
-    ...new Set(
-      (meusTimesLider ?? [])
-        .map((t) => Number((t as { id?: number | null }).id ?? 0))
-        .filter((id) => Number.isFinite(id) && id > 0),
-    ),
-  ];
-  let cntCandLider = 0;
-  if (meusTimeIdsLider.length > 0) {
-    const { count: candLiderCount } = await supabase
-      .from("time_candidaturas")
-      .select("id", { count: "exact", head: true })
-      .in("time_id", meusTimeIdsLider.slice(0, 100))
-      .eq("status", "pendente");
-    cntCandLider = candLiderCount ?? 0;
-  }
+  const cntCandLiderPromise =
+    meusTimeIdsLider.length > 0
+      ? supabase
+          .from("time_candidaturas")
+          .select("id", { count: "exact", head: true })
+          .in("time_id", meusTimeIdsLider.slice(0, 100))
+          .eq("status", "pendente")
+          .then(({ count }) => count ?? 0)
+      : Promise.resolve(0);
 
   const [
     { count: cntMatchIn },
@@ -78,6 +66,7 @@ export default async function ComunidadePage() {
     { count: cntPartAgend },
     { count: cntPartRelaunchPosContestacao },
     { count: cntMatchRankFlow },
+    cntCandLider,
   ] = await Promise.all([
     supabase.from("matches").select("id", { count: "exact", head: true }).eq("adversario_id", uidEq).eq("status", "Pendente"),
     supabase.from("matches").select("id", { count: "exact", head: true }).eq("usuario_id", uidEq).eq("status", "Pendente"),
@@ -119,6 +108,7 @@ export default async function ComunidadePage() {
       .or(matchRankFlowOr)
       .eq("finalidade", "ranking")
       .in("status", ["Aceito", "CancelamentoPendente", "ReagendamentoPendente"]),
+    cntCandLiderPromise,
   ]);
 
   const needEquipe =
@@ -126,7 +116,7 @@ export default async function ComunidadePage() {
     (cntSugEnv ?? 0) > 0 ||
     (cntConvRec ?? 0) > 0 ||
     (cntConvEnv ?? 0) > 0 ||
-    (cntCandLider ?? 0) > 0 ||
+    cntCandLider > 0 ||
     (cntCandMine ?? 0) > 0;
   const needPlacarAguardando = (cntPartAguarda ?? 0) > 0;
   const needAgendadaLaunch = (cntPartAgend ?? 0) > 0 || (cntPartRelaunchPosContestacao ?? 0) > 0;

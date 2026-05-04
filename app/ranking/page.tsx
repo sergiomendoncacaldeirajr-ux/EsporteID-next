@@ -35,7 +35,12 @@ export default async function RankingPage({ searchParams }: Props) {
   const [{ data: me }, { data: meusEsportesRaw }, { data: criados }, { data: membro }, { data: esportesCatalogoRaw }] =
     await Promise.all([
       supabase.from("profiles").select("localizacao, genero").eq("id", viewerId).maybeSingle(),
-      supabase.from("usuario_eid").select("esporte_id").eq("usuario_id", viewerId).order("esporte_id", { ascending: true }),
+      supabase
+        .from("usuario_eid")
+        .select("esporte_id")
+        .eq("usuario_id", viewerId)
+        .order("esporte_id", { ascending: true })
+        .limit(80),
       supabase.from("times").select("id").eq("criador_id", viewerId),
       supabase.from("membros_time").select("time_id").eq("usuario_id", viewerId).eq("status", "ativo"),
       supabase.from("esportes").select("id, nome").eq("ativo", true).order("ordem", { ascending: true }),

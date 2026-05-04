@@ -58,7 +58,8 @@ export async function MatchStreamRadar({ supabase, viewerId, me, sp, hideHero = 
       .from("usuario_eid")
       .select("esporte_id, modalidades_match")
       .eq("usuario_id", viewerId)
-      .order("id", { ascending: true }),
+      .order("id", { ascending: true })
+      .limit(120),
     supabase.from("times").select("id, tipo, esporte_id").eq("criador_id", viewerId),
     supabase
       .from("membros_time")

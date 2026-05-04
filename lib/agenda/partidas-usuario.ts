@@ -39,6 +39,13 @@ export async function getAgendaTeamContext(supabase: SupabaseClient, userId: str
       .eq("usuario_id", userId)
       .in("status", ["ativo", "aceito", "aprovado"]),
   ]);
+  const ownedTeamIds = [
+    ...new Set(
+      (ownedTeams ?? [])
+        .map((t) => Number((t as { id?: number | null }).id ?? 0))
+        .filter((id) => Number.isFinite(id) && id > 0),
+    ),
+  ];
   const teamIds = [
     ...new Set(
       [...(ownedTeams ?? []).map((t) => Number(t.id)), ...(memberTeams ?? []).map((m) => Number(m.time_id))].filter(
@@ -47,7 +54,7 @@ export async function getAgendaTeamContext(supabase: SupabaseClient, userId: str
     ),
   ];
   const teamClause = teamIds.length ? `,time1_id.in.(${teamIds.join(",")}),time2_id.in.(${teamIds.join(",")})` : "";
-  return { teamIds, teamClause };
+  return { teamIds, teamClause, ownedTeamIds };
 }
 
 /** Times em que o usuário é líder ou membro ativo (para aceite de agendamento em dupla/time). */

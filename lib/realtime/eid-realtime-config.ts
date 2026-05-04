@@ -4,7 +4,7 @@
  */
 
 /** Mínimo entre dois `router.refresh()` disparados pelo bridge Realtime (anti-tremor). */
-export const EID_REALTIME_REFRESH_THROTTLE_MS = 1500;
+export const EID_REALTIME_REFRESH_THROTTLE_MS = 2800;
 
 const AUTH_PATH_PREFIXES = [
   "/login",

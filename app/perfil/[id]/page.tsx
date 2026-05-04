@@ -42,7 +42,8 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
         "esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas, interesse_match, modalidade_match, posicao_rank, esportes(nome, tipo, permite_individual)",
       )
       .eq("usuario_id", id)
-      .order("pontos_ranking", { ascending: false }),
+      .order("pontos_ranking", { ascending: false })
+      .limit(80),
     user.id === id
       ? supabase.from("profiles").select("disponivel_amistoso, disponivel_amistoso_ate").eq("id", id).maybeSingle()
       : Promise.resolve({ data: null }),
