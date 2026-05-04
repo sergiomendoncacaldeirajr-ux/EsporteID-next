@@ -238,17 +238,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
       name: (sportObj as { name?: string } | null)?.name ?? (esp as { nome?: string } | null)?.nome ?? null,
       scoring_type: (sportObj as { scoring_type?: string } | null)?.scoring_type ?? "sets",
     },
-    format: (formatObj as Record<string, unknown> | null) ?? {
-      sets_to_win: 1,
-      games_per_set: 6,
-      tiebreak: false,
-      tiebreak_points: 7,
-      final_set_super_tiebreak: false,
-      points_limit: null,
-      win_by_two: false,
-      has_overtime: false,
-      max_rounds: 3,
-    },
+    format: (formatObj as Record<string, unknown> | null) ?? {},
   });
   const sportNameForFormats = (esp as { nome?: string } | null)?.nome ?? (sportObj as { name?: string } | null)?.name ?? null;
   const allSetFormatOptions =

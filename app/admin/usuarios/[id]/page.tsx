@@ -27,8 +27,52 @@ type ConfRow = {
   detalhes_json: Record<string, unknown> | null;
 };
 
-export default async function AdminUsuarioDetalhePage({ params }: { params: Promise<{ id: string }> }) {
+const USUARIO_ADMIN_FLASH: Record<string, { className: string; text: string }> = {
+  usuario_perfil_ok: { className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-100", text: "Perfil atualizado com sucesso." },
+  usuario_perfil_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "Falha ao salvar o perfil (exceção)." },
+  usuario_perfil_db_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "O banco recusou a atualização do perfil (username duplicado ou dado inválido)." },
+  usuario_perfil_sem_id: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Requisição inválida: falta user_id." },
+  usuario_eid_ok: { className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-100", text: "Linha EID salva com sucesso." },
+  usuario_eid_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "Falha ao salvar a linha EID (exceção)." },
+  usuario_eid_db_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "O banco recusou a atualização da linha EID." },
+  usuario_eid_validacao: {
+    className: "border-amber-500/40 bg-amber-500/10 text-amber-100",
+    text: "Valores inválidos: use números inteiros em vitórias/derrotas/jogos/pontos; no EID use ponto ou vírgula (ex.: 5 ou 5,05).",
+  },
+  usuario_eid_param_invalido: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Dados da linha incompletos ou ID inválido." },
+  usuario_eid_interesse_invalido: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Valor de interesse inválido." },
+  usuario_zerar_ok: { className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-100", text: "EID e estatísticas zerados em todas as modalidades." },
+  usuario_zerar_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "Falha ao zerar (exceção)." },
+  usuario_zerar_db_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "O banco recusou o zeramento." },
+  usuario_zerar_confirm_invalido: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Confirmação incorreta: digite exatamente ZERAR (maiúsculas)." },
+  usuario_zerar_sem_id: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Requisição inválida: falta user_id." },
+  usuario_ban_ok: { className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-100", text: "Estado de bloqueio da conta (auth) atualizado." },
+  usuario_ban_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "Falha ao alterar bloqueio (exceção)." },
+  usuario_ban_db_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "A API de auth recusou banir/desbanir." },
+  usuario_ban_param: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Parâmetros de bloqueio inválidos." },
+  usuario_ban_self: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Não é possível banir a própria conta por aqui." },
+  usuario_delete_confirm_invalido: {
+    className: "border-amber-500/40 bg-amber-500/10 text-amber-100",
+    text: "Para excluir, cole o UUID completo no campo de confirmação (igual ao ID acima).",
+  },
+  usuario_delete_self: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Não é possível excluir a própria conta por aqui." },
+  usuario_delete_admin: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Administradores de plataforma não podem ser excluídos por esta tela." },
+  usuario_delete_db_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "A API de auth recusou a exclusão (dependências ou política)." },
+  usuario_delete_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "Falha na exclusão (exceção)." },
+  usuario_delete_param: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Requisição de exclusão inválida." },
+};
+
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function AdminUsuarioDetalhePage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const sp = (await searchParams) ?? {};
+  const admFlashRaw = sp.adm_flash;
+  const admFlash = typeof admFlashRaw === "string" ? admFlashRaw.trim() : "";
+  const flashMsg = admFlash ? (USUARIO_ADMIN_FLASH[admFlash] ?? null) : null;
   if (!hasServiceRoleConfig()) {
     return <p className="text-sm text-eid-text-secondary">Configure a service role.</p>;
   }
@@ -72,6 +116,18 @@ export default async function AdminUsuarioDetalhePage({ params }: { params: Prom
       <Link href="/admin/usuarios" className="text-xs font-semibold text-eid-primary-300 hover:underline">
         ← Voltar à lista
       </Link>
+      {flashMsg ? (
+        <p
+          className={`mt-3 rounded-lg border px-3 py-2 text-sm font-semibold ${flashMsg.className}`}
+          role="status"
+        >
+          {flashMsg.text}
+        </p>
+      ) : admFlash ? (
+        <p className="mt-3 rounded-lg border border-eid-text-secondary/30 bg-eid-surface/40 px-3 py-2 text-sm text-eid-text-secondary" role="status">
+          Ação concluída (código: <span className="font-mono">{admFlash}</span>).
+        </p>
+      ) : null}
       <h2 className="mt-3 text-base font-bold text-eid-fg">{p.nome ?? "Perfil"}</h2>
       <p className="mt-1 font-mono text-xs text-eid-text-secondary">
         {p.id} · e-mail: {email}

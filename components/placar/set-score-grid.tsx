@@ -5,6 +5,7 @@ import type { MatchUIConfig } from "@/lib/match-scoring";
 import {
   evaluateSetForConfig,
   isProSet8Format,
+  isVolleyballRallyBo3Config,
   maxGamesMelhorDe3RegularSet,
   maxGamesProSet8,
   syncSetGamesFromTiebreak,
@@ -58,28 +59,32 @@ function PlayerChip({ name, avatarUrl }: { name: string; avatarUrl?: string | nu
   );
 }
 
+type SetCardKind = "regular" | "tennis_super_tb" | "volei_set3";
+
 export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, sideAAvatarUrl, sideBAvatarUrl }: Props) {
   const isMelhorDe3SuperTb =
     config.type === "sets" && config.setsToWin === 2 && config.gamesPerSet === 6 && config.finalSetSuperTiebreak;
+  const isVolleyballBo3 = isVolleyballRallyBo3Config(config);
+  const isMelhorDe3ComTerceiro = isMelhorDe3SuperTb || isVolleyballBo3;
   const s1 = sets[0] ?? { a: 0, b: 0, tiebreakA: 0, tiebreakB: 0 };
   const s2 = sets[1] ?? { a: 0, b: 0, tiebreakA: 0, tiebreakB: 0 };
   const s3 = sets[2] ?? { a: 0, b: 0, tiebreakA: 0, tiebreakB: 0 };
-  const s1Eval = evaluateSetForConfig(s1, { ...config, finalSetSuperTiebreak: false }, false);
-  const s2Eval = evaluateSetForConfig(s2, { ...config, finalSetSuperTiebreak: false }, false);
-  const precisaSuperTb = s1Eval.ok && s2Eval.ok && s1Eval.winner && s2Eval.winner && s1Eval.winner !== s2Eval.winner;
-  const finalizadoEm2Sets = s1Eval.ok && s2Eval.ok && s1Eval.winner && s2Eval.winner && s1Eval.winner === s2Eval.winner;
-
   const cfgNoFinalTb = { ...config, finalSetSuperTiebreak: false };
+  const cfgEvalPrimeirosSets = isMelhorDe3SuperTb ? cfgNoFinalTb : config;
+  const s1Eval = evaluateSetForConfig(s1, cfgEvalPrimeirosSets, false);
+  const s2Eval = evaluateSetForConfig(s2, cfgEvalPrimeirosSets, false);
+  const precisaTerceiroSeto = s1Eval.ok && s2Eval.ok && s1Eval.winner && s2Eval.winner && s1Eval.winner !== s2Eval.winner;
+  const finalizadoEm2Sets = s1Eval.ok && s2Eval.ok && s1Eval.winner && s2Eval.winner && s1Eval.winner === s2Eval.winner;
   const isPro8 = isProSet8Format(config);
   /** Tênis, padel, beach tênis etc.: 6×6 → TB; 7×5 válido; teto incremental igual ao layout melhor-de-3. */
   const capClassicSixGames =
-    !isMelhorDe3SuperTb &&
+    !isMelhorDe3ComTerceiro &&
     config.type === "sets" &&
     config.gamesPerSet === 6 &&
     config.tiebreak &&
     !isPro8;
   const showGlobalTiebreakSection =
-    !isMelhorDe3SuperTb &&
+    !isMelhorDe3ComTerceiro &&
     config.tiebreak &&
     sets.some((set) => (isPro8 ? shouldShowPro8DecisiveTiebreak(set, config.gamesPerSet) : true));
 
@@ -90,33 +95,42 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
   const tiebreakInnerPanelClass =
     "mt-2 rounded-lg border border-eid-primary-500/45 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-primary-500)_14%,transparent),color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-surface)_95%))] px-2 py-1.5 shadow-[inset_0_1px_0_0_color-mix(in_srgb,var(--eid-primary-500)_16%,transparent)]";
 
-  function renderSetCard(idx: number, title: string, set: SetItem, isSuperTb = false) {
-    const setEvalNormal = !isSuperTb ? evaluateSetForConfig(set, cfgNoFinalTb, false) : { ok: false, winner: null as "a" | "b" | null };
+  function renderSetCard(idx: number, title: string, set: SetItem, cardKind: SetCardKind = "regular") {
+    const isDecisive = cardKind !== "regular";
+    const setEvalNormal =
+      cardKind === "regular"
+        ? evaluateSetForConfig(set, isMelhorDe3SuperTb ? cfgNoFinalTb : config, false)
+        : { ok: false, winner: null as "a" | "b" | null };
+    const winnerEval = isDecisive ? evaluateSetForConfig(set, config, true) : setEvalNormal;
     const showTb =
       isMelhorDe3SuperTb &&
-      !isSuperTb &&
+      cardKind === "regular" &&
       config.tiebreak &&
       !setEvalNormal.ok &&
       ((set.a >= config.gamesPerSet && set.b >= config.gamesPerSet) || set.a + set.b >= config.gamesPerSet * 2);
     const maxA =
-      isMelhorDe3SuperTb && !isSuperTb
-        ? maxGamesMelhorDe3RegularSet(set, "a", config.gamesPerSet)
-        : isPro8 && !isSuperTb
-          ? maxGamesProSet8(set, "a", config.gamesPerSet)
-          : capClassicSixGames && !isSuperTb
-            ? maxGamesMelhorDe3RegularSet(set, "a", config.gamesPerSet)
-            : undefined;
+      isVolleyballBo3
+        ? undefined
+        : isMelhorDe3SuperTb && cardKind === "regular"
+          ? maxGamesMelhorDe3RegularSet(set, "a", config.gamesPerSet)
+          : isPro8 && cardKind === "regular"
+            ? maxGamesProSet8(set, "a", config.gamesPerSet)
+            : capClassicSixGames && cardKind === "regular"
+              ? maxGamesMelhorDe3RegularSet(set, "a", config.gamesPerSet)
+              : undefined;
     const maxB =
-      isMelhorDe3SuperTb && !isSuperTb
-        ? maxGamesMelhorDe3RegularSet(set, "b", config.gamesPerSet)
-        : isPro8 && !isSuperTb
-          ? maxGamesProSet8(set, "b", config.gamesPerSet)
-          : capClassicSixGames && !isSuperTb
-            ? maxGamesMelhorDe3RegularSet(set, "b", config.gamesPerSet)
-            : undefined;
+      isVolleyballBo3
+        ? undefined
+        : isMelhorDe3SuperTb && cardKind === "regular"
+          ? maxGamesMelhorDe3RegularSet(set, "b", config.gamesPerSet)
+          : isPro8 && cardKind === "regular"
+            ? maxGamesProSet8(set, "b", config.gamesPerSet)
+            : capClassicSixGames && cardKind === "regular"
+              ? maxGamesMelhorDe3RegularSet(set, "b", config.gamesPerSet)
+              : undefined;
     return (
-      <div key={`set-${idx}`} className={isSuperTb ? superTiebreakCardShellClass : setCardShellClass}>
-        {isSuperTb ? (
+      <div key={`set-${idx}`} className={isDecisive ? superTiebreakCardShellClass : setCardShellClass}>
+        {isDecisive ? (
           <div className="flex items-center gap-1.5">
             <Trophy
               className="h-3.5 w-3.5 shrink-0 text-[color:var(--eid-warning-400)] drop-shadow-[0_0_6px_color-mix(in_srgb,var(--eid-warning-500)_45%,transparent)]"
@@ -130,9 +144,9 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
         ) : (
           <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">{title}</p>
         )}
-        {!isSuperTb && setEvalNormal.ok && setEvalNormal.winner ? (
+        {winnerEval.ok && winnerEval.winner ? (
           <p className="mt-0.5 text-[11px] font-semibold text-eid-primary-700">
-            Vencedor ({title}): {setEvalNormal.winner === "a" ? sideALabel : sideBLabel}
+            Vencedor ({title}): {winnerEval.winner === "a" ? sideALabel : sideBLabel}
           </p>
         ) : null}
         <div className="mt-1.5 space-y-1.5">
@@ -145,7 +159,7 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
               onChange={(next) => {
                 const draft = [...sets];
                 let row: SetItem = { ...set, a: next };
-                if (isPro8 && !isSuperTb) {
+                if (isPro8 && cardKind === "regular") {
                   row = normalizePro8RowAfterGameChange(set, row, config.gamesPerSet);
                 }
                 draft[idx] = row;
@@ -162,7 +176,7 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
               onChange={(next) => {
                 const draft = [...sets];
                 let row: SetItem = { ...set, b: next };
-                if (isPro8 && !isSuperTb) {
+                if (isPro8 && cardKind === "regular") {
                   row = normalizePro8RowAfterGameChange(set, row, config.gamesPerSet);
                 }
                 draft[idx] = row;
@@ -171,9 +185,13 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
             />
           </div>
         </div>
-        {isSuperTb ? (
+        {cardKind === "tennis_super_tb" ? (
           <p className="mt-1 text-[10px] font-medium text-[color:color-mix(in_srgb,var(--eid-warning-400)_72%,var(--eid-text-secondary)_28%)]">
             Super tiebreak até 10, com 2 pontos de diferença.
+          </p>
+        ) : cardKind === "volei_set3" ? (
+          <p className="mt-1 text-[10px] font-medium text-[color:color-mix(in_srgb,var(--eid-warning-400)_72%,var(--eid-text-secondary)_28%)]">
+            Set decisivo a 15 pontos, com vantagem mínima de 2 (ex.: 17×15). Sem tie-break ao estilo do tênis.
           </p>
         ) : null}
         {showTb ? (
@@ -212,14 +230,20 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
   return (
     <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
       <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-text-secondary">Sets</p>
-      {isMelhorDe3SuperTb ? (
+      {isMelhorDe3ComTerceiro ? (
         <div className="mt-2 space-y-2">
           {renderSetCard(0, "Set 1", s1)}
           {s1Eval.ok ? renderSetCard(1, "Set 2", s2) : null}
-          {precisaSuperTb ? renderSetCard(2, "Super tiebreak", s3, true) : null}
+          {precisaTerceiroSeto
+            ? isVolleyballBo3
+              ? renderSetCard(2, "3º set (decisivo)", s3, "volei_set3")
+              : renderSetCard(2, "Super tiebreak", s3, "tennis_super_tb")
+            : null}
           {finalizadoEm2Sets ? (
             <p className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-[color:color-mix(in_srgb,var(--eid-success-400)_78%,var(--eid-fg)_22%)]">
-              Vitória definida em 2 sets. Não é necessário super tiebreak.
+              {isVolleyballBo3
+                ? "Vitória definida em 2 sets. Não é necessário o 3º set decisivo."
+                : "Vitória definida em 2 sets. Não é necessário super tiebreak."}
             </p>
           ) : null}
         </div>

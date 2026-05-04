@@ -88,19 +88,7 @@ function getSportDefaultsByName(sportName?: string | null): Partial<MatchUIConfi
     return null;
   }
 
-  if (name.includes("volei")) {
-    return {
-      type: "sets",
-      setsToWin: 3,
-      sets: 5,
-      gamesPerSet: 25,
-      tiebreak: false,
-      tiebreakPoints: 7,
-      finalSetSuperTiebreak: true,
-      finalSetTargetPoints: 15,
-      winByTwo: true,
-    };
-  }
+  /** Futevôlei antes de "volei" — o slug normalizado contém "volei" e pegaria regra errada. */
   if (name.includes("futevolei")) {
     return {
       type: "sets",
@@ -111,6 +99,20 @@ function getSportDefaultsByName(sportName?: string | null): Partial<MatchUIConfi
       tiebreakPoints: 7,
       finalSetSuperTiebreak: false,
       finalSetTargetPoints: 10,
+      winByTwo: true,
+    };
+  }
+  /** Vôlei de quadra/praia (desafio): melhor de 3 sets, 21/21/15, vantagem de 2, sem tie-break nos dois primeiros. */
+  if (name.includes("volei")) {
+    return {
+      type: "sets",
+      setsToWin: 2,
+      sets: 3,
+      gamesPerSet: 21,
+      tiebreak: false,
+      tiebreakPoints: 7,
+      finalSetSuperTiebreak: true,
+      finalSetTargetPoints: 15,
       winByTwo: true,
     };
   }
@@ -232,6 +234,27 @@ function normalizeName(input: string): string {
 export function sportLooksLikeBasquete(sportName?: string | null): boolean {
   const n = normalizeName(String(sportName ?? ""));
   return n.includes("basquete") || n.includes("basket");
+}
+
+/** Vôlei (não futevôlei) — formato melhor de 3 com sets a 21 e decisivo a 15. */
+export function sportLooksLikeVolei(sportName?: string | null): boolean {
+  const n = normalizeName(String(sportName ?? ""));
+  if (!n.includes("volei")) return false;
+  return !n.includes("futevolei");
+}
+
+/** Config do lançador melhor-de-3 com 1º/2º set a 21 pontos (rally) e 3º a 15 (vantagem de 2). */
+export function isVolleyballRallyBo3Config(config: MatchUIConfig): boolean {
+  return (
+    config.type === "sets" &&
+    config.setsToWin === 2 &&
+    config.sets === 3 &&
+    config.gamesPerSet === 21 &&
+    config.finalSetSuperTiebreak &&
+    !config.tiebreak &&
+    config.finalSetTargetPoints === 15 &&
+    config.winByTwo
+  );
 }
 
 /** Total exibido em listagens “estilo basquete”: regulação + prorrogação somados. */

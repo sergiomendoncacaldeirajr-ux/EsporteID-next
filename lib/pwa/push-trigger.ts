@@ -9,10 +9,35 @@ type PushTriggerMeta = {
   source?: string;
 };
 
+/** Não bloquear Server Actions por muito tempo: `webpush.sendNotification` pode demorar vários segundos com endpoint ruim. */
+const PUSH_DISPATCH_WAIT_MS = 4_000;
+
+function raceWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("push_dispatch_wait_timeout")), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      }
+    );
+  });
+}
+
 export type PushBestEffortResult = DispatchAggregate & {
   /** `false` quando não chegou a concluir o envio ao FCM (sem service role, VAPID incompleto, exceção, etc.). */
   dispatchAttempted: boolean;
-  skipReason: null | "no_ids" | "no_service_role" | "vapid_incomplete" | "dispatch_threw";
+  skipReason:
+    | null
+    | "no_ids"
+    | "no_service_role"
+    | "vapid_incomplete"
+    | "dispatch_threw"
+    | "dispatch_timeout";
   /** Preenchido quando `skipReason === "dispatch_threw"` (mensagem curta para diagnóstico). */
   dispatchError?: string;
 };
@@ -58,7 +83,7 @@ export async function triggerPushForNotificationIdsBestEffort(
   const source = String(meta?.source ?? "unknown");
   try {
     const admin = createServiceRoleClient();
-    const result = await dispatchPushForNotificationIds(admin, uniq);
+    const result = await raceWithTimeout(dispatchPushForNotificationIds(admin, uniq), PUSH_DISPATCH_WAIT_MS);
     console.info("[push-imediato]", {
       source,
       notificationIds: uniq.length,
@@ -79,7 +104,8 @@ export async function triggerPushForNotificationIdsBestEffort(
         : error && typeof error === "object" && "body" in error
           ? String((error as { body?: string }).body ?? error)
           : String(error);
-    console.warn("[push-imediato] falha best-effort", {
+    const isWaitTimeout = error instanceof Error && error.message === "push_dispatch_wait_timeout";
+    console.warn(isWaitTimeout ? "[push-imediato] tempo máximo de espera excedido (resposta ao usuário não bloqueada)" : "[push-imediato] falha best-effort", {
       source,
       notificationIds: uniq.length,
       error: msg,
@@ -89,9 +115,9 @@ export async function triggerPushForNotificationIdsBestEffort(
       failed: 0,
       scanned: uniq.length,
       noDevice: 0,
-      dispatchAttempted: false,
-      skipReason: "dispatch_threw",
-      dispatchError: msg.slice(0, 400),
+      dispatchAttempted: isWaitTimeout,
+      skipReason: isWaitTimeout ? "dispatch_timeout" : "dispatch_threw",
+      dispatchError: isWaitTimeout ? undefined : msg.slice(0, 400),
     };
   }
 }

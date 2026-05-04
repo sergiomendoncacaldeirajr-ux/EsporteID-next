@@ -22,6 +22,7 @@ import {
   getDesafioRankLockedSetFormat,
   getMatchUIConfig,
   sportLooksLikeBasquete,
+  sportLooksLikeVolei,
   type MatchUIConfig,
 } from "@/lib/match-scoring";
 import { redirectUnlessMatchMaioridadeConfirmada, safeNextInternalPath } from "@/lib/match/redirect-maioridade-match";
@@ -64,9 +65,16 @@ Intervalo: 2 min entre quartos | 5 min no intervalo (HT).
 Vitória: placar acumulado. 1 ponto de diferença define o vencedor.
 Empate: prorrogação de 5 minutos até haver um vencedor.`;
 
+const TEXTO_FORMATO_VOLEI_CAIXA_INFO = `Melhor de 3 sets: vence quem ganhar 2 sets.
+1º e 2º sets: 21 pontos cada, sem tie-break ao estilo do tênis; em 20×20 segue com vantagem de 2 (ex.: 22×20, 23×21).
+3º set (se empatar 1×1 nos sets): disputa a 15 pontos, também com vantagem de 2 (ex.: 17×15).`;
+
 function resumoFormaDisputa(cfg: MatchUIConfig, sportName?: string | null): string {
   if (sportLooksLikeBasquete(sportName)) {
     return TEXTO_FORMATO_BASQUETE_CAIXA_INFO;
+  }
+  if (sportLooksLikeVolei(sportName)) {
+    return TEXTO_FORMATO_VOLEI_CAIXA_INFO;
   }
   if (cfg.type === "sets") {
     const melhorDe = cfg.setsToWin * 2 - 1;

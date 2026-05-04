@@ -1757,11 +1757,28 @@ export async function adminDeleteDesafioScoreVariant(formData: FormData) {
 
 // --- Perfil e EID (admin) ---
 
+/** Números vindos do formulário admin (pt-BR pode usar vírgula decimal). */
+function parseAdminFormNumber(raw: FormDataEntryValue | null): number {
+  const s = String(raw ?? "")
+    .trim()
+    .replace(/\s/g, "")
+    .replace(",", ".");
+  if (s === "") return NaN;
+  return Number(s);
+}
+
+function parseAdminFormInt(raw: FormDataEntryValue | null): number {
+  const n = parseAdminFormNumber(raw);
+  if (!Number.isFinite(n)) return NaN;
+  return Math.round(n);
+}
+
 export async function adminUpdateProfileById(formData: FormData) {
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const base = userId ? `/admin/usuarios/${encodeURIComponent(userId)}` : "/admin/usuarios";
   try {
     await guard();
-    const userId = String(formData.get("user_id") ?? "").trim();
-    if (!userId) return;
+    if (!userId) redirect(`${base}?adm_flash=usuario_perfil_sem_id`);
     const genero = String(formData.get("genero") ?? "").trim() || null;
     const dataNasc = String(formData.get("data_nascimento") ?? "").trim();
     const data_nascimento: string | null = /^\d{4}-\d{2}-\d{2}$/.test(dataNasc) ? dataNasc : null;
@@ -1787,34 +1804,47 @@ export async function adminUpdateProfileById(formData: FormData) {
       atualizado_em: new Date().toISOString(),
     };
     const { error } = await svc().from("profiles").update(row).eq("id", userId);
-    if (error) return;
+    if (error) redirect(`${base}?adm_flash=usuario_perfil_db_erro`);
     revalidatePath("/admin/usuarios");
     revalidatePath(`/admin/usuarios/${userId}`);
     revalidatePath(`/perfil/${userId}`);
-  } catch {
-    return;
+    redirect(`${base}?adm_flash=usuario_perfil_ok`);
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    redirect(`${base}?adm_flash=usuario_perfil_erro`);
   }
 }
 
 export async function adminUpdateUsuarioEidRow(formData: FormData) {
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const base = userId ? `/admin/usuarios/${encodeURIComponent(userId)}` : "/admin/usuarios";
   try {
     await guard();
     const id = Number(formData.get("usuario_eid_id"));
-    if (!Number.isFinite(id)) return;
-    const userId = String(formData.get("user_id") ?? "").trim();
-    if (!userId) return;
-    const nota_eid = Number(formData.get("nota_eid"));
-    const vitorias = Math.round(Number(formData.get("vitorias")));
-    const derrotas = Math.round(Number(formData.get("derrotas")));
-    const partidas_jogadas = Math.round(Number(formData.get("partidas_jogadas")));
-    const pontos_ranking = Math.round(Number(formData.get("pontos_ranking")));
+    if (!Number.isFinite(id) || id < 1) redirect(`${base}?adm_flash=usuario_eid_param_invalido`);
+    if (!userId) redirect(`${base}?adm_flash=usuario_eid_param_invalido`);
+
+    const nota_eid = parseAdminFormNumber(formData.get("nota_eid"));
+    const vitorias = parseAdminFormInt(formData.get("vitorias"));
+    const derrotas = parseAdminFormInt(formData.get("derrotas"));
+    const partidas_jogadas = parseAdminFormInt(formData.get("partidas_jogadas"));
+    const pontos_ranking = parseAdminFormInt(formData.get("pontos_ranking"));
     const posStr = String(formData.get("posicao_rank") ?? "").trim();
-    const posicao_rank: number | null = posStr === "" ? null : Math.round(Number(posStr));
+    const posicao_rank: number | null = posStr === "" ? null : parseAdminFormInt(formData.get("posicao_rank"));
     const categoria = String(formData.get("categoria") ?? "").trim() || null;
     const interesse_match = String(formData.get("interesse_match") ?? "ranking_e_amistoso").trim();
-    if (!["ranking", "ranking_e_amistoso"].includes(interesse_match)) return;
-    if (!Number.isFinite(nota_eid) || ![vitorias, derrotas, partidas_jogadas, pontos_ranking].every((n) => Number.isFinite(n))) return;
-    if (posStr !== "" && (posicao_rank == null || !Number.isFinite(posicao_rank))) return;
+    if (!["ranking", "ranking_e_amistoso"].includes(interesse_match)) {
+      redirect(`${base}?adm_flash=usuario_eid_interesse_invalido`);
+    }
+    if (
+      !Number.isFinite(nota_eid) ||
+      ![vitorias, derrotas, partidas_jogadas, pontos_ranking].every((n) => Number.isFinite(n))
+    ) {
+      redirect(`${base}?adm_flash=usuario_eid_validacao`);
+    }
+    if (posStr !== "" && (posicao_rank == null || !Number.isFinite(posicao_rank))) {
+      redirect(`${base}?adm_flash=usuario_eid_validacao`);
+    }
     const row: Record<string, unknown> = {
       nota_eid: Math.min(10, Math.max(0, nota_eid)),
       vitorias,
@@ -1826,22 +1856,25 @@ export async function adminUpdateUsuarioEidRow(formData: FormData) {
       interesse_match,
     };
     const { error } = await svc().from("usuario_eid").update(row).eq("id", id).eq("usuario_id", userId);
-    if (error) return;
+    if (error) redirect(`${base}?adm_flash=usuario_eid_db_erro`);
     revalidatePath("/admin/usuarios");
     revalidatePath(`/admin/usuarios/${userId}`);
     revalidatePath("/ranking");
-  } catch {
-    return;
+    redirect(`${base}?adm_flash=usuario_eid_ok`);
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    redirect(`${base}?adm_flash=usuario_eid_erro`);
   }
 }
 
 export async function adminZerarUsuarioEidTodas(formData: FormData) {
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const base = userId ? `/admin/usuarios/${encodeURIComponent(userId)}` : "/admin/usuarios";
   try {
     await guard();
-    const userId = String(formData.get("user_id") ?? "").trim();
-    if (!userId) return;
+    if (!userId) redirect(`${base}?adm_flash=usuario_zerar_sem_id`);
     const confirmar = String(formData.get("confirmar") ?? "").trim();
-    if (confirmar.toUpperCase() !== "ZERAR") return;
+    if (confirmar.toUpperCase() !== "ZERAR") redirect(`${base}?adm_flash=usuario_zerar_confirm_invalido`);
     const { error } = await svc()
       .from("usuario_eid")
       .update({
@@ -1853,57 +1886,66 @@ export async function adminZerarUsuarioEidTodas(formData: FormData) {
         posicao_rank: null,
       })
       .eq("usuario_id", userId);
-    if (error) return;
+    if (error) redirect(`${base}?adm_flash=usuario_zerar_db_erro`);
     revalidatePath("/admin/usuarios");
     revalidatePath(`/admin/usuarios/${userId}`);
     revalidatePath("/ranking");
-  } catch {
-    return;
+    redirect(`${base}?adm_flash=usuario_zerar_ok`);
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    redirect(`${base}?adm_flash=usuario_zerar_erro`);
   }
 }
 
 export async function adminSetAuthUserBan(formData: FormData) {
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const base = userId ? `/admin/usuarios/${encodeURIComponent(userId)}` : "/admin/usuarios";
   try {
     await guard();
-    const userId = String(formData.get("user_id") ?? "").trim();
-    if (!userId) return;
+    if (!userId) redirect(`${base}?adm_flash=usuario_ban_param`);
     const acao = String(formData.get("acao") ?? "").trim();
-    if (!["banir", "desbanir"].includes(acao)) return;
+    if (!["banir", "desbanir"].includes(acao)) redirect(`${base}?adm_flash=usuario_ban_param`);
     const supabase = await createClient();
     const { data: me } = await supabase.auth.getUser();
-    if (me.user?.id === userId) return;
+    if (me.user?.id === userId) redirect(`${base}?adm_flash=usuario_ban_self`);
     if (acao === "banir") {
       const { error } = await svc().auth.admin.updateUserById(userId, { ban_duration: "2628000h" });
-      if (error) return;
+      if (error) redirect(`${base}?adm_flash=usuario_ban_db_erro`);
     } else {
       const { error: e1 } = await svc().auth.admin.updateUserById(userId, { ban_duration: "none" });
       if (e1) {
         const { error: e2 } = await svc().auth.admin.updateUserById(userId, { ban_duration: "0" });
-        if (e2) return;
+        if (e2) redirect(`${base}?adm_flash=usuario_ban_db_erro`);
       }
     }
     revalidatePath("/admin/usuarios");
     revalidatePath(`/admin/usuarios/${userId}`);
-  } catch {
-    return;
+    redirect(`${base}?adm_flash=usuario_ban_ok`);
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    redirect(`${base}?adm_flash=usuario_ban_erro`);
   }
 }
 
 export async function adminDeleteAuthUserCompletamente(formData: FormData) {
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const base = userId ? `/admin/usuarios/${encodeURIComponent(userId)}` : "/admin/usuarios";
   try {
     await guard();
-    const userId = String(formData.get("user_id") ?? "").trim();
+    if (!userId) redirect("/admin/usuarios?adm_flash=usuario_delete_param");
     const confirmar = String(formData.get("confirmar_excluir_id") ?? "").trim();
-    if (!userId || confirmar !== userId) return;
+    if (confirmar !== userId) redirect(`${base}?adm_flash=usuario_delete_confirm_invalido`);
     const supabase = await createClient();
     const { data: me } = await supabase.auth.getUser();
-    if (me.user?.id === userId) return;
+    if (me.user?.id === userId) redirect(`${base}?adm_flash=usuario_delete_self`);
     const { data: u } = await svc().from("platform_admins").select("user_id").eq("user_id", userId).maybeSingle();
-    if (u) return;
+    if (u) redirect(`${base}?adm_flash=usuario_delete_admin`);
     const { error } = await svc().auth.admin.deleteUser(userId);
-    if (error) return;
+    if (error) redirect(`${base}?adm_flash=usuario_delete_db_erro`);
     revalidatePath("/admin/usuarios");
-  } catch {
-    return;
+    redirect("/admin/usuarios?adm_flash=usuario_delete_ok");
+  } catch (e) {
+    if (isRedirectError(e)) throw e;
+    redirect(`${base}?adm_flash=usuario_delete_erro`);
   }
 }

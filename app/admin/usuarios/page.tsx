@@ -3,7 +3,7 @@ import { SearchSuggestGetForm } from "@/components/search/search-suggest-get-for
 import { searchProfilesForAdmin, sanitizeAdminUserSearch } from "@/lib/admin/search-profiles";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
-type Props = { searchParams?: Promise<{ q?: string }> };
+type Props = { searchParams?: Promise<{ q?: string; adm_flash?: string }> };
 
 export default async function AdminUsuariosPage({ searchParams }: Props) {
   if (!hasServiceRoleConfig()) {
@@ -11,6 +11,7 @@ export default async function AdminUsuariosPage({ searchParams }: Props) {
   }
   const sp = (await searchParams) ?? {};
   const rawQ = (sp.q ?? "").trim();
+  const listFlash = typeof sp.adm_flash === "string" ? sp.adm_flash.trim() : "";
 
   const db = createServiceRoleClient();
 
@@ -27,6 +28,14 @@ export default async function AdminUsuariosPage({ searchParams }: Props) {
   return (
     <div>
       <h2 className="text-base font-bold text-eid-fg">Usuários</h2>
+      {listFlash === "usuario_delete_ok" ? (
+        <p
+          className="mt-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-100"
+          role="status"
+        >
+          Usuário excluído com sucesso.
+        </p>
+      ) : null}
       <p className="mt-1 text-sm text-eid-text-secondary">
         {sanitizeAdminUserSearch(rawQ)
           ? "Resultados da busca (até 200)."

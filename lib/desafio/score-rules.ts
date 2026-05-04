@@ -5,6 +5,15 @@ export type ScoreRuleVariant = {
   maxPlacar: number;
   permitirEmpate: boolean;
   permitirWO: boolean;
+  /** Campos opcionais consumidos por `buildSetFormatOptions` (ex.: vôlei melhor de 3). */
+  sets_to_win?: number;
+  games_per_set?: number;
+  tiebreak?: boolean;
+  tiebreak_points?: number;
+  final_set_super_tiebreak?: boolean;
+  final_set_target_points?: number;
+  win_by_two?: boolean;
+  points_limit?: number | null;
 };
 
 export type ScoreRulesConfig = {
@@ -96,15 +105,28 @@ const PRESETS: Record<string, SportPreset> = {
     },
   },
   volei: {
-    modo: "pontos_corridos",
+    modo: "sets",
     regras: {
       minPlacar: 0,
-      maxPlacar: 25,
+      maxPlacar: 2,
       permitirEmpate: false,
       permitirWO: true,
       variantes: [
-        { key: "set_25", label: "Set até 25", minPlacar: 0, maxPlacar: 25, permitirEmpate: false, permitirWO: true },
-        { key: "set_21", label: "Set alternativo até 21", minPlacar: 0, maxPlacar: 21, permitirEmpate: false, permitirWO: true },
+        {
+          key: "bo3_rally_21_15",
+          label: "Melhor de 3 sets (21/21/15, vantagem de 2)",
+          minPlacar: 0,
+          maxPlacar: 2,
+          permitirEmpate: false,
+          permitirWO: true,
+          sets_to_win: 2,
+          games_per_set: 21,
+          tiebreak: false,
+          tiebreak_points: 7,
+          final_set_super_tiebreak: true,
+          final_set_target_points: 15,
+          win_by_two: true,
+        },
       ],
     },
   },
