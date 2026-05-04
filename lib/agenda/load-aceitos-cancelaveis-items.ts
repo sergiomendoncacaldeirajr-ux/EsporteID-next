@@ -130,13 +130,20 @@ export async function loadAceitosCancelaveisItems(
       local_espaco_id: (row as { local_espaco_id?: number | null }).local_espaco_id ?? null,
     });
   }
+  /** Inclui estados finais: o mapa por duelo precisa ver `concluida` quando não há `match_id` na partida (fallback do card “Desafios aceitos”). */
   const { data: partidasStatusRows } = await supabase
     .from("partidas")
     .select("id, esporte_id, jogador1_id, jogador2_id, status, status_ranking")
     .or(`jogador1_id.eq.${userId},jogador2_id.eq.${userId},usuario_id.eq.${userId}${teamClause}`)
-    .in("status", ["agendada", "aguardando_confirmacao"])
+    .in("status", [
+      "agendada",
+      "aguardando_aceite_agendamento",
+      "aguardando_confirmacao",
+      "concluida",
+      "cancelada",
+    ])
     .order("id", { ascending: false })
-    .limit(80);
+    .limit(120);
   const partidaMaisRecentePorDuelo = new Map<string, { status: string | null; status_ranking: string | null }>();
   const partidaMaisRecentePorDueloNoSport = new Map<string, { status: string | null; status_ranking: string | null }>();
   for (const row of partidasStatusRows ?? []) {
@@ -302,6 +309,11 @@ export async function loadAceitosCancelaveisItems(
   }
 
   const items = (aceitosCancelaveis ?? []).flatMap((m) => {
+    const stMatch = String((m as { status?: string | null }).status ?? "")
+      .trim()
+      .toLowerCase();
+    if (stMatch === "concluido" || stMatch === "concluído") return [];
+
     const effTeams = effectiveRankingMatchTeamIds(
       {
         id: m.id,
