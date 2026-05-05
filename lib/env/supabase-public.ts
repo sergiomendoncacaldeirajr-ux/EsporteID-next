@@ -32,8 +32,7 @@ export function parseSupabasePublicEnv(): SupabasePublicEnv | null {
     return null;
   }
   try {
-    const u = new URL(url);
-    if (!u.hostname.includes(".")) return null;
+    new URL(url);
   } catch {
     console.error("[eid-env] NEXT_PUBLIC_SUPABASE_URL não é uma URL válida");
     return null;
