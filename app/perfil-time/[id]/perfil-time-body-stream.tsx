@@ -140,9 +140,11 @@ export async function PerfilTimeBodyVisitanteStack({ timeId, viewerId }: { timeI
 }
 
 export async function PerfilTimeBodyEid({ timeId, viewerId }: { timeId: number; viewerId: string }) {
-  const idn = await getPerfilTimeIdentity(timeId, viewerId);
-  const pack = await getPerfilTimeMembrosHistPack(timeId, viewerId);
-  const { coletivoCooldownBannerUntilIso } = await getPerfilTimeColetivoCooldownBanner(timeId, viewerId);
+  const [idn, pack, { coletivoCooldownBannerUntilIso }] = await Promise.all([
+    getPerfilTimeIdentity(timeId, viewerId),
+    getPerfilTimeMembrosHistPack(timeId, viewerId),
+    getPerfilTimeColetivoCooldownBanner(timeId, viewerId),
+  ]);
   const { id, t, posicao, esp, fromPublic } = idn;
   const { hist, eidLogs } = pack;
 
@@ -263,11 +265,12 @@ export async function PerfilTimeBodyElenco({
   viewerId: string;
   removerMembroAction: (formData: FormData) => Promise<void>;
 }) {
-  const idn = await getPerfilTimeIdentity(timeId, viewerId);
-  const pack = await getPerfilTimeMembrosHistPack(timeId, viewerId);
-  const convitesPendentesPublic = idn.isLeader
-    ? (await getPerfilTimeVisitorMatchPack(timeId, viewerId)).convitesPendentesPublic
-    : [];
+  const [idn, pack, visitorPack] = await Promise.all([
+    getPerfilTimeIdentity(timeId, viewerId),
+    getPerfilTimeMembrosHistPack(timeId, viewerId),
+    getPerfilTimeVisitorMatchPack(timeId, viewerId),
+  ]);
+  const convitesPendentesPublic = idn.isLeader ? visitorPack.convitesPendentesPublic : [];
   const { id, t, isLeader } = idn;
   const { membros, idsExcluirConvite } = pack;
 

@@ -114,31 +114,9 @@ export async function PerfilPublicoBelowFold({
     viewerMatchIdadeGate = String(mgRowRes.data.match_idade_gate ?? "ok");
   }
 
-  const [{ data: professorPerfil }, { data: professorEsportes }, { data: professorMetricas }] = hasProfessor
-    ? await Promise.all([
-        supabase
-          .from("professor_perfil")
-          .select("headline, bio_profissional, aceita_novos_alunos, perfil_publicado")
-          .eq("usuario_id", id)
-          .maybeSingle(),
-        supabase
-          .from("professor_esportes")
-          .select("tipo_atuacao, valor_base_centavos, esportes(nome)")
-          .eq("professor_id", id)
-          .eq("ativo", true),
-        supabase
-          .from("professor_metricas")
-          .select("nota_docente, total_avaliacoes_validas, esportes(nome)")
-          .eq("professor_id", id)
-          .order("nota_docente", { ascending: false }),
-      ])
-    : [{ data: null }, { data: [] }, { data: [] }];
-
-  const podeVerWhatsappProfessor = hasProfessor
-    ? await podeExibirWhatsappProfessor(supabase, user.id, id, isSelf)
-    : false;
-  const podeVerWhatsapp = podeVerWhatsappAtleta || podeVerWhatsappProfessor;
-  const linkWpp = podeVerWhatsapp ? waMeHref(perfil.whatsapp) : null;
+  const podeVerWhatsappProfessorPromise = hasProfessor
+    ? podeExibirWhatsappProfessor(supabase, user.id, id, isSelf)
+    : Promise.resolve(false);
 
   const viewerEsporteIdsParaDesafio = new Set(
     (viewerEidRowsParaDesafio ?? [])
@@ -201,11 +179,7 @@ export async function PerfilPublicoBelowFold({
   }
   const leaderTeamIds = new Set((timesLider ?? []).map((team) => Number(team.id)));
 
-  const [
-    { count: alvoMembrosCount },
-    { count: alvoLiderTimesCount },
-    { count: alvoDuplasCount },
-  ] = await Promise.all([
+  const alvoCountsPromise = Promise.all([
     supabase
       .from("membros_time")
       .select("id", { count: "exact", head: true })
@@ -215,11 +189,7 @@ export async function PerfilPublicoBelowFold({
     supabase.from("duplas").select("id", { count: "exact", head: true }).or(`player1_id.eq.${id},player2_id.eq.${id}`),
   ]);
 
-  const alvoSemFormacao =
-    (alvoMembrosCount ?? 0) === 0 && (alvoLiderTimesCount ?? 0) === 0 && (alvoDuplasCount ?? 0) === 0;
-
   const semCardsEquipesPerfil = (timesFormacoes ?? []).length === 0 && (duplasCadastro ?? []).length === 0;
-  const ocultarSecaoEquipesParaVisitante = !isSelf && alvoSemFormacao && semCardsEquipesPerfil;
 
   const targetEsporteIdsParaConvite = new Set(
     (eids ?? []).map((e) => Number(e.esporte_id)).filter((n) => Number.isFinite(n) && n > 0),
@@ -291,20 +261,15 @@ export async function PerfilPublicoBelowFold({
       rankingBlockedUntil: cooldownUntilBySport.get(e.esporteId) ?? null,
     }));
 
-  const [{ data: socioRows }, { data: frequentesRows }] = await Promise.all([
-    supabase
-      .from("membership_requests")
-      .select("espaco_generico_id, espacos_genericos!inner(id, nome_publico, localizacao)")
-      .eq("usuario_id", id)
-      .eq("status", "aprovado")
-      .limit(20),
-    supabase
-      .from("usuario_locais_frequentes")
-      .select("visitas, espacos_genericos!inner(id, nome_publico, localizacao)")
-      .eq("usuario_id", id)
-      .order("visitas", { ascending: false })
-      .limit(10),
-  ]);
+  const [
+    podeVerWhatsappProfessor,
+    [{ count: alvoMembrosCount }, { count: alvoLiderTimesCount }, { count: alvoDuplasCount }],
+  ] = await Promise.all([podeVerWhatsappProfessorPromise, alvoCountsPromise]);
+  const podeVerWhatsapp = podeVerWhatsappAtleta || podeVerWhatsappProfessor;
+  const linkWpp = podeVerWhatsapp ? waMeHref(perfil.whatsapp) : null;
+  const alvoSemFormacao =
+    (alvoMembrosCount ?? 0) === 0 && (alvoLiderTimesCount ?? 0) === 0 && (alvoDuplasCount ?? 0) === 0;
+  const ocultarSecaoEquipesParaVisitante = !isSelf && alvoSemFormacao && semCardsEquipesPerfil;
 
   return (
     <div className="mt-4 grid gap-4">
@@ -383,87 +348,9 @@ export async function PerfilPublicoBelowFold({
       ) : null}
 
       {hasProfessor ? (
-        <ProfileSection
-          title="Professor"
-          info="Esportes em que atua como professor, proposta profissional, valores e avaliações docentes quando disponíveis."
-        >
-          <div className="space-y-3">
-            <div className="overflow-hidden rounded-xl border border-eid-action-500/24 bg-eid-action-500/8">
-              <div className="flex items-center justify-between border-b border-eid-action-500/20 bg-eid-action-500/10 px-3 py-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Perfil profissional</p>
-                <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
-                  Professor
-                </span>
-              </div>
-              <div className="p-4">
-                <p className="text-sm font-semibold text-eid-fg">
-                  {professorPerfil?.headline ?? "Professor ativo na plataforma"}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">
-                  {professorPerfil?.bio_profissional ??
-                    "Use o perfil profissional para divulgar aulas, treinamento e consultoria."}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-[color:var(--eid-border-subtle)] px-3 py-1 text-[10px] font-semibold text-eid-fg">
-                    {professorPerfil?.aceita_novos_alunos ? "Aceitando novos alunos" : "Captação sob consulta"}
-                  </span>
-                  {professorPerfil?.perfil_publicado ? (
-                    <Link
-                      href={`/professor/${id}`}
-                      className="rounded-full border border-eid-action-500/35 px-3 py-1 text-[10px] font-semibold text-eid-action-400"
-                    >
-                      Abrir página pública
-                    </Link>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            {(professorEsportes ?? []).length ? (
-              <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
-                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Modalidades</p>
-                  <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
-                    Aulas
-                  </span>
-                </div>
-                <div className="grid gap-2 p-2">
-                  {(professorEsportes ?? []).map((item, idx) => {
-                    const esporte = Array.isArray(item.esportes) ? item.esportes[0] : item.esportes;
-                    const metrica = (professorMetricas ?? []).find((m) => {
-                      const esporteM = Array.isArray(m.esportes) ? m.esportes[0] : m.esportes;
-                      return esporteM?.nome === esporte?.nome;
-                    });
-                    const tipos = item.tipo_atuacao;
-                    const tiposArr = Array.isArray(tipos) ? tipos : [];
-                    return (
-                      <div
-                        key={`${esporte?.nome ?? "esp"}-${idx}`}
-                        className="eid-list-item rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3"
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-eid-fg">{esporte?.nome ?? "Esporte"}</p>
-                            <p className="mt-1 text-xs text-eid-text-secondary">{tiposArr.join(", ") || "aulas"}</p>
-                          </div>
-                          <p className="text-xs font-bold text-eid-action-400">
-                            A partir de R$ {(Number(item.valor_base_centavos ?? 0) / 100).toFixed(2).replace(".", ",")}
-                          </p>
-                        </div>
-                        {metrica ? (
-                          <p className="mt-2 text-xs text-eid-text-secondary">
-                            Nota docente {Number(metrica.nota_docente ?? 0).toFixed(2)} · {metrica.total_avaliacoes_validas ?? 0}{" "}
-                            avaliações
-                          </p>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </ProfileSection>
+        <EidStreamSection fallback={<div className="h-40 w-full animate-pulse rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35" />}>
+          <PerfilPublicoProfessorSection profileId={id} />
+        </EidStreamSection>
       ) : null}
 
       <div className="-mt-3">
@@ -659,71 +546,134 @@ export async function PerfilPublicoBelowFold({
         </div>
       )}
 
-      {(socioRows ?? []).length > 0 || (frequentesRows ?? []).length > 0 ? (
-        <ProfileSection
-          title="Locais"
-          info="Espaços ou locais de jogo associados a este perfil (quando informados)."
-        >
-          {(socioRows ?? []).length > 0 ? (
-            <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-2">
-              <ul className="grid gap-1.5">
-                {(socioRows ?? []).map((s, idx) => {
-                  const esp = Array.isArray(s.espacos_genericos) ? s.espacos_genericos[0] : s.espacos_genericos;
-                  return (
-                    <li key={`${s.espaco_generico_id}-${idx}`}>
-                      {canOpenLocais ? (
-                        <Link
-                          href={`/local/${esp?.id}?from=/perfil/${id}`}
-                          className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px] text-eid-fg transition hover:border-eid-primary-500/30"
-                        >
-                          <span className="font-medium">{esp?.nome_publico ?? "Local"}</span>
-                          <span className="text-[10px] text-eid-text-secondary">{esp?.localizacao ?? "—"}</span>
-                        </Link>
-                      ) : (
-                        <div className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px] text-eid-fg">
-                          <span className="font-medium">{esp?.nome_publico ?? "Local"}</span>
-                          <span className="text-[10px] text-eid-text-secondary">{esp?.localizacao ?? "—"}</span>
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ) : null}
-          {(frequentesRows ?? []).length > 0 ? (
-            <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-2">
-              <ul className="grid gap-1.5">
-                {(frequentesRows ?? []).map((f, idx) => {
-                  const esp = Array.isArray(f.espacos_genericos) ? f.espacos_genericos[0] : f.espacos_genericos;
-                  return (
-                    <li key={`${esp?.id}-${idx}`}>
-                      {canOpenLocais ? (
-                        <Link
-                          href={`/local/${esp?.id}?from=/perfil/${id}`}
-                          className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px] transition hover:border-eid-primary-500/30"
-                        >
-                          <span className="font-medium text-eid-fg">{esp?.nome_publico ?? "Local"}</span>
-                          <span className="font-bold text-eid-primary-300">{f.visitas ?? 0}×</span>
-                        </Link>
-                      ) : (
-                        <div className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px]">
-                          <span className="font-medium text-eid-fg">{esp?.nome_publico ?? "Local"}</span>
-                          <span className="font-bold text-eid-primary-300">{f.visitas ?? 0}×</span>
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ) : null}
-        </ProfileSection>
-      ) : null}
+      <EidStreamSection fallback={<div className="h-28 w-full animate-pulse rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35" />}>
+        <PerfilPublicoLocaisSection profileId={id} canOpenLocais={canOpenLocais} />
+      </EidStreamSection>
 
       <EidStreamSection fallback={<ProfilePublicHistoricoStreamSkeleton />}>
         <PerfilPublicoHistoricoSection profileId={id} viewerId={viewerId} perfil={perfil} isSelf={isSelf} />
       </EidStreamSection>
     </div>
+  );
+}
+
+async function PerfilPublicoProfessorSection({ profileId }: { profileId: string }) {
+  const { supabase } = await getServerAuth();
+  const [{ data: professorPerfil }, { data: professorEsportes }, { data: professorMetricas }] = await Promise.all([
+    supabase
+      .from("professor_perfil")
+      .select("headline, bio_profissional, aceita_novos_alunos, perfil_publicado")
+      .eq("usuario_id", profileId)
+      .maybeSingle(),
+    supabase
+      .from("professor_esportes")
+      .select("tipo_atuacao, valor_base_centavos, esportes(nome)")
+      .eq("professor_id", profileId)
+      .eq("ativo", true),
+    supabase
+      .from("professor_metricas")
+      .select("nota_docente, total_avaliacoes_validas, esportes(nome)")
+      .eq("professor_id", profileId)
+      .order("nota_docente", { ascending: false }),
+  ]);
+  return (
+    <ProfileSection
+      title="Professor"
+      info="Esportes em que atua como professor, proposta profissional, valores e avaliações docentes quando disponíveis."
+    >
+      <div className="space-y-3">
+        <div className="overflow-hidden rounded-xl border border-eid-action-500/24 bg-eid-action-500/8">
+          <div className="flex items-center justify-between border-b border-eid-action-500/20 bg-eid-action-500/10 px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Perfil profissional</p>
+            <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-action-400">
+              Professor
+            </span>
+          </div>
+          <div className="p-4">
+            <p className="text-sm font-semibold text-eid-fg">{professorPerfil?.headline ?? "Professor ativo na plataforma"}</p>
+            <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">
+              {professorPerfil?.bio_profissional ?? "Use o perfil profissional para divulgar aulas, treinamento e consultoria."}
+            </p>
+          </div>
+        </div>
+        {(professorEsportes ?? []).length ? (
+          <div className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35">
+            <div className="grid gap-2 p-2">
+              {(professorEsportes ?? []).map((item, idx) => {
+                const esporte = Array.isArray(item.esportes) ? item.esportes[0] : item.esportes;
+                const metrica = (professorMetricas ?? []).find((m) => {
+                  const esporteM = Array.isArray(m.esportes) ? m.esportes[0] : m.esportes;
+                  return esporteM?.nome === esporte?.nome;
+                });
+                const tiposArr = Array.isArray(item.tipo_atuacao) ? item.tipo_atuacao : [];
+                return (
+                  <div key={`${esporte?.nome ?? "esp"}-${idx}`} className="eid-list-item rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3">
+                    <p className="text-sm font-semibold text-eid-fg">{esporte?.nome ?? "Esporte"}</p>
+                    <p className="mt-1 text-xs text-eid-text-secondary">{tiposArr.join(", ") || "aulas"}</p>
+                    {metrica ? (
+                      <p className="mt-2 text-xs text-eid-text-secondary">
+                        Nota docente {Number(metrica.nota_docente ?? 0).toFixed(2)} · {metrica.total_avaliacoes_validas ?? 0} avaliações
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </ProfileSection>
+  );
+}
+
+async function PerfilPublicoLocaisSection({ profileId, canOpenLocais }: { profileId: string; canOpenLocais: boolean }) {
+  const { supabase } = await getServerAuth();
+  const [{ data: socioRows }, { data: frequentesRows }] = await Promise.all([
+    supabase
+      .from("membership_requests")
+      .select("espaco_generico_id, espacos_genericos!inner(id, nome_publico, localizacao)")
+      .eq("usuario_id", profileId)
+      .eq("status", "aprovado")
+      .limit(20),
+    supabase
+      .from("usuario_locais_frequentes")
+      .select("visitas, espacos_genericos!inner(id, nome_publico, localizacao)")
+      .eq("usuario_id", profileId)
+      .order("visitas", { ascending: false })
+      .limit(10),
+  ]);
+  if ((socioRows ?? []).length === 0 && (frequentesRows ?? []).length === 0) return null;
+  return (
+    <ProfileSection title="Locais" info="Espaços ou locais de jogo associados a este perfil (quando informados).">
+      <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-2">
+        <ul className="grid gap-1.5">
+          {[...(socioRows ?? []), ...(frequentesRows ?? [])].map((r, idx) => {
+            const esp = Array.isArray(r.espacos_genericos) ? r.espacos_genericos[0] : r.espacos_genericos;
+            const content = (
+              <>
+                <span className="font-medium text-eid-fg">{esp?.nome_publico ?? "Local"}</span>
+                <span className="text-[10px] text-eid-text-secondary">{esp?.localizacao ?? "—"}</span>
+              </>
+            );
+            return (
+              <li key={`${esp?.id ?? "loc"}-${idx}`}>
+                {canOpenLocais ? (
+                  <Link
+                    href={`/local/${esp?.id}?from=/perfil/${profileId}`}
+                    className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px] transition hover:border-eid-primary-500/30"
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <div className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px]">
+                    {content}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </ProfileSection>
   );
 }

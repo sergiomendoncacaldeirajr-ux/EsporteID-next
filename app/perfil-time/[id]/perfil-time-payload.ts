@@ -361,10 +361,12 @@ export const getPerfilTimeColetivoCooldownBanner = cache(async (timeId: number, 
 export type PerfilTimePayload = Awaited<ReturnType<typeof loadPerfilTimePayloadMerged>>;
 
 async function loadPerfilTimePayloadMerged(timeId: number, viewerId: string) {
-  const identity = await getPerfilTimeIdentity(timeId, viewerId);
-  const bundle = await getPerfilTimePartidasBundle(timeId, viewerId);
-  const pack = await getPerfilTimeMembrosHistPack(timeId, viewerId);
-  const visitor = await getPerfilTimeVisitorMatchPack(timeId, viewerId);
+  const [identity, bundle, pack, visitor] = await Promise.all([
+    getPerfilTimeIdentity(timeId, viewerId),
+    getPerfilTimePartidasBundle(timeId, viewerId),
+    getPerfilTimeMembrosHistPack(timeId, viewerId),
+    getPerfilTimeVisitorMatchPack(timeId, viewerId),
+  ]);
   return { ...identity, ...bundle, ...pack, ...visitor };
 }
 

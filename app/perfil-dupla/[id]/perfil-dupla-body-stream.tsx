@@ -35,9 +35,11 @@ export type PerfilDuplaBodyStreamProps = {
 };
 
 export async function PerfilDuplaBodyVisitanteStack({ duplaId, viewerId }: PerfilDuplaBodyStreamProps) {
-  const idn = await getPerfilDuplaIdentity(duplaId, viewerId);
+  const [idn, v] = await Promise.all([
+    getPerfilDuplaIdentity(duplaId, viewerId),
+    getPerfilDuplaVisitorMatchPack(duplaId, viewerId),
+  ]);
   if (idn.isDonoDupla) return null;
-  const v = await getPerfilDuplaVisitorMatchPack(duplaId, viewerId);
   const { id, d, timeResolvidoId, timeResolvido, isMembroDupla } = idn;
 
   return (
@@ -121,8 +123,10 @@ export async function PerfilDuplaBodyVisitanteStack({ duplaId, viewerId }: Perfi
 }
 
 export async function PerfilDuplaBodyEid({ duplaId, viewerId }: PerfilDuplaBodyStreamProps) {
-  const idn = await getPerfilDuplaIdentity(duplaId, viewerId);
-  const h = await getPerfilDuplaHistEidPlayers(duplaId, viewerId);
+  const [idn, h] = await Promise.all([
+    getPerfilDuplaIdentity(duplaId, viewerId),
+    getPerfilDuplaHistEidPlayers(duplaId, viewerId),
+  ]);
   const { id, d, timeResolvido, esp, fromPublicDupla } = idn;
   const { eidLogsDupla, histDupla } = h;
 
@@ -232,8 +236,10 @@ export async function PerfilDuplaBodyEid({ duplaId, viewerId }: PerfilDuplaBodyS
 }
 
 export async function PerfilDuplaBodyConfrontos({ duplaId, viewerId }: PerfilDuplaBodyStreamProps) {
-  const idn = await getPerfilDuplaIdentity(duplaId, viewerId);
-  const b = await getPerfilDuplaPartidasBundle(duplaId, viewerId);
+  const [idn, b] = await Promise.all([
+    getPerfilDuplaIdentity(duplaId, viewerId),
+    getPerfilDuplaPartidasBundle(duplaId, viewerId),
+  ]);
 
   return (
     <ProfileSection
@@ -271,12 +277,13 @@ export async function PerfilDuplaBodyConfrontos({ duplaId, viewerId }: PerfilDup
 }
 
 export async function PerfilDuplaBodyParticipantes({ duplaId, viewerId }: PerfilDuplaBodyStreamProps) {
-  const idn = await getPerfilDuplaIdentity(duplaId, viewerId);
-  const h = await getPerfilDuplaHistEidPlayers(duplaId, viewerId);
+  const [idn, h, visitorPack] = await Promise.all([
+    getPerfilDuplaIdentity(duplaId, viewerId),
+    getPerfilDuplaHistEidPlayers(duplaId, viewerId),
+    getPerfilDuplaVisitorMatchPack(duplaId, viewerId),
+  ]);
   const convitesPendentesDupla =
-    idn.isDonoDupla && idn.timeResolvidoId
-      ? (await getPerfilDuplaVisitorMatchPack(duplaId, viewerId)).convitesPendentesDupla
-      : [];
+    idn.isDonoDupla && idn.timeResolvidoId ? visitorPack.convitesPendentesDupla : [];
   const { id, d, p1, p2, isDonoDupla, isLiderTimeDupla, timeResolvidoId, idsExcluirConviteDupla } = idn;
   const { eid1, eid2 } = h;
 

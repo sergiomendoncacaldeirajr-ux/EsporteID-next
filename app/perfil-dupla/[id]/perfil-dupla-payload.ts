@@ -389,10 +389,12 @@ export const getPerfilDuplaVisitorMatchPack = cache(loadPerfilDuplaVisitorMatchP
 export type PerfilDuplaPayload = Awaited<ReturnType<typeof loadPerfilDuplaPayloadMerged>>;
 
 async function loadPerfilDuplaPayloadMerged(duplaId: number, viewerId: string) {
-  const identity = await getPerfilDuplaIdentity(duplaId, viewerId);
-  const partidas = await getPerfilDuplaPartidasBundle(duplaId, viewerId);
-  const histEid = await getPerfilDuplaHistEidPlayers(duplaId, viewerId);
-  const visitor = await getPerfilDuplaVisitorMatchPack(duplaId, viewerId);
+  const [identity, partidas, histEid, visitor] = await Promise.all([
+    getPerfilDuplaIdentity(duplaId, viewerId),
+    getPerfilDuplaPartidasBundle(duplaId, viewerId),
+    getPerfilDuplaHistEidPlayers(duplaId, viewerId),
+    getPerfilDuplaVisitorMatchPack(duplaId, viewerId),
+  ]);
   return { ...identity, ...partidas, ...histEid, ...visitor };
 }
 
