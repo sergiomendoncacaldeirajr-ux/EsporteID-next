@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Props = {
@@ -11,6 +11,10 @@ type Props = {
 export function RankingLoadMoreButton({ href, className = "" }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    router.prefetch(href);
+  }, [href, router]);
 
   return (
     <button

@@ -64,6 +64,15 @@ export async function RankingStreamBody({
   let partidasRanking: PartidaRankingRow[] = [];
   let pontosVitoriaRegra = 10;
   let pontosDerrotaRegra = 4;
+  const nowRef = new Date();
+  const yearStart = new Date(nowRef.getFullYear(), 0, 1);
+  const nextYearStart = new Date(nowRef.getFullYear() + 1, 0, 1);
+  const monthStart = new Date(nowRef.getFullYear(), nowRef.getMonth(), 1);
+  const nextMonthStart = new Date(nowRef.getFullYear(), nowRef.getMonth() + 1, 1);
+  const periodoStart = state.periodo === "mes" ? monthStart : yearStart;
+  const periodoEnd = state.periodo === "mes" ? nextMonthStart : nextYearStart;
+  const periodoStartIso = periodoStart.toISOString();
+  const periodoEndIso = periodoEnd.toISOString();
 
   if (selectedEsporteId != null && stateComGenero.rank === "match") {
     const [{ data: regras }, { data: partidasBrutas }] = await Promise.all([
@@ -73,6 +82,9 @@ export async function RankingStreamBody({
         .select("id, jogador1_id, jogador2_id, time1_id, time2_id, vencedor_id, placar_1, placar_2, placar_desafiante, placar_desafiado, data_resultado, data_partida, data_registro")
         .eq("esporte_id", selectedEsporteId)
         .eq("tipo_partida", "ranking")
+        .or(
+          `and(data_resultado.gte.${periodoStartIso},data_resultado.lt.${periodoEndIso}),and(data_partida.gte.${periodoStartIso},data_partida.lt.${periodoEndIso}),and(data_registro.gte.${periodoStartIso},data_registro.lt.${periodoEndIso})`,
+        )
         .in("status", ["encerrada", "finalizada", "concluida", "concluída", "validada"]),
     ]);
     pontosVitoriaRegra = Number.isFinite(Number(regras?.pontos_vitoria)) ? Number(regras?.pontos_vitoria) : 10;
@@ -327,30 +339,29 @@ export async function RankingStreamBody({
   }
 
   if (state.periodo === "mes" && selectedEsporteId != null) {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
     const monthStartMs = monthStart.getTime();
     const nextMonthStartMs = nextMonthStart.getTime();
     const monthStartIso = monthStart.toISOString();
     const nextMonthStartIso = nextMonthStart.toISOString();
-    const partidaSelect =
-      state.tipo === "individual"
-        ? "jogador1_id, jogador2_id, data_resultado, data_partida, data_registro"
-        : "time1_id, time2_id, data_resultado, data_partida, data_registro";
-
-    const { data: partidasBrutas } = await supabase
-      .from("partidas")
-      .select(partidaSelect)
-      .eq("esporte_id", selectedEsporteId)
-      .or(
-        `and(data_resultado.gte.${monthStartIso},data_resultado.lt.${nextMonthStartIso}),and(data_partida.gte.${monthStartIso},data_partida.lt.${nextMonthStartIso}),and(data_registro.gte.${monthStartIso},data_registro.lt.${nextMonthStartIso})`,
-      )
-      .in("status", ["encerrada", "finalizada", "concluida", "concluída", "validada"]);
-
-    const rows = ((partidasBrutas ?? []) as PartidaPeriodoRow[]).filter((p) =>
-      timestampPartidaNoMesAtual(p, monthStartMs, nextMonthStartMs),
-    );
+    const rows: PartidaPeriodoRow[] =
+      stateComGenero.rank === "match"
+        ? ((partidasRanking ?? []) as PartidaPeriodoRow[]).filter((p) =>
+            timestampPartidaNoMesAtual(p, monthStartMs, nextMonthStartMs),
+          )
+        : (
+            await supabase
+              .from("partidas")
+              .select(
+                state.tipo === "individual"
+                  ? "jogador1_id, jogador2_id, data_resultado, data_partida, data_registro"
+                  : "time1_id, time2_id, data_resultado, data_partida, data_registro",
+              )
+              .eq("esporte_id", selectedEsporteId)
+              .or(
+                `and(data_resultado.gte.${monthStartIso},data_resultado.lt.${nextMonthStartIso}),and(data_partida.gte.${monthStartIso},data_partida.lt.${nextMonthStartIso}),and(data_registro.gte.${monthStartIso},data_registro.lt.${nextMonthStartIso})`,
+              )
+              .in("status", ["encerrada", "finalizada", "concluida", "concluída", "validada"])
+          ).data?.filter((p) => timestampPartidaNoMesAtual(p as PartidaPeriodoRow, monthStartMs, nextMonthStartMs)) ?? [];
 
     const activeUsers = new Set<string>();
     const activeTeams = new Set<number>();

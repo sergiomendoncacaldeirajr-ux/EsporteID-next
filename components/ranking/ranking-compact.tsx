@@ -11,6 +11,8 @@ function cn(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(" ");
 }
 
+const PREFETCH_FILTER_LINK = true;
+
 function IconCrown({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
@@ -106,6 +108,7 @@ export function RankingFilterBar({
       summaryRight={
         <Link
           href={clearHref}
+          prefetch={PREFETCH_FILTER_LINK}
           className="eid-ranking-filter-clear inline-flex h-[22px] shrink-0 items-center gap-1 rounded-full border border-transparent bg-eid-surface/50 px-2.5 text-[7.5px] font-black uppercase leading-tight tracking-[0.06em] text-eid-primary-400"
         >
           <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -117,15 +120,15 @@ export function RankingFilterBar({
     >
         <div className="eid-ranking-select-anim rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
           <div className="grid grid-cols-3 gap-1">
-            <Link href={href({ tipo: "individual", page: 1 })} className={filterBarSegmentButton(state.tipo === "individual")}>
+            <Link prefetch={PREFETCH_FILTER_LINK} href={href({ tipo: "individual", page: 1 })} className={filterBarSegmentButton(state.tipo === "individual")}>
               <IconSingle className="h-4 w-4 shrink-0" />
               <span>Individual</span>
             </Link>
-            <Link href={href({ tipo: "dupla", page: 1 })} className={filterBarSegmentButton(state.tipo === "dupla")}>
+            <Link prefetch={PREFETCH_FILTER_LINK} href={href({ tipo: "dupla", page: 1 })} className={filterBarSegmentButton(state.tipo === "dupla")}>
               <IconDouble className="h-4 w-4 shrink-0" />
               <span>Duplas</span>
             </Link>
-            <Link href={href({ tipo: "time", page: 1 })} className={filterBarSegmentButton(state.tipo === "time")}>
+            <Link prefetch={PREFETCH_FILTER_LINK} href={href({ tipo: "time", page: 1 })} className={filterBarSegmentButton(state.tipo === "time")}>
               <IconTeam className="h-4 w-4 shrink-0" />
               <span>Times</span>
             </Link>
@@ -133,13 +136,13 @@ export function RankingFilterBar({
         </div>
 
         <div className="eid-ranking-select-anim grid grid-cols-2 gap-1 rounded-2xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
-          <Link href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
+          <Link prefetch={PREFETCH_FILTER_LINK} href={href({ local: "cidade", page: 1 })} className={blockButton(state.local === "cidade")}>
             <IconPin className="h-4 w-4 shrink-0" />
             <span className="min-w-0 truncate">
               <CityGpsLabel fallbackCity={cidadeDisplay} />
             </span>
           </Link>
-          <Link href={href({ local: "brasil", page: 1 })} className={blockButton(state.local === "brasil")}>
+          <Link prefetch={PREFETCH_FILTER_LINK} href={href({ local: "brasil", page: 1 })} className={blockButton(state.local === "brasil")}>
             <IconBrazil className="h-4 w-4 shrink-0" />
             <span className="truncate">Brasil</span>
           </Link>
@@ -149,6 +152,7 @@ export function RankingFilterBar({
             Sem cidade —{" "}
             <Link
               href="/conta/perfil"
+              prefetch={PREFETCH_FILTER_LINK}
               className="font-semibold text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)] underline-offset-2 hover:underline"
             >
               perfil
@@ -166,6 +170,7 @@ export function RankingFilterBar({
                 return (
                   <Link
                     key={opt.id}
+                    prefetch={PREFETCH_FILTER_LINK}
                     href={href({ esporte: opt.id === principalEsporteId ? "" : String(opt.id), page: 1 })}
                     title={isPrincipal ? "Esporte principal do perfil" : undefined}
                     className={cn(
@@ -183,13 +188,6 @@ export function RankingFilterBar({
                   </Link>
                 );
               })}
-              <button
-                type="button"
-                className="eid-ranking-filter-plus inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-transparent bg-[color:color-mix(in_srgb,var(--eid-card)_76%,var(--eid-surface)_24%)] text-[13px] font-bold leading-none text-eid-text-secondary"
-                aria-label="Mais esportes"
-              >
-                +
-              </button>
             </div>
           </div>
         </div>
@@ -210,10 +208,10 @@ export function RankingPeriodToggle({
     <div className="flex justify-end [&_a]:[-webkit-tap-highlight-color:transparent]">
       <div className="eid-ranking-select-anim w-full max-w-[8.4rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
         <div className="grid grid-cols-2 gap-1">
-          <Link href={href({ periodo: "ano", page: 1 })} className={tipoSegmentButton(state.periodo === "ano")}>
+          <Link prefetch={PREFETCH_FILTER_LINK} href={href({ periodo: "ano", page: 1 })} className={tipoSegmentButton(state.periodo === "ano")}>
             Ano
           </Link>
-          <Link href={href({ periodo: "mes", page: 1 })} className={tipoSegmentButton(state.periodo === "mes")}>
+          <Link prefetch={PREFETCH_FILTER_LINK} href={href({ periodo: "mes", page: 1 })} className={tipoSegmentButton(state.periodo === "mes")}>
             Mês
           </Link>
         </div>
@@ -237,13 +235,13 @@ export function RankingGenderToggle({
     <div className="flex w-full justify-center px-0.5 [&_a]:[-webkit-tap-highlight-color:transparent]">
       <div className="eid-ranking-select-anim w-full max-w-[17.5rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
         <div className="grid grid-cols-3 gap-1">
-          <Link href={href({ genero: "masculino", page: 1 })} className={tipoSegmentButton(isMasc)}>
+          <Link prefetch={PREFETCH_FILTER_LINK} href={href({ genero: "masculino", page: 1 })} className={tipoSegmentButton(isMasc)}>
             Masculino
           </Link>
-          <Link href={href({ genero: "misto", page: 1 })} className={tipoSegmentButton(isMisto)}>
+          <Link prefetch={PREFETCH_FILTER_LINK} href={href({ genero: "misto", page: 1 })} className={tipoSegmentButton(isMisto)}>
             Misto
           </Link>
-          <Link href={href({ genero: "feminino", page: 1 })} className={tipoSegmentButton(isFem)}>
+          <Link prefetch={PREFETCH_FILTER_LINK} href={href({ genero: "feminino", page: 1 })} className={tipoSegmentButton(isFem)}>
             Feminino
           </Link>
         </div>
@@ -265,10 +263,10 @@ export function RankingRankToggle({
     <div className="flex justify-start [&_a]:[-webkit-tap-highlight-color:transparent]">
       <div className="eid-ranking-select-anim w-full max-w-[8.4rem] rounded-2xl border border-transparent bg-[color-mix(in_srgb,var(--eid-surface)_78%,var(--eid-bg)_22%)] p-1">
         <div className="grid grid-cols-2 gap-1">
-          <Link href={href({ rank: "match", page: 1 })} className={tipoSegmentButton(rankIsMatch)}>
+          <Link prefetch={PREFETCH_FILTER_LINK} href={href({ rank: "match", page: 1 })} className={tipoSegmentButton(rankIsMatch)}>
             Desafio
           </Link>
-          <Link href={href({ rank: "eid", page: 1 })} className={tipoSegmentButton(!rankIsMatch)}>
+          <Link prefetch={PREFETCH_FILTER_LINK} href={href({ rank: "eid", page: 1 })} className={tipoSegmentButton(!rankIsMatch)}>
             EID
           </Link>
         </div>

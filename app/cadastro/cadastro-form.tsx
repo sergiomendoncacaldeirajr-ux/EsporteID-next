@@ -184,8 +184,8 @@ export function CadastroForm() {
       );
       return;
     }
-    if (!locTrim) {
-      setError("Informe cidade e estado (Cidade - Estado).");
+    if (!locTrim || lat == null || lng == null) {
+      setError("A localização é obrigatória. Clique em \"Usar localização atual\" para continuar.");
       return;
     }
 
@@ -479,10 +479,13 @@ export function CadastroForm() {
                 placeholder="Cidade - Estado"
                 required
                 value={localizacao}
-                onChange={(e) => setLocalizacao(e.target.value)}
+                readOnly
                 className="min-w-0 flex-1 border-0 bg-transparent pl-2.5 text-[15px] text-eid-fg outline-none placeholder:text-eid-text-secondary/85"
               />
             </div>
+            <p className="mb-2 text-[11px] leading-snug text-eid-text-secondary">
+              A localização é obrigatória e preenchida automaticamente ao clicar em "Usar localização atual".
+            </p>
 
             <button
               type="button"

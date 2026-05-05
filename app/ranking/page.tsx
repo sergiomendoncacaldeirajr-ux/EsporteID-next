@@ -52,13 +52,19 @@ export default async function RankingPage({ searchParams }: Props) {
   const generoSelecionado = (state.genero || generoPerfil) as RankingSearchState["genero"];
   const stateComGenero: RankingSearchState = { ...state, genero: generoSelecionado };
 
-  const todosEsportes = (esportesCatalogoRaw ?? [])
+  const esportesHabilitadosNoCatalogo = (esportesCatalogoRaw ?? [])
     .filter((e): e is { id: number; nome: string | null } => typeof (e as { id?: number }).id === "number" && Number.isFinite((e as { id: number }).id))
     .filter((e) => isSportRankingEnabled(e.nome))
     .map((e) => ({
       id: e.id,
       nome: String(e.nome ?? "").trim() || "Esporte",
     }));
+  const meusEsportesIds = new Set(
+    meusEsportes
+      .map((r) => Number(r.esporte_id))
+      .filter((id) => Number.isFinite(id) && id > 0),
+  );
+  const todosEsportes = esportesHabilitadosNoCatalogo.filter((e) => meusEsportesIds.has(e.id));
 
   const allEsporteIds = new Set(todosEsportes.map((e) => e.id));
 
