@@ -35,10 +35,11 @@ type Props = {
  * Alterna tema claro/escuro em todo o site (`data-eid-theme` + localStorage).
  */
 export function EidThemeToggle({ className, variant = "default" }: Props) {
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof document === "undefined") return "dark";
-    return document.documentElement.dataset.eidTheme === "light" ? "light" : "dark";
-  });
+  /**
+   * Evita mismatch de hidratação: no SSR e no 1º render do cliente usamos "dark"
+   * e sincronizamos com o DOM logo após montar.
+   */
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useLayoutEffect(() => {
     const t = document.documentElement.dataset.eidTheme === "light" ? "light" : "dark";

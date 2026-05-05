@@ -181,6 +181,13 @@ export function normalizeSearchText(raw: string | null | undefined): string {
     .trim();
 }
 
+export function firstProfileName(raw: string | null | undefined): string {
+  const s = String(raw ?? "").trim();
+  if (!s) return "Atleta";
+  const first = s.split(/\s+/)[0]?.trim() ?? "";
+  return first || "Atleta";
+}
+
 export function bestViewerRankIndex(
   rows: UnifiedRank[],
   viewerId: string,

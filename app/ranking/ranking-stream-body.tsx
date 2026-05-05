@@ -13,6 +13,7 @@ import {
   bestViewerRankIndex,
   fetchLatestColetivoEidByTimeId,
   firstOf,
+  firstProfileName,
   LIST_PAGE_SIZE,
   matchBucketFormacoes,
   matchBucketIndividual,
@@ -185,7 +186,7 @@ export async function RankingStreamBody({
           return {
             key: `u-${uid}-${r.esporte_id}`,
             usuarioId: uid,
-            nome: p?.nome ?? "Atleta",
+            nome: firstProfileName(p?.nome),
             avatarUrl: p?.avatar_url ?? null,
             pontos: pontosGenero,
             notaEid: Number(r.nota_eid ?? 0),
