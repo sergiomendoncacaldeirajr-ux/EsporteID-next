@@ -4,6 +4,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/brand/logo-full";
 import { OnboardingTopbar } from "@/components/onboarding/onboarding-topbar";
@@ -477,6 +478,10 @@ export function OnboardingWizard({
   const [fotoSelecionadaNome, setFotoSelecionadaNome] = useState<string | null>(null);
   const [fotoPreparando, setFotoPreparando] = useState(false);
   const [fotoErro, setFotoErro] = useState<string | null>(null);
+  const [fotoActionOpen, setFotoActionOpen] = useState(false);
+  const [fotoEditorOpen, setFotoEditorOpen] = useState(false);
+  const [fotoEditorMode, setFotoEditorMode] = useState<"add" | "edit">("add");
+  const [fotoModalMounted, setFotoModalMounted] = useState(false);
   const didHydrateFromServerRef = useRef(false);
   const forceResetKey = `${draftKey}:force_reset`;
   const lastServerPapeisKeyRef = useRef<string | null>(null);
@@ -508,6 +513,10 @@ export function OnboardingWizard({
       root.style.scrollBehavior = prevBehavior;
     };
   }, [step]);
+
+  useEffect(() => {
+    setFotoModalMounted(true);
+  }, []);
 
   useEffect(() => {
     const normalized = normalizarPapeisContaPrincipal(selectedPapeis);
@@ -1188,6 +1197,9 @@ export function OnboardingWizard({
     setFotoPosX(50);
     setFotoPosY(50);
     setFotoZoom(1);
+    setFotoEditorMode(hasFotoParaFinalizar ? "edit" : "add");
+    setFotoActionOpen(false);
+    setFotoEditorOpen(true);
   }
 
   function removeFotoSelecionada() {
@@ -1207,6 +1219,8 @@ export function OnboardingWizard({
     if (fotoGaleriaInputRef.current) {
       fotoGaleriaInputRef.current.value = "";
     }
+    setFotoActionOpen(false);
+    setFotoEditorOpen(false);
   }
 
   function toggleEspacoEsporte(id: number) {
@@ -2104,17 +2118,10 @@ export function OnboardingWizard({
                   <div className="mt-1 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => fotoCameraInputRef.current?.click()}
+                      onClick={() => setFotoActionOpen(true)}
                       className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-fg transition hover:border-eid-primary-500/40"
                     >
-                      Tirar foto (câmera)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fotoGaleriaInputRef.current?.click()}
-                      className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-fg transition hover:border-eid-primary-500/40"
-                    >
-                      Enviar da galeria
+                      {hasFotoParaFinalizar ? "Editar foto" : "Adicionar foto"}
                     </button>
                   </div>
                   <input
@@ -2143,60 +2150,64 @@ export function OnboardingWizard({
                       {fotoErro}
                     </p>
                   ) : null}
-                  {fotoSelecionadaNome ? (
-                    <div className="mt-2 space-y-2">
-                      <p className="text-[11px] text-eid-text-secondary">Foto pronta para envio: {fotoSelecionadaNome}</p>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <label className="text-[11px] text-eid-text-secondary">
-                          Posição horizontal
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={fotoPosX}
-                            onChange={(e) => setFotoPosX(Number(e.target.value))}
-                            className="mt-1 w-full"
-                          />
-                        </label>
-                        <label className="text-[11px] text-eid-text-secondary">
-                          Posição vertical
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={fotoPosY}
-                            onChange={(e) => setFotoPosY(Number(e.target.value))}
-                            className="mt-1 w-full"
-                          />
-                        </label>
-                        <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                          Zoom
-                          <input
-                            type="range"
-                            min={1}
-                            max={2.5}
-                            step={0.05}
-                            value={fotoZoom}
-                            onChange={(e) => setFotoZoom(Number(e.target.value))}
-                            className="mt-1 w-full"
-                          />
-                        </label>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={removeFotoSelecionada}
-                        className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[11px] font-semibold text-eid-fg transition hover:border-eid-primary-500/40"
-                      >
-                        Remover foto selecionada
-                      </button>
-                    </div>
-                  ) : null}
+                  {fotoSelecionadaNome ? <p className="mt-2 text-[11px] text-eid-text-secondary">Foto pronta: {fotoSelecionadaNome}</p> : null}
                   <p className="mt-1 text-[11px] text-eid-text-secondary">
                     Use câmera ou galeria — aceitamos os formatos comuns (incluindo HEIC do iPhone). A foto é otimizada
                     automaticamente para um JPG leve antes do envio.
                   </p>
                 </div>
               </div>
+              {fotoModalMounted && fotoActionOpen
+                ? createPortal(
+                    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/60 p-3 sm:items-center motion-safe:animate-[fade-in_180ms_ease-out_both]">
+                      <div className="w-full max-w-xs rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 shadow-2xl motion-safe:animate-[eid-content-block-enter_240ms_cubic-bezier(0.22,1,0.36,1)_both]">
+                        <p className="text-sm font-bold text-eid-fg">Foto de perfil</p>
+                        <p className="mt-1 text-[11px] text-eid-text-secondary">Adicionar, editar enquadramento ou remover.</p>
+                        <div className="mt-3 grid gap-2">
+                          <button type="button" onClick={() => fotoCameraInputRef.current?.click()} className="rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-sm font-semibold text-eid-fg">
+                            Tirar foto (câmera)
+                          </button>
+                          <button type="button" onClick={() => fotoGaleriaInputRef.current?.click()} className="rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-sm font-semibold text-eid-fg">
+                            Enviar da galeria
+                          </button>
+                          {hasFotoSelecionada ? (
+                            <button type="button" onClick={() => { setFotoEditorMode("edit"); setFotoEditorOpen(true); setFotoActionOpen(false); }} className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-3 py-2 text-sm font-semibold text-eid-primary-300">
+                              Editar enquadramento
+                            </button>
+                          ) : null}
+                          {hasFotoParaFinalizar ? (
+                            <button type="button" onClick={removeFotoSelecionada} className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm font-semibold text-[color:color-mix(in_srgb,var(--eid-danger-600)_82%,var(--eid-fg)_18%)]">
+                              Remover foto selecionada
+                            </button>
+                          ) : null}
+                        </div>
+                        <button type="button" onClick={() => setFotoActionOpen(false)} className="mt-3 w-full rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-text-secondary">
+                          Fechar
+                        </button>
+                      </div>
+                    </div>,
+                    document.body,
+                  )
+                : null}
+              {fotoModalMounted && fotoEditorOpen && hasFotoSelecionada
+                ? createPortal(
+                    <div className="fixed inset-0 z-[96] flex items-center justify-center bg-black/65 px-4 motion-safe:animate-[fade-in_180ms_ease-out_both]">
+                      <div className="w-full max-w-xs rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 shadow-xl motion-safe:animate-[eid-content-block-enter_240ms_cubic-bezier(0.22,1,0.36,1)_both]">
+                        <p className="text-sm font-bold text-eid-fg">Ajustar foto</p>
+                        <div className="mt-2 grid gap-2">
+                          <label className="text-[11px] text-eid-text-secondary">Posição horizontal<input type="range" min={0} max={100} value={fotoPosX} onChange={(e) => setFotoPosX(Number(e.target.value))} className="mt-1 w-full" /></label>
+                          <label className="text-[11px] text-eid-text-secondary">Posição vertical<input type="range" min={0} max={100} value={fotoPosY} onChange={(e) => setFotoPosY(Number(e.target.value))} className="mt-1 w-full" /></label>
+                          <label className="text-[11px] text-eid-text-secondary">Zoom<input type="range" min={1} max={2.5} step={0.05} value={fotoZoom} onChange={(e) => setFotoZoom(Number(e.target.value))} className="mt-1 w-full" /></label>
+                        </div>
+                        <div className="mt-3 flex gap-2">
+                          <button type="button" onClick={() => setFotoEditorOpen(false)} className="flex-1 rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-text-secondary">Cancelar</button>
+                          <button type="button" onClick={() => setFotoEditorOpen(false)} className="flex-1 rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-3 py-2 text-xs font-semibold text-eid-primary-300">{fotoEditorMode === "add" ? "Enviar foto" : "Salvar edição"}</button>
+                        </div>
+                      </div>
+                    </div>,
+                    document.body,
+                  )
+                : null}
 
               <input
                 name="nome"

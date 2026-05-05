@@ -231,7 +231,7 @@ export function ProfileCoverControl({ hasCover }: Props) {
                   type="button"
                   onClick={removeCurrentCover}
                   disabled={removing}
-                  className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-red-400/45 bg-red-500/10 px-3 text-[11px] font-black uppercase tracking-[0.04em] text-red-200 disabled:opacity-60"
+                  className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-red-400/45 bg-red-500/10 px-3 text-[11px] font-black uppercase tracking-[0.04em] text-[color:color-mix(in_srgb,var(--eid-danger-600)_82%,var(--eid-fg)_18%)] disabled:opacity-60"
                 >
                   {removing ? "Removendo..." : "Remover capa atual"}
                 </button>
