@@ -36,7 +36,8 @@ export function esporteNomeFromRow(row: TimeListRow): string | null {
   return null;
 }
 
-export function rowToCardData(row: TimeListRow): TimesVagaCardData {
+/** Dados do card sem contagem de vagas (evita chave duplicada ao mesclar com `vagas_disponiveis` no stream). */
+export function rowToCardData(row: TimeListRow): Omit<TimesVagaCardData, "vagas_disponiveis"> {
   return {
     id: row.id,
     nome: row.nome,
@@ -48,7 +49,6 @@ export function rowToCardData(row: TimeListRow): TimesVagaCardData {
     esporteNome: esporteNomeFromRow(row),
     vagas_abertas: Boolean(row.vagas_abertas),
     aceita_pedidos: Boolean(row.aceita_pedidos),
-    vagas_disponiveis: null,
     criador_id: row.criador_id,
   };
 }

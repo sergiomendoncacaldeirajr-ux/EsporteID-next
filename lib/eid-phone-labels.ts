@@ -3,10 +3,13 @@ import ptBR from "react-phone-number-input/locale/pt-BR.json";
 
 /**
  * Labels em pt-BR (nome completo de cada país) + rótulo do campo.
- * Importante: não substituir por `{ phone: "WhatsApp" }` só — isso remove os nomes
- * e o `<select>` passa a exibir só códigos ISO (BR, US…).
+ * `pt-BR.json` já define `phone` ("Telefone"); omitimos antes do spread para não gerar
+ * chave duplicada no bundle (esbuild / workerd).
  */
+const ptBRLabels = ptBR as Record<string, string>;
+const { phone: _phoneDefault, ...ptBRRest } = ptBRLabels;
+
 export const EID_PHONE_LABELS: Labels = {
-  ...(ptBR as Labels),
+  ...ptBRRest,
   phone: "WhatsApp",
-};
+} as Labels;

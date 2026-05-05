@@ -74,7 +74,7 @@ export async function updateSession(request: NextRequest) {
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url?.trim() || !anon?.trim()) {
     console.error(
-      "[middleware] Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY na Vercel (Production)."
+      "[proxy] Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no painel de deploy (Vercel / Cloudflare Pages)."
     );
     return NextResponse.next({ request });
   }
