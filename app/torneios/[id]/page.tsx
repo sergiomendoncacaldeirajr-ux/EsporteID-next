@@ -9,7 +9,7 @@ import { labelStatusTorneio } from "@/lib/torneios/catalog";
 import { linhasResumoRegras, parseRegrasPlacarJson } from "@/lib/torneios/regras";
 import { contaEditarTorneioHref } from "@/lib/routes/conta";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
-import { canAccessSystemFeature, getSystemFeatureConfig, getViewerSandboxFeatureFlags } from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -35,14 +35,11 @@ export default async function TorneioPublicPage({ params, searchParams }: Props)
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect(`/login?next=/torneios/${id}`);
-  const [featureCfg, sandbox] = await Promise.all([
-    getSystemFeatureConfig(supabase),
-    getViewerSandboxFeatureFlags(supabase, user.id),
-  ]);
-  if (!canAccessSystemFeature(featureCfg, "torneios", user.id, false, sandbox.perfilModoTeste, sandbox.perfilModoTesteModulos)) {
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  if (!canAccessSystemFeature(featureCfg, "torneios", user.id, false)) {
     redirect("/dashboard");
   }
-  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id, false, sandbox.perfilModoTeste, sandbox.perfilModoTesteModulos);
+  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id, false);
 
   const { data: t } = await supabase
     .from("torneios")

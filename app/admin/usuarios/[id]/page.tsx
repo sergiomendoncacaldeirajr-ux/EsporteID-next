@@ -3,18 +3,10 @@ import { notFound } from "next/navigation";
 import {
   adminDeleteAuthUserCompletamente,
   adminSetAuthUserBan,
-  adminSetPerfilModoTeste,
   adminUpdateProfileById,
   adminUpdateUsuarioEidRow,
   adminZerarUsuarioEidTodas,
 } from "@/app/admin/actions";
-import {
-  ALL_SYSTEM_FEATURE_KEYS,
-  getSystemFeatureConfig,
-  parsePerfilModoTesteModulosJson,
-  SYSTEM_FEATURE_LABEL,
-  type SystemFeatureKey,
-} from "@/lib/system-features";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { createClient } from "@/lib/supabase/server";
 
@@ -74,18 +66,6 @@ const USUARIO_ADMIN_FLASH: Record<string, { className: string; text: string }> =
   },
   usuario_delete_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "Falha na exclusão (exceção)." },
   usuario_delete_param: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Requisição de exclusão inválida." },
-  usuario_modo_teste_ok: {
-    className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-100",
-    text: "Modo teste (sandbox) atualizado. O perfil só interage na plataforma com outros usuários no mesmo modo.",
-  },
-  usuario_modo_teste_db_erro: {
-    className: "border-red-500/40 bg-red-500/10 text-red-100",
-    text: "O banco recusou a alteração do modo teste.",
-  },
-  usuario_modo_teste_erro: {
-    className: "border-red-500/40 bg-red-500/10 text-red-100",
-    text: "Falha ao salvar modo teste (exceção).",
-  },
 };
 
 type PageProps = {
@@ -117,18 +97,12 @@ export default async function AdminUsuarioDetalhePage({ params, searchParams }: 
   const { data: p, error } = await db
     .from("profiles")
     .select(
-      "id, nome, username, bio, tipo_usuario, data_nascimento, match_maioridade_confirmada, match_maioridade_confirmada_em, localizacao, criado_em, whatsapp, genero, interesse_rank_match, interesse_torneio, disponivel_amistoso, status_conta, avatar_url, perfil_modo_teste, perfil_modo_teste_modulos"
+      "id, nome, username, bio, tipo_usuario, data_nascimento, match_maioridade_confirmada, match_maioridade_confirmada_em, localizacao, criado_em, whatsapp, genero, interesse_rank_match, interesse_torneio, disponivel_amistoso, status_conta, avatar_url"
     )
     .eq("id", id)
     .maybeSingle();
   if (error) return <p className="text-sm text-red-300">{error.message}</p>;
   if (!p) notFound();
-
-  const featureCfg = await getSystemFeatureConfig(db);
-  const chavesModoTesteApp = ALL_SYSTEM_FEATURE_KEYS.filter((k) => featureCfg[k].mode === "teste");
-  const modulosSandboxSalvos = parsePerfilModoTesteModulosJson(
-    (p as { perfil_modo_teste_modulos?: unknown }).perfil_modo_teste_modulos
-  );
 
   const { data: confs } = await db
     .from("match_maioridade_confirmacoes")
@@ -415,62 +389,6 @@ export default async function AdminUsuarioDetalhePage({ params, searchParams }: 
           <div>
             <button type="submit" className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-100">
               Zerar tudo
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <section className="mt-6 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
-        <h3 className="text-sm font-bold text-eid-fg">Modo teste (sandbox)</h3>
-        <p className="mt-1 text-xs text-eid-text-secondary">
-          Quando ativo, o usuário <strong>não aparece</strong> para contas normais (ranking, desafio, buscas, perfis públicos, etc.) e{" "}
-          <strong>só vê</strong> outros perfis também em modo teste. Se você gravar uma lista abaixo (subconjunto dos módulos hoje em modo{" "}
-          <strong>teste</strong> no app), ela passa a limitar o que o sandbox pode abrir também para módulos em <strong>desenvolvimento</strong>. Sem
-          lista gravada (todos marcados ao salvar), vale a liberação ampla do sandbox.
-        </p>
-        <form action={adminSetPerfilModoTeste} className="mt-4 space-y-4">
-          <input type="hidden" name="user_id" value={p.id} />
-          <label className="flex items-center gap-2 text-sm text-eid-fg">
-            <input name="perfil_modo_teste" type="checkbox" defaultChecked={(p as { perfil_modo_teste?: boolean }).perfil_modo_teste === true} />
-            Perfil em modo teste
-          </label>
-          {chavesModoTesteApp.length === 0 ? (
-            <p className="text-xs text-eid-text-secondary">
-              Nenhuma chave está em modo <span className="font-semibold">teste</span> em Funcionalidades do app — não há o que filtrar. Módulos em{" "}
-              <span className="font-semibold">desenvolvimento</span> seguem a regra geral do sandbox.
-            </p>
-          ) : (
-            <fieldset className="rounded-lg border border-[color:var(--eid-border-subtle)]/80 bg-eid-bg/20 p-3">
-              <legend className="px-1 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">
-                Módulos em modo teste visíveis para este usuário
-              </legend>
-              <ul className="mt-2 grid gap-2 sm:grid-cols-2">
-                {chavesModoTesteApp.map((k: SystemFeatureKey) => (
-                  <li key={k}>
-                    <label className="flex cursor-pointer items-center gap-2 text-xs text-eid-fg">
-                      <input
-                        type="checkbox"
-                        name="perfil_modo_teste_modulos"
-                        value={k}
-                        defaultChecked={modulosSandboxSalvos == null ? true : modulosSandboxSalvos.includes(k)}
-                      />
-                      {SYSTEM_FEATURE_LABEL[k]}
-                    </label>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-2 text-[10px] leading-snug text-eid-text-secondary">
-                Sem lista no banco: todos aparecem marcados. Desmarque para restringir. Se desmarcar todos e salvar, grava lista vazia (sandbox não
-                abre módulos em teste/desenvolvimento).
-              </p>
-            </fieldset>
-          )}
-          <div>
-            <button
-              type="submit"
-              className="rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg"
-            >
-              Salvar modo teste e módulos
             </button>
           </div>
         </form>

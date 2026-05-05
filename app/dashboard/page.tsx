@@ -17,11 +17,7 @@ import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
-import {
-  canAccessSystemFeature,
-  getSystemFeatureConfig,
-  parsePerfilModoTesteModulosJson,
-} from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { getAgendaTeamContext, partidaRowTemResultadoParaRevisaoOponente } from "@/lib/agenda/partidas-usuario";
@@ -74,19 +70,15 @@ export default async function DashboardPage({ searchParams }: Props) {
     supabase
       .from("profiles")
       .select(
-        "nome, avatar_url, localizacao, lat, lng, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate, perfil_completo, perfil_modo_teste, perfil_modo_teste_modulos"
+        "nome, avatar_url, localizacao, lat, lng, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate, perfil_completo"
       )
       .eq("id", user.id)
       .maybeSingle(),
   ]);
-  const perfilModoTeste = profileRes.data?.perfil_modo_teste === true;
-  const perfilModoTesteModulos = parsePerfilModoTesteModulosJson(
-    (profileRes.data as { perfil_modo_teste_modulos?: unknown } | null)?.perfil_modo_teste_modulos
-  );
-  const canSeeLocais = canAccessSystemFeature(featureCfg, "locais", user.id, false, perfilModoTeste, perfilModoTesteModulos);
-  const canSeeTorneios = canAccessSystemFeature(featureCfg, "torneios", user.id, false, perfilModoTeste, perfilModoTesteModulos);
-  const canSeeProfessores = canAccessSystemFeature(featureCfg, "professores", user.id, false, perfilModoTeste, perfilModoTesteModulos);
-  const canSeeMarketplace = canAccessSystemFeature(featureCfg, "marketplace", user.id, false, perfilModoTeste, perfilModoTesteModulos);
+  const canSeeLocais = canAccessSystemFeature(featureCfg, "locais", user.id, false);
+  const canSeeTorneios = canAccessSystemFeature(featureCfg, "torneios", user.id, false);
+  const canSeeProfessores = canAccessSystemFeature(featureCfg, "professores", user.id, false);
+  const canSeeMarketplace = canAccessSystemFeature(featureCfg, "marketplace", user.id, false);
   const profile = profileRes.data;
 
   if (!profile) {

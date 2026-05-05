@@ -5,7 +5,7 @@ import { getAuthContextState } from "@/lib/auth/active-context-server";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
-import { canAccessSystemFeature, getSystemFeatureConfig, getViewerSandboxFeatureFlags } from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 export const metadata = {
   title: "Buscar",
@@ -39,19 +39,11 @@ export default async function BuscarPage({ searchParams }: Props) {
   }
 
   const { supabase } = await getServerAuth();
-  const [featureCfg, gate, sandbox] = await Promise.all([
+  const [featureCfg, gate] = await Promise.all([
     getSystemFeatureConfig(supabase),
     getCachedProfileLegalRow(user.id),
-    getViewerSandboxFeatureFlags(supabase, user.id),
   ]);
-  const canOpenLocais = canAccessSystemFeature(
-    featureCfg,
-    "locais",
-    user.id,
-    false,
-    sandbox.perfilModoTeste,
-    sandbox.perfilModoTesteModulos
-  );
+  const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id, false);
   if (!gate || !legalAcceptanceIsCurrent(gate)) {
     redirect(`/conta/aceitar-termos?next=${encodeURIComponent(`/buscar${rawDisplay ? `?q=${encodeURIComponent(rawDisplay)}` : ""}`)}`);
   }

@@ -5,11 +5,7 @@ import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-i
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { DismissibleSectionIntro } from "@/components/ui/dismissible-section-intro";
 import { distanciaKm } from "@/lib/geo/distance-km";
-import {
-  canAccessSystemFeature,
-  getSystemFeatureConfig,
-  parsePerfilModoTesteModulosJson,
-} from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -134,14 +130,9 @@ export default async function LocaisPage({ searchParams }: Props) {
   if (!user) redirect("/login?next=/locais");
   const [featureCfg, profileGate] = await Promise.all([
     getSystemFeatureConfig(supabase),
-    supabase.from("profiles").select("lat, lng, localizacao, perfil_modo_teste, perfil_modo_teste_modulos").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("lat, lng, localizacao").eq("id", user.id).maybeSingle(),
   ]);
-  const perfilModoTesteModulos = parsePerfilModoTesteModulosJson(
-    (profileGate.data as { perfil_modo_teste_modulos?: unknown } | null)?.perfil_modo_teste_modulos
-  );
-  if (
-    !canAccessSystemFeature(featureCfg, "locais", user.id, false, profileGate.data?.perfil_modo_teste === true, perfilModoTesteModulos)
-  ) {
+  if (!canAccessSystemFeature(featureCfg, "locais", user.id, false)) {
     redirect("/dashboard");
   }
 

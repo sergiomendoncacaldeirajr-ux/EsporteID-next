@@ -12,7 +12,7 @@ import {
 } from "@/lib/torneios/catalog";
 import { TORNEIO_CATEGORIAS_PUBLICO } from "@/lib/torneios/categorias";
 import { usuarioPodeCriarTorneio } from "@/lib/torneios/organizador";
-import { canAccessSystemFeature, getSystemFeatureConfig, getViewerSandboxFeatureFlags } from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { getSportCapabilityByName } from "@/lib/sport-capabilities";
 
 export const metadata = {
@@ -32,11 +32,8 @@ export default async function CriarTorneioPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/torneios/criar");
-  const [featureCfg, sandbox] = await Promise.all([
-    getSystemFeatureConfig(supabase),
-    getViewerSandboxFeatureFlags(supabase, user.id),
-  ]);
-  if (!canAccessSystemFeature(featureCfg, "torneios", user.id, false, sandbox.perfilModoTeste, sandbox.perfilModoTesteModulos)) {
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  if (!canAccessSystemFeature(featureCfg, "torneios", user.id, false)) {
     redirect("/dashboard");
   }
   if (contextState.papeis.includes("organizador") && contextState.activeContext !== "organizador") {

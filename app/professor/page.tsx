@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getProfessorModulesBySportName } from "@/lib/professor/sport-admin-modules";
 import { requireProfessorUser } from "@/lib/professor/server";
-import { canAccessSystemFeature, getSystemFeatureConfig, getViewerSandboxFeatureFlags } from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 function moeda(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value / 100);
@@ -10,11 +10,8 @@ function moeda(value: number) {
 
 export default async function ProfessorHomePage() {
   const { supabase, user } = await requireProfessorUser("/professor");
-  const [featureCfg, sandbox] = await Promise.all([
-    getSystemFeatureConfig(supabase),
-    getViewerSandboxFeatureFlags(supabase, user.id),
-  ]);
-  if (!canAccessSystemFeature(featureCfg, "professores", user.id, false, sandbox.perfilModoTeste, sandbox.perfilModoTesteModulos)) {
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  if (!canAccessSystemFeature(featureCfg, "professores", user.id, false)) {
     redirect("/dashboard");
   }
 

@@ -2,15 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireProfessorUser } from "@/lib/professor/server";
 import { isMusculacaoSportName } from "@/lib/sport-capabilities";
-import { canAccessSystemFeature, getSystemFeatureConfig, getViewerSandboxFeatureFlags } from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 
 export default async function ProfessorMusculacaoPage() {
   const { supabase, user } = await requireProfessorUser("/professor/musculacao");
-  const [featureCfg, sandbox] = await Promise.all([
-    getSystemFeatureConfig(supabase),
-    getViewerSandboxFeatureFlags(supabase, user.id),
-  ]);
-  if (!canAccessSystemFeature(featureCfg, "professores", user.id, false, sandbox.perfilModoTeste, sandbox.perfilModoTesteModulos)) {
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  if (!canAccessSystemFeature(featureCfg, "professores", user.id, false)) {
     redirect("/dashboard");
   }
 

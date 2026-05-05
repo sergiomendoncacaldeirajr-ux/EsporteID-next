@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { canAccessSystemFeature, getSystemFeatureConfig, getViewerSandboxFeatureFlags } from "@/lib/system-features";
+import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -13,11 +13,8 @@ export default async function ProfessoresPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/professores");
-  const [featureCfg, sandbox] = await Promise.all([
-    getSystemFeatureConfig(supabase),
-    getViewerSandboxFeatureFlags(supabase, user.id),
-  ]);
-  if (!canAccessSystemFeature(featureCfg, "professores", user.id, false, sandbox.perfilModoTeste, sandbox.perfilModoTesteModulos)) {
+  const featureCfg = await getSystemFeatureConfig(supabase);
+  if (!canAccessSystemFeature(featureCfg, "professores", user.id, false)) {
     redirect("/dashboard");
   }
 
