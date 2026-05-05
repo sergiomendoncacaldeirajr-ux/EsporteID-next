@@ -1,0 +1,4 @@
+name = "esporteid-next"
+compatibility_date = "2026-05-05"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+pages_build_output_dir = ".open-next"
