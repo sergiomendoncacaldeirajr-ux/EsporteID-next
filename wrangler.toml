@@ -6,8 +6,6 @@ pages_build_output_dir = ".open-next"
 
 # Em Workers puro, OpenNext usa `[assets]` com binding `ASSETS`. Em **Pages**, `ASSETS` é nome reservado pelo runtime;
 # os estáticos vêm do próprio output em `.open-next` — não declare `[assets]` aqui.
-
-# Auto-referência do worker (revalidação / cache). Se o deploy no Pages reclamar, remova este bloco.
-[[services]]
-binding = "WORKER_SELF_REFERENCE"
-service = "esporteid-next"
+#
+# Não use `[[services]]` WORKER_SELF_REFERENCE aqui: no Cloudflare **Pages** o publish falha com
+# "references Worker … which was not found". Esse binding existe no template de **Workers** (`opennextjs-cloudflare deploy`).
