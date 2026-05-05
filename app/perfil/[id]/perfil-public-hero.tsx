@@ -196,11 +196,6 @@ export function PerfilPublicoHero({
               canToggle={isSelf}
             />
           </div>
-          {perfil.estilo_jogo ? (
-            <p className="shrink-0 whitespace-nowrap text-[9px] text-eid-text-secondary">
-              Estilo <span className="font-semibold text-eid-fg">{perfil.estilo_jogo}</span>
-            </p>
-          ) : null}
         </div>
 
         {conquistas.length > 0 && (() => {

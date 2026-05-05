@@ -15,6 +15,24 @@ export type SolicitarDesafioState =
 
 const UUID_V4_OR_GENERIC_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+/** Oponente (individual ou líder da formação) sem confirmação etária do match. */
+const MSG_OPONENTE_SEM_CONFIRMACAO_MAIORIDADE_MATCH =
+  "Não é possível enviar o desafio: o usuário que você escolheu ainda não confirmou a maioridade de 18 anos para o match. Sem essa confirmação, ele não pode receber desafios.";
+
+function mapSolicitarDesafioMatchRpcError(raw: string): string {
+  const m = String(raw ?? "").trim();
+  if (m.includes("O oponente precisa concluir a confirmação de maioridade")) {
+    return MSG_OPONENTE_SEM_CONFIRMACAO_MAIORIDADE_MATCH;
+  }
+  if (
+    m.includes("Este perfil não pode participar de match no momento") &&
+    m.toLowerCase().includes("verificação de idade")
+  ) {
+    return "Não é possível enviar o desafio: este perfil não pode ser desafiado no momento porque a verificação de idade com documento está pendente.";
+  }
+  return m;
+}
+
 async function getRankPendingLimit(
   supabase: Awaited<ReturnType<typeof createClient>>
 ): Promise<number> {
@@ -291,6 +309,8 @@ export async function solicitarDesafioMatch(
 
   let p_alvo_usuario_id: string | null = null;
   let p_alvo_time_id: number | null = null;
+  /** Adversário efetivo no RPC: jogador alvo ou líder (criador) da dupla/time adversária. */
+  let adversarioPrincipalUuid: string | null = null;
 
   const mod = p_modalidade === "atleta" ? "individual" : p_modalidade;
   if (mod === "individual") {
@@ -298,6 +318,7 @@ export async function solicitarDesafioMatch(
     if (!u) return { ok: false, message: "Alvo inválido." };
     if (!UUID_V4_OR_GENERIC_RE.test(u)) return { ok: false, message: "Usuário alvo inválido." };
     p_alvo_usuario_id = u;
+    adversarioPrincipalUuid = u;
   } else if (mod === "dupla" || mod === "time") {
     const tid = Number(alvoTime);
     if (!Number.isFinite(tid) || tid < 1) return { ok: false, message: "Formação inválida." };
@@ -331,11 +352,15 @@ export async function solicitarDesafioMatch(
     if (!alvoTimeRow?.id) {
       return { ok: false, message: "Formação alvo não encontrada." };
     }
-    if (String(alvoTimeRow.criador_id ?? "") === String(user.id)) {
+    const criadorAlvo = String(alvoTimeRow.criador_id ?? "").trim();
+    if (criadorAlvo === String(user.id)) {
       return {
         ok: false,
         message: "Você não pode desafiar a própria formação (outro líder precisa estar à frente da dupla/time).",
       };
+    }
+    if (criadorAlvo) {
+      adversarioPrincipalUuid = criadorAlvo;
     }
     const { data: ueSelfColetivo } = await supabase
       .from("usuario_eid")
@@ -547,6 +572,20 @@ export async function solicitarDesafioMatch(
     }
   }
 
+  if (adversarioPrincipalUuid) {
+    const { data: oppProfile, error: oppProfileErr } = await supabase
+      .from("profiles")
+      .select("match_maioridade_confirmada")
+      .eq("id", adversarioPrincipalUuid)
+      .maybeSingle();
+    if (oppProfileErr) {
+      return { ok: false, message: oppProfileErr.message };
+    }
+    if (!oppProfile || !oppProfile.match_maioridade_confirmada) {
+      return { ok: false, message: MSG_OPONENTE_SEM_CONFIRMACAO_MAIORIDADE_MATCH };
+    }
+  }
+
   const { data, error } = await supabase.rpc("solicitar_desafio_match", {
     p_esporte_id,
     p_modalidade: mod,
@@ -556,7 +595,7 @@ export async function solicitarDesafioMatch(
   });
 
   if (error) {
-    return { ok: false, message: error.message };
+    return { ok: false, message: mapSolicitarDesafioMatchRpcError(error.message) };
   }
 
   if (data == null) {

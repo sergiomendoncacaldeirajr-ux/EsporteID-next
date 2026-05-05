@@ -349,7 +349,6 @@ type Props = {
     lado: string | null;
     avatarUrl: string | null;
     bio: string;
-    estiloJogo: string;
     disponibilidadeSemanaJson: string;
   };
 };
@@ -467,7 +466,6 @@ export function OnboardingWizard({
   );
   const [lado, setLado] = useState<string>(profileInitial.lado ?? "");
   const [bio, setBio] = useState<string>(profileInitial.bio);
-  const [estiloJogo, setEstiloJogo] = useState<string>(profileInitial.estiloJogo);
   const fotoInputRef = useRef<HTMLInputElement | null>(null);
   const fotoCameraInputRef = useRef<HTMLInputElement | null>(null);
   const fotoGaleriaInputRef = useRef<HTMLInputElement | null>(null);
@@ -608,7 +606,6 @@ export function OnboardingWizard({
         pesoKg: string;
         lado: string;
         bio: string;
-        estiloJogo: string;
       }>;
       if (
         draft.step &&
@@ -674,7 +671,6 @@ export function OnboardingWizard({
       if (typeof draft.pesoKg === "string") setPesoKg(draft.pesoKg);
       if (typeof draft.lado === "string") setLado(draft.lado);
       if (typeof draft.bio === "string") setBio(draft.bio);
-      if (typeof draft.estiloJogo === "string") setEstiloJogo(draft.estiloJogo);
       setRestoredDraftAt(new Date().toLocaleTimeString("pt-BR"));
     } catch {
       window.localStorage.removeItem(draftKey);
@@ -734,7 +730,6 @@ export function OnboardingWizard({
       pesoKg,
       lado,
       bio,
-      estiloJogo,
     };
     window.localStorage.setItem(draftKey, JSON.stringify(payload));
   }, [
@@ -763,7 +758,6 @@ export function OnboardingWizard({
     nome,
     username,
     bio,
-    estiloJogo,
     orgEsporteId,
     orgEsportes,
     orgLocalModo,
@@ -983,7 +977,6 @@ export function OnboardingWizard({
     setPesoKg(profileInitial.pesoKg ? String(profileInitial.pesoKg) : "");
     setLado(profileInitial.lado ?? "");
     setBio(profileInitial.bio ?? "");
-    setEstiloJogo(profileInitial.estiloJogo ?? "");
     setMessage("Rascunho local limpo. O onboarding foi reiniciado na primeira etapa.");
   }
 
@@ -2236,13 +2229,6 @@ export function OnboardingWizard({
                 value={localizacao}
                 onChange={(e) => setLocalizacao(e.target.value)}
                 placeholder="Cidade / Estado"
-                className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
-              />
-              <input
-                name="estilo_jogo"
-                value={estiloJogo}
-                onChange={(e) => setEstiloJogo(e.target.value)}
-                placeholder={hasAnyProfessorSport && !hasAnyAthleteSport ? "Metodologia / especialidade (opcional)" : "Estilo de jogo (opcional)"}
                 className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
               />
               <textarea

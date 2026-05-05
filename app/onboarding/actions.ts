@@ -1066,7 +1066,6 @@ export async function salvarPerfilOnboarding(
   const localizacao = String(formData.get("localizacao") ?? "").trim();
   const genero = String(formData.get("genero") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
-  const estiloJogo = String(formData.get("estilo_jogo") ?? "").trim();
   const disponibilidadeRaw = String(formData.get("disponibilidade_semana_json") ?? "").trim();
   const alturaRaw = String(formData.get("altura_cm") ?? "").trim();
   const pesoRaw = String(formData.get("peso_kg") ?? "").trim();
@@ -1201,7 +1200,6 @@ export async function salvarPerfilOnboarding(
       localizacao,
       genero: genero || null,
       bio: bio || null,
-      estilo_jogo: estiloJogo || null,
       disponibilidade_semana_json: disponibilidadeSemana,
       altura_cm:
         precisaFicha &&

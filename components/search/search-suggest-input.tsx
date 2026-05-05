@@ -54,7 +54,11 @@ export function SearchSuggestInput({
 
   useEffect(() => {
     const q = value.trim();
-    if (q.length < minChars) return;
+    if (q.length < minChars) {
+      setItems([]);
+      setOpen(false);
+      return;
+    }
     ctrlRef.current?.abort();
     const ctrl = new AbortController();
     ctrlRef.current = ctrl;
@@ -133,6 +137,8 @@ export function SearchSuggestInput({
                     if (onPickItem) {
                       onPickItem(item);
                       setOpen(false);
+                      setItems([]);
+                      onChange("");
                       return;
                     }
                     const next = item.value;

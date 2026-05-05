@@ -34,7 +34,7 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      `id, nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, estilo_jogo, disponibilidade_semana_json, perfil_completo, onboarding_etapa, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
+      `id, nome, username, localizacao, avatar_url, altura_cm, peso_kg, lado, bio, disponibilidade_semana_json, perfil_completo, onboarding_etapa, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`
     )
     .eq("id", viewerId)
     .maybeSingle();
@@ -273,7 +273,6 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
         lado: hasAthleteSports ? (profile.lado ?? null) : null,
         avatarUrl: profile.avatar_url ?? null,
         bio: profile.bio ?? "",
-        estiloJogo: profile.estilo_jogo ?? "",
         disponibilidadeSemanaJson: JSON.stringify(profile.disponibilidade_semana_json ?? {}),
       }}
     />
