@@ -79,35 +79,52 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
   if (!user) redirect(`/login?next=${encodeURIComponent(eidPageHref)}`);
   const nextPath = eidPageHref;
 
-  const { data: perfil } = await supabase
-    .from("profiles")
-    .select("id, nome, username, avatar_url, foto_capa, localizacao, tempo_experiencia")
-    .eq("id", profileId)
-    .maybeSingle();
-  if (!perfil) notFound();
-
   const isVisitante = profileId !== user.id;
-  const viewerTemEidNesteEsporte =
+  const [perfilRes, ueRes, rankingRes, viewerTemEidNesteEsporte] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, nome, username, avatar_url, foto_capa, localizacao, tempo_experiencia")
+      .eq("id", profileId)
+      .maybeSingle(),
+    supabase
+      .from("usuario_eid")
+      .select(
+        "id, esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas, interesse_match, modalidade_match, modalidades_match, posicao_rank, categoria, tempo_experiencia, esportes(nome)"
+      )
+      .eq("usuario_id", profileId)
+      .eq("esporte_id", esporteId)
+      .maybeSingle(),
+    supabase
+      .from("usuario_eid")
+      .select("usuario_id, pontos_ranking, nota_eid")
+      .eq("esporte_id", esporteId)
+      .order("pontos_ranking", { ascending: false })
+      .order("nota_eid", { ascending: false }),
     isVisitante && esporteId != null
-      ? await viewerTemUsuarioEidNoEsporte(supabase, user.id, esporteId)
-      : true;
-
-  const { data: ue } = await supabase
-    .from("usuario_eid")
-    .select(
-      "id, esporte_id, nota_eid, vitorias, derrotas, pontos_ranking, partidas_jogadas, interesse_match, modalidade_match, modalidades_match, posicao_rank, categoria, tempo_experiencia, esportes(nome)"
-    )
-    .eq("usuario_id", profileId)
-    .eq("esporte_id", esporteId)
-    .maybeSingle();
-
+      ? viewerTemUsuarioEidNoEsporte(supabase, user.id, esporteId)
+      : Promise.resolve(true),
+  ]);
+  const perfil = perfilRes.data;
+  if (!perfil) notFound();
+  const ue = ueRes.data;
   if (!ue) notFound();
-  const { data: rankingRows } = await supabase
-    .from("usuario_eid")
-    .select("usuario_id, pontos_ranking, nota_eid")
+  const partidasIndividuaisPromise = supabase
+    .from("partidas")
+    .select(
+      "id, esporte_id, modalidade, jogador1_id, jogador2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro, tipo_partida, local_str, local_espaco_id, data_partida, mensagem"
+    )
     .eq("esporte_id", esporteId)
-    .order("pontos_ranking", { ascending: false })
-    .order("nota_eid", { ascending: false });
+    .or(`jogador1_id.eq.${profileId},jogador2_id.eq.${profileId}`)
+    .order("data_registro", { ascending: false })
+    .limit(120);
+  const historicoEidPromise = supabase
+    .from("historico_eid")
+    .select("nota_nova, data_registro")
+    .eq("esporte_id", esporteId)
+    .eq("entidade_id", ue.id)
+    .order("data_registro", { ascending: true })
+    .limit(80);
+  const rankingRows = rankingRes.data;
   const rankPosicaoCalculada = (() => {
     const rows = rankingRows ?? [];
     const idx = rows.findIndex((r) => String(r.usuario_id ?? "") === profileId);
@@ -131,11 +148,23 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
 
   const formationsMap = new Map<number, FormationRow>();
 
-  const { data: timesCriador } = await supabase
-    .from("times")
-    .select("id, nome, tipo, escudo, eid_time, pontos_ranking")
-    .eq("criador_id", profileId)
-    .eq("esporte_id", esporteId);
+  const [timesCriadorRes, membrosRowsRes, duplasRowsRes] = await Promise.all([
+    supabase
+      .from("times")
+      .select("id, nome, tipo, escudo, eid_time, pontos_ranking")
+      .eq("criador_id", profileId)
+      .eq("esporte_id", esporteId),
+    supabase
+      .from("membros_time")
+      .select("status, times(id, nome, tipo, escudo, eid_time, pontos_ranking, esporte_id)")
+      .eq("usuario_id", profileId),
+    supabase
+      .from("duplas")
+      .select("id, player1_id, player2_id")
+      .eq("esporte_id", esporteId)
+      .or(`player1_id.eq.${profileId},player2_id.eq.${profileId}`),
+  ]);
+  const timesCriador = timesCriadorRes.data;
 
   for (const t of timesCriador ?? []) {
     const id = Number(t.id);
@@ -150,10 +179,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
     });
   }
 
-  const { data: membrosRows } = await supabase
-    .from("membros_time")
-    .select("status, times(id, nome, tipo, escudo, eid_time, pontos_ranking, esporte_id)")
-    .eq("usuario_id", profileId);
+  const membrosRows = membrosRowsRes.data;
 
   for (const row of membrosRows ?? []) {
     if (!membroTimeAtivo(row.status)) continue;
@@ -193,48 +219,63 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
     }
   }
 
-  const { data: duplasRows } = await supabase
-    .from("duplas")
-    .select("id, player1_id, player2_id")
-    .eq("esporte_id", esporteId)
-    .or(`player1_id.eq.${profileId},player2_id.eq.${profileId}`);
+  const duplasRows = duplasRowsRes.data;
 
   const duplasSemTime: { id: number }[] = [];
 
-  for (const d of duplasRows ?? []) {
-    const p1 = d.player1_id as string;
-    const p2 = d.player2_id as string;
-    const tid = await resolverTimeIdParaDuplaRegistrada(supabase, p1, p2, esporteId);
-    const did = Number(d.id);
+  const missingTimeIds = new Set<number>();
+  const duplaToTimeId = new Map<number, number>();
+  const duplaResolved = await Promise.all(
+    (duplasRows ?? []).map(async (d) => {
+      const p1 = d.player1_id as string;
+      const p2 = d.player2_id as string;
+      const did = Number(d.id);
+      const tid = await resolverTimeIdParaDuplaRegistrada(supabase, p1, p2, esporteId);
+      return { did, tid };
+    })
+  );
+  for (const { did, tid } of duplaResolved) {
     if (tid != null) {
+      duplaToTimeId.set(did, tid);
       const ex = formationsMap.get(tid);
       if (ex) {
         if (!ex.duplaRegistroIds.includes(did)) ex.duplaRegistroIds.push(did);
         continue;
       }
-      const { data: trow } = await supabase
-        .from("times")
-        .select("id, nome, tipo, escudo, eid_time, pontos_ranking")
-        .eq("id", tid)
-        .maybeSingle();
-      if (trow) {
-        formationsMap.set(tid, {
-          id: tid,
-          nome: String(trow.nome ?? `Equipe #${tid}`),
-          tipo: trow.tipo ?? null,
-          escudo: trow.escudo ?? null,
-          eid_time: Number(trow.eid_time ?? 0),
-          pontos_ranking: Number(trow.pontos_ranking ?? 0),
-          duplaRegistroIds: [did],
-        });
-      }
+      missingTimeIds.add(tid);
     } else {
       duplasSemTime.push({ id: did });
     }
   }
 
+  if (missingTimeIds.size > 0) {
+    const { data: missingTimes } = await supabase
+      .from("times")
+      .select("id, nome, tipo, escudo, eid_time, pontos_ranking")
+      .in("id", [...missingTimeIds]);
+    for (const trow of missingTimes ?? []) {
+      const tid = Number(trow.id);
+      if (!Number.isFinite(tid)) continue;
+      formationsMap.set(tid, {
+        id: tid,
+        nome: String(trow.nome ?? `Equipe #${tid}`),
+        tipo: trow.tipo ?? null,
+        escudo: trow.escudo ?? null,
+        eid_time: Number(trow.eid_time ?? 0),
+        pontos_ranking: Number(trow.pontos_ranking ?? 0),
+        duplaRegistroIds: [],
+      });
+    }
+    for (const [did, tid] of duplaToTimeId) {
+      const row = formationsMap.get(tid);
+      if (!row) continue;
+      if (!row.duplaRegistroIds.includes(did)) row.duplaRegistroIds.push(did);
+    }
+  }
+
   const formationList = [...formationsMap.values()].sort((a, b) => b.pontos_ranking - a.pontos_ranking);
   const timeIds = formationList.map((f) => f.id);
+  const timeIdSet = new Set(timeIds);
 
   let partidasColetivoRaw: PartidaColetivaRow[] = [];
   if (timeIds.length > 0) {
@@ -265,7 +306,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
     if (t1 == null || t2 == null) continue;
     const pid = Number(p.id);
     for (const tid of [t1, t2]) {
-      if (!timeIds.includes(tid) || !formationsMap.has(tid)) continue;
+      if (!timeIdSet.has(tid) || !formationsMap.has(tid)) continue;
       const bucket = listaColetivoPorTime.get(tid)!;
       if (!bucket.some((x) => Number(x.id) === pid)) bucket.push(p);
     }
@@ -318,15 +359,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
     }
   }
 
-  const { data: partidas } = await supabase
-    .from("partidas")
-    .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, placar_1, placar_2, status, status_ranking, torneio_id, data_resultado, data_registro, tipo_partida, local_str, local_espaco_id, data_partida, mensagem"
-    )
-    .eq("esporte_id", esporteId)
-    .or(`jogador1_id.eq.${profileId},jogador2_id.eq.${profileId}`)
-    .order("data_registro", { ascending: false })
-    .limit(120);
+  const [{ data: partidas }, { data: historicoEid }] = await Promise.all([partidasIndividuaisPromise, historicoEidPromise]);
 
   const lista = (partidas ?? []).filter((p) => {
     if (p.jogador1_id !== profileId && p.jogador2_id !== profileId) return false;
@@ -393,14 +426,6 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
       }
     }
   }
-
-  const { data: historicoEid } = await supabase
-    .from("historico_eid")
-    .select("nota_nova, data_registro")
-    .eq("esporte_id", esporteId)
-    .eq("entidade_id", ue.id)
-    .order("data_registro", { ascending: true })
-    .limit(80);
 
   const notasHist = (historicoEid ?? []).map((h) => Number(h.nota_nova)).filter((n) => Number.isFinite(n));
   const eidNum = Number(ue.nota_eid ?? 0);
@@ -482,6 +507,14 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
 
   const listaIndividualPreview = lista.slice(0, INDIVIDUAL_HISTORICO_PREVIEW);
   const temMaisPartidasIndividuais = lista.length > listaIndividualPreview.length;
+  const partidasIndividuaisPorOponente = new Map<string, typeof lista>();
+  for (const p of lista) {
+    const oid = p.jogador1_id === profileId ? p.jogador2_id : p.jogador1_id;
+    if (!oid) continue;
+    const bucket = partidasIndividuaisPorOponente.get(oid) ?? [];
+    bucket.push(p);
+    partidasIndividuaisPorOponente.set(oid, bucket);
+  }
   const historicoIndividualQuery = new URLSearchParams();
   historicoIndividualQuery.set("from", eidPageHref);
   if (isEmbed) historicoIndividualQuery.set("embed", "1");
@@ -583,6 +616,20 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
     if (nh.length === 1) return [nh[0]!, eidAtual, eidAtual];
     return [eidAtual, eidAtual, eidAtual];
   };
+  const confrontosColetivosPorFormacao = new Map<number, Map<number, PartidaColetivaRow[]>>();
+  for (const f of filteredFormationList) {
+    const byOpp = new Map<number, PartidaColetivaRow[]>();
+    for (const p of listaColetivoPorTime.get(f.id) ?? []) {
+      const t1 = p.time1_id != null ? Number(p.time1_id) : null;
+      const t2 = p.time2_id != null ? Number(p.time2_id) : null;
+      const oppId = t1 === f.id ? t2 : t1;
+      if (oppId == null) continue;
+      const bucket = byOpp.get(oppId) ?? [];
+      bucket.push(p);
+      byOpp.set(oppId, bucket);
+    }
+    confrontosColetivosPorFormacao.set(f.id, byOpp);
+  }
 
   return (
       <main className={PROFILE_PUBLIC_MAIN_CLASS}>
@@ -929,12 +976,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                             if (m) return m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
                             return formacaoTipoLabel;
                           })();
-                          const confrontosMesmos = partidasForm.filter((h) => {
-                            const h1 = h.time1_id != null ? Number(h.time1_id) : null;
-                            const h2 = h.time2_id != null ? Number(h.time2_id) : null;
-                            if (h1 == null || h2 == null) return false;
-                            return (h1 === f.id && h2 === oppId) || (h2 === f.id && h1 === oppId);
-                          });
+                          const confrontosMesmos = confrontosColetivosPorFormacao.get(f.id)?.get(oppId) ?? [];
                           let saldoV = 0;
                           let saldoD = 0;
                           let saldoE = 0;
@@ -1039,10 +1081,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                     p.torneio_id != null || String(p.tipo_partida ?? "").toLowerCase() === "torneio"
                       ? "Torneio"
                       : "Ranking";
-                  const confrontosMesmos = lista.filter((h) => {
-                    const hOid = h.jogador1_id === profileId ? h.jogador2_id : h.jogador1_id;
-                    return hOid === oid;
-                  });
+                  const confrontosMesmos = partidasIndividuaisPorOponente.get(oid) ?? [];
                   let saldoV = 0;
                   let saldoD = 0;
                   let saldoE = 0;
