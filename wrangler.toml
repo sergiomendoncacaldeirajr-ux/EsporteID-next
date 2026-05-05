@@ -9,3 +9,10 @@ pages_build_output_dir = ".open-next"
 #
 # Não use `[[services]]` WORKER_SELF_REFERENCE aqui: no Cloudflare **Pages** o publish falha com
 # "references Worker … which was not found". Esse binding existe no template de **Workers** (`opennextjs-cloudflare deploy`).
+
+# `NEXT_PUBLIC_*` precisam estar em [vars] para o build Pages/OpenNext enxergar (segredos só no painel não bastam).
+# Service role, CRON, Asaas etc. continuam como Secret no Dashboard da Cloudflare — não coloque aqui.
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://mszefppevculardthqrt.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_TIxdH94fmzrKT8wJjdx0kg_Q57FYrqh"
+NEXT_PUBLIC_VAPID_PUBLIC_KEY = "BIqBwZ3McyoNuPFn2DcZA66oDdIoVGFUuuL5gXt8gWd4ovmhvWBiQcgHUkxI19Iv1Oa6h-xwNqtdY-8yPeKhG38"
