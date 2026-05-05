@@ -1,14 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import {
   removeProfileAvatarAction,
   removeProfileCoverAction,
   uploadProfileAvatarAction,
   uploadProfileCoverAction,
+  type ProfileUploadState,
 } from "@/app/perfil/actions";
-
+import { prepareAvatarForUpload, prepareCoverForUpload } from "@/lib/images/prepare-avatar-upload";
 type Props = {
   avatarUrl: string | null;
   coverUrl: string | null;
@@ -39,6 +40,57 @@ export function ProfileMediaEditor({ avatarUrl, coverUrl }: Props) {
   const coverFormRef = useRef<HTMLFormElement | null>(null);
   const coverInputRef = useRef<HTMLInputElement | null>(null);
 
+  const [coverState, coverAction] = useActionState(uploadProfileCoverAction, null as ProfileUploadState);
+  const [avatarState, avatarAction] = useActionState(uploadProfileAvatarAction, null as ProfileUploadState);
+  const [coverPrepErr, setCoverPrepErr] = useState<string | null>(null);
+  const [avatarPrepErr, setAvatarPrepErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (coverState?.ok === true) setCoverPrepErr(null);
+  }, [coverState]);
+
+  useEffect(() => {
+    if (avatarState?.ok === true) setAvatarPrepErr(null);
+  }, [avatarState]);
+
+  const coverErr =
+    coverPrepErr || (coverState && "ok" in coverState && !coverState.ok ? coverState.message : null);
+
+  const avatarErr =
+    avatarPrepErr || (avatarState && "ok" in avatarState && !avatarState.ok ? avatarState.message : null);
+
+  async function onCoverFileChange() {
+    const file = coverInputRef.current?.files?.[0];
+    if (!file) return;
+    setCoverPrepErr(null);
+    const p = await prepareCoverForUpload(file);
+    if (!p.ok) {
+      setCoverPrepErr(p.message);
+      if (coverInputRef.current) coverInputRef.current.value = "";
+      return;
+    }
+    const dt = new DataTransfer();
+    dt.items.add(p.file);
+    if (coverInputRef.current) coverInputRef.current.files = dt.files;
+    coverFormRef.current?.requestSubmit();
+  }
+
+  async function onAvatarFileChange() {
+    const file = avatarInputRef.current?.files?.[0];
+    if (!file) return;
+    setAvatarPrepErr(null);
+    const p = await prepareAvatarForUpload(file);
+    if (!p.ok) {
+      setAvatarPrepErr(p.message);
+      if (avatarInputRef.current) avatarInputRef.current.value = "";
+      return;
+    }
+    const dt = new DataTransfer();
+    dt.items.add(p.file);
+    if (avatarInputRef.current) avatarInputRef.current.files = dt.files;
+    avatarFormRef.current?.requestSubmit();
+  }
+
   return (
     <div className="grid gap-3">
       <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65 p-3">
@@ -59,15 +111,20 @@ export function ProfileMediaEditor({ avatarUrl, coverUrl }: Props) {
               </div>
             )}
           </div>
+          {coverErr ? (
+            <p className="mt-2 text-[11px] leading-snug text-amber-200" role="status">
+              {coverErr}
+            </p>
+          ) : null}
           <div className="mt-2 flex flex-wrap gap-2">
-            <form ref={coverFormRef} action={uploadProfileCoverAction}>
+            <form ref={coverFormRef} action={coverAction}>
               <input
                 ref={coverInputRef}
                 type="file"
                 name="cover_file"
                 accept="image/*"
                 className="sr-only"
-                onChange={() => coverFormRef.current?.requestSubmit()}
+                onChange={onCoverFileChange}
               />
               <button
                 type="button"
@@ -84,6 +141,9 @@ export function ProfileMediaEditor({ avatarUrl, coverUrl }: Props) {
               </form>
             ) : null}
           </div>
+          <p className="mt-1.5 text-[10px] text-eid-text-secondary">
+            Formatos comuns de galeria e câmera; a imagem é ajustada e comprimida automaticamente.
+          </p>
         </div>
       </section>
 
@@ -97,37 +157,46 @@ export function ProfileMediaEditor({ avatarUrl, coverUrl }: Props) {
               Sem foto
             </div>
           )}
-          <div className="flex flex-wrap gap-2">
-            <form ref={avatarFormRef} action={uploadProfileAvatarAction}>
-              <input
-                ref={avatarInputRef}
-                type="file"
-                name="avatar_file"
-                accept="image/*"
-                className="sr-only"
-                onChange={() => avatarFormRef.current?.requestSubmit()}
-              />
-              <button
-                type="button"
-                onClick={() => avatarInputRef.current?.click()}
-                className="inline-flex items-center gap-1 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-3 py-1.5 text-[11px] font-semibold text-[#2D58A6]"
-              >
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                  <circle cx="12" cy="13" r="3.2" />
-                  <path d="M5.5 8.5h3l1.2-1.8h4.6l1.2 1.8h3A1.5 1.5 0 0 1 20 10v7a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17v-7a1.5 1.5 0 0 1 1.5-1.5Z" />
-                </svg>
-                Trocar foto
-              </button>
-            </form>
-            {avatarUrl ? (
-              <form action={removeProfileAvatarAction}>
-                <RemoveMediaButton label="Remover" />
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
+              <form ref={avatarFormRef} action={avatarAction}>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  name="avatar_file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={onAvatarFileChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="inline-flex items-center gap-1 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-3 py-1.5 text-[11px] font-semibold text-[#2D58A6]"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <circle cx="12" cy="13" r="3.2" />
+                    <path d="M5.5 8.5h3l1.2-1.8h4.6l1.2 1.8h3A1.5 1.5 0 0 1 20 10v7a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17v-7a1.5 1.5 0 0 1 1.5-1.5Z" />
+                  </svg>
+                  Trocar foto
+                </button>
               </form>
+              {avatarUrl ? (
+                <form action={removeProfileAvatarAction}>
+                  <RemoveMediaButton label="Remover" />
+                </form>
+              ) : null}
+            </div>
+            {avatarErr ? (
+              <p className="text-[11px] leading-snug text-amber-200" role="status">
+                {avatarErr}
+              </p>
             ) : null}
+            <p className="text-[10px] text-eid-text-secondary">
+              Qualquer foto comum da galeria ou câmera; o app otimiza antes de enviar. Se der erro, escolha outra imagem ou tire uma nova.
+            </p>
           </div>
         </div>
       </section>
     </div>
   );
 }
-

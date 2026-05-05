@@ -14,6 +14,7 @@ import {
   type ProfessorObjetivoPlataforma,
   type ProfessorTipoAtuacao,
 } from "@/lib/professor/constants";
+import { prepareAvatarForUpload } from "@/lib/images/prepare-avatar-upload";
 import { normalizarPapeisContaPrincipal } from "@/lib/roles";
 
 /* ── Seletor de localização via GPS ────────────────────────────────── */
@@ -476,6 +477,8 @@ export function OnboardingWizard({
   const [fotoPosY, setFotoPosY] = useState<number>(50);
   const [fotoZoom, setFotoZoom] = useState<number>(1);
   const [fotoSelecionadaNome, setFotoSelecionadaNome] = useState<string | null>(null);
+  const [fotoPreparando, setFotoPreparando] = useState(false);
+  const [fotoErro, setFotoErro] = useState<string | null>(null);
   const didHydrateFromServerRef = useRef(false);
   const forceResetKey = `${draftKey}:force_reset`;
   const lastServerPapeisKeyRef = useRef<string | null>(null);
@@ -894,8 +897,13 @@ export function OnboardingWizard({
   function applyResult(r: OnboardingActionResult) {
     if (!r.ok) {
       setMessage(r.message);
+      const msg = r.message ?? "";
+      if (/foto|imagem|processar|enviar|capa/i.test(msg)) {
+        setFotoErro(msg);
+      }
       return;
     }
+    setFotoErro(null);
     setMessage(r.message ?? null);
     if (r.nextStep === "esportes") setStep("esportes");
     else if (r.nextStep === "extras") setStep("extras");
@@ -1143,18 +1151,47 @@ export function OnboardingWizard({
     startTransition(async () => applyResult(await salvarPerfilOnboarding(undefined, fd)));
   }
 
-  function handleFotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.currentTarget.files?.[0];
+  async function handleFotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
     if (!file) {
       if (fotoPreviewUrl) URL.revokeObjectURL(fotoPreviewUrl);
       setFotoPreviewUrl(null);
       setFotoSelecionadaNome(null);
+      setFotoErro(null);
       return;
     }
-    const nextUrl = URL.createObjectURL(file);
+
+    setFotoPreparando(true);
+    setFotoErro(null);
+    const prepared = await prepareAvatarForUpload(file);
+    setFotoPreparando(false);
+
+    if (!prepared.ok) {
+      setFotoErro(prepared.message);
+      input.value = "";
+      return;
+    }
+
+    const dt = new DataTransfer();
+    dt.items.add(prepared.file);
+    if (fotoInputRef.current) {
+      fotoInputRef.current.files = dt.files;
+    }
+    if (input !== fotoInputRef.current) {
+      input.value = "";
+    }
+    if (fotoCameraInputRef.current && input !== fotoCameraInputRef.current) {
+      fotoCameraInputRef.current.value = "";
+    }
+    if (fotoGaleriaInputRef.current && input !== fotoGaleriaInputRef.current) {
+      fotoGaleriaInputRef.current.value = "";
+    }
+
+    const nextUrl = URL.createObjectURL(prepared.file);
     if (fotoPreviewUrl) URL.revokeObjectURL(fotoPreviewUrl);
     setFotoPreviewUrl(nextUrl);
-    setFotoSelecionadaNome(file.name);
+    setFotoSelecionadaNome(prepared.file.name);
     setFotoPosX(50);
     setFotoPosY(50);
     setFotoZoom(1);
@@ -1164,6 +1201,7 @@ export function OnboardingWizard({
     if (fotoPreviewUrl) URL.revokeObjectURL(fotoPreviewUrl);
     setFotoPreviewUrl(null);
     setFotoSelecionadaNome(null);
+    setFotoErro(null);
     setFotoPosX(50);
     setFotoPosY(50);
     setFotoZoom(1);
@@ -2104,9 +2142,17 @@ export function OnboardingWizard({
                     className="hidden"
                   />
                   <input ref={fotoInputRef} type="file" name="foto" accept="image/*" onChange={handleFotoChange} className="hidden" />
+                  {fotoPreparando ? (
+                    <p className="mt-2 text-[11px] font-medium text-eid-primary-300">Ajustando a foto para o app…</p>
+                  ) : null}
+                  {fotoErro ? (
+                    <p className="mt-2 rounded-lg border border-amber-500/35 bg-amber-500/10 px-2.5 py-2 text-[11px] text-amber-100">
+                      {fotoErro}
+                    </p>
+                  ) : null}
                   {fotoSelecionadaNome ? (
                     <div className="mt-2 space-y-2">
-                      <p className="text-[11px] text-eid-text-secondary">Arquivo: {fotoSelecionadaNome}</p>
+                      <p className="text-[11px] text-eid-text-secondary">Foto pronta para envio: {fotoSelecionadaNome}</p>
                       <div className="grid gap-2 sm:grid-cols-2">
                         <label className="text-[11px] text-eid-text-secondary">
                           Posição horizontal
@@ -2153,7 +2199,8 @@ export function OnboardingWizard({
                     </div>
                   ) : null}
                   <p className="mt-1 text-[11px] text-eid-text-secondary">
-                    JPG, PNG ou WEBP, até 5MB. É necessário enviar uma foto para concluir o cadastro.
+                    Use câmera ou galeria — aceitamos os formatos comuns (incluindo HEIC do iPhone). A foto é otimizada
+                    automaticamente para um JPG leve antes do envio.
                   </p>
                 </div>
               </div>
@@ -2258,10 +2305,16 @@ export function OnboardingWizard({
 
               <button
                 type="submit"
-                disabled={pending || !perfilValid}
+                disabled={pending || !perfilValid || fotoPreparando}
                 className="eid-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50"
               >
-                {pending ? (hasFotoSelecionada ? "Enviando foto…" : "Finalizando…") : "Finalizar e entrar no painel"}
+                {fotoPreparando
+                  ? "Otimizando foto…"
+                  : pending
+                    ? hasFotoSelecionada
+                      ? "Enviando foto…"
+                      : "Finalizando…"
+                    : "Finalizar e entrar no painel"}
               </button>
             </form>
           ) : null}

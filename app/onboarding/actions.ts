@@ -22,6 +22,12 @@ import {
 import { serializarEspacoReservaConfig } from "@/lib/espacos/config";
 import { findDuplicateEspaco } from "@/lib/espacos/duplicate";
 import { slugifyEspaco } from "@/lib/espacos/slug";
+import {
+  isLikelyImageUpload,
+  MAX_RAW_IMAGE_BYTES,
+  MSG_FOTO_ENVIO_FALHOU,
+} from "@/lib/images/image-upload-helpers";
+import { normalizeAvatarBuffer } from "@/lib/images/normalize-avatar-server";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 
@@ -1147,24 +1153,34 @@ export async function salvarPerfilOnboarding(
   }
 
   if (foto instanceof File && foto.size > 0) {
-    if (!IMG_ACCEPT.has(foto.type)) {
-      return { ok: false, message: "Formato da foto inválido. Use JPG, PNG ou WEBP." };
+    if (!isLikelyImageUpload(foto)) {
+      return { ok: false, message: "Envie um arquivo de imagem (foto de perfil)." };
     }
-    if (foto.size > MAX_IMG_BYTES) {
-      return { ok: false, message: "A foto de perfil deve ter no máximo 5MB." };
-    }
-    const ext = (foto.name.split(".").pop() || "jpg").toLowerCase();
-    const path = `${user.id}/${Date.now()}.${ext}`;
-    const up = await supabase.storage.from("avatars").upload(path, foto, {
-      upsert: true,
-      contentType: foto.type || "image/jpeg",
-    });
-    if (up.error) {
-      const detail = up.error.message;
+    if (foto.size > MAX_RAW_IMAGE_BYTES) {
       return {
         ok: false,
-        message: `Não foi possível enviar a foto de perfil. ${detail ? `(${detail})` : "Tente novamente em instantes."}`,
+        message: "Esta foto está muito pesada para enviar. Escolha outra imagem ou reduza o tamanho no celular.",
       };
+    }
+    let jpegBuf: Buffer;
+    try {
+      jpegBuf = await normalizeAvatarBuffer(Buffer.from(await foto.arrayBuffer()));
+    } catch {
+      return { ok: false, message: MSG_FOTO_ENVIO_FALHOU };
+    }
+    if (jpegBuf.length > MAX_IMG_BYTES) {
+      return {
+        ok: false,
+        message: "A foto continua grande demais após otimizar. Tente uma imagem com resolução menor.",
+      };
+    }
+    const path = `${user.id}/${Date.now()}.jpg`;
+    const up = await supabase.storage.from("avatars").upload(path, jpegBuf, {
+      upsert: true,
+      contentType: "image/jpeg",
+    });
+    if (up.error) {
+      return { ok: false, message: MSG_FOTO_ENVIO_FALHOU };
     }
     avatarUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
   }

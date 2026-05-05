@@ -1,7 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { removeProfileAvatarAction, uploadProfileAvatarAction } from "@/app/perfil/actions";
+import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  removeProfileAvatarAction,
+  uploadProfileAvatarAction,
+  type ProfileUploadState,
+} from "@/app/perfil/actions";
+import { prepareAvatarForUpload } from "@/lib/images/prepare-avatar-upload";
 import { EidCancelAction } from "@/components/ui/eid-cancel-action";
 
 type Props = {
@@ -17,8 +22,18 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string>("");
   const [zoom, setZoom] = useState(1.2);
+  const [prepErr, setPrepErr] = useState<string | null>(null);
+  const [uploadState, uploadAction] = useActionState(uploadProfileAvatarAction, null as ProfileUploadState);
+
+  const serverErr = uploadState && "ok" in uploadState && !uploadState.ok ? uploadState.message : null;
+  const feedbackErr = prepErr || serverErr;
+
+  useEffect(() => {
+    if (uploadState?.ok === true) setPrepErr(null);
+  }, [uploadState]);
 
   function onClick() {
+    setPrepErr(null);
     if (!hasAvatar) {
       pickerRef.current?.click();
       return;
@@ -34,13 +49,24 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
     }
   }
 
-  function onFileChange() {
-    const file = pickerRef.current?.files?.[0];
-    if (!file) return;
-    const next = URL.createObjectURL(file);
+  async function onFileChange() {
+    const raw = pickerRef.current?.files?.[0];
+    if (!raw) return;
+    setPrepErr(null);
+    const p = await prepareAvatarForUpload(raw);
+    if (!p.ok) {
+      setPrepErr(p.message);
+      if (pickerRef.current) pickerRef.current.value = "";
+      return;
+    }
+    const dt = new DataTransfer();
+    dt.items.add(p.file);
+    if (pickerRef.current) pickerRef.current.files = dt.files;
+
+    const next = URL.createObjectURL(p.file);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(next);
-    setSelectedFileName(file.name);
+    setSelectedFileName(p.file.name);
     setZoom(1.2);
     setEditorOpen(true);
   }
@@ -54,8 +80,7 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
   }
 
   async function confirmCropAndUpload() {
-    const file = pickerRef.current?.files?.[0];
-    if (!file || !previewUrl || !uploadInputRef.current) return;
+    if (!previewUrl || !uploadInputRef.current) return;
 
     const image = await loadImage(previewUrl);
     const minSide = Math.min(image.naturalWidth, image.naturalHeight);
@@ -81,28 +106,32 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
 
   return (
     <>
-      <form ref={uploadFormRef} action={uploadProfileAvatarAction}>
-        <input
-          ref={uploadInputRef}
-          type="file"
-          name="avatar_file"
-          accept="image/*"
-          className="sr-only"
-        />
+      <form ref={uploadFormRef} action={uploadAction}>
+        <input ref={uploadInputRef} type="file" name="avatar_file" accept="image/jpeg" className="sr-only" />
       </form>
       <form ref={removeFormRef} action={removeProfileAvatarAction} />
       <input ref={pickerRef} type="file" accept="image/*" className="sr-only" onChange={onFileChange} />
-      <button
-        type="button"
-        onClick={onClick}
-        className="absolute -bottom-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/92 text-eid-text-secondary transition-colors hover:text-eid-fg"
-        aria-label="Editar foto de perfil"
-        title="Editar foto de perfil"
-      >
-        <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3" aria-hidden>
-          <path d="M2.5 4A1.5 1.5 0 0 1 4 2.5h1.124a1 1 0 0 0 .8-.4l.352-.47A1.5 1.5 0 0 1 7.476 1h1.048a1.5 1.5 0 0 1 1.2.63l.352.47a1 1 0 0 0 .8.4H12A1.5 1.5 0 0 1 13.5 4v8A1.5 1.5 0 0 1 12 13.5H4A1.5 1.5 0 0 1 2.5 12V4Zm5.5 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-        </svg>
-      </button>
+      <div className="absolute -bottom-1 -right-1 z-[5]">
+        <button
+          type="button"
+          onClick={onClick}
+          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/92 text-eid-text-secondary transition-colors hover:text-eid-fg"
+          aria-label="Editar foto de perfil"
+          title="Editar foto de perfil"
+        >
+          <svg viewBox="0 0 16 16" fill="currentColor" className="h-3 w-3" aria-hidden>
+            <path d="M2.5 4A1.5 1.5 0 0 1 4 2.5h1.124a1 1 0 0 0 .8-.4l.352-.47A1.5 1.5 0 0 1 7.476 1h1.048a1.5 1.5 0 0 1 1.2.63l.352.47a1 1 0 0 0 .8.4H12A1.5 1.5 0 0 1 13.5 4v8A1.5 1.5 0 0 1 12 13.5H4A1.5 1.5 0 0 1 2.5 12V4Zm5.5 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+          </svg>
+        </button>
+        {feedbackErr ? (
+          <p
+            className="absolute left-1/2 top-full z-[60] mt-1 w-max max-w-[min(14rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg border border-amber-500/35 bg-amber-500/15 px-2 py-1.5 text-center text-[9px] leading-snug text-amber-100 shadow-lg sm:text-[10px]"
+            role="status"
+          >
+            {feedbackErr}
+          </p>
+        ) : null}
+      </div>
       {editorOpen && previewUrl ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 px-4">
           <div className="w-full max-w-xs rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 shadow-xl">
@@ -134,7 +163,7 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
               <EidCancelAction type="button" compact className="rounded-lg" onClick={closeEditor} />
               <button
                 type="button"
-                onClick={confirmCropAndUpload}
+                onClick={() => void confirmCropAndUpload()}
                 className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/12 px-2 py-1 text-[10px] font-semibold text-eid-fg"
               >
                 Salvar foto
@@ -155,4 +184,3 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.src = src;
   });
 }
-
