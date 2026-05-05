@@ -180,18 +180,17 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
 
   const abrirPainel = () => {
     setAberto(true);
-    const list = aba === "ajuda" ? faqAjuda : aba === "perfil" ? faqPerfil : [];
-    setFaqAbertoId(list[0]?.id ?? null);
+    setFaqAbertoId(null);
   };
 
   const irAjuda = () => {
     setAba("ajuda");
-    setFaqAbertoId(faqAjuda[0]?.id ?? null);
+    setFaqAbertoId(null);
   };
 
   const irPerfil = () => {
     setAba("perfil");
-    setFaqAbertoId(faqPerfil[0]?.id ?? null);
+    setFaqAbertoId(null);
   };
 
   const irChamado = () => {
