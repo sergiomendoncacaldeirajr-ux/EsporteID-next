@@ -26,7 +26,7 @@ export function ProfileMediaEditor({ avatarUrl, coverUrl }: Props) {
             ) : null}
           </div>
           <p className="mt-1.5 text-[10px] text-eid-text-secondary">
-            Modal completo com adicionar, editar posicionamento, salvar e remover.
+            Toque em "Editar ou remover" para trocar, ajustar ou remover sua capa.
           </p>
         </div>
       </section>
@@ -46,7 +46,7 @@ export function ProfileMediaEditor({ avatarUrl, coverUrl }: Props) {
               <ProfileAvatarControl hasAvatar={Boolean(avatarUrl)} />
             </div>
             <p className="text-[10px] text-eid-text-secondary">
-              Mesmo fluxo completo com adicionar/editar/remover e animacoes.
+              Toque no icone da camera para trocar, ajustar ou remover sua foto.
             </p>
           </div>
         </div>

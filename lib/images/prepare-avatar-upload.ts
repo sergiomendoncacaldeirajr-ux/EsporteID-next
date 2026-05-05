@@ -109,3 +109,8 @@ export async function prepareAvatarForUpload(file: File): Promise<PrepareImageRe
 export async function prepareCoverForUpload(file: File): Promise<PrepareImageResult> {
   return prepareImageForUpload(file, { maxEdge: 2400, outFileName: "cover.jpg", jpegQuality: 0.86 });
 }
+
+/** Escudo de time/dupla — quadrado, otimizado para upload e edição em modal. */
+export async function prepareTeamShieldForUpload(file: File): Promise<PrepareImageResult> {
+  return prepareImageForUpload(file, { maxEdge: 1600, outFileName: "escudo.jpg", jpegQuality: 0.88 });
+}

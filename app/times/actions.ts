@@ -383,6 +383,7 @@ export async function atualizarMinhaEquipe(
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
   const username = usernameRaw ? usernameRaw.replace(/[^a-z0-9_]/g, "") : null;
   const bio = String(formData.get("bio") ?? "").trim();
+  const escudoRemove = String(formData.get("escudo_remove") ?? "").trim() === "1";
   let escudoFinal = String(owned.escudo ?? "").trim() || null;
 
   const escudoFile = formData.get("escudo_file");
@@ -414,6 +415,8 @@ export async function atualizarMinhaEquipe(
       };
     }
     escudoFinal = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+  } else if (escudoRemove) {
+    escudoFinal = null;
   }
 
   const nivel_procurado = String(formData.get("nivel_procurado") ?? "").trim() || null;

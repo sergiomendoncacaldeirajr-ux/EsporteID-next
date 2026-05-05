@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect } from "react";
 import { atualizarMinhaEquipe, type TeamActionState } from "@/app/times/actions";
+import { TeamShieldControl } from "@/components/perfil/team-shield-control";
 
 const initial: TeamActionState = { ok: false, message: "" };
 
@@ -34,24 +35,11 @@ export function PerfilTimeEditForm({
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(atualizarMinhaEquipe, initial);
-  const [escudoPreview, setEscudoPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (!state.ok) return;
-    setEscudoPreview((prev) => {
-      if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
-      return null;
-    });
     router.refresh();
   }, [state.ok, router]);
-
-  useEffect(() => {
-    return () => {
-      if (escudoPreview?.startsWith("blob:")) URL.revokeObjectURL(escudoPreview);
-    };
-  }, [escudoPreview]);
-
-  const escudoDisplay = escudoPreview ?? (escudo?.trim() ? escudo : null);
   const isPage = variant === "page";
 
   const blocoAjuda = (
@@ -131,32 +119,7 @@ export function PerfilTimeEditForm({
           <p className="mt-1 text-[10px] text-eid-text-secondary">
             Troque a imagem do escudo quando quiser (JPG, PNG, WEBP ou HEIC, até 5MB). Se não escolher arquivo novo, mantém o atual.
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
-            {escudoDisplay ? (
-              <img
-                src={escudoDisplay}
-                alt="Pré-visualização do escudo"
-                className="h-16 w-16 rounded-lg border border-[color:var(--eid-border-subtle)] object-cover"
-              />
-            ) : (
-              <span className="inline-flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/50 text-[10px] text-eid-text-secondary">
-                Sem foto
-              </span>
-            )}
-            <input
-              type="file"
-              name="escudo_file"
-              accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
-              className="min-w-0 flex-1 text-[11px] text-eid-text-secondary file:mr-2 file:rounded-lg file:border file:border-[color:var(--eid-border-subtle)] file:bg-eid-surface/70 file:px-2.5 file:py-1 file:text-[10px] file:font-semibold file:text-eid-fg"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                setEscudoPreview((prev) => {
-                  if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
-                  return f ? URL.createObjectURL(f) : null;
-                });
-              }}
-            />
-          </div>
+          <TeamShieldControl currentUrl={escudo ?? null} />
         </div>
         <div className="sm:col-span-2">
           <p className={`${isPage ? "inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg" : "text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary"}`}>
