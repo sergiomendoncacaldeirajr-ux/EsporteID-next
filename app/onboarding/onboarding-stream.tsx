@@ -62,7 +62,7 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
   const { data: professorEsportesRows } = professorContaDedicada
     ? await supabase
         .from("professor_esportes")
-        .select("esporte_id, modo_atuacao, objetivo_plataforma, tipo_atuacao, tempo_experiencia")
+        .select("esporte_id, modo_atuacao, objetivo_plataforma, tipo_atuacao")
         .eq("professor_id", viewerId)
         .eq("ativo", true)
     : { data: [] };
@@ -80,7 +80,6 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
   const selectedSportModes: Record<number, ProfessorModoEsportivo> = {};
   const selectedProfessorObjetivos: Record<number, ProfessorObjetivoPlataforma> = {};
   const selectedProfessorTipos: Record<number, ProfessorTipoAtuacao[]> = {};
-  const selectedProfessorExp: Record<number, string> = {};
   const selectedEsportesSet = new Set<number>(selectedEsportes);
 
   for (const row of professorEsportesRows ?? []) {
@@ -103,9 +102,6 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
             ["aulas", "treinamento", "consultoria"].includes(item)
           )
       : ["aulas"];
-    if (row.tempo_experiencia) {
-      selectedProfessorExp[esporteId] = String(row.tempo_experiencia);
-    }
   }
 
   for (const esporteId of selectedEsportes) {
@@ -280,7 +276,6 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
         estiloJogo: profile.estilo_jogo ?? "",
         disponibilidadeSemanaJson: JSON.stringify(profile.disponibilidade_semana_json ?? {}),
       }}
-      selectedProfessorExp={selectedProfessorExp}
     />
   );
 }

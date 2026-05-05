@@ -42,10 +42,22 @@ export function isSupportChamadoArea(v: string): v is SupportChamadoArea {
   return AREA_SET.has(v);
 }
 
+/** Ícone decorativo no painel de ajuda (mapeado em `support-center-float`). */
+export type SupportFaqIconKey =
+  | "ranking"
+  | "challenge"
+  | "friendly"
+  | "team"
+  | "venue"
+  | "solo"
+  | "sport"
+  | "captain";
+
 export type SupportFaqItem = {
   id: string;
   pergunta: string;
   resposta: string;
+  icone: SupportFaqIconKey;
   /** Se algum destes módulos estiver em `em_breve` na config global, o item some da ajuda (só produção). */
   ocultarSeModulosEmBreve?: SystemFeatureKey[];
 };
@@ -64,33 +76,38 @@ export function supportFaqVisivelEmProducao(
 export const SUPPORT_FAQ_ITEMS: SupportFaqItem[] = [
   {
     id: "ranking-sem-posicao",
-    pergunta: "Não consigo ver o ranking ou apareço sem posição",
+    icone: "ranking",
+    pergunta: "Por que não apareço no ranking ou minha posição não bate?",
     resposta:
-      "Confira se o esporte está selecionado no filtro, se o gênero do ranking bate com o do seu perfil e se você já tem EID cadastrado naquele esporte. Partidas ainda não validadas podem demorar a refletir.",
+      "Na maioria das vezes é só conferir três coisas: o esporte que você está vendo na tela é o mesmo do seu cadastro; o ranking masculino/feminino combina com o que está no seu perfil; e você já tem histórico válido naquele esporte (as partidas precisam estar registradas e confirmadas — enquanto o resultado ainda está em análise, a lista pode demorar um pouquinho para atualizar). Troque o esporte no filtro ou no seu perfil se quiser ver outro contexto.",
   },
   {
     id: "desafio-travado",
-    pergunta: "Desafio não aparece ou está travado",
+    icone: "challenge",
+    pergunta: "Meu desafio sumiu, travou ou não consigo continuar — o que faço?",
     resposta:
-      "Veja na Agenda se há pendência de aceite ou placar. Em dupla/time, só o líder pode certas ações. Se houver carência de ranking, o sistema pode bloquear novo desafio contra o mesmo adversário.",
+      "Abra a Agenda: costuma ter algo esperando — um aceite, um placar para registrar ou confirmar. Se você joga em dupla ou em time, quem organiza a dupla ou o capitão é quem fecha algumas etapas; se você não é essa pessoa, pode ser normal não ver o botão. Também existe regra de tempo mínimo entre um jogo e outro com o mesmo adversário: se acabou de jogar com a pessoa, pode ser preciso esperar um pouco antes de desafiar de novo.",
   },
   {
     id: "amistoso-radar",
-    pergunta: "Modo amistoso ou radar sem sugestões",
+    icone: "friendly",
+    pergunta: "Ativei o jeito “amistoso” mas não aparece ninguém — por quê?",
     resposta:
-      "O amistoso usa janela de disponibilidade e filtros de perfil. Ative o modo amistoso no seu perfil, confira localização/coordenadas e se o esporte permite desafio individual.",
+      "Esse modo junta pessoas com perfil e horários parecidos com os seus. Vale checar se o amistoso está ligado no seu perfil, se a localização ou cidade estão certas, e se você marcou quando costuma jogar. Em alguns esportes o pareamento é só no modelo individual — se o seu cadastro for outro formato, as sugestões podem ficar vazias.",
   },
   {
     id: "vagas-time",
-    pergunta: "Não encontro vaga ou convite de time",
+    icone: "team",
+    pergunta: "Não acho vaga no time ou não recebo convite",
     resposta:
-      "Vagas dependem do esporte da formação e do que o capitão publicou. Confirme se você está no papel certo (atleta) e se o time está ativo naquele esporte.",
+      "Vagas e convites dependem do que o time publicou e do esporte da formação. Confira se você entrou como atleta na conta certa e se o time ainda está ativo naquele esporte. Se o capitão não abriu vaga ou o elenco já está fechado, a lista pode ficar sem opções — nesse caso o caminho é falar com quem administra o time.",
   },
   {
     id: "reserva-espaco",
-    pergunta: "Problema com reserva ou espaço",
+    icone: "venue",
+    pergunta: "Trouxe problema ao reservar quadra ou espaço",
     resposta:
-      "Verifique se o espaço aceita reserva, horários disponíveis e se há bloqueio administrativo. Em dúvida sobre pagamento, use o histórico na sua conta.",
+      "Veja se o local aceita reserva pelo app, se o horário ainda está livre e se não há bloqueio ou manutenção. Se envolver pagamento, use o histórico na sua conta para acompanhar. Se nada disso bater com o que você vê na tela, use a aba Chamado — a gente olha com você.",
     ocultarSeModulosEmBreve: ["locais"],
   },
 ];
@@ -99,20 +116,23 @@ export const SUPPORT_FAQ_ITEMS: SupportFaqItem[] = [
 export const SUPPORT_PERFIL_FORMACOES_FAQ: SupportFaqItem[] = [
   {
     id: "perfil-individual-dupla-time",
-    pergunta: "Qual a diferença entre perfil individual, dupla e time?",
+    icone: "solo",
+    pergunta: "Individual, dupla e time — o que muda no dia a dia?",
     resposta:
-      "Individual é só você no ranking e nos desafios daquele esporte. Dupla reune dois atletas com ranking/EID próprios, com um líder da dupla para aceites e gestão. Time é a formação em elenco (vários jogadores), com capitão/líder definido pelo time — convites, vagas e parte da agenda seguem as regras do time.",
+      "No individual é só você: ranking e desafios contam só a sua participação naquele esporte. Na dupla são dois atletas com histórico próprio, e uma das pessoas vira referência para aceitar desafio e organizar a dupla. No time entram vários jogadores, com capitão (ou quem o time definiu) cuidando de convites, vagas e parte da rotina — por isso alguns botões só aparecem para quem tem esse papel.",
   },
   {
     id: "perfil-esporte-eid",
-    pergunta: "Como funciona esporte principal e EID no perfil?",
+    icone: "sport",
+    pergunta: "Tenho mais de um esporte — como leio ranking e “meu número” no esporte?",
     resposta:
-      "Você pode ter vários esportes no perfil; o filtro e o ranking usam o esporte selecionado. O EID é o índice daquele esporte — precisa estar cadastrado e com partidas válidas para posição estável. Troque o esporte no perfil ou no seletor do ranking quando quiser ver outro contexto.",
+      "Você pode cadastrar vários esportes no perfil. O ranking e as telas seguem o esporte que estiver selecionado no momento (no filtro ou no seu perfil). O número do esporte é o seu desempenho naquele esporte específico: quanto mais jogos válidos e consistentes, mais estável fica a posição. Quer ver outro esporte? É só trocar a seleção — cada um tem histórico separado.",
   },
   {
     id: "perfil-lider-dupla-time",
-    pergunta: "Quem é o “líder” na dupla ou no time?",
+    icone: "captain",
+    pergunta: "Quem manda na dupla e no time? Por que não vejo um botão?",
     resposta:
-      "Na dupla, o líder é quem assume aceite de desafios, certas confirmações e gestão da dupla. No time, o capitão (ou papel equivalente definido pelo time) concentra convites, elenco e publicação de vagas. Se algo “não aparece” para você, confira se a ação é só do líder.",
+      "Na dupla, quem “lidera” é quem aceita desafio e fecha algumas confirmações por vocês dois. No time, quem organiza convites, elenco e vagas costuma ser o capitão ou o papel que o time definiu. Se um botão não aparece para você, pode ser porque só quem tem esse papel pode usar — vale combinar com a outra pessoa da dupla ou com o capitão.",
   },
 ];

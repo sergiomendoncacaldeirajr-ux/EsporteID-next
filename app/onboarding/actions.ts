@@ -284,13 +284,6 @@ export async function salvarEsportesOnboarding(
   for (const esporteId of finalIds) {
     const meta = esporteMetaMap.get(esporteId);
     if (!meta) return { ok: false, message: "Esporte inválido." };
-    const tempoExp = tempoExperienciaLabel(expPorEsporte.get(esporteId));
-    if (!tempoExp) {
-      return {
-        ok: false,
-        message: `Em “${meta.nome}”, informe o tempo de prática (aproximado ou mês/ano).`,
-      };
-    }
 
     const modoEsporte: ProfessorModoEsportivo = hasProfessor
       ? "professor"

@@ -1,6 +1,20 @@
 "use client";
 
-import { Headset, X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  Bot,
+  Crown,
+  Headset,
+  HeartHandshake,
+  MapPin,
+  Medal,
+  Sparkles,
+  Swords,
+  Trophy,
+  User,
+  Users,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
@@ -10,9 +24,21 @@ import {
   SUPPORT_FAQ_ITEMS,
   SUPPORT_PERFIL_FORMACOES_FAQ,
   supportFaqVisivelEmProducao,
+  type SupportFaqIconKey,
   type SupportFaqItem,
 } from "@/lib/support/support-areas";
 import type { SystemFeatureKey } from "@/lib/system-features";
+
+const FAQ_ICON_MAP: Record<SupportFaqIconKey, LucideIcon> = {
+  ranking: Trophy,
+  challenge: Swords,
+  friendly: HeartHandshake,
+  team: Users,
+  venue: MapPin,
+  solo: User,
+  sport: Medal,
+  captain: Crown,
+};
 
 const initialSubmit: SupportChamadoSubmitState = { ok: false, message: "" };
 
@@ -21,42 +47,92 @@ function pathOcultaSuporte(pathname: string): boolean {
   return p.startsWith("/admin") || p.startsWith("/api/");
 }
 
-function renderFaqAccordion(
+function renderFaqCards(
   items: SupportFaqItem[],
   faqAbertoId: string | null,
   setFaqAbertoId: (id: string | null) => void
 ) {
   if (!items.length) {
     return (
-      <p className="text-[11px] leading-snug text-eid-text-secondary">
-        Nada listado aqui no momento — use <strong>Abrir chamado</strong> se precisar da equipe.
-      </p>
+      <div className="rounded-2xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/30 px-3 py-4 text-center">
+        <p className="text-[12px] leading-relaxed text-eid-text-secondary">
+          Ainda não temos perguntas prontas para esse momento.{" "}
+          <strong className="text-eid-fg">Fale com a gente</strong> na aba Chamado — respondemos pelo WhatsApp do seu
+          cadastro.
+        </p>
+      </div>
     );
   }
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-2.5">
       {items.map((item) => {
         const open = faqAbertoId === item.id;
+        const Icon = FAQ_ICON_MAP[item.icone] ?? Sparkles;
         return (
-          <li key={item.id} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-bg/40">
+          <li
+            key={item.id}
+            className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-gradient-to-br from-eid-surface/90 to-eid-bg/50 shadow-sm shadow-black/5"
+          >
             <button
               type="button"
-              className="flex w-full items-start justify-between gap-2 px-2.5 py-2 text-left text-xs font-semibold text-eid-fg"
+              className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition hover:bg-eid-primary-500/5"
               aria-expanded={open}
               onClick={() => setFaqAbertoId(open ? null : item.id)}
             >
-              <span>{item.pergunta}</span>
-              <span className="shrink-0 text-[10px] text-eid-text-secondary">{open ? "−" : "+"}</span>
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/15 text-eid-primary-300"
+                aria-hidden
+              >
+                <Icon className="h-[1.1rem] w-[1.1rem]" strokeWidth={2.25} />
+              </span>
+              <span className="min-w-0 flex-1 pt-0.5 text-[12px] font-semibold leading-snug text-eid-fg">
+                {item.pergunta}
+              </span>
+              <span className="shrink-0 pt-1 text-[11px] font-bold text-eid-primary-400/90">{open ? "▴" : "▾"}</span>
             </button>
             {open ? (
-              <p className="border-t border-[color:var(--eid-border-subtle)]/60 px-2.5 pb-2.5 pt-1.5 text-[11px] leading-relaxed text-eid-text-secondary">
-                {item.resposta}
-              </p>
+              <div className="border-t border-[color:var(--eid-border-subtle)]/70 bg-eid-bg/25 px-3 pb-3 pt-2">
+                <p className="text-[11.5px] leading-[1.65] text-eid-text-secondary [&_strong]:font-semibold [&_strong]:text-eid-fg/95">
+                  {item.resposta}
+                </p>
+              </div>
             ) : null}
           </li>
         );
       })}
     </ul>
+  );
+}
+
+function FaqAssistantIntro({
+  titulo,
+  subtitulo,
+  emoji,
+}: {
+  titulo: string;
+  subtitulo: string;
+  emoji: string;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-eid-primary-500/25 bg-gradient-to-br from-eid-primary-500/15 via-eid-surface/40 to-transparent px-3 py-3">
+      <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-eid-primary-500/10 blur-2xl" />
+      <div className="relative flex gap-2.5">
+        <span
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-eid-primary-500/30 bg-eid-card text-xl shadow-inner"
+          aria-hidden
+        >
+          {emoji}
+        </span>
+        <div className="min-w-0 pt-0.5">
+          <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-eid-primary-300">
+            <Bot className="h-3.5 w-3.5" aria-hidden />
+            Assistente
+          </p>
+          <p className="mt-0.5 text-[13px] font-bold leading-snug text-eid-fg">{titulo}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">{subtitulo}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -157,10 +233,20 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
             aria-labelledby="eid-support-title"
             className="pointer-events-auto flex max-h-[min(72svh,32rem)] w-[min(100vw-1.5rem,22rem)] flex-col overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl md:max-h-[min(78svh,38rem)] md:w-[24rem]"
           >
-            <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-3 py-2.5">
-              <h2 id="eid-support-title" className="text-sm font-bold text-eid-fg">
-                Suporte EsporteID
-              </h2>
+            <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-gradient-to-r from-eid-surface/80 via-eid-surface/60 to-eid-primary-500/5 px-3 py-2.5">
+              <div className="min-w-0">
+                <h2 id="eid-support-title" className="flex items-center gap-2 text-sm font-bold text-eid-fg">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/15 text-eid-primary-300">
+                    <Bot className="h-4 w-4" aria-hidden />
+                  </span>
+                  <span className="leading-tight">
+                    Ajuda EsporteID
+                    <span className="mt-0.5 block text-[10px] font-normal text-eid-text-secondary">
+                      Perguntas prontas + chamado para a equipe
+                    </span>
+                  </span>
+                </h2>
+              </div>
               <button
                 type="button"
                 aria-label="Fechar"
@@ -204,32 +290,36 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3">
               {aba === "ajuda" ? (
                 <div className="space-y-3">
-                  <p className="text-[11px] leading-snug text-eid-text-secondary">
-                    Dúvidas frequentes do que está no ar. Itens de módulos ainda em <strong>Em breve</strong> não aparecem
-                    aqui. Se precisar, use <strong>Chamado</strong> — enviamos para a equipe com o WhatsApp do seu perfil.
-                  </p>
-                  {renderFaqAccordion(faqAjuda, faqAbertoId, setFaqAbertoId)}
+                  <FaqAssistantIntro
+                    emoji="💡"
+                    titulo="Respostas rápidas, sem complicação"
+                    subtitulo="Toque em cada card para ver a explicação. Se ainda ficar dúvida, a equipe te ajuda pelo WhatsApp na aba Chamado."
+                  />
+                  {renderFaqCards(faqAjuda, faqAbertoId, setFaqAbertoId)}
                   <button
                     type="button"
                     onClick={irChamado}
-                    className="mt-1 w-full rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/15 py-2.5 text-xs font-bold text-eid-fg"
+                    className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl border border-eid-primary-500/45 bg-gradient-to-r from-eid-primary-500/20 to-eid-primary-500/10 py-3 text-xs font-bold text-eid-fg shadow-sm transition hover:border-eid-primary-500/60 hover:from-eid-primary-500/25"
                   >
-                    Não resolveu — abrir chamado
+                    <Sparkles className="h-3.5 w-3.5 text-eid-primary-300" aria-hidden />
+                    Ainda com dúvida — falar com a equipe
                   </button>
                 </div>
               ) : aba === "perfil" ? (
                 <div className="space-y-3">
-                  <p className="text-[11px] leading-snug text-eid-text-secondary">
-                    Perfil <strong>individual</strong>, <strong>dupla</strong> e <strong>time</strong>: como se encaixam no
-                    ranking e quem manda em cada formação.
-                  </p>
-                  {renderFaqAccordion(faqPerfil, faqAbertoId, setFaqAbertoId)}
+                  <FaqAssistantIntro
+                    emoji="👥"
+                    titulo="Perfil, dupla e time — em linguagem simples"
+                    subtitulo="Entenda como cada modo funciona no dia a dia: ranking, desafios e quem pode clicar em cada coisa."
+                  />
+                  {renderFaqCards(faqPerfil, faqAbertoId, setFaqAbertoId)}
                   <button
                     type="button"
                     onClick={irChamado}
-                    className="mt-1 w-full rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/15 py-2.5 text-xs font-bold text-eid-fg"
+                    className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl border border-eid-primary-500/45 bg-gradient-to-r from-eid-primary-500/20 to-eid-primary-500/10 py-3 text-xs font-bold text-eid-fg shadow-sm transition hover:border-eid-primary-500/60 hover:from-eid-primary-500/25"
                   >
-                    Não resolveu — abrir chamado
+                    <Sparkles className="h-3.5 w-3.5 text-eid-primary-300" aria-hidden />
+                    Ainda com dúvida — falar com a equipe
                   </button>
                 </div>
               ) : (
