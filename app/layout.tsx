@@ -98,9 +98,6 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-/* Vercel: mantém a execução server-side preferencialmente no Brasil (São Paulo). */
-export const preferredRegion = ["gru1"];
-
 export default async function RootLayout({
   children,
 }: Readonly<{
