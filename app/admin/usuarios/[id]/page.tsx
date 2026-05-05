@@ -31,6 +31,10 @@ const USUARIO_ADMIN_FLASH: Record<string, { className: string; text: string }> =
   usuario_perfil_ok: { className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-100", text: "Perfil atualizado com sucesso." },
   usuario_perfil_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "Falha ao salvar o perfil (exceção)." },
   usuario_perfil_db_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "O banco recusou a atualização do perfil (username duplicado ou dado inválido)." },
+  usuario_perfil_genero_invalido: {
+    className: "border-amber-500/40 bg-amber-500/10 text-amber-100",
+    text: "Gênero inválido. Use Masculino, Feminino, Outro ou deixe em branco.",
+  },
   usuario_perfil_sem_id: { className: "border-amber-500/40 bg-amber-500/10 text-amber-100", text: "Requisição inválida: falta user_id." },
   usuario_eid_ok: { className: "border-emerald-500/40 bg-emerald-500/10 text-emerald-100", text: "Linha EID salva com sucesso." },
   usuario_eid_erro: { className: "border-red-500/40 bg-red-500/10 text-red-100", text: "Falha ao salvar a linha EID (exceção)." },
@@ -218,11 +222,24 @@ export default async function AdminUsuarioDetalhePage({ params, searchParams }: 
           </label>
           <label className="grid gap-1">
             <span className="text-[10px] font-bold uppercase text-eid-text-secondary">Gênero</span>
-            <input
+            <select
               name="genero"
-              defaultValue={p.genero ?? ""}
+              defaultValue={
+                p.genero && ["Masculino", "Feminino", "Outro"].includes(p.genero) ? p.genero : ""
+              }
               className="eid-input-dark h-9 rounded-lg px-2 text-sm text-eid-fg"
-            />
+            >
+              <option value="">Não informado (corrija cadastros legados)</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Feminino">Feminino</option>
+              <option value="Outro">Outro</option>
+            </select>
+            {p.genero && !["Masculino", "Feminino", "Outro"].includes(p.genero) ? (
+              <span className="text-[10px] text-amber-200/90">
+                Valor atual no banco: <code className="font-mono">{p.genero}</code> — escolha uma opção e salve para
+                normalizar.
+              </span>
+            ) : null}
           </label>
           <label className="grid gap-1">
             <span className="text-[10px] font-bold uppercase text-eid-text-secondary">Nascimento (AAAA-MM-DD)</span>

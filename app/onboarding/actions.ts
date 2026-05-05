@@ -1064,7 +1064,9 @@ export async function salvarPerfilOnboarding(
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
   const username = usernameRaw ? usernameRaw.replace(/[^a-z0-9_]/g, "") : null;
   const localizacao = String(formData.get("localizacao") ?? "").trim();
-  const genero = String(formData.get("genero") ?? "").trim();
+  /** Só altera gênero no perfil quando o formulário envia o campo (ex.: conta/perfil). O passo final do onboarding não inclui `genero`; antes isso zerava o valor vindo do cadastro. */
+  const hasGeneroField = formData.has("genero");
+  const genero = hasGeneroField ? String(formData.get("genero") ?? "").trim() : "";
   const bio = String(formData.get("bio") ?? "").trim();
   const disponibilidadeRaw = String(formData.get("disponibilidade_semana_json") ?? "").trim();
   const alturaRaw = String(formData.get("altura_cm") ?? "").trim();
@@ -1079,7 +1081,7 @@ export async function salvarPerfilOnboarding(
     };
   }
   if (!localizacao) return { ok: false, message: "Informe cidade e estado." };
-  if (genero && !["Masculino", "Feminino", "Outro"].includes(genero)) {
+  if (hasGeneroField && genero && !["Masculino", "Feminino", "Outro"].includes(genero)) {
     return { ok: false, message: "Selecione um gênero válido ou deixe em branco." };
   }
   let disponibilidadeSemana: Record<string, unknown> | null = null;
@@ -1198,7 +1200,7 @@ export async function salvarPerfilOnboarding(
       nome,
       username,
       localizacao,
-      genero: genero || null,
+      ...(hasGeneroField ? { genero: genero || null } : {}),
       bio: bio || null,
       disponibilidade_semana_json: disponibilidadeSemana,
       altura_cm:

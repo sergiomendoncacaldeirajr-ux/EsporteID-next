@@ -1,9 +1,20 @@
 import Link from "next/link";
 import { SearchSuggestGetForm } from "@/components/search/search-suggest-get-form";
-import { searchProfilesForAdmin, sanitizeAdminUserSearch } from "@/lib/admin/search-profiles";
+import {
+  listAdminProfilesSemGenero,
+  searchProfilesForAdmin,
+  sanitizeAdminUserSearch,
+} from "@/lib/admin/search-profiles";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
-type Props = { searchParams?: Promise<{ q?: string; adm_flash?: string }> };
+type Props = { searchParams?: Promise<{ q?: string; adm_flash?: string; sem_genero?: string }> };
+
+function labelGeneroAdmin(raw: string | null | undefined): string {
+  const g = String(raw ?? "").trim();
+  if (!g) return "—";
+  if (g === "Masculino" || g === "Feminino" || g === "Outro") return g;
+  return `Legado: ${g}`;
+}
 
 export default async function AdminUsuariosPage({ searchParams }: Props) {
   if (!hasServiceRoleConfig()) {
@@ -12,14 +23,19 @@ export default async function AdminUsuariosPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const rawQ = (sp.q ?? "").trim();
   const listFlash = typeof sp.adm_flash === "string" ? sp.adm_flash.trim() : "";
+  const semGenero = sp.sem_genero === "1" || sp.sem_genero === "true";
+  const qSafe = sanitizeAdminUserSearch(rawQ);
 
   const db = createServiceRoleClient();
 
-  const { data, error } = await searchProfilesForAdmin(db, rawQ, {
-    whenEmpty: "recent",
-    defaultListLimit: 200,
-    searchLimit: 200,
-  });
+  const { data, error } =
+    semGenero && !qSafe
+      ? await listAdminProfilesSemGenero(db)
+      : await searchProfilesForAdmin(db, rawQ, {
+          whenEmpty: "recent",
+          defaultListLimit: 200,
+          searchLimit: 200,
+        });
 
   if (error) {
     return <p className="text-sm text-red-300">{error.message}</p>;
@@ -37,10 +53,29 @@ export default async function AdminUsuariosPage({ searchParams }: Props) {
         </p>
       ) : null}
       <p className="mt-1 text-sm text-eid-text-secondary">
-        {sanitizeAdminUserSearch(rawQ)
-          ? "Resultados da busca (até 200)."
-          : "Últimos 200 perfis (ordem de cadastro). Use a busca por nome, @username, e-mail ou UUID."}
+        {semGenero && !qSafe
+          ? "Perfis sem gênero informado (null ou vazio), até 200 — mais recentes primeiro. Use Gerir para definir Masculino, Feminino ou Outro."
+          : sanitizeAdminUserSearch(rawQ)
+            ? "Resultados da busca (até 200)."
+            : "Últimos 200 perfis (ordem de cadastro). Use a busca por nome, @username, e-mail ou UUID."}
       </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+        {semGenero && !qSafe ? (
+          <Link
+            href="/admin/usuarios"
+            className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/10 px-3 py-1.5 font-semibold text-eid-primary-200 hover:border-eid-primary-500/60"
+          >
+            Ver lista geral (últimos cadastros)
+          </Link>
+        ) : (
+          <Link
+            href="/admin/usuarios?sem_genero=1"
+            className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-1.5 font-semibold text-amber-100 hover:border-amber-500/50"
+          >
+            Cadastros sem gênero (corrigir)
+          </Link>
+        )}
+      </div>
       <SearchSuggestGetForm
         action="/admin/usuarios"
         defaultValue={rawQ}
@@ -59,6 +94,7 @@ export default async function AdminUsuariosPage({ searchParams }: Props) {
             <tr>
               <th className="px-3 py-2">Nome</th>
               <th className="px-3 py-2">@ / tipo</th>
+              <th className="px-3 py-2">Gênero</th>
               <th className="px-3 py-2">Perfil</th>
               <th className="px-3 py-2">Maioridade (Desafio)</th>
               <th className="px-3 py-2">Cadastro</th>
@@ -72,6 +108,7 @@ export default async function AdminUsuariosPage({ searchParams }: Props) {
                 <td className="px-3 py-2 text-eid-text-secondary">
                   {p.username ? `@${p.username}` : "—"} · {p.tipo_usuario}
                 </td>
+                <td className="max-w-[140px] px-3 py-2 text-eid-text-secondary">{labelGeneroAdmin(p.genero)}</td>
                 <td className="px-3 py-2">{p.perfil_completo ? "Completo" : "Pendente"}</td>
                 <td className="px-3 py-2 text-eid-text-secondary">
                   {p.match_maioridade_confirmada

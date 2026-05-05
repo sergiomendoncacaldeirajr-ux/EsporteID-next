@@ -1828,7 +1828,15 @@ export async function adminUpdateProfileById(formData: FormData) {
   try {
     await guard();
     if (!userId) redirect(`${base}?adm_flash=usuario_perfil_sem_id`);
-    const genero = String(formData.get("genero") ?? "").trim() || null;
+    const generoRaw = String(formData.get("genero") ?? "").trim();
+    let genero: string | null;
+    if (generoRaw === "") {
+      genero = null;
+    } else if (["Masculino", "Feminino", "Outro"].includes(generoRaw)) {
+      genero = generoRaw;
+    } else {
+      redirect(`${base}?adm_flash=usuario_perfil_genero_invalido`);
+    }
     const dataNasc = String(formData.get("data_nascimento") ?? "").trim();
     const data_nascimento: string | null = /^\d{4}-\d{2}-\d{2}$/.test(dataNasc) ? dataNasc : null;
     const row: Record<string, unknown> = {

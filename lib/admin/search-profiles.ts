@@ -12,7 +12,7 @@ export function sanitizeAdminUserSearch(term: string) {
 }
 
 const SELECT =
-  "id, nome, username, tipo_usuario, perfil_completo, criado_em, match_maioridade_confirmada, match_maioridade_confirmada_em" as const;
+  "id, nome, username, tipo_usuario, perfil_completo, criado_em, match_maioridade_confirmada, match_maioridade_confirmada_em, genero" as const;
 
 export type AdminSearchProfileRow = {
   id: string;
@@ -23,11 +23,48 @@ export type AdminSearchProfileRow = {
   criado_em: string;
   match_maioridade_confirmada: boolean;
   match_maioridade_confirmada_em: string | null;
+  genero: string | null;
 };
 
 export type SearchProfilesOpts =
   | { whenEmpty: "none"; searchLimit: number }
   | { whenEmpty: "recent"; defaultListLimit: number; searchLimit: number };
+
+const SEM_GENERO_LIMIT = 200;
+
+/**
+ * Perfis em que `genero` está ausente (null ou texto vazio), para correção no admin.
+ * Mescla `is.null` e `eq ''` e deduplica por id.
+ */
+export async function listAdminProfilesSemGenero(
+  db: SupabaseClient
+): Promise<{ data: AdminSearchProfileRow[]; error: { message: string } | null }> {
+  const [rNull, rEmpty] = await Promise.all([
+    db
+      .from("profiles")
+      .select(SELECT)
+      .is("genero", null)
+      .order("criado_em", { ascending: false })
+      .limit(SEM_GENERO_LIMIT),
+    db
+      .from("profiles")
+      .select(SELECT)
+      .eq("genero", "")
+      .order("criado_em", { ascending: false })
+      .limit(SEM_GENERO_LIMIT),
+  ]);
+  const err = rNull.error ?? rEmpty.error;
+  if (err) return { data: [], error: err };
+  const map = new Map<string, AdminSearchProfileRow>();
+  for (const row of [...(rNull.data ?? []), ...(rEmpty.data ?? [])]) {
+    const r = row as AdminSearchProfileRow;
+    map.set(r.id, r);
+  }
+  const data = [...map.values()].sort(
+    (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime()
+  );
+  return { data: data.slice(0, SEM_GENERO_LIMIT), error: null };
+}
 
 /**
  * Busca perfis (cliente com service role). Vazio + `whenEmpty: none` retorna lista vazia.
