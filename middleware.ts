@@ -2,10 +2,10 @@ import { type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 /**
- * Proxy na borda (Next.js 16+): sessão Supabase nas rotas do matcher.
- * Compatível com Cloudflare Workers/Pages via OpenNext.
+ * Mantém refresh de sessão Supabase nas rotas do matcher.
+ * OpenNext Cloudflare ainda exige `middleware.ts` (a convenção `proxy.ts` do Next 16 quebra o build).
  */
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   return await updateSession(request);
 }
 
