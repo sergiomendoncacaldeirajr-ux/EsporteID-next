@@ -547,6 +547,17 @@ function HistoricoLinhaSkeleton() {
   );
 }
 
+/** Lista do histórico completo (streaming do bloco pesado). */
+export function PerfilHistoricoCompletoListaSkeleton() {
+  return (
+    <ul className="mt-3 grid gap-1.5" aria-hidden>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <HistoricoLinhaSkeleton key={i} />
+      ))}
+    </ul>
+  );
+}
+
 /** Histórico completo (perfil global) ou lista EID por esporte. */
 export function PerfilHistoricoListaSkeleton({
   variant = "perfil",

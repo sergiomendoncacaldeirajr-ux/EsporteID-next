@@ -8,12 +8,13 @@ import { getPerfilTimeIdentity, getPerfilTimePartidasBundle } from "../perfil-ti
 
 export type PerfilTimeHistoricoCompletoStreamProps = {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ from?: string }>;
+  searchParams?: Promise<{ from?: string; embed?: string }>;
 };
 
 export async function PerfilTimeHistoricoCompletoStream({ params, searchParams }: PerfilTimeHistoricoCompletoStreamProps) {
   const { id } = await params;
   const sp = (await searchParams) ?? {};
+  const isEmbed = String(sp.embed ?? "").trim() === "1";
   const timeId = Number(id);
   const supabase = await createClient();
   const {
@@ -28,7 +29,7 @@ export async function PerfilTimeHistoricoCompletoStream({ params, searchParams }
 
   return (
     <main className={PROFILE_HISTORICO_FULLSCREEN_MAIN_CLASS}>
-      <PerfilBackLink href={`/perfil-time/${id}`} className="mb-2 shrink-0 self-start" />
+      {!isEmbed ? <PerfilBackLink href={`/perfil-time/${id}`} className="mb-2 shrink-0 self-start" /> : null}
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="inline-flex items-center gap-2">
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-eid-primary-500/12 text-eid-primary-300">
