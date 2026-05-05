@@ -36,6 +36,12 @@ import { getCachedUsuarioPapeis, getServerAuth } from "@/lib/auth/rsc-auth";
 import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
 import "./globals.css";
 
+/**
+ * Este layout usa `headers()`, `cookies()` e Supabase no servidor.
+ * Sem `force-dynamic`, o build tenta SSG e falha com `DYNAMIC_SERVER_USAGE` (OpenNext / Cloudflare).
+ */
+export const dynamic = "force-dynamic";
+
 /* Barlow — família atlética, muito usada em apps esportivos premium */
 const barlow = Barlow({
   variable: "--font-barlow",
@@ -127,12 +133,27 @@ export default async function RootLayout({
     }
   } catch (e) {
     console.error("[eid-layout] bootstrap do shell (auth / perfil / app_config)", e);
-    hdrs = await headers();
-    cookieStore = await cookies();
     user = null;
     canShowAuthenticatedChrome = false;
     papeis = [];
     supportModulosEmBreve = [];
+    try {
+      hdrs = await headers();
+      cookieStore = await cookies();
+    } catch (inner) {
+      console.warn("[eid-layout] headers/cookies após falha no bootstrap", inner);
+      hdrs = new Headers() as unknown as Awaited<ReturnType<typeof headers>>;
+      cookieStore = {
+        get: () => undefined,
+        getAll: () => [],
+        has: () => false,
+        size: 0,
+        [Symbol.iterator]: function* () {},
+        set: () => {},
+        delete: () => {},
+        clear: () => {},
+      } as unknown as Awaited<ReturnType<typeof cookies>>;
+    }
   }
   const hideAppShell = hdrs.get(EID_HIDE_APP_SHELL_HEADER) === "1";
   const showOnboardingChrome = hdrs.get(EID_SHOW_ONBOARDING_CHROME_HEADER) === "1";

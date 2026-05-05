@@ -17,7 +17,15 @@ export const getServerAuth = cache(async (): Promise<ServerAuth> => {
     } = await supabase.auth.getUser();
     return { supabase, user: user ?? null };
   } catch (e) {
-    console.error("[eid-auth] getServerAuth falhou (Supabase / cookies / rede)", e);
+    const digest = typeof e === "object" && e !== null && "digest" in e ? String((e as { digest?: string }).digest) : "";
+    if (digest === "DYNAMIC_SERVER_USAGE") {
+      console.error(
+        "[eid-auth] getServerAuth em contexto estático — o layout raiz deve usar export const dynamic = \"force-dynamic\" (OpenNext / Cloudflare).",
+        e
+      );
+    } else {
+      console.error("[eid-auth] getServerAuth falhou (Supabase / cookies / rede)", e);
+    }
     throw e;
   }
 });
