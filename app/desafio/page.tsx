@@ -2,14 +2,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
-import { DesafioEsporteRegrasModal } from "@/components/desafio/desafio-esporte-regras-modal";
-import { DesafioImpactoResumo } from "@/components/desafio/desafio-impacto-resumo";
 import { SugerirMatchLiderForm } from "@/components/perfil/sugerir-match-lider-form";
 import { EidStreamSection } from "@/components/eid-stream-section";
-import { DesafioIndividualImpactStreamSkeleton } from "@/components/loading/desafio-stream-skeletons";
+import {
+  DesafioColetivoCarenciaEnviarSkeleton,
+  DesafioIndividualImpactStreamSkeleton,
+} from "@/components/loading/desafio-stream-skeletons";
 import { EidCancelLink } from "@/components/ui/eid-cancel-link";
 import { EidSectionInfo } from "@/components/ui/eid-section-info";
-import { fetchColetivoRankingPreview } from "@/lib/desafio/fetch-impact-preview";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import { computeRankingBlockedUntilColetivo } from "@/lib/match/coletivo-ranking-cooldown";
@@ -17,7 +17,6 @@ import {
   fetchPendingRankingOpponentTimeIdsForAlvo,
   filterFormacoesSemParPendenteComAlvo,
 } from "@/lib/match/pending-ranking-opponents-of-alvo";
-import { formatCooldownRemaining } from "@/lib/match/cooldown-remaining";
 import {
   getDesafioRankLockedSetFormat,
   getMatchUIConfig,
@@ -39,6 +38,8 @@ import { isEsportePermitidoDesafioPerfilIndividual } from "@/lib/match/esporte-m
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER } from "@/lib/match/viewer-esporte-confronto";
 import { createClient } from "@/lib/supabase/server";
+import { DesafioStreamColetivoCarenciaEnviar } from "./desafio-stream-coletivo-carencia-enviar";
+import { DesafioStreamColetivoRankingImpact } from "./desafio-stream-coletivo-ranking-impact";
 import { DesafioStreamIndividualRankingImpact } from "./desafio-stream-individual-ranking-impact";
 
 type Params = {
@@ -856,28 +857,19 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
   const cooldownMesesColetivo = await getMatchRankCooldownMeses(supabase);
 
-  const [{ data: minhasLideradas }, { data: minhasMembroRows }, rankPrevCo] = await Promise.all([
-    supabase
-      .from("times")
-      .select("id, genero")
-      .eq("criador_id", user.id)
-      .eq("esporte_id", esporteId)
-      .eq("tipo", modalidade)
-      .limit(1),
-    supabase
-      .from("membros_time")
-      .select("time_id, times!inner(id, nome, criador_id, tipo, esporte_id)")
-      .eq("usuario_id", user.id)
-      .in("status", ["ativo", "aceito", "aprovado"]),
-    fetchColetivoRankingPreview(supabase, {
-      viewerUserId: user.id,
-      opponentTeamId: timeRow.id,
-      esporteId,
-      modalidade: modalidade as "dupla" | "time",
-    }),
-  ]);
+  const { data: minhasLideradas } = await supabase
+    .from("times")
+    .select("id, genero")
+    .eq("criador_id", user.id)
+    .eq("esporte_id", esporteId)
+    .eq("tipo", modalidade)
+    .limit(1);
 
   const meuTimeIdColetivo = Number(minhasLideradas?.[0]?.id ?? 0);
+  const canConfirmarRanking = (minhasLideradas ?? []).length > 0;
+  const meuTimeGenero = (minhasLideradas?.[0] as { genero?: string | null } | undefined)?.genero ?? null;
+  const rankGeneroColetivo = resolveColetivoRankGenero(meuTimeGenero, timeRow.genero);
+
   const rankingBlockedUntilColetivo = await computeRankingBlockedUntilColetivo(supabase, {
     esporteId,
     modalidade: modalidade as "dupla" | "time",
@@ -887,46 +879,51 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     fallbackViewerId: user.id,
     fallbackOpponentLeaderId: timeRow.criador_id ?? undefined,
   });
-  const canConfirmarRanking = (minhasLideradas ?? []).length > 0;
-  const meuTimeGenero = (minhasLideradas?.[0] as { genero?: string | null } | undefined)?.genero ?? null;
-  const rankGeneroColetivo = resolveColetivoRankGenero(meuTimeGenero, timeRow.genero);
-  const formacoesMembroNaoLiderRaw = (minhasMembroRows ?? [])
-    .map((row) => {
-      const rel = Array.isArray((row as { times?: unknown }).times)
-        ? (row as { times?: Array<{ id?: number | null; nome?: string | null; criador_id?: string | null; tipo?: string | null; esporte_id?: number | null }> }).times?.[0]
-        : (row as { times?: { id?: number | null; nome?: string | null; criador_id?: string | null; tipo?: string | null; esporte_id?: number | null } }).times;
-      return rel ?? null;
-    })
-    .filter((t): t is { id: number; nome: string | null; criador_id: string | null; tipo: string | null; esporte_id: number | null } => Boolean(t && Number.isFinite(Number(t.id))))
-    .filter((t) => String(t.criador_id ?? "") !== user.id)
-    .filter((t) => String(t.tipo ?? "").trim().toLowerCase() === modalidade)
-    .filter((t) => Number(t.esporte_id ?? 0) === esporteId)
-    .map((t) => ({
-      id: Number(t.id),
-      nome: desafioPrimeiroNome(t.nome, "Minha formação"),
-    }));
-  const formacoesMembroSemCarenciaRanking = (
-    await Promise.all(
-      formacoesMembroNaoLiderRaw.map(async (f) => {
-        const until = await computeRankingBlockedUntilColetivo(supabase, {
-          esporteId,
-          modalidade: modalidade as "dupla" | "time",
-          meuTimeId: f.id,
-          alvoTimeId: timeRow.id,
-          cooldownMeses: cooldownMesesColetivo,
-          fallbackViewerId: user.id,
-          fallbackOpponentLeaderId: timeRow.criador_id ?? undefined,
-        });
-        return until == null ? f : null;
+  let formacoesMembroNaoLider: { id: number; nome: string }[] = [];
+  if (!canConfirmarRanking) {
+    const { data: minhasMembroRows } = await supabase
+      .from("membros_time")
+      .select("time_id, times!inner(id, nome, criador_id, tipo, esporte_id)")
+      .eq("usuario_id", user.id)
+      .in("status", ["ativo", "aceito", "aprovado"]);
+    const formacoesMembroNaoLiderRaw = (minhasMembroRows ?? [])
+      .map((row) => {
+        const rel = Array.isArray((row as { times?: unknown }).times)
+          ? (row as { times?: Array<{ id?: number | null; nome?: string | null; criador_id?: string | null; tipo?: string | null; esporte_id?: number | null }> }).times?.[0]
+          : (row as { times?: { id?: number | null; nome?: string | null; criador_id?: string | null; tipo?: string | null; esporte_id?: number | null } }).times;
+        return rel ?? null;
       })
-    )
-  ).filter((f): f is { id: number; nome: string } => f != null);
-  const pendentesComAlvoDesafio = await fetchPendingRankingOpponentTimeIdsForAlvo(supabase, timeRow.id, esporteId);
-  const formacoesMembroNaoLider = filterFormacoesSemParPendenteComAlvo(
-    formacoesMembroSemCarenciaRanking,
-    timeRow.id,
-    pendentesComAlvoDesafio
-  );
+      .filter((t): t is { id: number; nome: string | null; criador_id: string | null; tipo: string | null; esporte_id: number | null } => Boolean(t && Number.isFinite(Number(t.id))))
+      .filter((t) => String(t.criador_id ?? "") !== user.id)
+      .filter((t) => String(t.tipo ?? "").trim().toLowerCase() === modalidade)
+      .filter((t) => Number(t.esporte_id ?? 0) === esporteId)
+      .map((t) => ({
+        id: Number(t.id),
+        nome: desafioPrimeiroNome(t.nome, "Minha formação"),
+      }));
+    const formacoesMembroSemCarenciaRanking = (
+      await Promise.all(
+        formacoesMembroNaoLiderRaw.map(async (f) => {
+          const until = await computeRankingBlockedUntilColetivo(supabase, {
+            esporteId,
+            modalidade: modalidade as "dupla" | "time",
+            meuTimeId: f.id,
+            alvoTimeId: timeRow.id,
+            cooldownMeses: cooldownMesesColetivo,
+            fallbackViewerId: user.id,
+            fallbackOpponentLeaderId: timeRow.criador_id ?? undefined,
+          });
+          return until == null ? f : null;
+        })
+      )
+    ).filter((f): f is { id: number; nome: string } => f != null);
+    const pendentesComAlvoDesafio = await fetchPendingRankingOpponentTimeIdsForAlvo(supabase, timeRow.id, esporteId);
+    formacoesMembroNaoLider = filterFormacoesSemParPendenteComAlvo(
+      formacoesMembroSemCarenciaRanking,
+      timeRow.id,
+      pendentesComAlvoDesafio
+    );
+  }
   const podeSugerirParaLider = !canConfirmarRanking && formacoesMembroNaoLider.length > 0;
 
   return (
@@ -947,16 +944,6 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         </p>
         <div className="mt-5 flex flex-col gap-3">
         <DesafioRuleSummaryCard formaDisputaResumo={formaDisputaResumo} />
-        {rankingBlockedUntilColetivo ? (
-          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
-            Carência ativa para desafio de ranking neste esporte ({modalidade}) até{" "}
-            <span className="font-semibold text-eid-fg">
-              {new Date(rankingBlockedUntilColetivo).toLocaleDateString("pt-BR")}
-            </span>
-            .{" "}
-            <span className="font-semibold text-eid-fg">{formatCooldownRemaining(rankingBlockedUntilColetivo)}</span>
-          </div>
-        ) : null}
         <div className="rounded-xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)_93%)] px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
           <p className="inline-flex items-center gap-1.5 font-semibold text-eid-fg">
             Faixa de pontos deste confronto:{" "}
@@ -993,27 +980,29 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
             </div>
           </div>
         </div>
-        {rankPrevCo ? (
-          <DesafioImpactoResumo
-            esporteNome={esporteNome}
-            regras={rankPrevCo.regras}
-            coletivo={rankPrevCo.coletivo}
-            className="!mt-0"
-          />
-        ) : (
-          <p className="text-[11px] text-amber-200/90">
-            Não foi possível carregar a estimativa: confira se você é líder de uma {modalidade} neste esporte (mesmo critério do envio do pedido).
-          </p>
-        )}
-        {canConfirmarRanking && !rankingBlockedUntilColetivo ? (
-          <DesafioEnviarForm
-            modalidade={modalidade}
+        <EidStreamSection className="contents" fallback={<DesafioIndividualImpactStreamSkeleton />}>
+          <DesafioStreamColetivoRankingImpact
+            supabase={supabase}
+            viewerUserId={user.id}
+            opponentTeamId={timeRow.id}
             esporteId={esporteId}
-            alvoTimeId={timeRow.id}
-            finalidade="ranking"
-            className="!mt-0"
+            esporteNome={esporteNome}
+            modalidade={modalidade as "dupla" | "time"}
           />
-        ) : null}
+        </EidStreamSection>
+        <EidStreamSection className="contents" fallback={<DesafioColetivoCarenciaEnviarSkeleton />}>
+          <DesafioStreamColetivoCarenciaEnviar
+            supabase={supabase}
+            viewerUserId={user.id}
+            esporteId={esporteId}
+            modalidade={modalidade as "dupla" | "time"}
+            meuTimeId={Number.isFinite(meuTimeIdColetivo) && meuTimeIdColetivo > 0 ? meuTimeIdColetivo : null}
+            alvoTimeId={timeRow.id}
+            cooldownMeses={cooldownMesesColetivo}
+            opponentLeaderId={timeRow.criador_id}
+            canConfirmarRanking={canConfirmarRanking}
+          />
+        </EidStreamSection>
         {!canConfirmarRanking ? (
           <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
             Você não é líder de uma {modalidade} neste esporte. O desafio de ranking direto fica disponível apenas para o dono da formação.
@@ -1029,15 +1018,6 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         ) : null}
         <EidCancelLink href="/match" {...exitEmbedProps(isEmbed)} className="!mt-0 !min-h-[44px] !rounded-xl !text-[11px] !font-black !tracking-[0.04em]" />
         </div>
-        {rankPrevCo ? (
-          <DesafioEsporteRegrasModal
-            esporteId={esporteId}
-            esporteNome={esporteNome}
-            modalidade={modalidade}
-            pontosVitoria={rankPrevCo.regras.pontos_vitoria}
-            pontosDerrota={rankPrevCo.regras.pontos_derrota}
-          />
-        ) : null}
       </main>
   );
 }

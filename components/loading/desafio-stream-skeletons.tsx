@@ -10,3 +10,16 @@ export function DesafioIndividualImpactStreamSkeleton() {
     </div>
   );
 }
+
+/** Carência coletiva + formulário de envio (streaming em `/desafio` dupla/time). */
+export function DesafioColetivoCarenciaEnviarSkeleton() {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/35 p-3 sm:p-4">
+        <SkBlock className="h-3 w-[min(92%,20rem)] rounded-md" />
+        <SkBlock className="mt-2 h-4 w-3/4 max-w-md rounded-md" />
+      </div>
+      <SkBlock className="h-12 w-full rounded-xl" />
+    </div>
+  );
+}
