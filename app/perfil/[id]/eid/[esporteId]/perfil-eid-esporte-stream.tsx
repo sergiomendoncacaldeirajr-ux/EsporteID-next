@@ -36,6 +36,15 @@ export type PerfilEidEsporteStreamProps = {
 };
 
 type EidView = "individual" | "dupla" | "time";
+type FormationRow = {
+  id: number;
+  nome: string;
+  tipo: string | null;
+  escudo: string | null;
+  eid_time: number;
+  pontos_ranking: number;
+  duplaRegistroIds: number[];
+};
 
 function parseEsporteId(raw: string): number | null {
   const n = Number(raw);
@@ -135,78 +144,36 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
 
   const esp = Array.isArray(ue.esportes) ? ue.esportes[0] : ue.esportes;
   const nomeEsporte = esp?.nome ?? "Esporte";
-
-  type FormationRow = {
-    id: number;
-    nome: string;
-    tipo: string | null;
-    escudo: string | null;
-    eid_time: number;
-    pontos_ranking: number;
-    duplaRegistroIds: number[];
-  };
+  const wantsColetivo = view === "dupla" || view === "time";
 
   const formationsMap = new Map<number, FormationRow>();
+  const duplasSemTime: { id: number }[] = [];
+  const listaColetivoPorTime = new Map<number, PartidaColetivaRow[]>();
+  const notasColetivoPorTime = new Map<number, number[]>();
+  const oponenteDetalhePorTime = new Map<number, OponenteTimeDetalhe>();
+  let historicoColetivoRows: { time_id: number; nota_nova: number | null; data_alteracao: string }[] = [];
 
-  const [timesCriadorRes, membrosRowsRes, duplasRowsRes] = await Promise.all([
-    supabase
-      .from("times")
-      .select("id, nome, tipo, escudo, eid_time, pontos_ranking")
-      .eq("criador_id", profileId)
-      .eq("esporte_id", esporteId),
-    supabase
-      .from("membros_time")
-      .select("status, times(id, nome, tipo, escudo, eid_time, pontos_ranking, esporte_id)")
-      .eq("usuario_id", profileId),
-    supabase
-      .from("duplas")
-      .select("id, player1_id, player2_id")
-      .eq("esporte_id", esporteId)
-      .or(`player1_id.eq.${profileId},player2_id.eq.${profileId}`),
-  ]);
-  const timesCriador = timesCriadorRes.data;
+  if (wantsColetivo) {
+    const [timesCriadorRes, membrosRowsRes, duplasRowsRes] = await Promise.all([
+      supabase
+        .from("times")
+        .select("id, nome, tipo, escudo, eid_time, pontos_ranking")
+        .eq("criador_id", profileId)
+        .eq("esporte_id", esporteId),
+      supabase
+        .from("membros_time")
+        .select("status, times(id, nome, tipo, escudo, eid_time, pontos_ranking, esporte_id)")
+        .eq("usuario_id", profileId),
+      supabase
+        .from("duplas")
+        .select("id, player1_id, player2_id")
+        .eq("esporte_id", esporteId)
+        .or(`player1_id.eq.${profileId},player2_id.eq.${profileId}`),
+    ]);
+    const timesCriador = timesCriadorRes.data;
 
-  for (const t of timesCriador ?? []) {
-    const id = Number(t.id);
-    formationsMap.set(id, {
-      id,
-      nome: String(t.nome ?? `Equipe #${id}`),
-      tipo: t.tipo ?? null,
-      escudo: t.escudo ?? null,
-      eid_time: Number(t.eid_time ?? 0),
-      pontos_ranking: Number(t.pontos_ranking ?? 0),
-      duplaRegistroIds: [],
-    });
-  }
-
-  const membrosRows = membrosRowsRes.data;
-
-  for (const row of membrosRows ?? []) {
-    if (!membroTimeAtivo(row.status)) continue;
-    const tRaw = row.times as
-      | {
-          id: number;
-          nome: string | null;
-          tipo: string | null;
-          escudo: string | null;
-          eid_time: number | null;
-          pontos_ranking: number | null;
-          esporte_id: number | null;
-        }
-      | {
-          id: number;
-          nome: string | null;
-          tipo: string | null;
-          escudo: string | null;
-          eid_time: number | null;
-          pontos_ranking: number | null;
-          esporte_id: number | null;
-        }[]
-      | null;
-    const t = Array.isArray(tRaw) ? tRaw[0] : tRaw;
-    if (!t || Number(t.esporte_id) !== esporteId) continue;
-    const id = Number(t.id);
-    if (!formationsMap.has(id)) {
+    for (const t of timesCriador ?? []) {
+      const id = Number(t.id);
       formationsMap.set(id, {
         id,
         nome: String(t.nome ?? `Equipe #${id}`),
@@ -217,147 +184,178 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
         duplaRegistroIds: [],
       });
     }
-  }
 
-  const duplasRows = duplasRowsRes.data;
-
-  const duplasSemTime: { id: number }[] = [];
-
-  const missingTimeIds = new Set<number>();
-  const duplaToTimeId = new Map<number, number>();
-  const duplaResolved = await Promise.all(
-    (duplasRows ?? []).map(async (d) => {
-      const p1 = d.player1_id as string;
-      const p2 = d.player2_id as string;
-      const did = Number(d.id);
-      const tid = await resolverTimeIdParaDuplaRegistrada(supabase, p1, p2, esporteId);
-      return { did, tid };
-    })
-  );
-  for (const { did, tid } of duplaResolved) {
-    if (tid != null) {
-      duplaToTimeId.set(did, tid);
-      const ex = formationsMap.get(tid);
-      if (ex) {
-        if (!ex.duplaRegistroIds.includes(did)) ex.duplaRegistroIds.push(did);
-        continue;
+    const membrosRows = membrosRowsRes.data;
+    for (const row of membrosRows ?? []) {
+      if (!membroTimeAtivo(row.status)) continue;
+      const tRaw = row.times as
+        | {
+            id: number;
+            nome: string | null;
+            tipo: string | null;
+            escudo: string | null;
+            eid_time: number | null;
+            pontos_ranking: number | null;
+            esporte_id: number | null;
+          }
+        | {
+            id: number;
+            nome: string | null;
+            tipo: string | null;
+            escudo: string | null;
+            eid_time: number | null;
+            pontos_ranking: number | null;
+            esporte_id: number | null;
+          }[]
+        | null;
+      const t = Array.isArray(tRaw) ? tRaw[0] : tRaw;
+      if (!t || Number(t.esporte_id) !== esporteId) continue;
+      const id = Number(t.id);
+      if (!formationsMap.has(id)) {
+        formationsMap.set(id, {
+          id,
+          nome: String(t.nome ?? `Equipe #${id}`),
+          tipo: t.tipo ?? null,
+          escudo: t.escudo ?? null,
+          eid_time: Number(t.eid_time ?? 0),
+          pontos_ranking: Number(t.pontos_ranking ?? 0),
+          duplaRegistroIds: [],
+        });
       }
-      missingTimeIds.add(tid);
-    } else {
-      duplasSemTime.push({ id: did });
     }
-  }
 
-  if (missingTimeIds.size > 0) {
-    const { data: missingTimes } = await supabase
-      .from("times")
-      .select("id, nome, tipo, escudo, eid_time, pontos_ranking")
-      .in("id", [...missingTimeIds]);
-    for (const trow of missingTimes ?? []) {
-      const tid = Number(trow.id);
-      if (!Number.isFinite(tid)) continue;
-      formationsMap.set(tid, {
-        id: tid,
-        nome: String(trow.nome ?? `Equipe #${tid}`),
-        tipo: trow.tipo ?? null,
-        escudo: trow.escudo ?? null,
-        eid_time: Number(trow.eid_time ?? 0),
-        pontos_ranking: Number(trow.pontos_ranking ?? 0),
-        duplaRegistroIds: [],
-      });
+    const duplasRows = duplasRowsRes.data;
+    const missingTimeIds = new Set<number>();
+    const duplaToTimeId = new Map<number, number>();
+    const duplaResolved = await Promise.all(
+      (duplasRows ?? []).map(async (d) => {
+        const p1 = d.player1_id as string;
+        const p2 = d.player2_id as string;
+        const did = Number(d.id);
+        const tid = await resolverTimeIdParaDuplaRegistrada(supabase, p1, p2, esporteId);
+        return { did, tid };
+      })
+    );
+    for (const { did, tid } of duplaResolved) {
+      if (tid != null) {
+        duplaToTimeId.set(did, tid);
+        const ex = formationsMap.get(tid);
+        if (ex) {
+          if (!ex.duplaRegistroIds.includes(did)) ex.duplaRegistroIds.push(did);
+          continue;
+        }
+        missingTimeIds.add(tid);
+      } else {
+        duplasSemTime.push({ id: did });
+      }
     }
-    for (const [did, tid] of duplaToTimeId) {
-      const row = formationsMap.get(tid);
-      if (!row) continue;
-      if (!row.duplaRegistroIds.includes(did)) row.duplaRegistroIds.push(did);
+
+    if (missingTimeIds.size > 0) {
+      const { data: missingTimes } = await supabase
+        .from("times")
+        .select("id, nome, tipo, escudo, eid_time, pontos_ranking")
+        .in("id", [...missingTimeIds]);
+      for (const trow of missingTimes ?? []) {
+        const tid = Number(trow.id);
+        if (!Number.isFinite(tid)) continue;
+        formationsMap.set(tid, {
+          id: tid,
+          nome: String(trow.nome ?? `Equipe #${tid}`),
+          tipo: trow.tipo ?? null,
+          escudo: trow.escudo ?? null,
+          eid_time: Number(trow.eid_time ?? 0),
+          pontos_ranking: Number(trow.pontos_ranking ?? 0),
+          duplaRegistroIds: [],
+        });
+      }
+      for (const [did, tid] of duplaToTimeId) {
+        const row = formationsMap.get(tid);
+        if (!row) continue;
+        if (!row.duplaRegistroIds.includes(did)) row.duplaRegistroIds.push(did);
+      }
+    }
+
+    const formationListWarmup = [...formationsMap.values()].sort((a, b) => b.pontos_ranking - a.pontos_ranking);
+    const timeIds = formationListWarmup.map((f) => f.id);
+    const timeIdSet = new Set(timeIds);
+
+    let partidasColetivoRaw: PartidaColetivaRow[] = [];
+    if (timeIds.length > 0) {
+      const orClause = timeIds.flatMap((tid) => [`time1_id.eq.${tid}`, `time2_id.eq.${tid}`]).join(",");
+      const { data: pc } = await supabase
+        .from("partidas")
+        .select(
+          "id, time1_id, time2_id, placar_1, placar_2, vencedor_id, status, status_ranking, torneio_id, modalidade, data_resultado, data_registro, tipo_partida, local_str, local_espaco_id, data_partida, mensagem"
+        )
+        .eq("esporte_id", esporteId)
+        .or(orClause)
+        .order("data_registro", { ascending: false })
+        .limit(320);
+      partidasColetivoRaw = (pc ?? []) as PartidaColetivaRow[];
+    }
+
+    for (const f of formationListWarmup) listaColetivoPorTime.set(f.id, []);
+
+    for (const p of partidasColetivoRaw) {
+      if (!partidaEncerradaParaHistorico(p)) continue;
+      const t1 = p.time1_id != null ? Number(p.time1_id) : null;
+      const t2 = p.time2_id != null ? Number(p.time2_id) : null;
+      if (t1 == null || t2 == null) continue;
+      const pid = Number(p.id);
+      for (const tid of [t1, t2]) {
+        if (!timeIdSet.has(tid) || !formationsMap.has(tid)) continue;
+        const bucket = listaColetivoPorTime.get(tid)!;
+        if (!bucket.some((x) => Number(x.id) === pid)) bucket.push(p);
+      }
+    }
+
+    const { data: historicoColetivoRowsRaw } =
+      timeIds.length > 0
+        ? await supabase.from("historico_eid_coletivo").select("time_id, nota_nova, data_alteracao").in("time_id", timeIds)
+        : { data: [] as { time_id: number; nota_nova: number | null; data_alteracao: string }[] };
+
+    historicoColetivoRows = [...(historicoColetivoRowsRaw ?? [])].sort((a, b) => {
+      const ta = new Date(a.data_alteracao).getTime();
+      const tb = new Date(b.data_alteracao).getTime();
+      return ta - tb;
+    });
+
+    for (const h of historicoColetivoRows) {
+      const tid = Number(h.time_id);
+      const n = Number(h.nota_nova);
+      if (!Number.isFinite(tid) || !Number.isFinite(n)) continue;
+      if (!notasColetivoPorTime.has(tid)) notasColetivoPorTime.set(tid, []);
+      notasColetivoPorTime.get(tid)!.push(n);
+    }
+
+    const opponentTeamIds = new Set<number>();
+    for (const f of formationListWarmup) {
+      for (const p of listaColetivoPorTime.get(f.id) ?? []) {
+        const t1 = p.time1_id != null ? Number(p.time1_id) : null;
+        const t2 = p.time2_id != null ? Number(p.time2_id) : null;
+        if (t1 === f.id && t2 != null) opponentTeamIds.add(t2);
+        else if (t2 === f.id && t1 != null) opponentTeamIds.add(t1);
+      }
+    }
+    if (opponentTeamIds.size > 0) {
+      const { data: oppT } = await supabase
+        .from("times")
+        .select("id, nome, escudo, eid_time, tipo")
+        .in("id", [...opponentTeamIds]);
+      for (const r of oppT ?? []) {
+        if (r.id == null) continue;
+        const id = Number(r.id);
+        oponenteDetalhePorTime.set(id, {
+          nome: String(r.nome ?? `Equipe #${id}`),
+          escudo: r.escudo ?? null,
+          eid_time: Number(r.eid_time ?? 0),
+          tipo: r.tipo ?? null,
+        });
+      }
     }
   }
 
   const formationList = [...formationsMap.values()].sort((a, b) => b.pontos_ranking - a.pontos_ranking);
-  const timeIds = formationList.map((f) => f.id);
-  const timeIdSet = new Set(timeIds);
-
-  let partidasColetivoRaw: PartidaColetivaRow[] = [];
-  if (timeIds.length > 0) {
-    const orClause = timeIds.flatMap((tid) => [`time1_id.eq.${tid}`, `time2_id.eq.${tid}`]).join(",");
-    const { data: pc } = await supabase
-      .from("partidas")
-      .select(
-        "id, time1_id, time2_id, placar_1, placar_2, vencedor_id, status, status_ranking, torneio_id, modalidade, data_resultado, data_registro, tipo_partida, local_str, local_espaco_id, data_partida, mensagem"
-      )
-      .eq("esporte_id", esporteId)
-      .or(orClause)
-      .order("data_registro", { ascending: false })
-      .limit(320);
-    partidasColetivoRaw = (pc ?? []) as PartidaColetivaRow[];
-  }
-
-  const listaColetivoPorTime = new Map<number, PartidaColetivaRow[]>();
-  for (const f of formationList) listaColetivoPorTime.set(f.id, []);
-
-  const incluirPartidaColetivaNoPerfil = (p: PartidaColetivaRow) => {
-    return partidaEncerradaParaHistorico(p);
-  };
-
-  for (const p of partidasColetivoRaw) {
-    if (!incluirPartidaColetivaNoPerfil(p)) continue;
-    const t1 = p.time1_id != null ? Number(p.time1_id) : null;
-    const t2 = p.time2_id != null ? Number(p.time2_id) : null;
-    if (t1 == null || t2 == null) continue;
-    const pid = Number(p.id);
-    for (const tid of [t1, t2]) {
-      if (!timeIdSet.has(tid) || !formationsMap.has(tid)) continue;
-      const bucket = listaColetivoPorTime.get(tid)!;
-      if (!bucket.some((x) => Number(x.id) === pid)) bucket.push(p);
-    }
-  }
-
-  const { data: historicoColetivoRowsRaw } =
-    timeIds.length > 0
-      ? await supabase.from("historico_eid_coletivo").select("time_id, nota_nova, data_alteracao").in("time_id", timeIds)
-      : { data: [] as { time_id: number; nota_nova: number | null; data_alteracao: string }[] };
-
-  const historicoColetivoRows = [...(historicoColetivoRowsRaw ?? [])].sort((a, b) => {
-    const ta = new Date(a.data_alteracao).getTime();
-    const tb = new Date(b.data_alteracao).getTime();
-    return ta - tb;
-  });
-
-  const notasColetivoPorTime = new Map<number, number[]>();
-  for (const h of historicoColetivoRows) {
-    const tid = Number(h.time_id);
-    const n = Number(h.nota_nova);
-    if (!Number.isFinite(tid) || !Number.isFinite(n)) continue;
-    if (!notasColetivoPorTime.has(tid)) notasColetivoPorTime.set(tid, []);
-    notasColetivoPorTime.get(tid)!.push(n);
-  }
-
-  const opponentTeamIds = new Set<number>();
-  for (const f of formationList) {
-    for (const p of listaColetivoPorTime.get(f.id) ?? []) {
-      const t1 = p.time1_id != null ? Number(p.time1_id) : null;
-      const t2 = p.time2_id != null ? Number(p.time2_id) : null;
-      if (t1 === f.id && t2 != null) opponentTeamIds.add(t2);
-      else if (t2 === f.id && t1 != null) opponentTeamIds.add(t1);
-    }
-  }
-  const oponenteDetalhePorTime = new Map<number, OponenteTimeDetalhe>();
-  if (opponentTeamIds.size > 0) {
-    const { data: oppT } = await supabase
-      .from("times")
-      .select("id, nome, escudo, eid_time, tipo")
-      .in("id", [...opponentTeamIds]);
-    for (const r of oppT ?? []) {
-      if (r.id == null) continue;
-      const id = Number(r.id);
-      oponenteDetalhePorTime.set(id, {
-        nome: String(r.nome ?? `Equipe #${id}`),
-        escudo: r.escudo ?? null,
-        eid_time: Number(r.eid_time ?? 0),
-        tipo: r.tipo ?? null,
-      });
-    }
-  }
 
   const [{ data: partidas }, { data: historicoEid }] = await Promise.all([partidasIndividuaisPromise, historicoEidPromise]);
 
