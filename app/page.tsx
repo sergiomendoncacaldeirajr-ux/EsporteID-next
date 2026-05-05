@@ -1,7 +1,13 @@
 import Link from "next/link";
+import type { User } from "@supabase/supabase-js";
 import { LogoFull } from "@/components/brand/logo-full";
 import { EidThemeToggle } from "@/components/eid-theme-toggle";
-import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
+import {
+  legalAcceptanceIsCurrent,
+  PROFILE_LEGAL_ACCEPTANCE_COLUMNS,
+  type ProfileLegalAcceptance,
+} from "@/lib/legal/acceptance";
+import { logMissingSupabasePublicEnv, parseSupabasePublicEnv } from "@/lib/env/supabase-public";
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
@@ -85,6 +91,8 @@ function IconPerson() {
   );
 }
 
+type HomeProfileRow = ProfileLegalAcceptance & { perfil_completo: boolean | null };
+
 type DesktopAreaIcon = "home" | "calendar" | "radar" | "spark" | "users" | "trophy" | "map" | "search" | "person" | "shield";
 
 function DesktopAreaIconGlyph({ name }: { name: DesktopAreaIcon }) {
@@ -116,21 +124,30 @@ function DesktopAreaIconGlyph({ name }: { name: DesktopAreaIcon }) {
 }
 
 export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const cfg = parseSupabasePublicEnv();
+  let user: User | null = null;
+  let profile: HomeProfileRow | null = null;
 
-  const profile =
-    user != null
-      ? (
-          await supabase
-            .from("profiles")
-            .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
-            .eq("id", user.id)
-            .maybeSingle()
-        ).data
-      : null;
+  if (cfg) {
+    const supabase = await createClient();
+    const {
+      data: { user: u },
+    } = await supabase.auth.getUser();
+    user = u ?? null;
+    profile =
+      user != null
+        ? (
+            await supabase
+              .from("profiles")
+              .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
+              .eq("id", user.id)
+              .maybeSingle()
+          ).data
+        : null;
+  } else {
+    logMissingSupabasePublicEnv("app/page.tsx (home)");
+    profile = null;
+  }
 
   const pillClass =
     "rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-1.5 text-sm font-medium text-eid-fg shadow-sm";

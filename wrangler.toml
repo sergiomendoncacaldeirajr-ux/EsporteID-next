@@ -1,4 +1,13 @@
 name = "esporteid-next"
 compatibility_date = "2026-05-05"
+# Template @opennextjs/cloudflare: nodejs + fetch público (evita surpresas com URLs absolutas no worker).
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 pages_build_output_dir = ".open-next"
+
+# Em Workers puro, OpenNext usa `[assets]` com binding `ASSETS`. Em **Pages**, `ASSETS` é nome reservado pelo runtime;
+# os estáticos vêm do próprio output em `.open-next` — não declare `[assets]` aqui.
+
+# Auto-referência do worker (revalidação / cache). Se o deploy no Pages reclamar, remova este bloco.
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "esporteid-next"
