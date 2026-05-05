@@ -10,11 +10,16 @@ type ServerAuth = { supabase: SupabaseClient; user: User | null };
  * Evita repetir auth.getUser quando layout, footer, LegalGate e páginas rodam no mesmo request.
  */
 export const getServerAuth = cache(async (): Promise<ServerAuth> => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return { supabase, user: user ?? null };
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return { supabase, user: user ?? null };
+  } catch (e) {
+    console.error("[eid-auth] getServerAuth falhou (Supabase / cookies / rede)", e);
+    throw e;
+  }
 });
 
 /**

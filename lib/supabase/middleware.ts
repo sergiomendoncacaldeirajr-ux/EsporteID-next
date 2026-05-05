@@ -6,6 +6,7 @@ import {
   type ProfileLegalAcceptance,
   PROFILE_LEGAL_ACCEPTANCE_COLUMNS,
 } from "@/lib/legal/acceptance";
+import { logMissingSupabasePublicEnv, parseSupabasePublicEnv } from "@/lib/env/supabase-public";
 import { rateLimitForRequest } from "@/lib/security/edge-rate-limit";
 import { hasMaliciousPayload } from "@/lib/security/request-guards";
 
@@ -70,14 +71,12 @@ function nextWithHideAppShell(request: NextRequest) {
 }
 
 export async function updateSession(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url?.trim() || !anon?.trim()) {
-    console.error(
-      "[middleware] Defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no painel de deploy (Vercel / Cloudflare Pages)."
-    );
+  const cfg = parseSupabasePublicEnv();
+  if (!cfg) {
+    logMissingSupabasePublicEnv("middleware");
     return NextResponse.next({ request });
   }
+  const { url, anon } = cfg;
 
   const path = request.nextUrl.pathname;
   const pathAndQuery = `${request.nextUrl.pathname}${request.nextUrl.search}`;
@@ -118,24 +117,25 @@ export async function updateSession(request: NextRequest) {
 
   const makeNextResponse = () => NextResponse.next({ request: { headers: requestHeaders } });
 
-  const supabase = createServerClient(
-    url,
-    anon,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          // Next.js 15+: cookies do request são imutáveis no middleware — só Set-Cookie na resposta.
-          supabaseResponse = makeNextResponse();
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
+  const supabase = createServerClient(url, anon, {
+    cookieOptions: {
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
       },
-    }
-  );
+      setAll(cookiesToSet) {
+        // Next.js 15+: cookies do request são imutáveis no middleware — só Set-Cookie na resposta.
+        supabaseResponse = makeNextResponse();
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options)
+        );
+      },
+    },
+  });
 
   /**
    * `getSession` lê o JWT do cookie (sem round-trip ao Auth) — bem mais rápido em cada navegação.

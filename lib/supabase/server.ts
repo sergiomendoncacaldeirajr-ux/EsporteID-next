@@ -1,24 +1,25 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { getSupabasePublicEnv } from "@/lib/env/supabase-public";
 
-function getSupabasePublicConfig(): { url: string; anon: string } | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
-  if (!url || !anon) return null;
-  return { url, anon };
-}
+const isProd = process.env.NODE_ENV === "production";
 
 export async function createClient() {
-  const cfg = getSupabasePublicConfig();
+  const cfg = getSupabasePublicEnv();
   if (!cfg) {
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL ou NEXT_PUBLIC_SUPABASE_ANON_KEY ausentes. Configure na Vercel (Production)."
+      "EID_SUPABASE_CONFIG_MISSING: defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY (Cloudflare Pages: Production e Preview)."
     );
   }
 
   const cookieStore = await cookies();
 
   return createServerClient(cfg.url, cfg.anon, {
+    cookieOptions: {
+      path: "/",
+      sameSite: "lax",
+      secure: isProd,
+    },
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -38,14 +39,19 @@ export async function createClient() {
 
 /** Route Handlers (ex.: `auth/callback`) — cookies podem ser gravados na resposta. */
 export async function createRouteHandlerClient() {
-  const cfg = getSupabasePublicConfig();
+  const cfg = getSupabasePublicEnv();
   if (!cfg) {
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL ou NEXT_PUBLIC_SUPABASE_ANON_KEY ausentes. Configure na Vercel (Production)."
+      "EID_SUPABASE_CONFIG_MISSING: defina NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY (Cloudflare Pages: Production e Preview)."
     );
   }
   const cookieStore = await cookies();
   return createServerClient(cfg.url, cfg.anon, {
+    cookieOptions: {
+      path: "/",
+      sameSite: "lax",
+      secure: isProd,
+    },
     cookies: {
       getAll() {
         return cookieStore.getAll();

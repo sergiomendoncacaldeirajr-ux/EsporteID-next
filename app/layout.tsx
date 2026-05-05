@@ -125,7 +125,8 @@ export default async function RootLayout({
       const cfg = await getSystemFeatureConfig(auth.supabase);
       supportModulosEmBreve = ALL_SYSTEM_FEATURE_KEYS.filter((k) => cfg[k].mode === "em_breve");
     }
-  } catch {
+  } catch (e) {
+    console.error("[eid-layout] bootstrap do shell (auth / perfil / app_config)", e);
     hdrs = await headers();
     cookieStore = await cookies();
     user = null;
