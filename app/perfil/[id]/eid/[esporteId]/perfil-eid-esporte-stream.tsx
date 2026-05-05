@@ -1,5 +1,7 @@
 ﻿import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import type { ReactNode } from "react";
+import { EidStreamSection } from "@/components/eid-stream-section";
 import { EidColetivoPartidaRow } from "@/components/perfil/eid-coletivo-partida-row";
 import { EidIndividualPartidaRow } from "@/components/perfil/eid-individual-partida-row";
 import { EidConfrontoResumoModal } from "@/components/perfil/eid-confronto-resumo-modal";
@@ -63,6 +65,36 @@ function membroTimeAtivo(status: string | null | undefined): boolean {
 }
 
 const INDIVIDUAL_HISTORICO_PREVIEW = 4;
+
+async function EidDeferredBlock({ children }: { children: ReactNode }) {
+  await Promise.resolve();
+  return <>{children}</>;
+}
+
+function EidPanelFallback({ rows = 2 }: { rows?: number }) {
+  return (
+    <div className={`mt-4 overflow-hidden ${PROFILE_CARD_BASE}`}>
+      <div className="h-8 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45" />
+      <div className="space-y-2 p-3">
+        {Array.from({ length: rows }).map((_, idx) => (
+          <div
+            key={`eid-fb-row-${idx}`}
+            className="h-11 animate-pulse rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EidGridFallback() {
+  return (
+    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+      <div className={`h-24 animate-pulse rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 ${PROFILE_CARD_PAD_MD}`} />
+      <div className={`h-24 animate-pulse rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 ${PROFILE_CARD_PAD_MD}`} />
+    </div>
+  );
+}
 
 export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEidEsporteStreamProps) {
   const { id: profileId, esporteId: esporteRaw } = await params;
@@ -738,50 +770,56 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
           </div>
         </div>
 
-        <ProfileSection
-          title="Panorama"
-          className="mt-4"
-          info="Visão geral do desempenho neste esporte: nota EID, ranking, partidas e aproveitamento."
-        >
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <div className={`overflow-hidden ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Aproveitamento (V+D)</p>
-              <div>
-                <p className="mt-1 text-2xl font-black text-eid-fg">
-                  {resumoAtivo.winRate != null ? `${resumoAtivo.winRate}%` : "—"}
-                </p>
-                <div className="mt-1 inline-flex items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[10px] font-bold">
-                  <span className="text-emerald-400">{resumoAtivo.vit}V</span>
-                  <span className="mx-1 text-eid-text-secondary">·</span>
-                  <span className="text-rose-400">{resumoAtivo.der}D</span>
-                  <span className="mx-1 text-eid-text-secondary">·</span>
-                  <span className="text-eid-text-secondary">{resumoAtivo.jogos} jogos</span>
+        <EidStreamSection fallback={<EidGridFallback />}>
+          <EidDeferredBlock>
+            <ProfileSection
+              title="Panorama"
+              className="mt-4"
+              info="Visão geral do desempenho neste esporte: nota EID, ranking, partidas e aproveitamento."
+            >
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <div className={`overflow-hidden ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Aproveitamento (V+D)</p>
+                  <div>
+                    <p className="mt-1 text-2xl font-black text-eid-fg">
+                      {resumoAtivo.winRate != null ? `${resumoAtivo.winRate}%` : "—"}
+                    </p>
+                    <div className="mt-1 inline-flex items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[10px] font-bold">
+                      <span className="text-emerald-400">{resumoAtivo.vit}V</span>
+                      <span className="mx-1 text-eid-text-secondary">·</span>
+                      <span className="text-rose-400">{resumoAtivo.der}D</span>
+                      <span className="mx-1 text-eid-text-secondary">·</span>
+                      <span className="text-eid-text-secondary">{resumoAtivo.jogos} jogos</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div className={`overflow-hidden ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-              <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Posição no ranking</p>
-              <div>
-                <p className="mt-1 text-2xl font-black text-eid-fg">
-                  {resumoAtivo.posicao != null ? `#${resumoAtivo.posicao}` : "—"}
-                </p>
-                <p className="mt-1 text-[10px] leading-relaxed font-semibold text-eid-text-secondary">
-                  {resumoAtivo.posicao != null ? "Posição atual no esporte" : "Sem posição disponível"}
-                </p>
-              </div>
-            </div>
-            {view === "individual" && ue.categoria ? (
-              <div className={`overflow-hidden ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
-                <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Categoria</p>
-                <div>
-                  <p className="mt-1 text-[12px] font-semibold text-eid-fg">{ue.categoria}</p>
+                <div className={`overflow-hidden ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Posição no ranking</p>
+                  <div>
+                    <p className="mt-1 text-2xl font-black text-eid-fg">
+                      {resumoAtivo.posicao != null ? `#${resumoAtivo.posicao}` : "—"}
+                    </p>
+                    <p className="mt-1 text-[10px] leading-relaxed font-semibold text-eid-text-secondary">
+                      {resumoAtivo.posicao != null ? "Posição atual no esporte" : "Sem posição disponível"}
+                    </p>
+                  </div>
                 </div>
+                {view === "individual" && ue.categoria ? (
+                  <div className={`overflow-hidden ${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD}`}>
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-eid-text-secondary">Categoria</p>
+                    <div>
+                      <p className="mt-1 text-[12px] font-semibold text-eid-fg">{ue.categoria}</p>
+                    </div>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-        </ProfileSection>
+            </ProfileSection>
+          </EidDeferredBlock>
+        </EidStreamSection>
 
         {filteredFormationList.length > 0 || showDuplasSemTime ? (
+          <EidStreamSection fallback={<EidPanelFallback rows={2} />}>
+          <EidDeferredBlock>
           <ProfileSection
             title="Equipes e duplas neste esporte"
             className="mt-4"
@@ -1049,9 +1087,13 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
               })}
             </div>
           </ProfileSection>
+          </EidDeferredBlock>
+          </EidStreamSection>
         ) : null}
 
         {showIndividual ? (
+        <EidStreamSection fallback={<EidPanelFallback rows={3} />}>
+        <EidDeferredBlock>
         <ProfileSection
           title="Histórico de partidas (individual)"
           className="mt-4"
@@ -1157,8 +1199,12 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
             </>
           )}
         </ProfileSection>
+        </EidDeferredBlock>
+        </EidStreamSection>
         ) : null}
 
+        <EidStreamSection fallback={<EidPanelFallback rows={2} />}>
+        <EidDeferredBlock>
         <ProfileSection
           title="Head-to-head"
           className="mt-4"
@@ -1263,6 +1309,8 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
             ) : null}
           </div>
         </ProfileSection>
+        </EidDeferredBlock>
+        </EidStreamSection>
       </main>
   );
 }
