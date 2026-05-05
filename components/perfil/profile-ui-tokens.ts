@@ -2,6 +2,13 @@
 export const PROFILE_PUBLIC_MAIN_CLASS =
   "mx-auto w-full max-w-lg px-2.5 pb-[var(--eid-shell-content-bottom-pad)] pt-0 sm:max-w-2xl sm:px-5 sm:pb-[var(--eid-shell-content-bottom-pad)] sm:pt-2.5";
 
+/**
+ * Histórico completo (perfil / dupla / time): tela cheia, sem cartão estreito no mobile —
+ * alinhado ao fluxo fullscreen do app (ex.: /desafio).
+ */
+export const PROFILE_HISTORICO_FULLSCREEN_MAIN_CLASS =
+  "eid-touch-ui-scope mx-auto flex min-h-[100dvh] w-full max-w-none flex-col bg-eid-bg px-3 pb-[var(--eid-shell-content-bottom-pad)] pt-2 sm:max-w-3xl sm:px-6 sm:pb-[var(--eid-shell-content-bottom-pad)] sm:pt-3";
+
 /** Landing de espaço: mesma base + largura maior no desktop. */
 export const PROFILE_PUBLIC_MAIN_WIDE_CLASS =
   "mx-auto w-full max-w-lg px-2.5 pb-[var(--eid-shell-content-bottom-pad)] pt-0 sm:max-w-2xl sm:px-5 sm:pb-[var(--eid-shell-content-bottom-pad)] sm:pt-2.5 lg:max-w-6xl";

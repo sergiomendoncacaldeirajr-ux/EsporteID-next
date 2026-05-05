@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { ProfileFormacaoResultados } from "@/components/perfil/profile-formacao-resultados";
-import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
+import { PROFILE_HISTORICO_FULLSCREEN_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { createClient } from "@/lib/supabase/server";
 import { getPerfilTimeIdentity, getPerfilTimePartidasBundle } from "../perfil-time-payload";
@@ -26,8 +27,9 @@ export async function PerfilTimeHistoricoCompletoStream({ params, searchParams }
   ]);
 
   return (
-    <main className={`${PROFILE_PUBLIC_MAIN_CLASS} pt-3 sm:pt-4`}>
-      <div className={`${PROFILE_HERO_PANEL_CLASS} p-3 sm:p-4`}>
+    <main className={PROFILE_HISTORICO_FULLSCREEN_MAIN_CLASS}>
+      <PerfilBackLink href={`/perfil-time/${id}`} className="mb-2 shrink-0 self-start" />
+      <div className="flex min-h-0 flex-1 flex-col">
         <div className="inline-flex items-center gap-2">
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-eid-primary-500/12 text-eid-primary-300">
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>

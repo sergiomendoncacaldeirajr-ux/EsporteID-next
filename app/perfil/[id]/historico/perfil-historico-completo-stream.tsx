@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { EidIndividualPartidaRow } from "@/components/perfil/eid-individual-partida-row";
-import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
+import { PROFILE_HISTORICO_FULLSCREEN_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
 import { partidaEncerradaParaHistorico } from "@/lib/perfil/formacao-eid-stats";
 import { createClient } from "@/lib/supabase/server";
@@ -20,25 +21,19 @@ export async function PerfilHistoricoCompletoStream({ params, searchParams }: Pe
   } = await supabase.auth.getUser();
   if (!user) redirect(loginNextWithOptionalFrom(`/perfil/${id}/historico`, sp));
 
-  const { data: perfil } = await supabase
-    .from("profiles")
-    .select("id, nome, mostrar_historico_publico")
-    .eq("id", id)
-    .maybeSingle();
+  const partidasSelect =
+    "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, tipo_partida, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id, mensagem";
+
+  const [{ data: perfil }, { data: partidasRaw }] = await Promise.all([
+    supabase.from("profiles").select("id, nome, mostrar_historico_publico").eq("id", id).maybeSingle(),
+    supabase.from("partidas").select(partidasSelect).or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`).order("data_registro", { ascending: false }).limit(300),
+  ]);
+
   if (!perfil) notFound();
   const isSelf = user.id === id;
   if (!isSelf && perfil.mostrar_historico_publico === false) {
     redirect(`/perfil/${id}`);
   }
-
-  const { data: partidasRaw } = await supabase
-    .from("partidas")
-    .select(
-      "id, esporte_id, modalidade, jogador1_id, jogador2_id, time1_id, time2_id, placar_1, placar_2, status, status_ranking, torneio_id, tipo_partida, data_resultado, data_registro, data_partida, local_str, local_cidade, local_espaco_id, mensagem"
-    )
-    .or(`jogador1_id.eq.${id},jogador2_id.eq.${id}`)
-    .order("data_registro", { ascending: false })
-    .limit(300);
 
   const partidas = (partidasRaw ?? []).filter((p) => {
     if (!p.jogador1_id || !p.jogador2_id) return false;
@@ -49,50 +44,60 @@ export async function PerfilHistoricoCompletoStream({ params, searchParams }: Pe
   const oponenteIds = [
     ...new Set(partidas.map((p) => (p.jogador1_id === id ? p.jogador2_id : p.jogador1_id)).filter((x): x is string => !!x)),
   ];
+
+  const partidasPorOponente = new Map<string, typeof partidas>();
+  for (const p of partidas) {
+    const oid = p.jogador1_id === id ? p.jogador2_id : p.jogador1_id;
+    if (!oid) continue;
+    const arr = partidasPorOponente.get(oid);
+    if (arr) arr.push(p);
+    else partidasPorOponente.set(oid, [p]);
+  }
+  const esporteIds = [...new Set(partidas.map((p) => Number(p.esporte_id)).filter((x) => Number.isFinite(x) && x > 0))];
+  const localEspacoIds = [...new Set(partidas.map((p) => Number(p.local_espaco_id)).filter((x) => Number.isFinite(x) && x > 0))];
+
+  const [oponentesRes, esportesRowsRes, notasRowsRes, locaisRowsRes] = await Promise.all([
+    oponenteIds.length > 0
+      ? supabase.from("profiles").select("id, nome, avatar_url, username").in("id", oponenteIds)
+      : Promise.resolve({ data: [] as { id: string; nome: string | null; avatar_url: string | null }[] }),
+    esporteIds.length > 0
+      ? supabase.from("esportes").select("id, nome").in("id", esporteIds)
+      : Promise.resolve({ data: [] as { id: number; nome: string | null }[] }),
+    oponenteIds.length > 0 && esporteIds.length > 0
+      ? supabase
+          .from("usuario_eid")
+          .select("usuario_id, esporte_id, nota_eid")
+          .in("usuario_id", oponenteIds)
+          .in("esporte_id", esporteIds)
+      : Promise.resolve({ data: [] as { usuario_id: string; esporte_id: number; nota_eid: number | null }[] }),
+    localEspacoIds.length > 0
+      ? supabase.from("espacos_genericos").select("id, nome_publico").in("id", localEspacoIds)
+      : Promise.resolve({ data: [] as { id: number; nome_publico: string | null }[] }),
+  ]);
+
   const oponenteMap = new Map<string, { nome: string; avatarUrl: string | null }>();
-  if (oponenteIds.length > 0) {
-    const { data: oponentes } = await supabase.from("profiles").select("id, nome, avatar_url, username").in("id", oponenteIds);
-    for (const op of oponentes ?? []) {
-      if (!op.id) continue;
-      oponenteMap.set(op.id, {
-        nome: op.nome ?? "Atleta",
-        avatarUrl: op.avatar_url ?? null,
-      });
-    }
+  for (const op of oponentesRes.data ?? []) {
+    if (!op.id) continue;
+    oponenteMap.set(op.id, {
+      nome: op.nome ?? "Atleta",
+      avatarUrl: op.avatar_url ?? null,
+    });
   }
 
-  const esporteIds = [...new Set(partidas.map((p) => Number(p.esporte_id)).filter((x) => Number.isFinite(x) && x > 0))];
   const esporteNomeMap = new Map<number, string>();
-  if (esporteIds.length > 0) {
-    const { data: esportesRows } = await supabase.from("esportes").select("id, nome").in("id", esporteIds);
-    for (const e of esportesRows ?? []) {
-      if (e.id != null) esporteNomeMap.set(Number(e.id), e.nome ?? "Esporte");
-    }
+  for (const e of esportesRowsRes.data ?? []) {
+    if (e.id != null) esporteNomeMap.set(Number(e.id), e.nome ?? "Esporte");
   }
 
   const oponenteNotaMap = new Map<string, number>();
-  if (oponenteIds.length > 0 && esporteIds.length > 0) {
-    const { data: notasRows } = await supabase
-      .from("usuario_eid")
-      .select("usuario_id, esporte_id, nota_eid")
-      .in("usuario_id", oponenteIds)
-      .in("esporte_id", esporteIds);
-    for (const row of notasRows ?? []) {
-      if (!row.usuario_id || row.esporte_id == null || row.nota_eid == null) continue;
-      oponenteNotaMap.set(`${row.usuario_id}:${Number(row.esporte_id)}`, Number(row.nota_eid));
-    }
+  for (const row of notasRowsRes.data ?? []) {
+    if (!row.usuario_id || row.esporte_id == null || row.nota_eid == null) continue;
+    oponenteNotaMap.set(`${row.usuario_id}:${Number(row.esporte_id)}`, Number(row.nota_eid));
   }
 
-  const localEspacoIds = [...new Set(partidas.map((p) => Number(p.local_espaco_id)).filter((x) => Number.isFinite(x) && x > 0))];
   const localEspacoNomeMap = new Map<number, string>();
-  if (localEspacoIds.length > 0) {
-    const { data: locaisRows } = await supabase
-      .from("espacos_genericos")
-      .select("id, nome_publico")
-      .in("id", localEspacoIds);
-    for (const loc of locaisRows ?? []) {
-      if (loc.id != null) localEspacoNomeMap.set(Number(loc.id), loc.nome_publico ?? "Local");
-    }
+  for (const loc of locaisRowsRes.data ?? []) {
+    if (loc.id != null) localEspacoNomeMap.set(Number(loc.id), loc.nome_publico ?? "Local");
   }
 
   const totais = partidas.reduce(
@@ -111,8 +116,9 @@ export async function PerfilHistoricoCompletoStream({ params, searchParams }: Pe
   );
 
   return (
-    <main className={`${PROFILE_PUBLIC_MAIN_CLASS} pt-3 sm:pt-4`}>
-      <div className={`${PROFILE_HERO_PANEL_CLASS} p-3 sm:p-4`}>
+    <main className={PROFILE_HISTORICO_FULLSCREEN_MAIN_CLASS}>
+      <PerfilBackLink href={`/perfil/${id}`} className="mb-2 shrink-0 self-start" />
+      <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex items-center justify-between gap-2">
           <div className="inline-flex items-center gap-2">
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-eid-primary-500/12 text-eid-primary-300">
@@ -176,10 +182,7 @@ export async function PerfilHistoricoCompletoStream({ params, searchParams }: Pe
               };
               const oponenteNota =
                 oponenteId && p.esporte_id != null ? oponenteNotaMap.get(`${oponenteId}:${Number(p.esporte_id)}`) ?? null : null;
-              const confrontosMesmos = partidas.filter((h) => {
-                const hOid = h.jogador1_id === id ? h.jogador2_id : h.jogador1_id;
-                return hOid === oponenteId;
-              });
+              const confrontosMesmos = oponenteId ? (partidasPorOponente.get(oponenteId) ?? []) : [];
               const ultimosConfrontos = confrontosMesmos.slice(0, 5).map((h) => {
                 const origem: "Ranking" | "Torneio" =
                   h.torneio_id != null || String(h.tipo_partida ?? "").toLowerCase() === "torneio"
@@ -206,7 +209,8 @@ export async function PerfilHistoricoCompletoStream({ params, searchParams }: Pe
                   origem,
                   confronto: `${perfil.nome ?? "Atleta"} vs ${oponenteNome}`,
                   mensagem: h.mensagem ?? null,
-                  sportLabel: esporteNome,
+                  sportLabel:
+                    h.esporte_id != null ? esporteNomeMap.get(Number(h.esporte_id)) ?? "Esporte" : "Esporte",
                 };
               });
               return (

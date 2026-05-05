@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 import { SkBlock } from "@/components/loading/skeleton-primitives";
-import { PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS, PROFILE_SECTION_TITLE } from "@/components/perfil/profile-ui-tokens";
+import {
+  PROFILE_HERO_PANEL_CLASS,
+  PROFILE_HISTORICO_FULLSCREEN_MAIN_CLASS,
+  PROFILE_PUBLIC_MAIN_CLASS,
+  PROFILE_SECTION_TITLE,
+} from "@/components/perfil/profile-ui-tokens";
 
 /** Mesmas classes do `DashboardTopbar` (sticky, blur, safe-area). */
 export function DashboardTopbarSkeleton() {
@@ -529,8 +534,6 @@ export function ProfileEditIframeLoadingSkeleton() {
   );
 }
 
-const MAIN_HIST_PERFIL = "mx-auto w-full max-w-lg px-2.5 pb-6 pt-2 sm:max-w-2xl sm:px-5 sm:pb-8 sm:pt-3";
-
 function HistoricoLinhaSkeleton() {
   return (
     <li className="eid-list-item flex items-center gap-2 rounded-xl bg-eid-surface/45 px-2 py-2">
@@ -553,8 +556,9 @@ export function PerfilHistoricoListaSkeleton({
 }) {
   if (variant === "perfil") {
     return (
-      <main className={MAIN_HIST_PERFIL}>
-        <div className="eid-surface-panel rounded-2xl p-3 sm:p-4">
+      <main className={PROFILE_HISTORICO_FULLSCREEN_MAIN_CLASS} aria-hidden>
+        <SkBlock className="h-9 w-24 rounded-xl" />
+        <div className="mt-2 flex min-h-0 flex-1 flex-col">
           <SkBlock className="h-4 w-44 rounded-md" />
           <SkBlock className="mt-1 h-2.5 w-52 max-w-full rounded" />
           <SkBlock className="mt-2 h-8 w-full max-w-lg rounded-md" />
