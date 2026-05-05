@@ -3,8 +3,6 @@ import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { normalizeRevalidateAppPath } from "@/lib/realtime/revalidate-app-path";
 import { revalidatePath } from "next/cache";
 
-export const preferredRegion = ["gru1"];
-
 /**
  * Invalida o cache RSC da rota atual antes de `router.refresh()` no cliente.
  * Usado pelo bridge global (`RealtimePageRefresh`); autenticação obrigatória.

@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 
-export const preferredRegion = ["gru1"];
-
 type Scope = "global" | "times" | "torneios" | "locais" | "atletas" | "admin_push_usuarios";
 
 type AtletaRow = { id: string; nome: string | null; username: string | null };

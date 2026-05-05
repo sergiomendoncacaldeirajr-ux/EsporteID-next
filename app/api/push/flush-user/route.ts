@@ -3,8 +3,6 @@ import { dispatchPushForNotificationIds, isPushDispatchConfigured } from "@/lib/
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
-export const preferredRegion = ["gru1"];
-
 export async function POST() {
   try {
     if (!hasServiceRoleConfig()) {

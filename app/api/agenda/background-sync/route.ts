@@ -3,8 +3,6 @@ import { getAgendaTeamContext } from "@/lib/agenda/partidas-usuario";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 
-export const preferredRegion = ["gru1"];
-
 export async function POST() {
   try {
     const supabase = await createRouteHandlerClient();

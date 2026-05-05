@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { dispatchPushForNotificationIds, isPushDispatchConfigured } from "@/lib/pwa/push-dispatch";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
-export const preferredRegion = ["gru1"];
-
 /**
  * Webhook (ex.: Supabase Database Webhook em INSERT em `public.notificacoes`).
  * Configure `EID_PUSH_WEBHOOK_SECRET` e envie Authorization: Bearer <secret>.

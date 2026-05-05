@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
 
-export const preferredRegion = ["gru1"];
-
 type LocalRow = {
   id: number;
   slug: string | null;

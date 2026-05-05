@@ -3,8 +3,6 @@ import { assertCronSecret } from "@/lib/internal/cron-auth";
 import { dispatchPendingPushNotifications } from "@/lib/pwa/push-dispatch";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
-export const preferredRegion = ["gru1"];
-
 async function run(request: Request) {
   try {
     assertCronSecret(request);
