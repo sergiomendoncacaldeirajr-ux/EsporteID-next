@@ -16,10 +16,12 @@ import {
 } from "./dashboard-layout-classes";
 import { getDashboardRadarVagasPayload, type DashboardRadarTeamsArgs } from "./dashboard-radar-teams-payload";
 
-export type DashboardStreamVagasEquipesProps = DashboardRadarTeamsArgs;
+export type DashboardStreamVagasEquipesProps = {
+  radarArgs: DashboardRadarTeamsArgs;
+};
 
 export async function DashboardStreamVagasEquipes(props: DashboardStreamVagasEquipesProps) {
-  const { timesFiltrados, teamRosterMap, q, hasMyCoords } = await getDashboardRadarVagasPayload(props);
+  const { timesFiltrados, teamRosterMap, q, hasMyCoords } = await getDashboardRadarVagasPayload(props.radarArgs);
 
   return (
     <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>

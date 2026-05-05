@@ -17,7 +17,9 @@ import {
 } from "./dashboard-layout-classes";
 import { getDashboardRadarSpotlightPayload, type DashboardRadarTeamsArgs } from "./dashboard-radar-teams-payload";
 
-export type DashboardStreamConfrontosProximosProps = DashboardRadarTeamsArgs;
+export type DashboardStreamConfrontosProximosProps = {
+  radarArgs: DashboardRadarTeamsArgs;
+};
 
 export async function DashboardStreamConfrontosProximos(props: DashboardStreamConfrontosProximosProps) {
   const {
@@ -27,7 +29,7 @@ export async function DashboardStreamConfrontosProximos(props: DashboardStreamCo
     esporteCardNome,
     matchHref,
     q,
-  } = await getDashboardRadarSpotlightPayload(props);
+  } = await getDashboardRadarSpotlightPayload(props.radarArgs);
 
   return (
     <section className={`${dashboardSectionOuter} mt-6 sm:mt-8`}>

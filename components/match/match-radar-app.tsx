@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Grid2x2, Handshake, Maximize2, Trophy, X } from "lucide-react";
@@ -411,6 +411,20 @@ function sortByLabelShort(sortBy: SortBy) {
   return sortBy === "eid_score" ? "Nota EID" : "Pontos rank";
 }
 
+function gridCacheKey(input: {
+  tipo: RadarTipo;
+  sortBy: SortBy;
+  raio: number;
+  esporte: string;
+  finalidade: MatchRadarFinalidade;
+}) {
+  return `grid|${input.tipo}|${input.sortBy}|${input.raio}|${input.esporte}|${input.finalidade}`;
+}
+
+function fullCacheKey(input: { sortBy: SortBy; raio: number; finalidade: MatchRadarFinalidade }) {
+  return `full|${input.sortBy}|${input.raio}|${input.finalidade}`;
+}
+
 export function MatchRadarApp({
   viewerId,
   initialCards,
@@ -492,6 +506,23 @@ export function MatchRadarApp({
     }
   }, []);
 
+  const cardsCacheRef = useRef<Map<string, MatchRadarCard[]>>(
+    new Map([
+      [
+        initialView === "full"
+          ? fullCacheKey({ sortBy: initialSortBy, raio: initialRaio, finalidade: initialFinalidade })
+          : gridCacheKey({
+              tipo: initialTipo,
+              sortBy: initialSortBy,
+              raio: initialRaio,
+              esporte: initialEsporteFiltro,
+              finalidade: initialFinalidade,
+            }),
+        initialCards,
+      ],
+    ])
+  );
+
   const syncUrl = useCallback(
     (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
       const q = new URLSearchParams();
@@ -515,6 +546,12 @@ export function MatchRadarApp({
 
   const runRefresh = useCallback(
     (next: { tipo: RadarTipo; sortBy: SortBy; raio: number; esporte: string; finalidade: MatchRadarFinalidade }) => {
+      const cacheId = gridCacheKey(next);
+      const cached = cardsCacheRef.current.get(cacheId);
+      if (cached) {
+        setCards(cached);
+        return;
+      }
       startTransition(async () => {
         const res = await refreshMatchRadarAction({
           tipo: next.tipo,
@@ -533,6 +570,7 @@ export function MatchRadarApp({
               : undefined,
         });
         if (res.ok) {
+          cardsCacheRef.current.set(cacheId, res.cards);
           setCards(res.cards);
         } else if (res.error === "no_maioridade") {
           const q = new URLSearchParams();
@@ -551,6 +589,12 @@ export function MatchRadarApp({
 
   const runRefreshFull = useCallback(
     (next: { sortBy: SortBy; raio: number; esporte: string }) => {
+      const cacheId = fullCacheKey({ sortBy: next.sortBy, raio: next.raio, finalidade });
+      const cached = cardsCacheRef.current.get(cacheId);
+      if (cached) {
+        setCards(cached);
+        return;
+      }
       const ids = fullRadarFetchEsporteIds.filter((id) => /^\d+$/.test(id));
       if (ids.length === 0) return;
 
@@ -617,7 +661,9 @@ export function MatchRadarApp({
             byKey.set(key, card);
           }
         }
-        setCards(Array.from(byKey.values()));
+        const deduped = Array.from(byKey.values());
+        cardsCacheRef.current.set(cacheId, deduped);
+        setCards(deduped);
       });
     },
     [tipo, finalidade, fullRadarFetchEsporteIds]

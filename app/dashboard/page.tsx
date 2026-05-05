@@ -295,6 +295,22 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   const myTeamsInClause = dashTeamIds.length > 0 ? dashTeamIds.join(",") : "";
   const dashTeamIdSet = new Set(dashTeamIds);
+  const radarArgs = {
+    supabase,
+    userId: user.id,
+    q,
+    hasMyCoords,
+    myLat,
+    myLng,
+    activeOpponentIds,
+    meusEsportesSet,
+    esportePrincipalId: esportePrincipalId != null ? Number(esportePrincipalId) : null,
+    esporteCardNome,
+    dashTeamIds,
+    dashTeamIdSet,
+    myTeamsInClause,
+    matchHref,
+  };
 
   return (
     <div
@@ -483,40 +499,10 @@ export default async function DashboardPage({ searchParams }: Props) {
 
       <div className="eid-progressive-enter space-y-0">
         <EidStreamSection fallback={<DashboardStreamConfrontosProximosSkeleton />}>
-          <DashboardStreamConfrontosProximos
-            supabase={supabase}
-            userId={user.id}
-            q={q}
-            hasMyCoords={hasMyCoords}
-            myLat={myLat}
-            myLng={myLng}
-            activeOpponentIds={activeOpponentIds}
-            meusEsportesSet={meusEsportesSet}
-            esportePrincipalId={esportePrincipalId != null ? Number(esportePrincipalId) : null}
-            esporteCardNome={esporteCardNome}
-            dashTeamIds={dashTeamIds}
-            dashTeamIdSet={dashTeamIdSet}
-            myTeamsInClause={myTeamsInClause}
-            matchHref={matchHref}
-          />
+          <DashboardStreamConfrontosProximos radarArgs={radarArgs} />
         </EidStreamSection>
         <EidStreamSection fallback={<DashboardStreamVagasEquipesSkeleton />}>
-          <DashboardStreamVagasEquipes
-            supabase={supabase}
-            userId={user.id}
-            q={q}
-            hasMyCoords={hasMyCoords}
-            myLat={myLat}
-            myLng={myLng}
-            activeOpponentIds={activeOpponentIds}
-            meusEsportesSet={meusEsportesSet}
-            esportePrincipalId={esportePrincipalId != null ? Number(esportePrincipalId) : null}
-            esporteCardNome={esporteCardNome}
-            dashTeamIds={dashTeamIds}
-            dashTeamIdSet={dashTeamIdSet}
-            myTeamsInClause={myTeamsInClause}
-            matchHref={matchHref}
-          />
+          <DashboardStreamVagasEquipes radarArgs={radarArgs} />
         </EidStreamSection>
         <EidStreamSection fallback={<DashboardStreamTorneiosSkeleton />}>
           <DashboardStreamTorneios
