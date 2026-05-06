@@ -22,6 +22,11 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      # NEXT_PUBLIC_* precisam existir no build do Next para serem embutidas no bundle cliente.
+      NEXT_PUBLIC_SUPABASE_URL: "https://mszefppevculardthqrt.supabase.co"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_TIxdH94fmzrKT8wJjdx0kg_Q57FYrqh"
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: "BIqBwZ3McyoNuPFn2DcZA66oDdIoVGFUuuL5gXt8gWd4ovmhvWBiQcgHUkxI19Iv1Oa6h-xwNqtdY-8yPeKhG38"
     steps:
       - uses: actions/checkout@v4
 
