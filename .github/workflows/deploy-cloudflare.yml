@@ -1,0 +1,41 @@
+# Deploy do Worker OpenNext na Cloudflare ao dar push na branch principal.
+# Também pode rodar manualmente: Actions → Deploy Cloudflare Worker → Run workflow.
+#
+# Secrets no repositório (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   — API Token com permissão Workers Scripts:Edit (e leitura de conta se precisar)
+#   CLOUDFLARE_ACCOUNT_ID  — ID da conta (visível no dashboard Cloudflare, canto direito ou URL)
+#
+# Se a branch principal não for "main", ajuste a lista em `branches` abaixo.
+name: Deploy Cloudflare Worker
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-cloudflare-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build:cloudflare
+
+      - run: npx wrangler deploy
+        env:
+          OPEN_NEXT_DEPLOY: "true"
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

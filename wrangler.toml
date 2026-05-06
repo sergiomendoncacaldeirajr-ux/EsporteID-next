@@ -1,18 +1,33 @@
-name = "esporteid-next"
-compatibility_date = "2026-05-05"
-# Template @opennextjs/cloudflare: nodejs + fetch público (evita surpresas com URLs absolutas no worker).
-compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
-pages_build_output_dir = ".open-next"
-
-# Em Workers puro, OpenNext usa `[assets]` com binding `ASSETS`. Em **Pages**, `ASSETS` é nome reservado pelo runtime;
-# os estáticos vêm do próprio output em `.open-next` — não declare `[assets]` aqui.
+# Deploy em **Cloudflare Workers** (formato oficial OpenNext).
+# O adaptador não é suportado em Cloudflare **Pages** com só `pages_build_output_dir` — isso gerava
+# runtime: `Cannot read ... 'require'` / `'react-rsc'` (ver `wrangler pages deployment tail`).
 #
-# Não use `[[services]]` WORKER_SELF_REFERENCE aqui: no Cloudflare **Pages** o publish falha com
-# "references Worker … which was not found". Esse binding existe no template de **Workers** (`opennextjs-cloudflare deploy`).
+# Próximos passos:
+# 1. Desligue o deploy automático do projeto **Pages** ligado a este repo (ou use outro repositório só para Pages).
+# 2. Crie / use **Workers** + domínio (workers.dev ou custom) e faça deploy com:
+#    npm run deploy:cf
+#    (exige `wrangler login` local ou `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` no CI).
+# 3. Opcional: [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/) ligado ao GitHub com o mesmo comando.
 
-# `NEXT_PUBLIC_*` precisam estar em [vars] para o build Pages/OpenNext enxergar (segredos só no painel não bastam).
-# Service role, CRON, Asaas etc. continuam como Secret no Dashboard da Cloudflare — não coloque aqui.
+name = "esporteid-next"
+main = ".open-next/worker.js"
+compatibility_date = "2026-05-05"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+[assets]
+binding = "ASSETS"
+directory = ".open-next/assets"
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "esporteid-next"
+
+# Públicas no cliente — necessárias no build e no worker.
 [vars]
 NEXT_PUBLIC_SUPABASE_URL = "https://mszefppevculardthqrt.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_TIxdH94fmzrKT8wJjdx0kg_Q57FYrqh"
 NEXT_PUBLIC_VAPID_PUBLIC_KEY = "BIqBwZ3McyoNuPFn2DcZA66oDdIoVGFUuuL5gXt8gWd4ovmhvWBiQcgHUkxI19Iv1Oa6h-xwNqtdY-8yPeKhG38"
+
+# Opcional: otimização `/_next/image` com Cloudflare Images (habilite na conta e descomente).
+# [images]
+# binding = "IMAGES"

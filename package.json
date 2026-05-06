@@ -7,6 +7,9 @@
     "dev:turbo": "next dev",
     "build": "next build --webpack",
     "build:cloudflare": "opennextjs-cloudflare build",
+    "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "deploy:cf:wrangler": "opennextjs-cloudflare build && cross-env OPEN_NEXT_DEPLOY=true wrangler deploy",
+    "deploy:wrangler": "cross-env OPEN_NEXT_DEPLOY=true wrangler deploy",
     "start": "next start",
     "lint": "eslint",
     "migrate:mysql": "node scripts/migrate-from-mysql.mjs",
@@ -28,6 +31,7 @@
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.19.6",
+    "cross-env": "^7.0.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -38,6 +42,7 @@
     "mysql2": "^3.14.0",
     "pg": "^8.14.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.54.0"
   }
 }
