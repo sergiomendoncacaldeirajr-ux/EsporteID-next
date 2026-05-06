@@ -1823,6 +1823,26 @@ button[data-eid-remove-media-btn="true"]:active {
   padding-left: 0.565rem !important;
   padding-right: 0.565rem !important;
 }
+
+/*
+ * Onboarding: o shell mobile reduz `.eid-btn-primary` dentro de `#app-main-column` (ex.: Android
+ * com --eid-android-content-scale), deixando o CTA ilegível. Este seletor ganha da regra genérica.
+ */
+#app-main-column [data-eid-onboarding-step] .eid-btn-primary {
+  font-size: 1.0625rem !important;
+  line-height: 1.3 !important;
+  font-weight: 800 !important;
+  min-height: 3.25rem !important;
+  padding: 0.85rem 1.25rem !important;
+  letter-spacing: 0.01em !important;
+}
+
+@media (min-width: 640px) {
+  #app-main-column [data-eid-onboarding-step] .eid-btn-primary {
+    font-size: 1.125rem !important;
+    min-height: 3.5rem !important;
+  }
+}
 [data-eid-theme="light"] .eid-native-auth-enter {
   filter: saturate(1.02);
 }

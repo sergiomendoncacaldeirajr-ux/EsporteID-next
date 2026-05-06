@@ -8,6 +8,7 @@ import {
   Home,
   Landmark,
   Settings,
+  UserPlus,
   Users,
   Wallet,
 } from "lucide-react";
@@ -17,6 +18,8 @@ export type EspacoPainelSpace = {
   nome_publico: string;
   slug: string | null;
   mostrarFinanceiro?: boolean;
+  /** Dono sem papel de atleta: atalho para criar perfil de atleta. */
+  oferecerCtaPerfilAtleta?: boolean;
 };
 
 function isActivePath(pathname: string, hrefPath: string) {
@@ -27,6 +30,7 @@ function isActivePath(pathname: string, hrefPath: string) {
 function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
   const pathname = usePathname() ?? "";
   const mostrarFinanceiro = space.mostrarFinanceiro !== false;
+  const oferecerCtaPerfilAtleta = Boolean(space.oferecerCtaPerfilAtleta);
 
   const items = [
     { href: "/espaco", label: "Início", Icon: Home },
@@ -35,6 +39,9 @@ function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
     ...(mostrarFinanceiro ? [{ href: "/espaco/financeiro", label: "Financ.", Icon: Wallet }] : []),
     { href: "/espaco/configuracao", label: "Ajustes", Icon: Settings },
     { href: "/espaco/integracao-asaas", label: "Asaas", Icon: Landmark },
+    ...(oferecerCtaPerfilAtleta
+      ? [{ href: "/conta/criar-perfil-atleta", label: "Ser atleta", Icon: UserPlus }]
+      : []),
   ] as const;
 
   return (

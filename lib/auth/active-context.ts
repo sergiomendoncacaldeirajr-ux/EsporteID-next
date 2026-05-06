@@ -35,7 +35,7 @@ export function listAvailableAppContexts(papeis: readonly string[]): ActiveAppCo
   if (hasProfessorContextCapability(papeis)) contexts.push("professor");
   if (hasOrganizadorContextCapability(papeis)) contexts.push("organizador");
   if (hasEspacoContextCapability(papeis)) contexts.push("espaco");
-  return contexts.length > 0 ? contexts : ["atleta"];
+  return contexts;
 }
 
 export function resolveActiveAppContext(
@@ -43,8 +43,9 @@ export function resolveActiveAppContext(
   papeis: readonly string[]
 ): ActiveAppContext {
   const available = listAvailableAppContexts(papeis);
+  if (available.length === 0) return "atleta";
   if (isActiveAppContext(requested) && available.includes(requested)) return requested;
-  return available[0] ?? "atleta";
+  return available[0]!;
 }
 
 export function getContextHomeHref(context: ActiveAppContext): string {

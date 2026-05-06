@@ -30,6 +30,16 @@ export function usuarioTemPapel(papeis: readonly string[], papel: Papel): boolea
   return papeis.includes(papel);
 }
 
+/** Conta criada só como dono de local — sem atleta, professor ou organizador. */
+export function contaSomenteDonoEspaco(papeis: readonly string[]): boolean {
+  return (
+    papeis.includes("espaco") &&
+    !papeis.includes("atleta") &&
+    !papeis.includes("professor") &&
+    !papeis.includes("organizador")
+  );
+}
+
 export function precisaEsportesPratica(papeis: readonly string[]): boolean {
   return papeis.some((papel) => papel === "atleta" || papel === "professor");
 }

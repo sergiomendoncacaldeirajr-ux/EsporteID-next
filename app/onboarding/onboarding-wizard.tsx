@@ -16,6 +16,11 @@ import {
   type ProfessorTipoAtuacao,
 } from "@/lib/professor/constants";
 import { prepareAvatarForUpload } from "@/lib/images/prepare-avatar-upload";
+import {
+  CONTRATO_OPERADOR_ESPACO_PARAGRAFOS,
+  CONTRATO_OPERADOR_ESPACO_TITULO,
+} from "@/lib/legal/contrato-operador-espaco";
+import { LEGAL_VERSIONS } from "@/lib/legal/versions";
 import { normalizarPapeisContaPrincipal } from "@/lib/roles";
 
 /* ── Seletor de localização via GPS ────────────────────────────────── */
@@ -461,6 +466,7 @@ export function OnboardingWizard({
   const [espacoComplemento, setEspacoComplemento] = useState<string>(extrasInitial.espacoComplemento);
   const [espacoLat, setEspacoLat] = useState<string>("");
   const [espacoLng, setEspacoLng] = useState<string>("");
+  const [aceiteContratoEspaco, setAceiteContratoEspaco] = useState(false);
   const [nome, setNome] = useState<string>(profileInitial.nome);
   const [username, setUsername] = useState<string>(profileInitial.username);
   const [localizacao, setLocalizacao] = useState<string>(profileInitial.localizacao);
@@ -529,6 +535,7 @@ export function OnboardingWizard({
     if (lastServerPapeisKeyRef.current === key) return;
     lastServerPapeisKeyRef.current = key;
     setPapeis(new Set(normalized));
+    if (!normalized.includes("espaco")) setAceiteContratoEspaco(false);
   }, [selectedPapeis]);
 
   useEffect(() => {
@@ -615,6 +622,7 @@ export function OnboardingWizard({
         espacoComplemento: string;
         espacoLat: string;
         espacoLng: string;
+        aceiteContratoEspaco: boolean;
         nome: string;
         username: string;
         localizacao: string;
@@ -682,6 +690,7 @@ export function OnboardingWizard({
       if (typeof draft.espacoComplemento === "string") setEspacoComplemento(draft.espacoComplemento);
       if (typeof draft.espacoLat === "string") setEspacoLat(draft.espacoLat);
       if (typeof draft.espacoLng === "string") setEspacoLng(draft.espacoLng);
+      if (typeof draft.aceiteContratoEspaco === "boolean") setAceiteContratoEspaco(draft.aceiteContratoEspaco);
       if (typeof draft.nome === "string") setNome(draft.nome);
       if (typeof draft.username === "string") setUsername(draft.username);
       if (typeof draft.localizacao === "string") setLocalizacao(draft.localizacao);
@@ -743,6 +752,7 @@ export function OnboardingWizard({
       espacoComplemento,
       espacoLat,
       espacoLng,
+      aceiteContratoEspaco,
       nome,
       username,
       localizacao,
@@ -753,6 +763,7 @@ export function OnboardingWizard({
     };
     window.localStorage.setItem(draftKey, JSON.stringify(payload));
   }, [
+    aceiteContratoEspaco,
     alturaCm,
     espacoEsportes,
     espacoNome,
@@ -865,9 +876,11 @@ export function OnboardingWizard({
       if (espacoCidade.trim().length < 2) return false;
       if (espacoEstado.trim().length < 2) return false;
       if (espacoEsportes.size === 0) return false;
+      if (!aceiteContratoEspaco) return false;
     }
     return true;
   }, [
+    aceiteContratoEspaco,
     espacoCidade,
     espacoEndereco,
     espacoEstado,
@@ -930,7 +943,19 @@ export function OnboardingWizard({
     if (r.nextStep === "esportes") setStep("esportes");
     else if (r.nextStep === "extras") setStep("extras");
     else if (r.nextStep === "perfil") setStep("perfil");
-    else if (r.nextStep === "dashboard") {
+    else if (r.nextStep === "espaco_home") {
+      window.localStorage.removeItem(draftKey);
+      void (async () => {
+        await fetch("/api/active-context", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ context: "espaco" }),
+        });
+        router.replace("/espaco");
+        router.refresh();
+      })();
+      return;
+    } else if (r.nextStep === "dashboard") {
       window.localStorage.removeItem(draftKey);
       router.push("/dashboard");
       return;
@@ -1000,6 +1025,7 @@ export function OnboardingWizard({
     setEspacoComplemento(extrasInitial.espacoComplemento);
     setEspacoLat("");
     setEspacoLng("");
+    setAceiteContratoEspaco(false);
     setNome(profileInitial.nome);
     setUsername(profileInitial.username);
     setLocalizacao(profileInitial.localizacao);
@@ -1156,6 +1182,10 @@ export function OnboardingWizard({
       }
       if (espacoCidade.trim().length < 2 || espacoEstado.trim().length < 2) {
         setMessage("Preencha cidade e UF do espaço para continuar.");
+        return;
+      }
+      if (!aceiteContratoEspaco) {
+        setMessage("É obrigatório aceitar o contrato de operador de espaço antes de enviar para análise.");
         return;
       }
     }
@@ -1968,6 +1998,49 @@ export function OnboardingWizard({
                     placeholder="Observações"
                     className="eid-input-dark mt-2 w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                   />
+
+                  <div className="mt-5 rounded-2xl border border-amber-500/35 bg-amber-500/5 p-4">
+                    <input type="hidden" name="espaco_contrato_versao" value={LEGAL_VERSIONS.contratoOperadorEspaco} />
+                    <h3 className="text-xs font-bold uppercase tracking-wide text-amber-200">
+                      {CONTRATO_OPERADOR_ESPACO_TITULO}
+                    </h3>
+                    <p className="mt-1 text-[10px] text-amber-100/85">
+                      Versão {LEGAL_VERSIONS.contratoOperadorEspaco} — leia com atenção. Este texto é um modelo jurídico;
+                      recomendamos revisão por advogado. Os{" "}
+                      <Link href="/termos" className="font-semibold text-amber-200 underline underline-offset-2">
+                        Termos de Uso
+                      </Link>{" "}
+                      e a{" "}
+                      <Link href="/privacidade" className="font-semibold text-amber-200 underline underline-offset-2">
+                        Política de Privacidade
+                      </Link>{" "}
+                      continuam aplicáveis.
+                    </p>
+                    <div
+                      className="mt-3 max-h-48 overflow-y-auto rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary"
+                      tabIndex={0}
+                    >
+                      <ol className="list-decimal space-y-2 pl-4 marker:text-amber-400/90">
+                        {CONTRATO_OPERADOR_ESPACO_PARAGRAFOS.map((p, i) => (
+                          <li key={i}>{p}</li>
+                        ))}
+                      </ol>
+                    </div>
+                    <label className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5 text-xs text-eid-fg transition hover:border-amber-500/35">
+                      <input
+                        type="checkbox"
+                        name="espaco_contrato_aceito"
+                        checked={aceiteContratoEspaco}
+                        onChange={(e) => setAceiteContratoEspaco(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-[color:var(--eid-border-subtle)] text-eid-primary-500 focus:ring-eid-primary-500/40"
+                      />
+                      <span>
+                        Declaro que li e aceito o contrato acima e que tenho poderes para vincular o espaço cadastrado.
+                        Entendo que o envio seguirá para análise da plataforma.
+                      </span>
+                    </label>
+                  </div>
+
                   <div className="mt-3">
                     <EidFilePicker
                       name="espaco_documento"
@@ -2285,7 +2358,7 @@ export function OnboardingWizard({
               <button
                 type="submit"
                 disabled={pending || !perfilValid || fotoPreparando}
-                className="eid-btn-primary w-full rounded-xl py-3 text-sm font-bold disabled:opacity-50"
+                className={`${continueButtonClass} text-center leading-snug`}
               >
                 {fotoPreparando
                   ? "Otimizando foto…"

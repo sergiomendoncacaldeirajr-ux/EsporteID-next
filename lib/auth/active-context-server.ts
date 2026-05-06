@@ -16,8 +16,8 @@ export async function getAuthContextState() {
     return {
       user: null,
       papeis: [] as string[],
-      availableContexts: ["atleta"] as ActiveAppContext[],
-      activeContext: "atleta" as ActiveAppContext,
+      availableContexts: listAvailableAppContexts([]),
+      activeContext: resolveActiveAppContext(null, []),
     };
   }
 

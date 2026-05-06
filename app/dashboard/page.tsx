@@ -21,6 +21,7 @@ import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-fea
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
 import { SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { getAgendaTeamContext, partidaRowTemResultadoParaRevisaoOponente } from "@/lib/agenda/partidas-usuario";
+import { contaSomenteDonoEspaco } from "@/lib/roles";
 import { firstOf, iniciais, primeiroNome, whenLabel, type PartidaResumo } from "./dashboard-helpers";
 import { dashboardAppNavClass } from "./dashboard-layout-classes";
 import {
@@ -56,6 +57,9 @@ export default async function DashboardPage({ searchParams }: Props) {
   }
   if (activeContext === "organizador" && contextState.papeis.includes("organizador")) {
     redirect("/organizador");
+  }
+  if (contaSomenteDonoEspaco(contextState.papeis)) {
+    redirect("/espaco");
   }
   const gate = await getCachedProfileLegalRow(user.id);
   if (!gate || !legalAcceptanceIsCurrent(gate)) {

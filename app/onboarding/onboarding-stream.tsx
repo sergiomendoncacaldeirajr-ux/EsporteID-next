@@ -5,6 +5,7 @@ import {
   type ProfessorTipoAtuacao,
 } from "@/lib/professor/constants";
 import {
+  contaSomenteDonoEspaco,
   listarPapeis,
   normalizarPapeisContaPrincipal,
   obterDetalhesPapel,
@@ -43,12 +44,17 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
     redirect(`/conta/aceitar-termos?next=${encodeURIComponent("/onboarding")}`);
   }
   if (profile.id !== viewerId) redirect("/dashboard");
-  if (profile.perfil_completo) redirect("/dashboard");
 
   const { data: papeisRows } = await supabase
     .from("usuario_papeis")
     .select("papel, detalhes_json")
     .eq("usuario_id", viewerId);
+
+  if (profile.perfil_completo) {
+    const papeisRedirect = normalizarPapeisContaPrincipal(listarPapeis(papeisRows));
+    if (contaSomenteDonoEspaco(papeisRedirect)) redirect("/espaco");
+    redirect("/dashboard");
+  }
 
   const papeis = normalizarPapeisContaPrincipal(listarPapeis(papeisRows));
   const detalhesAtleta = obterDetalhesPapel(papeisRows, "atleta");

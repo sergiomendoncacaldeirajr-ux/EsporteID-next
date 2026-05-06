@@ -14,6 +14,7 @@ import {
 import {
   PAPEIS_VALIDOS,
   type Papel,
+  contaSomenteDonoEspaco,
   legacyTipoUsuarioFromPapeis,
   normalizarPapeisContaPrincipal,
   parseDetalhesPapel,
@@ -31,13 +32,14 @@ import { normalizeAvatarBuffer } from "@/lib/images/normalize-avatar-server";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
+import { LEGAL_VERSIONS } from "@/lib/legal/versions";
 
 const ESTRUTURAS_VALIDAS = ["quadra", "campo", "piscina", "sala", "estadio"] as const;
 const RESERVA_MODELOS = ["livre", "socios", "pago", "misto"] as const;
 
 type Estrutura = (typeof ESTRUTURAS_VALIDAS)[number];
 
-type NextStep = "papeis" | "esportes" | "extras" | "perfil" | "dashboard";
+type NextStep = "papeis" | "esportes" | "extras" | "perfil" | "dashboard" | "espaco_home";
 
 export type OnboardingActionResult =
   | { ok: true; nextStep?: NextStep; message?: string }
@@ -826,6 +828,22 @@ export async function salvarExtrasOnboarding(
   }
 
   if (hasEspaco) {
+    if (formData.get("espaco_contrato_aceito") !== "on") {
+      return {
+        ok: false,
+        message:
+          "Leia e aceite o contrato de operador de espaço antes de enviar o cadastro para análise.",
+      };
+    }
+    const versaoInformada = String(formData.get("espaco_contrato_versao") ?? "").trim();
+    if (versaoInformada !== LEGAL_VERSIONS.contratoOperadorEspaco) {
+      return {
+        ok: false,
+        message:
+          "A versão do contrato foi atualizada. Recarregue a página, leia os termos novamente e aceite antes de continuar.",
+      };
+    }
+
     const espacoNome = normalizePtBrNameCase(String(formData.get("espaco_nome") ?? ""));
     const espacoEsportes = parseIntList(formData.getAll("espaco_esportes"));
     if (espacoEsportes.length === 0) {
@@ -1022,7 +1040,42 @@ export async function salvarExtrasOnboarding(
         validacao_status: "em_analise",
       });
       if (e) return { ok: false, message: e };
+
+      const { error: contratoErr } = await supabase
+        .from("profiles")
+        .update({
+          contrato_operador_espaco_versao: LEGAL_VERSIONS.contratoOperadorEspaco,
+          contrato_operador_espaco_aceito_em: new Date().toISOString(),
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq("id", user.id);
+      if (contratoErr) return { ok: false, message: contratoErr.message };
     }
+  }
+
+  const somenteDonoEspaco = contaSomenteDonoEspaco(papeis);
+  if (somenteDonoEspaco) {
+    const { error: upEspErr } = await supabase
+      .from("profiles")
+      .update({
+        onboarding_etapa: 99,
+        perfil_completo: true,
+        onboarding_completo: true,
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+    if (upEspErr) return { ok: false, message: upEspErr.message };
+
+    revalidatePath("/onboarding");
+    revalidatePath(`/perfil/${user.id}`);
+    revalidatePath("/espaco");
+    revalidatePath("/dashboard");
+    revalidatePath("/", "layout");
+    return {
+      ok: true,
+      nextStep: "espaco_home",
+      message: infoMessages.length > 0 ? infoMessages.join(" ") : undefined,
+    };
   }
 
   const { error: upErr } = await supabase
@@ -1043,6 +1096,49 @@ export async function salvarExtrasOnboarding(
     nextStep: "perfil",
     message: infoMessages.length > 0 ? infoMessages.join(" ") : undefined,
   };
+}
+
+export async function iniciarPerfilAtletaAction(): Promise<OnboardingActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada. Faça login novamente." };
+
+  const { data: rows, error: papeisErr } = await supabase
+    .from("usuario_papeis")
+    .select("papel")
+    .eq("usuario_id", user.id);
+  if (papeisErr) return { ok: false, message: papeisErr.message };
+
+  const papeis = (rows ?? []).map((r) => String(r.papel ?? ""));
+  if (papeis.includes("atleta")) {
+    return { ok: false, message: "Você já possui o perfil de atleta." };
+  }
+  if (!papeis.includes("espaco")) {
+    return { ok: false, message: "Esta opção é para donos de espaço que desejam competir como atletas." };
+  }
+
+  const { error: insErr } = await supabase.from("usuario_papeis").insert({ usuario_id: user.id, papel: "atleta" });
+  if (insErr) return { ok: false, message: insErr.message };
+
+  const { error: upErr } = await supabase
+    .from("profiles")
+    .update({
+      perfil_completo: false,
+      onboarding_completo: false,
+      onboarding_etapa: 1,
+      atualizado_em: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+  if (upErr) return { ok: false, message: upErr.message };
+
+  revalidatePath("/", "layout");
+  revalidatePath("/onboarding");
+  revalidatePath("/espaco");
+  revalidatePath("/dashboard");
+  revalidatePath("/conta/criar-perfil-atleta");
+  return { ok: true };
 }
 
 function tempoExperienciaResumoFromDetalhes(d: Record<string, unknown>): string | null {
@@ -1245,6 +1341,7 @@ export async function salvarPerfilOnboarding(
 
   const papeisIds = (papeisRows ?? []).map((r) => String(r.papel ?? ""));
   const temProfessor = papeisIds.includes("professor");
+  const temEspaco = papeisIds.includes("espaco");
 
   revalidatePath("/", "layout");
   revalidatePath("/onboarding");
@@ -1252,6 +1349,9 @@ export async function salvarPerfilOnboarding(
   revalidatePath("/conta/perfil");
   revalidatePath("/conta/esportes-eid");
   revalidatePath(`/perfil/${user.id}`);
+  if (temEspaco) {
+    revalidatePath("/espaco");
+  }
   if (temProfessor) {
     revalidatePath("/professor");
     revalidatePath("/professores");

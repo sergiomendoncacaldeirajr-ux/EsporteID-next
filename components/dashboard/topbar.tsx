@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useLayoutEffect, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useState, useTransition } from "react";
 import { ActiveContextSwitch } from "@/components/dashboard/active-context-switch";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LogoWordmark } from "@/components/brand/logo-wordmark";
@@ -44,6 +44,7 @@ export function DashboardTopbar({
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const [contextToAtletaPending, startContextToAtleta] = useTransition();
   const [q, setQ] = useState("");
   const [meId, setMeId] = useState<string | null>(initialMeId);
   const [papeis, setPapeis] = useState<string[]>(initialPapeis);
@@ -142,6 +143,7 @@ export function DashboardTopbar({
 
   const activeContext = resolveActiveAppContext(initialActiveContext, papeis);
   const availableContexts = listAvailableAppContexts(papeis);
+  const temPapelAtleta = papeis.includes("atleta");
   const baseAthleteNavItems = [
     { href: "/dashboard", label: "Painel" },
     { href: "/agenda", label: "Agenda" },
@@ -206,6 +208,27 @@ export function DashboardTopbar({
     router.push(`/buscar?q=${encodeURIComponent(term)}`);
   }
 
+  function switchToAtletaProfile() {
+    if (contextToAtletaPending || activeContext !== "espaco" || !temPapelAtleta) return;
+    startContextToAtleta(async () => {
+      const response = await fetch("/api/active-context", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ context: "atleta" }),
+      });
+      if (!response.ok) {
+        router.refresh();
+        return;
+      }
+      const payload = (await response.json().catch(() => null)) as
+        | { redirectTo?: string; context?: ActiveAppContext | null }
+        | null;
+      const targetHref = payload?.redirectTo ?? getContextHomeHref("atleta");
+      router.replace(targetHref);
+      router.refresh();
+    });
+  }
+
   return (
     <>
       <Suspense fallback={null}>
@@ -222,15 +245,46 @@ export function DashboardTopbar({
     >
       <div className="mx-auto w-full max-w-5xl px-3 sm:px-6">
         <div className="flex items-center justify-between gap-2 py-2.5 sm:py-3">
-          <Link href={getContextHomeHref(activeContext)} className="min-w-0 shrink transition hover:opacity-90">
-            <LogoWordmark
-              priority
-              className="h-10 max-w-[min(64vw,300px)] object-left sm:h-12 sm:max-w-[min(68vw,390px)]"
-            />
-          </Link>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Link
+              href={getContextHomeHref(activeContext)}
+              className="min-w-0 shrink transition hover:opacity-90"
+            >
+              <LogoWordmark
+                priority
+                className="h-10 max-w-[min(52vw,260px)] object-left sm:h-12 sm:max-w-[min(68vw,390px)]"
+              />
+            </Link>
+            {activeContext === "espaco" && !temPapelAtleta ? (
+              <Link
+                href="/conta/criar-perfil-atleta"
+                className="md:hidden shrink-0 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-eid-fg transition hover:bg-eid-primary-500/18"
+              >
+                Ser atleta
+              </Link>
+            ) : null}
+            {activeContext === "espaco" && temPapelAtleta ? (
+              <button
+                type="button"
+                onClick={switchToAtletaProfile}
+                disabled={contextToAtletaPending}
+                className="md:hidden shrink-0 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-eid-fg transition hover:bg-eid-primary-500/18 disabled:opacity-60"
+              >
+                {contextToAtletaPending ? "…" : "Atleta"}
+              </button>
+            ) : null}
+          </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <div className="hidden md:flex">
+            <div className="hidden items-center gap-2 md:flex">
+              {activeContext === "espaco" && !temPapelAtleta ? (
+                <Link
+                  href="/conta/criar-perfil-atleta"
+                  className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-eid-fg transition hover:bg-eid-primary-500/16"
+                >
+                  Ser atleta
+                </Link>
+              ) : null}
               <ActiveContextSwitch activeContext={activeContext} availableContexts={availableContexts} />
             </div>
             <NotificationBell userId={meId} />

@@ -128,7 +128,10 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     p.endsWith("/") ? pathname.startsWith(p) : pathname === p || pathname.startsWith(p + "/")
   );
   const showBottomChrome =
-    Boolean(resolvedUserId) && !onAuthPage && !pathname.startsWith("/admin");
+    Boolean(resolvedUserId) &&
+    !onAuthPage &&
+    !pathname.startsWith("/admin") &&
+    !pathname.startsWith("/espaco");
 
   /** Altura da barra inferior fixa (#eid-mobile-bottom-nav) → `--eid-shell-footer-offset-measured` no :root. */
   useLayoutEffect(() => {
@@ -530,6 +533,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   if (onAuthPage) return null;
 
   if (pathname.startsWith("/admin")) return null;
+
+  if (pathname.startsWith("/espaco")) return null;
 
   const isHome =
     activeContext === "organizador"
