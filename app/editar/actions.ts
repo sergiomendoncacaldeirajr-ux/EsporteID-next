@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { modalidadesMatchFromFlags } from "@/lib/onboarding/modalidades-match";
 import { createClient } from "@/lib/supabase/server";
+import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
 
 type SaveProfileResult = { ok: true } | { ok: false; message: string };
 
@@ -19,10 +20,10 @@ export async function saveProfileMainAction(formData: FormData): Promise<SavePro
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Sessão expirada." };
 
-  const nome = String(formData.get("nome") ?? "").trim();
+  const nome = normalizePtBrNameCase(String(formData.get("nome") ?? ""));
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
   const username = usernameRaw ? usernameRaw.replace(/[^a-z0-9_]/g, "").slice(0, 24) : null;
-  const localizacao = String(formData.get("localizacao") ?? "").trim();
+  const localizacao = normalizePtBrNameCaseLoose(String(formData.get("localizacao") ?? ""));
   const altura = parseIntOrNull(formData.get("altura_cm"));
   const peso = parseIntOrNull(formData.get("peso_kg"));
   const ladoRaw = String(formData.get("lado") ?? "").trim();

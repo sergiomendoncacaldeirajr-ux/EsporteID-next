@@ -12,6 +12,7 @@ import {
   violacaoLimiteGlobalAoIngressar,
 } from "@/lib/formacao/formacao-global-limit";
 import { createClient } from "@/lib/supabase/server";
+import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
 
 export type TeamActionState =
   | { ok: true; message: string; createdTimeId?: number; inviteAutoSent?: boolean }
@@ -160,13 +161,13 @@ export async function criarEquipe(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Sessão expirada." };
 
-  const nome = String(formData.get("nome") ?? "").trim();
+  const nome = normalizePtBrNameCase(String(formData.get("nome") ?? ""));
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
   const username = usernameRaw ? usernameRaw.replace(/[^a-z0-9_]/g, "") : null;
   const tipoRaw = String(formData.get("tipo") ?? "time");
   const tipo = tipoRaw === "dupla" ? "dupla" : "time";
   const esporteId = Number(formData.get("esporte_id") ?? 0);
-  const localizacao = String(formData.get("localizacao") ?? "").trim();
+  const localizacao = normalizePtBrNameCaseLoose(String(formData.get("localizacao") ?? ""));
   const escudoFile = formData.get("escudo_file");
 
   if (nome.length < 3) return { ok: false, message: "Nome da equipe inválido." };
@@ -365,7 +366,7 @@ export async function atualizarMinhaEquipe(
   if (!owned) return { ok: false, message: "Sem permissão para editar esta equipe." };
 
   // Trava de segurança: localização da formação é imutável após criação.
-  const localizacaoEnviada = String(formData.get("localizacao") ?? "").trim();
+  const localizacaoEnviada = normalizePtBrNameCaseLoose(String(formData.get("localizacao") ?? ""));
   const localizacaoAtual = String(owned.localizacao ?? "").trim();
   if (localizacaoEnviada && localizacaoEnviada !== localizacaoAtual) {
     return { ok: false, message: "A localização da formação não pode ser alterada. Crie outra equipe/dupla para mudar a cidade." };
@@ -379,7 +380,7 @@ export async function atualizarMinhaEquipe(
     }
   }
 
-  const nome = String(formData.get("nome") ?? "").trim();
+  const nome = normalizePtBrNameCase(String(formData.get("nome") ?? ""));
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
   const username = usernameRaw ? usernameRaw.replace(/[^a-z0-9_]/g, "") : null;
   const bio = String(formData.get("bio") ?? "").trim();

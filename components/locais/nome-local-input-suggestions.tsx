@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { normalizeEspacoDuplicateValue } from "@/lib/espacos/duplicate";
+import { normalizePtBrNameCase } from "@/lib/text/pt-br-name-case";
 
 type LocalHint = {
   id: number;
@@ -13,11 +14,14 @@ type LocalHint = {
 export function NomeLocalInputSuggestions({
   locais,
   canOpenLocais = false,
+  nome,
+  onNomeChange,
 }: {
   locais: LocalHint[];
   canOpenLocais?: boolean;
+  nome: string;
+  onNomeChange: (next: string) => void;
 }) {
-  const [nome, setNome] = useState("");
   const normalized = useMemo(() => normalizeEspacoDuplicateValue(nome), [nome]);
 
   const similares = useMemo(() => {
@@ -29,6 +33,7 @@ export function NomeLocalInputSuggestions({
       }))
       .filter((local) => {
         if (!local.nomeNormalizado) return false;
+        if (local.nomeNormalizado === normalized) return false;
         return (
           local.nomeNormalizado.includes(normalized) ||
           normalized.includes(local.nomeNormalizado) ||
@@ -38,14 +43,30 @@ export function NomeLocalInputSuggestions({
       .slice(0, 5);
   }, [locais, normalized]);
 
+  function handleNomeChange(raw: string) {
+    if (raw.endsWith(" ")) {
+      const core = raw.slice(0, -1);
+      if (core.length) {
+        onNomeChange(`${normalizePtBrNameCase(core)} `);
+        return;
+      }
+    }
+    onNomeChange(raw);
+  }
+
+  function handleNomeBlur() {
+    const fixed = normalizePtBrNameCase(nome);
+    if (fixed !== nome) onNomeChange(fixed);
+  }
+
   return (
     <div>
       <label htmlFor="nome_publico" className="text-[10px] font-black uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
         Nome do local
       </label>
-      <div className="mt-1.5 flex items-center gap-2">
-        <span className="inline-grid h-8 w-8 shrink-0 place-items-center rounded-[9px] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_85%,var(--eid-bg)_15%)] text-eid-primary-400">
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
+      <div className="mt-1.5 flex items-center gap-2.5">
+        <span className="inline-grid h-10 w-10 shrink-0 place-items-center rounded-[10px] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_85%,var(--eid-bg)_15%)] text-eid-primary-400">
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
             <rect x="4" y="5" width="16" height="14" rx="2" />
             <path d="M8 3v4M16 3v4M4 10h16" />
           </svg>
@@ -55,10 +76,15 @@ export function NomeLocalInputSuggestions({
           name="nome_publico"
           required
           minLength={2}
+          lang="pt-BR"
+          spellCheck
+          autoCapitalize="words"
+          enterKeyHint="next"
           placeholder="Ex.: Arena Central"
           value={nome}
-          onChange={(event) => setNome(event.target.value)}
-          className="eid-input-dark h-9 w-full rounded-[9px] px-3 py-0 text-[13px] leading-[1.2] text-eid-fg placeholder:text-[12px] placeholder:text-eid-text-secondary"
+          onChange={(event) => handleNomeChange(event.target.value)}
+          onBlur={handleNomeBlur}
+          className="eid-input-dark !min-h-[2.75rem] h-11 w-full rounded-[10px] !px-3.5 !py-2.5 !text-[15px] !leading-snug text-eid-fg placeholder:!text-[14px] placeholder:text-eid-text-secondary"
         />
       </div>
       {similares.length ? (

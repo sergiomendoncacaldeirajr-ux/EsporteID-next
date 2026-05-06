@@ -114,3 +114,8 @@ export async function prepareCoverForUpload(file: File): Promise<PrepareImageRes
 export async function prepareTeamShieldForUpload(file: File): Promise<PrepareImageResult> {
   return prepareImageForUpload(file, { maxEdge: 1600, outFileName: "escudo.jpg", jpegQuality: 0.88 });
 }
+
+/** Logo / foto de espaço ou local genérico — mesmo pipeline que o escudo (HEIC, limite de borda, JPEG). */
+export async function prepareEspacoLogoForUpload(file: File): Promise<PrepareImageResult> {
+  return prepareImageForUpload(file, { maxEdge: 1600, outFileName: "logo.jpg", jpegQuality: 0.88 });
+}

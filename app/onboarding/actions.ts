@@ -669,6 +669,8 @@ export async function salvarExtrasOnboarding(
     } else {
       const localNome = normalizePtBrNameCase(String(formData.get("org_novo_local_nome") ?? ""));
       const localEndereco = normalizePtBrNameCaseLoose(String(formData.get("org_novo_local_endereco") ?? ""));
+      const localNumero = String(formData.get("org_novo_local_numero") ?? "").trim();
+      const localBairro = normalizePtBrNameCase(String(formData.get("org_novo_local_bairro") ?? ""));
       const localCidade = normalizePtBrNameCase(String(formData.get("org_novo_local_cidade") ?? ""));
       const localEstado = String(formData.get("org_novo_local_estado") ?? "").trim();
       const localCep = String(formData.get("org_novo_local_cep") ?? "").trim();
@@ -676,8 +678,14 @@ export async function salvarExtrasOnboarding(
       const localLng = String(formData.get("org_novo_local_lng") ?? "").trim();
       const localLogo = formData.get("org_novo_local_logo");
       const localDoc = formData.get("org_novo_local_documento");
-      if (localNome.length < 3 || localCidade.length < 2 || localEstado.length < 2) {
-        return { ok: false, message: "Preencha os dados mínimos do novo local (nome, cidade e estado)." };
+      if (
+        localNome.length < 3 ||
+        localEndereco.length < 3 ||
+        localNumero.length < 1 ||
+        localCidade.length < 2 ||
+        localEstado.length < 2
+      ) {
+        return { ok: false, message: "Preencha os dados mínimos do novo local (nome, endereço, número, cidade e estado)." };
       }
 
       const dupNomeGlobal = await findLocalDuplicadoByNome(
@@ -753,6 +761,8 @@ export async function salvarExtrasOnboarding(
 
       const venueConfig = {
         endereco: localEndereco,
+        numero: localNumero,
+        bairro: localBairro || null,
         cep: localCep,
         cidade: localCidade,
         estado: localEstado.toUpperCase(),
@@ -844,7 +854,7 @@ export async function salvarExtrasOnboarding(
     const documento = formData.get("espaco_documento");
 
     if (espacoNome.length < 3) return { ok: false, message: "Informe o nome do espaço." };
-    if (cidade.length < 2 || estado.length < 2 || endereco.length < 3) {
+    if (cidade.length < 2 || estado.length < 2 || endereco.length < 3 || numero.length < 1) {
       return { ok: false, message: "Preencha endereço completo do espaço (rua, cidade e estado)." };
     }
 

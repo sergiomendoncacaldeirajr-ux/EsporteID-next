@@ -1,0 +1,51 @@
+"use client";
+
+import { useState } from "react";
+import { EnderecoAssistFields } from "@/components/locais/endereco-assist-fields";
+
+type Props = {
+  localLogoUrl?: string | null;
+};
+
+export function CadastrarLocalEnderecoFields({ localLogoUrl = null }: Props) {
+  const [endereco, setEndereco] = useState("");
+  const [numero, setNumero] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [estado, setEstado] = useState("");
+  const [cep, setCep] = useState("");
+  const [complemento, setComplemento] = useState("");
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
+
+  return (
+    <div className="space-y-2">
+      <p className="text-[10px] font-black uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
+        Endereço completo do local
+      </p>
+      <EnderecoAssistFields
+        endereco={endereco}
+        setEndereco={setEndereco}
+        numero={numero}
+        setNumero={setNumero}
+        bairro={bairro}
+        setBairro={setBairro}
+        cidade={cidade}
+        setCidade={setCidade}
+        estado={estado}
+        setEstado={setEstado}
+        cep={cep}
+        setCep={setCep}
+        complemento={complemento}
+        setComplemento={setComplemento}
+        lat={lat}
+        lng={lng}
+        onCoords={(nextLat, nextLng) => {
+          setLat(nextLat);
+          setLng(nextLng);
+        }}
+        localLogoUrl={localLogoUrl}
+      />
+    </div>
+  );
+}

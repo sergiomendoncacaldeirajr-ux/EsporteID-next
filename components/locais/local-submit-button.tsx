@@ -2,14 +2,16 @@
 
 import { useFormStatus } from "react-dom";
 
-export function LocalSubmitButton() {
+export function LocalSubmitButton({ disabled = false }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
+  const off = disabled || pending;
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={off}
       aria-busy={pending}
       className="inline-flex min-h-[38px] w-full items-center justify-center gap-2 rounded-xl border border-[#ff8a2b] bg-[#ff7a00] px-4 text-[11px] font-black uppercase tracking-[0.03em] text-white shadow-[0_8px_18px_-12px_rgba(249,115,22,0.7)] transition hover:bg-[#ff8617] disabled:opacity-60"
+      title={disabled && !pending ? "Complete o nome válido antes de enviar" : undefined}
     >
       {pending ? (
         <span className="inline-flex items-center gap-2">

@@ -1,14 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { NomeLocalInputSuggestions } from "@/components/locais/nome-local-input-suggestions";
-import { LocalSubmitButton } from "@/components/locais/local-submit-button";
+import { CadastrarLocalGenericoForm } from "@/components/locais/cadastrar-local-generico-form";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { usuarioJaGerenciaEspaco } from "@/lib/espacos/server";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
-import { cadastrarLocalGenerico } from "./actions";
-
 export type CadastrarLocalStreamProps = {
   searchParams?: Promise<{
     erro?: string;
@@ -37,21 +34,23 @@ export async function CadastrarLocalStream({ searchParams }: CadastrarLocalStrea
     sp.erro === "nome"
       ? "Informe um nome com pelo menos 2 caracteres."
       : sp.erro === "local"
-        ? "Informe cidade/região ou endereço (mín. 3 caracteres)."
+        ? "Informe o endereço completo com número, cidade e UF."
         : sp.erro === "duplicado"
           ? "Já existe um espaço com esse nome nesta mesma localização. Abra o cadastro existente ou solicite a posse oficial."
-        : sp.erro === "gravacao"
-          ? "Não foi possível salvar. Tente novamente."
-          : null;
+          : sp.erro === "nome_dup"
+            ? "Já existe um local cadastrado com esse nome. Escolha outro nome ou abra o cadastro existente."
+            : sp.erro === "gravacao"
+              ? "Não foi possível salvar. Tente novamente."
+              : null;
   const sucessoMsg =
     sp.sucesso === "1"
-      ? `Local cadastrado com sucesso${sp.novo_local_nome ? `: ${sp.novo_local_nome}` : ""}.`
+      ? `Sugestão enviada${sp.novo_local_nome ? `: ${sp.novo_local_nome}` : ""}. Um administrador pode publicar na vitrine depois de revisar — até lá o local não aparece para visitantes anônimos na lista de locais.`
       : null;
 
   const featureCfg = await getSystemFeatureConfig(supabase);
   const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", viewerId, false);
 
-  const duplicateId = Number(sp.erro === "duplicado" ? sp.id : "");
+  const duplicateId = Number(sp.erro === "duplicado" || sp.erro === "nome_dup" ? sp.id ?? "" : "");
   const [{ data: profile }, { data: locaisRaw }, { data: localDuplicado }] = await Promise.all([
     supabase.from("profiles").select("lat, lng").eq("id", viewerId).maybeSingle(),
     supabase
@@ -78,7 +77,7 @@ export async function CadastrarLocalStream({ searchParams }: CadastrarLocalStrea
     }))
     .sort((a, b) => a.dist - b.dist);
   const locaisOpcoes = locaisOrdenados.slice(0, 6);
-  const locaisHints = locaisOrdenados.slice(0, 80).map((local) => ({
+  const locaisHints = locaisOrdenados.map((local) => ({
     id: Number(local.id),
     nome_publico: local.nome_publico ?? null,
     localizacao: local.localizacao ?? null,
@@ -96,7 +95,7 @@ export async function CadastrarLocalStream({ searchParams }: CadastrarLocalStrea
           <div className="min-w-0">
             <h1 className="text-[17px] font-black leading-tight tracking-tight text-eid-fg sm:text-[24px]">Cadastrar local genérico</h1>
             <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary sm:text-[13px]">
-              Sugira um espaço esportivo para a comunidade com nome e localização. Depois é possível complementar dados e validar propriedade.
+              Sugira um espaço esportivo com nome e endereço. A sugestão fica pendente até um administrador aprovar a publicação na vitrine; você pode abrir o cadastro pelo link após enviar.
             </p>
           </div>
           <div className="justify-self-end" aria-hidden>
@@ -155,47 +154,12 @@ export async function CadastrarLocalStream({ searchParams }: CadastrarLocalStrea
             </div>
           ) : null}
 
-          <form action={cadastrarLocalGenerico} className="space-y-4">
-            <input type="hidden" name="return_to" value={returnTo} />
-            <NomeLocalInputSuggestions locais={locaisHints} canOpenLocais={canOpenLocais} />
-            <div>
-              <label htmlFor="localizacao" className="text-[10px] font-black uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
-                Cidade / região ou endereço
-              </label>
-              <div className="mt-1.5 flex items-center gap-2">
-                <span className="inline-grid h-8 w-8 shrink-0 place-items-center rounded-[9px] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_85%,var(--eid-bg)_15%)] text-eid-primary-400">
-                  <svg viewBox="0 0 24 24" className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden>
-                    <path d="M12 21s6-5.6 6-10a6 6 0 1 0-12 0c0 4.4 6 10 6 10z" />
-                    <circle cx="12" cy="11" r="2.1" />
-                  </svg>
-                </span>
-                <input
-                  id="localizacao"
-                  name="localizacao"
-                  required
-                  minLength={3}
-                  placeholder="Ex.: Ipatinga — MG"
-                  className="eid-input-dark h-9 w-full rounded-[9px] px-3 py-0 text-[13px] leading-[1.2] text-eid-fg placeholder:text-[12px] placeholder:text-eid-text-secondary"
-                />
-              </div>
-            </div>
-            <div>
-              <label htmlFor="logo_file" className="text-[10px] font-black uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
-                Foto / logo do local (opcional)
-              </label>
-              <div className="mt-1.5 rounded-[9px] border border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_86%,var(--eid-bg)_14%)] p-3">
-                <input
-                  id="logo_file"
-                  name="logo_file"
-                  type="file"
-                  accept="image/*"
-                  className="block w-full text-xs text-eid-text-secondary file:mr-2 file:rounded-lg file:border file:border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] file:bg-eid-card file:px-2.5 file:py-1.5 file:text-[11px] file:font-semibold file:text-eid-fg"
-                />
-                <p className="mt-2 text-[11px] text-eid-text-secondary">PNG, JPG ou WEBP até 5MB.</p>
-              </div>
-            </div>
-            <LocalSubmitButton />
-          </form>
+          <CadastrarLocalGenericoForm
+            locais={locaisHints}
+            canOpenLocais={canOpenLocais}
+            returnTo={returnTo}
+            localLogoUrl={localDuplicado?.logo_arquivo ?? null}
+          />
 
           <div className="mt-4 flex items-start gap-2 rounded-[10px] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_90%,var(--eid-bg)_10%)] px-3 py-2.5">
             <span className="mt-0.5 inline-grid h-4 w-4 shrink-0 place-items-center rounded-full bg-eid-primary-500/16 text-[9px] font-black text-eid-primary-400">

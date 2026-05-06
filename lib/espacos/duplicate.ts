@@ -27,6 +27,29 @@ export type EspacoDuplicateRow = {
   ownership_status?: string | null;
 };
 
+/** Mesmo nome normalizado não pode repetir (inclui sugestões ainda fora da vitrine). Suspensos admin não bloqueiam. */
+export async function findDuplicateEspacoByNome(
+  supabase: SupabaseClient,
+  nomePublico: string,
+  ignoreId?: number | null
+): Promise<EspacoDuplicateRow | null> {
+  const nomeNormalizado = normalizeEspacoDuplicateValue(nomePublico);
+  if (!nomeNormalizado || nomeNormalizado.length < 2) return null;
+
+  let query = supabase
+    .from("espacos_genericos")
+    .select("id, slug, nome_publico, localizacao, responsavel_usuario_id, ownership_status")
+    .eq("nome_publico_normalizado", nomeNormalizado)
+    .eq("admin_suspenso", false);
+
+  if (ignoreId && Number.isInteger(ignoreId) && ignoreId > 0) {
+    query = query.neq("id", ignoreId);
+  }
+
+  const { data } = await query.limit(1).maybeSingle();
+  return data ?? null;
+}
+
 export async function findDuplicateEspaco(
   supabase: SupabaseClient,
   {
@@ -51,7 +74,8 @@ export async function findDuplicateEspaco(
     .from("espacos_genericos")
     .select("id, slug, nome_publico, localizacao, responsavel_usuario_id, ownership_status")
     .eq("nome_publico_normalizado", nomeNormalizado)
-    .eq("localizacao_normalizada", localizacaoNormalizada);
+    .eq("localizacao_normalizada", localizacaoNormalizada)
+    .eq("admin_suspenso", false);
 
   if (ignoreId && Number.isInteger(ignoreId) && ignoreId > 0) {
     query = query.neq("id", ignoreId);

@@ -245,6 +245,7 @@ import {
   salvarPerfilOnboarding,
   type OnboardingActionResult,
 } from "./actions";
+import { EnderecoAssistFields } from "@/components/locais/endereco-assist-fields";
 import { LocalSelectAutocomplete } from "@/components/locais/local-select-autocomplete";
 
 const ONBOARDING_DRAFT_KEY_PREFIX = "eid_onboarding_draft_v1";
@@ -328,6 +329,8 @@ type Props = {
     orgLocalModo: "existente" | "novo";
     orgLocalId: number | null;
     orgLocalMsg: string;
+    orgNovoLocalNumero: string;
+    orgNovoLocalBairro: string;
     espacoNome: string;
     espacoEsportes: number[];
     estruturas: string[];
@@ -435,6 +438,8 @@ export function OnboardingWizard({
   const [orgLocalMsg, setOrgLocalMsg] = useState<string>(extrasInitial.orgLocalMsg);
   const [orgNovoLocalNome, setOrgNovoLocalNome] = useState<string>("");
   const [orgNovoLocalEndereco, setOrgNovoLocalEndereco] = useState<string>("");
+  const [orgNovoLocalNumero, setOrgNovoLocalNumero] = useState<string>(extrasInitial.orgNovoLocalNumero);
+  const [orgNovoLocalBairro, setOrgNovoLocalBairro] = useState<string>(extrasInitial.orgNovoLocalBairro);
   const [orgNovoLocalCidade, setOrgNovoLocalCidade] = useState<string>("");
   const [orgNovoLocalEstado, setOrgNovoLocalEstado] = useState<string>("");
   const [orgNovoLocalCep, setOrgNovoLocalCep] = useState<string>("");
@@ -589,6 +594,8 @@ export function OnboardingWizard({
         orgLocalMsg: string;
         orgNovoLocalNome: string;
         orgNovoLocalEndereco: string;
+        orgNovoLocalNumero: string;
+        orgNovoLocalBairro: string;
         orgNovoLocalCidade: string;
         orgNovoLocalEstado: string;
         orgNovoLocalCep: string;
@@ -654,6 +661,8 @@ export function OnboardingWizard({
       if (typeof draft.orgLocalMsg === "string") setOrgLocalMsg(draft.orgLocalMsg);
       if (typeof draft.orgNovoLocalNome === "string") setOrgNovoLocalNome(draft.orgNovoLocalNome);
       if (typeof draft.orgNovoLocalEndereco === "string") setOrgNovoLocalEndereco(draft.orgNovoLocalEndereco);
+      if (typeof draft.orgNovoLocalNumero === "string") setOrgNovoLocalNumero(draft.orgNovoLocalNumero);
+      if (typeof draft.orgNovoLocalBairro === "string") setOrgNovoLocalBairro(draft.orgNovoLocalBairro);
       if (typeof draft.orgNovoLocalCidade === "string") setOrgNovoLocalCidade(draft.orgNovoLocalCidade);
       if (typeof draft.orgNovoLocalEstado === "string") setOrgNovoLocalEstado(draft.orgNovoLocalEstado);
       if (typeof draft.orgNovoLocalCep === "string") setOrgNovoLocalCep(draft.orgNovoLocalCep);
@@ -713,6 +722,8 @@ export function OnboardingWizard({
       orgLocalMsg,
       orgNovoLocalNome,
       orgNovoLocalEndereco,
+      orgNovoLocalNumero,
+      orgNovoLocalBairro,
       orgNovoLocalCidade,
       orgNovoLocalEstado,
       orgNovoLocalCep,
@@ -774,6 +785,8 @@ export function OnboardingWizard({
     orgLocalMsg,
     orgNovoLocalNome,
     orgNovoLocalEndereco,
+    orgNovoLocalNumero,
+    orgNovoLocalBairro,
     orgNovoLocalCidade,
     orgNovoLocalEstado,
     orgNovoLocalCep,
@@ -841,11 +854,14 @@ export function OnboardingWizard({
     if (hasOrganizador && orgLocalModo === "existente" && Number(orgLocalId) <= 0) return false;
     if (hasOrganizador && orgLocalModo === "novo") {
       if (orgNovoLocalNome.trim().length < 3) return false;
+      if (orgNovoLocalEndereco.trim().length < 3) return false;
+      if (orgNovoLocalNumero.trim().length < 1) return false;
       if (orgNovoLocalCidade.trim().length < 2) return false;
       if (orgNovoLocalEstado.trim().length < 2) return false;
     }
     if (hasEspaco) {
       if (espacoEndereco.trim().length < 3) return false;
+      if (espacoNumero.trim().length < 1) return false;
       if (espacoCidade.trim().length < 2) return false;
       if (espacoEstado.trim().length < 2) return false;
       if (espacoEsportes.size === 0) return false;
@@ -856,6 +872,7 @@ export function OnboardingWizard({
     espacoEndereco,
     espacoEstado,
     espacoNome,
+    espacoNumero,
     espacoEsportes,
     hasEspaco,
     hasOrganizador,
@@ -863,8 +880,10 @@ export function OnboardingWizard({
     orgLocalId,
     orgLocalModo,
     orgNovoLocalCidade,
+    orgNovoLocalEndereco,
     orgNovoLocalEstado,
     orgNovoLocalNome,
+    orgNovoLocalNumero,
   ]);
 
   const perfilValid = useMemo(() => {
@@ -960,6 +979,8 @@ export function OnboardingWizard({
     setOrgLocalMsg(extrasInitial.orgLocalMsg);
     setOrgNovoLocalNome("");
     setOrgNovoLocalEndereco("");
+    setOrgNovoLocalNumero(extrasInitial.orgNovoLocalNumero);
+    setOrgNovoLocalBairro(extrasInitial.orgNovoLocalBairro);
     setOrgNovoLocalCidade("");
     setOrgNovoLocalEstado("");
     setOrgNovoLocalCep("");
@@ -1107,6 +1128,10 @@ export function OnboardingWizard({
         setMessage("Informe o nome do novo local (mínimo 3 caracteres).");
         return;
       }
+      if (orgNovoLocalEndereco.trim().length < 3 || orgNovoLocalNumero.trim().length < 1) {
+        setMessage("Informe endereço completo com número do novo local.");
+        return;
+      }
       if (orgNovoLocalCidade.trim().length < 2 || orgNovoLocalEstado.trim().length < 2) {
         setMessage("Preencha cidade e UF do novo local para continuar.");
         return;
@@ -1123,6 +1148,10 @@ export function OnboardingWizard({
       }
       if (espacoEndereco.trim().length < 3) {
         setMessage("Informe o endereço do espaço.");
+        return;
+      }
+      if (espacoNumero.trim().length < 1) {
+        setMessage("Informe o número do endereço do espaço.");
         return;
       }
       if (espacoCidade.trim().length < 2 || espacoEstado.trim().length < 2) {
@@ -1789,12 +1818,26 @@ export function OnboardingWizard({
                         placeholder="Nome do local"
                         className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg sm:col-span-2"
                       />
-                      <input
-                        name="org_novo_local_endereco"
-                        value={orgNovoLocalEndereco}
-                        onChange={(e) => setOrgNovoLocalEndereco(e.target.value)}
-                        placeholder="Endereço"
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg sm:col-span-2"
+                      <EnderecoAssistFields
+                        endereco={orgNovoLocalEndereco}
+                        setEndereco={setOrgNovoLocalEndereco}
+                        numero={orgNovoLocalNumero}
+                        setNumero={setOrgNovoLocalNumero}
+                        bairro={orgNovoLocalBairro}
+                        setBairro={setOrgNovoLocalBairro}
+                        cidade={orgNovoLocalCidade}
+                        setCidade={setOrgNovoLocalCidade}
+                        estado={orgNovoLocalEstado}
+                        setEstado={setOrgNovoLocalEstado}
+                        cep={orgNovoLocalCep}
+                        setCep={setOrgNovoLocalCep}
+                        lat={orgNovoLocalLat}
+                        lng={orgNovoLocalLng}
+                        onCoords={(lat, lng) => {
+                          setOrgNovoLocalLat(lat);
+                          setOrgNovoLocalLng(lng);
+                        }}
+                        prefix="org_novo_local_"
                       />
                       <div className="sm:col-span-2">
                         <EidFilePicker
@@ -1804,34 +1847,6 @@ export function OnboardingWizard({
                           hint="Logo do local (opcional)"
                         />
                       </div>
-                      <input
-                        name="org_novo_local_cidade"
-                        value={orgNovoLocalCidade}
-                        onChange={(e) => setOrgNovoLocalCidade(e.target.value)}
-                        placeholder="Cidade"
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                      />
-                      <input
-                        name="org_novo_local_estado"
-                        value={orgNovoLocalEstado}
-                        onChange={(e) => setOrgNovoLocalEstado(e.target.value)}
-                        placeholder="UF"
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                      />
-                      <input
-                        name="org_novo_local_cep"
-                        value={orgNovoLocalCep}
-                        onChange={(e) => setOrgNovoLocalCep(e.target.value)}
-                        placeholder="CEP (opcional)"
-                        className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                      />
-                      <LocationPicker
-                        latName="org_novo_local_lat"
-                        lngName="org_novo_local_lng"
-                        lat={orgNovoLocalLat}
-                        lng={orgNovoLocalLng}
-                        onCapture={(lat, lng) => { setOrgNovoLocalLat(lat); setOrgNovoLocalLng(lng); }}
-                      />
                       <div className="sm:col-span-2">
                         <EidFilePicker
                           name="org_novo_local_documento"
@@ -1858,61 +1873,28 @@ export function OnboardingWizard({
                     className="eid-input-dark mt-3 w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                   />
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    <input
-                      name="espaco_endereco"
-                      value={espacoEndereco}
-                      onChange={(e) => setEspacoEndereco(e.target.value)}
-                      placeholder="Endereço"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg sm:col-span-2"
-                    />
-                    <input
-                      name="espaco_numero"
-                      value={espacoNumero}
-                      onChange={(e) => setEspacoNumero(e.target.value)}
-                      placeholder="Número"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                    />
-                    <input
-                      name="espaco_bairro"
-                      value={espacoBairro}
-                      onChange={(e) => setEspacoBairro(e.target.value)}
-                      placeholder="Bairro"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                    />
-                    <input
-                      name="espaco_cidade"
-                      value={espacoCidade}
-                      onChange={(e) => setEspacoCidade(e.target.value)}
-                      placeholder="Cidade"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                    />
-                    <input
-                      name="espaco_estado"
-                      value={espacoEstado}
-                      onChange={(e) => setEspacoEstado(e.target.value)}
-                      placeholder="UF"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                    />
-                    <input
-                      name="espaco_cep"
-                      value={espacoCep}
-                      onChange={(e) => setEspacoCep(e.target.value)}
-                      placeholder="CEP"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                    />
-                    <input
-                      name="espaco_complemento"
-                      value={espacoComplemento}
-                      onChange={(e) => setEspacoComplemento(e.target.value)}
-                      placeholder="Complemento (opcional)"
-                      className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg"
-                    />
-                    <LocationPicker
-                      latName="espaco_lat"
-                      lngName="espaco_lng"
+                    <EnderecoAssistFields
+                      endereco={espacoEndereco}
+                      setEndereco={setEspacoEndereco}
+                      numero={espacoNumero}
+                      setNumero={setEspacoNumero}
+                      bairro={espacoBairro}
+                      setBairro={setEspacoBairro}
+                      cidade={espacoCidade}
+                      setCidade={setEspacoCidade}
+                      estado={espacoEstado}
+                      setEstado={setEspacoEstado}
+                      cep={espacoCep}
+                      setCep={setEspacoCep}
+                      complemento={espacoComplemento}
+                      setComplemento={setEspacoComplemento}
                       lat={espacoLat}
                       lng={espacoLng}
-                      onCapture={(lat, lng) => { setEspacoLat(lat); setEspacoLng(lng); }}
+                      onCoords={(lat, lng) => {
+                        setEspacoLat(lat);
+                        setEspacoLng(lng);
+                      }}
+                      prefix="espaco_"
                     />
                   </div>
                   <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary">

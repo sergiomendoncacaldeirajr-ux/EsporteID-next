@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { findDuplicateEspaco, isEspacoDuplicateError } from "@/lib/espacos/duplicate";
+import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
 
 export type LocalActionState = { ok: true; message: string } | { ok: false; message: string };
 
@@ -34,8 +35,8 @@ export async function atualizarMeuLocal(
     row.responsavel_usuario_id === user.id;
   if (!pode) return { ok: false, message: "Sem permissão para editar este local." };
 
-  const nome = String(formData.get("nome_publico") ?? "").trim();
-  const localizacao = String(formData.get("localizacao") ?? "").trim();
+  const nome = normalizePtBrNameCase(String(formData.get("nome_publico") ?? ""));
+  const localizacao = normalizePtBrNameCaseLoose(String(formData.get("localizacao") ?? ""));
   const logoRaw = String(formData.get("logo_arquivo") ?? "").trim();
   const tipo_quadra = String(formData.get("tipo_quadra") ?? "").trim() || null;
   const lat = String(formData.get("lat") ?? "").trim() || null;

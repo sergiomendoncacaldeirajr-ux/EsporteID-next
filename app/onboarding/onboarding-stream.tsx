@@ -237,6 +237,10 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
           typeof detalhesOrganizador.solicitacao_local_mensagem === "string"
             ? detalhesOrganizador.solicitacao_local_mensagem
             : "",
+        orgNovoLocalNumero:
+          typeof detalhesOrganizador.numero === "string" ? detalhesOrganizador.numero : "",
+        orgNovoLocalBairro:
+          typeof detalhesOrganizador.bairro === "string" ? detalhesOrganizador.bairro : "",
         espacoNome:
           typeof detalhesEspaco.nome_publico === "string" ? detalhesEspaco.nome_publico : "",
         espacoEsportes: Array.isArray(detalhesEspaco.esportes_ids)

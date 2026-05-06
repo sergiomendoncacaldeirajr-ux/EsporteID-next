@@ -289,7 +289,11 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                       {localRow.admin_suspenso ? (
                         <span className="text-red-200/95">(suspenso admin — invisível ao público)</span>
                       ) : !l.ativo_listagem ? (
-                        <span className="text-amber-200/90">(fora da listagem)</span>
+                        <span className="text-amber-200/90">
+                          {l.ownership_status === "generico"
+                            ? "(sugestão — aguardando aprovação na vitrine)"
+                            : "(fora da listagem)"}
+                        </span>
                       ) : null}
                     </p>
                     <p className="text-[11px] text-eid-text-secondary">

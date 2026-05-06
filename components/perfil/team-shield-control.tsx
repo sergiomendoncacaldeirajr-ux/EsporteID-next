@@ -1,22 +1,61 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { prepareTeamShieldForUpload } from "@/lib/images/prepare-avatar-upload";
+import { prepareEspacoLogoForUpload, prepareTeamShieldForUpload } from "@/lib/images/prepare-avatar-upload";
+
+export type TeamShieldControlVariant = "team_shield" | "espaco_logo";
 
 type Props = {
   currentUrl: string | null;
   fileInputName?: string;
   removeFlagName?: string;
   required?: boolean;
+  /** `espaco_logo`: textos e preparação iguais ao logo de local (cadastro genérico). */
+  variant?: TeamShieldControlVariant;
 };
+
+const COPY = {
+  team_shield: {
+    previewAlt: "Pré-visualização do escudo",
+    empty: "Sem foto",
+    primaryAdd: "Adicionar escudo",
+    primaryEdit: "Editar escudo",
+    sheetTitle: "Escudo",
+    sheetHint: "Adicione, edite enquadramento ou remova.",
+    sheetPickAdd: "Adicionar escudo",
+    sheetPickReplace: "Trocar escudo",
+    sheetReframe: "Editar enquadramento",
+    sheetRemove: "Remover escudo atual",
+    confirmAdd: "Enviar escudo",
+    confirmEdit: "Salvar edição",
+    outPrefix: "escudo",
+  },
+  espaco_logo: {
+    previewAlt: "Pré-visualização da foto do local",
+    empty: "Sem imagem",
+    primaryAdd: "Adicionar foto",
+    primaryEdit: "Trocar foto",
+    sheetTitle: "Foto / logo do local",
+    sheetHint: "Envie uma imagem, ajuste o enquadramento ou remova. HEIC da galeria vira JPEG automaticamente.",
+    sheetPickAdd: "Escolher da galeria",
+    sheetPickReplace: "Trocar imagem",
+    sheetReframe: "Ajustar enquadramento",
+    sheetRemove: "Remover imagem",
+    confirmAdd: "Usar esta imagem",
+    confirmEdit: "Salvar ajustes",
+    outPrefix: "logo",
+  },
+} as const;
 
 export function TeamShieldControl({
   currentUrl,
   fileInputName = "escudo_file",
   removeFlagName = "escudo_remove",
   required = false,
+  variant = "team_shield",
 }: Props) {
+  const t = COPY[variant];
   const EXIT_MS = 180;
   const pickerRef = useRef<HTMLInputElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
@@ -35,6 +74,11 @@ export function TeamShieldControl({
   const [removeCurrent, setRemoveCurrent] = useState(false);
   const [prepErr, setPrepErr] = useState<string | null>(null);
   const [editorMode, setEditorMode] = useState<"add" | "edit">("add");
+
+  const prepareUpload = useMemo(
+    () => (variant === "espaco_logo" ? prepareEspacoLogoForUpload : prepareTeamShieldForUpload),
+    [variant],
+  );
 
   const hasCurrent = Boolean(currentUrl && currentUrl.trim().length > 0);
   const displayUrl = previewUrl ?? (removeCurrent ? null : currentUrl);
@@ -82,7 +126,7 @@ export function TeamShieldControl({
     const raw = pickerRef.current?.files?.[0];
     if (!raw) return;
     setPrepErr(null);
-    const p = await prepareTeamShieldForUpload(raw);
+    const p = await prepareUpload(raw);
     if (!p.ok) {
       setPrepErr(p.message);
       if (pickerRef.current) pickerRef.current.value = "";
@@ -139,7 +183,7 @@ export function TeamShieldControl({
     ctx.drawImage(image, sx, sy, cropSide, cropSide, 0, 0, canvas.width, canvas.height);
     const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92));
     if (!blob) return;
-    const outFile = new File([blob], `escudo_${Date.now()}.jpg`, { type: "image/jpeg" });
+    const outFile = new File([blob], `${t.outPrefix}_${Date.now()}.jpg`, { type: "image/jpeg" });
     const dt = new DataTransfer();
     dt.items.add(outFile);
     uploadInputRef.current.files = dt.files;
@@ -154,10 +198,10 @@ export function TeamShieldControl({
       <input ref={pickerRef} type="file" accept="image/*" className="sr-only" onChange={() => void onPickFile()} />
 
       {displayUrl ? (
-        <img src={displayUrl} alt="Pré-visualização do escudo" className="h-16 w-16 rounded-lg border border-[color:var(--eid-border-subtle)] object-cover" />
+        <img src={displayUrl} alt={t.previewAlt} className="h-16 w-16 rounded-lg border border-[color:var(--eid-border-subtle)] object-cover" />
       ) : (
         <span className="inline-flex h-16 w-16 items-center justify-center rounded-lg border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/50 text-[10px] text-eid-text-secondary">
-          Sem foto
+          {t.empty}
         </span>
       )}
 
@@ -169,7 +213,7 @@ export function TeamShieldControl({
         }}
         className="inline-flex min-h-[38px] items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/12 px-3 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg"
       >
-        {hasAnyForUI ? "Editar escudo" : "Adicionar escudo"}
+        {hasAnyForUI ? t.primaryEdit : t.primaryAdd}
       </button>
 
       {prepErr ? <p className="w-full text-[11px] text-amber-200">{prepErr}</p> : null}
@@ -260,7 +304,7 @@ export function TeamShieldControl({
                     Cancelar
                   </button>
                   <button type="button" onClick={() => void confirmCropIntoInput()} className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/12 px-2 py-1 text-[10px] font-semibold text-eid-fg">
-                    {editorMode === "add" ? "Enviar escudo" : "Salvar edição"}
+                    {editorMode === "add" ? t.confirmAdd : t.confirmEdit}
                   </button>
                 </div>
               </div>

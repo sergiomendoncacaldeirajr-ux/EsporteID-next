@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { findDuplicateEspaco, isEspacoDuplicateError } from "@/lib/espacos/duplicate";
+import { findDuplicateEspaco, findDuplicateEspacoByNome, isEspacoDuplicateError } from "@/lib/espacos/duplicate";
 import { usuarioJaGerenciaEspaco } from "@/lib/espacos/server";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { createClient } from "@/lib/supabase/server";
+import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
 
 export async function cadastrarLocalGenerico(formData: FormData): Promise<void> {
   const supabase = await createClient();
@@ -19,8 +20,17 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
     redirect("/espaco");
   }
 
-  const nome = String(formData.get("nome_publico") ?? "").trim();
-  const localizacao = String(formData.get("localizacao") ?? "").trim();
+  const nome = normalizePtBrNameCase(String(formData.get("nome_publico") ?? ""));
+  const endereco = normalizePtBrNameCaseLoose(String(formData.get("endereco") ?? ""));
+  const numero = String(formData.get("numero") ?? "").trim();
+  const bairro = normalizePtBrNameCase(String(formData.get("bairro") ?? ""));
+  const cidade = normalizePtBrNameCase(String(formData.get("cidade") ?? ""));
+  const uf = String(formData.get("estado") ?? "").trim().toUpperCase();
+  const cep = String(formData.get("cep") ?? "").trim();
+  const complemento = normalizePtBrNameCaseLoose(String(formData.get("complemento") ?? ""));
+  const lat = String(formData.get("lat") ?? "").trim() || null;
+  const lng = String(formData.get("lng") ?? "").trim() || null;
+  const localizacao = normalizePtBrNameCaseLoose([cidade, uf].filter(Boolean).join(" - "));
   const returnTo = resolveBackHref(String(formData.get("return_to") ?? "").trim(), "/locais/cadastrar");
   const returnToQs = returnTo !== "/locais/cadastrar" ? `&return_to=${encodeURIComponent(returnTo)}` : "";
   const logoFile = formData.get("logo_file");
@@ -28,7 +38,13 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
   if (nome.length < 2) {
     redirect(`/locais/cadastrar?erro=nome${returnToQs}`);
   }
-  if (localizacao.length < 3) {
+
+  const duplicadoNome = await findDuplicateEspacoByNome(supabase, nome);
+  if (duplicadoNome) {
+    redirect(`/locais/cadastrar?erro=nome_dup&id=${duplicadoNome.id}${returnToQs}`);
+  }
+
+  if (endereco.length < 3 || numero.length < 1 || cidade.length < 2 || uf.length < 2) {
     redirect(`/locais/cadastrar?erro=local${returnToQs}`);
   }
 
@@ -68,12 +84,26 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
       nome_publico: nome,
       localizacao,
       logo_arquivo: logoPublicUrl,
+      cidade,
+      uf,
+      lat,
+      lng,
+      venue_config_json: JSON.stringify({
+        endereco,
+        numero,
+        bairro: bairro || null,
+        cidade,
+        estado: uf,
+        cep: cep || null,
+        complemento: complemento || null,
+        origem: "cadastro-local-generico",
+      }),
       criado_por_usuario_id: user.id,
       responsavel_usuario_id: null,
       esportes_ids: "[]",
       status: "publico",
       ownership_status: "generico",
-      ativo_listagem: true,
+      ativo_listagem: false,
     })
     .select("id")
     .single();

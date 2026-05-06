@@ -13,6 +13,7 @@ import { usuarioPodeCriarTorneio } from "@/lib/torneios/organizador";
 import { parseRegrasPlacarJson } from "@/lib/torneios/regras";
 import { canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
 import { getSportCapabilityByName } from "@/lib/sport-capabilities";
+import { normalizePtBrNameCase } from "@/lib/text/pt-br-name-case";
 
 function numOrNull(v: FormDataEntryValue | null): number | null {
   const s = String(v ?? "").trim();
@@ -48,7 +49,7 @@ export async function criarTorneo(formData: FormData): Promise<void> {
   const pode = await usuarioPodeCriarTorneio(supabase, user.id);
   if (!pode) redirect("/torneios/criar?erro=permissao");
 
-  const nome = String(formData.get("nome") ?? "").trim();
+  const nome = normalizePtBrNameCase(String(formData.get("nome") ?? ""));
   const esporteId = numOrNull(formData.get("esporte_id"));
   const status = String(formData.get("status") ?? "aberto").trim() || "aberto";
   const dataInicio = String(formData.get("data_inicio") ?? "").trim() || null;
@@ -154,7 +155,7 @@ export async function atualizarMeuTorneio(
     return { ok: false, message: "Sem permissão para editar este torneio." };
   }
 
-  const nome = String(formData.get("nome") ?? "").trim();
+  const nome = normalizePtBrNameCase(String(formData.get("nome") ?? ""));
   const esporteId = numOrNull(formData.get("esporte_id"));
   const status = String(formData.get("status") ?? "aberto").trim() || "aberto";
   const dataInicio = String(formData.get("data_inicio") ?? "").trim() || null;
