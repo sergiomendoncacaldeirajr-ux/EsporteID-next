@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { ensurePushReady, syncExistingPushSubscription } from "@/lib/pwa/push-client";
+
+const PUSH_SYNC_COOLDOWN_MS = 5 * 60 * 1000;
+const PUSH_SYNC_STORAGE_KEY = "eid:last-push-sync-at";
 
 function runWhenPageIsIdle(task: () => void): () => void {
   if (typeof window === "undefined") return () => {};
@@ -17,6 +20,26 @@ function runWhenPageIsIdle(task: () => void): () => void {
 export function PwaBootstrap() {
   const vapidPublicKey = String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim();
 
+  const shouldRunPushSync = useCallback(() => {
+    if (typeof window === "undefined") return true;
+    const now = Date.now();
+    const raw = window.localStorage.getItem(PUSH_SYNC_STORAGE_KEY) ?? "";
+    const last = Number(raw);
+    if (Number.isFinite(last) && now - last < PUSH_SYNC_COOLDOWN_MS) return false;
+    window.localStorage.setItem(PUSH_SYNC_STORAGE_KEY, String(now));
+    return true;
+  }, []);
+
+  const runPushSync = useCallback(() => {
+    if (!shouldRunPushSync()) return;
+    void ensurePushReady(vapidPublicKey).catch(() => {
+      // best-effort silencioso.
+    });
+    void fetch("/api/push/flush-user", { method: "POST" }).catch(() => {
+      // best-effort: falhas aqui não devem quebrar o bootstrap.
+    });
+  }, [shouldRunPushSync, vapidPublicKey]);
+
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     return runWhenPageIsIdle(() => {
@@ -24,25 +47,18 @@ export function PwaBootstrap() {
         void syncExistingPushSubscription().catch(() => {
           // best-effort silencioso: o usuário pode reativar no toggle se necessário.
         });
-        void ensurePushReady(vapidPublicKey).catch(() => {
-          // best-effort silencioso.
-        });
-        void fetch("/api/push/flush-user", { method: "POST" }).catch(() => {
-          // best-effort: falhas aqui não devem quebrar o bootstrap.
-        });
+        runPushSync();
       });
     });
-  }, [vapidPublicKey]);
+  }, [runPushSync]);
 
   useEffect(() => {
     const onFocus = () => {
-      void ensurePushReady(vapidPublicKey).catch(() => {});
-      void fetch("/api/push/flush-user", { method: "POST" }).catch(() => {});
+      runPushSync();
     };
     const onVisible = () => {
       if (document.visibilityState === "visible") {
-        void ensurePushReady(vapidPublicKey).catch(() => {});
-        void fetch("/api/push/flush-user", { method: "POST" }).catch(() => {});
+        runPushSync();
       }
     };
     window.addEventListener("focus", onFocus);
@@ -51,7 +67,7 @@ export function PwaBootstrap() {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [vapidPublicKey]);
+  }, [runPushSync]);
 
   return null;
 }

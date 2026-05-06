@@ -82,6 +82,8 @@ export function RealtimePageRefresh({ userId }: Props) {
   const instanceId = useId();
   const notifiedIdsRef = useRef<Set<number>>(new Set());
   const [elencoVersion, setElencoVersion] = useState(0);
+  const revalidateInFlightRef = useRef(false);
+  const refreshTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -104,6 +106,8 @@ export function RealtimePageRefresh({ userId }: Props) {
     const shouldPauseAutoRefresh = () => eidShouldPauseAutoRefreshFromLocation();
 
     const revalidateCurrentRouteIfNeeded = async () => {
+      if (revalidateInFlightRef.current) return;
+      revalidateInFlightRef.current = true;
       const p = String(pathnameRef.current ?? "") || "/";
       try {
         await fetch("/api/realtime/revalidate-current", {
@@ -114,7 +118,24 @@ export function RealtimePageRefresh({ userId }: Props) {
         });
       } catch {
         /* ignore */
+      } finally {
+        revalidateInFlightRef.current = false;
       }
+    };
+
+    const runRefresh = () => {
+      if (refreshTimerRef.current != null) return;
+      refreshTimerRef.current = window.setTimeout(() => {
+        refreshTimerRef.current = null;
+        void (async () => {
+          await revalidateCurrentRouteIfNeeded();
+          if (cancelled) return;
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+          }
+          router.refresh();
+        })();
+      }, 350);
     };
 
     const refresh = () => {
@@ -122,26 +143,12 @@ export function RealtimePageRefresh({ userId }: Props) {
       const now = Date.now();
       if (now - lastRefreshAt.current < EID_REALTIME_REFRESH_THROTTLE_MS) return;
       lastRefreshAt.current = now;
-      void (async () => {
-        await revalidateCurrentRouteIfNeeded();
-        if (cancelled) return;
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
-        }
-        router.refresh();
-      })();
+      runRefresh();
     };
     const refreshForced = () => {
       if (shouldPauseAutoRefresh()) return;
       lastRefreshAt.current = Date.now();
-      void (async () => {
-        await revalidateCurrentRouteIfNeeded();
-        if (cancelled) return;
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
-        }
-        router.refresh();
-      })();
+      runRefresh();
     };
 
     const notifyForeground = (notifId: number, mensagem: string) => {
@@ -430,6 +437,10 @@ export function RealtimePageRefresh({ userId }: Props) {
     return () => {
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisibility);
+      if (refreshTimerRef.current != null) {
+        window.clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
       channels.forEach((c) => void supabase.removeChannel(c));
     };
   }, [router, userId, pathname, elencoVersion, instanceId]);

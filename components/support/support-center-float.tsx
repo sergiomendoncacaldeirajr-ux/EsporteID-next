@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { submitSupportChamado, type SupportChamadoSubmitState } from "@/app/support/actions";
 import {
@@ -143,9 +143,11 @@ export type SupportCenterFloatProps = {
 export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatProps) {
   const pathname = usePathname() ?? "";
   const [aberto, setAberto] = useState(false);
+  const [panelMounted, setPanelMounted] = useState(false);
   const [aba, setAba] = useState<"ajuda" | "perfil" | "chamado">("ajuda");
   const [faqAbertoId, setFaqAbertoId] = useState<string | null>(null);
-  const [formKey, setFormKey] = useState(0);
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
 
   const [submitState, formAction, submitPending] = useActionState(submitSupportChamado, initialSubmit);
 
@@ -164,7 +166,7 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
 
   useEffect(() => {
     if (!submitState.ok || !submitState.message) return;
-    setFormKey((k) => k + 1);
+    formRef.current?.reset();
   }, [submitState.ok, submitState.message]);
 
   useEffect(() => {
@@ -176,11 +178,31 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
     return () => window.removeEventListener("keydown", onKey);
   }, [aberto]);
 
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current != null) window.clearTimeout(closeTimerRef.current);
+    };
+  }, []);
+
   if (pathOcultaSuporte(pathname)) return null;
 
   const abrirPainel = () => {
+    if (closeTimerRef.current != null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setPanelMounted(true);
     setAberto(true);
     setFaqAbertoId(null);
+  };
+
+  const fecharPainel = () => {
+    setAberto(false);
+    if (closeTimerRef.current != null) window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = window.setTimeout(() => {
+      setPanelMounted(false);
+      closeTimerRef.current = null;
+    }, 180);
   };
 
   const irAjuda = () => {
@@ -200,12 +222,12 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
 
   return (
     <>
-      {aberto ? (
+      {panelMounted ? (
         <button
           type="button"
           aria-label="Fechar suporte"
-          className="fixed inset-0 z-[56] bg-black/45 md:bg-black/35"
-          onClick={() => setAberto(false)}
+          className={`fixed inset-0 z-[56] transition-opacity duration-200 ${aberto ? "bg-black/45 opacity-100 md:bg-black/35" : "pointer-events-none bg-black/0 opacity-0"}`}
+          onClick={fecharPainel}
         />
       ) : null}
 
@@ -216,7 +238,7 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
           aria-controls={aberto ? "eid-support-panel" : undefined}
           aria-label="Abrir central de suporte"
           onClick={() => {
-            if (aberto) setAberto(false);
+            if (aberto) fecharPainel();
             else abrirPainel();
           }}
           className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border border-eid-primary-500/50 bg-eid-primary-500/25 text-eid-fg shadow-lg shadow-black/25 backdrop-blur-sm transition hover:border-eid-primary-500/70 hover:bg-eid-primary-500/35 md:h-11 md:w-11"
@@ -224,13 +246,17 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
           <Headset className="h-5 w-5 md:h-[1.15rem] md:w-[1.15rem]" aria-hidden />
         </button>
 
-        {aberto ? (
+        {panelMounted ? (
           <div
             id="eid-support-panel"
             role="dialog"
             aria-modal="true"
             aria-labelledby="eid-support-title"
-            className="pointer-events-auto flex max-h-[min(72svh,32rem)] w-[min(100vw-1.5rem,22rem)] flex-col overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl md:max-h-[min(78svh,38rem)] md:w-[24rem]"
+            className={`pointer-events-auto flex max-h-[min(72svh,32rem)] w-[min(100vw-1.5rem,22rem)] flex-col overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl transition duration-200 md:max-h-[min(78svh,38rem)] md:w-[24rem] ${
+              aberto
+                ? "translate-y-0 scale-100 opacity-100"
+                : "pointer-events-none translate-y-2 scale-[0.98] opacity-0"
+            }`}
           >
             <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-gradient-to-r from-eid-surface/80 via-eid-surface/60 to-eid-primary-500/5 px-3 py-2.5">
               <div className="min-w-0">
@@ -249,7 +275,7 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
               <button
                 type="button"
                 aria-label="Fechar"
-                onClick={() => setAberto(false)}
+                onClick={fecharPainel}
                 className="rounded-lg p-1.5 text-eid-text-secondary hover:bg-eid-bg hover:text-eid-fg"
               >
                 <X className="h-4 w-4" />
@@ -322,7 +348,7 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
                   </button>
                 </div>
               ) : (
-                <form key={formKey} action={formAction} className="space-y-3">
+                <form ref={formRef} action={formAction} className="space-y-3">
                   <label className="grid gap-1">
                     <span className="text-[10px] font-bold uppercase text-eid-text-secondary">Onde ocorreu?</span>
                     <select
@@ -358,7 +384,7 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
                     <Link
                       href="/conta/perfil"
                       className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline"
-                      onClick={() => setAberto(false)}
+                      onClick={fecharPainel}
                     >
                       Ajustar no perfil da conta
                     </Link>

@@ -11,7 +11,7 @@ function cn(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(" ");
 }
 
-const PREFETCH_FILTER_LINK = true;
+const PREFETCH_FILTER_LINK = false;
 
 function IconCrown({ className }: { className?: string }) {
   return (

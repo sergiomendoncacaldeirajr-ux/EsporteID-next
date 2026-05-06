@@ -58,6 +58,8 @@ function formatShort(iso: string | null | undefined) {
 
 const PREVIEW_LIMIT = 5;
 const PREVIEW_FETCH = 80;
+const NOTIFICATION_LOAD_MIN_GAP_MS = 3500;
+const NOTIFICATION_POLL_MS = 90_000;
 function scheduleNotificationIdle(task: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   const requestIdle = window.requestIdleCallback;
@@ -124,6 +126,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
   const comunidadeResumoSigRef = useRef<string | null>(null);
   const pathnameRef = useRef(pathname);
   const loadInFlightRef = useRef(false);
+  const lastLoadAtRef = useRef(0);
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -131,7 +134,10 @@ export function NotificationBell({ userId }: { userId: string | null }) {
 
   const load = useCallback(async () => {
     if (!userId) return;
+    const now = Date.now();
+    if (now - lastLoadAtRef.current < NOTIFICATION_LOAD_MIN_GAP_MS) return;
     if (loadInFlightRef.current) return;
+    lastLoadAtRef.current = now;
     loadInFlightRef.current = true;
     try {
     const supabase = createClient();
@@ -353,13 +359,13 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     };
   }, [userId, load]);
 
-  /** Fallback quando Realtime não entrega (publicação RLS/offline); ~28s com aba visível. */
+  /** Fallback quando Realtime não entrega (publicação RLS/offline); com aba visível. */
   useEffect(() => {
     if (!userId) return;
     const id = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
       void load();
-    }, 28_000);
+    }, NOTIFICATION_POLL_MS);
     return () => window.clearInterval(id);
   }, [userId, load]);
 
@@ -391,7 +397,12 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "partidas" },
+        { event: "*", schema: "public", table: "partidas", filter: `jogador1_id=eq.${userId}` },
+        () => void load()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "partidas", filter: `jogador2_id=eq.${userId}` },
         () => void load()
       )
       .subscribe();

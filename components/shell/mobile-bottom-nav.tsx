@@ -111,6 +111,9 @@ function scheduleAfterNavigationIdle(task: () => void): () => void {
   return () => window.clearTimeout(id);
 }
 
+const MOBILE_NAV_LOAD_MIN_GAP_MS = 3500;
+const MOBILE_NAV_POLL_MS = 90_000;
+
 export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const pathname = usePathname() ?? "";
   const router = useRouter();
@@ -166,7 +169,20 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       }
 
       const px = Math.max(Math.ceil(inset + 14), 72);
-      document.documentElement.style.setProperty(ROOT_VAR, `${px}px`);
+      const currentRaw = document.documentElement.style.getPropertyValue(ROOT_VAR).trim();
+      const current = Number(currentRaw.replace("px", ""));
+      if (!Number.isFinite(current) || Math.abs(current - px) >= 2) {
+        document.documentElement.style.setProperty(ROOT_VAR, `${px}px`);
+      }
+    };
+
+    let rafId = 0;
+    const applyDeferred = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        apply();
+      });
     };
 
     apply();
@@ -174,23 +190,22 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     const vv = window.visualViewport;
     const ro = new ResizeObserver(apply);
     if (shell) ro.observe(shell);
-    mq.addEventListener("change", apply);
-    window.addEventListener("orientationchange", apply);
-    vv?.addEventListener("resize", apply);
-    vv?.addEventListener("scroll", apply);
-    const t0 = window.setTimeout(apply, 0);
-    const t1 = window.setTimeout(apply, 160);
-    const t2 = window.setTimeout(apply, 520);
+    mq.addEventListener("change", applyDeferred);
+    window.addEventListener("orientationchange", applyDeferred);
+    vv?.addEventListener("resize", applyDeferred);
+    const t0 = window.setTimeout(applyDeferred, 0);
+    const t1 = window.setTimeout(applyDeferred, 160);
+    const t2 = window.setTimeout(applyDeferred, 520);
 
     return () => {
       ro.disconnect();
-      mq.removeEventListener("change", apply);
-      window.removeEventListener("orientationchange", apply);
-      vv?.removeEventListener("resize", apply);
-      vv?.removeEventListener("scroll", apply);
+      mq.removeEventListener("change", applyDeferred);
+      window.removeEventListener("orientationchange", applyDeferred);
+      vv?.removeEventListener("resize", applyDeferred);
       window.clearTimeout(t0);
       window.clearTimeout(t1);
       window.clearTimeout(t2);
+      if (rafId) window.cancelAnimationFrame(rafId);
       document.documentElement.style.removeProperty(ROOT_VAR);
     };
   }, [showBottomChrome, pathname]);
@@ -264,9 +279,13 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     const uid = resolvedUserId;
     let cancelled = false;
     let loadInFlight = false;
+    let lastLoadAt = 0;
     const supabase = createClient();
     async function load() {
+      const now = Date.now();
+      if (now - lastLoadAt < MOBILE_NAV_LOAD_MIN_GAP_MS) return;
       if (loadInFlight) return;
+      lastLoadAt = now;
       loadInFlight = true;
       try {
       const [agRes, partidasRevisaoRes, mRecebidosRes, mEnviadosRes, sLiderRes, sEnviadasRes, conviteRecebidoRes, conviteEnviadoRes, candidaturaEnviadaRes, meusTimesRes] = await Promise.all([
@@ -423,7 +442,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     const pollId = window.setInterval(() => {
       if (cancelled || document.visibilityState !== "visible") return;
       void load();
-    }, 28_000);
+    }, MOBILE_NAV_POLL_MS);
     const cancelInitialLoad = scheduleAfterNavigationIdle(() => void load());
     /** Alinha com `RealtimePageRefresh` / sininho: o miolo já revalida, mas o estado do badge ficava só no próximo Realtime ou em até 20s. */
     const onEidRealtimeRefresh = () => void load();
@@ -481,11 +500,6 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "time_candidaturas", filter: `candidato_usuario_id=eq.${resolvedUserId}` },
-        () => void load()
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "time_candidaturas" },
         () => void load()
       )
       .on(
