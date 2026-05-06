@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getSignupEmailRedirectTo } from "@/lib/auth/email-redirects";
 import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
+import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
 import "react-phone-number-input/style.css";
 import "./cadastro-register.css";
 
@@ -162,8 +163,8 @@ export function CadastroForm() {
     setError(null);
 
     const emailNorm = email.trim().toLowerCase();
-    const nomeTrim = nome.trim();
-    const locTrim = localizacao.trim();
+    const nomeTrim = normalizePtBrNameCase(nome);
+    const locTrim = normalizePtBrNameCaseLoose(localizacao);
 
     if (!nomeTrim) {
       setError("Informe seu nome completo.");
@@ -192,6 +193,9 @@ export function CadastroForm() {
     setLoading(true);
     const supabase = createClient();
     const origin = typeof window !== "undefined" ? window.location.origin : "";
+    setNome(nomeTrim);
+    setLocalizacao(locTrim);
+
     const meta: Record<string, string> = {
       nome: nomeTrim,
       genero,
@@ -335,6 +339,7 @@ export function CadastroForm() {
                 required
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
+                onBlur={(e) => setNome(normalizePtBrNameCase(e.target.value))}
                 className="min-w-0 flex-1 border-0 bg-transparent pl-2.5 text-[15px] text-eid-fg outline-none placeholder:text-eid-text-secondary/85"
               />
             </div>
@@ -480,6 +485,7 @@ export function CadastroForm() {
                 required
                 value={localizacao}
                 readOnly
+                onBlur={(e) => setLocalizacao(normalizePtBrNameCaseLoose(e.target.value))}
                 className="min-w-0 flex-1 border-0 bg-transparent pl-2.5 text-[15px] text-eid-fg outline-none placeholder:text-eid-text-secondary/85"
               />
             </div>

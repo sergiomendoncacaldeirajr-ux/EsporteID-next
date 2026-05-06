@@ -5,6 +5,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { salvarPerfilOnboarding, type OnboardingActionResult } from "@/app/onboarding/actions";
 import { CONTA_ESPORTES_EID_HREF } from "@/lib/routes/conta";
+import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
 
 type ProfileInitial = {
   nome: string;
@@ -247,6 +248,7 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
           required
           value={nome}
           onChange={(ev) => setNome(ev.target.value)}
+          onBlur={(ev) => setNome(normalizePtBrNameCase(ev.target.value))}
           placeholder="Nome completo"
           className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
         />
@@ -281,6 +283,7 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
           required
           value={localizacao}
           onChange={(ev) => setLocalizacao(ev.target.value)}
+          onBlur={(ev) => setLocalizacao(normalizePtBrNameCaseLoose(ev.target.value))}
           placeholder="Cidade / Estado"
           className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
         />

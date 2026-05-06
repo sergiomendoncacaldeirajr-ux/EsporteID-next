@@ -30,6 +30,7 @@ import {
 import { normalizeAvatarBuffer } from "@/lib/images/normalize-avatar-server";
 import { isSportMatchEnabled } from "@/lib/sport-capabilities";
 import { createClient } from "@/lib/supabase/server";
+import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
 
 const ESTRUTURAS_VALIDAS = ["quadra", "campo", "piscina", "sala", "estadio"] as const;
 const RESERVA_MODELOS = ["livre", "socios", "pago", "misto"] as const;
@@ -666,9 +667,9 @@ export async function salvarExtrasOnboarding(
         infoMessages.push("Solicitação para uso do local enviada e em análise pelo responsável.");
       }
     } else {
-      const localNome = String(formData.get("org_novo_local_nome") ?? "").trim();
-      const localEndereco = String(formData.get("org_novo_local_endereco") ?? "").trim();
-      const localCidade = String(formData.get("org_novo_local_cidade") ?? "").trim();
+      const localNome = normalizePtBrNameCase(String(formData.get("org_novo_local_nome") ?? ""));
+      const localEndereco = normalizePtBrNameCaseLoose(String(formData.get("org_novo_local_endereco") ?? ""));
+      const localCidade = normalizePtBrNameCase(String(formData.get("org_novo_local_cidade") ?? ""));
       const localEstado = String(formData.get("org_novo_local_estado") ?? "").trim();
       const localCep = String(formData.get("org_novo_local_cep") ?? "").trim();
       const localLat = String(formData.get("org_novo_local_lat") ?? "").trim();
@@ -815,7 +816,7 @@ export async function salvarExtrasOnboarding(
   }
 
   if (hasEspaco) {
-    const espacoNome = String(formData.get("espaco_nome") ?? "").trim();
+    const espacoNome = normalizePtBrNameCase(String(formData.get("espaco_nome") ?? ""));
     const espacoEsportes = parseIntList(formData.getAll("espaco_esportes"));
     if (espacoEsportes.length === 0) {
       return { ok: false, message: "Selecione ao menos um esporte atendido no espaço." };
@@ -830,13 +831,13 @@ export async function salvarExtrasOnboarding(
       : "livre";
     const reservaNotas = String(formData.get("reserva_notas") ?? "").trim();
 
-    const endereco = String(formData.get("espaco_endereco") ?? "").trim();
+    const endereco = normalizePtBrNameCaseLoose(String(formData.get("espaco_endereco") ?? ""));
     const numero = String(formData.get("espaco_numero") ?? "").trim();
-    const bairro = String(formData.get("espaco_bairro") ?? "").trim();
-    const cidade = String(formData.get("espaco_cidade") ?? "").trim();
+    const bairro = normalizePtBrNameCase(String(formData.get("espaco_bairro") ?? ""));
+    const cidade = normalizePtBrNameCase(String(formData.get("espaco_cidade") ?? ""));
     const estado = String(formData.get("espaco_estado") ?? "").trim().toUpperCase();
     const cep = String(formData.get("espaco_cep") ?? "").trim();
-    const complemento = String(formData.get("espaco_complemento") ?? "").trim();
+    const complemento = normalizePtBrNameCaseLoose(String(formData.get("espaco_complemento") ?? ""));
     const lat = String(formData.get("espaco_lat") ?? "").trim();
     const lng = String(formData.get("espaco_lng") ?? "").trim();
     const docMensagem = String(formData.get("espaco_doc_msg") ?? "").trim();
@@ -1060,10 +1061,10 @@ export async function salvarPerfilOnboarding(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, message: "Sessão expirada. Faça login novamente." };
 
-  const nome = String(formData.get("nome") ?? "").trim();
+  const nome = normalizePtBrNameCase(String(formData.get("nome") ?? ""));
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
   const username = usernameRaw ? usernameRaw.replace(/[^a-z0-9_]/g, "") : null;
-  const localizacao = String(formData.get("localizacao") ?? "").trim();
+  const localizacao = normalizePtBrNameCaseLoose(String(formData.get("localizacao") ?? ""));
   /** Só altera gênero no perfil quando o formulário envia o campo (ex.: conta/perfil). O passo final do onboarding não inclui `genero`; antes isso zerava o valor vindo do cadastro. */
   const hasGeneroField = formData.has("genero");
   const genero = hasGeneroField ? String(formData.get("genero") ?? "").trim() : "";
