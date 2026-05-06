@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { setViewerDisponivelAmistoso } from "@/app/match/actions";
 import {
@@ -21,6 +21,11 @@ export function ProfileFriendlyStatusToggle({ userId, initialOn, initialExpiresA
   const [on, setOn] = useState(initialOn);
   const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -87,7 +92,7 @@ export function ProfileFriendlyStatusToggle({ userId, initialOn, initialExpiresA
   const dotTone = effectiveOn ? "bg-eid-success-500" : "bg-eid-danger-500";
 
   const titleExtra =
-    effectiveOn && effectiveExpiresAt
+    mounted && effectiveOn && effectiveExpiresAt
       ? ` · até ${new Date(effectiveExpiresAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`
       : "";
 
@@ -96,7 +101,7 @@ export function ProfileFriendlyStatusToggle({ userId, initialOn, initialExpiresA
       <span
         className={`inline-flex min-h-[22px] items-center gap-1 rounded-full border px-2 py-px text-[10px] font-semibold ${tone}`}
         title={
-          effectiveOn && effectiveExpiresAt
+          mounted && effectiveOn && effectiveExpiresAt
             ? `Expira às ${new Date(effectiveExpiresAt).toLocaleString("pt-BR")}`
             : undefined
         }
