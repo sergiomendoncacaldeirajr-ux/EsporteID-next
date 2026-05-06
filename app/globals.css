@@ -586,7 +586,12 @@ html {
   /* `smooth` no root pode atrasar/conflitar com scroll programático após navegação App Router. */
   scroll-behavior: auto;
   -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+  /*
+   * Não travar gesto global no root: isso pode reduzir/alterar o overscroll nativo
+   * (efeito elástico no topo/fim) em alguns navegadores móveis.
+   * `touch-action: manipulation` continua aplicado apenas em controles interativos.
+   */
+  touch-action: auto;
   /*
    * `auto`: mantém o comportamento nativo ao chegar no fim da rolagem (elástico / “rubber band” no iOS
    * e overscroll visual no Android), sensação mais de app. Em alguns navegadores Android isso pode
@@ -599,6 +604,8 @@ html {
 
 body {
   overscroll-behavior-y: auto;
+  /* iOS/WebKit: mantém inércia/bounce nativos no documento. */
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Fonte padrão: Barlow — atlética, compacta, premium */
