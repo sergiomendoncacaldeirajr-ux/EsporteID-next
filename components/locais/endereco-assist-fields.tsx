@@ -238,7 +238,21 @@ function FieldIcon({ kind }: { kind: "home" | "hash" | "pin" | "city" | "uf" | "
   );
 }
 
-/** Miniatura gratuita (OpenStreetMap static map) + slot de logo do local. */
+/**
+ * URL de um único tile OSM no zoom dado (miniatura estável).
+ * Evita `staticmap.openstreetmap.de`, que frequentemente falha em DNS (ERR_NAME_NOT_RESOLVED).
+ */
+function osmTileUrlForLatLng(lat: number, lng: number, zoom = 16): string {
+  const latRad = (lat * Math.PI) / 180;
+  const n = 2 ** zoom;
+  const x = Math.floor(((lng + 180) / 360) * n);
+  const y = Math.floor(
+    ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n
+  );
+  return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+}
+
+/** Miniatura gratuita (tile OpenStreetMap) + slot de logo do local. */
 function EnderecoCardThumbnails({
   localLogoUrl,
   lat,
@@ -257,9 +271,7 @@ function EnderecoCardThumbnails({
   const ln = Number(lng);
   const hasCoords =
     Number.isFinite(la) && Number.isFinite(ln) && Math.abs(la) <= 90 && Math.abs(ln) <= 180;
-  const mapUrl = hasCoords
-    ? `https://staticmap.openstreetmap.de/staticmap.php?center=${la},${ln}&zoom=16&size=128x128&markers=${la},${ln},red-pushpin`
-    : null;
+  const mapUrl = hasCoords ? osmTileUrlForLatLng(la, ln, 16) : null;
 
   return (
     <div className="flex shrink-0 gap-2">
@@ -277,6 +289,7 @@ function EnderecoCardThumbnails({
           <img
             src={mapUrl}
             alt=""
+            title="Mapa © OpenStreetMap contributors"
             className="h-full w-full object-cover"
             loading="lazy"
             onError={() => setMapFailed(true)}

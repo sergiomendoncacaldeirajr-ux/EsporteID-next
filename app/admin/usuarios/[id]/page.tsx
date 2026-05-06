@@ -197,10 +197,13 @@ export default async function AdminUsuarioDetalhePage({ params, searchParams }: 
             <span className="text-[10px] font-bold uppercase text-eid-text-secondary">Tipo de usuário</span>
             <select
               name="tipo_usuario"
-              defaultValue={p.tipo_usuario ?? "atleta"}
+              defaultValue={p.tipo_usuario ?? "pendente"}
               className="eid-input-dark h-9 rounded-lg px-2 text-sm text-eid-fg"
             >
+              <option value="pendente">pendente (sem papel / onboarding)</option>
               <option value="atleta">atleta</option>
+              <option value="professor">professor</option>
+              <option value="espaco">espaco</option>
               <option value="organizador">organizador</option>
             </select>
           </label>

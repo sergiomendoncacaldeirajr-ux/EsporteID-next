@@ -122,11 +122,25 @@ export function PerfilPublicoHero({
               </h1>
               <div className="flex flex-wrap items-center gap-1">
                 <span className={PROFILE_HERO_ROLE_BADGE_CLASS}>
-                  {perfil.tipo_usuario === "organizador" ? "Organizador" : "Atleta"}
+                  {perfil.tipo_usuario === "organizador"
+                    ? "Organizador"
+                    : perfil.tipo_usuario === "espaco"
+                      ? "Espaço"
+                      : perfil.tipo_usuario === "professor"
+                        ? "Professor"
+                        : perfil.tipo_usuario === "pendente"
+                          ? "Perfil em definição"
+                          : "Atleta"}
                 </span>
-                {hasProfessor ? <span className={PROFILE_HERO_ROLE_BADGE_CLASS}>Professor</span> : null}
-                {hasOrganizador ? <span className={PROFILE_HERO_ROLE_BADGE_CLASS}>Organizador</span> : null}
-                {hasEspaco ? <span className={PROFILE_HERO_ROLE_BADGE_CLASS}>Espaço</span> : null}
+                {hasProfessor && perfil.tipo_usuario !== "professor" ? (
+                  <span className={PROFILE_HERO_ROLE_BADGE_CLASS}>Professor</span>
+                ) : null}
+                {hasOrganizador && perfil.tipo_usuario !== "organizador" ? (
+                  <span className={PROFILE_HERO_ROLE_BADGE_CLASS}>Organizador</span>
+                ) : null}
+                {hasEspaco && perfil.tipo_usuario !== "espaco" ? (
+                  <span className={PROFILE_HERO_ROLE_BADGE_CLASS}>Espaço</span>
+                ) : null}
               </div>
             </div>
             {perfil.username || perfil.localizacao ? (

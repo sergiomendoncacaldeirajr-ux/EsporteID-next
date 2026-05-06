@@ -49,7 +49,7 @@ export function legacyTipoUsuarioFromPapeis(papeis: readonly string[]): string {
   if (papeis.includes("organizador")) return "organizador";
   if (papeis.includes("professor")) return "professor";
   if (papeis.includes("atleta")) return "atleta";
-  return "atleta";
+  return "pendente";
 }
 
 export function parseDetalhesPapel(raw: unknown): Record<string, unknown> {
