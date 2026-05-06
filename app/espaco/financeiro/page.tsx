@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { EspacoMensalidadePaasCheckout } from "@/components/espaco/espaco-mensalidade-paas-checkout";
 import { EspacoPlanosPaaSFinanceiro } from "@/components/espaco/espaco-planos-paas-financeiro";
+import { EspacoSimularPagamentoDev } from "@/components/espaco/espaco-simular-pagamento-dev";
+import { isAsaasSimulationEnabledFor } from "@/lib/asaas/simulate-payments";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
 
 type PlanoPaaSFinanceiroRow = {
@@ -45,14 +47,16 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
     await Promise.all([
       supabase
         .from("espaco_transacoes")
-        .select("id, tipo, status, valor_bruto_centavos, valor_liquido_espaco_centavos, asaas_charge_url, criado_em")
+        .select(
+          "id, tipo, status, valor_bruto_centavos, valor_liquido_espaco_centavos, asaas_charge_url, asaas_payment_id, criado_em"
+        )
         .eq("espaco_generico_id", selectedSpace.id)
         .order("id", { ascending: false })
         .limit(30),
       supabase
         .from("espaco_assinaturas_plataforma")
         .select(
-          "id, status, plano_nome, valor_mensal_centavos, desconto_progressivo_percentual, proxima_cobranca, plano_mensal_id, trial_inicio, trial_ate, recorrencia_cartao_confirmada_em, cancelamento_bloqueado_ate, isento_total"
+          "id, status, plano_nome, valor_mensal_centavos, desconto_progressivo_percentual, proxima_cobranca, plano_mensal_id, trial_inicio, trial_ate, recorrencia_cartao_confirmada_em, cancelamento_bloqueado_ate, isento_total, asaas_subscription_id"
         )
         .eq("espaco_generico_id", selectedSpace.id)
         .maybeSingle(),
@@ -83,6 +87,10 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
         : Promise.resolve({ data: [] as never[] }),
     ]);
   const ocultarMensalidadePlataforma = Boolean(assinatura?.isento_total);
+  const simularPagamentoDev = await isAsaasSimulationEnabledFor("locais");
+  const transacoesPendentesSimulacao = (transacoes ?? []).filter(
+    (t) => t.status === "pending" && Boolean(t.asaas_payment_id)
+  );
 
   const totalRecebido = (transacoes ?? [])
     .filter((item) => item.status === "received")
@@ -176,6 +184,17 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
             </p>
           )}
         </div>
+        {simularPagamentoDev ? (
+          <EspacoSimularPagamentoDev
+            espacoId={selectedSpace.id}
+            transacoesPendentes={transacoesPendentesSimulacao.map((t) => ({
+              id: t.id,
+              tipo: String(t.tipo),
+              asaas_payment_id: t.asaas_payment_id ?? null,
+            }))}
+            asaasSubscriptionId={(assinatura as { asaas_subscription_id?: string | null } | null)?.asaas_subscription_id ?? null}
+          />
+        ) : null}
       </section>
 
       <section className="space-y-4">

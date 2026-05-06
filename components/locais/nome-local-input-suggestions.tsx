@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
+import { locaisSectionTitleClass } from "@/components/locais/locais-ui-tokens";
 import { normalizeEspacoDuplicateValue } from "@/lib/espacos/duplicate";
 import { normalizePtBrNameCase } from "@/lib/text/pt-br-name-case";
 
@@ -61,7 +62,7 @@ export function NomeLocalInputSuggestions({
 
   return (
     <div>
-      <label htmlFor="nome_publico" className="text-[10px] font-black uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
+      <label htmlFor="nome_publico" className={locaisSectionTitleClass}>
         Nome do local
       </label>
       <div className="mt-1.5 flex items-center gap-2.5">

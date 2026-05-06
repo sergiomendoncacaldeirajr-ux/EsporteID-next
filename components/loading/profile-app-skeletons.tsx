@@ -634,12 +634,16 @@ export function OnboardingStreamSkeleton() {
 /** `/locais/cadastrar` — hero + grid formulário / lateral. */
 export function LocaisCadastrarStreamSkeleton() {
   return (
-    <main className="mx-auto w-full max-w-4xl px-3 py-2 sm:px-6 sm:py-3" aria-hidden>
-      <SkBlock className="mb-5 h-28 w-full rounded-2xl sm:h-32" />
-      <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-        <SkBlock className="min-h-[260px] w-full rounded-xl" />
-        <SkBlock className="min-h-[180px] w-full rounded-xl" />
-      </div>
-    </main>
+    <div className="relative z-0 flex min-h-0 w-full flex-1 flex-col" aria-hidden>
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(48vh,26rem)] bg-[radial-gradient(ellipse_95%_60%_at_50%_-8%,rgba(37,99,235,0.11),transparent_55%)]" />
+      <main className="relative z-[1] mx-auto w-full max-w-5xl flex-1 px-3 py-3 pb-[var(--eid-shell-content-bottom-pad)] sm:px-6 sm:py-4">
+        <SkBlock className="mb-5 h-28 w-full rounded-2xl sm:h-32" />
+        <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+          <SkBlock className="min-h-[260px] w-full rounded-2xl" />
+          <SkBlock className="min-h-[180px] w-full rounded-2xl" />
+        </div>
+      </main>
+    </div>
   );
 }

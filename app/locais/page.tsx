@@ -2,7 +2,26 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
-import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
+import {
+  locaisBadgeGhostClass,
+  locaisEmptyClass,
+  locaisHeroClass,
+  locaisHintBlurbClass,
+  locaisMainWideClass,
+  locaisPageH1Class,
+  locaisPageLeadClass,
+  locaisPaginationLinkActiveClass,
+  locaisPaginationLinkDisabledClass,
+  locaisPaginationWrapClass,
+  locaisSearchCardClass,
+  locaisSectionBodyClass,
+  locaisSectionHeadClass,
+  locaisSectionOuterClass,
+  locaisSectionTitleClass,
+  locaisShellBgGradientClass,
+  locaisShellBgRadialClass,
+  locaisShellOuterClass,
+} from "@/components/locais/locais-ui-tokens";
 import { DismissibleSectionIntro } from "@/components/ui/dismissible-section-intro";
 import { distanciaKm } from "@/lib/geo/distance-km";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
@@ -12,40 +31,6 @@ export const metadata = {
   title: "Locais",
   description: "Locais esportivos da comunidade EsporteID",
 };
-
-const locaisHeroClass = `eid-locais-hero relative mb-4 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-5 md:mb-6 md:px-6 md:py-6`;
-
-const locaisSearchCardClass =
-  "eid-locais-search-card mb-4 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]";
-
-const locaisSectionOuterClass =
-  "eid-locais-section mb-6 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)] sm:mb-8";
-
-const locaisSectionHeadClass =
-  "eid-locais-section-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
-
-const locaisSectionTitleClass =
-  "text-[10px] font-black uppercase tracking-[0.18em] text-eid-primary-400";
-
-const locaisSectionBodyClass = "px-3 pb-3 pt-3 sm:px-4 sm:pb-4 sm:pt-3";
-
-const locaisBadgeGhostClass =
-  "inline-flex shrink-0 items-center rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_8%,transparent)] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]";
-
-const locaisHintBlurbClass =
-  "mb-6 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,var(--eid-primary-500)_10%)] bg-[color:color-mix(in_srgb,var(--eid-surface)_50%,transparent)] px-3 py-2.5 text-[11px] leading-relaxed text-eid-text-secondary sm:mb-8 sm:text-xs";
-
-const locaisEmptyClass =
-  "rounded-2xl border border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_62%,var(--eid-primary-500)_38%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-surface)_45%,transparent),transparent)] px-4 py-9 text-center text-sm text-eid-text-secondary ring-1 ring-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,transparent)]";
-
-const locaisPaginationWrapClass =
-  "eid-locais-pagination mt-8 flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-3 py-2.5 shadow-[0_10px_24px_-18px_rgba(15,23,42,0.22)] sm:px-4";
-
-const locaisPaginationLinkActiveClass =
-  "inline-flex min-h-9 items-center justify-center rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_8%,transparent)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-eid-fg transition hover:border-[color:color-mix(in_srgb,var(--eid-primary-500)_35%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,transparent)]";
-
-const locaisPaginationLinkDisabledClass =
-  "pointer-events-none inline-flex min-h-9 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary opacity-45";
 
 type Props = {
   searchParams?: Promise<{ q?: string; page?: string }>;
@@ -206,19 +191,10 @@ export default async function LocaisPage({ searchParams }: Props) {
   const queryBase = `q=${encodeURIComponent(sp.q ?? "")}`;
 
   return (
-    <div className="relative z-0 flex min-h-0 w-full flex-1 flex-col" data-eid-locais-page>
-      <div
-        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[min(48vh,26rem)] bg-[radial-gradient(ellipse_95%_60%_at_50%_-8%,rgba(37,99,235,0.11),transparent_55%)]"
-        aria-hidden
-      />
-      <main
-        data-eid-touch-ui
-        className="relative z-[1] mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 pb-[var(--eid-shell-content-bottom-pad)] sm:px-6 sm:py-4 sm:pb-[var(--eid-shell-content-bottom-pad)]"
-      >
+    <div className={locaisShellOuterClass} data-eid-locais-page>
+      <div className={locaisShellBgGradientClass} aria-hidden />
+      <div className={locaisShellBgRadialClass} aria-hidden />
+      <main data-eid-touch-ui className={locaisMainWideClass}>
         <header className={locaisHeroClass}>
           <div
             className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-primary-500/15 blur-3xl"
@@ -230,11 +206,9 @@ export default async function LocaisPage({ searchParams }: Props) {
           />
           <div className="relative z-[1] flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-eid-primary-400">Guia de locais</p>
-              <h1 className="mt-1 text-xl font-black leading-tight tracking-tight text-eid-fg md:text-3xl">
-                Locais esportivos perto de você
-              </h1>
-              <p className="mt-2 max-w-2xl text-xs leading-relaxed text-eid-text-secondary md:text-sm">
+              <p className={locaisSectionTitleClass}>Guia de locais</p>
+              <h1 className={locaisPageH1Class}>Locais esportivos perto de você</h1>
+              <p className={locaisPageLeadClass}>
                 Encontre locais por proximidade, veja seus vínculos e escolha onde reservar com mais rapidez.
               </p>
             </div>

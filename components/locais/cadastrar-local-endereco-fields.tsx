@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { EnderecoAssistFields } from "@/components/locais/endereco-assist-fields";
+import { locaisSectionTitleClass } from "@/components/locais/locais-ui-tokens";
 
 type Props = {
   localLogoUrl?: string | null;
@@ -20,9 +21,7 @@ export function CadastrarLocalEnderecoFields({ localLogoUrl = null }: Props) {
 
   return (
     <div className="space-y-2">
-      <p className="text-[10px] font-black uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
-        Endereço completo do local
-      </p>
+      <p className={locaisSectionTitleClass}>Endereço completo do local</p>
       <EnderecoAssistFields
         endereco={endereco}
         setEndereco={setEndereco}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { vincularLocalProfessorAction } from "@/app/professor/actions";
+import { locaisFormPanelClass, locaisPageLeadClass, locaisSectionTitleClass } from "@/components/locais/locais-ui-tokens";
 import { requireProfessorUser } from "@/lib/professor/server";
 
 export default async function ProfessorLocaisPage() {
@@ -21,37 +22,44 @@ export default async function ProfessorLocaisPage() {
 
   return (
     <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-      <form action={vincularLocalProfessorAction} className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-        <h2 className="text-lg font-bold text-eid-fg">Vincular local</h2>
-        <p className="mt-2 text-sm text-eid-text-secondary">
+      <form action={vincularLocalProfessorAction} className={locaisFormPanelClass}>
+        <p className={locaisSectionTitleClass}>Professor · locais</p>
+        <h2 className="mt-1 text-lg font-black tracking-tight text-eid-fg sm:text-xl">Vincular local</h2>
+        <p className={`${locaisPageLeadClass} mt-2`}>
           Vincule um espaço já existente para reaproveitar disponibilidade e centralizar aulas naquele local.
         </p>
         <div className="mt-4 grid gap-3">
-          <select name="espaco_id" className="eid-input-dark rounded-xl px-3 py-2 text-sm">
+          <select name="espaco_id" className="eid-input-dark rounded-xl px-3 py-2.5 text-sm text-eid-fg">
             {(locaisDisponiveis ?? []).map((local) => (
               <option key={local.id} value={local.id}>
                 {local.nome_publico} {local.localizacao ? `· ${local.localizacao}` : ""}
               </option>
             ))}
           </select>
-          <select name="tipo_vinculo" defaultValue="preferencial" className="eid-input-dark rounded-xl px-3 py-2 text-sm">
+          <select name="tipo_vinculo" defaultValue="preferencial" className="eid-input-dark rounded-xl px-3 py-2.5 text-sm text-eid-fg">
             <option value="preferencial">Preferencial</option>
             <option value="parceiro">Parceiro</option>
             <option value="proprio">Próprio</option>
           </select>
-          <label className="flex items-center gap-2 text-sm text-eid-fg">
-            <input type="checkbox" name="usa_horarios_do_espaco" />
+          <label className="flex items-center gap-2.5 text-sm text-eid-fg">
+            <input type="checkbox" name="usa_horarios_do_espaco" className="rounded border-[color:var(--eid-border-subtle)]" />
             Usar grade de horários do espaço nas minhas aulas
           </label>
-          <textarea name="observacoes" rows={3} placeholder="Observações" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
-          <button className="eid-btn-primary rounded-xl px-5 py-3 text-sm font-bold">
+          <textarea
+            name="observacoes"
+            rows={3}
+            placeholder="Observações"
+            className="eid-input-dark rounded-xl px-3 py-2.5 text-sm text-eid-fg placeholder:text-eid-text-secondary"
+          />
+          <button type="submit" className="eid-btn-primary min-h-[44px] rounded-xl px-5 py-3 text-sm font-bold">
             Vincular local
           </button>
         </div>
       </form>
 
-      <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-        <h2 className="text-lg font-bold text-eid-fg">Locais vinculados</h2>
+      <section className={locaisFormPanelClass}>
+        <p className={locaisSectionTitleClass}>Seus vínculos</p>
+        <h2 className="mt-1 text-lg font-black tracking-tight text-eid-fg sm:text-xl">Locais vinculados</h2>
         <div className="mt-4 space-y-3">
           {(vinculados ?? []).length ? (
             (vinculados ?? []).map((item) => {
@@ -73,7 +81,10 @@ export default async function ProfessorLocaisPage() {
                         {item.usa_horarios_do_espaco ? "Usando grade do espaço" : "Agenda livre do professor"}
                       </p>
                       {espaco?.id ? (
-                        <Link href={`/local/${espaco.id}`} className="mt-2 inline-flex text-xs font-semibold text-eid-primary-300 underline">
+                        <Link
+                          href={`/local/${espaco.id}`}
+                          className="mt-2 inline-flex text-xs font-bold text-eid-primary-300 underline-offset-2 hover:underline"
+                        >
                           Abrir página do local
                         </Link>
                       ) : null}
@@ -83,7 +94,9 @@ export default async function ProfessorLocaisPage() {
               );
             })
           ) : (
-            <p className="text-sm text-eid-text-secondary">Nenhum local vinculado ainda.</p>
+            <p className="rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-6 text-center text-sm text-eid-text-secondary">
+              Nenhum local vinculado ainda.
+            </p>
           )}
         </div>
       </section>

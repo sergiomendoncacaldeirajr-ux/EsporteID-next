@@ -14,6 +14,20 @@ export default async function AdminEsportesPage() {
 
   return (
     <div className="space-y-8">
+      <section className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/5 p-4">
+        <h2 className="text-base font-bold text-eid-fg">Esconder esporte para todo mundo</h2>
+        <p className="mt-1 text-sm text-eid-text-secondary">
+          Na lista abaixo use <strong className="text-eid-fg">Ocultar do site</strong> (desativa o registro). Esportes{" "}
+          <strong className="text-eid-fg">inativos</strong> deixam de aparecer em onboarding, escolhas de esporte, filtros e
+          qualquer lista pública — para visitantes e para usuários logados. Partidas ou torneios antigos ligados a esse
+          esporte podem mostrar o nome como genérico (“Esporte”) onde o catálogo não expõe mais o registro.
+        </p>
+        <p className="mt-2 text-xs text-eid-text-muted">
+          Esta página é <strong className="text-eid-fg">Admin → Esportes</strong> (menu lateral). Só administradores da
+          plataforma acessam.
+        </p>
+      </section>
+
       <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
         <h2 className="text-base font-bold text-eid-fg">Novo esporte</h2>
         <p className="mt-1 text-sm text-eid-text-secondary">Cria registro no catálogo. Slug em minúsculas, único (preencha ou deixe em branco para derivar do nome).</p>
@@ -64,7 +78,7 @@ export default async function AdminEsportesPage() {
           </label>
           <label className="flex items-center gap-2 text-xs text-eid-fg sm:col-span-2">
             <input name="ativo" type="checkbox" defaultChecked />
-            Ativo no catálogo
+            Visível no site (desmarque para criar já oculto)
           </label>
           <div className="sm:col-span-2">
             <button
@@ -79,7 +93,10 @@ export default async function AdminEsportesPage() {
 
       <div>
         <h2 className="text-base font-bold text-eid-fg">Catálogo</h2>
-        <p className="mt-1 text-sm text-eid-text-secondary">Ativar/desativar rápido ou abrir o bloco para editar nome, slug, regras e ordem.</p>
+        <p className="mt-1 text-sm text-eid-text-secondary">
+          <strong className="text-eid-fg">Ocultar do site</strong> / <strong className="text-eid-fg">Voltar a exibir</strong>{" "}
+          alterna visibilidade global. Detalhes: expanda <strong className="text-eid-fg">Editar campos do esporte</strong>.
+        </p>
         <div className="mt-4 space-y-3">
           {(data ?? []).map((e) => {
             const caps = getSportCapabilityByName(e.nome);
@@ -91,7 +108,10 @@ export default async function AdminEsportesPage() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="text-sm font-semibold text-eid-fg">
-                      {e.nome} {!e.ativo ? <span className="text-red-300/90">(inativo)</span> : null}
+                      {e.nome}{" "}
+                      {!e.ativo ? (
+                        <span className="text-red-300/90">(oculto — não aparece no app)</span>
+                      ) : null}
                     </p>
                     <p className="text-[11px] text-eid-text-secondary">
                       id {e.id} · slug {e.slug ?? "—"} · confronto {e.categoria_processamento ?? "—"} · ordem {e.ordem}
@@ -106,16 +126,24 @@ export default async function AdminEsportesPage() {
                       <form action={adminSetEsporteAtivo}>
                         <input type="hidden" name="id" value={e.id} />
                         <input type="hidden" name="ativo" value="false" />
-                        <button type="submit" className="rounded-lg border border-red-400/40 px-2 py-1 text-[11px] font-bold text-red-200">
-                          Desativar
+                        <button
+                          type="submit"
+                          className="rounded-lg border border-red-400/40 px-2 py-1 text-[11px] font-bold text-red-200"
+                          title="Some do catálogo para todos os usuários"
+                        >
+                          Ocultar do site
                         </button>
                       </form>
                     ) : (
                       <form action={adminSetEsporteAtivo}>
                         <input type="hidden" name="id" value={e.id} />
                         <input type="hidden" name="ativo" value="true" />
-                        <button type="submit" className="rounded-lg border border-eid-primary-500/40 px-2 py-1 text-[11px] font-bold text-eid-primary-300">
-                          Ativar
+                        <button
+                          type="submit"
+                          className="rounded-lg border border-eid-primary-500/40 px-2 py-1 text-[11px] font-bold text-eid-primary-300"
+                          title="Volta a listar para escolha e filtros"
+                        >
+                          Voltar a exibir
                         </button>
                       </form>
                     )}
@@ -189,7 +217,7 @@ export default async function AdminEsportesPage() {
                     </label>
                     <label className="flex items-center gap-2 text-xs text-eid-fg sm:col-span-2">
                       <input name="ativo" type="checkbox" defaultChecked={e.ativo} />
-                      Ativo
+                      Visível no site
                     </label>
                     <div className="sm:col-span-2">
                       <button

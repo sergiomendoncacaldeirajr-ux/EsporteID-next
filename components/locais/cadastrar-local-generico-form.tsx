@@ -5,6 +5,7 @@ import { cadastrarLocalGenerico } from "@/app/locais/cadastrar/actions";
 import { CadastrarLocalEnderecoFields } from "@/components/locais/cadastrar-local-endereco-fields";
 import { LocalSubmitButton } from "@/components/locais/local-submit-button";
 import { NomeLocalInputSuggestions } from "@/components/locais/nome-local-input-suggestions";
+import { locaisSectionTitleClass } from "@/components/locais/locais-ui-tokens";
 import { TeamShieldControl } from "@/components/perfil/team-shield-control";
 import { normalizeEspacoDuplicateValue } from "@/lib/espacos/duplicate";
 import Link from "next/link";
@@ -68,10 +69,8 @@ export function CadastrarLocalGenericoForm({ locais, canOpenLocais, returnTo, lo
       {canEditAddress ? (
         <>
           <CadastrarLocalEnderecoFields localLogoUrl={localLogoUrl} />
-          <div className="rounded-[10px] border border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_90%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-card)_86%,var(--eid-bg)_14%)] p-3">
-            <p className="text-[10px] font-black uppercase tracking-[0.03em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-primary-500)_28%)]">
-              Foto / logo do local (opcional)
-            </p>
+          <div className="rounded-xl border border-dashed border-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,var(--eid-primary-500)_12%)] bg-[color:color-mix(in_srgb,var(--eid-card)_86%,var(--eid-bg)_14%)] p-3 sm:p-4">
+            <p className={locaisSectionTitleClass}>Foto / logo (opcional)</p>
             <p className="mt-1 text-[11px] text-eid-text-secondary">
               Mesmo fluxo de foto do app: conversão HEIC, otimização e enquadramento antes do envio. O arquivo vai como JPEG (até 5MB no servidor).
             </p>

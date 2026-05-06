@@ -1,13 +1,20 @@
+import { ProfessorSimularPagamentoTeste } from "@/components/professor/professor-simular-pagamento-teste";
+import { isAsaasSimulationEnabledFor } from "@/lib/asaas/simulate-payments";
 import { requireProfessorUser } from "@/lib/professor/server";
 
 export default async function ProfessorRecebimentosPage() {
   const { supabase, user } = await requireProfessorUser("/professor/recebimentos");
 
-  const { data: pagamentos } = await supabase
-    .from("professor_pagamentos")
-    .select("id, status, valor_bruto_centavos, taxa_gateway_centavos, comissao_plataforma_centavos, valor_liquido_professor_centavos, asaas_payment_id, asaas_charge_url, criado_em, pago_em, professor_aulas(titulo)")
-    .eq("professor_id", user.id)
-    .order("criado_em", { ascending: false });
+  const [{ data: pagamentos }, simProfessor] = await Promise.all([
+    supabase
+      .from("professor_pagamentos")
+      .select(
+        "id, status, valor_bruto_centavos, taxa_gateway_centavos, comissao_plataforma_centavos, valor_liquido_professor_centavos, asaas_payment_id, asaas_charge_url, criado_em, pago_em, professor_aulas(titulo)"
+      )
+      .eq("professor_id", user.id)
+      .order("criado_em", { ascending: false }),
+    isAsaasSimulationEnabledFor("professores"),
+  ]);
 
   return (
     <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
@@ -15,6 +22,15 @@ export default async function ProfessorRecebimentosPage() {
       <p className="mt-2 text-sm text-eid-text-secondary">
         As cobranças são criadas via API Asaas e os status retornam pelo webhook da plataforma.
       </p>
+      {simProfessor ? (
+        <ProfessorSimularPagamentoTeste
+          pagamentos={(pagamentos ?? []).map((p) => ({
+            id: p.id,
+            status: p.status,
+            asaas_payment_id: p.asaas_payment_id,
+          }))}
+        />
+      ) : null}
       <div className="mt-4 space-y-3">
         {(pagamentos ?? []).length ? (
           (pagamentos ?? []).map((pagamento) => {

@@ -54,6 +54,50 @@ export default async function AdminFinanceiroPage() {
               Mensalidade clube (R$)
               <input type="number" step="0.01" name="clube_mensalidade" defaultValue={Number(data.clube_mensalidade)} className="eid-input-dark mt-1 w-full rounded-lg px-3 py-2 text-sm" />
             </label>
+            <div className="rounded-lg border border-amber-500/35 bg-amber-500/10 p-3">
+              <p className="text-xs font-bold text-amber-200">Modo teste de pagamentos (Asaas)</p>
+              <p className="mt-1 text-[11px] font-normal text-amber-100/85">
+                Marque <strong className="font-semibold">só</strong> onde quer permitir simular confirmação de cobrança no site.{" "}
+                <strong className="font-semibold">Desligue tudo</strong> quando terminar os testes.
+              </p>
+              <ul className="mt-3 space-y-2 text-xs font-semibold text-amber-100">
+                <li>
+                  <label className="flex cursor-pointer items-start gap-2">
+                    <input
+                      type="checkbox"
+                      name="asaas_simulacao_locais"
+                      defaultChecked={Boolean((data as Record<string, unknown>).asaas_simulacao_locais)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      Locais / espaços — Financeiro do dono do local (reservas, sócios, mensalidade PaaS)
+                    </span>
+                  </label>
+                </li>
+                <li>
+                  <label className="flex cursor-pointer items-start gap-2">
+                    <input
+                      type="checkbox"
+                      name="asaas_simulacao_professores"
+                      defaultChecked={Boolean((data as Record<string, unknown>).asaas_simulacao_professores)}
+                      className="mt-0.5"
+                    />
+                    <span>Professores — tela Recebimentos (cobranças de aula)</span>
+                  </label>
+                </li>
+                <li>
+                  <label className="flex cursor-pointer items-start gap-2">
+                    <input
+                      type="checkbox"
+                      name="asaas_simulacao_torneios"
+                      defaultChecked={Boolean((data as Record<string, unknown>).asaas_simulacao_torneios)}
+                      className="mt-0.5"
+                    />
+                    <span>Torneios — organizador, gestão de inscrições (página Operação)</span>
+                  </label>
+                </li>
+              </ul>
+            </div>
           </section>
 
           <section className="space-y-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4">

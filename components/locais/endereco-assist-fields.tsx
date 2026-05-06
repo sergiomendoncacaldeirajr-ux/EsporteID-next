@@ -267,8 +267,8 @@ function EnderecoCardThumbnails({
         {localLogoUrl ? (
           <img src={localLogoUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-gradient-to-br from-[#4285F4]/18 to-[#34A853]/12">
-            <MapPinned className="h-7 w-7 text-[#8AB4F8]" strokeWidth={1.75} />
+          <div className="grid h-full w-full place-items-center bg-gradient-to-br from-eid-primary-500/20 to-eid-primary-600/10">
+            <MapPinned className="h-7 w-7 text-eid-primary-400" strokeWidth={1.75} />
           </div>
         )}
       </div>
@@ -682,10 +682,10 @@ export function EnderecoAssistFields({
               href={googleMapsHref}
               target="_blank"
               rel="noreferrer"
-              className="group relative block overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-md transition hover:border-[#4285F4]/40 hover:shadow-lg"
+              className="group relative block overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)] transition hover:border-eid-primary-500/40 hover:shadow-[0_16px_36px_-22px_rgba(37,99,235,0.25)]"
             >
               <span
-                className="absolute inset-x-0 top-0 z-10 h-1 bg-[linear-gradient(90deg,#4285F4,#EA4335,#FBBC04,#34A853)]"
+                className="absolute inset-x-0 top-0 z-10 h-1 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_85%,transparent),color-mix(in_srgb,var(--eid-action-500)_70%,transparent))]"
                 aria-hidden
               />
               <span className="flex items-center gap-3 px-4 pb-3 pt-5">
@@ -693,7 +693,7 @@ export function EnderecoAssistFields({
                 <span className="min-w-0 flex-1 text-left">
                   <span className="flex items-center gap-1.5 text-sm font-bold tracking-tight text-eid-fg">
                     Abrir no Google Maps
-                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-[#8AB4F8] opacity-80 group-hover:opacity-100" aria-hidden />
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-eid-primary-400 opacity-80 group-hover:opacity-100" aria-hidden />
                   </span>
                   <span className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-eid-text-secondary">
                     {composedLabel || "Confira o endereço no mapa antes de enviar."}

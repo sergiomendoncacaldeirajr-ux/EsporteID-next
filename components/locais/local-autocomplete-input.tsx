@@ -91,7 +91,7 @@ export function LocalAutocompleteInput({
         <p className="mt-1 text-[11px] text-eid-text-secondary">Digite pelo menos {minChars} letras para sugerir locais.</p>
       ) : null}
       {canSearch && open && items.length ? (
-        <div className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-1 shadow-xl">
+        <div className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_98%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-1 shadow-[0_16px_40px_-20px_rgba(15,23,42,0.55)]">
           {items.map((item) => (
             <button
               key={item.id}
@@ -100,10 +100,10 @@ export function LocalAutocompleteInput({
                 setValue(item.localizacao ? `${item.nome} — ${item.localizacao}` : item.nome);
                 setOpen(false);
               }}
-              className="block w-full rounded-lg px-2.5 py-2 text-left hover:bg-eid-surface/70"
+              className="block w-full rounded-lg px-2.5 py-2.5 text-left transition hover:bg-eid-primary-500/10"
             >
-              <p className="truncate text-xs font-semibold text-eid-fg">{item.nome}</p>
-              <p className="truncate text-[11px] text-eid-text-secondary">
+              <p className="truncate text-[13px] font-bold text-eid-fg">{item.nome}</p>
+              <p className="truncate text-[11px] leading-snug text-eid-text-secondary">
                 {item.localizacao ?? "Sem localização"}
                 {item.distKm != null ? ` · ${String(item.distKm).replace(".", ",")} km` : ""}
               </p>

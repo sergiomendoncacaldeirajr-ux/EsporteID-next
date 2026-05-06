@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getAsaasSimulationFlags, isAnyAsaasSimulationEnabled } from "@/lib/asaas/simulate-payments";
 
 function flag(ok: boolean) {
   return ok ? (
@@ -36,8 +37,10 @@ function EnvTable({ items }: { items: EnvItem[] }) {
   );
 }
 
-export default function AdminIntegracoesPagamentoPage() {
+export default async function AdminIntegracoesPagamentoPage() {
   const asaasBaseUrl = envText("ASAAS_API_BASE_URL") || "https://api.asaas.com/v3 (padrão)";
+  const simFlags = await getAsaasSimulationFlags();
+  const simulateAsaasAtivo = await isAnyAsaasSimulationEnabled();
   const hasServiceRole = Boolean(envText("SUPABASE_SERVICE_ROLE_KEY"));
   const hasAndroidAssetLinksJson = Boolean(envText("ANDROID_ASSET_LINKS_JSON"));
   const hasAwsRegion = Boolean(envText("AWS_REGION"));
@@ -137,6 +140,14 @@ export default function AdminIntegracoesPagamentoPage() {
               name: "ASAAS_API_BASE_URL",
               ok: true,
               where: `Texto no Worker (opcional). Atual: ${asaasBaseUrl}`,
+            },
+            {
+              name: "EID_SIMULATE_ASAAS_PAYMENTS",
+              ok: Boolean(
+                envText("EID_SIMULATE_ASAAS_PAYMENTS").toLowerCase() === "true" && process.env.NODE_ENV !== "production"
+              ),
+              where: "Opcional no .env local. Em produção use Admin → Financeiro → modo teste de pagamentos.",
+              note: `Algum modo teste ativo: ${simulateAsaasAtivo ? "sim" : "não"}. Admin (banco): locais ${simFlags.locais ? "sim" : "não"}, professores ${simFlags.professores ? "sim" : "não"}, torneios ${simFlags.torneios ? "sim" : "não"}.`,
             },
           ]}
         />

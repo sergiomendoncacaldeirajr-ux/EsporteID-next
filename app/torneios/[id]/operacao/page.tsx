@@ -5,6 +5,7 @@ import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { TorneioInscricoesManager } from "@/components/torneios/torneio-inscricoes-manager";
 import { TorneioJogoScoreForm } from "@/components/torneios/torneio-jogo-score-form";
 import { TorneioStaffForm } from "@/components/torneios/torneio-staff-form";
+import { isAsaasSimulationEnabledFor } from "@/lib/asaas/simulate-payments";
 import { createClient } from "@/lib/supabase/server";
 import { canManageTorneioStaff, canLaunchTorneioScore, getTorneioStaffAccess } from "@/lib/torneios/staff";
 
@@ -34,6 +35,8 @@ export default async function TorneioOperacaoPage({ params, searchParams }: Prop
 
   const access = await getTorneioStaffAccess(supabase, torneioId, user.id);
   if (!canLaunchTorneioScore(access)) redirect(`/torneios/${torneioId}`);
+
+  const simTorneios = await isAsaasSimulationEnabledFor("torneios");
 
   const [{ data: torneio }, { data: jogos }, { data: staffRows }, { data: inscricoesRows }] = await Promise.all([
     supabase.from("torneios").select("id, nome, criador_id").eq("id", torneioId).maybeSingle(),
@@ -167,6 +170,7 @@ export default async function TorneioOperacaoPage({ params, searchParams }: Prop
                   <TorneioInscricoesManager
                     key={inscricao.id}
                     torneioId={torneioId}
+                    mostrarSimulacaoPagamentoTeste={simTorneios}
                     inscricao={{
                       id: inscricao.id,
                       label,

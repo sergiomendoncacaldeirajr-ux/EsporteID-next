@@ -711,6 +711,9 @@ export async function adminUpdateFinanceiro(formData: FormData) {
       espaco_trial_dias_default: Math.round(Number(formData.get("espaco_trial_dias_default"))),
       espaco_socio_comissao_percentual: Number(formData.get("espaco_socio_comissao_percentual")),
       espaco_clube_assinatura_comissao_percentual: Number(formData.get("espaco_clube_assinatura_comissao_percentual")),
+      asaas_simulacao_locais: formData.get("asaas_simulacao_locais") === "on",
+      asaas_simulacao_professores: formData.get("asaas_simulacao_professores") === "on",
+      asaas_simulacao_torneios: formData.get("asaas_simulacao_torneios") === "on",
     };
     const numericKeys = [
       "torneio_taxa_fixa",
@@ -744,7 +747,10 @@ export async function adminUpdateFinanceiro(formData: FormData) {
     if (error) return;
     revalidatePath("/admin/financeiro");
     revalidatePath("/admin/locais");
+    revalidatePath("/admin/integracoes-pagamento");
     revalidatePath("/espaco");
+    revalidatePath("/espaco/financeiro");
+    revalidatePath("/professor/recebimentos");
   } catch {
     return;
   }

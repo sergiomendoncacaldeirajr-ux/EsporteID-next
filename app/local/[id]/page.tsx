@@ -2,9 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { LocalOwnershipClaimForm } from "@/components/locais/local-ownership-claim-form";
+import {
+  locaisMainFichaClass,
+  locaisShellBgGradientClass,
+  locaisShellBgRadialClass,
+  locaisShellOuterClass,
+} from "@/components/locais/locais-ui-tokens";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
-import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
+import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { resolveBackHref } from "@/lib/perfil/back-href";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { createClient } from "@/lib/supabase/server";
@@ -74,10 +80,13 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
       : { data: null };
 
   return (
-    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <div className={locaisShellOuterClass} data-eid-locais-page>
+      <div className={locaisShellBgGradientClass} aria-hidden />
+      <div className={locaisShellBgRadialClass} aria-hidden />
+      <main data-eid-touch-ui className={locaisMainFichaClass}>
         <PerfilBackLink href={backHref} label="Voltar aos locais" />
 
-        <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2`}>
+        <div className={`${PROFILE_HERO_PANEL_CLASS} mt-2 overflow-hidden`}>
           <div className="relative flex h-28 items-center justify-center bg-eid-surface sm:h-32">
             <div
               className="pointer-events-none absolute inset-0 opacity-40"
@@ -101,10 +110,10 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
           </div>
           <div className="px-3 pb-3 pt-3 sm:px-4">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-eid-primary-300">
+              <span className="rounded-full border border-[color:color-mix(in_srgb,var(--eid-primary-500)_24%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_10%,transparent)] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-eid-primary-300">
                 {loc.status ?? "público"}
               </span>
-              <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-eid-action-400">
+              <span className="rounded-full border border-[color:color-mix(in_srgb,var(--eid-action-500)_28%,transparent)] bg-[color:color-mix(in_srgb,var(--eid-action-500)_10%,transparent)] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-eid-action-400">
                 {loc.ownership_status === "verificado"
                   ? "verificado"
                   : loc.ownership_status === "pendente_validacao"
@@ -112,8 +121,10 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
                     : "espaço genérico"}
               </span>
             </div>
-            <h1 className="mt-2 text-[15px] font-black leading-tight text-eid-fg sm:text-lg">{loc.nome_publico}</h1>
-            <p className="mt-1 text-[11px] text-eid-text-secondary sm:text-xs">{loc.localizacao}</p>
+            <h1 className="mt-2 text-lg font-black leading-tight tracking-tight text-eid-fg sm:text-xl md:text-2xl">
+              {loc.nome_publico}
+            </h1>
+            <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary sm:text-sm">{loc.localizacao}</p>
             {mapsHref ? (
               <a
                 href={mapsHref}
@@ -177,10 +188,11 @@ export default async function LocalPublicPage({ params, searchParams }: Props) {
         ) : null}
 
         {!loc.ativo_listagem ? (
-          <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+          <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs leading-relaxed text-amber-100">
             Este local pode estar fora da listagem pública.
           </p>
         ) : null}
       </main>
+    </div>
   );
 }

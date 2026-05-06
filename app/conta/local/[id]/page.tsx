@@ -1,7 +1,18 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ContaLocalEditForm } from "@/components/conta/conta-local-edit-form";
+import {
+  locaisFormPanelClass,
+  locaisMainFichaClass,
+  locaisPageH1Class,
+  locaisPageLeadClass,
+  locaisSectionTitleClass,
+  locaisShellBgGradientClass,
+  locaisShellBgRadialClass,
+  locaisShellOuterClass,
+} from "@/components/locais/locais-ui-tokens";
 import { PerfilBackLink } from "@/components/perfil/perfil-back-link";
+import { PROFILE_SECTION_TITLE } from "@/components/perfil/profile-ui-tokens";
 import { contaNextPath, requireContaPerfilPronto } from "@/lib/conta/require-perfil-pronto";
 import { createClient } from "@/lib/supabase/server";
 
@@ -42,19 +53,24 @@ export default async function ContaEditarLocalPage({ params, searchParams }: Pro
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:max-w-2xl sm:px-6 sm:py-10">
-      <PerfilBackLink href={from} label="Voltar" />
-      <h1 className="mt-4 text-xl font-bold text-eid-fg sm:text-2xl">Editar local</h1>
-      <p className="mt-2 text-sm text-eid-text-secondary">
-        Dados exibidos na ficha pública do espaço.{" "}
-        <Link href={`/local/${id}`} className="font-semibold text-eid-primary-300 underline">
-          Ver como visitante
-        </Link>
-        .
-      </p>
-      <section className="mt-6 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 sm:p-5">
-        <h2 className="text-sm font-semibold text-eid-fg">Cadastro do espaço</h2>
-        <ContaLocalEditForm
+    <div className={locaisShellOuterClass} data-eid-locais-page>
+      <div className={locaisShellBgGradientClass} aria-hidden />
+      <div className={locaisShellBgRadialClass} aria-hidden />
+      <main data-eid-touch-ui className={`${locaisMainFichaClass} pt-4 sm:pt-6`}>
+        <PerfilBackLink href={from} label="Voltar" />
+        <p className={`${locaisSectionTitleClass} mt-3`}>Conta · espaço</p>
+        <h1 className={`${locaisPageH1Class} mt-1`}>Editar local</h1>
+        <p className={`${locaisPageLeadClass} mt-2`}>
+          Dados exibidos na ficha pública do espaço.{" "}
+          <Link href={`/local/${id}`} className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">
+            Ver como visitante
+          </Link>
+          .
+        </p>
+        <section className={`${locaisFormPanelClass} mt-6`}>
+          <h2 className={PROFILE_SECTION_TITLE}>Cadastro do espaço</h2>
+          <div className="mt-4">
+            <ContaLocalEditForm
           espacoId={id}
           nomePublico={loc.nome_publico ?? ""}
           localizacao={loc.localizacao ?? ""}
@@ -64,8 +80,10 @@ export default async function ContaEditarLocalPage({ params, searchParams }: Pro
           lng={loc.lng ?? null}
           aceitaReserva={Boolean(loc.aceita_reserva)}
           ativoListagem={Boolean(loc.ativo_listagem)}
-        />
-      </section>
-    </main>
+            />
+          </div>
+        </section>
+      </main>
+    </div>
   );
 }

@@ -1,15 +1,18 @@
 import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
+import {
+  locaisShellBgGradientClass,
+  locaisShellBgRadialClass,
+  locaisShellOuterClass,
+} from "@/components/locais/locais-ui-tokens";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
 export default function LoadingLocais() {
   if (eidRouteSkeletonsDisabled()) return null;
   return (
-    <div className="relative z-0 flex min-h-0 w-full flex-1 flex-col" data-eid-locais-page>
-      <div
-        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg"
-        aria-hidden
-      />
+    <div className={locaisShellOuterClass} data-eid-locais-page>
+      <div className={locaisShellBgGradientClass} aria-hidden />
+      <div className={locaisShellBgRadialClass} aria-hidden />
       <SkMain
         variant="wide5"
         className="relative z-[1] pb-[var(--eid-shell-content-bottom-pad)] sm:pb-[var(--eid-shell-content-bottom-pad)]"
