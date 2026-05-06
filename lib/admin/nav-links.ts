@@ -15,7 +15,7 @@ export const ADMIN_NAV_LINKS: { href: string; label: string; hint: string }[] = 
   { href: "/admin/suporte", label: "Suporte", hint: "Chamados dos usuários" },
   { href: "/admin/professor", label: "Professor", hint: "Aulas e solicitações" },
   { href: "/admin/financeiro", label: "Financeiro", hint: "Taxas e promo" },
-  { href: "/admin/integracoes-pagamento", label: "Pagamentos", hint: "Asaas" },
+  { href: "/admin/integracoes-pagamento", label: "Integrações", hint: "APIs e segredos" },
   { href: "/admin/eid", label: "EID", hint: "Motor e auditoria" },
   {
     href: "/admin/funcionalidades-do-app",
