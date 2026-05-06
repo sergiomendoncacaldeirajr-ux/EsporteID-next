@@ -119,10 +119,12 @@ function VerificarCodigoPageInner() {
 
     setLoading(true);
     const supabase = createClient();
+    /** Confirmação de cadastro: usar `email` (tipos `signup`/`magiclink` estão depreciados no GoTrue / docs atuais). */
+    const otpType = mode === "recovery" ? "recovery" : "email";
     const { error: verifyErr } = await supabase.auth.verifyOtp({
       email,
       token,
-      type: mode,
+      type: otpType,
     });
     setLoading(false);
 
