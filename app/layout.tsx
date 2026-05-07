@@ -133,7 +133,7 @@ export default async function RootLayout({
         const entry = cfg[k];
         if (entry.mode !== "em_breve") return false;
         // Testers enxergam o módulo como se estivesse ativo
-        if (entry.testers.includes(user.id)) return false;
+        if (user && entry.testers.includes(user.id)) return false;
         return true;
       });
     }
