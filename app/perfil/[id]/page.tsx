@@ -41,8 +41,8 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
       if (espPublic) redirect(espPublic);
       notFound();
     }
-    // Sem papel reconhecido: não há perfil público para exibir
-    notFound();
+    // Sem papel explícito: pode ser atleta legado sem entrada em usuario_papeis.
+    // O check de tipo_usuario abaixo filtra perfis realmente incompletos.
   }
 
   const perfilSelect =
