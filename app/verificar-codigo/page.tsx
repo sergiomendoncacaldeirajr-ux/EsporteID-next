@@ -6,7 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useResendEmailCode } from "@/components/auth/use-resend-email-code";
 import { LogoFull } from "@/components/brand/logo-full";
 import { EmailCorrectionInline } from "@/components/auth/email-correction-inline";
+import { getSignupEmailRedirectTo } from "@/lib/auth/email-redirects";
 import { EMAIL_CODE_MESSAGES } from "@/lib/auth/messages";
+import { PENDING_SIGNUP_STORAGE_KEY, type PendingSignupSnapshot } from "@/lib/auth/pending-signup";
 import { createClient } from "@/lib/supabase/client";
 import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
@@ -169,6 +171,9 @@ function VerificarCodigoPageInner() {
     );
     router.refresh();
     router.push(dest);
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(PENDING_SIGNUP_STORAGE_KEY);
+    }
   }
 
   async function handleResend() {
@@ -187,15 +192,57 @@ function VerificarCodigoPageInner() {
     );
   }
 
-  function handleApplyEmailEdit(normalized: string) {
+  async function handleApplyEmailEdit(normalized: string) {
     setError(null);
-    setMsg(
-      mode === "recovery"
-        ? EMAIL_CODE_MESSAGES.correctedEmailRecovery
-        : EMAIL_CODE_MESSAGES.correctedEmailSignup
+    if (mode === "recovery") {
+      setMsg(EMAIL_CODE_MESSAGES.correctedEmailRecovery);
+      setCorrectedEmail(normalized);
+      setCodeDigits(Array.from({ length: OTP_LENGTH }, () => ""));
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("email", normalized);
+      router.replace(`/verificar-codigo?${params.toString()}`);
+      return;
+    }
+    if (typeof window === "undefined") return;
+    const raw = window.sessionStorage.getItem(PENDING_SIGNUP_STORAGE_KEY);
+    if (!raw) {
+      throw new Error(
+        "Não encontramos os dados do cadastro para reenviar no novo e-mail. Volte ao cadastro e tente novamente."
+      );
+    }
+    let snapshot: PendingSignupSnapshot;
+    try {
+      snapshot = JSON.parse(raw) as PendingSignupSnapshot;
+    } catch {
+      throw new Error("Dados de cadastro inválidos. Volte ao cadastro e tente novamente.");
+    }
+    if (!snapshot.password || snapshot.password.length < 6) {
+      throw new Error("Senha de cadastro indisponível. Volte ao cadastro e tente novamente.");
+    }
+    const supabase = createClient();
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const { error: signupErr } = await supabase.auth.signUp({
+      email: normalized,
+      password: snapshot.password,
+      options: {
+        data: snapshot.meta ?? {},
+        ...(origin
+          ? {
+              emailRedirectTo: getSignupEmailRedirectTo(origin),
+            }
+          : {}),
+      },
+    });
+    if (signupErr) {
+      throw new Error(signupErr.message);
+    }
+    window.sessionStorage.setItem(
+      PENDING_SIGNUP_STORAGE_KEY,
+      JSON.stringify({ ...snapshot, email: normalized, savedAt: Date.now() })
     );
     setCorrectedEmail(normalized);
     setCodeDigits(Array.from({ length: OTP_LENGTH }, () => ""));
+    setMsg(EMAIL_CODE_MESSAGES.correctedEmailSignup);
     const params = new URLSearchParams(searchParams.toString());
     params.set("email", normalized);
     router.replace(`/verificar-codigo?${params.toString()}`);

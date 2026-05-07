@@ -4,7 +4,7 @@ import { useState } from "react";
 
 type EmailCorrectionInlineProps = {
   currentEmail: string;
-  onApplyEmail: (normalizedEmail: string) => void;
+  onApplyEmail: (normalizedEmail: string) => void | Promise<void>;
   triggerLabel?: string;
   applyLabel?: string;
   cancelLabel?: string;
@@ -24,6 +24,7 @@ export function EmailCorrectionInline({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [applying, setApplying] = useState(false);
 
   function startEditing() {
     setError(null);
@@ -37,15 +38,22 @@ export function EmailCorrectionInline({
     setError(null);
   }
 
-  function applyEmail() {
+  async function applyEmail() {
     const normalized = draft.trim().toLowerCase();
     if (!normalized || !normalized.includes("@")) {
       setError("Informe um e-mail válido para continuar.");
       return;
     }
-    setError(null);
-    setEditing(false);
-    onApplyEmail(normalized);
+    setApplying(true);
+    try {
+      setError(null);
+      await onApplyEmail(normalized);
+      setEditing(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível atualizar o e-mail.");
+    } finally {
+      setApplying(false);
+    }
   }
 
   if (!editing) {
@@ -81,13 +89,15 @@ export function EmailCorrectionInline({
         <button
           type="button"
           onClick={applyEmail}
+          disabled={applying}
           className="flex-1 rounded-lg bg-eid-action-500 px-3 py-2 text-[12px] font-bold text-white transition hover:bg-eid-action-400"
         >
-          {applyLabel}
+          {applying ? "Atualizando..." : applyLabel}
         </button>
         <button
           type="button"
           onClick={cancelEditing}
+          disabled={applying}
           className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-2 text-[12px] font-semibold text-eid-text-secondary transition hover:text-eid-fg"
         >
           {cancelLabel}

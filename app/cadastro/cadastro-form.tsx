@@ -8,6 +8,7 @@ import type { Country, Value } from "react-phone-number-input";
 import { isPossiblePhoneNumber } from "react-phone-number-input";
 import { LogoFull } from "@/components/brand/logo-full";
 import { EID_PHONE_LABELS } from "@/lib/eid-phone-labels";
+import { PENDING_SIGNUP_STORAGE_KEY } from "@/lib/auth/pending-signup";
 import { createClient } from "@/lib/supabase/client";
 import { getSignupEmailRedirectTo } from "@/lib/auth/email-redirects";
 import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
@@ -206,6 +207,17 @@ export function CadastroForm() {
       meta.lat = String(lat);
       meta.lng = String(lng);
     }
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(
+        PENDING_SIGNUP_STORAGE_KEY,
+        JSON.stringify({
+          email: emailNorm,
+          password,
+          meta,
+          savedAt: Date.now(),
+        })
+      );
+    }
 
     // Confirmação por e-mail: fluxo PKCE em /auth/callback (URL permitida no painel do provedor de auth).
     const { data, error: err } = await supabase.auth.signUp({
@@ -231,6 +243,9 @@ export function CadastroForm() {
       return;
     }
     if (data.session) {
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem(PENDING_SIGNUP_STORAGE_KEY);
+      }
       const {
         data: { user: u },
       } = await supabase.auth.getUser();
