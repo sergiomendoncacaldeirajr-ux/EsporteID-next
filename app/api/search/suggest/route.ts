@@ -63,14 +63,27 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: true, items: [] });
     }
     const rows = (data ?? []) as AtletaRow[];
+    // Filtra perfis incompletos — não devem aparecer em fluxos de desafio/match
+    const atletaIds = rows.map((r) => r.id);
+    const completosSet = new Set<string>();
+    if (atletaIds.length) {
+      const { data: comp } = await supabase
+        .from("profiles")
+        .select("id")
+        .in("id", atletaIds)
+        .eq("perfil_completo", true);
+      for (const r of comp ?? []) completosSet.add(r.id);
+    }
     return NextResponse.json({
       ok: true,
-      items: rows.map((row) => ({
-        id: String(row.id),
-        value: String(row.username ?? "").trim(),
-        title: row.nome?.trim() || row.username || "Atleta",
-        subtitle: row.username ? `@${row.username}` : null,
-      })),
+      items: rows
+        .filter((row) => completosSet.has(row.id))
+        .map((row) => ({
+          id: String(row.id),
+          value: String(row.username ?? "").trim(),
+          title: row.nome?.trim() || row.username || "Atleta",
+          subtitle: row.username ? `@${row.username}` : null,
+        })),
     });
   }
 
@@ -193,22 +206,27 @@ export async function GET(request: Request) {
   const timeRows = (times.data ?? []) as TimeRow[];
   const torneioRows = (torneios.data ?? []) as TorneioRow[];
 
-  // Busca tipo_usuario para filtrar perfis sem página pública (pendente/espaco)
+  // Busca tipo_usuario e perfil_completo para filtrar perfis sem página pública
   // e rotear professores/organizadores para as rotas corretas.
   const profileIds = atletaRowsRaw.map((r) => r.id);
   const tipoMap = new Map<string, string | null>();
+  const completoMap = new Map<string, boolean>();
   if (profileIds.length) {
     const { data: tipoRows } = await supabase
       .from("profiles")
-      .select("id, tipo_usuario")
+      .select("id, tipo_usuario, perfil_completo")
       .in("id", profileIds);
-    for (const r of tipoRows ?? []) tipoMap.set(r.id, r.tipo_usuario);
+    for (const r of tipoRows ?? []) {
+      tipoMap.set(r.id, r.tipo_usuario);
+      completoMap.set(r.id, Boolean(r.perfil_completo));
+    }
   }
-  // Exclui perfis pendentes (sem página pública) e donos de espaço
-  // (esses já aparecem na seção de locais da busca).
+  // Exclui perfis pendentes/incompletos e donos de espaço
+  // (espaços já aparecem na seção de locais da busca).
   const atletaRows = atletaRowsRaw.filter((r) => {
     const tipo = tipoMap.get(r.id);
-    return tipo && tipo !== "pendente" && tipo !== "espaco";
+    const completo = completoMap.get(r.id);
+    return tipo && tipo !== "pendente" && tipo !== "espaco" && completo === true;
   });
 
   const localItems = localRows

@@ -46,7 +46,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   }
 
   const perfilSelect =
-    "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, disponivel_amistoso_ate, mostrar_historico_publico, estilo_jogo, bio";
+    "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, disponivel_amistoso_ate, mostrar_historico_publico, estilo_jogo, bio, perfil_completo";
 
   const [{ data: perfil }, { data: eids }, amRowRes, featureCfg] = await Promise.all([
     supabase.from("profiles").select(perfilSelect).eq("id", id).maybeSingle(),
@@ -66,7 +66,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
 
   const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id, false);
   if (!perfil) notFound();
-  if (perfil.tipo_usuario === "pendente" && !isSelf) notFound();
+  if ((perfil.tipo_usuario === "pendente" || !perfil.perfil_completo) && !isSelf) notFound();
 
   let disponivelAmistosoVal = perfil.disponivel_amistoso;
   let disponivelAmistosoAteVal = perfil.disponivel_amistoso_ate as string | null | undefined;

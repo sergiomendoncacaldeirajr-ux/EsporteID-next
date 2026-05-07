@@ -92,8 +92,22 @@ export default async function BuscarPage({ searchParams }: Props) {
     if (locaisRes.error) console.error("[buscar] locais", locaisRes.error);
     if (timesRes.error) console.error("[buscar] times", timesRes.error);
     if (torneiosRes.error) console.error("[buscar] torneios", torneiosRes.error);
+
+    // Filtra atletas com perfil incompleto — não devem aparecer na busca pública
+    const atletasRaw = (atletasRes.data ?? []) as typeof empty.atletas;
+    const atletaIds = atletasRaw.map((a) => a.id);
+    const atletasCompletos = new Set<string>();
+    if (atletaIds.length) {
+      const { data: compRows } = await supabase
+        .from("profiles")
+        .select("id")
+        .in("id", atletaIds)
+        .eq("perfil_completo", true);
+      for (const r of compRows ?? []) atletasCompletos.add(r.id);
+    }
+
     resultados = {
-      atletas: (atletasRes.data ?? []) as typeof empty.atletas,
+      atletas: atletasRaw.filter((a) => atletasCompletos.has(a.id)),
       locais: (locaisRes.data ?? []) as typeof empty.locais,
       times: (timesRes.data ?? []) as typeof empty.times,
       torneios: (torneiosRes.data ?? []) as typeof empty.torneios,

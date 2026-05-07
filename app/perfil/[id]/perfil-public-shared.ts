@@ -20,6 +20,7 @@ export type PerfilPublicoProfileRow = {
   mostrar_historico_publico: boolean | null;
   estilo_jogo: string | null;
   bio: string | null;
+  perfil_completo: boolean | null;
 };
 
 export type PerfilPublicoEidRow = Record<string, unknown> & {
