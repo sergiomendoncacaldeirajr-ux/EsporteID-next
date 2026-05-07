@@ -98,12 +98,14 @@ export default async function RankingPage({ searchParams }: Props) {
     <div className="relative z-0 flex w-full min-w-0 flex-col" data-eid-ranking-page data-eid-touch-ui-compact="true">
       <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-eid-bg via-eid-surface/35 to-eid-bg" aria-hidden />
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-48 max-h-[24rem] bg-[radial-gradient(ellipse_95%_60%_at_50%_-8%,rgba(37,99,235,0.11),transparent_55%)] sm:h-64"
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-48 max-h-[24rem] bg-[radial-gradient(ellipse_95%_60%_at_50%_-8%,rgba(37,99,235,0.13),transparent_55%),radial-gradient(ellipse_50%_30%_at_80%_0%,rgba(249,115,22,0.07),transparent_60%)] sm:h-64"
         aria-hidden
       />
       <main className="eid-progressive-enter relative z-[1] mx-auto flex w-full min-w-0 max-w-lg flex-col px-3 pb-[calc(var(--eid-shell-content-bottom-pad)+4.75rem)] pt-0 sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[var(--eid-shell-content-bottom-pad)]">
         <div className={`eid-ranking-hero mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-6 sm:py-5`}>
-          <div className="grid grid-cols-[minmax(0,1fr)_132px] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_320px] sm:gap-4">
+          <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-eid-action-500/8 blur-3xl" aria-hidden />
+          <div className="pointer-events-none absolute -bottom-6 -left-6 h-28 w-28 rounded-full bg-eid-primary-500/10 blur-3xl" aria-hidden />
+          <div className="relative grid grid-cols-[minmax(0,1fr)_132px] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_320px] sm:gap-4">
             <div>
               <p className="text-[8px] font-black uppercase tracking-[0.12em] text-eid-action-400 sm:text-[13px]">Painel competitivo</p>
               <h1 className="mt-1 text-[18px] font-black leading-none tracking-tight text-eid-fg sm:text-[42px]">Ranking EID</h1>
@@ -116,6 +118,7 @@ export default async function RankingPage({ searchParams }: Props) {
                 <Image src="/ranking-podio-alpha.png" alt="" fill unoptimized className="object-contain object-center" />
               </div>
             </div>
+          </div>
           </div>
         </div>
 
@@ -131,7 +134,7 @@ export default async function RankingPage({ searchParams }: Props) {
         </section>
 
         {noCatalogHint ? (
-          <p className="eid-ranking-empty mt-4 rounded-xl border border-transparent bg-eid-surface/40 p-5 text-center text-sm leading-relaxed text-eid-text-secondary shadow-none">
+          <p className="eid-ranking-empty mt-4 rounded-2xl border border-[rgba(255,255,255,0.05)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-700)_4%),color-mix(in_srgb,var(--eid-surface)_98%,transparent))] p-5 text-center text-sm leading-relaxed text-eid-text-secondary shadow-[0_8px_28px_-16px_rgba(15,23,42,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]">
             Nenhum esporte disponível no momento.
           </p>
         ) : (

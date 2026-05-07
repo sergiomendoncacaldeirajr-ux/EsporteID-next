@@ -38,31 +38,45 @@ export default async function AgendaPage() {
     >
       <AgendaBackgroundSync />
       <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-4 py-4 sm:px-6 sm:py-5`}>
-        <div className="grid grid-cols-[minmax(0,1fr)_88px] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_150px] sm:gap-4">
+        <div
+          className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-eid-action-500/10 blur-3xl"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute -bottom-6 left-4 h-24 w-24 rounded-full bg-eid-primary-500/12 blur-3xl"
+          aria-hidden
+        />
+        <div className="relative grid grid-cols-[minmax(0,1fr)_88px] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_150px] sm:gap-4">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-eid-action-400 sm:text-[12px]">Agenda</p>
             <h1 className="mt-1 text-[17px] font-black leading-[1.12] tracking-tight text-eid-fg sm:text-[28px]">
-              Sua agenda (referência)
+              Sua agenda
             </h1>
-            <p className="mt-2 max-w-[32ch] text-[10px] leading-relaxed text-eid-text-secondary sm:mt-3 sm:text-[18px]">
+            <p className="mt-2 max-w-[32ch] text-[10px] leading-relaxed text-eid-text-secondary sm:mt-3 sm:text-[12px]">
               Data e local combinados aqui; cancelamento, reagendamento e respostas ficam no{" "}
-              <Link href="/comunidade#desafios-aceitos-gestao" className="font-bold text-eid-primary-300 hover:underline">
+              <Link href="/comunidade#desafios-aceitos-gestao" className="font-bold text-eid-primary-300 underline-offset-2 hover:underline">
                 Painel social
               </Link>
               .
             </p>
           </div>
           <div className="justify-self-end" aria-hidden>
-            <svg viewBox="0 0 96 96" className="h-[78px] w-[78px] drop-shadow-[0_8px_12px_rgba(249,115,22,0.28)] sm:h-[130px] sm:w-[130px]">
-              <rect x="10" y="14" width="76" height="72" rx="16" fill="#FF7A00" />
-              <rect x="16" y="24" width="64" height="56" rx="12" fill="#FF8B20" />
-              <rect x="22" y="36" width="52" height="38" rx="8" fill="#FFF7ED" />
-              <rect x="28" y="8" width="8" height="18" rx="4" fill="#FF7A00" />
-              <rect x="60" y="8" width="8" height="18" rx="4" fill="#FF7A00" />
+            <svg viewBox="0 0 96 96" className="h-[78px] w-[78px] drop-shadow-[0_8px_18px_rgba(249,115,22,0.35)] sm:h-[120px] sm:w-[120px]">
+              <rect x="10" y="14" width="76" height="72" rx="16" fill="url(#ag-grad1)" />
+              <defs>
+                <linearGradient id="ag-grad1" x1="10" y1="14" x2="86" y2="86" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#FB923C" />
+                  <stop offset="1" stopColor="#EA580C" />
+                </linearGradient>
+              </defs>
+              <rect x="16" y="24" width="64" height="56" rx="12" fill="rgba(255,150,60,0.85)" />
+              <rect x="22" y="36" width="52" height="38" rx="8" fill="rgba(255,247,237,0.95)" />
+              <rect x="28" y="8" width="8" height="18" rx="4" fill="#EA580C" />
+              <rect x="60" y="8" width="8" height="18" rx="4" fill="#EA580C" />
               <path
                 d="m35 55 11 11 16-20"
                 fill="none"
-                stroke="#FF7A00"
+                stroke="#EA580C"
                 strokeWidth="7"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -86,7 +100,7 @@ export default async function AgendaPage() {
         </EidStreamSection>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-xl border border-transparent bg-eid-card/55 px-3 py-3 text-center md:mt-10 md:px-4 md:py-3.5">
+      <div className="mt-6 overflow-hidden rounded-xl border border-[rgba(255,255,255,0.045)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_90%,transparent),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-3 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] md:mt-10 md:px-4 md:py-3.5">
         <p className="text-[11px] leading-relaxed text-eid-text-secondary md:text-xs">
           Pedidos recebidos para aceitar estão no{" "}
           <Link href="/comunidade" className="font-bold text-eid-primary-300 hover:underline">

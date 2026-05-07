@@ -8,7 +8,6 @@ import {
   DashboardStreamVagasEquipesSkeleton,
 } from "@/components/loading/dashboard-stream-skeletons";
 import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
-import { MaioridadeConfirmacaoCard } from "@/components/perfil/maioridade-confirmacao-card";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
 import { AmistosoDailyHint } from "@/components/dashboard/amistoso-daily-hint";
 import { FindChallengeCta } from "@/components/dashboard/find-challenge-cta";
@@ -78,7 +77,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     supabase
       .from("profiles")
       .select(
-        "nome, avatar_url, localizacao, lat, lng, match_idade_gate, match_maioridade_confirmada, disponivel_amistoso, disponivel_amistoso_ate, perfil_completo"
+        "nome, avatar_url, localizacao, lat, lng, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate, perfil_completo"
       )
       .eq("id", user.id)
       .maybeSingle(),
@@ -325,7 +324,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       className="relative z-0 mx-auto flex w-full min-w-0 max-w-lg flex-1 flex-col px-3 pb-[var(--eid-shell-content-bottom-pad)] pt-0 sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[var(--eid-shell-content-bottom-pad)]"
       data-eid-dashboard-page
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-44 bg-[radial-gradient(ellipse_95%_60%_at_50%_-10%,rgba(37,99,235,0.1),transparent_55%)] sm:h-52" aria-hidden />
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-52 bg-[radial-gradient(ellipse_95%_65%_at_50%_-15%,rgba(37,99,235,0.14),transparent_58%),radial-gradient(ellipse_50%_30%_at_80%_10%,rgba(249,115,22,0.06),transparent_50%)] sm:h-64" aria-hidden />
       <div className={`eid-dashboard-hero relative mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-4`}>
         <div
           className="eid-dashboard-hero-glow pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-eid-primary-500/15 blur-3xl"
@@ -410,12 +409,8 @@ export default async function DashboardPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="mt-4 space-y-3">
-          {!profile.match_maioridade_confirmada ? (
-            <MaioridadeConfirmacaoCard gate={matchIdadeGate} />
-          ) : (
-            <MatchIdadeGateBanner gate={matchIdadeGate} />
-          )}
+        <div className="mt-4">
+          <MatchIdadeGateBanner gate={matchIdadeGate} />
         </div>
 
         <FindChallengeCta href={matchHref} />
@@ -439,8 +434,8 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <span
                   className={`flex h-10 w-10 items-center justify-center rounded-xl border sm:h-11 sm:w-11 sm:rounded-2xl ${
                     item.status !== "active"
-                      ? "border-transparent bg-eid-surface/45 text-eid-text-secondary"
-                      : "border-transparent bg-eid-primary-500/14 text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]"
+                      ? "border-transparent bg-eid-surface/40 text-eid-text-secondary"
+                      : "border-[rgba(37,99,235,0.2)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_18%,transparent),color-mix(in_srgb,var(--eid-primary-500)_8%,transparent))] text-eid-primary-400 shadow-[0_0_12px_-4px_rgba(37,99,235,0.25),inset_0_1px_0_rgba(255,255,255,0.08)]"
                   }`}
                 >
                   <Icon className="h-[22px] w-[22px] sm:h-6 sm:w-6" />
@@ -466,7 +461,7 @@ export default async function DashboardPage({ searchParams }: Props) {
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="eid-dashboard-app-nav-item eid-list-item relative flex min-h-[4rem] flex-col items-center justify-center gap-0.5 rounded-xl border border-transparent bg-transparent px-1 py-1.5 text-center transition hover:border-[color:color-mix(in_srgb,var(--eid-primary-500)_28%,transparent)] hover:bg-eid-primary-500/10 active:scale-[0.98] sm:min-h-[4.35rem] sm:rounded-xl sm:py-2"
+                  className="eid-dashboard-app-nav-item relative flex min-h-[4rem] flex-col items-center justify-center gap-0.5 rounded-xl border border-[rgba(255,255,255,0.04)] bg-[linear-gradient(155deg,color-mix(in_srgb,var(--eid-surface)_88%,var(--eid-primary-700)_12%),color-mix(in_srgb,var(--eid-bg)_90%,transparent))] px-1 py-1.5 text-center shadow-[0_2px_10px_-6px_rgba(15,23,42,0.3)] transition duration-200 hover:-translate-y-[1px] hover:border-[rgba(37,99,235,0.2)] hover:bg-[linear-gradient(155deg,color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-surface)),var(--eid-surface))] hover:shadow-[0_6px_18px_-8px_rgba(37,99,235,0.25)] active:scale-[0.97] active:translate-y-0 sm:min-h-[4.35rem] sm:rounded-xl sm:py-2"
                 >
                   {cardContent}
                 </Link>
@@ -476,7 +471,7 @@ export default async function DashboardPage({ searchParams }: Props) {
               <div
                 key={item.label}
                 aria-disabled
-                className="eid-dashboard-app-nav-item eid-list-item relative flex min-h-[4rem] flex-col items-center justify-center gap-0.5 rounded-xl border border-transparent bg-transparent px-1 py-1.5 text-center opacity-75 sm:min-h-[4.35rem] sm:rounded-xl sm:py-2"
+                className="eid-dashboard-app-nav-item relative flex min-h-[4rem] flex-col items-center justify-center gap-0.5 rounded-xl border border-[rgba(255,255,255,0.03)] bg-[linear-gradient(155deg,color-mix(in_srgb,var(--eid-surface)_80%,transparent),transparent)] px-1 py-1.5 text-center opacity-60 sm:min-h-[4.35rem] sm:rounded-xl sm:py-2"
               >
                 {cardContent}
               </div>
@@ -488,7 +483,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       {hasProfessor && canSeeProfessores ? (
         <Link
           href="/professor"
-          className="eid-btn-soft mt-3 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-xl border-eid-action-500/35 bg-eid-action-500/10 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-action-500)_45%)] sm:mt-4 sm:text-[11px]"
+          className="mt-3 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-xl border border-[rgba(249,115,22,0.2)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-500)_12%,var(--eid-card)),color-mix(in_srgb,var(--eid-action-500)_6%,var(--eid-surface)))] px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-action-500)_45%)] shadow-[0_4px_16px_-8px_rgba(249,115,22,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:-translate-y-[1px] hover:border-[rgba(249,115,22,0.3)] hover:shadow-[0_6px_22px_-8px_rgba(249,115,22,0.28)] sm:mt-4 sm:text-[11px]"
         >
           <IconUsers className="h-5 w-5 shrink-0 text-eid-action-400" />
           Painel do professor
@@ -497,9 +492,9 @@ export default async function DashboardPage({ searchParams }: Props) {
       {hasEspaco && canSeeLocais ? (
         <Link
           href="/espaco"
-          className="eid-btn-soft mt-3 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-xl border-eid-primary-500/35 bg-eid-primary-500/12 px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)] sm:mt-4 sm:text-[11px]"
+          className="mt-3 flex min-h-[3rem] w-full items-center justify-center gap-2 rounded-xl border border-[rgba(37,99,235,0.2)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_6%,var(--eid-surface)))] px-3 py-2.5 text-[10px] font-extrabold uppercase tracking-wider text-[color:color-mix(in_srgb,var(--eid-fg)_62%,var(--eid-primary-500)_38%)] shadow-[0_4px_16px_-8px_rgba(37,99,235,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:-translate-y-[1px] hover:border-[rgba(37,99,235,0.3)] hover:shadow-[0_6px_22px_-8px_rgba(37,99,235,0.28)] sm:mt-4 sm:text-[11px]"
         >
-          <IconMapPin className="h-5 w-5 shrink-0 text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]" />
+          <IconMapPin className="h-5 w-5 shrink-0 text-eid-primary-400" />
           Painel do espaço
         </Link>
       ) : null}

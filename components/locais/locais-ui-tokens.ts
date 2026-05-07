@@ -21,13 +21,13 @@ export const locaisMainFichaClass =
 export const locaisHeroClass = `eid-locais-hero relative mb-4 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-4 sm:py-5 md:mb-6 md:px-6 md:py-6`;
 
 export const locaisSearchCardClass =
-  "eid-locais-search-card mb-4 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)]";
+  "eid-locais-search-card mb-4 overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.055)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_96%,transparent))] shadow-[0_10px_28px_-16px_rgba(15,23,42,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]";
 
 export const locaisSectionOuterClass =
-  "eid-locais-section mb-6 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] shadow-[0_12px_28px_-20px_rgba(15,23,42,0.28)] sm:mb-8";
+  "eid-locais-section mb-6 overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.05)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-700)_4%),color-mix(in_srgb,var(--eid-surface)_98%,transparent))] shadow-[0_8px_28px_-16px_rgba(15,23,42,0.45),inset_0_1px_0_rgba(255,255,255,0.04)] sm:mb-8";
 
 export const locaisSectionHeadClass =
-  "eid-locais-section-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[color:color-mix(in_srgb,var(--eid-border-subtle)_78%,var(--eid-primary-500)_22%)] bg-transparent px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-4 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]";
+  "eid-locais-section-head flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-[rgba(255,255,255,0.045)] bg-transparent px-3 py-2.5 sm:px-4";
 
 export const locaisSectionTitleClass =
   "text-[10px] font-black uppercase tracking-[0.18em] text-eid-primary-400";

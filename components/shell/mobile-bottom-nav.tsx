@@ -718,7 +718,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
         aria-label="Navegação principal"
       >
         <div
-          className="relative overflow-visible rounded-[2rem] border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_94%,#ffffff_6%)] shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]"
+          className="relative overflow-visible rounded-[2rem] border border-[rgba(255,255,255,0.07)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-700)_4%),color-mix(in_srgb,var(--eid-surface)_98%,transparent))] shadow-[0_16px_36px_-22px_rgba(15,23,42,0.55),0_0_0_1px_rgba(255,255,255,0.03),inset_0_1px_0_rgba(255,255,255,0.055)]"
           style={{
             minHeight: "calc(4.2rem + max(0px, env(safe-area-inset-bottom, 0px)))",
             paddingBottom: "0.45rem",
@@ -746,10 +746,10 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                       }}
                     />
                     <span
-                      className={`absolute -top-[2.15rem] flex h-[58px] w-[58px] items-center justify-center rounded-full transition-all ${
+                      className={`absolute -top-[2.15rem] flex h-[58px] w-[58px] items-center justify-center rounded-full transition-all duration-200 ${
                         item.active
-                          ? "bg-[color:color-mix(in_srgb,var(--eid-action-500)_82%,#f59e0b_18%)] ring-[4px] ring-[color:color-mix(in_srgb,var(--eid-card)_94%,#ffffff_6%)] shadow-[0_8px_18px_-12px_color-mix(in_srgb,var(--eid-action-500)_62%,transparent)]"
-                          : "bg-eid-action-500/85 ring-[4px] ring-[color:color-mix(in_srgb,var(--eid-card)_94%,#ffffff_6%)] shadow-[0_10px_20px_-12px_color-mix(in_srgb,var(--eid-action-500)_70%,transparent)]"
+                          ? "bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-400)_65%,#fff_35%),var(--eid-action-500)_40%,color-mix(in_srgb,var(--eid-action-600)_90%,#000))] ring-[4px] ring-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-700)_4%),color-mix(in_srgb,var(--eid-surface)_98%,transparent))] shadow-[0_8px_22px_-8px_color-mix(in_srgb,var(--eid-action-500)_75%,transparent),0_0_18px_-6px_color-mix(in_srgb,var(--eid-action-500)_45%,transparent),inset_0_1px_0_rgba(255,255,255,0.28)]"
+                          : "bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-400)_70%,#fff_30%),var(--eid-action-500),color-mix(in_srgb,var(--eid-action-600)_88%,#000))] ring-[4px] ring-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-700)_4%),color-mix(in_srgb,var(--eid-surface)_98%,transparent))] shadow-[0_10px_24px_-10px_color-mix(in_srgb,var(--eid-action-500)_72%,transparent),inset_0_1px_0_rgba(255,255,255,0.24)]"
                       }`}
                     >
                       <svg viewBox="0 0 24 24" className="h-[24px] w-[24px] text-white" fill="none" aria-hidden>
@@ -779,18 +779,23 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   aria-label={item.label}
                 >
                   <span
-                    className={`relative flex h-[30px] w-[38px] items-center justify-center rounded-xl transition-all ${
-                      item.active ? "bg-eid-primary-500/10" : "bg-transparent"
+                    className={`relative flex h-[30px] w-[38px] items-center justify-center rounded-xl transition-all duration-200 ${
+                      item.active
+                        ? "bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_14%,transparent),color-mix(in_srgb,var(--eid-primary-500)_7%,transparent))] shadow-[0_0_10px_-3px_rgba(37,99,235,0.25),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                        : "bg-transparent"
                     }`}
-                    style={{ color: item.active ? "var(--eid-primary-500)" : "var(--eid-text-secondary)" }}
+                    style={{ color: item.active ? "var(--eid-primary-400)" : "var(--eid-text-secondary)" }}
                   >
                     {item.icon}
                     {item.badgeWrap ? <NavBadge n={item.badge ?? 0} /> : null}
                   </span>
 
                   <span
-                    className="text-[10px] font-medium leading-none transition"
-                    style={{ color: item.active ? "var(--eid-fg)" : "var(--eid-text-secondary)" }}
+                    className="text-[10px] leading-none transition-all duration-200"
+                    style={{
+                      color: item.active ? "var(--eid-fg)" : "var(--eid-text-secondary)",
+                      fontWeight: item.active ? 700 : 500,
+                    }}
                   >
                     {item.label}
                   </span>

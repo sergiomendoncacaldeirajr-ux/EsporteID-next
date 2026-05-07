@@ -44,10 +44,12 @@ export default async function TimesPage({ searchParams }: Props) {
       data-eid-vagas-page="true"
       className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 py-3 pb-[var(--eid-shell-content-bottom-pad)] sm:px-6 sm:py-4 sm:pb-[var(--eid-shell-content-bottom-pad)]"
     >
-      <div className="relative mb-4 overflow-hidden rounded-3xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(155deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] p-4 shadow-[0_16px_40px_-28px_rgba(37,99,235,0.26)] sm:p-6">
+      <div className="relative mb-4 overflow-hidden rounded-3xl border border-[rgba(255,255,255,0.055)] bg-[linear-gradient(155deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-700)_3%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-4 shadow-[0_16px_40px_-20px_rgba(37,99,235,0.3),inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-6">
+        <div className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-eid-primary-500/10 blur-3xl" aria-hidden />
+        <div className="pointer-events-none absolute -bottom-6 left-6 h-24 w-24 rounded-full bg-eid-action-500/8 blur-3xl" aria-hidden />
         <div className="relative grid grid-cols-[minmax(0,1fr)_110px] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_190px] sm:gap-6">
           <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#2563EB] sm:text-[11px]">Recrutamento</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-primary-400 sm:text-[11px]">Recrutamento</p>
             <h1 className="eid-vagas-hero-title mt-1 text-[17px] font-black uppercase leading-none tracking-tight text-eid-fg sm:text-[28px]">
               Vagas em times e duplas
             </h1>
@@ -89,7 +91,7 @@ export default async function TimesPage({ searchParams }: Props) {
         </EidStreamSection>
       </div>
 
-      <section className="mb-4 rounded-[20px] border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,white_12%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,white_3%),color-mix(in_srgb,var(--eid-surface)_94%,white_6%))] px-3 py-2.5 sm:px-4 sm:py-3">
+      <section className="mb-4 overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.05)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-700)_4%),color-mix(in_srgb,var(--eid-surface)_98%,transparent))] px-3 py-2.5 shadow-[0_8px_28px_-16px_rgba(15,23,42,0.45),inset_0_1px_0_rgba(255,255,255,0.04)] sm:px-4 sm:py-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="min-w-0 shrink whitespace-nowrap text-[11px] leading-tight text-eid-text-secondary sm:text-[12px]">
             Formações com vagas abertas e aceitando pedidos.
