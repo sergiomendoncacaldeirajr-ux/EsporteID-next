@@ -59,7 +59,9 @@ function formatShort(iso: string | null | undefined) {
 const PREVIEW_LIMIT = 5;
 const PREVIEW_FETCH = 80;
 const NOTIFICATION_LOAD_MIN_GAP_MS = 3500;
-const NOTIFICATION_POLL_MS = 90_000;
+const NOTIFICATION_POLL_MS = 300_000;
+let lastPushFlushAt = 0;
+const PUSH_FLUSH_COOLDOWN_MS = 5 * 60 * 1000;
 function scheduleNotificationIdle(task: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   const requestIdle = window.requestIdleCallback;
@@ -381,7 +383,11 @@ export function NotificationBell({ userId }: { userId: string | null }) {
           void load();
           /** Notificações criadas no banco (ex.: via trigger) não passam por `triggerPush*` no Node — pede envio push aqui. */
           if (payload.eventType === "INSERT") {
-            void fetch("/api/push/flush-user", { method: "POST", credentials: "same-origin" }).catch(() => {});
+            const now = Date.now();
+            if (now - lastPushFlushAt >= PUSH_FLUSH_COOLDOWN_MS) {
+              lastPushFlushAt = now;
+              void fetch("/api/push/flush-user", { method: "POST", credentials: "same-origin" }).catch(() => {});
+            }
           }
         }
       )

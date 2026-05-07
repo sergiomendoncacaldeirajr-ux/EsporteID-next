@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -76,18 +76,11 @@ function payloadStringField(
  */
 export function RealtimePageRefresh({ userId }: Props) {
   const router = useRouter();
-  const pathname = usePathname();
-  const pathnameRef = useRef(pathname);
   const lastRefreshAt = useRef(0);
   const instanceId = useId();
   const notifiedIdsRef = useRef<Set<number>>(new Set());
   const [elencoVersion, setElencoVersion] = useState(0);
-  const revalidateInFlightRef = useRef(false);
   const refreshTimerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    pathnameRef.current = pathname;
-  }, [pathname]);
 
   useEffect(() => {
     if (!userId) return;
@@ -105,36 +98,15 @@ export function RealtimePageRefresh({ userId }: Props) {
 
     const shouldPauseAutoRefresh = () => eidShouldPauseAutoRefreshFromLocation();
 
-    const revalidateCurrentRouteIfNeeded = async () => {
-      if (revalidateInFlightRef.current) return;
-      revalidateInFlightRef.current = true;
-      const p = String(pathnameRef.current ?? "") || "/";
-      try {
-        await fetch("/api/realtime/revalidate-current", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ path: p }),
-        });
-      } catch {
-        /* ignore */
-      } finally {
-        revalidateInFlightRef.current = false;
-      }
-    };
-
     const runRefresh = () => {
       if (refreshTimerRef.current != null) return;
       refreshTimerRef.current = window.setTimeout(() => {
         refreshTimerRef.current = null;
-        void (async () => {
-          await revalidateCurrentRouteIfNeeded();
-          if (cancelled) return;
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
-          }
-          router.refresh();
-        })();
+        if (cancelled) return;
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+        }
+        router.refresh();
       }, 350);
     };
 
@@ -195,7 +167,7 @@ export function RealtimePageRefresh({ userId }: Props) {
     };
     document.addEventListener("visibilitychange", onVisibility);
 
-    const channelTag = `${userId}-${instanceId}-${pathname}-${elencoVersion}`;
+    const channelTag = `${userId}-${instanceId}-${elencoVersion}`;
 
     void (async () => {
       const [teamIds, ownedIds] = await Promise.all([
@@ -443,7 +415,7 @@ export function RealtimePageRefresh({ userId }: Props) {
       }
       channels.forEach((c) => void supabase.removeChannel(c));
     };
-  }, [router, userId, pathname, elencoVersion, instanceId]);
+  }, [router, userId, elencoVersion, instanceId]);
 
   return null;
 }

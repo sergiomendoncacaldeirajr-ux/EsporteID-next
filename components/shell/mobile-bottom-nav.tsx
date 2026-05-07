@@ -112,7 +112,7 @@ function scheduleAfterNavigationIdle(task: () => void): () => void {
 }
 
 const MOBILE_NAV_LOAD_MIN_GAP_MS = 3500;
-const MOBILE_NAV_POLL_MS = 90_000;
+const MOBILE_NAV_POLL_MS = 300_000;
 
 export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const pathname = usePathname() ?? "";

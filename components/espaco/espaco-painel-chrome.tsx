@@ -100,7 +100,7 @@ function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
 
       <nav
         aria-label="Atalhos do painel"
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-[color:var(--eid-border-subtle)] bg-eid-card/95 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-10px_30px_-12px_rgba(0,0,0,0.35)] backdrop-blur-md md:hidden"
+        className="!fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--eid-border-subtle)] bg-eid-card/95 pb-[max(0.35rem,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-10px_30px_-12px_rgba(0,0,0,0.35)] backdrop-blur-md md:!hidden"
       >
         <div className="mx-auto flex max-w-6xl justify-between gap-0.5 px-1">
           {items.map(({ href, label, Icon }) => {
