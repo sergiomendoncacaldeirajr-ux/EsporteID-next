@@ -41,6 +41,8 @@ function VerificarCodigoPageInner() {
     [searchParams]
   );
   const [codeDigits, setCodeDigits] = useState<string[]>(Array.from({ length: OTP_LENGTH }, () => ""));
+  const [emailEdit, setEmailEdit] = useState("");
+  const [editingEmail, setEditingEmail] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,6 +50,7 @@ function VerificarCodigoPageInner() {
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
 
   const code = useMemo(() => codeDigits.join(""), [codeDigits]);
+  const effectiveEmail = editingEmail ? emailEdit.trim().toLowerCase() : email;
 
   function setDigitAt(index: number, val: string) {
     setCodeDigits((prev) => {
@@ -104,7 +107,7 @@ function VerificarCodigoPageInner() {
     setError(null);
     setMsg(null);
     const token = code.trim();
-    if (!email) {
+    if (!effectiveEmail) {
       setError(
         mode === "recovery"
           ? "E-mail inválido. Volte para recuperação de senha e tente novamente."
@@ -122,7 +125,7 @@ function VerificarCodigoPageInner() {
     /** Confirmação de cadastro: usar `email` (tipos `signup`/`magiclink` estão depreciados no GoTrue / docs atuais). */
     const otpType = mode === "recovery" ? "recovery" : "email";
     const { error: verifyErr } = await supabase.auth.verifyOtp({
-      email,
+      email: effectiveEmail,
       token,
       type: otpType,
     });
@@ -170,7 +173,7 @@ function VerificarCodigoPageInner() {
   async function handleResend() {
     setError(null);
     setMsg(null);
-    if (!email) {
+    if (!effectiveEmail) {
       setError("E-mail inválido para reenvio.");
       return;
     }
@@ -180,14 +183,14 @@ function VerificarCodigoPageInner() {
     const resendErr =
       mode === "recovery"
         ? (
-            await supabase.auth.resetPasswordForEmail(email, {
+            await supabase.auth.resetPasswordForEmail(effectiveEmail, {
               redirectTo: getRecoveryEmailRedirectTo(origin),
             })
           ).error
         : (
             await supabase.auth.resend({
               type: "signup",
-              email,
+              email: effectiveEmail,
               options: {
                 ...(origin
                   ? {
@@ -207,6 +210,37 @@ function VerificarCodigoPageInner() {
         ? "Código de recuperação reenviado. Verifique seu e-mail."
         : "Código reenviado. Verifique seu e-mail."
     );
+  }
+
+  function handleStartEmailEdit() {
+    setError(null);
+    setMsg(null);
+    setEmailEdit(effectiveEmail);
+    setEditingEmail(true);
+  }
+
+  function handleCancelEmailEdit() {
+    setEditingEmail(false);
+    setEmailEdit("");
+  }
+
+  function handleApplyEmailEdit() {
+    const normalized = emailEdit.trim().toLowerCase();
+    if (!normalized || !normalized.includes("@")) {
+      setError("Informe um e-mail válido para continuar.");
+      return;
+    }
+    setError(null);
+    setMsg(
+      mode === "recovery"
+        ? "E-mail atualizado. Agora use o reenvio para receber o novo código de recuperação."
+        : "E-mail atualizado. Agora use o reenvio para receber o novo código."
+    );
+    setCodeDigits(Array.from({ length: OTP_LENGTH }, () => ""));
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("email", normalized);
+    router.replace(`/verificar-codigo?${params.toString()}`);
+    setEditingEmail(false);
   }
 
   return (
@@ -230,8 +264,49 @@ function VerificarCodigoPageInner() {
           </h1>
           <p className="mt-2 text-center text-[12px] leading-snug text-eid-text-secondary">
             {mode === "recovery" ? "Digite o código de recuperação enviado para " : "Digite o código enviado para "}
-            <span className="font-semibold text-eid-fg">{email || "seu e-mail"}</span>.
+            <span className="font-semibold text-eid-fg">{effectiveEmail || "seu e-mail"}</span>.
           </p>
+          <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 px-3 py-2.5">
+            {!editingEmail ? (
+              <button
+                type="button"
+                onClick={handleStartEmailEdit}
+                className="w-full text-center text-[12px] font-semibold text-eid-action-500 transition hover:text-eid-action-400"
+              >
+                Errou o e-mail? Corrigir e reenviar código
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <label htmlFor="verify-email-edit" className="block text-[11px] font-semibold text-eid-text-secondary">
+                  Corrigir e-mail
+                </label>
+                <input
+                  id="verify-email-edit"
+                  type="email"
+                  value={emailEdit}
+                  onChange={(e) => setEmailEdit(e.target.value)}
+                  className="eid-input-dark h-10 w-full rounded-xl px-3 text-[13px] text-eid-fg"
+                  placeholder="seu-email@exemplo.com"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleApplyEmailEdit}
+                    className="flex-1 rounded-lg bg-eid-action-500 px-3 py-2 text-[12px] font-bold text-white transition hover:bg-eid-action-400"
+                  >
+                    Atualizar e-mail
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelEmailEdit}
+                    className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-2 text-[12px] font-semibold text-eid-text-secondary transition hover:text-eid-fg"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           <form onSubmit={handleVerify} className="mt-4 flex flex-col gap-3">
             {msg ? (
