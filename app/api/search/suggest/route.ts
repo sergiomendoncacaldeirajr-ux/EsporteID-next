@@ -188,10 +188,28 @@ export async function GET(request: Request) {
   if (times.error) console.error("[search/suggest] global times", times.error);
   if (torneios.error) console.error("[search/suggest] global torneios", torneios.error);
 
-  const atletaRows = (atletas.data ?? []) as AtletaRow[];
+  const atletaRowsRaw = (atletas.data ?? []) as AtletaRow[];
   const localRows = (locais.data ?? []) as LocalRow[];
   const timeRows = (times.data ?? []) as TimeRow[];
   const torneioRows = (torneios.data ?? []) as TorneioRow[];
+
+  // Busca tipo_usuario para filtrar perfis sem página pública (pendente/espaco)
+  // e rotear professores/organizadores para as rotas corretas.
+  const profileIds = atletaRowsRaw.map((r) => r.id);
+  const tipoMap = new Map<string, string | null>();
+  if (profileIds.length) {
+    const { data: tipoRows } = await supabase
+      .from("profiles")
+      .select("id, tipo_usuario")
+      .in("id", profileIds);
+    for (const r of tipoRows ?? []) tipoMap.set(r.id, r.tipo_usuario);
+  }
+  // Exclui perfis pendentes (sem página pública) e donos de espaço
+  // (esses já aparecem na seção de locais da busca).
+  const atletaRows = atletaRowsRaw.filter((r) => {
+    const tipo = tipoMap.get(r.id);
+    return tipo && tipo !== "pendente" && tipo !== "espaco";
+  });
 
   const localItems = localRows
     .map((row) => {
@@ -219,13 +237,24 @@ export async function GET(request: Request) {
     }));
 
   const items = [
-    ...atletaRows.map((row) => ({
-      id: `atleta-${row.id}`,
-      value: String(row.nome ?? row.username ?? ""),
-      title: row.nome ?? row.username ?? "Atleta",
-      subtitle: row.username ? `@${row.username}` : "Atleta",
-      href: `/perfil/${row.id}?from=/buscar`,
-    })),
+    ...atletaRows.map((row) => {
+      const tipo = tipoMap.get(row.id);
+      const href =
+        tipo === "professor" ? `/professor/${row.id}?from=/buscar`
+        : tipo === "organizador" ? `/organizador/${row.id}?from=/buscar`
+        : `/perfil/${row.id}?from=/buscar`;
+      const roleLabel =
+        tipo === "professor" ? "Professor"
+        : tipo === "organizador" ? "Organizador"
+        : "Atleta";
+      return {
+        id: `atleta-${row.id}`,
+        value: String(row.nome ?? row.username ?? ""),
+        title: row.nome ?? row.username ?? roleLabel,
+        subtitle: row.username ? `@${row.username}` : roleLabel,
+        href,
+      };
+    }),
     ...localItems,
     ...timeRows.map((row) => ({
       id: `time-${row.id}`,
