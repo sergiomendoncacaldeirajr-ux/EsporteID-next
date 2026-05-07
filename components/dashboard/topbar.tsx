@@ -144,6 +144,10 @@ export function DashboardTopbar({
   const activeContext = resolveActiveAppContext(initialActiveContext, papeis);
   const availableContexts = listAvailableAppContexts(papeis);
   const temPapelAtleta = papeis.includes("atleta");
+  const podeLinkSerAtleta =
+    !temPapelAtleta &&
+    (papeis.includes("espaco") || papeis.includes("professor") || papeis.includes("organizador")) &&
+    (activeContext === "espaco" || activeContext === "professor" || activeContext === "organizador");
   const baseAthleteNavItems = [
     { href: "/dashboard", label: "Painel" },
     { href: "/agenda", label: "Agenda" },
@@ -255,7 +259,7 @@ export function DashboardTopbar({
                 className="h-10 max-w-[min(52vw,260px)] object-left sm:h-12 sm:max-w-[min(68vw,390px)]"
               />
             </Link>
-            {activeContext === "espaco" && !temPapelAtleta ? (
+            {podeLinkSerAtleta ? (
               <Link
                 href="/conta/criar-perfil-atleta"
                 className="md:hidden shrink-0 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-eid-fg transition hover:bg-eid-primary-500/18"
@@ -277,7 +281,7 @@ export function DashboardTopbar({
 
           <div className="flex shrink-0 items-center gap-2">
             <div className="hidden items-center gap-2 md:flex">
-              {activeContext === "espaco" && !temPapelAtleta ? (
+              {podeLinkSerAtleta ? (
                 <Link
                   href="/conta/criar-perfil-atleta"
                   className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-eid-fg transition hover:bg-eid-primary-500/16"

@@ -39,7 +39,9 @@ export default async function ContaEsportesEidPage() {
   const { data: papeisRows } = await supabase.from("usuario_papeis").select("papel").eq("usuario_id", user.id);
   const papeis = listarPapeis(papeisRows);
   const needsSport = precisaEsportesPratica(papeis);
-  const canAtivarAtleta = papeis.includes("organizador") && !papeis.includes("atleta");
+  const canAtivarAtleta =
+    !papeis.includes("atleta") &&
+    (papeis.includes("organizador") || papeis.includes("professor") || papeis.includes("espaco"));
 
   async function ativarModoAtletaAction() {
     "use server";
@@ -147,7 +149,8 @@ export default async function ContaEsportesEidPage() {
                   Ativar perfil de atleta
                 </button>
                 <p className="mt-2 text-xs text-eid-text-secondary">
-                  Isso libera o Modo Atleta no menu e permite configurar seus esportes e EID sem remover o papel de organizador.
+                  Isso libera o modo atleta no app (desafios, ranking e perfil público de competidor) sem remover seu
+                  papel atual de espaço, professor ou organizador.
                 </p>
               </form>
             ) : null}

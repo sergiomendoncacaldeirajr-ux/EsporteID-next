@@ -31,13 +31,13 @@ export async function GET(request: Request) {
   if (scope === "admin_push_usuarios") {
     const { data: adminRow } = await supabase.from("platform_admins").select("user_id").eq("user_id", user.id).maybeSingle();
     if (!adminRow) return NextResponse.json({ ok: false, items: [] }, { status: 403 });
-    const { data, error } = await supabase.rpc("api_fold_search_atletas", {
+    const { data, error } = await supabase.rpc("api_fold_search_profiles_admin", {
       p_search: q,
       p_exclude_user: null,
       p_limit: 15,
     });
     if (error) {
-      console.error("[search/suggest] admin_push_usuarios api_fold_search_atletas", error);
+      console.error("[search/suggest] admin_push_usuarios api_fold_search_profiles_admin", error);
       return NextResponse.json({ ok: true, items: [] });
     }
     const rows = (data ?? []) as AtletaRow[];

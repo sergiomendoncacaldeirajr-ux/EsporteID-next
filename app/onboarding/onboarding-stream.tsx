@@ -10,6 +10,7 @@ import {
   normalizarPapeisContaPrincipal,
   obterDetalhesPapel,
   precisaEsportesPratica,
+  usuarioTemPapel,
 } from "@/lib/roles";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createClient } from "@/lib/supabase/server";
@@ -51,8 +52,15 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
     .eq("usuario_id", viewerId);
 
   if (profile.perfil_completo) {
-    const papeisRedirect = normalizarPapeisContaPrincipal(listarPapeis(papeisRows));
+    const papeisFull = listarPapeis(papeisRows);
+    const papeisRedirect = normalizarPapeisContaPrincipal(papeisFull);
     if (contaSomenteDonoEspaco(papeisRedirect)) redirect("/espaco");
+    if (usuarioTemPapel(papeisFull, "professor") && !usuarioTemPapel(papeisFull, "atleta")) {
+      redirect("/professor");
+    }
+    if (usuarioTemPapel(papeisFull, "organizador") && !usuarioTemPapel(papeisFull, "atleta")) {
+      redirect("/organizador");
+    }
     redirect("/dashboard");
   }
 

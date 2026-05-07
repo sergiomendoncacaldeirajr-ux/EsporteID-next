@@ -40,6 +40,16 @@ export function contaSomenteDonoEspaco(papeis: readonly string[]): boolean {
   );
 }
 
+/** Quem não entrou como atleta pode acrescentar o papel depois (desafios, EID, /perfil). */
+export function podeAcrescentarPapelAtleta(papeis: readonly string[]): boolean {
+  if (papeis.includes("atleta")) return false;
+  return (
+    papeis.includes("espaco") ||
+    papeis.includes("professor") ||
+    papeis.includes("organizador")
+  );
+}
+
 export function precisaEsportesPratica(papeis: readonly string[]): boolean {
   return papeis.some((papel) => papel === "atleta" || papel === "professor");
 }

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { legalAcceptanceIsCurrent } from "@/lib/legal/acceptance";
 import { getCachedProfileLegalRow } from "@/lib/auth/profile-legal-cache";
-import { listarPapeis } from "@/lib/roles";
+import { listarPapeis, podeAcrescentarPapelAtleta } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { CriarPerfilAtletaCta } from "./criar-perfil-atleta-cta";
 
@@ -72,16 +72,16 @@ export default async function CriarPerfilAtletaPage() {
     <main className="mx-auto max-w-lg px-4 py-10">
       <h1 className="text-xl font-bold text-eid-fg">Criar perfil de atleta</h1>
       <p className="mt-3 text-sm leading-relaxed text-eid-text-secondary">
-        Como dono de espaço, sua conta começa focada no local. Se quiser usar o app como atleta (desafios, ranking,
-        comunidade), ative o perfil abaixo. Você será guiado pelas mesmas etapas de esportes e ficha dos demais
-        usuários.
+        Sua conta está focada no papel que você escolheu no cadastro. Para também usar desafios, ranking e o perfil
+        público de atleta, ative o papel abaixo. Você passará pelas
+        etapas de esportes e ficha como os demais atletas.
       </p>
       <CriarPerfilAtletaCta />
       <Link
-        href="/espaco"
+        href="/dashboard"
         className="mt-8 inline-flex text-sm font-medium text-eid-text-secondary hover:text-eid-fg"
       >
-        ← Voltar ao painel do espaço
+        ← Voltar ao painel
       </Link>
     </main>
   );

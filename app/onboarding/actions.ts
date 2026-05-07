@@ -1115,8 +1115,14 @@ export async function iniciarPerfilAtletaAction(): Promise<OnboardingActionResul
   if (papeis.includes("atleta")) {
     return { ok: false, message: "Você já possui o perfil de atleta." };
   }
-  if (!papeis.includes("espaco")) {
-    return { ok: false, message: "Esta opção é para donos de espaço que desejam competir como atletas." };
+  const podeAtivar =
+    papeis.includes("espaco") || papeis.includes("professor") || papeis.includes("organizador");
+  if (!podeAtivar) {
+    return {
+      ok: false,
+      message:
+        "Esta opção é para contas de espaço, professor ou organizador que desejam também competir como atletas.",
+    };
   }
 
   const { error: insErr } = await supabase.from("usuario_papeis").insert({ usuario_id: user.id, papel: "atleta" });

@@ -61,6 +61,9 @@ export default async function DashboardPage({ searchParams }: Props) {
   if (contaSomenteDonoEspaco(contextState.papeis)) {
     redirect("/espaco");
   }
+  if (contextState.papeis.includes("professor") && !contextState.papeis.includes("atleta")) {
+    redirect("/professor");
+  }
   const gate = await getCachedProfileLegalRow(user.id);
   if (!gate || !legalAcceptanceIsCurrent(gate)) {
     redirect("/conta/aceitar-termos");

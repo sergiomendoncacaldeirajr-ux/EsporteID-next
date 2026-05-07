@@ -1,12 +1,13 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { loginNextWithOptionalFrom } from "@/lib/auth/login-next-path";
+import { resolveEspacoPublicPathForUsuario } from "@/lib/espacos/public-path-for-usuario";
 import { canAccessSystemFeature, getSystemFeatureConfig } from "@/lib/system-features";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
+import { listarPapeis } from "@/lib/roles";
 import { EidStreamSection } from "@/components/eid-stream-section";
 import { ProfilePublicBelowFoldSkeleton } from "@/components/loading/profile-app-skeletons";
 import { PROFILE_PUBLIC_MAIN_CLASS } from "@/components/perfil/profile-ui-tokens";
-import Loading from "./loading";
 import { PerfilPublicoBelowFold } from "./perfil-public-below-fold";
 import { PerfilPublicoHero } from "./perfil-public-hero";
 import type { PerfilPublicoEidRow, PerfilPublicoProfileRow } from "./perfil-public-shared";
@@ -23,12 +24,30 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const { supabase, user } = await getServerAuth();
   if (!user) redirect(loginNextWithOptionalFrom(`/perfil/${id}`, sp));
 
+  const isSelf = user.id === id;
+  const { data: papeisRows } = await supabase.from("usuario_papeis").select("papel").eq("usuario_id", id);
+  const papeisLista = listarPapeis(papeisRows);
+
+  if (!papeisLista.includes("atleta")) {
+    if (papeisLista.includes("professor")) {
+      redirect(isSelf ? "/professor" : `/professor/${id}`);
+    }
+    if (papeisLista.includes("organizador")) {
+      redirect(isSelf ? "/organizador" : `/organizador/${id}`);
+    }
+    if (papeisLista.includes("espaco")) {
+      if (isSelf) redirect("/espaco");
+      const espPublic = await resolveEspacoPublicPathForUsuario(supabase, id);
+      if (espPublic) redirect(espPublic);
+      notFound();
+    }
+  }
+
   const perfilSelect =
     "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, disponivel_amistoso_ate, mostrar_historico_publico, estilo_jogo, bio";
 
-  const [{ data: perfil }, { data: papeisRows }, { data: eids }, amRowRes, featureCfg] = await Promise.all([
+  const [{ data: perfil }, { data: eids }, amRowRes, featureCfg] = await Promise.all([
     supabase.from("profiles").select(perfilSelect).eq("id", id).maybeSingle(),
-    supabase.from("usuario_papeis").select("papel").eq("usuario_id", id),
     supabase
       .from("usuario_eid")
       .select(
@@ -46,7 +65,6 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id, false);
   if (!perfil) notFound();
 
-  const isSelf = user.id === id;
   let disponivelAmistosoVal = perfil.disponivel_amistoso;
   let disponivelAmistosoAteVal = perfil.disponivel_amistoso_ate as string | null | undefined;
   if (isSelf && amRowRes.data) {
@@ -56,10 +74,9 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   const amistosoPerfilOn = computeDisponivelAmistosoEffective(disponivelAmistosoVal, disponivelAmistosoAteVal);
   const amistosoPerfilExpiresAt = amistosoPerfilOn && disponivelAmistosoAteVal ? String(disponivelAmistosoAteVal) : null;
 
-  const papeis = (papeisRows ?? []).map((row) => row.papel);
-  const hasProfessor = papeis.includes("professor");
-  const hasOrganizador = papeis.includes("organizador");
-  const hasEspaco = papeis.includes("espaco");
+  const hasProfessor = papeisLista.includes("professor");
+  const hasOrganizador = papeisLista.includes("organizador");
+  const hasEspaco = papeisLista.includes("espaco");
 
   const principalEid =
     eids && eids.length > 0
