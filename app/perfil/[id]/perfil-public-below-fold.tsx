@@ -285,7 +285,31 @@ export async function PerfilPublicoBelowFold({
               </span>
             </div>
             <div className="p-3">
-              {linkWpp || esportesParaDesafio.length > 0 ? (
+              {/* Atleta ainda não confirmou maioridade — desafio indisponível */}
+              {!perfil.match_maioridade_confirmada ? (
+                <div className="flex flex-col items-center gap-3 px-2 py-4 text-center">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full border border-eid-border-subtle bg-eid-surface/60">
+                    <svg className="h-5 w-5 text-eid-text-secondary" viewBox="0 0 24 24" fill="none" aria-hidden>
+                      <path d="M12 2a5 5 0 0 1 5 5v3H7V7a5 5 0 0 1 5-5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+                      <rect x="4" y="10" width="16" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.6"/>
+                      <circle cx="12" cy="16" r="1.5" fill="currentColor"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-eid-fg">Desafio indisponível</p>
+                    <p className="mt-1 max-w-[220px] text-[11px] leading-snug text-eid-text-secondary">
+                      Este atleta ainda não concluiu a confirmação de maioridade exigida pela plataforma.
+                    </p>
+                  </div>
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-eid-border-subtle bg-eid-surface/50 px-3 py-1.5 text-[10px] font-semibold text-eid-text-muted">
+                    <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" aria-hidden>
+                      <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2"/>
+                      <path d="M6 4v2.5M6 8h.01" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                    Aguardando verificação de idade
+                  </div>
+                </div>
+              ) : linkWpp || esportesParaDesafio.length > 0 ? (
                 <div className="grid gap-3">
                   {linkWpp ? (
                     <a

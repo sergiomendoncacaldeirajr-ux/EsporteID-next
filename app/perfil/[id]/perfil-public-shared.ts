@@ -21,6 +21,7 @@ export type PerfilPublicoProfileRow = {
   estilo_jogo: string | null;
   bio: string | null;
   perfil_completo: boolean | null;
+  match_maioridade_confirmada: boolean | null;
 };
 
 export type PerfilPublicoEidRow = Record<string, unknown> & {

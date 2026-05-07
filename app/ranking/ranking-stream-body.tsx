@@ -102,10 +102,14 @@ export async function RankingStreamBody({
               "usuario_id, esporte_id, nota_eid, pontos_ranking, vitorias, derrotas, posicao_rank, profiles!inner(nome, avatar_url, localizacao, genero)",
             )
             .eq("esporte_id", selectedEsporteId)
+            .eq("profiles.perfil_completo", true)
+            .eq("profiles.match_maioridade_confirmada", true)
         : supabase
             .from("usuario_eid")
             .select("usuario_id, esporte_id, nota_eid, pontos_ranking, vitorias, derrotas, posicao_rank, profiles!inner(nome, avatar_url, genero)")
-            .eq("esporte_id", selectedEsporteId);
+            .eq("esporte_id", selectedEsporteId)
+            .eq("profiles.perfil_completo", true)
+            .eq("profiles.match_maioridade_confirmada", true);
       q = state.rank === "match" ? q.order("pontos_ranking", { ascending: false }) : q.order("nota_eid", { ascending: false });
       const { data: raw } = await q;
       const rows = ((raw ?? []) as UsuarioEidRow[]).filter((r) => {

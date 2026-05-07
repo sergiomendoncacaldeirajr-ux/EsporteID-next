@@ -8,6 +8,7 @@ import {
   DashboardStreamVagasEquipesSkeleton,
 } from "@/components/loading/dashboard-stream-skeletons";
 import { MatchIdadeGateBanner } from "@/components/perfil/match-idade-gate-banner";
+import { MaioridadeConfirmacaoCard } from "@/components/perfil/maioridade-confirmacao-card";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
 import { AmistosoDailyHint } from "@/components/dashboard/amistoso-daily-hint";
 import { FindChallengeCta } from "@/components/dashboard/find-challenge-cta";
@@ -77,7 +78,7 @@ export default async function DashboardPage({ searchParams }: Props) {
     supabase
       .from("profiles")
       .select(
-        "nome, avatar_url, localizacao, lat, lng, match_idade_gate, disponivel_amistoso, disponivel_amistoso_ate, perfil_completo"
+        "nome, avatar_url, localizacao, lat, lng, match_idade_gate, match_maioridade_confirmada, disponivel_amistoso, disponivel_amistoso_ate, perfil_completo"
       )
       .eq("id", user.id)
       .maybeSingle(),
@@ -409,8 +410,12 @@ export default async function DashboardPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="mt-4">
-          <MatchIdadeGateBanner gate={matchIdadeGate} />
+        <div className="mt-4 space-y-3">
+          {!profile.match_maioridade_confirmada ? (
+            <MaioridadeConfirmacaoCard gate={matchIdadeGate} />
+          ) : (
+            <MatchIdadeGateBanner gate={matchIdadeGate} />
+          )}
         </div>
 
         <FindChallengeCta href={matchHref} />

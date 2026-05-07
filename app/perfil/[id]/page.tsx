@@ -46,7 +46,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
   }
 
   const perfilSelect =
-    "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, disponivel_amistoso_ate, mostrar_historico_publico, estilo_jogo, bio, perfil_completo";
+    "id, nome, username, avatar_url, whatsapp, localizacao, altura_cm, peso_kg, lado, foto_capa, tipo_usuario, genero, tempo_experiencia, interesse_rank_match, interesse_torneio, disponivel_amistoso, disponivel_amistoso_ate, mostrar_historico_publico, estilo_jogo, bio, perfil_completo, match_maioridade_confirmada";
 
   const [{ data: perfil }, { data: eids }, amRowRes, featureCfg] = await Promise.all([
     supabase.from("profiles").select(perfilSelect).eq("id", id).maybeSingle(),
