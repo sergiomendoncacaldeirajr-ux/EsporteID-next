@@ -945,15 +945,12 @@ export function OnboardingWizard({
     else if (r.nextStep === "perfil") setStep("perfil");
     else if (r.nextStep === "espaco_home") {
       window.localStorage.removeItem(draftKey);
-      void (async () => {
-        await fetch("/api/active-context", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ context: "espaco" }),
-        });
-        router.replace("/espaco");
-        router.refresh();
-      })();
+      fetch("/api/active-context", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ context: "espaco" }),
+      }).catch(() => {});
+      router.replace("/espaco");
       return;
     } else if (r.nextStep === "dashboard") {
       window.localStorage.removeItem(draftKey);

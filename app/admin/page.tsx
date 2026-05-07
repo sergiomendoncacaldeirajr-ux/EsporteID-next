@@ -60,6 +60,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
     denuncias: null,
     denuncias_abertas: null,
     eids: null,
+    reivindicacoes_pendentes: null,
   };
 
   let alertas: Alerta[] = [];
@@ -87,6 +88,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
         dAbertas,
         eid,
         al,
+        reivPend,
       ] = await Promise.all([
         db.from("profiles").select("id", { count: "exact", head: true }),
         db.from("torneios").select("id", { count: "exact", head: true }),
@@ -107,6 +109,10 @@ export default async function AdminHomePage({ searchParams }: Props) {
           .eq("lido", false)
           .order("criado_em", { ascending: false })
           .limit(20),
+        db
+          .from("espaco_reivindicacoes")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "pendente"),
       ]);
       counts = {
         profiles: p.count ?? 0,
@@ -119,6 +125,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
         denuncias: d.count ?? 0,
         denuncias_abertas: dAbertas.count ?? 0,
         eids: eid.count ?? 0,
+        reivindicacoes_pendentes: reivPend.count ?? 0,
       };
       alertas = (al.data ?? []) as Alerta[];
       if (pushUserId) {
@@ -198,10 +205,27 @@ export default async function AdminHomePage({ searchParams }: Props) {
         Gerencie usuários, esportes, locais, torneios, partidas, pedidos de desafio, notificações e fluxos sociais, denúncias, parâmetros financeiros e o motor EID.
       </p>
 
+      {counts.reivindicacoes_pendentes != null && counts.reivindicacoes_pendentes > 0 ? (
+        <a
+          href="/admin/locais#reivindicacoes"
+          className="mt-4 flex items-center justify-between rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-4 py-3 text-sm text-eid-primary-100 transition hover:border-eid-primary-500/60"
+        >
+          <span className="flex items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-eid-primary-500 text-[10px] font-black text-white">
+              {counts.reivindicacoes_pendentes}
+            </span>
+            <span>
+              <span className="font-bold">{counts.reivindicacoes_pendentes}</span> reivindicação(ões) de local aguardando aprovação
+            </span>
+          </span>
+          <span className="text-xs font-bold uppercase tracking-wide text-eid-primary-300">Revisar →</span>
+        </a>
+      ) : null}
+
       {counts.denuncias_abertas != null && counts.denuncias_abertas > 0 ? (
         <a
           href="/admin/denuncias"
-          className="mt-4 flex items-center justify-between rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 transition hover:border-amber-400/50"
+          className="mt-3 flex items-center justify-between rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 transition hover:border-amber-400/50"
         >
           <span>
             <span className="font-bold">{counts.denuncias_abertas}</span> denúncia(s) aguardando análise

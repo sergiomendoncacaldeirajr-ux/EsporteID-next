@@ -636,109 +636,175 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
         </div>
       </section>
 
-      <section>
-        <h2 className="text-base font-bold text-eid-fg">Reivindicações de posse</h2>
-        <p className="mt-1 text-sm text-eid-text-secondary">Pedidos com documento comprobatório para validação oficial.</p>
-        <div className="mt-4 overflow-x-auto rounded-xl border border-[color:var(--eid-border-subtle)]">
-          <table className="w-full min-w-[1100px] text-left text-xs">
-            <thead className="border-b border-[color:var(--eid-border-subtle)] bg-eid-card text-[10px] font-bold uppercase text-eid-text-secondary">
-              <tr>
-                <th className="px-3 py-2">Espaço</th>
-                <th className="px-3 py-2">Solicitante</th>
-                <th className="px-3 py-2">Documento</th>
-                <th className="px-3 py-2">Mensagem</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Decisão</th>
-              </tr>
-            </thead>
-            <tbody>
-              {claims.map((claim) => {
-                const espaco = espacoMap.get(Number(claim.espaco_generico_id));
-                const profile = perfilMap.get(String(claim.solicitante_id ?? ""));
-                return (
-                  <tr key={claim.id} className="border-b border-[color:var(--eid-border-subtle)]/50 align-top">
-                    <td className="px-3 py-2">
-                      <p className="font-medium text-eid-fg">{espaco?.nome_publico ?? `Espaço #${claim.espaco_generico_id}`}</p>
-                      <p className="mt-0.5 text-[11px] text-eid-text-secondary">{espaco?.localizacao ?? "Localização não informada"}</p>
-                    </td>
-                    <td className="px-3 py-2">
-                      <p className="font-medium text-eid-fg">{profile?.nome ?? claim.solicitante_id}</p>
-                      <p className="mt-0.5 text-[11px] text-eid-text-secondary">
-                        {claim.criado_em ? new Date(claim.criado_em).toLocaleString("pt-BR") : "—"}
-                      </p>
-                    </td>
-                    <td className="px-3 py-2">
-                      {signedUrlMap.get(claim.id) ? (
-                        <a
-                          href={signedUrlMap.get(claim.id) ?? "#"}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-semibold text-eid-primary-300 hover:underline"
+      <section id="reivindicacoes">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base font-bold text-eid-fg">Reivindicações de posse</h2>
+            <p className="mt-0.5 text-sm text-eid-text-secondary">Pedidos com documento comprobatório para validação oficial.</p>
+          </div>
+          {(() => {
+            const pending = claims.filter((c) => c.status === "pendente");
+            return pending.length > 0 ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/12 px-3 py-1 text-xs font-bold text-amber-200">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
+                {pending.length} pendente{pending.length > 1 ? "s" : ""}
+              </span>
+            ) : null;
+          })()}
+        </div>
+
+        {claims.length === 0 ? (
+          <p className="mt-4 text-sm text-eid-text-secondary">Nenhuma reivindicação cadastrada.</p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {claims.map((claim) => {
+              const espaco = espacoMap.get(Number(claim.espaco_generico_id));
+              const profile = perfilMap.get(String(claim.solicitante_id ?? ""));
+              const isPending = claim.status === "pendente";
+              const isApproved = claim.status === "aprovado" || claim.status === "aprovada";
+              const signedUrl = signedUrlMap.get(claim.id);
+
+              return (
+                <div
+                  key={claim.id}
+                  className={`overflow-hidden rounded-2xl border ${
+                    isPending
+                      ? "border-amber-500/35 bg-amber-500/[0.04]"
+                      : isApproved
+                        ? "border-emerald-500/25 bg-emerald-500/[0.03]"
+                        : "border-[color:var(--eid-border-subtle)] bg-eid-card/40"
+                  }`}
+                >
+                  {/* Header */}
+                  <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                            isPending
+                              ? "bg-amber-500/18 text-amber-300"
+                              : isApproved
+                                ? "bg-emerald-500/18 text-emerald-300"
+                                : "bg-red-500/15 text-red-300"
+                          }`}
                         >
-                          Abrir arquivo
-                        </a>
-                      ) : (
-                        <span className="text-eid-text-secondary">Sem arquivo</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-[11px] text-eid-text-secondary">
-                      {claim.mensagem ?? "Sem mensagem"}
-                      {claim.observacoes_admin ? <p className="mt-1 text-amber-200">Admin: {claim.observacoes_admin}</p> : null}
-                    </td>
-                    <td className="px-3 py-2 text-[11px] text-eid-text-secondary">
-                      <p>{claim.status ?? "pendente"}</p>
-                      {claim.revisado_em ? <p className="mt-0.5">Revisto em {new Date(claim.revisado_em).toLocaleString("pt-BR")}</p> : null}
-                    </td>
-                    <td className="px-3 py-2">
-                      <form action={adminReviewEspacoClaim} className="space-y-2">
+                          {isPending ? "● Pendente" : isApproved ? "✓ Aprovado" : "✕ Rejeitado"}
+                        </span>
+                        <span className="font-mono text-[10px] text-eid-text-secondary">#{claim.id}</span>
+                        {claim.revisado_em && !isPending ? (
+                          <span className="text-[10px] text-eid-text-secondary">
+                            Revisto em {new Date(claim.revisado_em).toLocaleString("pt-BR")}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-1.5 text-sm font-bold text-eid-fg">
+                        {espaco?.nome_publico ?? `Espaço #${claim.espaco_generico_id}`}
+                      </p>
+                      <p className="text-[11px] text-eid-text-secondary">
+                        {espaco?.localizacao ?? "Localização não informada"}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1 text-right">
+                      <p className="text-xs font-semibold text-eid-fg">{profile?.nome ?? "—"}</p>
+                      <p className="text-[10px] text-eid-text-secondary">
+                        {claim.criado_em ? new Date(claim.criado_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <div className="grid gap-3 border-t border-[color:var(--eid-border-subtle)]/50 px-4 py-3 sm:grid-cols-2">
+                    {/* Documento + mensagem */}
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">Documento</p>
+                        {signedUrl ? (
+                          <a
+                            href={signedUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1 inline-flex items-center gap-1.5 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/8 px-3 py-1.5 text-xs font-semibold text-eid-primary-300 transition hover:border-eid-primary-500/50"
+                          >
+                            <svg viewBox="0 0 14 14" className="h-3.5 w-3.5" fill="none">
+                              <path d="M2 10V12h10v-2M7 2v7M4 6l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            Abrir comprovante
+                          </a>
+                        ) : (
+                          <p className="mt-1 text-xs text-eid-text-secondary">Sem arquivo</p>
+                        )}
+                      </div>
+                      {claim.mensagem ? (
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">Mensagem do solicitante</p>
+                          <p className="mt-1 text-xs text-eid-fg">{claim.mensagem}</p>
+                        </div>
+                      ) : null}
+                      {claim.observacoes_admin ? (
+                        <div className="rounded-lg border border-amber-500/25 bg-amber-500/8 px-2.5 py-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wide text-amber-300">Obs. admin</p>
+                          <p className="mt-0.5 text-xs text-amber-100">{claim.observacoes_admin}</p>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {/* Ação */}
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">
+                        {isPending ? "Decisão" : "Reanalisar"}
+                      </p>
+                      <form action={adminReviewEspacoClaim} className="mt-2 space-y-3">
                         <input type="hidden" name="claim_id" value={claim.id} />
                         <label className="block text-[11px] text-eid-text-secondary">
-                          Cobrar mensalidade da plataforma após aprovação?
+                          Mensalidade da plataforma
                           <select
                             name="cobra_mensalidade_plataforma"
                             defaultValue="sim"
-                            className="eid-input-dark mt-1 w-64 rounded px-2 py-1 text-[11px]"
+                            className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-xs"
                           >
                             <option value="sim">Sim, cobra mensalidade</option>
-                            <option value="nao">Não, espaço isento (não exibir mensalidade no painel)</option>
+                            <option value="nao">Não — espaço isento</option>
                           </select>
                           <span className="mt-1 block text-[10px] text-eid-text-muted">
-                            Você poderá alterar depois em &quot;Editar assinatura / categoria (plataforma)&quot; deste espaço.
+                            Ajustável depois em &ldquo;Editar assinatura&rdquo; do local.
                           </span>
                         </label>
-                        <textarea
-                          name="observacoes_admin"
-                          rows={3}
-                          defaultValue={claim.observacoes_admin ?? ""}
-                          className="eid-input-dark w-64 rounded px-2 py-1 text-[11px]"
-                          placeholder="Observações da revisão"
-                        />
+                        <label className="block text-[11px] text-eid-text-secondary">
+                          Observações internas
+                          <textarea
+                            name="observacoes_admin"
+                            rows={2}
+                            defaultValue={claim.observacoes_admin ?? ""}
+                            className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-xs"
+                            placeholder="Notas da revisão…"
+                          />
+                        </label>
                         <div className="flex gap-2">
                           <button
                             type="submit"
                             name="decision"
                             value="aprovar"
-                            className="rounded border border-emerald-500/35 bg-emerald-500/10 px-2 py-1 text-[11px] font-bold text-emerald-200"
+                            className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-500/12 px-3 py-2 text-xs font-bold text-emerald-200 transition hover:border-emerald-500/60 hover:bg-emerald-500/18"
                           >
-                            Aprovar
+                            ✓ Aprovar
                           </button>
                           <button
                             type="submit"
                             name="decision"
                             value="rejeitar"
-                            className="rounded border border-red-500/35 bg-red-500/10 px-2 py-1 text-[11px] font-bold text-red-200"
+                            className="flex-1 rounded-xl border border-red-500/35 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300 transition hover:border-red-500/55 hover:bg-red-500/15"
                           >
-                            Rejeitar
+                            ✕ Rejeitar
                           </button>
                         </div>
                       </form>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );
