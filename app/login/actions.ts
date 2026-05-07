@@ -3,6 +3,7 @@
 import { getPostAuthRedirect } from "@/lib/auth/post-login-path";
 import { legalAcceptanceIsCurrent, PROFILE_LEGAL_ACCEPTANCE_COLUMNS } from "@/lib/legal/acceptance";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import type { LoginActionState } from "./login-state";
 
 function safeNext(raw: string): string {
@@ -52,6 +53,52 @@ export async function entrarComSenha(formData: FormData): Promise<LoginActionSta
     if (err) {
       const msg = (err.message ?? "").toLowerCase();
       if (msg.includes("email not confirmed")) {
+        // Tentar auto-confirmar para contas não-atleta (dono de espaço, professor, organizador).
+        // Esses usuários completam o cadastro por fluxos que não exigem confirmação de e-mail,
+        // mas o Supabase pode bloquear o re-login se email_confirmed_at estiver nulo.
+        if (hasServiceRoleConfig()) {
+          try {
+            const svc = createServiceRoleClient();
+            // Localiza o usuário no auth.users pelo e-mail via service role
+            const { data: authUserRow } = await (svc as unknown as {
+              schema: (s: string) => { from: (t: string) => { select: (c: string) => { eq: (col: string, val: string) => { maybeSingle: () => Promise<{ data: { id: string } | null }> } } } }
+            }).schema("auth").from("users").select("id").eq("email", email).maybeSingle();
+
+            if (authUserRow?.id) {
+              const userId = String(authUserRow.id);
+              const { data: papeisRows } = await svc
+                .from("usuario_papeis")
+                .select("papel")
+                .eq("usuario_id", userId);
+              const papeis = (papeisRows ?? []).map((r: { papel: string }) => r.papel);
+              // Só auto-confirma se tiver papel não-atleta (espaco, professor, organizador, etc.)
+              const temPapelNaoAtleta = papeis.some((p) => p !== "atleta");
+              if (temPapelNaoAtleta) {
+                await svc.auth.admin.updateUserById(userId, { email_confirm: true });
+                // Refaz o login após confirmar
+                const { error: retryErr } = await supabase.auth.signInWithPassword({ email, password });
+                if (!retryErr) {
+                  const { data: { user: u } } = await supabase.auth.getUser();
+                  let dest = next;
+                  if (u) {
+                    const { data: profile } = await supabase
+                      .from("profiles")
+                      .select(`perfil_completo, ${PROFILE_LEGAL_ACCEPTANCE_COLUMNS}`)
+                      .eq("id", u.id)
+                      .maybeSingle();
+                    dest = getPostAuthRedirect(
+                      { termosAceitos: legalAcceptanceIsCurrent(profile), perfilCompleto: !!profile?.perfil_completo },
+                      next
+                    );
+                  }
+                  return { error: null, pendingConfirmationEmail: null, redirectTo: dest };
+                }
+              }
+            }
+          } catch (confirmErr) {
+            console.error("[entrarComSenha] auto-confirm não-atleta", confirmErr);
+          }
+        }
         return {
           error: "Seu e-mail ainda não foi confirmado.",
           pendingConfirmationEmail: email,

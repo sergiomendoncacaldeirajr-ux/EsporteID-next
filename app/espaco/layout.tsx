@@ -43,7 +43,7 @@ export default async function EspacoLayout({
   return (
     <main data-eid-touch-ui className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-4 sm:px-6">
       <EspacoPainelChrome space={chromeSpace} />
-      <div className="mt-5 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+      <div className="mt-5 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
         {emAnalise ? <EspacoValidacaoBanner nomePublico={space!.nome_publico} /> : null}
         {mensalidadeState ? (
           <EspacoMensalidadeGate state={mensalidadeState}>{children}</EspacoMensalidadeGate>

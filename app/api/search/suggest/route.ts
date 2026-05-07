@@ -161,7 +161,10 @@ export async function GET(request: Request) {
   }
 
   const [atletas, locais, times, torneios] = await Promise.all([
-    supabase.rpc("api_fold_search_atletas", {
+    // Busca todos os perfis cadastrados (não só atletas) para a pesquisa geral da plataforma.
+    // api_fold_search_atletas só retorna usuários com papel 'atleta', o que excluía donos de espaço,
+    // professores e organizadores. api_fold_search_profiles_admin busca pelo nome em todos os perfis.
+    supabase.rpc("api_fold_search_profiles_admin", {
       p_search: q,
       p_exclude_user: null,
       p_limit: 6,

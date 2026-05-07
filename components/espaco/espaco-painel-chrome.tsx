@@ -125,58 +125,80 @@ function PainelChromeInner({ space }: { space: EspacoPainelSpace }) {
       {/* ── Bottom nav — mobile only ─────────────────────────────────── */}
       <nav
         aria-label="Navegação do painel"
-        className="!fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--eid-border-subtle)] bg-eid-card/96 shadow-[0_-1px_0_0_rgba(255,255,255,0.04),0_-12px_32px_-8px_rgba(0,0,0,0.5)] backdrop-blur-md md:!hidden"
-        style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+        className="!fixed inset-x-0 bottom-0 z-[55] px-2.5 md:!hidden"
+        style={{
+          paddingBottom: "max(0px, env(safe-area-inset-bottom, 0px))",
+          marginBottom: "calc(-1 * max(0px, env(safe-area-inset-bottom, 0px)))",
+        }}
       >
-        <div className="mx-auto flex max-w-lg items-stretch px-1 pt-1">
-          {/* Itens principais */}
-          {navItems.map(({ href, label, Icon }) => {
-            const active = isActivePath(pathname, href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="flex flex-1 flex-col items-center gap-0.5 pb-1 pt-0.5 text-[9.5px] font-semibold leading-tight"
-              >
-                <span
-                  className={`relative flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ${
-                    active ? "bg-eid-primary-500/18 text-eid-primary-400" : "text-eid-text-secondary"
-                  }`}
+        {/* Pill flutuante — mesmo padrão visual do nav de atleta */}
+        <div
+          className="overflow-hidden rounded-[2rem] border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_94%,#ffffff_6%)] shadow-[0_14px_30px_-22px_rgba(15,23,42,0.45)]"
+          style={{
+            minHeight: "calc(4.2rem + max(0px, env(safe-area-inset-bottom, 0px)))",
+            paddingBottom: "0.45rem",
+            paddingLeft: "max(0px, env(safe-area-inset-left))",
+            paddingRight: "max(0px, env(safe-area-inset-right))",
+          }}
+        >
+          <div className="flex items-end justify-around px-1.5 pt-2">
+            {/* Itens principais */}
+            {navItems.map(({ href, label, Icon }) => {
+              const active = isActivePath(pathname, href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 transition-opacity active:opacity-80"
                 >
-                  {active && (
-                    <span
-                      className="absolute -top-1.5 left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-eid-primary-500"
-                      aria-hidden
-                    />
-                  )}
-                  <Icon className="h-[19px] w-[19px] shrink-0" aria-hidden />
-                </span>
-                <span className={active ? "text-eid-primary-300" : "text-eid-text-secondary/80"}>
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
+                  <span
+                    className={`relative flex h-[30px] w-[38px] items-center justify-center rounded-xl transition-all duration-150 ${
+                      active ? "bg-eid-primary-500/10" : "bg-transparent"
+                    }`}
+                    style={{ color: active ? "var(--eid-primary-500)" : "var(--eid-text-secondary)" }}
+                  >
+                    {active && (
+                      <span
+                        className="absolute -top-2 left-1/2 h-[3px] w-5 -translate-x-1/2 rounded-full bg-eid-primary-500"
+                        aria-hidden
+                      />
+                    )}
+                    <Icon className="h-[19px] w-[19px] shrink-0" aria-hidden />
+                  </span>
+                  <span
+                    className="text-[10px] font-medium leading-none transition"
+                    style={{ color: active ? "var(--eid-fg)" : "var(--eid-text-secondary)" }}
+                  >
+                    {label}
+                  </span>
+                </Link>
+              );
+            })}
 
-          {/* Separador visual */}
-          <span className="my-1.5 w-px self-stretch rounded-full bg-[color:var(--eid-border-subtle)]" aria-hidden />
+            {/* Separador visual */}
+            <span className="mb-1.5 w-px self-stretch rounded-full bg-[color:var(--eid-border-subtle)]" aria-hidden />
 
-          {/* Asaas — item secundário */}
-          <Link
-            href="/espaco/integracao-asaas"
-            className="flex flex-col items-center gap-0.5 pb-1 pl-1.5 pr-2 pt-0.5 text-[9.5px] font-semibold leading-tight"
-          >
-            <span
-              className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ${
-                asaasActive ? "bg-amber-500/15 text-amber-400" : "text-eid-text-secondary/55"
-              }`}
+            {/* Asaas — item secundário */}
+            <Link
+              href="/espaco/integracao-asaas"
+              className="relative flex flex-col items-center gap-0.5 pb-1.5 pl-1 pr-0.5 transition-opacity active:opacity-80"
             >
-              <Landmark className="h-[19px] w-[19px] shrink-0" aria-hidden />
-            </span>
-            <span className={asaasActive ? "text-amber-300" : "text-eid-text-secondary/55"}>
-              Asaas
-            </span>
-          </Link>
+              <span
+                className={`flex h-[30px] w-[34px] items-center justify-center rounded-xl transition-all duration-150 ${
+                  asaasActive ? "bg-amber-500/12" : "bg-transparent"
+                }`}
+                style={{ color: asaasActive ? "#f59e0b" : "var(--eid-text-secondary)" }}
+              >
+                <Landmark className="h-[19px] w-[19px] shrink-0" aria-hidden />
+              </span>
+              <span
+                className="text-[10px] font-medium leading-none transition"
+                style={{ color: asaasActive ? "#f59e0b" : "var(--eid-text-secondary)" }}
+              >
+                Asaas
+              </span>
+            </Link>
+          </div>
         </div>
       </nav>
     </>
