@@ -277,39 +277,15 @@ export async function PerfilPublicoBelowFold({
       {!isSelf ? (
         <section>
           <h2 className="sr-only">Ação principal</h2>
-          <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-            <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Ação principal</p>
-              <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+          <div className="overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.16)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_96%,transparent))] shadow-[0_6px_22px_-14px_rgba(15,23,42,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.05)] bg-transparent px-3 py-2.5">
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-eid-primary-400">Ação principal</p>
+              <span className="rounded-full border border-eid-primary-500/30 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)))] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300 shadow-[0_0_8px_-2px_rgba(37,99,235,0.15)]">
                 Desafio
               </span>
             </div>
             <div className="p-3">
-              {/* Atleta ainda não confirmou maioridade — desafio indisponível */}
-              {!perfil.match_maioridade_confirmada ? (
-                <div className="flex flex-col items-center gap-3 px-2 py-4 text-center">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full border border-eid-border-subtle bg-eid-surface/60">
-                    <svg className="h-5 w-5 text-eid-text-secondary" viewBox="0 0 24 24" fill="none" aria-hidden>
-                      <path d="M12 2a5 5 0 0 1 5 5v3H7V7a5 5 0 0 1 5-5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
-                      <rect x="4" y="10" width="16" height="12" rx="2.5" stroke="currentColor" strokeWidth="1.6"/>
-                      <circle cx="12" cy="16" r="1.5" fill="currentColor"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-eid-fg">Desafio indisponível</p>
-                    <p className="mt-1 max-w-[220px] text-[11px] leading-snug text-eid-text-secondary">
-                      Este atleta ainda não concluiu a confirmação de maioridade exigida pela plataforma.
-                    </p>
-                  </div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full border border-eid-border-subtle bg-eid-surface/50 px-3 py-1.5 text-[10px] font-semibold text-eid-text-muted">
-                    <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" aria-hidden>
-                      <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2"/>
-                      <path d="M6 4v2.5M6 8h.01" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-                    </svg>
-                    Aguardando verificação de idade
-                  </div>
-                </div>
-              ) : linkWpp || esportesParaDesafio.length > 0 ? (
+              {linkWpp || esportesParaDesafio.length > 0 ? (
                 <div className="grid gap-3">
                   {linkWpp ? (
                     <a
@@ -397,7 +373,7 @@ export async function PerfilPublicoBelowFold({
           title="Performance EID"
           info="Nota EID e desempenho por esporte. Cada modalidade tem registro próprio; toque no card para abrir estatísticas e histórico daquele esporte."
         >
-          <div className="eid-list-item mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 p-2">
+          <div className="eid-list-item mt-2 overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-700)_4%),color-mix(in_srgb,var(--eid-surface)_98%,transparent))] p-2 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.35),inset_0_1px_0_rgba(255,255,255,0.03)]">
             {(eids ?? []).length === 0 ? (
               <p className="w-full rounded-xl bg-eid-surface/45 p-3 text-[11px] text-eid-text-secondary">
                 Ainda sem EID registrado por esporte.
@@ -415,7 +391,7 @@ export async function PerfilPublicoBelowFold({
                       title={`Estatística de ${(esp as { nome?: string | null } | null)?.nome ?? "esporte"}`}
                       fullscreen
                       topMode="backOnly"
-                      className="relative flex w-max min-h-[48px] shrink-0 snap-start touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl bg-eid-surface/45 px-2 py-1 transition-all duration-200 ease-out motion-safe:transform-gpu hover:-translate-y-[1px] hover:bg-eid-surface/60 active:translate-y-0 active:scale-[0.98]"
+                      className="relative flex w-max min-h-[48px] shrink-0 snap-start touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-surface)_90%,var(--eid-primary-500)_10%),var(--eid-surface))] px-2 py-1 shadow-[0_2px_8px_-4px_rgba(37,99,235,0.12)] transition-all duration-200 ease-out motion-safe:transform-gpu hover:-translate-y-[2px] hover:border-[rgba(37,99,235,0.25)] hover:bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_16%,var(--eid-surface)),var(--eid-surface))] hover:shadow-[0_6px_18px_-8px_rgba(37,99,235,0.3)] active:translate-y-0 active:scale-[0.98]"
                     >
                       <ProfileEidPerformanceSeal
                         notaEid={eid}
@@ -457,7 +433,7 @@ export async function PerfilPublicoBelowFold({
             info="Duplas e times em que este perfil está cadastrado. Toque para abrir o perfil público de cada formação."
           >
             {(timesFormacoes ?? []).length > 0 || (duplasCadastro ?? []).length > 0 ? (
-              <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-2">
+              <div className="mt-2 overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-700)_4%),color-mix(in_srgb,var(--eid-surface)_98%,transparent))] p-2 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.35),inset_0_1px_0_rgba(255,255,255,0.03)]">
                 <div className="grid grid-cols-2 gap-2">
                   {(timesFormacoes ?? []).map((t) => {
                     const esp = Array.isArray(t.esportes) ? t.esportes[0] : t.esportes;
@@ -548,7 +524,7 @@ export async function PerfilPublicoBelowFold({
                 </div>
               </div>
             ) : (
-              <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-2">
+              <div className="mt-2 overflow-hidden rounded-2xl border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-700)_4%),color-mix(in_srgb,var(--eid-surface)_98%,transparent))] p-2 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.35),inset_0_1px_0_rgba(255,255,255,0.03)]">
                 <ProfileEditDrawerTrigger
                   href={`/editar/equipes/cadastrar?from=${encodeURIComponent(`/perfil/${id}`)}`}
                   title="Cadastrar equipe"

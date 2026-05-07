@@ -52,10 +52,10 @@ export async function PerfilTimeHeroIdentity({ timeId, viewerId, sairEquipeActio
             <img
               src={t.escudo}
               alt=""
-              className="h-24 w-24 rounded-2xl border-2 border-eid-action-500/50 object-cover shadow-lg sm:h-28 sm:w-28"
+              className="h-24 w-24 rounded-2xl border-2 border-eid-action-500/50 object-cover shadow-[0_8px_28px_-12px_rgba(249,115,22,0.42),0_0_0_3px_rgba(249,115,22,0.1)] sm:h-28 sm:w-28"
             />
           ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-eid-surface text-sm font-bold text-eid-primary-300 sm:h-28 sm:w-28">
+            <div className="flex h-24 w-24 items-center justify-center rounded-2xl border-2 border-eid-primary-500/40 bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_16%,var(--eid-surface)),var(--eid-surface))] text-2xl font-black text-eid-primary-300 shadow-[0_8px_24px_-12px_rgba(37,99,235,0.3),inset_0_1px_0_rgba(255,255,255,0.06)] sm:h-28 sm:w-28">
               {(t.tipo ?? "T").toUpperCase().slice(0, 1)}
             </div>
           )}
@@ -63,7 +63,7 @@ export async function PerfilTimeHeroIdentity({ timeId, viewerId, sairEquipeActio
         <div
           className={`flex w-full min-w-0 flex-1 flex-col items-center space-y-2 text-center sm:items-start sm:text-left ${canLeaveTeam ? "pr-10 sm:pr-12" : ""}`}
         >
-          <span className="inline-block rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300">
+          <span className="inline-block overflow-hidden rounded-full border border-eid-primary-500/35 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)))] px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300 shadow-[0_0_10px_-3px_rgba(37,99,235,0.2),inset_0_1px_0_rgba(255,255,255,0.06)]">
             <span className="inline-flex items-center gap-1.5">
               <span className="inline-flex items-center gap-1">
                 <ModalidadeGlyphIcon modalidade={String(t.tipo ?? "").trim().toLowerCase() === "time" ? "time" : "dupla"} />
@@ -91,7 +91,7 @@ export async function PerfilTimeHeroIdentity({ timeId, viewerId, sairEquipeActio
       {t.bio ? <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary sm:mt-3">{t.bio}</p> : null}
 
       {criador ? (
-        <div className="mt-4 flex w-full min-w-0 flex-col items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-3 py-2.5">
+        <div className="mt-4 flex w-full min-w-0 flex-col items-center gap-3 overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
           <Link
             href={`/perfil/${criador.id}?from=/perfil-time/${id}`}
             className="inline-flex max-w-full min-w-0 items-center gap-3 rounded-lg text-left transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-eid-card"
