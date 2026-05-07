@@ -129,7 +129,13 @@ export default async function RootLayout({
       papeis = papeisResult;
       canShowAuthenticatedChrome = legalAcceptanceIsCurrent(profile);
       const cfg = await getSystemFeatureConfig(auth.supabase);
-      supportModulosEmBreve = ALL_SYSTEM_FEATURE_KEYS.filter((k) => cfg[k].mode === "em_breve");
+      supportModulosEmBreve = ALL_SYSTEM_FEATURE_KEYS.filter((k) => {
+        const entry = cfg[k];
+        if (entry.mode !== "em_breve") return false;
+        // Testers enxergam o módulo como se estivesse ativo
+        if (entry.testers.includes(user.id)) return false;
+        return true;
+      });
     }
   } catch (e) {
     console.error("[eid-layout] bootstrap do shell (auth / perfil / app_config)", e);
