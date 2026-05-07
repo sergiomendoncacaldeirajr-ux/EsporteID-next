@@ -163,7 +163,7 @@ function resolveColetivoRankGenero(meuGenero: string | null | undefined, alvoGen
 }
 
 const desafioRuleIconBadgeClass =
-  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-card)_86%)] shadow-sm ring-1 ring-[color:color-mix(in_srgb,var(--eid-primary-500)_32%,var(--eid-border-subtle)_68%)]";
+  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-surface)))] shadow-[0_0_12px_-4px_rgba(37,99,235,0.3)] ring-1 ring-[color:color-mix(in_srgb,var(--eid-primary-500)_38%,var(--eid-border-subtle)_62%)]";
 
 /** Ícone “info” em círculo à esquerda do título “Forma de disputa”. */
 function DesafioInfoRuleIcon() {
@@ -215,12 +215,12 @@ function DesafioRankingRuleIcon() {
 function DesafioRuleSummaryCard({ formaDisputaResumo }: { formaDisputaResumo: string }) {
   const multiline = formaDisputaResumo.includes("\n");
   return (
-    <div className="rounded-2xl border border-transparent bg-eid-primary-500/8 px-3 py-2.5 text-[12px] leading-relaxed text-eid-text-secondary">
+    <div className="overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-700)_6%,var(--eid-surface)))] px-3 py-3 text-[12px] leading-relaxed text-eid-text-secondary shadow-[0_4px_16px_-10px_rgba(37,99,235,0.18),inset_0_1px_0_rgba(255,255,255,0.04)]">
       <p className="inline-flex items-center gap-2.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-primary-300">
         <DesafioInfoRuleIcon />
         Forma de disputa deste esporte
       </p>
-      <p className="mt-1">
+      <p className="mt-1.5">
         <span className={`font-semibold text-eid-fg${multiline ? " block whitespace-pre-line" : ""}`}>{formaDisputaResumo}</span>
       </p>
     </div>
@@ -569,21 +569,26 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
       return (
         <main className={DESAFIO_PAGE_MAIN_CLASS}>
-            <h1 className="text-lg font-bold text-eid-fg">Solicitar desafio</h1>
-            <p className="mt-2 text-sm text-eid-text-secondary">
-              <span className="text-eid-fg">{desafioPrimeiroNome(perfil.nome, "Atleta")}</span> · {esporteNome} (individual). Escolha o tipo de confronto.
-            </p>
-            <div className="mt-3 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
-              Forma de disputa deste esporte:{" "}
+            <div className="relative mt-1 mb-4 overflow-hidden rounded-2xl border border-[rgba(249,115,22,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)),color-mix(in_srgb,var(--eid-surface)_96%,transparent))] px-4 py-4 shadow-[0_8px_28px_-16px_rgba(249,115,22,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-eid-action-500/10 blur-3xl" aria-hidden />
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-eid-action-400">Desafio</p>
+              <h1 className="mt-0.5 text-[18px] font-black leading-tight tracking-tight text-eid-fg">Solicitar desafio</h1>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-eid-text-secondary">
+                <span className="font-semibold text-eid-fg">{desafioPrimeiroNome(perfil.nome, "Atleta")}</span>
+                {" · "}{esporteNome} · individual. Escolha o tipo de confronto.
+              </p>
+            </div>
+            <div className="mt-0 rounded-2xl border border-[rgba(37,99,235,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-700)_6%,var(--eid-surface)))] px-3 py-2.5 text-[11px] leading-relaxed text-eid-text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+              Forma de disputa:{" "}
               <span
-                className={`font-semibold text-eid-fg${formaDisputaResumo.includes("\n") ? " block whitespace-pre-line" : ""}`}
+                className={`font-semibold text-eid-fg${formaDisputaResumo.includes("\n") ? " block whitespace-pre-line mt-1" : ""}`}
               >
                 {formaDisputaResumo}
               </span>
             </div>
-            <div className="mt-2 rounded-xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)_93%)] px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
+            <div className="mt-2 overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.1)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)_93%)] px-3 py-2.5 text-[11px] leading-relaxed text-eid-text-secondary">
               <p className="inline-flex items-center gap-1.5 font-semibold text-eid-fg">
-                Faixa de pontos deste confronto:{" "}
+                Faixa de pontos:{" "}
                 <span className="text-eid-primary-300">{rankGeneroLabel(rankGeneroIndividual.bucket)}</span>
                 <EidSectionInfo sectionLabel="Como definimos a faixa de pontos por gênero">
                   No individual, o sistema cruza o gênero dos dois perfis no momento do pedido. Quando ambos são do mesmo
@@ -591,7 +596,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
                   <span className="font-semibold text-eid-fg">misto</span>.
                 </EidSectionInfo>
               </p>
-              <p className="mt-1">{`Motivo: ${rankGeneroIndividual.reason}`}</p>
+              <p className="mt-1 text-eid-text-secondary">{`Motivo: ${rankGeneroIndividual.reason}`}</p>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -654,25 +659,27 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
     return (
       <main className={DESAFIO_PAGE_MAIN_CLASS}>
-          <h1 className="text-2xl font-bold tracking-tight text-eid-fg">Solicitar desafio</h1>
-          <p className="mt-1.5 text-sm leading-relaxed text-eid-text-secondary">
-            Confirme o pedido no esporte{" "}
-            <span className="inline-flex items-center gap-1 text-eid-fg">
-              <SportGlyphIcon sportName={esporteNome} />
-              <span>{esporteNome}</span>
-            </span>{" "}
-            ·{" "}
-            <span className="inline-flex items-center gap-1 text-eid-fg">
-              <ModalidadeGlyphIcon modalidade="individual" />
-              <span>individual</span>
-            </span>{" "}
-            ·{" "}
-            <span className="font-semibold text-eid-fg">
-              {finalidadeEscolhida === "amistoso" ? "Desafio amistoso" : "Desafio de ranking"}
-            </span>
-            .
-          </p>
-          <div className="mt-5 flex flex-col gap-3">
+          <div className="relative mt-1 mb-4 overflow-hidden rounded-2xl border border-[rgba(249,115,22,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)),color-mix(in_srgb,var(--eid-surface)_96%,transparent))] px-4 py-4 shadow-[0_8px_28px_-16px_rgba(249,115,22,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-eid-action-500/10 blur-3xl" aria-hidden />
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-eid-action-400">Desafio</p>
+            <h1 className="mt-0.5 text-[18px] font-black leading-tight tracking-tight text-eid-fg">Solicitar desafio</h1>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-relaxed text-eid-text-secondary">
+              <span className="inline-flex items-center gap-1 font-semibold text-eid-fg">
+                <SportGlyphIcon sportName={esporteNome} />
+                {esporteNome}
+              </span>
+              <span className="text-eid-text-secondary/50">·</span>
+              <span className="inline-flex items-center gap-1 text-eid-fg">
+                <ModalidadeGlyphIcon modalidade="individual" />
+                individual
+              </span>
+              <span className="text-eid-text-secondary/50">·</span>
+              <span className={`font-bold ${finalidadeEscolhida === "amistoso" ? "text-emerald-300" : "text-eid-primary-300"}`}>
+                {finalidadeEscolhida === "amistoso" ? "Amistoso" : "Ranking"}
+              </span>
+            </p>
+          </div>
+          <div className="mt-0 flex flex-col gap-3">
           <DesafioRuleSummaryCard formaDisputaResumo={formaDisputaResumo} />
           {finalidadeEscolhida === "amistoso" ? (
             <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
@@ -709,9 +716,9 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
               </p>
             </div>
           ) : null}
-          <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:p-4">
+          <div className="overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_6px_20px_-12px_rgba(15,23,42,0.35),inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-4">
             <div className="flex items-center gap-3">
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-eid-primary-500/30 bg-eid-surface">
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-eid-primary-500/35 bg-eid-surface shadow-[0_0_14px_-4px_rgba(37,99,235,0.28)]">
                 {perfil.avatar_url ? (
                   <Image src={perfil.avatar_url} alt="" fill unoptimized className="object-cover" />
                 ) : (
@@ -721,9 +728,8 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-eid-fg">{desafioPrimeiroNome(perfil.nome, "Atleta")}</p>
-                <p className="mt-1 inline-flex flex-wrap items-center gap-1 text-xs text-eid-text-secondary">
-                  <span>Modalidade:</span>
+                <p className="truncate text-sm font-bold text-eid-fg">{desafioPrimeiroNome(perfil.nome, "Atleta")}</p>
+                <p className="mt-1 inline-flex flex-wrap items-center gap-1 text-[11px] text-eid-text-secondary">
                   <ModalidadeGlyphIcon modalidade="individual" />
                   <span>individual</span>
                 </p>
@@ -928,21 +934,23 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
 
   return (
     <main className={DESAFIO_PAGE_MAIN_CLASS}>
-          <h1 className="text-2xl font-bold tracking-tight text-eid-fg">Solicitar desafio</h1>
-        <p className="mt-1.5 text-sm leading-relaxed text-eid-text-secondary">
-          Confirme o pedido no esporte{" "}
-          <span className="inline-flex items-center gap-1 text-eid-fg">
-            <SportGlyphIcon sportName={esporteNome} />
-            <span>{esporteNome}</span>
-          </span>{" "}
-          ·{" "}
-          <span className="inline-flex items-center gap-1 text-eid-fg">
-            <ModalidadeGlyphIcon modalidade={modalidade === "dupla" ? "dupla" : "time"} />
-            <span>{modalidade === "dupla" ? "dupla" : "time"}</span>
-          </span>
-          .
-        </p>
-        <div className="mt-5 flex flex-col gap-3">
+        <div className="relative mt-1 mb-4 overflow-hidden rounded-2xl border border-[rgba(249,115,22,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)),color-mix(in_srgb,var(--eid-surface)_96%,transparent))] px-4 py-4 shadow-[0_8px_28px_-16px_rgba(249,115,22,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-eid-action-500/10 blur-3xl" aria-hidden />
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-eid-action-400">Desafio</p>
+          <h1 className="mt-0.5 text-[18px] font-black leading-tight tracking-tight text-eid-fg">Solicitar desafio</h1>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-relaxed text-eid-text-secondary">
+            <span className="inline-flex items-center gap-1 font-semibold text-eid-fg">
+              <SportGlyphIcon sportName={esporteNome} />
+              {esporteNome}
+            </span>
+            <span className="text-eid-text-secondary/50">·</span>
+            <span className="inline-flex items-center gap-1 text-eid-fg">
+              <ModalidadeGlyphIcon modalidade={modalidade === "dupla" ? "dupla" : "time"} />
+              {modalidade === "dupla" ? "dupla" : "time"}
+            </span>
+          </p>
+        </div>
+        <div className="mt-0 flex flex-col gap-3">
         <DesafioRuleSummaryCard formaDisputaResumo={formaDisputaResumo} />
         <div className="rounded-xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)_93%)] px-3 py-2 text-[11px] leading-relaxed text-eid-text-secondary">
           <p className="inline-flex items-center gap-1.5 font-semibold text-eid-fg">
@@ -956,9 +964,9 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
           </p>
           <p className="mt-1">{`Motivo: ${rankGeneroColetivo.reason}`}</p>
         </div>
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 sm:p-4">
+        <div className="overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-3 shadow-[0_6px_20px_-12px_rgba(15,23,42,0.35),inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-4">
           <div className="flex items-center gap-3">
-            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[14px] border-2 border-eid-primary-500/50 bg-eid-surface shadow-[0_8px_18px_-12px_rgba(37,99,235,0.32)]">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[14px] border-2 border-eid-primary-500/40 bg-eid-surface shadow-[0_0_14px_-4px_rgba(37,99,235,0.3)]">
               {timeRow.escudo ? (
                 <Image src={timeRow.escudo} alt="" fill unoptimized className="h-full w-full object-cover" />
               ) : (
@@ -968,9 +976,8 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-eid-fg">{desafioPrimeiroNome(timeRow.nome, "Formação")}</p>
-              <p className="mt-1 inline-flex items-center gap-1 text-xs text-eid-text-secondary">
-                <span>Modalidade:</span>
+              <p className="truncate text-sm font-bold text-eid-fg">{desafioPrimeiroNome(timeRow.nome, "Formação")}</p>
+              <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-eid-text-secondary">
                 <ModalidadeGlyphIcon modalidade={modalidade === "dupla" ? "dupla" : "time"} />
                 <span>{modalidade}</span>
               </p>

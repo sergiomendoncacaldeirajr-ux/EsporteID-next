@@ -13,13 +13,13 @@ export const DESAFIO_FLOW_SECONDARY_CLASS =
   "eid-btn-ghost inline-flex min-h-[30px] items-center justify-center px-3 text-[9px] font-bold uppercase tracking-[0.03em]";
 
 export const DESAFIO_CHOICE_RANKING =
-  "rounded-xl border border-transparent bg-eid-primary-500/10 p-4 transition hover:bg-eid-primary-500/16";
+  "group relative overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.18)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-700)_8%,var(--eid-surface)))] p-4 shadow-[0_4px_18px_-10px_rgba(37,99,235,0.25),inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:-translate-y-[2px] hover:border-[rgba(37,99,235,0.32)] hover:shadow-[0_10px_28px_-12px_rgba(37,99,235,0.4)] active:translate-y-0";
 
 export const DESAFIO_CHOICE_AMISTOSO =
-  "rounded-xl border border-transparent bg-emerald-500/10 p-4 transition hover:bg-emerald-500/16";
+  "group relative overflow-hidden rounded-2xl border border-[rgba(16,185,129,0.2)] bg-[linear-gradient(145deg,color-mix(in_srgb,#10b981_12%,var(--eid-card)),color-mix(in_srgb,#059669_6%,var(--eid-surface)))] p-4 shadow-[0_4px_18px_-10px_rgba(16,185,129,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:-translate-y-[2px] hover:border-[rgba(16,185,129,0.38)] hover:shadow-[0_10px_28px_-12px_rgba(16,185,129,0.32)] active:translate-y-0";
 
 export const DESAFIO_CHOICE_ACTION =
-  "inline-flex min-h-[30px] w-full items-center justify-center rounded-xl border border-transparent bg-eid-action-500/10 px-3 text-center text-[9px] font-bold uppercase tracking-[0.03em] text-eid-action-200 transition hover:bg-eid-action-500/16";
+  "inline-flex min-h-[44px] w-full items-center justify-center rounded-2xl border border-[rgba(249,115,22,0.22)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-500)_14%,var(--eid-card)),color-mix(in_srgb,var(--eid-action-500)_8%,var(--eid-surface)))] px-3 text-center text-[10px] font-bold uppercase tracking-[0.04em] text-eid-action-200 shadow-[0_4px_18px_-10px_rgba(249,115,22,0.22),inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-200 hover:-translate-y-[2px] hover:border-[rgba(249,115,22,0.38)] hover:shadow-[0_10px_26px_-12px_rgba(249,115,22,0.32)] active:translate-y-0";
 
 /**
  * Aceitar / Recusar em pedidos (convite de equipe, pedido de desafio, candidatura ao elenco).
