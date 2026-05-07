@@ -131,9 +131,11 @@ export default async function RootLayout({
       const cfg = await getSystemFeatureConfig(auth.supabase);
       supportModulosEmBreve = ALL_SYSTEM_FEATURE_KEYS.filter((k) => {
         const entry = cfg[k];
-        if (entry.mode !== "em_breve") return false;
-        // Testers enxergam o módulo como se estivesse ativo
-        if (user && entry.testers.includes(user.id)) return false;
+        // Módulo ativo para todos: nunca ocultar no suporte
+        if (entry.mode === "ativo") return false;
+        // Qualquer outro modo (em_breve, desenvolvimento, teste):
+        // testers enxergam como disponível; demais usuários não veem
+        if (entry.testers.includes(user.id)) return false;
         return true;
       });
     }
