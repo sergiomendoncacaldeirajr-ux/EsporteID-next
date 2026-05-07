@@ -20,6 +20,11 @@ export default async function EspacoHomePage() {
   const { supabase, selectedSpace } = await getEspacoSelecionado({
     nextPath: "/espaco",
   });
+
+  if (selectedSpace.operacao_status === "rascunho") {
+    redirect("/espaco/onboarding");
+  }
+
   const { data: assinatura } = await supabase
     .from("espaco_assinaturas_plataforma")
     .select("id, isento_total, recorrencia_cartao_confirmada_em")
