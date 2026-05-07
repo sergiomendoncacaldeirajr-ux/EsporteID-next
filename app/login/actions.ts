@@ -55,17 +55,27 @@ export async function entrarComSenha(formData: FormData): Promise<LoginActionSta
       if (msg.includes("email not confirmed")) {
         // Tentar auto-confirmar para contas não-atleta (dono de espaço, professor, organizador).
         // Esses usuários completam o cadastro por fluxos que não exigem confirmação de e-mail,
-        // mas o Supabase pode bloquear o re-login se email_confirmed_at estiver nulo.
+        // mas o Supabase bloqueia o re-login se email_confirmed_at estiver nulo.
         if (hasServiceRoleConfig()) {
           try {
             const svc = createServiceRoleClient();
-            // Localiza o usuário no auth.users pelo e-mail via service role
-            const { data: authUserRow } = await (svc as unknown as {
-              schema: (s: string) => { from: (t: string) => { select: (c: string) => { eq: (col: string, val: string) => { maybeSingle: () => Promise<{ data: { id: string } | null }> } } } }
-            }).schema("auth").from("users").select("id").eq("email", email).maybeSingle();
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+            const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+            let userId: string | null = null;
 
-            if (authUserRow?.id) {
-              const userId = String(authUserRow.id);
+            // Localiza o usuário via GoTrue admin API — suporta filtro por email
+            if (supabaseUrl && serviceKey) {
+              const resp = await fetch(
+                `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}&page=1&per_page=1`,
+                { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } }
+              );
+              if (resp.ok) {
+                const body = (await resp.json()) as { users?: Array<{ id: string; email?: string }> };
+                userId = (body.users ?? []).find((u) => u.email === email)?.id ?? null;
+              }
+            }
+
+            if (userId) {
               const { data: papeisRows } = await svc
                 .from("usuario_papeis")
                 .select("papel")
@@ -78,7 +88,9 @@ export async function entrarComSenha(formData: FormData): Promise<LoginActionSta
                 // Refaz o login após confirmar
                 const { error: retryErr } = await supabase.auth.signInWithPassword({ email, password });
                 if (!retryErr) {
-                  const { data: { user: u } } = await supabase.auth.getUser();
+                  const {
+                    data: { user: u },
+                  } = await supabase.auth.getUser();
                   let dest = next;
                   if (u) {
                     const { data: profile } = await supabase

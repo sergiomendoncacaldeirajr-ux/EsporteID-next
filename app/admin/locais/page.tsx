@@ -28,16 +28,46 @@ const CATEGORIAS = [
   { value: "outro", label: "Outro" },
 ];
 
+const STATUS_OPTIONS = [
+  { value: "ativo", label: "Ativo" },
+  { value: "pendente_validacao", label: "Pendente validação" },
+  { value: "rascunho", label: "Rascunho" },
+  { value: "suspenso", label: "Suspenso" },
+  { value: "inativo", label: "Inativo" },
+];
+
 function sanitizeBusca(term: string) {
-  return term
-    .trim()
-    .slice(0, 96)
-    .replace(/[%_,]/g, "")
-    .trim();
+  return term.trim().slice(0, 96).replace(/[%_,]/g, "").trim();
 }
 
 function brlDeCentavos(c: number) {
   return (Number(c || 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function StatusPill({ status, adminSuspenso, ativoListagem, ownershipStatus }: {
+  status: string | null;
+  adminSuspenso: boolean | null;
+  ativoListagem: boolean | null;
+  ownershipStatus: string | null;
+}) {
+  if (adminSuspenso) {
+    return <span className="inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-300">● Suspenso (admin)</span>;
+  }
+  if (!ativoListagem) {
+    const label = ownershipStatus === "generico" ? "Aguard. vitrine" : "Fora da listagem";
+    return <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[10px] font-bold text-amber-300">● {label}</span>;
+  }
+  const s = (status ?? "").toLowerCase();
+  if (s === "pendente_validacao") {
+    return <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[10px] font-bold text-amber-300">● Pend. validação</span>;
+  }
+  if (s === "ativo") {
+    return <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">● Ativo</span>;
+  }
+  if (s === "rascunho") {
+    return <span className="inline-flex items-center gap-1 rounded-full border border-eid-border-subtle bg-eid-surface/50 px-2 py-0.5 text-[10px] font-bold text-eid-text-secondary">● Rascunho</span>;
+  }
+  return <span className="inline-flex items-center gap-1 rounded-full border border-eid-border-subtle bg-eid-surface/50 px-2 py-0.5 text-[10px] font-bold text-eid-text-secondary">● {status ?? "—"}</span>;
 }
 
 type PageProps = { searchParams?: Promise<{ q?: string; adm_flash?: string; adm_detail?: string }> };
@@ -54,9 +84,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
   const db = createServiceRoleClient();
 
   const { data: eiRow, error: eiErr } = await db.from("ei_financeiro_config").select("*").eq("id", 1).maybeSingle();
-  if (eiErr) {
-    return <p className="text-sm text-red-300">{eiErr.message}</p>;
-  }
+  if (eiErr) return <p className="text-sm text-red-300">{eiErr.message}</p>;
   const ei = (eiRow ?? {}) as Record<string, unknown>;
 
   const { data: planosCatRows, error: planosErr } = await db
@@ -64,18 +92,10 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
     .select("id, nome, categoria_espaco, min_unidades, max_unidades, valor_mensal_centavos, liberacao, ordem")
     .is("espaco_generico_id", null)
     .order("ordem", { ascending: true });
-  if (planosErr) {
-    return <p className="text-sm text-red-300">{planosErr.message}</p>;
-  }
+  if (planosErr) return <p className="text-sm text-red-300">{planosErr.message}</p>;
   const planosCatalogo = (planosCatRows ?? []) as Array<{
-    id: number;
-    nome: string;
-    categoria_espaco: string;
-    min_unidades: number;
-    max_unidades: number | null;
-    valor_mensal_centavos: number;
-    liberacao: string;
-    ordem: number;
+    id: number; nome: string; categoria_espaco: string; min_unidades: number;
+    max_unidades: number | null; valor_mensal_centavos: number; liberacao: string; ordem: number;
   }>;
 
   let locaisQ = db
@@ -95,9 +115,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
   }
 
   const locaisRes = await locaisQ.limit(200);
-  if (locaisRes.error) {
-    return <p className="text-sm text-red-300">{locaisRes.error.message}</p>;
-  }
+  if (locaisRes.error) return <p className="text-sm text-red-300">{locaisRes.error.message}</p>;
   const data = locaisRes.data ?? [];
   const locaisIds = data.map((l) => l.id);
 
@@ -114,16 +132,14 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
     })
   );
 
-  const [claimsRes] = await Promise.all([
-    db
-      .from("espaco_reivindicacoes")
-      .select("id, espaco_generico_id, solicitante_id, documento_arquivo, mensagem, status, criado_em, revisado_em, observacoes_admin")
-      .order("criado_em", { ascending: false })
-      .limit(80),
-  ]);
+  const claimsRes = await db
+    .from("espaco_reivindicacoes")
+    .select("id, espaco_generico_id, solicitante_id, documento_arquivo, mensagem, status, criado_em, revisado_em, observacoes_admin")
+    .order("criado_em", { ascending: false })
+    .limit(80);
   const claims = claimsRes.data ?? [];
-  const espacoIds = [...new Set(claims.map((claim) => Number(claim.espaco_generico_id)).filter(Number.isFinite))];
-  const solicitanteIds = [...new Set(claims.map((claim) => String(claim.solicitante_id ?? "")).filter(Boolean))];
+  const espacoIds = [...new Set(claims.map((c) => Number(c.espaco_generico_id)).filter(Number.isFinite))];
+  const solicitanteIds = [...new Set(claims.map((c) => String(c.solicitante_id ?? "")).filter(Boolean))];
   const [{ data: espacosMapRows }, { data: perfisMapRows }] = await Promise.all([
     espacoIds.length
       ? db.from("espacos_genericos").select("id, nome_publico, localizacao").in("id", espacoIds)
@@ -142,59 +158,50 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
     })
   );
   const signedUrlMap = new Map<number, string | null>(signedUrls);
+  const pendingClaimsCount = claims.filter((c) => c.status === "pendente").length;
 
   const flashMsg =
-    admFlash === "delete_ok"
-      ? "Local excluído permanentemente do sistema."
-      : admFlash === "delete_erro"
-        ? "Não foi possível excluir o local."
-        : admFlash === "delete_confirm"
-          ? "Para excluir, digite exatamente EXCLUIR no campo de confirmação."
-          : admFlash === "delete_param"
-            ? "Parâmetros de exclusão inválidos."
-            : null;
+    admFlash === "delete_ok" ? "Local excluído permanentemente do sistema." :
+    admFlash === "delete_erro" ? "Não foi possível excluir o local." :
+    admFlash === "delete_confirm" ? "Para excluir, digite exatamente EXCLUIR no campo de confirmação." :
+    admFlash === "delete_param" ? "Parâmetros de exclusão inválidos." : null;
 
   return (
     <div className="space-y-8">
       {flashMsg ? (
-        <div
-          className={`rounded-xl border px-4 py-3 text-sm ${
-            admFlash === "delete_ok"
-              ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-100"
-              : "border-amber-500/35 bg-amber-500/10 text-amber-100"
-          }`}
-          role="status"
-        >
+        <div className={`rounded-xl border px-4 py-3 text-sm ${admFlash === "delete_ok" ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-100" : "border-amber-500/35 bg-amber-500/10 text-amber-100"}`} role="status">
           <p className="font-semibold">{flashMsg}</p>
-          {admDetail && admFlash === "delete_erro" ? (
-            <p className="mt-1 font-mono text-[11px] text-eid-text-secondary">{admDetail}</p>
-          ) : null}
+          {admDetail && admFlash === "delete_erro" ? <p className="mt-1 font-mono text-[11px] text-eid-text-secondary">{admDetail}</p> : null}
         </div>
       ) : null}
+
+      {/* Info bar */}
       <div className="rounded-xl border border-eid-primary-500/20 bg-eid-primary-500/[0.04] p-4">
-        <h2 className="text-sm font-bold text-eid-fg">Mensalidade (referência e bloqueio)</h2>
-        <p className="mt-1 text-sm text-eid-text-secondary">
-          Valor por categoria, dias de aviso e dias após o vencimento para bloquear o painel do dono: configure em{" "}
-          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/financeiro">
-            Admin → Financeiro
-          </Link>{" "}
-          (seção de espaços / mensalidade plataforma). A integração Asaas está em{" "}
-          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/integracoes-pagamento">
-            Pagamentos
-          </Link>
-          . O catálogo e faixas de preço (condomínio, clube, recorrência automática no cadastro) estão em{" "}
-          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/locais/planos-mensalidade">
-            Planos de mensalidade
-          </Link>
-          .
-        </p>
+        <h2 className="text-sm font-bold text-eid-fg">Configurações globais de mensalidade</h2>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-eid-text-secondary">
+          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/financeiro">Financeiro (valores e prazos)</Link>
+          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/integracoes-pagamento">Pagamentos (Asaas)</Link>
+          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/locais/planos-mensalidade">Planos de mensalidade</Link>
+          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/locais/suspeitas-mista">Reservas suspeitas</Link>
+        </div>
       </div>
 
+      {/* ── Locais ───────────────────────────────────────────────────── */}
       <section>
-        <h2 className="text-base font-bold text-eid-fg">Locais (espaços genéricos)</h2>
-        <p className="mt-1 text-sm text-eid-text-secondary">
-          Busque por ID, UUID, nome, slug ou endereço. Cada local pode ter assinatura, categoria, valor e override (isento / forçar bloqueio).
-        </p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold text-eid-fg">Locais cadastrados</h2>
+            <p className="mt-0.5 text-xs text-eid-text-secondary">
+              Busque por ID, nome, slug ou endereço. Até 200 resultados.
+            </p>
+          </div>
+          {data.length > 0 && (
+            <span className="rounded-full border border-eid-border-subtle bg-eid-surface/50 px-3 py-1 text-xs font-semibold text-eid-text-secondary">
+              {data.length} encontrado{data.length !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+
         <SearchSuggestGetForm
           action="/admin/locais"
           defaultValue={rawQ}
@@ -207,20 +214,15 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
           submitClassName="eid-btn-primary min-h-[40px] shrink-0 rounded-xl px-4 text-sm font-bold"
           clearClassName="min-h-[40px] self-end rounded-xl border border-eid-text-secondary/30 px-3 py-2 text-sm font-bold text-eid-text-secondary"
         />
-        <p className="mt-1 text-xs text-eid-text-muted">
-          Até 200 resultados. <strong className="text-eid-fg">Suspender</strong> oculta o local de todos (listagem, busca e
-          página pública); o dono ainda acessa o painel <span className="font-mono">/espaco</span>.{" "}
-          <strong className="text-eid-fg">Excluir</strong> remove o registro e vínculos (irreversível).{" "}
-          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/locais/suspeitas-mista">
-            Relatório: reservas mista só gratuitas (suspeita)
-          </Link>
-        </p>
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-3">
           {data.length === 0 ? (
-            <p className="text-sm text-eid-text-secondary">Nenhum local na busca.</p>
+            <div className="rounded-xl border border-dashed border-eid-border-subtle py-10 text-center text-sm text-eid-text-secondary">
+              Nenhum local encontrado para esta busca.
+            </div>
           ) : null}
-          {(data ?? []).map((l) => {
+
+          {data.map((l) => {
             const cat = (l as { categoria_mensalidade?: string | null }).categoria_mensalidade ?? "outro";
             const localRow = l as {
               id: number;
@@ -240,116 +242,64 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
             const taxaReservaBrl = Number(localRow.taxa_reserva_plataforma_centavos ?? 0) / 100;
             const sociosFl = (localRow.socios_mensalidade_espaco ?? "em_breve") as keyof typeof SOCIOS_MENSAL_ESPACO_LABEL;
             const clubeFl = (localRow.clube_assinaturas_socios ?? "em_breve") as keyof typeof CLUBE_ASSINATURA_SOCIOS_LABEL;
-            const a = assinMap.get(l.id) as
-              | {
-                  id: number;
-                  status: string;
-                  valor_mensal_centavos: number;
-                  proxima_cobranca: string | null;
-                  trial_ate: string | null;
-                  situacao_override: string | null;
-                  plano_nome: string | null;
-                  observacoes_admin: string | null;
-                  plano_mensal_id: number | null;
-                  trial_dias_override: number | null;
-                  isento_total: boolean | null;
-                }
-              | undefined;
-            const situ = computeMensalidadePainelState(
-              ei,
-              a ?? null,
-              cat,
-              new Date(),
-              {
-                modoReserva: localRow.modo_reserva,
-                modoMonetizacao: localRow.modo_monetizacao,
-                paasAprovadoOperacaoSemGateway: localRow.paas_aprovado_operacao_sem_gateway,
-                paasPrimeiroPagamentoMensalRecebidoEm: localRow.paas_primeiro_pagamento_mensal_recebido_em,
-              }
-            );
-            const cor =
-              situ.nivel === "bloqueado" || (a?.situacao_override === "forcar_bloqueio" && situ.nivel !== "isento")
-                ? "text-red-300"
-                : situ.nivel === "inativo_agenda"
-                  ? "text-amber-200/90"
-                  : situ.nivel === "aviso" || situ.diasEmAtraso > 0
-                    ? "text-amber-200"
-                    : "text-emerald-200/90";
+            const a = assinMap.get(l.id) as {
+              id: number; status: string; valor_mensal_centavos: number; proxima_cobranca: string | null;
+              trial_ate: string | null; situacao_override: string | null; plano_nome: string | null;
+              observacoes_admin: string | null; plano_mensal_id: number | null;
+              trial_dias_override: number | null; isento_total: boolean | null;
+            } | undefined;
+            const situ = computeMensalidadePainelState(ei, a ?? null, cat, new Date(), {
+              modoReserva: localRow.modo_reserva,
+              modoMonetizacao: localRow.modo_monetizacao,
+              paasAprovadoOperacaoSemGateway: localRow.paas_aprovado_operacao_sem_gateway,
+              paasPrimeiroPagamentoMensalRecebidoEm: localRow.paas_primeiro_pagamento_mensal_recebido_em,
+            });
+            const mensalidadeCor =
+              situ.nivel === "bloqueado" || a?.situacao_override === "forcar_bloqueio"
+                ? "text-red-300 border-red-500/25 bg-red-500/8"
+                : situ.nivel === "inativo_agenda" ? "text-amber-200/90 border-amber-500/20 bg-amber-500/6"
+                : situ.nivel === "aviso" || situ.diasEmAtraso > 0 ? "text-amber-200 border-amber-500/20 bg-amber-500/6"
+                : "text-emerald-300 border-emerald-500/20 bg-emerald-500/6";
             const valorBrl = (a?.valor_mensal_centavos ?? 0) / 100;
+
             return (
-              <div
-                key={l.id}
-                className="overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50"
-              >
-                <div className="grid gap-3 p-3 md:grid-cols-[1fr_auto]">
-                  <div>
-                    <p className="font-mono text-[10px] text-eid-text-secondary">ID {l.id}</p>
-                    <p className="text-sm font-bold text-eid-fg">
-                      {l.nome_publico}{" "}
-                      {localRow.admin_suspenso ? (
-                        <span className="text-red-200/95">(suspenso admin — invisível ao público)</span>
-                      ) : !l.ativo_listagem ? (
-                        <span className="text-amber-200/90">
-                          {l.ownership_status === "generico"
-                            ? "(sugestão — aguardando aprovação na vitrine)"
-                            : "(fora da listagem)"}
-                        </span>
+              <div key={l.id} className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60">
+                {/* Card header */}
+                <div className="flex flex-wrap items-start justify-between gap-3 p-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-[10px] text-eid-text-muted">#{l.id}</span>
+                      <StatusPill
+                        status={l.status}
+                        adminSuspenso={localRow.admin_suspenso ?? null}
+                        ativoListagem={l.ativo_listagem ?? null}
+                        ownershipStatus={l.ownership_status ?? null}
+                      />
+                      {localRow.operacao_suspeita_somente_reservas_gratis ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-red-500/35 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-300">⚠ Suspeita</span>
                       ) : null}
+                    </div>
+                    <p className="mt-1 text-base font-bold text-eid-fg">{l.nome_publico ?? "Sem nome"}</p>
+                    <p className="text-xs text-eid-text-secondary">
+                      {l.localizacao ?? "Sem localização"} · {l.slug ? `/${l.slug}` : "sem slug"} · {cat}
                     </p>
-                    <p className="text-[11px] text-eid-text-secondary">
-                      {l.localizacao} · {l.slug ? `/${l.slug}` : "sem slug"} · categoria: {cat}
-                    </p>
-                    <p className={`mt-1 text-xs font-semibold ${cor}`}>
-                      Mensalidade plataforma: {situ.nivel} · {situ.mensagem}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-eid-text-secondary">
-                      {a
-                        ? `Paga ${brlDeCentavos(a.valor_mensal_centavos)} · próx. venc. ${a.proxima_cobranca ?? "—"} · override ${a.situacao_override ?? "—"}`
-                        : "Sem assinatura na tabela ainda (use o formulário abaixo)."}
-                    </p>
-                    <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary">
-                      Reservas: {MODO_RESERVA_LABEL[modoR] ?? modoR} · {MODO_MONETIZACAO_LABEL[modoM] ?? modoM} · taxa plataforma
-                      (reserva): {brlDeCentavos(Math.round(taxaReservaBrl * 100))} / reserva (líquido desejado, antes do split Asaas). Sócios:{" "}
-                      {SOCIOS_MENSAL_ESPACO_LABEL[sociosFl] ?? sociosFl}. Clube de assinaturas:{" "}
-                      {CLUBE_ASSINATURA_SOCIOS_LABEL[clubeFl] ?? clubeFl}.
-                    </p>
-                    {localRow.operacao_suspeita_somente_reservas_gratis ? (
-                      <p className="mt-1 text-[11px] text-red-300">
-                        Suspeita (mista, só reservas gratuitas há 15+ dias, nenhuma paga). {localRow.operacao_suspeita_observacao ?? ""}{" "}
-                        <Link className="font-bold underline" href="/admin/locais/suspeitas-mista">
-                          Ver relatório
-                        </Link>
-                      </p>
-                    ) : null}
-                    <form action={adminSetPaasAprovadoOperacaoSemGateway} className="mt-2 flex max-w-lg flex-wrap items-center gap-2 text-[10px] text-eid-text-secondary">
-                      <input type="hidden" name="espaco_generico_id" value={l.id} />
-                      <span className="shrink-0">Reservas 100% gratuitas (e simil.):</span>
-                      <select
-                        name="aprovado_sem_pagamento"
-                        defaultValue={localRow.paas_aprovado_operacao_sem_gateway ? "true" : "false"}
-                        className="eid-input-dark min-w-[200px] rounded-lg px-2 py-1 text-xs"
-                      >
-                        <option value="false">Exigir 1º pagamento PaaS (padrão)</option>
-                        <option value="true">Liberar grade sem pagamento (exceção admin)</option>
-                      </select>
-                      <button type="submit" className="rounded border border-eid-primary-500/40 px-2 py-1 text-[10px] font-bold text-eid-primary-200">
-                        Aplicar
-                      </button>
-                    </form>
                   </div>
-                  <div className="flex flex-col gap-2 sm:items-end">
-                    <form action={adminSetEspacoStatus} className="flex flex-wrap items-end gap-1">
-                      <input type="hidden" name="id" value={l.id} />
-                      <input type="text" name="status" defaultValue={l.status ?? ""} className="eid-input-dark w-28 rounded px-1 py-0.5 text-[11px]" />
-                      <button type="submit" className="text-[10px] font-bold text-eid-primary-300">
-                        status
-                      </button>
-                    </form>
+
+                  {/* Quick actions */}
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <Link
+                      href={l.slug ? `/espaco/${l.slug}` : `/local/${l.id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1.5 text-[11px] font-semibold text-eid-primary-300 hover:bg-eid-primary-500/18"
+                    >
+                      Ver público ↗
+                    </Link>
                     {l.ativo_listagem ? (
                       <form action={adminSetEspacoListagem} className="inline">
                         <input type="hidden" name="id" value={l.id} />
                         <input type="hidden" name="ativo_listagem" value="false" />
-                        <button type="submit" className="text-[11px] font-bold text-amber-200">
+                        <button type="submit" className="inline-flex items-center rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-1.5 text-[11px] font-semibold text-amber-300 hover:bg-amber-500/18">
                           Ocultar listagem
                         </button>
                       </form>
@@ -357,278 +307,248 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                       <form action={adminSetEspacoListagem} className="inline">
                         <input type="hidden" name="id" value={l.id} />
                         <input type="hidden" name="ativo_listagem" value="true" />
-                        <button type="submit" className="text-[11px] font-bold text-eid-primary-300">
-                          Publicar listagem
+                        <button type="submit" className="inline-flex items-center rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/18">
+                          Publicar
                         </button>
                       </form>
                     )}
-                    <Link
-                      href={l.slug ? `/espaco/${l.slug}` : `/local/${l.id}`}
-                      className="text-[11px] font-bold text-eid-primary-300 hover:underline"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Abrir público
-                    </Link>
                     {localRow.admin_suspenso ? (
-                      <form action={adminSetEspacoAdminSuspenso} className="flex flex-col gap-1 border-t border-white/10 pt-2">
+                      <form action={adminSetEspacoAdminSuspenso} className="inline">
                         <input type="hidden" name="id" value={l.id} />
                         <input type="hidden" name="admin_suspenso" value="false" />
-                        <button
-                          type="submit"
-                          className="rounded border border-emerald-500/40 px-2 py-1 text-left text-[11px] font-bold text-emerald-200"
-                        >
-                          Encerrar suspensão (reativar visibilidade pública)
+                        <button type="submit" className="inline-flex items-center rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-300">
+                          Reativar
                         </button>
                       </form>
                     ) : (
-                      <form action={adminSetEspacoAdminSuspenso} className="flex flex-col gap-1 border-t border-white/10 pt-2">
+                      <form action={adminSetEspacoAdminSuspenso} className="inline">
                         <input type="hidden" name="id" value={l.id} />
                         <input type="hidden" name="admin_suspenso" value="true" />
-                        <button
-                          type="submit"
-                          className="rounded border border-amber-500/45 px-2 py-1 text-left text-[11px] font-bold text-amber-200"
-                        >
-                          Suspender local (temporário — some para todos)
+                        <button type="submit" className="inline-flex items-center rounded-lg border border-red-500/35 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold text-red-300">
+                          Suspender
                         </button>
                       </form>
                     )}
-                    <details className="rounded border border-red-500/35 bg-red-500/5 px-2 py-1.5">
-                      <summary className="cursor-pointer text-[11px] font-bold text-red-200">Excluir permanentemente</summary>
-                      <p className="mt-2 text-[10px] text-eid-text-secondary">
-                        Remove o espaço e dados vinculados (cascade). Digite <span className="font-mono text-eid-fg">EXCLUIR</span>{" "}
-                        para confirmar.
-                      </p>
-                      <form action={adminDeleteEspacoGenerico} className="mt-2 flex flex-col gap-2">
-                        <input type="hidden" name="id" value={l.id} />
-                        <input
-                          name="confirmar_exclusao"
-                          type="text"
-                          autoComplete="off"
-                          placeholder="EXCLUIR"
-                          className="eid-input-dark rounded px-2 py-1 text-xs"
-                        />
-                        <button
-                          type="submit"
-                          className="rounded border border-red-500/50 bg-red-500/15 px-2 py-1 text-[11px] font-bold text-red-200"
-                        >
-                          Excluir do sistema
-                        </button>
-                      </form>
-                    </details>
                   </div>
                 </div>
-                <details className="border-t border-[color:var(--eid-border-subtle)]/60 bg-eid-bg/20 p-3">
-                  <summary className="cursor-pointer text-xs font-bold text-eid-primary-300">
-                    Modo de reserva, monetização e taxa (plataforma)
-                  </summary>
-                  <p className="mt-2 max-w-2xl text-[10px] text-eid-text-secondary">
-                    A <strong className="font-semibold text-eid-fg">taxa de reserva</strong> é o valor em reais que a plataforma deseja receber por
-                    reserva, embutido na cobrança junto com o processamento (Asaas); o desconto da taxa do cliente e o repasse vêm do módulo de
-                    pagamento.
-                  </p>
-                  <form action={adminUpdateEspacoModoCobranca} className="mt-3 grid max-w-2xl gap-2 sm:grid-cols-2">
-                    <input type="hidden" name="id" value={l.id} />
-                    <label className="text-[10px] text-eid-text-secondary sm:col-span-2">
-                      Modo de reserva (público / unidades)
+
+                {/* Status + mensalidade row */}
+                <div className="grid gap-3 border-t border-[color:var(--eid-border-subtle)]/50 px-4 py-3 sm:grid-cols-2">
+                  {/* Status edit */}
+                  <div>
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Status do cadastro</p>
+                    <form action={adminSetEspacoStatus} className="flex items-center gap-2">
+                      <input type="hidden" name="id" value={l.id} />
                       <select
-                        name="modo_reserva"
-                        defaultValue={localRow.modo_reserva ?? "mista"}
-                        className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm"
+                        name="status"
+                        defaultValue={l.status ?? ""}
+                        className="eid-input-dark min-w-[160px] rounded-lg px-2 py-1.5 text-xs"
                       >
-                        <option value="gratuita">{MODO_RESERVA_LABEL.gratuita}</option>
-                        <option value="paga">{MODO_RESERVA_LABEL.paga}</option>
-                        <option value="mista">{MODO_RESERVA_LABEL.mista}</option>
-                      </select>
-                    </label>
-                    <label className="text-[10px] text-eid-text-secondary sm:col-span-2">
-                      O que o local paga / como monetiza
-                      <select
-                        name="modo_monetizacao"
-                        defaultValue={localRow.modo_monetizacao ?? "misto"}
-                        className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm"
-                      >
-                        <option value="mensalidade_plataforma">{MODO_MONETIZACAO_LABEL.mensalidade_plataforma}</option>
-                        <option value="apenas_reservas">{MODO_MONETIZACAO_LABEL.apenas_reservas}</option>
-                        <option value="misto">{MODO_MONETIZACAO_LABEL.misto}</option>
-                      </select>
-                    </label>
-                    <label className="text-[10px] text-eid-text-secondary">
-                      Taxa plataforma por reserva (R$)
-                      <input
-                        name="taxa_reserva_plataforma_brl"
-                        type="number"
-                        step="0.01"
-                        min={0}
-                        defaultValue={Number(taxaReservaBrl.toFixed(2))}
-                        className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm"
-                      />
-                    </label>
-                    <label className="text-[10px] text-eid-text-secondary sm:col-span-2 sm:max-w-2xl">
-                      Mensalidade de sócios (módulo do espaço)
-                      <select
-                        name="socios_mensalidade_espaco"
-                        defaultValue={localRow.socios_mensalidade_espaco ?? "em_breve"}
-                        className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm"
-                      >
-                        <option value="off">{SOCIOS_MENSAL_ESPACO_LABEL.off}</option>
-                        <option value="em_breve">{SOCIOS_MENSAL_ESPACO_LABEL.em_breve}</option>
-                        <option value="on">{SOCIOS_MENSAL_ESPACO_LABEL.on}</option>
-                      </select>
-                    </label>
-                    <label className="text-[10px] text-eid-text-secondary sm:col-span-2 sm:max-w-2xl">
-                      Clube de assinaturas entre sócios (opcional)
-                      <select
-                        name="clube_assinaturas_socios"
-                        defaultValue={localRow.clube_assinaturas_socios ?? "em_breve"}
-                        className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm"
-                      >
-                        <option value="off">{CLUBE_ASSINATURA_SOCIOS_LABEL.off}</option>
-                        <option value="em_breve">{CLUBE_ASSINATURA_SOCIOS_LABEL.em_breve}</option>
-                        <option value="on">{CLUBE_ASSINATURA_SOCIOS_LABEL.on}</option>
-                      </select>
-                    </label>
-                    <div className="sm:col-span-2">
-                      <button
-                        type="submit"
-                        className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-3 py-2 text-xs font-bold text-eid-fg"
-                      >
-                        Salvar modo e taxa
-                      </button>
-                    </div>
-                  </form>
-                </details>
-                <details className="border-t border-[color:var(--eid-border-subtle)]/60 bg-eid-bg/25 p-3">
-                  <summary className="cursor-pointer text-xs font-bold text-eid-primary-300">Editar assinatura / categoria (plataforma)</summary>
-                  <form action={adminUpdateEspacoMensalidadePlataforma} className="mt-3 grid max-w-2xl gap-2 sm:grid-cols-2">
-                    <input type="hidden" name="espaco_generico_id" value={l.id} />
-                    <label className="text-[10px] text-eid-text-secondary sm:col-span-2">
-                      Categoria
-                      <select
-                        name="categoria_mensalidade"
-                        defaultValue={cat}
-                        className="eid-input-dark mt-1 w-full max-w-sm rounded-lg px-2 py-1.5 text-sm"
-                      >
-                        {CATEGORIAS.map((c) => (
-                          <option key={c.value} value={c.value}>
-                            {c.label}
-                          </option>
+                        {STATUS_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
                         ))}
                       </select>
-                    </label>
-                    <div className="sm:col-span-2">
-                      <button
-                        type="submit"
-                        formAction={adminAplicarPlanoMensalAutomatico}
-                        className="rounded-lg border border-eid-text-secondary/25 px-3 py-1.5 text-[11px] font-bold text-eid-primary-200 hover:bg-white/5"
-                      >
-                        Aplicar plano do catálogo (faixa por categoria e unidades ativas)
+                      <button type="submit" className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-3 py-1.5 text-[11px] font-bold text-eid-fg">
+                        Salvar
                       </button>
+                    </form>
+                  </div>
+
+                  {/* Mensalidade summary */}
+                  <div>
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Mensalidade plataforma</p>
+                    <div className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold ${mensalidadeCor}`}>
+                      <span className="capitalize">{situ.nivel}</span>
+                      <span className="font-normal opacity-80">·</span>
+                      <span className="font-normal">{situ.mensagem}</span>
                     </div>
-                    <label className="text-[10px] text-eid-text-secondary sm:col-span-2">
-                      Plano (catálogo) — vincular assinatura
-                      <select
-                        name="plano_mensal_id"
-                        defaultValue={a?.plano_mensal_id && a.plano_mensal_id > 0 ? String(a.plano_mensal_id) : "0"}
-                        className="eid-input-dark mt-1 w-full max-w-2xl rounded-lg px-2 py-1.5 text-sm"
-                      >
-                        <option value="0">(nenhum — preencha valor e nome manualmente)</option>
-                        {planosCatalogo.map((p) => {
-                          const faixa = p.max_unidades == null ? `${p.min_unidades}+` : `${p.min_unidades}–${p.max_unidades}`;
-                          const preco = brlDeCentavos(p.valor_mensal_centavos);
-                          const label = `${p.categoria_espaco} · faixa ${faixa} u. · ${p.nome} · ${preco}/mês${
-                            p.liberacao !== "publico" ? " [catálogo não público — uso admin]" : ""
-                          }`;
-                          return (
-                            <option key={p.id} value={p.id} disabled={p.liberacao === "inativo"}>
-                              {label}
-                            </option>
-                          );
-                        })}
-                      </select>
+                    {a ? (
+                      <p className="mt-1 text-[11px] text-eid-text-secondary">
+                        {brlDeCentavos(a.valor_mensal_centavos)}/mês · venc. {a.proxima_cobranca ?? "—"} · override: {a.situacao_override ?? "nenhum"}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[11px] text-eid-text-secondary">Sem assinatura registrada</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Reservas gratuitas liberadas */}
+                <div className="border-t border-[color:var(--eid-border-subtle)]/40 px-4 py-3">
+                  <form action={adminSetPaasAprovadoOperacaoSemGateway} className="flex flex-wrap items-center gap-2">
+                    <input type="hidden" name="espaco_generico_id" value={l.id} />
+                    <label className="text-[11px] text-eid-text-secondary">
+                      Reservas 100% gratuitas (e simil.):
                     </label>
-                    <label className="text-[10px] text-eid-text-secondary">
-                      Valor mensal (R$) — pago à plataforma
-                      <input
-                        name="valor_mensal_brl"
-                        type="number"
-                        step="0.01"
-                        min={0}
-                        defaultValue={Number(valorBrl.toFixed(2))}
-                        className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm"
-                      />
-                    </label>
-                    <label className="text-[10px] text-eid-text-secondary">
-                      Próxima cobrança (data)
-                      <input
-                        name="proxima_cobranca"
-                        type="date"
-                        defaultValue={a?.proxima_cobranca ?? ""}
-                        className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm"
-                      />
-                    </label>
-                    <label className="text-[10px] text-eid-text-secondary">
-                      Mês grátis (dias, override por espaço)
-                      <input
-                        name="trial_dias_override"
-                        type="number"
-                        min={0}
-                        max={90}
-                        defaultValue={a?.trial_dias_override ?? 30}
-                        className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm"
-                      />
-                    </label>
-                    <label className="text-[10px] text-eid-text-secondary">
-                      Nome do plano
-                      <input
-                        name="plano_nome"
-                        defaultValue={a?.plano_nome ?? "Plataforma"}
-                        className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm"
-                      />
-                    </label>
-                    <label className="text-[10px] text-eid-text-secondary">
-                      Status
-                      <select name="status" defaultValue={a?.status ?? "active"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
-                        <option value="trial">trial</option>
-                        <option value="active">active</option>
-                        <option value="overdue">overdue</option>
-                        <option value="cancelled">cancelled</option>
-                      </select>
-                    </label>
-                    <label className="text-[10px] text-eid-text-secondary sm:col-span-2">
-                      Override
-                      <select
-                        name="situacao_override"
-                        defaultValue={a?.situacao_override ?? ""}
-                        className="eid-input-dark mt-1 w-full max-w-sm rounded-lg px-2 py-1.5 text-sm"
-                      >
-                        <option value="">(automático / sem override)</option>
-                        <option value="isento">Isento (não cobra / não bloqueia)</option>
-                        <option value="forcar_bloqueio">Forçar bloqueio (manual)</option>
-                      </select>
-                    </label>
-                    <label className="flex items-center gap-2 text-[11px] text-eid-text-secondary sm:col-span-2">
-                      <input type="checkbox" name="isento_total" defaultChecked={Boolean(a?.isento_total)} />
-                      Espaço sem cobrança da plataforma (isento total)
-                    </label>
-                    <label className="text-[10px] text-eid-text-secondary sm:col-span-2">
-                      Obs. internas
-                      <textarea
-                        name="observacoes_admin"
-                        rows={2}
-                        defaultValue={a?.observacoes_admin ?? ""}
-                        className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm"
-                      />
-                    </label>
-                    <div className="sm:col-span-2">
-                      <button
-                        type="submit"
-                        className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-3 py-2 text-xs font-bold text-eid-fg"
-                      >
-                        Salvar assinatura
-                      </button>
-                    </div>
+                    <select
+                      name="aprovado_sem_pagamento"
+                      defaultValue={localRow.paas_aprovado_operacao_sem_gateway ? "true" : "false"}
+                      className="eid-input-dark rounded-lg px-2 py-1 text-xs"
+                    >
+                      <option value="false">Exigir 1º pagamento PaaS (padrão)</option>
+                      <option value="true">Liberar sem pagamento (exceção admin)</option>
+                    </select>
+                    <button type="submit" className="rounded-lg border border-eid-primary-500/35 px-3 py-1 text-[11px] font-bold text-eid-primary-200">
+                      Aplicar
+                    </button>
                   </form>
+                  {localRow.operacao_suspeita_somente_reservas_gratis ? (
+                    <p className="mt-1.5 text-[11px] text-red-300">
+                      ⚠ Suspeita: mista, só reservas gratuitas há 15+ dias. {localRow.operacao_suspeita_observacao ?? ""}{" "}
+                      <Link className="font-bold underline" href="/admin/locais/suspeitas-mista">Ver relatório</Link>
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Expandable sections */}
+                <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
+                  <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02]">
+                    ▸ Modo de reserva, monetização e taxa
+                  </summary>
+                  <div className="border-t border-[color:var(--eid-border-subtle)]/30 bg-eid-bg/20 px-4 pb-4 pt-3">
+                    <form action={adminUpdateEspacoModoCobranca} className="grid max-w-2xl gap-3 sm:grid-cols-2">
+                      <input type="hidden" name="id" value={l.id} />
+                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                        Modo de reserva
+                        <select name="modo_reserva" defaultValue={localRow.modo_reserva ?? "mista"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
+                          <option value="gratuita">{MODO_RESERVA_LABEL.gratuita}</option>
+                          <option value="paga">{MODO_RESERVA_LABEL.paga}</option>
+                          <option value="mista">{MODO_RESERVA_LABEL.mista}</option>
+                        </select>
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                        Monetização
+                        <select name="modo_monetizacao" defaultValue={localRow.modo_monetizacao ?? "misto"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
+                          <option value="mensalidade_plataforma">{MODO_MONETIZACAO_LABEL.mensalidade_plataforma}</option>
+                          <option value="apenas_reservas">{MODO_MONETIZACAO_LABEL.apenas_reservas}</option>
+                          <option value="misto">{MODO_MONETIZACAO_LABEL.misto}</option>
+                        </select>
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary">
+                        Taxa plataforma por reserva (R$)
+                        <input name="taxa_reserva_plataforma_brl" type="number" step="0.01" min={0} defaultValue={Number(taxaReservaBrl.toFixed(2))} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                        Mensalidade de sócios
+                        <select name="socios_mensalidade_espaco" defaultValue={localRow.socios_mensalidade_espaco ?? "em_breve"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
+                          <option value="off">{SOCIOS_MENSAL_ESPACO_LABEL.off}</option>
+                          <option value="em_breve">{SOCIOS_MENSAL_ESPACO_LABEL.em_breve}</option>
+                          <option value="on">{SOCIOS_MENSAL_ESPACO_LABEL.on}</option>
+                        </select>
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                        Clube de assinaturas entre sócios
+                        <select name="clube_assinaturas_socios" defaultValue={localRow.clube_assinaturas_socios ?? "em_breve"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
+                          <option value="off">{CLUBE_ASSINATURA_SOCIOS_LABEL.off}</option>
+                          <option value="em_breve">{CLUBE_ASSINATURA_SOCIOS_LABEL.em_breve}</option>
+                          <option value="on">{CLUBE_ASSINATURA_SOCIOS_LABEL.on}</option>
+                        </select>
+                      </label>
+                      <div className="sm:col-span-2">
+                        <button type="submit" className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg">
+                          Salvar modo e taxa
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </details>
+
+                <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
+                  <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02]">
+                    ▸ Assinatura / categoria da plataforma
+                  </summary>
+                  <div className="border-t border-[color:var(--eid-border-subtle)]/30 bg-eid-bg/25 px-4 pb-4 pt-3">
+                    <form action={adminUpdateEspacoMensalidadePlataforma} className="grid max-w-2xl gap-3 sm:grid-cols-2">
+                      <input type="hidden" name="espaco_generico_id" value={l.id} />
+                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                        Categoria
+                        <select name="categoria_mensalidade" defaultValue={cat} className="eid-input-dark mt-1 w-full max-w-sm rounded-lg px-2 py-1.5 text-sm">
+                          {CATEGORIAS.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+                        </select>
+                      </label>
+                      <div className="sm:col-span-2">
+                        <button type="submit" formAction={adminAplicarPlanoMensalAutomatico} className="rounded-lg border border-eid-text-secondary/25 px-3 py-1.5 text-[11px] font-bold text-eid-primary-200 hover:bg-white/5">
+                          Aplicar plano do catálogo automaticamente
+                        </button>
+                      </div>
+                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                        Plano do catálogo
+                        <select name="plano_mensal_id" defaultValue={a?.plano_mensal_id && a.plano_mensal_id > 0 ? String(a.plano_mensal_id) : "0"} className="eid-input-dark mt-1 w-full max-w-2xl rounded-lg px-2 py-1.5 text-sm">
+                          <option value="0">(nenhum — preencher manualmente)</option>
+                          {planosCatalogo.map((p) => {
+                            const faixa = p.max_unidades == null ? `${p.min_unidades}+` : `${p.min_unidades}–${p.max_unidades}`;
+                            const label = `${p.categoria_espaco} · ${faixa} u. · ${p.nome} · ${brlDeCentavos(p.valor_mensal_centavos)}/mês${p.liberacao !== "publico" ? " [admin]" : ""}`;
+                            return (<option key={p.id} value={p.id} disabled={p.liberacao === "inativo"}>{label}</option>);
+                          })}
+                        </select>
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary">
+                        Valor mensal (R$)
+                        <input name="valor_mensal_brl" type="number" step="0.01" min={0} defaultValue={Number(valorBrl.toFixed(2))} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary">
+                        Próxima cobrança
+                        <input name="proxima_cobranca" type="date" defaultValue={a?.proxima_cobranca ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary">
+                        Mês grátis (dias)
+                        <input name="trial_dias_override" type="number" min={0} max={90} defaultValue={a?.trial_dias_override ?? 30} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary">
+                        Nome do plano
+                        <input name="plano_nome" defaultValue={a?.plano_nome ?? "Plataforma"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary">
+                        Status da assinatura
+                        <select name="status" defaultValue={a?.status ?? "active"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
+                          <option value="trial">trial</option>
+                          <option value="active">active</option>
+                          <option value="overdue">overdue</option>
+                          <option value="cancelled">cancelled</option>
+                        </select>
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary">
+                        Override
+                        <select name="situacao_override" defaultValue={a?.situacao_override ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
+                          <option value="">(automático)</option>
+                          <option value="isento">Isento (não cobra)</option>
+                          <option value="forcar_bloqueio">Forçar bloqueio</option>
+                        </select>
+                      </label>
+                      <label className="flex items-center gap-2 text-[11px] text-eid-text-secondary sm:col-span-2">
+                        <input type="checkbox" name="isento_total" defaultChecked={Boolean(a?.isento_total)} />
+                        Espaço sem cobrança da plataforma (isento total)
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                        Observações internas
+                        <textarea name="observacoes_admin" rows={2} defaultValue={a?.observacoes_admin ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                      </label>
+                      <div className="sm:col-span-2">
+                        <button type="submit" className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg">
+                          Salvar assinatura
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </details>
+
+                {/* Danger zone */}
+                <details className="group border-t border-red-500/20">
+                  <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-red-400/80 hover:bg-red-500/5">
+                    ▸ Zona de risco — excluir permanentemente
+                  </summary>
+                  <div className="border-t border-red-500/20 bg-red-500/5 px-4 pb-4 pt-3">
+                    <p className="mb-2 text-[11px] text-eid-text-secondary">
+                      Remove o espaço e todos os dados vinculados (cascade). <strong className="text-eid-fg">Irreversível.</strong>{" "}
+                      Digite <span className="font-mono font-bold text-eid-fg">EXCLUIR</span> para confirmar.
+                    </p>
+                    <form action={adminDeleteEspacoGenerico} className="flex flex-wrap items-end gap-2">
+                      <input type="hidden" name="id" value={l.id} />
+                      <input name="confirmar_exclusao" type="text" autoComplete="off" placeholder="EXCLUIR" className="eid-input-dark w-36 rounded-lg px-2 py-1.5 text-sm" />
+                      <button type="submit" className="rounded-lg border border-red-500/50 bg-red-500/15 px-3 py-1.5 text-[11px] font-bold text-red-200">
+                        Excluir do sistema
+                      </button>
+                    </form>
+                  </div>
                 </details>
               </div>
             );
@@ -636,175 +556,134 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
         </div>
       </section>
 
+      {/* ── Reivindicações ───────────────────────────────────────────── */}
       <section id="reivindicacoes">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h2 className="text-base font-bold text-eid-fg">Reivindicações de posse</h2>
-            <p className="mt-0.5 text-sm text-eid-text-secondary">Pedidos com documento comprobatório para validação oficial.</p>
-          </div>
-          {(() => {
-            const pending = claims.filter((c) => c.status === "pendente");
-            return pending.length > 0 ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/12 px-3 py-1 text-xs font-bold text-amber-200">
-                <span className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
-                {pending.length} pendente{pending.length > 1 ? "s" : ""}
+        <div className="flex flex-wrap items-center gap-3">
+          <h2 className="text-base font-bold text-eid-fg">Reivindicações de posse</h2>
+          {pendingClaimsCount > 0 ? (
+            <span className="flex items-center gap-1.5 rounded-full border border-amber-500/45 bg-amber-500/12 px-2.5 py-1 text-[11px] font-bold text-amber-300">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
               </span>
-            ) : null;
-          })()}
+              {pendingClaimsCount} pendente{pendingClaimsCount !== 1 ? "s" : ""}
+            </span>
+          ) : null}
         </div>
+        <p className="mt-1 text-xs text-eid-text-secondary">Pedidos com documento comprobatório para validação de propriedade.</p>
 
-        {claims.length === 0 ? (
-          <p className="mt-4 text-sm text-eid-text-secondary">Nenhuma reivindicação cadastrada.</p>
-        ) : (
-          <div className="mt-4 space-y-3">
-            {claims.map((claim) => {
-              const espaco = espacoMap.get(Number(claim.espaco_generico_id));
-              const profile = perfilMap.get(String(claim.solicitante_id ?? ""));
-              const isPending = claim.status === "pendente";
-              const isApproved = claim.status === "aprovado" || claim.status === "aprovada";
-              const signedUrl = signedUrlMap.get(claim.id);
+        <div className="mt-4 space-y-3">
+          {claims.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-eid-border-subtle py-10 text-center text-sm text-eid-text-secondary">
+              Nenhuma reivindicação registrada.
+            </div>
+          ) : null}
 
-              return (
-                <div
-                  key={claim.id}
-                  className={`overflow-hidden rounded-2xl border ${
-                    isPending
-                      ? "border-amber-500/35 bg-amber-500/[0.04]"
-                      : isApproved
-                        ? "border-emerald-500/25 bg-emerald-500/[0.03]"
-                        : "border-[color:var(--eid-border-subtle)] bg-eid-card/40"
-                  }`}
-                >
-                  {/* Header */}
-                  <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                            isPending
-                              ? "bg-amber-500/18 text-amber-300"
-                              : isApproved
-                                ? "bg-emerald-500/18 text-emerald-300"
-                                : "bg-red-500/15 text-red-300"
-                          }`}
-                        >
-                          {isPending ? "● Pendente" : isApproved ? "✓ Aprovado" : "✕ Rejeitado"}
-                        </span>
-                        <span className="font-mono text-[10px] text-eid-text-secondary">#{claim.id}</span>
-                        {claim.revisado_em && !isPending ? (
-                          <span className="text-[10px] text-eid-text-secondary">
-                            Revisto em {new Date(claim.revisado_em).toLocaleString("pt-BR")}
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="mt-1.5 text-sm font-bold text-eid-fg">
-                        {espaco?.nome_publico ?? `Espaço #${claim.espaco_generico_id}`}
-                      </p>
-                      <p className="text-[11px] text-eid-text-secondary">
-                        {espaco?.localizacao ?? "Localização não informada"}
-                      </p>
+          {claims.map((claim) => {
+            const espaco = espacoMap.get(Number(claim.espaco_generico_id));
+            const profile = perfilMap.get(String(claim.solicitante_id ?? ""));
+            const docUrl = signedUrlMap.get(claim.id);
+            const isPending = claim.status === "pendente";
+            const isApproved = claim.status === "aprovado";
+
+            return (
+              <div
+                key={claim.id}
+                className={`overflow-hidden rounded-2xl border ${
+                  isPending
+                    ? "border-amber-500/35 bg-amber-500/[0.04]"
+                    : isApproved
+                      ? "border-emerald-500/25 bg-emerald-500/[0.03]"
+                      : "border-[color:var(--eid-border-subtle)] bg-eid-card/40"
+                }`}
+              >
+                {/* Claim header */}
+                <div className="flex flex-wrap items-start justify-between gap-3 p-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isPending ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/45 bg-amber-500/12 px-2 py-0.5 text-[10px] font-bold text-amber-300">● Pendente</span>
+                      ) : isApproved ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">✓ Aprovado</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-red-500/35 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-300">✕ Rejeitado</span>
+                      )}
+                      <span className="text-[10px] text-eid-text-muted">#{claim.id}</span>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1 text-right">
-                      <p className="text-xs font-semibold text-eid-fg">{profile?.nome ?? "—"}</p>
-                      <p className="text-[10px] text-eid-text-secondary">
-                        {claim.criado_em ? new Date(claim.criado_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—"}
-                      </p>
-                    </div>
+                    <p className="mt-1 text-sm font-bold text-eid-fg">
+                      {espaco?.nome_publico ?? `Espaço #${claim.espaco_generico_id}`}
+                    </p>
+                    <p className="text-[11px] text-eid-text-secondary">{espaco?.localizacao ?? "Localização não informada"}</p>
                   </div>
-
-                  {/* Body */}
-                  <div className="grid gap-3 border-t border-[color:var(--eid-border-subtle)]/50 px-4 py-3 sm:grid-cols-2">
-                    {/* Documento + mensagem */}
-                    <div className="space-y-2">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">Documento</p>
-                        {signedUrl ? (
-                          <a
-                            href={signedUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-1 inline-flex items-center gap-1.5 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/8 px-3 py-1.5 text-xs font-semibold text-eid-primary-300 transition hover:border-eid-primary-500/50"
-                          >
-                            <svg viewBox="0 0 14 14" className="h-3.5 w-3.5" fill="none">
-                              <path d="M2 10V12h10v-2M7 2v7M4 6l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                            Abrir comprovante
-                          </a>
-                        ) : (
-                          <p className="mt-1 text-xs text-eid-text-secondary">Sem arquivo</p>
-                        )}
-                      </div>
-                      {claim.mensagem ? (
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">Mensagem do solicitante</p>
-                          <p className="mt-1 text-xs text-eid-fg">{claim.mensagem}</p>
-                        </div>
-                      ) : null}
-                      {claim.observacoes_admin ? (
-                        <div className="rounded-lg border border-amber-500/25 bg-amber-500/8 px-2.5 py-2">
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-amber-300">Obs. admin</p>
-                          <p className="mt-0.5 text-xs text-amber-100">{claim.observacoes_admin}</p>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    {/* Ação */}
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">
-                        {isPending ? "Decisão" : "Reanalisar"}
-                      </p>
-                      <form action={adminReviewEspacoClaim} className="mt-2 space-y-3">
-                        <input type="hidden" name="claim_id" value={claim.id} />
-                        <label className="block text-[11px] text-eid-text-secondary">
-                          Mensalidade da plataforma
-                          <select
-                            name="cobra_mensalidade_plataforma"
-                            defaultValue="sim"
-                            className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-xs"
-                          >
-                            <option value="sim">Sim, cobra mensalidade</option>
-                            <option value="nao">Não — espaço isento</option>
-                          </select>
-                          <span className="mt-1 block text-[10px] text-eid-text-muted">
-                            Ajustável depois em &ldquo;Editar assinatura&rdquo; do local.
-                          </span>
-                        </label>
-                        <label className="block text-[11px] text-eid-text-secondary">
-                          Observações internas
-                          <textarea
-                            name="observacoes_admin"
-                            rows={2}
-                            defaultValue={claim.observacoes_admin ?? ""}
-                            className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-xs"
-                            placeholder="Notas da revisão…"
-                          />
-                        </label>
-                        <div className="flex gap-2">
-                          <button
-                            type="submit"
-                            name="decision"
-                            value="aprovar"
-                            className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-500/12 px-3 py-2 text-xs font-bold text-emerald-200 transition hover:border-emerald-500/60 hover:bg-emerald-500/18"
-                          >
-                            ✓ Aprovar
-                          </button>
-                          <button
-                            type="submit"
-                            name="decision"
-                            value="rejeitar"
-                            className="flex-1 rounded-xl border border-red-500/35 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300 transition hover:border-red-500/55 hover:bg-red-500/15"
-                          >
-                            ✕ Rejeitar
-                          </button>
-                        </div>
-                      </form>
-                    </div>
+                  <div className="text-right text-[11px] text-eid-text-secondary">
+                    <p className="font-semibold text-eid-fg">{profile?.nome ?? "Solicitante desconhecido"}</p>
+                    <p>{claim.criado_em ? new Date(claim.criado_em).toLocaleDateString("pt-BR") : "—"}</p>
+                    {claim.revisado_em ? <p className="text-[10px]">Revisto {new Date(claim.revisado_em).toLocaleDateString("pt-BR")}</p> : null}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                {/* Claim body */}
+                <div className="grid gap-3 border-t border-[color:var(--eid-border-subtle)]/40 px-4 py-3 sm:grid-cols-2">
+                  <div>
+                    {claim.mensagem ? (
+                      <div>
+                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Mensagem do solicitante</p>
+                        <p className="text-[11px] text-eid-fg">{claim.mensagem}</p>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-eid-text-secondary">Sem mensagem</p>
+                    )}
+                    {claim.observacoes_admin ? (
+                      <div className="mt-2 rounded-lg border border-amber-500/25 bg-amber-500/8 px-3 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-400">Obs. admin</p>
+                        <p className="mt-0.5 text-[11px] text-amber-200">{claim.observacoes_admin}</p>
+                      </div>
+                    ) : null}
+                    {docUrl ? (
+                      <a href={docUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1.5 text-[11px] font-semibold text-eid-primary-300 hover:bg-eid-primary-500/18">
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" aria-hidden>
+                          <path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6L9 2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
+                          <path d="M9 2v4h4M5 9h6M5 11.5h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                        </svg>
+                        Ver documento
+                      </a>
+                    ) : (
+                      <p className="mt-2 text-[11px] text-eid-text-muted">Sem documento anexado</p>
+                    )}
+                  </div>
+
+                  {/* Decision form */}
+                  <form action={adminReviewEspacoClaim} className="space-y-2.5">
+                    <input type="hidden" name="claim_id" value={claim.id} />
+                    <label className="block text-[11px] text-eid-text-secondary">
+                      Cobrar mensalidade da plataforma?
+                      <select name="cobra_mensalidade_plataforma" defaultValue="sim" className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-xs">
+                        <option value="sim">Sim, cobrar mensalidade</option>
+                        <option value="nao">Não — espaço isento (não exibir mensalidade)</option>
+                      </select>
+                      <span className="mt-0.5 block text-[10px] text-eid-text-muted">Pode ser alterado depois em "Assinatura" do espaço.</span>
+                    </label>
+                    <textarea
+                      name="observacoes_admin"
+                      rows={2}
+                      defaultValue={claim.observacoes_admin ?? ""}
+                      placeholder="Observações da revisão"
+                      className="eid-input-dark w-full rounded-lg px-2 py-1.5 text-xs"
+                    />
+                    <div className="flex gap-2">
+                      <button type="submit" name="decision" value="aprovar" className="flex-1 rounded-lg border border-emerald-500/40 bg-emerald-500/12 px-3 py-2 text-xs font-bold text-emerald-200 hover:bg-emerald-500/20">
+                        ✓ Aprovar
+                      </button>
+                      <button type="submit" name="decision" value="rejeitar" className="flex-1 rounded-lg border border-red-500/35 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300 hover:bg-red-500/18">
+                        ✕ Rejeitar
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </section>
     </div>
   );

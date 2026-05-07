@@ -41,6 +41,8 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
       if (espPublic) redirect(espPublic);
       notFound();
     }
+    // Sem papel reconhecido: não há perfil público para exibir
+    notFound();
   }
 
   const perfilSelect =
@@ -64,6 +66,7 @@ export default async function PerfilPublicoPage({ params, searchParams }: Props)
 
   const canOpenLocais = canAccessSystemFeature(featureCfg, "locais", user.id, false);
   if (!perfil) notFound();
+  if (perfil.tipo_usuario === "pendente" && !isSelf) notFound();
 
   let disponivelAmistosoVal = perfil.disponivel_amistoso;
   let disponivelAmistosoAteVal = perfil.disponivel_amistoso_ate as string | null | undefined;
