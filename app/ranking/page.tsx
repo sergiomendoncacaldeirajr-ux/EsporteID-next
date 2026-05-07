@@ -119,7 +119,6 @@ export default async function RankingPage({ searchParams }: Props) {
               </div>
             </div>
           </div>
-          </div>
         </div>
 
         <section className="mt-4 md:mt-6">
