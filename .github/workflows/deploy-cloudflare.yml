@@ -23,6 +23,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       # NEXT_PUBLIC_* precisam existir no build do Next para serem embutidas no bundle cliente.
       NEXT_PUBLIC_SUPABASE_URL: "https://mszefppevculardthqrt.supabase.co"
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_TIxdH94fmzrKT8wJjdx0kg_Q57FYrqh"
@@ -32,7 +33,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           cache: npm
 
       - run: npm ci
