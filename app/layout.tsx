@@ -129,13 +129,14 @@ export default async function RootLayout({
       papeis = papeisResult;
       canShowAuthenticatedChrome = legalAcceptanceIsCurrent(profile);
       const cfg = await getSystemFeatureConfig(auth.supabase);
+      const currentUser = user;
       supportModulosEmBreve = ALL_SYSTEM_FEATURE_KEYS.filter((k) => {
         const entry = cfg[k];
         // Módulo ativo para todos: nunca ocultar no suporte
         if (entry.mode === "ativo") return false;
         // Qualquer outro modo (em_breve, desenvolvimento, teste):
         // testers enxergam como disponível; demais usuários não veem
-        if (entry.testers.includes(user.id)) return false;
+        if (entry.testers.includes(currentUser.id)) return false;
         return true;
       });
     }
