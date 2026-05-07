@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { EmailCorrectionInline } from "@/components/auth/email-correction-inline";
+import { EMAIL_CODE_MESSAGES } from "@/lib/auth/messages";
+import { useResendEmailCode } from "@/components/auth/use-resend-email-code";
 import { LogoFull } from "@/components/brand/logo-full";
-import { createClient } from "@/lib/supabase/client";
-import { getSignupEmailRedirectTo } from "@/lib/auth/email-redirects";
 import { entrarComSenha } from "@/app/login/actions";
 import { loginActionInitial } from "@/app/login/login-state";
 
@@ -86,11 +87,16 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
-  const [resending, setResending] = useState(false);
+  const [correctedPendingEmail, setCorrectedPendingEmail] = useState<string | null>(null);
+  const { resending, resend } = useResendEmailCode({ mode: "signup" });
 
   const displayError = bootstrapError ?? actionState.error ?? localError;
   const pendingConfirmationEmail = actionState.pendingConfirmationEmail;
-
+  const pendingConfirmationEmailEffective = (
+    correctedPendingEmail ?? pendingConfirmationEmail ?? email
+  )
+    .trim()
+    .toLowerCase();
   const handleLoginSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -127,39 +133,24 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
   async function handleResendConfirmation() {
     setLocalError(null);
     setInfo(null);
-    const emailNorm = (pendingConfirmationEmail ?? email).trim().toLowerCase();
+    const emailNorm = pendingConfirmationEmailEffective;
     if (!emailNorm) {
       setLocalError("Informe seu e-mail para reenviar o código.");
       return;
     }
-
-    setResending(true);
-    try {
-      const supabase = createClient();
-      const origin = typeof window !== "undefined" ? window.location.origin : "";
-      const { error: resendErr } = await supabase.auth.resend({
-        type: "signup",
-        email: emailNorm,
-        options: {
-          ...(origin
-            ? {
-                emailRedirectTo: getSignupEmailRedirectTo(origin),
-              }
-            : {}),
-        },
-      });
-
-      if (resendErr) {
-        setLocalError(resendErr.message);
-        return;
-      }
-      setInfo("Código de confirmação reenviado. Verifique seu e-mail.");
-      router.push(`/verificar-codigo?email=${encodeURIComponent(emailNorm)}`);
-    } catch (e) {
-      setLocalError(e instanceof Error ? e.message : "Não foi possível reenviar. Tente de novo.");
-    } finally {
-      setResending(false);
+    const result = await resend(emailNorm);
+    if (!result.ok) {
+      setLocalError(result.error ?? "Não foi possível reenviar.");
+      return;
     }
+    setInfo(result.message ?? EMAIL_CODE_MESSAGES.resendSuccessSignup);
+    router.push(`/verificar-codigo?email=${encodeURIComponent(emailNorm)}`);
+  }
+
+  function applyPendingEmailEdit(normalized: string) {
+    setLocalError(null);
+    setCorrectedPendingEmail(normalized);
+    setInfo(EMAIL_CODE_MESSAGES.correctedEmailSignup);
   }
 
   return (
@@ -214,6 +205,16 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
             {pendingConfirmationEmail ? (
               <div className="mb-[15px] rounded-xl border border-eid-action-500/30 bg-eid-action-500/10 px-3 py-2.5 text-center text-[12px] text-eid-fg">
                 <p className="mb-2">Confirme seu e-mail para continuar.</p>
+                <p className="mb-2 text-[11px] text-eid-text-secondary">
+                  E-mail atual: <span className="font-semibold text-eid-fg">{pendingConfirmationEmailEffective}</span>
+                </p>
+                <div className="mb-2">
+                  <EmailCorrectionInline
+                    currentEmail={pendingConfirmationEmailEffective}
+                    onApplyEmail={applyPendingEmailEdit}
+                    inputId="pending-email-edit"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={handleResendConfirmation}
@@ -223,7 +224,7 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
                   {resending ? "Reenviando código..." : "Reenviar código de confirmação"}
                 </button>
                 <Link
-                  href={`/verificar-codigo?email=${encodeURIComponent(pendingConfirmationEmail)}`}
+                  href={`/verificar-codigo?email=${encodeURIComponent(pendingConfirmationEmailEffective)}`}
                   className="mt-2 inline-block font-semibold text-eid-action-500 hover:text-eid-action-400"
                 >
                   Já tenho o código
