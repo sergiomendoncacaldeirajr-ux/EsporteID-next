@@ -59,9 +59,9 @@ export async function EditarPerfilStream({ viewerId, sp }: EditarPerfilStreamPro
           </div>
         </section>
         <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
-          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-            <p className="text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg">Mídia do perfil</p>
-            <span className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.04em] text-eid-primary-300">
+          <div className="flex items-center justify-between border-b border-[rgba(37,99,235,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-3 py-2">
+            <p className="text-[11px] font-black uppercase tracking-[0.04em] text-eid-primary-200">Mídia do perfil</p>
+            <span className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.04em] text-eid-primary-300 shadow-[0_0_8px_-3px_rgba(37,99,235,0.3)]">
               <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <rect x="4" y="6" width="16" height="12" rx="2" />
                 <circle cx="9" cy="10" r="1.5" />
@@ -76,9 +76,9 @@ export async function EditarPerfilStream({ viewerId, sp }: EditarPerfilStreamPro
         </section>
 
         <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
-          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-            <p className="text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg">Dados principais</p>
-            <span className="inline-flex items-center gap-1 rounded-full border border-[#F5D8A6] bg-[#FFF2DF] px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.04em] text-[#B8791D]">
+          <div className="flex items-center justify-between border-b border-[rgba(249,115,22,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-action-500)_7%,var(--eid-surface)),color-mix(in_srgb,var(--eid-action-500)_3%,var(--eid-surface)))] px-3 py-2">
+            <p className="text-[11px] font-black uppercase tracking-[0.04em] text-eid-action-300">Dados principais</p>
+            <span className="inline-flex items-center gap-1 rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.04em] text-eid-action-300 shadow-[0_0_8px_-3px_rgba(249,115,22,0.3)]">
               <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <circle cx="12" cy="8" r="3" />
                 <path d="M6 18a6 6 0 0 1 12 0" />

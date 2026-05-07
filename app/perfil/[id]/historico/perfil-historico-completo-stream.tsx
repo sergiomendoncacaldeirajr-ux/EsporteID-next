@@ -63,47 +63,47 @@ export async function PerfilHistoricoCompletoStream({ params, searchParams }: Pe
     <main className={PROFILE_HISTORICO_FULLSCREEN_MAIN_CLASS}>
       {!isEmbed ? <PerfilBackLink href={`/perfil/${id}`} className="mb-2 shrink-0 self-start" /> : null}
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex items-center justify-between gap-2">
-          <div className="inline-flex items-center gap-2">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-eid-primary-500/12 text-eid-primary-300">
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M4 19V9" />
-                <path d="M10 19V5" />
-                <path d="M16 19v-8" />
-                <path d="M22 19v-4" />
+        <div className="relative overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_96%,transparent))] px-4 py-4 shadow-[0_8px_28px_-16px_rgba(15,23,42,0.45),inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-eid-primary-500/8 blur-3xl" aria-hidden />
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[rgba(37,99,235,0.22)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-surface)))] text-eid-primary-300 shadow-[0_0_14px_-4px_rgba(37,99,235,0.3)]">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                <path d="M4 19V9" /><path d="M10 19V5" /><path d="M16 19v-8" /><path d="M22 19v-4" />
               </svg>
             </span>
-            <h1 className="text-[13px] font-black uppercase tracking-[0.03em] text-eid-fg">Histórico completo</h1>
+            <div className="min-w-0">
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-eid-primary-400">Perfil</p>
+              <h1 className="text-[15px] font-black leading-tight tracking-tight text-eid-fg">Histórico completo</h1>
+            </div>
           </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-eid-text-secondary">
+            <span className="font-semibold text-eid-fg">{perfil.nome ?? "Atleta"}</span> · confrontos individuais. Para resultados por esporte, acesse as estatísticas EID no perfil.
+          </p>
         </div>
-        <p className="mt-0.5 text-[13px] text-eid-text-secondary">{perfil.nome ?? "Atleta"} · somente confrontos individuais</p>
-        <p className="mt-2 text-[12px] leading-relaxed text-eid-text-secondary">
-          Aqui estão todos os confrontos deste perfil. Para ver resultados por esporte, volte ao perfil e acesse as estatísticas no EID de cada esporte.
-        </p>
 
-        <div className="mt-3 grid grid-cols-5 gap-1">
-          <div className="eid-list-item rounded-md bg-eid-surface/45 px-1 py-1 text-center">
+        <div className="mt-3 grid grid-cols-5 gap-1.5">
+          <div className="overflow-hidden rounded-xl border border-[rgba(16,185,129,0.2)] bg-[linear-gradient(145deg,color-mix(in_srgb,#10b981_12%,var(--eid-card)),color-mix(in_srgb,#059669_6%,var(--eid-surface)))] px-1 py-2 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <p className="text-[18px] font-black leading-none text-emerald-300">{totais.vitorias}</p>
-            <p className="mt-0.5 text-[8px] font-bold uppercase text-emerald-300">Vitória</p>
+            <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.06em] text-emerald-400/80">Vitórias</p>
           </div>
-          <div className="eid-list-item rounded-md bg-eid-surface/45 px-1 py-1 text-center">
+          <div className="overflow-hidden rounded-xl border border-[rgba(244,63,94,0.2)] bg-[linear-gradient(145deg,color-mix(in_srgb,#f43f5e_12%,var(--eid-card)),color-mix(in_srgb,#e11d48_6%,var(--eid-surface)))] px-1 py-2 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <p className="text-[18px] font-black leading-none text-rose-300">{totais.derrotas}</p>
-            <p className="mt-0.5 text-[8px] font-bold uppercase text-rose-300">Derrotas</p>
+            <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.06em] text-rose-400/80">Derrotas</p>
           </div>
-          <div className="eid-list-item rounded-md bg-eid-surface/45 px-1 py-1 text-center">
+          <div className="overflow-hidden rounded-xl border border-[rgba(37,99,235,0.2)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-700)_6%,var(--eid-surface)))] px-1 py-2 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <p className="text-[18px] font-black leading-none text-eid-primary-300">{totais.empates}</p>
-            <p className="mt-0.5 text-[8px] font-bold uppercase text-eid-primary-300">Empates</p>
+            <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.06em] text-eid-primary-400/80">Empates</p>
           </div>
-          <div className="eid-list-item rounded-md bg-eid-surface/45 px-1 py-1 text-center">
+          <div className="overflow-hidden rounded-xl border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-surface)_85%,var(--eid-primary-900)_15%),color-mix(in_srgb,var(--eid-bg)_90%,transparent))] px-1 py-2 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <p className="text-[18px] font-black leading-none text-eid-fg">{totais.rank}</p>
-            <p className="mt-0.5 text-[8px] font-bold uppercase text-eid-text-secondary">Rank</p>
+            <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.06em] text-eid-text-secondary">Rank</p>
           </div>
-          <div className="eid-list-item rounded-md bg-eid-surface/45 px-1 py-1 text-center">
-            <p className="text-[18px] font-black leading-none text-eid-fg">{totais.torneio}</p>
-            <p className="mt-0.5 text-[8px] font-bold uppercase text-eid-text-secondary">Torneios</p>
+          <div className="overflow-hidden rounded-xl border border-[rgba(249,115,22,0.18)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)),color-mix(in_srgb,var(--eid-action-500)_5%,var(--eid-surface)))] px-1 py-2 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <p className="text-[18px] font-black leading-none text-eid-action-400">{totais.torneio}</p>
+            <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.06em] text-eid-action-400/80">Torneios</p>
           </div>
         </div>
-        <div className="mt-3 h-px w-full bg-[color:var(--eid-border-subtle)]" />
+        <div className="mt-3 h-px w-full bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-border-subtle)),transparent)]" />
 
         {partidas.length > 0 ? (
           <EidStreamSection className="contents" fallback={<PerfilHistoricoCompletoListaSkeleton />}>

@@ -121,16 +121,20 @@ export default async function ContaEsportesEidPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-bold tracking-tight text-eid-fg sm:text-xl">Esportes e EID</h1>
-            <p className="mt-1 text-sm text-eid-text-secondary">
-              Configure por esporte se voce atua como atleta, professor ou ambos.
-            </p>
+        <div className="relative mb-5 overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.18)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_96%,transparent))] px-4 py-4 shadow-[0_6px_22px_-14px_rgba(15,23,42,0.4),inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-eid-primary-500/8 blur-3xl" aria-hidden />
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-eid-primary-400">Configurações</p>
+              <h1 className="mt-0.5 text-[17px] font-black leading-tight tracking-tight text-eid-fg sm:text-xl">Esportes e EID</h1>
+              <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
+                Configure por esporte se você atua como atleta, professor ou ambos.
+              </p>
+            </div>
+            <Link href="/dashboard" className="shrink-0 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-eid-primary-300 transition hover:bg-eid-primary-500/18">
+              Painel
+            </Link>
           </div>
-          <Link href="/dashboard" className="shrink-0 text-xs font-medium text-eid-primary-300 hover:text-eid-fg">
-            Painel
-          </Link>
         </div>
 
         {!needsSport ? (

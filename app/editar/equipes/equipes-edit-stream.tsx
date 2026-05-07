@@ -70,9 +70,9 @@ export async function EditarEquipesStream({ viewerId, sp }: EditarEquipesStreamP
           </div>
         </section>
         <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
-          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Equipes</p>
-            <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-300">
+          <div className="flex items-center justify-between border-b border-[rgba(37,99,235,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-primary-300/80">Equipes</p>
+            <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-300 shadow-[0_0_8px_-3px_rgba(37,99,235,0.3)]">
               Gestão
             </span>
           </div>

@@ -88,9 +88,9 @@ export async function EditarPerformanceEidStream({
 
         {!needsSport ? (
           <section className="eid-surface-panel overflow-hidden rounded-2xl p-0 text-sm text-eid-text-secondary">
-            <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-              <p className="text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg">Esportes e EID</p>
-              <span className="inline-flex items-center gap-1 rounded-full border border-[#F5D8A6] bg-[#FFF2DF] px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.04em] text-[#B8791D]">
+            <div className="flex items-center justify-between border-b border-[rgba(249,115,22,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-action-500)_7%,var(--eid-surface)),color-mix(in_srgb,var(--eid-action-500)_3%,var(--eid-surface)))] px-3 py-2">
+              <p className="text-[11px] font-black uppercase tracking-[0.04em] text-eid-action-300">Esportes e EID</p>
+              <span className="inline-flex items-center gap-1 rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.04em] text-eid-action-300 shadow-[0_0_8px_-3px_rgba(249,115,22,0.3)]">
                 <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M4 18.5h16" />
                   <path d="m6.5 15.5 3.5-4 3 2.6 4.5-5.1" />
@@ -117,9 +117,9 @@ export async function EditarPerformanceEidStream({
           </section>
         ) : (
           <section className="eid-surface-panel overflow-hidden rounded-2xl p-0">
-            <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-              <p className="text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg">Esportes e EID</p>
-              <span className="inline-flex items-center gap-1 rounded-full border border-[#F5D8A6] bg-[#FFF2DF] px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.04em] text-[#B8791D]">
+            <div className="flex items-center justify-between border-b border-[rgba(249,115,22,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-action-500)_7%,var(--eid-surface)),color-mix(in_srgb,var(--eid-action-500)_3%,var(--eid-surface)))] px-3 py-2">
+              <p className="text-[11px] font-black uppercase tracking-[0.04em] text-eid-action-300">Esportes e EID</p>
+              <span className="inline-flex items-center gap-1 rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.04em] text-eid-action-300 shadow-[0_0_8px_-3px_rgba(249,115,22,0.3)]">
                 <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                   <path d="M4 18.5h16" />
                   <path d="m6.5 15.5 3.5-4 3 2.6 4.5-5.1" />

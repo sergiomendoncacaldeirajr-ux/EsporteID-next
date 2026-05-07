@@ -681,43 +681,45 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
         ) : null}
 
         <div className={`mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS}`}>
-          <div className="px-3 py-3 sm:px-4 sm:py-4">
-            <p className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.16em] text-eid-action-400">
+          <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-eid-action-500/8 blur-3xl" aria-hidden />
+          <div className="pointer-events-none absolute -bottom-6 left-4 h-24 w-24 rounded-full bg-eid-primary-500/10 blur-3xl" aria-hidden />
+          <div className="relative px-3 py-3 sm:px-4 sm:py-4">
+            <p className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-eid-action-400">
               <span aria-hidden>{esporteIcon}</span>
               {nomeEsporte}
             </p>
-            <h1 className="mt-1 text-base font-black leading-tight text-eid-fg sm:text-lg">{perfil.nome ?? "Atleta"}</h1>
+            <h1 className="mt-1 text-[17px] font-black leading-tight tracking-tight text-eid-fg sm:text-xl">{perfil.nome ?? "Atleta"}</h1>
             <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary">
               {resumoAtivo.experienceLabel}
             </p>
 
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <div className="rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-2 text-center shadow-[0_8px_20px_-14px_rgba(37,99,235,0.55)]">
-                <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Nota EID</p>
+              <div className="overflow-hidden rounded-xl border border-[rgba(37,99,235,0.3)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-700)_10%,var(--eid-surface)))] px-2 py-2.5 text-center shadow-[0_6px_18px_-10px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]">
+                <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-eid-primary-300/70">Nota EID</p>
                 <p className="mt-0.5 text-xl font-black tabular-nums text-eid-fg">{resumoAtivo.eid.toFixed(2)}</p>
               </div>
-              <div className="rounded-xl border border-eid-action-500/30 bg-eid-surface/55 px-2 py-2 text-center">
-                <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">{resumoAtivo.pointsLabel}</p>
+              <div className="overflow-hidden rounded-xl border border-[rgba(249,115,22,0.25)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-500)_12%,var(--eid-card)),color-mix(in_srgb,var(--eid-action-500)_6%,var(--eid-surface)))] px-2 py-2.5 text-center shadow-[0_6px_18px_-10px_rgba(249,115,22,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]">
+                <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-eid-action-400/80">{resumoAtivo.pointsLabel}</p>
                 <p className="mt-0.5 text-xl font-black tabular-nums text-eid-fg">
                   {resumoAtivo.pontos == null ? "—" : resumoAtivo.pontos}
                 </p>
               </div>
-              <div className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-2 py-2 text-center">
-                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Vitórias</p>
-                <p className="mt-0.5 text-lg font-black tabular-nums text-emerald-400">{resumoAtivo.vit}</p>
+              <div className="overflow-hidden rounded-xl border border-[rgba(16,185,129,0.28)] bg-[linear-gradient(145deg,color-mix(in_srgb,#10b981_14%,var(--eid-card)),color-mix(in_srgb,#059669_7%,var(--eid-surface)))] px-2 py-2.5 text-center shadow-[0_6px_18px_-10px_rgba(16,185,129,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]">
+                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-emerald-400/80">Vitórias</p>
+                <p className="mt-0.5 text-lg font-black tabular-nums text-emerald-300">{resumoAtivo.vit}</p>
               </div>
-              <div className="rounded-xl border border-rose-500/35 bg-rose-500/10 px-2 py-2 text-center">
-                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Derrotas</p>
-                <p className="mt-0.5 text-lg font-black tabular-nums text-rose-400">{resumoAtivo.der}</p>
+              <div className="overflow-hidden rounded-xl border border-[rgba(244,63,94,0.28)] bg-[linear-gradient(145deg,color-mix(in_srgb,#f43f5e_14%,var(--eid-card)),color-mix(in_srgb,#e11d48_7%,var(--eid-surface)))] px-2 py-2.5 text-center shadow-[0_6px_18px_-10px_rgba(244,63,94,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]">
+                <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-rose-400/80">Derrotas</p>
+                <p className="mt-0.5 text-lg font-black tabular-nums text-rose-300">{resumoAtivo.der}</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className={`mt-3 overflow-hidden ${PROFILE_CARD_BASE}`}>
-          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Tendência EID</p>
-            <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-primary-300">
+          <div className="flex items-center justify-between border-b border-[rgba(37,99,235,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-3 py-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-primary-300/80">Tendência EID</p>
+            <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-primary-300 shadow-[0_0_8px_-3px_rgba(37,99,235,0.3)]">
               Histórico
             </span>
           </div>
@@ -741,9 +743,9 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
         </div>
 
         <div className={`mt-3 overflow-hidden ${PROFILE_CARD_BASE}`}>
-          <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Ver estatísticas</p>
-            <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
+          <div className="flex items-center justify-between border-b border-[rgba(249,115,22,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-action-500)_7%,var(--eid-surface)),color-mix(in_srgb,var(--eid-action-500)_3%,var(--eid-surface)))] px-3 py-2">
+            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-eid-action-400/80">Ver estatísticas</p>
+            <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400 shadow-[0_0_8px_-3px_rgba(249,115,22,0.3)]">
               Modalidade
             </span>
           </div>
@@ -1213,9 +1215,9 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
           <div className="mt-2 space-y-3">
             {showIndividual ? (
               <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
-                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Individual</p>
-                  <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-primary-300">
+                <div className="flex items-center justify-between border-b border-[rgba(37,99,235,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-primary-300/80">Individual</p>
+                  <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-primary-300 shadow-[0_0_8px_-3px_rgba(37,99,235,0.3)]">
                     Top confrontos
                   </span>
                 </div>
@@ -1253,9 +1255,9 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
 
             {(showDupla || showTime) ? (
               <div className={`overflow-hidden ${PROFILE_CARD_BASE}`}>
-                <div className="flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Dupla/Time</p>
-                  <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400">
+                <div className="flex items-center justify-between border-b border-[rgba(249,115,22,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-action-500)_7%,var(--eid-surface)),color-mix(in_srgb,var(--eid-action-500)_3%,var(--eid-surface)))] px-3 py-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-action-400/80">Dupla/Time</p>
+                  <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-eid-action-400 shadow-[0_0_8px_-3px_rgba(249,115,22,0.3)]">
                     Histórico direto
                   </span>
                 </div>

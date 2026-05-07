@@ -113,7 +113,7 @@ export async function CadastrarLocalStream({ searchParams }: CadastrarLocalStrea
             aria-hidden
           />
           <div className="relative z-[1] grid grid-cols-[44px_minmax(0,1fr)] items-start gap-3 sm:grid-cols-[56px_minmax(0,1fr)] sm:items-center sm:gap-4">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_88%,var(--eid-bg)_12%)] text-eid-primary-500 shadow-[0_6px_16px_-10px_rgba(37,99,235,0.45)] sm:h-14 sm:w-14">
+            <div className="grid h-11 w-11 place-items-center rounded-2xl border border-[rgba(37,99,235,0.28)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-700)_10%,var(--eid-surface)))] text-eid-primary-300 shadow-[0_6px_16px_-8px_rgba(37,99,235,0.5),0_0_14px_-4px_rgba(37,99,235,0.3),inset_0_1px_0_rgba(255,255,255,0.08)] sm:h-14 sm:w-14">
               <svg viewBox="0 0 24 24" className="h-6 w-6 sm:h-7 sm:w-7" fill="currentColor" aria-hidden>
                 <path d="M12 2.5A7.5 7.5 0 0 0 4.5 10c0 5.8 7.5 11.5 7.5 11.5s7.5-5.7 7.5-11.5A7.5 7.5 0 0 0 12 2.5Zm0 10.2a2.7 2.7 0 1 1 0-5.4 2.7 2.7 0 0 1 0 5.4Z" />
               </svg>
