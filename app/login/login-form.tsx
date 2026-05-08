@@ -205,32 +205,76 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
               </p>
             )}
             {pendingConfirmationEmail ? (
-              <div className="mb-[15px] rounded-xl border border-eid-action-500/30 bg-eid-action-500/10 px-3 py-2.5 text-center text-[12px] text-eid-fg">
-                <p className="mb-2">Confirme seu e-mail para continuar.</p>
-                <p className="mb-2 text-[11px] text-eid-text-secondary">
-                  E-mail atual: <span className="font-semibold text-eid-fg">{pendingConfirmationEmailEffective}</span>
-                </p>
-                <div className="mb-2">
-                  <EmailCorrectionInline
-                    currentEmail={pendingConfirmationEmailEffective}
-                    onApplyEmail={applyPendingEmailEdit}
-                    inputId="pending-email-edit"
-                  />
+              <div className="mb-4 overflow-hidden rounded-[16px] border border-eid-action-500/25 bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-action-500)_8%,var(--eid-card)),color-mix(in_srgb,var(--eid-action-500)_4%,var(--eid-card))_60%,var(--eid-card))]">
+                {/* Top strip */}
+                <div className="flex items-center gap-2 border-b border-eid-action-500/15 bg-eid-action-500/8 px-3.5 py-2.5">
+                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-eid-action-500/20 text-eid-action-400">
+                    <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+                      <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                  </span>
+                  <p className="text-[12px] font-bold text-eid-fg">Confirme seu e-mail para entrar</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleResendConfirmation}
-                  disabled={resending}
-                  className="w-full rounded-lg bg-eid-action-500 px-3 py-2 text-[12px] font-bold text-white transition hover:bg-eid-action-400 disabled:opacity-60"
-                >
-                  {resending ? "Reenviando código..." : "Reenviar código de confirmação"}
-                </button>
-                <Link
-                  href={`/verificar-codigo?email=${encodeURIComponent(pendingConfirmationEmailEffective)}`}
-                  className="mt-2 inline-block font-semibold text-eid-action-500 hover:text-eid-action-400"
-                >
-                  Já tenho o código
-                </Link>
+
+                {/* Body */}
+                <div className="px-3.5 py-3">
+                  {/* Email chip */}
+                  <div className="mb-3 flex items-center justify-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-[color:var(--eid-field-bg)] px-3 py-2">
+                    <svg viewBox="0 0 24 24" width={13} height={13} fill="currentColor" className="shrink-0 text-eid-action-400" aria-hidden>
+                      <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                    </svg>
+                    <span className="min-w-0 truncate text-[12px] font-semibold text-eid-fg">
+                      {pendingConfirmationEmailEffective}
+                    </span>
+                  </div>
+
+                  {/* Email correction */}
+                  <div className="mb-3">
+                    <EmailCorrectionInline
+                      currentEmail={pendingConfirmationEmailEffective}
+                      onApplyEmail={applyPendingEmailEdit}
+                      inputId="pending-email-edit"
+                      triggerLabel="Errou o e-mail? Corrigir"
+                      triggerClassName="w-full text-center text-[11.5px] font-semibold text-eid-text-muted transition hover:text-eid-action-500"
+                    />
+                  </div>
+
+                  {/* Resend button */}
+                  <button
+                    type="button"
+                    onClick={handleResendConfirmation}
+                    disabled={resending}
+                    className="flex h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-400)_65%,#fff_35%),var(--eid-action-500)_50%,var(--eid-action-600))] text-[12.5px] font-extrabold uppercase tracking-wide text-white shadow-[0_6px_18px_-8px_rgba(249,115,22,0.6)] transition hover:brightness-105 active:scale-[0.97] disabled:opacity-60 disabled:shadow-none"
+                  >
+                    {resending ? (
+                      <>
+                        <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
+                        Reenviando...
+                      </>
+                    ) : (
+                      <>
+                        <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                          <path d="M22 2 11 13" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="m22 2-7 20-4-9-9-4 20-7z" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        Reenviar código
+                      </>
+                    )}
+                  </button>
+
+                  {/* Already have code */}
+                  <Link
+                    href={`/verificar-codigo?email=${encodeURIComponent(pendingConfirmationEmailEffective)}`}
+                    className="mt-2.5 flex h-[38px] w-full items-center justify-center gap-1.5 rounded-xl border border-eid-action-500/30 text-[12px] font-semibold text-eid-action-400 transition hover:border-eid-action-500/55 hover:bg-eid-action-500/8 hover:text-eid-action-300"
+                  >
+                    <svg viewBox="0 0 24 24" width={13} height={13} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z" />
+                    </svg>
+                    Já tenho o código
+                  </Link>
+                </div>
               </div>
             ) : null}
 
