@@ -21,6 +21,10 @@ export function ProfileMainEditor({ initial }: Props) {
   const [message, setMessage] = useState<string | null>(null);
 
   const [nome, setNome] = useState(initial.nome);
+  /** Capitaliza a primeira letra de cada palavra, restante em minúsculas. */
+  function formatarNome(raw: string): string {
+    return raw.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+  }
   const [username, setUsername] = useState(initial.username);
   const [localizacao, setLocalizacao] = useState(initial.localizacao);
   const [alturaCm, setAlturaCm] = useState(initial.alturaCm ? String(initial.alturaCm) : "");
@@ -105,7 +109,7 @@ export function ProfileMainEditor({ initial }: Props) {
             name="nome"
             required
             value={nome}
-            onChange={(ev) => setNome(ev.target.value)}
+            onChange={(ev) => setNome(formatarNome(ev.target.value))}
             placeholder="Nome completo"
             className="h-10 w-full bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
           />

@@ -468,6 +468,10 @@ export function OnboardingWizard({
   const [espacoLng, setEspacoLng] = useState<string>("");
   const [aceiteContratoEspaco, setAceiteContratoEspaco] = useState(false);
   const [nome, setNome] = useState<string>(profileInitial.nome);
+  /** Capitaliza a primeira letra de cada palavra, restante em minúsculas. */
+  function formatarNome(raw: string): string {
+    return raw.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+  }
   const [username, setUsername] = useState<string>(profileInitial.username);
   const [localizacao, setLocalizacao] = useState<string>(profileInitial.localizacao);
   const [locGeoStatus, setLocGeoStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
@@ -2127,75 +2131,103 @@ export function OnboardingWizard({
 
           {step === "perfil" ? (
             <form onSubmit={submitPerfil} className="mt-6 space-y-4">
-              <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-4 space-y-3">
-                <h2 className="text-sm font-bold uppercase tracking-wide text-eid-primary-500">
-                  Resumo antes de concluir
-                </h2>
-
-                {/* Quem você é */}
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary mb-1.5">
-                    Quem você é na plataforma
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {roles.filter((r) => papeis.has(r.id)).length > 0
-                      ? roles.filter((r) => papeis.has(r.id)).map((r) => (
-                          <span
-                            key={r.id}
-                            className="inline-flex items-center rounded-full border border-eid-primary-500/30 bg-eid-primary-500/8 px-2.5 py-0.5 text-xs font-semibold text-eid-primary-400"
-                          >
-                            {r.titulo}
-                          </span>
-                        ))
-                      : <span className="text-xs text-eid-text-secondary">Não definido</span>}
-                  </div>
+              {/* Resumo das etapas anteriores */}
+              <section className="overflow-hidden rounded-2xl border border-eid-primary-500/20 bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_3%,var(--eid-card))_55%,var(--eid-card))]">
+                {/* Cabeçalho */}
+                <div className="flex items-center gap-2.5 border-b border-eid-primary-500/12 bg-eid-primary-500/6 px-4 py-2.5">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-eid-primary-500/20 text-eid-primary-400">
+                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                      <path d="m5 12 4 4 10-10" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <h2 className="text-[12px] font-black uppercase tracking-[0.1em] text-eid-primary-300">
+                    Tudo pronto — confira antes de finalizar
+                  </h2>
                 </div>
 
-                {/* Esportes */}
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary mb-1.5">
-                    Esportes
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[...esportesSel].length > 0
-                      ? [...esportesSel].map((id) => {
-                          const nome = esportes.find((e) => e.id === id)?.nome;
-                          return nome ? (
-                            <span key={id}
-                              className="inline-flex items-center rounded-full border border-[color:var(--eid-border-subtle)] px-2.5 py-0.5 text-xs font-semibold text-eid-fg"
-                            >
-                              {nome}
-                            </span>
-                          ) : null;
-                        })
-                      : <span className="text-xs text-eid-text-secondary">Não definido</span>}
-                  </div>
-                </div>
-
-                {/* Espaço */}
-                {hasEspaco && (
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary mb-1">
-                      Espaço / arena
-                    </p>
-                    <span className="text-xs font-semibold text-eid-fg">
-                      {espacoNome || <span className="text-eid-text-secondary font-normal">Nome não definido</span>}
+                {/* Linhas de resumo */}
+                <div className="divide-y divide-eid-primary-500/8 px-4">
+                  {/* Papel */}
+                  <div className="flex items-center gap-3 py-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)))] text-eid-primary-400">
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                      </svg>
                     </span>
-                  </div>
-                )}
-
-                {hasAnyProfessorSport ? (
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-eid-text-secondary mb-1.5">
-                      Perfil profissional
-                    </p>
-                    <div className="space-y-1 text-xs text-eid-text-secondary">
-                      {professorHeadline ? <p><span className="text-eid-fg font-semibold">Headline:</span> {professorHeadline}</p> : null}
-                      {professorAceitaNovosAlunos ? <p>Aceitando novos alunos.</p> : <p>No momento não está aceitando novos alunos.</p>}
-                      {professorPerfilPublicado ? <p>Perfil público de professor ativado.</p> : <p>Perfil de professor ainda não publicado.</p>}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[9px] font-black uppercase tracking-[0.12em] text-eid-text-muted">Papel na plataforma</p>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {roles.filter((r) => papeis.has(r.id)).length > 0
+                          ? roles.filter((r) => papeis.has(r.id)).map((r) => (
+                              <span key={r.id} className="inline-flex items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[11px] font-semibold text-eid-primary-300">
+                                {r.titulo}
+                              </span>
+                            ))
+                          : <span className="text-[11px] text-eid-text-muted">Não definido</span>}
+                      </div>
                     </div>
                   </div>
-                ) : null}
+
+                  {/* Esportes */}
+                  <div className="flex items-center gap-3 py-3">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-action-500)_8%,var(--eid-card)))] text-eid-action-400">
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                        <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" />
+                      </svg>
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[9px] font-black uppercase tracking-[0.12em] text-eid-text-muted">Esportes</p>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {[...esportesSel].length > 0
+                          ? [...esportesSel].map((id) => {
+                              const nomeEsporte = esportes.find((e) => e.id === id)?.nome;
+                              return nomeEsporte ? (
+                                <span key={id} className="inline-flex items-center rounded-full border border-eid-action-500/30 bg-eid-action-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-eid-action-400">
+                                  {nomeEsporte}
+                                </span>
+                              ) : null;
+                            })
+                          : <span className="text-[11px] text-eid-text-muted">Não definido</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Espaço — condicional */}
+                  {hasEspaco && (
+                    <div className="flex items-center gap-3 py-3">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)))] text-eid-primary-400">
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" strokeLinecap="round" strokeLinejoin="round" /><polyline points="9 22 9 12 15 12 15 22" />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[9px] font-black uppercase tracking-[0.12em] text-eid-text-muted">Espaço / arena</p>
+                        <p className="mt-0.5 text-[12px] font-semibold text-eid-fg">
+                          {espacoNome || <span className="text-eid-text-muted font-normal">Nome não definido</span>}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Professor — condicional */}
+                  {hasAnyProfessorSport && (
+                    <div className="flex items-start gap-3 py-3">
+                      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)))] text-eid-primary-400">
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                          <path d="M22 10v6M2 10l10-5 10 5-10 5z" strokeLinecap="round" strokeLinejoin="round" /><path d="M6 12v5c3 3 9 3 12 0v-5" strokeLinecap="round" />
+                        </svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[9px] font-black uppercase tracking-[0.12em] text-eid-text-muted">Perfil profissional</p>
+                        <div className="mt-1 space-y-0.5 text-[11px] text-eid-text-secondary">
+                          {professorHeadline ? <p><span className="font-semibold text-eid-fg">{professorHeadline}</span></p> : null}
+                          <p>{professorAceitaNovosAlunos ? "✓ Aceitando novos alunos" : "✗ Não aceitando alunos agora"}</p>
+                          <p>{professorPerfilPublicado ? "✓ Perfil público ativado" : "✗ Perfil não publicado ainda"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </section>
               {/* Foto de perfil — zona clicável interativa */}
               <div className="flex flex-col items-center gap-3">
@@ -2387,7 +2419,7 @@ export function OnboardingWizard({
                     name="nome"
                     required
                     value={nome}
-                    onChange={(e) => setNome(e.target.value)}
+                    onChange={(e) => setNome(formatarNome(e.target.value))}
                     placeholder="Nome completo"
                     className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/90"
                   />
