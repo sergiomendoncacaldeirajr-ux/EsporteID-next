@@ -250,62 +250,58 @@ function VerificarCodigoPageInner() {
 
   return (
     <main className="eid-auth-bg flex min-h-[100svh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.25rem,env(safe-area-inset-top,0px)+0.75rem)] text-eid-fg sm:px-6 sm:py-8">
-      <div className="eid-native-auth-enter w-full max-w-[340px] pb-6">
+      <div className="eid-native-auth-enter w-full max-w-[360px] pb-6">
         <Link
           href={
             mode === "recovery"
               ? "/recuperar-senha"
               : `/cadastro${next ? `?next=${encodeURIComponent(next)}` : ""}`
           }
-          className="mb-3 inline-block text-[13px] text-eid-text-muted no-underline transition hover:text-eid-fg"
+          className="mb-4 inline-block text-[13px] text-eid-text-muted no-underline transition hover:text-eid-fg"
         >
-          {mode === "recovery" ? "← Voltar para recuperação" : "← Voltar ao cadastro"}
+          ← {mode === "recovery" ? "Voltar para recuperação" : "Voltar ao cadastro"}
         </Link>
-        <LogoFull className="mb-5 mt-1" />
+        <LogoFull size="auth" className="mb-6 mt-1" />
 
-        <div className="eid-auth-card p-5 sm:p-6">
-          <div className="mb-4 flex flex-col items-center">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-card)))] shadow-[0_0_22px_-6px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.1)] ring-1 ring-eid-primary-500/25">
-              <svg viewBox="0 0 24 24" className="h-[22px] w-[22px] text-eid-primary-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5" strokeLinecap="round" strokeLinejoin="round"/>
+        <div className="eid-auth-card p-5 sm:p-7">
+          {/* Header */}
+          <div className="mb-5 flex flex-col items-center text-center">
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_28%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)))] shadow-[0_0_28px_-6px_rgba(37,99,235,0.5),inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-eid-primary-500/30">
+              <svg viewBox="0 0 24 24" className="h-6 w-6 text-eid-primary-400" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+                <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
               </svg>
             </span>
-            <h1 className="mt-3 text-[15px] font-black uppercase tracking-[0.1em] text-eid-fg">
-              {mode === "recovery" ? "Redefinir senha" : "Confirmar e-mail"}
+            <h1 className="mt-3.5 text-[16px] font-black uppercase tracking-[0.1em] text-eid-fg">
+              {mode === "recovery" ? "Redefinir senha" : "Confirme seu e-mail"}
             </h1>
-            <p className="mt-1 text-center text-[12px] leading-snug text-eid-text-secondary">
-              {mode === "recovery" ? "Código enviado para " : "Código enviado para "}
-              <span className="font-semibold text-eid-fg">{effectiveEmail || "seu e-mail"}</span>.
+            <p className="mt-1.5 max-w-[260px] text-[12px] leading-relaxed text-eid-text-secondary">
+              {mode === "recovery"
+                ? "Digite o código de verificação enviado para"
+                : "Digite o código que enviamos para"}
+            </p>
+            <p className="mt-0.5 max-w-[260px] truncate text-[13px] font-semibold text-eid-fg">
+              {effectiveEmail || "seu e-mail"}
             </p>
           </div>
-          <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 px-3 py-2.5">
-            <EmailCorrectionInline
-              currentEmail={effectiveEmail}
-              onApplyEmail={handleApplyEmailEdit}
-              triggerLabel="Errou o e-mail? Corrigir e reenviar código"
-              inputId="verify-email-edit"
-              triggerClassName="w-full text-center text-[12px] font-semibold text-eid-action-500 transition hover:text-eid-action-400"
-            />
-          </div>
 
-          <form onSubmit={handleVerify} className="mt-4 flex flex-col gap-3">
-            {msg ? (
-              <p className="rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-2 text-center text-[12px] text-eid-primary-300">
-                {msg}
-              </p>
-            ) : null}
-            {error ? (
-              <p className="rounded-xl border border-[rgba(255,107,107,0.2)] bg-[rgba(255,107,107,0.1)] px-2.5 py-2 text-center text-[12px] text-[#ff6b6b]">
-                {error}
-              </p>
-            ) : null}
+          {/* Messages */}
+          {msg ? (
+            <p className="mb-4 rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/10 px-3 py-2.5 text-center text-[12px] leading-snug text-eid-primary-300">
+              {msg}
+            </p>
+          ) : null}
+          {error ? (
+            <p className="mb-4 rounded-xl border border-[rgba(255,107,107,0.22)] bg-[rgba(255,107,107,0.1)] px-3 py-2.5 text-center text-[12px] leading-snug text-[#ff6b6b]" role="alert">
+              {error}
+            </p>
+          ) : null}
 
+          {/* OTP form */}
+          <form onSubmit={handleVerify} className="flex flex-col gap-4">
             <div>
-              <label htmlFor="otp-0" className="mb-2 block text-[11px] font-semibold text-eid-text-secondary">
-                Código de {OTP_LENGTH} dígitos
-              </label>
               <div
-                className="grid gap-2"
+                className="grid gap-2.5"
                 style={{ gridTemplateColumns: `repeat(${OTP_LENGTH}, minmax(0, 1fr))` }}
               >
                 {Array.from({ length: OTP_LENGTH }).map((_, idx) => (
@@ -322,50 +318,79 @@ function VerificarCodigoPageInner() {
                     onPaste={onPasteOtp}
                     onChange={(e) => onDigitChange(idx, e.target.value)}
                     onKeyDown={(e) => onDigitKeyDown(idx, e)}
-                    className="h-13 w-full rounded-xl border-[1.5px] border-[color:var(--eid-border-subtle)] bg-[color:var(--eid-field-bg)] px-0 text-center text-xl font-black text-eid-fg outline-none transition focus:border-eid-primary-500/55 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] focus:bg-eid-card"
+                    aria-label={`Dígito ${idx + 1} de ${OTP_LENGTH}`}
+                    className="h-[58px] w-full rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] bg-[color:var(--eid-field-bg)] px-0 text-center text-[22px] font-black tracking-widest text-eid-fg outline-none transition-all duration-150 focus:border-eid-primary-500/60 focus:bg-[color:var(--eid-card)] focus:shadow-[0_0_0_3px_rgba(37,99,235,0.14)] [&:not(:placeholder-shown)]:border-eid-primary-500/30 [&:not(:placeholder-shown)]:bg-[color:var(--eid-card)]"
                     required
                   />
                 ))}
               </div>
+              <p className="mt-2 text-center text-[11px] text-eid-text-muted">
+                {mode === "recovery"
+                  ? "O link no e-mail também funciona."
+                  : "Cole o código ou digite dígito por dígito."}
+              </p>
             </div>
 
             <button
               type="submit"
-              disabled={loading}
-              className={primaryBtnClass}
+              disabled={loading || code.length < OTP_LENGTH}
+              className="flex h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-0 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-400)_65%,#fff_35%),var(--eid-action-500)_50%,var(--eid-action-600))] text-[14px] font-extrabold uppercase tracking-wide text-white shadow-[0_8px_24px_-10px_rgba(249,115,22,0.6)] transition hover:brightness-105 hover:shadow-[0_12px_30px_-10px_rgba(249,115,22,0.75)] active:scale-[0.97] active:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
             >
               {loading ? (
                 <>
                   <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
-                  <span>Confirmando código...</span>
+                  <span>Verificando...</span>
                 </>
               ) : (
-                "Confirmar código"
+                <>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                    <path d="m5 12 4 4 10-10" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  Confirmar código
+                </>
               )}
             </button>
           </form>
 
+          {/* Divider */}
+          <div className="my-4 flex items-center gap-3">
+            <div className="h-px flex-1 bg-[color:var(--eid-border-subtle)]" />
+            <span className="text-[11px] text-eid-text-muted">ou</span>
+            <div className="h-px flex-1 bg-[color:var(--eid-border-subtle)]" />
+          </div>
+
+          {/* Resend */}
           <button
             type="button"
             onClick={handleResend}
             disabled={resending}
-            className={`mt-3 ${secondaryBtnClass}`}
+            className="flex h-[46px] w-full items-center justify-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-transparent px-3 text-[13px] font-semibold text-eid-text-secondary transition hover:border-eid-primary-500/30 hover:bg-eid-card/60 hover:text-eid-fg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {resending ? (
               <>
-                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-eid-action-500 border-t-transparent" aria-hidden />
-                <span>Reenviando código...</span>
+                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-eid-text-secondary border-t-transparent" aria-hidden />
+                <span>Reenviando...</span>
               </>
             ) : (
-              "Não recebeu? Reenviar código"
+              <>
+                <svg viewBox="0 0 24 24" className="h-4 w-4 text-eid-primary-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                Não recebi o código — reenviar
+              </>
             )}
           </button>
 
-          <p className="mt-3 text-center text-[11px] text-eid-text-secondary">
-            {mode === "recovery"
-              ? "O link de recuperação no e-mail também funciona."
-              : "O link de confirmação no e-mail também funciona."}
-          </p>
+          {/* Email correction */}
+          <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/40 px-3 py-2.5">
+            <EmailCorrectionInline
+              currentEmail={effectiveEmail}
+              onApplyEmail={handleApplyEmailEdit}
+              triggerLabel="E-mail errado? Corrigir e reenviar"
+              inputId="verify-email-edit"
+              triggerClassName="w-full text-center text-[12px] font-semibold text-eid-text-muted transition hover:text-eid-action-500"
+            />
+          </div>
         </div>
       </div>
     </main>
