@@ -127,16 +127,17 @@ export default async function RootLayout({
         getCachedProfileLegalRow(user.id),
       ]);
       papeis = papeisResult;
-      canShowAuthenticatedChrome = legalAcceptanceIsCurrent(profile);
+      // Exibe o chrome completo (nav + topbar) somente se o onboarding foi concluído.
+      // `perfil_completo` já vem em getCachedProfileLegalRow — sem query extra.
+      canShowAuthenticatedChrome = legalAcceptanceIsCurrent(profile) && !!profile?.perfil_completo;
       const cfg = await getSystemFeatureConfig(auth.supabase);
-      const currentUser = user;
       supportModulosEmBreve = ALL_SYSTEM_FEATURE_KEYS.filter((k) => {
         const entry = cfg[k];
         // Módulo ativo para todos: nunca ocultar no suporte
         if (entry.mode === "ativo") return false;
         // Qualquer outro modo (em_breve, desenvolvimento, teste):
         // testers enxergam como disponível; demais usuários não veem
-        if (entry.testers.includes(currentUser.id)) return false;
+        if (entry.testers.includes(user.id)) return false;
         return true;
       });
     }

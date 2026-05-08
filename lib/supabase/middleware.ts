@@ -38,7 +38,19 @@ function needsSessionWork(path: string): boolean {
     path.startsWith("/buscar") ||
     path.startsWith("/organizador") ||
     path.startsWith("/onboarding") ||
-    path.startsWith("/admin")
+    path.startsWith("/admin") ||
+    // Rotas internas da plataforma — precisam de sessão para verificar perfil_completo.
+    path.startsWith("/agenda") ||
+    path.startsWith("/ranking") ||
+    path.startsWith("/comunidade") ||
+    path.startsWith("/match") ||
+    path.startsWith("/desafio") ||
+    path.startsWith("/performance") ||
+    path.startsWith("/vagas") ||
+    path.startsWith("/espaco") ||
+    path.startsWith("/professor") ||
+    path.startsWith("/minhas-aulas") ||
+    path.startsWith("/times")
   );
 }
 
@@ -207,6 +219,18 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Rotas internas da plataforma — requerem autenticação.
+  const internalPlatformPaths = [
+    "/agenda", "/ranking", "/comunidade", "/match", "/desafio",
+    "/performance", "/vagas", "/espaco", "/professor", "/minhas-aulas", "/times",
+  ];
+  if (!user && !authCode && internalPlatformPaths.some((p) => path.startsWith(p))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+    return NextResponse.redirect(url);
+  }
+
   if (path.startsWith("/admin") && !user && !authCode) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -214,7 +238,34 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && (path.startsWith("/dashboard") || path.startsWith("/organizador") || path.startsWith("/buscar"))) {
+  /**
+   * Rotas que exigem perfil completo (onboarding concluído).
+   * Qualquer rota interna da plataforma — exceto /onboarding e /conta/aceitar-termos —
+   * deve redirecionar para /onboarding se o perfil ainda não foi finalizado.
+   */
+  function isProtectedPlatformPath(p: string): boolean {
+    return (
+      p.startsWith("/dashboard") ||
+      p.startsWith("/organizador") ||
+      p.startsWith("/buscar") ||
+      p.startsWith("/agenda") ||
+      p.startsWith("/ranking") ||
+      p.startsWith("/comunidade") ||
+      p.startsWith("/match") ||
+      p.startsWith("/desafio") ||
+      p.startsWith("/performance") ||
+      p.startsWith("/vagas") ||
+      p.startsWith("/espaco") ||
+      p.startsWith("/professor") ||
+      p.startsWith("/minhas-aulas") ||
+      p.startsWith("/times") ||
+      p.startsWith("/editar") ||
+      // /conta — exceto aceitar-termos que é a próxima etapa obrigatória
+      (p.startsWith("/conta") && !p.startsWith("/conta/aceitar-termos"))
+    );
+  }
+
+  if (user && isProtectedPlatformPath(path)) {
     const profile = await getProfile();
 
     if (!profile || !legalAcceptanceIsCurrent(profile)) {
