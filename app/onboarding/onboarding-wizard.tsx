@@ -2152,105 +2152,155 @@ export function OnboardingWizard({
                   </div>
                 ) : null}
               </section>
-              <div className="flex items-center gap-3">
-                {hasFotoSelecionada ? (
-                  <div className="relative h-16 w-16 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)]">
+              {/* Foto de perfil — zona clicável interativa */}
+              <div className="flex flex-col items-center gap-3">
+                <p className="self-start text-[11px] font-black uppercase tracking-[0.12em] text-eid-text-muted">
+                  Foto de perfil <span className="text-eid-action-400">*</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setFotoActionOpen(true)}
+                  className="group relative flex h-28 w-28 shrink-0 items-center justify-center overflow-hidden rounded-full transition focus:outline-none"
+                  aria-label={hasFotoParaFinalizar ? "Editar foto de perfil" : "Adicionar foto de perfil"}
+                >
+                  {/* Foto ou placeholder */}
+                  {hasFotoSelecionada ? (
                     <Image
                       src={fotoPreviewUrl ?? ""}
                       alt="Prévia da foto"
                       fill
                       unoptimized
                       className="object-cover"
-                      style={{
-                        objectPosition: `${fotoPosX}% ${fotoPosY}%`,
-                        transform: `scale(${fotoZoom})`,
-                      }}
+                      style={{ objectPosition: `${fotoPosX}% ${fotoPosY}%`, transform: `scale(${fotoZoom})` }}
                     />
-                  </div>
-                ) : profileInitial.avatarUrl ? (
-                  <Image
-                    src={profileInitial.avatarUrl}
-                    alt="Avatar atual"
-                    width={64}
-                    height={64}
-                    unoptimized
-                    className="h-16 w-16 rounded-full border border-[color:var(--eid-border-subtle)] object-cover"
-                  />
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-eid-primary-500/60 text-xs text-eid-primary-300">
-                    Sem foto
-                  </div>
-                )}
-                <div className="flex-1">
-                  <label className="text-sm font-medium text-eid-fg">Foto de perfil (obrigatória)</label>
-                  <div className="mt-1 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFotoActionOpen(true)}
-                      className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-fg transition hover:border-eid-primary-500/40"
-                    >
-                      {hasFotoParaFinalizar ? "Editar foto" : "Adicionar foto"}
-                    </button>
-                  </div>
-                  <input
-                    ref={fotoCameraInputRef}
-                    type="file"
-                    name="foto_camera"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleFotoChange}
-                    className="hidden"
-                  />
-                  <input
-                    ref={fotoGaleriaInputRef}
-                    type="file"
-                    name="foto_galeria"
-                    accept="image/*"
-                    onChange={handleFotoChange}
-                    className="hidden"
-                  />
-                  <input ref={fotoInputRef} type="file" name="foto" accept="image/*" onChange={handleFotoChange} className="hidden" />
+                  ) : profileInitial.avatarUrl ? (
+                    <Image
+                      src={profileInitial.avatarUrl}
+                      alt="Avatar atual"
+                      fill
+                      unoptimized
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 rounded-full border-2 border-dashed border-eid-primary-500/40 bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-card)),var(--eid-card))] transition group-hover:border-eid-primary-500/70 group-hover:bg-eid-primary-500/12">
+                      <svg viewBox="0 0 24 24" className="h-7 w-7 text-eid-primary-400 transition group-hover:scale-110" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                      <span className="text-[10px] font-bold text-eid-primary-400">Adicionar foto</span>
+                    </div>
+                  )}
+
+                  {/* Overlay ao hover quando já tem foto */}
+                  {hasFotoParaFinalizar ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-full bg-black/50 opacity-0 transition group-hover:opacity-100">
+                      <svg viewBox="0 0 24 24" className="h-6 w-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                      <span className="text-[10px] font-bold text-white">Editar</span>
+                    </div>
+                  ) : null}
+
+                  {/* Loading spinner */}
                   {fotoPreparando ? (
-                    <p className="mt-2 text-[11px] font-medium text-eid-primary-300">Ajustando a foto para o app…</p>
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/55">
+                      <span className="h-6 w-6 animate-spin rounded-full border-[3px] border-white border-t-transparent" />
+                    </div>
                   ) : null}
-                  {fotoErro ? (
-                    <p className="mt-2 rounded-lg border border-amber-500/35 bg-amber-500/10 px-2.5 py-2 text-[11px] text-amber-100">
-                      {fotoErro}
-                    </p>
-                  ) : null}
-                  {fotoSelecionadaNome ? <p className="mt-2 text-[11px] text-eid-text-secondary">Foto pronta: {fotoSelecionadaNome}</p> : null}
-                  <p className="mt-1 text-[11px] text-eid-text-secondary">
-                    Use câmera ou galeria — aceitamos os formatos comuns (incluindo HEIC do iPhone). A foto é otimizada
-                    automaticamente para um JPG leve antes do envio.
+                </button>
+
+                {/* Feedback */}
+                {fotoPreparando ? (
+                  <p className="text-[11px] font-medium text-eid-primary-300">Ajustando a foto…</p>
+                ) : fotoSelecionadaNome ? (
+                  <p className="flex items-center gap-1 text-[11px] text-eid-text-secondary">
+                    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 shrink-0 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M3 8l3 3 7-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {fotoSelecionadaNome}
                   </p>
-                </div>
+                ) : (
+                  <p className="text-center text-[11px] leading-relaxed text-eid-text-muted">
+                    Câmera ou galeria · formatos comuns aceitos
+                  </p>
+                )}
+
+                {fotoErro ? (
+                  <p className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 text-center text-[11px] text-amber-200">
+                    {fotoErro}
+                  </p>
+                ) : null}
               </div>
+
+              {/* Inputs ocultos */}
+              <input ref={fotoCameraInputRef} type="file" name="foto_camera" accept="image/*" capture="environment" onChange={handleFotoChange} className="hidden" />
+              <input ref={fotoGaleriaInputRef} type="file" name="foto_galeria" accept="image/*" onChange={handleFotoChange} className="hidden" />
+              <input ref={fotoInputRef} type="file" name="foto" accept="image/*" onChange={handleFotoChange} className="hidden" />
+
+              {/* Modal: escolher fonte da foto */}
               {fotoModalMounted && fotoActionOpen
                 ? createPortal(
                     <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/60 p-3 sm:items-center motion-safe:animate-[fade-in_180ms_ease-out_both]">
                       <div className="w-full max-w-xs rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 shadow-2xl motion-safe:animate-[eid-content-block-enter_240ms_cubic-bezier(0.22,1,0.36,1)_both]">
-                        <p className="text-sm font-bold text-eid-fg">Foto de perfil</p>
-                        <p className="mt-1 text-[11px] text-eid-text-secondary">Adicionar, editar enquadramento ou remover.</p>
+                        <p className="text-[14px] font-black tracking-tight text-eid-fg">Foto de perfil</p>
+                        <p className="mt-0.5 text-[11px] text-eid-text-secondary">Escolha como adicionar ou editar a foto.</p>
                         <div className="mt-3 grid gap-2">
-                          <button type="button" onClick={() => fotoCameraInputRef.current?.click()} className="rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-sm font-semibold text-eid-fg">
-                            Tirar foto (câmera)
+                          <button
+                            type="button"
+                            onClick={() => fotoCameraInputRef.current?.click()}
+                            className="flex items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 text-sm font-semibold text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-primary-500/8"
+                          >
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-eid-primary-500/15 text-eid-primary-400">
+                              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" /><circle cx="12" cy="13" r="4" />
+                              </svg>
+                            </span>
+                            Tirar foto com câmera
                           </button>
-                          <button type="button" onClick={() => fotoGaleriaInputRef.current?.click()} className="rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-sm font-semibold text-eid-fg">
-                            Enviar da galeria
+                          <button
+                            type="button"
+                            onClick={() => fotoGaleriaInputRef.current?.click()}
+                            className="flex items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 text-sm font-semibold text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-primary-500/8"
+                          >
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-eid-primary-500/15 text-eid-primary-400">
+                              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                                <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+                              </svg>
+                            </span>
+                            Escolher da galeria
                           </button>
                           {hasFotoSelecionada ? (
-                            <button type="button" onClick={() => { setFotoEditorMode("edit"); setFotoEditorOpen(true); setFotoActionOpen(false); }} className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-3 py-2 text-sm font-semibold text-eid-primary-300">
-                              Editar enquadramento
+                            <button
+                              type="button"
+                              onClick={() => { setFotoEditorMode("edit"); setFotoEditorOpen(true); setFotoActionOpen(false); }}
+                              className="flex items-center gap-3 rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/8 px-4 py-3 text-sm font-semibold text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/14"
+                            >
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-eid-primary-500/20 text-eid-primary-400">
+                                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              </span>
+                              Ajustar enquadramento
                             </button>
                           ) : null}
                           {hasFotoParaFinalizar ? (
-                            <button type="button" onClick={removeFotoSelecionada} className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm font-semibold text-[color:color-mix(in_srgb,var(--eid-danger-600)_82%,var(--eid-fg)_18%)]">
-                              Remover foto selecionada
+                            <button
+                              type="button"
+                              onClick={removeFotoSelecionada}
+                              className="flex items-center gap-3 rounded-xl border border-rose-500/30 bg-rose-500/8 px-4 py-3 text-sm font-semibold text-rose-400 transition hover:border-rose-500/55"
+                            >
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-500/15 text-rose-400">
+                                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                                  <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" strokeLinecap="round" strokeLinejoin="round" /><path d="M10 11v6M14 11v6" strokeLinecap="round" />
+                                </svg>
+                              </span>
+                              Remover foto
                             </button>
                           ) : null}
                         </div>
-                        <button type="button" onClick={() => setFotoActionOpen(false)} className="mt-3 w-full rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-text-secondary">
-                          Fechar
+                        <button type="button" onClick={() => setFotoActionOpen(false)} className="mt-3 w-full rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2.5 text-xs font-semibold text-eid-text-secondary transition hover:text-eid-fg">
+                          Cancelar
                         </button>
                       </div>
                     </div>,
@@ -2277,95 +2327,141 @@ export function OnboardingWizard({
                   )
                 : null}
 
-              <input
-                name="nome"
-                required
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                placeholder="Nome completo"
-                className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
-              />
-              <input
-                name="username"
-                value={username}
-                onChange={(e) =>
-                  setUsername(
-                    e.target.value
-                      .toLowerCase()
-                      .replace(/[^a-z0-9_]/g, "")
-                      .slice(0, 24)
-                  )
-                }
-                placeholder="@usuario (opcional)"
-                className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
-              />
-              <p className="text-[11px] text-eid-text-secondary">
-                Use de 3 a 24 caracteres: letras minúsculas, números e sublinhado (_).
-              </p>
-              <input
-                name="localizacao"
-                required
-                value={localizacao}
-                onChange={(e) => setLocalizacao(e.target.value)}
-                placeholder="Cidade / Estado"
-                className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
-              />
-              <textarea
-                name="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder={hasAnyProfessorSport ? "Bio pública curta (opcional)" : "Bio curta (opcional)"}
-                rows={3}
-                className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
-              />
+              {/* hidden inputs que o server action ainda precisa */}
+              <input type="hidden" name="bio" value="" />
               <input type="hidden" name="disponibilidade_semana_json" value="{}" />
 
+              {/* Campos de identidade */}
+              <div className="space-y-2.5">
+                {/* Nome */}
+                <div className="flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="currentColor" aria-hidden>
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                  </svg>
+                  <input
+                    name="nome"
+                    required
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    placeholder="Nome completo"
+                    className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/90"
+                  />
+                </div>
+
+                {/* Username */}
+                <div>
+                  <div className="flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
+                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" strokeLinecap="round" />
+                    </svg>
+                    <input
+                      name="username"
+                      value={username}
+                      onChange={(e) =>
+                        setUsername(
+                          e.target.value
+                            .toLowerCase()
+                            .replace(/[^a-z0-9_]/g, "")
+                            .slice(0, 24)
+                        )
+                      }
+                      placeholder="@usuario (opcional)"
+                      className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/90"
+                    />
+                  </div>
+                  <p className="mt-1.5 pl-1 text-[11px] text-eid-text-muted">
+                    3–24 caracteres: letras minúsculas, números e sublinhado (_).
+                  </p>
+                </div>
+
+                {/* Localização */}
+                <div className="flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
+                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  <input
+                    name="localizacao"
+                    required
+                    value={localizacao}
+                    onChange={(e) => setLocalizacao(e.target.value)}
+                    placeholder="Cidade / Estado"
+                    className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/90"
+                  />
+                </div>
+              </div>
+
+              {/* Dados físicos — só para atletas */}
               {hasAnyAthleteSport ? (
-                <>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <input
-                      type="number"
-                      name="altura_cm"
-                      min={50}
-                      max={260}
-                      value={alturaCm}
-                      onChange={(e) => setAlturaCm(e.target.value)}
-                      placeholder="Altura (cm) — opcional"
-                      className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
-                    />
-                    <input
-                      type="number"
-                      name="peso_kg"
-                      min={20}
-                      max={300}
-                      value={pesoKg}
-                      onChange={(e) => setPesoKg(e.target.value)}
-                      placeholder="Peso (kg) — opcional"
-                      className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
-                    />
+                <div className="space-y-2.5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-text-muted">
+                    Dados físicos <span className="font-normal normal-case tracking-normal">(opcional)</span>
+                  </p>
+
+                  <div className="grid gap-2.5 sm:grid-cols-2">
+                    {/* Altura */}
+                    <div className="flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
+                      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                        <path d="M21 6H3M21 12H3M21 18H3" strokeLinecap="round" /><path d="M6 3v4M6 17v4M18 10v4" strokeLinecap="round" />
+                      </svg>
+                      <input
+                        type="number"
+                        name="altura_cm"
+                        min={50}
+                        max={260}
+                        value={alturaCm}
+                        onChange={(e) => setAlturaCm(e.target.value)}
+                        placeholder="Altura (cm)"
+                        className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/90"
+                      />
+                    </div>
+
+                    {/* Peso */}
+                    <div className="flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
+                      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" strokeLinecap="round" />
+                      </svg>
+                      <input
+                        type="number"
+                        name="peso_kg"
+                        min={20}
+                        max={300}
+                        value={pesoKg}
+                        onChange={(e) => setPesoKg(e.target.value)}
+                        placeholder="Peso (kg)"
+                        className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/90"
+                      />
+                    </div>
                   </div>
-                  {/* Mão dominante — opcional */}
+
+                  {/* Mão dominante */}
                   <input type="hidden" name="lado" value={lado} />
-                  <p className="text-[11px] text-eid-text-secondary">Mão dominante (opcional)</p>
-                  <div className="inline-flex rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-1 gap-1">
-                    {([
-                      { val: "Destro",   label: "Destro" },
-                      { val: "Canhoto",  label: "Canhoto" },
-                      { val: "Ambos",    label: "Ambidestro" },
-                    ] as const).map(({ val, label }) => {
-                      const active = lado === val;
-                      return (
-                        <button key={val} type="button" onClick={() => setLado(val)}
-                          className={`cursor-pointer rounded-lg px-4 py-1.5 text-xs font-semibold transition-all select-none ${
-                            active ? "bg-eid-primary-500 text-white shadow-sm" : "text-eid-text-secondary hover:text-eid-fg"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
+                  <div className="flex items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 py-2.5 transition" style={{ background: "var(--eid-field-bg)" }}>
+                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span className="text-[13px] text-eid-text-muted">Mão dominante</span>
+                    <div className="ml-auto inline-flex rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 p-0.5 gap-0.5">
+                      {([
+                        { val: "Destro",  label: "Destro" },
+                        { val: "Canhoto", label: "Canhoto" },
+                        { val: "Ambos",   label: "Ambidestro" },
+                      ] as const).map(({ val, label }) => {
+                        const active = lado === val;
+                        return (
+                          <button key={val} type="button" onClick={() => setLado(val)}
+                            className={`cursor-pointer rounded-md px-3 py-1 text-[12px] font-semibold transition-all select-none ${
+                              active ? "bg-eid-primary-500 text-white shadow-sm" : "text-eid-text-secondary hover:text-eid-fg"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </>
+                </div>
               ) : null}
 
               <button
@@ -2378,8 +2474,8 @@ export function OnboardingWizard({
                   : pending
                     ? hasFotoSelecionada
                       ? "Enviando foto…"
-                      : "Finalizando…"
-                    : "Finalizar e entrar no painel"}
+                      : "Criando seu perfil…"
+                    : "Entrar no EsporteID →"}
               </button>
             </form>
           ) : null}
