@@ -192,71 +192,69 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
       {mounted && editorPresent && previewUrl
         ? createPortal(
         <div
-          className={`fixed inset-0 z-[95] flex items-center justify-center bg-black/55 px-4 transition-opacity duration-180 ${editorClosing ? "opacity-0" : "opacity-100"} motion-safe:animate-[fade-in_180ms_ease-out_both]`}
+          className={`fixed inset-0 z-[95] flex items-end justify-center bg-black/70 transition-opacity duration-180 sm:items-center sm:px-4 ${editorClosing ? "opacity-0" : "opacity-100"} motion-safe:animate-[fade-in_180ms_ease-out_both]`}
         >
           <div
-            className={`w-full max-w-xs rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 shadow-xl transition-all duration-180 motion-safe:animate-[eid-content-block-enter_240ms_cubic-bezier(0.22,1,0.36,1)_both] ${editorClosing ? "translate-y-2 scale-[0.985] opacity-0" : "translate-y-0 scale-100 opacity-100"}`}
+            className={`w-full max-w-sm rounded-t-3xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl transition-all duration-180 motion-safe:animate-[eid-content-block-enter_240ms_cubic-bezier(0.22,1,0.36,1)_both] sm:rounded-2xl ${editorClosing ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"}`}
           >
-            <p className="truncate text-[11px] font-semibold text-eid-fg">{selectedFileName}</p>
-            <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-black/20">
-              <img
-                src={previewUrl}
-                alt=""
-                className="h-44 w-full object-cover"
-                style={{
-                  objectPosition: `${50 + posX * 0.45}% ${50 + posY * 0.45}%`,
-                  transform: `scale(${zoom})`,
-                }}
-              />
+            <div className="flex justify-center pt-3 sm:hidden">
+              <div className="h-1 w-10 rounded-full bg-[color:var(--eid-border-subtle)]" />
             </div>
-            <div className="mt-2 grid gap-2">
-              <label className="block text-[10px] text-eid-text-secondary">
-                Zoom do recorte
-                <input
-                  type="range"
-                  min={1}
-                  max={2.4}
-                  step={0.05}
-                  value={zoom}
-                  onChange={(ev) => setZoom(Number(ev.target.value))}
-                  className="mt-1 w-full"
-                />
-              </label>
-              <label className="block text-[10px] text-eid-text-secondary">
-                Posição horizontal
-                <input
-                  type="range"
-                  min={-100}
-                  max={100}
-                  step={1}
-                  value={posX}
-                  onChange={(ev) => setPosX(Number(ev.target.value))}
-                  className="mt-1 w-full"
-                />
-              </label>
-              <label className="block text-[10px] text-eid-text-secondary">
-                Posição vertical
-                <input
-                  type="range"
-                  min={-100}
-                  max={100}
-                  step={1}
-                  value={posY}
-                  onChange={(ev) => setPosY(Number(ev.target.value))}
-                  className="mt-1 w-full"
-                />
-              </label>
+            <div className="flex items-center gap-2 border-b border-[color:var(--eid-border-subtle)] px-4 py-3">
+              <svg viewBox="0 0 24 24" className="h-4 w-4 text-eid-primary-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <p className="text-sm font-bold text-eid-fg">Ajustar foto de perfil</p>
             </div>
-            <div className="mt-2 flex justify-end gap-2">
-              <EidCancelAction type="button" compact className="rounded-lg" onClick={closeEditor} />
-              <button
-                type="button"
-                onClick={() => void confirmCropAndUpload()}
-                disabled={saving}
-                className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/12 px-2 py-1 text-[10px] font-semibold text-eid-fg disabled:opacity-60"
-              >
-                {saving ? (editorMode === "add" ? "Enviando..." : "Salvando...") : editorMode === "add" ? "Enviar foto" : "Salvar edição"}
-              </button>
+            <div className="p-4">
+              {/* Preview circular em tempo real */}
+              <div className="mb-4 flex flex-col items-center gap-2">
+                <div className="relative h-24 w-24 overflow-hidden rounded-full ring-2 ring-eid-primary-500/40 ring-offset-2 ring-offset-eid-card">
+                  <img
+                    src={previewUrl}
+                    alt="Prévia"
+                    className="absolute inset-0 h-full w-full object-cover"
+                    style={{
+                      objectPosition: `${50 + posX * 0.45}% ${50 + posY * 0.45}%`,
+                      transform: `scale(${zoom})`,
+                      transformOrigin: `${50 + posX * 0.45}% ${50 + posY * 0.45}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-eid-text-muted">Prévia do recorte circular</p>
+              </div>
+              <div className="grid gap-3">
+                <label className="block">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-eid-text-secondary">Zoom</span>
+                    <span className="text-[10px] tabular-nums text-eid-text-muted">{zoom.toFixed(2)}×</span>
+                  </div>
+                  <input type="range" min={1} max={2.4} step={0.05} value={zoom} onChange={(ev) => setZoom(Number(ev.target.value))} className="w-full accent-[#2563eb]" />
+                </label>
+                <label className="block">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-eid-text-secondary">Posição horizontal</span>
+                    <span className="text-[10px] tabular-nums text-eid-text-muted">{posX > 0 ? `+${posX}` : posX}</span>
+                  </div>
+                  <input type="range" min={-100} max={100} step={1} value={posX} onChange={(ev) => setPosX(Number(ev.target.value))} className="w-full accent-[#2563eb]" />
+                </label>
+                <label className="block">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-eid-text-secondary">Posição vertical</span>
+                    <span className="text-[10px] tabular-nums text-eid-text-muted">{posY > 0 ? `+${posY}` : posY}</span>
+                  </div>
+                  <input type="range" min={-100} max={100} step={1} value={posY} onChange={(ev) => setPosY(Number(ev.target.value))} className="w-full accent-[#2563eb]" />
+                </label>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <button type="button" onClick={closeEditor} className="flex-1 rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2.5 text-xs font-semibold text-eid-text-secondary transition hover:border-eid-primary-500/30 hover:text-eid-fg">
+                  Cancelar
+                </button>
+                <button type="button" onClick={() => void confirmCropAndUpload()} disabled={saving} className="flex-1 rounded-xl bg-[linear-gradient(135deg,#2563EB,#1D4ED8)] px-3 py-2.5 text-xs font-bold text-white shadow-[0_6px_16px_-8px_rgba(37,99,235,0.7)] transition hover:brightness-105 disabled:opacity-60">
+                  {saving ? (editorMode === "add" ? "Enviando..." : "Salvando...") : editorMode === "add" ? "Usar esta foto" : "Salvar ajuste"}
+                </button>
+              </div>
             </div>
           </div>
         </div>,

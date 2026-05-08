@@ -252,84 +252,67 @@ export function ProfileCoverControl({ hasCover }: Props) {
       {mounted && editorPresent && previewUrl
         ? createPortal(
         <div
-          className={`fixed inset-0 z-[95] flex items-end justify-center bg-black/65 p-3 transition-opacity duration-180 sm:items-center ${editorClosing ? "opacity-0" : "opacity-100"} motion-safe:animate-[fade-in_180ms_ease-out_both]`}
+          className={`fixed inset-0 z-[95] flex items-end justify-center bg-black/70 transition-opacity duration-180 sm:items-center sm:px-4 ${editorClosing ? "opacity-0" : "opacity-100"} motion-safe:animate-[fade-in_180ms_ease-out_both]`}
         >
-          <button
-            type="button"
-            aria-label="Fechar editor de capa"
-            className="absolute inset-0"
-            onClick={closeEditor}
-          />
           <div
-            className={`relative z-[1] w-full max-w-md rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 shadow-2xl transition-all duration-180 motion-safe:animate-[eid-content-block-enter_240ms_cubic-bezier(0.22,1,0.36,1)_both] ${editorClosing ? "translate-y-2 scale-[0.985] opacity-0" : "translate-y-0 scale-100 opacity-100"}`}
+            className={`w-full max-w-md rounded-t-3xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl transition-all duration-180 motion-safe:animate-[eid-content-block-enter_240ms_cubic-bezier(0.22,1,0.36,1)_both] sm:rounded-2xl ${editorClosing ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"}`}
           >
-            <p className="truncate text-[11px] font-semibold text-eid-fg">{selectedFileName}</p>
-            <div className="mt-3 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-black/30">
-              <div className="relative h-36 w-full overflow-hidden">
-                <img
-                  src={previewUrl}
-                  alt=""
-                  className="absolute left-1/2 top-1/2 h-full w-full object-cover"
-                  style={{
-                    transform: `translate(calc(-50% + ${posX}%), calc(-50% + ${posY}%)) scale(${1 + (zoom - 1) * 0.9})`,
-                    transformOrigin: "center",
-                  }}
-                />
+            <div className="flex justify-center pt-3 sm:hidden">
+              <div className="h-1 w-10 rounded-full bg-[color:var(--eid-border-subtle)]" />
+            </div>
+            <div className="flex items-center gap-2 border-b border-[color:var(--eid-border-subtle)] px-4 py-3">
+              <svg viewBox="0 0 24 24" className="h-4 w-4 text-eid-primary-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <p className="text-sm font-bold text-eid-fg">Ajustar foto de capa</p>
+            </div>
+            <div className="p-4">
+              {/* Preview panorâmico em tempo real */}
+              <div className="mb-4">
+                <div className="relative h-28 w-full overflow-hidden rounded-xl ring-2 ring-eid-primary-500/30">
+                  <img
+                    src={previewUrl}
+                    alt="Prévia da capa"
+                    className="absolute left-1/2 top-1/2 h-full w-full object-cover"
+                    style={{
+                      transform: `translate(calc(-50% + ${posX}%), calc(-50% + ${posY}%)) scale(${1 + (zoom - 1) * 0.9})`,
+                      transformOrigin: "center",
+                    }}
+                  />
+                </div>
+                <p className="mt-1.5 text-center text-[10px] text-eid-text-muted">Prévia da foto de capa</p>
               </div>
-            </div>
-
-            <div className="mt-3 grid gap-2">
-              <label className="grid gap-1 text-[10px] text-eid-text-secondary">
-                Zoom
-                <input
-                  type="range"
-                  min={1}
-                  max={2.5}
-                  step={0.05}
-                  value={zoom}
-                  onChange={(ev) => setZoom(Number(ev.target.value))}
-                />
-              </label>
-              <label className="grid gap-1 text-[10px] text-eid-text-secondary">
-                Posição horizontal
-                <input
-                  type="range"
-                  min={-100}
-                  max={100}
-                  step={1}
-                  value={posX}
-                  onChange={(ev) => setPosX(Number(ev.target.value))}
-                />
-              </label>
-              <label className="grid gap-1 text-[10px] text-eid-text-secondary">
-                Posição vertical
-                <input
-                  type="range"
-                  min={-100}
-                  max={100}
-                  step={1}
-                  value={posY}
-                  onChange={(ev) => setPosY(Number(ev.target.value))}
-                />
-              </label>
-            </div>
-
-            <div className="mt-3 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={closeEditor}
-                className="rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.04em] text-eid-text-secondary"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => void confirmCoverAndUpload()}
-                disabled={saving}
-                className="rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/12 px-3 py-2 text-[10px] font-black uppercase tracking-[0.04em] text-eid-fg disabled:opacity-60"
-              >
-                {saving ? (editorMode === "add" ? "Enviando..." : "Salvando...") : editorMode === "add" ? "Enviar capa" : "Salvar edição"}
-              </button>
+              <div className="grid gap-3">
+                <label className="block">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-eid-text-secondary">Zoom</span>
+                    <span className="text-[10px] tabular-nums text-eid-text-muted">{zoom.toFixed(2)}×</span>
+                  </div>
+                  <input type="range" min={1} max={2.5} step={0.05} value={zoom} onChange={(ev) => setZoom(Number(ev.target.value))} className="w-full accent-[#2563eb]" />
+                </label>
+                <label className="block">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-eid-text-secondary">Posição horizontal</span>
+                    <span className="text-[10px] tabular-nums text-eid-text-muted">{posX > 0 ? `+${posX}` : posX}</span>
+                  </div>
+                  <input type="range" min={-100} max={100} step={1} value={posX} onChange={(ev) => setPosX(Number(ev.target.value))} className="w-full accent-[#2563eb]" />
+                </label>
+                <label className="block">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-eid-text-secondary">Posição vertical</span>
+                    <span className="text-[10px] tabular-nums text-eid-text-muted">{posY > 0 ? `+${posY}` : posY}</span>
+                  </div>
+                  <input type="range" min={-100} max={100} step={1} value={posY} onChange={(ev) => setPosY(Number(ev.target.value))} className="w-full accent-[#2563eb]" />
+                </label>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <button type="button" onClick={closeEditor} className="flex-1 rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2.5 text-xs font-semibold text-eid-text-secondary transition hover:border-eid-primary-500/30 hover:text-eid-fg">
+                  Cancelar
+                </button>
+                <button type="button" onClick={() => void confirmCoverAndUpload()} disabled={saving} className="flex-1 rounded-xl bg-[linear-gradient(135deg,#2563EB,#1D4ED8)] px-3 py-2.5 text-xs font-bold text-white shadow-[0_6px_16px_-8px_rgba(37,99,235,0.7)] transition hover:brightness-105 disabled:opacity-60">
+                  {saving ? (editorMode === "add" ? "Enviando..." : "Salvando...") : editorMode === "add" ? "Usar esta capa" : "Salvar ajuste"}
+                </button>
+              </div>
             </div>
           </div>
         </div>,

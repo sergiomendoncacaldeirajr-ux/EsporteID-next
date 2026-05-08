@@ -196,45 +196,50 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
           />
           <input ref={fotoInputRef} type="file" name="foto" accept="image/*" onChange={handleFotoChange} className="hidden" />
           {fotoSelecionadaNome ? (
-            <div className="mt-3 space-y-2">
-              <p className="text-[11px] text-eid-text-secondary">{fotoSelecionadaNome}</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <label className="text-[11px] text-eid-text-secondary">
-                  Posição H
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={fotoPosX}
-                    onChange={(ev) => setFotoPosX(Number(ev.target.value))}
-                    className="mt-1 w-full"
-                  />
+            <div className="mt-3 space-y-3">
+              {/* Preview circular em tempo real */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="relative h-20 w-20 overflow-hidden rounded-full ring-2 ring-eid-primary-500/40 ring-offset-2 ring-offset-eid-card">
+                  {fotoPreviewUrl && (
+                    <img
+                      src={fotoPreviewUrl}
+                      alt="Prévia"
+                      className="absolute inset-0 h-full w-full object-cover"
+                      style={{
+                        objectPosition: `${fotoPosX}% ${fotoPosY}%`,
+                        transform: `scale(${fotoZoom})`,
+                        transformOrigin: `${fotoPosX}% ${fotoPosY}%`,
+                      }}
+                    />
+                  )}
+                </div>
+                <p className="text-[10px] text-eid-text-muted">Prévia do recorte</p>
+              </div>
+              {/* Sliders */}
+              <div className="grid gap-2.5">
+                <label className="block">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-eid-text-secondary">Posição horizontal</span>
+                    <span className="text-[10px] tabular-nums text-eid-text-muted">{fotoPosX}%</span>
+                  </div>
+                  <input type="range" min={0} max={100} value={fotoPosX} onChange={(ev) => setFotoPosX(Number(ev.target.value))} className="w-full accent-[#2563eb]" />
                 </label>
-                <label className="text-[11px] text-eid-text-secondary">
-                  Posição V
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={fotoPosY}
-                    onChange={(ev) => setFotoPosY(Number(ev.target.value))}
-                    className="mt-1 w-full"
-                  />
+                <label className="block">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-eid-text-secondary">Posição vertical</span>
+                    <span className="text-[10px] tabular-nums text-eid-text-muted">{fotoPosY}%</span>
+                  </div>
+                  <input type="range" min={0} max={100} value={fotoPosY} onChange={(ev) => setFotoPosY(Number(ev.target.value))} className="w-full accent-[#2563eb]" />
                 </label>
-                <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                  Zoom
-                  <input
-                    type="range"
-                    min={1}
-                    max={2.5}
-                    step={0.05}
-                    value={fotoZoom}
-                    onChange={(ev) => setFotoZoom(Number(ev.target.value))}
-                    className="mt-1 w-full"
-                  />
+                <label className="block">
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-eid-text-secondary">Zoom</span>
+                    <span className="text-[10px] tabular-nums text-eid-text-muted">{fotoZoom.toFixed(2)}×</span>
+                  </div>
+                  <input type="range" min={1} max={2.5} step={0.05} value={fotoZoom} onChange={(ev) => setFotoZoom(Number(ev.target.value))} className="w-full accent-[#2563eb]" />
                 </label>
               </div>
-              <button type="button" onClick={removeFotoSelecionada} className="text-[11px] text-eid-primary-300 underline">
+              <button type="button" onClick={removeFotoSelecionada} className="text-[11px] text-eid-text-muted underline hover:text-eid-fg">
                 Remover foto nova
               </button>
             </div>

@@ -92,14 +92,14 @@ export function ProfileMainEditor({ initial }: Props) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="w-full overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65 p-3 sm:p-4">
-      <p className="mb-3 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg">Dados pessoais</p>
+    <form onSubmit={onSubmit} className="w-full overflow-hidden">
       {message ? (
         <p className="mb-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2 text-xs text-eid-fg">
           {message}
         </p>
       ) : null}
-      <div className="grid w-full gap-3">
+      <div className="grid w-full gap-2.5">
+        {/* Nome */}
         <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
           <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <circle cx="12" cy="8" r="3" />
@@ -114,6 +114,8 @@ export function ProfileMainEditor({ initial }: Props) {
             className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
           />
         </div>
+
+        {/* Username */}
         <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
           <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <circle cx="12" cy="12" r="8" />
@@ -135,8 +137,9 @@ export function ProfileMainEditor({ initial }: Props) {
             className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
           />
         </div>
+
         {/* Localização — somente leitura, atualizada via GPS */}
-        <div>
+        <div className="min-w-0">
           <div className={`flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border px-3 transition ${
             locGeoStatus === "ok"
               ? "border-emerald-500/35 bg-emerald-500/6"
@@ -158,33 +161,37 @@ export function ProfileMainEditor({ initial }: Props) {
               required
               readOnly
               value={localizacao}
-              placeholder="Toque em Atualizar para detectar"
+              placeholder="Localização não detectada"
               className="h-full min-w-0 flex-1 cursor-default truncate bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
             />
+          </div>
+          {/* Botão + feedback em linha abaixo do input */}
+          <div className="mt-1.5 flex min-w-0 items-center justify-between gap-2">
+            <p className="min-w-0 truncate text-[10px] text-eid-text-muted">
+              {locGeoError
+                ? <span className="text-amber-400">{locGeoError}</span>
+                : locGeoStatus === "ok" && localizacao
+                ? <span className="flex items-center gap-1 text-emerald-400">
+                    <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M2 6l2.5 2.5 5.5-5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Localização atualizada
+                  </span>
+                : "Toque em Detectar para preencher"
+              }
+            </p>
             <button
               type="button"
               onClick={detectarLocalizacao}
               disabled={locGeoStatus === "loading"}
-              className="shrink-0 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18 disabled:opacity-50"
+              className="shrink-0 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-1 text-[10px] font-bold text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18 disabled:opacity-50"
             >
               {locGeoStatus === "loading" ? "…" : locGeoStatus === "ok" ? "Atualizar" : "Detectar"}
             </button>
           </div>
-          {locGeoError ? (
-            <p className="mt-1 pl-1 text-[10px] text-amber-400">{locGeoError}</p>
-          ) : locGeoStatus === "ok" && localizacao ? (
-            <p className="mt-1 flex items-center gap-1 pl-1 text-[10px] text-emerald-400">
-              <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <path d="M2 6l2.5 2.5 5.5-5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Localização atualizada
-            </p>
-          ) : (
-            <p className="mt-1 pl-1 text-[10px] text-eid-text-muted">
-              Clique em "Detectar" para preencher com sua cidade atual.
-            </p>
-          )}
         </div>
+
+        {/* Altura e Peso */}
         <div className="grid min-w-0 grid-cols-2 gap-2">
           <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
             <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -199,8 +206,8 @@ export function ProfileMainEditor({ initial }: Props) {
               max={260}
               value={alturaCm}
               onChange={(ev) => setAlturaCm(ev.target.value)}
-              placeholder="Altura (cm)"
-              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
+              placeholder="Altura cm"
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </div>
           <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
@@ -216,11 +223,13 @@ export function ProfileMainEditor({ initial }: Props) {
               max={300}
               value={pesoKg}
               onChange={(ev) => setPesoKg(ev.target.value)}
-              placeholder="Peso (kg)"
-              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
+              placeholder="Peso kg"
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </div>
         </div>
+
+        {/* Mão dominante */}
         <div className="relative flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
           <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <path d="M6 14c0-1.7 1.3-3 3-3h1V8.8A2.8 2.8 0 0 1 12.8 6h0A2.2 2.2 0 0 1 15 8.2V15" />
@@ -231,8 +240,8 @@ export function ProfileMainEditor({ initial }: Props) {
             name="lado"
             value={lado}
             onChange={(ev) => setLado(ev.target.value)}
-            style={{ backgroundColor: "transparent" }}
-            className="h-10 min-w-0 flex-1 appearance-none pr-5 text-sm text-eid-fg focus:outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
+            style={{ backgroundColor: "transparent", color: lado === "" ? "var(--eid-text-muted)" : "var(--eid-fg)" }}
+            className="h-10 min-w-0 flex-1 appearance-none pr-6 text-sm focus:outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
           >
             <option value="">Mão dominante</option>
             <option value="Destro">Destro</option>
