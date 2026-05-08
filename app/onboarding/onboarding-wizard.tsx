@@ -479,6 +479,28 @@ export function OnboardingWizard({
     if (idx === -1) return s;
     return s.slice(0, idx + 1) + s.slice(idx + 1).replace(/,/g, "");
   }
+  /**
+   * Normaliza altura no blur: converte metros → cm automaticamente.
+   * Ex: "1,72" → "172" | "1.80" → "180" | "175,5" → "175" | "175" → "175"
+   */
+  function normalizarAltura(raw: string): string {
+    const s = formatarMedida(raw);
+    if (!s) return s;
+    const num = parseFloat(s.replace(",", "."));
+    if (isNaN(num) || num <= 0) return s;
+    // Metros (ex: 1,72) → cm
+    if (num >= 0.5 && num < 3) return String(Math.round(num * 100));
+    // Cm com decimal (ex: 175,5) → inteiro
+    if (num >= 50) return String(Math.floor(num));
+    return s;
+  }
+  /** Converte valor de altura para número em cm (aceita metros ou cm). */
+  function alturaParaCm(raw: string): number {
+    const num = parseFloat(raw.replace(",", "."));
+    if (isNaN(num) || num <= 0) return NaN;
+    if (num >= 0.5 && num < 3) return Math.round(num * 100);
+    return Math.floor(num);
+  }
   const [username, setUsername] = useState<string>(profileInitial.username);
   const [localizacao, setLocalizacao] = useState<string>(profileInitial.localizacao);
   const [locGeoStatus, setLocGeoStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
@@ -860,8 +882,8 @@ export function OnboardingWizard({
   const stepOrder: Step[] = ["papeis", "esportes", "extras", "perfil"];
   const activeStepIndex = stepOrder.indexOf(step);
   const progressPct = ((activeStepIndex + 1) / stepOrder.length) * 100;
-  const perfilAlturaNum = alturaCm ? parseFloat(alturaCm.replace(",", ".")) : NaN;
-  const perfilPesoNum = pesoKg ? parseFloat(pesoKg.replace(",", ".")) : NaN;
+  const perfilAlturaNum = alturaCm.trim() ? alturaParaCm(alturaCm) : NaN;
+  const perfilPesoNum = pesoKg.trim() ? parseFloat(pesoKg.replace(",", ".")) : NaN;
   const hasFotoSelecionada = Boolean(fotoPreviewUrl);
   const hasFotoParaFinalizar =
     hasFotoSelecionada || Boolean(profileInitial.avatarUrl && profileInitial.avatarUrl.trim().length > 0);
@@ -1265,9 +1287,12 @@ export function OnboardingWizard({
     fd.set("foto_pos_x", String(fotoPosX));
     fd.set("foto_pos_y", String(fotoPosY));
     fd.set("foto_zoom", String(fotoZoom));
-    // Normaliza medidas: vírgula → ponto para o parseInt do servidor
-    const alturaVal = String(fd.get("altura_cm") ?? "").trim();
-    if (alturaVal) fd.set("altura_cm", alturaVal.replace(",", "."));
+    // Normaliza medidas para o servidor (parseInt espera número simples)
+    const alturaRawFd = String(fd.get("altura_cm") ?? "").trim();
+    if (alturaRawFd) {
+      const alturaNum = alturaParaCm(alturaRawFd);
+      fd.set("altura_cm", isNaN(alturaNum) ? alturaRawFd.replace(",", ".") : String(alturaNum));
+    }
     const pesoVal = String(fd.get("peso_kg") ?? "").trim();
     if (pesoVal) fd.set("peso_kg", pesoVal.replace(",", "."));
     startTransition(async () => applyResult(await salvarPerfilOnboarding(undefined, fd)));
@@ -2606,6 +2631,7 @@ export function OnboardingWizard({
                         name="altura_cm"
                         value={alturaCm}
                         onChange={(e) => setAlturaCm(formatarMedida(e.target.value))}
+                        onBlur={(e) => setAlturaCm(normalizarAltura(e.target.value))}
                         placeholder="Altura (cm)"
                         className="min-w-0 flex-1 border-0 bg-transparent text-sm text-eid-fg outline-none placeholder:text-eid-text-muted/90"
                       />

@@ -672,7 +672,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
           >
             <p className="text-[11px] leading-relaxed text-eid-text-secondary">{MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER}</p>
             <Link
-              href="/conta/esportes-eid"
+              href={`/editar/performance-eid?from=${encodeURIComponent(eidPageHref)}`}
               className="mt-2 inline-flex text-[11px] font-semibold text-eid-primary-300 underline-offset-2 hover:underline"
             >
               Configurar esportes no perfil →

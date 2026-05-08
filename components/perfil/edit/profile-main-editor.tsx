@@ -32,6 +32,25 @@ export function ProfileMainEditor({ initial }: Props) {
     if (idx === -1) return s;
     return s.slice(0, idx + 1) + s.slice(idx + 1).replace(/,/g, "");
   }
+  /**
+   * Normaliza altura no blur: converte metros → cm automaticamente.
+   * Ex: "1,72" → "172" | "1.80" → "180" | "175,5" → "175" | "175" → "175"
+   */
+  function normalizarAltura(raw: string): string {
+    const s = formatarMedida(raw);
+    if (!s) return s;
+    const num = parseFloat(s.replace(",", "."));
+    if (isNaN(num) || num <= 0) return s;
+    if (num >= 0.5 && num < 3) return String(Math.round(num * 100));
+    if (num >= 50) return String(Math.floor(num));
+    return s;
+  }
+  function alturaParaCm(raw: string): number {
+    const num = parseFloat(raw.replace(",", "."));
+    if (isNaN(num) || num <= 0) return NaN;
+    if (num >= 0.5 && num < 3) return Math.round(num * 100);
+    return Math.floor(num);
+  }
   const [username, setUsername] = useState(initial.username);
   const [localizacao, setLocalizacao] = useState(initial.localizacao);
   const [alturaCm, setAlturaCm] = useState(initial.alturaCm ? String(initial.alturaCm) : "");
@@ -87,9 +106,12 @@ export function ProfileMainEditor({ initial }: Props) {
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    // Normaliza medidas: troca vírgula por ponto antes de enviar ao servidor
-    const alturaVal = String(fd.get("altura_cm") ?? "").trim();
-    if (alturaVal) fd.set("altura_cm", alturaVal.replace(",", "."));
+    // Normaliza medidas para o servidor (converte metros→cm se necessário)
+    const alturaRawFd = String(fd.get("altura_cm") ?? "").trim();
+    if (alturaRawFd) {
+      const alturaNum = alturaParaCm(alturaRawFd);
+      fd.set("altura_cm", isNaN(alturaNum) ? alturaRawFd.replace(",", ".") : String(alturaNum));
+    }
     const pesoVal = String(fd.get("peso_kg") ?? "").trim();
     if (pesoVal) fd.set("peso_kg", pesoVal.replace(",", "."));
     startTransition(async () => {
@@ -217,6 +239,7 @@ export function ProfileMainEditor({ initial }: Props) {
               name="altura_cm"
               value={alturaCm}
               onChange={(ev) => setAlturaCm(formatarMedida(ev.target.value))}
+              onBlur={(ev) => setAlturaCm(normalizarAltura(ev.target.value))}
               placeholder="Altura cm"
               className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
             />
