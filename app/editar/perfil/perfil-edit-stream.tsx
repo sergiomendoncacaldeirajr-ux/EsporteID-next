@@ -89,6 +89,7 @@ export async function EditarPerfilStream({ viewerId, sp }: EditarPerfilStreamPro
           </div>
           <div className="p-3">
             <ProfileMainEditor
+              userId={viewerId}
               initial={{
                 nome: profile.nome ?? "",
                 username: profile.username ?? "",

@@ -3,8 +3,10 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveProfileMainAction } from "@/app/editar/actions";
+import { useUsernameCheck } from "@/lib/hooks/use-username-check";
 
 type Props = {
+  userId: string;
   initial: {
     nome: string;
     username: string;
@@ -15,7 +17,7 @@ type Props = {
   };
 };
 
-export function ProfileMainEditor({ initial }: Props) {
+export function ProfileMainEditor({ userId, initial }: Props) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
@@ -52,6 +54,7 @@ export function ProfileMainEditor({ initial }: Props) {
     return Math.floor(num);
   }
   const [username, setUsername] = useState(initial.username);
+  const usernameStatus = useUsernameCheck(username, "profiles", userId);
   const [localizacao, setLocalizacao] = useState(initial.localizacao);
   const [alturaCm, setAlturaCm] = useState(initial.alturaCm ? String(initial.alturaCm) : "");
   const [pesoKg, setPesoKg] = useState(initial.pesoKg ? String(initial.pesoKg) : "");
@@ -171,6 +174,31 @@ export function ProfileMainEditor({ initial }: Props) {
             className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
           />
         </div>
+        {username.trim() ? (
+          <div className="flex items-center gap-1.5 px-1 text-[11px]">
+            {usernameStatus === "checking" && (
+              <>
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#98A2B3] border-t-transparent" />
+                <span className="text-[#98A2B3]">Verificando...</span>
+              </>
+            )}
+            {usernameStatus === "available" && (
+              <>
+                <svg className="h-3.5 w-3.5 shrink-0 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><path d="M5 13l4 4L19 7" /></svg>
+                <span className="text-emerald-400">@{username.trim()} disponível</span>
+              </>
+            )}
+            {usernameStatus === "taken" && (
+              <>
+                <svg className="h-3.5 w-3.5 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
+                <span className="text-amber-400">@{username.trim()} já está em uso — escolha outro</span>
+              </>
+            )}
+            {(usernameStatus === "invalid" || usernameStatus === "idle") && (
+              <span className="text-[#98A2B3]">3–24 chars: a-z, 0-9 e _</span>
+            )}
+          </div>
+        ) : null}
 
         {/* Localização — somente leitura, atualizada via GPS */}
         <div className="min-w-0">
@@ -289,7 +317,7 @@ export function ProfileMainEditor({ initial }: Props) {
       <div className="mt-4 flex justify-end">
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || usernameStatus === "taken"}
           className="inline-flex min-h-[42px] items-center gap-2 rounded-full border border-[#1D4ED8] bg-[linear-gradient(135deg,#2563EB,#1D4ED8)] px-5 text-[12px] font-black uppercase tracking-[0.04em] text-white shadow-[0_10px_22px_-14px_rgba(37,99,235,0.8)] transition hover:brightness-105 disabled:opacity-60"
         >
           {pending ? (

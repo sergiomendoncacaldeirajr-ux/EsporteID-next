@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useActionState } from "react";
 import type { ChangeEvent } from "react";
+import { useUsernameCheck } from "@/lib/hooks/use-username-check";
 import { criarEquipe, convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
 import { emitEidSocialDataRefresh } from "@/lib/comunidade/social-panel-layout";
 import { AVISO_REGRA_LIMITE_FORMACAO_GLOBAL } from "@/lib/formacao/formacao-global-limit";
@@ -127,6 +128,8 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
   const [inviteSuggestOpen, setInviteSuggestOpen] = useState(false);
   const [inviteSuggestLoading, setInviteSuggestLoading] = useState(false);
   const [escudoPrepError, setEscudoPrepError] = useState<string | null>(null);
+  const [createUsername, setCreateUsername] = useState("");
+  const createUsernameStatus = useUsernameCheck(createUsername, "times");
 
   useEffect(() => {
     if (esporteId !== "" || esportes.length === 0) return;
@@ -336,15 +339,55 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
               <input name="nome" required placeholder="Nome da equipe" className={`${isCadastrarStyle ? "h-10 w-full bg-transparent text-[11px] text-eid-fg placeholder:text-[#64748B] focus:outline-none" : "eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"}`} />
             </div>
           </div>
-          <div className={`${isCadastrarStyle ? "flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 sm:col-span-2" : "sm:col-span-2"}`}>
-            {isCadastrarStyle ? (
-              <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#64748B]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                <circle cx="12" cy="12" r="8" />
-                <path d="M8.5 14.8c.8-1.6 2-2.4 3.5-2.4s2.7.8 3.5 2.4" />
-                <path d="M9.8 9.8h4.4" />
-              </svg>
+          <div className="sm:col-span-2">
+            <div className={`${isCadastrarStyle ? "flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3" : ""}`}>
+              {isCadastrarStyle ? (
+                <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#64748B]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <circle cx="12" cy="12" r="8" />
+                  <path d="M8.5 14.8c.8-1.6 2-2.4 3.5-2.4s2.7.8 3.5 2.4" />
+                  <path d="M9.8 9.8h4.4" />
+                </svg>
+              ) : null}
+              <input
+                name="username"
+                value={createUsername}
+                onChange={(e) =>
+                  setCreateUsername(
+                    e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9_]/g, "")
+                      .slice(0, 24)
+                  )
+                }
+                placeholder="@username da equipe (opcional)"
+                className={`${isCadastrarStyle ? "h-10 w-full bg-transparent text-[11px] text-eid-fg placeholder:text-[#64748B] focus:outline-none" : "eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"}`}
+              />
+            </div>
+            {createUsername.trim() ? (
+              <div className="mt-1 flex items-center gap-1.5 px-1 text-[11px]">
+                {createUsernameStatus === "checking" && (
+                  <>
+                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#64748B] border-t-transparent" />
+                    <span className="text-[#64748B]">Verificando...</span>
+                  </>
+                )}
+                {createUsernameStatus === "available" && (
+                  <>
+                    <svg className="h-3.5 w-3.5 shrink-0 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><path d="M5 13l4 4L19 7" /></svg>
+                    <span className="text-emerald-400">@{createUsername.trim()} disponível</span>
+                  </>
+                )}
+                {createUsernameStatus === "taken" && (
+                  <>
+                    <svg className="h-3.5 w-3.5 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
+                    <span className="text-amber-400">@{createUsername.trim()} já está em uso — escolha outro</span>
+                  </>
+                )}
+                {(createUsernameStatus === "invalid" || createUsernameStatus === "idle") && (
+                  <span className="text-[#64748B]">3–24 chars: a-z, 0-9 e _</span>
+                )}
+              </div>
             ) : null}
-            <input name="username" placeholder="@username da equipe (opcional)" className={`${isCadastrarStyle ? "h-10 w-full bg-transparent text-[11px] text-eid-fg placeholder:text-[#64748B] focus:outline-none" : "eid-input-dark w-full rounded-xl px-3 py-2 text-sm text-eid-fg"}`} />
           </div>
           <label className="grid min-w-0 gap-1">
             <span className={`${isCadastrarStyle ? "inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg" : "text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-text-secondary"}`}>
@@ -543,7 +586,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
               </div>
               <button
                 type="submit"
-                disabled={createPending}
+                disabled={createPending || createUsernameStatus === "taken"}
                 className="mt-2.5 inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-[12px] border border-[#F97316] bg-[#FF6A00] px-4 text-[11px] font-black uppercase tracking-[0.03em] text-white shadow-[0_10px_20px_-14px_rgba(249,115,22,0.8)] transition hover:brightness-105 disabled:opacity-60"
               >
                 {createPending ? (
@@ -570,7 +613,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
           ) : (
           <button
             type="submit"
-            disabled={createPending}
+            disabled={createPending || createUsernameStatus === "taken"}
             className="rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/22 px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/65 hover:bg-eid-primary-500/30 disabled:opacity-60 sm:col-span-2"
           >
             {createPending

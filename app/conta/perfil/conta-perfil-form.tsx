@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { salvarPerfilOnboarding, type OnboardingActionResult } from "@/app/onboarding/actions";
 import { CONTA_ESPORTES_EID_HREF } from "@/lib/routes/conta";
 import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
+import { useUsernameCheck } from "@/lib/hooks/use-username-check";
 
 type ProfileInitial = {
   nome: string;
@@ -35,6 +36,7 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
 
   const [nome, setNome] = useState(profileInitial.nome);
   const [username, setUsername] = useState(profileInitial.username);
+  const usernameStatus = useUsernameCheck(username, "profiles", userId);
   const [localizacao, setLocalizacao] = useState(profileInitial.localizacao);
   const [alturaCm, setAlturaCm] = useState(profileInitial.alturaCm ? String(profileInitial.alturaCm) : "");
   const [pesoKg, setPesoKg] = useState(profileInitial.pesoKg ? String(profileInitial.pesoKg) : "");
@@ -62,6 +64,7 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
     if (nome.trim().length < 3 || localizacao.trim().length < 3) return false;
     const uname = username.trim().toLowerCase();
     if (uname && !/^[a-z0-9_]{3,24}$/.test(uname)) return false;
+    if (uname && usernameStatus === "taken") return false;
     if (hasAtletaProfessor) {
       if (!Number.isInteger(perfilAlturaNum) || perfilAlturaNum < 50 || perfilAlturaNum > 260) return false;
       if (!Number.isInteger(perfilPesoNum) || perfilPesoNum < 20 || perfilPesoNum > 300) return false;
@@ -69,7 +72,7 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
     }
     if (genero && !["Masculino", "Feminino", "Outro"].includes(genero)) return false;
     return true;
-  }, [genero, hasAtletaProfessor, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum, username]);
+  }, [genero, hasAtletaProfessor, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum, username, usernameStatus]);
 
   const hasFotoSelecionada = Boolean(fotoPreviewUrl);
 
@@ -282,7 +285,33 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
           placeholder="@usuario (opcional)"
           className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
         />
-        <p className="text-[11px] text-eid-text-secondary">3–24 caracteres: a-z, 0-9 e _</p>
+        {username.trim() ? (
+          <div className="flex items-center gap-1.5 text-[11px]">
+            {usernameStatus === "checking" && (
+              <>
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-eid-text-secondary border-t-transparent" />
+                <span className="text-eid-text-secondary">Verificando...</span>
+              </>
+            )}
+            {usernameStatus === "available" && (
+              <>
+                <svg className="h-3.5 w-3.5 shrink-0 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><path d="M5 13l4 4L19 7" /></svg>
+                <span className="text-emerald-400">@{username.trim()} disponível</span>
+              </>
+            )}
+            {usernameStatus === "taken" && (
+              <>
+                <svg className="h-3.5 w-3.5 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
+                <span className="text-amber-400">@{username.trim()} já está em uso — escolha outro</span>
+              </>
+            )}
+            {(usernameStatus === "invalid" || usernameStatus === "idle") && (
+              <span className="text-eid-text-secondary">3–24 caracteres: a-z, 0-9 e _</span>
+            )}
+          </div>
+        ) : (
+          <p className="text-[11px] text-eid-text-secondary">3–24 caracteres: a-z, 0-9 e _</p>
+        )}
         <input
           name="localizacao"
           required

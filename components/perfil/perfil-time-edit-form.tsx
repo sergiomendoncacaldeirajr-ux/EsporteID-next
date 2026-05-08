@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { atualizarMinhaEquipe, type TeamActionState } from "@/app/times/actions";
 import { TeamShieldControl } from "@/components/perfil/team-shield-control";
+import { useUsernameCheck } from "@/lib/hooks/use-username-check";
 
 const initial: TeamActionState = { ok: false, message: "" };
 
@@ -35,6 +36,8 @@ export function PerfilTimeEditForm({
 }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(atualizarMinhaEquipe, initial);
+  const [usernameVal, setUsernameVal] = useState(username ?? "");
+  const usernameStatus = useUsernameCheck(usernameVal, "times", timeId);
 
   useEffect(() => {
     if (!state.ok) return;
@@ -103,11 +106,44 @@ export function PerfilTimeEditForm({
             </svg>
             <input
               name="username"
-              defaultValue={username ?? ""}
+              value={usernameVal}
+              onChange={(e) =>
+                setUsernameVal(
+                  e.target.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9_]/g, "")
+                    .slice(0, 24)
+                )
+              }
               placeholder="@username (opcional)"
               className="h-10 w-full bg-transparent text-sm text-eid-fg placeholder:text-[#64748B] focus:outline-none"
             />
           </div>
+          {usernameVal.trim() ? (
+            <div className="mt-1 flex items-center gap-1.5 px-1 text-[11px]">
+              {usernameStatus === "checking" && (
+                <>
+                  <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#64748B] border-t-transparent" />
+                  <span className="text-[#64748B]">Verificando...</span>
+                </>
+              )}
+              {usernameStatus === "available" && (
+                <>
+                  <svg className="h-3.5 w-3.5 shrink-0 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><path d="M5 13l4 4L19 7" /></svg>
+                  <span className="text-emerald-400">@{usernameVal.trim()} disponível</span>
+                </>
+              )}
+              {usernameStatus === "taken" && (
+                <>
+                  <svg className="h-3.5 w-3.5 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
+                  <span className="text-amber-400">@{usernameVal.trim()} já está em uso — escolha outro</span>
+                </>
+              )}
+              {(usernameStatus === "invalid" || usernameStatus === "idle") && (
+                <span className="text-[#64748B]">3–24 chars: a-z, 0-9 e _</span>
+              )}
+            </div>
+          ) : null}
         </div>
         <div className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 sm:col-span-2">
           <p className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-eid-primary-300">
@@ -211,7 +247,7 @@ export function PerfilTimeEditForm({
         <div className={`sm:col-span-2 ${isPage ? "flex justify-center" : "flex justify-start"}`}>
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || usernameStatus === "taken"}
             className={`${isPage ? "inline-flex min-h-[42px] w-full items-center justify-center gap-2 rounded-[12px] border border-[#F97316] bg-[#FF6A00] px-4 text-[12px] font-black uppercase tracking-[0.03em] text-white shadow-[0_10px_20px_-14px_rgba(249,115,22,0.8)] transition hover:brightness-105 disabled:opacity-60" : "eid-btn-primary inline-flex !min-h-[32px] min-w-[132px] items-center justify-center gap-1.5 rounded-lg px-5 py-1.5 text-[12px] font-extrabold leading-none sm:!min-h-[34px] sm:min-w-[148px] sm:px-6 sm:text-[13px]"}`}
           >
             {pending ? (

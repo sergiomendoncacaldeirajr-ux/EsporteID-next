@@ -22,6 +22,7 @@ import {
 } from "@/lib/legal/contrato-operador-espaco";
 import { LEGAL_VERSIONS } from "@/lib/legal/versions";
 import { normalizarPapeisContaPrincipal } from "@/lib/roles";
+import { useUsernameCheck } from "@/lib/hooks/use-username-check";
 
 /* ── Seletor de localização via GPS ────────────────────────────────── */
 function LocationPicker({
@@ -502,6 +503,7 @@ export function OnboardingWizard({
     return Math.floor(num);
   }
   const [username, setUsername] = useState<string>(profileInitial.username);
+  const usernameStatus = useUsernameCheck(username, "profiles", userId);
   const [localizacao, setLocalizacao] = useState<string>(profileInitial.localizacao);
   const [locGeoStatus, setLocGeoStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [locGeoError, setLocGeoError] = useState<string | null>(null);
@@ -963,6 +965,31 @@ export function OnboardingWizard({
     pesoKg,
     username,
   ]);
+
+  /** Erros que bloqueiam o botão final — exibidos acima do submit. */
+  const perfilErros = useMemo(() => {
+    const erros: Array<{ campo: string; msg: string; onFix?: () => void }> = [];
+    if (nome.trim().length < 3)
+      erros.push({ campo: "nome", msg: "Nome muito curto — mínimo 3 letras" });
+    if (localizacao.trim().length < 3)
+      erros.push({ campo: "localizacao", msg: "Localização não preenchida — toque em Detectar" });
+    if (!hasFotoParaFinalizar)
+      erros.push({ campo: "foto", msg: "Adicione uma foto de perfil para continuar" });
+    const uname = username.trim().toLowerCase();
+    if (uname && !/^[a-z0-9_]{3,24}$/.test(uname))
+      erros.push({ campo: "username", msg: "Username inválido — use letras, números e _ (3–24 chars)" });
+    if (uname && usernameStatus === "taken")
+      erros.push({ campo: "username", msg: `@${uname} já está em uso — escolha outro username` });
+    if (hasAnyAthleteSport) {
+      const alturaRaw = alturaCm.trim();
+      if (alturaRaw.length > 0 && (isNaN(perfilAlturaNum) || Math.floor(perfilAlturaNum) < 50 || Math.floor(perfilAlturaNum) > 260))
+        erros.push({ campo: "altura", msg: "Altura inválida — informe entre 50 e 260 cm (ex: 172)" });
+      const pesoRaw = pesoKg.trim();
+      if (pesoRaw.length > 0 && (isNaN(perfilPesoNum) || Math.floor(perfilPesoNum) < 20 || Math.floor(perfilPesoNum) > 300))
+        erros.push({ campo: "peso", msg: "Peso inválido — informe entre 20 e 300 kg (ex: 70)" });
+    }
+    return erros;
+  }, [alturaCm, hasAnyAthleteSport, hasFotoParaFinalizar, localizacao, nome, perfilAlturaNum, perfilPesoNum, pesoKg, username, usernameStatus]);
 
   function applyResult(r: OnboardingActionResult) {
     if (!r.ok) {
@@ -2516,11 +2543,12 @@ export function OnboardingWizard({
               {/* Campos de identidade */}
               <div className="space-y-2.5">
                 {/* Nome */}
-                <div className="flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] px-3 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
-                  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-eid-primary-500" fill="currentColor" aria-hidden>
+                <div className={`flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border px-3 transition focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)] ${perfilErros.some(e => e.campo === "nome") ? "border-amber-500/60 bg-amber-500/6 focus-within:border-amber-500/80" : "border-[color:var(--eid-border-subtle)] focus-within:border-eid-primary-500/50"}`} style={{ background: perfilErros.some(e => e.campo === "nome") ? undefined : "var(--eid-field-bg)" }}>
+                  <svg viewBox="0 0 24 24" className={`h-4 w-4 shrink-0 ${perfilErros.some(e => e.campo === "nome") ? "text-amber-400" : "text-eid-primary-500"}`} fill="currentColor" aria-hidden>
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                   </svg>
                   <input
+                    id="ob-nome"
                     name="nome"
                     required
                     value={nome}
@@ -2532,11 +2560,12 @@ export function OnboardingWizard({
 
                 {/* Username */}
                 <div>
-                  <div className="flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] px-3 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <div className={`flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border px-3 transition focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)] ${perfilErros.some(e => e.campo === "username") ? "border-amber-500/60 bg-amber-500/6 focus-within:border-amber-500/80" : "border-[color:var(--eid-border-subtle)] focus-within:border-eid-primary-500/50"}`} style={{ background: perfilErros.some(e => e.campo === "username") ? undefined : "var(--eid-field-bg)" }}>
+                    <svg viewBox="0 0 24 24" className={`h-4 w-4 shrink-0 ${perfilErros.some(e => e.campo === "username") ? "text-amber-400" : "text-eid-primary-500"}`} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                       <circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" strokeLinecap="round" />
                     </svg>
                     <input
+                      id="ob-username"
                       name="username"
                       value={username}
                       onChange={(e) =>
@@ -2551,9 +2580,38 @@ export function OnboardingWizard({
                       className="min-w-0 flex-1 border-0 bg-transparent text-sm text-eid-fg outline-none placeholder:text-eid-text-muted/90"
                     />
                   </div>
-                  <p className="mt-1.5 pl-1 text-[11px] text-eid-text-muted">
-                    3–24 caracteres: letras minúsculas, números e sublinhado (_).
-                  </p>
+                  {username.trim() ? (
+                    <div className="mt-1.5 flex items-center gap-1.5 pl-1 text-[11px]">
+                      {usernameStatus === "checking" && (
+                        <>
+                          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-eid-text-muted border-t-transparent" />
+                          <span className="text-eid-text-muted">Verificando...</span>
+                        </>
+                      )}
+                      {usernameStatus === "available" && (
+                        <>
+                          <svg className="h-3.5 w-3.5 shrink-0 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><path d="M5 13l4 4L19 7" /></svg>
+                          <span className="text-emerald-400">@{username.trim()} disponível</span>
+                        </>
+                      )}
+                      {usernameStatus === "taken" && (
+                        <>
+                          <svg className="h-3.5 w-3.5 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
+                          <span className="text-amber-400">@{username.trim()} já está em uso — escolha outro</span>
+                        </>
+                      )}
+                      {usernameStatus === "invalid" && (
+                        <span className="text-eid-text-muted">3–24 chars: letras minúsculas, números e _</span>
+                      )}
+                      {usernameStatus === "idle" && (
+                        <span className="text-eid-text-muted">3–24 chars: letras minúsculas, números e _</span>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="mt-1.5 pl-1 text-[11px] text-eid-text-muted">
+                      3–24 caracteres: letras minúsculas, números e sublinhado (_).
+                    </p>
+                  )}
                 </div>
 
                 {/* Localização — somente leitura, atualizada via GPS */}
@@ -2561,8 +2619,10 @@ export function OnboardingWizard({
                   <div className={`flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border px-3 transition ${
                     locGeoStatus === "ok"
                       ? "border-emerald-500/35 bg-emerald-500/6"
-                      : "border-[color:var(--eid-border-subtle)]"
-                  }`} style={locGeoStatus === "ok" ? {} : { background: "var(--eid-field-bg)" }}>
+                      : perfilErros.some(e => e.campo === "localizacao")
+                        ? "border-amber-500/60 bg-amber-500/6"
+                        : "border-[color:var(--eid-border-subtle)]"
+                  }`} style={locGeoStatus === "ok" || perfilErros.some(e => e.campo === "localizacao") ? {} : { background: "var(--eid-field-bg)" }}>
                     {locGeoStatus === "loading" ? (
                       <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-eid-primary-500 border-t-transparent" />
                     ) : locGeoStatus === "ok" ? (
@@ -2621,11 +2681,12 @@ export function OnboardingWizard({
 
                   <div className="grid min-w-0 gap-2 sm:grid-cols-2">
                     {/* Altura */}
-                    <div className="flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] px-3 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
-                      <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <div className={`flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border px-3 transition focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)] ${perfilErros.some(e => e.campo === "altura") ? "border-amber-500/60 bg-amber-500/6 focus-within:border-amber-500/80" : "border-[color:var(--eid-border-subtle)] focus-within:border-eid-primary-500/50"}`} style={{ background: perfilErros.some(e => e.campo === "altura") ? undefined : "var(--eid-field-bg)" }}>
+                      <svg viewBox="0 0 24 24" className={`h-4 w-4 shrink-0 ${perfilErros.some(e => e.campo === "altura") ? "text-amber-400" : "text-eid-primary-500"}`} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                         <path d="M21 6H3M21 12H3M21 18H3" strokeLinecap="round" /><path d="M6 3v4M6 17v4M18 10v4" strokeLinecap="round" />
                       </svg>
                       <input
+                        id="ob-altura"
                         type="text"
                         inputMode="decimal"
                         name="altura_cm"
@@ -2638,11 +2699,12 @@ export function OnboardingWizard({
                     </div>
 
                     {/* Peso */}
-                    <div className="flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] px-3 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
-                      <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <div className={`flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border px-3 transition focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)] ${perfilErros.some(e => e.campo === "peso") ? "border-amber-500/60 bg-amber-500/6 focus-within:border-amber-500/80" : "border-[color:var(--eid-border-subtle)] focus-within:border-eid-primary-500/50"}`} style={{ background: perfilErros.some(e => e.campo === "peso") ? undefined : "var(--eid-field-bg)" }}>
+                      <svg viewBox="0 0 24 24" className={`h-4 w-4 shrink-0 ${perfilErros.some(e => e.campo === "peso") ? "text-amber-400" : "text-eid-primary-500"}`} fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" strokeLinecap="round" />
                       </svg>
                       <input
+                        id="ob-peso"
                         type="text"
                         inputMode="decimal"
                         name="peso_kg"
@@ -2676,6 +2738,37 @@ export function OnboardingWizard({
                       <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
+                </div>
+              ) : null}
+
+              {/* Erros que bloqueiam o submit — clicáveis para focar o campo */}
+              {perfilErros.length > 0 ? (
+                <div className="overflow-hidden rounded-xl border border-amber-500/30 bg-amber-500/8 px-3 py-2.5">
+                  <p className="mb-1.5 text-[10px] font-black uppercase tracking-[0.1em] text-amber-400">
+                    Corrija para continuar
+                  </p>
+                  <ul className="space-y-1">
+                    {perfilErros.map((e) => (
+                      <li key={e.campo}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (e.campo === "foto") { fotoInputRef.current?.click(); return; }
+                            if (e.campo === "localizacao") { detectarLocalizacao(); return; }
+                            document.getElementById(`ob-${e.campo}`)?.focus();
+                          }}
+                          className="flex w-full items-start gap-2 text-left"
+                        >
+                          <svg viewBox="0 0 8 8" className="mt-[3px] h-2 w-2 shrink-0 fill-amber-400" aria-hidden>
+                            <circle cx="4" cy="4" r="4" />
+                          </svg>
+                          <span className="text-[11px] leading-snug text-amber-300 underline-offset-2 hover:underline">
+                            {e.msg}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ) : null}
 
