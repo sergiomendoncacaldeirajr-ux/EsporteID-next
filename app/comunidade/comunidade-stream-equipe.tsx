@@ -627,12 +627,12 @@ export async function ComunidadeStreamEquipe({
   const minhasCandSoPendentes = minhasCandidaturasEquipe.filter((c) => c.statusRaw === "pendente");
 
   return (
-    <section className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0">
-      <div className="flex items-center justify-between gap-2 border-b border-transparent bg-eid-card px-3 py-2 md:px-4">
+    <section className="eid-list-item overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.15)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_98%,var(--eid-primary-500)_2%),var(--eid-card))] p-0 shadow-[0_4px_18px_-10px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)] md:p-0">
+      <div className="flex items-center justify-between gap-2 border-b border-[rgba(37,99,235,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-3 py-2 md:px-4">
         <div className="flex min-w-0 items-center gap-1.5">
-          <UserPlus className="h-3.5 w-3.5 shrink-0 text-eid-primary-500" strokeWidth={2} aria-hidden />
+          <UserPlus className="h-3.5 w-3.5 shrink-0 text-eid-primary-400" strokeWidth={2} aria-hidden />
           <div className="min-w-0">
-            <h2 className="text-[8px] font-black uppercase tracking-[0.14em] text-eid-fg">Equipe</h2>
+            <h2 className="text-[8px] font-black uppercase tracking-[0.14em] text-eid-primary-200">Equipe</h2>
             <p className="mt-0.5 hidden text-[8px] font-medium text-eid-text-secondary md:block">
               Convites e sugestões de liderança que precisam da sua resposta.
             </p>

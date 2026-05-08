@@ -15,20 +15,50 @@ self.addEventListener("push", (event) => {
   }
 
   const title = payload.title || "EsporteID";
+  const tipo = String(payload.tipo || "").toLowerCase();
+  const destUrl = payload.url || "/comunidade";
+
+  // Type-aware action buttons
+  let actions;
+  if (tipo === "match") {
+    actions = [
+      { action: "open_url", title: "Ver Desafio" },
+      { action: "open_agenda", title: "Minha Agenda" },
+    ];
+  } else if (tipo === "desafio") {
+    actions = [
+      { action: "open_url", title: "Ver Placar" },
+      { action: "open_social", title: "Social" },
+    ];
+  } else if (tipo === "agenda_status") {
+    actions = [
+      { action: "open_url", title: "Ver Agenda" },
+      { action: "open_social", title: "Social" },
+    ];
+  } else if (tipo.includes("convite") || tipo.includes("candidatura") || tipo.includes("time")) {
+    actions = [
+      { action: "open_url", title: "Ver Equipe" },
+      { action: "open_agenda", title: "Agenda" },
+    ];
+  } else {
+    actions = [
+      { action: "open_url", title: "Abrir" },
+      { action: "open_agenda", title: "Agenda" },
+    ];
+  }
+
   const options = {
     body: payload.body || "Você tem uma atualização no app.",
     icon: "/pwa-icon-192.png",
     badge: "/pwa-icon-192.png",
-    image: payload.image || undefined,
     tag: payload.tag || "eid-notificacao",
     renotify: true,
-    vibrate: [120, 40, 120],
-    actions: [
-      { action: "open_social", title: "Abrir Social" },
-      { action: "open_agenda", title: "Abrir Agenda" },
-    ],
+    requireInteraction: payload.requireInteraction === true,
+    vibrate: [100, 40, 100, 40, 80],
+    actions,
     data: {
-      url: payload.url || "/comunidade",
+      url: destUrl,
+      tipo,
     },
   };
 
@@ -38,10 +68,28 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const action = event.action;
-  const fallback = (event.notification && event.notification.data && event.notification.data.url) || "/comunidade";
-  const url = action === "open_agenda" ? "/agenda" : action === "open_social" ? "/comunidade" : fallback;
+  const notifData = (event.notification && event.notification.data) || {};
+  const notifUrl = notifData.url || "/comunidade";
+  // "open_url" uses the notification-specific URL; shortcuts go to fixed paths
+  const url =
+    action === "open_agenda" ? "/agenda" :
+    action === "open_social" ? "/comunidade" :
+    notifUrl;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (clients) => {
+      // Prefer a client already on our origin
+      const origin = self.location.origin;
+      const sameOrigin = clients.filter((c) => c.url.startsWith(origin));
+      for (const client of sameOrigin) {
+        try {
+          if ("navigate" in client && typeof client.navigate === "function") {
+            await client.navigate(url);
+          }
+          if ("focus" in client) return client.focus();
+        } catch {
+          /* tenta próximo client */
+        }
+      }
       for (const client of clients) {
         try {
           if ("navigate" in client && typeof client.navigate === "function") {

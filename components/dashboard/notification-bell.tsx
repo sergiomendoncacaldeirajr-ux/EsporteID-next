@@ -47,10 +47,19 @@ function IconBell({ className }: { className?: string }) {
   );
 }
 
-function formatShort(iso: string | null | undefined) {
+function formatRelative(iso: string | null | undefined): string {
   if (!iso) return "";
   try {
-    return new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diffMs / 60_000);
+    if (mins < 1) return "agora";
+    if (mins < 60) return `${mins}min atrás`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h atrás`;
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return "ontem";
+    if (days < 7) return `${days}d atrás`;
+    return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
   } catch {
     return "";
   }
@@ -100,6 +109,59 @@ function SummaryGlyph({ kind }: { kind: "agenda" | "social" | "placar" }) {
           <circle cx="12" cy="11" r="2" fill="currentColor" />
         </svg>
       )}
+    </span>
+  );
+}
+
+function NotifTypeIcon({ tipo, unread }: { tipo: string | null; unread: boolean }) {
+  const t = String(tipo ?? "").toLowerCase().trim();
+  if (t === "match") {
+    return (
+      <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${unread ? "bg-eid-action-500/18 text-eid-action-400" : "bg-eid-action-500/10 text-eid-action-500/60"}`}>
+        <svg viewBox="0 0 24 24" width={14} height={14} fill="none" aria-hidden>
+          <path d="M14.5 9.5 9 15m5.5-9.5L17 4l3 3-2.5 2.5M9 15l-2.5 2.5L3 14l2.5-2.5M9 15l-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </span>
+    );
+  }
+  if (t === "desafio") {
+    return (
+      <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${unread ? "bg-violet-500/18 text-violet-400" : "bg-violet-500/10 text-violet-500/60"}`}>
+        <svg viewBox="0 0 24 24" width={14} height={14} fill="none" aria-hidden>
+          <path d="M12 21s6-5.2 6-10a6 6 0 10-12 0c0 4.8 6 10 6 10z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+          <circle cx="12" cy="11" r="2" fill="currentColor"/>
+        </svg>
+      </span>
+    );
+  }
+  if (t === "agenda_status") {
+    return (
+      <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${unread ? "bg-eid-primary-500/18 text-eid-primary-400" : "bg-eid-primary-500/10 text-eid-primary-500/60"}`}>
+        <svg viewBox="0 0 24 24" width={14} height={14} fill="none" aria-hidden>
+          <path d="M5 7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v12H5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+          <path d="M8 3v4M16 3v4M5 10h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      </span>
+    );
+  }
+  if (t.includes("time") || t.includes("convite") || t.includes("candidatura")) {
+    return (
+      <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${unread ? "bg-eid-primary-500/18 text-eid-primary-400" : "bg-eid-primary-500/10 text-eid-primary-500/60"}`}>
+        <svg viewBox="0 0 24 24" width={14} height={14} fill="none" aria-hidden>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      </span>
+    );
+  }
+  // default / geral
+  return (
+    <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${unread ? "bg-eid-primary-500/12 text-eid-text-secondary" : "bg-eid-surface/50 text-eid-text-secondary/50"}`}>
+      <svg viewBox="0 0 24 24" width={13} height={13} fill="none" aria-hidden>
+        <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
     </span>
   );
 }
@@ -543,7 +605,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         ref={bellBtnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,transparent)] text-eid-text-secondary shadow-none transition-all duration-200 ease-out hover:border-eid-primary-500/35 hover:text-eid-fg active:translate-y-[0.5px] active:scale-[0.985] md:h-9 md:w-9 [touch-action:manipulation]"
+        className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_95%,var(--eid-primary-500)_5%),color-mix(in_srgb,var(--eid-card)_98%,transparent))] text-eid-text-secondary shadow-[0_2px_6px_-4px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-200 ease-out hover:border-eid-primary-500/40 hover:text-eid-fg hover:shadow-[0_4px_10px_-6px_rgba(37,99,235,0.3),inset_0_1px_0_rgba(255,255,255,0.06)] active:translate-y-[0.5px] active:scale-[0.985] md:h-9 md:w-9 [touch-action:manipulation]"
         aria-label="Notificações e resumos"
         aria-expanded={open}
       >
@@ -558,7 +620,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
       {open ? (
         <div
           data-eid-notif-modal="true"
-          className="fixed z-[70] w-[min(84vw,280px)] overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-2 shadow-[0_20px_48px_-30px_rgba(15,23,42,0.55)]"
+          className="fixed z-[70] w-[min(84vw,280px)] overflow-hidden rounded-xl border border-[rgba(37,99,235,0.16)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--eid-card)_96%,var(--eid-primary-500)_4%),var(--eid-card))] p-2 shadow-[0_20px_48px_-20px_rgba(15,23,42,0.65),0_0_0_1px_rgba(37,99,235,0.06),inset_0_1px_0_rgba(255,255,255,0.04)]"
           style={{ top: `${panelPos.top}px`, left: `${panelPos.left}px` }}
         >
             <div className="flex items-start justify-between gap-3">
@@ -583,25 +645,40 @@ export function NotificationBell({ userId }: { userId: string | null }) {
               </button>
             </div>
 
-            <div className="mt-2.5 flex items-center justify-between border-b border-[color:var(--eid-border-subtle)] pb-1.5">
-              <span className="text-[10px] font-black uppercase tracking-[0.08em] text-eid-fg">Push</span>
+            <div className={`mt-2.5 flex items-center gap-2 rounded-lg border px-2 py-1.5 ${pushEnabled ? "border-emerald-500/20 bg-[linear-gradient(90deg,color-mix(in_srgb,rgb(16,185,129)_8%,var(--eid-surface)),var(--eid-surface))]" : "border-[rgba(37,99,235,0.14)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)),var(--eid-surface))]"}`}>
+              <span className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${pushEnabled ? "bg-emerald-500/15 text-emerald-400" : "bg-eid-primary-500/12 text-eid-primary-400"}`}>
+                <svg viewBox="0 0 24 24" width={12} height={12} fill="none" aria-hidden>
+                  {pushEnabled ? (
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  ) : (
+                    <>
+                      <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </>
+                  )}
+                </svg>
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-black uppercase tracking-[0.07em] text-eid-fg">Notificações push</p>
+                <p className="text-[8px] text-eid-text-secondary">{pushEnabled ? "Recebendo alertas no dispositivo" : "Ative para receber alertas"}</p>
+              </div>
               <button
                 type="button"
                 onClick={onTogglePush}
                 disabled={pushBusy}
-                className={`inline-flex min-h-[20px] items-center justify-center rounded-full border px-2 text-[7px] font-black uppercase tracking-[0.03em] transition ${
+                className={`inline-flex min-h-[22px] items-center justify-center rounded-full border px-2.5 text-[8px] font-black uppercase tracking-[0.04em] transition ${
                   pushEnabled
-                    ? "border-emerald-500/25 bg-emerald-500/12 text-emerald-400"
-                    : "border-eid-primary-500/28 bg-eid-primary-500/10 text-eid-primary-400"
+                    ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/22"
+                    : "border-eid-primary-500/30 bg-eid-primary-500/12 text-eid-primary-300 hover:bg-eid-primary-500/20"
                 } ${pushBusy ? "opacity-60" : ""}`}
               >
-                {pushBusy ? "..." : pushEnabled ? "• Ativo" : "Ativar"}
+                {pushBusy ? "…" : pushEnabled ? "✓ Ativo" : "Ativar"}
               </button>
             </div>
 
             <p className="mt-2 text-[9px] font-black uppercase tracking-[0.08em] text-eid-fg">Resumo rápido</p>
             <ul className="mt-1.5 space-y-1.5">
-              <li className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5">
+              <li className="flex items-center justify-between rounded-lg border border-[rgba(37,99,235,0.14)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
                 <div className="flex min-w-0 items-center gap-2.5">
                   <SummaryGlyph kind="agenda" />
                   <div>
@@ -619,7 +696,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                   {agendaN}
                 </Link>
               </li>
-              <li className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5">
+              <li className="flex items-center justify-between rounded-lg border border-[rgba(249,115,22,0.14)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-action-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-action-500)_4%,var(--eid-surface)))] px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
                 <div className="flex min-w-0 items-center gap-2.5">
                   <SummaryGlyph kind="social" />
                   <div>
@@ -635,7 +712,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                   {pedidosDesafioN + sugestoesLiderN + gestaoCancelN}
                 </Link>
               </li>
-              <li className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5">
+              <li className="flex items-center justify-between rounded-lg border border-[rgba(139,92,246,0.14)] bg-[linear-gradient(90deg,color-mix(in_srgb,rgb(139,92,246)_9%,var(--eid-surface)),color-mix(in_srgb,rgb(139,92,246)_4%,var(--eid-surface)))] px-2 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
                 <div className="flex min-w-0 items-center gap-2.5">
                   <SummaryGlyph kind="placar" />
                   <div>
@@ -653,7 +730,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
               Últimas notificações
             </p>
             {preview.length === 0 ? (
-              <div className="mt-1.5 flex flex-col items-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2.5 py-3 text-center">
+              <div className="mt-1.5 flex flex-col items-center rounded-lg border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-surface)),var(--eid-surface))] px-2.5 py-3 text-center">
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-eid-primary-500/10 text-eid-primary-400">
                   <IconBell className="h-5 w-5" />
                 </span>
@@ -661,23 +738,28 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                 <p className="mt-1 text-[9px] text-eid-text-secondary">Quando houver novidades, você verá aqui.</p>
               </div>
             ) : (
-              <ul className="mt-1.5 max-h-40 space-y-1.5 overflow-y-auto pr-1">
+              <ul className="mt-1.5 max-h-[168px] space-y-1 overflow-y-auto pr-0.5 [scrollbar-width:thin] [scrollbar-color:rgba(37,99,235,0.15)_transparent]">
                 {preview.slice(0, PREVIEW_LIMIT).map((n) => {
                   const amistosoInfo = isAmistosoAceiteInformativoNotif(n.tipo, n.mensagem);
+                  const unread = n.lida !== true;
                   return (
                     <li key={n.id}>
                       <div
-                        className={`flex gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 px-2 py-1.5 transition hover:border-eid-primary-500/35 ${amistosoInfo ? "items-start" : ""}`}
+                        className={`flex items-start gap-2 rounded-lg border px-2 py-1.5 transition ${unread ? "border-[rgba(37,99,235,0.16)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)),var(--eid-surface))] shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]" : "border-[color:var(--eid-border-subtle)] bg-eid-surface/15 hover:bg-eid-surface/30"}`}
                       >
+                        <NotifTypeIcon tipo={n.tipo} unread={unread} />
                         <button
                           type="button"
                           onClick={() => void onPreviewClick(n)}
-                          className={`min-w-0 text-left ${amistosoInfo ? "flex-1 py-0" : "block w-full"}`}
+                          className="min-w-0 flex-1 py-0.5 text-left"
                         >
-                          <p className={`line-clamp-2 text-[10px] ${n.lida ? "text-eid-text-secondary" : "font-semibold text-eid-fg"}`}>
+                          <p className={`line-clamp-2 text-[10px] leading-snug ${unread ? "font-semibold text-eid-fg" : "text-eid-text-secondary"}`}>
                             {n.mensagem}
                           </p>
-                          <p className="mt-1 text-[9px] text-eid-text-secondary">{formatShort(n.data_criacao ?? n.criada_em)}</p>
+                          <div className="mt-0.5 flex items-center gap-1.5">
+                            <p className="text-[8px] text-eid-text-secondary">{formatRelative(n.data_criacao ?? n.criada_em)}</p>
+                            {unread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-eid-primary-500" />}
+                          </div>
                         </button>
                         {amistosoInfo ? (
                           <button
@@ -686,7 +768,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
                               e.stopPropagation();
                               void onLimparPreviewAmistoso(n);
                             }}
-                            className="shrink-0 self-center rounded-md border border-eid-action-500/30 bg-eid-action-500/10 px-1.5 py-1 text-[7px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/45"
+                            className="shrink-0 self-center rounded-md border border-[rgba(249,115,22,0.25)] bg-eid-action-500/10 px-1.5 py-1 text-[7px] font-black uppercase tracking-wide text-eid-action-400 transition hover:border-eid-action-500/40 hover:bg-eid-action-500/15"
                           >
                             Limpar
                           </button>
@@ -698,30 +780,29 @@ export function NotificationBell({ userId }: { userId: string | null }) {
               </ul>
             )}
 
-            <div className="mt-2 flex justify-center">
+            <div className="mt-2 flex items-center gap-1.5">
+              <Link
+                href="/comunidade#notificacoes"
+                className="inline-flex flex-1 min-h-[28px] items-center justify-center rounded-lg border border-eid-primary-500/25 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)))] px-2.5 text-[9px] font-black tracking-wide text-eid-primary-300 transition hover:bg-eid-primary-500/20 hover:border-eid-primary-500/35"
+                onClick={() => setOpen(false)}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" aria-hidden>
+                    <path d="M14 5h5v5M10 14L19 5M19 14v5h-5M5 10V5h5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                  </svg>
+                  Central Social
+                </span>
+              </Link>
               <button
                 type="button"
                 onClick={() => void onLimparTodasNotificacoes()}
                 disabled={limpandoTodas || (preview.length === 0 && total === 0)}
-                className={`inline-flex min-h-[24px] items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 text-[8px] font-black tracking-[0.06em] text-eid-text-secondary transition hover:border-eid-action-500/30 hover:text-eid-fg disabled:pointer-events-none disabled:opacity-45 ${limpandoTodas ? "normal-case" : "uppercase"}`}
+                className={`inline-flex min-h-[28px] items-center justify-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/30 px-2.5 text-[8px] font-black tracking-[0.05em] text-eid-text-secondary transition hover:border-eid-action-500/30 hover:text-eid-fg disabled:pointer-events-none disabled:opacity-40 ${limpandoTodas ? "normal-case" : "uppercase"}`}
                 aria-busy={limpandoTodas}
               >
-                {limpandoTodas ? "limpando..." : "Limpar todas"}
+                {limpandoTodas ? "…" : "Limpar"}
               </button>
             </div>
-
-            <Link
-              href="/comunidade#notificacoes"
-              className="mt-2 inline-flex min-h-[30px] w-full items-center justify-center rounded-lg border border-eid-primary-500/25 bg-eid-primary-500/14 px-2.5 text-[10px] font-black text-eid-primary-500 transition hover:bg-eid-primary-500/20"
-              onClick={() => setOpen(false)}
-            >
-              <span className="inline-flex items-center gap-2">
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-                  <path d="M14 5h5v5M10 14L19 5M19 14v5h-5M5 10V5h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                Abrir Central Social
-              </span>
-            </Link>
         </div>
       ) : null}
     </div>

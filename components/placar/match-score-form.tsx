@@ -115,10 +115,10 @@ export function MatchScoreForm({
       {config.type === "sets" ? (
         <>
           {setFormatOptions.length > 0 ? (
-            <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65">
-              <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2">
-                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">Formato disputado</span>
-                <span className="rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-200">
+            <div className="overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.16)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),var(--eid-card))]">
+              <div className="flex items-center justify-between gap-2 border-b border-[rgba(37,99,235,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-3 py-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-eid-primary-200">Formato disputado</span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-300 shadow-[0_0_8px_-3px_rgba(37,99,235,0.25)]">
                   Regras
                 </span>
               </div>

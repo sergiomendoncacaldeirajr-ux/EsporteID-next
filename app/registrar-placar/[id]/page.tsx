@@ -536,9 +536,9 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           {podeLancar && !resultadoEnviadoAguardando ? (
             <details
               open={abrirAgendamentoPorPadrao}
-              className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 open:shadow-[0_10px_18px_-14px_rgba(15,23,42,0.35)]"
+              className="mt-4 overflow-hidden rounded-xl border border-[rgba(37,99,235,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),var(--eid-card))] open:shadow-[0_10px_18px_-14px_rgba(15,23,42,0.35)]"
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-2.5 sm:px-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 border-b border-[rgba(37,99,235,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-3 py-2.5 sm:px-4">
                 <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">
                   {agendaSomente ? "Data e local" : "Agendamento (opcional)"}
                 </span>
@@ -616,10 +616,10 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           ) : null}
 
           {exibirLancamentoPlacar ? (
-            <div className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-              <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Lançamento de resultado</p>
-                <span className="rounded-full border border-eid-action-500/35 bg-eid-action-500/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-action-300">
+            <div className="mt-4 overflow-hidden rounded-xl border border-[rgba(249,115,22,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-action-500)_3%),var(--eid-card))]">
+              <div className="flex items-center justify-between gap-2 border-b border-[rgba(249,115,22,0.14)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-action-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-action-500)_4%,var(--eid-surface)))] px-3 py-2.5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-action-300">Lançamento de resultado</p>
+                <span className="inline-flex items-center gap-1 rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-eid-action-300 shadow-[0_0_8px_-3px_rgba(249,115,22,0.3)]">
                   Placar
                 </span>
               </div>
@@ -653,10 +653,10 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
           ) : null}
 
           {podeConfirmarOuContestar && !agendaSomente && resultadoTemPlacar ? (
-            <div className="mt-4 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55">
-              <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2.5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-eid-text-secondary">Ação sobre resultado</p>
-                <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-[color:color-mix(in_srgb,var(--eid-fg)_65%,var(--eid-primary-500)_35%)]">
+            <div className="mt-4 overflow-hidden rounded-xl border border-[rgba(16,185,129,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,rgb(16,185,129)_3%),var(--eid-card))]">
+              <div className="flex items-center justify-between gap-2 border-b border-[rgba(16,185,129,0.14)] bg-[linear-gradient(90deg,color-mix(in_srgb,rgb(16,185,129)_9%,var(--eid-surface)),color-mix(in_srgb,rgb(16,185,129)_4%,var(--eid-surface)))] px-3 py-2.5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[color:color-mix(in_srgb,rgb(16,185,129)_80%,var(--eid-fg)_20%)]">Ação sobre resultado</p>
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/35 bg-emerald-500/12 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-emerald-300 shadow-[0_0_8px_-3px_rgba(16,185,129,0.3)]">
                   Aprovação
                 </span>
               </div>

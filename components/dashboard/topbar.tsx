@@ -240,7 +240,7 @@ export function DashboardTopbar({
       </Suspense>
     <header
       id={persistent ? "eid-persistent-topbar" : undefined}
-      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-transparent bg-eid-bg backdrop-blur-xl md:mb-3`}
+      className={`${persistent ? "fixed left-0 right-0 top-0 z-50" : "sticky top-0 z-40"} border-b border-[rgba(37,99,235,0.1)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-bg)_93%,var(--eid-primary-500)_7%),var(--eid-bg))] shadow-[0_1px_0_rgba(37,99,235,0.08),0_8px_24px_-12px_rgba(15,23,42,0.45)] backdrop-blur-xl md:mb-3`}
       style={{
         paddingTop: "max(0px, env(safe-area-inset-top, 0px))",
         paddingLeft: "max(0px, env(safe-area-inset-left, 0px))",
@@ -294,7 +294,7 @@ export function DashboardTopbar({
             <NotificationBell userId={meId} />
             <EidThemeToggle
               variant="toolbar"
-              className="h-8 w-8 rounded-full border border-[color:var(--eid-border-subtle)] bg-[color:color-mix(in_srgb,var(--eid-card)_92%,transparent)] text-eid-text-secondary shadow-none hover:border-eid-primary-500/35 md:h-9 md:w-9"
+              className="h-8 w-8 rounded-full border border-[rgba(37,99,235,0.16)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_94%,var(--eid-primary-500)_6%),color-mix(in_srgb,var(--eid-surface)_90%,transparent))] text-eid-text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition hover:border-eid-primary-500/35 hover:text-eid-fg md:h-9 md:w-9"
             />
             <SignOutButton variant="icon" />
           </div>
@@ -332,7 +332,7 @@ export function DashboardTopbar({
                       ? "Buscar reservas, sócios..."
                       : "Buscar atletas, locais..."
               }
-              className="h-11 w-full rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_88%,var(--eid-border)_12%)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_96%,transparent),color-mix(in_srgb,var(--eid-surface)_92%,transparent))] pl-12 pr-4 text-[13px] text-eid-fg shadow-[inset_0_1px_0_color-mix(in_srgb,var(--eid-fg)_8%,transparent)] outline-none transition placeholder:text-eid-text-secondary/88 focus:border-eid-primary-500/35 sm:h-12 sm:text-[15px]"
+              className="h-11 w-full rounded-2xl border border-[rgba(37,99,235,0.14)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] pl-12 pr-4 text-[13px] text-eid-fg shadow-[0_2px_8px_-4px_rgba(15,23,42,0.25),inset_0_1px_0_rgba(255,255,255,0.05)] outline-none transition placeholder:text-eid-text-secondary/80 focus:border-eid-primary-500/45 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_2px_8px_-4px_rgba(15,23,42,0.25),inset_0_1px_0_rgba(255,255,255,0.05)] sm:h-12 sm:text-[15px]"
             />
           </div>
         </form>
@@ -345,10 +345,10 @@ export function DashboardTopbar({
             <Link
               key={item.href}
               href={item.href}
-              className={`whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-medium transition ${
+              className={`whitespace-nowrap rounded-full border px-3 py-1 text-[11px] font-semibold transition-all duration-150 ${
                 active
-                  ? "border-eid-primary-500/45 bg-eid-primary-500/12 text-eid-fg ring-2 ring-eid-primary-500/35"
-                  : "border-transparent bg-transparent text-eid-text-secondary hover:border-eid-primary-500/25 hover:text-eid-fg"
+                  ? "border-[rgba(37,99,235,0.4)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_16%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_9%,var(--eid-surface)))] text-eid-fg shadow-[0_2px_8px_-4px_rgba(37,99,235,0.35),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                  : "border-transparent bg-transparent text-eid-text-secondary hover:border-[rgba(37,99,235,0.2)] hover:bg-eid-primary-500/[0.07] hover:text-eid-fg"
               }`}
             >
               {item.label}

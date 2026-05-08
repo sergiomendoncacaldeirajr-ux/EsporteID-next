@@ -86,7 +86,7 @@ function formatDeadline(iso: string | null | undefined) {
 }
 
 const cardBase =
-  "rounded-2xl border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] p-2.5 shadow-none backdrop-blur-sm transition md:p-4";
+  "rounded-2xl border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] p-2.5 shadow-[0_4px_16px_-8px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-sm transition md:p-4";
 
 export function PartidaAgendaCard({
   id,
@@ -250,7 +250,7 @@ export function PartidaAgendaCard({
 
       {agendamentoPendente ? (
         <div className="mt-3 overflow-hidden rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_40%,var(--eid-border-subtle)_60%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)_88%)] p-0">
-          <div className="flex items-center justify-between gap-2 border-b border-[color:color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-border-subtle)_70%)] bg-eid-surface/45 px-3 py-2">
+          <div className="flex items-center justify-between gap-2 border-b border-[rgba(37,99,235,0.2)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_11%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-surface)))] px-3 py-2">
             <EidPendingBadge label="Agendamento pendente" />
           </div>
           <div className="p-2.5 md:p-3">
@@ -417,7 +417,7 @@ export function PartidaAgendaCard({
         ? createPortal(
             <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[1.5px] sm:items-center">
               <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-0 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
-                <div className="border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
+                <div className="border-b border-[rgba(220,38,38,0.15)] bg-[linear-gradient(90deg,color-mix(in_srgb,rgb(220,38,38)_9%,var(--eid-surface)),color-mix(in_srgb,rgb(220,38,38)_4%,var(--eid-surface)))] px-4 py-2">
                   <p className="text-center text-[11px] font-black uppercase tracking-[0.1em] text-eid-fg">Cancelamento</p>
                 </div>
                 <div className="p-4">
@@ -464,7 +464,7 @@ export function PartidaAgendaCard({
         ? createPortal(
             <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[1.5px] sm:items-center">
               <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/98 p-0 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.78)]">
-                <div className="flex items-center justify-between gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-4 py-2">
+                <div className="flex items-center justify-between gap-2 border-b border-[rgba(217,119,6,0.18)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-warning-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-warning-500)_4%,var(--eid-surface)))] px-4 py-2">
                   <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Confirmação</p>
                   <span className="shrink-0 rounded-full border border-amber-400/85 bg-[color:color-mix(in_srgb,#d97706_12%,white_88%)] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] text-amber-950 eid-dark:border-amber-500/35 eid-dark:bg-amber-500/12 eid-dark:text-amber-100">
                     Desistência

@@ -167,10 +167,10 @@ export function AgendaAceitosCancelaveis({
   if (items.length === 0) return null;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-transparent bg-eid-card/55">
-      <div className="flex items-center justify-between border-b border-transparent bg-eid-surface/45 px-3 py-2">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-text-secondary">Desafios aceitos</h2>
-        <span className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300">
+    <div className="overflow-hidden rounded-xl border border-[rgba(37,99,235,0.16)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] shadow-[0_4px_16px_-8px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)]">
+      <div className="flex items-center justify-between border-b border-[rgba(37,99,235,0.12)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-primary-500)_4%,var(--eid-surface)))] px-3 py-2">
+        <h2 className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-200">Desafios aceitos</h2>
+        <span className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-primary-300 shadow-[0_0_8px_-3px_rgba(37,99,235,0.25)]">
           {somenteInformativo ? "Status" : "Gestão social"}
         </span>
       </div>
@@ -203,7 +203,7 @@ export function AgendaAceitosCancelaveis({
         {items.map((m) => (
           <article
             key={m.id}
-            className="rounded-2xl border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,transparent),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] px-2.5 py-2.5 shadow-none backdrop-blur-sm md:px-3 md:py-3"
+            className="rounded-2xl border border-[rgba(37,99,235,0.08)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-2.5 py-2.5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.25),inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-sm md:px-3 md:py-3"
           >
             <div className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-2 md:grid-cols-[40px_minmax(0,1fr)_auto]">
               <div className="flex w-[40px] shrink-0 flex-col items-center">
@@ -285,7 +285,7 @@ export function AgendaAceitosCancelaveis({
             </div>
             <div className="mt-1.5 flex w-full flex-col gap-1.5 sm:w-auto md:mt-2 md:gap-2">
               {somenteInformativo ? (
-                <p className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5 text-[10px] leading-snug text-eid-text-secondary md:text-[11px]">
+                <p className="rounded-lg border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-surface)),var(--eid-surface))] px-2 py-1.5 text-[10px] leading-snug text-eid-text-secondary md:text-[11px]">
                   Alterações de desafio (cancelar, aceitar cancelamento, opções de data):{" "}
                   <Link href="/comunidade#desafios-aceitos-gestao" className="font-semibold text-eid-primary-300 hover:underline">
                     abrir na Comunidade
@@ -295,7 +295,7 @@ export function AgendaAceitosCancelaveis({
               ) : null}
 
               {!somenteInformativo && m.gestaoSomenteLeitura && m.status === "Aceito" ? (
-                <p className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 px-2 py-1.5 text-[10px] leading-snug text-eid-text-secondary md:text-[11px]">
+                <p className="rounded-lg border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-surface)),var(--eid-surface))] px-2 py-1.5 text-[10px] leading-snug text-eid-text-secondary md:text-[11px]">
                   Você integra o elenco: acompanhe o status aqui. <span className="font-semibold text-eid-fg">Só o líder</span>{" "}
                   combina data/local e lança o resultado no Painel.
                 </p>
@@ -440,7 +440,7 @@ export function AgendaAceitosCancelaveis({
                   {m.options.map((op) => (
                     <div
                       key={`${m.id}-${op.optionIdx}`}
-                    className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-2 md:p-2.5"
+                    className="rounded-xl border border-[rgba(37,99,235,0.12)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_7%,var(--eid-surface)),var(--eid-surface))] p-2 md:p-2.5"
                     >
                       <p className="text-[11px] font-semibold text-eid-fg md:text-xs">
                         Opção {op.optionIdx}: {when(op.scheduledFor)}

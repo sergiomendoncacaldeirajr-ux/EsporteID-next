@@ -228,8 +228,8 @@ export function SetScoreGrid({ config, sets, onChange, sideALabel, sideBLabel, s
   }
 
   return (
-    <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3">
-      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-text-secondary">Sets</p>
+    <div className="rounded-2xl border border-[rgba(249,115,22,0.12)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-action-500)_3%),var(--eid-card))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-action-300">Sets</p>
       {isMelhorDe3ComTerceiro ? (
         <div className="mt-2 space-y-2">
           {renderSetCard(0, "Set 1", s1)}

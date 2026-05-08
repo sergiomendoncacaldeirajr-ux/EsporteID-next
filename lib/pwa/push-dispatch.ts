@@ -95,23 +95,53 @@ async function claimPushDeliveryRow(
 }
 
 function buildNotificationPayload(n: NotificacaoRow): string {
-  const tipo = String(n.tipo ?? "").toLowerCase();
-  const title = tipo.includes("professor")
-    ? "EsporteID · Aulas"
-    : tipo.includes("time") || tipo.includes("convite")
-      ? "EsporteID · Equipe"
-      : "EsporteID";
-  const body = String(n.mensagem ?? "Você recebeu uma nova notificação.");
-  const url = tipo.includes("professor")
-    ? "/comunidade#aulas"
-    : tipo.includes("time") || tipo.includes("convite")
-      ? "/comunidade"
-      : "/comunidade#notificacoes";
+  const tipo = String(n.tipo ?? "").toLowerCase().trim();
+  const rawMsg = String(n.mensagem ?? "").trim();
+  const body = rawMsg.length > 110 ? rawMsg.slice(0, 107) + "…" : rawMsg || "Você tem uma nova notificação.";
+
+  let title: string;
+  let url: string;
+  let requireInteraction = false;
+  let category: string = tipo;
+
+  if (tipo === "match") {
+    title = "⚔️ EsporteID · Desafio recebido";
+    url = "/comunidade#desafios";
+    requireInteraction = true;
+  } else if (tipo === "desafio") {
+    title = "🏆 EsporteID · Placar / Agenda";
+    url = "/agenda#placares";
+    requireInteraction = true;
+  } else if (tipo === "agenda_status") {
+    title = "📅 EsporteID · Atualização de agenda";
+    url = "/agenda#agenda-status-ranking";
+  } else if (tipo.includes("candidatura")) {
+    title = "👥 EsporteID · Candidatura";
+    url = "/comunidade";
+    requireInteraction = true;
+  } else if (tipo.includes("convite")) {
+    title = "👥 EsporteID · Convite de equipe";
+    url = "/comunidade";
+    requireInteraction = true;
+  } else if (tipo.includes("time")) {
+    title = "👥 EsporteID · Equipe";
+    url = "/comunidade";
+  } else if (tipo.includes("professor")) {
+    title = "📚 EsporteID · Aulas";
+    url = "/comunidade#aulas";
+  } else {
+    title = "EsporteID";
+    url = "/comunidade#notificacoes";
+    category = "geral";
+  }
+
   return JSON.stringify({
     title,
     body,
     url,
     tag: `notif-${n.id}`,
+    tipo: category,
+    requireInteraction,
   });
 }
 

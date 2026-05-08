@@ -53,7 +53,7 @@ function formacaoHref(item: SugestaoMatchItem): string {
 }
 
 const sugestaoCardShell =
-  "relative overflow-hidden rounded-xl border border-transparent bg-[color:color-mix(in_srgb,var(--eid-warning-500)_9%,var(--eid-card)_91%)] text-sm shadow-[0_8px_18px_-14px_rgba(217,119,6,0.45)]";
+  "relative overflow-hidden rounded-xl border border-[rgba(217,119,6,0.2)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-warning-500)_12%,var(--eid-card)),color-mix(in_srgb,var(--eid-surface)_94%,transparent))] text-sm shadow-[0_8px_22px_-14px_rgba(217,119,6,0.4),inset_0_1px_0_rgba(255,255,255,0.04)]";
 
 export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[] }) {
   const router = useRouter();

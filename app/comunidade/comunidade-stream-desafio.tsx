@@ -322,16 +322,16 @@ export async function ComunidadeStreamDesafio({ supabase, viewerUserId }: Comuni
   return (
     <section
       id="desafio-pedidos"
-      className="eid-list-item overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-0 md:p-0"
+      className="eid-list-item overflow-hidden rounded-2xl border border-[rgba(249,115,22,0.15)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_98%,var(--eid-action-500)_2%),var(--eid-card))] p-0 shadow-[0_4px_18px_-10px_rgba(15,23,42,0.3),inset_0_1px_0_rgba(255,255,255,0.03)] md:p-0"
     >
-      <div className="flex items-center justify-between gap-2 border-b border-transparent bg-eid-surface/40 px-3 py-2.5 md:px-4">
+      <div className="flex items-center justify-between gap-2 border-b border-[rgba(249,115,22,0.14)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-action-500)_9%,var(--eid-surface)),color-mix(in_srgb,var(--eid-action-500)_4%,var(--eid-surface)))] px-3 py-2.5 md:px-4">
         <div>
           <h2 className="text-[12px] font-black tracking-tight text-eid-fg">Desafio</h2>
           <p className="mt-0.5 hidden text-[11px] text-eid-text-secondary md:block">
             Pedidos de desafio que aguardam aceite ou resposta.
           </p>
         </div>
-        <span className="shrink-0 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-primary-300">
+        <span className="inline-flex items-center gap-1 shrink-0 rounded-full border border-eid-action-500/35 bg-eid-action-500/12 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.05em] text-eid-action-300 shadow-[0_0_8px_-3px_rgba(249,115,22,0.25)]">
           Social
         </span>
       </div>
