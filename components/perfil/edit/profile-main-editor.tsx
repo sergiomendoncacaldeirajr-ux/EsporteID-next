@@ -221,7 +221,7 @@ export function ProfileMainEditor({ initial }: Props) {
             />
           </div>
         </div>
-        <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
+        <div className="relative flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
           <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <path d="M6 14c0-1.7 1.3-3 3-3h1V8.8A2.8 2.8 0 0 1 12.8 6h0A2.2 2.2 0 0 1 15 8.2V15" />
             <path d="M15 11h1.5a2.5 2.5 0 0 1 2.5 2.5V15" />
@@ -231,13 +231,16 @@ export function ProfileMainEditor({ initial }: Props) {
             name="lado"
             value={lado}
             onChange={(ev) => setLado(ev.target.value)}
-            className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg focus:outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
+            className="h-10 min-w-0 flex-1 appearance-none bg-transparent pr-5 text-sm text-eid-fg focus:outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
           >
             <option value="">Mão dominante</option>
             <option value="Destro">Destro</option>
             <option value="Canhoto">Canhoto</option>
             <option value="Ambos">Ambidestro</option>
           </select>
+          <svg viewBox="0 0 24 24" className="pointer-events-none absolute right-3 h-3.5 w-3.5 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+            <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
       </div>
       <div className="mt-4 flex justify-end">

@@ -2551,7 +2551,7 @@ export function OnboardingWizard({
                   </div>
 
                   {/* Mão dominante */}
-                  <div className="flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] px-3 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
+                  <div className="relative flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] px-3 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
                     <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                       <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" strokeLinecap="round" strokeLinejoin="round" />
@@ -2560,13 +2560,16 @@ export function OnboardingWizard({
                       name="lado"
                       value={lado}
                       onChange={(e) => setLado(e.target.value)}
-                      className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm text-eid-fg outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
+                      className="h-full min-w-0 flex-1 appearance-none border-0 bg-transparent pr-5 text-sm text-eid-fg outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
                     >
                       <option value="">Mão dominante</option>
                       <option value="Destro">Destro</option>
                       <option value="Canhoto">Canhoto</option>
                       <option value="Ambos">Ambidestro</option>
                     </select>
+                    <svg viewBox="0 0 24 24" className="pointer-events-none absolute right-3 h-3.5 w-3.5 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </div>
                 </div>
               ) : null}
