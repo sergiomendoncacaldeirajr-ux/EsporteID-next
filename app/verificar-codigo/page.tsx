@@ -263,14 +263,21 @@ function VerificarCodigoPageInner() {
         </Link>
         <LogoFull className="mb-5 mt-1" />
 
-        <div className="eid-auth-card p-5">
-          <h1 className="text-center text-[14px] font-extrabold uppercase tracking-[1px] text-eid-primary-500">
-            {mode === "recovery" ? "Confirmar recuperação" : "Confirmar e-mail"}
-          </h1>
-          <p className="mt-2 text-center text-[12px] leading-snug text-eid-text-secondary">
-            {mode === "recovery" ? "Digite o código de recuperação enviado para " : "Digite o código enviado para "}
-            <span className="font-semibold text-eid-fg">{effectiveEmail || "seu e-mail"}</span>.
-          </p>
+        <div className="eid-auth-card p-5 sm:p-6">
+          <div className="mb-4 flex flex-col items-center">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-card)))] shadow-[0_0_22px_-6px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.1)] ring-1 ring-eid-primary-500/25">
+              <svg viewBox="0 0 24 24" className="h-[22px] w-[22px] text-eid-primary-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+            <h1 className="mt-3 text-[15px] font-black uppercase tracking-[0.1em] text-eid-fg">
+              {mode === "recovery" ? "Redefinir senha" : "Confirmar e-mail"}
+            </h1>
+            <p className="mt-1 text-center text-[12px] leading-snug text-eid-text-secondary">
+              {mode === "recovery" ? "Código enviado para " : "Código enviado para "}
+              <span className="font-semibold text-eid-fg">{effectiveEmail || "seu e-mail"}</span>.
+            </p>
+          </div>
           <div className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/55 px-3 py-2.5">
             <EmailCorrectionInline
               currentEmail={effectiveEmail}
@@ -315,7 +322,7 @@ function VerificarCodigoPageInner() {
                     onPaste={onPasteOtp}
                     onChange={(e) => onDigitChange(idx, e.target.value)}
                     onKeyDown={(e) => onDigitKeyDown(idx, e)}
-                    className="eid-input-dark h-12 w-full rounded-xl px-0 text-center text-lg font-bold text-eid-fg"
+                    className="h-13 w-full rounded-xl border-[1.5px] border-[color:var(--eid-border-subtle)] bg-[color:var(--eid-field-bg)] px-0 text-center text-xl font-black text-eid-fg outline-none transition focus:border-eid-primary-500/55 focus:shadow-[0_0_0_3px_rgba(37,99,235,0.12)] focus:bg-eid-card"
                     required
                   />
                 ))}

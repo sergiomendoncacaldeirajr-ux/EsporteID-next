@@ -1771,20 +1771,25 @@ button[data-eid-remove-media-btn="true"]:active {
   background-color: var(--eid-bg);
   background-image:
     radial-gradient(
-      ellipse 100% 55% at 50% -15%,
-      color-mix(in srgb, var(--eid-primary-500) 16%, transparent),
+      ellipse 110% 60% at 50% -10%,
+      color-mix(in srgb, var(--eid-primary-500) 22%, transparent),
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 100% 90%,
+      color-mix(in srgb, var(--eid-action-500) 11%, transparent),
       transparent 50%
     ),
     radial-gradient(
-      ellipse 70% 45% at 100% 80%,
-      color-mix(in srgb, var(--eid-action-500) 8%, transparent),
+      ellipse 50% 35% at 0% 60%,
+      color-mix(in srgb, var(--eid-primary-500) 6%, transparent),
       transparent 45%
     ),
     linear-gradient(
       165deg,
-      color-mix(in srgb, var(--eid-brand-ink) 55%, #050810) 0%,
-      #050810 55%,
-      #060912 100%
+      color-mix(in srgb, var(--eid-brand-ink) 60%, #040710) 0%,
+      #040710 50%,
+      #050811 100%
     );
 }
 
@@ -1807,10 +1812,18 @@ button[data-eid-remove-media-btn="true"]:active {
 .eid-auth-card {
   position: relative;
   border-radius: var(--eid-radius-lg);
-  border: 1px solid var(--eid-border-subtle);
-  background: color-mix(in srgb, var(--eid-card) 92%, transparent);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+  border: 1px solid color-mix(in srgb, var(--eid-primary-500) 16%, var(--eid-border-subtle));
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--eid-card) 93%, var(--eid-primary-500) 7%) 0%,
+    var(--eid-card) 65%
+  );
+  backdrop-filter: blur(28px) saturate(1.4);
+  box-shadow:
+    0 28px 64px -20px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12);
 }
 
 /* Onboarding: ajuste fino (maior que o padrão, sem exagero). */
@@ -1879,9 +1892,13 @@ button[data-eid-remove-media-btn="true"]:active {
   }
 }
 [data-eid-theme="light"] .eid-auth-card {
-  background: var(--eid-card);
+  background: linear-gradient(155deg, color-mix(in srgb, white 97%, var(--eid-primary-500) 3%), white);
   backdrop-filter: none;
-  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.08);
+  box-shadow:
+    0 8px 40px -8px rgba(15, 23, 42, 0.14),
+    0 0 0 1px rgba(37, 99, 235, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border-color: color-mix(in srgb, var(--eid-primary-500) 14%, var(--eid-border-subtle));
 }
 
 /* Botão primário (CTA) — laranja marca */

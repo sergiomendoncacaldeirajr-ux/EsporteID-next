@@ -120,10 +120,10 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
     []
   );
 
-  const focusWithinBg = "focus-within:bg-eid-card";
+  const focusWithinBg = "focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]";
 
   function inputGroupClass() {
-    return `eid-focus-ring flex h-[46px] items-center rounded-[14px] border-[1.5px] border-transparent px-[15px] transition`;
+    return `flex h-[50px] items-center rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-[15px] transition`;
   }
 
   function inputGroupStyle(): React.CSSProperties {
@@ -165,13 +165,18 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
 
         <LogoFull size="auth" className="mb-6 mt-2 sm:mb-7" />
 
-        <div className="eid-auth-card p-5">
-          <h2 className="mb-[15px] mt-0 text-center text-[14px] font-extrabold uppercase tracking-[1px] text-eid-primary-500">
-            Entrar
-          </h2>
-          <p className="-mt-2 mb-4 text-center text-[12px] leading-snug text-eid-text-muted">
-            Use o mesmo e-mail e senha do seu cadastro.
-          </p>
+        <div className="eid-auth-card p-5 sm:p-6">
+          <div className="mb-5 flex flex-col items-center">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-card)))] shadow-[0_0_22px_-6px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.1)] ring-1 ring-eid-primary-500/25">
+              <IconLock className="h-[22px] w-[22px] text-eid-primary-400" />
+            </span>
+            <h2 className="mt-3 text-[15px] font-black uppercase tracking-[0.1em] text-eid-fg">
+              Bem-vindo de volta
+            </h2>
+            <p className="mt-1 text-center text-[12px] leading-snug text-eid-text-muted">
+              Use o mesmo e-mail e senha do seu cadastro.
+            </p>
+          </div>
 
           <form onSubmit={handleLoginSubmit} noValidate className="m-0 flex flex-col gap-0">
             <input type="hidden" name="next" value={next} />
@@ -281,7 +286,7 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
             <button
               type="submit"
               disabled={isSubmitting || Boolean(bootstrapError)}
-              className="mt-2 flex h-[50px] w-full cursor-pointer items-center justify-center rounded-xl border-0 bg-eid-action-500 text-[14px] font-extrabold uppercase text-white transition hover:bg-eid-action-400 active:scale-[0.97] active:bg-eid-action-600 active:opacity-95 disabled:opacity-60"
+              className="mt-3 flex h-[52px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-0 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-400)_65%,#fff_35%),var(--eid-action-500)_50%,var(--eid-action-600))] text-[14px] font-extrabold uppercase tracking-wide text-white shadow-[0_8px_24px_-10px_rgba(249,115,22,0.65)] transition hover:brightness-105 hover:shadow-[0_12px_30px_-10px_rgba(249,115,22,0.75)] active:scale-[0.97] active:opacity-90 disabled:opacity-60"
             >
               {isSubmitting ? (
                 <span
@@ -293,21 +298,23 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
               )}
             </button>
 
-            <p className="mt-[15px] text-center text-[13px] text-eid-text-muted">
+            <p className="mt-4 text-center text-[12px] text-eid-text-muted">
               <Link
                 href="/recuperar-senha"
-                className="font-bold text-eid-action-500 no-underline hover:text-eid-action-400"
+                className="font-bold text-eid-text-secondary underline-offset-2 no-underline hover:text-eid-fg hover:underline"
               >
                 Esqueci minha senha
               </Link>
             </p>
 
-            <p className="mt-2 text-center text-[13px] text-eid-text-muted">
-              Não tem conta?{" "}
-              <Link href="/cadastro" className="font-bold text-eid-action-500 no-underline hover:text-eid-action-400">
-                Criar conta
+            <div className="mt-4 border-t border-[color:var(--eid-border-subtle)] pt-4">
+              <Link
+                href="/cadastro"
+                className="flex h-[46px] w-full items-center justify-center rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 text-[13px] font-bold text-eid-primary-300 transition hover:bg-eid-primary-500/18 hover:border-eid-primary-500/50"
+              >
+                Criar conta gratuita →
               </Link>
-            </p>
+            </div>
           </form>
         </div>
       </div>

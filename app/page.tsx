@@ -150,25 +150,25 @@ export default async function Home() {
   }
 
   const pillClass =
-    "rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-1.5 text-sm font-medium text-eid-fg shadow-sm";
+    "rounded-full border border-eid-primary-500/22 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-primary-500)_9%,var(--eid-card)),var(--eid-card))] px-3 py-1.5 text-sm font-medium text-eid-fg shadow-[0_2px_8px_-4px_rgba(37,99,235,0.18)]";
 
   const sectionCard =
-    "rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-5 shadow-sm backdrop-blur-sm sm:p-6";
+    "rounded-2xl border border-[rgba(37,99,235,0.09)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),var(--eid-card))] p-5 shadow-[0_4px_20px_-8px_rgba(0,0,0,0.18)] backdrop-blur-sm sm:p-6";
 
   const linkCard =
-    "rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-4 py-2.5 text-sm font-medium text-eid-fg transition hover:border-eid-primary-500/40 hover:text-eid-primary-500";
+    "rounded-xl border border-[color:var(--eid-border-subtle)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),var(--eid-card))] px-4 py-2.5 text-sm font-medium text-eid-fg transition hover:border-eid-primary-500/40 hover:text-eid-primary-300 hover:shadow-[0_4px_12px_-6px_rgba(37,99,235,0.2)]";
 
   const desktopExploreCard =
-    "group flex h-full min-h-[5.75rem] gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 text-left transition hover:-translate-y-0.5 hover:border-eid-primary-500/45 hover:shadow-lg hover:shadow-eid-primary-500/10";
+    "group flex h-full min-h-[5.75rem] gap-3 rounded-xl border border-[rgba(37,99,235,0.08)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),var(--eid-card))] p-4 text-left shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)] transition hover:-translate-y-0.5 hover:border-eid-primary-500/40 hover:shadow-[0_8px_24px_-8px_rgba(37,99,235,0.18)]";
 
   const ctaPairBaseClass =
     "inline-flex h-14 w-full items-center justify-center rounded-2xl px-8 text-lg font-bold transition active:scale-[0.98] sm:max-w-md sm:text-xl";
 
   const heroCtaPrimaryClass =
-    `eid-btn-primary ${ctaPairBaseClass} border-2 border-transparent shadow-lg shadow-eid-primary-500/20`;
+    `${ctaPairBaseClass} border-2 border-transparent bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-400)_60%,#fff_40%),var(--eid-action-500)_50%,var(--eid-action-600))] text-white shadow-[0_10px_32px_-12px_rgba(249,115,22,0.7)] hover:brightness-105 hover:shadow-[0_14px_36px_-12px_rgba(249,115,22,0.8)]`;
 
   const heroCtaSecondaryClass =
-    `${ctaPairBaseClass} border-2 border-eid-primary-500/40 bg-eid-card text-eid-fg shadow-sm hover:border-eid-primary-500/60 hover:bg-eid-surface`;
+    `${ctaPairBaseClass} border-2 border-eid-primary-500/40 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)),var(--eid-card))] text-eid-fg shadow-[0_4px_16px_-6px_rgba(37,99,235,0.15)] hover:border-eid-primary-500/60 hover:shadow-[0_8px_24px_-8px_rgba(37,99,235,0.25)]`;
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden">
@@ -371,7 +371,7 @@ export default async function Home() {
               return (
                 <li key={item.href}>
                   <Link href={href} className={desktopExploreCard}>
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-eid-primary-500/12 text-eid-primary-400 transition group-hover:bg-eid-primary-500/20">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_16%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)))] text-eid-primary-400 shadow-[0_2px_8px_-3px_rgba(37,99,235,0.2)] transition group-hover:bg-eid-primary-500/22 group-hover:shadow-[0_4px_12px_-4px_rgba(37,99,235,0.3)]">
                       <DesktopAreaIconGlyph name={item.icon} />
                     </span>
                     <span className="min-w-0 flex-1">
@@ -391,7 +391,7 @@ export default async function Home() {
 
         {!user ? (
           <section
-            className="mt-10 rounded-2xl border border-eid-primary-500/35 bg-gradient-to-b from-eid-primary-500/15 to-eid-primary-500/5 p-6 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.35)] sm:p-8 md:mt-12"
+            className="mt-10 rounded-2xl border border-eid-primary-500/30 bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-card))_60%,var(--eid-card))] p-6 shadow-[0_16px_48px_-16px_rgba(37,99,235,0.25),0_4px_16px_-6px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-8 md:mt-12"
             aria-label="Entrar ou criar conta"
           >
             <p className="text-center text-base font-bold leading-snug text-eid-fg sm:text-lg">
@@ -434,7 +434,7 @@ export default async function Home() {
               },
             ].map((item) => (
               <li key={item.step} className={sectionCard}>
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-eid-primary-500/15 text-sm font-bold text-eid-primary-300">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-card)))] text-sm font-black text-eid-primary-300 shadow-[0_0_12px_-4px_rgba(37,99,235,0.35)] ring-1 ring-eid-primary-500/25">
                   {item.step}
                 </span>
                 <h3 className="mt-3 text-base font-semibold text-eid-fg">{item.title}</h3>
@@ -488,7 +488,7 @@ export default async function Home() {
           </ul>
         </section>
 
-        <section className="mt-10 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/10 p-5 sm:p-6">
+        <section className="mt-10 rounded-2xl border border-eid-action-500/22 bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-500)_8%,var(--eid-card)),var(--eid-card))] p-5 shadow-[0_8px_32px_-12px_rgba(249,115,22,0.18)] sm:p-6">
           <h2 className="text-base font-bold text-eid-fg">Pronto para o próximo jogo?</h2>
           <p className="mt-2 text-sm leading-relaxed text-eid-text-secondary">
             {user

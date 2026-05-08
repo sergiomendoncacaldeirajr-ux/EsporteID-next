@@ -945,12 +945,15 @@ export function OnboardingWizard({
     else if (r.nextStep === "perfil") setStep("perfil");
     else if (r.nextStep === "espaco_home") {
       window.localStorage.removeItem(draftKey);
-      fetch("/api/active-context", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ context: "espaco" }),
-      }).catch(() => {});
-      router.replace("/espaco");
+      void (async () => {
+        await fetch("/api/active-context", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ context: "espaco" }),
+        });
+        router.replace("/espaco");
+        router.refresh();
+      })();
       return;
     } else if (r.nextStep === "dashboard") {
       window.localStorage.removeItem(draftKey);
@@ -1342,17 +1345,22 @@ export function OnboardingWizard({
         </div>
 
         <div className="eid-auth-card p-6 sm:p-8">
-          <div className="mb-4">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-eid-primary-500">
-                Etapa {activeStepIndex + 1} de {stepOrder.length}
-              </p>
+          <div className="mb-5">
+            <div className="mb-2.5 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_30%,var(--eid-card)),color-mix(in_srgb,var(--eid-action-500)_14%,var(--eid-card)))] text-[10px] font-black text-eid-action-300 ring-1 ring-eid-action-500/30">
+                  {activeStepIndex + 1}
+                </span>
+                <p className="text-[11px] font-black uppercase tracking-[0.14em] text-eid-action-400">
+                  de {stepOrder.length} etapas
+                </p>
+              </div>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={clearDraft}
                   disabled={pending}
-                  className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[11px] font-semibold text-eid-text-secondary transition hover:border-eid-primary-500/40 hover:text-eid-fg disabled:opacity-50"
+                  className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[10px] font-semibold text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg disabled:opacity-50"
                 >
                   Limpar rascunho
                 </button>
@@ -1361,30 +1369,38 @@ export function OnboardingWizard({
                     type="button"
                     onClick={goBackStep}
                     disabled={pending}
-                    className="rounded-lg border border-[color:var(--eid-border-subtle)] px-2.5 py-1 text-[11px] font-semibold text-eid-fg transition hover:border-eid-primary-500/40 disabled:opacity-50"
+                    className="rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/8 px-2.5 py-1 text-[10px] font-semibold text-eid-primary-300 transition hover:bg-eid-primary-500/15 disabled:opacity-50"
                   >
-                    Voltar etapa
+                    ← Voltar
                   </button>
                 ) : null}
               </div>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-eid-card">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-eid-card/80 shadow-[inset_0_1px_3px_rgba(0,0,0,0.25)]">
               <div
-                className="h-full rounded-full bg-eid-action-500 transition-all duration-300"
+                className="h-full rounded-full bg-[linear-gradient(90deg,color-mix(in_srgb,var(--eid-action-400)_70%,#fff_30%),var(--eid-action-500))] shadow-[0_0_10px_-2px_rgba(249,115,22,0.5)] transition-all duration-500"
                 style={{ width: `${progressPct}%` }}
               />
             </div>
             {restoredDraftAt ? (
-              <p className="mt-2 text-[11px] text-eid-text-secondary">
-                Rascunho local restaurado às {restoredDraftAt}.
+              <p className="mt-2 text-[10px] text-eid-text-secondary">
+                Rascunho restaurado às {restoredDraftAt}.
               </p>
             ) : null}
           </div>
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-eid-primary-500">
-            Onboarding
-          </p>
-          <h1 className="mt-2 text-xl font-semibold text-eid-fg">Olá, {primeiroNome}!</h1>
-          <p className="mt-2 text-sm leading-relaxed text-eid-text-secondary">
+
+          <div className="mb-4 flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-card)))] shadow-[0_0_16px_-5px_rgba(37,99,235,0.4)] ring-1 ring-eid-primary-500/25">
+              <svg viewBox="0 0 24 24" className="h-5 w-5 text-eid-primary-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-primary-400">Configuração</p>
+              <h1 className="text-lg font-black leading-tight text-eid-fg">Olá, {primeiroNome}!</h1>
+            </div>
+          </div>
+          <p className="text-sm leading-relaxed text-eid-text-secondary">
             {step === "papeis" &&
               "Escolha somente um perfil principal para esta conta. Depois você poderá ter outros perfis em painéis separados."}
             {step === "esportes" &&
@@ -1418,8 +1434,8 @@ export function OnboardingWizard({
                           : "cursor-pointer"
                       } ${
                         sel
-                          ? "border-eid-primary-500/60 bg-eid-primary-500/10 shadow-sm"
-                          : "border-[color:var(--eid-border-subtle)] bg-eid-card/60 hover:border-eid-primary-500/30"
+                          ? "border-eid-primary-500/55 bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_14%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-card)))] shadow-[0_4px_16px_-6px_rgba(37,99,235,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]"
+                          : "border-[rgba(37,99,235,0.1)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_98%,var(--eid-primary-500)_2%),var(--eid-card))] hover:border-eid-primary-500/30 hover:shadow-[0_4px_12px_-6px_rgba(37,99,235,0.15)]"
                       }`}
                     >
                       <input
