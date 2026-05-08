@@ -167,14 +167,11 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
 
         <div className="eid-auth-card p-5 sm:p-6">
           <div className="mb-5 flex flex-col items-center">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-card)))] shadow-[0_0_22px_-6px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.1)] ring-1 ring-eid-primary-500/25">
-              <IconLock className="h-[22px] w-[22px] text-eid-primary-400" />
-            </span>
-            <h2 className="mt-3 text-[15px] font-black uppercase tracking-[0.1em] text-eid-fg">
-              Bem-vindo de volta
+            <h2 className="text-[16px] font-black uppercase tracking-[0.1em] text-eid-fg">
+              Acesse sua conta
             </h2>
-            <p className="mt-1 text-center text-[12px] leading-snug text-eid-text-muted">
-              Use o mesmo e-mail e senha do seu cadastro.
+            <p className="mt-1.5 text-center text-[12px] leading-snug text-eid-text-muted">
+              Entre com seu e-mail e senha cadastrados.
             </p>
           </div>
 

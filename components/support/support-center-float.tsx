@@ -244,10 +244,10 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
           aria-controls={aberto ? "eid-support-panel" : undefined}
           aria-label={aberto ? "Fechar suporte" : "Abrir central de ajuda"}
           onClick={() => (aberto ? fecharPainel() : abrirPainel())}
-          className={`pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all duration-200 md:h-11 md:w-11 ${
+          className={`pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full transition-all duration-200 md:h-11 md:w-11 ${
             aberto
-              ? "border border-[color:var(--eid-border-subtle)] bg-eid-surface text-eid-text-secondary shadow-black/20 hover:text-eid-fg"
-              : "bg-eid-action-500 text-white shadow-eid-action-500/35 hover:bg-eid-action-600 hover:shadow-[0_8px_20px_rgba(249,115,22,0.45)]"
+              ? "border border-[color:var(--eid-border-subtle)] bg-eid-surface text-eid-text-secondary shadow-[0_2px_8px_rgba(0,0,0,0.2)] hover:text-eid-fg"
+              : "border border-[color:var(--eid-border-subtle)] bg-eid-card/90 text-eid-text-secondary shadow-[0_2px_10px_rgba(0,0,0,0.22)] backdrop-blur-sm hover:border-eid-primary-500/30 hover:text-eid-fg hover:shadow-[0_4px_14px_rgba(0,0,0,0.28)]"
           }`}
         >
           {aberto ? (
