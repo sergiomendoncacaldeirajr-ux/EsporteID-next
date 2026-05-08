@@ -231,7 +231,8 @@ export function ProfileMainEditor({ initial }: Props) {
             name="lado"
             value={lado}
             onChange={(ev) => setLado(ev.target.value)}
-            className="h-10 min-w-0 flex-1 appearance-none bg-transparent pr-5 text-sm text-eid-fg focus:outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
+            style={{ backgroundColor: "transparent" }}
+            className="h-10 min-w-0 flex-1 appearance-none pr-5 text-sm text-eid-fg focus:outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
           >
             <option value="">Mão dominante</option>
             <option value="Destro">Destro</option>

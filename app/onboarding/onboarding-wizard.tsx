@@ -2386,17 +2386,85 @@ export function OnboardingWizard({
                 : null}
               {fotoModalMounted && fotoEditorOpen && hasFotoSelecionada
                 ? createPortal(
-                    <div className="fixed inset-0 z-[96] flex items-center justify-center bg-black/65 px-4 motion-safe:animate-[fade-in_180ms_ease-out_both]">
-                      <div className="w-full max-w-xs rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-3 shadow-xl motion-safe:animate-[eid-content-block-enter_240ms_cubic-bezier(0.22,1,0.36,1)_both]">
-                        <p className="text-sm font-bold text-eid-fg">Ajustar foto</p>
-                        <div className="mt-2 grid gap-2">
-                          <label className="text-[11px] text-eid-text-secondary">Posição horizontal<input type="range" min={0} max={100} value={fotoPosX} onChange={(e) => setFotoPosX(Number(e.target.value))} className="mt-1 w-full" /></label>
-                          <label className="text-[11px] text-eid-text-secondary">Posição vertical<input type="range" min={0} max={100} value={fotoPosY} onChange={(e) => setFotoPosY(Number(e.target.value))} className="mt-1 w-full" /></label>
-                          <label className="text-[11px] text-eid-text-secondary">Zoom<input type="range" min={1} max={2.5} step={0.05} value={fotoZoom} onChange={(e) => setFotoZoom(Number(e.target.value))} className="mt-1 w-full" /></label>
+                    <div className="fixed inset-0 z-[96] flex items-end justify-center bg-black/70 px-0 pb-0 motion-safe:animate-[fade-in_180ms_ease-out_both] sm:items-center sm:px-4">
+                      <div className="w-full max-w-sm rounded-t-3xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl motion-safe:animate-[eid-content-block-enter_240ms_cubic-bezier(0.22,1,0.36,1)_both] sm:rounded-2xl">
+                        {/* Handle (mobile) */}
+                        <div className="flex justify-center pt-3 sm:hidden">
+                          <div className="h-1 w-10 rounded-full bg-[color:var(--eid-border-subtle)]" />
                         </div>
-                        <div className="mt-3 flex gap-2">
-                          <button type="button" onClick={() => setFotoEditorOpen(false)} className="flex-1 rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-text-secondary">Cancelar</button>
-                          <button type="button" onClick={() => setFotoEditorOpen(false)} className="flex-1 rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-3 py-2 text-xs font-semibold text-eid-primary-300">{fotoEditorMode === "add" ? "Enviar foto" : "Salvar edição"}</button>
+
+                        {/* Header */}
+                        <div className="flex items-center gap-2 border-b border-[color:var(--eid-border-subtle)] px-4 py-3">
+                          <svg viewBox="0 0 24 24" className="h-4 w-4 text-eid-primary-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          <p className="text-sm font-bold text-eid-fg">Ajustar foto</p>
+                        </div>
+
+                        <div className="p-4">
+                          {/* Preview circular em tempo real */}
+                          <div className="mb-4 flex flex-col items-center gap-2">
+                            <div className="relative h-24 w-24 overflow-hidden rounded-full ring-2 ring-eid-primary-500/40 ring-offset-2 ring-offset-eid-card">
+                              {fotoPreviewUrl && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={fotoPreviewUrl}
+                                  alt="Prévia"
+                                  className="absolute inset-0 h-full w-full object-cover"
+                                  style={{
+                                    objectPosition: `${fotoPosX}% ${fotoPosY}%`,
+                                    transform: `scale(${fotoZoom})`,
+                                    transformOrigin: `${fotoPosX}% ${fotoPosY}%`,
+                                  }}
+                                />
+                              )}
+                            </div>
+                            <p className="text-[10px] text-eid-text-muted">Prévia do recorte circular</p>
+                          </div>
+
+                          {/* Sliders */}
+                          <div className="grid gap-3">
+                            <label className="block">
+                              <div className="mb-1 flex items-center justify-between">
+                                <span className="text-[11px] font-semibold text-eid-text-secondary">Posição horizontal</span>
+                                <span className="text-[10px] tabular-nums text-eid-text-muted">{fotoPosX}%</span>
+                              </div>
+                              <input type="range" min={0} max={100} value={fotoPosX} onChange={(e) => setFotoPosX(Number(e.target.value))} className="w-full accent-[#2563eb]" />
+                            </label>
+                            <label className="block">
+                              <div className="mb-1 flex items-center justify-between">
+                                <span className="text-[11px] font-semibold text-eid-text-secondary">Posição vertical</span>
+                                <span className="text-[10px] tabular-nums text-eid-text-muted">{fotoPosY}%</span>
+                              </div>
+                              <input type="range" min={0} max={100} value={fotoPosY} onChange={(e) => setFotoPosY(Number(e.target.value))} className="w-full accent-[#2563eb]" />
+                            </label>
+                            <label className="block">
+                              <div className="mb-1 flex items-center justify-between">
+                                <span className="text-[11px] font-semibold text-eid-text-secondary">Zoom</span>
+                                <span className="text-[10px] tabular-nums text-eid-text-muted">{fotoZoom.toFixed(2)}×</span>
+                              </div>
+                              <input type="range" min={1} max={2.5} step={0.05} value={fotoZoom} onChange={(e) => setFotoZoom(Number(e.target.value))} className="w-full accent-[#2563eb]" />
+                            </label>
+                          </div>
+
+                          {/* Ações */}
+                          <div className="mt-4 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setFotoEditorOpen(false)}
+                              className="flex-1 rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2.5 text-xs font-semibold text-eid-text-secondary transition hover:border-eid-primary-500/30 hover:text-eid-fg"
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFotoEditorOpen(false)}
+                              className="flex-1 rounded-xl bg-[linear-gradient(135deg,#2563EB,#1D4ED8)] px-3 py-2.5 text-xs font-bold text-white shadow-[0_6px_16px_-8px_rgba(37,99,235,0.7)] transition hover:brightness-105"
+                            >
+                              {fotoEditorMode === "add" ? "Usar esta foto" : "Salvar ajuste"}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>,
@@ -2560,7 +2628,8 @@ export function OnboardingWizard({
                       name="lado"
                       value={lado}
                       onChange={(e) => setLado(e.target.value)}
-                      className={`h-full min-w-0 flex-1 appearance-none border-0 bg-transparent pr-5 text-sm outline-none [&>option]:bg-[#0b1220] [&>option]:text-white ${lado === "" ? "text-eid-text-muted/90" : "text-eid-fg"}`}
+                      style={{ backgroundColor: "transparent" }}
+                      className={`h-full min-w-0 flex-1 appearance-none border-0 pr-5 text-sm outline-none [&>option]:bg-[#0b1220] [&>option]:text-white ${lado === "" ? "text-eid-text-muted/90" : "text-eid-fg"}`}
                     >
                       <option value="">Mão dominante</option>
                       <option value="Destro">Destro</option>
