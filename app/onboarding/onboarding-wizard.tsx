@@ -470,6 +470,8 @@ export function OnboardingWizard({
   const [nome, setNome] = useState<string>(profileInitial.nome);
   const [username, setUsername] = useState<string>(profileInitial.username);
   const [localizacao, setLocalizacao] = useState<string>(profileInitial.localizacao);
+  const [locGeoStatus, setLocGeoStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [locGeoError, setLocGeoError] = useState<string | null>(null);
   const [alturaCm, setAlturaCm] = useState<string>(
     profileInitial.alturaCm ? String(profileInitial.alturaCm) : ""
   );
@@ -1196,6 +1198,49 @@ export function OnboardingWizard({
     setMessage(null);
     const fd = new FormData(e.currentTarget);
     startTransition(async () => applyResult(await salvarExtrasOnboarding(undefined, fd)));
+  }
+
+  async function detectarLocalizacao() {
+    setLocGeoError(null);
+    if (!navigator.geolocation) {
+      setLocGeoStatus("error");
+      setLocGeoError("Seu navegador não suporta geolocalização.");
+      return;
+    }
+    setLocGeoStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: la, longitude: ln } = pos.coords;
+        try {
+          const r = await fetch(`/api/geocode/reverse?lat=${la}&lon=${ln}`);
+          const d = (await r.json()) as {
+            address?: { city?: string; town?: string; village?: string; state?: string };
+          };
+          const cidade = d.address?.city || d.address?.town || d.address?.village || "";
+          const estado = d.address?.state || "";
+          const v = cidade && estado ? `${cidade} - ${estado}` : cidade || estado || "";
+          if (v) {
+            setLocalizacao(v);
+            setLocGeoStatus("ok");
+          } else {
+            setLocGeoStatus("error");
+            setLocGeoError("Não conseguimos identificar sua cidade. Tente novamente.");
+          }
+        } catch {
+          setLocGeoStatus("error");
+          setLocGeoError("Falha ao obter localização. Verifique sua conexão.");
+        }
+      },
+      (err) => {
+        setLocGeoStatus("error");
+        setLocGeoError(
+          err.code === 1
+            ? "Permissão de localização negada. Habilite nas configurações do navegador."
+            : "Não foi possível obter a localização. Tente novamente."
+        );
+      },
+      { enableHighAccuracy: false, timeout: 10000 }
+    );
   }
 
   function submitPerfil(e: React.FormEvent<HTMLFormElement>) {
@@ -2374,20 +2419,59 @@ export function OnboardingWizard({
                   </p>
                 </div>
 
-                {/* Localização */}
-                <div className="flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
-                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-                    <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  <input
-                    name="localizacao"
-                    required
-                    value={localizacao}
-                    onChange={(e) => setLocalizacao(e.target.value)}
-                    placeholder="Cidade / Estado"
-                    className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/90"
-                  />
+                {/* Localização — somente leitura, atualizada via GPS */}
+                <div>
+                  <div className={`flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] px-4 transition ${
+                    locGeoStatus === "ok"
+                      ? "border-emerald-500/40 bg-emerald-500/6"
+                      : "border-[color:var(--eid-border-subtle)]"
+                  }`} style={locGeoStatus === "ok" ? {} : { background: "var(--eid-field-bg)" }}>
+                    {locGeoStatus === "loading" ? (
+                      <span className="h-[18px] w-[18px] shrink-0 animate-spin rounded-full border-2 border-eid-primary-500 border-t-transparent" />
+                    ) : locGeoStatus === "ok" ? (
+                      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                        <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                    )}
+                    {/* Exibição da cidade — não editável */}
+                    <input
+                      name="localizacao"
+                      required
+                      readOnly
+                      value={localizacao}
+                      placeholder="Toque em Atualizar para detectar"
+                      className="min-w-0 flex-1 cursor-default border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/70"
+                    />
+                    {/* Botão de atualizar */}
+                    <button
+                      type="button"
+                      onClick={detectarLocalizacao}
+                      disabled={locGeoStatus === "loading"}
+                      className="shrink-0 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-1 text-[11px] font-bold text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18 disabled:opacity-50"
+                    >
+                      {locGeoStatus === "loading" ? "…" : locGeoStatus === "ok" ? "Atualizar" : "Detectar"}
+                    </button>
+                  </div>
+                  {locGeoError ? (
+                    <p className="mt-1.5 pl-1 text-[11px] text-amber-400">{locGeoError}</p>
+                  ) : locGeoStatus === "ok" && localizacao ? (
+                    <p className="mt-1.5 flex items-center gap-1 pl-1 text-[11px] text-emerald-400">
+                      <svg viewBox="0 0 12 12" className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                        <path d="M2 6l2.5 2.5 5.5-5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Localização detectada com sucesso
+                    </p>
+                  ) : (
+                    <p className="mt-1.5 pl-1 text-[11px] text-eid-text-muted">
+                      Clique em "Detectar" para preencher automaticamente com sua cidade.
+                    </p>
+                  )}
                 </div>
               </div>
 

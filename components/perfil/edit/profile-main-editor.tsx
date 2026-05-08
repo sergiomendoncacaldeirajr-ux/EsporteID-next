@@ -27,6 +27,52 @@ export function ProfileMainEditor({ initial }: Props) {
   const [pesoKg, setPesoKg] = useState(initial.pesoKg ? String(initial.pesoKg) : "");
   const [lado, setLado] = useState(initial.lado ?? "");
 
+  const [locGeoStatus, setLocGeoStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [locGeoError, setLocGeoError] = useState<string | null>(null);
+
+  async function detectarLocalizacao() {
+    setLocGeoError(null);
+    if (!navigator.geolocation) {
+      setLocGeoStatus("error");
+      setLocGeoError("Seu navegador não suporta geolocalização.");
+      return;
+    }
+    setLocGeoStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: la, longitude: ln } = pos.coords;
+        try {
+          const r = await fetch(`/api/geocode/reverse?lat=${la}&lon=${ln}`);
+          const d = (await r.json()) as {
+            address?: { city?: string; town?: string; village?: string; state?: string };
+          };
+          const cidade = d.address?.city || d.address?.town || d.address?.village || "";
+          const estado = d.address?.state || "";
+          const v = cidade && estado ? `${cidade} - ${estado}` : cidade || estado || "";
+          if (v) {
+            setLocalizacao(v);
+            setLocGeoStatus("ok");
+          } else {
+            setLocGeoStatus("error");
+            setLocGeoError("Não conseguimos identificar sua cidade. Tente novamente.");
+          }
+        } catch {
+          setLocGeoStatus("error");
+          setLocGeoError("Falha ao obter localização. Verifique sua conexão.");
+        }
+      },
+      (err) => {
+        setLocGeoStatus("error");
+        setLocGeoError(
+          err.code === 1
+            ? "Permissão negada. Habilite a localização nas configurações do navegador."
+            : "Não foi possível obter a localização. Tente novamente."
+        );
+      },
+      { enableHighAccuracy: false, timeout: 10000 }
+    );
+  }
+
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
@@ -85,19 +131,55 @@ export function ProfileMainEditor({ initial }: Props) {
             className="h-10 w-full bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
           />
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
-          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <path d="M12 21s7-5.8 7-11a7 7 0 1 0-14 0c0 5.2 7 11 7 11Z" />
-            <circle cx="12" cy="10" r="2.4" />
-          </svg>
-          <input
-            name="localizacao"
-            required
-            value={localizacao}
-            onChange={(ev) => setLocalizacao(ev.target.value)}
-            placeholder="Cidade / Estado"
-            className="h-10 w-full bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
-          />
+        {/* Localização — somente leitura, atualizada via GPS */}
+        <div>
+          <div className={`flex h-10 items-center gap-2 rounded-xl border px-3 transition ${
+            locGeoStatus === "ok"
+              ? "border-emerald-500/35 bg-emerald-500/6"
+              : "border-[color:var(--eid-border-subtle)] bg-eid-card"
+          }`}>
+            {locGeoStatus === "loading" ? (
+              <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-eid-primary-400 border-t-transparent" />
+            ) : locGeoStatus === "ok" ? (
+              <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M12 21s7-5.8 7-11a7 7 0 1 0-14 0c0 5.2 7 11 7 11Z" /><circle cx="12" cy="10" r="2.4" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M12 21s7-5.8 7-11a7 7 0 1 0-14 0c0 5.2 7 11 7 11Z" /><circle cx="12" cy="10" r="2.4" />
+              </svg>
+            )}
+            <input
+              name="localizacao"
+              required
+              readOnly
+              value={localizacao}
+              placeholder="Toque em Atualizar para detectar"
+              className="h-full min-w-0 flex-1 cursor-default bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={detectarLocalizacao}
+              disabled={locGeoStatus === "loading"}
+              className="shrink-0 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18 disabled:opacity-50"
+            >
+              {locGeoStatus === "loading" ? "…" : locGeoStatus === "ok" ? "Atualizar" : "Detectar"}
+            </button>
+          </div>
+          {locGeoError ? (
+            <p className="mt-1 pl-1 text-[10px] text-amber-400">{locGeoError}</p>
+          ) : locGeoStatus === "ok" && localizacao ? (
+            <p className="mt-1 flex items-center gap-1 pl-1 text-[10px] text-emerald-400">
+              <svg viewBox="0 0 12 12" className="h-2.5 w-2.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M2 6l2.5 2.5 5.5-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Localização atualizada
+            </p>
+          ) : (
+            <p className="mt-1 pl-1 text-[10px] text-eid-text-muted">
+              Clique em "Detectar" para preencher com sua cidade atual.
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
