@@ -934,6 +934,7 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
   const podeSugerirParaLider = !canConfirmarRanking && formacoesMembroNaoLider.length > 0;
 
   return (
+    <>
     <main className={DESAFIO_PAGE_MAIN_CLASS}>
         <div className="relative mt-1 mb-4 overflow-hidden rounded-2xl border border-[rgba(249,115,22,0.14)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)),color-mix(in_srgb,var(--eid-surface)_96%,transparent))] px-4 py-4 shadow-[0_8px_28px_-16px_rgba(249,115,22,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]">
           <div className="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-eid-action-500/10 blur-3xl" aria-hidden />
@@ -1028,5 +1029,6 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         </div>
       </main>
       <LocationPermissionBanner />
+    </>
   );
 }

@@ -321,6 +321,7 @@ export default async function DashboardPage({ searchParams }: Props) {
   };
 
   return (
+    <>
     <div
       className="relative z-0 mx-auto flex w-full min-w-0 max-w-lg flex-1 flex-col px-3 pb-[var(--eid-shell-content-bottom-pad)] pt-0 sm:max-w-2xl sm:px-6 sm:pt-1 sm:pb-[var(--eid-shell-content-bottom-pad)]"
       data-eid-dashboard-page
@@ -537,5 +538,6 @@ export default async function DashboardPage({ searchParams }: Props) {
       </div>
     </div>
     <LocationPermissionBanner />
+    </>
   );
 }
