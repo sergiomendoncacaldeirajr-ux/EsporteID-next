@@ -186,9 +186,12 @@ export default async function Home() {
           <div className="mb-4 flex items-center justify-end gap-2 sm:mb-6">
             <Link
               href="/dashboard"
-              className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-3 py-1.5 text-xs font-bold text-eid-primary-300 transition hover:bg-eid-primary-500/20"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-eid-action-500/35 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_10%,var(--eid-card)),var(--eid-card))] px-3.5 py-1.5 text-xs font-bold text-eid-action-400 transition hover:border-eid-action-500/55 hover:bg-eid-action-500/12"
             >
-              Painel
+              Abrir app
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                <path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </Link>
             <EidThemeToggle variant="toolbar" />
           </div>
