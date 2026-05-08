@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import { LocationPermissionBanner } from "@/components/location/location-permission-banner";
 import { DesafioEnviarForm } from "@/components/desafio/desafio-enviar-form";
 import { SugerirMatchLiderForm } from "@/components/perfil/sugerir-match-lider-form";
 import { EidStreamSection } from "@/components/eid-stream-section";
@@ -1026,5 +1027,6 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
         <EidCancelLink href="/match" {...exitEmbedProps(isEmbed)} className="!mt-0 !min-h-[44px] !rounded-xl !text-[11px] !font-black !tracking-[0.04em]" />
         </div>
       </main>
+      <LocationPermissionBanner />
   );
 }

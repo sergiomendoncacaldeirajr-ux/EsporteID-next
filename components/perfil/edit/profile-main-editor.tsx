@@ -25,6 +25,13 @@ export function ProfileMainEditor({ initial }: Props) {
   function formatarNome(raw: string): string {
     return raw.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
   }
+  /** Normaliza medida numérica: troca ponto por vírgula, permite apenas dígitos e uma vírgula. */
+  function formatarMedida(raw: string): string {
+    const s = raw.replace(/\./g, ",").replace(/[^0-9,]/g, "");
+    const idx = s.indexOf(",");
+    if (idx === -1) return s;
+    return s.slice(0, idx + 1) + s.slice(idx + 1).replace(/,/g, "");
+  }
   const [username, setUsername] = useState(initial.username);
   const [localizacao, setLocalizacao] = useState(initial.localizacao);
   const [alturaCm, setAlturaCm] = useState(initial.alturaCm ? String(initial.alturaCm) : "");
@@ -80,6 +87,11 @@ export function ProfileMainEditor({ initial }: Props) {
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    // Normaliza medidas: troca vírgula por ponto antes de enviar ao servidor
+    const alturaVal = String(fd.get("altura_cm") ?? "").trim();
+    if (alturaVal) fd.set("altura_cm", alturaVal.replace(",", "."));
+    const pesoVal = String(fd.get("peso_kg") ?? "").trim();
+    if (pesoVal) fd.set("peso_kg", pesoVal.replace(",", "."));
     startTransition(async () => {
       const res = await saveProfileMainAction(fd);
       if (!res.ok) {
@@ -200,14 +212,13 @@ export function ProfileMainEditor({ initial }: Props) {
               <path d="M7 4h3M7 20h3" />
             </svg>
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
               name="altura_cm"
-              min={50}
-              max={260}
               value={alturaCm}
-              onChange={(ev) => setAlturaCm(ev.target.value)}
+              onChange={(ev) => setAlturaCm(formatarMedida(ev.target.value))}
               placeholder="Altura cm"
-              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
             />
           </div>
           <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
@@ -217,14 +228,13 @@ export function ProfileMainEditor({ initial }: Props) {
               <path d="M10 12h4" />
             </svg>
             <input
-              type="number"
+              type="text"
+              inputMode="decimal"
               name="peso_kg"
-              min={20}
-              max={300}
               value={pesoKg}
-              onChange={(ev) => setPesoKg(ev.target.value)}
+              onChange={(ev) => setPesoKg(formatarMedida(ev.target.value))}
               placeholder="Peso kg"
-              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
             />
           </div>
         </div>

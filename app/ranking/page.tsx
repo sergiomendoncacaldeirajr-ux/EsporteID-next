@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Image from "next/image";
+import { LocationPermissionBanner } from "@/components/location/location-permission-banner";
 import { RankingFilterBar } from "@/components/ranking/ranking-compact";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { parseRankingSearch, type RankingSearchState } from "@/lib/ranking/ranking-href";
@@ -153,6 +154,7 @@ export default async function RankingPage({ searchParams }: Props) {
         )}
       </main>
       <MatchRankingRulesModal />
+      <LocationPermissionBanner />
     </div>
   );
 }

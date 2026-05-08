@@ -32,6 +32,7 @@ import {
   IconTorneioCard,
   IconUsers,
 } from "./dashboard-icons";
+import { LocationPermissionBanner } from "@/components/location/location-permission-banner";
 import { DashboardStreamLocais } from "./dashboard-stream-locais";
 import { DashboardStreamConfrontosProximos } from "./dashboard-stream-confrontos-proximos";
 import { DashboardStreamTorneios } from "./dashboard-stream-torneios";
@@ -535,5 +536,6 @@ export default async function DashboardPage({ searchParams }: Props) {
         </EidStreamSection>
       </div>
     </div>
+    <LocationPermissionBanner />
   );
 }

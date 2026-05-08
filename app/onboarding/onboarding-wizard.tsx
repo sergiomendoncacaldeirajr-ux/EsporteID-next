@@ -472,6 +472,13 @@ export function OnboardingWizard({
   function formatarNome(raw: string): string {
     return raw.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
   }
+  /** Normaliza medida numérica: troca ponto por vírgula, permite apenas dígitos e uma vírgula. */
+  function formatarMedida(raw: string): string {
+    const s = raw.replace(/\./g, ",").replace(/[^0-9,]/g, "");
+    const idx = s.indexOf(",");
+    if (idx === -1) return s;
+    return s.slice(0, idx + 1) + s.slice(idx + 1).replace(/,/g, "");
+  }
   const [username, setUsername] = useState<string>(profileInitial.username);
   const [localizacao, setLocalizacao] = useState<string>(profileInitial.localizacao);
   const [locGeoStatus, setLocGeoStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
@@ -853,8 +860,8 @@ export function OnboardingWizard({
   const stepOrder: Step[] = ["papeis", "esportes", "extras", "perfil"];
   const activeStepIndex = stepOrder.indexOf(step);
   const progressPct = ((activeStepIndex + 1) / stepOrder.length) * 100;
-  const perfilAlturaNum = Number(alturaCm);
-  const perfilPesoNum = Number(pesoKg);
+  const perfilAlturaNum = alturaCm ? parseFloat(alturaCm.replace(",", ".")) : NaN;
+  const perfilPesoNum = pesoKg ? parseFloat(pesoKg.replace(",", ".")) : NaN;
   const hasFotoSelecionada = Boolean(fotoPreviewUrl);
   const hasFotoParaFinalizar =
     hasFotoSelecionada || Boolean(profileInitial.avatarUrl && profileInitial.avatarUrl.trim().length > 0);
@@ -913,10 +920,10 @@ export function OnboardingWizard({
     if (hasAnyAthleteSport) {
       const alturaRaw = alturaCm.trim();
       const pesoRaw = pesoKg.trim();
-      if (alturaRaw.length > 0 && (!Number.isInteger(perfilAlturaNum) || perfilAlturaNum < 50 || perfilAlturaNum > 260)) {
+      if (alturaRaw.length > 0 && (isNaN(perfilAlturaNum) || Math.floor(perfilAlturaNum) < 50 || Math.floor(perfilAlturaNum) > 260)) {
         return false;
       }
-      if (pesoRaw.length > 0 && (!Number.isInteger(perfilPesoNum) || perfilPesoNum < 20 || perfilPesoNum > 300)) {
+      if (pesoRaw.length > 0 && (isNaN(perfilPesoNum) || Math.floor(perfilPesoNum) < 20 || Math.floor(perfilPesoNum) > 300)) {
         return false;
       }
       if (lado && !["Destro", "Canhoto", "Ambos"].includes(lado)) return false;
@@ -1258,6 +1265,11 @@ export function OnboardingWizard({
     fd.set("foto_pos_x", String(fotoPosX));
     fd.set("foto_pos_y", String(fotoPosY));
     fd.set("foto_zoom", String(fotoZoom));
+    // Normaliza medidas: vírgula → ponto para o parseInt do servidor
+    const alturaVal = String(fd.get("altura_cm") ?? "").trim();
+    if (alturaVal) fd.set("altura_cm", alturaVal.replace(",", "."));
+    const pesoVal = String(fd.get("peso_kg") ?? "").trim();
+    if (pesoVal) fd.set("peso_kg", pesoVal.replace(",", "."));
     startTransition(async () => applyResult(await salvarPerfilOnboarding(undefined, fd)));
   }
 
@@ -2589,12 +2601,11 @@ export function OnboardingWizard({
                         <path d="M21 6H3M21 12H3M21 18H3" strokeLinecap="round" /><path d="M6 3v4M6 17v4M18 10v4" strokeLinecap="round" />
                       </svg>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         name="altura_cm"
-                        min={50}
-                        max={260}
                         value={alturaCm}
-                        onChange={(e) => setAlturaCm(e.target.value)}
+                        onChange={(e) => setAlturaCm(formatarMedida(e.target.value))}
                         placeholder="Altura (cm)"
                         className="min-w-0 flex-1 border-0 bg-transparent text-sm text-eid-fg outline-none placeholder:text-eid-text-muted/90"
                       />
@@ -2606,12 +2617,11 @@ export function OnboardingWizard({
                         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" strokeLinecap="round" />
                       </svg>
                       <input
-                        type="number"
+                        type="text"
+                        inputMode="decimal"
                         name="peso_kg"
-                        min={20}
-                        max={300}
                         value={pesoKg}
-                        onChange={(e) => setPesoKg(e.target.value)}
+                        onChange={(e) => setPesoKg(formatarMedida(e.target.value))}
                         placeholder="Peso (kg)"
                         className="min-w-0 flex-1 border-0 bg-transparent text-sm text-eid-fg outline-none placeholder:text-eid-text-muted/90"
                       />
