@@ -367,7 +367,7 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
                       <strong className="font-semibold text-eid-fg">Respondemos via WhatsApp</strong> do seu cadastro
                       em até 2 h.{" "}
                       <Link
-                        href="/conta/perfil"
+                        href="/editar/perfil"
                         className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline"
                         onClick={fecharPainel}
                       >

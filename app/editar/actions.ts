@@ -5,7 +5,7 @@ import { modalidadesMatchFromFlags } from "@/lib/onboarding/modalidades-match";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
 
-type SaveProfileResult = { ok: true } | { ok: false; message: string };
+export type SaveProfileResult = { ok: true } | { ok: false; message: string };
 
 function parseIntOrNull(value: FormDataEntryValue | null): number | null {
   if (typeof value !== "string") return null;
@@ -50,6 +50,30 @@ export async function saveProfileMainAction(formData: FormData): Promise<SavePro
 
   revalidatePath(`/perfil/${user.id}`);
   revalidatePath("/conta/perfil");
+  revalidatePath("/editar/perfil");
+  return { ok: true };
+}
+
+export async function saveWhatsappAction(formData: FormData): Promise<SaveProfileResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, message: "Sessão expirada." };
+
+  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  if (!whatsapp) return { ok: false, message: "Número obrigatório." };
+  if (!/^\+[1-9]\d{6,14}$/.test(whatsapp)) {
+    return { ok: false, message: "Formato inválido. Informe o número com código do país (+55...)." };
+  }
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ whatsapp, atualizado_em: new Date().toISOString() })
+    .eq("id", user.id);
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath(`/perfil/${user.id}`);
   revalidatePath("/editar/perfil");
   return { ok: true };
 }
