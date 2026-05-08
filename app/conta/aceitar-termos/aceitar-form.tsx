@@ -37,104 +37,121 @@ export function AceitarForm() {
   }
 
   return (
-    <>
-      <div className="mx-auto mb-3 flex w-full max-w-lg items-center justify-end gap-2">
+    <main className="eid-auth-bg flex min-h-[100svh] w-full flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.5rem,env(safe-area-inset-top,0px)+1rem)] sm:px-6 sm:py-10">
+      {/* Toolbar */}
+      <div className="mb-4 flex w-full max-w-[440px] items-center justify-end gap-2">
         <EidThemeToggle variant="toolbar" />
         <SignOutButton variant="icon" />
       </div>
 
-      <form
-        onSubmit={onSubmit}
-        className="eid-auth-card mx-auto flex max-w-lg flex-col gap-5 p-6 sm:p-8"
-      >
-      <div className="flex flex-col items-center gap-3">
-        <LogoFull className="flex justify-center" />
-        <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_20%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)))] shadow-[0_0_20px_-6px_rgba(37,99,235,0.4)] ring-1 ring-eid-primary-500/25">
-          <svg viewBox="0 0 24 24" className="h-5 w-5 text-eid-primary-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
-          </svg>
-        </span>
-        <div className="text-center">
-          <h1 className="text-[15px] font-black uppercase tracking-[0.08em] text-eid-fg">Termos e privacidade</h1>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-eid-text-secondary">
-            Para usar o EsporteID, confirme que leu e concorda com a versão vigente dos documentos.
-            O tratamento de dados segue a LGPD (Lei 13.709/2018).
+      <div className="eid-native-auth-enter w-full max-w-[440px] pb-6">
+        <LogoFull size="auth" className="mb-6 flex justify-center" />
+
+        <form
+          onSubmit={onSubmit}
+          className="eid-auth-card flex flex-col gap-0 p-5 sm:p-7"
+        >
+          {/* Header */}
+          <div className="mb-6 flex flex-col items-center text-center">
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_28%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)))] shadow-[0_0_28px_-6px_rgba(37,99,235,0.5),inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-eid-primary-500/30">
+              <svg viewBox="0 0 24 24" className="h-6 w-6 text-eid-primary-400" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <h1 className="mt-3.5 text-[16px] font-black uppercase tracking-[0.1em] text-eid-fg">
+              Termos e privacidade
+            </h1>
+            <p className="mt-2 max-w-[300px] text-[12px] leading-relaxed text-eid-text-secondary">
+              Leia e confirme os documentos abaixo para usar o EsporteID.
+              Seus dados são protegidos pela{" "}
+              <span className="font-semibold text-eid-text-muted">LGPD (Lei 13.709/2018)</span>.
+            </p>
+          </div>
+
+          {/* Required agreements */}
+          <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-eid-text-muted">
+            Obrigatório
           </p>
-        </div>
+          <div className="mb-4 flex flex-col gap-2.5">
+            <label className="group flex cursor-pointer items-start gap-3.5 rounded-[14px] border border-[rgba(37,99,235,0.12)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_6%,var(--eid-surface)),var(--eid-surface))] p-4 transition hover:border-eid-primary-500/30 hover:bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-surface)),var(--eid-surface))] has-[:checked]:border-eid-primary-500/40 has-[:checked]:bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-surface)),var(--eid-surface))]">
+              <div className="mt-[1px] flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-[1.5px] border-[color:var(--eid-border-subtle)] bg-[color:var(--eid-field-bg)] transition group-has-[:checked]:border-eid-action-500 group-has-[:checked]:bg-eid-action-500">
+                <svg viewBox="0 0 12 12" className="h-3 w-3 text-white opacity-0 transition group-has-[:checked]:opacity-100" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                  <path d="m2 6 3 3 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <input type="checkbox" name="aceite_termos" className="sr-only" required />
+              </div>
+              <span className="text-[13px] leading-relaxed text-eid-fg">
+                Li e aceito os{" "}
+                <Link href="/termos" target="_blank" className="font-bold text-eid-primary-300 underline-offset-2 hover:underline">
+                  Termos de Uso
+                </Link>
+                , incluindo a{" "}
+                <strong className="font-bold text-eid-fg">idade mínima de 18 anos</strong>.
+              </span>
+            </label>
+
+            <label className="group flex cursor-pointer items-start gap-3.5 rounded-[14px] border border-[rgba(37,99,235,0.12)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_6%,var(--eid-surface)),var(--eid-surface))] p-4 transition hover:border-eid-primary-500/30 hover:bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_10%,var(--eid-surface)),var(--eid-surface))] has-[:checked]:border-eid-primary-500/40 has-[:checked]:bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-surface)),var(--eid-surface))]">
+              <div className="mt-[1px] flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-[1.5px] border-[color:var(--eid-border-subtle)] bg-[color:var(--eid-field-bg)] transition group-has-[:checked]:border-eid-action-500 group-has-[:checked]:bg-eid-action-500">
+                <svg viewBox="0 0 12 12" className="h-3 w-3 text-white opacity-0 transition group-has-[:checked]:opacity-100" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                  <path d="m2 6 3 3 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <input type="checkbox" name="aceite_privacidade" className="sr-only" required />
+              </div>
+              <span className="text-[13px] leading-relaxed text-eid-fg">
+                Li a{" "}
+                <Link href="/privacidade" target="_blank" className="font-bold text-eid-primary-300 underline-offset-2 hover:underline">
+                  Política de Privacidade
+                </Link>{" "}
+                e autorizo o tratamento dos meus dados conforme descrito.
+              </span>
+            </label>
+          </div>
+
+          {/* Optional */}
+          <p className="mb-2 text-[10px] font-black uppercase tracking-[0.12em] text-eid-text-muted">
+            Opcional
+          </p>
+          <label className="group mb-5 flex cursor-pointer items-start gap-3.5 rounded-[14px] border border-[color:var(--eid-border-subtle)] bg-eid-surface/25 p-4 transition hover:bg-eid-surface/40">
+            <div className="mt-[1px] flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-[1.5px] border-[color:var(--eid-border-subtle)] bg-[color:var(--eid-field-bg)] transition group-has-[:checked]:border-eid-action-500 group-has-[:checked]:bg-eid-action-500">
+              <svg viewBox="0 0 12 12" className="h-3 w-3 text-white opacity-0 transition group-has-[:checked]:opacity-100" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                <path d="m2 6 3 3 5-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <input type="checkbox" name="marketing" className="sr-only" />
+            </div>
+            <span className="text-[12px] leading-relaxed text-eid-text-secondary">
+              Quero receber novidades sobre eventos e torneios por e-mail.
+            </span>
+          </label>
+
+          {/* Error */}
+          {message ? (
+            <p className="mb-4 rounded-xl border border-[rgba(255,107,107,0.22)] bg-[rgba(255,107,107,0.1)] px-3 py-2.5 text-center text-[12px] leading-snug text-[#ff6b6b]" role="alert">
+              {message}
+            </p>
+          ) : null}
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={pending}
+            className="flex h-[54px] w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-0 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-400)_65%,#fff_35%),var(--eid-action-500)_50%,var(--eid-action-600))] text-[14px] font-extrabold uppercase tracking-wide text-white shadow-[0_8px_24px_-10px_rgba(249,115,22,0.65)] transition hover:brightness-105 hover:shadow-[0_12px_30px_-10px_rgba(249,115,22,0.75)] active:scale-[0.97] active:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
+          >
+            {pending ? (
+              <>
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
+                <span>Salvando...</span>
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                  <path d="m5 12 4 4 10-10" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Confirmar e continuar
+              </>
+            )}
+          </button>
+        </form>
       </div>
-
-      <div className="space-y-3">
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-surface)),var(--eid-surface))] p-3 text-sm text-eid-fg transition hover:border-eid-primary-500/25">
-          <input
-            type="checkbox"
-            name="aceite_termos"
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-[color:var(--eid-border-subtle)] accent-eid-action-500"
-            required
-          />
-          <span className="text-[13px] leading-relaxed">
-            Li e aceito os{" "}
-            <Link href="/termos" className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">
-              Termos de Uso
-            </Link>
-            , incluindo a <strong className="font-semibold text-eid-fg">idade mínima de 18 anos</strong>.
-          </span>
-        </label>
-
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_5%,var(--eid-surface)),var(--eid-surface))] p-3 text-sm text-eid-fg transition hover:border-eid-primary-500/25">
-          <input
-            type="checkbox"
-            name="aceite_privacidade"
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-[color:var(--eid-border-subtle)] accent-eid-action-500"
-            required
-          />
-          <span className="text-[13px] leading-relaxed">
-            Li a{" "}
-            <Link href="/privacidade" className="font-semibold text-eid-primary-300 underline-offset-2 hover:underline">
-              Política de Privacidade
-            </Link>{" "}
-            e autorizo o tratamento dos meus dados conforme descrito.
-          </span>
-        </label>
-
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/30 p-3 text-sm text-eid-fg">
-          <input
-            type="checkbox"
-            name="marketing"
-            className="mt-0.5 h-4 w-4 shrink-0 rounded border-[color:var(--eid-border-subtle)] accent-eid-action-500"
-          />
-          <span className="text-[12px] leading-relaxed text-eid-text-secondary">
-            Quero receber comunicações sobre eventos, torneios e novidades <span className="text-eid-text-muted">(opcional)</span>.
-          </span>
-        </label>
-      </div>
-
-      {message ? (
-        <p className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2.5 text-sm text-red-200">
-          {message}
-        </p>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={pending}
-        className="flex min-h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-400)_65%,#fff_35%),var(--eid-action-500)_50%,var(--eid-action-600))] px-5 text-[14px] font-extrabold uppercase tracking-wide text-white shadow-[0_8px_24px_-10px_rgba(249,115,22,0.65)] transition hover:brightness-105 hover:shadow-[0_12px_30px_-10px_rgba(249,115,22,0.75)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {pending ? (
-          <>
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden />
-            <span>Salvando...</span>
-          </>
-        ) : (
-          <>
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-              <path d="m5 12 4 4 10-10" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Confirmar e continuar
-          </>
-        )}
-      </button>
-      </form>
-    </>
+    </main>
   );
 }
