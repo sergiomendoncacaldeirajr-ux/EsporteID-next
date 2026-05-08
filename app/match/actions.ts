@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { getServerAuth } from "@/lib/auth/rsc-auth";
 import { fetchViewerAllTeamIds } from "@/lib/match/dashboard-ranking-cooldown-blocklists";
 import {
@@ -39,8 +40,10 @@ export async function atualizarLocalizacaoMatch(lat: number, lng: number): Promi
 
   if (error) return { ok: false, message: error.message };
 
-  revalidatePath("/match");
-  revalidatePath("/dashboard");
+  after(() => {
+    revalidatePath("/match");
+    revalidatePath("/dashboard");
+  });
   return { ok: true };
 }
 
@@ -154,7 +157,12 @@ export async function setViewerDisponivelAmistoso(disponivel: boolean): Promise<
   const payload = nextDisponivelAmistosoPayload(disponivel);
   const { error } = await supabase.from("profiles").update(payload).eq("id", user.id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath("/match");
-  revalidatePath(`/perfil/${user.id}`);
+  // Defer cache invalidation so the action returns immediately after the DB write.
+  // The UI already updates optimistically + via Realtime subscription — no need to block here.
+  const uid = user.id;
+  after(() => {
+    revalidatePath("/match");
+    revalidatePath(`/perfil/${uid}`);
+  });
   return { ok: true };
 }
