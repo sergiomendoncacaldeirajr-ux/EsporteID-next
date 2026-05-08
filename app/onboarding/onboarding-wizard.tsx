@@ -2411,8 +2411,8 @@ export function OnboardingWizard({
               {/* Campos de identidade */}
               <div className="space-y-2.5">
                 {/* Nome */}
-                <div className="flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
-                  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="currentColor" aria-hidden>
+                <div className="flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] px-3 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-eid-primary-500" fill="currentColor" aria-hidden>
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                   </svg>
                   <input
@@ -2421,14 +2421,14 @@ export function OnboardingWizard({
                     value={nome}
                     onChange={(e) => setNome(formatarNome(e.target.value))}
                     placeholder="Nome completo"
-                    className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/90"
+                    className="min-w-0 flex-1 border-0 bg-transparent text-sm text-eid-fg outline-none placeholder:text-eid-text-muted/90"
                   />
                 </div>
 
                 {/* Username */}
                 <div>
-                  <div className="flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
-                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <div className="flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] px-3 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                       <circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" strokeLinecap="round" />
                     </svg>
                     <input
@@ -2443,7 +2443,7 @@ export function OnboardingWizard({
                         )
                       }
                       placeholder="@usuario (opcional)"
-                      className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/90"
+                      className="min-w-0 flex-1 border-0 bg-transparent text-sm text-eid-fg outline-none placeholder:text-eid-text-muted/90"
                     />
                   </div>
                   <p className="mt-1.5 pl-1 text-[11px] text-eid-text-muted">
@@ -2453,20 +2453,20 @@ export function OnboardingWizard({
 
                 {/* Localização — somente leitura, atualizada via GPS */}
                 <div>
-                  <div className={`flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] px-4 transition ${
+                  <div className={`flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border px-3 transition ${
                     locGeoStatus === "ok"
-                      ? "border-emerald-500/40 bg-emerald-500/6"
+                      ? "border-emerald-500/35 bg-emerald-500/6"
                       : "border-[color:var(--eid-border-subtle)]"
                   }`} style={locGeoStatus === "ok" ? {} : { background: "var(--eid-field-bg)" }}>
                     {locGeoStatus === "loading" ? (
-                      <span className="h-[18px] w-[18px] shrink-0 animate-spin rounded-full border-2 border-eid-primary-500 border-t-transparent" />
+                      <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-eid-primary-500 border-t-transparent" />
                     ) : locGeoStatus === "ok" ? (
-                      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                         <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
                         <circle cx="12" cy="10" r="3" />
                       </svg>
                     ) : (
-                      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                         <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
                         <circle cx="12" cy="10" r="3" />
                       </svg>
@@ -2477,15 +2477,15 @@ export function OnboardingWizard({
                       required
                       readOnly
                       value={localizacao}
-                      placeholder="Toque em Atualizar para detectar"
-                      className="min-w-0 flex-1 cursor-default border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/70"
+                      placeholder="Toque em Detectar para preencher"
+                      className="min-w-0 flex-1 cursor-default truncate border-0 bg-transparent text-sm text-eid-fg outline-none placeholder:text-eid-text-muted/70"
                     />
                     {/* Botão de atualizar */}
                     <button
                       type="button"
                       onClick={detectarLocalizacao}
                       disabled={locGeoStatus === "loading"}
-                      className="shrink-0 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-1 text-[11px] font-bold text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18 disabled:opacity-50"
+                      className="shrink-0 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18 disabled:opacity-50"
                     >
                       {locGeoStatus === "loading" ? "…" : locGeoStatus === "ok" ? "Atualizar" : "Detectar"}
                     </button>
@@ -2514,10 +2514,10 @@ export function OnboardingWizard({
                     Dados físicos <span className="font-normal normal-case tracking-normal">(opcional)</span>
                   </p>
 
-                  <div className="grid gap-2.5 sm:grid-cols-2">
+                  <div className="grid min-w-0 gap-2 sm:grid-cols-2">
                     {/* Altura */}
-                    <div className="flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
-                      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <div className="flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] px-3 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                         <path d="M21 6H3M21 12H3M21 18H3" strokeLinecap="round" /><path d="M6 3v4M6 17v4M18 10v4" strokeLinecap="round" />
                       </svg>
                       <input
@@ -2528,13 +2528,13 @@ export function OnboardingWizard({
                         value={alturaCm}
                         onChange={(e) => setAlturaCm(e.target.value)}
                         placeholder="Altura (cm)"
-                        className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/90"
+                        className="min-w-0 flex-1 border-0 bg-transparent text-sm text-eid-fg outline-none placeholder:text-eid-text-muted/90"
                       />
                     </div>
 
                     {/* Peso */}
-                    <div className="flex h-[52px] items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
-                      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <div className="flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] px-3 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" strokeLinecap="round" strokeLinejoin="round" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" strokeLinecap="round" />
                       </svg>
                       <input
@@ -2545,37 +2545,28 @@ export function OnboardingWizard({
                         value={pesoKg}
                         onChange={(e) => setPesoKg(e.target.value)}
                         placeholder="Peso (kg)"
-                        className="min-w-0 flex-1 border-0 bg-transparent text-[15px] text-eid-fg outline-none placeholder:text-eid-text-muted/90"
+                        className="min-w-0 flex-1 border-0 bg-transparent text-sm text-eid-fg outline-none placeholder:text-eid-text-muted/90"
                       />
                     </div>
                   </div>
 
                   {/* Mão dominante */}
-                  <input type="hidden" name="lado" value={lado} />
-                  <div className="flex items-center gap-3 rounded-[14px] border-[1.5px] border-[color:var(--eid-border-subtle)] px-4 py-2.5 transition" style={{ background: "var(--eid-field-bg)" }}>
-                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <div className="flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] px-3 transition focus-within:border-eid-primary-500/50 focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]" style={{ background: "var(--eid-field-bg)" }}>
+                    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-eid-primary-500" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                       <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M18 11a2 2 0 1 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <span className="text-[13px] text-eid-text-muted">Mão dominante</span>
-                    <div className="ml-auto inline-flex rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 p-0.5 gap-0.5">
-                      {([
-                        { val: "Destro",  label: "Destro" },
-                        { val: "Canhoto", label: "Canhoto" },
-                        { val: "Ambos",   label: "Ambidestro" },
-                      ] as const).map(({ val, label }) => {
-                        const active = lado === val;
-                        return (
-                          <button key={val} type="button" onClick={() => setLado(val)}
-                            className={`cursor-pointer rounded-md px-3 py-1 text-[12px] font-semibold transition-all select-none ${
-                              active ? "bg-eid-primary-500 text-white shadow-sm" : "text-eid-text-secondary hover:text-eid-fg"
-                            }`}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </div>
+                    <select
+                      name="lado"
+                      value={lado}
+                      onChange={(e) => setLado(e.target.value)}
+                      className="h-full min-w-0 flex-1 border-0 bg-transparent text-sm text-eid-fg outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
+                    >
+                      <option value="">Mão dominante</option>
+                      <option value="Destro">Destro</option>
+                      <option value="Canhoto">Canhoto</option>
+                      <option value="Ambos">Ambidestro</option>
+                    </select>
                   </div>
                 </div>
               ) : null}

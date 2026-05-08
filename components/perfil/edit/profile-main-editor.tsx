@@ -92,15 +92,15 @@ export function ProfileMainEditor({ initial }: Props) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65 p-3 sm:p-4">
+    <form onSubmit={onSubmit} className="w-full overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/65 p-3 sm:p-4">
       <p className="mb-3 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg">Dados pessoais</p>
       {message ? (
         <p className="mb-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2 text-xs text-eid-fg">
           {message}
         </p>
       ) : null}
-      <div className="grid gap-3">
-        <div className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
+      <div className="grid w-full gap-3">
+        <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
           <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <circle cx="12" cy="8" r="3" />
             <path d="M6 18a6 6 0 0 1 12 0" />
@@ -111,10 +111,10 @@ export function ProfileMainEditor({ initial }: Props) {
             value={nome}
             onChange={(ev) => setNome(formatarNome(ev.target.value))}
             placeholder="Nome completo"
-            className="h-10 w-full bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
+            className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
           />
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
+        <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
           <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <circle cx="12" cy="12" r="8" />
             <path d="M9.8 9.8h4.4" />
@@ -132,12 +132,12 @@ export function ProfileMainEditor({ initial }: Props) {
               )
             }
             placeholder="@usuario"
-            className="h-10 w-full bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
+            className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
           />
         </div>
         {/* Localização — somente leitura, atualizada via GPS */}
         <div>
-          <div className={`flex h-10 items-center gap-2 rounded-xl border px-3 transition ${
+          <div className={`flex h-10 min-w-0 items-center gap-2 overflow-hidden rounded-xl border px-3 transition ${
             locGeoStatus === "ok"
               ? "border-emerald-500/35 bg-emerald-500/6"
               : "border-[color:var(--eid-border-subtle)] bg-eid-card"
@@ -159,7 +159,7 @@ export function ProfileMainEditor({ initial }: Props) {
               readOnly
               value={localizacao}
               placeholder="Toque em Atualizar para detectar"
-              className="h-full min-w-0 flex-1 cursor-default bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
+              className="h-full min-w-0 flex-1 cursor-default truncate bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
             />
             <button
               type="button"
@@ -185,8 +185,8 @@ export function ProfileMainEditor({ initial }: Props) {
             </p>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
+        <div className="grid min-w-0 grid-cols-2 gap-2">
+          <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
             <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M7 4v16" />
               <path d="M11 7h3M11 11h2M11 15h3" />
@@ -200,10 +200,10 @@ export function ProfileMainEditor({ initial }: Props) {
               value={alturaCm}
               onChange={(ev) => setAlturaCm(ev.target.value)}
               placeholder="Altura (cm)"
-              className="h-10 w-full bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
             />
           </div>
-          <div className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
+          <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
             <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M6 8h12" />
               <path d="M8 8v8a4 4 0 0 0 8 0V8" />
@@ -217,11 +217,11 @@ export function ProfileMainEditor({ initial }: Props) {
               value={pesoKg}
               onChange={(ev) => setPesoKg(ev.target.value)}
               placeholder="Peso (kg)"
-              className="h-10 w-full bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
+              className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg placeholder:text-[#98A2B3] focus:outline-none"
             />
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
+        <div className="flex min-w-0 items-center gap-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3">
           <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-[#98A2B3]" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <path d="M6 14c0-1.7 1.3-3 3-3h1V8.8A2.8 2.8 0 0 1 12.8 6h0A2.2 2.2 0 0 1 15 8.2V15" />
             <path d="M15 11h1.5a2.5 2.5 0 0 1 2.5 2.5V15" />
@@ -231,7 +231,7 @@ export function ProfileMainEditor({ initial }: Props) {
             name="lado"
             value={lado}
             onChange={(ev) => setLado(ev.target.value)}
-            className="h-10 w-full bg-transparent text-sm text-eid-fg focus:outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
+            className="h-10 min-w-0 flex-1 bg-transparent text-sm text-eid-fg focus:outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
           >
             <option value="">Mão dominante</option>
             <option value="Destro">Destro</option>
