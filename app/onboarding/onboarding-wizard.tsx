@@ -2132,34 +2132,34 @@ export function OnboardingWizard({
           {step === "perfil" ? (
             <form onSubmit={submitPerfil} className="mt-6 space-y-4">
               {/* Resumo das etapas anteriores */}
-              <section className="overflow-hidden rounded-2xl border border-eid-primary-500/20 bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_3%,var(--eid-card))_55%,var(--eid-card))]">
+              <section className="overflow-hidden rounded-xl border border-eid-primary-500/20 bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_3%,var(--eid-card))_55%,var(--eid-card))]">
                 {/* Cabeçalho */}
-                <div className="flex items-center gap-2.5 border-b border-eid-primary-500/12 bg-eid-primary-500/6 px-4 py-2.5">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-eid-primary-500/20 text-eid-primary-400">
-                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+                <div className="flex items-center gap-2 border-b border-eid-primary-500/12 bg-eid-primary-500/6 px-3 py-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-eid-primary-500/20 text-eid-primary-400">
+                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
                       <path d="m5 12 4 4 10-10" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
-                  <h2 className="text-[12px] font-black uppercase tracking-[0.1em] text-eid-primary-300">
-                    Tudo pronto — confira antes de finalizar
+                  <h2 className="text-[11px] font-black uppercase tracking-[0.08em] text-eid-primary-300">
+                    Confira antes de finalizar
                   </h2>
                 </div>
 
                 {/* Linhas de resumo */}
-                <div className="divide-y divide-eid-primary-500/8 px-4">
+                <div className="divide-y divide-eid-primary-500/8 px-3">
                   {/* Papel */}
-                  <div className="flex items-center gap-3 py-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)))] text-eid-primary-400">
-                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                  <div className="flex items-center gap-2.5 py-2">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)))] text-eid-primary-400">
+                      <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor" aria-hidden>
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                       </svg>
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[9px] font-black uppercase tracking-[0.12em] text-eid-text-muted">Papel na plataforma</p>
-                      <div className="mt-1 flex flex-wrap gap-1">
+                      <p className="text-[9px] font-black uppercase tracking-[0.1em] text-eid-text-muted">Papel</p>
+                      <div className="mt-0.5 flex flex-wrap gap-1">
                         {roles.filter((r) => papeis.has(r.id)).length > 0
                           ? roles.filter((r) => papeis.has(r.id)).map((r) => (
-                              <span key={r.id} className="inline-flex items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2.5 py-0.5 text-[11px] font-semibold text-eid-primary-300">
+                              <span key={r.id} className="inline-flex items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 py-px text-[10px] font-semibold text-eid-primary-300">
                                 {r.titulo}
                               </span>
                             ))
@@ -2169,20 +2169,20 @@ export function OnboardingWizard({
                   </div>
 
                   {/* Esportes */}
-                  <div className="flex items-center gap-3 py-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-action-500)_8%,var(--eid-card)))] text-eid-action-400">
-                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                  <div className="flex items-center gap-2.5 py-2">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-action-500)_8%,var(--eid-card)))] text-eid-action-400">
+                      <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor" aria-hidden>
                         <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z" />
                       </svg>
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[9px] font-black uppercase tracking-[0.12em] text-eid-text-muted">Esportes</p>
-                      <div className="mt-1 flex flex-wrap gap-1">
+                      <p className="text-[9px] font-black uppercase tracking-[0.1em] text-eid-text-muted">Esportes</p>
+                      <div className="mt-0.5 flex flex-wrap gap-1">
                         {[...esportesSel].length > 0
                           ? [...esportesSel].map((id) => {
                               const nomeEsporte = esportes.find((e) => e.id === id)?.nome;
                               return nomeEsporte ? (
-                                <span key={id} className="inline-flex items-center rounded-full border border-eid-action-500/30 bg-eid-action-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-eid-action-400">
+                                <span key={id} className="inline-flex items-center rounded-full border border-eid-action-500/30 bg-eid-action-500/10 px-2 py-px text-[10px] font-semibold text-eid-action-400">
                                   {nomeEsporte}
                                 </span>
                               ) : null;
@@ -2194,16 +2194,16 @@ export function OnboardingWizard({
 
                   {/* Espaço — condicional */}
                   {hasEspaco && (
-                    <div className="flex items-center gap-3 py-3">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)))] text-eid-primary-400">
-                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <div className="flex items-center gap-2.5 py-2">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)))] text-eid-primary-400">
+                        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" strokeLinecap="round" strokeLinejoin="round" /><polyline points="9 22 9 12 15 12 15 22" />
                         </svg>
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[9px] font-black uppercase tracking-[0.12em] text-eid-text-muted">Espaço / arena</p>
-                        <p className="mt-0.5 text-[12px] font-semibold text-eid-fg">
-                          {espacoNome || <span className="text-eid-text-muted font-normal">Nome não definido</span>}
+                        <p className="text-[9px] font-black uppercase tracking-[0.1em] text-eid-text-muted">Espaço / arena</p>
+                        <p className="mt-0.5 text-[11px] font-semibold text-eid-fg">
+                          {espacoNome || <span className="font-normal text-eid-text-muted">Nome não definido</span>}
                         </p>
                       </div>
                     </div>
@@ -2211,15 +2211,15 @@ export function OnboardingWizard({
 
                   {/* Professor — condicional */}
                   {hasAnyProfessorSport && (
-                    <div className="flex items-start gap-3 py-3">
-                      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)))] text-eid-primary-400">
-                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <div className="flex items-start gap-2.5 py-2">
+                      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)))] text-eid-primary-400">
+                        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                           <path d="M22 10v6M2 10l10-5 10 5-10 5z" strokeLinecap="round" strokeLinejoin="round" /><path d="M6 12v5c3 3 9 3 12 0v-5" strokeLinecap="round" />
                         </svg>
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[9px] font-black uppercase tracking-[0.12em] text-eid-text-muted">Perfil profissional</p>
-                        <div className="mt-1 space-y-0.5 text-[11px] text-eid-text-secondary">
+                        <p className="text-[9px] font-black uppercase tracking-[0.1em] text-eid-text-muted">Perfil profissional</p>
+                        <div className="mt-0.5 space-y-px text-[10px] text-eid-text-secondary">
                           {professorHeadline ? <p><span className="font-semibold text-eid-fg">{professorHeadline}</span></p> : null}
                           <p>{professorAceitaNovosAlunos ? "✓ Aceitando novos alunos" : "✗ Não aceitando alunos agora"}</p>
                           <p>{professorPerfilPublicado ? "✓ Perfil público ativado" : "✗ Perfil não publicado ainda"}</p>
@@ -2560,7 +2560,7 @@ export function OnboardingWizard({
                       name="lado"
                       value={lado}
                       onChange={(e) => setLado(e.target.value)}
-                      className="h-full min-w-0 flex-1 appearance-none border-0 bg-transparent pr-5 text-sm text-eid-fg outline-none [&>option]:bg-[#0b1220] [&>option]:text-white"
+                      className={`h-full min-w-0 flex-1 appearance-none border-0 bg-transparent pr-5 text-sm outline-none [&>option]:bg-[#0b1220] [&>option]:text-white ${lado === "" ? "text-eid-text-muted/90" : "text-eid-fg"}`}
                     >
                       <option value="">Mão dominante</option>
                       <option value="Destro">Destro</option>
