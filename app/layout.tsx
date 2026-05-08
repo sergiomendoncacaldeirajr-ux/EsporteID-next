@@ -122,9 +122,12 @@ export default async function RootLayout({
     cookieStore = ck;
     user = auth.user;
     if (user) {
+      // Capturar userId antes dos awaits: TypeScript perde o narrowing de `user`
+      // dentro de callbacks/closures após operações assíncronas (variável `let` mutável).
+      const userId = user.id;
       const [papeisResult, profile] = await Promise.all([
-        getCachedUsuarioPapeis(user.id),
-        getCachedProfileLegalRow(user.id),
+        getCachedUsuarioPapeis(userId),
+        getCachedProfileLegalRow(userId),
       ]);
       papeis = papeisResult;
       // Exibe o chrome completo (nav + topbar) somente se o onboarding foi concluído.
@@ -137,7 +140,7 @@ export default async function RootLayout({
         if (entry.mode === "ativo") return false;
         // Qualquer outro modo (em_breve, desenvolvimento, teste):
         // testers enxergam como disponível; demais usuários não veem
-        if (entry.testers.includes(user.id)) return false;
+        if (entry.testers.includes(userId)) return false;
         return true;
       });
     }
