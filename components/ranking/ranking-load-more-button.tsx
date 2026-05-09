@@ -16,6 +16,12 @@ export function RankingLoadMoreButton({ href, className = "" }: Props) {
     router.prefetch(href);
   }, [href, router]);
 
+  // Quando href muda, a navegação completou e o servidor entregou a nova página —
+  // resetar o estado de loading para liberar o botão novamente.
+  useEffect(() => {
+    setLoading(false);
+  }, [href]);
+
   return (
     <button
       type="button"
