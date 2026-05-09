@@ -23,7 +23,6 @@ import {
 import { LEGAL_VERSIONS } from "@/lib/legal/versions";
 import { normalizarPapeisContaPrincipal } from "@/lib/roles";
 import { useUsernameCheck } from "@/lib/hooks/use-username-check";
-import { TeamShieldControl } from "@/components/perfil/team-shield-control";
 
 /* ── Seletor de localização via GPS ────────────────────────────────── */
 function LocationPicker({
@@ -255,6 +254,7 @@ import {
 import { EnderecoAssistFields } from "@/components/locais/endereco-assist-fields";
 import { LocalSelectAutocomplete } from "@/components/locais/local-select-autocomplete";
 import { LocalClaimSearch, type LocalClaimItem } from "@/components/locais/local-claim-search";
+import { TeamShieldControl } from "@/components/perfil/team-shield-control";
 
 const ONBOARDING_DRAFT_KEY_PREFIX = "eid_onboarding_draft_v1";
 
@@ -1981,7 +1981,14 @@ export function OnboardingWizard({
                         onChange={setOrgNovoLocalNome}
                         onSelect={(item) => {
                           setOrgNovoLocalNome(item.nome);
-                          setOrgNovoLocalEndereco(item.localizacao);
+                          setOrgNovoLocalEndereco(item.endereco ?? item.localizacao);
+                          setOrgNovoLocalNumero(item.numero ?? "");
+                          setOrgNovoLocalBairro(item.bairro ?? "");
+                          setOrgNovoLocalCidade(item.cidade ?? "");
+                          setOrgNovoLocalEstado(item.estado ?? "");
+                          setOrgNovoLocalCep(item.cep ?? "");
+                          if (item.lat) setOrgNovoLocalLat(item.lat);
+                          if (item.lng) setOrgNovoLocalLng(item.lng);
                           setOrgNovoLocalReivindicarId(item.id);
                         }}
                         onClear={() => setOrgNovoLocalReivindicarId(null)}
@@ -2011,7 +2018,7 @@ export function OnboardingWizard({
                         prefix="org_novo_local_"
                       />
                       <div className="sm:col-span-2">
-                        <p className="mb-1.5 text-[11px] font-semibold text-eid-text-secondary uppercase tracking-wide">Logo do local (opcional)</p>
+                        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">Logo do local (opcional)</p>
                         <TeamShieldControl
                           variant="espaco_logo"
                           fileInputName="org_novo_local_logo"
@@ -2047,7 +2054,14 @@ export function OnboardingWizard({
                     onChange={setEspacoNome}
                     onSelect={(item) => {
                       setEspacoNome(item.nome);
-                      setEspacoEndereco(item.localizacao);
+                      setEspacoEndereco(item.endereco ?? item.localizacao);
+                      setEspacoNumero(item.numero ?? "");
+                      setEspacoBairro(item.bairro ?? "");
+                      setEspacoCidade(item.cidade ?? "");
+                      setEspacoEstado(item.estado ?? "");
+                      setEspacoCep(item.cep ?? "");
+                      if (item.lat) setEspacoLat(item.lat);
+                      if (item.lng) setEspacoLng(item.lng);
                       setEspacoReivindicarId(item.id);
                     }}
                     onClear={() => setEspacoReivindicarId(null)}

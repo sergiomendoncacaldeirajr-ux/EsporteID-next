@@ -7,6 +7,14 @@ export type LocalClaimItem = {
   nome: string;
   localizacao: string;
   donoUsuarioId: string | null;
+  endereco?: string;
+  numero?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  lat?: string;
+  lng?: string;
 };
 
 type Props = {

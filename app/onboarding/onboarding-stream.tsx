@@ -150,7 +150,7 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
 
   const { data: locais } = await supabase
     .from("espacos_genericos")
-    .select("id, nome_publico, localizacao, responsavel_usuario_id, criado_por_usuario_id")
+    .select("id, nome_publico, localizacao, responsavel_usuario_id, criado_por_usuario_id, venue_config_json, cidade, uf, lat, lng")
     .eq("ativo_listagem", true)
     .order("id", { ascending: false })
     .limit(80);
@@ -180,12 +180,23 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
         permiteTime: Boolean(e.permite_time),
         suportaConfronto: isSportMatchEnabled(e.nome),
       }))}
-      locais={(locais ?? []).map((l) => ({
-        id: l.id,
-        nome: l.nome_publico,
-        localizacao: l.localizacao ?? "",
-        donoUsuarioId: l.responsavel_usuario_id ?? l.criado_por_usuario_id ?? null,
-      }))}
+      locais={(locais ?? []).map((l) => {
+        const cfg = (l.venue_config_json as Record<string, string> | null) ?? {};
+        return {
+          id: l.id,
+          nome: l.nome_publico ?? "",
+          localizacao: l.localizacao ?? "",
+          donoUsuarioId: l.responsavel_usuario_id ?? l.criado_por_usuario_id ?? null,
+          endereco: cfg.endereco ?? "",
+          numero: cfg.numero ?? "",
+          bairro: cfg.bairro ?? "",
+          cidade: l.cidade ?? cfg.cidade ?? "",
+          estado: l.uf ?? cfg.estado ?? "",
+          cep: cfg.cep ?? "",
+          lat: String(l.lat ?? ""),
+          lng: String(l.lng ?? ""),
+        };
+      })}
       selectedPapeis={papeis}
       roleModes={roleModes}
       roleFeatureModes={roleFeatureModes}

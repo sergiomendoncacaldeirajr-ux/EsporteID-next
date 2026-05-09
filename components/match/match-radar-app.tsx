@@ -23,6 +23,7 @@ import {
   MatchChallengeMissingFormationPrompt,
 } from "@/components/match/match-challenge-action";
 import { MatchRankingRulesModal } from "@/components/match/match-ranking-rules-modal";
+import type { MatchRulesConfig } from "@/components/match/match-rank-rules-content";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { EidSectionInfo } from "@/components/ui/eid-section-info";
@@ -391,6 +392,7 @@ type Props = {
   viewerEsportesIndividual: number[];
   /** Quando true, o hero em grade já foi renderizado na página (streaming). */
   hideHero?: boolean;
+  rulesConfig?: MatchRulesConfig;
 };
 
 const RAII = [10, 30, 50, 100] as const;
@@ -444,6 +446,7 @@ export function MatchRadarApp({
   viewerEsportesComTime,
   viewerEsportesIndividual,
   hideHero = false,
+  rulesConfig,
 }: Props) {
   const router = useRouter();
   const [tipo, setTipo] = useState<RadarTipo>(initialTipo);
@@ -1108,7 +1111,7 @@ export function MatchRadarApp({
             document.body
           )
         : null}
-      {!showEntryPrompt ? <MatchRankingRulesModal /> : null}
+      {!showEntryPrompt ? <MatchRankingRulesModal config={rulesConfig} /> : null}
       {!isFullView && !hideHero ? (
         <MatchRadarGridHero
           viewerId={viewerId}

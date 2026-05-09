@@ -355,8 +355,6 @@ export async function adminEditarAgendamentoPartida(formData: FormData) {
     const localStr = String(formData.get("local_str") ?? "").trim().slice(0, 200) || null;
     const payload: { data_partida?: string | null; local_str?: string | null } = { local_str: localStr || null };
     if (dataRaw) {
-      // O form exibe horário em BRT (UTC-3h subtraído do default). Forçamos parse UTC com "Z"
-      // e somamos 180 min para converter BRT→UTC — funciona igual em Windows local e Cloudflare.
       const dt = new Date((dataRaw.endsWith("Z") ? dataRaw : dataRaw + "Z"));
       if (isNaN(dt.getTime())) redirect("/admin/partidas?adm_flash=agenda_invalido");
       dt.setMinutes(dt.getMinutes() + 180);
@@ -1408,7 +1406,6 @@ export async function adminSetMatchRankCooldownMeses(formData: FormData) {
       );
     if (error) return;
     revalidatePath("/admin/regras");
-    revalidatePath("/admin/partidas");
     revalidatePath("/desafio");
   } catch {
     return;
@@ -1433,7 +1430,6 @@ export async function adminSetMatchRankPendingLimit(formData: FormData) {
       );
     if (error) return;
     revalidatePath("/admin/regras");
-    revalidatePath("/admin/partidas");
     revalidatePath("/desafio");
     revalidatePath("/match");
   } catch {
@@ -1459,7 +1455,6 @@ export async function adminSetMatchRankMonthlyLimitPerSport(formData: FormData) 
       );
     if (error) return;
     revalidatePath("/admin/regras");
-    revalidatePath("/admin/partidas");
     revalidatePath("/desafio");
     revalidatePath("/match");
     revalidatePath("/perfil");
@@ -1486,69 +1481,7 @@ export async function adminSetMatchResultadoAutoAprovacaoHoras(formData: FormDat
       );
     if (error) return;
     revalidatePath("/admin/regras");
-    revalidatePath("/admin/partidas");
     revalidatePath("/agenda");
-  } catch {
-    return;
-  }
-}
-
-/** Janela de agendamento: prazo (h) para marcar data/local após aceite do desafio. */
-export async function adminSetMatchAgendamentoJanelaHoras(formData: FormData) {
-  try {
-    await guard();
-    const raw = Number(formData.get("horas"));
-    const horas = Number.isFinite(raw) ? Math.max(1, Math.min(720, Math.floor(raw))) : 72;
-    const { error } = await svc()
-      .from("app_config")
-      .upsert(
-        { key: "match_agendamento_janela_horas", value_json: { horas }, atualizado_em: new Date().toISOString() },
-        { onConflict: "key" }
-      );
-    if (error) return;
-    revalidatePath("/admin/partidas");
-    revalidatePath("/agenda");
-    revalidatePath("/comunidade");
-  } catch {
-    return;
-  }
-}
-
-/** Aceite de agendamento: prazo (h) para o oponente aceitar a data/local proposta. */
-export async function adminSetMatchAgendamentoAceiteHoras(formData: FormData) {
-  try {
-    await guard();
-    const raw = Number(formData.get("horas"));
-    const horas = Number.isFinite(raw) ? Math.max(1, Math.min(168, Math.floor(raw))) : 24;
-    const { error } = await svc()
-      .from("app_config")
-      .upsert(
-        { key: "match_agendamento_aceite_horas", value_json: { horas }, atualizado_em: new Date().toISOString() },
-        { onConflict: "key" }
-      );
-    if (error) return;
-    revalidatePath("/admin/partidas");
-    revalidatePath("/agenda");
-  } catch {
-    return;
-  }
-}
-
-/** Cancelamento: prazo (h) de resposta ao pedido de cancelamento. */
-export async function adminSetMatchCancelamentoRespostaHoras(formData: FormData) {
-  try {
-    await guard();
-    const raw = Number(formData.get("horas"));
-    const horas = Number.isFinite(raw) ? Math.max(1, Math.min(336, Math.floor(raw))) : 72;
-    const { error } = await svc()
-      .from("app_config")
-      .upsert(
-        { key: "match_cancelamento_resposta_horas", value_json: { horas }, atualizado_em: new Date().toISOString() },
-        { onConflict: "key" }
-      );
-    if (error) return;
-    revalidatePath("/admin/partidas");
-    revalidatePath("/comunidade");
   } catch {
     return;
   }
@@ -2084,6 +2017,32 @@ export async function adminSetAuthUserBan(formData: FormData) {
     if (isRedirectError(e)) throw e;
     redirect(`${base}?adm_flash=usuario_ban_erro`);
   }
+}
+
+export async function adminUpdateEspacoInfo(formData: FormData): Promise<void> {
+  "use server";
+  const db = createServiceRoleClient();
+  const id = Number(formData.get("id") ?? 0);
+  if (!Number.isFinite(id) || id <= 0) redirect("/admin/locais?adm_flash=info_param");
+  const nomeRaw = String(formData.get("nome_publico") ?? "").trim();
+  const slugRaw = String(formData.get("slug") ?? "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  const localizacaoRaw = String(formData.get("localizacao") ?? "").trim();
+  const payload: Record<string, unknown> = {};
+  if (nomeRaw) payload.nome_publico = nomeRaw;
+  if (slugRaw) payload.slug = slugRaw;
+  if (localizacaoRaw) payload.localizacao = localizacaoRaw;
+  const logoFile = formData.get("logo_arquivo");
+  if (logoFile instanceof File && logoFile.size > 0 && logoFile.type.startsWith("image/")) {
+    const ext = (logoFile.name.split(".").pop()?.toLowerCase() ?? "jpg").replace(/[^a-z0-9]/g, "") || "jpg";
+    const path = `admin/${id}/logo_${Date.now()}.${ext}`;
+    const { error: upErr } = await db.storage.from("espaco-logos").upload(path, logoFile, { upsert: true, contentType: logoFile.type });
+    if (!upErr) payload.logo_arquivo = db.storage.from("espaco-logos").getPublicUrl(path).data.publicUrl;
+  }
+  if (Object.keys(payload).length === 0) redirect(`/admin/locais?adm_flash=info_noop`);
+  const { error } = await db.from("espacos_genericos").update(payload).eq("id", id);
+  if (error) redirect(`/admin/locais?adm_flash=info_erro`);
+  revalidatePath("/admin/locais");
+  redirect("/admin/locais?adm_flash=info_ok");
 }
 
 export async function adminDeleteAuthUserCompletamente(formData: FormData) {

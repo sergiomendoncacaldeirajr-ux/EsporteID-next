@@ -9,6 +9,8 @@ import {
   fetchMatchRadarCardsTodasMerged,
 } from "@/lib/match/radar-snapshot";
 import { computeDisponivelAmistosoEffective } from "@/lib/perfil/disponivel-amistoso";
+import { getMatchRankMonthlyLimitPerSport } from "@/lib/app-config/match-rank-monthly-limit";
+import { getMatchRankCooldownMeses } from "@/lib/app-config/match-rank-cooldown";
 import {
   toGeneroFiltro,
   toMatchFinalidade,
@@ -53,7 +55,7 @@ export async function MatchStreamRadar({ supabase, viewerId, me, sp, hideHero = 
   const esportes = await getEsportesConfrontoCached();
   const esporteIdsDisponiveis = new Set(esportes.map((e) => String(e.id)));
 
-  const [{ data: meusEidsRows }, { data: meusTimesCriados }, { data: minhasMembRows }] = await Promise.all([
+  const [{ data: meusEidsRows }, { data: meusTimesCriados }, { data: minhasMembRows }, limitesMensal, cooldownMeses, pendingLimitRow, autoAprovacaoRow] = await Promise.all([
     supabase
       .from("usuario_eid")
       .select("esporte_id, modalidades_match")
@@ -66,7 +68,14 @@ export async function MatchStreamRadar({ supabase, viewerId, me, sp, hideHero = 
       .select("time_id, times!inner(id, tipo, esporte_id)")
       .eq("usuario_id", viewerId)
       .in("status", ["ativo", "aceito", "aprovado"]),
+    getMatchRankMonthlyLimitPerSport(supabase),
+    getMatchRankCooldownMeses(supabase),
+    supabase.from("app_config").select("value_json").eq("key", "match_rank_pending_result_limit").maybeSingle(),
+    supabase.from("app_config").select("value_json").eq("key", "match_resultado_autoaprovacao_horas").maybeSingle(),
   ]);
+  const pendingLimit = (() => { const v = (pendingLimitRow?.data?.value_json as { limite?: unknown } | null)?.limite; const n = Number(v); return Number.isFinite(n) && n >= 1 ? Math.min(20, n) : 2; })();
+  const autoAprovacaoHoras = (() => { const v = (autoAprovacaoRow?.data?.value_json as { horas?: unknown } | null)?.horas; const n = Number(v); return Number.isFinite(n) && n >= 1 ? Math.min(168, n) : 24; })();
+  const radarRulesConfig = { limitesMensal, cooldownMeses, pendingLimit, autoAprovacaoHoras };
 
   const meusTimesMembro = (minhasMembRows ?? [])
     .map((r) => {
@@ -398,6 +407,7 @@ export async function MatchStreamRadar({ supabase, viewerId, me, sp, hideHero = 
       viewerEsportesComTime={viewerEsportesComTimeDedup}
       viewerEsportesIndividual={viewerEsportesIndividualDedup}
       hideHero={hideHero}
+      rulesConfig={radarRulesConfig}
     />
   );
 }

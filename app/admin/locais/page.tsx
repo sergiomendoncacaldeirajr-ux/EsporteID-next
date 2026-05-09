@@ -8,6 +8,7 @@ import {
   adminSetEspacoListagem,
   adminSetEspacoStatus,
   adminSetPaasAprovadoOperacaoSemGateway,
+  adminUpdateEspacoInfo,
   adminUpdateEspacoMensalidadePlataforma,
   adminUpdateEspacoModoCobranca,
 } from "@/app/admin/actions";
@@ -52,9 +53,6 @@ function StatusPill({ status, adminSuspenso, ativoListagem, ownershipStatus }: {
 }) {
   if (adminSuspenso) {
     return <span className="inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-300">● Suspenso (admin)</span>;
-  }
-  if (ownershipStatus === "pendente_validacao" || ownershipStatus === "reivindicado") {
-    return <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/45 bg-sky-500/12 px-2 py-0.5 text-[10px] font-bold text-sky-300">● Posse pendente</span>;
   }
   if (!ativoListagem) {
     const label = ownershipStatus === "generico" ? "Aguard. vitrine" : "Fora da listagem";
@@ -104,7 +102,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
   let locaisQ = db
     .from("espacos_genericos")
     .select(
-      "id, slug, nome_publico, localizacao, status, operacao_status, aceita_socios, ativo_listagem, admin_suspenso, ownership_status, criado_em, categoria_mensalidade, modo_reserva, modo_monetizacao, taxa_reserva_plataforma_centavos, socios_mensalidade_espaco, clube_assinaturas_socios, paas_aprovado_operacao_sem_gateway, paas_primeiro_pagamento_mensal_recebido_em, operacao_suspeita_somente_reservas_gratis, operacao_suspeita_observacao"
+      "id, slug, nome_publico, localizacao, status, operacao_status, aceita_socios, ativo_listagem, admin_suspenso, ownership_status, criado_em, categoria_mensalidade, modo_reserva, modo_monetizacao, taxa_reserva_plataforma_centavos, socios_mensalidade_espaco, clube_assinaturas_socios, paas_aprovado_operacao_sem_gateway, paas_primeiro_pagamento_mensal_recebido_em, operacao_suspeita_somente_reservas_gratis, operacao_suspeita_observacao, logo_arquivo, responsavel_usuario_id, criado_por_usuario_id"
     )
     .order("id", { ascending: false });
 
@@ -121,6 +119,15 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
   if (locaisRes.error) return <p className="text-sm text-red-300">{locaisRes.error.message}</p>;
   const data = locaisRes.data ?? [];
   const locaisIds = data.map((l) => l.id);
+
+  const ownerIds = [...new Set(data.flatMap((l) => {
+    const lf = l as { responsavel_usuario_id?: string | null; criado_por_usuario_id?: string | null };
+    return [lf.responsavel_usuario_id, lf.criado_por_usuario_id].filter(Boolean) as string[];
+  }))];
+  const { data: ownerProfileRows } = ownerIds.length
+    ? await db.from("profiles").select("id, nome, avatar_url").in("id", ownerIds)
+    : { data: [] };
+  const ownerProfileMap = new Map((ownerProfileRows ?? []).map((p) => [p.id, p]));
 
   const { data: assinRows } = locaisIds.length
     ? await db
@@ -167,12 +174,17 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
     admFlash === "delete_ok" ? "Local excluído permanentemente do sistema." :
     admFlash === "delete_erro" ? "Não foi possível excluir o local." :
     admFlash === "delete_confirm" ? "Para excluir, digite exatamente EXCLUIR no campo de confirmação." :
-    admFlash === "delete_param" ? "Parâmetros de exclusão inválidos." : null;
+    admFlash === "delete_param" ? "Parâmetros de exclusão inválidos." :
+    admFlash === "info_ok" ? "Dados básicos do local atualizados com sucesso." :
+    admFlash === "info_param" ? "Parâmetros inválidos para atualização." :
+    admFlash === "info_erro" ? "Erro ao atualizar os dados do local." :
+    admFlash === "info_noop" ? "Nenhum dado foi alterado." : null;
+  const flashIsSuccess = admFlash === "delete_ok" || admFlash === "info_ok";
 
   return (
     <div className="space-y-8">
       {flashMsg ? (
-        <div className={`rounded-xl border px-4 py-3 text-sm ${admFlash === "delete_ok" ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-100" : "border-amber-500/35 bg-amber-500/10 text-amber-100"}`} role="status">
+        <div className={`rounded-xl border px-4 py-3 text-sm ${flashIsSuccess ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-100" : "border-amber-500/35 bg-amber-500/10 text-amber-100"}`} role="status">
           <p className="font-semibold">{flashMsg}</p>
           {admDetail && admFlash === "delete_erro" ? <p className="mt-1 font-mono text-[11px] text-eid-text-secondary">{admDetail}</p> : null}
         </div>
@@ -239,7 +251,16 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
               paas_primeiro_pagamento_mensal_recebido_em?: string | null;
               operacao_suspeita_somente_reservas_gratis?: boolean | null;
               operacao_suspeita_observacao?: string | null;
+              logo_arquivo?: string | null;
+              responsavel_usuario_id?: string | null;
+              criado_por_usuario_id?: string | null;
             };
+            const ownerProfile = localRow.responsavel_usuario_id
+              ? ownerProfileMap.get(localRow.responsavel_usuario_id)
+              : null;
+            const registrantProfile = localRow.criado_por_usuario_id
+              ? ownerProfileMap.get(localRow.criado_por_usuario_id)
+              : null;
             const modoR = (localRow.modo_reserva ?? "mista") as keyof typeof MODO_RESERVA_LABEL;
             const modoM = (localRow.modo_monetizacao ?? "misto") as keyof typeof MODO_MONETIZACAO_LABEL;
             const taxaReservaBrl = Number(localRow.taxa_reserva_plataforma_centavos ?? 0) / 100;
@@ -278,6 +299,15 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                         ativoListagem={l.ativo_listagem ?? null}
                         ownershipStatus={l.ownership_status ?? null}
                       />
+                      {l.ownership_status === "generico" ? (
+                        <span className="inline-flex items-center rounded-full border border-eid-border-subtle bg-eid-surface/50 px-2 py-0.5 text-[10px] font-semibold text-eid-text-secondary">Genérico</span>
+                      ) : l.ownership_status === "reivindicado" ? (
+                        <span className="inline-flex items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-semibold text-eid-primary-300">Reivindicado</span>
+                      ) : l.ownership_status === "dono_cadastrado" ? (
+                        <span className="inline-flex items-center rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">Dono cadastrado</span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full border border-eid-border-subtle bg-eid-surface/50 px-2 py-0.5 text-[10px] font-semibold text-eid-text-secondary">—</span>
+                      )}
                       {localRow.operacao_suspeita_somente_reservas_gratis ? (
                         <span className="inline-flex items-center gap-1 rounded-full border border-red-500/35 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-300">⚠ Suspeita</span>
                       ) : null}
@@ -403,6 +433,58 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                 </div>
 
                 {/* Expandable sections */}
+                <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
+                  <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02]">
+                    ▸ Dados básicos e logo
+                  </summary>
+                  <div className="border-t border-[color:var(--eid-border-subtle)]/30 bg-eid-bg/20 px-4 pb-4 pt-3">
+                    {/* Owner info */}
+                    <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-eid-text-secondary">
+                      {ownerProfile ? (
+                        <span><span className="font-semibold text-eid-text-muted">Responsável:</span> {ownerProfile.nome ?? localRow.responsavel_usuario_id}</span>
+                      ) : localRow.responsavel_usuario_id ? (
+                        <span><span className="font-semibold text-eid-text-muted">Responsável:</span> <span className="font-mono text-[10px]">{localRow.responsavel_usuario_id}</span></span>
+                      ) : null}
+                      {registrantProfile ? (
+                        <span><span className="font-semibold text-eid-text-muted">Cadastrado por:</span> {registrantProfile.nome ?? localRow.criado_por_usuario_id}</span>
+                      ) : localRow.criado_por_usuario_id ? (
+                        <span><span className="font-semibold text-eid-text-muted">Cadastrado por:</span> <span className="font-mono text-[10px]">{localRow.criado_por_usuario_id}</span></span>
+                      ) : null}
+                    </div>
+                    {localRow.logo_arquivo ? (
+                      <div className="mb-3">
+                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Logo atual</p>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={localRow.logo_arquivo} alt="Logo do local" className="h-12 w-12 rounded-lg object-cover" />
+                      </div>
+                    ) : null}
+                    <form action={adminUpdateEspacoInfo} className="grid max-w-2xl gap-3 sm:grid-cols-2" encType="multipart/form-data">
+                      <input type="hidden" name="id" value={l.id} />
+                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                        Nome público
+                        <input name="nome_publico" defaultValue={l.nome_publico ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary">
+                        Slug
+                        <input name="slug" defaultValue={l.slug ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm font-mono" />
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary">
+                        Localização
+                        <input name="localizacao" defaultValue={l.localizacao ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                      </label>
+                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                        Nova logo (imagem)
+                        <input name="logo_arquivo" type="file" accept="image/*" className="mt-1 block w-full text-xs text-eid-text-secondary file:mr-2 file:rounded-lg file:border file:border-eid-border-subtle file:bg-eid-surface file:px-2 file:py-1 file:text-[11px] file:font-semibold file:text-eid-fg" />
+                      </label>
+                      <div className="sm:col-span-2">
+                        <button type="submit" className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg">
+                          Salvar dados básicos
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </details>
+
                 <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
                   <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02]">
                     ▸ Modo de reserva, monetização e taxa
