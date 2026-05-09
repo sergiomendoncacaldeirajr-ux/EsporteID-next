@@ -176,8 +176,8 @@ export function EidDateTimePicker({
             max={maxParts.date}
             value={date}
             onChange={(e) => handleDateChange(e.target.value)}
-            className="eid-input-dark h-11 w-full rounded-xl px-3 text-[15px] text-eid-fg"
-            style={{ fontSize: "15px" }}
+            className="eid-input-dark h-11 w-full rounded-xl px-3 text-[11px] text-eid-fg"
+            style={{ fontSize: "11px" }}
           />
         </div>
 
@@ -201,8 +201,8 @@ export function EidDateTimePicker({
             max={maxTime}
             value={time}
             onChange={(e) => handleTimeChange(e.target.value)}
-            className="eid-input-dark h-11 w-[6rem] rounded-xl px-2 text-[15px] text-eid-fg"
-            style={{ fontSize: "15px" }}
+            className="eid-input-dark h-11 w-[6rem] rounded-xl px-2 text-[11px] text-eid-fg"
+            style={{ fontSize: "11px" }}
           />
         </div>
       </div>

@@ -558,8 +558,8 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                         type="datetime-local"
                         name="data_partida"
                         defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
-                        className="eid-input-dark h-11 w-full rounded-xl px-3 text-[15px] text-eid-fg"
-                        style={{ fontSize: "15px" }}
+                        className="eid-input-dark h-11 w-full rounded-xl px-3 text-[11px] text-eid-fg"
+                        style={{ fontSize: "11px" }}
                       />
                     ) : (
                       <RankingConfrontoDatetimeInput
@@ -583,8 +583,8 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                       defaultValue={defaultLocalStr}
                       placeholder="Quadra, clube, endereço..."
                       minChars={3}
-                      className="eid-input-dark h-11 rounded-xl px-3 text-[13px] text-eid-fg placeholder:text-eid-text-secondary/50"
-                      inputStyle={{ fontSize: "13px" }}
+                      className="eid-input-dark h-11 rounded-xl px-3 text-[11px] text-eid-fg placeholder:text-eid-text-secondary/50"
+                      inputStyle={{ fontSize: "11px" }}
                     />
                     <CadastrarLocalOverlayTrigger
                       href={cadastrarLocalHref}
