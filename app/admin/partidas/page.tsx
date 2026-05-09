@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   adminCancelarLimparPartida,
   adminDefinirResultadoPartida,
+  adminEditarAgendamentoPartida,
   adminSetMatchAgendamentoJanelaHoras,
   adminSetMatchAgendamentoAceiteHoras,
   adminSetMatchCancelamentoRespostaHoras,
@@ -149,7 +150,7 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
     db.from("app_config").select("value_json").eq("key", "match_rank_monthly_limit_per_sport").maybeSingle(),
     db
       .from("partidas")
-      .select("id, match_id, status, status_ranking, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, torneio_id, data_partida, criado_em")
+      .select("id, match_id, status, status_ranking, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, torneio_id, data_partida, local_str, criado_em")
       .order("id", { ascending: false })
       .limit(200),
   ]);
@@ -208,8 +209,10 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
       </div>
 
       {/* ── Flash messages ─────────────────────────────────────────────────── */}
-      {flash === "partida_limpar_ok" && (
-        <p className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200">Partida cancelada/limpa.</p>
+      {(flash === "partida_limpar_ok" || flash === "agenda_ok") && (
+        <p className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200">
+          {flash === "agenda_ok" ? "Agendamento atualizado com sucesso." : "Partida cancelada/limpa."}
+        </p>
       )}
       {flash === "partida_resultado_ok" && (
         <p className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-200">Resultado definido pelo admin.</p>
@@ -219,6 +222,9 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
       )}
       {(flash === "partida_resultado_invalido" || flash === "partida_resultado_erro") && (
         <p className="rounded-xl border border-rose-500/35 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-200">Não foi possível definir o resultado.</p>
+      )}
+      {(flash === "agenda_invalido" || flash === "agenda_erro") && (
+        <p className="rounded-xl border border-rose-500/35 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-200">Não foi possível atualizar o agendamento.</p>
       )}
 
       {/* ── Stats bar ──────────────────────────────────────────────────────── */}
@@ -395,12 +401,22 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
             const podeDefinirResultado = !jaCancelada && !jaConcluida;
             const lado1 = ladoExibicaoAdmin(p, 1, profileMap, timeMap);
             const lado2 = ladoExibicaoAdmin(p, 2, profileMap, timeMap);
+            const esporteNome = esporteMap.get(Number(p.esporte_id ?? 0)) || `esp #${p.esporte_id}`;
+            const dataPartida = (p as { data_partida?: string | null }).data_partida ?? null;
+            const localStr = (p as { local_str?: string | null }).local_str ?? null;
+            const dataFormatada = dataPartida
+              ? new Date(dataPartida).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" })
+              : null;
+            // Default value for datetime-local input (BRT = UTC-3)
+            const dataInputDefault = dataPartida
+              ? (() => { const d = new Date(dataPartida); d.setMinutes(d.getMinutes() - 180); return d.toISOString().slice(0, 16); })()
+              : "";
             return (
-              <article key={p.id} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 p-3 transition hover:bg-eid-card/90">
-                {/* Header row */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2 py-0.5 font-mono text-[10px] text-eid-text-secondary">#{p.id}</span>
-                  {p.match_id && <span className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-2 py-0.5 font-mono text-[10px] text-eid-text-secondary">match {p.match_id}</span>}
+              <article key={p.id} className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/70 shadow-sm transition hover:bg-eid-card/90">
+                {/* ── Header strip ── */}
+                <div className="flex flex-wrap items-center gap-2 border-b border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3 py-2">
+                  <span className="rounded border border-[color:var(--eid-border-subtle)] bg-eid-surface/80 px-1.5 py-0.5 font-mono text-[10px] text-eid-text-secondary">#{p.id}</span>
+                  {p.match_id && <span className="rounded border border-[color:var(--eid-border-subtle)] bg-eid-surface/80 px-1.5 py-0.5 font-mono text-[10px] text-eid-text-secondary">match {p.match_id}</span>}
                   <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] ${statusColor(p.status ?? "")}`}>{p.status ?? "—"}</span>
                   {statusRanking && statusRanking !== "null" && (
                     <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.06em] ${rankingColor(statusRanking)}`}>{statusRanking}</span>
@@ -410,60 +426,119 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
                       torneio {p.torneio_id}
                     </Link>
                   )}
-                  <span className="ml-auto text-[10px] text-eid-text-secondary">
-                    {esporteMap.get(Number(p.esporte_id ?? 0)) || `esp #${p.esporte_id}`}
-                    {" · "}
-                    {p.data_partida ? new Date(p.data_partida).toLocaleDateString("pt-BR") : p.criado_em ? new Date(p.criado_em).toLocaleDateString("pt-BR") : "—"}
-                  </span>
+                  <span className="ml-auto rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[9px] font-semibold text-eid-text-secondary">{esporteNome}</span>
                 </div>
 
-                {/* Players */}
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  {[lado1, lado2].map((lado, idx) => {
-                    if (!lado) return null;
-                    const rounded = lado.imageRounded === "xl" ? "rounded-xl" : "rounded-full";
-                    return (
-                      <span key={`${p.id}-lado-${idx}`} className="inline-flex max-w-[220px] items-center gap-1.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-0.5 text-[10px]">
-                        <span className={`inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg ${rounded}`}>
-                          {lado.imageUrl ? <img src={lado.imageUrl} alt="" className="h-full w-full object-cover" /> : String(lado.label).slice(0, 1).toUpperCase()}
+                <div className="p-3">
+                  {/* ── Players ── */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {[lado1, lado2].map((lado, idx) => {
+                      if (!lado) return null;
+                      const rounded = lado.imageRounded === "xl" ? "rounded-xl" : "rounded-full";
+                      return (
+                        <span key={`${p.id}-lado-${idx}`} className="inline-flex max-w-[240px] items-center gap-1.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-1.5 py-0.5 text-[10px]">
+                          <span className={`inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[8px] font-bold text-eid-fg ${rounded}`}>
+                            {lado.imageUrl ? <img src={lado.imageUrl} alt="" className="h-full w-full object-cover" /> : String(lado.label).slice(0, 1).toUpperCase()}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate font-semibold text-eid-fg">{lado.label}</span>
+                            {lado.sub && <span className="block truncate text-[9px] text-eid-text-secondary">{lado.sub}</span>}
+                          </span>
                         </span>
-                        <span className="min-w-0">
-                          <span className="block truncate font-semibold text-eid-fg">{lado.label}</span>
-                          {lado.sub && <span className="block truncate text-[9px] text-eid-text-secondary">{lado.sub}</span>}
-                        </span>
-                      </span>
-                    );
-                  })}
-                  {lado1 && lado2 && <span className="text-[10px] font-bold text-eid-text-secondary">vs</span>}
-                </div>
+                      );
+                    })}
+                    {lado1 && lado2 && <span className="text-[10px] font-bold text-eid-text-secondary">×</span>}
+                  </div>
 
-                {/* Actions */}
-                <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                  <Link href={`/registrar-placar/${p.id}?from=/admin/partidas&admin=1`} className="rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/12 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.05em] text-eid-primary-200 transition hover:bg-eid-primary-500/22">
-                    Abrir lançador
-                  </Link>
-                  {podeDefinirResultado && (
-                    <form action={adminDefinirResultadoPartida} className="flex flex-wrap items-center gap-1.5">
+                  {/* ── Scheduling info ── */}
+                  <div className="mt-2.5 grid gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/30 p-2.5 sm:grid-cols-2">
+                    <div className="flex items-start gap-2">
+                      <svg viewBox="0 0 16 16" fill="currentColor" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-eid-primary-400" aria-hidden>
+                        <path d="M4.5 1a.5.5 0 0 1 .5.5V2h6v-.5a.5.5 0 0 1 1 0V2h.5A1.5 1.5 0 0 1 14 3.5v9A1.5 1.5 0 0 1 12.5 14h-9A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H4v-.5a.5.5 0 0 1 .5-.5ZM3 5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7H3Zm1-2.5H3.5a.5.5 0 0 0-.5.5V4.5h10V3.5a.5.5 0 0 0-.5-.5H12v.5a.5.5 0 0 1-1 0V3H5v.5a.5.5 0 0 1-1 0V3Z" />
+                      </svg>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.07em] text-eid-text-secondary">Data / Hora</p>
+                        <p className={`mt-0.5 text-[11px] font-semibold ${dataFormatada ? "text-eid-fg" : "text-eid-text-secondary/60 italic"}`}>
+                          {dataFormatada ?? "A combinar"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <svg viewBox="0 0 16 16" fill="currentColor" className="mt-0.5 h-3.5 w-3.5 shrink-0 text-eid-action-400" aria-hidden>
+                        <path d="M8 1a5 5 0 1 0 0 10A5 5 0 0 0 8 1ZM3 8a5 5 0 1 1 10 0A5 5 0 0 1 3 8Z"/><path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.146.354l-2 2a.5.5 0 0 1-.708-.708L8 7.793V4.5A.5.5 0 0 1 8 4Zm-3 8.5h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1Z"/>
+                      </svg>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-bold uppercase tracking-[0.07em] text-eid-text-secondary">Local</p>
+                        <p className={`mt-0.5 truncate text-[11px] font-semibold ${localStr ? "text-eid-fg" : "text-eid-text-secondary/60 italic"}`}>
+                          {localStr ?? "A combinar"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Edit scheduling (always available) ── */}
+                  <details className="mt-2 group">
+                    <summary className="cursor-pointer list-none text-[10px] font-bold uppercase tracking-[0.07em] text-eid-primary-400 hover:text-eid-primary-300 [&::-webkit-details-marker]:hidden">
+                      <span className="group-open:hidden">▸ Editar agendamento</span>
+                      <span className="hidden group-open:inline">▾ Fechar edição</span>
+                    </summary>
+                    <form action={adminEditarAgendamentoPartida} className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
                       <input type="hidden" name="partida_id" value={p.id} />
-                      <select name="winner_side" defaultValue="1" className="eid-input-dark h-8 rounded-lg border border-[color:var(--eid-border-subtle)] px-1.5 text-[10px]">
-                        <option value="1">Venceu: {lado1?.label ?? "lado 1"}</option>
-                        <option value="2">Venceu: {lado2?.label ?? "lado 2"}</option>
-                      </select>
-                      <input type="number" name="placar_1" min={0} defaultValue={1} className="eid-input-dark h-8 w-12 rounded-lg border border-[color:var(--eid-border-subtle)] px-1 text-[10px]"/>
-                      <span className="text-[10px] text-eid-text-secondary">×</span>
-                      <input type="number" name="placar_2" min={0} defaultValue={0} className="eid-input-dark h-8 w-12 rounded-lg border border-[color:var(--eid-border-subtle)] px-1 text-[10px]"/>
-                      <button type="submit" className="rounded-lg border border-emerald-500/45 bg-emerald-500/12 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.05em] text-emerald-300 transition hover:bg-emerald-500/22">Definir resultado</button>
+                      <div className="grid gap-1">
+                        <label className="text-[9px] font-bold uppercase tracking-[0.07em] text-eid-text-secondary">Data e hora (BRT)</label>
+                        <input
+                          type="datetime-local"
+                          name="data_partida"
+                          defaultValue={dataInputDefault}
+                          className="eid-input-dark h-9 rounded-xl px-2.5 text-[11px] text-eid-fg"
+                        />
+                      </div>
+                      <div className="grid gap-1">
+                        <label className="text-[9px] font-bold uppercase tracking-[0.07em] text-eid-text-secondary">Local</label>
+                        <input
+                          type="text"
+                          name="local_str"
+                          defaultValue={localStr ?? ""}
+                          placeholder="Quadra, clube, endereço..."
+                          className="eid-input-dark h-9 rounded-xl px-2.5 text-[11px] text-eid-fg placeholder:text-eid-text-secondary/50"
+                        />
+                      </div>
+                      <div className="flex items-end">
+                        <button type="submit" className="h-9 rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/12 px-3 text-[10px] font-bold uppercase tracking-[0.05em] text-eid-primary-200 transition hover:bg-eid-primary-500/22 whitespace-nowrap">
+                          Salvar
+                        </button>
+                      </div>
                     </form>
-                  )}
-                  {podeLimpar && (
-                    <form action={adminCancelarLimparPartida}>
-                      <input type="hidden" name="partida_id" value={p.id} />
-                      <EidCancelAction label="Cancelar/Limpar" compact className="rounded-lg" />
-                    </form>
-                  )}
-                  {!podeLimpar && !podeDefinirResultado && (
-                    <span className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary">Encerrada</span>
-                  )}
+                  </details>
+
+                  {/* ── Actions ── */}
+                  <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-[color:var(--eid-border-subtle)] pt-2.5">
+                    <Link href={`/registrar-placar/${p.id}?from=/admin/partidas&admin=1`} className="rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/12 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.05em] text-eid-primary-200 transition hover:bg-eid-primary-500/22">
+                      Abrir lançador
+                    </Link>
+                    {podeDefinirResultado && (
+                      <form action={adminDefinirResultadoPartida} className="flex flex-wrap items-center gap-1.5">
+                        <input type="hidden" name="partida_id" value={p.id} />
+                        <select name="winner_side" defaultValue="1" className="eid-input-dark h-8 rounded-lg border border-[color:var(--eid-border-subtle)] px-1.5 text-[10px]">
+                          <option value="1">Venceu: {lado1?.label ?? "lado 1"}</option>
+                          <option value="2">Venceu: {lado2?.label ?? "lado 2"}</option>
+                        </select>
+                        <input type="number" name="placar_1" min={0} defaultValue={1} className="eid-input-dark h-8 w-12 rounded-lg border border-[color:var(--eid-border-subtle)] px-1 text-[10px]"/>
+                        <span className="text-[10px] text-eid-text-secondary">×</span>
+                        <input type="number" name="placar_2" min={0} defaultValue={0} className="eid-input-dark h-8 w-12 rounded-lg border border-[color:var(--eid-border-subtle)] px-1 text-[10px]"/>
+                        <button type="submit" className="rounded-lg border border-emerald-500/45 bg-emerald-500/12 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.05em] text-emerald-300 transition hover:bg-emerald-500/22">Definir resultado</button>
+                      </form>
+                    )}
+                    {podeLimpar && (
+                      <form action={adminCancelarLimparPartida}>
+                        <input type="hidden" name="partida_id" value={p.id} />
+                        <EidCancelAction label="Cancelar/Limpar" compact className="rounded-lg" />
+                      </form>
+                    )}
+                    {!podeLimpar && !podeDefinirResultado && (
+                      <span className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.05em] text-eid-text-secondary">Encerrada</span>
+                    )}
+                  </div>
                 </div>
               </article>
             );

@@ -524,11 +524,14 @@ export async function cancelarPedidoMatchPendente(
   return { ok: true };
 }
 
-function parseFutureIsoFromDatetimeLocal(raw: string): string | null {
+function parseFutureIsoFromDatetimeLocal(raw: string, tzOffsetMinutes = 0): string | null {
   const v = raw.trim();
   if (!v) return null;
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return null;
+  if (Number.isFinite(tzOffsetMinutes) && tzOffsetMinutes !== 0) {
+    d.setMinutes(d.getMinutes() + tzOffsetMinutes);
+  }
   return d.toISOString();
 }
 
@@ -615,9 +618,10 @@ export async function gerenciarCancelamentoMatch(
 
   if (intent === "respond_cancel") {
     const aceitar = String(formData.get("aceitar_cancelamento") ?? "") === "1";
-    const op1 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_1") ?? ""));
-    const op2 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_2") ?? ""));
-    const op3 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_3") ?? ""));
+    const tzOff = Number(String(formData.get("tz_offset_minutes") ?? "").trim());
+    const op1 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_1") ?? ""), tzOff);
+    const op2 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_2") ?? ""), tzOff);
+    const op3 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_3") ?? ""), tzOff);
     const local = String(formData.get("local_reagendamento") ?? "").trim();
     if (!aceitar) {
       if (isPastDateTime(op1) || isPastDateTime(op2) || isPastDateTime(op3)) {

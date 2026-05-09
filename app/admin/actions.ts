@@ -344,6 +344,34 @@ export async function adminDefinirResultadoPartida(formData: FormData) {
   }
 }
 
+export async function adminEditarAgendamentoPartida(formData: FormData) {
+  try {
+    await guard();
+    const partidaId = Number(formData.get("partida_id"));
+    if (!Number.isFinite(partidaId) || partidaId < 1) {
+      redirect("/admin/partidas?adm_flash=agenda_invalido");
+    }
+    const dataRaw = String(formData.get("data_partida") ?? "").trim();
+    const localStr = String(formData.get("local_str") ?? "").trim().slice(0, 200) || null;
+    const payload: { data_partida?: string | null; local_str?: string | null } = { local_str: localStr || null };
+    if (dataRaw) {
+      const dt = new Date(dataRaw);
+      if (isNaN(dt.getTime())) redirect("/admin/partidas?adm_flash=agenda_invalido");
+      payload.data_partida = dt.toISOString();
+    } else {
+      payload.data_partida = null;
+    }
+    const db = svc();
+    const { error } = await db.from("partidas").update(payload).eq("id", partidaId);
+    if (error) redirect("/admin/partidas?adm_flash=agenda_erro");
+    revalidateAdminPartidaPaths(partidaId, 0);
+    redirect("/admin/partidas?adm_flash=agenda_ok");
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirect("/admin/partidas?adm_flash=agenda_erro");
+  }
+}
+
 export async function adminMediarResultadoDaDenuncia(formData: FormData) {
   try {
     await guard();
