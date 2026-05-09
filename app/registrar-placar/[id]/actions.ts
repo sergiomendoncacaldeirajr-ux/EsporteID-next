@@ -763,6 +763,14 @@ export async function salvarAgendamentoAction(formData: FormData) {
     if (Number.isNaN(dt.getTime())) {
       salvarAgendaRedirect(partidaId, "erro", "Data/hora de agendamento inválida.", modoAgenda);
     }
+    // Aplicar offset do timezone do browser para converter hora local → UTC correto.
+    // O campo datetime-local envia hora sem fuso (ex: "14:30"), que o servidor (UTC) parseia
+    // como UTC. Somando o offset (ex: BRT = +180 min) chegamos ao UTC real do usuário.
+    const tzOffsetRaw = String(formData.get("tz_offset_minutes") ?? "").trim();
+    const tzOffsetMinutes = Number(tzOffsetRaw);
+    if (Number.isFinite(tzOffsetMinutes) && tzOffsetMinutes !== 0) {
+      dt.setMinutes(dt.getMinutes() + tzOffsetMinutes);
+    }
     if (!p.torneio_id && !agendamentoRankingDentroDaJanelaUtc(dt)) {
       salvarAgendaRedirect(
         partidaId,
@@ -788,7 +796,15 @@ export async function salvarAgendamentoAction(formData: FormData) {
   if (error) salvarAgendaRedirect(partidaId, "erro", "Não foi possível salvar o agendamento.", modoAgenda);
 
   if (!p.torneio_id) {
-    const when = payload.data_partida ? new Date(payload.data_partida).toLocaleString("pt-BR") : "data a combinar";
+    // Formatar exibindo no timezone do usuário (offset vem do form); fallback America/Sao_Paulo
+    const tzOffsetRaw2 = String(formData.get("tz_offset_minutes") ?? "").trim();
+    const tzOffsetMin2 = Number(tzOffsetRaw2);
+    const displayTz = Number.isFinite(tzOffsetMin2)
+      ? `Etc/GMT${tzOffsetMin2 >= 0 ? "+" : ""}${Math.round(tzOffsetMin2 / 60)}`
+      : "America/Sao_Paulo";
+    const when = payload.data_partida
+      ? new Date(payload.data_partida).toLocaleString("pt-BR", { timeZone: displayTz, dateStyle: "short", timeStyle: "short" })
+      : "data a combinar";
     const where = payload.local_str ? String(payload.local_str) : "local a combinar";
     const msgQuemPropoe = `Você agendou o confronto para ${when} • ${where}.`;
     const msgPropriaFormacao = `Agendamento proposto para o desafio: ${when} • ${where}. Aguardando aceite do oponente (até 24h).`;

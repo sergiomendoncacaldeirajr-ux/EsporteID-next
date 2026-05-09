@@ -1,6 +1,19 @@
 "use client";
 
-import { useState, useId } from "react";
+import { useState, useId, useEffect } from "react";
+
+/**
+ * Converte uma ISO string UTC (com ou sem "Z"/"+") para datetime local no formato
+ * "YYYY-MM-DDTHH:MM" usando o timezone do browser.
+ * Se o valor já não tiver indicador de timezone (string local), retorna como está.
+ */
+function toLocalDatetimeString(val: string): string {
+  if (!val) return "";
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    EidDateTimePicker
@@ -90,10 +103,17 @@ export function EidDateTimePicker({
 
   const minParts = splitDatetime(min);
   const maxParts = splitDatetime(max);
-  const defaultParts = splitDatetime(defaultValue || min);
+  // Converte o defaultValue (potencialmente UTC com "Z") para hora local do browser
+  const localDefault = toLocalDatetimeString(defaultValue) || defaultValue;
+  const defaultParts = splitDatetime(localDefault || min);
 
   const [date, setDate] = useState(defaultParts.date);
   const [time, setTime] = useState(defaultParts.time || "08:00");
+  // Offset em minutos entre o timezone local e UTC (ex: BRT UTC-3 → 180)
+  const [tzOffsetMinutes, setTzOffsetMinutes] = useState(0);
+  useEffect(() => {
+    setTzOffsetMinutes(new Date().getTimezoneOffset());
+  }, []);
 
   const minTime = date && date === minParts.date ? minParts.time : "00:00";
   const maxTime = date && date === maxParts.date ? maxParts.time : "23:59";
@@ -145,8 +165,10 @@ export function EidDateTimePicker({
         </div>
       )}
 
-      {/* Hidden combined field */}
+      {/* Hidden combined field (hora local do browser) */}
       <input type="hidden" name={name} value={combined} />
+      {/* Offset do timezone do browser em minutos (usado pelo server para converter para UTC correto) */}
+      <input type="hidden" name="tz_offset_minutes" value={tzOffsetMinutes} />
 
       {/* ── Inputs row ── */}
       <div className="grid grid-cols-[1fr_auto] gap-2">

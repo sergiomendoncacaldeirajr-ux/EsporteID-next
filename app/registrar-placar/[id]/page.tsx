@@ -562,14 +562,14 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                       <input
                         type="datetime-local"
                         name="data_partida"
-                        defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
+                        defaultValue={p.data_partida ?? ""}
                         className="eid-input-dark h-11 w-full rounded-xl px-3 text-[11px] text-eid-fg"
                         style={{ fontSize: "11px" }}
                       />
                     ) : (
                       <RankingConfrontoDatetimeInput
                         name="data_partida"
-                        defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
+                        defaultValue={p.data_partida ?? ""}
                       />
                     )}
                   </div>
