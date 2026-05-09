@@ -468,6 +468,7 @@ export function RankingRow({
   rankDelta,
   avatarUrl,
   href,
+  isViewer = false,
 }: {
   rank: number;
   nome: string;
@@ -479,6 +480,7 @@ export function RankingRow({
   rankDelta?: number | null;
   avatarUrl: string | null;
   href: string;
+  isViewer?: boolean;
 }) {
   const initial = (nome.trim().slice(0, 2) || "—").toUpperCase();
   const valueText = metricKind === "eid" ? metricValue.toFixed(1) : String(metricValue);
@@ -488,7 +490,12 @@ export function RankingRow({
   const delta = Number.isFinite(rankDelta as number) ? Number(rankDelta) : perfDelta;
   const showWDL = vitorias != null || derrotas != null;
   return (
-    <div className="eid-ranking-row flex items-center gap-2.5 border-b border-[color:var(--eid-border-subtle)] py-2 last:border-b-0 sm:py-2.5">
+    <div
+      className={cn(
+        "eid-ranking-row flex items-center gap-2.5 border-b border-[color:var(--eid-border-subtle)] py-2 last:border-b-0 sm:py-2.5",
+        isViewer && "-mx-2.5 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/[0.08] px-2.5 shadow-[0_2px_12px_-6px_rgba(37,99,235,0.28)]"
+      )}
+    >
       <span className="eid-ranking-rank-num w-8 shrink-0 text-center text-[16px] font-black tabular-nums leading-none text-[color:color-mix(in_srgb,var(--eid-fg)_48%,var(--eid-primary-500)_52%)] sm:text-[18px]">
         {rank}º
       </span>
@@ -498,7 +505,12 @@ export function RankingRow({
         aria-label={`Perfil de ${nome}`}
       >
         <div className="relative">
-          <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-[color:var(--eid-border-subtle)] transition group-hover:border-eid-primary-500/35 sm:h-9 sm:w-9">
+          <div
+            className={cn(
+              "relative h-8 w-8 shrink-0 overflow-hidden rounded-full border transition group-hover:border-eid-primary-500/35 sm:h-9 sm:w-9",
+              isViewer ? "border-eid-primary-500/45" : "border-[color:var(--eid-border-subtle)]"
+            )}
+          >
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
@@ -510,7 +522,14 @@ export function RankingRow({
         </div>
       </Link>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[10px] font-bold leading-tight text-eid-fg sm:text-[12px]">{nome}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="truncate text-[10px] font-bold leading-tight text-eid-fg sm:text-[12px]">{nome}</p>
+          {isViewer ? (
+            <span className="shrink-0 rounded-full bg-eid-primary-500/20 px-1.5 py-px text-[7px] font-black uppercase tracking-[0.06em] text-eid-primary-300">
+              Você
+            </span>
+          ) : null}
+        </div>
         {showWDL ? (
           <p className="mt-0.5 text-[9px] font-black leading-none">
             <span className="text-emerald-600">{wins}V</span>{" "}
@@ -544,13 +563,20 @@ export function RankingRow({
 
 export function ViewerRankCard({ rank }: { rank: number }) {
   return (
-    <div className="eid-ranking-viewer-card mb-2 rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/[0.08] px-3 py-2 text-center shadow-[0_8px_20px_-14px_rgba(37,99,235,0.35)]">
-      <p className="text-[11px] text-eid-text-secondary md:text-xs">
-        Sua posição:{" "}
-        <span className="text-base font-black tabular-nums text-[color:color-mix(in_srgb,var(--eid-fg)_58%,var(--eid-primary-500)_42%)]">
+    <div className="eid-ranking-viewer-card rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/[0.07] px-4 py-3 shadow-[0_6px_18px_-12px_rgba(37,99,235,0.32)]">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.06em] text-eid-text-secondary">
+            Sua posição neste ranking
+          </p>
+          <p className="mt-0.5 text-[11px] text-eid-text-secondary">
+            Continue jogando para subir na classificação.
+          </p>
+        </div>
+        <span className="shrink-0 text-[28px] font-black tabular-nums leading-none text-[color:color-mix(in_srgb,var(--eid-fg)_55%,var(--eid-primary-500)_45%)] sm:text-[32px]">
           {rank}º
         </span>
-      </p>
+      </div>
     </div>
   );
 }

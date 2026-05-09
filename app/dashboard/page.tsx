@@ -143,7 +143,7 @@ export default async function DashboardPage({ searchParams }: Props) {
       .in("status", ["Pendente", "Aceito", "CancelamentoPendente", "ReagendamentoPendente"]),
     supabase
       .from("usuario_eid")
-      .select("esporte_id, esportes(nome)")
+      .select("esporte_id, esportes(nome), vitorias, derrotas, pontos_ranking")
       .eq("usuario_id", user.id)
       .order("esporte_id", { ascending: true })
       .limit(40),
@@ -179,9 +179,16 @@ export default async function DashboardPage({ searchParams }: Props) {
       return {
         esporteId: Number(row.esporte_id ?? 0),
         esporteNome,
+        vitorias: Number(row.vitorias ?? 0),
+        derrotas: Number(row.derrotas ?? 0),
+        pontosRanking: Number(row.pontos_ranking ?? 0),
       };
     })
     .filter((item) => Number.isFinite(item.esporteId) && item.esporteId > 0);
+  // Verdadeiro quando o usuário tem esportes cadastrados mas ainda não completou nenhum desafio de ranking
+  const nuncaJogouDesafio =
+    meusEsportesResumo.length > 0 &&
+    meusEsportesResumo.every((e) => e.vitorias === 0 && e.derrotas === 0 && e.pontosRanking === 0);
   const meusEsportesSet = new Set(meusEsportesResumo.map((item) => item.esporteId));
   const esportePrincipalId = meusEsportes?.[0]?.esporte_id ?? null;
   const esporteCardNome = meusEsportesResumo[0]?.esporteNome ?? "Esporte";
@@ -415,6 +422,36 @@ export default async function DashboardPage({ searchParams }: Props) {
           <MatchIdadeGateBanner gate={matchIdadeGate} />
         </div>
 
+        {nuncaJogouDesafio ? (
+          <div className="relative mt-3 overflow-hidden rounded-xl border border-eid-primary-500/25 bg-gradient-to-br from-eid-primary-500/[0.11] via-eid-surface/20 to-transparent sm:mt-4">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-eid-primary-500/10 blur-2xl" aria-hidden />
+            <div className="relative px-3.5 py-3">
+              <div className="flex items-start gap-2.5">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/15 text-eid-primary-300" aria-hidden>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                  </svg>
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-bold leading-snug text-eid-fg">
+                    Comece a marcar pontos no ranking
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-eid-text-secondary">
+                    Desafie um adversário do seu esporte e suba na classificação. Cada partida de ranking soma pontos para os dois.
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">
+                      <span aria-hidden>▲</span> Vitória +10 pts
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-eid-primary-500/30 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-bold text-eid-primary-300">
+                      <span aria-hidden>●</span> Derrota +4 pts
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
         <FindChallengeCta href={matchHref} />
       </div>
 

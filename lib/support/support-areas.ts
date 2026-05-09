@@ -62,11 +62,33 @@ export type SupportFaqIconKey =
   | "account"
   | "community";
 
+// ── Rich FAQ content blocks ───────────────────────────────────────────────────
+export type RichFaqStep = {
+  emoji: string;
+  titulo: string;
+  desc: string;
+};
+
+export type RichFaqStat = {
+  rotulo: string;
+  valor: string;
+  cor: "azul" | "verde" | "laranja" | "roxo";
+};
+
+export type RichFaqBlock =
+  | { tipo: "intro"; texto: string }
+  | { tipo: "steps"; itens: RichFaqStep[] }
+  | { tipo: "stats"; itens: RichFaqStat[] }
+  | { tipo: "dica"; texto: string }
+  | { tipo: "aviso"; texto: string };
+
 export type SupportFaqItem = {
   id: string;
   pergunta: string;
   resposta: string;
   icone: SupportFaqIconKey;
+  /** Conteúdo visual rico exibido no lugar de `resposta` quando presente. */
+  blocos?: RichFaqBlock[];
   /** Se algum destes módulos estiver em `em_breve` na config global, o item some da ajuda (só produção). */
   ocultarSeModulosEmBreve?: SystemFeatureKey[];
 };
@@ -83,6 +105,160 @@ export function supportFaqVisivelEmProducao(
 }
 
 export const SUPPORT_FAQ_ITEMS: SupportFaqItem[] = [
+  // ── Nota EID ────────────────────────────────────────────────────────────────
+  {
+    id: "nota-eid-como-funciona",
+    icone: "sport",
+    pergunta: "O que é a Nota EID e como ela é calculada?",
+    resposta:
+      "A Nota EID é uma pontuação de desempenho por esporte — sobe conforme você acumula resultados consistentes em partidas de ranking. Não reinicia: é um histórico permanente do seu nível.",
+    blocos: [
+      {
+        tipo: "intro",
+        texto:
+          "A Nota EID é uma pontuação de desempenho individual por esporte — inspirada em sistemas de rating usados no xadrez e no tênis profissional. Ela não reinicia: é um histórico permanente do seu nível.",
+      },
+      {
+        tipo: "steps",
+        itens: [
+          {
+            emoji: "🎯",
+            titulo: "Só partidas de ranking contam",
+            desc: "Desafios do tipo ranking alimentam a nota. Amistosos não entram no cálculo — eles são para treino.",
+          },
+          {
+            emoji: "🏆",
+            titulo: "Qualidade do adversário pesa",
+            desc: "Vencer alguém com nota mais alta impulsiona mais a sua Nota EID do que vencer quem está abaixo de você. A plataforma valoriza o desafio real.",
+          },
+          {
+            emoji: "📈",
+            titulo: "Consistência supera quantidade",
+            desc: "Jogar regularmente e manter bom desempenho vale mais do que acumular muitas partidas de uma vez. Ritmo constante constrói nota mais sólida.",
+          },
+          {
+            emoji: "♾️",
+            titulo: "Acumulativa e permanente",
+            desc: "A Nota EID não zera com o mês ou o ano. É uma linha do tempo do seu histórico — quanto mais tempo e dedicação, mais ela reflete seu nível real.",
+          },
+        ],
+      },
+      {
+        tipo: "dica",
+        texto:
+          "Veja sua Nota EID no perfil público e no ranking. No filtro 'EID' do ranking, a classificação usa essa nota — não os pontos do período.",
+      },
+    ],
+  },
+  // ── Pontos do Ranking ────────────────────────────────────────────────────────
+  {
+    id: "pontos-ranking-como-funciona",
+    icone: "ranking",
+    pergunta: "Como funcionam os Pontos do Ranking?",
+    resposta:
+      "A cada partida de ranking você ganha pontos — vitória vale mais, mas derrota também pontua. Os pontos reiniciam por período (mês ou ano) e determinam sua posição no ranking de desafios.",
+    blocos: [
+      {
+        tipo: "intro",
+        texto:
+          "Os Pontos do Ranking medem seu desempenho em partidas de desafio dentro de um período (mês ou ano). Ao contrário da Nota EID, eles reiniciam a cada ciclo — o que mantém o ranking sempre competitivo.",
+      },
+      {
+        tipo: "stats",
+        itens: [
+          { rotulo: "Vitória", valor: "10 pts", cor: "verde" },
+          { rotulo: "Derrota", valor: "4 pts", cor: "azul" },
+          { rotulo: "Bônus virada", valor: "+até 20%", cor: "laranja" },
+          { rotulo: "Reinício", valor: "Mensal / Anual", cor: "roxo" },
+        ],
+      },
+      {
+        tipo: "steps",
+        itens: [
+          {
+            emoji: "📅",
+            titulo: "Duas temporadas: mês e ano",
+            desc: "Os pontos são separados por período. Você pode estar em 1º no ranking mensal e em outro lugar no anual — cada um tem sua própria contagem.",
+          },
+          {
+            emoji: "⚡",
+            titulo: "Bônus por virada (upset)",
+            desc: "Se você vencer alguém que tem mais pontos do que você no momento, ganha até +20% de bônus extra. A plataforma recompensa quem arrisca contra favoritos.",
+          },
+          {
+            emoji: "🎮",
+            titulo: "Derrota também vale",
+            desc: "Perder uma partida de ranking ainda rende pontos (4 padrão). Então jogar sempre é melhor do que ficar esperando uma vitória certa.",
+          },
+          {
+            emoji: "🔢",
+            titulo: "Pontos variam por esporte",
+            desc: "Os valores padrão são 10 (vitória) e 4 (derrota), mas cada esporte pode ter regras próprias configuradas pela plataforma.",
+          },
+        ],
+      },
+      {
+        tipo: "aviso",
+        texto:
+          "Pontos do Ranking e Nota EID são independentes: você pode ter muitos pontos no mês (jogou muito) e ainda ter Nota EID crescendo — ou vice-versa. Os dois filtros aparecem no ranking.",
+      },
+    ],
+  },
+  // ── Desafios ─────────────────────────────────────────────────────────────────
+  {
+    id: "desafio-como-funciona",
+    icone: "challenge",
+    pergunta: "Como funciona o sistema de Desafios?",
+    resposta:
+      "Desafios são partidas de ranking entre dois jogadores, duplas ou times. Você desafia, o adversário aceita, vocês jogam, registram o placar — e os pontos entram no ranking de ambos.",
+    blocos: [
+      {
+        tipo: "intro",
+        texto:
+          "O Desafio é o coração do EsporteID: partidas de ranking reais que somam pontos e movem sua posição na classificação. Funciona em 4 etapas simples.",
+      },
+      {
+        tipo: "steps",
+        itens: [
+          {
+            emoji: "1️⃣",
+            titulo: "Você desafia",
+            desc: "Encontre um adversário no Radar de Desafio e envie o desafio. Você pode desafiar no individual, na dupla ou pelo seu time.",
+          },
+          {
+            emoji: "2️⃣",
+            titulo: "O adversário aceita",
+            desc: "Ele recebe a notificação e aceita (ou recusa). Só depois que os dois concordam o desafio está ativo.",
+          },
+          {
+            emoji: "3️⃣",
+            titulo: "Acontece o jogo",
+            desc: "Combinem local e horário, joguem de verdade. O agendamento fica na Agenda para os dois acompanharem.",
+          },
+          {
+            emoji: "4️⃣",
+            titulo: "Registrar o placar",
+            desc: "Após o jogo, um dos dois lança o placar no app. O outro confirma — ou contesta se o resultado estiver errado. Confirmado, os pontos entram no ranking.",
+          },
+        ],
+      },
+      {
+        tipo: "stats",
+        itens: [
+          { rotulo: "Vitória", valor: "10 pts", cor: "verde" },
+          { rotulo: "Derrota", valor: "4 pts", cor: "azul" },
+          { rotulo: "Bônus virada", valor: "+até 20%", cor: "laranja" },
+          { rotulo: "Amistoso", valor: "Sem pts", cor: "roxo" },
+        ],
+      },
+      {
+        tipo: "dica",
+        texto:
+          "Desafio de ranking e Amistoso são coisas diferentes. Amistoso é para treino — não soma pontos nem afeta a Nota EID. Só desafios de ranking contam para a classificação.",
+      },
+    ],
+  },
+  // ── demais itens ─────────────────────────────────────────────────────────────
   {
     id: "ranking-sem-posicao",
     icone: "ranking",

@@ -32,6 +32,7 @@ import {
   SUPPORT_FAQ_ITEMS,
   SUPPORT_PERFIL_FORMACOES_FAQ,
   supportFaqVisivelEmProducao,
+  type RichFaqBlock,
   type SupportFaqIconKey,
   type SupportFaqItem,
 } from "@/lib/support/support-areas";
@@ -58,6 +59,99 @@ const initialSubmit: SupportChamadoSubmitState = { ok: false, message: "" };
 function pathOcultaSuporte(pathname: string): boolean {
   const p = pathname || "";
   return p.startsWith("/admin") || p.startsWith("/api/");
+}
+
+const STAT_COR_MAP: Record<string, string> = {
+  verde:
+    "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+  azul:
+    "border-eid-primary-500/30 bg-eid-primary-500/10 text-eid-primary-300",
+  laranja:
+    "border-eid-action-500/30 bg-eid-action-500/10 text-eid-action-400",
+  roxo:
+    "border-violet-500/30 bg-violet-500/10 text-violet-300",
+};
+
+function RichFaqRenderer({ blocos }: { blocos: RichFaqBlock[] }) {
+  return (
+    <div className="space-y-3">
+      {blocos.map((bloco, i) => {
+        if (bloco.tipo === "intro") {
+          return (
+            <p key={i} className="text-[11.5px] leading-[1.7] text-eid-text-secondary">
+              {bloco.texto}
+            </p>
+          );
+        }
+        if (bloco.tipo === "steps") {
+          return (
+            <ul key={i} className="space-y-2">
+              {bloco.itens.map((item, j) => (
+                <li
+                  key={j}
+                  className="flex gap-2.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-bg/50 px-2.5 py-2"
+                >
+                  <span
+                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-eid-primary-500/20 bg-eid-primary-500/10 text-[15px] leading-none"
+                    aria-hidden
+                  >
+                    {item.emoji}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-bold leading-snug text-eid-fg">{item.titulo}</p>
+                    <p className="mt-0.5 text-[10.5px] leading-relaxed text-eid-text-secondary">{item.desc}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          );
+        }
+        if (bloco.tipo === "stats") {
+          return (
+            <div key={i} className="grid grid-cols-2 gap-1.5">
+              {bloco.itens.map((stat, j) => (
+                <div
+                  key={j}
+                  className={`flex flex-col items-center rounded-xl border px-2 py-2 ${STAT_COR_MAP[stat.cor] ?? STAT_COR_MAP.azul}`}
+                >
+                  <span className="text-[15px] font-black tabular-nums leading-tight">{stat.valor}</span>
+                  <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.04em] opacity-80">{stat.rotulo}</span>
+                </div>
+              ))}
+            </div>
+          );
+        }
+        if (bloco.tipo === "dica") {
+          return (
+            <div
+              key={i}
+              className="flex gap-2 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/[0.08] px-2.5 py-2"
+            >
+              <span className="mt-0.5 shrink-0 text-[13px] leading-none" aria-hidden>💡</span>
+              <p className="text-[11px] leading-relaxed text-eid-text-secondary">
+                <strong className="font-semibold text-eid-fg">Dica: </strong>
+                {bloco.texto}
+              </p>
+            </div>
+          );
+        }
+        if (bloco.tipo === "aviso") {
+          return (
+            <div
+              key={i}
+              className="flex gap-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.07] px-2.5 py-2"
+            >
+              <span className="mt-0.5 shrink-0 text-[13px] leading-none" aria-hidden>⚠️</span>
+              <p className="text-[11px] leading-relaxed text-eid-text-secondary">
+                {bloco.texto}
+              </p>
+            </div>
+          );
+        }
+        return null;
+      })}
+    </div>
+  );
 }
 
 function FaqAccordion({
@@ -111,9 +205,13 @@ function FaqAccordion({
             </button>
             {open ? (
               <div className="border-t border-[color:var(--eid-border-subtle)]/60 bg-eid-bg/40 px-3 pb-3 pt-2.5">
-                <p className="text-[11.5px] leading-[1.7] text-eid-text-secondary [&_strong]:font-semibold [&_strong]:text-eid-fg/90">
-                  {item.resposta}
-                </p>
+                {item.blocos ? (
+                  <RichFaqRenderer blocos={item.blocos} />
+                ) : (
+                  <p className="text-[11.5px] leading-[1.7] text-eid-text-secondary [&_strong]:font-semibold [&_strong]:text-eid-fg/90">
+                    {item.resposta}
+                  </p>
+                )}
               </div>
             ) : null}
           </li>

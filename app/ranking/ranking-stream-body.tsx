@@ -393,12 +393,16 @@ export async function RankingStreamBody({
   const podiumRows = rankingAll.slice(0, 3);
   const afterPodium = rankingAll.slice(3);
   const start = (state.page - 1) * LIST_PAGE_SIZE;
-  const pageSlice = afterPodium.slice(start, start + LIST_PAGE_SIZE);
+  const pageSlice = afterPodium.slice(0, start + LIST_PAGE_SIZE);
   const hasMore = afterPodium.length > start + LIST_PAGE_SIZE;
 
   const viewerIdx = bestViewerRankIndex(rankingAll, viewerId, myTeamIds, state.tipo);
   const viewerRank = viewerIdx === null ? null : viewerIdx + 1;
-  const showViewerCard = viewerRank !== null && viewerRank > 10;
+  // Show the "Sua posição" card only when viewer is not visible in current slice (podium or list)
+  const viewerInPodium = viewerIdx !== null && viewerIdx < 3;
+  const viewerAfterPodiumIdx = viewerIdx !== null && viewerIdx >= 3 ? viewerIdx - 3 : null;
+  const viewerInPageSlice = viewerAfterPodiumIdx !== null && viewerAfterPodiumIdx < pageSlice.length;
+  const showViewerCard = viewerRank !== null && !viewerInPodium && !viewerInPageSlice;
 
   const podiumSecond = toPodiumSlot(podiumRows[1], "2º");
   const podiumFirst = toPodiumSlot(podiumRows[0], "1º");
@@ -427,12 +431,6 @@ export async function RankingStreamBody({
             periodToggle={<RankingPeriodToggle state={stateComGenero} principalEsporteId={esportePrincipalId} />}
           />
         </section>
-      ) : null}
-
-      {showViewerCard && viewerRank !== null ? (
-        <div className="mt-3 md:mt-4">
-          <ViewerRankCard rank={viewerRank} />
-        </div>
       ) : null}
 
       {rankingAll.length === 0 ? (
@@ -469,7 +467,11 @@ export async function RankingStreamBody({
                   </div>
                 ) : (
                   pageSlice.map((row, i) => {
-                    const rank = 4 + start + i;
+                    const rank = 4 + i;
+                    const isViewer =
+                      state.tipo === "individual"
+                        ? row.usuarioId === viewerId
+                        : row.timeId !== undefined && myTeamIds.has(row.timeId);
                     return (
                       <RankingRow
                         key={row.key}
@@ -483,6 +485,7 @@ export async function RankingStreamBody({
                         rankDelta={row.posicaoRank != null ? row.posicaoRank - rank : null}
                         avatarUrl={row.avatarUrl}
                         href={row.href}
+                        isViewer={isViewer}
                       />
                     );
                   })
@@ -497,6 +500,12 @@ export async function RankingStreamBody({
                 href={rankingHref({ page: state.page + 1 }, stateComGenero, esportePrincipalId)}
                 className="eid-ranking-cta inline-flex min-h-10 w-full items-center justify-center gap-1.5 border-t border-transparent px-5 text-[11px] font-black uppercase tracking-[0.02em] text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] transition-all duration-200 ease-out motion-safe:transform-gpu hover:bg-eid-primary-500/10 active:scale-[0.995]"
               />
+            </div>
+          ) : null}
+
+          {showViewerCard && viewerRank !== null ? (
+            <div className="mt-2">
+              <ViewerRankCard rank={viewerRank} />
             </div>
           ) : null}
         </>
