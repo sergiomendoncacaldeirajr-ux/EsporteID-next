@@ -4,12 +4,13 @@ import { useState, useId } from "react";
 
 /* ─────────────────────────────────────────────────────────────────────────────
    EidDateTimePicker
-   Replaces a single <input type="datetime-local"> with two separate inputs
-   (type="date" + type="time") so the browser never has to manage multiple
-   focus segments simultaneously — fixing the "hour-selection loop" bug that
-   happens with controlled datetime-local inputs in React.
+   Two separate inputs (type="date" + type="time") + a hidden combined field.
+   Fixes the "hour-selection loop" caused by controlled datetime-local in React.
 
-   The form still receives a single "YYYY-MM-DDTHH:MM" value via a hidden field.
+   Modes:
+   - optionNumber (1|2|3): coloured badge header — for the 3-option reschedule form
+   - label (string): plain text header — for labelled standalone use
+   - neither: no header at all — drop-in replacement with just the two inputs
 ──────────────────────────────────────────────────────────────────────────── */
 
 type OptionStyle = 1 | 2 | 3;
@@ -55,7 +56,7 @@ function buildDatetimeLocal(date: string, time: string): string {
 
 function prettyDate(dateStr: string): string | null {
   if (!dateStr) return null;
-  const d = new Date(`${dateStr}T12:00:00`); // noon avoids DST edge cases
+  const d = new Date(`${dateStr}T12:00:00`);
   if (isNaN(d.getTime())) return null;
   return `${DIAS_PT[d.getDay()]}, ${d.getDate()} de ${MESES_PT[d.getMonth()]}`;
 }
@@ -64,12 +65,15 @@ type Props = {
   /** Name submitted to the form — receives "YYYY-MM-DDTHH:MM". */
   name: string;
   defaultValue?: string;
-  min: string; // "YYYY-MM-DDTHH:MM"
-  max: string; // "YYYY-MM-DDTHH:MM"
+  min: string;
+  max: string;
   required?: boolean;
-  /** Visual style (1 = blue, 2 = violet, 3 = emerald). Omit for plain style. */
+  /** Visual style (1=blue, 2=violet, 3=emerald). Badge header shown. */
   optionNumber?: OptionStyle;
-  /** Displayed in the header; falls back to "Data e horário". */
+  /**
+   * Header label text. When omitted together with optionNumber,
+   * no header row is rendered — the component is fully inline.
+   */
   label?: string;
 };
 
@@ -91,25 +95,19 @@ export function EidDateTimePicker({
   const [date, setDate] = useState(defaultParts.date);
   const [time, setTime] = useState(defaultParts.time || "08:00");
 
-  // Dynamic min/max time based on which date is selected
   const minTime = date && date === minParts.date ? minParts.time : "00:00";
   const maxTime = date && date === maxParts.date ? maxParts.time : "23:59";
 
   const combined = buildDatetimeLocal(date, time);
   const pretty = prettyDate(date);
 
-  const style = optionNumber ? OPTION_STYLES[optionNumber] : null;
+  const optStyle = optionNumber ? OPTION_STYLES[optionNumber] : null;
+  const hasHeader = Boolean(optionNumber || label);
 
   function handleDateChange(next: string) {
     setDate(next);
-    // If selected date is min-date and current time is too early, clamp forward
-    if (next === minParts.date && time < minParts.time) {
-      setTime(minParts.time);
-    }
-    // If selected date is max-date and current time is too late, clamp back
-    if (next === maxParts.date && time > maxParts.time) {
-      setTime(maxParts.time);
-    }
+    if (next === minParts.date && time < minParts.time) setTime(minParts.time);
+    if (next === maxParts.date && time > maxParts.time) setTime(maxParts.time);
   }
 
   function handleTimeChange(next: string) {
@@ -121,44 +119,54 @@ export function EidDateTimePicker({
 
   return (
     <div
-      className={`rounded-xl border p-2.5 ${style ? style.ring : "border-[color:var(--eid-border-subtle)] bg-eid-surface/40"}`}
+      className={
+        hasHeader
+          ? `rounded-xl border p-2.5 ${optStyle ? optStyle.ring : "border-[color:var(--eid-border-subtle)] bg-eid-surface/40"}`
+          : "grid gap-1.5"
+      }
     >
-      {/* Header row */}
-      <div className="mb-2 flex items-center gap-2">
-        {style ? (
-          <span
-            className={`rounded-full border px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.07em] ${style.badge}`}
-          >
-            {label ?? style.label}
-          </span>
-        ) : (
-          <span className="text-[9px] font-bold uppercase tracking-[0.07em] text-eid-text-secondary">
-            {label ?? "Data e horário"}
-          </span>
-        )}
-        {pretty && (
-          <span className="ml-auto text-[9px] font-semibold text-eid-text-secondary">
-            {pretty}
-          </span>
-        )}
-      </div>
+      {/* ── Header — only when label or optionNumber is given ── */}
+      {hasHeader && (
+        <div className="mb-2.5 flex items-center gap-2">
+          {optStyle ? (
+            <span className={`rounded-full border px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.07em] ${optStyle.badge}`}>
+              {label ?? optStyle.label}
+            </span>
+          ) : (
+            <span className="text-[9px] font-bold uppercase tracking-[0.07em] text-eid-text-secondary">
+              {label}
+            </span>
+          )}
+          {pretty && (
+            <span className="ml-auto text-[9px] font-semibold text-eid-text-secondary">
+              {pretty}
+            </span>
+          )}
+        </div>
+      )}
 
-      {/* Hidden field — the actual form value */}
+      {/* Hidden combined field */}
       <input type="hidden" name={name} value={combined} />
 
-      {/* Date + Time side by side */}
+      {/* ── Inputs row ── */}
       <div className="grid grid-cols-[1fr_auto] gap-2">
-        {/* Date */}
+        {/* Date input */}
         <div className="grid gap-1">
+          {/* Sub-label */}
           <label
             htmlFor={`${uid}-date`}
             className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-text-secondary"
           >
-            {/* Calendar icon */}
             <svg className="h-3 w-3 shrink-0 opacity-60" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
               <path d="M4.5 1a.5.5 0 0 1 .5.5V2h6v-.5a.5.5 0 0 1 1 0V2h.5A1.5 1.5 0 0 1 14 3.5v9A1.5 1.5 0 0 1 12.5 14h-9A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H4v-.5a.5.5 0 0 1 .5-.5ZM3 5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7H3Zm1-2.5H3.5a.5.5 0 0 0-.5.5V4.5h10V3.5a.5.5 0 0 0-.5-.5H12v.5a.5.5 0 0 1-1 0V3H5v.5a.5.5 0 0 1-1 0V3Z" />
             </svg>
             Data
+            {/* Inline pretty-date when there's no header */}
+            {!hasHeader && pretty && (
+              <span className="ml-auto font-semibold normal-case tracking-normal text-eid-text-secondary/70">
+                {pretty}
+              </span>
+            )}
           </label>
           <input
             id={`${uid}-date`}
@@ -168,22 +176,21 @@ export function EidDateTimePicker({
             max={maxParts.date}
             value={date}
             onChange={(e) => handleDateChange(e.target.value)}
-            className="eid-input-dark h-10 w-full rounded-xl px-3 text-sm text-eid-fg"
+            className="eid-input-dark h-11 w-full rounded-xl px-3 text-[15px] text-eid-fg"
           />
         </div>
 
-        {/* Time */}
+        {/* Time input */}
         <div className="grid gap-1">
           <label
             htmlFor={`${uid}-time`}
             className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.06em] text-eid-text-secondary"
           >
-            {/* Clock icon */}
             <svg className="h-3 w-3 shrink-0 opacity-60" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
               <path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1ZM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Z" />
               <path d="M8 3.5a.5.5 0 0 1 .5.5v4.25l2.5 1.44a.5.5 0 0 1-.5.866L7.75 9.07A.5.5 0 0 1 7.5 8.63V4a.5.5 0 0 1 .5-.5Z" />
             </svg>
-            Hora
+            Horário
           </label>
           <input
             id={`${uid}-time`}
@@ -193,7 +200,7 @@ export function EidDateTimePicker({
             max={maxTime}
             value={time}
             onChange={(e) => handleTimeChange(e.target.value)}
-            className="eid-input-dark h-10 w-[5.5rem] rounded-xl px-2 text-sm text-eid-fg"
+            className="eid-input-dark h-11 w-[6rem] rounded-xl px-2 text-[15px] text-eid-fg"
           />
         </div>
       </div>

@@ -165,9 +165,17 @@ export async function ComunidadeStreamPartidas({
     ),
   ];
   const { data: painelLocaisRows } = painelLocalIds.length
-    ? await supabase.from("espacos_genericos").select("id, nome_publico").in("id", painelLocalIds)
+    ? await supabase.from("espacos_genericos").select("id, nome_publico, logo_arquivo").in("id", painelLocalIds)
     : { data: [] };
-  const painelLocMap = new Map((painelLocaisRows ?? []).map((l) => [l.id, l.nome_publico]));
+  const painelLocMap = new Map(
+    (painelLocaisRows ?? []).map((l) => [
+      l.id,
+      {
+        nome: (l as { nome_publico?: string | null }).nome_publico ?? null,
+        logo: (l as { logo_arquivo?: string | null }).logo_arquivo?.trim() || null,
+      },
+    ])
+  );
   const painelPlayerIds = new Set<string>();
   for (const p of painelPartidasAll) {
     if (p.jogador1_id) painelPlayerIds.add(p.jogador1_id);
@@ -389,8 +397,13 @@ export async function ComunidadeStreamPartidas({
                             sched?.scheduledLocation,
                             pr.local_str,
                             pr.local_espaco_id,
-                            pr.local_espaco_id ? painelLocMap.get(pr.local_espaco_id) ?? null : null,
+                            pr.local_espaco_id ? painelLocMap.get(pr.local_espaco_id)?.nome ?? null : null,
                           )}
+                          localLogoUrl={
+                            pr.local_espaco_id && !sched?.scheduledLocation
+                              ? painelLocMap.get(pr.local_espaco_id)?.logo ?? null
+                              : null
+                          }
                           variant="placar"
                           ctaFullscreen
                           href={`/registrar-placar/${pr.id}?from=/comunidade`}
@@ -450,8 +463,13 @@ export async function ComunidadeStreamPartidas({
                             sched?.scheduledLocation,
                             pr.local_str,
                             pr.local_espaco_id,
-                            pr.local_espaco_id ? painelLocMap.get(pr.local_espaco_id) ?? null : null,
+                            pr.local_espaco_id ? painelLocMap.get(pr.local_espaco_id)?.nome ?? null : null,
                           )}
+                          localLogoUrl={
+                            pr.local_espaco_id && !sched?.scheduledLocation
+                              ? painelLocMap.get(pr.local_espaco_id)?.logo ?? null
+                              : null
+                          }
                           variant="agendada"
                           ctaFullscreen
                           cancelMatchId={cancelMatchIdResolved}

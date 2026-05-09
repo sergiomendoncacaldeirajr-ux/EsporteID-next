@@ -38,6 +38,8 @@ type Props = {
   esporteId?: number | null;
   dataRef: string | null;
   localLabel: string | null;
+  /** Logo/escudo do espaço cadastrado — exibido como miniatura antes do nome do local. */
+  localLogoUrl?: string | null;
   variant: "agendada" | "placar";
   /** Se omitido: agendada → `?modo=agenda`; placar → página completa. */
   href?: string;
@@ -104,6 +106,7 @@ export function PartidaAgendaCard({
   esporteId,
   dataRef,
   localLabel,
+  localLogoUrl,
   variant,
   href,
   ctaLabel,
@@ -237,9 +240,22 @@ export function PartidaAgendaCard({
       </div>
 
       {localLabel ? (
-        <p className="mt-2.5 text-center text-[10px] text-eid-text-secondary md:mt-3 md:text-[11px]">
-          📍 <span className="font-semibold text-eid-fg/90">{localLabel}</span>
-        </p>
+        <div className="mt-2.5 flex items-center justify-center gap-1.5 md:mt-3">
+          {localLogoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={localLogoUrl}
+              alt=""
+              aria-hidden
+              className="h-5 w-5 shrink-0 rounded-md border border-white/10 object-cover shadow-sm"
+            />
+          ) : (
+            <span className="shrink-0 text-[10px] leading-none">📍</span>
+          )}
+          <span className="text-center text-[10px] font-semibold text-eid-fg/90 md:text-[11px]">
+            {localLabel}
+          </span>
+        </div>
       ) : null}
 
       {isPlacar ? (

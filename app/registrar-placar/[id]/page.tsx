@@ -546,63 +546,74 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   Agenda
                 </span>
               </summary>
-              <div className="px-3 pb-3 pt-2.5 sm:px-4 sm:pb-4">
-                <form action={salvarAgendamentoAction} className="grid gap-0">
+              <div className="px-3 pb-4 pt-3 sm:px-4 sm:pb-5">
+                <form action={salvarAgendamentoAction} className="grid gap-3">
                   <input type="hidden" name="partida_id" value={id} />
                   {agendaSomente ? <input type="hidden" name="modo_agenda" value="1" /> : null}
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <label className="grid gap-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Data e hora</span>
-                      {p.torneio_id ? (
-                        <input
-                          type="datetime-local"
-                          name="data_partida"
-                          defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
-                          className="eid-input-dark h-10 rounded-xl px-3 !text-[14px] text-eid-fg placeholder:!text-[12px]"
-                          style={{ fontSize: "14px" }}
-                        />
-                      ) : (
-                        <RankingConfrontoDatetimeInput
-                          name="data_partida"
-                          defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
-                          className="eid-input-dark h-10 rounded-xl px-3 !text-[14px] text-eid-fg placeholder:!text-[12px]"
-                          style={{ fontSize: "14px" }}
-                        />
-                      )}
-                    </label>
-                    <label className="grid gap-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-eid-text-secondary">Local</span>
-                      <LocalAutocompleteInput
-                        name="local_str"
-                        defaultValue={defaultLocalStr}
-                        placeholder="Quadra, clube, endereço..."
-                        minChars={3}
-                        className="eid-input-dark h-10 rounded-xl px-3 !text-[14px] text-eid-fg placeholder:!text-[12px]"
-                        inputStyle={{ fontSize: "14px" }}
+
+                  {/* ── Data e hora ── */}
+                  <div className="grid gap-1.5">
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">
+                      <svg className="h-3 w-3 opacity-60" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
+                        <path d="M4.5 1a.5.5 0 0 1 .5.5V2h6v-.5a.5.5 0 0 1 1 0V2h.5A1.5 1.5 0 0 1 14 3.5v9A1.5 1.5 0 0 1 12.5 14h-9A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H4v-.5a.5.5 0 0 1 .5-.5ZM3 5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7H3Zm1-2.5H3.5a.5.5 0 0 0-.5.5V4.5h10V3.5a.5.5 0 0 0-.5-.5H12v.5a.5.5 0 0 1-1 0V3H5v.5a.5.5 0 0 1-1 0V3Z" />
+                      </svg>
+                      Data e hora
+                    </span>
+                    {p.torneio_id ? (
+                      <input
+                        type="datetime-local"
+                        name="data_partida"
+                        defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
+                        className="eid-input-dark h-11 w-full rounded-xl px-3 text-[15px] text-eid-fg"
                       />
-                    </label>
+                    ) : (
+                      <RankingConfrontoDatetimeInput
+                        name="data_partida"
+                        defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
+                      />
+                    )}
                   </div>
-                  <CadastrarLocalOverlayTrigger
-                    href={cadastrarLocalHref}
-                    className={`${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full rounded-xl text-center !min-h-[34px]`}
-                  >
-                    + Cadastrar local genérico
-                  </CadastrarLocalOverlayTrigger>
+
+                  {/* ── Local ── */}
+                  <div className="grid gap-1.5">
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">
+                      <svg className="h-3 w-3 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                        <circle cx="12" cy="9" r="2.5" />
+                      </svg>
+                      Local
+                    </span>
+                    <LocalAutocompleteInput
+                      name="local_str"
+                      defaultValue={defaultLocalStr}
+                      placeholder="Quadra, clube, endereço..."
+                      minChars={3}
+                      className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-eid-text-secondary/50"
+                      inputStyle={{ fontSize: "15px" }}
+                    />
+                    <CadastrarLocalOverlayTrigger
+                      href={cadastrarLocalHref}
+                      className={`${DESAFIO_FLOW_SECONDARY_CLASS} w-full rounded-xl text-center !min-h-[32px] !text-[9px]`}
+                    >
+                      + Cadastrar local genérico
+                    </CadastrarLocalOverlayTrigger>
+                  </div>
+
+                  {/* ── Submit ── */}
                   <AgendamentoSubmitButton
                     idleLabel="Salvar agendamento"
-                    pendingLabel="Salvando agendamento..."
+                    pendingLabel="Salvando..."
                     className={
                       agendaSomente
-                        ? "mt-3 inline-flex min-h-[40px] w-full items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/15 px-3 text-[10px] font-black uppercase tracking-wide text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] shadow-[0_4px_14px_-6px_rgba(37,99,235,0.25)] transition hover:bg-eid-primary-500/22 disabled:cursor-not-allowed disabled:opacity-70 md:text-[11px]"
-                        : `${DESAFIO_FLOW_SECONDARY_CLASS} mt-3 w-full rounded-xl !min-h-[36px] disabled:cursor-not-allowed disabled:opacity-70`
+                        ? "inline-flex min-h-[42px] w-full items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/15 px-3 text-[11px] font-black uppercase tracking-wide text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] shadow-[0_4px_14px_-6px_rgba(37,99,235,0.25)] transition hover:bg-eid-primary-500/22 disabled:cursor-not-allowed disabled:opacity-70"
+                        : `${DESAFIO_FLOW_SECONDARY_CLASS} w-full rounded-xl !min-h-[38px] disabled:cursor-not-allowed disabled:opacity-70`
                     }
                   />
+
                   {!p.torneio_id ? (
-                    <p className="mt-2 text-[10px] leading-relaxed text-eid-text-secondary md:text-[11px]">
-                      {agendaSomente ? "Defina data e local aqui." : "Agendamento opcional."} Confronto de ranking (individual,
-                      dupla ou time): data entre agora e as próximas {CONFRONTO_AGENDAMENTO_JANELA_HORAS} horas, como nas opções de
-                      reagendamento.
-                      {agendaSomente ? " Para o placar após o jogo, use o Painel de controle." : ""}
+                    <p className="text-[10px] leading-relaxed text-eid-text-secondary">
+                      Janela de {CONFRONTO_AGENDAMENTO_JANELA_HORAS}h a partir de agora para confrontos de ranking.
+                      {agendaSomente ? " Placar disponível no Painel social após o jogo." : ""}
                     </p>
                   ) : null}
                 </form>

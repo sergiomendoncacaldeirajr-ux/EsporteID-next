@@ -55,12 +55,16 @@ export async function AgendaStreamConfrontos({ supabase, userId, teamClause, age
                 (Number.isFinite(midPartida) && midPartida > 0 ? p.acceptedScheduleByMatchId.get(midPartida) ?? null : null) ??
                 (dueloKeyCard ? p.acceptedScheduleByDuelo.get(dueloKeyCard) ?? null : null);
               const effectiveDataRef = acceptedSchedule?.scheduledFor ?? pr.data_partida ?? pr.data_registro;
+              const locEntry = pr.local_espaco_id ? p.locMap.get(pr.local_espaco_id) ?? null : null;
               const effectiveLocalLabel = mergeAgendaLocalDisplayed(
                 acceptedSchedule?.scheduledLocation,
                 pr.local_str,
                 pr.local_espaco_id,
-                pr.local_espaco_id ? p.locMap.get(pr.local_espaco_id) ?? null : null,
+                locEntry?.nome ?? null,
               );
+              // Logo only when the match is at a registered espaco (not free-text location)
+              const effectiveLocalLogoUrl =
+                pr.local_espaco_id && !acceptedSchedule?.scheduledLocation ? locEntry?.logo ?? null : null;
               const hasScheduleDefined = Boolean((acceptedSchedule?.scheduledFor ?? pr.data_partida) && effectiveLocalLabel);
               const schedulePending = String(pr.status ?? "") === "aguardando_aceite_agendamento";
               const cancelMatchIdResolved = resolveCancelMatchIdParaCard(
@@ -103,6 +107,7 @@ export async function AgendaStreamConfrontos({ supabase, userId, teamClause, age
                   esporteId={esporteIdCard}
                   dataRef={effectiveDataRef}
                   localLabel={effectiveLocalLabel}
+                  localLogoUrl={effectiveLocalLogoUrl}
                   variant="agendada"
                   ctaFullscreen
                   cancelMatchId={cancelMatchIdResolved}

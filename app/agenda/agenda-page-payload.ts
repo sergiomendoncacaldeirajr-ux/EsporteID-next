@@ -30,7 +30,7 @@ export type AgendaPendenteEnvioRow = {
 
 export type AgendaPagePayload = {
   partidasAgendadasVisiveis: AgendaPartidaCardRow[];
-  locMap: Map<number, string | null>;
+  locMap: Map<number, { nome: string | null; logo: string | null }>;
   perfilMap: Map<string, { id: string; nome: string | null; avatar_url: string | null }>;
   nomeMap: Map<string, string | null>;
   notaEidByUserSport: Map<string, number>;
@@ -113,8 +113,8 @@ export const getAgendaConfrontosPayload = cache(
 
     const [{ data: locaisRows }, { data: nomeRows }, { data: ueRows }, loadAceitosResult] = await Promise.all([
       allLocalIds.length
-        ? supabase.from("espacos_genericos").select("id, nome_publico").in("id", allLocalIds)
-        : Promise.resolve({ data: [] as Array<{ id: number; nome_publico: string | null }> }),
+        ? supabase.from("espacos_genericos").select("id, nome_publico, logo_arquivo").in("id", allLocalIds)
+        : Promise.resolve({ data: [] as Array<{ id: number; nome_publico: string | null; logo_arquivo: string | null }> }),
       playerList.length
         ? supabase.from("profiles").select("id, nome, avatar_url").in("id", playerList)
         : Promise.resolve({ data: [] as Array<{ id: string; nome: string | null; avatar_url: string | null }> }),
@@ -127,7 +127,15 @@ export const getAgendaConfrontosPayload = cache(
         : Promise.resolve({ data: [] as Array<{ usuario_id: string; esporte_id: number; nota_eid: number | null }> }),
       loadAceitosCancelaveisItems(supabase, userId, (partidasAgendadas ?? []) as AgendaPartidaCardRow[]),
     ]);
-    const locMap = new Map((locaisRows ?? []).map((l) => [l.id, l.nome_publico]));
+    const locMap = new Map(
+      (locaisRows ?? []).map((l) => [
+        l.id,
+        {
+          nome: l.nome_publico ?? null,
+          logo: (l as { logo_arquivo?: string | null }).logo_arquivo?.trim() || null,
+        },
+      ])
+    );
     const perfilMap = new Map((nomeRows ?? []).map((r) => [r.id, r]));
     const nomeMap = new Map((nomeRows ?? []).map((r) => [r.id, r.nome]));
     const notaEidByUserSport = new Map(

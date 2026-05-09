@@ -32,6 +32,7 @@ export function RankingConfrontoDatetimeInput({ name, defaultValue }: Props) {
     return defaultValue;
   })();
 
+  // No label/optionNumber → inline mode (no header row, no redundant text)
   return (
     <EidDateTimePicker
       name={name}
@@ -39,7 +40,6 @@ export function RankingConfrontoDatetimeInput({ name, defaultValue }: Props) {
       min={min}
       max={max}
       required
-      label="Data e horário da partida"
     />
   );
 }
