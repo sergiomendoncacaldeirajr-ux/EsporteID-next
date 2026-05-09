@@ -150,7 +150,7 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
     db.from("app_config").select("value_json").eq("key", "match_rank_monthly_limit_per_sport").maybeSingle(),
     db
       .from("partidas")
-      .select("id, match_id, status, status_ranking, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, torneio_id, data_partida, local_str, criado_em")
+      .select("id, match_id, status, status_ranking, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, torneio_id, data_partida, local_str, criado_em, placar_1, placar_2, lancado_por, data_resultado")
       .order("id", { ascending: false })
       .limit(200),
   ]);
@@ -181,7 +181,13 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
   const statsAtivas = rows.filter((r) => !["cancelada", "concluida", "concluído", "concluido"].includes(String(r.status ?? "").toLowerCase())).length;
 
   // ── Build lookup maps ─────────────────────────────────────────────────────
-  const userIds = [...new Set(rows.flatMap((r) => [r.jogador1_id, r.jogador2_id]).filter(Boolean))] as string[];
+  const userIds = [
+    ...new Set(
+      rows
+        .flatMap((r) => [r.jogador1_id, r.jogador2_id, (r as { lancado_por?: string | null }).lancado_por])
+        .filter(Boolean)
+    ),
+  ] as string[];
   const timeIds = [...new Set(rows.flatMap((r) => [Number(r.time1_id ?? 0), Number(r.time2_id ?? 0)]).filter((n) => n > 0))];
   const esporteIds = [...new Set(rows.map((r) => Number(r.esporte_id ?? 0)).filter((n) => n > 0))];
   const [{ data: profilesRows }, { data: esportesRows }, { data: timesRows }] = await Promise.all([
@@ -404,6 +410,12 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
             const esporteNome = esporteMap.get(Number(p.esporte_id ?? 0)) || `esp #${p.esporte_id}`;
             const dataPartida = (p as { data_partida?: string | null }).data_partida ?? null;
             const localStr = (p as { local_str?: string | null }).local_str ?? null;
+            const placar1 = (p as { placar_1?: number | null }).placar_1 ?? null;
+            const placar2 = (p as { placar_2?: number | null }).placar_2 ?? null;
+            const lancadoPor = (p as { lancado_por?: string | null }).lancado_por ?? null;
+            const dataResultado = (p as { data_resultado?: string | null }).data_resultado ?? null;
+            const temPlacar = placar1 !== null && placar2 !== null;
+            const lancadoPorNome = lancadoPor ? (profileMap.get(lancadoPor)?.nome ?? lancadoPor.slice(0, 8) + "…") : null;
             const dataFormatada = dataPartida
               ? new Date(dataPartida).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" })
               : null;
@@ -476,6 +488,57 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
                     </div>
                   </div>
 
+                  {/* ── Resultado lançado ── */}
+                  {temPlacar && (
+                    <div className="mt-2.5 overflow-hidden rounded-xl border border-emerald-500/25 bg-emerald-500/8">
+                      <div className="flex items-center justify-between gap-2 border-b border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5">
+                        <span className="text-[9px] font-black uppercase tracking-[0.07em] text-emerald-300">Resultado lançado</span>
+                        {status === "aguardando_confirmacao" && (
+                          <span className="rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.06em] text-amber-300">Aguardando confirmação</span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 px-3 py-2">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-[11px] font-semibold text-eid-fg/70">{lado1?.label ?? "Lado 1"}</span>
+                          <span className="text-[22px] font-black tabular-nums leading-none text-eid-fg">
+                            {placar1} <span className="text-[14px] font-bold text-eid-text-secondary">×</span> {placar2}
+                          </span>
+                          <span className="text-[11px] font-semibold text-eid-fg/70">{lado2?.label ?? "Lado 2"}</span>
+                        </div>
+                        {lancadoPorNome && (
+                          <div className="ml-auto text-right">
+                            <p className="text-[9px] text-eid-text-secondary">Lançado por</p>
+                            <p className="text-[10px] font-semibold text-eid-fg">{lancadoPorNome}</p>
+                            {dataResultado && (
+                              <p className="text-[9px] text-eid-text-secondary">
+                                {new Date(dataResultado).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" })}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {podeDefinirResultado && (
+                        <details className="border-t border-emerald-500/15 group/res">
+                          <summary className="cursor-pointer list-none px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.07em] text-emerald-400 hover:text-emerald-300 [&::-webkit-details-marker]:hidden">
+                            <span className="group-open/res:hidden">▸ Editar placar</span>
+                            <span className="hidden group-open/res:inline">▾ Fechar</span>
+                          </summary>
+                          <form action={adminDefinirResultadoPartida} className="flex flex-wrap items-center gap-1.5 px-3 pb-2.5 pt-1">
+                            <input type="hidden" name="partida_id" value={p.id} />
+                            <select name="winner_side" defaultValue={placar1 !== null && placar2 !== null && placar1 >= placar2 ? "1" : "2"} className="eid-input-dark h-8 rounded-lg border border-[color:var(--eid-border-subtle)] px-1.5 text-[10px]">
+                              <option value="1">Venceu: {lado1?.label ?? "lado 1"}</option>
+                              <option value="2">Venceu: {lado2?.label ?? "lado 2"}</option>
+                            </select>
+                            <input type="number" name="placar_1" min={0} defaultValue={placar1 ?? 1} className="eid-input-dark h-8 w-12 rounded-lg px-1 text-[10px]" />
+                            <span className="text-[10px] text-eid-text-secondary">×</span>
+                            <input type="number" name="placar_2" min={0} defaultValue={placar2 ?? 0} className="eid-input-dark h-8 w-12 rounded-lg px-1 text-[10px]" />
+                            <button type="submit" className="rounded-lg border border-emerald-500/45 bg-emerald-500/12 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.05em] text-emerald-300 transition hover:bg-emerald-500/22">Salvar resultado</button>
+                          </form>
+                        </details>
+                      )}
+                    </div>
+                  )}
+
                   {/* ── Edit scheduling (always available) ── */}
                   <details className="mt-2 group">
                     <summary className="cursor-pointer list-none text-[10px] font-bold uppercase tracking-[0.07em] text-eid-primary-400 hover:text-eid-primary-300 [&::-webkit-details-marker]:hidden">
@@ -516,7 +579,7 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
                     <Link href={`/registrar-placar/${p.id}?from=/admin/partidas&admin=1`} className="rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/12 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.05em] text-eid-primary-200 transition hover:bg-eid-primary-500/22">
                       Abrir lançador
                     </Link>
-                    {podeDefinirResultado && (
+                    {!temPlacar && podeDefinirResultado && (
                       <form action={adminDefinirResultadoPartida} className="flex flex-wrap items-center gap-1.5">
                         <input type="hidden" name="partida_id" value={p.id} />
                         <select name="winner_side" defaultValue="1" className="eid-input-dark h-8 rounded-lg border border-[color:var(--eid-border-subtle)] px-1.5 text-[10px]">

@@ -100,13 +100,18 @@ export function whenLabel(iso: string | null) {
   if (!iso) return "em breve";
   const dt = new Date(iso);
   if (Number.isNaN(dt.getTime())) return "em breve";
+  const TZ = "America/Sao_Paulo";
   const now = new Date();
-  const amanha = new Date(now);
-  amanha.setDate(amanha.getDate() + 1);
-  const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  if (isSameDay(dt, now)) return `hoje às ${hora}`;
-  if (isSameDay(dt, amanha)) return `amanhã às ${hora}`;
-  const data = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  // Compara datas no fuso BRT convertendo para objeto Date com componentes locais no TZ alvo
+  const toBrt = (d: Date) => new Date(d.toLocaleString("en-US", { timeZone: TZ }));
+  const dtBrt = toBrt(dt);
+  const nowBrt = toBrt(now);
+  const amanhaBrt = new Date(nowBrt);
+  amanhaBrt.setDate(amanhaBrt.getDate() + 1);
+  const hora = dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
+  if (isSameDay(dtBrt, nowBrt)) return `hoje às ${hora}`;
+  if (isSameDay(dtBrt, amanhaBrt)) return `amanhã às ${hora}`;
+  const data = dt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: TZ });
   return `${data} às ${hora}`;
 }
 

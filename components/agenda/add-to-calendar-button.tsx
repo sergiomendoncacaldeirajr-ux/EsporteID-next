@@ -81,45 +81,41 @@ export function AddToCalendarButton({ title, startIso, durationMinutes = 90, loc
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Salvar na agenda do celular"
-        className="inline-flex items-center gap-1.5 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.05em] text-eid-primary-300 transition hover:bg-eid-primary-500/20 active:scale-[0.97] md:text-[10px]"
+        className="inline-flex items-center gap-1 rounded border border-eid-primary-500/20 bg-transparent px-1.5 py-0.5 text-[8px] font-semibold tracking-wide text-eid-primary-400 transition hover:border-eid-primary-500/35 hover:text-eid-primary-300 active:scale-[0.97]"
       >
         <svg
           viewBox="0 0 16 16"
-          className="h-3 w-3 shrink-0"
+          className="h-2.5 w-2.5 shrink-0"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.6"
+          strokeWidth="1.7"
           strokeLinecap="round"
         >
           <rect x="2" y="3" width="12" height="11" rx="2" />
           <path d="M2 7h12M5 1v3M11 1v3" />
         </svg>
-        <span>Salvar na agenda</span>
+        <span>+ agenda</span>
       </button>
 
       {open && (
-        <div className="absolute bottom-full left-0 z-50 mb-1.5 w-48 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-[0_8px_32px_-8px_rgba(0,0,0,0.6)]">
+        <div className="absolute bottom-full left-1/2 z-50 mb-1 w-44 -translate-x-1/2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-[0_8px_24px_-6px_rgba(0,0,0,0.55)]">
           <a
             href={googleCalendarUrl(title, startIso, endIso, location)}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2.5 text-[11px] font-semibold text-eid-fg transition hover:bg-eid-surface/70"
+            className="flex items-center gap-2 px-3 py-2 text-[10px] font-semibold text-eid-fg transition hover:bg-eid-surface/70"
           >
-            <span className="text-sm leading-none" aria-hidden>
-              📅
-            </span>
+            <span className="text-xs leading-none" aria-hidden>📅</span>
             Google Agenda
           </a>
           <div className="mx-3 border-t border-[color:var(--eid-border-subtle)]" />
           <button
             type="button"
             onClick={downloadIcs}
-            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-[11px] font-semibold text-eid-fg transition hover:bg-eid-surface/70"
+            className="flex w-full items-center gap-2 px-3 py-2 text-[10px] font-semibold text-eid-fg transition hover:bg-eid-surface/70"
           >
-            <span className="text-sm leading-none" aria-hidden>
-              🍎
-            </span>
+            <span className="text-xs leading-none" aria-hidden>🍎</span>
             Apple / Outlook (.ics)
           </button>
         </div>

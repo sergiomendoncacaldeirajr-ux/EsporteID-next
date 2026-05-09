@@ -355,8 +355,11 @@ export async function adminEditarAgendamentoPartida(formData: FormData) {
     const localStr = String(formData.get("local_str") ?? "").trim().slice(0, 200) || null;
     const payload: { data_partida?: string | null; local_str?: string | null } = { local_str: localStr || null };
     if (dataRaw) {
-      const dt = new Date(dataRaw);
+      // O form exibe horário em BRT (UTC-3h subtraído do default). Forçamos parse UTC com "Z"
+      // e somamos 180 min para converter BRT→UTC — funciona igual em Windows local e Cloudflare.
+      const dt = new Date((dataRaw.endsWith("Z") ? dataRaw : dataRaw + "Z"));
       if (isNaN(dt.getTime())) redirect("/admin/partidas?adm_flash=agenda_invalido");
+      dt.setMinutes(dt.getMinutes() + 180);
       payload.data_partida = dt.toISOString();
     } else {
       payload.data_partida = null;

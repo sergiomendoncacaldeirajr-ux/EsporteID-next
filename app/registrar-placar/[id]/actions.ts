@@ -759,13 +759,14 @@ export async function salvarAgendamentoAction(formData: FormData) {
     local_espaco_id: Number.isFinite(localEspacoId) && (localEspacoId ?? 0) > 0 ? localEspacoId : null,
   };
   if (dataPartida) {
-    const dt = new Date(dataPartida);
+    // Forçar parse como UTC (+ "Z") para comportamento idêntico em qualquer runtime
+    // (Next.js local Windows/BRT vs Cloudflare Workers/UTC).
+    // O EidDateTimePicker envia hora local sem fuso; o offset enviado pelo browser
+    // (tz_offset_minutes) compensa a diferença de fuso para chegar ao UTC correto.
+    const dt = new Date(dataPartida.endsWith("Z") ? dataPartida : dataPartida + "Z");
     if (Number.isNaN(dt.getTime())) {
       salvarAgendaRedirect(partidaId, "erro", "Data/hora de agendamento inválida.", modoAgenda);
     }
-    // Aplicar offset do timezone do browser para converter hora local → UTC correto.
-    // O campo datetime-local envia hora sem fuso (ex: "14:30"), que o servidor (UTC) parseia
-    // como UTC. Somando o offset (ex: BRT = +180 min) chegamos ao UTC real do usuário.
     const tzOffsetRaw = String(formData.get("tz_offset_minutes") ?? "").trim();
     const tzOffsetMinutes = Number(tzOffsetRaw);
     if (Number.isFinite(tzOffsetMinutes) && tzOffsetMinutes !== 0) {
