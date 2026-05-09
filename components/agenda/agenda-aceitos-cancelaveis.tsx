@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useActionState } from "react";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
@@ -14,8 +14,8 @@ import { EidAcceptedBadge } from "@/components/ui/eid-accepted-badge";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/eid-social-acao-buttons";
 import { iniciaisFormacaoNome } from "@/lib/comunidade/iniciais-formacao";
+import { EidDateTimePicker } from "@/components/agenda/eid-date-time-picker";
 import {
-  clampDatetimeLocalBetweenMinMax,
   CONFRONTO_AGENDAMENTO_JANELA_HORAS,
   maxDatetimeLocalValueHorasAFrente,
   minDatetimeLocalValue,
@@ -81,12 +81,7 @@ function addMinutesToDatetimeLocal(base: string, minutes: number): string {
   if (Number.isNaN(t)) return base;
   const dt = new Date(t + minutes * 60 * 1000);
   const pad = (n: number) => String(n).padStart(2, "0");
-  const yyyy = dt.getFullYear();
-  const mm = pad(dt.getMonth() + 1);
-  const dd = pad(dt.getDate());
-  const hh = pad(dt.getHours());
-  const mi = pad(dt.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
 }
 
 type Props = {
@@ -106,7 +101,6 @@ export function AgendaAceitosCancelaveis({
   const [openRefuseByMatch, setOpenRefuseByMatch] = useState<Record<number, boolean>>({});
   const [clickedAction, setClickedAction] = useState<Record<number, "acceptCancel" | "rejectCancel" | "acceptOption" | "rejectOption">>({});
   const [localPrefillByMatch, setLocalPrefillByMatch] = useState<Record<number, string>>({});
-  const [datetimeValueByField, setDatetimeValueByField] = useState<Record<string, string>>({});
   const [minDateTimeLocal] = useState<string>(() => minDatetimeLocalValue());
   const [maxDateTimeLocal] = useState<string>(() =>
     maxDatetimeLocalValueHorasAFrente(CONFRONTO_AGENDAMENTO_JANELA_HORAS)
@@ -138,40 +132,10 @@ export function AgendaAceitosCancelaveis({
     window.history.replaceState(null, "", nextUrl);
   }, []);
 
-  function clampDatetimeValue(raw: string): string {
-    return clampDatetimeLocalBetweenMinMax(raw, minDateTimeLocal, maxDateTimeLocal);
-  }
-
-  function handleDatetimeChange(matchId: number, optionIdx: 1 | 2 | 3, event: ChangeEvent<HTMLInputElement>) {
-    const k = `${matchId}_${optionIdx}`;
-    const nextRaw = String(event.target.value ?? "");
-    const clamped = clampDatetimeValue(nextRaw);
-    if (clamped !== nextRaw) {
-      event.target.value = clamped;
-      event.target.setCustomValidity(
-        `Escolha um horário entre agora e ${CONFRONTO_AGENDAMENTO_JANELA_HORAS} horas.`
-      );
-      event.target.reportValidity();
-    } else {
-      event.target.setCustomValidity("");
-    }
-    setDatetimeValueByField((prev) => ({ ...prev, [k]: clamped }));
-  }
-
-  function ensureInitialDateOptions(matchId: number) {
-    const k1 = `${matchId}_1`;
-    const k2 = `${matchId}_2`;
-    const k3 = `${matchId}_3`;
-    setDatetimeValueByField((prev) => {
-      if (prev[k1] || prev[k2] || prev[k3]) return prev;
-      return {
-        ...prev,
-        [k1]: minDateTimeLocal,
-        [k2]: addMinutesToDatetimeLocal(minDateTimeLocal, 60),
-        [k3]: addMinutesToDatetimeLocal(minDateTimeLocal, 120),
-      };
-    });
-  }
+  // Default option times: now, now+60min, now+120min
+  // Used as defaultValue for EidDateTimePicker instances
+  const defaultOption2 = addMinutesToDatetimeLocal(minDateTimeLocal, 60);
+  const defaultOption3 = addMinutesToDatetimeLocal(minDateTimeLocal, 120);
 
   if (items.length === 0) return null;
 
@@ -375,11 +339,7 @@ export function AgendaAceitosCancelaveis({
                       busy={false}
                       onClick={() => {
                         setClickedAction((prev) => ({ ...prev, [m.id]: "rejectCancel" }));
-                        setOpenRefuseByMatch((s) => {
-                          const nextOpen = !s[m.id];
-                          if (nextOpen) ensureInitialDateOptions(m.id);
-                          return { ...s, [m.id]: nextOpen };
-                        });
+                        setOpenRefuseByMatch((s) => ({ ...s, [m.id]: !s[m.id] }));
                       }}
                       className="min-h-[28px] rounded-xl text-[8px] md:text-[9px]"
                     />
@@ -388,43 +348,37 @@ export function AgendaAceitosCancelaveis({
                   {openRefuseByMatch[m.id] ? (
                     <form
                       action={formAction}
-                      className="grid gap-1.5 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_35%,var(--eid-border-subtle)_65%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_8%,var(--eid-card)_92%)] p-2 md:gap-2 md:p-2.5"
+                      className="grid gap-2 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-border-subtle)_70%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_6%,var(--eid-card)_94%)] p-2.5"
                     >
                       <input type="hidden" name="intent" value="respond_cancel" />
                       <input type="hidden" name="match_id" value={String(m.id)} />
                       <input type="hidden" name="aceitar_cancelamento" value="0" />
-                      <input
+                      <p className="text-[9px] font-bold uppercase tracking-[0.07em] text-eid-text-secondary">
+                        Sugira 3 horários alternativos
+                      </p>
+                      <EidDateTimePicker
                         name="opcao_1"
-                        type="datetime-local"
-                        required
+                        defaultValue={minDateTimeLocal}
                         min={minDateTimeLocal}
                         max={maxDateTimeLocal}
-                        value={datetimeValueByField[`${m.id}_1`] ?? minDateTimeLocal}
-                        onChange={(event) => handleDatetimeChange(m.id, 1, event)}
-                        className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
-                        style={{ fontSize: "15px" }}
+                        required
+                        optionNumber={1}
                       />
-                      <input
+                      <EidDateTimePicker
                         name="opcao_2"
-                        type="datetime-local"
-                        required
+                        defaultValue={defaultOption2}
                         min={minDateTimeLocal}
                         max={maxDateTimeLocal}
-                        value={datetimeValueByField[`${m.id}_2`] ?? addMinutesToDatetimeLocal(minDateTimeLocal, 60)}
-                        onChange={(event) => handleDatetimeChange(m.id, 2, event)}
-                        className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
-                        style={{ fontSize: "15px" }}
+                        required
+                        optionNumber={2}
                       />
-                      <input
+                      <EidDateTimePicker
                         name="opcao_3"
-                        type="datetime-local"
-                        required
+                        defaultValue={defaultOption3}
                         min={minDateTimeLocal}
                         max={maxDateTimeLocal}
-                        value={datetimeValueByField[`${m.id}_3`] ?? addMinutesToDatetimeLocal(minDateTimeLocal, 120)}
-                        onChange={(event) => handleDatetimeChange(m.id, 3, event)}
-                        className="eid-input-dark eid-datetime-local-fix h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-[15px]"
-                        style={{ fontSize: "15px" }}
+                        required
+                        optionNumber={3}
                       />
                       <LocalAutocompleteInput
                         name="local_reagendamento"

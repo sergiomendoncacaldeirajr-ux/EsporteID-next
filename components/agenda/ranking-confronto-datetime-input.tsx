@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
+import { EidDateTimePicker } from "@/components/agenda/eid-date-time-picker";
 import {
   CONFRONTO_AGENDAMENTO_JANELA_HORAS,
-  clampDatetimeLocalBetweenMinMax,
   maxDatetimeLocalValueHorasAFrente,
   minDatetimeLocalValue,
 } from "@/lib/agenda/confronto-agendamento-janela";
@@ -11,41 +11,35 @@ import {
 type Props = {
   name: string;
   defaultValue: string;
+  /** className/style kept for API compat but ignored — EidDateTimePicker has its own styling. */
   className?: string;
   style?: CSSProperties;
 };
 
-export function RankingConfrontoDatetimeInput({ name, defaultValue, className, style }: Props) {
-  const [bounds] = useState(() => ({
-    min: minDatetimeLocalValue(),
-    max: maxDatetimeLocalValueHorasAFrente(CONFRONTO_AGENDAMENTO_JANELA_HORAS),
-  }));
+export function RankingConfrontoDatetimeInput({ name, defaultValue }: Props) {
+  const min = minDatetimeLocalValue();
+  const max = maxDatetimeLocalValueHorasAFrente(CONFRONTO_AGENDAMENTO_JANELA_HORAS);
 
-  const defaultClamped = useMemo(
-    () => clampDatetimeLocalBetweenMinMax(defaultValue, bounds.min, bounds.max),
-    [defaultValue, bounds.min, bounds.max]
-  );
+  // Clamp the defaultValue into the valid window
+  const safeDefault = (() => {
+    if (!defaultValue) return min;
+    const t = new Date(defaultValue).getTime();
+    if (isNaN(t)) return min;
+    const tMin = new Date(min).getTime();
+    const tMax = new Date(max).getTime();
+    if (t < tMin) return min;
+    if (t > tMax) return max;
+    return defaultValue;
+  })();
 
   return (
-    <input
-      type="datetime-local"
+    <EidDateTimePicker
       name={name}
-      min={bounds.min}
-      max={bounds.max}
-      defaultValue={defaultClamped || ""}
-      className={className}
-      style={style}
-      onChange={(e) => {
-        const next = clampDatetimeLocalBetweenMinMax(e.target.value, bounds.min, bounds.max);
-        if (next !== e.target.value) {
-          e.target.value = next;
-          e.target.setCustomValidity(
-            next ? "" : `Escolha um horário entre agora e ${CONFRONTO_AGENDAMENTO_JANELA_HORAS} horas.`
-          );
-        } else {
-          e.target.setCustomValidity("");
-        }
-      }}
+      defaultValue={safeDefault}
+      min={min}
+      max={max}
+      required
+      label="Data e horário da partida"
     />
   );
 }
