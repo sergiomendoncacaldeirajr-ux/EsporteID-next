@@ -379,28 +379,29 @@ export async function PerfilPublicoBelowFold({
                 Ainda sem EID registrado por esporte.
               </p>
             ) : (
-              <div className="flex snap-x gap-1 overflow-x-auto pb-1">
+              <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5">
                 {(eids ?? []).map((e, idx) => {
                   const esp = Array.isArray(e.esportes) ? e.esportes[0] : e.esportes;
                   const eid = Number(e.nota_eid ?? 0);
+                  const nomeEsporte = (esp as { nome?: string | null } | null)?.nome ?? "—";
 
                   return (
                     <ProfileEditDrawerTrigger
                       key={`${e.esporte_id}-${idx}`}
                       href={`/perfil/${encodeURIComponent(id)}/eid/${e.esporte_id}?from=${encodeURIComponent(`/perfil/${id}`)}`}
-                      title={`Estatística de ${(esp as { nome?: string | null } | null)?.nome ?? "esporte"}`}
+                      title={`Estatística de ${nomeEsporte}`}
                       fullscreen
                       topMode="backOnly"
-                      className="relative flex w-max min-h-[48px] shrink-0 snap-start touch-manipulation flex-col items-center justify-center gap-0.5 rounded-xl border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-surface)_90%,var(--eid-primary-500)_10%),var(--eid-surface))] px-2 py-1 shadow-[0_2px_8px_-4px_rgba(37,99,235,0.12)] transition-all duration-200 ease-out motion-safe:transform-gpu hover:-translate-y-[2px] hover:border-[rgba(37,99,235,0.25)] hover:bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_16%,var(--eid-surface)),var(--eid-surface))] hover:shadow-[0_6px_18px_-8px_rgba(37,99,235,0.3)] active:translate-y-0 active:scale-[0.98]"
+                      className="relative flex w-full min-h-[60px] touch-manipulation flex-col items-center justify-center gap-1 rounded-xl border border-[rgba(37,99,235,0.1)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-surface)_90%,var(--eid-primary-500)_10%),var(--eid-surface))] px-1.5 py-2 shadow-[0_2px_8px_-4px_rgba(37,99,235,0.12)] transition-all duration-200 ease-out motion-safe:transform-gpu hover:-translate-y-[2px] hover:border-[rgba(37,99,235,0.25)] hover:bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_16%,var(--eid-surface)),var(--eid-surface))] hover:shadow-[0_6px_18px_-8px_rgba(37,99,235,0.3)] active:translate-y-0 active:scale-[0.98]"
                     >
                       <ProfileEidPerformanceSeal
                         notaEid={eid}
                         compact
                         sealVariant="emphasis"
-                        title={`EID ${eid.toFixed(1)} · ${(esp as { nome?: string | null } | null)?.nome ?? "esporte"}`}
+                        title={`EID ${eid.toFixed(1)} · ${nomeEsporte}`}
                       />
-                      <span className="line-clamp-1 text-center text-[8px] font-black uppercase tracking-[0.09em] text-eid-fg">
-                        {(esp as { nome?: string | null } | null)?.nome ?? "—"}
+                      <span className="w-full truncate text-center text-[8px] font-black uppercase leading-tight tracking-[0.06em] text-eid-fg px-0.5">
+                        {nomeEsporte}
                       </span>
                     </ProfileEditDrawerTrigger>
                   );

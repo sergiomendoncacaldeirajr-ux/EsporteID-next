@@ -167,14 +167,14 @@ export function ProfilePublicPageSkeleton() {
           <section>
             <SectionTitleSkeleton />
             <div className="eid-list-item mt-2 rounded-xl bg-eid-card/55 p-2">
-              <div className="flex snap-x gap-2 overflow-x-auto pb-1">
+              <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div
                     key={i}
-                    className="flex min-h-[42px] min-w-[108px] shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-xl bg-eid-surface/45 px-1 py-1"
+                    className="flex min-h-[60px] w-full flex-col items-center justify-center gap-1 rounded-xl bg-eid-surface/45 px-1.5 py-2"
                   >
                     <SkBlock className="h-5 w-[88px] rounded-full" />
-                    <SkBlock className="h-2 w-16 rounded" />
+                    <SkBlock className="h-2 w-12 rounded" />
                   </div>
                 ))}
               </div>
