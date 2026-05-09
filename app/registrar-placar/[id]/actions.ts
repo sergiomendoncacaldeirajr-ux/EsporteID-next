@@ -717,6 +717,11 @@ export async function salvarAgendamentoAction(formData: FormData) {
   const modoAgenda = String(formData.get("modo_agenda") ?? "") === "1";
   const dataPartida = String(formData.get("data_partida") ?? "").trim();
   const localStr = sanitizeUserText(formData.get("local_str"), 180);
+  const localEspacoIdRaw = formData.get("local_espaco_id");
+  const localEspacoId =
+    localEspacoIdRaw != null && String(localEspacoIdRaw).trim() !== ""
+      ? Number(localEspacoIdRaw)
+      : null;
   if (hasMaliciousPayload(localStr)) salvarAgendaRedirect(partidaId, "erro", "Local inválido.", modoAgenda);
 
   const supabase = await createClient();
@@ -743,6 +748,7 @@ export async function salvarAgendamentoAction(formData: FormData) {
   const payload: {
     data_partida?: string | null;
     local_str?: string | null;
+    local_espaco_id?: number | null;
     status?: string;
     agendamento_proposto_por?: string | null;
     agendamento_aceite_deadline?: string | null;
@@ -750,6 +756,7 @@ export async function salvarAgendamentoAction(formData: FormData) {
     mensagem?: string | null;
   } = {
     local_str: sanitizeOptionalUserText(localStr, 180),
+    local_espaco_id: Number.isFinite(localEspacoId) && (localEspacoId ?? 0) > 0 ? localEspacoId : null,
   };
   if (dataPartida) {
     const dt = new Date(dataPartida);

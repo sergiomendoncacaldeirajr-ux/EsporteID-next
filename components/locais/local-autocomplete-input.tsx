@@ -13,6 +13,14 @@ type SuggestItem = {
 type Props = {
   name: string;
   defaultValue?: string;
+  /**
+   * When provided, a hidden `<input>` with this name submits the selected
+   * espaco ID. Empty string when no suggestion has been selected.
+   */
+  espacoIdName?: string;
+  /** Pre-fill the espaco ID — useful when returning from the "register new
+   *  space" flow where the server already knows which espaco was just created. */
+  defaultEspacoId?: number | null;
   placeholder?: string;
   className?: string;
   inputStyle?: CSSProperties;
@@ -22,12 +30,15 @@ type Props = {
 export function LocalAutocompleteInput({
   name,
   defaultValue = "",
+  espacoIdName,
+  defaultEspacoId = null,
   placeholder = "Digite o nome do local...",
   className,
   inputStyle,
   minChars = 3,
 }: Props) {
   const [value, setValue] = useState(defaultValue);
+  const [selectedId, setSelectedId] = useState<number | null>(defaultEspacoId);
   const [items, setItems] = useState<SuggestItem[]>([]);
   const [open, setOpen] = useState(false);
   const ctrlRef = useRef<AbortController | null>(null);
@@ -37,6 +48,10 @@ export function LocalAutocompleteInput({
   useEffect(() => {
     setValue(defaultValue);
   }, [defaultValue]);
+
+  useEffect(() => {
+    setSelectedId(defaultEspacoId);
+  }, [defaultEspacoId]);
 
   useEffect(() => {
     function onDocClick(event: MouseEvent) {
@@ -75,10 +90,18 @@ export function LocalAutocompleteInput({
 
   return (
     <div ref={rootRef} className="relative">
+      {/* Hidden ID field — populated when user picks from the dropdown. */}
+      {espacoIdName && (
+        <input type="hidden" name={espacoIdName} value={selectedId ?? ""} />
+      )}
       <input
         name={name}
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={(event) => {
+          setValue(event.target.value);
+          // Manual typing resets the linked espaco ID.
+          setSelectedId(null);
+        }}
         onFocus={() => {
           if (items.length) setOpen(true);
         }}
@@ -98,6 +121,7 @@ export function LocalAutocompleteInput({
               type="button"
               onClick={() => {
                 setValue(item.localizacao ? `${item.nome} — ${item.localizacao}` : item.nome);
+                setSelectedId(item.id);
                 setOpen(false);
               }}
               className="block w-full rounded-lg px-2.5 py-2.5 text-left transition hover:bg-eid-primary-500/10"

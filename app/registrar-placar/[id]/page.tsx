@@ -109,7 +109,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const { data: p } = await supabase
     .from("partidas")
     .select(
-      "id, match_id, jogador1_id, jogador2_id, status, status_ranking, esporte_id, torneio_id, esportes(nome,desafio_modo_lancamento,desafio_regras_placar_json), placar_1, placar_2, lancado_por, mensagem, data_resultado, data_validacao, modalidade, time1_id, time2_id, data_partida, local_str"
+      "id, match_id, jogador1_id, jogador2_id, status, status_ranking, esporte_id, torneio_id, esportes(nome,desafio_modo_lancamento,desafio_regras_placar_json), placar_1, placar_2, lancado_por, mensagem, data_resultado, data_validacao, modalidade, time1_id, time2_id, data_partida, local_str, local_espaco_id"
     )
     .eq("id", id)
     .maybeSingle();
@@ -263,6 +263,11 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const defaultLocalStr = novoLocal
     ? `${novoLocal.nome_publico ?? "Local"}${novoLocal.localizacao ? ` — ${novoLocal.localizacao}` : ""}`
     : p.local_str ?? "";
+  // When returning from the "register new space" flow we know the ID;
+  // otherwise fall back to whatever was already saved on the partida row.
+  const defaultEspacoId: number | null = novoLocal?.id != null
+    ? Number(novoLocal.id)
+    : (p as { local_espaco_id?: number | null }).local_espaco_id ?? null;
   const returnToPath = `/registrar-placar/${id}${modoRaw === "agenda" || fromSafe ? "?" : ""}${
     modoRaw === "agenda" ? `modo=agenda${fromSafe ? `&from=${encodeURIComponent(fromSafe)}` : ""}` : fromSafe ? `from=${encodeURIComponent(fromSafe)}` : ""
   }`;
@@ -580,7 +585,9 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                     </span>
                     <LocalAutocompleteInput
                       name="local_str"
+                      espacoIdName="local_espaco_id"
                       defaultValue={defaultLocalStr}
+                      defaultEspacoId={defaultEspacoId}
                       placeholder="Quadra, clube, endereço..."
                       minChars={3}
                       className="eid-input-dark h-11 rounded-xl px-3 text-[11px] text-eid-fg placeholder:text-eid-text-secondary/50"
