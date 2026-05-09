@@ -59,7 +59,9 @@ export async function CadastrarLocalStream({ searchParams }: CadastrarLocalStrea
               : null;
   const sucessoMsg =
     sp.sucesso === "1"
-      ? `Sugestão enviada${sp.novo_local_nome ? `: ${sp.novo_local_nome}` : ""}. Um administrador pode publicar na vitrine depois de revisar — até lá o local não aparece para visitantes anônimos na lista de locais.`
+      ? sp.novo_local_nome
+        ? `Enviado com sucesso: ${sp.novo_local_nome}. Um administrador vai revisar e confirmar a posse — você receberá acesso ao painel do espaço após aprovação.`
+        : "Enviado com sucesso. Um administrador vai revisar e confirmar em breve."
       : null;
 
   const featureCfg = await getSystemFeatureConfig(supabase);
@@ -70,7 +72,7 @@ export async function CadastrarLocalStream({ searchParams }: CadastrarLocalStrea
     supabase.from("profiles").select("lat, lng").eq("id", viewerId).maybeSingle(),
     supabase
       .from("espacos_genericos")
-      .select("id, nome_publico, localizacao, logo_arquivo, lat, lng")
+      .select("id, nome_publico, localizacao, logo_arquivo, lat, lng, venue_config_json")
       .eq("ativo_listagem", true)
       .order("id", { ascending: false })
       .limit(200),
@@ -92,11 +94,29 @@ export async function CadastrarLocalStream({ searchParams }: CadastrarLocalStrea
     }))
     .sort((a, b) => a.dist - b.dist);
   const locaisOpcoes = locaisOrdenados.slice(0, 6);
-  const locaisHints = locaisOrdenados.map((local) => ({
-    id: Number(local.id),
-    nome_publico: local.nome_publico ?? null,
-    localizacao: local.localizacao ?? null,
-  }));
+  const locaisHints = locaisOrdenados.map((local) => {
+    const cfg = (() => {
+      try {
+        const raw = (local as { venue_config_json?: unknown }).venue_config_json;
+        return raw && typeof raw === "object" ? (raw as Record<string, string>) : {};
+      } catch { return {}; }
+    })();
+    return {
+      id: Number(local.id),
+      nome_publico: local.nome_publico ?? null,
+      localizacao: local.localizacao ?? null,
+      logo_arquivo: local.logo_arquivo ?? null,
+      lat: local.lat != null ? String(local.lat) : null,
+      lng: local.lng != null ? String(local.lng) : null,
+      endereco: cfg.endereco ?? null,
+      numero: cfg.numero ?? null,
+      bairro: cfg.bairro ?? null,
+      cidade: cfg.cidade ?? null,
+      estado: cfg.estado ?? null,
+      cep: cfg.cep ?? null,
+      complemento: cfg.complemento ?? null,
+    };
+  });
 
   return (
     <div className={locaisShellOuterClass} data-eid-locais-page>

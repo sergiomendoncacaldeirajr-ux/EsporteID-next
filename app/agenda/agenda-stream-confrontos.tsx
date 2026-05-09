@@ -56,15 +56,21 @@ export async function AgendaStreamConfrontos({ supabase, userId, teamClause, age
                 (dueloKeyCard ? p.acceptedScheduleByDuelo.get(dueloKeyCard) ?? null : null);
               const effectiveDataRef = acceptedSchedule?.scheduledFor ?? pr.data_partida ?? pr.data_registro;
               const locEntry = pr.local_espaco_id ? p.locMap.get(pr.local_espaco_id) ?? null : null;
+              // Text-based fallback for partidas where local_espaco_id wasn't saved historically
+              const localStrLogoFallback =
+                !pr.local_espaco_id && pr.local_str
+                  ? p.localStrLogoMap.get(pr.local_str) ?? null
+                  : null;
               const effectiveLocalLabel = mergeAgendaLocalDisplayed(
                 acceptedSchedule?.scheduledLocation,
                 pr.local_str,
                 pr.local_espaco_id,
                 locEntry?.nome ?? null,
               );
-              // Logo only when the match is at a registered espaco (not free-text location)
-              const effectiveLocalLogoUrl =
-                pr.local_espaco_id && !acceptedSchedule?.scheduledLocation ? locEntry?.logo ?? null : null;
+              // Logo: prefer ID-based lookup, fall back to text-match for older records
+              const effectiveLocalLogoUrl = !acceptedSchedule?.scheduledLocation
+                ? locEntry?.logo ?? localStrLogoFallback ?? null
+                : null;
               const hasScheduleDefined = Boolean((acceptedSchedule?.scheduledFor ?? pr.data_partida) && effectiveLocalLabel);
               const schedulePending = String(pr.status ?? "") === "aguardando_aceite_agendamento";
               const cancelMatchIdResolved = resolveCancelMatchIdParaCard(

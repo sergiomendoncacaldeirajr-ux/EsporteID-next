@@ -23,6 +23,7 @@ import {
 import { LEGAL_VERSIONS } from "@/lib/legal/versions";
 import { normalizarPapeisContaPrincipal } from "@/lib/roles";
 import { useUsernameCheck } from "@/lib/hooks/use-username-check";
+import { TeamShieldControl } from "@/components/perfil/team-shield-control";
 
 /* ── Seletor de localização via GPS ────────────────────────────────── */
 function LocationPicker({
@@ -1996,11 +1997,12 @@ export function OnboardingWizard({
                         prefix="org_novo_local_"
                       />
                       <div className="sm:col-span-2">
-                        <EidFilePicker
-                          name="org_novo_local_logo"
-                          accept="image/*"
-                          label="Escolher logo"
-                          hint="Logo do local (opcional)"
+                        <p className="mb-1.5 text-[11px] font-semibold text-eid-text-secondary uppercase tracking-wide">Logo do local (opcional)</p>
+                        <TeamShieldControl
+                          variant="espaco_logo"
+                          fileInputName="org_novo_local_logo"
+                          removeFlagName="org_novo_local_logo_remove"
+                          currentUrl={null}
                         />
                       </div>
                       <div className="sm:col-span-2">

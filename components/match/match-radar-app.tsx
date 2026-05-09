@@ -1537,7 +1537,7 @@ export function MatchRadarApp({
         ) : null}
         {isFullView && visibleCards.length > 0 && mounted
           ? createPortal(<div
-            className="fixed inset-0 isolate flex flex-col bg-eid-bg px-2.5 pb-[max(10px,env(safe-area-inset-bottom))] pt-[max(8px,env(safe-area-inset-top))] sm:px-4"
+            className="fixed inset-0 isolate flex flex-col overflow-hidden bg-eid-bg px-2.5 pb-[max(10px,env(safe-area-inset-bottom))] pt-[max(8px,env(safe-area-inset-top))] sm:px-4"
             style={{ zIndex: 300 }}
             role="dialog"
             aria-modal="true"
@@ -1565,7 +1565,7 @@ export function MatchRadarApp({
                 <X className="h-4 w-4" strokeWidth={2.5} aria-hidden />
               </button>
             </div>
-            <div className="@container grid min-w-0 flex-1 grid-cols-2 content-start items-start gap-1.5 overflow-y-auto pb-2 sm:gap-2.5">
+            <div className="@container grid min-w-0 flex-1 min-h-0 grid-cols-2 content-start items-start gap-1.5 overflow-y-auto overscroll-contain pb-2 sm:gap-2.5">
               {displayedSuggestionCards.map((c) => (
                 <div key={`${c.modalidade}-${c.id}-${c.esporteId}-full`} className="min-w-0">
                   <MatchRadarStickerCard
@@ -1595,7 +1595,7 @@ export function MatchRadarApp({
                 </div>
               ) : null}
             </div>
-            <div className="sticky bottom-0 z-[2] flex justify-center bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--eid-bg)_88%,transparent)_35%)] pb-1 pt-1">
+            <div className="flex shrink-0 justify-center bg-[linear-gradient(180deg,transparent,color-mix(in_srgb,var(--eid-bg)_88%,transparent)_35%)] pb-1 pt-1">
               <button
                 type="button"
                 onClick={() => switchViewMode("grid")}

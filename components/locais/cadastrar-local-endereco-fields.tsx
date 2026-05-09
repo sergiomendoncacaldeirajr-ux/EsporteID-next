@@ -4,20 +4,33 @@ import { useState } from "react";
 import { EnderecoAssistFields } from "@/components/locais/endereco-assist-fields";
 import { locaisSectionTitleClass } from "@/components/locais/locais-ui-tokens";
 
-type Props = {
-  localLogoUrl?: string | null;
+export type EnderecoInitialValues = {
+  endereco?: string;
+  numero?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  complemento?: string;
+  lat?: string;
+  lng?: string;
 };
 
-export function CadastrarLocalEnderecoFields({ localLogoUrl = null }: Props) {
-  const [endereco, setEndereco] = useState("");
-  const [numero, setNumero] = useState("");
-  const [bairro, setBairro] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [estado, setEstado] = useState("");
-  const [cep, setCep] = useState("");
-  const [complemento, setComplemento] = useState("");
-  const [lat, setLat] = useState("");
-  const [lng, setLng] = useState("");
+type Props = {
+  localLogoUrl?: string | null;
+  initialValues?: EnderecoInitialValues;
+};
+
+export function CadastrarLocalEnderecoFields({ localLogoUrl = null, initialValues }: Props) {
+  const [endereco, setEndereco] = useState(initialValues?.endereco ?? "");
+  const [numero, setNumero] = useState(initialValues?.numero ?? "");
+  const [bairro, setBairro] = useState(initialValues?.bairro ?? "");
+  const [cidade, setCidade] = useState(initialValues?.cidade ?? "");
+  const [estado, setEstado] = useState(initialValues?.estado ?? "");
+  const [cep, setCep] = useState(initialValues?.cep ?? "");
+  const [complemento, setComplemento] = useState(initialValues?.complemento ?? "");
+  const [lat, setLat] = useState(initialValues?.lat ?? "");
+  const [lng, setLng] = useState(initialValues?.lng ?? "");
 
   return (
     <div className="space-y-2">

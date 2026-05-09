@@ -31,6 +31,8 @@ export type AgendaPendenteEnvioRow = {
 export type AgendaPagePayload = {
   partidasAgendadasVisiveis: AgendaPartidaCardRow[];
   locMap: Map<number, { nome: string | null; logo: string | null }>;
+  /** Fallback logo lookup keyed by `local_str` text for partidas with no `local_espaco_id`. */
+  localStrLogoMap: LocalStrLogoMap;
   perfilMap: Map<string, { id: string; nome: string | null; avatar_url: string | null }>;
   nomeMap: Map<string, string | null>;
   notaEidByUserSport: Map<string, number>;
@@ -56,6 +58,9 @@ export type AgendaConfrontosPayload = Omit<
   AgendaPagePayload,
   "pendentesRankingStatus" | "timeRowById" | "espMap" | "pendentesEnvio" | "advMap" | "advEidMap"
 >;
+
+/** Text-keyed logo fallback for partidas where local_espaco_id wasn't saved. */
+export type LocalStrLogoMap = Map<string, string | null>;
 
 function matchAceitosOrClause(userId: string, agendaTeamIds: number[]): string {
   return agendaTeamIds.length > 0
@@ -96,6 +101,17 @@ export const getAgendaConfrontosPayload = cache(
       ),
     ];
 
+    // Text-based lookup: partidas that have local_str but no local_espaco_id
+    // (scheduled before the local_espaco_id save was implemented).
+    const localStrNamesForLookup = [
+      ...new Set(
+        (partidasAgendadas ?? [])
+          .filter((p) => p.local_str && !(p.local_espaco_id && Number(p.local_espaco_id) > 0))
+          .map((p) => String(p.local_str ?? "").split(" — ")[0].trim())
+          .filter((n) => n.length >= 2),
+      ),
+    ];
+
     const allPlayerIds = new Set<string>();
     for (const p of partidasAgendadas ?? []) {
       if (p.jogador1_id) allPlayerIds.add(p.jogador1_id);
@@ -111,7 +127,7 @@ export const getAgendaConfrontosPayload = cache(
       ),
     ];
 
-    const [{ data: locaisRows }, { data: nomeRows }, { data: ueRows }, loadAceitosResult] = await Promise.all([
+    const [{ data: locaisRows }, { data: nomeRows }, { data: ueRows }, loadAceitosResult, { data: localStrEspacos }] = await Promise.all([
       allLocalIds.length
         ? supabase.from("espacos_genericos").select("id, nome_publico, logo_arquivo").in("id", allLocalIds)
         : Promise.resolve({ data: [] as Array<{ id: number; nome_publico: string | null; logo_arquivo: string | null }> }),
@@ -126,6 +142,12 @@ export const getAgendaConfrontosPayload = cache(
             .in("esporte_id", esporteIdsPartidas)
         : Promise.resolve({ data: [] as Array<{ usuario_id: string; esporte_id: number; nota_eid: number | null }> }),
       loadAceitosCancelaveisItems(supabase, userId, (partidasAgendadas ?? []) as AgendaPartidaCardRow[]),
+      localStrNamesForLookup.length
+        ? supabase
+            .from("espacos_genericos")
+            .select("id, nome_publico, logo_arquivo, localizacao")
+            .in("nome_publico", localStrNamesForLookup)
+        : Promise.resolve({ data: [] as Array<{ id: number; nome_publico: string | null; logo_arquivo: string | null; localizacao: string | null }> }),
     ]);
     const locMap = new Map(
       (locaisRows ?? []).map((l) => [
@@ -136,6 +158,31 @@ export const getAgendaConfrontosPayload = cache(
         },
       ])
     );
+
+    // Build fallback map: "full local_str text" → logo URL
+    const localStrLogoMap: LocalStrLogoMap = new Map();
+    for (const p of (partidasAgendadas ?? []).filter(
+      (x) => x.local_str && !(x.local_espaco_id && Number(x.local_espaco_id) > 0)
+    )) {
+      const str = String(p.local_str ?? "").trim();
+      if (!str || localStrLogoMap.has(str)) continue;
+      const namePart = str.split(" — ")[0].trim();
+      const locPart = str.includes(" — ") ? str.slice(str.indexOf(" — ") + 3).trim() : null;
+      const candidates = (localStrEspacos ?? []).filter(
+        (e) => (e.nome_publico ?? "").trim().toLowerCase() === namePart.toLowerCase()
+      );
+      let match = candidates[0] as (typeof candidates)[0] | undefined;
+      if (candidates.length > 1 && locPart) {
+        const precise = candidates.find((e) =>
+          (e.localizacao ?? "").trim().toLowerCase().includes(locPart.toLowerCase())
+        );
+        if (precise) match = precise;
+      }
+      const logo = match
+        ? (match as { logo_arquivo?: string | null }).logo_arquivo?.trim() || null
+        : null;
+      localStrLogoMap.set(str, logo);
+    }
     const perfilMap = new Map((nomeRows ?? []).map((r) => [r.id, r]));
     const nomeMap = new Map((nomeRows ?? []).map((r) => [r.id, r.nome]));
     const notaEidByUserSport = new Map(
@@ -228,6 +275,7 @@ export const getAgendaConfrontosPayload = cache(
     return {
       partidasAgendadasVisiveis,
       locMap,
+      localStrLogoMap,
       perfilMap,
       nomeMap,
       notaEidByUserSport,

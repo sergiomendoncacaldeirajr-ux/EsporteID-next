@@ -10,6 +10,7 @@ type LocalHint = {
   id: number;
   nome_publico: string | null;
   localizacao: string | null;
+  [key: string]: unknown; // allow extra fields from the full hint object
 };
 
 export function NomeLocalInputSuggestions({

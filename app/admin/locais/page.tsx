@@ -53,6 +53,9 @@ function StatusPill({ status, adminSuspenso, ativoListagem, ownershipStatus }: {
   if (adminSuspenso) {
     return <span className="inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-300">● Suspenso (admin)</span>;
   }
+  if (ownershipStatus === "pendente_validacao" || ownershipStatus === "reivindicado") {
+    return <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/45 bg-sky-500/12 px-2 py-0.5 text-[10px] font-bold text-sky-300">● Posse pendente</span>;
+  }
   if (!ativoListagem) {
     const label = ownershipStatus === "generico" ? "Aguard. vitrine" : "Fora da listagem";
     return <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[10px] font-bold text-amber-300">● {label}</span>;

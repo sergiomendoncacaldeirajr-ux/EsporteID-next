@@ -164,9 +164,23 @@ export async function ComunidadeStreamPartidas({
       painelPartidasAll.map((p) => p.local_espaco_id).filter((x): x is number => typeof x === "number" && x > 0),
     ),
   ];
-  const { data: painelLocaisRows } = painelLocalIds.length
-    ? await supabase.from("espacos_genericos").select("id, nome_publico, logo_arquivo").in("id", painelLocalIds)
-    : { data: [] };
+  // Text-based fallback: partidas with local_str but no local_espaco_id
+  const painelLocalStrNames = [
+    ...new Set(
+      painelPartidasAll
+        .filter((p) => p.local_str && !(p.local_espaco_id && Number(p.local_espaco_id) > 0))
+        .map((p) => String(p.local_str ?? "").split(" — ")[0].trim())
+        .filter((n) => n.length >= 2),
+    ),
+  ];
+  const [{ data: painelLocaisRows }, { data: painelLocalStrEspacos }] = await Promise.all([
+    painelLocalIds.length
+      ? supabase.from("espacos_genericos").select("id, nome_publico, logo_arquivo").in("id", painelLocalIds)
+      : Promise.resolve({ data: [] as Array<{ id: number; nome_publico: string | null; logo_arquivo: string | null }> }),
+    painelLocalStrNames.length
+      ? supabase.from("espacos_genericos").select("id, nome_publico, logo_arquivo, localizacao").in("nome_publico", painelLocalStrNames)
+      : Promise.resolve({ data: [] as Array<{ id: number; nome_publico: string | null; logo_arquivo: string | null; localizacao: string | null }> }),
+  ]);
   const painelLocMap = new Map(
     (painelLocaisRows ?? []).map((l) => [
       l.id,
@@ -176,6 +190,27 @@ export async function ComunidadeStreamPartidas({
       },
     ])
   );
+  // Build fallback map: "full local_str text" → logo URL
+  const painelLocalStrLogoMap = new Map<string, string | null>();
+  for (const p of painelPartidasAll.filter(
+    (x) => x.local_str && !(x.local_espaco_id && Number(x.local_espaco_id) > 0)
+  )) {
+    const str = String(p.local_str ?? "").trim();
+    if (!str || painelLocalStrLogoMap.has(str)) continue;
+    const namePart = str.split(" — ")[0].trim();
+    const locPart = str.includes(" — ") ? str.slice(str.indexOf(" — ") + 3).trim() : null;
+    const candidates = (painelLocalStrEspacos ?? []).filter(
+      (e) => (e.nome_publico ?? "").trim().toLowerCase() === namePart.toLowerCase()
+    );
+    let match = candidates[0] as (typeof candidates)[0] | undefined;
+    if (candidates.length > 1 && locPart) {
+      const precise = candidates.find((e) =>
+        (e.localizacao ?? "").trim().toLowerCase().includes(locPart.toLowerCase())
+      );
+      if (precise) match = precise;
+    }
+    painelLocalStrLogoMap.set(str, match ? (match as { logo_arquivo?: string | null }).logo_arquivo?.trim() || null : null);
+  }
   const painelPlayerIds = new Set<string>();
   for (const p of painelPartidasAll) {
     if (p.jogador1_id) painelPlayerIds.add(p.jogador1_id);
@@ -400,8 +435,12 @@ export async function ComunidadeStreamPartidas({
                             pr.local_espaco_id ? painelLocMap.get(pr.local_espaco_id)?.nome ?? null : null,
                           )}
                           localLogoUrl={
-                            pr.local_espaco_id && !sched?.scheduledLocation
-                              ? painelLocMap.get(pr.local_espaco_id)?.logo ?? null
+                            !sched?.scheduledLocation
+                              ? (pr.local_espaco_id
+                                  ? painelLocMap.get(pr.local_espaco_id)?.logo ?? null
+                                  : pr.local_str
+                                    ? painelLocalStrLogoMap.get(pr.local_str) ?? null
+                                    : null)
                               : null
                           }
                           variant="placar"
@@ -466,8 +505,12 @@ export async function ComunidadeStreamPartidas({
                             pr.local_espaco_id ? painelLocMap.get(pr.local_espaco_id)?.nome ?? null : null,
                           )}
                           localLogoUrl={
-                            pr.local_espaco_id && !sched?.scheduledLocation
-                              ? painelLocMap.get(pr.local_espaco_id)?.logo ?? null
+                            !sched?.scheduledLocation
+                              ? (pr.local_espaco_id
+                                  ? painelLocMap.get(pr.local_espaco_id)?.logo ?? null
+                                  : pr.local_str
+                                    ? painelLocalStrLogoMap.get(pr.local_str) ?? null
+                                    : null)
                               : null
                           }
                           variant="agendada"

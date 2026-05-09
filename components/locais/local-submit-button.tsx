@@ -2,7 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 
-export function LocalSubmitButton({ disabled = false }: { disabled?: boolean }) {
+export function LocalSubmitButton({ disabled = false, idleLabel }: { disabled?: boolean; idleLabel?: string }) {
   const { pending } = useFormStatus();
   const off = disabled || pending;
   return (
@@ -16,14 +16,14 @@ export function LocalSubmitButton({ disabled = false }: { disabled?: boolean }) 
       {pending ? (
         <span className="inline-flex items-center gap-2">
           <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/35 border-t-white" aria-hidden />
-          <span className="animate-pulse">Cadastrando...</span>
+          <span className="animate-pulse">Enviando...</span>
         </span>
       ) : (
         <>
           <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
             <path d="M3 11.9 20.4 4a.8.8 0 0 1 1.1 1l-4.4 14a.8.8 0 0 1-1.4.2l-2.8-3.6-4.2 2.2a.8.8 0 0 1-1.2-.8l.6-4.4-4-1.2a.8.8 0 0 1-.1-1.5Z" />
           </svg>
-          Cadastrar sugestão
+          {idleLabel ?? "Cadastrar sugestão"}
         </>
       )}
     </button>

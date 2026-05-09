@@ -34,26 +34,16 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
   const returnTo = resolveBackHref(String(formData.get("return_to") ?? "").trim(), "/locais/cadastrar");
   const returnToQs = returnTo !== "/locais/cadastrar" ? `&return_to=${encodeURIComponent(returnTo)}` : "";
   const logoFile = formData.get("logo_file");
+  const espacoIdReivindicadoRaw = String(formData.get("espaco_id_reivindicado") ?? "").trim();
+  const espacoIdReivindicado = espacoIdReivindicadoRaw ? Number(espacoIdReivindicadoRaw) : null;
+  const isClaimMode = Number.isFinite(espacoIdReivindicado) && (espacoIdReivindicado ?? 0) > 0;
 
   if (nome.length < 2) {
     redirect(`/locais/cadastrar?erro=nome${returnToQs}`);
   }
 
-  const duplicadoNome = await findDuplicateEspacoByNome(supabase, nome);
-  if (duplicadoNome) {
-    redirect(`/locais/cadastrar?erro=nome_dup&id=${duplicadoNome.id}${returnToQs}`);
-  }
-
   if (endereco.length < 3 || numero.length < 1 || cidade.length < 2 || uf.length < 2) {
     redirect(`/locais/cadastrar?erro=local${returnToQs}`);
-  }
-
-  const duplicado = await findDuplicateEspaco(supabase, {
-    nomePublico: nome,
-    localizacao,
-  });
-  if (duplicado) {
-    redirect(`/locais/cadastrar?erro=duplicado&id=${duplicado.id}${returnToQs}`);
   }
 
   let logoPublicUrl: string | null = null;
@@ -76,6 +66,69 @@ export async function cadastrarLocalGenerico(formData: FormData): Promise<void> 
       redirect(`/locais/cadastrar?erro=gravacao${returnToQs}`);
     }
     logoPublicUrl = supabase.storage.from("espaco-logos").getPublicUrl(path).data.publicUrl;
+  }
+
+  // ── Claim mode: update espaco data + create reivindicacao record ──────────
+  if (isClaimMode) {
+    const venueConfigJson = JSON.stringify({
+      endereco,
+      numero,
+      bairro: bairro || null,
+      cidade,
+      estado: uf,
+      cep: cep || null,
+      complemento: complemento || null,
+      origem: "reivindicacao-dono",
+    });
+    const updatePayload: Record<string, unknown> = {
+      nome_publico: nome,
+      localizacao,
+      cidade,
+      uf,
+      lat,
+      lng,
+      venue_config_json: venueConfigJson,
+      ownership_status: "pendente_validacao",
+    };
+    if (logoPublicUrl) updatePayload.logo_arquivo = logoPublicUrl;
+
+    // Update the espaco with the corrected data and mark pending validation
+    const { error: updateErr } = await supabase
+      .from("espacos_genericos")
+      .update(updatePayload)
+      .eq("id", espacoIdReivindicado!);
+    if (updateErr) redirect(`/locais/cadastrar?erro=gravacao${returnToQs}`);
+
+    // Create a formal reivindicação record for admin review
+    await supabase.from("espaco_reivindicacoes").insert({
+      espaco_generico_id: espacoIdReivindicado,
+      solicitante_id: user.id,
+      mensagem: `Solicitação de posse via cadastro de local (dados confirmados/atualizados pelo usuário).`,
+      status: "pendente",
+      revisado_por_usuario_id: null,
+      revisado_em: null,
+      observacoes_admin: null,
+    });
+
+    revalidatePath("/locais");
+    revalidatePath("/dashboard");
+    redirect(
+      `/locais/cadastrar?sucesso=1&novo_local_nome=${encodeURIComponent(nome)}&id=${encodeURIComponent(String(espacoIdReivindicado))}${returnToQs ?? ""}`
+    );
+  }
+
+  // ── Create mode (normal flow) ─────────────────────────────────────────────
+  const duplicadoNome = await findDuplicateEspacoByNome(supabase, nome);
+  if (duplicadoNome) {
+    redirect(`/locais/cadastrar?erro=nome_dup&id=${duplicadoNome.id}${returnToQs}`);
+  }
+
+  const duplicado = await findDuplicateEspaco(supabase, {
+    nomePublico: nome,
+    localizacao,
+  });
+  if (duplicado) {
+    redirect(`/locais/cadastrar?erro=duplicado&id=${duplicado.id}${returnToQs}`);
   }
 
   const { data, error } = await supabase
