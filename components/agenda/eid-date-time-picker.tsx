@@ -177,6 +177,7 @@ export function EidDateTimePicker({
             value={date}
             onChange={(e) => handleDateChange(e.target.value)}
             className="eid-input-dark h-11 w-full rounded-xl px-3 text-[15px] text-eid-fg"
+            style={{ fontSize: "15px" }}
           />
         </div>
 
@@ -201,6 +202,7 @@ export function EidDateTimePicker({
             value={time}
             onChange={(e) => handleTimeChange(e.target.value)}
             className="eid-input-dark h-11 w-[6rem] rounded-xl px-2 text-[15px] text-eid-fg"
+            style={{ fontSize: "15px" }}
           />
         </div>
       </div>

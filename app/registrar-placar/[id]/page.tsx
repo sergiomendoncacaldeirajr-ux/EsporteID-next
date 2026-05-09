@@ -551,20 +551,15 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                   <input type="hidden" name="partida_id" value={id} />
                   {agendaSomente ? <input type="hidden" name="modo_agenda" value="1" /> : null}
 
-                  {/* ── Data e hora ── */}
-                  <div className="grid gap-1.5">
-                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-eid-text-secondary">
-                      <svg className="h-3 w-3 opacity-60" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
-                        <path d="M4.5 1a.5.5 0 0 1 .5.5V2h6v-.5a.5.5 0 0 1 1 0V2h.5A1.5 1.5 0 0 1 14 3.5v9A1.5 1.5 0 0 1 12.5 14h-9A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H4v-.5a.5.5 0 0 1 .5-.5ZM3 5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7H3Zm1-2.5H3.5a.5.5 0 0 0-.5.5V4.5h10V3.5a.5.5 0 0 0-.5-.5H12v.5a.5.5 0 0 1-1 0V3H5v.5a.5.5 0 0 1-1 0V3Z" />
-                      </svg>
-                      Data e hora
-                    </span>
+                  {/* ── Data e hora (sem título — o cabeçalho da seção já diz "Data e Local") ── */}
+                  <div>
                     {p.torneio_id ? (
                       <input
                         type="datetime-local"
                         name="data_partida"
                         defaultValue={p.data_partida ? new Date(p.data_partida).toISOString().slice(0, 16) : ""}
                         className="eid-input-dark h-11 w-full rounded-xl px-3 text-[15px] text-eid-fg"
+                        style={{ fontSize: "15px" }}
                       />
                     ) : (
                       <RankingConfrontoDatetimeInput
@@ -588,8 +583,8 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                       defaultValue={defaultLocalStr}
                       placeholder="Quadra, clube, endereço..."
                       minChars={3}
-                      className="eid-input-dark h-11 rounded-xl px-3 text-[15px] text-eid-fg placeholder:text-eid-text-secondary/50"
-                      inputStyle={{ fontSize: "15px" }}
+                      className="eid-input-dark h-11 rounded-xl px-3 text-[13px] text-eid-fg placeholder:text-eid-text-secondary/50"
+                      inputStyle={{ fontSize: "13px" }}
                     />
                     <CadastrarLocalOverlayTrigger
                       href={cadastrarLocalHref}
