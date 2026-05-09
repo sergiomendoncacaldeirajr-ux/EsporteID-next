@@ -1463,6 +1463,54 @@ export async function adminSetMatchRankMonthlyLimitPerSport(formData: FormData) 
   }
 }
 
+/** Prazo (horas) para marcar data/local após o desafio ser aceito. */
+export async function adminSetMatchAgendamentoJanelaHoras(formData: FormData) {
+  try {
+    await guard();
+    const raw = Number(formData.get("horas"));
+    const horas = Number.isFinite(raw) ? Math.max(1, Math.min(720, Math.floor(raw))) : 48;
+    const { error } = await svc()
+      .from("app_config")
+      .upsert({ key: "match_agendamento_janela_horas", value_json: { horas }, atualizado_em: new Date().toISOString() }, { onConflict: "key" });
+    if (error) return;
+    revalidatePath("/admin/partidas");
+  } catch {
+    return;
+  }
+}
+
+/** Prazo (horas) para o oponente aceitar a data/local proposta. */
+export async function adminSetMatchAgendamentoAceiteHoras(formData: FormData) {
+  try {
+    await guard();
+    const raw = Number(formData.get("horas"));
+    const horas = Number.isFinite(raw) ? Math.max(1, Math.min(168, Math.floor(raw))) : 24;
+    const { error } = await svc()
+      .from("app_config")
+      .upsert({ key: "match_agendamento_aceite_horas", value_json: { horas }, atualizado_em: new Date().toISOString() }, { onConflict: "key" });
+    if (error) return;
+    revalidatePath("/admin/partidas");
+  } catch {
+    return;
+  }
+}
+
+/** Prazo (horas) para responder ao pedido de cancelamento de desafio. */
+export async function adminSetMatchCancelamentoRespostaHoras(formData: FormData) {
+  try {
+    await guard();
+    const raw = Number(formData.get("horas"));
+    const horas = Number.isFinite(raw) ? Math.max(1, Math.min(336, Math.floor(raw))) : 24;
+    const { error } = await svc()
+      .from("app_config")
+      .upsert({ key: "match_cancelamento_resposta_horas", value_json: { horas }, atualizado_em: new Date().toISOString() }, { onConflict: "key" });
+    if (error) return;
+    revalidatePath("/admin/partidas");
+  } catch {
+    return;
+  }
+}
+
 /** Prazo (em horas) para autoaprovar resultado pendente sem contestação. */
 export async function adminSetMatchResultadoAutoAprovacaoHoras(formData: FormData) {
   try {
