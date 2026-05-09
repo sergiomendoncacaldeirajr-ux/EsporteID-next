@@ -6,6 +6,7 @@ import {
   criarUnidadeEspacoAction,
 } from "@/app/espaco/actions";
 import { EspacoConfigForm } from "@/components/espaco/espaco-config-form";
+import { EspacoUnidadeLogoControl } from "@/components/espaco/espaco-unidade-logo-control";
 import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
 
@@ -230,19 +231,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
                         </select>
                       </label>
                     </div>
-                    <label className="block text-xs text-eid-text-secondary">
-                      Nova foto ou logo
-                      <input
-                        type="file"
-                        name="logo_file"
-                        accept="image/*"
-                        className="mt-1 block w-full text-[11px] file:mr-2 file:rounded-lg file:border file:border-[color:var(--eid-border-subtle)] file:bg-eid-surface/70 file:px-2 file:py-1"
-                      />
-                    </label>
-                    <label className="flex items-center gap-2 text-[11px] text-eid-text-secondary">
-                      <input type="checkbox" name="remover_logo" value="1" />
-                      Remover imagem atual
-                    </label>
+                    <EspacoUnidadeLogoControl currentUrl={u.logo_arquivo ?? null} />
                     <button
                       type="submit"
                       className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-primary-200"
@@ -296,15 +285,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               placeholder="Observações"
               className="eid-input-dark rounded-xl px-3 py-2 text-sm"
             />
-            <label className="text-xs text-eid-text-secondary">
-              Foto ou logo da quadra
-              <input
-                type="file"
-                name="logo_file"
-                accept="image/*"
-                className="mt-1 block w-full text-[11px] file:mr-2 file:rounded-lg file:border file:border-[color:var(--eid-border-subtle)] file:bg-eid-surface/70 file:px-2 file:py-1"
-              />
-            </label>
+            <EspacoUnidadeLogoControl currentUrl={null} />
             <div className="grid gap-2 sm:grid-cols-2">
               <input type="number" name="capacidade" defaultValue={4} className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
               <input name="status_operacao" defaultValue="ativa" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />

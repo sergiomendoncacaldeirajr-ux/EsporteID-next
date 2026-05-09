@@ -8,6 +8,7 @@ import {
   effectiveRankingMatchTeamIds,
   timesDaPartidaPorMatchRows,
 } from "@/lib/agenda/ranking-match-effective-teams";
+import { waMeHref } from "@/lib/perfil/whatsapp-visibility";
 import type { AceitosCancelaveisItem } from "@/components/agenda/agenda-aceitos-cancelaveis";
 
 const aceitosSelect =
@@ -183,12 +184,17 @@ export async function loadAceitosCancelaveisItems(
     ),
   ];
   const { data: oponentesAceitos } = oponenteIdsAceitos.length
-    ? await supabase.from("profiles").select("id, nome, avatar_url, localizacao").in("id", oponenteIdsAceitos)
+    ? await supabase.from("profiles").select("id, nome, avatar_url, localizacao, whatsapp").in("id", oponenteIdsAceitos)
     : { data: [] };
   const oponenteMapAceitos = new Map(
     (oponentesAceitos ?? []).map((p) => [
       p.id,
-      { nome: p.nome ?? "Oponente", avatarUrl: p.avatar_url ?? null, localizacao: p.localizacao ?? null },
+      {
+        nome: p.nome ?? "Oponente",
+        avatarUrl: p.avatar_url ?? null,
+        localizacao: p.localizacao ?? null,
+        whatsapp: (p as { whatsapp?: string | null }).whatsapp ?? null,
+      },
     ])
   );
 
@@ -263,6 +269,18 @@ export async function loadAceitosCancelaveisItems(
     const cid = String((t as { criador_id?: string | null }).criador_id ?? "").trim();
     if (cid) criadorPorTimeIdAgenda.set(id, cid);
   }
+  // Fetch WhatsApp for all team leaders (needed for WA contact buttons).
+  const allCriadorIds = [...new Set([...criadorPorTimeIdAgenda.values()])];
+  const { data: criadoresProfileRows } = allCriadorIds.length
+    ? await supabase.from("profiles").select("id, nome, whatsapp").in("id", allCriadorIds)
+    : { data: [] };
+  const criadorProfileById = new Map(
+    (criadoresProfileRows ?? []).map((p) => [
+      p.id as string,
+      { nome: (p.nome as string | null) ?? "Líder", whatsapp: (p as { whatsapp?: string | null }).whatsapp ?? null },
+    ])
+  );
+
   const agendaTeamIdSet = new Set(agendaTeamIds);
   function resolveOponenteTimeIdAceitos(m: {
     usuario_id?: string | null;
@@ -398,6 +416,58 @@ export async function loadAceitosCancelaveisItems(
     const locPerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.localizacao : null) ?? null;
     const nomeTime = timeRow?.nome != null && String(timeRow.nome).trim() ? String(timeRow.nome).trim() : null;
     const escudoTime = timeRow?.escudo != null && String(timeRow.escudo).trim() ? String(timeRow.escudo).trim() : null;
+    // ── WhatsApp contact resolution ──────────────────────────────────────
+    // Individual  → opponent's own WhatsApp
+    // Team leader → opponent team leader's WhatsApp
+    // Team member → own team leader's WhatsApp (never opponent's)
+    let whatsappContato: string | null = null;
+    let whatsappContatoNome: string | null = null;
+    const isTeamMatch =
+      String((m as { modalidade_confronto?: string | null }).modalidade_confronto ?? "")
+        .trim()
+        .toLowerCase() !== "individual";
+
+    if (!isTeamMatch) {
+      // Individual: show opponent's WhatsApp
+      const oppWa = opp ? (oponenteMapAceitos.get(opp)?.whatsapp ?? null) : null;
+      const href = waMeHref(oppWa);
+      if (href) {
+        whatsappContato = href;
+        whatsappContatoNome = opp ? (oponenteMapAceitos.get(opp)?.nome ?? null) : null;
+      }
+    } else if (isLeader) {
+      // Team leader: show opponent leader's WhatsApp
+      if (tidOpp != null) {
+        const oppCriadorId = criadorPorTimeIdAgenda.get(tidOpp);
+        if (oppCriadorId) {
+          const oppLeader = criadorProfileById.get(oppCriadorId);
+          const href = waMeHref(oppLeader?.whatsapp ?? null);
+          if (href) {
+            whatsappContato = href;
+            whatsappContatoNome = oppLeader?.nome ?? null;
+          }
+        }
+      }
+    } else {
+      // Team member: show own team leader's WhatsApp (NOT the opponent's)
+      const dti = Number(effTeams.desafiante_time_id ?? 0);
+      const ati = Number(effTeams.adversario_time_id ?? 0);
+      const myTeamId =
+        dti > 0 && agendaTeamIdSet.has(dti) ? dti : ati > 0 && agendaTeamIdSet.has(ati) ? ati : null;
+      if (myTeamId != null) {
+        const myCriadorId = criadorPorTimeIdAgenda.get(myTeamId);
+        // Only show if criador is someone other than the member themselves
+        if (myCriadorId && myCriadorId !== userId) {
+          const myLeader = criadorProfileById.get(myCriadorId);
+          const href = waMeHref(myLeader?.whatsapp ?? null);
+          if (href) {
+            whatsappContato = href;
+            whatsappContatoNome = myLeader?.nome ?? null;
+          }
+        }
+      }
+    }
+
     return [
       {
         id: Number(m.id),
@@ -416,6 +486,8 @@ export async function loadAceitosCancelaveisItems(
         rescheduleDeadlineAt: m.reschedule_deadline_at ? String(m.reschedule_deadline_at) : null,
         options: opcoesByMatch.get(Number(m.id)) ?? [],
         gestaoSomenteLeitura: !isLeader,
+        whatsappContato,
+        whatsappContatoNome,
       },
     ];
   });

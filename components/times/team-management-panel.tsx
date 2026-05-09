@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useActionState } from "react";
-import type { ChangeEvent } from "react";
 import { useUsernameCheck } from "@/lib/hooks/use-username-check";
 import { criarEquipe, convidarUsuarioParaEquipe, type TeamActionState } from "@/app/times/actions";
 import { emitEidSocialDataRefresh } from "@/lib/comunidade/social-panel-layout";
@@ -12,7 +11,7 @@ import { AVISO_REGRA_LIMITE_FORMACAO_GLOBAL } from "@/lib/formacao/formacao-glob
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { EidInviteButton } from "@/components/ui/eid-invite-button";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
-import { prepareTeamShieldForUpload } from "@/lib/images/prepare-avatar-upload";
+import { TeamShieldControl } from "@/components/perfil/team-shield-control";
 
 const initial: TeamActionState = { ok: false, message: "" };
 
@@ -127,7 +126,6 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
   const [inviteSuggestions, setInviteSuggestions] = useState<AtletaSuggest[]>([]);
   const [inviteSuggestOpen, setInviteSuggestOpen] = useState(false);
   const [inviteSuggestLoading, setInviteSuggestLoading] = useState(false);
-  const [escudoPrepError, setEscudoPrepError] = useState<string | null>(null);
   const [createUsername, setCreateUsername] = useState("");
   const createUsernameStatus = useUsernameCheck(createUsername, "times");
 
@@ -251,22 +249,6 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
     );
   }
 
-  async function onEscudoCreateChange(e: ChangeEvent<HTMLInputElement>) {
-    const input = e.currentTarget;
-    const raw = input.files?.[0];
-    if (!raw) return;
-    setEscudoPrepError(null);
-    const prepared = await prepareTeamShieldForUpload(raw);
-    if (!prepared.ok) {
-      setEscudoPrepError(prepared.message);
-      input.value = "";
-      return;
-    }
-    const dt = new DataTransfer();
-    dt.items.add(prepared.file);
-    input.files = dt.files;
-  }
-
   const showCreate = panelMode === "all" || panelMode === "create";
   const showInviteBlock =
     (panelMode === "all" || panelMode === "invite") && minhasEquipes.length > 0;
@@ -302,15 +284,13 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
             </p>
               </div>
             </div>
-            <input
-              type="file"
-              name="escudo_file"
-              accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif"
-              required
-              className={`${isCadastrarStyle ? "mt-2 block w-full text-[10px] text-[#556987] file:mr-2 file:rounded-full file:border file:border-[#C9D8F6] file:bg-white file:px-2.5 file:py-1.5 file:text-[10px] file:font-bold file:text-[#2563EB]" : "mt-2 block w-full text-[11px] text-eid-text-secondary file:mr-2 file:rounded-lg file:border file:border-[color:var(--eid-border-subtle)] file:bg-eid-surface/70 file:px-2.5 file:py-1 file:text-[10px] file:font-semibold file:text-eid-fg"}`}
-              onChange={(e) => void onEscudoCreateChange(e)}
+            <TeamShieldControl
+              fileInputName="escudo_file"
+              variant="team_shield"
+              required={true}
+              currentUrl={null}
+              removeFlagName="escudo_remove"
             />
-            {escudoPrepError ? <p className="mt-2 text-[11px] text-amber-200">{escudoPrepError}</p> : null}
           </div>
 
           <p
