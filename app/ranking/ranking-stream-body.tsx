@@ -415,8 +415,8 @@ export async function RankingStreamBody({
 
   return (
     <>
-      {state.page === 1 ? (
-        <section className="mt-4 md:mt-6">
+      {/* Pódio sempre visível — a lista é cumulativa, sempre começa do 1º */}
+      <section className="mt-4 md:mt-6">
           <RankingPodium
             second={podiumSecond}
             first={podiumFirst}
@@ -430,8 +430,7 @@ export async function RankingStreamBody({
             rankToggle={<RankingRankToggle state={stateComGenero} principalEsporteId={esportePrincipalId} />}
             periodToggle={<RankingPeriodToggle state={stateComGenero} principalEsporteId={esportePrincipalId} />}
           />
-        </section>
-      ) : null}
+      </section>
 
       {rankingAll.length === 0 ? (
         <p className="eid-ranking-empty mt-4 rounded-xl border border-transparent bg-eid-surface/40 p-6 text-center text-sm text-eid-text-secondary shadow-none">
