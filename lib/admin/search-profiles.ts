@@ -12,7 +12,7 @@ export function sanitizeAdminUserSearch(term: string) {
 }
 
 const SELECT =
-  "id, nome, username, tipo_usuario, perfil_completo, criado_em, match_maioridade_confirmada, match_maioridade_confirmada_em, genero" as const;
+  "id, nome, username, tipo_usuario, perfil_completo, criado_em, match_maioridade_confirmada, match_maioridade_confirmada_em, genero, avatar_url, localizacao" as const;
 
 export type AdminSearchProfileRow = {
   id: string;
@@ -24,6 +24,8 @@ export type AdminSearchProfileRow = {
   match_maioridade_confirmada: boolean;
   match_maioridade_confirmada_em: string | null;
   genero: string | null;
+  avatar_url: string | null;
+  localizacao: string | null;
 };
 
 export type SearchProfilesOpts =

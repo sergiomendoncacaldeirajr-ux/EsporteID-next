@@ -1377,6 +1377,7 @@ export async function adminSetMatchRankCooldownMeses(formData: FormData) {
       );
     if (error) return;
     revalidatePath("/admin/regras");
+    revalidatePath("/admin/partidas");
     revalidatePath("/desafio");
   } catch {
     return;
@@ -1401,6 +1402,7 @@ export async function adminSetMatchRankPendingLimit(formData: FormData) {
       );
     if (error) return;
     revalidatePath("/admin/regras");
+    revalidatePath("/admin/partidas");
     revalidatePath("/desafio");
     revalidatePath("/match");
   } catch {
@@ -1426,6 +1428,7 @@ export async function adminSetMatchRankMonthlyLimitPerSport(formData: FormData) 
       );
     if (error) return;
     revalidatePath("/admin/regras");
+    revalidatePath("/admin/partidas");
     revalidatePath("/desafio");
     revalidatePath("/match");
     revalidatePath("/perfil");
@@ -1452,7 +1455,69 @@ export async function adminSetMatchResultadoAutoAprovacaoHoras(formData: FormDat
       );
     if (error) return;
     revalidatePath("/admin/regras");
+    revalidatePath("/admin/partidas");
     revalidatePath("/agenda");
+  } catch {
+    return;
+  }
+}
+
+/** Janela de agendamento: prazo (h) para marcar data/local após aceite do desafio. */
+export async function adminSetMatchAgendamentoJanelaHoras(formData: FormData) {
+  try {
+    await guard();
+    const raw = Number(formData.get("horas"));
+    const horas = Number.isFinite(raw) ? Math.max(1, Math.min(720, Math.floor(raw))) : 72;
+    const { error } = await svc()
+      .from("app_config")
+      .upsert(
+        { key: "match_agendamento_janela_horas", value_json: { horas }, atualizado_em: new Date().toISOString() },
+        { onConflict: "key" }
+      );
+    if (error) return;
+    revalidatePath("/admin/partidas");
+    revalidatePath("/agenda");
+    revalidatePath("/comunidade");
+  } catch {
+    return;
+  }
+}
+
+/** Aceite de agendamento: prazo (h) para o oponente aceitar a data/local proposta. */
+export async function adminSetMatchAgendamentoAceiteHoras(formData: FormData) {
+  try {
+    await guard();
+    const raw = Number(formData.get("horas"));
+    const horas = Number.isFinite(raw) ? Math.max(1, Math.min(168, Math.floor(raw))) : 24;
+    const { error } = await svc()
+      .from("app_config")
+      .upsert(
+        { key: "match_agendamento_aceite_horas", value_json: { horas }, atualizado_em: new Date().toISOString() },
+        { onConflict: "key" }
+      );
+    if (error) return;
+    revalidatePath("/admin/partidas");
+    revalidatePath("/agenda");
+  } catch {
+    return;
+  }
+}
+
+/** Cancelamento: prazo (h) de resposta ao pedido de cancelamento. */
+export async function adminSetMatchCancelamentoRespostaHoras(formData: FormData) {
+  try {
+    await guard();
+    const raw = Number(formData.get("horas"));
+    const horas = Number.isFinite(raw) ? Math.max(1, Math.min(336, Math.floor(raw))) : 72;
+    const { error } = await svc()
+      .from("app_config")
+      .upsert(
+        { key: "match_cancelamento_resposta_horas", value_json: { horas }, atualizado_em: new Date().toISOString() },
+        { onConflict: "key" }
+      );
+    if (error) return;
+    revalidatePath("/admin/partidas");
+    revalidatePath("/comunidade");
   } catch {
     return;
   }
