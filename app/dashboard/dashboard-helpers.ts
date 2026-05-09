@@ -21,6 +21,7 @@ export type PartidaResumo = {
   data_partida: string | null;
   data_registro: string | null;
   torneio_id?: number | null;
+  local_str?: string | null;
   esportes?: { nome?: string | null } | Array<{ nome?: string | null }> | null;
 };
 

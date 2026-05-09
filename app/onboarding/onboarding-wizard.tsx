@@ -254,6 +254,7 @@ import {
 } from "./actions";
 import { EnderecoAssistFields } from "@/components/locais/endereco-assist-fields";
 import { LocalSelectAutocomplete } from "@/components/locais/local-select-autocomplete";
+import { LocalClaimSearch, type LocalClaimItem } from "@/components/locais/local-claim-search";
 
 const ONBOARDING_DRAFT_KEY_PREFIX = "eid_onboarding_draft_v1";
 
@@ -443,6 +444,7 @@ export function OnboardingWizard({
   const [orgLocalModo, setOrgLocalModo] = useState<"existente" | "novo">(extrasInitial.orgLocalModo);
   const [orgLocalId, setOrgLocalId] = useState<string>(extrasInitial.orgLocalId ? String(extrasInitial.orgLocalId) : "0");
   const [orgLocalMsg, setOrgLocalMsg] = useState<string>(extrasInitial.orgLocalMsg);
+  const [orgNovoLocalReivindicarId, setOrgNovoLocalReivindicarId] = useState<number | null>(null);
   const [orgNovoLocalNome, setOrgNovoLocalNome] = useState<string>("");
   const [orgNovoLocalEndereco, setOrgNovoLocalEndereco] = useState<string>("");
   const [orgNovoLocalNumero, setOrgNovoLocalNumero] = useState<string>(extrasInitial.orgNovoLocalNumero);
@@ -452,6 +454,7 @@ export function OnboardingWizard({
   const [orgNovoLocalCep, setOrgNovoLocalCep] = useState<string>("");
   const [orgNovoLocalLat, setOrgNovoLocalLat] = useState<string>("");
   const [orgNovoLocalLng, setOrgNovoLocalLng] = useState<string>("");
+  const [espacoReivindicarId, setEspacoReivindicarId] = useState<number | null>(null);
   const [espacoNome, setEspacoNome] = useState<string>(extrasInitial.espacoNome);
   const [espacoEsportes, setEspacoEsportes] = useState<Set<number>>(new Set(extrasInitial.espacoEsportes));
   const [estruturas, setEstruturas] = useState<Set<string>>(new Set(extrasInitial.estruturas));
@@ -1968,10 +1971,21 @@ export function OnboardingWizard({
                     </>
                   ) : (
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      <input
+                      {orgNovoLocalReivindicarId && (
+                        <input type="hidden" name="org_novo_local_reivindicar_id" value={orgNovoLocalReivindicarId} className="hidden" />
+                      )}
+                      <LocalClaimSearch
+                        locais={locais as LocalClaimItem[]}
                         name="org_novo_local_nome"
                         value={orgNovoLocalNome}
-                        onChange={(e) => setOrgNovoLocalNome(e.target.value)}
+                        onChange={setOrgNovoLocalNome}
+                        onSelect={(item) => {
+                          setOrgNovoLocalNome(item.nome);
+                          setOrgNovoLocalEndereco(item.localizacao);
+                          setOrgNovoLocalReivindicarId(item.id);
+                        }}
+                        onClear={() => setOrgNovoLocalReivindicarId(null)}
+                        claimId={orgNovoLocalReivindicarId}
                         placeholder="Nome do local"
                         className="eid-input-dark rounded-xl px-3 py-2 text-sm text-eid-fg sm:col-span-2"
                       />
@@ -2023,10 +2037,21 @@ export function OnboardingWizard({
                   <h2 className="text-sm font-bold uppercase tracking-wide text-eid-primary-500">
                     Dados completos do espaço
                   </h2>
-                  <input
+                  {espacoReivindicarId && (
+                    <input type="hidden" name="espaco_reivindicar_id" value={espacoReivindicarId} />
+                  )}
+                  <LocalClaimSearch
+                    locais={locais as LocalClaimItem[]}
                     name="espaco_nome"
                     value={espacoNome}
-                    onChange={(e) => setEspacoNome(e.target.value)}
+                    onChange={setEspacoNome}
+                    onSelect={(item) => {
+                      setEspacoNome(item.nome);
+                      setEspacoEndereco(item.localizacao);
+                      setEspacoReivindicarId(item.id);
+                    }}
+                    onClear={() => setEspacoReivindicarId(null)}
+                    claimId={espacoReivindicarId}
                     placeholder="Nome público do local"
                     className="eid-input-dark mt-3 w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                   />

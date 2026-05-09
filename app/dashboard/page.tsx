@@ -110,7 +110,7 @@ export default async function DashboardPage({ searchParams }: Props) {
 
   const partidasAgendadasResumoPromise = supabase
     .from("partidas")
-    .select("id, data_partida, data_registro, torneio_id, esportes(nome)")
+    .select("id, data_partida, data_registro, torneio_id, local_str, esportes(nome)")
     .or(partidasDashOr)
     .eq("status", "agendada")
     .order("data_partida", { ascending: true, nullsFirst: false })
@@ -237,7 +237,8 @@ export default async function DashboardPage({ searchParams }: Props) {
     if (proximaPartida.torneio_id) {
       mensagemTopo = `Prioridade: partida de torneio ${when}. Confira na agenda.`;
     } else {
-      mensagemTopo = `Jogo ${when} em ${esporteProximaPartida}.`;
+      const localInfo = proximaPartida.local_str ? ` · ${proximaPartida.local_str}` : "";
+      mensagemTopo = `Partida de ${esporteProximaPartida}${localInfo} — ${when}. Confira na agenda.`;
     }
     mensagemTopoHref = "/agenda";
     mensagemTopoTom = "aviso";

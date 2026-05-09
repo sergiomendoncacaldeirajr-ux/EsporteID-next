@@ -122,6 +122,49 @@ function PrazoCard({
   );
 }
 
+function formatScoreFromMsg(mensagem: string | null | undefined): string | null {
+  if (!mensagem) return null;
+  const marker = "| score_payload:";
+  const idx = mensagem.indexOf(marker);
+  if (idx === -1) return null;
+  try {
+    const raw = JSON.parse(mensagem.slice(idx + marker.length)) as {
+      type?: string;
+      sets?: Array<{ a?: number; b?: number; tiebreakA?: number; tiebreakB?: number }>;
+      goals?: { a?: number; b?: number; overtimeA?: number; overtimeB?: number; penaltiesA?: number; penaltiesB?: number };
+      points?: { a?: number; b?: number };
+      rounds?: { items?: Array<{ a?: number; b?: number }> };
+    };
+    if (raw.type === "sets" && raw.sets?.length) {
+      return raw.sets
+        .filter((s) => Number.isFinite(Number(s.a)) || Number.isFinite(Number(s.b)))
+        .map((s) => {
+          const a = Number(s.a ?? 0);
+          const b = Number(s.b ?? 0);
+          const tb = Number(s.tiebreakA ?? 0) > 0 || Number(s.tiebreakB ?? 0) > 0;
+          const tbScore = tb ? `(${Math.min(Number(s.tiebreakA ?? 0), Number(s.tiebreakB ?? 0))})` : "";
+          return `${a}-${b}${tbScore}`;
+        })
+        .join("  ");
+    }
+    if (raw.type === "gols" && raw.goals) {
+      const g = raw.goals;
+      let out = `${Number(g.a ?? 0)}-${Number(g.b ?? 0)}`;
+      const hasOT = Number(g.overtimeA ?? 0) > 0 || Number(g.overtimeB ?? 0) > 0;
+      const hasPen = Number(g.penaltiesA ?? 0) > 0 || Number(g.penaltiesB ?? 0) > 0;
+      if (hasOT) out += `  (prol. ${Number(g.overtimeA ?? 0)}-${Number(g.overtimeB ?? 0)})`;
+      if (hasPen) out += `  (pen. ${Number(g.penaltiesA ?? 0)}-${Number(g.penaltiesB ?? 0)})`;
+      return out;
+    }
+    if (raw.type === "pontos" && raw.points) {
+      return `${Number(raw.points.a ?? 0)}-${Number(raw.points.b ?? 0)}`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function AdminPartidasPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const flash = typeof sp.adm_flash === "string" ? sp.adm_flash : "";
@@ -150,7 +193,7 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
     db.from("app_config").select("value_json").eq("key", "match_rank_monthly_limit_per_sport").maybeSingle(),
     db
       .from("partidas")
-      .select("id, match_id, status, status_ranking, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, torneio_id, data_partida, local_str, criado_em, placar_1, placar_2, lancado_por, data_resultado")
+      .select("id, match_id, status, status_ranking, esporte_id, jogador1_id, jogador2_id, time1_id, time2_id, torneio_id, data_partida, local_str, criado_em, placar_1, placar_2, lancado_por, data_resultado, mensagem")
       .order("id", { ascending: false })
       .limit(200),
   ]);
@@ -414,6 +457,8 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
             const placar2 = (p as { placar_2?: number | null }).placar_2 ?? null;
             const lancadoPor = (p as { lancado_por?: string | null }).lancado_por ?? null;
             const dataResultado = (p as { data_resultado?: string | null }).data_resultado ?? null;
+            const mensagemRaw = (p as { mensagem?: string | null }).mensagem ?? null;
+            const fullScore = formatScoreFromMsg(mensagemRaw);
             const temPlacar = placar1 !== null && placar2 !== null;
             const lancadoPorNome = lancadoPor ? (profileMap.get(lancadoPor)?.nome ?? lancadoPor.slice(0, 8) + "…") : null;
             const dataFormatada = dataPartida
@@ -498,12 +543,17 @@ export default async function AdminPartidasPage({ searchParams }: Props) {
                         )}
                       </div>
                       <div className="flex flex-wrap items-center gap-3 px-3 py-2">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-[11px] font-semibold text-eid-fg/70">{lado1?.label ?? "Lado 1"}</span>
-                          <span className="text-[22px] font-black tabular-nums leading-none text-eid-fg">
-                            {placar1} <span className="text-[14px] font-bold text-eid-text-secondary">×</span> {placar2}
-                          </span>
-                          <span className="text-[11px] font-semibold text-eid-fg/70">{lado2?.label ?? "Lado 2"}</span>
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-[11px] font-semibold text-eid-fg/70">{lado1?.label ?? "Lado 1"}</span>
+                            <span className="text-[22px] font-black tabular-nums leading-none text-eid-fg">
+                              {placar1} <span className="text-[14px] font-bold text-eid-text-secondary">×</span> {placar2}
+                            </span>
+                            <span className="text-[11px] font-semibold text-eid-fg/70">{lado2?.label ?? "Lado 2"}</span>
+                          </div>
+                          {fullScore && (
+                            <p className="font-mono text-[11px] tracking-wide text-emerald-200">{fullScore}</p>
+                          )}
                         </div>
                         {lancadoPorNome && (
                           <div className="ml-auto text-right">
