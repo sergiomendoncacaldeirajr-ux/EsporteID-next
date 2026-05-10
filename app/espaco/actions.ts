@@ -8,6 +8,7 @@ import {
   createAsaasPayment,
   createAsaasSubscription,
 } from "@/lib/asaas/client";
+import { isAsaasSimulationEnabledFor } from "@/lib/asaas/simulate-payments";
 import { slugifyEspaco } from "@/lib/espacos/slug";
 import { normalizeEspacoAssociacaoConfig } from "@/lib/espacos/associacao-config";
 import { normalizeEspacoReservaConfig, serializarEspacoReservaConfig } from "@/lib/espacos/config";
@@ -2581,7 +2582,7 @@ export async function gerarCobrancaMensalidadePlataformaEspacoAction(
     );
     const trialFim = new Date(hoje.getTime() + trialDias * 24 * 60 * 60 * 1000);
     const primeiraCobranca = trialFim.toISOString().slice(0, 10);
-    const subscription = await createAsaasSubscription({
+    const subscriptionPayload: Record<string, unknown> = {
       customer: customerId,
       billingType: "CREDIT_CARD",
       value: (Number(assin.valor_mensal_centavos ?? 0) || 0) / 100,
@@ -2589,7 +2590,49 @@ export async function gerarCobrancaMensalidadePlataformaEspacoAction(
       cycle: "MONTHLY",
       description: `Mensalidade PaaS EsporteID — ${String(espaco.nome_publico ?? "Espaço")} · ${String(assin.plano_nome ?? "Plano")}`,
       externalReference: `espaco_paaS_assinatura:${assin.id}:${Date.now()}`,
-    });
+    };
+
+    const simulationEnabled = await isAsaasSimulationEnabledFor("locais");
+    let subscription: { id: string; nextDueDate?: string | null; status?: string } | null = null;
+    if (simulationEnabled) {
+      subscription = { id: `sim_locais_${assin.id}_${Date.now()}`, nextDueDate: primeiraCobranca, status: "ACTIVE" };
+    } else {
+      const digits = (value: FormDataEntryValue | null) => String(value ?? "").replace(/\D/g, "");
+      const holderName = String(formData.get("card_holder_name") ?? "").trim();
+      const cardNumber = digits(formData.get("card_number"));
+      const expiryMonth = digits(formData.get("card_expiry_month")).padStart(2, "0").slice(0, 2);
+      const expiryYear = digits(formData.get("card_expiry_year")).slice(-4);
+      const ccv = digits(formData.get("card_ccv"));
+      const cpfCnpj = digits(formData.get("holder_cpf_cnpj"));
+      const postalCode = digits(formData.get("holder_postal_code"));
+      const addressNumber = String(formData.get("holder_address_number") ?? "").trim();
+      const phone = digits(formData.get("holder_phone"));
+      const email = String(formData.get("holder_email") ?? user.email ?? "").trim();
+      if (!holderName || cardNumber.length < 13 || !expiryMonth || expiryYear.length < 4 || ccv.length < 3) {
+        return { ok: false, message: "Informe os dados do cartão de crédito para ativar a recorrência." };
+      }
+      if (!cpfCnpj || !postalCode || !addressNumber || !phone || !email) {
+        return { ok: false, message: "Informe os dados do titular para validar o cartão no Asaas." };
+      }
+      subscription = await createAsaasSubscription({
+        ...subscriptionPayload,
+        creditCard: {
+          holderName,
+          number: cardNumber,
+          expiryMonth,
+          expiryYear,
+          ccv,
+        },
+        creditCardHolderInfo: {
+          name: holderName,
+          email,
+          cpfCnpj,
+          postalCode,
+          addressNumber,
+          phone,
+        },
+      });
+    }
 
     const bloqueioCancelamentoAte = new Date(hoje.getFullYear(), hoje.getMonth() + 3, hoje.getDate())
       .toISOString()
@@ -2772,7 +2815,7 @@ export async function salvarDadosContaAsaasParceiroAction(
     if (!Number.isFinite(espacoId) || espacoId < 1) {
       return { ok: false, message: "Espaço inválido." };
     }
-    const { supabase, user } = await requireEspacoManager(espacoId);
+    const { user } = await requireEspacoManager(espacoId);
     const nomeRazao = text(formData, "nome_razao_social");
     const cpfCnpj = text(formData, "cpf_cnpj").replace(/\D/g, "");
     const email = text(formData, "email");

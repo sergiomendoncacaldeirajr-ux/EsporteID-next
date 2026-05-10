@@ -196,8 +196,10 @@ export async function criarUnidadeWizardAction(
     const espacoId = Number(formData.get("espaco_id") ?? 0);
     const { supabase, user } = await requireWizardManager(espacoId);
     const gate = await getPaaSUnidadeGateInfo(supabase, espacoId);
-    if (!gate.podeCriarUnidade) {
-      throw new Error(gate.motivoBloqueio ?? "Seu plano atual não permite cadastrar outra quadra no momento.");
+    if (gate.maxUnidadesPlano != null && gate.unidadesTotal >= gate.maxUnidadesPlano) {
+      throw new Error(
+        `Seu plano permite até ${gate.maxUnidadesPlano} quadra(s). Para cadastrar mais, altere o plano antes de continuar.`
+      );
     }
     const nome = field(formData, "nome");
     if (nome.length < 2) throw new Error("Informe o nome da quadra ou campo.");
@@ -506,7 +508,11 @@ export async function concluirOnboardingAction(espacoId: number): Promise<void> 
   if (!user) throw new Error("Sessão expirada.");
   await supabase
     .from("espacos_genericos")
-    .update({ operacao_status: "ativo" })
+    .update({
+      operacao_status: "pendente_admin",
+      status: "pendente_validacao",
+      ativo_listagem: false,
+    })
     .eq("id", espacoId)
     .eq("responsavel_usuario_id", user.id);
   revalidatePath("/espaco");

@@ -795,6 +795,14 @@ export async function salvarExtrasOnboarding(
         logoArquivo = supabase.storage.from("espaco-logos").getPublicUrl(path).data.publicUrl;
       }
 
+      if (localPreferidoId && logoArquivo) {
+        await supabase
+          .from("espacos_genericos")
+          .update({ logo_arquivo: logoArquivo })
+          .eq("id", localPreferidoId)
+          .is("logo_arquivo", null);
+      }
+
       if (!localPreferidoId) {
         const { data: novoLocal, error: novoLocalErr } = await supabase
           .from("espacos_genericos")

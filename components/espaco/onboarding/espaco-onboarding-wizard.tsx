@@ -704,7 +704,7 @@ function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
   const usadas = unidadeGate.unidadesTotal || unidades.length;
   const limite = unidadeGate.maxUnidadesPlano;
   const restantes = limite == null ? null : Math.max(0, limite - usadas);
-  const podeAdicionar = unidadeGate.podeCriarUnidade && (limite == null || usadas < limite);
+  const podeAdicionar = limite == null || usadas < limite;
   const percentualUso = limite == null ? 100 : Math.min(100, Math.round((usadas / Math.max(1, limite)) * 100));
   const planoLabel = unidadeGate.planoNome || (unidadeGate.modoMonetizacao === "mensalidade_plataforma" ? "Plano da plataforma" : "Plano atual");
 
@@ -745,11 +745,18 @@ function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
               <span className="block h-full rounded-full bg-eid-primary-500" style={{ width: `${percentualUso}%` }} />
             </div>
             <p className="mt-2 text-[11px] font-semibold text-eid-text-secondary">
-              {podeAdicionar ? "Cadastro liberado" : unidadeGate.motivoBloqueio ?? "Cadastro bloqueado pelo plano atual."}
+              {podeAdicionar ? "Cadastro liberado" : "Limite de quadras atingido para este plano."}
             </p>
           </div>
         </div>
       </div>
+
+      {unidadeGate.motivoBloqueio ? (
+        <div className="rounded-xl border border-amber-500/25 bg-amber-500/8 p-4 text-xs text-amber-100">
+          Você pode terminar o cadastro das quadras agora. A forma de pagamento e a aprovação do admin só controlam
+          quando o espaço aparece para os atletas na plataforma.
+        </div>
+      ) : null}
 
       {unidades.length > 0 && (
         <div className="space-y-2">
@@ -1469,7 +1476,7 @@ function StepConclusao({ space, unidades, horarios, planos, parceiro }: {
 
   return (
     <div className="space-y-6">
-      <StepHeader title="Seu espaço está pronto! 🎉" subtitle="Revise o que foi configurado e publique seu espaço." />
+      <StepHeader title="Cadastro pronto para análise" subtitle="Revise o que foi configurado e envie para aprovação do admin." />
 
       <div className="space-y-2">
         {itens.map((item, i) => (
@@ -1487,7 +1494,8 @@ function StepConclusao({ space, unidades, horarios, planos, parceiro }: {
       </div>
 
       <div className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-4 text-sm text-eid-text-secondary">
-        Você pode ajustar qualquer configuração a qualquer momento pelo painel. Após publicar, os atletas poderão encontrar e reservar seu espaço.
+        Você pode ajustar qualquer configuração pelo painel. O espaço só aparece para atletas depois da forma de
+        pagamento exigida estar configurada e o admin aprovar a publicação.
       </div>
 
       <button
@@ -1496,7 +1504,7 @@ function StepConclusao({ space, unidades, horarios, planos, parceiro }: {
         className="flex w-full items-center justify-center gap-2 rounded-2xl bg-eid-primary-500 px-6 py-4 text-base font-bold text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.6)] transition hover:bg-eid-primary-600 disabled:opacity-50"
       >
         {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-        Publicar meu espaço e ir ao painel
+        Enviar cadastro para análise
       </button>
     </div>
   );

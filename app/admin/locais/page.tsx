@@ -134,11 +134,18 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
     ? await db.from("profiles").select("id, nome, avatar_url").in("id", ownerIds)
     : { data: [] };
   const ownerProfileMap = new Map((ownerProfileRows ?? []).map((p) => [p.id, p]));
+  const { data: parceiroRows } = ownerIds.length
+    ? await db
+        .from("parceiro_conta_asaas")
+        .select("usuario_id, nome_razao_social, email, onboarding_status")
+        .in("usuario_id", ownerIds)
+    : { data: [] };
+  const parceiroMap = new Map((parceiroRows ?? []).map((p) => [p.usuario_id, p]));
 
   const { data: assinRows } = locaisIds.length
     ? await db
         .from("espaco_assinaturas_plataforma")
-        .select("id, espaco_generico_id, status, valor_mensal_centavos, proxima_cobranca, trial_ate, situacao_override, plano_nome, observacoes_admin, plano_mensal_id, trial_dias_override, isento_total")
+        .select("id, espaco_generico_id, status, valor_mensal_centavos, proxima_cobranca, trial_ate, situacao_override, plano_nome, observacoes_admin, plano_mensal_id, trial_dias_override, isento_total, recorrencia_cartao_confirmada_em, asaas_subscription_id")
         .in("espaco_generico_id", locaisIds)
     : { data: [] as unknown[] };
   const assinMap = new Map(
@@ -184,15 +191,20 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
     admFlash === "info_ok" ? "Dados do local atualizados com sucesso." :
     admFlash === "info_param" ? "Parâmetros inválidos para atualização." :
     admFlash === "info_erro" ? "Erro ao atualizar os dados do local." :
-    admFlash === "info_noop" ? "Nenhum dado foi alterado." : null;
-  const flashIsSuccess = admFlash === "delete_ok" || admFlash === "info_ok";
+    admFlash === "info_noop" ? "Nenhum dado foi alterado." :
+    admFlash === "listagem_ok" ? "Local aprovado e publicado na plataforma." :
+    admFlash === "listagem_oculta" ? "Local removido da listagem pública." :
+    admFlash === "listagem_bloqueada" ? "Ainda não é possível publicar este local." :
+    admFlash === "listagem_param" ? "Parâmetros inválidos para publicação." :
+    admFlash === "listagem_erro" ? "Erro ao alterar a publicação do local." : null;
+  const flashIsSuccess = admFlash === "delete_ok" || admFlash === "info_ok" || admFlash === "listagem_ok" || admFlash === "listagem_oculta";
 
   return (
     <div className="space-y-8">
       {flashMsg ? (
         <div className={`rounded-xl border px-4 py-3 text-sm ${flashIsSuccess ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-100" : "border-amber-500/35 bg-amber-500/10 text-amber-100"}`} role="status">
           <p className="font-semibold">{flashMsg}</p>
-          {admDetail && admFlash === "delete_erro" ? <p className="mt-1 font-mono text-[11px] text-eid-text-secondary">{admDetail}</p> : null}
+          {admDetail ? <p className="mt-1 font-mono text-[11px] text-eid-text-secondary">{admDetail}</p> : null}
         </div>
       ) : null}
 
@@ -263,6 +275,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
               admin_suspenso?: boolean | null;
               modo_reserva?: string;
               modo_monetizacao?: string;
+              operacao_status?: string | null;
               taxa_reserva_plataforma_centavos?: number | null;
               socios_mensalidade_espaco?: string;
               clube_assinaturas_socios?: string;
@@ -285,6 +298,9 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
             const ownerProfile = localRow.responsavel_usuario_id
               ? ownerProfileMap.get(localRow.responsavel_usuario_id)
               : null;
+            const parceiroAsaas = localRow.responsavel_usuario_id
+              ? parceiroMap.get(localRow.responsavel_usuario_id)
+              : null;
             const registrantProfile = localRow.criado_por_usuario_id
               ? ownerProfileMap.get(localRow.criado_por_usuario_id)
               : null;
@@ -294,7 +310,16 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
               trial_ate: string | null; situacao_override: string | null; plano_nome: string | null;
               observacoes_admin: string | null; plano_mensal_id: number | null;
               trial_dias_override: number | null; isento_total: boolean | null;
+              recorrencia_cartao_confirmada_em?: string | null; asaas_subscription_id?: string | null;
             } | undefined;
+            const cadastroConcluido = localRow.operacao_status !== "rascunho" && l.status !== "rascunho";
+            const exigeMensalidade = localRow.modo_reserva !== "paga" && localRow.modo_monetizacao !== "apenas_reservas";
+            const mensalidadeConfigurada =
+              !exigeMensalidade || Boolean(a?.isento_total) || Boolean(a?.recorrencia_cartao_confirmada_em);
+            const exigeRecebimentos = localRow.modo_reserva === "paga" || localRow.modo_reserva === "mista";
+            const recebimentosConfigurados =
+              !exigeRecebimentos || Boolean(parceiroAsaas?.nome_razao_social) || Boolean(parceiroAsaas?.email);
+            const prontoParaAprovar = cadastroConcluido && mensalidadeConfigurada && recebimentosConfigurados;
             const situ = computeMensalidadePainelState(ei, a ?? null, cat, new Date(), {
               modoReserva: localRow.modo_reserva,
               modoMonetizacao: localRow.modo_monetizacao,
@@ -391,13 +416,18 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                         </button>
                       </form>
                     ) : (
-                      <form action={adminSetEspacoListagem} className="inline">
-                        <input type="hidden" name="id" value={l.id} />
-                        <input type="hidden" name="ativo_listagem" value="true" />
-                        <button type="submit" className="inline-flex items-center rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/18">
-                          Publicar
-                        </button>
-                      </form>
+                        <form action={adminSetEspacoListagem} className="inline">
+                          <input type="hidden" name="id" value={l.id} />
+                          <input type="hidden" name="ativo_listagem" value="true" />
+                          <button
+                            type="submit"
+                            disabled={!prontoParaAprovar}
+                            title={prontoParaAprovar ? "Aprovar e publicar" : "Resolva as pendências antes de publicar"}
+                            className="inline-flex items-center rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/18 disabled:cursor-not-allowed disabled:opacity-45"
+                          >
+                            Publicar
+                          </button>
+                        </form>
                     )}
                     {localRow.admin_suspenso ? (
                       <form action={adminSetEspacoAdminSuspenso} className="inline">
@@ -418,6 +448,50 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                     )}
                   </div>
                 </div>
+
+                {!isGenerico ? (
+                  <div className="grid gap-2 border-t border-[color:var(--eid-border-subtle)]/50 bg-eid-bg/15 px-4 py-3 sm:grid-cols-3">
+                    {[
+                      {
+                        ok: cadastroConcluido,
+                        title: "Cadastro",
+                        text: cadastroConcluido ? "Wizard concluído" : "Aguardando conclusão do wizard",
+                      },
+                      {
+                        ok: mensalidadeConfigurada,
+                        title: "Mensalidade",
+                        text: exigeMensalidade
+                          ? mensalidadeConfigurada
+                            ? "Cartão configurado"
+                            : "Falta configurar cartão de crédito"
+                          : "Não exige mensalidade PaaS",
+                      },
+                      {
+                        ok: recebimentosConfigurados,
+                        title: "Recebimentos",
+                        text: exigeRecebimentos
+                          ? recebimentosConfigurados
+                            ? "Conta Asaas informada"
+                            : "Falta conta Asaas"
+                          : "Não exige recebimentos",
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.title}
+                        className={`rounded-xl border px-3 py-2 ${
+                          item.ok
+                            ? "border-emerald-500/25 bg-emerald-500/8"
+                            : "border-amber-500/25 bg-amber-500/8"
+                        }`}
+                      >
+                        <p className={`text-[10px] font-black uppercase tracking-[0.1em] ${item.ok ? "text-emerald-300" : "text-amber-300"}`}>
+                          {item.ok ? "OK" : "Pendente"} · {item.title}
+                        </p>
+                        <p className="mt-1 text-[11px] font-semibold text-eid-fg">{item.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
 
                 {/* ── Status + mensalidade row ── */}
                 <div className="grid gap-3 border-t border-[color:var(--eid-border-subtle)]/50 px-4 py-3 sm:grid-cols-2">

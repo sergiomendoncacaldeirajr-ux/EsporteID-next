@@ -31,6 +31,8 @@ export default async function EspacoHomePage() {
     .eq("espaco_generico_id", selectedSpace.id)
     .maybeSingle();
   const onboardingPagamentoConcluido =
+    selectedSpace.modo_reserva === "paga" ||
+    selectedSpace.modo_monetizacao === "apenas_reservas" ||
     Boolean(assinatura?.isento_total) ||
     Boolean(assinatura?.recorrencia_cartao_confirmada_em);
   if (!onboardingPagamentoConcluido) {

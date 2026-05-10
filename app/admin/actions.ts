@@ -508,12 +508,74 @@ export async function adminSetEspacoListagem(formData: FormData) {
     await guard();
     const id = Number(formData.get("id"));
     const ativo = formData.get("ativo_listagem") === "true";
-    if (!Number.isFinite(id)) return;
-    const { error } = await svc().from("espacos_genericos").update({ ativo_listagem: ativo }).eq("id", id);
-    if (error) return;
+    if (!Number.isFinite(id)) redirect("/admin/locais?adm_flash=listagem_param");
+    const db = svc();
+
+    if (ativo) {
+      const { data: espaco, error: espacoErr } = await db
+        .from("espacos_genericos")
+        .select("id, status, operacao_status, modo_reserva, modo_monetizacao, responsavel_usuario_id")
+        .eq("id", id)
+        .maybeSingle();
+      if (espacoErr || !espaco) {
+        redirect(`/admin/locais?adm_flash=listagem_erro${adminQueryDetail(espacoErr?.message ?? "Local não encontrado.")}`);
+      }
+
+      const cadastroConcluido = espaco.operacao_status !== "rascunho" && espaco.status !== "rascunho";
+      if (!cadastroConcluido) {
+        redirect(
+          `/admin/locais?adm_flash=listagem_bloqueada${adminQueryDetail("O wizard ainda não foi concluído pelo dono do local.")}`
+        );
+      }
+
+      const [{ data: assinatura }, { data: parceiro }] = await Promise.all([
+        db
+          .from("espaco_assinaturas_plataforma")
+          .select("id, isento_total, recorrencia_cartao_confirmada_em")
+          .eq("espaco_generico_id", id)
+          .maybeSingle(),
+        espaco.responsavel_usuario_id
+          ? db
+              .from("parceiro_conta_asaas")
+              .select("nome_razao_social, email, onboarding_status")
+              .eq("usuario_id", espaco.responsavel_usuario_id)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+      const exigeMensalidade =
+        espaco.modo_reserva !== "paga" && espaco.modo_monetizacao !== "apenas_reservas";
+      const mensalidadeOk =
+        !exigeMensalidade ||
+        Boolean(assinatura?.isento_total) ||
+        Boolean(assinatura?.recorrencia_cartao_confirmada_em);
+      if (!mensalidadeOk) {
+        redirect(
+          `/admin/locais?adm_flash=listagem_bloqueada${adminQueryDetail("A mensalidade da plataforma precisa estar configurada no cartão de crédito antes da aprovação.")}`
+        );
+      }
+
+      const exigeRecebimentos = espaco.modo_reserva === "paga" || espaco.modo_reserva === "mista";
+      const recebimentosOk =
+        !exigeRecebimentos || Boolean(parceiro?.nome_razao_social) || Boolean(parceiro?.email);
+      if (!recebimentosOk) {
+        redirect(
+          `/admin/locais?adm_flash=listagem_bloqueada${adminQueryDetail("A conta Asaas de recebimentos ainda não foi configurada pelo dono do local.")}`
+        );
+      }
+    }
+
+    const patch = ativo
+      ? { ativo_listagem: true, status: "publico", operacao_status: "ativo" }
+      : { ativo_listagem: false };
+    const { error } = await db.from("espacos_genericos").update(patch).eq("id", id);
+    if (error) redirect(`/admin/locais?adm_flash=listagem_erro${adminQueryDetail(error.message)}`);
     revalidatePath("/admin/locais");
-  } catch {
-    return;
+    revalidatePath("/locais");
+    revalidatePath("/espaco", "layout");
+    redirect(`/admin/locais?adm_flash=${ativo ? "listagem_ok" : "listagem_oculta"}`);
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirect("/admin/locais?adm_flash=listagem_erro");
   }
 }
 

@@ -63,6 +63,21 @@ function comparableText(value: string | null | undefined) {
     .toLocaleLowerCase("pt-BR");
 }
 
+async function getLogoMaisRecenteDoStorageDeLocais(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+) {
+  const { data } = await supabase.storage.from("espaco-logos").list(userId, {
+    limit: 50,
+    sortBy: { column: "created_at", order: "desc" },
+  });
+  const file = (data ?? []).find((item) => {
+    const name = String(item.name ?? "");
+    return /^org_|^local_generico_/.test(name) && !name.endsWith("/");
+  });
+  return file ? resolveEspacoPublicAssetUrl(supabase, `${userId}/${file.name}`) : null;
+}
+
 export async function getLogoCadastradoNoOnboardingDeLocais({
   supabase,
   userId,
@@ -74,15 +89,15 @@ export async function getLogoCadastradoNoOnboardingDeLocais({
 }) {
   const { data } = await supabase
     .from("espacos_genericos")
-    .select("id, nome_publico, localizacao, cidade, uf, logo_arquivo")
-    .eq("criado_por_usuario_id", userId)
+    .select("id, nome_publico, localizacao, cidade, uf, logo_arquivo, criado_por_usuario_id, responsavel_usuario_id")
+    .or(`criado_por_usuario_id.eq.${userId},responsavel_usuario_id.eq.${userId}`)
     .not("logo_arquivo", "is", null)
     .neq("id", space.id)
     .order("id", { ascending: false })
     .limit(10);
 
   const candidates = (data ?? []).filter((row) => String(row.logo_arquivo ?? "").trim().length > 0);
-  if (!candidates.length) return null;
+  if (!candidates.length) return getLogoMaisRecenteDoStorageDeLocais(supabase, userId);
 
   const spaceName = comparableText(space.nome_publico);
   const spaceLocation = comparableText(space.localizacao);
@@ -103,7 +118,10 @@ export async function getLogoCadastradoNoOnboardingDeLocais({
     candidates.find((row) => comparableText(row.nome_publico) === spaceName) ??
     (candidates.length === 1 ? candidates[0] : null);
 
-  return resolveEspacoPublicAssetUrl(supabase, matched?.logo_arquivo ?? null);
+  return (
+    resolveEspacoPublicAssetUrl(supabase, matched?.logo_arquivo ?? null) ??
+    getLogoMaisRecenteDoStorageDeLocais(supabase, userId)
+  );
 }
 
 export async function requireEspacoManagerUser(nextPath: string) {
