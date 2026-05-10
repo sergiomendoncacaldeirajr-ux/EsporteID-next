@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useActionState, useTransition, useState, useEffect, useRef } from "react";
+import { useActionState, useTransition, useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { Country, Value } from "react-phone-number-input";
 import type { LucideIcon } from "lucide-react";
@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { EID_PHONE_LABELS } from "@/lib/eid-phone-labels";
 import { EspacoUnidadeLogoControl } from "@/components/espaco/espaco-unidade-logo-control";
+import { descricaoFaixaUnidadesPaaS, detalheValorESociosPlanoPaaS } from "@/lib/espacos/plano-mensal-catalogo";
 import type { PaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import {
   salvarModeloEspacoAction,
@@ -23,6 +24,7 @@ import {
   criarUnidadeWizardAction,
   atualizarFotoUnidadeWizardAction,
   removerUnidadeWizardAction,
+  escolherPlanoPlataformaWizardAction,
   salvarGradeWizardAction,
   sincronizarFeriadosWizardAction,
   toggleFeriadoWizardAction,
@@ -72,6 +74,15 @@ type Feriado = {
 
 type Plano = { id: number; nome: string; mensalidade_centavos: number };
 
+type PlanoPaaS = {
+  id: number;
+  nome: string;
+  min_unidades: number;
+  max_unidades: number | null;
+  valor_mensal_centavos: number;
+  socios_mensal_modo: string | null;
+};
+
 type Parceiro = {
   nome_razao_social: string | null; cpf_cnpj: string | null;
   email: string | null; onboarding_status: string | null;
@@ -82,6 +93,7 @@ type WizardProps = {
   esportes: Array<{ id: number; nome: string }>;
   unidades: Unidade[];
   unidadeGate: PaaSUnidadeGateInfo;
+  planosPaaS: PlanoPaaS[];
   horarios: Horario[];
   feriados: Feriado[];
   planos: Plano[];
@@ -281,20 +293,23 @@ function SectionTitle({ Icon, title, text }: { Icon: LucideIcon; title: string; 
 const STEPS = [
   { id: "modelo", label: "Modelo", Icon: Building2 },
   { id: "perfil", label: "Perfil", Icon: MapPin },
+  { id: "plano_plataforma", label: "Plano", Icon: CreditCard },
   { id: "unidades", label: "Quadras", Icon: LayoutGrid },
   { id: "horarios", label: "Horários", Icon: Clock },
   { id: "feriados", label: "Feriados", Icon: Calendar },
-  { id: "planos", label: "Planos", Icon: Users },
-  { id: "pagamento", label: "Pagamento", Icon: CreditCard },
+  { id: "planos", label: "Sócios", Icon: Users },
+  { id: "pagamento", label: "Receber", Icon: Wallet },
   { id: "conclusao", label: "Pronto", Icon: CheckCircle2 },
 ] as const;
 
-function ProgressBar({ current, completed }: { current: number; completed: Set<number> }) {
+type WizardStep = (typeof STEPS)[number];
+
+function ProgressBar({ steps, current, completed }: { steps: WizardStep[]; current: number; completed: Set<string> }) {
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between gap-0.5">
-        {STEPS.map(({ Icon, label }, i) => {
-          const done = completed.has(i);
+        {steps.map(({ Icon, id, label }, i) => {
+          const done = completed.has(id);
           const active = i === current;
           return (
             <div key={i} className="flex flex-1 flex-col items-center gap-1">
@@ -323,7 +338,7 @@ function ProgressBar({ current, completed }: { current: number; completed: Set<n
       <div className="relative mt-3 h-1 overflow-hidden rounded-full bg-eid-surface/60">
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-eid-primary-500 transition-all duration-500"
-          style={{ width: `${((current) / (STEPS.length - 1)) * 100}%` }}
+          style={{ width: `${steps.length > 1 ? (current / (steps.length - 1)) * 100 : 100}%` }}
         />
       </div>
     </div>
@@ -830,6 +845,97 @@ function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
   );
 }
 
+function StepPlanoPlataforma({
+  space,
+  planosPaaS,
+  unidadeGate,
+  onNext,
+  onBack,
+}: {
+  space: Space;
+  planosPaaS: PlanoPaaS[];
+  unidadeGate: PaaSUnidadeGateInfo;
+  onNext: () => void;
+  onBack?: () => void;
+}) {
+  const [state, action, pending] = useActionState<ActionState, FormData>(escolherPlanoPlataformaWizardAction, undefined);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state?.ok) router.refresh();
+  }, [router, state]);
+
+  const planoSelecionado = Boolean(unidadeGate.planoMensalId || state?.ok);
+
+  return (
+    <div className="space-y-5">
+      <StepHeader
+        title="Plano da plataforma"
+        subtitle="Escolha primeiro a faixa de quadras do seu plano. Esse limite define quantas quadras ou unidades você poderá cadastrar."
+      />
+
+      {planosPaaS.length === 0 ? (
+        <div className="rounded-2xl border border-eid-action-500/20 bg-eid-action-500/10 p-4">
+          <p className="text-sm font-black text-eid-fg">Nenhum plano disponível para esta categoria</p>
+          <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
+            Fale com o suporte EsporteID para liberar um plano da plataforma antes de cadastrar quadras.
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {planosPaaS.map((plano) => {
+            const ativo = unidadeGate.planoMensalId === plano.id;
+            const faixa = descricaoFaixaUnidadesPaaS(plano.min_unidades, plano.max_unidades);
+            return (
+              <form
+                key={plano.id}
+                action={action}
+                className={`rounded-2xl border p-4 text-sm transition ${
+                  ativo
+                    ? "border-eid-primary-500/60 bg-eid-primary-500/10 shadow-[0_12px_30px_-18px_rgba(37,99,235,0.85)]"
+                    : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 hover:border-eid-primary-500/35"
+                }`}
+              >
+                <input type="hidden" name="espaco_id" value={space.id} />
+                <input type="hidden" name="plano_mensal_id" value={plano.id} />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-base font-black text-eid-fg">{plano.nome}</p>
+                    <p className="mt-1 text-xs font-semibold text-eid-primary-300">{faixa}</p>
+                  </div>
+                  {ativo ? (
+                    <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-emerald-300">
+                      Atual
+                    </span>
+                  ) : null}
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-eid-text-secondary">
+                  {detalheValorESociosPlanoPaaS(plano)}
+                </p>
+                <button
+                  type="submit"
+                  disabled={ativo || pending}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-eid-primary-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-eid-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {pending && !ativo ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                  {ativo ? "Plano selecionado" : "Escolher este plano"}
+                </button>
+              </form>
+            );
+          })}
+        </div>
+      )}
+
+      <Feedback state={state} />
+      {planoSelecionado ? (
+        <NavButtons onBack={onBack} onNext={onNext} nextLabel="Continuar para quadras" />
+      ) : (
+        <NavButtons onBack={onBack} nextDisabled nextLabel="Escolha um plano para continuar" />
+      )}
+    </div>
+  );
+}
+
 function StepHorarios({ space, horarios, onNext, onBack }: {
   space: Space; horarios: Horario[]; onNext: () => void; onBack?: () => void;
 }) {
@@ -1240,51 +1346,59 @@ function StepConclusao({ space, unidades, horarios, planos, parceiro }: {
 // ── Wizard principal ───────────────────────────────────────────────────────
 
 export function EspacoOnboardingWizard({
-  space, unidades, unidadeGate, horarios, feriados, planos, parceiro,
+  space, unidades, unidadeGate, planosPaaS, horarios, feriados, planos, parceiro,
 }: WizardProps) {
   const storageKey = `eid:onboarding-step-${space.id}`;
   const [step, setStep] = useState<number>(() => {
     if (typeof window === "undefined") return 0;
     return Math.min(Number(localStorage.getItem(storageKey) ?? "0"), STEPS.length - 1);
   });
-  const [completed, setCompleted] = useState<Set<number>>(new Set());
+  const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [modoReserva, setModoReserva] = useState(space.modo_reserva ?? "mista");
   const [aceitaSocios, setAceitaSocios] = useState(space.aceita_socios ?? true);
 
+  const skipPlanoPlataforma = unidadeGate.modoMonetizacao !== "mensalidade_plataforma";
   const skipPlanos = !aceitaSocios;
   const skipPagamento = modoReserva === "gratuita" && !aceitaSocios;
+  const activeSteps = useMemo(
+    () =>
+      STEPS.filter((item) => {
+        if (item.id === "plano_plataforma") return !skipPlanoPlataforma;
+        if (item.id === "planos") return !skipPlanos;
+        if (item.id === "pagamento") return !skipPagamento;
+        return true;
+      }),
+    [skipPagamento, skipPlanoPlataforma, skipPlanos]
+  );
+  const currentStep = activeSteps[Math.min(step, activeSteps.length - 1)] ?? activeSteps[0];
 
   useEffect(() => {
     localStorage.setItem(storageKey, String(step));
   }, [step, storageKey]);
 
-  const advance = () => {
-    setCompleted((prev) => new Set([...prev, step]));
-    setStep((s) => {
-      let next = s + 1;
-      if (next === 5 && skipPlanos) next = 6;
-      if (next === 6 && skipPagamento) next = 7;
-      return Math.min(next, STEPS.length - 1);
+  useEffect(() => {
+    queueMicrotask(() => {
+      setStep((s) => Math.min(s, Math.max(0, activeSteps.length - 1)));
     });
+  }, [activeSteps.length]);
+
+  const advance = () => {
+    if (currentStep) setCompleted((prev) => new Set([...prev, currentStep.id]));
+    setStep((s) => Math.min(s + 1, activeSteps.length - 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const goBack = () => {
-    setStep((s) => {
-      let prev = s - 1;
-      if (prev === 6 && skipPagamento) prev = 5;
-      if (prev === 5 && skipPlanos) prev = 4;
-      return Math.max(prev, 0);
-    });
+    setStep((s) => Math.max(s - 1, 0));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 sm:p-6">
-        <ProgressBar current={step} completed={completed} />
+        <ProgressBar steps={activeSteps} current={step} completed={completed} />
         <div className="min-h-[420px]">
-          {step === 0 && (
+          {currentStep?.id === "modelo" && (
             <StepModelo
               space={{ ...space, modo_reserva: modoReserva, aceita_socios: aceitaSocios }}
               onNext={({ modoReserva: mr, aceitaSocios: as }) => {
@@ -1294,10 +1408,19 @@ export function EspacoOnboardingWizard({
               }}
             />
           )}
-          {step === 1 && (
+          {currentStep?.id === "perfil" && (
             <StepPerfil space={space} onNext={advance} onBack={goBack} />
           )}
-          {step === 2 && (
+          {currentStep?.id === "plano_plataforma" && (
+            <StepPlanoPlataforma
+              space={space}
+              planosPaaS={planosPaaS}
+              unidadeGate={unidadeGate}
+              onNext={advance}
+              onBack={goBack}
+            />
+          )}
+          {currentStep?.id === "unidades" && (
             <StepUnidades
               space={space}
               unidades={unidades}
@@ -1306,19 +1429,19 @@ export function EspacoOnboardingWizard({
               onBack={goBack}
             />
           )}
-          {step === 3 && (
+          {currentStep?.id === "horarios" && (
             <StepHorarios space={space} horarios={horarios} onNext={advance} onBack={goBack} />
           )}
-          {step === 4 && (
+          {currentStep?.id === "feriados" && (
             <StepFeriados space={space} feriados={feriados} onNext={advance} onBack={goBack} />
           )}
-          {step === 5 && !skipPlanos && (
+          {currentStep?.id === "planos" && (
             <StepPlanos space={space} planos={planos} onNext={advance} onBack={goBack} onSkip={advance} />
           )}
-          {step === 6 && !skipPagamento && (
+          {currentStep?.id === "pagamento" && (
             <StepPagamento space={space} parceiro={parceiro} onNext={advance} onBack={goBack} onSkip={advance} />
           )}
-          {step === 7 && (
+          {currentStep?.id === "conclusao" && (
             <StepConclusao
               space={{ ...space, modo_reserva: modoReserva, aceita_socios: aceitaSocios }}
               unidades={unidades} horarios={horarios} planos={planos} parceiro={parceiro}

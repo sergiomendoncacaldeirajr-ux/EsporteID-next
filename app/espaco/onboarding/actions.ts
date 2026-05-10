@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { slugifyEspaco } from "@/lib/espacos/slug";
 import { fetchAutomaticHolidaysForYear } from "@/lib/espacos/calendar";
 import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
+import { escolherPlanoMensalidadePaaSAction } from "@/app/espaco/actions";
 
 type State = { ok: true; message: string } | { ok: false; message: string };
 
@@ -258,6 +259,19 @@ export async function removerUnidadeWizardAction(
     return { ok: true, message: "Unidade removida." };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Erro." };
+  }
+}
+
+export async function escolherPlanoPlataformaWizardAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    await escolherPlanoMensalidadePaaSAction(formData);
+    revalidatePath("/espaco/onboarding");
+    return { ok: true, message: "Plano da plataforma selecionado." };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Erro ao selecionar plano." };
   }
 }
 

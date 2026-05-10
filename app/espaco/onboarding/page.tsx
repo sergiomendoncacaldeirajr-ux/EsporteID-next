@@ -22,6 +22,7 @@ export default async function EspacoOnboardingPage() {
     { data: feriados },
     { data: planos },
     { data: parceiro },
+    { data: planosPaaS },
     unidadeGate,
   ] = await Promise.all([
     supabase.from("esportes").select("id, nome").order("nome"),
@@ -56,6 +57,16 @@ export default async function EspacoOnboardingPage() {
       .select("nome_razao_social, cpf_cnpj, email, onboarding_status")
       .eq("usuario_id", user.id)
       .maybeSingle(),
+    selectedSpace.modo_monetizacao === "mensalidade_plataforma"
+      ? supabase
+          .from("espaco_plano_mensal_plataforma")
+          .select("id, nome, min_unidades, max_unidades, valor_mensal_centavos, socios_mensal_modo")
+          .is("espaco_generico_id", null)
+          .eq("categoria_espaco", selectedSpace.categoria_mensalidade ?? "outro")
+          .eq("ativo", true)
+          .eq("liberacao", "publico")
+          .order("ordem", { ascending: true })
+      : Promise.resolve({ data: [] as never[] }),
     getPaaSUnidadeGateInfo(supabase, selectedSpace.id),
   ]);
 
@@ -85,6 +96,14 @@ export default async function EspacoOnboardingPage() {
         logo_arquivo: string | null;
       }>}
       unidadeGate={unidadeGate}
+      planosPaaS={(planosPaaS ?? []) as Array<{
+        id: number;
+        nome: string;
+        min_unidades: number;
+        max_unidades: number | null;
+        valor_mensal_centavos: number;
+        socios_mensal_modo: string | null;
+      }>}
       horarios={(horarios ?? []) as Array<{
         id: number; dia_semana: number; hora_inicio: string; hora_fim: string;
       }>}
