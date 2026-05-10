@@ -303,7 +303,7 @@ type Props = {
     permiteTime: boolean;
     suportaConfronto: boolean;
   }[];
-  locais: { id: number; nome: string; localizacao: string; donoUsuarioId: string | null }[];
+  locais: { id: number; nome: string; localizacao: string; donoUsuarioId: string | null; endereco?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; cep?: string; complemento?: string; lat?: string; lng?: string }[];
   selectedPapeis: string[];
   roleModes: {
     professor: boolean;
@@ -1981,7 +1981,7 @@ export function OnboardingWizard({
                         onChange={setOrgNovoLocalNome}
                         onSelect={(item) => {
                           setOrgNovoLocalNome(item.nome);
-                          setOrgNovoLocalEndereco(item.endereco ?? item.localizacao);
+                          setOrgNovoLocalEndereco(item.endereco ?? "");
                           setOrgNovoLocalNumero(item.numero ?? "");
                           setOrgNovoLocalBairro(item.bairro ?? "");
                           setOrgNovoLocalCidade(item.cidade ?? "");
@@ -2054,12 +2054,13 @@ export function OnboardingWizard({
                     onChange={setEspacoNome}
                     onSelect={(item) => {
                       setEspacoNome(item.nome);
-                      setEspacoEndereco(item.endereco ?? item.localizacao);
+                      setEspacoEndereco(item.endereco ?? "");
                       setEspacoNumero(item.numero ?? "");
                       setEspacoBairro(item.bairro ?? "");
                       setEspacoCidade(item.cidade ?? "");
                       setEspacoEstado(item.estado ?? "");
                       setEspacoCep(item.cep ?? "");
+                      setEspacoComplemento(item.complemento ?? "");
                       if (item.lat) setEspacoLat(item.lat);
                       if (item.lng) setEspacoLng(item.lng);
                       setEspacoReivindicarId(item.id);

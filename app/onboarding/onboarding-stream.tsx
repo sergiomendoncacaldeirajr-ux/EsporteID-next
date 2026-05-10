@@ -193,6 +193,7 @@ export async function OnboardingStream({ viewerId }: OnboardingStreamProps) {
           cidade: l.cidade ?? cfg.cidade ?? "",
           estado: l.uf ?? cfg.estado ?? "",
           cep: cfg.cep ?? "",
+          complemento: cfg.complemento ?? "",
           lat: String(l.lat ?? ""),
           lng: String(l.lng ?? ""),
         };

@@ -13,6 +13,7 @@ export type LocalClaimItem = {
   cidade?: string;
   estado?: string;
   cep?: string;
+  complemento?: string;
   lat?: string;
   lng?: string;
 };
