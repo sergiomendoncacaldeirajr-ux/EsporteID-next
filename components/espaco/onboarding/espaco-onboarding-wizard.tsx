@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { EID_PHONE_LABELS } from "@/lib/eid-phone-labels";
 import { EspacoUnidadeLogoControl } from "@/components/espaco/espaco-unidade-logo-control";
+import { TeamShieldControl } from "@/components/perfil/team-shield-control";
 import { descricaoFaixaUnidadesPaaS, detalheValorESociosPlanoPaaS } from "@/lib/espacos/plano-mensal-catalogo";
 import type { PaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import {
@@ -48,6 +49,8 @@ type Space = {
   categoria_mensalidade: string | null;
   modo_reserva: string | null;
   aceita_socios: boolean | null;
+  logo_arquivo: string | null;
+  cover_arquivo: string | null;
   cidade: string | null;
   uf: string | null;
   descricao_curta: string | null;
@@ -522,9 +525,57 @@ function StepPerfil({ space, onNext, onBack }: {
   useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
 
   return (
-    <form ref={formRef} action={action} className="space-y-4">
+    <form ref={formRef} action={action} encType="multipart/form-data" className="space-y-4">
       <input type="hidden" name="espaco_id" value={space.id} />
       <StepHeader title="Perfil público do espaço" subtitle="Como os atletas vão encontrar e conhecer seu espaço." />
+
+      <div className="grid gap-3 sm:grid-cols-[0.9fr_1.1fr]">
+        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4">
+          <SectionTitle
+            Icon={BadgeCheck}
+            title="Foto ou escudo"
+            text="Use a imagem cadastrada no início, edite o enquadramento, remova o fundo ou troque a foto."
+          />
+          <div className="mt-3">
+            <TeamShieldControl
+              currentUrl={space.logo_arquivo ?? null}
+              variant="espaco_logo"
+              fileInputName="logo_file"
+              removeFlagName="logo_remove"
+            />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-4">
+          <SectionTitle
+            Icon={ImageIcon}
+            title="Foto de capa"
+            text="Adicione uma imagem larga para destacar o espaço na página pública."
+          />
+          <div className="mt-3 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-primary-500/10">
+            {space.cover_arquivo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={space.cover_arquivo} alt="" className="h-28 w-full object-cover sm:h-32" />
+            ) : (
+              <div className="flex h-28 w-full items-center justify-center gap-2 text-xs font-bold text-eid-primary-300 sm:h-32">
+                <ImageIcon className="h-5 w-5" aria-hidden />
+                Sem capa
+              </div>
+            )}
+          </div>
+          <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2.5 text-xs font-bold text-eid-primary-200 transition hover:bg-eid-primary-500/15">
+            <Camera className="h-4 w-4" aria-hidden />
+            Adicionar ou trocar capa
+            <input name="cover_file" type="file" accept="image/*,.heic,.heif" className="sr-only" />
+          </label>
+          {space.cover_arquivo ? (
+            <label className="mt-2 flex items-center gap-2 text-xs font-semibold text-eid-text-secondary">
+              <input type="checkbox" name="cover_remove" value="1" className="h-4 w-4 rounded accent-eid-primary-500" />
+              Remover capa atual
+            </label>
+          ) : null}
+        </div>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5 sm:col-span-2">

@@ -79,6 +79,25 @@ async function uploadLogoUnidadeWizard(file: File, userId: string) {
   return supabase.storage.from("espaco-logos").getPublicUrl(path).data.publicUrl;
 }
 
+async function uploadImagemEspacoWizard(file: File, userId: string, prefix: "logo" | "cover") {
+  const supabase = await createClient();
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Envie uma imagem (PNG, JPG, WEBP ou HEIC).");
+  }
+  if (file.size > 6 * 1024 * 1024) {
+    throw new Error("Imagem acima de 6MB.");
+  }
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const safeExt = ext.replace(/[^a-z0-9]/g, "") || "jpg";
+  const path = `${userId}/${prefix}_espaco_${Date.now()}_${Math.random().toString(16).slice(2, 8)}.${safeExt}`;
+  const { error } = await supabase.storage.from("espaco-logos").upload(path, file, {
+    upsert: true,
+    contentType: file.type || "image/jpeg",
+  });
+  if (error) throw new Error(error.message);
+  return supabase.storage.from("espaco-logos").getPublicUrl(path).data.publicUrl;
+}
+
 // ── Step 1 ─────────────────────────────────────────────────────────────────
 export async function salvarModeloEspacoAction(
   _prev: State | undefined,
@@ -116,7 +135,7 @@ export async function salvarPerfilWizardAction(
 ): Promise<State> {
   try {
     const espacoId = Number(formData.get("espaco_id") ?? 0);
-    const { supabase } = await requireWizardManager(espacoId);
+    const { supabase, user } = await requireWizardManager(espacoId);
     const nomePublico = field(formData, "nome_publico");
     if (nomePublico.length < 2) throw new Error("Informe o nome do espaço.");
     const slugBase = slugifyEspaco(
@@ -129,20 +148,35 @@ export async function salvarPerfilWizardAction(
       .neq("id", espacoId)
       .maybeSingle();
     const slugFinal = existing ? `${slugBase}-${espacoId}` : slugBase;
+    const logoFile = formData.get("logo_file");
+    const coverFile = formData.get("cover_file");
+    const logoArquivo =
+      logoFile instanceof File && logoFile.size > 0
+        ? await uploadImagemEspacoWizard(logoFile, user.id, "logo")
+        : undefined;
+    const coverArquivo =
+      coverFile instanceof File && coverFile.size > 0
+        ? await uploadImagemEspacoWizard(coverFile, user.id, "cover")
+        : undefined;
+    const updatePayload: Record<string, unknown> = {
+      nome_publico: nomePublico,
+      slug: slugFinal,
+      cidade: field(formData, "cidade") || null,
+      uf: field(formData, "uf").toUpperCase() || null,
+      descricao_curta: field(formData, "descricao_curta") || null,
+      descricao_longa: field(formData, "descricao_longa") || null,
+      whatsapp_contato: field(formData, "whatsapp_contato") || null,
+      email_contato: field(formData, "email_contato") || null,
+      website_url: normalizeWebsiteUrl(field(formData, "website_url")) || null,
+      instagram_url: normalizeInstagramHandle(field(formData, "instagram_url")) || null,
+    };
+    if (logoArquivo !== undefined) updatePayload.logo_arquivo = logoArquivo;
+    if (field(formData, "logo_remove") === "1") updatePayload.logo_arquivo = null;
+    if (coverArquivo !== undefined) updatePayload.cover_arquivo = coverArquivo;
+    if (field(formData, "cover_remove") === "1") updatePayload.cover_arquivo = null;
     const { error } = await supabase
       .from("espacos_genericos")
-      .update({
-        nome_publico: nomePublico,
-        slug: slugFinal,
-        cidade: field(formData, "cidade") || null,
-        uf: field(formData, "uf").toUpperCase() || null,
-        descricao_curta: field(formData, "descricao_curta") || null,
-        descricao_longa: field(formData, "descricao_longa") || null,
-        whatsapp_contato: field(formData, "whatsapp_contato") || null,
-        email_contato: field(formData, "email_contato") || null,
-        website_url: normalizeWebsiteUrl(field(formData, "website_url")) || null,
-        instagram_url: normalizeInstagramHandle(field(formData, "instagram_url")) || null,
-      })
+      .update(updatePayload)
       .eq("id", espacoId);
     if (error) throw new Error(error.message);
     revalidatePath("/espaco");

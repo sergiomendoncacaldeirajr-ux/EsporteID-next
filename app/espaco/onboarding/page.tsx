@@ -79,6 +79,8 @@ export default async function EspacoOnboardingPage() {
         categoria_mensalidade: selectedSpace.categoria_mensalidade,
         modo_reserva: selectedSpace.modo_reserva,
         aceita_socios: selectedSpace.aceita_socios,
+        logo_arquivo: selectedSpace.logo_arquivo,
+        cover_arquivo: selectedSpace.cover_arquivo,
         cidade: selectedSpace.cidade,
         uf: selectedSpace.uf,
         descricao_curta: selectedSpace.descricao_curta,

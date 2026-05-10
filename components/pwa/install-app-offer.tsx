@@ -9,7 +9,6 @@ type BeforeInstallPromptEvent = Event & {
 
 const IOS_DISMISS_SESSION_KEY = "eid-ios-add-home-dismissed";
 const INSTALL_OFFER_LAST_SHOWN_DAY_KEY = "eid-install-offer-last-shown-day";
-const ANDROID_PLAY_URL = "https://play.google.com/store/apps/details?id=com.esporteid.app";
 
 function dayStampNow() {
   return new Date().toISOString().slice(0, 10);
@@ -181,27 +180,28 @@ export function InstallAppOffer() {
             >
               Fechar
             </button>
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-300">EsporteID na Google Play</p>
-            <h2 className="mt-2 text-xl font-black text-eid-fg">Jogue mais rápido com o app oficial</h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-300">EsporteID no Android</p>
+            <h2 className="mt-2 text-xl font-black text-eid-fg">Adicione o EsporteID à tela inicial</h2>
             <p className="mt-2 text-sm text-eid-text-secondary">
-              Abra partidas e torneios em poucos toques, com melhor estabilidade e experiência de app no seu Android.
+              Enquanto o app aguarda aprovação na Google Play, instale a versão web no Android. Ela abre como aplicativo, com ícone na tela inicial.
             </p>
-            <div className="mt-4 flex gap-2">
-              <a
-                href={ANDROID_PLAY_URL}
-                className="eid-btn-primary min-h-[44px] flex-1 rounded-xl px-4 py-2 text-center text-sm font-black"
-              >
-                Instalar na Google Play
-              </a>
+            <div className="mt-4 flex flex-col gap-2">
               {installEvt ? (
                 <button
                   type="button"
                   onClick={onInstallNow}
-                  className="min-h-[44px] rounded-xl border border-eid-primary-500/35 px-4 text-sm font-black text-eid-primary-200"
+                  className="eid-btn-primary min-h-[44px] flex-1 rounded-xl px-4 py-2 text-center text-sm font-black"
                 >
-                  Instalar PWA
+                  Adicionar à tela inicial
                 </button>
-              ) : null}
+              ) : (
+                <div className="space-y-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3 text-sm text-eid-fg">
+                  <p className="font-bold">Como instalar no Chrome</p>
+                  <p className="text-xs leading-relaxed text-eid-text-secondary">
+                    Toque no menu de três pontos do navegador e escolha <strong className="text-eid-fg">Adicionar à tela inicial</strong> ou <strong className="text-eid-fg">Instalar app</strong>.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
