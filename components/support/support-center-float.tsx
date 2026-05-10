@@ -29,6 +29,8 @@ import { usePathname } from "next/navigation";
 import { submitSupportChamado, type SupportChamadoSubmitState } from "@/app/support/actions";
 import {
   SUPPORT_CHAMADO_AREAS,
+  SUPPORT_ESPACO_DONO_FAQ,
+  SUPPORT_ESPACO_OPERACAO_FAQ,
   SUPPORT_FAQ_ITEMS,
   SUPPORT_PERFIL_FORMACOES_FAQ,
   supportFaqVisivelEmProducao,
@@ -255,6 +257,7 @@ export type SupportCenterFloatProps = {
 
 export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatProps) {
   const pathname = usePathname() ?? "";
+  const isEspacoContext = pathname === "/espaco" || pathname.startsWith("/espaco/");
   const [aberto, setAberto] = useState(false);
   const [panelMounted, setPanelMounted] = useState(false);
   const [aba, setAba] = useState<"ajuda" | "perfil" | "chamado">("ajuda");
@@ -265,17 +268,35 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
   const [submitState, formAction, submitPending] = useActionState(submitSupportChamado, initialSubmit);
 
   const faqAjuda = useMemo(
-    () => SUPPORT_FAQ_ITEMS.filter((x) => supportFaqVisivelEmProducao(x, modulosEmBreve)),
-    [modulosEmBreve],
+    () =>
+      (isEspacoContext ? SUPPORT_ESPACO_DONO_FAQ : SUPPORT_FAQ_ITEMS).filter((x) =>
+        supportFaqVisivelEmProducao(x, modulosEmBreve)
+      ),
+    [isEspacoContext, modulosEmBreve],
   );
   const faqPerfil = useMemo(
-    () => SUPPORT_PERFIL_FORMACOES_FAQ.filter((x) => supportFaqVisivelEmProducao(x, modulosEmBreve)),
-    [modulosEmBreve],
+    () =>
+      (isEspacoContext ? SUPPORT_ESPACO_OPERACAO_FAQ : SUPPORT_PERFIL_FORMACOES_FAQ).filter((x) =>
+        supportFaqVisivelEmProducao(x, modulosEmBreve)
+      ),
+    [isEspacoContext, modulosEmBreve],
   );
   const chamadoAreasVisiveis = useMemo(
-    () => SUPPORT_CHAMADO_AREAS.filter((a) => supportFaqVisivelEmProducao(a, modulosEmBreve)),
-    [modulosEmBreve],
+    () => {
+      const areas = SUPPORT_CHAMADO_AREAS.filter((a) => supportFaqVisivelEmProducao(a, modulosEmBreve));
+      if (!isEspacoContext) return areas;
+      const prioridade = new Set(["locais", "professores", "torneios", "conta", "outro"]);
+      return areas.filter((a) => prioridade.has(a.value));
+    },
+    [isEspacoContext, modulosEmBreve],
   );
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      setAba("ajuda");
+      setFaqAbertoId(null);
+    });
+  }, [isEspacoContext]);
 
   useEffect(() => {
     if (!submitState.ok || !submitState.message) return;
@@ -381,9 +402,11 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
               </div>
               <div className="min-w-0 flex-1">
                 <h2 id="eid-support-title" className="text-[13px] font-bold leading-tight text-eid-fg">
-                  Central de Ajuda
+                  {isEspacoContext ? "Ajuda para Locais" : "Central de Ajuda"}
                 </h2>
-                <p className="text-[10px] text-eid-text-secondary">Resposta em até 2 h via WhatsApp</p>
+                <p className="text-[10px] text-eid-text-secondary">
+                  {isEspacoContext ? "Reservas, sócios, agenda e financeiro" : "Resposta em até 2 h via WhatsApp"}
+                </p>
               </div>
               <button
                 type="button"
@@ -401,7 +424,7 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
                 {(
                   [
                     { id: "ajuda", label: "Dúvidas", Icon: LifeBuoy },
-                    { id: "perfil", label: "Perfil & Times", Icon: Users },
+                    { id: "perfil", label: isEspacoContext ? "Operação" : "Perfil & Times", Icon: Users },
                     { id: "chamado", label: "Chamado", Icon: MessageCircle },
                   ] as const
                 ).map(({ id, label, Icon }) => (
@@ -427,9 +450,13 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
               {aba === "ajuda" ? (
                 <div className="space-y-3">
                   <SupportHint
-                    emoji="💡"
-                    titulo="Respostas rápidas, sem enrolação"
-                    subtitulo="Toque em cada card para ver a explicação completa. Se a dúvida persistir, use a aba Chamado."
+                    emoji={isEspacoContext ? "🏟️" : "💡"}
+                    titulo={isEspacoContext ? "Ajuda focada em donos de locais" : "Respostas rápidas, sem enrolação"}
+                    subtitulo={
+                      isEspacoContext
+                        ? "Veja dúvidas sobre perfil público, reservas, sócios, financeiro e publicação do espaço."
+                        : "Toque em cada card para ver a explicação completa. Se a dúvida persistir, use a aba Chamado."
+                    }
                   />
                   <FaqAccordion items={faqAjuda} faqAbertoId={faqAbertoId} setFaqAbertoId={setFaqAbertoId} />
                   <button
@@ -444,9 +471,13 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
               ) : aba === "perfil" ? (
                 <div className="space-y-3">
                   <SupportHint
-                    emoji="👥"
-                    titulo="Perfil, dupla e time — em linguagem simples"
-                    subtitulo="Como cada modo funciona no ranking, desafios e quem pode clicar em cada botão."
+                    emoji={isEspacoContext ? "⚙️" : "👥"}
+                    titulo={isEspacoContext ? "Operação do espaço" : "Perfil, dupla e time — em linguagem simples"}
+                    subtitulo={
+                      isEspacoContext
+                        ? "Entenda modelos de reserva, unidades, WhatsApp de contato e integração Asaas."
+                        : "Como cada modo funciona no ranking, desafios e quem pode clicar em cada botão."
+                    }
                   />
                   <FaqAccordion items={faqPerfil} faqAbertoId={faqAbertoId} setFaqAbertoId={setFaqAbertoId} />
                   <button
@@ -482,11 +513,13 @@ export function SupportCenterFloat({ modulosEmBreve = [] }: SupportCenterFloatPr
                       name="area"
                       required
                       className="eid-input-dark h-9 rounded-xl px-2.5 text-xs text-eid-fg"
-                      defaultValue=""
+                      defaultValue={isEspacoContext ? "locais" : ""}
                     >
-                      <option value="" disabled>
-                        Selecione a área
-                      </option>
+                      {isEspacoContext ? null : (
+                        <option value="" disabled>
+                          Selecione a área
+                        </option>
+                      )}
                       {chamadoAreasVisiveis.map((a) => (
                         <option key={a.value} value={a.value}>
                           {a.label}

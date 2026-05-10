@@ -359,3 +359,109 @@ export const SUPPORT_PERFIL_FORMACOES_FAQ: SupportFaqItem[] = [
       "A comunidade conecta atletas, professores e espaços esportivos. Você pode seguir outros perfis, ver atividades do seu círculo e interagir com publicações. Acesse pelo menu lateral — novos recursos são adicionados continuamente. Se quiser sugerir algo ou reportar um problema, use a aba Chamado.",
   },
 ];
+
+/** Dúvidas específicas para donos/gestores de locais esportivos. */
+export const SUPPORT_ESPACO_DONO_FAQ: SupportFaqItem[] = [
+  {
+    id: "espaco-primeiros-passos",
+    icone: "venue",
+    pergunta: "O que preciso configurar para meu local aparecer direito?",
+    resposta:
+      "Comece pelo Perfil público: nome, cidade, WhatsApp, site/Instagram e descrição. Depois cadastre quadras/unidades, horários de funcionamento e regras de reserva. Quanto mais completo estiver, mais fácil o atleta entende onde joga, quando pode reservar e como falar com o local.",
+    blocos: [
+      {
+        tipo: "steps",
+        itens: [
+          {
+            emoji: "1",
+            titulo: "Perfil público",
+            desc: "Preencha nome, cidade, contatos e uma descrição clara do espaço.",
+          },
+          {
+            emoji: "2",
+            titulo: "Quadras e unidades",
+            desc: "Cadastre cada quadra/campo com tipo, superfície, capacidade e recursos.",
+          },
+          {
+            emoji: "3",
+            titulo: "Horários e feriados",
+            desc: "Defina abertura por dia da semana e ajuste datas especiais para evitar reservas indevidas.",
+          },
+          {
+            emoji: "4",
+            titulo: "Financeiro e planos",
+            desc: "Configure cobrança, mensalidade da plataforma e planos de sócios quando usar reservas pagas ou associação.",
+          },
+        ],
+      },
+    ],
+    ocultarSeModulosEmBreve: ["locais"],
+  },
+  {
+    id: "espaco-reservas-agenda",
+    icone: "calendar",
+    pergunta: "Como acompanho reservas e horários do meu espaço?",
+    resposta:
+      "Use a Agenda do painel do espaço. Ela concentra reservas, horários configurados e disponibilidade das unidades. Se um horário não aparece para o atleta, confira se a unidade está ativa, se o dia está aberto e se não há bloqueio por feriado, pagamento ou limite do plano.",
+    ocultarSeModulosEmBreve: ["locais"],
+  },
+  {
+    id: "espaco-socios-planos",
+    icone: "team",
+    pergunta: "Para que serve a área de Sócios?",
+    resposta:
+      "A área de Sócios organiza membros do local, planos de associação e benefícios. Ela é útil para clubes e espaços que têm mensalidade, reservas gratuitas por semana, filas ou regras diferentes para associados e avulsos.",
+    ocultarSeModulosEmBreve: ["locais"],
+  },
+  {
+    id: "espaco-financeiro-paas",
+    icone: "store",
+    pergunta: "Por que o painel fala de Financeiro, mensalidade ou Asaas?",
+    resposta:
+      "O Financeiro cuida de dois lados: a mensalidade da plataforma para manter o painel ativo e a integração de recebimentos para reservas ou planos pagos. O Asaas é usado quando o espaço precisa gerar cobranças online e organizar pagamentos.",
+    ocultarSeModulosEmBreve: ["locais"],
+  },
+  {
+    id: "espaco-nao-consigo-publicar",
+    icone: "account",
+    pergunta: "Não consigo publicar ou continuar a configuração. O que verifico?",
+    resposta:
+      "Confira se o perfil do espaço tem nome/cidade, se existe pelo menos uma unidade cadastrada e se os horários foram definidos. Em alguns modelos, também é preciso resolver pendências de mensalidade, integração de pagamento ou validação do espaço.",
+    ocultarSeModulosEmBreve: ["locais"],
+  },
+];
+
+export const SUPPORT_ESPACO_OPERACAO_FAQ: SupportFaqItem[] = [
+  {
+    id: "espaco-gratuita-paga-mista",
+    icone: "venue",
+    pergunta: "Qual a diferença entre reserva gratuita, paga e mista?",
+    resposta:
+      "Gratuita é indicada para locais em que sócios reservam sem cobrança por reserva. Paga cobra toda reserva. Mista combina os dois: sócios podem ter benefício ou gratuidade, enquanto avulsos pagam para reservar.",
+    ocultarSeModulosEmBreve: ["locais"],
+  },
+  {
+    id: "espaco-unidades-limite",
+    icone: "venue",
+    pergunta: "Por que não consigo adicionar mais quadras/unidades?",
+    resposta:
+      "O limite pode estar ligado ao plano contratado da plataforma ou a uma pendência financeira. Veja a área Financeiro do painel; se o plano atual não comporta mais unidades, altere o plano ou fale com suporte.",
+    ocultarSeModulosEmBreve: ["locais"],
+  },
+  {
+    id: "espaco-whatsapp-contato",
+    icone: "account",
+    pergunta: "Qual WhatsApp aparece para atletas?",
+    resposta:
+      "O WhatsApp de contato do Perfil público do espaço é o canal exibido para atletas e usado pela equipe em suporte operacional do local. Use um número do atendimento do espaço, com país e DDD corretos.",
+    ocultarSeModulosEmBreve: ["locais"],
+  },
+  {
+    id: "espaco-asaas-integracao",
+    icone: "store",
+    pergunta: "Quando preciso configurar o Asaas?",
+    resposta:
+      "Configure o Asaas quando quiser receber pagamentos online por reservas, planos de sócios ou outras cobranças do espaço. Se o local operar apenas com reservas gratuitas, a integração pode ficar para depois, dependendo do modelo escolhido.",
+    ocultarSeModulosEmBreve: ["locais"],
+  },
+];

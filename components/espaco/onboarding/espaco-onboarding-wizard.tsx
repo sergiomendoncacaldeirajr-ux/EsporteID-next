@@ -308,9 +308,19 @@ function ProgressBar({ current, completed }: { current: number; completed: Set<n
 
 function StepHeader({ title, subtitle }: { title: string; subtitle: string }) {
   return (
-    <div className="mb-5">
-      <h2 className="text-xl font-bold text-eid-fg sm:text-2xl">{title}</h2>
-      <p className="mt-1 text-sm text-eid-text-secondary">{subtitle}</p>
+    <div className="mb-6 overflow-hidden rounded-2xl border border-eid-primary-500/25 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-primary-500)_14%,transparent),color-mix(in_srgb,var(--eid-card)_94%,transparent)_48%,color-mix(in_srgb,var(--eid-action-500)_7%,transparent))] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.055)] sm:px-5">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-eid-primary-500/25 bg-[color:color-mix(in_srgb,var(--eid-primary-500)_14%,transparent)] text-eid-primary-300">
+          <Sparkles className="h-5 w-5" aria-hidden />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-eid-primary-300">
+            Configuração do espaço
+          </p>
+          <h2 className="mt-1 text-2xl font-black leading-tight text-eid-fg sm:text-3xl">{title}</h2>
+          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-eid-text-secondary">{subtitle}</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -352,7 +362,7 @@ function NavButtons({
         {onNext && (
           <button
             type="button" onClick={onNext} disabled={nextDisabled || pending}
-            className="flex items-center gap-1.5 rounded-xl bg-eid-primary-500 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-eid-primary-600 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-xl border border-eid-primary-500/30 bg-[color:color-mix(in_srgb,var(--eid-primary-500)_88%,transparent)] px-5 py-2.5 text-sm font-bold text-white shadow-[0_10px_22px_-18px_rgba(37,99,235,0.8)] transition hover:bg-eid-primary-500 disabled:opacity-50"
           >
             {pending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
             {nextLabel}
