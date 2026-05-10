@@ -575,7 +575,7 @@ export default async function DashboardPage({ searchParams }: Props) {
         </EidStreamSection>
       </div>
     </div>
-    <LocationPermissionBanner />
+    <LocationPermissionBanner hasCoords={hasMyCoords} />
     </>
   );
 }

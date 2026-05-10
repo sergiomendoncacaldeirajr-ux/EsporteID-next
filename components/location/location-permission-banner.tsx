@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { atualizarLocalizacaoMatch } from "@/app/match/actions";
 
 /** Chave localStorage: timestamp (ms) até o qual não exibir o banner novamente. */
 const DISMISS_KEY = "eid_loc_prompt_dismissed_until";
@@ -12,7 +13,12 @@ const EXIT_MS = 220;
 
 type PermStatus = "prompt" | "denied" | "granted" | "unknown";
 
-export function LocationPermissionBanner() {
+type Props = {
+  /** Se true, o usuário já tem coordenadas salvas — não exibe o banner. */
+  hasCoords?: boolean;
+};
+
+export function LocationPermissionBanner({ hasCoords = false }: Props) {
   const [mounted, setMounted] = useState(false);
   const [present, setPresent] = useState(false); // controla presença no DOM
   const [closing, setClosing] = useState(false);
@@ -24,19 +30,12 @@ export function LocationPermissionBanner() {
   useEffect(() => {
     setMounted(true);
 
-    // Verifica se o usuário dispensou recentemente
-    try {
-      const until = localStorage.getItem(DISMISS_KEY);
-      if (until && Date.now() < Number(until)) return;
-    } catch {
-      // localStorage indisponível — continua normalmente
-    }
-
-    // Verifica estado atual da permissão
     if (!("permissions" in navigator)) {
-      // Navegador antigo: mostra o banner com cautela
-      setPermStatus("prompt");
-      setPresent(true);
+      // Navegador antigo: mostra o banner somente se não há coords salvas
+      if (!hasCoords) {
+        setPermStatus("prompt");
+        setPresent(true);
+      }
       return;
     }
 
@@ -44,7 +43,29 @@ export function LocationPermissionBanner() {
       .query({ name: "geolocation" as PermissionName })
       .then((result) => {
         permRef.current = result;
-        if (result.state === "granted") return; // já tem permissão, não incomoda
+
+        if (result.state === "granted") {
+          // Permissão já concedida: atualiza localização em background silenciosamente
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              atualizarLocalizacaoMatch(pos.coords.latitude, pos.coords.longitude).catch(() => {});
+            },
+            () => {},
+            { enableHighAccuracy: false, timeout: 10000 },
+          );
+          return;
+        }
+
+        // Permissão não concedida: só exibe banner se não há coords salvas
+        if (hasCoords) return;
+
+        try {
+          const until = localStorage.getItem(DISMISS_KEY);
+          if (until && Date.now() < Number(until)) return;
+        } catch {
+          // localStorage indisponível — continua normalmente
+        }
+
         setPermStatus(result.state as PermStatus);
         setPresent(true);
         result.onchange = () => {
@@ -59,7 +80,7 @@ export function LocationPermissionBanner() {
       if (permRef.current) permRef.current.onchange = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hasCoords]);
 
   function startClose() {
     setClosing(true);
@@ -83,8 +104,10 @@ export function LocationPermissionBanner() {
     setError(null);
     setRequesting(true);
     navigator.geolocation.getCurrentPosition(
-      () => {
+      (pos) => {
         setRequesting(false);
+        // Salva coordenadas no banco para não pedir novamente
+        atualizarLocalizacaoMatch(pos.coords.latitude, pos.coords.longitude).catch(() => {});
         startClose();
       },
       (err) => {

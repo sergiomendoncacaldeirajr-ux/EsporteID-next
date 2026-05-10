@@ -37,7 +37,7 @@ export default async function RankingPage({ searchParams }: Props) {
 
   const [{ data: me }, { data: meusEsportesRaw }, { data: criados }, { data: membro }, { data: esportesCatalogoRaw }, limitesMensal, cooldownMeses, pendingLimitRow, autoAprovacaoRow] =
     await Promise.all([
-      supabase.from("profiles").select("localizacao, genero").eq("id", viewerId).maybeSingle(),
+      supabase.from("profiles").select("localizacao, genero, lat, lng").eq("id", viewerId).maybeSingle(),
       supabase
         .from("usuario_eid")
         .select("esporte_id")
@@ -90,6 +90,9 @@ export default async function RankingPage({ searchParams }: Props) {
 
   const cidadeDisplay = cidadeDisplayFromProfile(me?.localizacao ?? null);
   const needsCidadeFallback = state.local === "cidade" && !cidadeDisplay;
+  const myLat = Number((me as { lat?: unknown } | null)?.lat ?? NaN);
+  const myLng = Number((me as { lng?: unknown } | null)?.lng ?? NaN);
+  const hasMyCoords = Number.isFinite(myLat) && Number.isFinite(myLng);
 
   const myTeamIds = new Set<number>();
   for (const r of criados ?? []) {
@@ -163,7 +166,7 @@ export default async function RankingPage({ searchParams }: Props) {
         )}
       </main>
       <MatchRankingRulesModal config={rulesConfig} />
-      <LocationPermissionBanner />
+      <LocationPermissionBanner hasCoords={hasMyCoords} />
     </div>
   );
 }
