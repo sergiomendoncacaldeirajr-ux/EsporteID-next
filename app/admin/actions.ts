@@ -1388,6 +1388,78 @@ export async function adminReprocessarPartidasEidPendentes(formData: FormData) {
   }
 }
 
+/** Processa EID de uma partida específica pelo ID. */
+export async function adminProcessarPartidaPorId(formData: FormData) {
+  try {
+    await guard();
+    const rawId = Number(formData.get("partida_id"));
+    if (!Number.isFinite(rawId) || rawId < 1) redirectAdminEidFlash("eid_partida_id_invalida");
+    const force = String(formData.get("force") ?? "") === "1";
+    const partidaId = Math.floor(rawId);
+    const db = svc();
+    await db.rpc("processar_eid_partida_by_id", { p_partida_id: partidaId, p_force: force });
+    await db.rpc("aplicar_pontos_ranking_match_desafio", { p_partida_id: partidaId });
+    revalidatePath("/admin/eid");
+    revalidatePath("/ranking");
+    revalidatePath("/dashboard");
+    redirectAdminEidFlash("eid_partida_ok");
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirectAdminEidFlash("eid_partida_erro");
+  }
+}
+
+/** Edita manualmente o nota_eid de um atleta em um esporte. */
+export async function adminEditarEidAtleta(formData: FormData) {
+  try {
+    await guard();
+    const raw = String(formData.get("usuario_esporte") ?? "").trim();
+    const [usuarioId, esporteRaw] = raw.split(":");
+    const esporteId = Number(esporteRaw);
+    const notaEid = Number(formData.get("nota_eid"));
+    if (!usuarioId || !Number.isFinite(esporteId) || esporteId < 1 || !Number.isFinite(notaEid) || notaEid < 0 || notaEid > 10) {
+      redirectAdminEidFlash("eid_edit_invalido");
+    }
+    const db = svc();
+    const { error } = await db
+      .from("usuario_eid")
+      .update({ nota_eid: Math.min(10, Math.max(0, notaEid)) })
+      .eq("usuario_id", usuarioId)
+      .eq("esporte_id", esporteId);
+    if (error) redirectAdminEidFlash("eid_edit_erro");
+    revalidatePath("/admin/eid");
+    revalidatePath("/ranking");
+    redirectAdminEidFlash("eid_edit_ok");
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirectAdminEidFlash("eid_edit_erro");
+  }
+}
+
+/** Edita manualmente o eid_time de uma formação. */
+export async function adminEditarEidTime(formData: FormData) {
+  try {
+    await guard();
+    const timeId = Math.floor(Number(formData.get("time_id")));
+    const eidTime = Number(formData.get("eid_time"));
+    if (!Number.isFinite(timeId) || timeId < 1 || !Number.isFinite(eidTime) || eidTime < 0 || eidTime > 10) {
+      redirectAdminEidFlash("eid_edit_invalido");
+    }
+    const db = svc();
+    const { error } = await db
+      .from("times")
+      .update({ eid_time: Math.min(10, Math.max(0, eidTime)) })
+      .eq("id", timeId);
+    if (error) redirectAdminEidFlash("eid_edit_erro");
+    revalidatePath("/admin/eid");
+    revalidatePath("/ranking");
+    redirectAdminEidFlash("eid_edit_ok");
+  } catch (error) {
+    if (isRedirectError(error)) throw error;
+    redirectAdminEidFlash("eid_edit_erro");
+  }
+}
+
 /** Carência mínima (meses) entre confrontos de ranking válidos para o mesmo par de atletas no mesmo esporte. */
 export async function adminSetMatchRankCooldownMeses(formData: FormData) {
   try {

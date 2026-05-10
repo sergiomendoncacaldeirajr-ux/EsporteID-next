@@ -63,6 +63,12 @@ type Props = {
   ladoBTimeId?: number | null;
   /** `formacao`: escudo time/dupla com cantos mais quadrados, alinhado ao restante do app. */
   avatarVariant?: "circle" | "formacao";
+  /**
+   * Quando true, inverte set.a ↔ set.b no placar por sets.
+   * Necessário quando o "self" (ladoA) é jogador2 na partida — os dados brutos
+   * sempre têm set.a = jogador1 e set.b = jogador2.
+   */
+  swapSets?: boolean;
 };
 
 function HistoricoPlacarDisplay({
@@ -311,6 +317,7 @@ export function EidConfrontoResumoModal({
   ladoATimeId,
   ladoBTimeId,
   avatarVariant = "circle",
+  swapSets = false,
   origem,
   dataHora,
   local,
@@ -584,7 +591,11 @@ export function EidConfrontoResumoModal({
 
             {payload?.type === "sets" && Array.isArray(payload.sets) && payload.sets.length > 0 ? (
               <SetsScoreboardTable
-                sets={payload.sets}
+                sets={
+                  swapSets
+                    ? payload.sets.map((s) => ({ a: s.b, b: s.a, tiebreakA: s.tiebreakB, tiebreakB: s.tiebreakA }))
+                    : payload.sets
+                }
                 ladoA={ladoA}
                 ladoB={ladoB}
                 ladoAAvatarUrl={ladoAAvatarUrl}

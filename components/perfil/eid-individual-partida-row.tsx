@@ -117,6 +117,7 @@ export function EidIndividualPartidaRow({
       placarBase={placarTxt}
       sportLabel={esporteLabel ?? null}
       mensagem={p.mensagem ?? null}
+      swapSets={!selfIsJ1}
       totalConfrontos={totalConfrontos}
       saldoResumo={saldoResumo}
       ultimosConfrontos={ultimosConfrontos}

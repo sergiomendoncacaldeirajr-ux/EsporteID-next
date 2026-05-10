@@ -1,4 +1,11 @@
-import { adminRecalcularEidHistorico, adminReprocessarPartidasEidPendentes, adminUpdateEidConfig } from "@/app/admin/actions";
+import {
+  adminRecalcularEidHistorico,
+  adminReprocessarPartidasEidPendentes,
+  adminUpdateEidConfig,
+  adminProcessarPartidaPorId,
+  adminEditarEidAtleta,
+  adminEditarEidTime,
+} from "@/app/admin/actions";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 function firstOf<T>(value: T | T[] | null | undefined): T | null {
@@ -30,7 +37,17 @@ function flashMessage(code: string | null): { tone: "ok" | "warn" | "error"; tex
     case "eid_config_erro":
     case "eid_recalc_erro":
     case "eid_reproc_erro":
+    case "eid_partida_erro":
+    case "eid_edit_erro":
       return { tone: "error", text: "Não foi possível concluir a ação. Verifique sua permissão de admin e tente novamente." };
+    case "eid_partida_ok":
+      return { tone: "ok", text: "Partida processada com sucesso." };
+    case "eid_partida_id_invalida":
+      return { tone: "error", text: "ID de partida inválido." };
+    case "eid_edit_ok":
+      return { tone: "ok", text: "EID atualizado com sucesso." };
+    case "eid_edit_invalido":
+      return { tone: "error", text: "Dados inválidos. Verifique os campos e tente novamente." };
     default:
       return null;
   }
@@ -131,6 +148,44 @@ export default async function AdminEidPage({ searchParams }: AdminEidPageProps) 
               className="rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/14 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-eid-primary-200 transition hover:bg-eid-primary-500/22"
             >
               Reprocessar pendentes (dupla/time)
+            </button>
+          </form>
+          <form action={adminReprocessarPartidasEidPendentes} className="flex flex-wrap items-center gap-2 rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/8 px-2 py-1.5">
+            <input type="hidden" name="somente_coletivo" value="0" />
+            <input
+              name="limite"
+              type="number"
+              min="1"
+              max="1000"
+              defaultValue={300}
+              className="eid-input-dark w-20 rounded-lg px-2 py-1 text-xs"
+              aria-label="Limite de partidas para reprocessar"
+            />
+            <button
+              type="submit"
+              className="rounded-lg border border-eid-primary-500/45 bg-eid-primary-500/14 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-eid-primary-200 transition hover:bg-eid-primary-500/22"
+            >
+              Reprocessar pendentes (individual)
+            </button>
+          </form>
+          <form action={adminProcessarPartidaPorId} className="flex flex-wrap items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1.5">
+            <input
+              name="partida_id"
+              type="number"
+              min="1"
+              placeholder="ID da partida"
+              className="eid-input-dark w-28 rounded-lg px-2 py-1 text-xs"
+              aria-label="ID da partida"
+            />
+            <label className="flex items-center gap-1 text-[10px] text-eid-text-secondary">
+              <input type="checkbox" name="force" value="1" className="accent-eid-action-500" />
+              Forçar
+            </label>
+            <button
+              type="submit"
+              className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-eid-fg transition hover:bg-eid-card"
+            >
+              Processar por ID
             </button>
           </form>
         </div>
@@ -259,6 +314,92 @@ export default async function AdminEidPage({ searchParams }: AdminEidPageProps) 
               ))}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4">
+        <h2 className="text-base font-bold text-eid-fg">Editar EID manual</h2>
+        <p className="mt-1 text-xs text-eid-text-secondary">
+          Ajuste pontual de nota EID. Use com cautela — não gera log de histórico.
+        </p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">Atleta</p>
+            <form action={adminEditarEidAtleta} className="flex flex-col gap-2">
+              <select
+                name="usuario_esporte"
+                className="eid-input-dark w-full rounded-xl px-3 py-2 text-xs"
+                defaultValue=""
+              >
+                <option value="" disabled>Selecione atleta + esporte…</option>
+                {(atletasRes.data ?? []).map((row, i) => {
+                  const nome = firstOf(row.profiles)?.nome ?? "Atleta";
+                  const esporte = firstOf(row.esportes)?.nome ?? "Esporte";
+                  const eid = Number(row.nota_eid ?? 0).toFixed(2);
+                  return (
+                    <option key={`${row.usuario_id}-${row.esporte_id}-${i}`} value={`${row.usuario_id}:${row.esporte_id}`}>
+                      {nome} — {esporte} ({eid})
+                    </option>
+                  );
+                })}
+              </select>
+              <div className="flex items-center gap-2">
+                <input
+                  name="nota_eid"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="10"
+                  placeholder="Novo EID (0–10)"
+                  className="eid-input-dark flex-1 rounded-xl px-3 py-2 text-xs"
+                />
+                <button
+                  type="submit"
+                  className="rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/14 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-eid-primary-200 transition hover:bg-eid-primary-500/22"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
+          </div>
+          <div>
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-eid-text-secondary">Formação / time</p>
+            <form action={adminEditarEidTime} className="flex flex-col gap-2">
+              <select
+                name="time_id"
+                className="eid-input-dark w-full rounded-xl px-3 py-2 text-xs"
+                defaultValue=""
+              >
+                <option value="" disabled>Selecione formação…</option>
+                {(timesRes.data ?? []).map((row) => {
+                  const esporte = firstOf(row.esportes)?.nome ?? "Esporte";
+                  const eid = Number(row.eid_time ?? 0).toFixed(2);
+                  return (
+                    <option key={row.id} value={String(row.id)}>
+                      {row.nome ?? `Formação #${row.id}`} — {esporte} ({eid})
+                    </option>
+                  );
+                })}
+              </select>
+              <div className="flex items-center gap-2">
+                <input
+                  name="eid_time"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="10"
+                  placeholder="Novo EID (0–10)"
+                  className="eid-input-dark flex-1 rounded-xl px-3 py-2 text-xs"
+                />
+                <button
+                  type="submit"
+                  className="rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/14 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-eid-primary-200 transition hover:bg-eid-primary-500/22"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </section>
 
