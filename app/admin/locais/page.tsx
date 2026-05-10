@@ -3,6 +3,7 @@ import { SearchSuggestGetForm } from "@/components/search/search-suggest-get-for
 import {
   adminAplicarPlanoMensalAutomatico,
   adminDeleteEspacoGenerico,
+  adminRemoveEspacoLogoBg,
   adminReviewEspacoClaim,
   adminSetEspacoAdminSuspenso,
   adminSetEspacoListagem,
@@ -45,29 +46,32 @@ function brlDeCentavos(c: number) {
   return (Number(c || 0) / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function OwnershipBadge({ status }: { status: string | null }) {
+  if (status === "generico")
+    return <span className="inline-flex items-center rounded-full border border-eid-border-subtle bg-eid-surface/50 px-2 py-0.5 text-[10px] font-semibold text-eid-text-secondary">Genérico</span>;
+  if (status === "reivindicado")
+    return <span className="inline-flex items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-semibold text-eid-primary-300">Reivindicado</span>;
+  if (status === "dono_cadastrado")
+    return <span className="inline-flex items-center rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">Dono cadastrado</span>;
+  return <span className="inline-flex items-center rounded-full border border-eid-border-subtle bg-eid-surface/50 px-2 py-0.5 text-[10px] font-semibold text-eid-text-secondary">—</span>;
+}
+
 function StatusPill({ status, adminSuspenso, ativoListagem, ownershipStatus }: {
-  status: string | null;
-  adminSuspenso: boolean | null;
-  ativoListagem: boolean | null;
-  ownershipStatus: string | null;
+  status: string | null; adminSuspenso: boolean | null; ativoListagem: boolean | null; ownershipStatus: string | null;
 }) {
-  if (adminSuspenso) {
+  if (adminSuspenso)
     return <span className="inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-300">● Suspenso (admin)</span>;
-  }
   if (!ativoListagem) {
     const label = ownershipStatus === "generico" ? "Aguard. vitrine" : "Fora da listagem";
     return <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[10px] font-bold text-amber-300">● {label}</span>;
   }
   const s = (status ?? "").toLowerCase();
-  if (s === "pendente_validacao") {
+  if (s === "pendente_validacao")
     return <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[10px] font-bold text-amber-300">● Pend. validação</span>;
-  }
-  if (s === "ativo") {
+  if (s === "ativo")
     return <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-300">● Ativo</span>;
-  }
-  if (s === "rascunho") {
+  if (s === "rascunho")
     return <span className="inline-flex items-center gap-1 rounded-full border border-eid-border-subtle bg-eid-surface/50 px-2 py-0.5 text-[10px] font-bold text-eid-text-secondary">● Rascunho</span>;
-  }
   return <span className="inline-flex items-center gap-1 rounded-full border border-eid-border-subtle bg-eid-surface/50 px-2 py-0.5 text-[10px] font-bold text-eid-text-secondary">● {status ?? "—"}</span>;
 }
 
@@ -83,6 +87,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
   const rawQ = (sp.q ?? "").trim();
   const qSafe = sanitizeBusca(rawQ);
   const db = createServiceRoleClient();
+  const hasRemoveBgKey = !!process.env.REMOVEBG_API_KEY;
 
   const { data: eiRow, error: eiErr } = await db.from("ei_financeiro_config").select("*").eq("id", 1).maybeSingle();
   if (eiErr) return <p className="text-sm text-red-300">{eiErr.message}</p>;
@@ -102,7 +107,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
   let locaisQ = db
     .from("espacos_genericos")
     .select(
-      "id, slug, nome_publico, localizacao, status, operacao_status, aceita_socios, ativo_listagem, admin_suspenso, ownership_status, criado_em, categoria_mensalidade, modo_reserva, modo_monetizacao, taxa_reserva_plataforma_centavos, socios_mensalidade_espaco, clube_assinaturas_socios, paas_aprovado_operacao_sem_gateway, paas_primeiro_pagamento_mensal_recebido_em, operacao_suspeita_somente_reservas_gratis, operacao_suspeita_observacao, logo_arquivo, responsavel_usuario_id, criado_por_usuario_id"
+      "id, slug, nome_publico, localizacao, status, operacao_status, aceita_socios, ativo_listagem, admin_suspenso, ownership_status, criado_em, categoria_mensalidade, modo_reserva, modo_monetizacao, taxa_reserva_plataforma_centavos, socios_mensalidade_espaco, clube_assinaturas_socios, paas_aprovado_operacao_sem_gateway, paas_primeiro_pagamento_mensal_recebido_em, operacao_suspeita_somente_reservas_gratis, operacao_suspeita_observacao, logo_arquivo, responsavel_usuario_id, criado_por_usuario_id, venue_config_json, cidade, uf, lat, lng"
     )
     .order("id", { ascending: false });
 
@@ -175,7 +180,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
     admFlash === "delete_erro" ? "Não foi possível excluir o local." :
     admFlash === "delete_confirm" ? "Para excluir, digite exatamente EXCLUIR no campo de confirmação." :
     admFlash === "delete_param" ? "Parâmetros de exclusão inválidos." :
-    admFlash === "info_ok" ? "Dados básicos do local atualizados com sucesso." :
+    admFlash === "info_ok" ? "Dados do local atualizados com sucesso." :
     admFlash === "info_param" ? "Parâmetros inválidos para atualização." :
     admFlash === "info_erro" ? "Erro ao atualizar os dados do local." :
     admFlash === "info_noop" ? "Nenhum dado foi alterado." : null;
@@ -230,7 +235,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
           clearClassName="min-h-[40px] self-end rounded-xl border border-eid-text-secondary/30 px-3 py-2 text-sm font-bold text-eid-text-secondary"
         />
 
-        <div className="mt-4 space-y-3">
+        <div className="mt-4 space-y-4">
           {data.length === 0 ? (
             <div className="rounded-xl border border-dashed border-eid-border-subtle py-10 text-center text-sm text-eid-text-secondary">
               Nenhum local encontrado para esta busca.
@@ -254,7 +259,15 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
               logo_arquivo?: string | null;
               responsavel_usuario_id?: string | null;
               criado_por_usuario_id?: string | null;
+              venue_config_json?: unknown;
+              cidade?: string | null;
+              uf?: string | null;
+              lat?: number | null;
+              lng?: number | null;
             };
+            const isGenerico = l.ownership_status === "generico";
+            const cfg = (localRow.venue_config_json as Record<string, string> | null) ?? {};
+
             const ownerProfile = localRow.responsavel_usuario_id
               ? ownerProfileMap.get(localRow.responsavel_usuario_id)
               : null;
@@ -286,36 +299,67 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                 : "text-emerald-300 border-emerald-500/20 bg-emerald-500/6";
             const valorBrl = (a?.valor_mensal_centavos ?? 0) / 100;
 
+            // Build address summary line
+            const addrParts = [
+              cfg.endereco && cfg.numero ? `${cfg.endereco}, ${cfg.numero}` : cfg.endereco,
+              cfg.bairro,
+              localRow.cidade ?? cfg.cidade,
+              localRow.uf ?? cfg.estado,
+              cfg.cep,
+            ].filter(Boolean);
+            const addrLine = addrParts.join(" · ");
+
             return (
-              <div key={l.id} className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60">
-                {/* Card header */}
+              <div key={l.id} className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 shadow-sm">
+                {/* ── Card header ── */}
                 <div className="flex flex-wrap items-start justify-between gap-3 p-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-[10px] text-eid-text-muted">#{l.id}</span>
-                      <StatusPill
-                        status={l.status}
-                        adminSuspenso={localRow.admin_suspenso ?? null}
-                        ativoListagem={l.ativo_listagem ?? null}
-                        ownershipStatus={l.ownership_status ?? null}
-                      />
-                      {l.ownership_status === "generico" ? (
-                        <span className="inline-flex items-center rounded-full border border-eid-border-subtle bg-eid-surface/50 px-2 py-0.5 text-[10px] font-semibold text-eid-text-secondary">Genérico</span>
-                      ) : l.ownership_status === "reivindicado" ? (
-                        <span className="inline-flex items-center rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-2 py-0.5 text-[10px] font-semibold text-eid-primary-300">Reivindicado</span>
-                      ) : l.ownership_status === "dono_cadastrado" ? (
-                        <span className="inline-flex items-center rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">Dono cadastrado</span>
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    {/* Logo thumbnail */}
+                    <div className="shrink-0">
+                      {localRow.logo_arquivo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={localRow.logo_arquivo} alt="" className="h-12 w-12 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 object-cover" />
                       ) : (
-                        <span className="inline-flex items-center rounded-full border border-eid-border-subtle bg-eid-surface/50 px-2 py-0.5 text-[10px] font-semibold text-eid-text-secondary">—</span>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/30">
+                          <svg viewBox="0 0 24 24" className="h-5 w-5 text-eid-text-secondary/40" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                            <rect x="3" y="3" width="18" height="18" rx="3"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <path d="m21 15-5-5L5 21"/>
+                          </svg>
+                        </div>
                       )}
-                      {localRow.operacao_suspeita_somente_reservas_gratis ? (
-                        <span className="inline-flex items-center gap-1 rounded-full border border-red-500/35 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-300">⚠ Suspeita</span>
-                      ) : null}
                     </div>
-                    <p className="mt-1 text-base font-bold text-eid-fg">{l.nome_publico ?? "Sem nome"}</p>
-                    <p className="text-xs text-eid-text-secondary">
-                      {l.localizacao ?? "Sem localização"} · {l.slug ? `/${l.slug}` : "sem slug"} · {cat}
-                    </p>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="font-mono text-[10px] text-eid-text-muted">#{l.id}</span>
+                        <StatusPill
+                          status={l.status}
+                          adminSuspenso={localRow.admin_suspenso ?? null}
+                          ativoListagem={l.ativo_listagem ?? null}
+                          ownershipStatus={l.ownership_status ?? null}
+                        />
+                        <OwnershipBadge status={l.ownership_status ?? null} />
+                        {localRow.operacao_suspeita_somente_reservas_gratis ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-red-500/35 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-300">⚠ Suspeita</span>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 text-base font-bold text-eid-fg">{l.nome_publico ?? "Sem nome"}</p>
+                      <p className="text-[11px] text-eid-text-secondary">
+                        {l.localizacao ?? "—"} {l.slug ? <span className="font-mono opacity-70">· /{l.slug}</span> : null} · {cat}
+                      </p>
+                      {addrLine && (
+                        <p className="mt-0.5 text-[11px] text-eid-text-secondary/70">{addrLine}</p>
+                      )}
+                      {/* Owner info inline */}
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-eid-text-secondary">
+                        {ownerProfile && (
+                          <span><span className="font-semibold">Dono:</span> {ownerProfile.nome}</span>
+                        )}
+                        {registrantProfile && (
+                          <span><span className="font-semibold">Cadastrou:</span> {registrantProfile.nome}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Quick actions */}
@@ -333,7 +377,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                         <input type="hidden" name="id" value={l.id} />
                         <input type="hidden" name="ativo_listagem" value="false" />
                         <button type="submit" className="inline-flex items-center rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-1.5 text-[11px] font-semibold text-amber-300 hover:bg-amber-500/18">
-                          Ocultar listagem
+                          Ocultar
                         </button>
                       </form>
                     ) : (
@@ -365,18 +409,13 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                   </div>
                 </div>
 
-                {/* Status + mensalidade row */}
+                {/* ── Status + mensalidade row ── */}
                 <div className="grid gap-3 border-t border-[color:var(--eid-border-subtle)]/50 px-4 py-3 sm:grid-cols-2">
-                  {/* Status edit */}
                   <div>
                     <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Status do cadastro</p>
                     <form action={adminSetEspacoStatus} className="flex items-center gap-2">
                       <input type="hidden" name="id" value={l.id} />
-                      <select
-                        name="status"
-                        defaultValue={l.status ?? ""}
-                        className="eid-input-dark min-w-[160px] rounded-lg px-2 py-1.5 text-xs"
-                      >
+                      <select name="status" defaultValue={l.status ?? ""} className="eid-input-dark min-w-[160px] rounded-lg px-2 py-1.5 text-xs">
                         {STATUS_OPTIONS.map((o) => (
                           <option key={o.value} value={o.value}>{o.label}</option>
                         ))}
@@ -387,239 +426,365 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                     </form>
                   </div>
 
-                  {/* Mensalidade summary */}
-                  <div>
-                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Mensalidade plataforma</p>
-                    <div className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold ${mensalidadeCor}`}>
-                      <span className="capitalize">{situ.nivel}</span>
-                      <span className="font-normal opacity-80">·</span>
-                      <span className="font-normal">{situ.mensagem}</span>
+                  {isGenerico ? (
+                    <div>
+                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Tipo</p>
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-eid-border-subtle bg-eid-surface/40 px-3 py-1.5 text-[11px] font-semibold text-eid-text-secondary">
+                        Cadastro genérico — sem cobrança de plataforma
+                      </span>
                     </div>
-                    {a ? (
-                      <p className="mt-1 text-[11px] text-eid-text-secondary">
-                        {brlDeCentavos(a.valor_mensal_centavos)}/mês · venc. {a.proxima_cobranca ?? "—"} · override: {a.situacao_override ?? "nenhum"}
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-[11px] text-eid-text-secondary">Sem assinatura registrada</p>
-                    )}
-                  </div>
+                  ) : (
+                    <div>
+                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Mensalidade plataforma</p>
+                      <div className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold ${mensalidadeCor}`}>
+                        <span className="capitalize">{situ.nivel}</span>
+                        <span className="font-normal opacity-80">·</span>
+                        <span className="font-normal">{situ.mensagem}</span>
+                      </div>
+                      {a ? (
+                        <p className="mt-1 text-[11px] text-eid-text-secondary">
+                          {brlDeCentavos(a.valor_mensal_centavos)}/mês · venc. {a.proxima_cobranca ?? "—"} · override: {a.situacao_override ?? "nenhum"}
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-[11px] text-eid-text-secondary">Sem assinatura registrada</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {/* Reservas gratuitas liberadas */}
-                <div className="border-t border-[color:var(--eid-border-subtle)]/40 px-4 py-3">
-                  <form action={adminSetPaasAprovadoOperacaoSemGateway} className="flex flex-wrap items-center gap-2">
-                    <input type="hidden" name="espaco_generico_id" value={l.id} />
-                    <label className="text-[11px] text-eid-text-secondary">
-                      Reservas 100% gratuitas (e simil.):
-                    </label>
-                    <select
-                      name="aprovado_sem_pagamento"
-                      defaultValue={localRow.paas_aprovado_operacao_sem_gateway ? "true" : "false"}
-                      className="eid-input-dark rounded-lg px-2 py-1 text-xs"
-                    >
-                      <option value="false">Exigir 1º pagamento PaaS (padrão)</option>
-                      <option value="true">Liberar sem pagamento (exceção admin)</option>
-                    </select>
-                    <button type="submit" className="rounded-lg border border-eid-primary-500/35 px-3 py-1 text-[11px] font-bold text-eid-primary-200">
-                      Aplicar
-                    </button>
-                  </form>
-                  {localRow.operacao_suspeita_somente_reservas_gratis ? (
-                    <p className="mt-1.5 text-[11px] text-red-300">
-                      ⚠ Suspeita: mista, só reservas gratuitas há 15+ dias. {localRow.operacao_suspeita_observacao ?? ""}{" "}
-                      <Link className="font-bold underline" href="/admin/locais/suspeitas-mista">Ver relatório</Link>
-                    </p>
-                  ) : null}
-                </div>
-
-                {/* Expandable sections */}
-                <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
-                  <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02]">
-                    ▸ Dados básicos e logo
-                  </summary>
-                  <div className="border-t border-[color:var(--eid-border-subtle)]/30 bg-eid-bg/20 px-4 pb-4 pt-3">
-                    {/* Owner info */}
-                    <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-eid-text-secondary">
-                      {ownerProfile ? (
-                        <span><span className="font-semibold text-eid-text-muted">Responsável:</span> {ownerProfile.nome ?? localRow.responsavel_usuario_id}</span>
-                      ) : localRow.responsavel_usuario_id ? (
-                        <span><span className="font-semibold text-eid-text-muted">Responsável:</span> <span className="font-mono text-[10px]">{localRow.responsavel_usuario_id}</span></span>
-                      ) : null}
-                      {registrantProfile ? (
-                        <span><span className="font-semibold text-eid-text-muted">Cadastrado por:</span> {registrantProfile.nome ?? localRow.criado_por_usuario_id}</span>
-                      ) : localRow.criado_por_usuario_id ? (
-                        <span><span className="font-semibold text-eid-text-muted">Cadastrado por:</span> <span className="font-mono text-[10px]">{localRow.criado_por_usuario_id}</span></span>
-                      ) : null}
-                    </div>
-                    {localRow.logo_arquivo ? (
-                      <div className="mb-3">
-                        <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-eid-text-muted">Logo atual</p>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={localRow.logo_arquivo} alt="Logo do local" className="h-12 w-12 rounded-lg object-cover" />
-                      </div>
-                    ) : null}
-                    <form action={adminUpdateEspacoInfo} className="grid max-w-2xl gap-3 sm:grid-cols-2" encType="multipart/form-data">
-                      <input type="hidden" name="id" value={l.id} />
-                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                        Nome público
-                        <input name="nome_publico" defaultValue={l.nome_publico ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary">
-                        Slug
-                        <input name="slug" defaultValue={l.slug ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm font-mono" />
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary">
-                        Localização
-                        <input name="localizacao" defaultValue={l.localizacao ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                        Nova logo (imagem)
-                        <input name="logo_arquivo" type="file" accept="image/*" className="mt-1 block w-full text-xs text-eid-text-secondary file:mr-2 file:rounded-lg file:border file:border-eid-border-subtle file:bg-eid-surface file:px-2 file:py-1 file:text-[11px] file:font-semibold file:text-eid-fg" />
-                      </label>
-                      <div className="sm:col-span-2">
-                        <button type="submit" className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg">
-                          Salvar dados básicos
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </details>
-
-                <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
-                  <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02]">
-                    ▸ Modo de reserva, monetização e taxa
-                  </summary>
-                  <div className="border-t border-[color:var(--eid-border-subtle)]/30 bg-eid-bg/20 px-4 pb-4 pt-3">
-                    <form action={adminUpdateEspacoModoCobranca} className="grid max-w-2xl gap-3 sm:grid-cols-2">
-                      <input type="hidden" name="id" value={l.id} />
-                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                        Modo de reserva
-                        <select name="modo_reserva" defaultValue={localRow.modo_reserva ?? "mista"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
-                          <option value="gratuita">{MODO_RESERVA_LABEL.gratuita}</option>
-                          <option value="paga">{MODO_RESERVA_LABEL.paga}</option>
-                          <option value="mista">{MODO_RESERVA_LABEL.mista}</option>
-                        </select>
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                        Monetização
-                        <select name="modo_monetizacao" defaultValue={localRow.modo_monetizacao ?? "misto"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
-                          <option value="mensalidade_plataforma">{MODO_MONETIZACAO_LABEL.mensalidade_plataforma}</option>
-                          <option value="apenas_reservas">{MODO_MONETIZACAO_LABEL.apenas_reservas}</option>
-                          <option value="misto">{MODO_MONETIZACAO_LABEL.misto}</option>
-                        </select>
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary">
-                        Taxa plataforma por reserva (R$)
-                        <input name="taxa_reserva_plataforma_brl" type="number" step="0.01" min={0} defaultValue={Number(taxaReservaBrl.toFixed(2))} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                        Mensalidade de sócios
-                        <select name="socios_mensalidade_espaco" defaultValue={localRow.socios_mensalidade_espaco ?? "em_breve"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
-                          <option value="off">{SOCIOS_MENSAL_ESPACO_LABEL.off}</option>
-                          <option value="em_breve">{SOCIOS_MENSAL_ESPACO_LABEL.em_breve}</option>
-                          <option value="on">{SOCIOS_MENSAL_ESPACO_LABEL.on}</option>
-                        </select>
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                        Clube de assinaturas entre sócios
-                        <select name="clube_assinaturas_socios" defaultValue={localRow.clube_assinaturas_socios ?? "em_breve"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
-                          <option value="off">{CLUBE_ASSINATURA_SOCIOS_LABEL.off}</option>
-                          <option value="em_breve">{CLUBE_ASSINATURA_SOCIOS_LABEL.em_breve}</option>
-                          <option value="on">{CLUBE_ASSINATURA_SOCIOS_LABEL.on}</option>
-                        </select>
-                      </label>
-                      <div className="sm:col-span-2">
-                        <button type="submit" className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg">
-                          Salvar modo e taxa
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </details>
-
-                <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
-                  <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02]">
-                    ▸ Assinatura / categoria da plataforma
-                  </summary>
-                  <div className="border-t border-[color:var(--eid-border-subtle)]/30 bg-eid-bg/25 px-4 pb-4 pt-3">
-                    <form action={adminUpdateEspacoMensalidadePlataforma} className="grid max-w-2xl gap-3 sm:grid-cols-2">
+                {/* ── Reservas gratuitas — só para locais com dono ── */}
+                {!isGenerico && (
+                  <div className="border-t border-[color:var(--eid-border-subtle)]/40 px-4 py-3">
+                    <form action={adminSetPaasAprovadoOperacaoSemGateway} className="flex flex-wrap items-center gap-2">
                       <input type="hidden" name="espaco_generico_id" value={l.id} />
-                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                        Categoria
-                        <select name="categoria_mensalidade" defaultValue={cat} className="eid-input-dark mt-1 w-full max-w-sm rounded-lg px-2 py-1.5 text-sm">
-                          {CATEGORIAS.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
-                        </select>
+                      <label className="text-[11px] text-eid-text-secondary">
+                        Reservas 100% gratuitas (e simil.):
                       </label>
-                      <div className="sm:col-span-2">
-                        <button type="submit" formAction={adminAplicarPlanoMensalAutomatico} className="rounded-lg border border-eid-text-secondary/25 px-3 py-1.5 text-[11px] font-bold text-eid-primary-200 hover:bg-white/5">
-                          Aplicar plano do catálogo automaticamente
-                        </button>
+                      <select
+                        name="aprovado_sem_pagamento"
+                        defaultValue={localRow.paas_aprovado_operacao_sem_gateway ? "true" : "false"}
+                        className="eid-input-dark rounded-lg px-2 py-1 text-xs"
+                      >
+                        <option value="false">Exigir 1º pagamento PaaS (padrão)</option>
+                        <option value="true">Liberar sem pagamento (exceção admin)</option>
+                      </select>
+                      <button type="submit" className="rounded-lg border border-eid-primary-500/35 px-3 py-1 text-[11px] font-bold text-eid-primary-200">
+                        Aplicar
+                      </button>
+                    </form>
+                    {localRow.operacao_suspeita_somente_reservas_gratis ? (
+                      <p className="mt-1.5 text-[11px] text-red-300">
+                        ⚠ Suspeita: mista, só reservas gratuitas há 15+ dias. {localRow.operacao_suspeita_observacao ?? ""}{" "}
+                        <Link className="font-bold underline" href="/admin/locais/suspeitas-mista">Ver relatório</Link>
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+
+                {/* ── Dados básicos, endereço e logo ── */}
+                <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
+                  <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02] list-none flex items-center gap-1.5">
+                    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><path d="M6 4l4 4-4 4"/></svg>
+                    Dados básicos, endereço e logo
+                  </summary>
+                  <div className="border-t border-[color:var(--eid-border-subtle)]/30 bg-eid-bg/20 px-4 pb-5 pt-4">
+                    <form action={adminUpdateEspacoInfo} className="space-y-4 max-w-2xl" encType="multipart/form-data">
+                      <input type="hidden" name="id" value={l.id} />
+
+                      {/* Identidade */}
+                      <div>
+                        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.1em] text-eid-text-muted">Identidade</p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                            Nome público
+                            <input name="nome_publico" defaultValue={l.nome_publico ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                          </label>
+                          <label className="text-[11px] text-eid-text-secondary">
+                            Slug (URL)
+                            <input name="slug" defaultValue={l.slug ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm font-mono" />
+                          </label>
+                          <label className="text-[11px] text-eid-text-secondary">
+                            Localização (resumida)
+                            <input name="localizacao" defaultValue={l.localizacao ?? ""} placeholder="Ex: Ipatinga - MG" className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                          </label>
+                        </div>
                       </div>
-                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                        Plano do catálogo
-                        <select name="plano_mensal_id" defaultValue={a?.plano_mensal_id && a.plano_mensal_id > 0 ? String(a.plano_mensal_id) : "0"} className="eid-input-dark mt-1 w-full max-w-2xl rounded-lg px-2 py-1.5 text-sm">
-                          <option value="0">(nenhum — preencher manualmente)</option>
-                          {planosCatalogo.map((p) => {
-                            const faixa = p.max_unidades == null ? `${p.min_unidades}+` : `${p.min_unidades}–${p.max_unidades}`;
-                            const label = `${p.categoria_espaco} · ${faixa} u. · ${p.nome} · ${brlDeCentavos(p.valor_mensal_centavos)}/mês${p.liberacao !== "publico" ? " [admin]" : ""}`;
-                            return (<option key={p.id} value={p.id} disabled={p.liberacao === "inativo"}>{label}</option>);
-                          })}
-                        </select>
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary">
-                        Valor mensal (R$)
-                        <input name="valor_mensal_brl" type="number" step="0.01" min={0} defaultValue={Number(valorBrl.toFixed(2))} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary">
-                        Próxima cobrança
-                        <input name="proxima_cobranca" type="date" defaultValue={a?.proxima_cobranca ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary">
-                        Mês grátis (dias)
-                        <input name="trial_dias_override" type="number" min={0} max={90} defaultValue={a?.trial_dias_override ?? 30} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary">
-                        Nome do plano
-                        <input name="plano_nome" defaultValue={a?.plano_nome ?? "Plataforma"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary">
-                        Status da assinatura
-                        <select name="status" defaultValue={a?.status ?? "active"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
-                          <option value="trial">trial</option>
-                          <option value="active">active</option>
-                          <option value="overdue">overdue</option>
-                          <option value="cancelled">cancelled</option>
-                        </select>
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary">
-                        Override
-                        <select name="situacao_override" defaultValue={a?.situacao_override ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
-                          <option value="">(automático)</option>
-                          <option value="isento">Isento (não cobra)</option>
-                          <option value="forcar_bloqueio">Forçar bloqueio</option>
-                        </select>
-                      </label>
-                      <label className="flex items-center gap-2 text-[11px] text-eid-text-secondary sm:col-span-2">
-                        <input type="checkbox" name="isento_total" defaultChecked={Boolean(a?.isento_total)} />
-                        Espaço sem cobrança da plataforma (isento total)
-                      </label>
-                      <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
-                        Observações internas
-                        <textarea name="observacoes_admin" rows={2} defaultValue={a?.observacoes_admin ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
-                      </label>
-                      <div className="sm:col-span-2">
-                        <button type="submit" className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg">
-                          Salvar assinatura
+
+                      {/* Endereço completo */}
+                      <div>
+                        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.1em] text-eid-text-muted">Endereço completo</p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                            Logradouro (rua/av.)
+                            <input name="endereco" defaultValue={cfg.endereco ?? ""} placeholder="Ex: Rua das Flores" className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                          </label>
+                          <label className="text-[11px] text-eid-text-secondary">
+                            Número
+                            <input name="numero" defaultValue={cfg.numero ?? ""} placeholder="123" className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                          </label>
+                          <label className="text-[11px] text-eid-text-secondary">
+                            Complemento
+                            <input name="complemento" defaultValue={cfg.complemento ?? ""} placeholder="Sala, bloco, galpão..." className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                          </label>
+                          <label className="text-[11px] text-eid-text-secondary">
+                            Bairro
+                            <input name="bairro" defaultValue={cfg.bairro ?? ""} placeholder="Bairro" className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                          </label>
+                          <label className="text-[11px] text-eid-text-secondary">
+                            CEP
+                            <input name="cep" defaultValue={cfg.cep ?? ""} placeholder="00000-000" className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm font-mono" />
+                          </label>
+                          <label className="text-[11px] text-eid-text-secondary">
+                            Cidade
+                            <input name="cidade" defaultValue={localRow.cidade ?? cfg.cidade ?? ""} placeholder="Cidade" className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                          </label>
+                          <label className="text-[11px] text-eid-text-secondary">
+                            UF
+                            <input name="estado" defaultValue={localRow.uf ?? cfg.estado ?? ""} placeholder="MG" maxLength={2} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm uppercase" />
+                          </label>
+                          <label className="text-[11px] text-eid-text-secondary">
+                            Latitude
+                            <input name="lat" type="number" step="any" defaultValue={localRow.lat ?? ""} placeholder="-19.0000" className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm font-mono" />
+                          </label>
+                          <label className="text-[11px] text-eid-text-secondary">
+                            Longitude
+                            <input name="lng" type="number" step="any" defaultValue={localRow.lng ?? ""} placeholder="-44.0000" className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm font-mono" />
+                          </label>
+                        </div>
+                        {(localRow.lat && localRow.lng) ? (
+                          <a
+                            href={`https://www.google.com/maps?q=${localRow.lat},${localRow.lng}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-semibold text-eid-primary-400 hover:underline"
+                          >
+                            <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><path d="M8 2a4 4 0 0 1 4 4c0 3-4 8-4 8S4 9 4 6a4 4 0 0 1 4-4z"/><circle cx="8" cy="6" r="1.5"/></svg>
+                            Ver pin atual no Google Maps ↗
+                          </a>
+                        ) : null}
+                      </div>
+
+                      {/* Logo */}
+                      <div>
+                        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.1em] text-eid-text-muted">Logo</p>
+                        <div className="flex flex-wrap items-start gap-4">
+                          {localRow.logo_arquivo ? (
+                            <div className="flex items-start gap-3">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={localRow.logo_arquivo}
+                                alt="Logo atual"
+                                className="h-24 w-24 rounded-xl border border-[color:var(--eid-border-subtle)] bg-[repeating-conic-gradient(#1e2a3a_0%_25%,#0f1724_0%_50%)_0_0/16px_16px] object-contain p-1"
+                              />
+                              <div className="space-y-2">
+                                <p className="text-[11px] text-eid-text-secondary">Logo atual</p>
+                                {hasRemoveBgKey && (
+                                  <form action={adminRemoveEspacoLogoBg}>
+                                    <input type="hidden" name="id" value={l.id} />
+                                    <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-[11px] font-bold text-violet-300 transition hover:bg-violet-500/18">
+                                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-3.5 w-3.5" aria-hidden>
+                                        <path d="M3 3l10 10M6.5 3h3L14 8l-2.5 5H4.5L2 8l1-2"/>
+                                      </svg>
+                                      Remover fundo da logo atual
+                                    </button>
+                                  </form>
+                                )}
+                                <a
+                                  href={localRow.logo_arquivo}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] text-eid-text-secondary hover:text-eid-primary-300"
+                                >
+                                  Ver original ↗
+                                </a>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex h-24 w-24 items-center justify-center rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] bg-eid-surface/30">
+                              <svg viewBox="0 0 24 24" className="h-8 w-8 text-eid-text-secondary/40" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                                <rect x="3" y="3" width="18" height="18" rx="3"/>
+                                <circle cx="8.5" cy="8.5" r="1.5"/>
+                                <path d="m21 15-5-5L5 21"/>
+                              </svg>
+                            </div>
+                          )}
+                          <div className="flex-1 space-y-2">
+                            <label className="block text-[11px] text-eid-text-secondary">
+                              Nova logo (substituir)
+                              <input
+                                name="logo_arquivo"
+                                type="file"
+                                accept="image/*"
+                                className="mt-1 block w-full text-xs text-eid-text-secondary file:mr-2 file:rounded-lg file:border file:border-eid-border-subtle file:bg-eid-surface file:px-2 file:py-1 file:text-[11px] file:font-semibold file:text-eid-fg"
+                              />
+                            </label>
+                            {hasRemoveBgKey ? (
+                              <label className="flex cursor-pointer items-center gap-2 text-[11px] text-eid-text-secondary">
+                                <input type="checkbox" name="remove_bg" value="1" className="rounded" />
+                                <span>Remover fundo automaticamente ao enviar <span className="text-violet-400">(remove.bg)</span></span>
+                              </label>
+                            ) : (
+                              <p className="text-[11px] text-eid-text-secondary/60">
+                                Configure <span className="font-mono">REMOVEBG_API_KEY</span> para habilitar remoção de fundo automática.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-1">
+                        <button type="submit" className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-5 py-2 text-xs font-bold text-eid-fg hover:bg-eid-primary-500/22 transition">
+                          Salvar alterações
                         </button>
                       </div>
                     </form>
                   </div>
                 </details>
 
-                {/* Danger zone */}
+                {/* ── Modo de reserva — só para locais com dono ── */}
+                {!isGenerico && (
+                  <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
+                    <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02] list-none flex items-center gap-1.5">
+                      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><path d="M6 4l4 4-4 4"/></svg>
+                      Modo de reserva, monetização e taxa
+                    </summary>
+                    <div className="border-t border-[color:var(--eid-border-subtle)]/30 bg-eid-bg/20 px-4 pb-4 pt-3">
+                      <form action={adminUpdateEspacoModoCobranca} className="grid max-w-2xl gap-3 sm:grid-cols-2">
+                        <input type="hidden" name="id" value={l.id} />
+                        <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                          Modo de reserva
+                          <select name="modo_reserva" defaultValue={localRow.modo_reserva ?? "mista"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
+                            <option value="gratuita">{MODO_RESERVA_LABEL.gratuita}</option>
+                            <option value="paga">{MODO_RESERVA_LABEL.paga}</option>
+                            <option value="mista">{MODO_RESERVA_LABEL.mista}</option>
+                          </select>
+                        </label>
+                        <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                          Monetização
+                          <select name="modo_monetizacao" defaultValue={localRow.modo_monetizacao ?? "misto"} className="eid-input-dark mt-1 w-full max-w-md rounded-lg px-2 py-1.5 text-sm">
+                            <option value="mensalidade_plataforma">{MODO_MONETIZACAO_LABEL.mensalidade_plataforma}</option>
+                            <option value="apenas_reservas">{MODO_MONETIZACAO_LABEL.apenas_reservas}</option>
+                            <option value="misto">{MODO_MONETIZACAO_LABEL.misto}</option>
+                          </select>
+                        </label>
+                        <label className="text-[11px] text-eid-text-secondary">
+                          Taxa plataforma por reserva (R$)
+                          <input name="taxa_reserva_plataforma_brl" type="number" step="0.01" min={0} defaultValue={Number(taxaReservaBrl.toFixed(2))} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                        </label>
+                        <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                          Mensalidade de sócios
+                          <select name="socios_mensalidade_espaco" defaultValue={localRow.socios_mensalidade_espaco ?? "em_breve"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
+                            <option value="off">{SOCIOS_MENSAL_ESPACO_LABEL.off}</option>
+                            <option value="em_breve">{SOCIOS_MENSAL_ESPACO_LABEL.em_breve}</option>
+                            <option value="on">{SOCIOS_MENSAL_ESPACO_LABEL.on}</option>
+                          </select>
+                        </label>
+                        <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                          Clube de assinaturas entre sócios
+                          <select name="clube_assinaturas_socios" defaultValue={localRow.clube_assinaturas_socios ?? "em_breve"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
+                            <option value="off">{CLUBE_ASSINATURA_SOCIOS_LABEL.off}</option>
+                            <option value="em_breve">{CLUBE_ASSINATURA_SOCIOS_LABEL.em_breve}</option>
+                            <option value="on">{CLUBE_ASSINATURA_SOCIOS_LABEL.on}</option>
+                          </select>
+                        </label>
+                        <div className="sm:col-span-2">
+                          <button type="submit" className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg">
+                            Salvar modo e taxa
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </details>
+                )}
+
+                {/* ── Assinatura — só para locais com dono ── */}
+                {!isGenerico && (
+                  <details className="group border-t border-[color:var(--eid-border-subtle)]/50">
+                    <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-eid-primary-300 hover:bg-white/[0.02] list-none flex items-center gap-1.5">
+                      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><path d="M6 4l4 4-4 4"/></svg>
+                      Assinatura / categoria da plataforma
+                    </summary>
+                    <div className="border-t border-[color:var(--eid-border-subtle)]/30 bg-eid-bg/25 px-4 pb-4 pt-3">
+                      <form action={adminUpdateEspacoMensalidadePlataforma} className="grid max-w-2xl gap-3 sm:grid-cols-2">
+                        <input type="hidden" name="espaco_generico_id" value={l.id} />
+                        <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                          Categoria
+                          <select name="categoria_mensalidade" defaultValue={cat} className="eid-input-dark mt-1 w-full max-w-sm rounded-lg px-2 py-1.5 text-sm">
+                            {CATEGORIAS.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+                          </select>
+                        </label>
+                        <div className="sm:col-span-2">
+                          <button type="submit" formAction={adminAplicarPlanoMensalAutomatico} className="rounded-lg border border-eid-text-secondary/25 px-3 py-1.5 text-[11px] font-bold text-eid-primary-200 hover:bg-white/5">
+                            Aplicar plano do catálogo automaticamente
+                          </button>
+                        </div>
+                        <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                          Plano do catálogo
+                          <select name="plano_mensal_id" defaultValue={a?.plano_mensal_id && a.plano_mensal_id > 0 ? String(a.plano_mensal_id) : "0"} className="eid-input-dark mt-1 w-full max-w-2xl rounded-lg px-2 py-1.5 text-sm">
+                            <option value="0">(nenhum — preencher manualmente)</option>
+                            {planosCatalogo.map((p) => {
+                              const faixa = p.max_unidades == null ? `${p.min_unidades}+` : `${p.min_unidades}–${p.max_unidades}`;
+                              const label = `${p.categoria_espaco} · ${faixa} u. · ${p.nome} · ${brlDeCentavos(p.valor_mensal_centavos)}/mês${p.liberacao !== "publico" ? " [admin]" : ""}`;
+                              return (<option key={p.id} value={p.id} disabled={p.liberacao === "inativo"}>{label}</option>);
+                            })}
+                          </select>
+                        </label>
+                        <label className="text-[11px] text-eid-text-secondary">
+                          Valor mensal (R$)
+                          <input name="valor_mensal_brl" type="number" step="0.01" min={0} defaultValue={Number(valorBrl.toFixed(2))} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                        </label>
+                        <label className="text-[11px] text-eid-text-secondary">
+                          Próxima cobrança
+                          <input name="proxima_cobranca" type="date" defaultValue={a?.proxima_cobranca ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                        </label>
+                        <label className="text-[11px] text-eid-text-secondary">
+                          Mês grátis (dias)
+                          <input name="trial_dias_override" type="number" min={0} max={90} defaultValue={a?.trial_dias_override ?? 30} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                        </label>
+                        <label className="text-[11px] text-eid-text-secondary">
+                          Nome do plano
+                          <input name="plano_nome" defaultValue={a?.plano_nome ?? "Plataforma"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                        </label>
+                        <label className="text-[11px] text-eid-text-secondary">
+                          Status da assinatura
+                          <select name="status" defaultValue={a?.status ?? "active"} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
+                            <option value="trial">trial</option>
+                            <option value="active">active</option>
+                            <option value="overdue">overdue</option>
+                            <option value="cancelled">cancelled</option>
+                          </select>
+                        </label>
+                        <label className="text-[11px] text-eid-text-secondary">
+                          Override
+                          <select name="situacao_override" defaultValue={a?.situacao_override ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm">
+                            <option value="">(automático)</option>
+                            <option value="isento">Isento (não cobra)</option>
+                            <option value="forcar_bloqueio">Forçar bloqueio</option>
+                          </select>
+                        </label>
+                        <label className="flex items-center gap-2 text-[11px] text-eid-text-secondary sm:col-span-2">
+                          <input type="checkbox" name="isento_total" defaultChecked={Boolean(a?.isento_total)} />
+                          Espaço sem cobrança da plataforma (isento total)
+                        </label>
+                        <label className="text-[11px] text-eid-text-secondary sm:col-span-2">
+                          Observações internas
+                          <textarea name="observacoes_admin" rows={2} defaultValue={a?.observacoes_admin ?? ""} className="eid-input-dark mt-1 w-full rounded-lg px-2 py-1.5 text-sm" />
+                        </label>
+                        <div className="sm:col-span-2">
+                          <button type="submit" className="rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-fg">
+                            Salvar assinatura
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </details>
+                )}
+
+                {/* ── Danger zone ── */}
                 <details className="group border-t border-red-500/20">
-                  <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-red-400/80 hover:bg-red-500/5">
-                    ▸ Zona de risco — excluir permanentemente
+                  <summary className="cursor-pointer px-4 py-2.5 text-xs font-semibold text-red-400/80 hover:bg-red-500/5 list-none flex items-center gap-1.5">
+                    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden><path d="M6 4l4 4-4 4"/></svg>
+                    Zona de risco — excluir permanentemente
                   </summary>
                   <div className="border-t border-red-500/20 bg-red-500/5 px-4 pb-4 pt-3">
                     <p className="mb-2 text-[11px] text-eid-text-secondary">
@@ -682,7 +847,6 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                       : "border-[color:var(--eid-border-subtle)] bg-eid-card/40"
                 }`}
               >
-                {/* Claim header */}
                 <div className="flex flex-wrap items-start justify-between gap-3 p-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -707,7 +871,6 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                   </div>
                 </div>
 
-                {/* Claim body */}
                 <div className="grid gap-3 border-t border-[color:var(--eid-border-subtle)]/40 px-4 py-3 sm:grid-cols-2">
                   <div>
                     {claim.mensagem ? (
@@ -737,7 +900,6 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                     )}
                   </div>
 
-                  {/* Decision form */}
                   <form action={adminReviewEspacoClaim} className="space-y-2.5">
                     <input type="hidden" name="claim_id" value={claim.id} />
                     <label className="block text-[11px] text-eid-text-secondary">

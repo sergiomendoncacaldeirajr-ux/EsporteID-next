@@ -2072,25 +2072,112 @@ export async function adminUpdateEspacoInfo(formData: FormData): Promise<void> {
   const db = createServiceRoleClient();
   const id = Number(formData.get("id") ?? 0);
   if (!Number.isFinite(id) || id <= 0) redirect("/admin/locais?adm_flash=info_param");
+
   const nomeRaw = String(formData.get("nome_publico") ?? "").trim();
   const slugRaw = String(formData.get("slug") ?? "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
   const localizacaoRaw = String(formData.get("localizacao") ?? "").trim();
+
+  const endereco = String(formData.get("endereco") ?? "").trim();
+  const numero = String(formData.get("numero") ?? "").trim();
+  const bairro = String(formData.get("bairro") ?? "").trim();
+  const cidadeF = String(formData.get("cidade") ?? "").trim();
+  const estadoF = String(formData.get("estado") ?? "").toUpperCase().trim().slice(0, 2);
+  const cepF = String(formData.get("cep") ?? "").replace(/\D/g, "").slice(0, 8);
+  const complemento = String(formData.get("complemento") ?? "").trim();
+  const latRaw = Number(formData.get("lat") ?? "");
+  const lngRaw = Number(formData.get("lng") ?? "");
+
   const payload: Record<string, unknown> = {};
   if (nomeRaw) payload.nome_publico = nomeRaw;
   if (slugRaw) payload.slug = slugRaw;
   if (localizacaoRaw) payload.localizacao = localizacaoRaw;
+
+  const addrFields: Record<string, string> = {};
+  if (endereco) addrFields.endereco = endereco;
+  if (numero) addrFields.numero = numero;
+  if (bairro) addrFields.bairro = bairro;
+  if (cidadeF) addrFields.cidade = cidadeF;
+  if (estadoF) addrFields.estado = estadoF;
+  if (cepF) addrFields.cep = cepF;
+  if (complemento) addrFields.complemento = complemento;
+  if (Object.keys(addrFields).length > 0) payload.venue_config_json = addrFields;
+  if (cidadeF) payload.cidade = cidadeF;
+  if (estadoF) payload.uf = estadoF;
+  if (Number.isFinite(latRaw) && latRaw !== 0) payload.lat = latRaw;
+  if (Number.isFinite(lngRaw) && lngRaw !== 0) payload.lng = lngRaw;
+
   const logoFile = formData.get("logo_arquivo");
+  const removeBg = formData.get("remove_bg") === "1";
   if (logoFile instanceof File && logoFile.size > 0 && logoFile.type.startsWith("image/")) {
     const ext = (logoFile.name.split(".").pop()?.toLowerCase() ?? "jpg").replace(/[^a-z0-9]/g, "") || "jpg";
-    const path = `admin/${id}/logo_${Date.now()}.${ext}`;
-    const { error: upErr } = await db.storage.from("espaco-logos").upload(path, logoFile, { upsert: true, contentType: logoFile.type });
-    if (!upErr) payload.logo_arquivo = db.storage.from("espaco-logos").getPublicUrl(path).data.publicUrl;
+    let uploadPath = `admin/${id}/logo_${Date.now()}.${ext}`;
+    let buffer: ArrayBuffer = await logoFile.arrayBuffer();
+    let contentType = logoFile.type;
+    const apiKey = process.env.REMOVEBG_API_KEY ?? "";
+    if (removeBg && apiKey) {
+      try {
+        const rbgForm = new FormData();
+        rbgForm.append("image_file", logoFile, logoFile.name);
+        rbgForm.append("size", "auto");
+        const rbgRes = await fetch("https://api.remove.bg/v1.0/removebg", {
+          method: "POST",
+          headers: { "X-Api-Key": apiKey },
+          body: rbgForm,
+        });
+        if (rbgRes.ok) {
+          buffer = await rbgRes.arrayBuffer();
+          contentType = "image/png";
+          uploadPath = `admin/${id}/logo_${Date.now()}_nobg.png`;
+        }
+      } catch {
+        // fall through: upload original
+      }
+    }
+    const { error: upErr } = await db.storage.from("espaco-logos").upload(uploadPath, buffer, { upsert: true, contentType });
+    if (!upErr) payload.logo_arquivo = db.storage.from("espaco-logos").getPublicUrl(uploadPath).data.publicUrl;
   }
+
   if (Object.keys(payload).length === 0) redirect(`/admin/locais?adm_flash=info_noop`);
   const { error } = await db.from("espacos_genericos").update(payload).eq("id", id);
   if (error) redirect(`/admin/locais?adm_flash=info_erro`);
   revalidatePath("/admin/locais");
   redirect("/admin/locais?adm_flash=info_ok");
+}
+
+/** Remove fundo da logo atual do espaço usando remove.bg API. */
+export async function adminRemoveEspacoLogoBg(formData: FormData): Promise<void> {
+  "use server";
+  const db = createServiceRoleClient();
+  const id = Number(formData.get("id") ?? 0);
+  if (!Number.isFinite(id) || id <= 0) redirect("/admin/locais?adm_flash=info_param");
+  const apiKey = process.env.REMOVEBG_API_KEY ?? "";
+  if (!apiKey) redirect("/admin/locais?adm_flash=info_param");
+  const { data: row } = await db.from("espacos_genericos").select("logo_arquivo").eq("id", id).maybeSingle();
+  const logoUrl = String((row as { logo_arquivo?: string | null } | null)?.logo_arquivo ?? "").trim();
+  if (!logoUrl) redirect("/admin/locais?adm_flash=info_noop");
+  try {
+    const rbgForm = new FormData();
+    rbgForm.append("image_url", logoUrl);
+    rbgForm.append("size", "auto");
+    const rbgRes = await fetch("https://api.remove.bg/v1.0/removebg", {
+      method: "POST",
+      headers: { "X-Api-Key": apiKey },
+      body: rbgForm,
+    });
+    if (!rbgRes.ok) redirect("/admin/locais?adm_flash=info_erro");
+    const buffer = await rbgRes.arrayBuffer();
+    const uploadPath = `admin/${id}/logo_${Date.now()}_nobg.png`;
+    const { error: upErr } = await db.storage.from("espaco-logos").upload(uploadPath, buffer, { upsert: true, contentType: "image/png" });
+    if (upErr) redirect("/admin/locais?adm_flash=info_erro");
+    const newUrl = db.storage.from("espaco-logos").getPublicUrl(uploadPath).data.publicUrl;
+    const { error } = await db.from("espacos_genericos").update({ logo_arquivo: newUrl }).eq("id", id);
+    if (error) redirect("/admin/locais?adm_flash=info_erro");
+    revalidatePath("/admin/locais");
+    redirect("/admin/locais?adm_flash=info_ok");
+  } catch (e) {
+    if ((e as { digest?: string }).digest?.startsWith("NEXT_REDIRECT")) throw e;
+    redirect("/admin/locais?adm_flash=info_erro");
+  }
 }
 
 export async function adminDeleteAuthUserCompletamente(formData: FormData) {

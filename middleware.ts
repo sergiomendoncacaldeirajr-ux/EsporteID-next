@@ -11,6 +11,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    /* Digital Asset Links / proveitos estáticos de verificação — sem middleware (evita 4xx/5xx e cookies em /.well-known). */
+    "/((?!_next/static|_next/image|favicon.ico|\\.well-known/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
