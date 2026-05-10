@@ -220,6 +220,7 @@ export async function PerfilPublicoHistoricoSection({ profileId, viewerId, perfi
                     const ultimosConfrontos = confrontosMesmos.slice(0, 5).map((h) => {
                       const hr = h as {
                         id: string;
+                        jogador1_id?: string | null;
                         torneio_id?: unknown;
                         tipo_partida?: string | null;
                         data_partida?: string | null;
@@ -252,7 +253,9 @@ export async function PerfilPublicoHistoricoSection({ profileId, viewerId, perfi
                           hr.local_espaco_id != null && Number(hr.local_espaco_id) > 0
                             ? `/local/${Number(hr.local_espaco_id)}`
                             : null,
-                        placar: `${Number(hr.placar_1 ?? 0)} × ${Number(hr.placar_2 ?? 0)}`,
+                        placar: hr.jogador1_id === id
+                          ? `${Number(hr.placar_1 ?? 0)} × ${Number(hr.placar_2 ?? 0)}`
+                          : `${Number(hr.placar_2 ?? 0)} × ${Number(hr.placar_1 ?? 0)}`,
                         origem,
                         confronto: `${perfil.nome ?? "Atleta"} vs ${op?.nome ?? "Atleta"}`,
                         mensagem: (hr as { mensagem?: string | null }).mensagem ?? null,

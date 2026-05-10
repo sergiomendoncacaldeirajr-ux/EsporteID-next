@@ -300,7 +300,10 @@ export function FormacaoEidEsporteDetailsBlocks({
                   hour: "2-digit",
                   minute: "2-digit",
                 }).format(new Date(h.data_partida ?? h.data_resultado ?? h.data_registro ?? Date.now()));
-                const placar = `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`;
+                const selfIsT1 = Number(h.time1_id) === timeId;
+                const placar = selfIsT1
+                  ? `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`
+                  : `${Number(h.placar_2 ?? 0)} × ${Number(h.placar_1 ?? 0)}`;
                 return {
                   id: h.id,
                   dataHora,

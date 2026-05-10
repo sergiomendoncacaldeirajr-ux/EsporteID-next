@@ -121,7 +121,9 @@ export async function PerfilHistoricoCompletoListaStream({ profileId, perfilNome
               (String(h.local_str ?? "").trim() || String(h.local_cidade ?? "").trim() || null),
             localHref:
               h.local_espaco_id != null && Number(h.local_espaco_id) > 0 ? `/local/${Number(h.local_espaco_id)}` : null,
-            placar: `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`,
+            placar: h.jogador1_id === id
+              ? `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`
+              : `${Number(h.placar_2 ?? 0)} × ${Number(h.placar_1 ?? 0)}`,
             origem,
             confronto: `${perfilNome} vs ${oponenteNome}`,
             mensagem: h.mensagem ?? null,

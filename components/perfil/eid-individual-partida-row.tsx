@@ -82,7 +82,12 @@ export function EidIndividualPartidaRow({
   }).format(new Date(p.data_partida ?? p.data_resultado ?? p.data_registro ?? Date.now()));
   const placarOk =
     Number.isFinite(Number(p.placar_1)) && Number.isFinite(Number(p.placar_2));
-  const placarTxt = placarOk ? `${p.placar_1} × ${p.placar_2}` : "—";
+  const selfIsJ1 = p.jogador2_id === opponentId;
+  const placarTxt = placarOk
+    ? selfIsJ1
+      ? `${p.placar_1} × ${p.placar_2}`
+      : `${p.placar_2} × ${p.placar_1}`
+    : "—";
   const perfilHref = `/perfil/${encodeURIComponent(opponentId)}?from=${encodeURIComponent(profileLinkFrom)}`;
   const origemLinha = origemLabel === "Ranking" ? "Rank" : origemLabel;
 

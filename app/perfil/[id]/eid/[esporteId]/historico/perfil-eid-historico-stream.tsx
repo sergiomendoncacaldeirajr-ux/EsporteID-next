@@ -160,7 +160,9 @@ export async function PerfilEidEsporteHistoricoStream({ params, searchParams }: 
                   dataHora,
                   local: null,
                   localHref: null,
-                  placar: `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`,
+                  placar: h.jogador1_id === profileId
+                    ? `${Number(h.placar_1 ?? 0)} × ${Number(h.placar_2 ?? 0)}`
+                    : `${Number(h.placar_2 ?? 0)} × ${Number(h.placar_1 ?? 0)}`,
                   origem,
                   confronto: `${perfil.nome ?? "Atleta"} vs ${op?.nome ?? "Atleta"}`,
                   mensagem: h.mensagem ?? null,
