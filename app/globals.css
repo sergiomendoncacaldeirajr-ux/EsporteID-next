@@ -248,10 +248,14 @@ body.eid-app-shell {
 
 [data-eid-theme="light"] :where(
   .text-amber-100\/90,
+  .text-amber-100\/85,
+  .text-amber-100\/80,
   .text-amber-200\/90,
+  .text-amber-200\/85,
   .text-amber-200\/80,
   .text-amber-200\/95,
-  .text-amber-300\/90
+  .text-amber-300\/90,
+  .text-amber-300\/85
 ) {
   color: #b45309 !important;
 }
