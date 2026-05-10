@@ -31,6 +31,33 @@ function bool(formData: FormData, key: string) {
   return formData.get(key) === "on";
 }
 
+function normalizeWebsiteUrl(raw: string) {
+  const value = raw.trim();
+  if (!value) return "";
+  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
+  try {
+    const url = new URL(withProtocol);
+    if (!url.hostname.startsWith("www.") && !/^(localhost|\d{1,3}(?:\.\d{1,3}){3})$/i.test(url.hostname)) {
+      url.hostname = `www.${url.hostname}`;
+    }
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    const withoutProtocol = withProtocol.replace(/^https?:\/\//i, "");
+    return `https://${withoutProtocol.startsWith("www.") ? withoutProtocol : `www.${withoutProtocol}`}`;
+  }
+}
+
+function normalizeInstagramHandle(raw: string) {
+  const value = raw.trim();
+  if (!value) return "";
+  const handle = value
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+    .replace(/^instagram\.com\//i, "")
+    .replace(/^\/+|\/+$/g, "");
+  return handle.startsWith("@") ? handle : `@${handle}`;
+}
+
 // ── Step 1 ─────────────────────────────────────────────────────────────────
 export async function salvarModeloEspacoAction(
   _prev: State | undefined,
@@ -92,8 +119,8 @@ export async function salvarPerfilWizardAction(
         descricao_longa: field(formData, "descricao_longa") || null,
         whatsapp_contato: field(formData, "whatsapp_contato") || null,
         email_contato: field(formData, "email_contato") || null,
-        website_url: field(formData, "website_url") || null,
-        instagram_url: field(formData, "instagram_url") || null,
+        website_url: normalizeWebsiteUrl(field(formData, "website_url")) || null,
+        instagram_url: normalizeInstagramHandle(field(formData, "instagram_url")) || null,
       })
       .eq("id", espacoId);
     if (error) throw new Error(error.message);

@@ -1,13 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useActionState, useTransition, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import type { Country, Value } from "react-phone-number-input";
+import type { LucideIcon } from "lucide-react";
 import {
   Building2, MapPin, LayoutGrid, Clock, Calendar,
   Users, CreditCard, CheckCircle2, ChevronRight,
   ChevronLeft, Plus, Trash2, AlertCircle, Loader2,
-  Wifi, Sun, Lightbulb, RefreshCw, ExternalLink,
+  Lightbulb, RefreshCw, ExternalLink,
+  AtSign, BadgeCheck, Banknote, FileText, Globe2,
+  Hash, IdCard, Mail, MessageSquareText, Phone,
+  ShieldCheck, Sparkles, Type, Wallet,
 } from "lucide-react";
+import { EID_PHONE_LABELS } from "@/lib/eid-phone-labels";
 import {
   salvarModeloEspacoAction,
   salvarPerfilWizardAction,
@@ -20,6 +27,12 @@ import {
   salvarAsaasWizardAction,
   concluirOnboardingAction,
 } from "@/app/espaco/onboarding/actions";
+import "react-phone-number-input/style.css";
+import "@/app/cadastro/cadastro-register.css";
+
+const PhoneInput = dynamic(() => import("react-phone-number-input"), {
+  ssr: false,
+});
 
 // ── Tipos ──────────────────────────────────────────────────────────────────
 
@@ -75,7 +88,6 @@ type ActionState = { ok: boolean; message: string } | undefined;
 // ── Constantes ─────────────────────────────────────────────────────────────
 
 const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-const DIAS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const UFS = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
@@ -83,17 +95,17 @@ const UFS = [
 ];
 
 const CATEGORIAS = [
-  { value: "clube", label: "Clube", desc: "Clube esportivo com sócios e mensalidades" },
-  { value: "quadra", label: "Quadra / Court", desc: "Espaço com quadras para reserva" },
-  { value: "centro_esportivo", label: "Centro Esportivo", desc: "Academia ou centro multiesporte" },
-  { value: "condominio", label: "Condomínio", desc: "Área esportiva de uso condominial" },
-  { value: "outro", label: "Outro", desc: "Outro tipo de espaço esportivo" },
+  { value: "clube", label: "Clube", desc: "Clube esportivo com sócios e mensalidades", Icon: Users },
+  { value: "quadra", label: "Quadra / Court", desc: "Espaço com quadras para reserva", Icon: LayoutGrid },
+  { value: "centro_esportivo", label: "Centro Esportivo", desc: "Academia ou centro multiesporte", Icon: Building2 },
+  { value: "condominio", label: "Condomínio", desc: "Área esportiva de uso condominial", Icon: ShieldCheck },
+  { value: "outro", label: "Outro", desc: "Outro tipo de espaço esportivo", Icon: Sparkles },
 ];
 
 const MODOS_RESERVA = [
-  { value: "gratuita", label: "Gratuita", desc: "Sócios reservam sem custo adicional", icon: "🎁" },
-  { value: "paga", label: "Paga", desc: "Toda reserva tem valor cobrado", icon: "💳" },
-  { value: "mista", label: "Mista", desc: "Parte gratuita para sócios, avulso pago", icon: "⚖️" },
+  { value: "gratuita", label: "Gratuita", desc: "Sócios reservam sem custo adicional", Icon: BadgeCheck },
+  { value: "paga", label: "Paga", desc: "Toda reserva tem valor cobrado", Icon: CreditCard },
+  { value: "mista", label: "Mista", desc: "Parte gratuita para sócios, avulso pago", Icon: Wallet },
 ];
 
 const TIPOS_UNIDADE = [
@@ -136,39 +148,101 @@ function Label({ children }: { children: React.ReactNode }) {
   return <label className="text-xs font-semibold text-eid-text-secondary">{children}</label>;
 }
 
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+function FieldChrome({
+  Icon,
+  children,
+  multiline = false,
+}: {
+  Icon: LucideIcon;
+  children: React.ReactNode;
+  multiline?: boolean;
+}) {
   return (
-    <input
-      {...props}
-      className={`w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-4 py-2.5 text-sm text-eid-fg placeholder:text-eid-text-secondary/50 focus:border-eid-primary-500/60 focus:outline-none focus:ring-1 focus:ring-eid-primary-500/40 ${props.className ?? ""}`}
-    />
+    <div
+      className={`group flex w-full gap-2.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-3.5 text-sm text-eid-fg transition focus-within:border-eid-primary-500/60 focus-within:ring-1 focus-within:ring-eid-primary-500/40 ${
+        multiline ? "items-start py-2.5" : "items-center py-0"
+      }`}
+    >
+      <Icon
+        className={`h-[18px] w-[18px] shrink-0 text-eid-primary-400 transition group-focus-within:text-eid-primary-300 ${
+          multiline ? "mt-1" : ""
+        }`}
+        aria-hidden
+      />
+      {children}
+    </div>
   );
 }
 
-function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+function IconInput({ Icon, className, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { Icon: LucideIcon }) {
   return (
-    <textarea
-      {...props}
-      className={`w-full resize-none rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-4 py-2.5 text-sm text-eid-fg placeholder:text-eid-text-secondary/50 focus:border-eid-primary-500/60 focus:outline-none focus:ring-1 focus:ring-eid-primary-500/40 ${props.className ?? ""}`}
-    />
+    <FieldChrome Icon={Icon}>
+      <input
+        {...props}
+        className={`min-h-11 w-full min-w-0 bg-transparent py-2.5 text-sm text-eid-fg placeholder:text-eid-text-secondary/50 focus:outline-none ${className ?? ""}`}
+      />
+    </FieldChrome>
   );
 }
 
-function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+function IconTextarea({ Icon, className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { Icon: LucideIcon }) {
   return (
-    <select
-      {...props}
-      className={`w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-4 py-2.5 text-sm text-eid-fg focus:border-eid-primary-500/60 focus:outline-none focus:ring-1 focus:ring-eid-primary-500/40 ${props.className ?? ""}`}
-    />
+    <FieldChrome Icon={Icon} multiline>
+      <textarea
+        {...props}
+        className={`min-h-24 w-full min-w-0 resize-none bg-transparent text-sm text-eid-fg placeholder:text-eid-text-secondary/50 focus:outline-none ${className ?? ""}`}
+      />
+    </FieldChrome>
   );
+}
+
+function IconSelect({ Icon, className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { Icon: LucideIcon }) {
+  return (
+    <FieldChrome Icon={Icon}>
+      <select
+        {...props}
+        className={`min-h-11 w-full min-w-0 bg-transparent py-2.5 text-sm text-eid-fg focus:outline-none ${className ?? ""}`}
+      />
+    </FieldChrome>
+  );
+}
+
+function normalizeWebsiteInput(raw: string) {
+  const value = raw.trim();
+  if (!value) return "";
+  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+
+  try {
+    const url = new URL(withProtocol);
+    if (!url.hostname.startsWith("www.") && !/^(localhost|\d{1,3}(?:\.\d{1,3}){3})$/i.test(url.hostname)) {
+      url.hostname = `www.${url.hostname}`;
+    }
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    const withoutProtocol = withProtocol.replace(/^https?:\/\//i, "");
+    return `https://${withoutProtocol.startsWith("www.") ? withoutProtocol : `www.${withoutProtocol}`}`;
+  }
+}
+
+function normalizeInstagramInput(raw: string) {
+  const value = raw.trim();
+  if (!value) return "";
+  const withoutUrl = value
+    .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+    .replace(/^instagram\.com\//i, "")
+    .replace(/^\/+|\/+$/g, "");
+  return withoutUrl.startsWith("@") ? withoutUrl : `@${withoutUrl}`;
 }
 
 function Toggle({
-  label, name, defaultChecked, onChange,
-}: { label: string; name: string; defaultChecked?: boolean; onChange?: (v: boolean) => void }) {
+  label, name, defaultChecked, onChange, Icon,
+}: { label: string; name: string; defaultChecked?: boolean; onChange?: (v: boolean) => void; Icon?: LucideIcon }) {
   return (
     <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-3.5 py-2.5">
-      <span className="text-sm text-eid-fg">{label}</span>
+      <span className="flex min-w-0 items-center gap-2 text-sm text-eid-fg">
+        {Icon ? <Icon className="h-4 w-4 shrink-0 text-eid-primary-400" aria-hidden /> : null}
+        {label}
+      </span>
       <input
         type="checkbox" name={name} defaultChecked={defaultChecked}
         onChange={(e) => onChange?.(e.target.checked)}
@@ -190,8 +264,6 @@ const STEPS = [
   { id: "pagamento", label: "Pagamento", Icon: CreditCard },
   { id: "conclusao", label: "Pronto", Icon: CheckCircle2 },
 ] as const;
-
-type StepId = (typeof STEPS)[number]["id"];
 
 function ProgressBar({ current, completed }: { current: number; completed: Set<number> }) {
   return (
@@ -305,7 +377,7 @@ function StepModelo({ space, onNext, onBack }: {
 
   useEffect(() => {
     if (state?.ok) onNext({ modoReserva, aceitaSocios });
-  }, [state]);
+  }, [aceitaSocios, modoReserva, onNext, state]);
 
   return (
     <form ref={formRef} action={action} className="space-y-5">
@@ -319,7 +391,7 @@ function StepModelo({ space, onNext, onBack }: {
       <div>
         <Label>Tipo de espaço</Label>
         <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {CATEGORIAS.map(({ value, label, desc }) => (
+          {CATEGORIAS.map(({ value, label, desc, Icon }) => (
             <button
               key={value} type="button" onClick={() => setCategoria(value)}
               className={`rounded-xl border p-3 text-left transition ${
@@ -328,6 +400,11 @@ function StepModelo({ space, onNext, onBack }: {
                   : "border-[color:var(--eid-border-subtle)] bg-eid-surface/40 text-eid-text-secondary hover:border-eid-primary-500/30"
               }`}
             >
+              <span className={`mb-2 flex h-9 w-9 items-center justify-center rounded-xl ${
+                categoria === value ? "bg-eid-primary-500/18 text-eid-primary-300" : "bg-eid-surface/70 text-eid-primary-400"
+              }`}>
+                <Icon className="h-5 w-5" aria-hidden />
+              </span>
               <p className={`text-sm font-bold ${categoria === value ? "text-eid-primary-200" : ""}`}>{label}</p>
               <p className="mt-0.5 text-[11px] leading-snug">{desc}</p>
             </button>
@@ -338,7 +415,7 @@ function StepModelo({ space, onNext, onBack }: {
       <div>
         <Label>Modelo de reserva</Label>
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
-          {MODOS_RESERVA.map(({ value, label, desc, icon }) => (
+          {MODOS_RESERVA.map(({ value, label, desc, Icon }) => (
             <button
               key={value} type="button" onClick={() => setModoReserva(value)}
               className={`rounded-xl border p-3 text-left transition ${
@@ -347,7 +424,11 @@ function StepModelo({ space, onNext, onBack }: {
                   : "border-[color:var(--eid-border-subtle)] bg-eid-surface/40 hover:border-eid-primary-500/30"
               }`}
             >
-              <span className="text-xl">{icon}</span>
+              <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+                modoReserva === value ? "bg-eid-primary-500/18 text-eid-primary-300" : "bg-eid-surface/70 text-eid-primary-400"
+              }`}>
+                <Icon className="h-5 w-5" aria-hidden />
+              </span>
               <p className={`mt-1 text-sm font-bold ${modoReserva === value ? "text-eid-primary-200" : "text-eid-fg"}`}>{label}</p>
               <p className="mt-0.5 text-[11px] text-eid-text-secondary leading-snug">{desc}</p>
             </button>
@@ -363,7 +444,10 @@ function StepModelo({ space, onNext, onBack }: {
         }`}
       >
         <div>
-          <p className={`text-sm font-bold ${aceitaSocios ? "text-eid-primary-200" : "text-eid-fg"}`}>Aceita sócios / membros</p>
+          <p className={`flex items-center gap-2 text-sm font-bold ${aceitaSocios ? "text-eid-primary-200" : "text-eid-fg"}`}>
+            <Users className="h-4 w-4 text-eid-primary-400" aria-hidden />
+            Aceita sócios / membros
+          </p>
           <p className="mt-0.5 text-xs text-eid-text-secondary">Habilita planos de associação, filas e benefícios</p>
         </div>
         <span className={`h-6 w-11 shrink-0 rounded-full border-2 transition-all ${aceitaSocios ? "border-eid-primary-500 bg-eid-primary-500" : "border-eid-text-secondary/30 bg-transparent"}`}>
@@ -382,7 +466,11 @@ function StepPerfil({ space, onNext, onBack }: {
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(salvarPerfilWizardAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
-  useEffect(() => { if (state?.ok) onNext(); }, [state]);
+  const [whatsapp, setWhatsapp] = useState<Value | undefined>((space.whatsapp_contato ?? "") as Value | undefined);
+  const [phoneCountry, setPhoneCountry] = useState<Country>("BR");
+  const [websiteUrl, setWebsiteUrl] = useState(space.website_url ?? "");
+  const [instagramUrl, setInstagramUrl] = useState(space.instagram_url ?? "");
+  useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
 
   return (
     <form ref={formRef} action={action} className="space-y-4">
@@ -392,46 +480,95 @@ function StepPerfil({ space, onNext, onBack }: {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Nome do espaço *</Label>
-          <Input name="nome_publico" defaultValue={space.nome_publico} placeholder="Ex.: Arena Tennis Club" required />
+          <IconInput Icon={Building2} name="nome_publico" defaultValue={space.nome_publico} placeholder="Ex.: Arena Tennis Club" required />
         </div>
         <div className="space-y-1.5">
           <Label>Link público (slug)</Label>
-          <Input name="slug" defaultValue={space.slug ?? ""} placeholder="arena-tennis-club" />
+          <IconInput Icon={Hash} name="slug" defaultValue={space.slug ?? ""} placeholder="arena-tennis-club" />
         </div>
         <div className="space-y-1.5">
           <Label>Cidade</Label>
-          <Input name="cidade" defaultValue={space.cidade ?? ""} placeholder="São Paulo" />
+          <IconInput Icon={MapPin} name="cidade" defaultValue={space.cidade ?? ""} placeholder="São Paulo" />
         </div>
         <div className="space-y-1.5">
           <Label>Estado (UF)</Label>
-          <Select name="uf" defaultValue={space.uf ?? ""}>
+          <IconSelect Icon={MapPin} name="uf" defaultValue={space.uf ?? ""}>
             <option value="">Selecione</option>
             {UFS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
-          </Select>
+          </IconSelect>
         </div>
         <div className="space-y-1.5">
           <Label>WhatsApp de contato</Label>
-          <Input name="whatsapp_contato" defaultValue={space.whatsapp_contato ?? ""} placeholder="+55 11 99999-9999" type="tel" />
+          <input type="hidden" name="whatsapp_contato" value={typeof whatsapp === "string" ? whatsapp : ""} />
+          <FieldChrome Icon={Phone}>
+            <PhoneInput
+              international
+              defaultCountry="BR"
+              value={whatsapp}
+              onChange={setWhatsapp}
+              onCountryChange={(c) => setPhoneCountry((c ?? "BR") as Country)}
+              labels={EID_PHONE_LABELS}
+              locales="pt-BR"
+              className="cadastro-phone"
+              numberInputProps={{
+                id: "espaco-whatsapp-contato",
+                autoComplete: "tel",
+                inputMode: "tel",
+                "aria-label": "WhatsApp de contato do espaço",
+              }}
+              countrySelectProps={{
+                className: "cadastro-country-select",
+                "aria-label": "País e código de chamada",
+              }}
+              style={
+                {
+                  "--PhoneInput-color--text": "var(--eid-fg)",
+                  "--PhoneInputCountrySelect-marginRight": "0.35rem",
+                } as React.CSSProperties
+              }
+            />
+          </FieldChrome>
+          <p className="text-[11px] leading-snug text-eid-text-secondary">
+            País:{" "}
+            <span className="font-semibold text-eid-fg">
+              {(EID_PHONE_LABELS as Record<string, string | undefined>)[phoneCountry] ?? phoneCountry}
+            </span>
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label>E-mail de contato</Label>
-          <Input name="email_contato" defaultValue={space.email_contato ?? ""} placeholder="contato@espaço.com" type="email" />
+          <IconInput Icon={Mail} name="email_contato" defaultValue={space.email_contato ?? ""} placeholder="contato@espaco.com" type="email" />
         </div>
         <div className="space-y-1.5">
           <Label>Site</Label>
-          <Input name="website_url" defaultValue={space.website_url ?? ""} placeholder="https://meuespaco.com.br" type="url" />
+          <IconInput
+            Icon={Globe2}
+            name="website_url"
+            value={websiteUrl}
+            onChange={(e) => setWebsiteUrl(e.target.value)}
+            onBlur={() => setWebsiteUrl((prev) => normalizeWebsiteInput(prev))}
+            placeholder="https://www.meuespaco.com.br"
+            type="url"
+          />
         </div>
         <div className="space-y-1.5">
           <Label>Instagram</Label>
-          <Input name="instagram_url" defaultValue={space.instagram_url ?? ""} placeholder="@meuespaco" />
+          <IconInput
+            Icon={AtSign}
+            name="instagram_url"
+            value={instagramUrl}
+            onChange={(e) => setInstagramUrl(e.target.value)}
+            onBlur={() => setInstagramUrl((prev) => normalizeInstagramInput(prev))}
+            placeholder="@meuespaco"
+          />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Descrição curta (máx. 160 caracteres)</Label>
-          <Input name="descricao_curta" defaultValue={space.descricao_curta ?? ""} maxLength={160} placeholder="Clube com 8 quadras de tênis e beach tennis no centro da cidade." />
+          <IconInput Icon={MessageSquareText} name="descricao_curta" defaultValue={space.descricao_curta ?? ""} maxLength={160} placeholder="Clube com 8 quadras de tênis e beach tennis no centro da cidade." />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Sobre o espaço (texto completo)</Label>
-          <Textarea name="descricao_longa" defaultValue={space.descricao_longa ?? ""} rows={4} placeholder="Descreva sua infraestrutura, diferenciais, história..." />
+          <IconTextarea Icon={FileText} name="descricao_longa" defaultValue={space.descricao_longa ?? ""} rows={4} placeholder="Descreva sua infraestrutura, diferenciais, história..." />
         </div>
       </div>
 
@@ -453,11 +590,11 @@ function StepUnidades({ space, unidades, onNext, onBack }: {
   useEffect(() => {
     if (state?.ok) {
       router.refresh();
-      setShowForm(false);
+      queueMicrotask(() => setShowForm(false));
       if (formRef.current) formRef.current.reset();
     }
-  }, [state]);
-  useEffect(() => { if (removeState?.ok) router.refresh(); }, [removeState]);
+  }, [router, state]);
+  useEffect(() => { if (removeState?.ok) router.refresh(); }, [removeState, router]);
 
   return (
     <div className="space-y-5">
@@ -500,36 +637,36 @@ function StepUnidades({ space, unidades, onNext, onBack }: {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Nome *</Label>
-              <Input name="nome" placeholder='Ex.: Quadra 1 — Saibro' required />
+              <IconInput Icon={Type} name="nome" placeholder='Ex.: Quadra 1 - Saibro' required />
             </div>
             <div className="space-y-1.5">
               <Label>Tipo</Label>
-              <Select name="tipo_unidade" defaultValue="quadra">
+              <IconSelect Icon={LayoutGrid} name="tipo_unidade" defaultValue="quadra">
                 {TIPOS_UNIDADE.map((t) => <option key={t} value={t} className="capitalize">{t}</option>)}
-              </Select>
+              </IconSelect>
             </div>
             <div className="space-y-1.5">
               <Label>Superfície</Label>
-              <Select name="superficie" defaultValue="">
+              <IconSelect Icon={Sparkles} name="superficie" defaultValue="">
                 <option value="">Não informada</option>
                 {SUPERFICIES.map((s) => <option key={s} value={s}>{superficieLabel(s)}</option>)}
-              </Select>
+              </IconSelect>
             </div>
             <div className="space-y-1.5">
               <Label>Capacidade (jogadores)</Label>
-              <Input name="capacidade" type="number" min={1} max={100} defaultValue={2} />
+              <IconInput Icon={Users} name="capacidade" type="number" min={1} max={100} defaultValue={2} />
             </div>
           </div>
           <div className="grid gap-2 sm:grid-cols-3">
-            <Toggle label="Coberta" name="coberta" />
-            <Toggle label="Indoor" name="indoor" />
-            <Toggle label="Iluminação" name="iluminacao" />
-            <Toggle label="Aceita aulas" name="aceita_aulas" defaultChecked />
-            <Toggle label="Aceita torneios" name="aceita_torneios" />
+            <Toggle label="Coberta" name="coberta" Icon={ShieldCheck} />
+            <Toggle label="Indoor" name="indoor" Icon={Building2} />
+            <Toggle label="Iluminação" name="iluminacao" Icon={Lightbulb} />
+            <Toggle label="Aceita aulas" name="aceita_aulas" defaultChecked Icon={Users} />
+            <Toggle label="Aceita torneios" name="aceita_torneios" Icon={BadgeCheck} />
           </div>
           <div className="space-y-1.5">
             <Label>Observações</Label>
-            <Input name="observacoes" placeholder="Informações adicionais sobre a unidade" />
+            <IconInput Icon={MessageSquareText} name="observacoes" placeholder="Informações adicionais sobre a unidade" />
           </div>
           <Feedback state={state} />
           <div className="flex gap-2">
@@ -591,7 +728,7 @@ function StepHorarios({ space, horarios, onNext, onBack }: {
   const [fim, setFim] = useState<Record<number, string>>(defaultFim);
   const [state, action, pending] = useActionState<ActionState, FormData>(salvarGradeWizardAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
-  useEffect(() => { if (state?.ok) onNext(); }, [state]);
+  useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
 
   const copiarSegsex = () => {
     const [i, f] = [inicio[1] ?? "08:00", fim[1] ?? "22:00"];
@@ -613,11 +750,13 @@ function StepHorarios({ space, horarios, onNext, onBack }: {
 
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={presetPadrao}
-          className="rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/8 px-3 py-1.5 text-xs font-semibold text-eid-primary-300 transition hover:bg-eid-primary-500/15">
+          className="inline-flex items-center gap-1.5 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/8 px-3 py-1.5 text-xs font-semibold text-eid-primary-300 transition hover:bg-eid-primary-500/15">
+          <Clock className="h-3.5 w-3.5" aria-hidden />
           Preset: seg–sáb 08:00–22:00
         </button>
         <button type="button" onClick={copiarSegsex}
-          className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-text-secondary transition hover:text-eid-fg">
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-text-secondary transition hover:text-eid-fg">
+          <RefreshCw className="h-3.5 w-3.5" aria-hidden />
           Copiar seg–sex para sáb e dom
         </button>
       </div>
@@ -641,19 +780,25 @@ function StepHorarios({ space, horarios, onNext, onBack }: {
             </span>
             {abertos[dia] ? (
               <div className="flex flex-1 items-center gap-2">
-                <input
-                  type="time" name={`dia_${dia}_inicio`}
-                  value={inicio[dia] ?? "08:00"}
-                  onChange={(e) => setInicio((p) => ({ ...p, [dia]: e.target.value }))}
-                  className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1 text-sm text-eid-fg focus:outline-none focus:ring-1 focus:ring-eid-primary-500/40"
-                />
+                <div className="flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1 focus-within:ring-1 focus-within:ring-eid-primary-500/40">
+                  <Clock className="h-3.5 w-3.5 shrink-0 text-eid-primary-400" aria-hidden />
+                  <input
+                    type="time" name={`dia_${dia}_inicio`}
+                    value={inicio[dia] ?? "08:00"}
+                    onChange={(e) => setInicio((p) => ({ ...p, [dia]: e.target.value }))}
+                    className="w-[5.8rem] bg-transparent text-sm text-eid-fg focus:outline-none"
+                  />
+                </div>
                 <span className="text-xs text-eid-text-secondary">até</span>
-                <input
-                  type="time" name={`dia_${dia}_fim`}
-                  value={fim[dia] ?? "22:00"}
-                  onChange={(e) => setFim((p) => ({ ...p, [dia]: e.target.value }))}
-                  className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1 text-sm text-eid-fg focus:outline-none focus:ring-1 focus:ring-eid-primary-500/40"
-                />
+                <div className="flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1 focus-within:ring-1 focus-within:ring-eid-primary-500/40">
+                  <Clock className="h-3.5 w-3.5 shrink-0 text-eid-action-400" aria-hidden />
+                  <input
+                    type="time" name={`dia_${dia}_fim`}
+                    value={fim[dia] ?? "22:00"}
+                    onChange={(e) => setFim((p) => ({ ...p, [dia]: e.target.value }))}
+                    className="w-[5.8rem] bg-transparent text-sm text-eid-fg focus:outline-none"
+                  />
+                </div>
               </div>
             ) : (
               <span className="text-xs text-eid-text-secondary">Fechado</span>
@@ -680,7 +825,7 @@ function StepFeriados({ space, feriados, onNext, onBack }: {
   );
   const router = useRouter();
   const [toggling, startToggle] = useTransition();
-  useEffect(() => { if (syncState?.ok) router.refresh(); }, [syncState]);
+  useEffect(() => { if (syncState?.ok) router.refresh(); }, [router, syncState]);
 
   const handleToggle = (feriadoId: number, operar: boolean) => {
     startToggle(async () => {
@@ -781,8 +926,12 @@ function StepPlanos({ space, planos, onNext, onBack, onSkip }: {
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (state?.ok) { router.refresh(); setShowForm(false); formRef.current?.reset(); }
-  }, [state]);
+    if (state?.ok) {
+      router.refresh();
+      queueMicrotask(() => setShowForm(false));
+      formRef.current?.reset();
+    }
+  }, [router, state]);
 
   return (
     <div className="space-y-5">
@@ -816,19 +965,19 @@ function StepPlanos({ space, planos, onNext, onBack, onSkip }: {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Nome do plano *</Label>
-              <Input name="nome" placeholder='Ex.: Sócio Mensal, Plano Anual' required />
+              <IconInput Icon={Users} name="nome" placeholder='Ex.: Sócio Mensal, Plano Anual' required />
             </div>
             <div className="space-y-1.5">
               <Label>Mensalidade (R$)</Label>
-              <Input name="mensalidade_reais" type="number" min={0} step="0.01" placeholder="150,00" />
+              <IconInput Icon={Banknote} name="mensalidade_reais" type="number" min={0} step="0.01" placeholder="150,00" />
             </div>
             <div className="space-y-1.5">
               <Label>Reservas gratuitas / semana</Label>
-              <Input name="reservas_gratis" type="number" min={0} max={30} defaultValue={3} />
+              <IconInput Icon={Calendar} name="reservas_gratis" type="number" min={0} max={30} defaultValue={3} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Descrição</Label>
-              <Input name="descricao" placeholder="Benefícios, regras, acesso..." />
+              <IconInput Icon={FileText} name="descricao" placeholder="Benefícios, regras, acesso..." />
             </div>
           </div>
           <Feedback state={state} />
@@ -863,7 +1012,7 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(salvarAsaasWizardAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
-  useEffect(() => { if (state?.ok) onNext(); }, [state]);
+  useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
 
   return (
     <form ref={formRef} action={action} className="space-y-5">
@@ -893,15 +1042,15 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Nome / Razão social *</Label>
-          <Input name="nome_razao_social" defaultValue={parceiro?.nome_razao_social ?? ""} placeholder="Seu nome ou nome da empresa" required />
+          <IconInput Icon={Wallet} name="nome_razao_social" defaultValue={parceiro?.nome_razao_social ?? ""} placeholder="Seu nome ou nome da empresa" required />
         </div>
         <div className="space-y-1.5">
           <Label>CPF ou CNPJ</Label>
-          <Input name="cpf_cnpj" defaultValue={parceiro?.cpf_cnpj ?? ""} placeholder="000.000.000-00" />
+          <IconInput Icon={IdCard} name="cpf_cnpj" defaultValue={parceiro?.cpf_cnpj ?? ""} placeholder="000.000.000-00" />
         </div>
         <div className="space-y-1.5">
           <Label>E-mail cadastrado no Asaas</Label>
-          <Input name="email" defaultValue={parceiro?.email ?? ""} placeholder="email@asaas.com" type="email" />
+          <IconInput Icon={Mail} name="email" defaultValue={parceiro?.email ?? ""} placeholder="email@asaas.com" type="email" />
         </div>
       </div>
 
@@ -970,7 +1119,7 @@ function StepConclusao({ space, unidades, horarios, planos, parceiro }: {
 // ── Wizard principal ───────────────────────────────────────────────────────
 
 export function EspacoOnboardingWizard({
-  space, esportes, unidades, horarios, feriados, planos, parceiro,
+  space, unidades, horarios, feriados, planos, parceiro,
 }: WizardProps) {
   const storageKey = `eid:onboarding-step-${space.id}`;
   const [step, setStep] = useState<number>(() => {
