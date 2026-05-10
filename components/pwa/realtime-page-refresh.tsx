@@ -165,7 +165,11 @@ export function RealtimePageRefresh({ userId }: Props) {
       if (shouldPauseAutoRefresh()) return;
       refresh();
     };
+    const onPwaResume = () => {
+      refreshForced();
+    };
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("eid:pwa-resume", onPwaResume);
 
     const channelTag = `${userId}-${instanceId}-${elencoVersion}`;
 
@@ -409,6 +413,7 @@ export function RealtimePageRefresh({ userId }: Props) {
     return () => {
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("eid:pwa-resume", onPwaResume);
       if (refreshTimerRef.current != null) {
         window.clearTimeout(refreshTimerRef.current);
         refreshTimerRef.current = null;

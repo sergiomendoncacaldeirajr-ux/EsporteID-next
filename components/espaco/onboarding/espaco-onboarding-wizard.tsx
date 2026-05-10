@@ -12,13 +12,16 @@ import {
   Lightbulb, RefreshCw, ExternalLink,
   AtSign, BadgeCheck, Banknote, FileText, Globe2,
   Hash, IdCard, Mail, MessageSquareText, Phone,
-  ShieldCheck, Sparkles, Type, Wallet,
+  Camera, ImageIcon, ShieldCheck, Sparkles, Type, Wallet,
 } from "lucide-react";
 import { EID_PHONE_LABELS } from "@/lib/eid-phone-labels";
+import { EspacoUnidadeLogoControl } from "@/components/espaco/espaco-unidade-logo-control";
+import type { PaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import {
   salvarModeloEspacoAction,
   salvarPerfilWizardAction,
   criarUnidadeWizardAction,
+  atualizarFotoUnidadeWizardAction,
   removerUnidadeWizardAction,
   salvarGradeWizardAction,
   sincronizarFeriadosWizardAction,
@@ -56,7 +59,8 @@ type Space = {
 type Unidade = {
   id: number; nome: string; tipo_unidade: string;
   superficie: string | null; coberta: boolean; indoor: boolean;
-  iluminacao: boolean; capacidade: number; aceita_aulas: boolean; aceita_torneios: boolean;
+  iluminacao: boolean; aceita_aulas: boolean; aceita_torneios: boolean;
+  logo_arquivo: string | null;
 };
 
 type Horario = { id: number; dia_semana: number; hora_inicio: string; hora_fim: string };
@@ -77,6 +81,7 @@ type WizardProps = {
   space: Space;
   esportes: Array<{ id: number; nome: string }>;
   unidades: Unidade[];
+  unidadeGate: PaaSUnidadeGateInfo;
   horarios: Horario[];
   feriados: Feriado[];
   planos: Plano[];
@@ -254,6 +259,20 @@ function Toggle({
         className="h-4 w-4 rounded accent-eid-primary-500"
       />
     </label>
+  );
+}
+
+function SectionTitle({ Icon, title, text }: { Icon: LucideIcon; title: string; text: string }) {
+  return (
+    <div className="flex items-start gap-2.5 border-b border-[color:var(--eid-border-subtle)] pb-2">
+      <span className="mt-0.5 rounded-lg bg-eid-primary-500/10 p-1.5 text-eid-primary-300">
+        <Icon className="h-4 w-4" aria-hidden />
+      </span>
+      <div className="min-w-0">
+        <p className="text-sm font-black text-eid-fg">{title}</p>
+        <p className="text-xs leading-relaxed text-eid-text-secondary">{text}</p>
+      </div>
+    </div>
   );
 }
 
@@ -593,14 +612,21 @@ function StepPerfil({ space, onNext, onBack }: {
   );
 }
 
-function StepUnidades({ space, unidades, onNext, onBack }: {
-  space: Space; unidades: Unidade[]; onNext: () => void; onBack?: () => void;
+function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
+  space: Space; unidades: Unidade[]; unidadeGate: PaaSUnidadeGateInfo; onNext: () => void; onBack?: () => void;
 }) {
   const [showForm, setShowForm] = useState(unidades.length === 0);
   const [state, action, pending] = useActionState<ActionState, FormData>(criarUnidadeWizardAction, undefined);
+  const [photoState, photoAction, photoPending] = useActionState<ActionState, FormData>(atualizarFotoUnidadeWizardAction, undefined);
   const [removeState, removeAction] = useActionState<ActionState, FormData>(removerUnidadeWizardAction, undefined);
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const usadas = unidadeGate.unidadesTotal || unidades.length;
+  const limite = unidadeGate.maxUnidadesPlano;
+  const restantes = limite == null ? null : Math.max(0, limite - usadas);
+  const podeAdicionar = unidadeGate.podeCriarUnidade && (limite == null || usadas < limite);
+  const percentualUso = limite == null ? 100 : Math.min(100, Math.round((usadas / Math.max(1, limite)) * 100));
+  const planoLabel = unidadeGate.planoNome || (unidadeGate.modoMonetizacao === "mensalidade_plataforma" ? "Plano da plataforma" : "Plano atual");
 
   useEffect(() => {
     if (state?.ok) {
@@ -609,79 +635,152 @@ function StepUnidades({ space, unidades, onNext, onBack }: {
       if (formRef.current) formRef.current.reset();
     }
   }, [router, state]);
+  useEffect(() => { if (photoState?.ok) router.refresh(); }, [photoState, router]);
   useEffect(() => { if (removeState?.ok) router.refresh(); }, [removeState, router]);
 
   return (
     <div className="space-y-5">
       <StepHeader
         title="Quadras e instalações"
-        subtitle="Adicione todas as quadras, campos, pistas ou salas disponíveis no seu espaço."
+        subtitle="Cadastre as quadras, campos, pistas ou salas que poderão receber reservas e atividades."
       />
 
-      {/* Lista existente */}
+      <div className="rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/10 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-eid-primary-300">Limite do plano</p>
+            <p className="mt-1 text-2xl font-black text-eid-fg">
+              {usadas}{limite == null ? "" : ` de ${limite}`} cadastrada{usadas === 1 ? "" : "s"}
+            </p>
+            <p className="text-xs text-eid-text-secondary">
+              {limite == null
+                ? `${planoLabel}: sem limite de quadras definido.`
+                : restantes === 0
+                  ? `${planoLabel}: limite atingido.`
+                  : `${planoLabel}: ainda ${restantes === 1 ? "resta 1 cadastro" : `restam ${restantes} cadastros`}.`}
+            </p>
+          </div>
+          <div className="min-w-[150px] rounded-xl border border-white/10 bg-eid-surface/50 px-3 py-2">
+            <div className="h-2 overflow-hidden rounded-full bg-eid-surface/70">
+              <span className="block h-full rounded-full bg-eid-primary-500" style={{ width: `${percentualUso}%` }} />
+            </div>
+            <p className="mt-2 text-[11px] font-semibold text-eid-text-secondary">
+              {podeAdicionar ? "Cadastro liberado" : unidadeGate.motivoBloqueio ?? "Cadastro bloqueado pelo plano atual."}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {unidades.length > 0 && (
         <div className="space-y-2">
           {unidades.map((u) => (
-            <div key={u.id} className="flex items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3">
-              <LayoutGrid className="h-5 w-5 shrink-0 text-eid-primary-400" aria-hidden />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-eid-fg">{u.nome}</p>
-                <p className="text-[11px] text-eid-text-secondary capitalize">
-                  {u.tipo_unidade}{u.superficie ? ` · ${superficieLabel(u.superficie)}` : ""}
-                  {u.coberta ? " · coberta" : ""}
-                  {u.iluminacao ? " · iluminada" : ""}
-                </p>
+            <div key={u.id} className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-primary-500/10">
+                  {u.logo_arquivo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={u.logo_arquivo} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <ImageIcon className="h-5 w-5 text-eid-primary-300" aria-hidden />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-black text-eid-fg">{u.nome}</p>
+                  <p className="text-[11px] text-eid-text-secondary">
+                    {u.tipo_unidade}{u.superficie ? ` · ${superficieLabel(u.superficie)}` : ""}
+                    {u.coberta ? " · coberta" : ""}
+                    {u.indoor ? " · indoor" : ""}
+                    {u.iluminacao ? " · iluminada" : ""}
+                  </p>
+                </div>
+                <form action={removeAction}>
+                  <input type="hidden" name="espaco_id" value={space.id} />
+                  <input type="hidden" name="unidade_id" value={u.id} />
+                  <button type="submit" className="rounded-lg p-2 text-eid-text-secondary/50 transition hover:bg-red-500/10 hover:text-red-400" aria-label={`Remover ${u.nome}`}>
+                    <Trash2 className="h-4 w-4" aria-hidden />
+                  </button>
+                </form>
               </div>
-              <form action={removeAction}>
-                <input type="hidden" name="espaco_id" value={space.id} />
-                <input type="hidden" name="unidade_id" value={u.id} />
-                <button type="submit" className="rounded-lg p-1.5 text-eid-text-secondary/50 transition hover:text-red-400">
-                  <Trash2 className="h-4 w-4" aria-hidden />
-                </button>
-              </form>
+              <details className="mt-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 px-3 py-2">
+                <summary className="flex cursor-pointer list-none items-center gap-2 text-xs font-bold text-eid-primary-300">
+                  <Camera className="h-4 w-4" aria-hidden />
+                  Adicionar ou editar foto
+                </summary>
+                <form action={photoAction} encType="multipart/form-data" className="mt-3 space-y-3">
+                  <input type="hidden" name="espaco_id" value={space.id} />
+                  <input type="hidden" name="unidade_id" value={u.id} />
+                  <EspacoUnidadeLogoControl currentUrl={u.logo_arquivo ?? null} />
+                  <button
+                    type="submit"
+                    disabled={photoPending}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-eid-primary-500 px-3 py-2 text-xs font-bold text-white transition hover:bg-eid-primary-600 disabled:opacity-50"
+                  >
+                    {photoPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                    Salvar foto
+                  </button>
+                </form>
+              </details>
             </div>
           ))}
+          <Feedback state={photoState} />
         </div>
       )}
 
-      {/* Formulário nova unidade */}
-      {showForm ? (
-        <form ref={formRef} action={action} className="space-y-4 rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-4">
-          <p className="text-sm font-bold text-eid-fg">Nova quadra / campo</p>
+      {showForm && podeAdicionar ? (
+        <form ref={formRef} action={action} encType="multipart/form-data" className="space-y-5 rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-4">
+          <SectionTitle Icon={LayoutGrid} title="Cadastrar nova quadra ou unidade" text="Preencha os dados que ajudam o atleta a escolher o lugar certo para reservar." />
           <input type="hidden" name="espaco_id" value={space.id} />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label>Nome *</Label>
-              <IconInput Icon={Type} name="nome" placeholder='Ex.: Quadra 1 - Saibro' required />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Tipo</Label>
-              <IconSelect Icon={LayoutGrid} name="tipo_unidade" defaultValue="quadra">
-                {TIPOS_UNIDADE.map((t) => <option key={t} value={t} className="capitalize">{t}</option>)}
-              </IconSelect>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Superfície</Label>
-              <IconSelect Icon={Sparkles} name="superficie" defaultValue="">
-                <option value="">Não informada</option>
-                {SUPERFICIES.map((s) => <option key={s} value={s}>{superficieLabel(s)}</option>)}
-              </IconSelect>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Capacidade (jogadores)</Label>
-              <IconInput Icon={Users} name="capacidade" type="number" min={1} max={100} defaultValue={2} />
+
+          <div className="space-y-3">
+            <SectionTitle Icon={Type} title="Identificação" text="Use um nome curto e fácil de reconhecer na agenda." />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>Nome da quadra *</Label>
+                <IconInput Icon={Type} name="nome" placeholder='Ex.: Quadra 1 - Saibro' required />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Tipo de espaço</Label>
+                <IconSelect Icon={LayoutGrid} name="tipo_unidade" defaultValue="quadra">
+                  {TIPOS_UNIDADE.map((t) => <option key={t} value={t} className="capitalize">{t}</option>)}
+                </IconSelect>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Tipo de piso</Label>
+                <IconSelect Icon={Sparkles} name="superficie" defaultValue="">
+                  <option value="">Não informado</option>
+                  {SUPERFICIES.map((s) => <option key={s} value={s}>{superficieLabel(s)}</option>)}
+                </IconSelect>
+              </div>
             </div>
           </div>
-          <div className="grid gap-2 sm:grid-cols-3">
-            <Toggle label="Coberta" name="coberta" Icon={ShieldCheck} />
-            <Toggle label="Indoor" name="indoor" Icon={Building2} />
-            <Toggle label="Iluminação" name="iluminacao" Icon={Lightbulb} />
-            <Toggle label="Aceita aulas" name="aceita_aulas" defaultChecked Icon={Users} />
-            <Toggle label="Aceita torneios" name="aceita_torneios" Icon={BadgeCheck} />
+
+          <div className="space-y-3">
+            <SectionTitle Icon={Camera} title="Foto da quadra" text="Adicione uma imagem para deixar a escolha mais visual no app." />
+            <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3">
+              <EspacoUnidadeLogoControl currentUrl={null} />
+            </div>
           </div>
+
+          <div className="space-y-3">
+            <SectionTitle Icon={ShieldCheck} title="Características" text="Marque somente o que descreve a estrutura física da quadra." />
+            <div className="grid gap-2 sm:grid-cols-3">
+              <Toggle label="Coberta" name="coberta" Icon={ShieldCheck} />
+              <Toggle label="Ambiente interno" name="indoor" Icon={Building2} />
+              <Toggle label="Iluminação" name="iluminacao" Icon={Lightbulb} />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle Icon={BadgeCheck} title="Uso no aplicativo" text="Defina como essa unidade aparece nas atividades e reservas." />
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Toggle label="Permite aulas" name="aceita_aulas" defaultChecked Icon={Users} />
+              <Toggle label="Permite torneios" name="aceita_torneios" Icon={BadgeCheck} />
+            </div>
+          </div>
+
           <div className="space-y-1.5">
-            <Label>Observações</Label>
-            <IconInput Icon={MessageSquareText} name="observacoes" placeholder="Informações adicionais sobre a unidade" />
+            <Label>Observações internas</Label>
+            <IconInput Icon={MessageSquareText} name="observacoes" placeholder="Ex.: próxima da portaria, precisa de iluminação à noite" />
           </div>
           <Feedback state={state} />
           <div className="flex gap-2">
@@ -690,7 +789,7 @@ function StepUnidades({ space, unidades, onNext, onBack }: {
               className="flex items-center gap-1.5 rounded-xl bg-eid-primary-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-eid-primary-600 disabled:opacity-50"
             >
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Adicionar
+              Cadastrar quadra
             </button>
             {unidades.length > 0 && (
               <button type="button" onClick={() => setShowForm(false)}
@@ -700,18 +799,25 @@ function StepUnidades({ space, unidades, onNext, onBack }: {
             )}
           </div>
         </form>
+      ) : !podeAdicionar ? (
+        <div className="rounded-2xl border border-eid-action-500/20 bg-eid-action-500/10 p-4 text-sm text-eid-fg">
+          <p className="font-black">Limite de cadastro atingido</p>
+          <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
+            {unidadeGate.motivoBloqueio ?? "Seu plano atual não permite cadastrar outra quadra agora."}
+          </p>
+        </div>
       ) : (
         <button
           type="button" onClick={() => setShowForm(true)}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-eid-primary-500/40 bg-eid-primary-500/5 py-4 text-sm font-semibold text-eid-primary-400 transition hover:bg-eid-primary-500/10"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          Adicionar outra quadra / campo
+          Cadastrar outra quadra
         </button>
       )}
 
       {unidades.length === 0 && (
-        <p className="text-center text-xs text-eid-text-secondary">Adicione pelo menos uma unidade antes de continuar.</p>
+        <p className="text-center text-xs text-eid-text-secondary">Cadastre pelo menos uma quadra ou unidade antes de continuar.</p>
       )}
 
       <NavButtons
@@ -1134,7 +1240,7 @@ function StepConclusao({ space, unidades, horarios, planos, parceiro }: {
 // ── Wizard principal ───────────────────────────────────────────────────────
 
 export function EspacoOnboardingWizard({
-  space, unidades, horarios, feriados, planos, parceiro,
+  space, unidades, unidadeGate, horarios, feriados, planos, parceiro,
 }: WizardProps) {
   const storageKey = `eid:onboarding-step-${space.id}`;
   const [step, setStep] = useState<number>(() => {
@@ -1192,7 +1298,13 @@ export function EspacoOnboardingWizard({
             <StepPerfil space={space} onNext={advance} onBack={goBack} />
           )}
           {step === 2 && (
-            <StepUnidades space={space} unidades={unidades} onNext={advance} onBack={goBack} />
+            <StepUnidades
+              space={space}
+              unidades={unidades}
+              unidadeGate={unidadeGate}
+              onNext={advance}
+              onBack={goBack}
+            />
           )}
           {step === 3 && (
             <StepHorarios space={space} horarios={horarios} onNext={advance} onBack={goBack} />

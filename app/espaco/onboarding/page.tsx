@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
+import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import { EspacoOnboardingWizard } from "@/components/espaco/onboarding/espaco-onboarding-wizard";
 
 export default async function EspacoOnboardingPage() {
@@ -21,11 +22,12 @@ export default async function EspacoOnboardingPage() {
     { data: feriados },
     { data: planos },
     { data: parceiro },
+    unidadeGate,
   ] = await Promise.all([
     supabase.from("esportes").select("id, nome").order("nome"),
     supabase
       .from("espaco_unidades")
-      .select("id, nome, tipo_unidade, superficie, coberta, indoor, iluminacao, capacidade, aceita_aulas, aceita_torneios, ativo")
+      .select("id, nome, tipo_unidade, superficie, coberta, indoor, iluminacao, aceita_aulas, aceita_torneios, logo_arquivo, ativo")
       .eq("espaco_generico_id", selectedSpace.id)
       .eq("ativo", true)
       .order("id"),
@@ -54,6 +56,7 @@ export default async function EspacoOnboardingPage() {
       .select("nome_razao_social, cpf_cnpj, email, onboarding_status")
       .eq("usuario_id", user.id)
       .maybeSingle(),
+    getPaaSUnidadeGateInfo(supabase, selectedSpace.id),
   ]);
 
   return (
@@ -78,8 +81,10 @@ export default async function EspacoOnboardingPage() {
       unidades={(unidades ?? []) as Array<{
         id: number; nome: string; tipo_unidade: string;
         superficie: string | null; coberta: boolean; indoor: boolean;
-        iluminacao: boolean; capacidade: number; aceita_aulas: boolean; aceita_torneios: boolean;
+        iluminacao: boolean; aceita_aulas: boolean; aceita_torneios: boolean;
+        logo_arquivo: string | null;
       }>}
+      unidadeGate={unidadeGate}
       horarios={(horarios ?? []) as Array<{
         id: number; dia_semana: number; hora_inicio: string; hora_fim: string;
       }>}

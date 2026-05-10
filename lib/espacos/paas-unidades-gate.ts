@@ -43,7 +43,8 @@ export async function getPaaSUnidadeGateInfo(
   const { count } = await supabase
     .from("espaco_unidades")
     .select("id", { count: "exact", head: true })
-    .eq("espaco_generico_id", espacoId);
+    .eq("espaco_generico_id", espacoId)
+    .eq("ativo", true);
   const unidadesTotal = count ?? 0;
 
   let maxUnidadesPlano: number | null = null;

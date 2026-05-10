@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import { ensurePushReady, syncExistingPushSubscription } from "@/lib/pwa/push-client";
 
@@ -18,6 +19,7 @@ function runWhenPageIsIdle(task: () => void): () => void {
 }
 
 export function PwaBootstrap() {
+  const router = useRouter();
   const vapidPublicKey = String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim();
 
   const shouldRunPushSync = useCallback(() => {
@@ -53,21 +55,46 @@ export function PwaBootstrap() {
   }, [runPushSync]);
 
   useEffect(() => {
-    const onFocus = () => {
+    let hiddenAt: number | null = null;
+    let lastResumeAt = 0;
+    const recoverFromResume = (force = false) => {
+      const now = Date.now();
+      if (!force && now - lastResumeAt < 2500) return;
+      lastResumeAt = now;
       runPushSync();
+      window.dispatchEvent(new CustomEvent("eid:pwa-resume"));
+      window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
+      window.setTimeout(() => router.refresh(), 120);
+    };
+    const onFocus = () => {
+      recoverFromResume();
     };
     const onVisible = () => {
+      if (document.visibilityState === "hidden") {
+        hiddenAt = Date.now();
+        return;
+      }
       if (document.visibilityState === "visible") {
-        runPushSync();
+        recoverFromResume(Boolean(hiddenAt && Date.now() - hiddenAt > 8000));
       }
     };
+    const onPageShow = (event: PageTransitionEvent) => {
+      recoverFromResume(event.persisted);
+    };
+    const onOnline = () => {
+      recoverFromResume(true);
+    };
     window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("online", onOnline);
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("online", onOnline);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [runPushSync]);
+  }, [router, runPushSync]);
 
   return null;
 }

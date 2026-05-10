@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { slugifyEspaco } from "@/lib/espacos/slug";
 import { fetchAutomaticHolidaysForYear } from "@/lib/espacos/calendar";
+import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 
 type State = { ok: true; message: string } | { ok: false; message: string };
 
@@ -56,6 +57,25 @@ function normalizeInstagramHandle(raw: string) {
     .replace(/^instagram\.com\//i, "")
     .replace(/^\/+|\/+$/g, "");
   return handle.startsWith("@") ? handle : `@${handle}`;
+}
+
+async function uploadLogoUnidadeWizard(file: File, userId: string) {
+  const supabase = await createClient();
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Envie uma imagem (PNG, JPG ou WEBP).");
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("Imagem acima de 5MB.");
+  }
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const safeExt = ext.replace(/[^a-z0-9]/g, "") || "jpg";
+  const path = `${userId}/unidade_${Date.now()}_${Math.random().toString(16).slice(2, 8)}.${safeExt}`;
+  const { error } = await supabase.storage.from("espaco-logos").upload(path, file, {
+    upsert: true,
+    contentType: file.type || "image/jpeg",
+  });
+  if (error) throw new Error(error.message);
+  return supabase.storage.from("espaco-logos").getPublicUrl(path).data.publicUrl;
 }
 
 // ── Step 1 ─────────────────────────────────────────────────────────────────
@@ -132,7 +152,7 @@ export async function salvarPerfilWizardAction(
   }
 }
 
-// ── Step 3 — unidades (sem gate PaaS, wizard simplificado) ─────────────────
+// ── Step 3 — unidades ─────────────────────────────────────────────────────
 export async function criarUnidadeWizardAction(
   _prev: State | undefined,
   formData: FormData
@@ -140,8 +160,17 @@ export async function criarUnidadeWizardAction(
   try {
     const espacoId = Number(formData.get("espaco_id") ?? 0);
     const { supabase, user } = await requireWizardManager(espacoId);
+    const gate = await getPaaSUnidadeGateInfo(supabase, espacoId);
+    if (!gate.podeCriarUnidade) {
+      throw new Error(gate.motivoBloqueio ?? "Seu plano atual não permite cadastrar outra quadra no momento.");
+    }
     const nome = field(formData, "nome");
     if (nome.length < 2) throw new Error("Informe o nome da quadra ou campo.");
+    const logoFile = formData.get("logo_file");
+    let logoArquivo: string | null = null;
+    if (logoFile instanceof File && logoFile.size > 0) {
+      logoArquivo = await uploadLogoUnidadeWizard(logoFile, user.id);
+    }
     const payload = {
       espaco_generico_id: espacoId,
       nome,
@@ -154,6 +183,7 @@ export async function criarUnidadeWizardAction(
       aceita_aulas: bool(formData, "aceita_aulas"),
       aceita_torneios: bool(formData, "aceita_torneios"),
       observacoes: field(formData, "observacoes") || null,
+      logo_arquivo: logoArquivo,
       status_operacao: "ativa",
       ativo: true,
     };
@@ -172,6 +202,42 @@ export async function criarUnidadeWizardAction(
     return { ok: true, message: `"${nome}" adicionada.` };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Erro ao criar unidade." };
+  }
+}
+
+export async function atualizarFotoUnidadeWizardAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    const espacoId = Number(formData.get("espaco_id") ?? 0);
+    const unidadeId = Number(formData.get("unidade_id") ?? 0);
+    if (!espacoId || !unidadeId) throw new Error("Identificador inválido.");
+    const { supabase, user } = await requireWizardManager(espacoId);
+
+    const logoFile = formData.get("logo_file");
+    let logoArquivo: string | null | undefined;
+    if (logoFile instanceof File && logoFile.size > 0) {
+      logoArquivo = await uploadLogoUnidadeWizard(logoFile, user.id);
+    } else if (field(formData, "remover_logo") === "1") {
+      logoArquivo = null;
+    } else {
+      throw new Error("Escolha uma nova foto ou remova a foto atual.");
+    }
+
+    const { error } = await supabase
+      .from("espaco_unidades")
+      .update({ logo_arquivo: logoArquivo, atualizado_em: new Date().toISOString() })
+      .eq("id", unidadeId)
+      .eq("espaco_generico_id", espacoId);
+    if (error) throw new Error(error.message);
+
+    revalidatePath("/espaco/onboarding");
+    revalidatePath("/espaco/configuracao");
+    revalidatePath("/espaco");
+    return { ok: true, message: "Foto da quadra atualizada." };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Erro ao atualizar foto." };
   }
 }
 
