@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getEspacoSelecionado } from "@/lib/espacos/server";
+import { getEspacoSelecionado, resolveEspacoPublicAssetUrl } from "@/lib/espacos/server";
 import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import { EspacoOnboardingWizard } from "@/components/espaco/onboarding/espaco-onboarding-wizard";
 
@@ -70,6 +70,11 @@ export default async function EspacoOnboardingPage() {
     getPaaSUnidadeGateInfo(supabase, selectedSpace.id),
   ]);
 
+  const unidadesWizard = (unidades ?? []).map((unidade) => ({
+    ...unidade,
+    logo_arquivo: resolveEspacoPublicAssetUrl(supabase, unidade.logo_arquivo),
+  }));
+
   return (
     <EspacoOnboardingWizard
       space={{
@@ -91,7 +96,7 @@ export default async function EspacoOnboardingPage() {
         instagram_url: selectedSpace.instagram_url,
       }}
       esportes={(esportes ?? []) as Array<{ id: number; nome: string }>}
-      unidades={(unidades ?? []) as Array<{
+      unidades={unidadesWizard as Array<{
         id: number; nome: string; tipo_unidade: string;
         superficie: string | null; coberta: boolean; indoor: boolean;
         iluminacao: boolean; aceita_aulas: boolean; aceita_torneios: boolean;

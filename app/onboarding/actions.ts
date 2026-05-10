@@ -792,7 +792,7 @@ export async function salvarExtrasOnboarding(
               "Não foi possível enviar a logo do local. Verifique o bucket 'espaco-logos' ou tente sem logo.",
           };
         }
-        logoArquivo = path;
+        logoArquivo = supabase.storage.from("espaco-logos").getPublicUrl(path).data.publicUrl;
       }
 
       if (!localPreferidoId) {

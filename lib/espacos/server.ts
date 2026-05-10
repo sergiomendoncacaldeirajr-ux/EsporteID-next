@@ -44,6 +44,19 @@ type ManagedSpace = {
   clube_assinaturas_socios: string | null;
 };
 
+const PUBLIC_ASSET_RE = /^(https?:|data:|blob:)/i;
+
+export function resolveEspacoPublicAssetUrl(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  value: string | null | undefined,
+  bucket = "espaco-logos"
+) {
+  const asset = String(value ?? "").trim();
+  if (!asset) return null;
+  if (PUBLIC_ASSET_RE.test(asset)) return asset;
+  return supabase.storage.from(bucket).getPublicUrl(asset.replace(/^\/+/, "")).data.publicUrl;
+}
+
 export async function requireEspacoManagerUser(nextPath: string) {
   const supabase = await createClient();
   const {
@@ -67,10 +80,16 @@ export async function requireEspacoManagerUser(nextPath: string) {
     redirect("/locais/cadastrar?modo=espaco");
   }
 
+  const spaces = (managedSpaces ?? []).map((space) => ({
+    ...space,
+    logo_arquivo: resolveEspacoPublicAssetUrl(supabase, space.logo_arquivo),
+    cover_arquivo: resolveEspacoPublicAssetUrl(supabase, space.cover_arquivo),
+  }));
+
   return {
     supabase,
     user,
-    managedSpaces: (managedSpaces ?? []) as ManagedSpace[],
+    managedSpaces: spaces as ManagedSpace[],
   };
 }
 
