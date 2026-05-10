@@ -12,9 +12,9 @@ export const MODO_RESERVA_LABEL: Record<ModoReserva, string> = {
 };
 
 export const MODO_MONETIZACAO_LABEL: Record<ModoMonetizacaoEspaco, string> = {
-  mensalidade_plataforma: "Mensalidade da plataforma (+ reservas, se houver)",
-  apenas_reservas: "Só taxas de reserva (sem mensalidade PaaS)",
-  misto: "Mensalidade + taxas de reserva",
+  mensalidade_plataforma: "Mensalidade da plataforma (reservas gratuitas ou mistas)",
+  apenas_reservas: "Só taxas de reserva (somente reservas pagas)",
+  misto: "Legado: mensalidade + taxas de reserva",
 };
 
 export const SOCIOS_MENSAL_ESPACO_LABEL: Record<SociosMensalidadeEspacoFlag, string> = {

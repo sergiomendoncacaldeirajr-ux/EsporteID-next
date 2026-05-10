@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
-import { getEspacoSelecionado, resolveEspacoPublicAssetUrl } from "@/lib/espacos/server";
+import {
+  getEspacoSelecionado,
+  getLogoCadastradoNoOnboardingDeLocais,
+  resolveEspacoPublicAssetUrl,
+} from "@/lib/espacos/server";
 import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import { EspacoOnboardingWizard } from "@/components/espaco/onboarding/espaco-onboarding-wizard";
 
@@ -74,6 +78,13 @@ export default async function EspacoOnboardingPage() {
     ...unidade,
     logo_arquivo: resolveEspacoPublicAssetUrl(supabase, unidade.logo_arquivo),
   }));
+  const logoCadastradoNoOnboarding =
+    selectedSpace.logo_arquivo ??
+    (await getLogoCadastradoNoOnboardingDeLocais({
+      supabase,
+      userId: user.id,
+      space: selectedSpace,
+    }));
 
   return (
     <EspacoOnboardingWizard
@@ -84,7 +95,7 @@ export default async function EspacoOnboardingPage() {
         categoria_mensalidade: selectedSpace.categoria_mensalidade,
         modo_reserva: selectedSpace.modo_reserva,
         aceita_socios: selectedSpace.aceita_socios,
-        logo_arquivo: selectedSpace.logo_arquivo,
+        logo_arquivo: logoCadastradoNoOnboarding,
         cover_arquivo: selectedSpace.cover_arquivo,
         cidade: selectedSpace.cidade,
         uf: selectedSpace.uf,

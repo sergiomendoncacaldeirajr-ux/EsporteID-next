@@ -13,11 +13,17 @@ import {
   AtSign, BadgeCheck, Banknote, FileText, Globe2,
   Hash, IdCard, Mail, MessageSquareText, Phone,
   Camera, ImageIcon, ShieldCheck, Sparkles, Type, Wallet,
+  Crown, ArrowUpRight,
 } from "lucide-react";
 import { EID_PHONE_LABELS } from "@/lib/eid-phone-labels";
 import { EspacoUnidadeLogoControl } from "@/components/espaco/espaco-unidade-logo-control";
 import { TeamShieldControl } from "@/components/perfil/team-shield-control";
-import { descricaoFaixaUnidadesPaaS, detalheValorESociosPlanoPaaS } from "@/lib/espacos/plano-mensal-catalogo";
+import {
+  descricaoFaixaUnidadesPaaS,
+  detalheValorESociosPlanoPaaS,
+  inferirNivelPlanoPaaS,
+  perfilComercialPlanoPaaS,
+} from "@/lib/espacos/plano-mensal-catalogo";
 import type { PaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import {
   salvarModeloEspacoAction,
@@ -123,9 +129,9 @@ const CATEGORIAS = [
 ];
 
 const MODOS_RESERVA = [
-  { value: "gratuita", label: "Gratuita", desc: "Sócios reservam sem custo adicional", Icon: BadgeCheck },
-  { value: "paga", label: "Paga", desc: "Toda reserva tem valor cobrado", Icon: CreditCard },
-  { value: "mista", label: "Mista", desc: "Parte gratuita para sócios, avulso pago", Icon: Wallet },
+  { value: "gratuita", label: "Gratuita", desc: "Sócios reservam sem custo; exige mensalidade da plataforma", Icon: BadgeCheck },
+  { value: "paga", label: "Paga", desc: "Sem mensalidade da plataforma; cobra só taxas das reservas", Icon: CreditCard },
+  { value: "mista", label: "Mista", desc: "Gratuita e paga; exige mensalidade da plataforma", Icon: Wallet },
 ];
 
 const TIPOS_UNIDADE = [
@@ -466,6 +472,14 @@ function StepModelo({ space, onNext, onBack }: {
 
       <div>
         <Label>Modelo de reserva</Label>
+        <div className="mt-2 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-3 text-xs leading-relaxed text-eid-text-secondary">
+          <p>
+            Regra de negócio: espaços com reservas <strong className="text-eid-fg">gratuitas</strong> ou{" "}
+            <strong className="text-eid-fg">mistas</strong> pagam mensalidade da plataforma. Espaços com{" "}
+            <strong className="text-eid-fg">somente reservas pagas</strong> não pagam mensalidade da plataforma; usam filas,
+            mensalidades de usuários e recursos ligados às reservas pagas, pagando apenas as taxas/comissões das reservas.
+          </p>
+        </div>
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
           {MODOS_RESERVA.map(({ value, label, desc, Icon }) => (
             <button
@@ -917,12 +931,27 @@ function StepPlanoPlataforma({
   }, [router, state]);
 
   const planoSelecionado = Boolean(unidadeGate.planoMensalId || state?.ok);
+  const planosOrdenados = [...planosPaaS].sort(
+    (a, b) =>
+      b.valor_mensal_centavos - a.valor_mensal_centavos ||
+      (b.max_unidades ?? 9999) - (a.max_unidades ?? 9999) ||
+      b.min_unidades - a.min_unidades
+  );
+  const planoMaisCompleto = planosOrdenados[0] ?? null;
+  const valorPlano = (centavos: number) =>
+    new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+    }).format((Number(centavos) || 0) / 100);
+  const capacidadeTexto = (plano: PlanoPaaS) =>
+    plano.max_unidades == null ? `${plano.min_unidades}+` : String(plano.max_unidades);
 
   return (
     <div className="space-y-5">
       <StepHeader
         title="Plano da plataforma"
-        subtitle="Escolha primeiro a faixa de quadras do seu plano. Esse limite define quantas quadras ou unidades você poderá cadastrar."
+        subtitle="Escolha a estrutura que acompanha o crescimento do seu espaço. O plano define quantas quadras ou unidades você poderá cadastrar agora."
       />
 
       {planosPaaS.length === 0 ? (
@@ -933,26 +962,81 @@ function StepPlanoPlataforma({
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {planosPaaS.map((plano) => {
+        <div className="space-y-4">
+          {planoMaisCompleto ? (
+            <div className="overflow-hidden rounded-2xl border border-eid-action-500/35 bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-surface)))] shadow-[0_18px_42px_-28px_rgba(249,115,22,0.85)]">
+              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-eid-action-500 text-white shadow-[0_10px_24px_-12px_rgba(249,115,22,0.9)]">
+                    <Crown className="h-5 w-5" aria-hidden />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-eid-action-400">
+                      Recomendado para crescer
+                    </p>
+                    <h3 className="mt-1 text-lg font-black leading-tight text-eid-fg">
+                      Comece com o plano mais completo
+                    </h3>
+                    <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
+                      Mais limite desde o início, menos troca de plano no meio da operação e espaço para cadastrar novas quadras sem travar o setup.
+                    </p>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-eid-action-500/30 bg-eid-card/70 px-4 py-3 text-left sm:min-w-[9.5rem] sm:text-right">
+                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-text-secondary">Plano destaque</p>
+                  <p className="mt-1 text-xl font-black text-eid-fg">{valorPlano(planoMaisCompleto.valor_mensal_centavos)}</p>
+                  <p className="text-[11px] font-semibold text-eid-action-400">por mês</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="grid gap-3 lg:grid-cols-3">
+          {planosOrdenados.map((plano) => {
             const ativo = unidadeGate.planoMensalId === plano.id;
             const faixa = descricaoFaixaUnidadesPaaS(plano.min_unidades, plano.max_unidades);
+            const destaque = planoMaisCompleto?.id === plano.id;
+            const perfil = perfilComercialPlanoPaaS(inferirNivelPlanoPaaS(plano, planosPaaS));
+            const beneficios = [faixa, ...perfil.beneficios];
             return (
               <form
                 key={plano.id}
                 action={action}
-                className={`rounded-2xl border p-4 text-sm transition ${
+                className={`relative overflow-hidden rounded-2xl border p-4 text-sm transition ${
                   ativo
-                    ? "border-eid-primary-500/60 bg-eid-primary-500/10 shadow-[0_12px_30px_-18px_rgba(37,99,235,0.85)]"
-                    : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 hover:border-eid-primary-500/35"
+                    ? "border-eid-primary-500/70 bg-eid-primary-500/12 shadow-[0_16px_34px_-22px_rgba(37,99,235,0.95)]"
+                    : destaque
+                      ? "border-eid-action-500/55 bg-eid-action-500/10 shadow-[0_18px_38px_-24px_rgba(249,115,22,0.9)] hover:border-eid-action-500/75"
+                      : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 hover:border-eid-primary-500/35"
                 }`}
               >
+                {destaque ? (
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-eid-action-500" aria-hidden />
+                ) : null}
                 <input type="hidden" name="espaco_id" value={space.id} />
                 <input type="hidden" name="plano_mensal_id" value={plano.id} />
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-base font-black text-eid-fg">{plano.nome}</p>
-                    <p className="mt-1 text-xs font-semibold text-eid-primary-300">{faixa}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-base font-black text-eid-fg">{plano.nome}</p>
+                      {destaque ? (
+                        <span className="rounded-full bg-eid-action-500 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-white">
+                          Melhor escolha
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] ${
+                      destaque
+                        ? "border-eid-action-500/35 bg-eid-action-500/10 text-eid-action-400"
+                        : "border-eid-primary-500/25 bg-eid-primary-500/8 text-eid-primary-300"
+                    }`}>
+                      {perfil.titulo}
+                    </p>
+                    <p className="mt-2 text-2xl font-black leading-none text-eid-fg">
+                      {valorPlano(plano.valor_mensal_centavos)}
+                      <span className="ml-1 text-xs font-bold text-eid-text-secondary">/mês</span>
+                    </p>
+                    <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">{perfil.resumo}</p>
                   </div>
                   {ativo ? (
                     <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-emerald-300">
@@ -960,20 +1044,44 @@ function StepPlanoPlataforma({
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-3 text-xs leading-relaxed text-eid-text-secondary">
+                <div className={`mt-4 rounded-2xl border p-3 ${
+                  destaque
+                    ? "border-eid-action-500/25 bg-eid-action-500/10"
+                    : "border-[color:var(--eid-border-subtle)] bg-eid-card/45"
+                }`}>
+                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-text-secondary">Limite do plano</p>
+                  <div className="mt-2 flex items-end justify-between gap-2">
+                    <p className="text-3xl font-black leading-none text-eid-fg">{capacidadeTexto(plano)}</p>
+                    <p className="pb-1 text-right text-xs font-semibold leading-tight text-eid-primary-300">quadras ou unidades</p>
+                  </div>
+                </div>
+                <ul className="mt-4 space-y-2">
+                  {beneficios.map((beneficio) => (
+                    <li key={beneficio} className="flex items-start gap-2 text-xs leading-relaxed text-eid-text-secondary">
+                      <CheckCircle2 className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${destaque ? "text-eid-action-400" : "text-eid-primary-300"}`} aria-hidden />
+                      <span>{beneficio}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-3 text-[11px] leading-relaxed text-eid-text-secondary">
                   {detalheValorESociosPlanoPaaS(plano)}
                 </p>
                 <button
                   type="submit"
                   disabled={ativo || pending}
-                  className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-eid-primary-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-eid-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-black text-white transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                    destaque
+                      ? "bg-eid-action-500 hover:bg-eid-action-600"
+                      : "bg-eid-primary-500 hover:bg-eid-primary-600"
+                  }`}
                 >
-                  {pending && !ativo ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                  {ativo ? "Plano selecionado" : "Escolher este plano"}
+                  {pending && !ativo ? <Loader2 className="h-4 w-4 animate-spin" /> : destaque ? <ArrowUpRight className="h-4 w-4" /> : <CreditCard className="h-4 w-4" />}
+                  {ativo ? "Plano selecionado" : destaque ? "Escolher plano completo" : perfil.cta}
                 </button>
               </form>
             );
           })}
+          </div>
         </div>
       )}
 

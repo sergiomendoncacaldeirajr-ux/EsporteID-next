@@ -641,12 +641,12 @@ export async function adminReviewEspacoClaim(formData: FormData) {
           })
           .eq("espaco_generico_id", claim.espaco_generico_id);
       }
-      if (cobraMensalidadePlataforma && String(egMeta?.modo_reserva ?? "") === "mista") {
+      if (cobraMensalidadePlataforma && String(egMeta?.modo_reserva ?? "") === "paga") {
         await db.from("espaco_assinaturas_plataforma").upsert(
           {
             espaco_generico_id: claim.espaco_generico_id,
             responsavel_usuario_id: claim.solicitante_id,
-            plano_nome: "PaaS — somente taxas (reservas mistas)",
+            plano_nome: "Somente taxas de reservas pagas",
             valor_mensal_centavos: 0,
             status: "active",
             situacao_override: "isento",
@@ -859,16 +859,18 @@ export async function adminUpdateEspacoModoCobranca(formData: FormData) {
     const id = Number(formData.get("id"));
     if (!Number.isFinite(id)) return;
     const modo_reserva = String(formData.get("modo_reserva") ?? "").trim();
-    const modo_monetizacao = String(formData.get("modo_monetizacao") ?? "").trim();
+    const modoMonetizacaoRaw = String(formData.get("modo_monetizacao") ?? "").trim();
     const taxaBrl = Number(formData.get("taxa_reserva_plataforma_brl"));
     const socios_esp = String(formData.get("socios_mensalidade_espaco") ?? "em_breve").trim();
     const clube_ass = String(formData.get("clube_assinaturas_socios") ?? "em_breve").trim();
     if (!new Set(["gratuita", "paga", "mista"]).has(modo_reserva)) return;
-    if (!new Set(["mensalidade_plataforma", "apenas_reservas", "misto"]).has(modo_monetizacao)) return;
+    if (!new Set(["mensalidade_plataforma", "apenas_reservas", "misto"]).has(modoMonetizacaoRaw)) return;
     if (!new Set(["off", "em_breve", "on"]).has(socios_esp)) return;
     if (!new Set(["off", "em_breve", "on"]).has(clube_ass)) return;
     if (!Number.isFinite(taxaBrl) || taxaBrl < 0) return;
     const taxa_reserva_plataforma_centavos = Math.round(taxaBrl * 100);
+    const modo_monetizacao =
+      modo_reserva === "paga" ? "apenas_reservas" : "mensalidade_plataforma";
     const { error } = await svc()
       .from("espacos_genericos")
       .update({
@@ -895,10 +897,32 @@ export async function adminAplicarPlanoMensalAutomatico(formData: FormData) {
     const db = svc();
     const { data: esp } = await db
       .from("espacos_genericos")
-      .select("id, categoria_mensalidade, responsavel_usuario_id, criado_por_usuario_id")
+      .select("id, categoria_mensalidade, modo_reserva, responsavel_usuario_id, criado_por_usuario_id")
       .eq("id", espacoId)
       .maybeSingle();
     if (!esp) return;
+    if (String((esp as { modo_reserva?: string | null }).modo_reserva ?? "") === "paga") {
+      const responsavelPago = esp.responsavel_usuario_id ?? esp.criado_por_usuario_id;
+      if (!responsavelPago) return;
+      await db.from("espacos_genericos").update({ modo_monetizacao: "apenas_reservas" }).eq("id", espacoId);
+      await db.from("espaco_assinaturas_plataforma").upsert(
+        {
+          espaco_generico_id: espacoId,
+          responsavel_usuario_id: responsavelPago,
+          plano_mensal_id: null,
+          plano_nome: "Somente taxas de reservas pagas",
+          valor_mensal_centavos: 0,
+          atualizado_em: new Date().toISOString(),
+          status: "active",
+          situacao_override: "isento",
+          isento_total: true,
+        },
+        { onConflict: "espaco_generico_id" }
+      );
+      revalidatePath("/admin/locais");
+      revalidatePath("/espaco");
+      return;
+    }
     const categoria = String(esp.categoria_mensalidade ?? "outro");
     const { count } = await db
       .from("espaco_unidades")

@@ -110,7 +110,7 @@ export async function salvarModeloEspacoAction(
     const modoReserva = field(formData, "modo_reserva") || "mista";
     const aceitaSocios = bool(formData, "aceita_socios");
     const modoMonetizacao =
-      modoReserva === "gratuita" ? "gratuito" : "mensalidade_plataforma";
+      modoReserva === "paga" ? "apenas_reservas" : "mensalidade_plataforma";
     const { error } = await supabase
       .from("espacos_genericos")
       .update({

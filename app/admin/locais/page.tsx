@@ -15,6 +15,7 @@ import {
 } from "@/app/admin/actions";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { computeMensalidadePainelState } from "@/lib/espacos/mensalidade-acesso";
+import { inferirNivelPlanoPaaS, perfilComercialPlanoPaaS } from "@/lib/espacos/plano-mensal-catalogo";
 import {
   CLUBE_ASSINATURA_SOCIOS_LABEL,
   MODO_MONETIZACAO_LABEL,
@@ -95,13 +96,13 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
 
   const { data: planosCatRows, error: planosErr } = await db
     .from("espaco_plano_mensal_plataforma")
-    .select("id, nome, categoria_espaco, min_unidades, max_unidades, valor_mensal_centavos, liberacao, ordem")
+    .select("id, nome, categoria_espaco, min_unidades, max_unidades, valor_mensal_centavos, socios_mensal_modo, liberacao, ordem")
     .is("espaco_generico_id", null)
     .order("ordem", { ascending: true });
   if (planosErr) return <p className="text-sm text-red-300">{planosErr.message}</p>;
   const planosCatalogo = (planosCatRows ?? []) as Array<{
     id: number; nome: string; categoria_espaco: string; min_unidades: number;
-    max_unidades: number | null; valor_mensal_centavos: number; liberacao: string; ordem: number;
+    max_unidades: number | null; valor_mensal_centavos: number; socios_mensal_modo: string | null; liberacao: string; ordem: number;
   }>;
 
   let locaisQ = db
@@ -196,13 +197,26 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
       ) : null}
 
       {/* Info bar */}
-      <div className="rounded-xl border border-eid-primary-500/20 bg-eid-primary-500/[0.04] p-4">
-        <h2 className="text-sm font-bold text-eid-fg">Configurações globais de mensalidade</h2>
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-eid-text-secondary">
-          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/financeiro">Financeiro (valores e prazos)</Link>
-          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/integracoes-pagamento">Pagamentos (Asaas)</Link>
-          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/locais/planos-mensalidade">Planos de mensalidade</Link>
-          <Link className="font-semibold text-eid-primary-300 hover:underline" href="/admin/locais/suspeitas-mista">Reservas suspeitas</Link>
+      <div className="rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/[0.04] p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-bold text-eid-fg">Operação de locais e planos</h2>
+            <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
+              Reservas gratuitas ou mistas exigem mensalidade da plataforma. Reservas somente pagas não pagam mensalidade PaaS:
+              o local usa recursos pagos e paga apenas taxas/comissões das reservas.
+            </p>
+          </div>
+          <Link
+            className="rounded-xl bg-eid-action-500 px-3 py-2 text-xs font-black text-white hover:bg-eid-action-600"
+            href="/admin/locais/planos-mensalidade"
+          >
+            Gerenciar planos
+          </Link>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2 text-xs text-eid-text-secondary">
+          <Link className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-1.5 font-semibold text-eid-primary-300 hover:bg-eid-surface/70" href="/admin/financeiro">Financeiro</Link>
+          <Link className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-1.5 font-semibold text-eid-primary-300 hover:bg-eid-surface/70" href="/admin/integracoes-pagamento">Pagamentos Asaas</Link>
+          <Link className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-1.5 font-semibold text-eid-primary-300 hover:bg-eid-surface/70" href="/admin/locais/suspeitas-mista">Reservas suspeitas</Link>
         </div>
       </div>
 
@@ -274,11 +288,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
             const registrantProfile = localRow.criado_por_usuario_id
               ? ownerProfileMap.get(localRow.criado_por_usuario_id)
               : null;
-            const modoR = (localRow.modo_reserva ?? "mista") as keyof typeof MODO_RESERVA_LABEL;
-            const modoM = (localRow.modo_monetizacao ?? "misto") as keyof typeof MODO_MONETIZACAO_LABEL;
             const taxaReservaBrl = Number(localRow.taxa_reserva_plataforma_centavos ?? 0) / 100;
-            const sociosFl = (localRow.socios_mensalidade_espaco ?? "em_breve") as keyof typeof SOCIOS_MENSAL_ESPACO_LABEL;
-            const clubeFl = (localRow.clube_assinaturas_socios ?? "em_breve") as keyof typeof CLUBE_ASSINATURA_SOCIOS_LABEL;
             const a = assinMap.get(l.id) as {
               id: number; status: string; valor_mensal_centavos: number; proxima_cobranca: string | null;
               trial_ate: string | null; situacao_override: string | null; plano_nome: string | null;
@@ -666,6 +676,9 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                             <option value="apenas_reservas">{MODO_MONETIZACAO_LABEL.apenas_reservas}</option>
                             <option value="misto">{MODO_MONETIZACAO_LABEL.misto}</option>
                           </select>
+                          <span className="mt-1 block text-[10px] leading-relaxed text-eid-text-secondary">
+                            Ao salvar, a regra é aplicada automaticamente: gratuita/mista = mensalidade da plataforma; paga = somente taxas de reserva.
+                          </span>
                         </label>
                         <label className="text-[11px] text-eid-text-secondary">
                           Taxa plataforma por reserva (R$)
@@ -724,10 +737,15 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                             <option value="0">(nenhum — preencher manualmente)</option>
                             {planosCatalogo.map((p) => {
                               const faixa = p.max_unidades == null ? `${p.min_unidades}+` : `${p.min_unidades}–${p.max_unidades}`;
-                              const label = `${p.categoria_espaco} · ${faixa} u. · ${p.nome} · ${brlDeCentavos(p.valor_mensal_centavos)}/mês${p.liberacao !== "publico" ? " [admin]" : ""}`;
+                              const planosDaCategoria = planosCatalogo.filter((item) => item.categoria_espaco === p.categoria_espaco);
+                              const perfil = perfilComercialPlanoPaaS(inferirNivelPlanoPaaS(p, planosDaCategoria));
+                              const label = `${perfil.nome} · ${perfil.titulo} · ${p.categoria_espaco} · ${faixa} u. · ${brlDeCentavos(p.valor_mensal_centavos)}/mês${p.liberacao !== "publico" ? " [admin]" : ""}`;
                               return (<option key={p.id} value={p.id} disabled={p.liberacao === "inativo"}>{label}</option>);
                             })}
                           </select>
+                          <span className="mt-1 block text-[10px] leading-relaxed text-eid-text-secondary">
+                            Gratuita e mista usam mensalidade da plataforma. Somente paga não exige mensalidade PaaS e paga apenas taxas/comissões das reservas.
+                          </span>
                         </label>
                         <label className="text-[11px] text-eid-text-secondary">
                           Valor mensal (R$)
@@ -908,7 +926,7 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
                         <option value="sim">Sim, cobrar mensalidade</option>
                         <option value="nao">Não — espaço isento (não exibir mensalidade)</option>
                       </select>
-                      <span className="mt-0.5 block text-[10px] text-eid-text-muted">Pode ser alterado depois em "Assinatura" do espaço.</span>
+                      <span className="mt-0.5 block text-[10px] text-eid-text-muted">Pode ser alterado depois em &quot;Assinatura&quot; do espaço.</span>
                     </label>
                     <textarea
                       name="observacoes_admin"

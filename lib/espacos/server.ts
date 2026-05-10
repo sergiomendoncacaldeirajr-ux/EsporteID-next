@@ -57,6 +57,55 @@ export function resolveEspacoPublicAssetUrl(
   return supabase.storage.from(bucket).getPublicUrl(asset.replace(/^\/+/, "")).data.publicUrl;
 }
 
+function comparableText(value: string | null | undefined) {
+  return String(value ?? "")
+    .trim()
+    .toLocaleLowerCase("pt-BR");
+}
+
+export async function getLogoCadastradoNoOnboardingDeLocais({
+  supabase,
+  userId,
+  space,
+}: {
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  userId: string;
+  space: Pick<ManagedSpace, "id" | "nome_publico" | "localizacao" | "cidade" | "uf">;
+}) {
+  const { data } = await supabase
+    .from("espacos_genericos")
+    .select("id, nome_publico, localizacao, cidade, uf, logo_arquivo")
+    .eq("criado_por_usuario_id", userId)
+    .not("logo_arquivo", "is", null)
+    .neq("id", space.id)
+    .order("id", { ascending: false })
+    .limit(10);
+
+  const candidates = (data ?? []).filter((row) => String(row.logo_arquivo ?? "").trim().length > 0);
+  if (!candidates.length) return null;
+
+  const spaceName = comparableText(space.nome_publico);
+  const spaceLocation = comparableText(space.localizacao);
+  const spaceCity = comparableText(space.cidade);
+  const spaceUf = comparableText(space.uf);
+
+  const matched =
+    candidates.find((row) => {
+      const sameName = comparableText(row.nome_publico) === spaceName;
+      const sameLocation = comparableText(row.localizacao) === spaceLocation;
+      const sameCityUf =
+        comparableText(row.cidade) === spaceCity &&
+        comparableText(row.uf) === spaceUf &&
+        spaceCity.length > 0 &&
+        spaceUf.length > 0;
+      return sameName && (sameLocation || sameCityUf);
+    }) ??
+    candidates.find((row) => comparableText(row.nome_publico) === spaceName) ??
+    (candidates.length === 1 ? candidates[0] : null);
+
+  return resolveEspacoPublicAssetUrl(supabase, matched?.logo_arquivo ?? null);
+}
+
 export async function requireEspacoManagerUser(nextPath: string) {
   const supabase = await createClient();
   const {

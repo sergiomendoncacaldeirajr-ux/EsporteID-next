@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { adminDeletePlanoMensalPlataforma, adminUpsertPlanoMensalPlataforma } from "@/app/admin/actions";
+import {
+  descricaoFaixaUnidadesPaaS,
+  inferirNivelPlanoPaaS,
+  perfilComercialPlanoPaaS,
+} from "@/lib/espacos/plano-mensal-catalogo";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 const CATEGORIAS = [
@@ -20,6 +25,12 @@ const LIB = [
   { value: "publico", label: "Público (pode se aplicar / aparecer no fluxo)" },
   { value: "em_breve", label: "Em breve (visível admin, não no fluxo automático)" },
   { value: "inativo", label: "Inativo" },
+];
+
+const GUIA_PLANOS = [
+  perfilComercialPlanoPaaS("basico"),
+  perfilComercialPlanoPaaS("intermediario"),
+  perfilComercialPlanoPaaS("completo"),
 ];
 
 function brlDeCentavos(c: number) {
@@ -66,11 +77,35 @@ export default async function AdminPlanoMensalPlataformaPage() {
         </p>
         <h1 className="text-lg font-bold text-eid-fg">Planos de mensalidade (catálogo PaaS)</h1>
         <p className="mt-1 text-sm text-eid-text-secondary">
-          Planos globais por <strong className="font-semibold text-eid-fg">categoria de espaço</strong> e faixa de unidades/ quadras. Os flags de
-          recorrência e confirmação automática ficam prontos para quando a assinatura for integrada ao Asaas. Planos com liberação &quot;em
-          breve&quot; podem ser criados e ativados depois.
+          Catálogo global por categoria de espaço. A ordem comercial esperada é: Básico para reservas gratuitas,
+          Intermediário para reservas gratuitas/pagas com fila, e Completo com recebimento de mensalidades. Espaços somente pagos
+          não usam estes planos: pagam apenas taxas/comissões das reservas.
         </p>
       </div>
+
+      <section className="grid gap-3 lg:grid-cols-3">
+        {GUIA_PLANOS.map((plano) => (
+          <div
+            key={plano.nome}
+            className={`rounded-2xl border p-4 ${
+              plano.nome === "Completo"
+                ? "border-eid-action-500/35 bg-eid-action-500/10"
+                : "border-[color:var(--eid-border-subtle)] bg-eid-card/45"
+            }`}
+          >
+            <p className={`text-[10px] font-black uppercase tracking-[0.14em] ${plano.nome === "Completo" ? "text-eid-action-400" : "text-eid-primary-300"}`}>
+              {plano.nome}
+            </p>
+            <h2 className="mt-1 text-base font-black text-eid-fg">{plano.titulo}</h2>
+            <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">{plano.resumo}</p>
+            <ul className="mt-3 space-y-1.5 text-[11px] leading-relaxed text-eid-text-secondary">
+              {plano.beneficios.slice(0, 4).map((beneficio) => (
+                <li key={beneficio}>• {beneficio}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </section>
 
       <section className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/50 p-4">
         <h2 className="text-sm font-bold text-eid-fg">Novo plano (catálogo global)</h2>
@@ -199,13 +234,43 @@ export default async function AdminPlanoMensalPlataformaPage() {
           {planos.length === 0 ? <p className="text-sm text-eid-text-secondary">Nenhum registro (rode a migration e recarregue).</p> : null}
           {planos.map((p) => {
             const brl = (p.valor_mensal_centavos ?? 0) / 100;
+            const planosDaCategoria = planos.filter((item) => item.categoria_espaco === p.categoria_espaco);
+            const perfil = perfilComercialPlanoPaaS(inferirNivelPlanoPaaS(p, planosDaCategoria));
+            const faixa = descricaoFaixaUnidadesPaaS(p.min_unidades, p.max_unidades);
+            const isCompleto = perfil.nome === "Completo";
             return (
               <div
                 key={p.id}
-                className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-bg/30 p-4"
+                className={`overflow-hidden rounded-2xl border ${
+                  isCompleto
+                    ? "border-eid-action-500/35 bg-eid-action-500/8"
+                    : "border-[color:var(--eid-border-subtle)] bg-eid-bg/30"
+                }`}
               >
-                <p className="text-[10px] font-mono text-eid-text-secondary">id {p.id}</p>
-                <form action={adminUpsertPlanoMensalPlataforma} className="mt-2 block">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[color:var(--eid-border-subtle)]/45 p-4">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-[10px] font-mono text-eid-text-secondary">id {p.id}</p>
+                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em] ${
+                        isCompleto
+                          ? "border-eid-action-500/35 bg-eid-action-500/10 text-eid-action-400"
+                          : "border-eid-primary-500/25 bg-eid-primary-500/8 text-eid-primary-300"
+                      }`}>
+                        {perfil.nome}
+                      </span>
+                      <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2 py-0.5 text-[10px] font-semibold text-eid-text-secondary">
+                        {p.categoria_espaco}
+                      </span>
+                    </div>
+                    <h3 className="mt-1 text-base font-black text-eid-fg">{p.nome}</h3>
+                    <p className="mt-0.5 text-xs text-eid-text-secondary">{perfil.resumo}</p>
+                  </div>
+                  <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 px-3 py-2 text-right">
+                    <p className="text-base font-black text-eid-fg">{brlDeCentavos(p.valor_mensal_centavos)}</p>
+                    <p className="text-[10px] font-semibold text-eid-text-secondary">{faixa}</p>
+                  </div>
+                </div>
+                <form action={adminUpsertPlanoMensalPlataforma} className="block p-4">
                 <input type="hidden" name="id" value={p.id} />
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                   <label className="text-xs font-semibold text-eid-text-secondary md:col-span-2">
@@ -341,7 +406,7 @@ export default async function AdminPlanoMensalPlataformaPage() {
                   </button>
                 </div>
                 </form>
-                <form action={adminDeletePlanoMensalPlataforma} className="mt-2">
+                <form action={adminDeletePlanoMensalPlataforma} className="border-t border-[color:var(--eid-border-subtle)]/35 px-4 py-3">
                   <input type="hidden" name="id" value={p.id} />
                   <button
                     type="submit"

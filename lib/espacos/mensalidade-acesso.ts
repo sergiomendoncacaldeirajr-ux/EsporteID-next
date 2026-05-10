@@ -112,17 +112,17 @@ export function computeMensalidadePainelState(
     };
   }
 
-  if (modoR === "mista" && modoMonet !== "mensalidade_plataforma") {
+  if (modoR === "paga" && modoMonet !== "mensalidade_plataforma") {
     return {
       nivel: "isento",
       proximaCobranca: assinRow?.proxima_cobranca ?? null,
       valorMensalCentavos: 0,
       mensagem:
-        "Reservas mista (grátis e pagas): sem mensalidade PaaS. A plataforma cobra só a taxa em reservas pagas, conforme configurado.",
+        "Reservas somente pagas: sem mensalidade da plataforma. O espaço usa recursos ligados a reservas pagas e paga apenas as taxas/comissões das reservas.",
       diasAteVencimento: null,
       diasEmAtraso: 0,
       categoria: categoriaMensalidade,
-      modoReserva: "mista",
+      modoReserva: "paga",
     };
   }
 
