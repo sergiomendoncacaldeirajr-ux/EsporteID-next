@@ -145,7 +145,12 @@ function Feedback({ state }: { state: ActionState }) {
 }
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <label className="text-xs font-semibold text-eid-text-secondary">{children}</label>;
+  return (
+    <label className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.13em] text-eid-fg/85">
+      <span className="h-1.5 w-1.5 rounded-full bg-eid-primary-400 shadow-[0_0_0_3px_color-mix(in_srgb,var(--eid-primary-500)_12%,transparent)]" aria-hidden />
+      {children}
+    </label>
+  );
 }
 
 function FieldChrome({
