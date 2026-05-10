@@ -1,24 +1,45 @@
 import { SkBlock, SkMain } from "@/components/loading/skeleton-primitives";
 import { eidRouteSkeletonsDisabled } from "@/lib/eid-route-skeleton-flag";
 
-/** Página de local / espaço na listagem. */
 export default function LoadingLocalPublico() {
   if (eidRouteSkeletonsDisabled()) return null;
   return (
     <SkMain variant="wide5">
-      <SkBlock className="h-7 w-32 rounded-lg" />
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-        <SkBlock className="aspect-video w-full rounded-2xl lg:aspect-auto lg:min-h-[220px]" />
-        <div className="space-y-3">
-          <SkBlock className="h-8 w-3/4 max-w-sm rounded-lg" />
-          <SkBlock className="h-4 w-full rounded-md" />
-          <SkBlock className="h-4 w-4/5 rounded-md" />
-          <SkBlock className="mt-4 h-12 w-full rounded-xl" />
+      {/* Hero card */}
+      <div className="overflow-hidden rounded-2xl">
+        {/* Cover */}
+        <SkBlock className="h-44 w-full rounded-none sm:h-56" />
+        <div className="p-4 pt-0">
+          {/* Logo + map button row */}
+          <div className="-mt-8 mb-3 flex items-end justify-between">
+            <SkBlock className="h-16 w-16 rounded-[14px]" />
+            <SkBlock className="h-8 w-28 rounded-xl" />
+          </div>
+          {/* Name */}
+          <SkBlock className="h-7 w-3/5 rounded-lg" />
+          <SkBlock className="mt-2 h-3.5 w-2/5 rounded-md" />
         </div>
       </div>
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+
+      {/* Stats grid */}
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <SkBlock key={i} className="h-24 rounded-xl" />
+          <SkBlock key={i} className="h-20 rounded-xl" />
+        ))}
+      </div>
+
+      {/* Services */}
+      <SkBlock className="mt-5 h-3 w-24 rounded-md" />
+      <div className="mt-3 grid gap-2">
+        <SkBlock className="h-16 rounded-2xl" />
+        <SkBlock className="h-16 rounded-2xl" />
+      </div>
+
+      {/* Amenities */}
+      <SkBlock className="mt-5 h-3 w-24 rounded-md" />
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkBlock key={i} className="h-6 w-16 rounded-full" />
         ))}
       </div>
     </SkMain>
