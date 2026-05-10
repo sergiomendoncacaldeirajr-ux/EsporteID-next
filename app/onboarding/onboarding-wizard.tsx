@@ -471,6 +471,7 @@ export function OnboardingWizard({
   const [espacoComplemento, setEspacoComplemento] = useState<string>(extrasInitial.espacoComplemento);
   const [espacoLat, setEspacoLat] = useState<string>("");
   const [espacoLng, setEspacoLng] = useState<string>("");
+  const [espacoAddressLoading, setEspacoAddressLoading] = useState(false);
   const [aceiteContratoEspaco, setAceiteContratoEspaco] = useState(false);
   const [nome, setNome] = useState<string>(profileInitial.nome);
   /** Capitaliza a primeira letra de cada palavra, restante em minúsculas. */
@@ -2064,12 +2065,37 @@ export function OnboardingWizard({
                       if (item.lat) setEspacoLat(item.lat);
                       if (item.lng) setEspacoLng(item.lng);
                       setEspacoReivindicarId(item.id);
+                      // Se não há endereço detalhado no banco mas temos coordenadas, busca via reverse geocode
+                      const missingAddress = !item.endereco;
+                      const hasCoords = item.lat && item.lng && Number.isFinite(Number(item.lat));
+                      if (missingAddress && hasCoords) {
+                        setEspacoAddressLoading(true);
+                        void fetch(`/api/geocode/reverse?lat=${item.lat}&lon=${item.lng}`)
+                          .then((r) => r.ok ? r.json() : null)
+                          .then((data: { address?: Record<string, string> } | null) => {
+                            if (!data?.address) return;
+                            const a = data.address;
+                            const road = a.road ?? a.pedestrian ?? a.path ?? a.street_name ?? "";
+                            const houseNum = a.house_number ?? "";
+                            const suburb = a.suburb ?? a.neighbourhood ?? a.city_district ?? a.quarter ?? "";
+                            const postcode = a.postcode ?? "";
+                            if (road) setEspacoEndereco(road);
+                            if (houseNum) setEspacoNumero(houseNum);
+                            if (suburb) setEspacoBairro(suburb);
+                            if (postcode) setEspacoCep(postcode);
+                          })
+                          .catch(() => undefined)
+                          .finally(() => setEspacoAddressLoading(false));
+                      }
                     }}
                     onClear={() => setEspacoReivindicarId(null)}
                     claimId={espacoReivindicarId}
                     placeholder="Nome público do local"
                     className="eid-input-dark mt-3 w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                   />
+                  {espacoAddressLoading && (
+                    <p className="mt-2 text-[11px] text-eid-text-secondary animate-pulse">Buscando endereço pelo mapa…</p>
+                  )}
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
                     <EnderecoAssistFields
                       endereco={espacoEndereco}
