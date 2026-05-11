@@ -45,7 +45,10 @@ export function PwaBootstrap() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     return runWhenPageIsIdle(() => {
-      void navigator.serviceWorker.register("/sw.js").then(() => {
+      void navigator.serviceWorker.register("/sw.js").then((reg) => {
+        void reg.update().catch(() => {
+          // best-effort: o navegador também atualiza sozinho.
+        });
         void syncExistingPushSubscription().catch(() => {
           // best-effort silencioso: o usuário pode reativar no toggle se necessário.
         });

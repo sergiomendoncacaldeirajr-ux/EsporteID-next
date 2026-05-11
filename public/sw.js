@@ -18,51 +18,23 @@ self.addEventListener("push", (event) => {
   const tipo = String(payload.tipo || "").toLowerCase();
   const destUrl = payload.url || "/comunidade";
 
-  // Type-aware action buttons
-  let actions;
-  if (tipo === "match") {
-    actions = [
-      { action: "open_url", title: "Ver Desafio" },
-      { action: "open_agenda", title: "Minha Agenda" },
-    ];
-  } else if (tipo === "desafio") {
-    actions = [
-      { action: "open_url", title: "Ver Placar" },
-      { action: "open_social", title: "Social" },
-    ];
-  } else if (tipo === "agenda_status") {
-    actions = [
-      { action: "open_url", title: "Ver Agenda" },
-      { action: "open_social", title: "Social" },
-    ];
-  } else if (tipo.includes("convite") || tipo.includes("candidatura") || tipo.includes("time")) {
-    actions = [
-      { action: "open_url", title: "Ver Equipe" },
-      { action: "open_agenda", title: "Agenda" },
-    ];
-  } else {
-    actions = [
-      { action: "open_url", title: "Abrir" },
-      { action: "open_agenda", title: "Agenda" },
-    ];
-  }
-
   const options = {
     body: payload.body || "Você tem uma atualização no app.",
     icon: "/pwa-icon-192.png",
     badge: "/pwa-icon-192.png",
     tag: payload.tag || "eid-notificacao",
-    renotify: true,
-    requireInteraction: payload.requireInteraction === true,
-    vibrate: [100, 40, 100, 40, 80],
-    actions,
+    timestamp: Date.now(),
     data: {
       url: destUrl,
       tipo,
     },
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    self.registration.showNotification(title, options).catch((error) => {
+      console.error("[eid-sw] showNotification failed", error);
+    })
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
