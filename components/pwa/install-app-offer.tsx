@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Download, Loader2, MoreVertical, Smartphone, X } from "lucide-react";
+import { CheckCircle2, Download, ExternalLink, Loader2, MoreVertical, Smartphone, X } from "lucide-react";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -10,6 +10,7 @@ type BeforeInstallPromptEvent = Event & {
 
 const IOS_DISMISS_SESSION_KEY = "eid-ios-add-home-dismissed";
 const INSTALL_OFFER_LAST_SHOWN_DAY_KEY = "eid-install-offer-last-shown-day";
+const PLAY_STORE_INSTALL_URL = "https://play.google.com/store/apps/details?id=com.esporteid.app";
 
 function dayStampNow() {
   return new Date().toISOString().slice(0, 10);
@@ -210,9 +211,19 @@ export function InstallAppOffer() {
             <p className="mt-4 text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-300">EsporteID no Android</p>
             <h2 className="mt-2 text-xl font-black text-eid-fg">Instale o app no seu celular</h2>
             <p className="mt-2 text-sm text-eid-text-secondary">
-              Use o botão abaixo para instalar a versão web como aplicativo, com ícone na tela inicial e abertura em tela cheia.
+              Baixe o app oficial pela Play Store. Se preferir, também dá para instalar a versão web pelo navegador.
             </p>
             <div className="mt-4 flex flex-col gap-2">
+              <a
+                href={PLAY_STORE_INSTALL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="eid-btn-primary flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-eid-action-500 px-4 py-2 text-center text-sm font-black text-white shadow-lg shadow-eid-action-500/20 hover:bg-eid-action-600"
+              >
+                <Download className="h-4 w-4" aria-hidden />
+                Instalar pela Play Store
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              </a>
               {installEvt ? (
                 <div className="rounded-2xl border border-eid-action-500/25 bg-eid-action-500/10 p-3">
                   <div className="flex items-start gap-3">

@@ -14,7 +14,6 @@ import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
 import { HashTargetHighlight } from "@/components/system/hash-target-highlight";
 import { InstallAppOfferDynamic } from "@/components/pwa/install-app-offer-dynamic";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
-import { PwaLaunchSplash } from "@/components/pwa/pwa-launch-splash";
 import { RealtimePageRefresh } from "@/components/pwa/realtime-page-refresh";
 import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
 import {
@@ -194,7 +193,6 @@ export default async function RootLayout({
       >
         <EidThemeHydration />
         <PwaBootstrap />
-        <PwaLaunchSplash />
         <ThemeColorSync />
         <InstallAppOfferDynamic />
         <GlobalScrollReset />
