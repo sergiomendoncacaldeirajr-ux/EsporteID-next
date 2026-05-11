@@ -82,12 +82,6 @@ function inferPushPlatform(userAgent: string | null | undefined) {
   return "Outro";
 }
 
-function preferInstalledAndroidApp(subs: PushSubRow[]) {
-  const hasAndroidApp = subs.some((s) => inferPushPlatform(s.user_agent) === "Android/App");
-  if (!hasAndroidApp) return subs;
-  return subs.filter((s) => inferPushPlatform(s.user_agent) !== "Android/Navegador");
-}
-
 function isDeliveredPushStatus(status: string | null | undefined) {
   return ["success", "received", "shown"].includes(String(status ?? "").toLowerCase());
 }
@@ -236,10 +230,6 @@ async function dispatchNotificationsToSubscriptions(
     arr.sort(newerSubscriptionFirst);
     subByUser.set(s.usuario_id, arr);
   }
-  for (const [userId, userSubs] of subByUser) {
-    subByUser.set(userId, preferInstalledAndroidApp(userSubs));
-  }
-
   const delivered = new Set<string>();
   for (const d of (deliveries ?? []) as PushDeliveryRow[]) {
     if (isDeliveredPushStatus(d.status)) delivered.add(`${d.notificacao_id}:${d.subscription_id}`);
