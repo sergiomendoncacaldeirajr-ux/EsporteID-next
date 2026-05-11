@@ -470,8 +470,9 @@ export async function salvarGradeWizardAction(
       const intervalo = clampIntervalMinutes(formData.get(`unidade_${unidadeId}_intervalo`));
       for (let dia = 0; dia <= 6; dia++) {
         if (formData.get(`unidade_${unidadeId}_dia_${dia}_aberto`) !== "on") continue;
-        if (modo === "especificos") {
-          for (const slot of readSpecificSlots(field(formData, `unidade_${unidadeId}_dia_${dia}_slots`))) {
+        const slotsEditados = readSpecificSlots(field(formData, `unidade_${unidadeId}_dia_${dia}_slots`));
+        if (slotsEditados.length > 0) {
+          for (const slot of slotsEditados) {
             inserts.push({
               espaco_generico_id: espacoId,
               espaco_unidade_id: unidadeId,
@@ -479,9 +480,12 @@ export async function salvarGradeWizardAction(
               hora_inicio: slot.inicio,
               hora_fim: slot.fim,
               ativo: true,
-              observacoes: "Horário específico criado no wizard.",
+              observacoes: "Horário revisado no wizard.",
             });
           }
+          continue;
+        }
+        if (modo === "especificos") {
           continue;
         }
 

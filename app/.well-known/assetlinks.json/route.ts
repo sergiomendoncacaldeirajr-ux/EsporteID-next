@@ -16,7 +16,10 @@ const DEFAULT_ASSET_LINKS = [
       namespace: "android_app",
       package_name: "com.esporteid.app",
       sha256_cert_fingerprints: [
+        // Play App Signing / certificado publicado atual.
         "08:A5:07:68:C8:61:CD:2F:87:7E:E1:0A:FA:54:E6:81:F6:86:1F:5E:D4:49:75:2E:DC:68:16:60:6C:10:E4:00",
+        // Upload/local keystore presente no projeto TWA enviado.
+        "A2:A6:AD:CD:53:45:2E:FE:FC:D5:8A:95:8B:04:B5:B1:60:D8:BB:2D:5D:9D:4D:BA:4B:9B:C4:E6:6C:58:21:18",
       ],
     },
   },

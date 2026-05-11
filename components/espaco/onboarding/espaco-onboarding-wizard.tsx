@@ -244,6 +244,32 @@ function slugifyClient(value: string) {
     .slice(0, 80);
 }
 
+function timeToMinutesClient(value: string) {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+  return hours * 60 + minutes;
+}
+
+function minutesToTimeClient(minutes: number) {
+  const hours = Math.floor(minutes / 60).toString().padStart(2, "0");
+  const mins = (minutes % 60).toString().padStart(2, "0");
+  return `${hours}:${mins}`;
+}
+
+function gerarGradeTexto(inicio: string, fim: string, intervalo: number) {
+  const inicioMin = timeToMinutesClient(inicio);
+  const fimMin = timeToMinutesClient(fim);
+  if (inicioMin == null || fimMin == null || fimMin <= inicioMin || intervalo < 5) return "";
+  const linhas: string[] = [];
+  for (let cursor = inicioMin; cursor + intervalo <= fimMin; cursor += intervalo) {
+    linhas.push(`${minutesToTimeClient(cursor)}-${minutesToTimeClient(cursor + intervalo)}`);
+  }
+  return linhas.join("\n");
+}
+
 // ── Componentes auxiliares ─────────────────────────────────────────────────
 
 function Feedback({ state }: { state: ActionState }) {
@@ -1658,10 +1684,13 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
     const slots: Record<string, string> = {};
     const modos: Record<number, string> = {};
     const intervalos: Record<number, string> = {};
+    const intervalosPersonalizados: Record<number, string> = {};
     for (const unidade of unidades) {
       const config = agendaConfig(unidade);
+      const intervaloPadrao = unidade.intervalo_minutos ?? 60;
       modos[unidade.id] = String(config.modo ?? "convencional");
-      intervalos[unidade.id] = String(unidade.intervalo_minutos ?? 60);
+      intervalos[unidade.id] = INTERVALOS_RESERVA.includes(intervaloPadrao) ? String(intervaloPadrao) : "personalizado";
+      intervalosPersonalizados[unidade.id] = String(intervaloPadrao);
       const porDia = horariosPorUnidade.get(unidade.id);
       for (let dia = 0; dia <= 6; dia++) {
         const key = `${unidade.id}_${dia}`;
@@ -1673,10 +1702,10 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
         fim[key] = existentes.at(-1)?.hora_fim ? horaCurta(existentes.at(-1)?.hora_fim) : fimPadrao;
         slots[key] = existentes.length > 0
           ? existentes.map((h) => `${horaCurta(h.hora_inicio)}-${horaCurta(h.hora_fim)}`).join("\n")
-          : `${inicioPadrao}-09:00\n09:00-10:00`;
+          : gerarGradeTexto(inicioPadrao, fimPadrao, intervaloPadrao);
       }
     }
-    return { abertos, inicio, fim, slots, modos, intervalos };
+    return { abertos, inicio, fim, slots, modos, intervalos, intervalosPersonalizados };
   }, [horarios.length, horariosPorUnidade, unidades]);
 
   const [abertos, setAbertos] = useState<Record<string, boolean>>(defaults.abertos);
@@ -1685,6 +1714,8 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
   const [slots, setSlots] = useState<Record<string, string>>(defaults.slots);
   const [modos, setModos] = useState<Record<number, string>>(defaults.modos);
   const [intervalos, setIntervalos] = useState<Record<number, string>>(defaults.intervalos);
+  const [intervalosPersonalizados, setIntervalosPersonalizados] = useState<Record<number, string>>(defaults.intervalosPersonalizados);
+  const [slotsEditados, setSlotsEditados] = useState<Record<string, boolean>>({});
   const [state, action, pending] = useActionState<ActionState, FormData>(salvarGradeWizardAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
@@ -1694,6 +1725,7 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
     setInicio((p) => ({ ...p, [`${unidadeId}_0`]: p[origem] ?? "08:00", [`${unidadeId}_6`]: p[origem] ?? "08:00" }));
     setFim((p) => ({ ...p, [`${unidadeId}_0`]: p[origem] ?? "22:00", [`${unidadeId}_6`]: p[origem] ?? "22:00" }));
     setAbertos((p) => ({ ...p, [`${unidadeId}_0`]: true, [`${unidadeId}_6`]: true }));
+    setSlotsEditados((p) => ({ ...p, [`${unidadeId}_0`]: false, [`${unidadeId}_6`]: false }));
   };
 
   const presetPadrao = (unidadeId: number) => {
@@ -1701,6 +1733,14 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
     setAbertos((p) => ({ ...p, ...Object.fromEntries(Array.from({ length: 7 }, (_, dia) => [`${unidadeId}_${dia}`, dia >= 1 && dia <= 6])) }));
     setInicio((p) => ({ ...p, ...Object.fromEntries(Array.from({ length: 7 }, (_, dia) => [`${unidadeId}_${dia}`, "08:00"])) }));
     setFim((p) => ({ ...p, ...Object.fromEntries(Array.from({ length: 7 }, (_, dia) => [`${unidadeId}_${dia}`, "22:00"])) }));
+    setSlotsEditados((p) => ({ ...p, ...Object.fromEntries(Array.from({ length: 7 }, (_, dia) => [`${unidadeId}_${dia}`, false])) }));
+  };
+
+  const intervaloAtual = (unidadeId: number) => {
+    const raw = intervalos[unidadeId] === "personalizado"
+      ? intervalosPersonalizados[unidadeId]
+      : intervalos[unidadeId];
+    return Math.max(5, Math.min(360, Number(raw) || 60));
   };
 
   return (
@@ -1750,14 +1790,35 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
                 <Label>Intervalo</Label>
                 <IconSelect
                   Icon={Clock}
-                  name={`unidade_${unidade.id}_intervalo`}
                   value={intervalos[unidade.id] ?? "60"}
-                  onChange={(e) => setIntervalos((p) => ({ ...p, [unidade.id]: e.target.value }))}
+                  onChange={(e) => {
+                    setIntervalos((p) => ({ ...p, [unidade.id]: e.target.value }));
+                    setSlotsEditados((p) => ({ ...p, ...Object.fromEntries(Array.from({ length: 7 }, (_, dia) => [`${unidade.id}_${dia}`, false])) }));
+                  }}
                 >
                   {INTERVALOS_RESERVA.map((minutos) => (
                     <option key={minutos} value={minutos}>{minutos} minutos</option>
                   ))}
+                  <option value="personalizado">Personalizado</option>
                 </IconSelect>
+                <input type="hidden" name={`unidade_${unidade.id}_intervalo`} value={intervaloAtual(unidade.id)} />
+                {intervalos[unidade.id] === "personalizado" ? (
+                  <div className="mt-2">
+                    <IconInput
+                      Icon={Clock}
+                      type="number"
+                      min={5}
+                      max={360}
+                      step={5}
+                      value={intervalosPersonalizados[unidade.id] ?? "75"}
+                      onChange={(e) => {
+                        setIntervalosPersonalizados((p) => ({ ...p, [unidade.id]: e.target.value }));
+                        setSlotsEditados((p) => ({ ...p, ...Object.fromEntries(Array.from({ length: 7 }, (_, dia) => [`${unidade.id}_${dia}`, false])) }));
+                      }}
+                      placeholder="Ex.: 75"
+                    />
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -1766,6 +1827,9 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
                 const key = `${unidade.id}_${dia}`;
                 const aberto = Boolean(abertos[key]);
                 const especificos = modos[unidade.id] === "especificos";
+                const gradeGerada = gerarGradeTexto(inicio[key] ?? "08:00", fim[key] ?? "22:00", intervaloAtual(unidade.id));
+                const gradeTexto = especificos || slotsEditados[key] ? (slots[key] ?? "") : gradeGerada;
+                const totalHorarios = gradeTexto.split(/\n+/).map((linha) => linha.trim()).filter(Boolean).length;
                 return (
                   <div key={key} className={`rounded-xl border px-3 py-3 transition ${
                     aberto ? "border-eid-primary-500/25 bg-eid-surface/60" : "border-[color:var(--eid-border-subtle)] bg-eid-surface/25 opacity-70"
@@ -1784,27 +1848,25 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
                         {DIAS[dia]}
                       </span>
                       {!aberto ? <span className="text-xs text-eid-text-secondary">Fechado</span> : null}
+                      {aberto ? (
+                        <span className="ml-auto rounded-full border border-eid-primary-500/25 bg-eid-primary-500/8 px-2 py-0.5 text-[10px] font-bold text-eid-primary-300">
+                          {totalHorarios} horário{totalHorarios === 1 ? "" : "s"}
+                        </span>
+                      ) : null}
                     </div>
                     {aberto ? (
-                      especificos ? (
-                        <div className="mt-3">
-                          <IconTextarea
-                            Icon={Clock}
-                            name={`unidade_${unidade.id}_dia_${dia}_slots`}
-                            value={slots[key] ?? ""}
-                            onChange={(e) => setSlots((p) => ({ ...p, [key]: e.target.value }))}
-                            rows={3}
-                            placeholder={"08:00-09:00\n09:30-10:30"}
-                          />
-                        </div>
-                      ) : (
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <div className="mt-3 space-y-3">
+                        {!especificos ? (
+                          <div className="flex flex-wrap items-center gap-2">
                           <div className="flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1 focus-within:ring-1 focus-within:ring-eid-primary-500/40">
                             <Clock className="h-3.5 w-3.5 shrink-0 text-eid-primary-400" aria-hidden />
                             <input
                               type="time" name={`unidade_${unidade.id}_dia_${dia}_inicio`}
                               value={inicio[key] ?? "08:00"}
-                              onChange={(e) => setInicio((p) => ({ ...p, [key]: e.target.value }))}
+                              onChange={(e) => {
+                                setInicio((p) => ({ ...p, [key]: e.target.value }));
+                                setSlotsEditados((p) => ({ ...p, [key]: false }));
+                              }}
                               className="w-[5.8rem] bg-transparent text-sm text-eid-fg focus:outline-none"
                             />
                           </div>
@@ -1814,12 +1876,46 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
                             <input
                               type="time" name={`unidade_${unidade.id}_dia_${dia}_fim`}
                               value={fim[key] ?? "22:00"}
-                              onChange={(e) => setFim((p) => ({ ...p, [key]: e.target.value }))}
+                              onChange={(e) => {
+                                setFim((p) => ({ ...p, [key]: e.target.value }));
+                                setSlotsEditados((p) => ({ ...p, [key]: false }));
+                              }}
                               className="w-[5.8rem] bg-transparent text-sm text-eid-fg focus:outline-none"
                             />
                           </div>
                         </div>
-                      )
+                        ) : null}
+                        <div>
+                          <div className="mb-1.5 flex items-center justify-between gap-2">
+                            <p className="text-[11px] font-black uppercase tracking-[0.1em] text-eid-text-secondary">
+                              Grade que será criada
+                            </p>
+                            {!especificos && slotsEditados[key] ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSlots((p) => ({ ...p, [key]: gradeGerada }));
+                                  setSlotsEditados((p) => ({ ...p, [key]: false }));
+                                }}
+                                className="text-[10px] font-bold text-eid-primary-300 hover:text-eid-primary-200"
+                              >
+                                Regerar
+                              </button>
+                            ) : null}
+                          </div>
+                          <IconTextarea
+                            Icon={Clock}
+                            name={`unidade_${unidade.id}_dia_${dia}_slots`}
+                            value={gradeTexto}
+                            onChange={(e) => {
+                              setSlots((p) => ({ ...p, [key]: e.target.value }));
+                              setSlotsEditados((p) => ({ ...p, [key]: true }));
+                            }}
+                            rows={Math.min(8, Math.max(3, totalHorarios))}
+                            placeholder={"08:00-09:00\n09:30-10:30"}
+                          />
+                        </div>
+                      </div>
                     ) : null}
                   </div>
                 );
