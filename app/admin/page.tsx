@@ -53,6 +53,15 @@ function parseAdminPushDebug(sp: Record<string, string | string[] | undefined>) 
   };
 }
 
+function inferPushPlatform(userAgent: string | null | undefined) {
+  const ua = String(userAgent ?? "");
+  if (/Android/i.test(ua)) return "Android/TWA";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "iOS";
+  if (/Windows/i.test(ua)) return "Windows/PC";
+  if (/Macintosh|Mac OS X/i.test(ua)) return "macOS";
+  return "Outro";
+}
+
 const STAT_CARDS = [
   {
     key: "profiles",
@@ -192,8 +201,8 @@ export default async function AdminHomePage({ searchParams }: Props) {
     userId: string;
     subsAtivas: number;
     subsTotais: number;
-    ultimasEntregas: { status: string | null; erro: string | null; enviadoEm: string | null; notifId: number | null }[];
-    ultimosErros: { status: string | null; erro: string | null; enviadoEm: string | null; notifId: number | null }[];
+    ultimasEntregas: { status: string | null; erro: string | null; enviadoEm: string | null; notifId: number | null; subId: number | null; plataforma: string }[];
+    ultimosErros: { status: string | null; erro: string | null; enviadoEm: string | null; notifId: number | null; subId: number | null; plataforma: string }[];
     checklist: string[];
   } | null = null;
 
@@ -237,12 +246,14 @@ export default async function AdminHomePage({ searchParams }: Props) {
       if (pushUserId) {
         const { data: subsRows } = await db
           .from("push_subscriptions")
-          .select("id, ativo")
+          .select("id, ativo, user_agent")
           .eq("usuario_id", pushUserId)
-          .order("id", { ascending: false })
+          .order("atualizado_em", { ascending: false })
           .limit(40);
-        const subs = (subsRows ?? []) as Array<{ id: number; ativo?: boolean | null }>;
+        const subs = (subsRows ?? []) as Array<{ id: number; ativo?: boolean | null; user_agent?: string | null }>;
         const subIds = new Set(subs.map((s) => Number(s.id)).filter((n) => Number.isFinite(n) && n > 0));
+        const plataformaPorSub = new Map<number, string>();
+        for (const s of subs) plataformaPorSub.set(Number(s.id), inferPushPlatform(s.user_agent));
         const { data: entregaRows } =
           subIds.size > 0
             ? await db
@@ -257,6 +268,8 @@ export default async function AdminHomePage({ searchParams }: Props) {
           erro: (r as { ultimo_erro?: string | null }).ultimo_erro ?? null,
           enviadoEm: (r as { enviado_em?: string | null }).enviado_em ?? null,
           notifId: Number((r as { notificacao_id?: number | null }).notificacao_id ?? 0) || null,
+          subId: Number((r as { subscription_id?: number | null }).subscription_id ?? 0) || null,
+          plataforma: plataformaPorSub.get(Number((r as { subscription_id?: number | null }).subscription_id ?? 0)) ?? "Outro",
         }));
         const ultimasEntregas = entregas.slice(0, 8);
         const hasSuccess = ultimasEntregas.some((e) => String(e.status ?? "").toLowerCase() === "success");
@@ -607,7 +620,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
                 <ul className="mt-1 space-y-0.5">
                   {pushDiag.ultimasEntregas.map((e, idx) => (
                     <li key={`last-${e.notifId ?? "n"}-${idx}`} className="text-[11px] text-eid-text-secondary">
-                      #{e.notifId ?? "?"} · {e.status ?? "?"}{" "}
+                      #{e.notifId ?? "?"} · sub #{e.subId ?? "?"} · {e.plataforma} · {e.status ?? "?"}{" "}
                       {e.enviadoEm ? `· ${new Date(e.enviadoEm).toLocaleString("pt-BR")}` : ""}
                     </li>
                   ))}
@@ -622,7 +635,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
                     className="rounded-lg border border-rose-500/25 bg-rose-500/8 px-2.5 py-1.5"
                   >
                     <p className="text-[11px] text-eid-fg">
-                      {e.status ?? "erro"} · notif #{e.notifId ?? "?"}
+                      {e.status ?? "erro"} · notif #{e.notifId ?? "?"} · sub #{e.subId ?? "?"} · {e.plataforma}
                     </p>
                     {e.erro && <p className="text-[10px] text-rose-200">{e.erro}</p>}
                     {e.enviadoEm && (

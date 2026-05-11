@@ -15,6 +15,7 @@ type PushSubRow = {
   endpoint: string;
   p256dh: string;
   auth: string;
+  atualizado_em: string | null;
 };
 
 type PushDeliveryRow = {
@@ -62,6 +63,28 @@ function isSendingStale(updatedAt: string | null | undefined): boolean {
   const t = new Date(updatedAt).getTime();
   if (!Number.isFinite(t)) return true;
   return Date.now() - t > 10 * 60 * 1000;
+}
+
+function newerSubscriptionFirst(a: PushSubRow, b: PushSubRow): number {
+  const ta = a.atualizado_em ? new Date(a.atualizado_em).getTime() : 0;
+  const tb = b.atualizado_em ? new Date(b.atualizado_em).getTime() : 0;
+  return tb - ta;
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(label)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
 }
 
 /**
@@ -171,7 +194,7 @@ async function dispatchNotificationsToSubscriptions(
   const [{ data: subs, error: subErr }, { data: deliveries, error: delErr }] = await Promise.all([
     admin
       .from("push_subscriptions")
-      .select("id, usuario_id, endpoint, p256dh, auth")
+      .select("id, usuario_id, endpoint, p256dh, auth, atualizado_em")
       .eq("ativo", true)
       .in("usuario_id", userIds),
     admin
@@ -186,6 +209,7 @@ async function dispatchNotificationsToSubscriptions(
   for (const s of (subs ?? []) as PushSubRow[]) {
     const arr = subByUser.get(s.usuario_id) ?? [];
     arr.push(s);
+    arr.sort(newerSubscriptionFirst);
     subByUser.set(s.usuario_id, arr);
   }
 
@@ -205,21 +229,25 @@ async function dispatchNotificationsToSubscriptions(
       continue;
     }
     const payload = buildNotificationPayload(n);
-    for (const s of userSubs) {
+    const results = await Promise.all(
+      userSubs.map(async (s) => {
       const key = `${n.id}:${s.id}`;
-      if (delivered.has(key)) continue;
+      if (delivered.has(key)) return { sent: 0, failed: 0 };
       const claimed = await claimPushDeliveryRow(admin, n.id, s.id);
-      if (!claimed) continue;
+      if (!claimed) return { sent: 0, failed: 0 };
       try {
-        await webpush.sendNotification(
-          {
-            endpoint: s.endpoint,
-            keys: { p256dh: s.p256dh, auth: s.auth },
-          },
-          payload,
-          sendOpts
+        await withTimeout(
+          webpush.sendNotification(
+            {
+              endpoint: s.endpoint,
+              keys: { p256dh: s.p256dh, auth: s.auth },
+            },
+            payload,
+            sendOpts
+          ),
+          6500,
+          "push_endpoint_timeout"
         );
-        sent += 1;
         delivered.add(key);
         await admin.from("push_entregas_notificacao").upsert(
           {
@@ -232,8 +260,8 @@ async function dispatchNotificationsToSubscriptions(
           },
           { onConflict: "notificacao_id,subscription_id" }
         );
+        return { sent: 1, failed: 0 };
       } catch (err) {
-        failed += 1;
         const pushErr = err as PushSendError;
         const statusCode = Number(pushErr?.statusCode ?? 0);
         const msg =
@@ -254,8 +282,12 @@ async function dispatchNotificationsToSubscriptions(
         if ([400, 403, 404, 410].includes(statusCode) || /\b(400|403|404|410)\b/.test(msg)) {
           await admin.from("push_subscriptions").update({ ativo: false }).eq("id", s.id);
         }
+        return { sent: 0, failed: 1 };
       }
-    }
+      })
+    );
+    sent += results.reduce((acc, r) => acc + r.sent, 0);
+    failed += results.reduce((acc, r) => acc + r.failed, 0);
   }
 
   return { sent, failed, scanned: list.length, noDevice };

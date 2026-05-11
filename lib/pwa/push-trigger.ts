@@ -10,7 +10,7 @@ type PushTriggerMeta = {
 };
 
 /** Não bloquear Server Actions por muito tempo: `webpush.sendNotification` pode demorar vários segundos com endpoint ruim. */
-const PUSH_DISPATCH_WAIT_MS = 4_000;
+const PUSH_DISPATCH_WAIT_MS = 9_000;
 
 function raceWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return new Promise((resolve, reject) => {
