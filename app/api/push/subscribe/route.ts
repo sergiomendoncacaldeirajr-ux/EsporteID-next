@@ -23,6 +23,10 @@ function appendClientContextToUserAgent(userAgent: string | null, context: Clien
   return `${userAgent ?? ""} EsporteIDPush/${parts.join(";")}`.slice(0, 1000);
 }
 
+function isAndroidAppSubscription(userAgent: string) {
+  return /Android/i.test(userAgent) && /EsporteIDPush\/.*display=standalone/i.test(userAgent);
+}
+
 export async function POST(request: Request) {
   const supabase = await createRouteHandlerClient();
   const {
@@ -67,6 +71,19 @@ export async function POST(request: Request) {
     { onConflict: "endpoint" }
   );
   if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 400 });
+
+  if (isAndroidAppSubscription(ua)) {
+    const { error: deactivateBrowserError } = await supabase
+      .from("push_subscriptions")
+      .update({ ativo: false })
+      .eq("usuario_id", user.id)
+      .neq("endpoint", sub.endpoint)
+      .ilike("user_agent", "%Android%")
+      .not("user_agent", "ilike", "%display=standalone%");
+    if (deactivateBrowserError) {
+      return NextResponse.json({ ok: false, message: deactivateBrowserError.message }, { status: 400 });
+    }
+  }
 
   return NextResponse.json({ ok: true });
 }

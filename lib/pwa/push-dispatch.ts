@@ -16,6 +16,7 @@ type PushSubRow = {
   p256dh: string;
   auth: string;
   atualizado_em: string | null;
+  user_agent: string | null;
 };
 
 type PushDeliveryRow = {
@@ -69,6 +70,22 @@ function newerSubscriptionFirst(a: PushSubRow, b: PushSubRow): number {
   const ta = a.atualizado_em ? new Date(a.atualizado_em).getTime() : 0;
   const tb = b.atualizado_em ? new Date(b.atualizado_em).getTime() : 0;
   return tb - ta;
+}
+
+function inferPushPlatform(userAgent: string | null | undefined) {
+  const ua = String(userAgent ?? "");
+  if (/Android/i.test(ua) && /EsporteIDPush\/.*display=standalone/i.test(ua)) return "Android/App";
+  if (/Android/i.test(ua)) return "Android/Navegador";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "iOS";
+  if (/Windows/i.test(ua)) return "Windows/PC";
+  if (/Macintosh|Mac OS X/i.test(ua)) return "macOS";
+  return "Outro";
+}
+
+function preferInstalledAndroidApp(subs: PushSubRow[]) {
+  const hasAndroidApp = subs.some((s) => inferPushPlatform(s.user_agent) === "Android/App");
+  if (!hasAndroidApp) return subs;
+  return subs.filter((s) => inferPushPlatform(s.user_agent) !== "Android/Navegador");
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -195,7 +212,7 @@ async function dispatchNotificationsToSubscriptions(
   const [{ data: subs, error: subErr }, { data: deliveries, error: delErr }] = await Promise.all([
     admin
       .from("push_subscriptions")
-      .select("id, usuario_id, endpoint, p256dh, auth, atualizado_em")
+      .select("id, usuario_id, endpoint, p256dh, auth, atualizado_em, user_agent")
       .eq("ativo", true)
       .in("usuario_id", userIds),
     admin
@@ -212,6 +229,9 @@ async function dispatchNotificationsToSubscriptions(
     arr.push(s);
     arr.sort(newerSubscriptionFirst);
     subByUser.set(s.usuario_id, arr);
+  }
+  for (const [userId, userSubs] of subByUser) {
+    subByUser.set(userId, preferInstalledAndroidApp(userSubs));
   }
 
   const delivered = new Set<string>();
