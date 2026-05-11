@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { addMinutesToIso, googleCalendarUrl } from "@/lib/calendar/ics";
 
 type Props = {
   title: string;
@@ -9,43 +10,27 @@ type Props = {
   location?: string | null;
 };
 
-function icsDate(iso: string) {
-  return iso.replace(/[-:]/g, "").split(".")[0] + "Z";
+function isAndroidLike() {
+  if (typeof navigator === "undefined") return false;
+  return /Android/i.test(navigator.userAgent);
 }
 
-function addMinutesToIso(iso: string, min: number): string {
-  const d = new Date(iso);
-  d.setMinutes(d.getMinutes() + min);
-  return d.toISOString();
+function isIOSLike() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return /iPhone|iPod|iPad/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 }
 
-function buildIcs(title: string, start: string, end: string, location?: string | null): string {
-  const esc = (s: string) => s.replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
-  const lines = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//EsporteID//PT",
-    "BEGIN:VEVENT",
-    `DTSTART:${icsDate(start)}`,
-    `DTEND:${icsDate(end)}`,
-    `SUMMARY:${esc(title)}`,
-    "DESCRIPTION:Partida EsporteID – acompanhe pelo app",
-    location ? `LOCATION:${esc(location)}` : "",
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ].filter(Boolean);
-  return lines.join("\r\n");
-}
-
-function googleCalendarUrl(title: string, start: string, end: string, location?: string | null): string {
+function calendarIcsUrl(title: string, start: string, end: string, location?: string | null) {
   const params = new URLSearchParams({
-    action: "TEMPLATE",
-    text: title,
-    dates: `${icsDate(start)}/${icsDate(end)}`,
-    details: "Partida EsporteID – acompanhe pelo app",
+    title,
+    start,
+    end,
+    description: "Partida EsporteID - acompanhe pelo app",
   });
   if (location) params.set("location", location);
-  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  if (typeof window !== "undefined") params.set("url", window.location.href);
+  return `/api/calendar/event.ics?${params.toString()}`;
 }
 
 export function AddToCalendarButton({ title, startIso, durationMinutes = 90, location }: Props) {
@@ -62,16 +47,31 @@ export function AddToCalendarButton({ title, startIso, durationMinutes = 90, loc
   }, [open]);
 
   const endIso = addMinutesToIso(startIso, durationMinutes);
+  const event = {
+    title,
+    startIso,
+    endIso,
+    location,
+    description: "Partida EsporteID - acompanhe pelo app",
+  };
+  const icsUrl = calendarIcsUrl(title, startIso, endIso, location);
+  const googleUrl = googleCalendarUrl(event);
 
-  function downloadIcs() {
-    const content = buildIcs(title, startIso, endIso, location);
-    const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "partida-esporteid.ics";
-    a.click();
-    URL.revokeObjectURL(url);
+  function openBestCalendar() {
+    if (isAndroidLike()) {
+      window.location.href = googleUrl;
+      return;
+    }
+    window.location.href = icsUrl;
+  }
+
+  function openMenu(e: React.MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation();
+    setOpen((v) => !v);
+  }
+
+  function openIcs() {
+    window.location.href = icsUrl;
     setOpen(false);
   }
 
@@ -79,9 +79,9 @@ export function AddToCalendarButton({ title, startIso, durationMinutes = 90, loc
     <div ref={wrapRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={openBestCalendar}
         aria-label="Salvar na agenda do celular"
-        className="inline-flex items-center gap-1 rounded border border-eid-primary-500/20 bg-transparent px-1.5 py-0.5 text-[8px] font-semibold tracking-wide text-eid-primary-400 transition hover:border-eid-primary-500/35 hover:text-eid-primary-300 active:scale-[0.97]"
+        className="inline-flex items-center gap-1 rounded-l border border-eid-primary-500/20 bg-transparent px-1.5 py-0.5 text-[8px] font-semibold tracking-wide text-eid-primary-400 transition hover:border-eid-primary-500/35 hover:text-eid-primary-300 active:scale-[0.97]"
       >
         <svg
           viewBox="0 0 16 16"
@@ -96,28 +96,45 @@ export function AddToCalendarButton({ title, startIso, durationMinutes = 90, loc
         </svg>
         <span>+ agenda</span>
       </button>
+      <button
+        type="button"
+        onClick={openMenu}
+        aria-label="Opções de calendário"
+        className="-ml-px inline-flex items-center rounded-r border border-eid-primary-500/20 bg-transparent px-1 py-0.5 text-[8px] font-semibold tracking-wide text-eid-primary-400 transition hover:border-eid-primary-500/35 hover:text-eid-primary-300 active:scale-[0.97]"
+      >
+        <svg viewBox="0 0 16 16" className="h-2.5 w-2.5" fill="currentColor" aria-hidden>
+          <path d="M4.2 6.2a.8.8 0 0 1 1.1 0L8 8.9l2.7-2.7a.8.8 0 1 1 1.1 1.1L8.6 10.5a.8.8 0 0 1-1.1 0L4.2 7.3a.8.8 0 0 1 0-1.1Z" />
+        </svg>
+      </button>
 
       {open && (
         <div className="absolute bottom-full left-1/2 z-50 mb-1 w-44 -translate-x-1/2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card shadow-[0_8px_24px_-6px_rgba(0,0,0,0.55)]">
           <a
-            href={googleCalendarUrl(title, startIso, endIso, location)}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={googleUrl}
             onClick={() => setOpen(false)}
             className="flex items-center gap-2 px-3 py-2 text-[10px] font-semibold text-eid-fg transition hover:bg-eid-surface/70"
           >
-            <span className="text-xs leading-none" aria-hidden>📅</span>
+            <span className="text-xs leading-none" aria-hidden>
+              G
+            </span>
             Google Agenda
           </a>
           <div className="mx-3 border-t border-[color:var(--eid-border-subtle)]" />
           <button
             type="button"
-            onClick={downloadIcs}
+            onClick={openIcs}
             className="flex w-full items-center gap-2 px-3 py-2 text-[10px] font-semibold text-eid-fg transition hover:bg-eid-surface/70"
           >
-            <span className="text-xs leading-none" aria-hidden>🍎</span>
-            Apple / Outlook (.ics)
+            <span className="text-xs leading-none" aria-hidden>
+              ICS
+            </span>
+            Calendário do aparelho
           </button>
+          {isIOSLike() ? null : (
+            <p className="border-t border-[color:var(--eid-border-subtle)] px-3 py-2 text-[9px] leading-snug text-eid-text-secondary">
+              No Android, o Google Agenda costuma abrir direto no app.
+            </p>
+          )}
         </div>
       )}
     </div>

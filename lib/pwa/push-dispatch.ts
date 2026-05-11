@@ -23,6 +23,11 @@ type PushDeliveryRow = {
   status: string;
 };
 
+type PushSendError = Error & {
+  statusCode?: number;
+  body?: string;
+};
+
 export type DispatchAggregate = {
   sent: number;
   failed: number;
@@ -52,6 +57,13 @@ function isUniqueViolation(error: unknown): boolean {
   return typeof error === "object" && error !== null && (error as { code?: string }).code === "23505";
 }
 
+function isSendingStale(updatedAt: string | null | undefined): boolean {
+  if (!updatedAt) return true;
+  const t = new Date(updatedAt).getTime();
+  if (!Number.isFinite(t)) return true;
+  return Date.now() - t > 10 * 60 * 1000;
+}
+
 /**
  * Garante que só um worker envia push para o par (notificação, subscription).
  * Duas requisições paralelas (ex.: sininho + rodapé, ou webhook + flush) não devem
@@ -75,20 +87,22 @@ async function claimPushDeliveryRow(
 
   const { data: row, error: selErr } = await admin
     .from("push_entregas_notificacao")
-    .select("status")
+    .select("status, atualizado_em")
     .eq("notificacao_id", notificacaoId)
     .eq("subscription_id", subscriptionId)
     .maybeSingle();
   if (selErr) throw new Error(`Falha ao ler entrega push: ${selErr.message}`);
-  const st = String((row as { status?: string } | null)?.status ?? "").toLowerCase();
-  if (st === "success" || st === "sending") return false;
+  const delivery = row as { status?: string; atualizado_em?: string | null } | null;
+  const st = String(delivery?.status ?? "").toLowerCase();
+  if (st === "success") return false;
+  if (st === "sending" && !isSendingStale(delivery?.atualizado_em)) return false;
 
   const { data: claimed, error: updErr } = await admin
     .from("push_entregas_notificacao")
     .update({ status: "sending", ultimo_erro: null })
     .eq("notificacao_id", notificacaoId)
     .eq("subscription_id", subscriptionId)
-    .in("status", ["failed", "pendente"])
+    .in("status", ["failed", "pendente", "sending"])
     .select("id");
   if (updErr) throw new Error(`Falha ao re-reservar entrega push: ${updErr.message}`);
   return (claimed ?? []).length > 0;
@@ -220,7 +234,12 @@ async function dispatchNotificationsToSubscriptions(
         );
       } catch (err) {
         failed += 1;
-        const msg = err instanceof Error ? err.message.slice(0, 600) : "Falha no envio push.";
+        const pushErr = err as PushSendError;
+        const statusCode = Number(pushErr?.statusCode ?? 0);
+        const msg =
+          err instanceof Error
+            ? `${statusCode ? `${statusCode} ` : ""}${err.message}`.slice(0, 600)
+            : "Falha no envio push.";
         await admin.from("push_entregas_notificacao").upsert(
           {
             notificacao_id: n.id,
@@ -232,7 +251,7 @@ async function dispatchNotificationsToSubscriptions(
           },
           { onConflict: "notificacao_id,subscription_id" }
         );
-        if (msg.includes("410") || msg.includes("404")) {
+        if ([400, 403, 404, 410].includes(statusCode) || /\b(400|403|404|410)\b/.test(msg)) {
           await admin.from("push_subscriptions").update({ ativo: false }).eq("id", s.id);
         }
       }

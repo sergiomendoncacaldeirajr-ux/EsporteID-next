@@ -30,6 +30,53 @@ export function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
+function normalizeBase64Url(value: string) {
+  return value.trim().replace(/=+$/g, "");
+}
+
+function arrayBufferToBase64Url(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.byteLength; i += 1) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function subscriptionMatchesVapidKey(sub: PushSubscription, vapidPublicKey: string) {
+  const currentKey = sub.options?.applicationServerKey;
+  if (!currentKey) return true;
+  return arrayBufferToBase64Url(currentKey) === normalizeBase64Url(vapidPublicKey);
+}
+
+async function savePushSubscription(sub: PushSubscription) {
+  const resp = await fetch("/api/push/subscribe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ subscription: sub.toJSON() }),
+  });
+  if (!resp.ok) throw new Error("Falha ao salvar assinatura push.");
+  return true;
+}
+
+async function getOrCreatePushSubscription(vapidPublicKey: string, createIfMissing: boolean) {
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (sub && !subscriptionMatchesVapidKey(sub, vapidPublicKey)) {
+    try {
+      await sub.unsubscribe();
+    } catch {
+      /* ignore */
+    }
+    sub = null;
+  }
+  if (!sub && createIfMissing) {
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    });
+  }
+  return sub;
+}
+
 export async function enablePushNotifications(vapidPublicKey: string) {
   if (!("Notification" in window) || !("serviceWorker" in navigator)) {
     throw new Error("Seu navegador não suporta notificações push.");
@@ -44,21 +91,9 @@ export async function enablePushNotifications(vapidPublicKey: string) {
     throw new Error("Permissão de notificação não concedida.");
   }
 
-  const reg = await navigator.serviceWorker.ready;
-  let sub = await reg.pushManager.getSubscription();
-  if (!sub) {
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-    });
-  }
-
-  const resp = await fetch("/api/push/subscribe", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ subscription: sub.toJSON() }),
-  });
-  if (!resp.ok) throw new Error("Falha ao salvar assinatura push.");
+  const sub = await getOrCreatePushSubscription(vapidPublicKey, true);
+  if (!sub) throw new Error("Não foi possível criar assinatura push.");
+  await savePushSubscription(sub);
 
   return sub;
 }
@@ -104,12 +139,8 @@ export async function syncExistingPushSubscription() {
   const reg = await navigator.serviceWorker.ready;
   const sub = await reg.pushManager.getSubscription();
   if (!sub) return false;
-  const resp = await fetch("/api/push/subscribe", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ subscription: sub.toJSON() }),
-  });
-  return resp.ok;
+  await savePushSubscription(sub);
+  return true;
 }
 
 export async function ensurePushReady(vapidPublicKey: string) {
@@ -118,14 +149,8 @@ export async function ensurePushReady(vapidPublicKey: string) {
   if (!vapidPublicKey) return false;
   if (getPushClientOptOut()) return false;
   if (Notification.permission !== "granted") return false;
-  const reg = await navigator.serviceWorker.ready;
-  const sub = await reg.pushManager.getSubscription();
-  /** Não recriar assinatura aqui: o usuário desativa pelo sininho e `ensurePushReady` não pode re-inscrever sozinho. */
+  const sub = await getOrCreatePushSubscription(vapidPublicKey, true);
   if (!sub) return false;
-  const resp = await fetch("/api/push/subscribe", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ subscription: sub.toJSON() }),
-  });
-  return resp.ok;
+  await savePushSubscription(sub);
+  return true;
 }
