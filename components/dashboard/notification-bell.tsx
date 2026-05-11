@@ -7,8 +7,10 @@ import { createClient } from "@/lib/supabase/client";
 import {
   disablePushNotifications,
   enablePushNotifications,
+  hasAndroidNativePushEnabled,
   hasActivePushSubscription,
   isStandaloneAndroidApp,
+  setAndroidNativePushEnabled,
 } from "@/lib/pwa/push-client";
 import { isAmistosoAceiteInformativoNotif } from "@/lib/notificacoes/amistoso-aceite-informativo";
 import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
@@ -515,7 +517,8 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     void (async () => {
       try {
         if (isStandaloneAndroidApp()) {
-          if (!cancelled) setPushEnabled(true);
+          const active = await hasAndroidNativePushEnabled();
+          if (!cancelled) setPushEnabled(active);
           return;
         }
         const active = await hasActivePushSubscription();
@@ -533,14 +536,16 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     if (pushBusy) return;
     setPushBusy(true);
     try {
+      if (isStandaloneAndroidApp()) {
+        const nextEnabled = !pushEnabled;
+        await setAndroidNativePushEnabled(nextEnabled);
+        setPushEnabled(nextEnabled);
+        return;
+      }
       if (pushEnabled) {
         await disablePushNotifications();
         setPushEnabled(false);
       } else {
-        if (isStandaloneAndroidApp()) {
-          setPushEnabled(true);
-          return;
-        }
         await enablePushNotifications(vapidPublicKey);
         setPushEnabled(true);
       }

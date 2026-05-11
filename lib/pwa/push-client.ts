@@ -1,6 +1,8 @@
 "use client";
 
 const EID_PUSH_OPT_OUT_KEY = "eid_push_opt_out";
+const EID_ANDROID_FCM_TOKEN_KEY = "eid_android_fcm_token";
+const EID_ANDROID_FCM_OPT_OUT_KEY = "eid_android_fcm_opt_out";
 let enablePushInFlight: Promise<PushSubscription> | null = null;
 
 export function getPushClientOptOut(): boolean {
@@ -71,6 +73,73 @@ export function isStandaloneAndroidApp() {
   return /Android/i.test(navigator.userAgent || "") && getPushClientContext().displayMode === "standalone";
 }
 
+export function rememberAndroidFcmToken(token: string): void {
+  if (typeof window === "undefined") return;
+  const cleanToken = token.trim();
+  if (!cleanToken) return;
+  try {
+    window.localStorage.setItem(EID_ANDROID_FCM_TOKEN_KEY, cleanToken);
+  } catch {
+    /* ignore */
+  }
+}
+
+function getAndroidFcmToken(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.localStorage.getItem(EID_ANDROID_FCM_TOKEN_KEY)?.trim() ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function getAndroidNativePushOptOut(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(EID_ANDROID_FCM_OPT_OUT_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function setAndroidNativePushOptOut(optOut: boolean): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (optOut) window.localStorage.setItem(EID_ANDROID_FCM_OPT_OUT_KEY, "1");
+    else window.localStorage.removeItem(EID_ANDROID_FCM_OPT_OUT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function hasAndroidNativePushEnabled(): Promise<boolean> {
+  return Boolean(getAndroidFcmToken()) && !getAndroidNativePushOptOut();
+}
+
+export async function setAndroidNativePushEnabled(enabled: boolean): Promise<void> {
+  const token = getAndroidFcmToken();
+  if (!token) {
+    throw new Error("Abra o app novamente para concluir a ativação das notificações.");
+  }
+
+  setAndroidNativePushOptOut(!enabled);
+  const resp = await fetch("/api/push/fcm/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      token,
+      device: navigator.userAgent,
+      appVersion: "7.0.1",
+      active: enabled,
+    }),
+  });
+  const data = (await resp.json().catch(() => ({}))) as { message?: string };
+  if (!resp.ok) {
+    setAndroidNativePushOptOut(enabled);
+    throw new Error(data.message || "Não foi possível alterar as notificações.");
+  }
+}
+
 function subscribeWithVapidKey(reg: ServiceWorkerRegistration, vapidPublicKey: string) {
   return reg.pushManager.subscribe({
     userVisibleOnly: true,
@@ -139,7 +208,7 @@ async function enablePushNotificationsOnce(vapidPublicKey: string) {
     throw new Error("Seu navegador não suporta notificações push.");
   }
   if (!vapidPublicKey) {
-    throw new Error("Falta configurar NEXT_PUBLIC_VAPID_PUBLIC_KEY.");
+    throw new Error("Não foi possível ativar as notificações agora.");
   }
   setPushClientOptOut(false);
 

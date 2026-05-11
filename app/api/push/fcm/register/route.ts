@@ -5,6 +5,7 @@ type RegisterFcmBody = {
   token?: string;
   device?: string;
   appVersion?: string;
+  active?: boolean;
 };
 
 export async function POST(request: Request) {
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
       token,
       device: String(body.device ?? "").slice(0, 120) || null,
       app_version: String(body.appVersion ?? "").slice(0, 40) || null,
-      ativo: true,
+      ativo: body.active === false ? false : true,
     },
     { onConflict: "token" }
   );

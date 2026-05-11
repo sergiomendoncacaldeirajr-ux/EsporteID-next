@@ -2,7 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect } from "react";
-import { ensurePushReady, syncExistingPushSubscription } from "@/lib/pwa/push-client";
+import {
+  ensurePushReady,
+  getAndroidNativePushOptOut,
+  rememberAndroidFcmToken,
+  syncExistingPushSubscription,
+} from "@/lib/pwa/push-client";
 
 const PUSH_SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 const PUSH_SYNC_STORAGE_KEY = "eid:last-push-sync-at";
@@ -37,6 +42,7 @@ async function registerAndroidFcmTokenFromUrl() {
 
   url.searchParams.delete("eid_fcm_token");
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  rememberAndroidFcmToken(token);
 
   await fetch("/api/push/fcm/register", {
     method: "POST",
@@ -45,6 +51,7 @@ async function registerAndroidFcmTokenFromUrl() {
       token,
       device: navigator.userAgent,
       appVersion: "7.0.1",
+      active: !getAndroidNativePushOptOut(),
     }),
   });
 }

@@ -30,6 +30,13 @@ import { createClient } from "@/lib/supabase/server";
 
 type State = { ok: true; message: string } | { ok: false; message: string };
 
+function exigeUmaReservaAtivaPorVez(plano: { beneficios_json?: unknown } | null | undefined) {
+  const beneficios = plano?.beneficios_json;
+  if (!beneficios || typeof beneficios !== "object" || Array.isArray(beneficios)) return false;
+  const record = beneficios as Record<string, unknown>;
+  return record.uma_reserva_ativa_por_vez === true || record.umaReservaAtivaPorVez === true;
+}
+
 async function requireUser() {
   const supabase = await createClient();
   const {
@@ -1110,6 +1117,10 @@ export async function criarPlanoSocioEspacoAction(formData: FormData) {
         0,
         Number(formData.get("reservas_gratuitas_semana") ?? 0) || 0
       ),
+      beneficios_json: {
+        uma_reserva_ativa_por_vez:
+          checkbox(formData, "uma_reserva_ativa_por_vez"),
+      },
       percentual_desconto_avulso: Math.max(
         0,
         Number(formData.get("percentual_desconto_avulso") ?? 0) || 0
@@ -1536,7 +1547,7 @@ export async function criarReservaEspacoAction(
       return { ok: false, message: "Preencha unidade, início e fim da reserva." };
     }
 
-    const [{ data: espaco }, { data: socio }, { data: plano }, { data: cfg }, { count: reservasSemana }] =
+    const [{ data: espaco }, { data: socio }, { data: planoFormulario }, { data: cfg }] =
       await Promise.all([
         supabase
           .from("espacos_genericos")
@@ -1563,18 +1574,18 @@ export async function criarReservaEspacoAction(
           )
           .eq("id", 1)
           .maybeSingle(),
-        supabase
-          .from("reservas_quadra")
-          .select("id", { count: "exact", head: true })
-          .eq("espaco_generico_id", espacoId)
-          .eq("usuario_solicitante_id", user.id)
-          .gte(
-            "inicio",
-            new Date(new Date().setHours(0, 0, 0, 0)).toISOString()
-          ),
       ]);
 
     if (!espaco) return { ok: false, message: "Espaço não encontrado." };
+    let plano = planoFormulario;
+    if (!plano && socio?.plano_socio_id) {
+      const { data: planoSocio } = await supabase
+        .from("espaco_planos_socio")
+        .select("*")
+        .eq("id", Number(socio.plano_socio_id))
+        .maybeSingle();
+      plano = planoSocio;
+    }
     const inicioDate = new Date(inicio);
     const fimDate = new Date(fim);
     if (
@@ -1736,8 +1747,34 @@ export async function criarReservaEspacoAction(
         message: `Seu plano permite reservar até ${benefit.antecedenciaMaxDias} dia(s) à frente.`,
       };
     }
+    if (exigeUmaReservaAtivaPorVez(plano)) {
+      const { count: reservasAtivasCount, error: reservasAtivasErr } = await supabase
+        .from("reservas_quadra")
+        .select("id", { count: "exact", head: true })
+        .eq("espaco_generico_id", espacoId)
+        .eq("usuario_solicitante_id", user.id)
+        .in("status_reserva", ["pendente", "confirmada", "aguardando_pagamento"])
+        .gte("fim", new Date().toISOString());
+      if (reservasAtivasErr) {
+        return { ok: false, message: reservasAtivasErr.message };
+      }
+      if (Number(reservasAtivasCount ?? 0) > 0) {
+        return {
+          ok: false,
+          message:
+            "Seu plano permite 1 marcação ativa por vez. Cancele ou finalize a reserva atual para marcar a próxima.",
+        };
+      }
+    }
 
-    const [reservasExistentes, bloqueios, gradeSemanal, feriadosCustom, reservasDiaUsuario, ultimaReservaUsuario] =
+    const inicioSemanaReserva = new Date(inicioDate);
+    inicioSemanaReserva.setDate(inicioDate.getDate() - inicioDate.getDay());
+    inicioSemanaReserva.setHours(0, 0, 0, 0);
+    const fimSemanaReserva = new Date(inicioSemanaReserva);
+    fimSemanaReserva.setDate(inicioSemanaReserva.getDate() + 7);
+    fimSemanaReserva.setMilliseconds(-1);
+
+    const [reservasExistentes, bloqueios, gradeSemanal, feriadosCustom, reservasDiaUsuario, reservasSemanaUsuario, ultimaReservaUsuario] =
       await Promise.all([
         supabase
           .from("reservas_quadra")
@@ -1774,6 +1811,7 @@ export async function criarReservaEspacoAction(
           .select("id", { count: "exact", head: true })
           .eq("espaco_generico_id", espacoId)
           .eq("usuario_solicitante_id", user.id)
+          .neq("status_reserva", "cancelada")
           .gte(
             "inicio",
             new Date(
@@ -1786,6 +1824,14 @@ export async function criarReservaEspacoAction(
               new Date(inicioDate).setHours(23, 59, 59, 999)
             ).toISOString()
           ),
+        supabase
+          .from("reservas_quadra")
+          .select("id", { count: "exact", head: true })
+          .eq("espaco_generico_id", espacoId)
+          .eq("usuario_solicitante_id", user.id)
+          .neq("status_reserva", "cancelada")
+          .gte("inicio", inicioSemanaReserva.toISOString())
+          .lte("inicio", fimSemanaReserva.toISOString()),
         supabase
           .from("reservas_quadra")
           .select("inicio")
@@ -1956,7 +2002,7 @@ export async function criarReservaEspacoAction(
       taxaReservaPlataformaDb > 0
         ? taxaReservaPlataformaDb
         : 0;
-    if (benefit.limiteReservasSemana > 0 && (reservasSemana ?? 0) >= benefit.limiteReservasSemana) {
+    if (benefit.limiteReservasSemana > 0 && (reservasSemanaUsuario.count ?? 0) >= benefit.limiteReservasSemana) {
       return {
         ok: false,
         message: "Você atingiu o limite semanal de reservas deste espaço.",

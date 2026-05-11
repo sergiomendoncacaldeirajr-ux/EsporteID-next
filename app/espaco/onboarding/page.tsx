@@ -91,7 +91,9 @@ export default async function EspacoOnboardingPage() {
       .limit(30),
     supabase
       .from("espaco_planos_socio")
-      .select("id, nome, mensalidade_centavos, ativo")
+      .select(
+        "id, nome, mensalidade_centavos, ativo, reservas_gratuitas_semana, limite_reservas_semana, cooldown_horas, antecedencia_max_dias, beneficios_json"
+      )
       .eq("espaco_generico_id", selectedSpace.id)
       .eq("ativo", true)
       .order("ordem"),

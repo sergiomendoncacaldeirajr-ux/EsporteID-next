@@ -39,7 +39,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
       .order("ordem", { ascending: true }),
     supabase
       .from("espaco_planos_socio")
-      .select("id, nome, mensalidade_centavos, ativo")
+      .select("id, nome, mensalidade_centavos, ativo, reservas_gratuitas_semana, limite_reservas_semana, cooldown_horas, antecedencia_max_dias, beneficios_json")
       .eq("espaco_generico_id", selectedSpace.id)
       .order("ordem", { ascending: true }),
     getPaaSUnidadeGateInfo(supabase, selectedSpace.id),
@@ -370,6 +370,41 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               className="eid-input-dark rounded-xl px-3 py-2 text-sm"
             />
           </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <input
+              type="number"
+              min={0}
+              name="limite_reservas_semana"
+              placeholder="Marcações/semana (0 = livre)"
+              className="eid-input-dark rounded-xl px-3 py-2 text-sm"
+            />
+            <input
+              type="number"
+              min={0}
+              max={720}
+              name="cooldown_horas"
+              placeholder="Intervalo entre marcações (h)"
+              className="eid-input-dark rounded-xl px-3 py-2 text-sm"
+            />
+            <input
+              type="number"
+              min={1}
+              max={365}
+              name="antecedencia_max_dias"
+              defaultValue={5}
+              placeholder="Libera agenda em dias"
+              className="eid-input-dark rounded-xl px-3 py-2 text-sm"
+            />
+          </div>
+          <label className="flex items-start gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-3 text-sm text-eid-fg">
+            <input type="checkbox" name="uma_reserva_ativa_por_vez" className="mt-1 h-4 w-4 accent-eid-action-500" />
+            <span>
+              <span className="block font-semibold">1 marcação ativa por vez</span>
+              <span className="block text-xs text-eid-text-secondary">
+                O sócio só consegue marcar a próxima depois de cancelar ou finalizar a atual.
+              </span>
+            </span>
+          </label>
           <button className="rounded-xl border border-eid-action-500/35 bg-eid-action-500/10 px-4 py-3 text-sm font-bold text-eid-action-400">
             Criar plano
           </button>
@@ -383,6 +418,21 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               <p className="text-sm font-semibold text-eid-fg">{plano.nome}</p>
               <p className="mt-1 text-xs text-eid-text-secondary">
                 {moedaCentavos(plano.mensalidade_centavos)} · {plano.ativo ? "Ativo" : "Inativo"}
+                {" · "}
+                {Number(plano.reservas_gratuitas_semana ?? 0)} grátis/semana
+                {" · "}
+                {Number(plano.limite_reservas_semana ?? 0) > 0
+                  ? `${Number(plano.limite_reservas_semana)} marcações/semana`
+                  : "sem limite semanal"}
+                {" · agenda "}
+                {Number(plano.antecedencia_max_dias ?? 30)} dia(s)
+                {typeof plano.beneficios_json === "object" &&
+                plano.beneficios_json &&
+                !Array.isArray(plano.beneficios_json) &&
+                "uma_reserva_ativa_por_vez" in plano.beneficios_json &&
+                plano.beneficios_json.uma_reserva_ativa_por_vez
+                  ? " · 1 ativa por vez"
+                  : ""}
               </p>
             </div>
           ))}

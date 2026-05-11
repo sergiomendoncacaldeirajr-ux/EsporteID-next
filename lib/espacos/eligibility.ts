@@ -18,6 +18,7 @@ export type EspacoPlanoResumo = {
   antecedencia_max_dias?: number | null;
   reservas_gratuitas_semana?: number | null;
   percentual_desconto_avulso?: number | null;
+  beneficios_json?: Record<string, unknown> | null;
 };
 
 export type EspacoBenefitStatus = {

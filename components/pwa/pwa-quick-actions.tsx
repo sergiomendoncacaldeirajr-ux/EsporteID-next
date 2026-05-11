@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { enablePushNotifications, isStandaloneAndroidApp } from "@/lib/pwa/push-client";
+import { enablePushNotifications, isStandaloneAndroidApp, setAndroidNativePushEnabled } from "@/lib/pwa/push-client";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -46,18 +46,19 @@ export function PwaQuickActions() {
         return;
       }
       if (isStandaloneAndroidApp()) {
+        await setAndroidNativePushEnabled(true);
         setPushStatus("enabled");
-        setPushMsg("No app Android, o push e nativo pelo Firebase.");
+        setPushMsg("Notificações ativadas.");
         return;
       }
       if (!vapidPublicKey) {
         setPushStatus("error");
-        setPushMsg("Push pronto no app. Falta configurar NEXT_PUBLIC_VAPID_PUBLIC_KEY.");
+        setPushMsg("Não foi possível ativar as notificações agora.");
         return;
       }
       await enablePushNotifications(vapidPublicKey);
       setPushStatus("enabled");
-      setPushMsg("Push ativado. Em breve enviaremos notificações nativas.");
+      setPushMsg("Notificações ativadas.");
     } catch (err) {
       setPushStatus("error");
       setPushMsg(err instanceof Error ? err.message : "Não foi possível ativar o push.");

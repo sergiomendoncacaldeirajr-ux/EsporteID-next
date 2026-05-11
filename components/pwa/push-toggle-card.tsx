@@ -5,8 +5,10 @@ import {
   disablePushNotifications,
   enablePushNotifications,
   getPushClientOptOut,
+  hasAndroidNativePushEnabled,
   hasActivePushSubscription,
   isStandaloneAndroidApp,
+  setAndroidNativePushEnabled,
 } from "@/lib/pwa/push-client";
 
 export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boolean }) {
@@ -22,8 +24,10 @@ export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boo
       const isAndroidApp = isStandaloneAndroidApp();
       setAndroidApp(isAndroidApp);
       if (isAndroidApp) {
-        setEnabled(true);
-        setMsg("No app Android, o push e nativo pelo Firebase.");
+        const nativeEnabled = await hasAndroidNativePushEnabled();
+        if (!active) return;
+        setEnabled(nativeEnabled);
+        setMsg(null);
         return;
       }
 
@@ -46,18 +50,20 @@ export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boo
       setBusy(true);
       setMsg(null);
       if (androidApp) {
-        setEnabled(true);
-        setMsg("No app Android, o push e nativo pelo Firebase.");
+        const nextEnabled = !enabled;
+        await setAndroidNativePushEnabled(nextEnabled);
+        setEnabled(nextEnabled);
+        setMsg(nextEnabled ? "Notificações ativadas." : "Notificações desativadas neste aparelho.");
         return;
       }
       if (enabled) {
         await disablePushNotifications();
         setEnabled(false);
-        setMsg("Push desativado.");
+        setMsg("Notificações desativadas neste aparelho.");
       } else {
         await enablePushNotifications(vapidPublicKey);
         setEnabled(true);
-        setMsg("Push ativado.");
+        setMsg("Notificações ativadas.");
       }
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Não foi possível alterar o push.");
@@ -89,9 +95,9 @@ export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boo
         <button
           type="button"
           onClick={onToggle}
-          disabled={androidApp || busy}
+          disabled={busy}
           aria-label={enabled ? "Desativar notificação push" : "Ativar notificação push"}
-          aria-disabled={androidApp || busy}
+          aria-disabled={busy}
           className={`relative inline-flex h-6 w-10 shrink-0 items-center rounded-full border p-0 transition ${
             enabled
               ? "border-eid-primary-500/45 bg-eid-primary-500/90"

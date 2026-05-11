@@ -623,6 +623,25 @@ export async function criarPlanoWizardAction(
     if (nome.length < 2) throw new Error("Informe o nome do plano.");
     const mensalidadeCentavos =
       Math.round(Number(field(formData, "mensalidade_reais").replace(",", ".")) * 100) || 0;
+    const antecedenciaPreset = field(formData, "antecedencia_max_dias_preset");
+    const antecedenciaCustom = Number(formData.get("antecedencia_max_dias_custom") ?? 0) || 0;
+    const antecedenciaMaxDias = Math.max(
+      1,
+      Math.min(
+        365,
+        antecedenciaPreset === "custom"
+          ? antecedenciaCustom || 5
+          : Number(antecedenciaPreset) || 5
+      )
+    );
+    const limiteReservasSemana = Math.max(
+      0,
+      Number(formData.get("limite_reservas_semana") ?? 0) || 0
+    );
+    const cooldownHoras = Math.max(
+      0,
+      Number(formData.get("cooldown_horas") ?? 0) || 0
+    );
     const { error } = await supabase.from("espaco_planos_socio").insert({
       espaco_generico_id: espacoId,
       nome,
@@ -633,6 +652,13 @@ export async function criarPlanoWizardAction(
         0,
         Number(formData.get("reservas_gratis") ?? 0) || 0
       ),
+      limite_reservas_semana: limiteReservasSemana || null,
+      cooldown_horas: cooldownHoras,
+      antecedencia_max_dias: antecedenciaMaxDias,
+      beneficios_json: {
+        uma_reserva_ativa_por_vez:
+          formData.get("uma_reserva_ativa_por_vez") === "on",
+      },
       percentual_desconto_avulso: 0,
       ativo: true,
       ordem: 0,

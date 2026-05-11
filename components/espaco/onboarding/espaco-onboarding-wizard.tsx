@@ -96,7 +96,16 @@ type Feriado = {
   hora_inicio: string | null; hora_fim: string | null; sobrepor_grade: boolean | null;
 };
 
-type Plano = { id: number; nome: string; mensalidade_centavos: number };
+type Plano = {
+  id: number;
+  nome: string;
+  mensalidade_centavos: number;
+  reservas_gratuitas_semana?: number | null;
+  limite_reservas_semana?: number | null;
+  cooldown_horas?: number | null;
+  antecedencia_max_dias?: number | null;
+  beneficios_json?: Record<string, unknown> | null;
+};
 
 type PlanoPaaS = {
   id: number;
@@ -2320,6 +2329,15 @@ function StepPlanos({ space, planos, onNext, onBack, onSkip }: {
                   {p.mensalidade_centavos > 0
                     ? `R$ ${(p.mensalidade_centavos / 100).toFixed(2).replace(".", ",")}/mês`
                     : "Gratuito"}
+                  {" · "}
+                  {Number(p.reservas_gratuitas_semana ?? 0)} grátis/semana
+                  {" · "}
+                  {Number(p.limite_reservas_semana ?? 0) > 0
+                    ? `${Number(p.limite_reservas_semana)} marcações/semana`
+                    : "sem limite semanal"}
+                  {" · agenda "}
+                  {Number(p.antecedencia_max_dias ?? 30)} dia(s)
+                  {p.beneficios_json?.uma_reserva_ativa_por_vez ? " · 1 ativa por vez" : ""}
                 </p>
               </div>
             </div>
@@ -2344,6 +2362,42 @@ function StepPlanos({ space, planos, onNext, onBack, onSkip }: {
               <Label>Reservas gratuitas / semana</Label>
               <IconInput Icon={Calendar} name="reservas_gratis" type="number" min={0} max={30} defaultValue={3} />
             </div>
+            <div className="space-y-1.5">
+              <Label>Marcações totais / semana</Label>
+              <IconInput Icon={Calendar} name="limite_reservas_semana" type="number" min={0} max={60} placeholder="0 = sem limite" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Intervalo entre marcações (h)</Label>
+              <IconInput Icon={Clock} name="cooldown_horas" type="number" min={0} max={720} placeholder="0 = sem intervalo" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Liberação da agenda</Label>
+              <select
+                name="antecedencia_max_dias_preset"
+                defaultValue="5"
+                className="h-11 w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface px-3 text-sm text-eid-fg outline-none transition focus:border-eid-primary-500"
+              >
+                <option value="2">2 dias</option>
+                <option value="5">5 dias</option>
+                <option value="7">7 dias</option>
+                <option value="15">15 dias</option>
+                <option value="30">30 dias</option>
+                <option value="custom">Personalizado</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Dias personalizados</Label>
+              <IconInput Icon={Calendar} name="antecedencia_max_dias_custom" type="number" min={1} max={365} placeholder="Use se escolher personalizado" />
+            </div>
+            <label className="flex items-start gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3 text-sm text-eid-fg sm:col-span-2">
+              <input type="checkbox" name="uma_reserva_ativa_por_vez" className="mt-1 h-4 w-4 accent-eid-action-500" />
+              <span>
+                <span className="block font-bold">1 marcação ativa por vez</span>
+                <span className="block text-xs text-eid-text-secondary">
+                  O sócio só consegue reservar de novo depois de cancelar ou finalizar a reserva atual.
+                </span>
+              </span>
+            </label>
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Descrição</Label>
               <IconInput Icon={FileText} name="descricao" placeholder="Benefícios, regras, acesso..." />
