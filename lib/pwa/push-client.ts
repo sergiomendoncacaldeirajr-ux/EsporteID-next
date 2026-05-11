@@ -66,6 +66,11 @@ function getPushClientContext() {
   };
 }
 
+function isStandaloneAndroid() {
+  if (typeof window === "undefined") return false;
+  return /Android/i.test(navigator.userAgent || "") && getPushClientContext().displayMode === "standalone";
+}
+
 function subscribeWithVapidKey(reg: ServiceWorkerRegistration, vapidPublicKey: string) {
   return reg.pushManager.subscribe({
     userVisibleOnly: true,
@@ -139,9 +144,13 @@ async function enablePushNotificationsOnce(vapidPublicKey: string) {
   setPushClientOptOut(false);
 
   const permission =
-    Notification.permission === "default" ? await Notification.requestPermission() : Notification.permission;
+    Notification.permission === "default" && !isStandaloneAndroid()
+      ? await Notification.requestPermission()
+      : Notification.permission;
   if (permission !== "granted") {
-    throw new Error("Permissão de notificação não concedida.");
+    if (!(permission === "default" && isStandaloneAndroid())) {
+      throw new Error("Permissão de notificação não concedida.");
+    }
   }
 
   const sub = await getOrCreatePushSubscription(vapidPublicKey, true);
