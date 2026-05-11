@@ -88,6 +88,10 @@ function preferInstalledAndroidApp(subs: PushSubRow[]) {
   return subs.filter((s) => inferPushPlatform(s.user_agent) !== "Android/Navegador");
 }
 
+function isDeliveredPushStatus(status: string | null | undefined) {
+  return ["success", "received", "shown"].includes(String(status ?? "").toLowerCase());
+}
+
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(label)), ms);
@@ -236,7 +240,7 @@ async function dispatchNotificationsToSubscriptions(
 
   const delivered = new Set<string>();
   for (const d of (deliveries ?? []) as PushDeliveryRow[]) {
-    if (d.status === "success") delivered.add(`${d.notificacao_id}:${d.subscription_id}`);
+    if (isDeliveredPushStatus(d.status)) delivered.add(`${d.notificacao_id}:${d.subscription_id}`);
   }
 
   let sent = 0;

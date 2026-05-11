@@ -252,10 +252,10 @@ export async function salvarPerfilWizardAction(
         origem: "wizard-espaco",
       }),
       configuracao_reservas_json: JSON.stringify({
-        observacoesPublicas: field(formData, "reserva_observacoes") || null,
-        politicaCancelamento: field(formData, "reserva_observacoes") || null,
+        observacoesPublicas: null,
+        politicaCancelamento: null,
       }),
-      descricao_curta: field(formData, "descricao_curta") || null,
+      descricao_curta: field(formData, "descricao_longa").slice(0, 160) || null,
       descricao_longa: field(formData, "descricao_longa") || null,
       whatsapp_contato: field(formData, "whatsapp_contato") || null,
       email_contato: field(formData, "email_contato") || null,

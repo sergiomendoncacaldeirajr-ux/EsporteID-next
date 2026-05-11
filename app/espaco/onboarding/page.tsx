@@ -46,6 +46,10 @@ export default async function EspacoOnboardingPage() {
     redirect("/espaco");
   }
 
+  const deveCarregarPlanosPaaS =
+    selectedSpace.modo_monetizacao === "mensalidade_plataforma" ||
+    selectedSpace.modo_reserva !== "paga";
+
   const [
     { data: esportes },
     { data: locaisExistentes },
@@ -96,7 +100,7 @@ export default async function EspacoOnboardingPage() {
       .select("nome_razao_social, cpf_cnpj, email, onboarding_status")
       .eq("usuario_id", user.id)
       .maybeSingle(),
-    selectedSpace.modo_monetizacao === "mensalidade_plataforma"
+    deveCarregarPlanosPaaS
       ? supabase
           .from("espaco_plano_mensal_plataforma")
           .select("id, nome, min_unidades, max_unidades, valor_mensal_centavos, socios_mensal_modo")

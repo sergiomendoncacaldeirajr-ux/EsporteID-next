@@ -75,6 +75,10 @@ function formatAdminDateTime(iso: string | null | undefined) {
   })} BRT`;
 }
 
+function isPushAcceptedStatus(status: string | null | undefined) {
+  return ["success", "received", "shown"].includes(String(status ?? "").toLowerCase());
+}
+
 const STAT_CARDS = [
   {
     key: "profiles",
@@ -293,7 +297,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
           plataforma: plataformaPorSub.get(Number((r as { subscription_id?: number | null }).subscription_id ?? 0)) ?? "Outro",
         }));
         const ultimasEntregas = entregas.slice(0, 8);
-        const hasSuccess = ultimasEntregas.some((e) => String(e.status ?? "").toLowerCase() === "success");
+        const hasSuccess = ultimasEntregas.some((e) => isPushAcceptedStatus(e.status));
         const errosAtivos = entregas.filter((e) => e.subId != null && activeSubIds.has(e.subId));
         const has410or404 = errosAtivos.some((e) => {
           const er = String(e.erro ?? "").toLowerCase();
@@ -310,7 +314,10 @@ export default async function AdminHomePage({ searchParams }: Props) {
           return e.plataforma === "Android/App" && (er.includes("410") || er.includes("404"));
         });
         const hasAndroidAppSuccess = ultimasEntregas.some(
-          (e) => e.plataforma === "Android/App" && String(e.status ?? "").toLowerCase() === "success"
+          (e) => e.plataforma === "Android/App" && isPushAcceptedStatus(e.status)
+        );
+        const hasAndroidAppShown = ultimasEntregas.some(
+          (e) => e.plataforma === "Android/App" && String(e.status ?? "").toLowerCase() === "shown"
         );
         const checklist: string[] = [];
         if (!isPushDispatchConfigured())
@@ -327,6 +334,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
         if (has410or404) checklist.push("Há erro 410/404 em envio anterior (subscription expirada).");
         if (!hasSuccess && ultimasEntregas.length > 0)
           checklist.push("Sem sucesso recente de entrega para este usuário.");
+        if (hasAndroidAppShown) checklist.push("Android/App exibiu a notificação pelo service worker.");
         if (hasAndroidAppSuccess) checklist.push("Android/App recebeu aceite recente do FCM.");
         if (hasSuccess) checklist.push("Há entrega com sucesso recente em pelo menos uma plataforma.");
         pushDiag = {
@@ -336,7 +344,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
           subsAndroidAtivas: androidSubsAtivas.length,
           subsAndroidTotais: androidSubs.length,
           ultimasEntregas,
-          ultimosErros: errosAtivos.filter((e) => e.status !== "success").slice(0, 8),
+          ultimosErros: errosAtivos.filter((e) => !isPushAcceptedStatus(e.status)).slice(0, 8),
           checklist,
         };
       }

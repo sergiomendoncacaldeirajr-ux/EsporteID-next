@@ -6,6 +6,29 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+async function postPushReceipt(payload, status, error) {
+  const notifId = Number(payload && payload.notifId ? payload.notifId : 0);
+  if (!Number.isFinite(notifId) || notifId < 1) return;
+  try {
+    const sub = await self.registration.pushManager.getSubscription();
+    const endpoint = sub && sub.endpoint;
+    if (!endpoint) return;
+    await fetch("/api/push/receipt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        endpoint,
+        notificationId: notifId,
+        status,
+        error: error ? String(error && error.message ? error.message : error).slice(0, 600) : null,
+      }),
+    });
+  } catch {
+    /* Diagnóstico best-effort. */
+  }
+}
+
 self.addEventListener("push", (event) => {
   let payload = {};
   try {
@@ -37,9 +60,27 @@ self.addEventListener("push", (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(title, options).catch((error) => {
-      console.error("[eid-sw] showNotification failed", error);
-    })
+    (async () => {
+      await postPushReceipt(payload, "received", null);
+      try {
+        await self.registration.showNotification(title, options);
+        await postPushReceipt(payload, "shown", null);
+      } catch (error) {
+        console.error("[eid-sw] showNotification failed", error);
+        try {
+          await self.registration.showNotification(title, {
+            body: options.body,
+            icon: "/pwa-icon-192.png",
+            tag,
+            data: options.data,
+          });
+          await postPushReceipt(payload, "shown", null);
+        } catch (fallbackError) {
+          console.error("[eid-sw] showNotification fallback failed", fallbackError);
+          await postPushReceipt(payload, "failed", fallbackError);
+        }
+      }
+    })()
   );
 });
 

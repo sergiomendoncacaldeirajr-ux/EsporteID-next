@@ -196,6 +196,22 @@ function modoReservaUnidadeLabel(value: string | null | undefined) {
   return MODOS_RESERVA_UNIDADE.find((modo) => modo.value === value)?.label ?? "Seguir regra do espaço";
 }
 
+function modoReservaEspacoLabel(value: string | null | undefined) {
+  if (value === "gratuita") return "Reservas gratuitas para sócios";
+  if (value === "paga") return "Reservas pagas";
+  if (value === "mista") return "Reservas gratuitas e pagas";
+  return "Modelo de reserva ainda não definido";
+}
+
+function modoReservaEspacoDesc(value: string | null | undefined, aceitaSocios: boolean | null | undefined) {
+  if (value === "gratuita") return "O espaço opera com reservas gratuitas para associados.";
+  if (value === "paga") return aceitaSocios
+    ? "O espaço recebe reservas pagas e pode manter sócios, filas e benefícios ligados às reservas pagas."
+    : "O espaço recebe apenas reservas pagas.";
+  if (value === "mista") return "O espaço combina reservas gratuitas para sócios com reservas pagas para outros públicos.";
+  return "Defina o modelo de reserva na primeira etapa para exibir essa informação no perfil.";
+}
+
 function esporteNome(esportes: Array<{ id: number; nome: string }>, esporteId: number | null) {
   return esportes.find((esporte) => esporte.id === esporteId)?.nome ?? null;
 }
@@ -1101,16 +1117,30 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
           />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
-          <Label>Descrição curta (máx. 160 caracteres)</Label>
-          <IconInput Icon={MessageSquareText} name="descricao_curta" defaultValue={space.descricao_curta ?? ""} maxLength={160} placeholder="Clube com 8 quadras de tênis e beach tennis no centro da cidade." />
+          <Label>Descrição do local</Label>
+          <IconTextarea
+            Icon={FileText}
+            name="descricao_longa"
+            defaultValue={space.descricao_longa ?? space.descricao_curta ?? ""}
+            rows={4}
+            placeholder="Descreva a estrutura, modalidades atendidas, diferenciais e informações importantes do espaço."
+          />
         </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Sobre o espaço (texto completo)</Label>
-          <IconTextarea Icon={FileText} name="descricao_longa" defaultValue={space.descricao_longa ?? ""} rows={4} placeholder="Descreva sua infraestrutura, diferenciais, história..." />
-        </div>
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Observações sobre reservas</Label>
-          <IconTextarea Icon={Lightbulb} name="reserva_observacoes" defaultValue={space.reserva_observacoes} rows={3} placeholder="Regras iniciais, cancelamento, acesso de visitantes..." />
+        <div className="sm:col-span-2 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-4">
+          <div className="flex items-start gap-3">
+            <span className="rounded-xl bg-eid-primary-500/12 p-2 text-eid-primary-300">
+              <Wallet className="h-4 w-4" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-black uppercase tracking-[0.12em] text-eid-primary-300">
+                Modelo de reserva no perfil
+              </p>
+              <p className="mt-1 text-sm font-black text-eid-fg">{modoReservaEspacoLabel(space.modo_reserva)}</p>
+              <p className="mt-1 text-xs leading-relaxed text-eid-text-secondary">
+                {modoReservaEspacoDesc(space.modo_reserva, space.aceita_socios)}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2165,8 +2195,9 @@ export function EspacoOnboardingWizard({
   const [modoReserva, setModoReserva] = useState(space.modo_reserva ?? "mista");
   const [aceitaSocios, setAceitaSocios] = useState(space.aceita_socios ?? true);
 
-  const skipPlanoPlataforma = unidadeGate.modoMonetizacao !== "mensalidade_plataforma";
-  const skipPlanos = !aceitaSocios;
+  const exigePlanoPlataforma = modoReserva === "gratuita" || modoReserva === "mista";
+  const skipPlanoPlataforma = !exigePlanoPlataforma;
+  const skipPlanos = modoReserva === "gratuita" ? false : !aceitaSocios;
   const skipPagamento = modoReserva === "gratuita" && !aceitaSocios;
   const activeSteps = useMemo(
     () =>
