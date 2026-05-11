@@ -23,6 +23,32 @@ type FalhaRow = {
   atualizadoEm: string | null;
 };
 
+type SubResumo = {
+  id: number;
+  usuarioId: string | null;
+  ativo: boolean;
+  plataforma: string;
+  endpointHost: string;
+  atualizadoEm: string | null;
+};
+
+function inferPushPlatform(userAgent: string | null | undefined) {
+  const ua = String(userAgent ?? "");
+  if (/Android/i.test(ua)) return "Android/TWA";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "iOS";
+  if (/Windows/i.test(ua)) return "Windows/PC";
+  if (/Macintosh|Mac OS X/i.test(ua)) return "macOS";
+  return "Outro";
+}
+
+function endpointHost(endpoint: string | null | undefined) {
+  try {
+    return new URL(String(endpoint ?? "")).hostname;
+  } catch {
+    return "endpoint inválido";
+  }
+}
+
 export default async function AdminPushPage() {
   const serviceRole = hasServiceRoleConfig();
   const vapidParOk = isPushDispatchConfigured();
@@ -62,13 +88,15 @@ export default async function AdminPushPage() {
   ] as const;
 
   let falhasRecentes: FalhaRow[] = [];
+  let subsRecentes: SubResumo[] = [];
   let subsAtivos = 0;
   let subsTotal = 0;
+  let subsAndroidAtivos = 0;
 
   if (serviceRole) {
     try {
       const db = createServiceRoleClient();
-      const [{ data: failedRows }, { count: cAtivos }, { count: cTotal }] = await Promise.all([
+      const [{ data: failedRows }, { count: cAtivos }, { count: cTotal }, { count: cAndroidAtivos }, { data: recentSubs }] = await Promise.all([
         db
           .from("push_entregas_notificacao")
           .select("notificacao_id, subscription_id, status, ultimo_erro, atualizado_em")
@@ -77,9 +105,31 @@ export default async function AdminPushPage() {
           .limit(40),
         db.from("push_subscriptions").select("id", { count: "exact", head: true }).eq("ativo", true),
         db.from("push_subscriptions").select("id", { count: "exact", head: true }),
+        db.from("push_subscriptions").select("id", { count: "exact", head: true }).eq("ativo", true).ilike("user_agent", "%Android%"),
+        db
+          .from("push_subscriptions")
+          .select("id, usuario_id, endpoint, user_agent, ativo, atualizado_em")
+          .order("atualizado_em", { ascending: false })
+          .limit(20),
       ]);
       subsAtivos = cAtivos ?? 0;
       subsTotal = cTotal ?? 0;
+      subsAndroidAtivos = cAndroidAtivos ?? 0;
+      subsRecentes = ((recentSubs ?? []) as Array<{
+        id?: number | null;
+        usuario_id?: string | null;
+        endpoint?: string | null;
+        user_agent?: string | null;
+        ativo?: boolean | null;
+        atualizado_em?: string | null;
+      }>).map((s) => ({
+        id: Number(s.id ?? 0),
+        usuarioId: s.usuario_id ?? null,
+        ativo: s.ativo === true,
+        plataforma: inferPushPlatform(s.user_agent),
+        endpointHost: endpointHost(s.endpoint),
+        atualizadoEm: s.atualizado_em ?? null,
+      }));
 
       const rows = (failedRows ?? []) as Array<{
         notificacao_id?: number | null;
@@ -158,11 +208,60 @@ export default async function AdminPushPage() {
           {serviceRole ? (
             <li>
               Subscriptions no banco: <span className="font-semibold text-eid-fg">{subsAtivos}</span> ativa(s) ·{" "}
-              <span className="font-semibold text-eid-fg">{subsTotal}</span> no total.
+              <span className="font-semibold text-eid-fg">{subsTotal}</span> no total ·{" "}
+              <span className={subsAndroidAtivos > 0 ? "font-semibold text-emerald-400" : "font-semibold text-amber-300"}>
+                {subsAndroidAtivos}
+              </span>{" "}
+              Android/TWA ativa(s).
             </li>
           ) : null}
         </ul>
       </section>
+
+      {serviceRole ? (
+        <section className="mt-6 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
+          <h3 className="text-sm font-bold text-eid-fg">Subscriptions recentes</h3>
+          <p className="mt-1 text-xs text-eid-text-secondary">
+            Use isto para confirmar se o app Android/TWA criou uma inscrição ativa depois de abrir o app e ativar notificações.
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="min-w-full text-left text-xs">
+              <thead className="border-b border-[color:var(--eid-border-subtle)] text-[10px] uppercase tracking-wide text-eid-text-secondary">
+                <tr>
+                  <th className="py-2 pr-3">Sub</th>
+                  <th className="py-2 pr-3">Plataforma</th>
+                  <th className="py-2 pr-3">Status</th>
+                  <th className="py-2 pr-3">Endpoint</th>
+                  <th className="py-2 pr-3">Atualizada</th>
+                </tr>
+              </thead>
+              <tbody>
+                {subsRecentes.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-3 text-eid-text-secondary">
+                      Nenhuma subscription encontrada.
+                    </td>
+                  </tr>
+                ) : (
+                  subsRecentes.map((s) => (
+                    <tr key={s.id} className="border-b border-[color:var(--eid-border-subtle)]/45">
+                      <td className="py-2 pr-3 font-mono text-[11px] text-eid-fg">#{s.id}</td>
+                      <td className="py-2 pr-3 font-semibold text-eid-fg">{s.plataforma}</td>
+                      <td className={s.ativo ? "py-2 pr-3 font-semibold text-emerald-400" : "py-2 pr-3 font-semibold text-rose-300"}>
+                        {s.ativo ? "ativa" : "inativa"}
+                      </td>
+                      <td className="py-2 pr-3 font-mono text-[11px] text-eid-text-secondary">{s.endpointHost}</td>
+                      <td className="py-2 pr-3 text-eid-text-secondary">
+                        {s.atualizadoEm ? new Date(s.atualizadoEm).toLocaleString("pt-BR") : "-"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-6 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
         <h3 className="text-sm font-bold text-eid-fg">Variáveis de ambiente (checklist)</h3>

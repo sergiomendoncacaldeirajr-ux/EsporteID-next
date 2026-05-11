@@ -18,7 +18,6 @@ import { EidCancelButton } from "@/components/ui/eid-cancel-button";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import type { PartidaAgendaFormacaoLado } from "@/lib/agenda/partida-formacao-lado";
 import { iniciaisFormacaoNome } from "@/lib/comunidade/iniciais-formacao";
-import { AddToCalendarButton } from "@/components/agenda/add-to-calendar-button";
 
 export type { PartidaAgendaFormacaoLado } from "@/lib/agenda/partida-formacao-lado";
 
@@ -130,8 +129,12 @@ export function PartidaAgendaCard({
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, cancelInitial);
   const [agendaState, agendaAction, agendaPending] = useActionState(responderAgendamentoPartidaAction, agendaInitial);
   useEffect(() => {
-    if (state.ok) setOpenCancel(false);
-    if (state.ok) setOpenDesist(false);
+    if (!state.ok) return;
+    const id = window.setTimeout(() => {
+      setOpenCancel(false);
+      setOpenDesist(false);
+    }, 0);
+    return () => window.clearTimeout(id);
   }, [state.ok]);
   const ctaHref =
     href ??
@@ -256,16 +259,6 @@ export function PartidaAgendaCard({
           <span className="text-center text-[10px] font-semibold text-eid-fg/90 md:text-[11px]">
             {localLabel}
           </span>
-        </div>
-      ) : null}
-
-      {!isPlacar && !agendamentoPendente && dataRef ? (
-        <div className="mt-2.5 flex justify-center">
-          <AddToCalendarButton
-            title={`${esporteNome}: ${primeiroNome(formacaoJ1?.nome ?? j1Nome ?? null)} vs ${primeiroNome(formacaoJ2?.nome ?? j2Nome ?? null)}`}
-            startIso={dataRef}
-            location={localLabel}
-          />
         </div>
       ) : null}
 
