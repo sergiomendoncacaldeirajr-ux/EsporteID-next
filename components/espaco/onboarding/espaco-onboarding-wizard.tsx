@@ -270,6 +270,23 @@ function gerarGradeTexto(inicio: string, fim: string, intervalo: number) {
   return linhas.join("\n");
 }
 
+function parseSlotsClient(raw: string) {
+  return raw
+    .split(/[\n,;]+/)
+    .map((part) => part.trim().match(/^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/))
+    .filter((match): match is RegExpMatchArray => Boolean(match))
+    .map((match) => ({ inicio: match[1], fim: match[2] }))
+    .filter((slot) => {
+      const i = timeToMinutesClient(slot.inicio);
+      const f = timeToMinutesClient(slot.fim);
+      return i != null && f != null && f > i;
+    });
+}
+
+function slotsToText(slots: Array<{ inicio: string; fim: string }>) {
+  return slots.map((slot) => `${slot.inicio}-${slot.fim}`).join("\n");
+}
+
 // ── Componentes auxiliares ─────────────────────────────────────────────────
 
 function Feedback({ state }: { state: ActionState }) {
@@ -1716,6 +1733,8 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
   const [intervalos, setIntervalos] = useState<Record<number, string>>(defaults.intervalos);
   const [intervalosPersonalizados, setIntervalosPersonalizados] = useState<Record<number, string>>(defaults.intervalosPersonalizados);
   const [slotsEditados, setSlotsEditados] = useState<Record<string, boolean>>({});
+  const [diasExpandidos, setDiasExpandidos] = useState<Record<string, boolean>>({});
+  const [slotEditando, setSlotEditando] = useState<string | null>(null);
   const [state, action, pending] = useActionState<ActionState, FormData>(salvarGradeWizardAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
@@ -1741,6 +1760,34 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
       ? intervalosPersonalizados[unidadeId]
       : intervalos[unidadeId];
     return Math.max(5, Math.min(360, Number(raw) || 60));
+  };
+
+  const setSlotsDoDia = (key: string, nextSlots: Array<{ inicio: string; fim: string }>) => {
+    setSlots((p) => ({ ...p, [key]: slotsToText(nextSlots) }));
+    setSlotsEditados((p) => ({ ...p, [key]: true }));
+  };
+
+  const removerSlot = (key: string, index: number, currentText: string) => {
+    const next = parseSlotsClient(currentText).filter((_, i) => i !== index);
+    setSlotsDoDia(key, next);
+  };
+
+  const atualizarSlot = (key: string, index: number, field: "inicio" | "fim", value: string, currentText: string) => {
+    const next = parseSlotsClient(currentText);
+    if (!next[index]) return;
+    next[index] = { ...next[index], [field]: value };
+    setSlotsDoDia(key, next);
+  };
+
+  const adicionarSlot = (key: string, currentText: string, unidadeId: number) => {
+    const next = parseSlotsClient(currentText);
+    const intervalo = intervaloAtual(unidadeId);
+    const start = next.at(-1)?.fim ?? inicio[key] ?? "08:00";
+    const startMin = timeToMinutesClient(start) ?? 8 * 60;
+    const endMin = Math.min(24 * 60, startMin + intervalo);
+    next.push({ inicio: minutesToTimeClient(startMin), fim: minutesToTimeClient(endMin) });
+    setSlotsDoDia(key, next);
+    setDiasExpandidos((p) => ({ ...p, [key]: true }));
   };
 
   return (
@@ -1829,7 +1876,10 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
                 const especificos = modos[unidade.id] === "especificos";
                 const gradeGerada = gerarGradeTexto(inicio[key] ?? "08:00", fim[key] ?? "22:00", intervaloAtual(unidade.id));
                 const gradeTexto = especificos || slotsEditados[key] ? (slots[key] ?? "") : gradeGerada;
-                const totalHorarios = gradeTexto.split(/\n+/).map((linha) => linha.trim()).filter(Boolean).length;
+                const slotsDia = parseSlotsClient(gradeTexto);
+                const totalHorarios = slotsDia.length;
+                const expandido = Boolean(diasExpandidos[key]);
+                const slotsVisiveis = expandido ? slotsDia : slotsDia.slice(0, 8);
                 return (
                   <div key={key} className={`rounded-xl border px-3 py-3 transition ${
                     aberto ? "border-eid-primary-500/25 bg-eid-surface/60" : "border-[color:var(--eid-border-subtle)] bg-eid-surface/25 opacity-70"
@@ -1886,34 +1936,100 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
                         </div>
                         ) : null}
                         <div>
-                          <div className="mb-1.5 flex items-center justify-between gap-2">
+                          <div className="mb-2 flex items-center justify-between gap-2">
                             <p className="text-[11px] font-black uppercase tracking-[0.1em] text-eid-text-secondary">
                               Grade que será criada
                             </p>
-                            {!especificos && slotsEditados[key] ? (
+                            <div className="flex items-center gap-2">
+                              {!especificos && slotsEditados[key] ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSlots((p) => ({ ...p, [key]: gradeGerada }));
+                                    setSlotsEditados((p) => ({ ...p, [key]: false }));
+                                  }}
+                                  className="text-[10px] font-bold text-eid-primary-300 hover:text-eid-primary-200"
+                                >
+                                  Regerar
+                                </button>
+                              ) : null}
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setSlots((p) => ({ ...p, [key]: gradeGerada }));
-                                  setSlotsEditados((p) => ({ ...p, [key]: false }));
-                                }}
-                                className="text-[10px] font-bold text-eid-primary-300 hover:text-eid-primary-200"
+                                onClick={() => adicionarSlot(key, gradeTexto, unidade.id)}
+                                className="inline-flex items-center gap-1 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/8 px-2 py-1 text-[10px] font-bold text-eid-primary-300"
                               >
-                                Regerar
+                                <Plus className="h-3 w-3" aria-hidden />
+                                Horário
                               </button>
-                            ) : null}
+                            </div>
                           </div>
-                          <IconTextarea
-                            Icon={Clock}
-                            name={`unidade_${unidade.id}_dia_${dia}_slots`}
-                            value={gradeTexto}
-                            onChange={(e) => {
-                              setSlots((p) => ({ ...p, [key]: e.target.value }));
-                              setSlotsEditados((p) => ({ ...p, [key]: true }));
-                            }}
-                            rows={Math.min(8, Math.max(3, totalHorarios))}
-                            placeholder={"08:00-09:00\n09:30-10:30"}
-                          />
+                          <input type="hidden" name={`unidade_${unidade.id}_dia_${dia}_slots`} value={gradeTexto} />
+                          {slotsDia.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {slotsVisiveis.map((slot, index) => {
+                                const editKey = `${key}_${index}`;
+                                const editando = slotEditando === editKey;
+                                return (
+                                  <div
+                                    key={editKey}
+                                    className={`inline-flex min-h-9 items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs transition ${
+                                      editando
+                                        ? "border-eid-primary-500/60 bg-eid-primary-500/12"
+                                        : "border-[color:var(--eid-border-subtle)] bg-eid-surface/60"
+                                    }`}
+                                  >
+                                    <Clock className="h-3.5 w-3.5 shrink-0 text-eid-primary-300" aria-hidden />
+                                    {editando ? (
+                                      <>
+                                        <input
+                                          type="time"
+                                          value={slot.inicio}
+                                          onChange={(e) => atualizarSlot(key, index, "inicio", e.target.value, gradeTexto)}
+                                          className="w-[4.9rem] bg-transparent text-xs font-bold text-eid-fg focus:outline-none"
+                                        />
+                                        <span className="text-eid-text-secondary">-</span>
+                                        <input
+                                          type="time"
+                                          value={slot.fim}
+                                          onChange={(e) => atualizarSlot(key, index, "fim", e.target.value, gradeTexto)}
+                                          className="w-[4.9rem] bg-transparent text-xs font-bold text-eid-fg focus:outline-none"
+                                        />
+                                      </>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => setSlotEditando(editKey)}
+                                        className="font-bold text-eid-fg"
+                                      >
+                                        {slot.inicio}-{slot.fim}
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => removerSlot(key, index, gradeTexto)}
+                                      className="rounded-md p-1 text-eid-text-secondary hover:bg-red-500/10 hover:text-red-300"
+                                      aria-label={`Remover horário ${slot.inicio}-${slot.fim}`}
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                              {slotsDia.length > 8 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setDiasExpandidos((p) => ({ ...p, [key]: !p[key] }))}
+                                  className="inline-flex min-h-9 items-center rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 text-xs font-bold text-eid-primary-300"
+                                >
+                                  {expandido ? "Mostrar menos" : `Ver mais ${slotsDia.length - 8}`}
+                                </button>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <p className="rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] px-3 py-3 text-xs text-eid-text-secondary">
+                              Nenhum horário gerado. Ajuste abertura, fechamento ou intervalo.
+                            </p>
+                          )}
                         </div>
                       </div>
                     ) : null}
