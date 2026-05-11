@@ -298,6 +298,10 @@ export default async function AdminHomePage({ searchParams }: Props) {
           const er = String(e.erro ?? "").toLowerCase();
           return e.plataforma.startsWith("Android/") && (er.includes("410") || er.includes("404"));
         });
+        const hasAndroidApp410or404 = entregas.some((e) => {
+          const er = String(e.erro ?? "").toLowerCase();
+          return e.plataforma === "Android/App" && (er.includes("410") || er.includes("404"));
+        });
         const checklist: string[] = [];
         if (!isPushDispatchConfigured())
           checklist.push("Chaves VAPID incompletas — nenhum Web Push será enviado. Veja Admin → Push.");
@@ -308,10 +312,12 @@ export default async function AdminHomePage({ searchParams }: Props) {
           checklist.push("Android tem subscriptions no histórico, mas nenhuma ativa agora.");
         if (hasAndroid410or404)
           checklist.push("Android voltou 410/404: o FCM considera a inscrição expirada/cancelada.");
+        if (hasAndroidApp410or404)
+          checklist.push("Android/App precisa abrir novamente para recriar a inscrição push expirada.");
         if (has410or404) checklist.push("Há erro 410/404 em envio anterior (subscription expirada).");
         if (!hasSuccess && ultimasEntregas.length > 0)
           checklist.push("Sem sucesso recente de entrega para este usuário.");
-        if (hasSuccess) checklist.push("Há entrega com sucesso recente: canal push operacional.");
+        if (hasSuccess) checklist.push("Há entrega com sucesso recente em pelo menos uma plataforma.");
         pushDiag = {
           userId: pushUserId,
           subsAtivas: subs.filter((s) => s.ativo !== false).length,

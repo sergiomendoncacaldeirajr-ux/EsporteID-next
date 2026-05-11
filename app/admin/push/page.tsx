@@ -29,6 +29,7 @@ type SubResumo = {
   ativo: boolean;
   plataforma: string;
   endpointHost: string;
+  criadoEm: string | null;
   atualizadoEm: string | null;
 };
 
@@ -120,8 +121,8 @@ export default async function AdminPushPage() {
         db.from("push_subscriptions").select("id", { count: "exact", head: true }).eq("ativo", true).ilike("user_agent", "%Android%"),
         db
           .from("push_subscriptions")
-          .select("id, usuario_id, endpoint, user_agent, ativo, atualizado_em")
-          .order("atualizado_em", { ascending: false })
+          .select("id, usuario_id, endpoint, user_agent, ativo, criado_em, atualizado_em")
+          .order("criado_em", { ascending: false })
           .limit(20),
       ]);
       subsAtivos = cAtivos ?? 0;
@@ -133,6 +134,7 @@ export default async function AdminPushPage() {
         endpoint?: string | null;
         user_agent?: string | null;
         ativo?: boolean | null;
+        criado_em?: string | null;
         atualizado_em?: string | null;
       }>).map((s) => ({
         id: Number(s.id ?? 0),
@@ -140,6 +142,7 @@ export default async function AdminPushPage() {
         ativo: s.ativo === true,
         plataforma: inferPushPlatform(s.user_agent),
         endpointHost: endpointHost(s.endpoint),
+        criadoEm: s.criado_em ?? null,
         atualizadoEm: s.atualizado_em ?? null,
       }));
 
@@ -244,7 +247,7 @@ export default async function AdminPushPage() {
                   <th className="py-2 pr-3">Plataforma</th>
                   <th className="py-2 pr-3">Status</th>
                   <th className="py-2 pr-3">Endpoint</th>
-                  <th className="py-2 pr-3">Atualizada</th>
+                  <th className="py-2 pr-3">Criada</th>
                 </tr>
               </thead>
               <tbody>
@@ -264,7 +267,7 @@ export default async function AdminPushPage() {
                       </td>
                       <td className="py-2 pr-3 font-mono text-[11px] text-eid-text-secondary">{s.endpointHost}</td>
                       <td className="py-2 pr-3 text-eid-text-secondary">
-                        {formatAdminDateTime(s.atualizadoEm) || "-"}
+                        {formatAdminDateTime(s.criadoEm) || "-"}
                       </td>
                     </tr>
                   ))

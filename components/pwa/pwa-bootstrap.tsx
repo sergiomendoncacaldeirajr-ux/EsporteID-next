@@ -7,6 +7,16 @@ import { ensurePushReady, syncExistingPushSubscription } from "@/lib/pwa/push-cl
 const PUSH_SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 const PUSH_SYNC_STORAGE_KEY = "eid:last-push-sync-at";
 
+function isStandaloneDisplayMode() {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia?.("(display-mode: standalone)")?.matches ||
+    window.matchMedia?.("(display-mode: fullscreen)")?.matches ||
+    window.matchMedia?.("(display-mode: minimal-ui)")?.matches ||
+    Boolean((navigator as Navigator & { standalone?: boolean }).standalone)
+  );
+}
+
 function runWhenPageIsIdle(task: () => void): () => void {
   if (typeof window === "undefined") return () => {};
   const requestIdle = window.requestIdleCallback;
@@ -22,8 +32,12 @@ export function PwaBootstrap() {
   const router = useRouter();
   const vapidPublicKey = String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim();
 
-  const shouldRunPushSync = useCallback(() => {
+  const shouldRunPushSync = useCallback((force = false) => {
     if (typeof window === "undefined") return true;
+    if (force) {
+      window.localStorage.setItem(PUSH_SYNC_STORAGE_KEY, String(Date.now()));
+      return true;
+    }
     const now = Date.now();
     const raw = window.localStorage.getItem(PUSH_SYNC_STORAGE_KEY) ?? "";
     const last = Number(raw);
@@ -32,8 +46,8 @@ export function PwaBootstrap() {
     return true;
   }, []);
 
-  const runPushSync = useCallback(() => {
-    if (!shouldRunPushSync()) return;
+  const runPushSync = useCallback((force = false) => {
+    if (!shouldRunPushSync(force)) return;
     void ensurePushReady(vapidPublicKey).catch(() => {
       // best-effort silencioso.
     });
@@ -52,7 +66,7 @@ export function PwaBootstrap() {
         void syncExistingPushSubscription(vapidPublicKey).catch(() => {
           // best-effort silencioso: o usuário pode reativar no toggle se necessário.
         });
-        runPushSync();
+        runPushSync(isStandaloneDisplayMode());
       });
     });
   }, [runPushSync, vapidPublicKey]);
@@ -64,7 +78,7 @@ export function PwaBootstrap() {
       const now = Date.now();
       if (!force && now - lastResumeAt < 2500) return;
       lastResumeAt = now;
-      runPushSync();
+      runPushSync(force || isStandaloneDisplayMode());
       window.dispatchEvent(new CustomEvent("eid:pwa-resume"));
       window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
       window.setTimeout(() => router.refresh(), 120);

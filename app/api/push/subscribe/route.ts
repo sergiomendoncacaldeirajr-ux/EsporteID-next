@@ -77,6 +77,7 @@ export async function POST(request: Request) {
       .from("push_subscriptions")
       .update({ ativo: false })
       .eq("usuario_id", user.id)
+      .eq("ativo", true)
       .neq("endpoint", sub.endpoint)
       .ilike("user_agent", "%Android%")
       .not("user_agent", "ilike", "%display=standalone%");
