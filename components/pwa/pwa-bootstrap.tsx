@@ -29,6 +29,26 @@ function runWhenPageIsIdle(task: () => void): () => void {
   return () => window.clearTimeout(id);
 }
 
+async function registerAndroidFcmTokenFromUrl() {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get("eid_fcm_token");
+  if (!token) return;
+
+  url.searchParams.delete("eid_fcm_token");
+  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+
+  await fetch("/api/push/fcm/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      token,
+      device: navigator.userAgent,
+      appVersion: "7.0.1",
+    }),
+  });
+}
+
 export function PwaBootstrap() {
   const router = useRouter();
   const vapidPublicKey = String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim();
@@ -60,6 +80,9 @@ export function PwaBootstrap() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     return runWhenPageIsIdle(() => {
+      void registerAndroidFcmTokenFromUrl().catch(() => {
+        // O token sera reenviado pelo app em uma proxima abertura.
+      });
       void navigator.serviceWorker.register(`/sw.js?v=${encodeURIComponent(EID_SW_VERSION)}`).then((reg) => {
         void reg.update().catch(() => {
           // best-effort: o navegador também atualiza sozinho.

@@ -8,6 +8,7 @@ import {
   disablePushNotifications,
   enablePushNotifications,
   hasActivePushSubscription,
+  isStandaloneAndroidApp,
 } from "@/lib/pwa/push-client";
 import { isAmistosoAceiteInformativoNotif } from "@/lib/notificacoes/amistoso-aceite-informativo";
 import { resolveNotificationHref } from "@/lib/notificacoes/resolve-notification-href";
@@ -513,6 +514,10 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     let cancelled = false;
     void (async () => {
       try {
+        if (isStandaloneAndroidApp()) {
+          if (!cancelled) setPushEnabled(true);
+          return;
+        }
         const active = await hasActivePushSubscription();
         if (!cancelled) setPushEnabled(active);
       } catch {
@@ -532,6 +537,10 @@ export function NotificationBell({ userId }: { userId: string | null }) {
         await disablePushNotifications();
         setPushEnabled(false);
       } else {
+        if (isStandaloneAndroidApp()) {
+          setPushEnabled(true);
+          return;
+        }
         await enablePushNotifications(vapidPublicKey);
         setPushEnabled(true);
       }

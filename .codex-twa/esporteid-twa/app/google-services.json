@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "375170461856",
+    "project_id": "esporteid-5cae2",
+    "storage_bucket": "esporteid-5cae2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:375170461856:android:41259f494f624ce3f719c5",
+        "android_client_info": {
+          "package_name": "com.esporteid.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgYiDhB8GW48x2ECFI45csfcBOBwpw3Qw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

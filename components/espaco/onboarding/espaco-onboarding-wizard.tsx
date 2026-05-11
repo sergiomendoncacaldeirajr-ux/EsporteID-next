@@ -290,10 +290,11 @@ function slotsToText(slots: Array<{ inicio: string; fim: string }>) {
 function ajustarSlotsAposEdicao(
   slots: Array<{ inicio: string; fim: string }>,
   indexEditado: number,
-  slotAnterior: { inicio: string; fim: string },
+  inicioDia: string,
   fimDia: string,
   intervaloPadrao: number
 ) {
+  const inicioDiaMin = timeToMinutesClient(inicioDia) ?? 0;
   const fimDiaMin = timeToMinutesClient(fimDia) ?? 24 * 60;
   const normalizados = slots.slice(0, indexEditado).filter((slot) => {
     const inicioMin = timeToMinutesClient(slot.inicio);
@@ -303,19 +304,18 @@ function ajustarSlotsAposEdicao(
   const prevFimMin = normalizados.length > 0
     ? timeToMinutesClient(normalizados.at(-1)?.fim ?? "")
     : null;
-  const oldInicioMin = timeToMinutesClient(slotAnterior.inicio);
-  const oldFimMin = timeToMinutesClient(slotAnterior.fim);
   let novoInicioMin = timeToMinutesClient(slots[indexEditado]?.inicio ?? "");
   let novoFimMin = timeToMinutesClient(slots[indexEditado]?.fim ?? "");
-  if (novoInicioMin == null || novoFimMin == null || oldInicioMin == null || oldFimMin == null) return slots;
+  if (novoInicioMin == null || novoFimMin == null) return slots;
   if (prevFimMin != null && novoInicioMin < prevFimMin) novoInicioMin = prevFimMin;
   if (novoFimMin <= novoInicioMin) novoFimMin = Math.min(fimDiaMin, novoInicioMin + intervaloPadrao);
-  if (novoInicioMin >= fimDiaMin || novoFimMin > fimDiaMin) return normalizados;
+  if (novoInicioMin >= fimDiaMin) return normalizados;
+  if (novoFimMin > fimDiaMin) novoFimMin = fimDiaMin;
 
-  const inicioRestanteAntes = Math.max(oldInicioMin, prevFimMin ?? oldInicioMin);
-  if (novoInicioMin > inicioRestanteAntes) {
+  const ancoraInicio = prevFimMin ?? inicioDiaMin;
+  if (novoInicioMin > ancoraInicio) {
     normalizados.push({
-      inicio: minutesToTimeClient(inicioRestanteAntes),
+      inicio: minutesToTimeClient(ancoraInicio),
       fim: minutesToTimeClient(novoInicioMin),
     });
   }
@@ -327,17 +327,7 @@ function ajustarSlotsAposEdicao(
 
   const duracaoEditada = novoFimMin - novoInicioMin;
   let cursor = novoFimMin;
-  if (novoFimMin < oldFimMin) {
-    const fimRestante = Math.min(oldFimMin, fimDiaMin);
-    normalizados.push({
-      inicio: minutesToTimeClient(novoFimMin),
-      fim: minutesToTimeClient(fimRestante),
-    });
-    cursor = fimRestante;
-  }
-
-  const slotsRestantes = slots.length - indexEditado - 1;
-  for (let i = 0; i < slotsRestantes; i++) {
+  while (cursor < fimDiaMin) {
     const nextFim = cursor + duracaoEditada;
     if (nextFim > fimDiaMin) {
       if (fimDiaMin > cursor) {
@@ -1846,7 +1836,6 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
   const atualizarSlot = (key: string, index: number, field: "inicio" | "fim", value: string, currentText: string, unidadeId: number) => {
     const next = parseSlotsClient(currentText, { keepInvalidRange: true });
     if (!next[index]) return;
-    const slotAnterior = next[index];
     next[index] = { ...next[index], [field]: value };
     const inicioMin = timeToMinutesClient(next[index].inicio);
     const fimMin = timeToMinutesClient(next[index].fim);
@@ -1857,17 +1846,48 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
     }
     setSlotsDoDia(
       key,
-      ajustarSlotsAposEdicao(next, index, slotAnterior, fim[key] ?? "23:59", intervaloAtual(unidadeId))
+      ajustarSlotsAposEdicao(next, index, inicio[key] ?? "00:00", fim[key] ?? "23:59", intervaloAtual(unidadeId))
     );
   };
 
   const adicionarSlot = (key: string, currentText: string, unidadeId: number) => {
     const next = parseSlotsClient(currentText);
     const intervalo = intervaloAtual(unidadeId);
-    const start = next.at(-1)?.fim ?? inicio[key] ?? "08:00";
-    const startMin = timeToMinutesClient(start) ?? 8 * 60;
-    const endMin = Math.min(24 * 60, startMin + intervalo);
-    next.push({ inicio: minutesToTimeClient(startMin), fim: minutesToTimeClient(endMin) });
+    const inicioDiaMin = timeToMinutesClient(inicio[key] ?? "08:00") ?? 8 * 60;
+    const fimDiaMin = timeToMinutesClient(fim[key] ?? "23:59") ?? 24 * 60;
+    const ordenados = [...next].sort((a, b) => {
+      const ai = timeToMinutesClient(a.inicio) ?? 0;
+      const bi = timeToMinutesClient(b.inicio) ?? 0;
+      return ai - bi;
+    });
+    let cursor = inicioDiaMin;
+    let novoSlot: { inicio: string; fim: string } | null = null;
+    for (const slot of ordenados) {
+      const slotInicio = timeToMinutesClient(slot.inicio);
+      const slotFim = timeToMinutesClient(slot.fim);
+      if (slotInicio == null || slotFim == null || slotFim <= slotInicio) continue;
+      if (slotInicio > cursor) {
+        novoSlot = {
+          inicio: minutesToTimeClient(cursor),
+          fim: minutesToTimeClient(Math.min(slotInicio, cursor + intervalo)),
+        };
+        break;
+      }
+      cursor = Math.max(cursor, slotFim);
+    }
+    if (!novoSlot && cursor < fimDiaMin) {
+      novoSlot = {
+        inicio: minutesToTimeClient(cursor),
+        fim: minutesToTimeClient(Math.min(fimDiaMin, cursor + intervalo)),
+      };
+    }
+    if (!novoSlot) return;
+    next.push(novoSlot);
+    next.sort((a, b) => {
+      const ai = timeToMinutesClient(a.inicio) ?? 0;
+      const bi = timeToMinutesClient(b.inicio) ?? 0;
+      return ai - bi;
+    });
     setSlotsDoDia(key, next);
     setDiasExpandidos((p) => ({ ...p, [key]: true }));
   };

@@ -60,6 +60,10 @@
             android:name="twa_generator"
             android:value="@string/generatorApp" />
 
+        <meta-data
+            android:name="firebase_messaging_notification_delegation_enabled"
+            android:value="false" />
+
         
 
         
@@ -203,6 +207,14 @@
             <intent-filter>
                 <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE"/>
                 <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".EsporteIdFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
 

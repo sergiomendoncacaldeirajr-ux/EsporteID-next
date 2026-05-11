@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { enablePushNotifications } from "@/lib/pwa/push-client";
+import { enablePushNotifications, isStandaloneAndroidApp } from "@/lib/pwa/push-client";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -43,6 +43,11 @@ export function PwaQuickActions() {
       if (!("Notification" in window) || !("serviceWorker" in navigator)) {
         setPushStatus("error");
         setPushMsg("Seu navegador não suporta notificações push.");
+        return;
+      }
+      if (isStandaloneAndroidApp()) {
+        setPushStatus("enabled");
+        setPushMsg("No app Android, o push e nativo pelo Firebase.");
         return;
       }
       if (!vapidPublicKey) {

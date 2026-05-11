@@ -66,7 +66,7 @@ function getPushClientContext() {
   };
 }
 
-function isStandaloneAndroid() {
+export function isStandaloneAndroidApp() {
   if (typeof window === "undefined") return false;
   return /Android/i.test(navigator.userAgent || "") && getPushClientContext().displayMode === "standalone";
 }
@@ -144,11 +144,11 @@ async function enablePushNotificationsOnce(vapidPublicKey: string) {
   setPushClientOptOut(false);
 
   const permission =
-    Notification.permission === "default" && !isStandaloneAndroid()
+    Notification.permission === "default" && !isStandaloneAndroidApp()
       ? await Notification.requestPermission()
       : Notification.permission;
   if (permission !== "granted") {
-    if (!(permission === "default" && isStandaloneAndroid())) {
+    if (!(permission === "default" && isStandaloneAndroidApp())) {
       throw new Error("Permissão de notificação não concedida.");
     }
   }
@@ -196,6 +196,7 @@ export async function hasActivePushSubscription() {
 export async function syncExistingPushSubscription(vapidPublicKey = "") {
   if (!("serviceWorker" in navigator)) return false;
   if (!("Notification" in window)) return false;
+  if (isStandaloneAndroidApp()) return false;
   if (getPushClientOptOut()) return false;
   if (!vapidPublicKey) return false;
   if (Notification.permission !== "granted") return false;
@@ -209,6 +210,7 @@ export async function syncExistingPushSubscription(vapidPublicKey = "") {
 export async function ensurePushReady(vapidPublicKey: string) {
   if (!("serviceWorker" in navigator)) return false;
   if (!("Notification" in window)) return false;
+  if (isStandaloneAndroidApp()) return false;
   if (!vapidPublicKey) return false;
   if (getPushClientOptOut()) return false;
   if (Notification.permission !== "granted") return false;

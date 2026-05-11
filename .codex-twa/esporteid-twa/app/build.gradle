@@ -20,6 +20,10 @@ plugins {
     id 'com.android.application'
 }
 
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
+}
+
 // Assinatura de release: crie keystore.properties na pasta C:\apps\esporteid-twa\ (veja keystore.properties.example)
 def keystorePropertiesFile = rootProject.file('keystore.properties')
 def keystoreProperties = new Properties()
@@ -62,10 +66,10 @@ android {
     namespace "com.esporteid.app"
     defaultConfig {
         applicationId "com.esporteid.app"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 35
-        versionCode 7
-        versionName "7"
+        versionCode 8
+        versionName "7.0.1"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
@@ -229,5 +233,7 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     
         implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
+        implementation platform('com.google.firebase:firebase-bom:34.7.0')
+        implementation 'com.google.firebase:firebase-messaging'
     
 }

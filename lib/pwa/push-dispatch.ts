@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getFcmMessaging, isFcmConfigured } from "@/lib/push/fcm-admin";
 
 type NotificacaoRow = {
   id: number;
@@ -23,6 +24,12 @@ type PushDeliveryRow = {
   notificacao_id: number;
   subscription_id: number;
   status: string;
+};
+
+type AndroidFcmTokenRow = {
+  id: number;
+  usuario_id: string;
+  token: string;
 };
 
 type PushSendError = Error & {
@@ -200,6 +207,83 @@ function buildNotificationPayload(n: NotificacaoRow, platform = "Outro"): string
   });
 }
 
+function buildFcmMessage(n: NotificacaoRow, token: string) {
+  const payload = JSON.parse(buildNotificationPayload(n, "Android/App")) as {
+    title?: string;
+    body?: string;
+    url?: string;
+    notifId?: number;
+    tipo?: string;
+  };
+
+  return {
+    token,
+    notification: {
+      title: payload.title || "EsporteID",
+      body: payload.body || "Voce tem uma nova notificacao.",
+    },
+    data: {
+      url: String(payload.url || "/comunidade#notificacoes"),
+      notifId: String(payload.notifId || n.id),
+      tipo: String(payload.tipo || n.tipo || "geral"),
+    },
+    android: {
+      priority: "high" as const,
+      notification: {
+        channelId: "esporteid_alerts",
+        icon: "ic_notification_icon",
+        color: "#2563eb",
+      },
+    },
+  };
+}
+
+async function dispatchFcmToAndroidApp(
+  admin: SupabaseClient,
+  list: NotificacaoRow[],
+  userIds: string[]
+): Promise<{ sent: number; failed: number }> {
+  if (!isFcmConfigured()) return { sent: 0, failed: 0 };
+  const { data, error } = await admin
+    .from("android_fcm_tokens")
+    .select("id, usuario_id, token")
+    .eq("ativo", true)
+    .in("usuario_id", userIds);
+  if (error) throw new Error(`Falha ao buscar tokens FCM Android: ${error.message}`);
+
+  const tokensByUser = new Map<string, AndroidFcmTokenRow[]>();
+  for (const row of (data ?? []) as AndroidFcmTokenRow[]) {
+    const arr = tokensByUser.get(row.usuario_id) ?? [];
+    arr.push(row);
+    tokensByUser.set(row.usuario_id, arr);
+  }
+
+  const messaging = getFcmMessaging();
+  let sent = 0;
+  let failed = 0;
+  for (const n of list) {
+    const rows = tokensByUser.get(n.usuario_id) ?? [];
+    const results = await Promise.all(
+      rows.map(async (row) => {
+        try {
+          await messaging.send(buildFcmMessage(n, row.token));
+          return { sent: 1, failed: 0, stale: false };
+        } catch (err) {
+          const code = String((err as { code?: string })?.code ?? "");
+          return { sent: 0, failed: 1, stale: /registration-token-not-registered|invalid-registration-token/.test(code) };
+        }
+      })
+    );
+    sent += results.reduce((acc, r) => acc + r.sent, 0);
+    failed += results.reduce((acc, r) => acc + r.failed, 0);
+    const staleTokens = rows.filter((_, index) => results[index]?.stale).map((row) => row.token);
+    if (staleTokens.length) {
+      await admin.from("android_fcm_tokens").update({ ativo: false }).in("token", staleTokens);
+    }
+  }
+  return { sent, failed };
+}
+
 async function dispatchNotificationsToSubscriptions(
   admin: SupabaseClient,
   list: NotificacaoRow[]
@@ -238,6 +322,10 @@ async function dispatchNotificationsToSubscriptions(
   let sent = 0;
   let failed = 0;
   let noDevice = 0;
+  const fcmResult = await dispatchFcmToAndroidApp(admin, list, userIds);
+  sent += fcmResult.sent;
+  failed += fcmResult.failed;
+
   const sendOpts = { TTL: 86_400, urgency: "high" as const };
   for (const n of list) {
     const userSubs = subByUser.get(n.usuario_id) ?? [];
