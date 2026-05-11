@@ -267,6 +267,12 @@ export default async function AdminHomePage({ searchParams }: Props) {
           .limit(40);
         const subs = (subsRows ?? []) as Array<{ id: number; ativo?: boolean | null; user_agent?: string | null }>;
         const subIds = new Set(subs.map((s) => Number(s.id)).filter((n) => Number.isFinite(n) && n > 0));
+        const activeSubIds = new Set(
+          subs
+            .filter((s) => s.ativo !== false)
+            .map((s) => Number(s.id))
+            .filter((n) => Number.isFinite(n) && n > 0)
+        );
         const plataformaPorSub = new Map<number, string>();
         for (const s of subs) plataformaPorSub.set(Number(s.id), inferPushPlatform(s.user_agent));
         const { data: entregaRows } =
@@ -288,20 +294,24 @@ export default async function AdminHomePage({ searchParams }: Props) {
         }));
         const ultimasEntregas = entregas.slice(0, 8);
         const hasSuccess = ultimasEntregas.some((e) => String(e.status ?? "").toLowerCase() === "success");
-        const has410or404 = entregas.some((e) => {
+        const errosAtivos = entregas.filter((e) => e.subId != null && activeSubIds.has(e.subId));
+        const has410or404 = errosAtivos.some((e) => {
           const er = String(e.erro ?? "").toLowerCase();
           return er.includes("410") || er.includes("404");
         });
         const androidSubs = subs.filter((s) => inferPushPlatform(s.user_agent).startsWith("Android/"));
         const androidSubsAtivas = androidSubs.filter((s) => s.ativo !== false);
-        const hasAndroid410or404 = entregas.some((e) => {
+        const hasAndroid410or404 = errosAtivos.some((e) => {
           const er = String(e.erro ?? "").toLowerCase();
           return e.plataforma.startsWith("Android/") && (er.includes("410") || er.includes("404"));
         });
-        const hasAndroidApp410or404 = entregas.some((e) => {
+        const hasAndroidApp410or404 = errosAtivos.some((e) => {
           const er = String(e.erro ?? "").toLowerCase();
           return e.plataforma === "Android/App" && (er.includes("410") || er.includes("404"));
         });
+        const hasAndroidAppSuccess = ultimasEntregas.some(
+          (e) => e.plataforma === "Android/App" && String(e.status ?? "").toLowerCase() === "success"
+        );
         const checklist: string[] = [];
         if (!isPushDispatchConfigured())
           checklist.push("Chaves VAPID incompletas — nenhum Web Push será enviado. Veja Admin → Push.");
@@ -317,6 +327,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
         if (has410or404) checklist.push("Há erro 410/404 em envio anterior (subscription expirada).");
         if (!hasSuccess && ultimasEntregas.length > 0)
           checklist.push("Sem sucesso recente de entrega para este usuário.");
+        if (hasAndroidAppSuccess) checklist.push("Android/App recebeu aceite recente do FCM.");
         if (hasSuccess) checklist.push("Há entrega com sucesso recente em pelo menos uma plataforma.");
         pushDiag = {
           userId: pushUserId,
@@ -325,7 +336,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
           subsAndroidAtivas: androidSubsAtivas.length,
           subsAndroidTotais: androidSubs.length,
           ultimasEntregas,
-          ultimosErros: entregas.filter((e) => e.status !== "success").slice(0, 8),
+          ultimosErros: errosAtivos.filter((e) => e.status !== "success").slice(0, 8),
           checklist,
         };
       }
