@@ -16,7 +16,6 @@ import { EidSocialAceitarButton, EidSocialRecusarButton } from "@/components/ui/
 import { iniciaisFormacaoNome } from "@/lib/comunidade/iniciais-formacao";
 import { EidDateTimePicker } from "@/components/agenda/eid-date-time-picker";
 import {
-  CONFRONTO_AGENDAMENTO_JANELA_HORAS,
   maxDatetimeLocalValueHorasAFrente,
   minDatetimeLocalValue,
 } from "@/lib/agenda/confronto-agendamento-janela";
@@ -84,8 +83,29 @@ function addMinutesToDatetimeLocal(base: string, minutes: number): string {
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
 }
 
+function readLocalPrefillFromUrl():
+  | { matchId: number; prefill: string; nextUrl: string }
+  | null {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const matchId = Number(params.get("reag_match") ?? "0");
+  const localNome = String(params.get("novo_local_nome") ?? "").trim();
+  const localizacao = String(params.get("novo_local_localizacao") ?? "").trim();
+  if (!Number.isFinite(matchId) || matchId < 1) return null;
+  if (!localNome && !localizacao) return null;
+  const prefill = localizacao ? `${localNome} — ${localizacao}` : localNome;
+  params.delete("novo_local_id");
+  params.delete("novo_local_nome");
+  params.delete("novo_local_localizacao");
+  params.delete("reag_match");
+  const nextQs = params.toString();
+  const nextUrl = `${window.location.pathname}${nextQs ? `?${nextQs}` : ""}${window.location.hash}`;
+  return { matchId, prefill, nextUrl };
+}
+
 type Props = {
   items: AceitosCancelaveisItem[];
+  agendamentoJanelaHoras: number;
   /** Na Agenda: só status e prazos; ações ficam no Painel social (Comunidade). */
   somenteInformativo?: boolean;
   /** Base para `return_to` ao cadastrar local no fluxo de recusar cancelamento (ex.: `/comunidade`). */
@@ -94,6 +114,7 @@ type Props = {
 
 export function AgendaAceitosCancelaveis({
   items,
+  agendamentoJanelaHoras,
   somenteInformativo = false,
   cadastrarLocalReturnBase = "/agenda",
 }: Props) {
@@ -103,7 +124,7 @@ export function AgendaAceitosCancelaveis({
   const [localPrefillByMatch, setLocalPrefillByMatch] = useState<Record<number, string>>({});
   const [minDateTimeLocal] = useState<string>(() => minDatetimeLocalValue());
   const [maxDateTimeLocal] = useState<string>(() =>
-    maxDatetimeLocalValueHorasAFrente(CONFRONTO_AGENDAMENTO_JANELA_HORAS)
+    maxDatetimeLocalValueHorasAFrente(agendamentoJanelaHoras)
   );
   const err = !state.ok ? state.message : null;
   const okMsg = state.ok ? state.message : null;
@@ -113,23 +134,14 @@ export function AgendaAceitosCancelaveis({
   );
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const matchId = Number(params.get("reag_match") ?? "0");
-    const localNome = String(params.get("novo_local_nome") ?? "").trim();
-    const localizacao = String(params.get("novo_local_localizacao") ?? "").trim();
-    if (!Number.isFinite(matchId) || matchId < 1) return;
-    if (!localNome && !localizacao) return;
-    const prefill = localizacao ? `${localNome} — ${localizacao}` : localNome;
-    setOpenRefuseByMatch((prev) => ({ ...prev, [matchId]: true }));
-    setLocalPrefillByMatch((prev) => ({ ...prev, [matchId]: prefill }));
-    params.delete("novo_local_id");
-    params.delete("novo_local_nome");
-    params.delete("novo_local_localizacao");
-    params.delete("reag_match");
-    const nextQs = params.toString();
-    const nextUrl = `${window.location.pathname}${nextQs ? `?${nextQs}` : ""}${window.location.hash}`;
-    window.history.replaceState(null, "", nextUrl);
+    const urlPrefill = readLocalPrefillFromUrl();
+    if (!urlPrefill) return;
+    const timer = window.setTimeout(() => {
+      setOpenRefuseByMatch((prev) => ({ ...prev, [urlPrefill.matchId]: true }));
+      setLocalPrefillByMatch((prev) => ({ ...prev, [urlPrefill.matchId]: urlPrefill.prefill }));
+      window.history.replaceState(null, "", urlPrefill.nextUrl);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   // Default option times: now, now+60min, now+120min
@@ -398,7 +410,7 @@ export function AgendaAceitosCancelaveis({
                         disabled={pending}
                         className="inline-flex min-h-[34px] w-full items-center justify-center rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/15 px-3 text-[9px] font-black uppercase tracking-wide text-[color:color-mix(in_srgb,var(--eid-fg)_68%,var(--eid-primary-500)_32%)] shadow-[0_4px_14px_-6px_rgba(37,99,235,0.25)] transition hover:bg-eid-primary-500/22 disabled:opacity-50 md:text-[10px]"
                       >
-                        Enviar 3 opções (janela {CONFRONTO_AGENDAMENTO_JANELA_HORAS}h)
+                        Enviar 3 opções (janela {agendamentoJanelaHoras}h)
                       </button>
                     </form>
                   ) : null}

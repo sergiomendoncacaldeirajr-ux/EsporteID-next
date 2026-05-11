@@ -1,15 +1,19 @@
 /**
- * Janela de data/hora para confrontos de ranking (individual, dupla e time):
- * mesma tolerância das 3 opções de reagendamento após recusa de cancelamento (72h).
+ * Fallback da janela de data/hora para confrontos de ranking quando a configuração
+ * administrativa ainda não foi carregada.
  */
 
 export const CONFRONTO_AGENDAMENTO_JANELA_HORAS = 72;
 
-export function agendamentoRankingDentroDaJanelaUtc(dataPartida: Date, agora: Date = new Date()): boolean {
+export function agendamentoRankingDentroDaJanelaUtc(
+  dataPartida: Date,
+  agora: Date = new Date(),
+  janelaHoras: number = CONFRONTO_AGENDAMENTO_JANELA_HORAS
+): boolean {
   const t = dataPartida.getTime();
   if (Number.isNaN(t)) return false;
   if (t < agora.getTime()) return false;
-  const max = agora.getTime() + CONFRONTO_AGENDAMENTO_JANELA_HORAS * 60 * 60 * 1000;
+  const max = agora.getTime() + janelaHoras * 60 * 60 * 1000;
   return t <= max;
 }
 

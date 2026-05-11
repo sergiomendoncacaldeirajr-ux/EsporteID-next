@@ -7,6 +7,7 @@ import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-perfo
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
+import { getMatchAgendamentoJanelaHoras } from "@/lib/app-config/match-prazos";
 import { getAgendaRestPayload } from "./agenda-page-payload";
 
 export type AgendaStreamRestProps = {
@@ -17,7 +18,10 @@ export type AgendaStreamRestProps = {
 };
 
 export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTeamIds }: AgendaStreamRestProps) {
-  const p = await getAgendaRestPayload(supabase, userId, teamClause, agendaTeamIds);
+  const [p, agendamentoJanelaHoras] = await Promise.all([
+    getAgendaRestPayload(supabase, userId, teamClause, agendaTeamIds),
+    getMatchAgendamentoJanelaHoras(supabase),
+  ]);
 
   const hasRanking = p.pendentesRankingStatus.length > 0;
   const hasAceitos = p.aceitosItems.length > 0;
@@ -145,7 +149,12 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
             </div>
           ) : null}
           {hasAceitos ? (
-            <AgendaAceitosCancelaveis items={p.aceitosItems} somenteInformativo cadastrarLocalReturnBase="/comunidade" />
+            <AgendaAceitosCancelaveis
+              items={p.aceitosItems}
+              agendamentoJanelaHoras={agendamentoJanelaHoras}
+              somenteInformativo
+              cadastrarLocalReturnBase="/comunidade"
+            />
           ) : null}
         </section>
       ) : null}

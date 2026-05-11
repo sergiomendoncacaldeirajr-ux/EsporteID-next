@@ -15,6 +15,7 @@ import {
 } from "@/lib/agenda/partidas-usuario";
 import { pickFormacaoLadoPartida } from "@/lib/agenda/partida-formacao-lado";
 import { processarPendenciasAgendamentoAceite } from "@/lib/agenda/processar-pendencias-agendamento";
+import { getMatchAgendamentoJanelaHoras } from "@/lib/app-config/match-prazos";
 import {
   dueloKey,
   dueloKeyNoSport,
@@ -86,10 +87,15 @@ export async function ComunidadeStreamPartidas({
       ])
     : Promise.resolve(null);
 
-  const [agRes, plRes, metaPair] = await Promise.all([
+  const agendamentoJanelaHorasPromise = needPainelMatchMeta
+    ? getMatchAgendamentoJanelaHoras(supabase)
+    : Promise.resolve(72);
+
+  const [agRes, plRes, metaPair, agendamentoJanelaHoras] = await Promise.all([
     painelAgendadasPromise,
     painelPlacarPromise,
     painelMatchesMetaPromise,
+    agendamentoJanelaHorasPromise,
   ]);
 
   const painelAgendadas = agRes.data;
@@ -277,7 +283,7 @@ export async function ComunidadeStreamPartidas({
   const rescheduleAcceptedByDueloPainel = new Set<string>();
   const blockedDueloByCancelFlowPainel = new Set<string>();
   const blockedMatchIdsByCancelFlowPainel = new Set<number>();
-  let painelAcceptedScheduleByMatchId = new Map<
+  const painelAcceptedScheduleByMatchId = new Map<
     number,
     { scheduledFor: string | null; scheduledLocation: string | null }
   >();
@@ -371,7 +377,11 @@ export async function ComunidadeStreamPartidas({
     <>
       {painelAceitosCancelaveisItems.length > 0 ? (
         <div id="desafios-aceitos-gestao" className="scroll-mt-4 md:scroll-mt-6">
-          <AgendaAceitosCancelaveis items={painelAceitosCancelaveisItems} cadastrarLocalReturnBase="/comunidade" />
+          <AgendaAceitosCancelaveis
+            items={painelAceitosCancelaveisItems}
+            agendamentoJanelaHoras={agendamentoJanelaHoras}
+            cadastrarLocalReturnBase="/comunidade"
+          />
         </div>
       ) : null}
       {painelPlacarPendente.length > 0 || painelAgendadasVisiveis.length > 0 ? (

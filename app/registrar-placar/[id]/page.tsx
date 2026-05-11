@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { DismissibleTapAwayHint } from "@/components/agenda/dismissible-tapaway-hint";
 import { AgendamentoSubmitButton } from "@/components/agenda/agendamento-submit-button";
 import { RankingConfrontoDatetimeInput } from "@/components/agenda/ranking-confronto-datetime-input";
-import { CONFRONTO_AGENDAMENTO_JANELA_HORAS } from "@/lib/agenda/confronto-agendamento-janela";
+import { getMatchAgendamentoJanelaHoras } from "@/lib/app-config/match-prazos";
 import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-local-overlay-trigger";
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import { MatchScoreForm } from "@/components/placar/match-score-form";
@@ -94,6 +94,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
   const fromSafe = fromRaw.startsWith("/") && !fromRaw.startsWith("//") ? fromRaw : null;
 
   const supabase = await createClient();
+  const agendamentoJanelaHoras = await getMatchAgendamentoJanelaHoras(supabase);
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -570,6 +571,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
                       <RankingConfrontoDatetimeInput
                         name="data_partida"
                         defaultValue={p.data_partida ?? ""}
+                        janelaHoras={agendamentoJanelaHoras}
                       />
                     )}
                   </div>
@@ -614,7 +616,7 @@ export default async function RegistrarPlacarPage({ params, searchParams }: Prop
 
                   {!p.torneio_id ? (
                     <p className="text-[10px] leading-relaxed text-eid-text-secondary">
-                      Janela de {CONFRONTO_AGENDAMENTO_JANELA_HORAS}h a partir de agora para confrontos de ranking.
+                      Janela de {agendamentoJanelaHoras}h a partir de agora para confrontos de ranking.
                       {agendaSomente ? " Placar disponível no Painel social após o jogo." : ""}
                     </p>
                   ) : null}

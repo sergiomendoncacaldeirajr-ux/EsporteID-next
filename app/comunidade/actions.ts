@@ -5,7 +5,7 @@ import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger"
 import { MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER } from "@/lib/match/viewer-esporte-confronto";
 import { fetchDashboardRankingCooldownBlocklists } from "@/lib/match/dashboard-ranking-cooldown-blocklists";
 import { createClient } from "@/lib/supabase/server";
-import { CONFRONTO_AGENDAMENTO_JANELA_HORAS } from "@/lib/agenda/confronto-agendamento-janela";
+import { getMatchAgendamentoJanelaHoras } from "@/lib/app-config/match-prazos";
 
 export type ResponderMatchState = { ok: true } | { ok: false; message: string };
 export type ResponderConviteState = { ok: true } | { ok: false; message: string };
@@ -542,11 +542,11 @@ function isPastDateTime(iso: string | null): boolean {
   return t < Date.now();
 }
 
-function isBeyondAgendamentoJanelaDateTime(iso: string | null): boolean {
+function isBeyondAgendamentoJanelaDateTime(iso: string | null, janelaHoras: number): boolean {
   if (!iso) return true;
   const t = new Date(iso).getTime();
   if (Number.isNaN(t)) return true;
-  const max = Date.now() + CONFRONTO_AGENDAMENTO_JANELA_HORAS * 60 * 60 * 1000;
+  const max = Date.now() + janelaHoras * 60 * 60 * 1000;
   return t > max;
 }
 
@@ -624,17 +624,18 @@ export async function gerenciarCancelamentoMatch(
     const op3 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_3") ?? ""), tzOff);
     const local = String(formData.get("local_reagendamento") ?? "").trim();
     if (!aceitar) {
+      const agendamentoJanelaHoras = await getMatchAgendamentoJanelaHoras(supabase);
       if (isPastDateTime(op1) || isPastDateTime(op2) || isPastDateTime(op3)) {
         return { ok: false, message: "As opções de data e hora devem ser de agora em diante." };
       }
       if (
-        isBeyondAgendamentoJanelaDateTime(op1) ||
-        isBeyondAgendamentoJanelaDateTime(op2) ||
-        isBeyondAgendamentoJanelaDateTime(op3)
+        isBeyondAgendamentoJanelaDateTime(op1, agendamentoJanelaHoras) ||
+        isBeyondAgendamentoJanelaDateTime(op2, agendamentoJanelaHoras) ||
+        isBeyondAgendamentoJanelaDateTime(op3, agendamentoJanelaHoras)
       ) {
         return {
           ok: false,
-          message: `As opções de data e hora devem estar dentro de ${CONFRONTO_AGENDAMENTO_JANELA_HORAS} horas.`,
+          message: `As opções de data e hora devem estar dentro de ${agendamentoJanelaHoras} horas.`,
         };
       }
       if (hasDuplicateDateTimeOptions([op1, op2, op3])) {
@@ -683,7 +684,7 @@ export async function gerenciarCancelamentoMatch(
       ok: true,
       message: aceitar
         ? "Cancelamento aceito. O desafio foi cancelado."
-        : `Cancelamento recusado com opções de data/hora. A outra parte deve escolher em até ${CONFRONTO_AGENDAMENTO_JANELA_HORAS}h.`,
+        : "Cancelamento recusado com opções de data/hora. A outra parte deve escolher uma opção pela Agenda.",
     };
   }
 

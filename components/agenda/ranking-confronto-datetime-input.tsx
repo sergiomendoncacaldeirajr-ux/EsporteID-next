@@ -3,7 +3,6 @@
 import { type CSSProperties } from "react";
 import { EidDateTimePicker } from "@/components/agenda/eid-date-time-picker";
 import {
-  CONFRONTO_AGENDAMENTO_JANELA_HORAS,
   maxDatetimeLocalValueHorasAFrente,
   minDatetimeLocalValue,
 } from "@/lib/agenda/confronto-agendamento-janela";
@@ -11,14 +10,15 @@ import {
 type Props = {
   name: string;
   defaultValue: string;
+  janelaHoras: number;
   /** className/style kept for API compat but ignored — EidDateTimePicker has its own styling. */
   className?: string;
   style?: CSSProperties;
 };
 
-export function RankingConfrontoDatetimeInput({ name, defaultValue }: Props) {
+export function RankingConfrontoDatetimeInput({ name, defaultValue, janelaHoras }: Props) {
   const min = minDatetimeLocalValue();
-  const max = maxDatetimeLocalValueHorasAFrente(CONFRONTO_AGENDAMENTO_JANELA_HORAS);
+  const max = maxDatetimeLocalValueHorasAFrente(janelaHoras);
 
   // Clamp the defaultValue into the valid window
   const safeDefault = (() => {

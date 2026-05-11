@@ -15,8 +15,8 @@ import {
 } from "@/lib/agenda/partidas-usuario";
 import {
   agendamentoRankingDentroDaJanelaUtc,
-  CONFRONTO_AGENDAMENTO_JANELA_HORAS,
 } from "@/lib/agenda/confronto-agendamento-janela";
+import { getMatchAgendamentoAceiteHoras, getMatchAgendamentoJanelaHoras } from "@/lib/app-config/match-prazos";
 import { loadPartidaContext, revalidateAfterPartidaPlacarChange } from "@/lib/torneios/lancar-resultado-partida";
 
 function toInt(v: FormDataEntryValue | null): number | null {
@@ -772,11 +772,12 @@ export async function salvarAgendamentoAction(formData: FormData) {
     if (Number.isFinite(tzOffsetMinutes) && tzOffsetMinutes !== 0) {
       dt.setMinutes(dt.getMinutes() + tzOffsetMinutes);
     }
-    if (!p.torneio_id && !agendamentoRankingDentroDaJanelaUtc(dt)) {
+    const agendamentoJanelaHoras = p.torneio_id ? null : await getMatchAgendamentoJanelaHoras(ctx.supabase);
+    if (!p.torneio_id && !agendamentoRankingDentroDaJanelaUtc(dt, new Date(), agendamentoJanelaHoras ?? undefined)) {
       salvarAgendaRedirect(
         partidaId,
         "erro",
-        `Data e hora do confronto devem estar entre agora e as próximas ${CONFRONTO_AGENDAMENTO_JANELA_HORAS} horas (individual, dupla e time).`,
+        `Data e hora do confronto devem estar entre agora e as próximas ${agendamentoJanelaHoras} horas (individual, dupla e time).`,
         modoAgenda
       );
     }
@@ -784,13 +785,14 @@ export async function salvarAgendamentoAction(formData: FormData) {
   }
 
   const agendamentoPendenteAceite = !p.torneio_id && Boolean(payload.data_partida && payload.local_str);
+  const agendamentoAceiteHoras = agendamentoPendenteAceite ? await getMatchAgendamentoAceiteHoras(ctx.supabase) : 24;
   if (agendamentoPendenteAceite) {
-    const deadline = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    const deadline = new Date(Date.now() + agendamentoAceiteHoras * 60 * 60 * 1000).toISOString();
     payload.status = "aguardando_aceite_agendamento";
     payload.agendamento_proposto_por = user.id;
     payload.agendamento_aceite_deadline = deadline;
     payload.agendamento_aceito_por = null;
-    payload.mensagem = "Agendamento proposto. Aguardando aceite do oponente (24h).";
+    payload.mensagem = `Agendamento proposto. Aguardando aceite do oponente (${agendamentoAceiteHoras}h).`;
   }
 
   const { error } = await ctx.supabase.from("partidas").update(payload).eq("id", partidaId);
@@ -808,8 +810,8 @@ export async function salvarAgendamentoAction(formData: FormData) {
       : "data a combinar";
     const where = payload.local_str ? String(payload.local_str) : "local a combinar";
     const msgQuemPropoe = `Você agendou o confronto para ${when} • ${where}.`;
-    const msgPropriaFormacao = `Agendamento proposto para o desafio: ${when} • ${where}. Aguardando aceite do oponente (até 24h).`;
-    const msgAdversario = `O adversário propôs agendamento: ${when} • ${where}. Acesse a Agenda para aceitar em até 24h.`;
+    const msgPropriaFormacao = `Agendamento proposto para o desafio: ${when} • ${where}. Aguardando aceite do oponente (até ${agendamentoAceiteHoras}h).`;
+    const msgAdversario = `O adversário propôs agendamento: ${when} • ${where}. Acesse a Agenda para aceitar em até ${agendamentoAceiteHoras}h.`;
     const msgAtualizado = `Horário do confronto atualizado: ${when} • ${where}. Confira na Agenda.`;
 
     const { lado1, lado2 } = await loadPartidaLadosUsuarioIds(ctx.supabase, p);
