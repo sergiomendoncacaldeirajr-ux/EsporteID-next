@@ -36,10 +36,9 @@ export const EID_LOGO_ICON_E_HEIGHT = 1024;
 export const EID_APP_CANVAS_BG_DARK = "#0b0f14";
 
 /**
- * Tom do header no escuro (~`color-mix` 58% card / 42% bg em `globals.css`) — mesmo eixo visual do topbar.
- * Manifest / viewport SSR usam isso para a barra do sistema bater com o chrome, não com o canvas da página.
+ * Tom do header/status bar no escuro. No Android precisa bater com o topo fixo para não aparecer faixa separada.
  */
-export const EID_SYSTEM_UI_THEME_COLOR_DARK = "#121821";
+export const EID_SYSTEM_UI_THEME_COLOR_DARK = EID_APP_CANVAS_BG_DARK;
 
 /** Splash / `background_color` do manifest = ink da marca para launch nativo Android/iOS. */
 export const EID_PWA_BACKGROUND = "#0b1d2e";

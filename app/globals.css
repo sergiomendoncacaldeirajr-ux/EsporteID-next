@@ -85,10 +85,10 @@
   --eid-field-bg: #1a222e;
 
   /*
-   * Cor para `theme-color` / barra de status: próxima ao topo do header (gradiente card↔surface),
-   * não ao fundo da página — evita faixa mais escura que o app no iOS (translúcido) e no Android.
+   * Cor para `theme-color` / barra de status: igual ao topo real do app no escuro.
+   * No Android mobile o header também usa esse valor para não criar faixa/linha no status bar.
    */
-  --eid-system-ui-chrome: color-mix(in srgb, var(--eid-card) 58%, var(--eid-bg) 42%);
+  --eid-system-ui-chrome: var(--eid-bg);
 
   /* Texto — escuro */
   --eid-fg: #eef2f7;
@@ -849,6 +849,7 @@ header#eid-persistent-topbar textarea {
   @media (max-width: 767px) {
     :root {
       --eid-android-content-scale: 0.63;
+      --eid-system-ui-chrome: var(--eid-bg);
     }
 
     html {
@@ -935,7 +936,7 @@ header#eid-persistent-topbar textarea {
 
     /* Android: cola o header no topo sem linha/divisão com a barra do sistema. */
     #eid-persistent-topbar {
-      background: var(--eid-bg) !important;
+      background: var(--eid-system-ui-chrome) !important;
       background-image: none !important;
       border-bottom-color: transparent !important;
       box-shadow: none !important;
@@ -948,7 +949,7 @@ header#eid-persistent-topbar textarea {
       right: 0;
       top: -2px;
       height: 2px;
-      background: var(--eid-bg);
+      background: var(--eid-system-ui-chrome);
       pointer-events: none;
     }
 
