@@ -47,6 +47,24 @@ function subscriptionMatchesVapidKey(sub: PushSubscription, vapidPublicKey: stri
   return arrayBufferToBase64Url(currentKey) === normalizeBase64Url(vapidPublicKey);
 }
 
+function getPushClientContext() {
+  const standalone =
+    window.matchMedia?.("(display-mode: standalone)")?.matches ||
+    window.matchMedia?.("(display-mode: fullscreen)")?.matches ||
+    window.matchMedia?.("(display-mode: minimal-ui)")?.matches ||
+    Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+
+  return {
+    displayMode: standalone ? "standalone" : "browser",
+    notificationPermission: "Notification" in window ? Notification.permission : "unsupported",
+    platform: navigator.platform || "",
+    userAgentDataPlatform:
+      "userAgentData" in navigator
+        ? String((navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform ?? "")
+        : "",
+  };
+}
+
 function subscribeWithVapidKey(reg: ServiceWorkerRegistration, vapidPublicKey: string) {
   return reg.pushManager.subscribe({
     userVisibleOnly: true,
@@ -58,7 +76,7 @@ async function savePushSubscription(sub: PushSubscription) {
   const resp = await fetch("/api/push/subscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ subscription: sub.toJSON() }),
+    body: JSON.stringify({ subscription: sub.toJSON(), clientContext: getPushClientContext() }),
   });
   const data = (await resp.json().catch(() => ({}))) as { recreate?: boolean; message?: string };
   if (resp.status === 409 && data.recreate) return { recreate: true };

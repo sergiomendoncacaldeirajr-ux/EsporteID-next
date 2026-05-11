@@ -6,6 +6,23 @@ type PushPayload = {
   keys?: { p256dh?: string; auth?: string };
 };
 
+type ClientContext = {
+  displayMode?: string;
+  notificationPermission?: string;
+  platform?: string;
+  userAgentDataPlatform?: string;
+};
+
+function appendClientContextToUserAgent(userAgent: string | null, context: ClientContext | undefined) {
+  const parts = [
+    `display=${String(context?.displayMode ?? "unknown").slice(0, 24)}`,
+    `perm=${String(context?.notificationPermission ?? "unknown").slice(0, 24)}`,
+    `platform=${String(context?.platform ?? "").slice(0, 40)}`,
+    `uaPlatform=${String(context?.userAgentDataPlatform ?? "").slice(0, 40)}`,
+  ];
+  return `${userAgent ?? ""} EsporteIDPush/${parts.join(";")}`.slice(0, 1000);
+}
+
 export async function POST(request: Request) {
   const supabase = await createRouteHandlerClient();
   const {
@@ -13,13 +30,13 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, message: "Sessão inválida." }, { status: 401 });
 
-  const body = (await request.json().catch(() => ({}))) as { subscription?: PushPayload };
+  const body = (await request.json().catch(() => ({}))) as { subscription?: PushPayload; clientContext?: ClientContext };
   const sub = body.subscription;
   if (!sub?.endpoint || !sub.keys?.p256dh || !sub.keys?.auth) {
     return NextResponse.json({ ok: false, message: "Assinatura push inválida." }, { status: 400 });
   }
 
-  const ua = request.headers.get("user-agent");
+  const ua = appendClientContextToUserAgent(request.headers.get("user-agent"), body.clientContext);
   const { data: existing, error: existingError } = await supabase
     .from("push_subscriptions")
     .select("id, ativo")

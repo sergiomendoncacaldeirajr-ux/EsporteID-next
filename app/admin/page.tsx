@@ -56,7 +56,8 @@ function parseAdminPushDebug(sp: Record<string, string | string[] | undefined>) 
 
 function inferPushPlatform(userAgent: string | null | undefined) {
   const ua = String(userAgent ?? "");
-  if (/Android/i.test(ua)) return "Android/TWA";
+  if (/Android/i.test(ua) && /EsporteIDPush\/.*display=standalone/i.test(ua)) return "Android/App";
+  if (/Android/i.test(ua)) return "Android/Navegador";
   if (/iPhone|iPad|iPod/i.test(ua)) return "iOS";
   if (/Windows/i.test(ua)) return "Windows/PC";
   if (/Macintosh|Mac OS X/i.test(ua)) return "macOS";
@@ -291,11 +292,11 @@ export default async function AdminHomePage({ searchParams }: Props) {
           const er = String(e.erro ?? "").toLowerCase();
           return er.includes("410") || er.includes("404");
         });
-        const androidSubs = subs.filter((s) => inferPushPlatform(s.user_agent) === "Android/TWA");
+        const androidSubs = subs.filter((s) => inferPushPlatform(s.user_agent).startsWith("Android/"));
         const androidSubsAtivas = androidSubs.filter((s) => s.ativo !== false);
         const hasAndroid410or404 = entregas.some((e) => {
           const er = String(e.erro ?? "").toLowerCase();
-          return e.plataforma === "Android/TWA" && (er.includes("410") || er.includes("404"));
+          return e.plataforma.startsWith("Android/") && (er.includes("410") || er.includes("404"));
         });
         const checklist: string[] = [];
         if (!isPushDispatchConfigured())
@@ -304,9 +305,9 @@ export default async function AdminHomePage({ searchParams }: Props) {
         if (subs.length > 0 && subs.filter((s) => s.ativo !== false).length === 0)
           checklist.push("Subscriptions existem, mas nenhuma está ativa.");
         if (androidSubs.length > 0 && androidSubsAtivas.length === 0)
-          checklist.push("Android/TWA tem subscriptions no histórico, mas nenhuma ativa agora.");
+          checklist.push("Android tem subscriptions no histórico, mas nenhuma ativa agora.");
         if (hasAndroid410or404)
-          checklist.push("Android/TWA voltou 410/404: o FCM considera a inscrição expirada/cancelada.");
+          checklist.push("Android voltou 410/404: o FCM considera a inscrição expirada/cancelada.");
         if (has410or404) checklist.push("Há erro 410/404 em envio anterior (subscription expirada).");
         if (!hasSuccess && ultimasEntregas.length > 0)
           checklist.push("Sem sucesso recente de entrega para este usuário.");
@@ -624,7 +625,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
             </p>
             <p className="mt-1 text-xs text-eid-text-secondary">
               Subscriptions: <strong className="text-eid-fg">{pushDiag.subsAtivas}</strong> ativa(s) de{" "}
-              <strong className="text-eid-fg">{pushDiag.subsTotais}</strong> total. Android/TWA:{" "}
+              <strong className="text-eid-fg">{pushDiag.subsTotais}</strong> total. Android:{" "}
               <strong className={pushDiag.subsAndroidAtivas > 0 ? "text-emerald-400" : "text-amber-300"}>
                 {pushDiag.subsAndroidAtivas}
               </strong>{" "}

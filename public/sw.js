@@ -17,16 +17,22 @@ self.addEventListener("push", (event) => {
   const title = payload.title || "EsporteID";
   const tipo = String(payload.tipo || "").toLowerCase();
   const destUrl = payload.url || "/comunidade";
+  const tag = payload.tag || `eid-notificacao-${Date.now()}`;
 
   const options = {
     body: payload.body || "Você tem uma atualização no app.",
     icon: "/pwa-icon-192.png",
     badge: "/pwa-icon-192.png",
-    tag: payload.tag || "eid-notificacao",
+    tag,
+    renotify: true,
+    requireInteraction: Boolean(payload.requireInteraction),
+    silent: false,
     timestamp: Date.now(),
+    vibrate: [120, 80, 120],
     data: {
       url: destUrl,
       tipo,
+      notifId: payload.notifId || null,
     },
   };
 

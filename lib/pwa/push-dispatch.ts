@@ -177,6 +177,7 @@ function buildNotificationPayload(n: NotificacaoRow): string {
     body,
     url,
     tag: `notif-${n.id}`,
+    notifId: n.id,
     tipo: category,
     requireInteraction,
   });

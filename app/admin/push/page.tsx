@@ -34,7 +34,8 @@ type SubResumo = {
 
 function inferPushPlatform(userAgent: string | null | undefined) {
   const ua = String(userAgent ?? "");
-  if (/Android/i.test(ua)) return "Android/TWA";
+  if (/Android/i.test(ua) && /EsporteIDPush\/.*display=standalone/i.test(ua)) return "Android/App";
+  if (/Android/i.test(ua)) return "Android/Navegador";
   if (/iPhone|iPad|iPod/i.test(ua)) return "iOS";
   if (/Windows/i.test(ua)) return "Windows/PC";
   if (/Macintosh|Mac OS X/i.test(ua)) return "macOS";
@@ -223,7 +224,7 @@ export default async function AdminPushPage() {
               <span className={subsAndroidAtivos > 0 ? "font-semibold text-emerald-400" : "font-semibold text-amber-300"}>
                 {subsAndroidAtivos}
               </span>{" "}
-              Android/TWA ativa(s).
+              Android ativa(s).
             </li>
           ) : null}
         </ul>
@@ -233,7 +234,7 @@ export default async function AdminPushPage() {
         <section className="mt-6 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
           <h3 className="text-sm font-bold text-eid-fg">Subscriptions recentes</h3>
           <p className="mt-1 text-xs text-eid-text-secondary">
-            Use isto para confirmar se o app Android/TWA criou uma inscrição ativa depois de abrir o app e ativar notificações.
+            Use isto para confirmar se o Android criou uma inscrição ativa depois de abrir o app e ativar notificações.
           </p>
           <div className="mt-3 overflow-x-auto">
             <table className="min-w-full text-left text-xs">

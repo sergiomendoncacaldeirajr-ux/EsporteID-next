@@ -16,6 +16,11 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait",
     background_color: EID_PWA_BACKGROUND,
     theme_color: EID_APP_CHROME_THEME_COLOR,
+    /*
+     * Sender ID público histórico do Chrome/FCM para Web Push.
+     * Mantê-lo no manifest melhora compatibilidade Android/TWA sem expor chave privada.
+     */
+    gcm_sender_id: "103953800507",
     categories: ["sports", "social", "productivity"],
     icons: [
       {
@@ -43,5 +48,5 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "maskable",
       },
     ],
-  };
+  } as MetadataRoute.Manifest & { gcm_sender_id: string };
 }
