@@ -104,7 +104,7 @@ export function computeMensalidadePainelState(
       valorMensalCentavos:
         assinRow?.valor_mensal_centavos ?? valorMensalEsperadoCentavos(categoriaMensalidade, ei),
       mensagem:
-        "Mensalidade da plataforma: conclua o primeiro pagamento em Financeiro para liberar quadras, unidades e a grade. Escolha antes o plano (faixa de quadras) que faz sentido para o seu espaço.",
+        "Você pode concluir o cadastro do espaço normalmente. Para ele aparecer para os usuários, escolha o plano da plataforma, cadastre a mensalidade no cartão e aguarde a aprovação do admin.",
       diasAteVencimento: null,
       diasEmAtraso: 0,
       categoria: categoriaMensalidade,

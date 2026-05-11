@@ -47,14 +47,42 @@ function subscriptionMatchesVapidKey(sub: PushSubscription, vapidPublicKey: stri
   return arrayBufferToBase64Url(currentKey) === normalizeBase64Url(vapidPublicKey);
 }
 
+function subscribeWithVapidKey(reg: ServiceWorkerRegistration, vapidPublicKey: string) {
+  return reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+  });
+}
+
 async function savePushSubscription(sub: PushSubscription) {
   const resp = await fetch("/api/push/subscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ subscription: sub.toJSON() }),
   });
-  if (!resp.ok) throw new Error("Falha ao salvar assinatura push.");
-  return true;
+  const data = (await resp.json().catch(() => ({}))) as { recreate?: boolean; message?: string };
+  if (resp.status === 409 && data.recreate) return { recreate: true };
+  if (!resp.ok) throw new Error(data.message || "Falha ao salvar assinatura push.");
+  return { recreate: false };
+}
+
+async function saveOrRecreatePushSubscription(sub: PushSubscription, vapidPublicKey: string) {
+  const saved = await savePushSubscription(sub);
+  if (!saved.recreate) return sub;
+
+  const reg = await navigator.serviceWorker.ready;
+  try {
+    await sub.unsubscribe();
+  } catch {
+    /* ignore */
+  }
+
+  const freshSub = await subscribeWithVapidKey(reg, vapidPublicKey);
+  const freshSaved = await savePushSubscription(freshSub);
+  if (freshSaved.recreate) {
+    throw new Error("Assinatura push expirada. Remova e instale o app novamente para liberar uma nova inscrição.");
+  }
+  return freshSub;
 }
 
 async function getOrCreatePushSubscription(vapidPublicKey: string, createIfMissing: boolean) {
@@ -69,10 +97,7 @@ async function getOrCreatePushSubscription(vapidPublicKey: string, createIfMissi
     sub = null;
   }
   if (!sub && createIfMissing) {
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-    });
+    sub = await subscribeWithVapidKey(reg, vapidPublicKey);
   }
   return sub;
 }
@@ -93,9 +118,9 @@ export async function enablePushNotifications(vapidPublicKey: string) {
 
   const sub = await getOrCreatePushSubscription(vapidPublicKey, true);
   if (!sub) throw new Error("Não foi possível criar assinatura push.");
-  await savePushSubscription(sub);
+  const activeSub = await saveOrRecreatePushSubscription(sub, vapidPublicKey);
 
-  return sub;
+  return activeSub;
 }
 
 export async function disablePushNotifications() {
@@ -131,15 +156,16 @@ export async function hasActivePushSubscription() {
   return Boolean(sub);
 }
 
-export async function syncExistingPushSubscription() {
+export async function syncExistingPushSubscription(vapidPublicKey = "") {
   if (!("serviceWorker" in navigator)) return false;
   if (!("Notification" in window)) return false;
   if (getPushClientOptOut()) return false;
+  if (!vapidPublicKey) return false;
   if (Notification.permission !== "granted") return false;
   const reg = await navigator.serviceWorker.ready;
   const sub = await reg.pushManager.getSubscription();
   if (!sub) return false;
-  await savePushSubscription(sub);
+  await saveOrRecreatePushSubscription(sub, vapidPublicKey);
   return true;
 }
 
@@ -151,6 +177,6 @@ export async function ensurePushReady(vapidPublicKey: string) {
   if (Notification.permission !== "granted") return false;
   const sub = await getOrCreatePushSubscription(vapidPublicKey, true);
   if (!sub) return false;
-  await savePushSubscription(sub);
+  await saveOrRecreatePushSubscription(sub, vapidPublicKey);
   return true;
 }

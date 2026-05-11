@@ -20,6 +20,24 @@ export async function POST(request: Request) {
   }
 
   const ua = request.headers.get("user-agent");
+  const { data: existing, error: existingError } = await supabase
+    .from("push_subscriptions")
+    .select("id, ativo")
+    .eq("usuario_id", user.id)
+    .eq("endpoint", sub.endpoint)
+    .maybeSingle();
+  if (existingError) return NextResponse.json({ ok: false, message: existingError.message }, { status: 400 });
+  if (existing && existing.ativo === false) {
+    return NextResponse.json(
+      {
+        ok: false,
+        recreate: true,
+        message: "Assinatura push expirada. Recrie a subscription no dispositivo.",
+      },
+      { status: 409 }
+    );
+  }
+
   const { error } = await supabase.from("push_subscriptions").upsert(
     {
       usuario_id: user.id,

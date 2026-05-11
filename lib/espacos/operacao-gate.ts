@@ -10,7 +10,7 @@ export type EspacoOperacaoFlags = {
 };
 
 const MSG_PAAS_PRIMEIRO =
-  "É necessário o primeiro pagamento da mensalidade da plataforma aprovado (Financeiro → PIX) antes de criar quadras/unidades ou a grade. Conclua também a integração de pagamento, se aplicável. Administradores podem liberar excepcionalmente.";
+  "Você pode concluir o cadastro de quadras e horários. A publicação para os usuários fica pendente até o plano da plataforma, a mensalidade no cartão e a aprovação do admin.";
 
 /**
  * Grade e unidades: reservas gratuitas ou mistas exigem mensalidade PaaS;

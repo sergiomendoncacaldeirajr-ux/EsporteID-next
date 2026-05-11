@@ -42,6 +42,7 @@ import {
 import "react-phone-number-input/style.css";
 import "@/app/cadastro/cadastro-register.css";
 import { prepareCoverForUpload } from "@/lib/images/prepare-avatar-upload";
+import { normalizeEspacoDuplicateValue } from "@/lib/espacos/duplicate";
 
 const PhoneInput = dynamic(() => import("react-phone-number-input"), {
   ssr: false,
@@ -111,9 +112,24 @@ type Parceiro = {
   email: string | null; onboarding_status: string | null;
 } | null;
 
+type LocalExistente = {
+  id: number;
+  nome_publico: string | null;
+  localizacao: string | null;
+  logo_arquivo: string | null;
+  endereco: string;
+  numero: string;
+  bairro: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  complemento: string;
+};
+
 type WizardProps = {
   space: Space;
   esportes: Array<{ id: number; nome: string }>;
+  locaisExistentes: LocalExistente[];
   unidades: Unidade[];
   unidadeGate: PaaSUnidadeGateInfo;
   planosPaaS: PlanoPaaS[];
@@ -190,6 +206,15 @@ function horaCurta(value: string | null | undefined) {
 function agendaConfig(unidade: Unidade) {
   const raw = unidade.configuracao_agenda_json;
   return raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+}
+
+function onlyDigits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+function formatCep(value: string) {
+  const digits = onlyDigits(value).slice(0, 8);
+  return digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
 }
 
 // ── Componentes auxiliares ─────────────────────────────────────────────────
@@ -684,21 +709,94 @@ function StepModelo({ space, onNext, onBack }: {
   );
 }
 
-function StepPerfil({ space, esportes, onNext, onBack }: {
-  space: Space; esportes: Array<{ id: number; nome: string }>; onNext: () => void; onBack?: () => void;
+function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
+  space: Space; esportes: Array<{ id: number; nome: string }>; locaisExistentes: LocalExistente[]; onNext: () => void; onBack?: () => void;
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(salvarPerfilWizardAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
+  const [nomePublico, setNomePublico] = useState(space.nome_publico ?? "");
+  const [claimMode, setClaimMode] = useState(false);
+  const [cep, setCep] = useState(space.cep ?? "");
+  const [endereco, setEndereco] = useState(space.endereco ?? "");
+  const [numero, setNumero] = useState(space.numero ?? "");
+  const [bairro, setBairro] = useState(space.bairro ?? "");
+  const [cidade, setCidade] = useState(space.cidade ?? "");
+  const [uf, setUf] = useState(space.uf ?? "");
+  const [complemento, setComplemento] = useState(space.complemento ?? "");
+  const [cepBusy, setCepBusy] = useState(false);
+  const [cepMessage, setCepMessage] = useState<string | null>(null);
   const [whatsapp, setWhatsapp] = useState<Value | undefined>((space.whatsapp_contato ?? "") as Value | undefined);
   const [phoneCountry, setPhoneCountry] = useState<Country>("BR");
   const [websiteUrl, setWebsiteUrl] = useState(space.website_url ?? "");
   const [instagramUrl, setInstagramUrl] = useState(space.instagram_url ?? "");
   const selectedSports = new Set(space.esportes_ids);
+  const normalizedNome = useMemo(() => normalizeEspacoDuplicateValue(nomePublico), [nomePublico]);
+  const exactMatch = useMemo(() => {
+    if (normalizedNome.length < 2) return null;
+    return locaisExistentes.find((local) => normalizeEspacoDuplicateValue(local.nome_publico ?? "") === normalizedNome) ?? null;
+  }, [locaisExistentes, normalizedNome]);
+
   useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
+
+  function fillFromExistingLocal(local: LocalExistente) {
+    setEndereco(local.endereco ?? "");
+    setNumero(local.numero ?? "");
+    setBairro(local.bairro ?? "");
+    setCidade(local.cidade ?? "");
+    setUf(local.estado ?? "");
+    setCep(local.cep ?? "");
+    setComplemento(local.complemento ?? "");
+  }
+
+  function handleNomePublicoChange(next: string) {
+    setNomePublico(next);
+    setClaimMode(false);
+    const normalized = normalizeEspacoDuplicateValue(next);
+    const match = normalized.length >= 2
+      ? locaisExistentes.find((local) => normalizeEspacoDuplicateValue(local.nome_publico ?? "") === normalized)
+      : null;
+    if (match) fillFromExistingLocal(match);
+  }
+
+  useEffect(() => {
+    const cepDigits = onlyDigits(cep);
+    if (cepDigits.length !== 8 || exactMatch) return;
+    const timer = window.setTimeout(async () => {
+      setCepBusy(true);
+      setCepMessage(null);
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`, { cache: "no-store" });
+        const data = await res.json() as {
+          erro?: boolean;
+          logradouro?: string;
+          bairro?: string;
+          localidade?: string;
+          uf?: string;
+        };
+        if (data.erro) {
+          setCepMessage("CEP não encontrado.");
+          return;
+        }
+        if (data.logradouro) setEndereco(data.logradouro);
+        if (data.bairro) setBairro(data.bairro);
+        if (data.localidade) setCidade(data.localidade);
+        if (data.uf) setUf(data.uf.toUpperCase());
+        setCepMessage("Endereço preenchido pelo CEP. Informe apenas o número e confira os dados.");
+      } catch {
+        setCepMessage("Não foi possível consultar o CEP agora.");
+      } finally {
+        setCepBusy(false);
+      }
+    }, 280);
+    return () => window.clearTimeout(timer);
+  }, [cep, exactMatch]);
 
   return (
     <form ref={formRef} action={action} encType="multipart/form-data" className="space-y-4">
       <input type="hidden" name="espaco_id" value={space.id} />
+      {claimMode && exactMatch ? (
+        <input type="hidden" name="espaco_id_reivindicado" value={exactMatch.id} />
+      ) : null}
       <StepHeader title="Perfil público do espaço" subtitle="Como os atletas vão encontrar e conhecer seu espaço." />
 
       <div className="grid gap-3 sm:grid-cols-[0.9fr_1.1fr]">
@@ -731,43 +829,100 @@ function StepPerfil({ space, esportes, onNext, onBack }: {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Nome do espaço *</Label>
-          <IconInput Icon={Building2} name="nome_publico" defaultValue={space.nome_publico} placeholder="Ex.: Arena Tennis Club" required />
+          <IconInput
+            Icon={Building2}
+            name="nome_publico"
+            value={nomePublico}
+            onChange={(e) => handleNomePublicoChange(e.target.value)}
+            placeholder="Ex.: Arena Tennis Club"
+            required
+          />
         </div>
+        {exactMatch ? (
+          <div className="sm:col-span-2 rounded-2xl border border-eid-primary-500/30 bg-eid-primary-500/10 p-3">
+            <div className="flex items-center gap-3">
+              {exactMatch.logo_arquivo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={exactMatch.logo_arquivo} alt="" className="h-12 w-12 shrink-0 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover" />
+              ) : (
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 text-[10px] font-black text-eid-primary-300">
+                  EID
+                </span>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-black text-eid-fg">{exactMatch.nome_publico ?? "Espaço cadastrado"}</p>
+                <p className="truncate text-xs text-eid-text-secondary">{exactMatch.localizacao ?? "Localização não informada"}</p>
+              </div>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-eid-text-secondary">
+              Encontramos um espaço com esse nome. Preenchi o endereço cadastrado abaixo. Se esse local é seu, solicite a propriedade para o admin revisar.
+            </p>
+            <button
+              type="button"
+              onClick={() => setClaimMode(true)}
+              className={`mt-3 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-xs font-black transition ${
+                claimMode
+                  ? "border border-emerald-500/35 bg-emerald-500/15 text-emerald-300"
+                  : "border border-eid-primary-500/35 bg-eid-primary-500/12 text-eid-primary-200 hover:bg-eid-primary-500/18"
+              }`}
+            >
+              <BadgeCheck className="h-4 w-4" aria-hidden />
+              {claimMode ? "Solicitação de propriedade marcada" : "Solicitar propriedade deste local"}
+            </button>
+          </div>
+        ) : null}
         <div className="space-y-1.5">
           <Label>Link público (slug)</Label>
           <IconInput Icon={Hash} name="slug" defaultValue={space.slug ?? ""} placeholder="arena-tennis-club" />
         </div>
         <div className="space-y-1.5">
+          <Label>CEP</Label>
+          <FieldChrome Icon={MapPin}>
+            <input
+              name="cep"
+              value={cep}
+              onChange={(e) => setCep(formatCep(e.target.value))}
+              placeholder="00000-000"
+              inputMode="numeric"
+              className="min-h-11 w-full min-w-0 bg-transparent py-2.5 text-sm text-eid-fg placeholder:text-eid-text-secondary/50 focus:outline-none"
+            />
+            <span className="self-center text-[10px] font-bold text-eid-text-secondary">
+              {cepBusy ? "Buscando..." : "Auto"}
+            </span>
+          </FieldChrome>
+        </div>
+        <div className="space-y-1.5">
           <Label>Cidade</Label>
-          <IconInput Icon={MapPin} name="cidade" defaultValue={space.cidade ?? ""} placeholder="São Paulo" />
+          <IconInput Icon={MapPin} name="cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="São Paulo" />
         </div>
         <div className="space-y-1.5">
           <Label>Estado (UF)</Label>
-          <IconSelect Icon={MapPin} name="uf" defaultValue={space.uf ?? ""}>
+          <IconSelect Icon={MapPin} name="uf" value={uf} onChange={(e) => setUf(e.target.value)}>
             <option value="">Selecione</option>
             {UFS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
           </IconSelect>
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label>Endereço</Label>
-          <IconInput Icon={MapPin} name="endereco" defaultValue={space.endereco} placeholder="Rua, avenida ou nome da via" />
+          <IconInput Icon={MapPin} name="endereco" value={endereco} onChange={(e) => setEndereco(e.target.value)} placeholder="Rua, avenida ou nome da via" />
         </div>
         <div className="space-y-1.5">
           <Label>Número</Label>
-          <IconInput Icon={Hash} name="numero" defaultValue={space.numero} placeholder="123" />
+          <IconInput Icon={Hash} name="numero" value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="123" />
         </div>
         <div className="space-y-1.5">
           <Label>Bairro</Label>
-          <IconInput Icon={MapPin} name="bairro" defaultValue={space.bairro} placeholder="Centro" />
-        </div>
-        <div className="space-y-1.5">
-          <Label>CEP</Label>
-          <IconInput Icon={MapPin} name="cep" defaultValue={space.cep} placeholder="00000-000" />
+          <IconInput Icon={MapPin} name="bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} placeholder="Centro" />
         </div>
         <div className="space-y-1.5">
           <Label>Complemento</Label>
-          <IconInput Icon={Building2} name="complemento" defaultValue={space.complemento} placeholder="Bloco, referência..." />
+          <IconInput Icon={Building2} name="complemento" value={complemento} onChange={(e) => setComplemento(e.target.value)} placeholder="Bloco, referência..." />
         </div>
+        {cepMessage ? (
+          <p className="sm:col-span-2 rounded-xl border border-eid-primary-500/20 bg-eid-primary-500/8 px-3 py-2 text-xs font-semibold text-eid-primary-300">
+            {cepMessage}
+          </p>
+        ) : null}
         <div className="space-y-2 sm:col-span-2">
           <Label>Esportes atendidos</Label>
           <div className="flex flex-wrap gap-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-3">
@@ -1907,7 +2062,7 @@ function StepConclusao({ space, unidades, horarios, planos, parceiro }: {
 // ── Wizard principal ───────────────────────────────────────────────────────
 
 export function EspacoOnboardingWizard({
-  space, esportes, unidades, unidadeGate, planosPaaS, horarios, feriados, planos, parceiro,
+  space, esportes, locaisExistentes, unidades, unidadeGate, planosPaaS, horarios, feriados, planos, parceiro,
 }: WizardProps) {
   const storageKey = `eid:onboarding-step-${space.id}`;
   const [step, setStep] = useState<number>(() => {
@@ -1970,7 +2125,7 @@ export function EspacoOnboardingWizard({
             />
           )}
           {currentStep?.id === "perfil" && (
-            <StepPerfil space={space} esportes={esportes} onNext={advance} onBack={goBack} />
+            <StepPerfil space={space} esportes={esportes} locaisExistentes={locaisExistentes} onNext={advance} onBack={goBack} />
           )}
           {currentStep?.id === "plano_plataforma" && (
             <StepPlanoPlataforma

@@ -48,6 +48,7 @@ export default async function EspacoOnboardingPage() {
 
   const [
     { data: esportes },
+    { data: locaisExistentes },
     { data: unidades },
     { data: horarios },
     { data: feriados },
@@ -57,6 +58,12 @@ export default async function EspacoOnboardingPage() {
     unidadeGate,
   ] = await Promise.all([
     supabase.from("esportes").select("id, nome").order("nome"),
+    supabase
+      .from("espacos_genericos")
+      .select("id, nome_publico, localizacao, logo_arquivo, cidade, uf, venue_config_json")
+      .neq("id", selectedSpace.id)
+      .order("nome_publico")
+      .limit(500),
     supabase
       .from("espaco_unidades")
       .select("id, nome, tipo_unidade, superficie, esporte_id, modalidade, coberta, indoor, iluminacao, aceita_aulas, aceita_torneios, observacoes, logo_arquivo, modo_reserva, intervalo_minutos, configuracao_agenda_json, ativo")
@@ -115,6 +122,22 @@ export default async function EspacoOnboardingPage() {
       }));
   const venueConfig = parseJsonRecord(selectedSpace.venue_config_json);
   const reservaConfig = parseJsonRecord(selectedSpace.configuracao_reservas_json);
+  const locaisWizard = (locaisExistentes ?? []).map((local) => {
+    const cfg = parseJsonRecord(local.venue_config_json);
+    return {
+      id: local.id,
+      nome_publico: local.nome_publico,
+      localizacao: local.localizacao,
+      logo_arquivo: resolveEspacoPublicAssetUrl(supabase, local.logo_arquivo),
+      endereco: String(cfg.endereco ?? ""),
+      numero: String(cfg.numero ?? ""),
+      bairro: String(cfg.bairro ?? ""),
+      cidade: String(cfg.cidade ?? local.cidade ?? ""),
+      estado: String(cfg.estado ?? local.uf ?? ""),
+      cep: String(cfg.cep ?? ""),
+      complemento: String(cfg.complemento ?? ""),
+    };
+  });
 
   return (
     <EspacoOnboardingWizard
@@ -144,6 +167,7 @@ export default async function EspacoOnboardingPage() {
         instagram_url: selectedSpace.instagram_url,
       }}
       esportes={(esportes ?? []) as Array<{ id: number; nome: string }>}
+      locaisExistentes={locaisWizard}
       unidades={unidadesWizard as Array<{
         id: number; nome: string; tipo_unidade: string;
         superficie: string | null; esporte_id: number | null; modalidade: string | null;

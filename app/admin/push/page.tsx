@@ -49,6 +49,17 @@ function endpointHost(endpoint: string | null | undefined) {
   }
 }
 
+function formatAdminDateTime(iso: string | null | undefined) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    dateStyle: "short",
+    timeStyle: "medium",
+  })} BRT`;
+}
+
 export default async function AdminPushPage() {
   const serviceRole = hasServiceRoleConfig();
   const vapidParOk = isPushDispatchConfigured();
@@ -252,7 +263,7 @@ export default async function AdminPushPage() {
                       </td>
                       <td className="py-2 pr-3 font-mono text-[11px] text-eid-text-secondary">{s.endpointHost}</td>
                       <td className="py-2 pr-3 text-eid-text-secondary">
-                        {s.atualizadoEm ? new Date(s.atualizadoEm).toLocaleString("pt-BR") : "-"}
+                        {formatAdminDateTime(s.atualizadoEm) || "-"}
                       </td>
                     </tr>
                   ))
@@ -368,7 +379,7 @@ export default async function AdminPushPage() {
                 </p>
                 {f.erro ? <p className="mt-1 text-[10px] text-rose-200">{f.erro}</p> : null}
                 {f.atualizadoEm ? (
-                  <p className="mt-1 text-[10px] text-eid-text-muted">{new Date(f.atualizadoEm).toLocaleString("pt-BR")}</p>
+                  <p className="mt-1 text-[10px] text-eid-text-muted">{formatAdminDateTime(f.atualizadoEm)}</p>
                 ) : null}
               </li>
             ))}

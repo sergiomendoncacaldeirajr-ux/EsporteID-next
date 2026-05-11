@@ -49,13 +49,13 @@ export function PwaBootstrap() {
         void reg.update().catch(() => {
           // best-effort: o navegador também atualiza sozinho.
         });
-        void syncExistingPushSubscription().catch(() => {
+        void syncExistingPushSubscription(vapidPublicKey).catch(() => {
           // best-effort silencioso: o usuário pode reativar no toggle se necessário.
         });
         runPushSync();
       });
     });
-  }, [runPushSync]);
+  }, [runPushSync, vapidPublicKey]);
 
   useEffect(() => {
     let hiddenAt: number | null = null;

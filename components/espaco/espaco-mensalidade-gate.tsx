@@ -63,7 +63,7 @@ export function EspacoMensalidadeGate({ state, children }: { state: MensalidadeP
     <>
       {state.nivel === "inativo_agenda" && !onAgenda ? (
         <div className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-50">
-          <p className="font-semibold">Ativação da grade</p>
+          <p className="font-semibold">Publicação pendente</p>
           <p className="mt-1 text-amber-100/90">{state.mensagem}</p>
         </div>
       ) : null}

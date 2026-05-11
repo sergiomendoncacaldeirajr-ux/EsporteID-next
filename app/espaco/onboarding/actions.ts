@@ -206,6 +206,7 @@ export async function salvarPerfilWizardAction(
     const uf = field(formData, "uf").toUpperCase();
     const endereco = field(formData, "endereco");
     const numero = field(formData, "numero");
+    const espacoIdReivindicado = Number(formData.get("espaco_id_reivindicado") ?? 0) || null;
     const esportesIds = intList(formData, "esportes_ids");
     if (cidade.length < 2 || uf.length < 2) throw new Error("Informe cidade e UF do espaço.");
     if (endereco.length < 3 || numero.length < 1) throw new Error("Informe endereço completo com número.");
@@ -219,7 +220,10 @@ export async function salvarPerfilWizardAction(
       .eq("slug", slugBase)
       .neq("id", espacoId)
       .maybeSingle();
-    const slugFinal = existing ? `${slugBase}-${espacoId}` : slugBase;
+    if (existing?.id && !espacoIdReivindicado) {
+      throw new Error("Este link público já está em uso. Escolha outro nome para o link.");
+    }
+    const slugFinal = existing?.id ? `${slugBase}-${espacoId}` : slugBase;
     const logoFile = formData.get("logo_file");
     const coverFile = formData.get("cover_file");
     const logoArquivo =
@@ -267,6 +271,27 @@ export async function salvarPerfilWizardAction(
       .update(updatePayload)
       .eq("id", espacoId);
     if (error) throw new Error(error.message);
+    if (espacoIdReivindicado) {
+      const { data: reivindicacaoExistente } = await supabase
+        .from("espaco_reivindicacoes")
+        .select("id")
+        .eq("espaco_generico_id", espacoIdReivindicado)
+        .eq("solicitante_id", user.id)
+        .eq("status", "pendente")
+        .maybeSingle();
+      if (!reivindicacaoExistente?.id) {
+        const { error: claimErr } = await supabase.from("espaco_reivindicacoes").insert({
+          espaco_generico_id: espacoIdReivindicado,
+          solicitante_id: user.id,
+          mensagem: "Solicitação de propriedade enviada pelo wizard de cadastro de espaço.",
+          status: "pendente",
+          revisado_por_usuario_id: null,
+          revisado_em: null,
+          observacoes_admin: null,
+        });
+        if (claimErr) throw new Error(claimErr.message);
+      }
+    }
     revalidatePath("/espaco");
     revalidatePath("/espaco/onboarding");
     return { ok: true, message: "Perfil salvo." };
