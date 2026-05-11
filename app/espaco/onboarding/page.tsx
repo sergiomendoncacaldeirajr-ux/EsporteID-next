@@ -59,20 +59,21 @@ export default async function EspacoOnboardingPage() {
     supabase.from("esportes").select("id, nome").order("nome"),
     supabase
       .from("espaco_unidades")
-      .select("id, nome, tipo_unidade, superficie, coberta, indoor, iluminacao, aceita_aulas, aceita_torneios, logo_arquivo, ativo")
+      .select("id, nome, tipo_unidade, superficie, esporte_id, modalidade, coberta, indoor, iluminacao, aceita_aulas, aceita_torneios, observacoes, logo_arquivo, modo_reserva, intervalo_minutos, configuracao_agenda_json, ativo")
       .eq("espaco_generico_id", selectedSpace.id)
       .eq("ativo", true)
       .order("id"),
     supabase
       .from("espaco_horarios_semanais")
-      .select("id, dia_semana, hora_inicio, hora_fim")
+      .select("id, espaco_unidade_id, dia_semana, hora_inicio, hora_fim, observacoes")
       .eq("espaco_generico_id", selectedSpace.id)
-      .is("espaco_unidade_id", null)
       .eq("ativo", true)
-      .order("dia_semana"),
+      .order("espaco_unidade_id", { nullsFirst: true })
+      .order("dia_semana")
+      .order("hora_inicio"),
     supabase
       .from("espaco_feriados_personalizados")
-      .select("id, nome, data_inicio, data_fim, operar_no_feriado, recorrente_anual")
+      .select("id, nome, data_inicio, data_fim, operar_no_feriado, recorrente_anual, hora_inicio, hora_fim, sobrepor_grade")
       .eq("espaco_generico_id", selectedSpace.id)
       .gte("data_fim", new Date().toISOString().slice(0, 10))
       .order("data_inicio")
@@ -145,9 +146,11 @@ export default async function EspacoOnboardingPage() {
       esportes={(esportes ?? []) as Array<{ id: number; nome: string }>}
       unidades={unidadesWizard as Array<{
         id: number; nome: string; tipo_unidade: string;
-        superficie: string | null; coberta: boolean; indoor: boolean;
-        iluminacao: boolean; aceita_aulas: boolean; aceita_torneios: boolean;
-        logo_arquivo: string | null;
+        superficie: string | null; esporte_id: number | null; modalidade: string | null;
+        coberta: boolean; indoor: boolean; iluminacao: boolean;
+        aceita_aulas: boolean; aceita_torneios: boolean; observacoes: string | null;
+        logo_arquivo: string | null; modo_reserva: string | null; intervalo_minutos: number | null;
+        configuracao_agenda_json: unknown;
       }>}
       unidadeGate={unidadeGate}
       planosPaaS={(planosPaaS ?? []) as Array<{
@@ -159,11 +162,13 @@ export default async function EspacoOnboardingPage() {
         socios_mensal_modo: string | null;
       }>}
       horarios={(horarios ?? []) as Array<{
-        id: number; dia_semana: number; hora_inicio: string; hora_fim: string;
+        id: number; espaco_unidade_id: number | null; dia_semana: number;
+        hora_inicio: string; hora_fim: string; observacoes: string | null;
       }>}
       feriados={(feriados ?? []) as Array<{
         id: number; nome: string | null; data_inicio: string; data_fim: string;
         operar_no_feriado: boolean; recorrente_anual: boolean | null;
+        hora_inicio: string | null; hora_fim: string | null; sobrepor_grade: boolean | null;
       }>}
       planos={(planos ?? []) as Array<{
         id: number; nome: string; mensalidade_centavos: number;

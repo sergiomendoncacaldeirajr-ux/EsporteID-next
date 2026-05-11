@@ -9,8 +9,10 @@ import {
   Users,
   Users2,
 } from "lucide-react";
+import Link from "next/link";
 import { adminDispararPushTesteParaUsuario, adminMarcarAlertaLido } from "@/app/admin/actions";
 import { AdminPushUsuarioPicker } from "@/components/admin/admin-push-usuario-picker";
+import { ADMIN_NAV_LINKS } from "@/lib/admin/nav-links";
 import { isPushDispatchConfigured } from "@/lib/pwa/push-dispatch";
 import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
@@ -57,90 +59,108 @@ const STAT_CARDS = [
     label: "Perfis",
     href: "/admin/usuarios",
     Icon: Users,
-    colorBg: "bg-blue-500/10",
-    colorBorder: "border-blue-500/20",
-    colorIcon: "text-blue-400",
-    colorHover: "hover:border-blue-500/35",
+    colorBg: "bg-eid-primary-500/10",
+    colorBorder: "border-eid-primary-500/20",
+    colorIcon: "text-eid-primary-300",
+    colorHover: "hover:border-eid-primary-500/35",
   },
   {
     key: "torneios",
     label: "Torneios",
     href: "/admin/torneios",
     Icon: Calendar,
-    colorBg: "bg-purple-500/10",
-    colorBorder: "border-purple-500/20",
-    colorIcon: "text-purple-400",
-    colorHover: "hover:border-purple-500/35",
+    colorBg: "bg-eid-info-500/10",
+    colorBorder: "border-eid-info-500/20",
+    colorIcon: "text-eid-info-400",
+    colorHover: "hover:border-eid-info-500/35",
   },
   {
     key: "times",
     label: "Equipes",
     href: "/admin/equipes",
     Icon: Users2,
-    colorBg: "bg-emerald-500/10",
-    colorBorder: "border-emerald-500/20",
-    colorIcon: "text-emerald-400",
-    colorHover: "hover:border-emerald-500/35",
+    colorBg: "bg-eid-success-500/10",
+    colorBorder: "border-eid-success-500/20",
+    colorIcon: "text-eid-success-400",
+    colorHover: "hover:border-eid-success-500/35",
   },
   {
     key: "espacos",
     label: "Locais",
     href: "/admin/locais",
     Icon: MapPin,
-    colorBg: "bg-orange-500/10",
-    colorBorder: "border-orange-500/20",
-    colorIcon: "text-orange-400",
-    colorHover: "hover:border-orange-500/35",
+    colorBg: "bg-eid-action-500/10",
+    colorBorder: "border-eid-action-500/20",
+    colorIcon: "text-eid-action-400",
+    colorHover: "hover:border-eid-action-500/35",
   },
   {
     key: "partidas",
     label: "Partidas",
     href: "/admin/partidas",
     Icon: Swords,
-    colorBg: "bg-indigo-500/10",
-    colorBorder: "border-indigo-500/20",
-    colorIcon: "text-indigo-400",
-    colorHover: "hover:border-indigo-500/35",
+    colorBg: "bg-eid-primary-700/15",
+    colorBorder: "border-eid-primary-500/20",
+    colorIcon: "text-eid-primary-400",
+    colorHover: "hover:border-eid-primary-500/35",
   },
   {
     key: "matches",
     label: "Pedidos",
     href: "/admin/matches",
     Icon: Target,
-    colorBg: "bg-amber-500/10",
-    colorBorder: "border-amber-500/20",
-    colorIcon: "text-amber-400",
-    colorHover: "hover:border-amber-500/35",
+    colorBg: "bg-eid-warning-500/10",
+    colorBorder: "border-eid-warning-500/20",
+    colorIcon: "text-eid-warning-400",
+    colorHover: "hover:border-eid-warning-500/35",
   },
   {
     key: "denuncias",
     label: "Denúncias",
     href: "/admin/denuncias",
     Icon: Flag,
-    colorBg: "bg-rose-500/10",
-    colorBorder: "border-rose-500/20",
-    colorIcon: "text-rose-400",
-    colorHover: "hover:border-rose-500/35",
+    colorBg: "bg-eid-danger-500/10",
+    colorBorder: "border-eid-danger-500/20",
+    colorIcon: "text-eid-danger-400",
+    colorHover: "hover:border-eid-danger-500/35",
   },
   {
     key: "social_ops",
     label: "Notificações",
     href: "/admin/operacoes-sociais",
     Icon: Bell,
-    colorBg: "bg-teal-500/10",
-    colorBorder: "border-teal-500/20",
-    colorIcon: "text-teal-400",
-    colorHover: "hover:border-teal-500/35",
+    colorBg: "bg-eid-info-500/10",
+    colorBorder: "border-eid-info-500/20",
+    colorIcon: "text-eid-info-400",
+    colorHover: "hover:border-eid-info-500/35",
   },
   {
     key: "eids",
     label: "EIDs",
     href: "/admin/eid",
     Icon: Activity,
-    colorBg: "bg-cyan-500/10",
-    colorBorder: "border-cyan-500/20",
-    colorIcon: "text-cyan-400",
-    colorHover: "hover:border-cyan-500/35",
+    colorBg: "bg-eid-primary-500/10",
+    colorBorder: "border-eid-primary-500/20",
+    colorIcon: "text-eid-primary-300",
+    colorHover: "hover:border-eid-primary-500/35",
+  },
+] as const;
+
+const MANAGEMENT_SECTIONS = [
+  {
+    title: "Operação diária",
+    description: "Fila de suporte, denúncias, partidas e pedidos de desafio.",
+    links: ["/admin/suporte", "/admin/denuncias", "/admin/partidas", "/admin/matches"],
+  },
+  {
+    title: "Cadastros centrais",
+    description: "Usuários, locais, esportes, equipes, professores e torneios.",
+    links: ["/admin/usuarios", "/admin/locais", "/admin/esportes", "/admin/equipes", "/admin/professor", "/admin/torneios"],
+  },
+  {
+    title: "Configuração da plataforma",
+    description: "Financeiro, integrações, regras, EID e funcionalidades liberadas.",
+    links: ["/admin/financeiro", "/admin/integracoes-pagamento", "/admin/regras", "/admin/eid", "/admin/funcionalidades-do-app"],
   },
 ] as const;
 
@@ -269,14 +289,30 @@ export default async function AdminHomePage({ searchParams }: Props) {
   }
 
   const hoje = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const navByHref = new Map(ADMIN_NAV_LINKS.map((link) => [link.href, link]));
 
   return (
     <div className="space-y-6">
-      {/* Page header */}
+      <div className="eid-admin-card overflow-hidden p-5 md:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-eid-action-400">Painel Admin</p>
+            <h2 className="mt-1 text-2xl font-black text-eid-fg">Gestão completa da plataforma</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-eid-text-secondary">
+              Centralize operação, moderação, cadastros, financeiro, regras e diagnósticos técnicos do EsporteID.
+            </p>
+          </div>
+          <div className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/55 px-3 py-2 text-right">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-eid-text-muted">Hoje</p>
+            <p className="mt-0.5 text-xs capitalize text-eid-fg">{hoje}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold text-eid-fg">Visão Geral</h2>
-          <p className="mt-0.5 text-[12px] capitalize text-eid-text-secondary">{hoje}</p>
+          <h2 className="text-xl font-bold text-eid-fg">Saúde operacional</h2>
+          <p className="mt-0.5 text-[12px] text-eid-text-secondary">Métricas principais e filas que pedem atenção.</p>
         </div>
       </div>
 
@@ -323,10 +359,10 @@ export default async function AdminHomePage({ searchParams }: Props) {
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {STAT_CARDS.map(({ key, label, href, Icon, colorBg, colorBorder, colorIcon, colorHover }) => (
-          <a
+          <Link
             key={key}
             href={href}
-            className={`group flex items-center gap-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 shadow-sm transition hover:shadow-md ${colorHover}`}
+            className={`group flex items-center gap-3 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 shadow-sm transition hover:shadow-md ${colorHover}`}
           >
             <div
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${colorBorder} ${colorBg}`}
@@ -341,9 +377,44 @@ export default async function AdminHomePage({ searchParams }: Props) {
                 {label}
               </p>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
+
+      <section>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-eid-fg">Mapa de gestão</h3>
+            <p className="mt-0.5 text-xs text-eid-text-secondary">Atalhos organizados por tipo de responsabilidade.</p>
+          </div>
+          <span className="rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 px-2.5 py-1 text-[10px] font-black text-eid-primary-200">
+            {ADMIN_NAV_LINKS.length} áreas
+          </span>
+        </div>
+        <div className="grid gap-3 lg:grid-cols-3">
+          {MANAGEMENT_SECTIONS.map((section) => (
+            <article key={section.title} className="eid-admin-card p-4">
+              <h4 className="text-sm font-black text-eid-fg">{section.title}</h4>
+              <p className="mt-1 min-h-10 text-xs leading-relaxed text-eid-text-secondary">{section.description}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {section.links.map((href) => {
+                  const item = navByHref.get(href);
+                  if (!item) return null;
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      className="rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-2.5 py-1.5 text-[11px] font-bold text-eid-text-secondary transition hover:border-eid-primary-500/35 hover:text-eid-fg"
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
       {/* Admin alerts */}
       {alertas.length > 0 && (
@@ -422,13 +493,13 @@ export default async function AdminHomePage({ searchParams }: Props) {
             { href: "/admin/eid", label: "Auditoria EID" },
             { href: "/admin/financeiro", label: "Parâmetros financeiros" },
           ].map((l) => (
-            <a
+            <Link
               key={l.href}
               href={l.href}
               className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/60 px-3 py-2.5 text-[12px] font-semibold text-eid-text-secondary transition hover:border-eid-primary-500/30 hover:bg-eid-card hover:text-eid-fg"
             >
               {l.label}
-            </a>
+            </Link>
           ))}
         </div>
       </section>

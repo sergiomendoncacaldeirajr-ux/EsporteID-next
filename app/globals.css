@@ -2909,3 +2909,127 @@ a.eid-list-item:hover, button.eid-list-item:hover {
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* ─── Admin: camada visual comum, escopada ───────────────────────────────── */
+[data-eid-admin] {
+  --eid-admin-panel: color-mix(in srgb, var(--eid-card) 82%, var(--eid-bg) 18%);
+  --eid-admin-panel-soft: color-mix(in srgb, var(--eid-surface) 72%, transparent);
+}
+
+[data-eid-admin] h1,
+[data-eid-admin] h2 {
+  letter-spacing: 0;
+}
+
+[data-eid-admin] h2:first-child {
+  font-size: clamp(1.25rem, 1.2rem + 0.35vw, 1.7rem);
+  line-height: 1.15;
+  font-weight: 900;
+}
+
+[data-eid-admin] section > h2:first-child,
+[data-eid-admin] section > div:first-child > h2:first-child,
+[data-eid-admin] h3 {
+  letter-spacing: 0;
+}
+
+[data-eid-admin] table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+[data-eid-admin] thead {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--eid-primary-500) 8%, transparent), transparent),
+    var(--eid-admin-panel-soft);
+}
+
+[data-eid-admin] th {
+  white-space: nowrap;
+  color: var(--eid-text-muted);
+  letter-spacing: 0.075em;
+}
+
+[data-eid-admin] tbody tr {
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+[data-eid-admin] tbody tr:hover {
+  background-color: color-mix(in srgb, var(--eid-primary-500) 6%, transparent);
+}
+
+[data-eid-admin] td {
+  vertical-align: middle;
+}
+
+[data-eid-admin] input:not([type="checkbox"]):not([type="radio"]),
+[data-eid-admin] select,
+[data-eid-admin] textarea,
+[data-eid-admin] .eid-input-dark {
+  border-color: var(--eid-border-subtle);
+  background-color: color-mix(in srgb, var(--eid-field-bg) 78%, transparent);
+  color: var(--eid-fg);
+  outline: none;
+}
+
+[data-eid-admin] input:not([type="checkbox"]):not([type="radio"]):focus,
+[data-eid-admin] select:focus,
+[data-eid-admin] textarea:focus,
+[data-eid-admin] .eid-input-dark:focus {
+  border-color: color-mix(in srgb, var(--eid-primary-500) 58%, var(--eid-border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--eid-primary-500) 16%, transparent);
+}
+
+[data-eid-admin] button[type="submit"],
+[data-eid-admin] a[href^="/admin"] {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+[data-eid-admin] button[type="submit"] {
+  min-height: 2rem;
+}
+
+.eid-admin-card {
+  border: 1px solid var(--eid-border-subtle);
+  border-radius: var(--eid-radius-md);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--eid-primary-500) 5%, transparent), transparent 46%),
+    var(--eid-admin-panel);
+  box-shadow: 0 14px 36px -28px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+.eid-admin-kpi {
+  border: 1px solid var(--eid-border-subtle);
+  border-radius: var(--eid-radius-md);
+  background:
+    linear-gradient(155deg, color-mix(in srgb, var(--eid-primary-500) 8%, transparent), transparent 48%),
+    color-mix(in srgb, var(--eid-card) 88%, var(--eid-bg) 12%);
+  box-shadow: 0 10px 26px -22px rgba(0, 0, 0, 0.72);
+}
+
+.eid-admin-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: var(--eid-radius-md);
+  border: 1px solid color-mix(in srgb, var(--eid-action-500) 45%, transparent);
+  background: color-mix(in srgb, var(--eid-action-500) 16%, transparent);
+  color: color-mix(in srgb, var(--eid-action-400) 72%, var(--eid-fg) 28%);
+  padding: 0.5rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.eid-admin-action:hover {
+  border-color: color-mix(in srgb, var(--eid-action-500) 68%, transparent);
+  background: color-mix(in srgb, var(--eid-action-500) 22%, transparent);
+  color: var(--eid-fg);
+}
+
+[data-eid-theme="light"] [data-eid-admin] {
+  --eid-admin-panel: var(--eid-card);
+  --eid-admin-panel-soft: var(--eid-surface);
+}

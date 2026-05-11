@@ -44,6 +44,43 @@ function intList(formData: FormData, key: string) {
   return out;
 }
 
+function clampIntervalMinutes(value: FormDataEntryValue | null) {
+  const minutes = Number(value ?? 60) || 60;
+  return Math.min(360, Math.max(15, Math.round(minutes)));
+}
+
+function validModoReservaUnidade(value: string) {
+  return ["herdar", "gratuita", "paga", "mista"].includes(value) ? value : "herdar";
+}
+
+function timeToMinutes(value: string) {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+  return hours * 60 + minutes;
+}
+
+function minutesToTime(minutes: number) {
+  const hours = Math.floor(minutes / 60).toString().padStart(2, "0");
+  const mins = (minutes % 60).toString().padStart(2, "0");
+  return `${hours}:${mins}`;
+}
+
+function readSpecificSlots(raw: string) {
+  const slots: Array<{ inicio: string; fim: string }> = [];
+  for (const part of raw.split(/[\n,;]+/)) {
+    const match = part.trim().match(/^(\d{2}:\d{2})\s*(?:-|às|as|a)\s*(\d{2}:\d{2})$/i);
+    if (!match) continue;
+    const inicioMin = timeToMinutes(match[1]);
+    const fimMin = timeToMinutes(match[2]);
+    if (inicioMin == null || fimMin == null || fimMin <= inicioMin) continue;
+    slots.push({ inicio: match[1], fim: match[2] });
+  }
+  return slots;
+}
+
 function normalizeWebsiteUrl(raw: string) {
   const value = raw.trim();
   if (!value) return "";
@@ -264,6 +301,8 @@ export async function criarUnidadeWizardAction(
       nome,
       tipo_unidade: field(formData, "tipo_unidade") || "quadra",
       superficie: field(formData, "superficie") || null,
+      esporte_id: Number(formData.get("esporte_id") || 0) || null,
+      modalidade: field(formData, "modalidade") || null,
       coberta: bool(formData, "coberta"),
       indoor: bool(formData, "indoor"),
       iluminacao: bool(formData, "iluminacao"),
@@ -272,6 +311,13 @@ export async function criarUnidadeWizardAction(
       aceita_torneios: bool(formData, "aceita_torneios"),
       observacoes: field(formData, "observacoes") || null,
       logo_arquivo: logoArquivo,
+      modo_reserva: validModoReservaUnidade(field(formData, "modo_reserva_unidade")),
+      intervalo_minutos: clampIntervalMinutes(formData.get("intervalo_minutos")),
+      configuracao_agenda_json: {
+        modo: field(formData, "agenda_modo") === "especificos" ? "especificos" : "convencional",
+        horarioPadraoInicio: field(formData, "horario_padrao_inicio") || "08:00",
+        horarioPadraoFim: field(formData, "horario_padrao_fim") || "22:00",
+      },
       status_operacao: "ativa",
       ativo: true,
     };
@@ -362,7 +408,7 @@ export async function escolherPlanoPlataformaWizardAction(
   }
 }
 
-// ── Step 4 — horários semanais globais ─────────────────────────────────────
+// ── Step 4 — horários semanais por unidade ─────────────────────────────────
 export async function salvarGradeWizardAction(
   _prev: State | undefined,
   formData: FormData
@@ -370,38 +416,75 @@ export async function salvarGradeWizardAction(
   try {
     const espacoId = Number(formData.get("espaco_id") ?? 0);
     const { supabase } = await requireWizardManager(espacoId);
-    // Limpa grade global existente
+    const unidadeIds = formData
+      .getAll("unidade_id")
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value > 0);
+    if (unidadeIds.length === 0) {
+      throw new Error("Cadastre pelo menos uma quadra antes de configurar horários.");
+    }
+
+    const { data: unidades } = await supabase
+      .from("espaco_unidades")
+      .select("id")
+      .eq("espaco_generico_id", espacoId)
+      .eq("ativo", true)
+      .in("id", unidadeIds);
+    const idsPermitidos = new Set((unidades ?? []).map((unidade) => Number(unidade.id)));
+    if (idsPermitidos.size === 0) throw new Error("Nenhuma quadra válida foi encontrada.");
+
     await supabase
       .from("espaco_horarios_semanais")
       .delete()
-      .eq("espaco_generico_id", espacoId)
-      .is("espaco_unidade_id", null);
+      .eq("espaco_generico_id", espacoId);
 
     const inserts: Array<Record<string, unknown>> = [];
-    // 0=Dom, 1=Seg, ..., 6=Sáb
-    for (let dia = 0; dia <= 6; dia++) {
-      if (formData.get(`dia_${dia}_aberto`) !== "on") continue;
-      const inicio = field(formData, `dia_${dia}_inicio`);
-      const fim = field(formData, `dia_${dia}_fim`);
-      if (!inicio || !fim || fim <= inicio) continue;
-      inserts.push({
-        espaco_generico_id: espacoId,
-        espaco_unidade_id: null,
-        dia_semana: dia,
-        hora_inicio: inicio,
-        hora_fim: fim,
-        ativo: true,
-      });
+    for (const unidadeId of unidadeIds) {
+      if (!idsPermitidos.has(unidadeId)) continue;
+      const modo = field(formData, `unidade_${unidadeId}_modo`) === "especificos" ? "especificos" : "convencional";
+      const intervalo = clampIntervalMinutes(formData.get(`unidade_${unidadeId}_intervalo`));
+      for (let dia = 0; dia <= 6; dia++) {
+        if (formData.get(`unidade_${unidadeId}_dia_${dia}_aberto`) !== "on") continue;
+        if (modo === "especificos") {
+          for (const slot of readSpecificSlots(field(formData, `unidade_${unidadeId}_dia_${dia}_slots`))) {
+            inserts.push({
+              espaco_generico_id: espacoId,
+              espaco_unidade_id: unidadeId,
+              dia_semana: dia,
+              hora_inicio: slot.inicio,
+              hora_fim: slot.fim,
+              ativo: true,
+              observacoes: "Horário específico criado no wizard.",
+            });
+          }
+          continue;
+        }
+
+        const inicioMin = timeToMinutes(field(formData, `unidade_${unidadeId}_dia_${dia}_inicio`));
+        const fimMin = timeToMinutes(field(formData, `unidade_${unidadeId}_dia_${dia}_fim`));
+        if (inicioMin == null || fimMin == null || fimMin <= inicioMin) continue;
+        for (let cursor = inicioMin; cursor + intervalo <= fimMin; cursor += intervalo) {
+          inserts.push({
+            espaco_generico_id: espacoId,
+            espaco_unidade_id: unidadeId,
+            dia_semana: dia,
+            hora_inicio: minutesToTime(cursor),
+            hora_fim: minutesToTime(cursor + intervalo),
+            ativo: true,
+            observacoes: `Horário gerado no wizard (${intervalo} min).`,
+          });
+        }
+      }
     }
     if (inserts.length === 0)
-      throw new Error("Selecione pelo menos um dia de funcionamento.");
+      throw new Error("Configure pelo menos um horário válido para uma quadra.");
     const { error } = await supabase
       .from("espaco_horarios_semanais")
       .insert(inserts);
     if (error) throw new Error(error.message);
     revalidatePath("/espaco/onboarding");
     revalidatePath("/espaco/agenda");
-    return { ok: true, message: `Horários salvos (${inserts.length} dia(s)).` };
+    return { ok: true, message: `Horários salvos (${inserts.length} janela(s) de reserva).` };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Erro ao salvar horários." };
   }
@@ -475,10 +558,25 @@ export async function toggleFeriadoWizardAction(formData: FormData): Promise<voi
   const espacoId = Number(formData.get("espaco_id") ?? 0);
   const feriadoId = Number(formData.get("feriado_id") ?? 0);
   const operar = formData.get("operar") === "true";
+  const horaInicio = field(formData, "hora_inicio") || null;
+  const horaFim = field(formData, "hora_fim") || null;
   const { supabase } = await requireWizardManager(espacoId);
+  const updatePayload = operar
+    ? {
+        operar_no_feriado: true,
+        sobrepor_grade: true,
+        hora_inicio: horaInicio,
+        hora_fim: horaFim,
+      }
+    : {
+        operar_no_feriado: false,
+        sobrepor_grade: true,
+        hora_inicio: null,
+        hora_fim: null,
+      };
   await supabase
     .from("espaco_feriados_personalizados")
-    .update({ operar_no_feriado: operar })
+    .update(updatePayload)
     .eq("id", feriadoId)
     .eq("espaco_generico_id", espacoId);
   revalidatePath("/espaco/onboarding");

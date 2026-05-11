@@ -8,6 +8,7 @@ import {
   Calendar,
   CreditCard,
   DollarSign,
+  ExternalLink,
   Flag,
   GraduationCap,
   Headset,
@@ -110,25 +111,40 @@ function SidebarContent({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Logo */}
-      <div className="flex shrink-0 items-center gap-3 border-b border-[color:var(--eid-border-subtle)] px-4 py-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/15 text-sm font-black text-eid-primary-300">
-          A
+      <div className="shrink-0 border-b border-[color:var(--eid-border-subtle)] px-4 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-eid-primary-500/35 bg-eid-primary-500/15 text-sm font-black text-eid-primary-300 shadow-[0_0_24px_-12px_var(--eid-primary-500)]">
+            EID
+          </div>
+          <div className="min-w-0">
+            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-eid-action-400">Admin</p>
+            <p className="truncate text-sm font-bold leading-tight text-eid-fg">EsporteID</p>
+          </div>
         </div>
-        <div>
-          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-eid-action-500">Admin</p>
-          <p className="text-sm font-bold leading-tight text-eid-fg">EsporteID</p>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
+          <span className="rounded-lg border border-eid-primary-500/25 bg-eid-primary-500/10 px-2 py-1 font-semibold text-eid-primary-200">
+            Gestão
+          </span>
+          <span
+            className={`rounded-lg border px-2 py-1 font-semibold ${
+              hasServiceRole
+                ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-200"
+                : "border-amber-500/30 bg-amber-500/10 text-amber-200"
+            }`}
+          >
+            {hasServiceRole ? "Service OK" : "Limitado"}
+          </span>
         </div>
       </div>
 
-      {/* Voltar ao app */}
       <div className="shrink-0 border-b border-[color:var(--eid-border-subtle)] px-3 py-2">
         <Link
           href="/dashboard"
-          className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-eid-text-secondary transition hover:bg-eid-bg hover:text-eid-fg"
+          className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-eid-text-secondary transition hover:bg-eid-bg hover:text-eid-fg"
           onClick={onClose}
         >
-          <span aria-hidden>←</span> Voltar ao app
+          <span>Voltar ao app</span>
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </div>
 
@@ -143,15 +159,14 @@ function SidebarContent({
         </div>
       )}
 
-      {/* Navigation */}
       <nav
-        className="min-h-0 flex-1 overflow-y-auto px-2 py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="min-h-0 flex-1 overflow-y-auto px-2.5 py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         aria-label="Seções do admin"
       >
         {NAV_GROUPS.map((group, gi) => (
-          <div key={gi} className={gi > 0 ? "mt-3 border-t border-[color:var(--eid-border-subtle)] pt-3" : ""}>
+          <div key={gi} className={gi > 0 ? "mt-4 border-t border-[color:var(--eid-border-subtle)] pt-3" : ""}>
             {group.label && (
-              <p className="mb-1.5 px-2.5 text-[9px] font-bold uppercase tracking-[0.15em] text-eid-text-muted">
+              <p className="mb-1.5 px-2.5 text-[9px] font-bold uppercase tracking-[0.16em] text-eid-text-muted">
                 {group.label}
               </p>
             )}
@@ -163,12 +178,12 @@ function SidebarContent({
                     <Link
                       href={item.href}
                       onClick={onClose}
-                      className={`flex items-center gap-2.5 rounded-xl px-2.5 py-[7px] text-[11.5px] transition ${
+                      className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[12px] transition ${
                         item.indent ? "ml-3" : ""
                       } ${
                         active
-                          ? "bg-eid-primary-500/15 font-semibold text-eid-fg"
-                          : "font-medium text-eid-text-secondary hover:bg-eid-card hover:text-eid-fg"
+                          ? "border border-eid-primary-500/25 bg-eid-primary-500/15 font-semibold text-eid-fg shadow-[inset_3px_0_0_var(--eid-primary-500)]"
+                          : "border border-transparent font-medium text-eid-text-secondary hover:border-[color:var(--eid-border-subtle)] hover:bg-eid-card/70 hover:text-eid-fg"
                       }`}
                     >
                       <item.Icon
@@ -177,9 +192,6 @@ function SidebarContent({
                         aria-hidden
                       />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                      {active && (
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-eid-primary-400" aria-hidden />
-                      )}
                     </Link>
                   </li>
                 );
@@ -189,9 +201,9 @@ function SidebarContent({
         ))}
       </nav>
 
-      {/* Footer */}
       <div className="shrink-0 border-t border-[color:var(--eid-border-subtle)] px-4 py-3">
-        <p className="text-[10px] text-eid-text-muted">EsporteID · Painel Admin</p>
+        <p className="text-[10px] font-semibold text-eid-text-muted">Painel administrativo</p>
+        <p className="mt-0.5 text-[9px] text-eid-text-muted/80">Operação, moderação e plataforma</p>
       </div>
     </div>
   );
@@ -204,7 +216,7 @@ export function AdminSidebar({ hasServiceRole }: { hasServiceRole: boolean }) {
   return (
     <>
       {/* Desktop sidebar — always visible on md+ */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-56 border-r border-[color:var(--eid-border-subtle)] bg-eid-card/90 md:flex md:flex-col">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-68 border-r border-[color:var(--eid-border-subtle)] bg-eid-card/90 shadow-2xl shadow-black/20 backdrop-blur md:flex md:flex-col">
         <SidebarContent hasServiceRole={hasServiceRole} pathname={pathname} />
       </aside>
 
@@ -221,7 +233,7 @@ export function AdminSidebar({ hasServiceRole }: { hasServiceRole: boolean }) {
       {/* Mobile drawer */}
       <aside
         aria-label="Menu admin"
-        className={`fixed inset-y-0 left-0 z-50 flex w-56 flex-col border-r border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl shadow-black/40 transition-transform duration-200 md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[86vw] flex-col border-r border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl shadow-black/40 transition-transform duration-200 md:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -240,8 +252,7 @@ export function AdminSidebar({ hasServiceRole }: { hasServiceRole: boolean }) {
         />
       </aside>
 
-      {/* Mobile top bar */}
-      <header className="fixed left-0 right-0 top-0 z-30 flex h-12 items-center gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-bg/95 px-3 backdrop-blur-sm md:hidden">
+      <header className="fixed left-0 right-0 top-0 z-30 flex h-14 items-center gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-bg/95 px-3 backdrop-blur-sm md:hidden">
         <button
           type="button"
           aria-label="Abrir menu"
@@ -251,8 +262,8 @@ export function AdminSidebar({ hasServiceRole }: { hasServiceRole: boolean }) {
           <Menu className="h-5 w-5" aria-hidden />
         </button>
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/15 text-[10px] font-black text-eid-primary-300">
-            A
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/15 text-[9px] font-black text-eid-primary-300">
+            EID
           </div>
           <span className="text-sm font-bold text-eid-fg">EsporteID Admin</span>
         </div>

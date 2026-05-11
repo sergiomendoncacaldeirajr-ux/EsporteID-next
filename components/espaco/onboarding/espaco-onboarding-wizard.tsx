@@ -76,16 +76,22 @@ type Space = {
 
 type Unidade = {
   id: number; nome: string; tipo_unidade: string;
-  superficie: string | null; coberta: boolean; indoor: boolean;
-  iluminacao: boolean; aceita_aulas: boolean; aceita_torneios: boolean;
-  logo_arquivo: string | null;
+  superficie: string | null; esporte_id: number | null; modalidade: string | null;
+  coberta: boolean; indoor: boolean; iluminacao: boolean;
+  aceita_aulas: boolean; aceita_torneios: boolean; observacoes: string | null;
+  logo_arquivo: string | null; modo_reserva: string | null; intervalo_minutos: number | null;
+  configuracao_agenda_json?: unknown;
 };
 
-type Horario = { id: number; dia_semana: number; hora_inicio: string; hora_fim: string };
+type Horario = {
+  id: number; espaco_unidade_id: number | null; dia_semana: number;
+  hora_inicio: string; hora_fim: string; observacoes: string | null;
+};
 
 type Feriado = {
   id: number; nome: string | null; data_inicio: string; data_fim: string;
   operar_no_feriado: boolean; recorrente_anual: boolean | null;
+  hora_inicio: string | null; hora_fim: string | null; sobrepor_grade: boolean | null;
 };
 
 type Plano = { id: number; nome: string; mensalidade_centavos: number };
@@ -150,6 +156,15 @@ const SUPERFICIES = [
   "madeira", "borracha", "agua", "areia", "outro",
 ];
 
+const MODOS_RESERVA_UNIDADE = [
+  { value: "herdar", label: "Seguir regra do espaço", desc: "Usa o modelo definido para o espaço inteiro.", Icon: ShieldCheck },
+  { value: "gratuita", label: "Só gratuitas", desc: "Apenas reservas sem cobrança para associados.", Icon: BadgeCheck },
+  { value: "paga", label: "Só pagas", desc: "Disponível apenas para reservas com cobrança.", Icon: CreditCard },
+  { value: "mista", label: "Mista", desc: "Aceita reservas gratuitas e pagas nessa quadra.", Icon: Wallet },
+];
+
+const INTERVALOS_RESERVA = [30, 45, 60, 90, 120];
+
 function superficieLabel(s: string) {
   const map: Record<string, string> = {
     saibro: "Saibro", grama_natural: "Grama natural", grama_sintetica: "Grama sintética",
@@ -157,6 +172,23 @@ function superficieLabel(s: string) {
     agua: "Água", areia: "Areia", outro: "Outro",
   };
   return map[s] ?? s;
+}
+
+function modoReservaUnidadeLabel(value: string | null | undefined) {
+  return MODOS_RESERVA_UNIDADE.find((modo) => modo.value === value)?.label ?? "Seguir regra do espaço";
+}
+
+function esporteNome(esportes: Array<{ id: number; nome: string }>, esporteId: number | null) {
+  return esportes.find((esporte) => esporte.id === esporteId)?.nome ?? null;
+}
+
+function horaCurta(value: string | null | undefined) {
+  return (value ?? "").slice(0, 5);
+}
+
+function agendaConfig(unidade: Unidade) {
+  const raw = unidade.configuracao_agenda_json;
+  return raw && typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
 }
 
 // ── Componentes auxiliares ─────────────────────────────────────────────────
@@ -744,8 +776,8 @@ function StepPerfil({ space, esportes, onNext, onBack }: {
   );
 }
 
-function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
-  space: Space; unidades: Unidade[]; unidadeGate: PaaSUnidadeGateInfo; onNext: () => void; onBack?: () => void;
+function StepUnidades({ space, esportes, unidades, unidadeGate, onNext, onBack }: {
+  space: Space; esportes: Array<{ id: number; nome: string }>; unidades: Unidade[]; unidadeGate: PaaSUnidadeGateInfo; onNext: () => void; onBack?: () => void;
 }) {
   const [showForm, setShowForm] = useState(unidades.length === 0);
   const [state, action, pending] = useActionState<ActionState, FormData>(criarUnidadeWizardAction, undefined);
@@ -774,7 +806,7 @@ function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
     <div className="space-y-5">
       <StepHeader
         title="Quadras e instalações"
-        subtitle="Cadastre as quadras, campos, pistas ou salas que poderão receber reservas e atividades."
+        subtitle="Cadastre cada quadra com imagem, modalidade, regra de reserva e padrão inicial de agenda."
       />
 
       <div className="rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/10 p-4">
@@ -827,10 +859,24 @@ function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
                   <p className="truncate text-sm font-black text-eid-fg">{u.nome}</p>
                   <p className="text-[11px] text-eid-text-secondary">
                     {u.tipo_unidade}{u.superficie ? ` · ${superficieLabel(u.superficie)}` : ""}
+                    {esporteNome(esportes, u.esporte_id) ? ` · ${esporteNome(esportes, u.esporte_id)}` : ""}
                     {u.coberta ? " · coberta" : ""}
                     {u.indoor ? " · indoor" : ""}
                     {u.iluminacao ? " · iluminada" : ""}
                   </p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="rounded-full border border-eid-primary-500/25 bg-eid-primary-500/8 px-2 py-0.5 text-[10px] font-bold text-eid-primary-300">
+                      {modoReservaUnidadeLabel(u.modo_reserva)}
+                    </span>
+                    <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[10px] font-semibold text-eid-text-secondary">
+                      Intervalo: {u.intervalo_minutos ?? 60} min
+                    </span>
+                    {u.modalidade ? (
+                      <span className="rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-0.5 text-[10px] font-semibold text-eid-text-secondary">
+                        {u.modalidade}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <form action={removeAction}>
                   <input type="hidden" name="espaco_id" value={space.id} />
@@ -867,11 +913,11 @@ function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
 
       {showForm && podeAdicionar ? (
         <form ref={formRef} action={action} encType="multipart/form-data" className="space-y-5 rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-4">
-          <SectionTitle Icon={LayoutGrid} title="Cadastrar nova quadra ou unidade" text="Preencha os dados que ajudam o atleta a escolher o lugar certo para reservar." />
+          <SectionTitle Icon={LayoutGrid} title="Cadastrar nova quadra ou unidade" text="Organize os dados para facilitar a reserva, a agenda e a aprovação do espaço." />
           <input type="hidden" name="espaco_id" value={space.id} />
 
           <div className="space-y-3">
-            <SectionTitle Icon={Type} title="Identificação" text="Use um nome curto e fácil de reconhecer na agenda." />
+            <SectionTitle Icon={Type} title="Identificação da quadra" text="Use um nome curto, claro e fácil de localizar na agenda." />
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>Nome da quadra *</Label>
@@ -890,6 +936,19 @@ function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
                   {SUPERFICIES.map((s) => <option key={s} value={s}>{superficieLabel(s)}</option>)}
                 </IconSelect>
               </div>
+              <div className="space-y-1.5">
+                <Label>Esporte principal</Label>
+                <IconSelect Icon={BadgeCheck} name="esporte_id" defaultValue={space.esportes_ids[0] ? String(space.esportes_ids[0]) : ""}>
+                  <option value="">Não informado</option>
+                  {esportes.map((esporte) => (
+                    <option key={esporte.id} value={esporte.id}>{esporte.nome}</option>
+                  ))}
+                </IconSelect>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Modalidade ou observação curta</Label>
+                <IconInput Icon={MessageSquareText} name="modalidade" placeholder="Ex.: Beach tennis, society, futsal" />
+              </div>
             </div>
           </div>
 
@@ -901,7 +960,56 @@ function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
           </div>
 
           <div className="space-y-3">
-            <SectionTitle Icon={ShieldCheck} title="Características" text="Marque somente o que descreve a estrutura física da quadra." />
+            <SectionTitle Icon={Wallet} title="Tipo de reserva desta quadra" text="Escolha se ela segue a regra do espaço ou tem uma operação própria." />
+            <div className="grid gap-2 sm:grid-cols-2">
+              {MODOS_RESERVA_UNIDADE.map(({ value, label, desc, Icon }) => (
+                <label key={value} className="group cursor-pointer rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3 transition has-[:checked]:border-eid-primary-500/60 has-[:checked]:bg-eid-primary-500/12">
+                  <input type="radio" name="modo_reserva_unidade" value={value} defaultChecked={value === "herdar"} className="sr-only" />
+                  <span className="flex items-start gap-2.5">
+                    <span className="rounded-lg bg-eid-primary-500/10 p-1.5 text-eid-primary-300">
+                      <Icon className="h-4 w-4" aria-hidden />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-black text-eid-fg">{label}</span>
+                      <span className="mt-0.5 block text-xs leading-relaxed text-eid-text-secondary">{desc}</span>
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle Icon={Clock} title="Agenda padrão" text="Defina como os horários serão montados na próxima etapa." />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Intervalo das reservas</Label>
+                <IconSelect Icon={Clock} name="intervalo_minutos" defaultValue="60">
+                  {INTERVALOS_RESERVA.map((minutos) => (
+                    <option key={minutos} value={minutos}>{minutos} minutos</option>
+                  ))}
+                </IconSelect>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Modo de configuração</Label>
+                <IconSelect Icon={LayoutGrid} name="agenda_modo" defaultValue="convencional">
+                  <option value="convencional">Horário convencional</option>
+                  <option value="especificos">Horários específicos</option>
+                </IconSelect>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Abertura padrão</Label>
+                <IconInput Icon={Clock} type="time" name="horario_padrao_inicio" defaultValue="08:00" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Fechamento padrão</Label>
+                <IconInput Icon={Clock} type="time" name="horario_padrao_fim" defaultValue="22:00" />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <SectionTitle Icon={ShieldCheck} title="Características da estrutura" text="Marque somente o que descreve a estrutura física da quadra." />
             <div className="grid gap-2 sm:grid-cols-3">
               <Toggle label="Coberta" name="coberta" Icon={ShieldCheck} />
               <Toggle label="Ambiente interno" name="indoor" Icon={Building2} />
@@ -910,7 +1018,7 @@ function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
           </div>
 
           <div className="space-y-3">
-            <SectionTitle Icon={BadgeCheck} title="Uso no aplicativo" text="Defina como essa unidade aparece nas atividades e reservas." />
+            <SectionTitle Icon={BadgeCheck} title="Uso no aplicativo" text="Defina se essa quadra também pode aparecer em aulas e torneios." />
             <div className="grid gap-2 sm:grid-cols-2">
               <Toggle label="Permite aulas" name="aceita_aulas" defaultChecked Icon={Users} />
               <Toggle label="Permite torneios" name="aceita_torneios" Icon={BadgeCheck} />
@@ -1154,106 +1262,201 @@ function StepPlanoPlataforma({
   );
 }
 
-function StepHorarios({ space, horarios, onNext, onBack }: {
-  space: Space; horarios: Horario[]; onNext: () => void; onBack?: () => void;
+function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
+  space: Space; unidades: Unidade[]; horarios: Horario[]; onNext: () => void; onBack?: () => void;
 }) {
-  const existingMap = Object.fromEntries(horarios.map((h) => [h.dia_semana, h]));
-  const defaultAbertos = horarios.length > 0
-    ? Object.fromEntries(horarios.map((h) => [h.dia_semana, true]))
-    : { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true };
-  const defaultInicio = Object.fromEntries(
-    Array.from({ length: 7 }, (_, i) => [i, existingMap[i]?.hora_inicio ?? "08:00"])
-  );
-  const defaultFim = Object.fromEntries(
-    Array.from({ length: 7 }, (_, i) => [i, existingMap[i]?.hora_fim ?? "22:00"])
-  );
+  const horariosPorUnidade = useMemo(() => {
+    const map = new Map<number, Map<number, Horario[]>>();
+    for (const horario of horarios) {
+      if (!horario.espaco_unidade_id) continue;
+      if (!map.has(horario.espaco_unidade_id)) map.set(horario.espaco_unidade_id, new Map());
+      const byDia = map.get(horario.espaco_unidade_id)!;
+      if (!byDia.has(horario.dia_semana)) byDia.set(horario.dia_semana, []);
+      byDia.get(horario.dia_semana)!.push(horario);
+    }
+    return map;
+  }, [horarios]);
 
-  const [abertos, setAbertos] = useState<Record<number, boolean>>(defaultAbertos as Record<number, boolean>);
-  const [inicio, setInicio] = useState<Record<number, string>>(defaultInicio);
-  const [fim, setFim] = useState<Record<number, string>>(defaultFim);
+  const defaults = useMemo(() => {
+    const abertos: Record<string, boolean> = {};
+    const inicio: Record<string, string> = {};
+    const fim: Record<string, string> = {};
+    const slots: Record<string, string> = {};
+    const modos: Record<number, string> = {};
+    const intervalos: Record<number, string> = {};
+    for (const unidade of unidades) {
+      const config = agendaConfig(unidade);
+      modos[unidade.id] = String(config.modo ?? "convencional");
+      intervalos[unidade.id] = String(unidade.intervalo_minutos ?? 60);
+      const porDia = horariosPorUnidade.get(unidade.id);
+      for (let dia = 0; dia <= 6; dia++) {
+        const key = `${unidade.id}_${dia}`;
+        const existentes = porDia?.get(dia) ?? [];
+        abertos[key] = existentes.length > 0 || (horarios.length === 0 && dia >= 1 && dia <= 6);
+        const inicioPadrao = horaCurta(String(config.horarioPadraoInicio ?? "08:00"));
+        const fimPadrao = horaCurta(String(config.horarioPadraoFim ?? "22:00"));
+        inicio[key] = existentes[0]?.hora_inicio ? horaCurta(existentes[0].hora_inicio) : inicioPadrao;
+        fim[key] = existentes.at(-1)?.hora_fim ? horaCurta(existentes.at(-1)?.hora_fim) : fimPadrao;
+        slots[key] = existentes.length > 0
+          ? existentes.map((h) => `${horaCurta(h.hora_inicio)}-${horaCurta(h.hora_fim)}`).join("\n")
+          : `${inicioPadrao}-09:00\n09:00-10:00`;
+      }
+    }
+    return { abertos, inicio, fim, slots, modos, intervalos };
+  }, [horarios.length, horariosPorUnidade, unidades]);
+
+  const [abertos, setAbertos] = useState<Record<string, boolean>>(defaults.abertos);
+  const [inicio, setInicio] = useState<Record<string, string>>(defaults.inicio);
+  const [fim, setFim] = useState<Record<string, string>>(defaults.fim);
+  const [slots, setSlots] = useState<Record<string, string>>(defaults.slots);
+  const [modos, setModos] = useState<Record<number, string>>(defaults.modos);
+  const [intervalos, setIntervalos] = useState<Record<number, string>>(defaults.intervalos);
   const [state, action, pending] = useActionState<ActionState, FormData>(salvarGradeWizardAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
 
-  const copiarSegsex = () => {
-    const [i, f] = [inicio[1] ?? "08:00", fim[1] ?? "22:00"];
-    setInicio((p) => ({ ...p, 0: i, 6: i }));
-    setFim((p) => ({ ...p, 0: f, 6: f }));
-    setAbertos((p) => ({ ...p, 0: true, 6: true }));
+  const copiarSemanaParaFimDeSemana = (unidadeId: number) => {
+    const origem = `${unidadeId}_1`;
+    setInicio((p) => ({ ...p, [`${unidadeId}_0`]: p[origem] ?? "08:00", [`${unidadeId}_6`]: p[origem] ?? "08:00" }));
+    setFim((p) => ({ ...p, [`${unidadeId}_0`]: p[origem] ?? "22:00", [`${unidadeId}_6`]: p[origem] ?? "22:00" }));
+    setAbertos((p) => ({ ...p, [`${unidadeId}_0`]: true, [`${unidadeId}_6`]: true }));
   };
 
-  const presetPadrao = () => {
-    setAbertos({ 0: false, 1: true, 2: true, 3: true, 4: true, 5: true, 6: true });
-    setInicio(Object.fromEntries(Array.from({ length: 7 }, (_, i) => [i, "08:00"])));
-    setFim(Object.fromEntries(Array.from({ length: 7 }, (_, i) => [i, "22:00"])));
+  const presetPadrao = (unidadeId: number) => {
+    setModos((p) => ({ ...p, [unidadeId]: "convencional" }));
+    setAbertos((p) => ({ ...p, ...Object.fromEntries(Array.from({ length: 7 }, (_, dia) => [`${unidadeId}_${dia}`, dia >= 1 && dia <= 6])) }));
+    setInicio((p) => ({ ...p, ...Object.fromEntries(Array.from({ length: 7 }, (_, dia) => [`${unidadeId}_${dia}`, "08:00"])) }));
+    setFim((p) => ({ ...p, ...Object.fromEntries(Array.from({ length: 7 }, (_, dia) => [`${unidadeId}_${dia}`, "22:00"])) }));
   };
 
   return (
     <form ref={formRef} action={action} className="space-y-5">
       <input type="hidden" name="espaco_id" value={space.id} />
-      <StepHeader title="Horários de funcionamento" subtitle="Configure quando cada dia da semana estará disponível para reservas." />
+      <StepHeader title="Horários por quadra" subtitle="Monte a agenda semanal de cada quadra com intervalos automáticos ou horários específicos." />
 
-      <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={presetPadrao}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/8 px-3 py-1.5 text-xs font-semibold text-eid-primary-300 transition hover:bg-eid-primary-500/15">
-          <Clock className="h-3.5 w-3.5" aria-hidden />
-          Preset: seg–sáb 08:00–22:00
-        </button>
-        <button type="button" onClick={copiarSegsex}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-text-secondary transition hover:text-eid-fg">
-          <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-          Copiar seg–sex para sáb e dom
-        </button>
-      </div>
-
-      <div className="space-y-2">
-        {Array.from({ length: 7 }, (_, dia) => (
-          <div key={dia} className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition ${
-            abertos[dia] ? "border-eid-primary-500/25 bg-eid-surface/60" : "border-[color:var(--eid-border-subtle)] bg-eid-surface/25 opacity-60"
-          }`}>
-            <input type="hidden" name={`dia_${dia}_aberto`} value={abertos[dia] ? "on" : "off"} />
-            <button
-              type="button"
-              onClick={() => setAbertos((p) => ({ ...p, [dia]: !p[dia] }))}
-              className={`h-5 w-5 rounded border-2 shrink-0 transition-all ${
-                abertos[dia] ? "border-eid-primary-500 bg-eid-primary-500" : "border-eid-text-secondary/30 bg-transparent"
-              }`}
-              aria-label={abertos[dia] ? "Fechar" : "Abrir"}
-            />
-            <span className={`w-20 shrink-0 text-sm font-semibold ${abertos[dia] ? "text-eid-fg" : "text-eid-text-secondary"}`}>
-              {DIAS[dia]}
-            </span>
-            {abertos[dia] ? (
-              <div className="flex flex-1 items-center gap-2">
-                <div className="flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1 focus-within:ring-1 focus-within:ring-eid-primary-500/40">
-                  <Clock className="h-3.5 w-3.5 shrink-0 text-eid-primary-400" aria-hidden />
-                  <input
-                    type="time" name={`dia_${dia}_inicio`}
-                    value={inicio[dia] ?? "08:00"}
-                    onChange={(e) => setInicio((p) => ({ ...p, [dia]: e.target.value }))}
-                    className="w-[5.8rem] bg-transparent text-sm text-eid-fg focus:outline-none"
-                  />
-                </div>
-                <span className="text-xs text-eid-text-secondary">até</span>
-                <div className="flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1 focus-within:ring-1 focus-within:ring-eid-primary-500/40">
-                  <Clock className="h-3.5 w-3.5 shrink-0 text-eid-action-400" aria-hidden />
-                  <input
-                    type="time" name={`dia_${dia}_fim`}
-                    value={fim[dia] ?? "22:00"}
-                    onChange={(e) => setFim((p) => ({ ...p, [dia]: e.target.value }))}
-                    className="w-[5.8rem] bg-transparent text-sm text-eid-fg focus:outline-none"
-                  />
-                </div>
+      <div className="space-y-4">
+        {unidades.map((unidade) => (
+          <div key={unidade.id} className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-4">
+            <input type="hidden" name="unidade_id" value={unidade.id} />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-base font-black text-eid-fg">{unidade.nome}</p>
+                <p className="mt-0.5 text-xs text-eid-text-secondary">
+                  {modoReservaUnidadeLabel(unidade.modo_reserva)} · intervalo sugerido de {unidade.intervalo_minutos ?? 60} min
+                </p>
               </div>
-            ) : (
-              <span className="text-xs text-eid-text-secondary">Fechado</span>
-            )}
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => presetPadrao(unidade.id)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/8 px-3 py-1.5 text-xs font-semibold text-eid-primary-300 transition hover:bg-eid-primary-500/15">
+                  <Clock className="h-3.5 w-3.5" aria-hidden />
+                  Seg-sáb 08:00-22:00
+                </button>
+                <button type="button" onClick={() => copiarSemanaParaFimDeSemana(unidade.id)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-text-secondary transition hover:text-eid-fg">
+                  <RefreshCw className="h-3.5 w-3.5" aria-hidden />
+                  Copiar para fim de semana
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Formato da agenda</Label>
+                <IconSelect
+                  Icon={LayoutGrid}
+                  name={`unidade_${unidade.id}_modo`}
+                  value={modos[unidade.id] ?? "convencional"}
+                  onChange={(e) => setModos((p) => ({ ...p, [unidade.id]: e.target.value }))}
+                >
+                  <option value="convencional">Gerar por intervalo</option>
+                  <option value="especificos">Informar horários específicos</option>
+                </IconSelect>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Intervalo</Label>
+                <IconSelect
+                  Icon={Clock}
+                  name={`unidade_${unidade.id}_intervalo`}
+                  value={intervalos[unidade.id] ?? "60"}
+                  onChange={(e) => setIntervalos((p) => ({ ...p, [unidade.id]: e.target.value }))}
+                >
+                  {INTERVALOS_RESERVA.map((minutos) => (
+                    <option key={minutos} value={minutos}>{minutos} minutos</option>
+                  ))}
+                </IconSelect>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              {Array.from({ length: 7 }, (_, dia) => {
+                const key = `${unidade.id}_${dia}`;
+                const aberto = Boolean(abertos[key]);
+                const especificos = modos[unidade.id] === "especificos";
+                return (
+                  <div key={key} className={`rounded-xl border px-3 py-3 transition ${
+                    aberto ? "border-eid-primary-500/25 bg-eid-surface/60" : "border-[color:var(--eid-border-subtle)] bg-eid-surface/25 opacity-70"
+                  }`}>
+                    <input type="hidden" name={`unidade_${unidade.id}_dia_${dia}_aberto`} value={aberto ? "on" : "off"} />
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setAbertos((p) => ({ ...p, [key]: !p[key] }))}
+                        className={`h-5 w-5 shrink-0 rounded border-2 transition-all ${
+                          aberto ? "border-eid-primary-500 bg-eid-primary-500" : "border-eid-text-secondary/30 bg-transparent"
+                        }`}
+                        aria-label={aberto ? `Fechar ${DIAS[dia]}` : `Abrir ${DIAS[dia]}`}
+                      />
+                      <span className={`w-20 shrink-0 text-sm font-semibold ${aberto ? "text-eid-fg" : "text-eid-text-secondary"}`}>
+                        {DIAS[dia]}
+                      </span>
+                      {!aberto ? <span className="text-xs text-eid-text-secondary">Fechado</span> : null}
+                    </div>
+                    {aberto ? (
+                      especificos ? (
+                        <div className="mt-3">
+                          <IconTextarea
+                            Icon={Clock}
+                            name={`unidade_${unidade.id}_dia_${dia}_slots`}
+                            value={slots[key] ?? ""}
+                            onChange={(e) => setSlots((p) => ({ ...p, [key]: e.target.value }))}
+                            rows={3}
+                            placeholder={"08:00-09:00\n09:30-10:30"}
+                          />
+                        </div>
+                      ) : (
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <div className="flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1 focus-within:ring-1 focus-within:ring-eid-primary-500/40">
+                            <Clock className="h-3.5 w-3.5 shrink-0 text-eid-primary-400" aria-hidden />
+                            <input
+                              type="time" name={`unidade_${unidade.id}_dia_${dia}_inicio`}
+                              value={inicio[key] ?? "08:00"}
+                              onChange={(e) => setInicio((p) => ({ ...p, [key]: e.target.value }))}
+                              className="w-[5.8rem] bg-transparent text-sm text-eid-fg focus:outline-none"
+                            />
+                          </div>
+                          <span className="text-xs text-eid-text-secondary">até</span>
+                          <div className="flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1 focus-within:ring-1 focus-within:ring-eid-primary-500/40">
+                            <Clock className="h-3.5 w-3.5 shrink-0 text-eid-action-400" aria-hidden />
+                            <input
+                              type="time" name={`unidade_${unidade.id}_dia_${dia}_fim`}
+                              value={fim[key] ?? "22:00"}
+                              onChange={(e) => setFim((p) => ({ ...p, [key]: e.target.value }))}
+                              className="w-[5.8rem] bg-transparent text-sm text-eid-fg focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      )
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>
 
       <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 px-4 py-3 text-xs text-amber-300">
-        <strong>Dica:</strong> Feriados são configurados na próxima etapa. Estes horários se aplicam a dias normais.
+        <strong>Dica:</strong> feriados são configurados na próxima etapa. Estes horários se aplicam a dias normais de funcionamento.
       </div>
 
       <Feedback state={state} />
@@ -1272,12 +1475,14 @@ function StepFeriados({ space, feriados, onNext, onBack }: {
   const [toggling, startToggle] = useTransition();
   useEffect(() => { if (syncState?.ok) router.refresh(); }, [router, syncState]);
 
-  const handleToggle = (feriadoId: number, operar: boolean) => {
+  const handleToggle = (formData: FormData, feriadoId: number, operar: boolean) => {
     startToggle(async () => {
       const fd = new FormData();
       fd.set("espaco_id", String(space.id));
       fd.set("feriado_id", String(feriadoId));
       fd.set("operar", String(operar));
+      fd.set("hora_inicio", String(formData.get("hora_inicio") ?? "08:00"));
+      fd.set("hora_fim", String(formData.get("hora_fim") ?? "18:00"));
       await toggleFeriadoWizardAction(fd);
       router.refresh();
     });
@@ -1290,7 +1495,7 @@ function StepFeriados({ space, feriados, onNext, onBack }: {
     <div className="space-y-5">
       <StepHeader
         title="Feriados e datas especiais"
-        subtitle="Defina se o espaço abre ou fecha em feriados nacionais e estaduais."
+        subtitle="Sincronize a lista pela API e defina, em poucos cliques, se o espaço abre e em qual horário."
       />
 
       {/* Sync */}
@@ -1322,33 +1527,64 @@ function StepFeriados({ space, feriados, onNext, onBack }: {
             {feriados.length} feriado(s) próximos — defina se vai abrir
           </p>
           {feriados.map((f) => (
-            <div key={f.id} className="flex items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-eid-fg">{f.nome ?? "Feriado"}</p>
-                <p className="text-[11px] text-eid-text-secondary">
-                  {f.data_inicio === f.data_fim
-                    ? formatDate(f.data_inicio)
-                    : `${formatDate(f.data_inicio)} – ${formatDate(f.data_fim)}`}
-                  {f.recorrente_anual ? " · anual" : ""}
-                </p>
+            <form
+              key={f.id}
+              action={(formData) => handleToggle(formData, f.id, formData.get("operar") === "true")}
+              className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-eid-fg">{f.nome ?? "Feriado"}</p>
+                  <p className="text-[11px] text-eid-text-secondary">
+                    {f.data_inicio === f.data_fim
+                      ? formatDate(f.data_inicio)
+                      : `${formatDate(f.data_inicio)} - ${formatDate(f.data_fim)}`}
+                    {f.recorrente_anual ? " · anual" : ""}
+                  </p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-[auto_auto_auto] sm:items-center">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1 focus-within:ring-1 focus-within:ring-eid-primary-500/40">
+                      <Clock className="h-3.5 w-3.5 shrink-0 text-eid-primary-400" aria-hidden />
+                      <input
+                        type="time"
+                        name="hora_inicio"
+                        defaultValue={horaCurta(f.hora_inicio) || "08:00"}
+                        className="w-[5.8rem] bg-transparent text-sm text-eid-fg focus:outline-none"
+                      />
+                    </div>
+                    <span className="text-xs text-eid-text-secondary">até</span>
+                    <div className="flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 px-2 py-1 focus-within:ring-1 focus-within:ring-eid-primary-500/40">
+                      <Clock className="h-3.5 w-3.5 shrink-0 text-eid-action-400" aria-hidden />
+                      <input
+                        type="time"
+                        name="hora_fim"
+                        defaultValue={horaCurta(f.hora_fim) || "18:00"}
+                        className="w-[5.8rem] bg-transparent text-sm text-eid-fg focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    name="operar"
+                    value="true"
+                    disabled={toggling}
+                    className={`rounded-lg px-3 py-2 text-xs font-bold transition ${
+                      f.operar_no_feriado ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40" : "bg-eid-surface/60 text-eid-text-secondary hover:text-eid-fg"
+                    }`}
+                  >Abre</button>
+                  <button
+                    type="submit"
+                    name="operar"
+                    value="false"
+                    disabled={toggling}
+                    className={`rounded-lg px-3 py-2 text-xs font-bold transition ${
+                      !f.operar_no_feriado ? "bg-red-500/20 text-red-300 ring-1 ring-red-500/40" : "bg-eid-surface/60 text-eid-text-secondary hover:text-eid-fg"
+                    }`}
+                  >Fecha</button>
+                </div>
               </div>
-              <div className="flex shrink-0 gap-1.5">
-                <button
-                  type="button" disabled={toggling}
-                  onClick={() => handleToggle(f.id, true)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                    f.operar_no_feriado ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/40" : "bg-eid-surface/60 text-eid-text-secondary hover:text-eid-fg"
-                  }`}
-                >Abre</button>
-                <button
-                  type="button" disabled={toggling}
-                  onClick={() => handleToggle(f.id, false)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
-                    !f.operar_no_feriado ? "bg-red-500/20 text-red-300 ring-1 ring-red-500/40" : "bg-eid-surface/60 text-eid-text-secondary hover:text-eid-fg"
-                  }`}
-                >Fecha</button>
-              </div>
-            </div>
+            </form>
           ))}
         </div>
       ) : (
@@ -1651,6 +1887,7 @@ export function EspacoOnboardingWizard({
           {currentStep?.id === "unidades" && (
             <StepUnidades
               space={space}
+              esportes={esportes}
               unidades={unidades}
               unidadeGate={unidadeGate}
               onNext={advance}
@@ -1658,7 +1895,7 @@ export function EspacoOnboardingWizard({
             />
           )}
           {currentStep?.id === "horarios" && (
-            <StepHorarios space={space} horarios={horarios} onNext={advance} onBack={goBack} />
+            <StepHorarios space={space} unidades={unidades} horarios={horarios} onNext={advance} onBack={goBack} />
           )}
           {currentStep?.id === "feriados" && (
             <StepFeriados space={space} feriados={feriados} onNext={advance} onBack={goBack} />
