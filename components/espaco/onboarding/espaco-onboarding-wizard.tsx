@@ -270,7 +270,7 @@ function gerarGradeTexto(inicio: string, fim: string, intervalo: number) {
   return linhas.join("\n");
 }
 
-function parseSlotsClient(raw: string) {
+function parseSlotsClient(raw: string, opts?: { keepInvalidRange?: boolean }) {
   return raw
     .split(/[\n,;]+/)
     .map((part) => part.trim().match(/^(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/))
@@ -279,7 +279,7 @@ function parseSlotsClient(raw: string) {
     .filter((slot) => {
       const i = timeToMinutesClient(slot.inicio);
       const f = timeToMinutesClient(slot.fim);
-      return i != null && f != null && f > i;
+      return i != null && f != null && (opts?.keepInvalidRange || f > i);
     });
 }
 
@@ -312,9 +312,10 @@ function ajustarSlotsAposEdicao(
   if (novoFimMin <= novoInicioMin) novoFimMin = Math.min(fimDiaMin, novoInicioMin + intervaloPadrao);
   if (novoInicioMin >= fimDiaMin || novoFimMin > fimDiaMin) return normalizados;
 
-  if (novoInicioMin > oldInicioMin && oldInicioMin >= (prevFimMin ?? oldInicioMin)) {
+  const inicioRestanteAntes = Math.max(oldInicioMin, prevFimMin ?? oldInicioMin);
+  if (novoInicioMin > inicioRestanteAntes) {
     normalizados.push({
-      inicio: minutesToTimeClient(oldInicioMin),
+      inicio: minutesToTimeClient(inicioRestanteAntes),
       fim: minutesToTimeClient(novoInicioMin),
     });
   }
@@ -1846,10 +1847,17 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
   };
 
   const atualizarSlot = (key: string, index: number, field: "inicio" | "fim", value: string, currentText: string, unidadeId: number) => {
-    const next = parseSlotsClient(currentText);
+    const next = parseSlotsClient(currentText, { keepInvalidRange: true });
     if (!next[index]) return;
     const slotAnterior = next[index];
     next[index] = { ...next[index], [field]: value };
+    const inicioMin = timeToMinutesClient(next[index].inicio);
+    const fimMin = timeToMinutesClient(next[index].fim);
+    if (inicioMin == null || fimMin == null || fimMin <= inicioMin) {
+      setSlots((p) => ({ ...p, [key]: slotsToText(next) }));
+      setSlotsEditados((p) => ({ ...p, [key]: true }));
+      return;
+    }
     setSlotsDoDia(
       key,
       ajustarSlotsAposEdicao(next, index, slotAnterior, fim[key] ?? "23:59", intervaloAtual(unidadeId))
@@ -1953,7 +1961,7 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
                 const especificos = modos[unidade.id] === "especificos";
                 const gradeGerada = gerarGradeTexto(inicio[key] ?? "08:00", fim[key] ?? "22:00", intervaloAtual(unidade.id));
                 const gradeTexto = especificos || slotsEditados[key] ? (slots[key] ?? "") : gradeGerada;
-                const slotsDia = parseSlotsClient(gradeTexto);
+                const slotsDia = parseSlotsClient(gradeTexto, { keepInvalidRange: Boolean(slotEditando?.startsWith(`${key}_`)) });
                 const totalHorarios = slotsDia.length;
                 const expandido = Boolean(diasExpandidos[key]);
                 const slotsVisiveis = expandido ? slotsDia : slotsDia.slice(0, 8);
