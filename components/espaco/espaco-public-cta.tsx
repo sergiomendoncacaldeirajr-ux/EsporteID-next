@@ -101,9 +101,11 @@ export function EspacoPublicJoinForm({
   espacoId,
   planos,
   regraEntrada,
+  modoReserva,
 }: {
   espacoId: number;
   planos: Array<{ id: number; nome: string; mensalidade_centavos: number | null }>;
+  modoReserva?: string | null;
   regraEntrada?: {
     modoEntrada: "somente_perfil" | "matricula" | "cpf";
     rotuloCampo: string;
@@ -111,64 +113,74 @@ export function EspacoPublicJoinForm({
   };
 }) {
   const [state, action, pending] = useActionState(solicitarSocioEspacoAction, initial);
+  const entradaAutomatica = String(modoReserva ?? "").toLowerCase() === "paga";
 
   return (
     <form action={action} className="space-y-3 rounded-2xl border border-eid-action-500/25 bg-eid-card/90 p-4">
       <input type="hidden" name="espaco_id" value={espacoId} />
-      <h3 className="text-sm font-bold text-eid-fg">Seja sócio</h3>
+      <h3 className="text-sm font-bold text-eid-fg">{entradaAutomatica ? "Tornar-se membro" : "Solicitar entrada"}</h3>
       <p className="text-xs text-eid-text-secondary">
-        {regraEntrada?.instrucoes ?? "Envie seus dados para o dono analisar sua entrada no espaço."}
+        {entradaAutomatica
+          ? "Neste local com reservas pagas, sua entrada como membro é imediata. Você continua pagando cada reserva normalmente."
+          : regraEntrada?.instrucoes ?? "Envie seus dados para o dono analisar sua entrada no espaço."}
       </p>
-      <select
-        name="plano_socio_id"
-        className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
-        defaultValue={planos[0]?.id ?? ""}
-      >
-        {planos.map((plano) => (
-          <option key={plano.id} value={plano.id}>
-            {plano.nome} · R$ {((Number(plano.mensalidade_centavos ?? 0) || 0) / 100).toFixed(2).replace(".", ",")}
-          </option>
-        ))}
-      </select>
+      {planos.length > 0 ? (
+        <select
+          name="plano_socio_id"
+          className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
+          defaultValue={entradaAutomatica ? "" : planos[0]?.id ?? ""}
+        >
+          <option value="">Sem mensalidade agora</option>
+          {planos.map((plano) => (
+            <option key={plano.id} value={plano.id}>
+              {plano.nome} · R$ {((Number(plano.mensalidade_centavos ?? 0) || 0) / 100).toFixed(2).replace(".", ",")}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input type="hidden" name="plano_socio_id" value="" />
+      )}
       <textarea
         name="mensagem"
         rows={2}
         placeholder="Conte ao clube o que você procura."
         className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
       />
-      {regraEntrada?.modoEntrada !== "somente_perfil" ? (
+      {!entradaAutomatica && regraEntrada?.modoEntrada !== "somente_perfil" ? (
         <input
           name="identificador_entrada"
           placeholder={regraEntrada?.rotuloCampo || (regraEntrada?.modoEntrada === "cpf" ? "CPF" : "Matrícula")}
           className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
         />
       ) : null}
-      <div className="grid gap-2 sm:grid-cols-3">
-        <input
-          type="file"
-          name="documento_rg"
-          accept=".pdf,image/*"
-          className="eid-input-dark rounded-xl px-3 py-2 text-xs"
-        />
-        <input
-          type="file"
-          name="documento_cpf"
-          accept=".pdf,image/*"
-          className="eid-input-dark rounded-xl px-3 py-2 text-xs"
-        />
-        <input
-          type="file"
-          name="documento_comprovante"
-          accept=".pdf,image/*"
-          className="eid-input-dark rounded-xl px-3 py-2 text-xs"
-        />
-      </div>
+      {!entradaAutomatica ? (
+        <div className="grid gap-2 sm:grid-cols-3">
+          <input
+            type="file"
+            name="documento_rg"
+            accept=".pdf,image/*"
+            className="eid-input-dark rounded-xl px-3 py-2 text-xs"
+          />
+          <input
+            type="file"
+            name="documento_cpf"
+            accept=".pdf,image/*"
+            className="eid-input-dark rounded-xl px-3 py-2 text-xs"
+          />
+          <input
+            type="file"
+            name="documento_comprovante"
+            accept=".pdf,image/*"
+            className="eid-input-dark rounded-xl px-3 py-2 text-xs"
+          />
+        </div>
+      ) : null}
       <button
         type="submit"
         disabled={pending}
         className="eid-btn-primary w-full rounded-xl px-4 py-3 text-sm font-bold"
       >
-        {pending ? "Enviando..." : "Solicitar associação"}
+        {pending ? "Enviando..." : entradaAutomatica ? "Virar membro" : "Solicitar associação"}
       </button>
       {state.message ? (
         <p className={`text-xs ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>
@@ -185,21 +197,28 @@ export function EspacoPublicReservaForm({
   esporteId,
   latitude = null,
   longitude = null,
+  jogosAgendados = [],
 }: {
   espacoId: number;
   unidadeId: number | null;
   esporteId: number | null;
   latitude?: number | null;
   longitude?: number | null;
+  jogosAgendados?: Array<{ id: number; label: string; data_partida: string | null }>;
 }) {
   const [state, action, pending] = useActionState(criarReservaEspacoAction, initial);
   const [inicio, setInicio] = useState("");
   return (
-    <form action={action} className="space-y-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4">
+    <form action={action} className="space-y-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 shadow-[0_10px_28px_-18px_rgba(15,23,42,0.5)]">
       <input type="hidden" name="espaco_id" value={espacoId} />
       <input type="hidden" name="espaco_unidade_id" value={unidadeId ?? ""} />
       <input type="hidden" name="esporte_id" value={esporteId ?? ""} />
-      <h3 className="text-sm font-bold text-eid-fg">Reservar horário</h3>
+      <div>
+        <h3 className="text-sm font-bold text-eid-fg">Reservar horário</h3>
+        <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
+          Escolha o tipo de uso e, se for uma partida já marcada, vincule o jogo para o dono do local ver o contexto.
+        </p>
+      </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <input
           type="datetime-local"
@@ -228,21 +247,22 @@ export function EspacoPublicReservaForm({
           className="eid-input-dark rounded-xl px-3 py-2 text-sm"
           defaultValue="paga"
         >
-          <option value="paga">Reserva paga</option>
-          <option value="socio">Benefício de sócio</option>
+          <option value="paga">Reserva comum paga</option>
+          <option value="socio">Reserva de membro</option>
           <option value="rank">Jogo de ranking</option>
           <option value="professor">Uso por professor</option>
           <option value="torneio">Uso por torneio</option>
         </select>
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
-        <input
-          type="number"
-          name="partida_id"
-          min={1}
-          placeholder="ID da partida (ranking)"
-          className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-        />
+        <select name="partida_id" className="eid-input-dark rounded-xl px-3 py-2 text-sm" defaultValue="">
+          <option value="">Sem jogo vinculado</option>
+          {jogosAgendados.map((jogo) => (
+            <option key={jogo.id} value={jogo.id}>
+              {jogo.label}
+            </option>
+          ))}
+        </select>
         <input
           type="number"
           name="torneio_jogo_id"
@@ -255,6 +275,12 @@ export function EspacoPublicReservaForm({
         <input type="checkbox" name="usar_beneficio_gratis" />
         Tentar usar benefício gratuito do plano
       </label>
+      <div className="rounded-xl border border-eid-action-500/20 bg-eid-action-500/8 px-3 py-2">
+        <p className="text-[11px] font-semibold text-eid-fg">Pagamento transparente</p>
+        <p className="mt-1 text-[11px] leading-relaxed text-eid-text-secondary">
+          Se houver cobrança, você será levado ao checkout seguro. O local vê a reserva como aguardando pagamento até a confirmação.
+        </p>
+      </div>
       <WeatherPreview inicio={inicio} latitude={latitude} longitude={longitude} />
       <button
         type="submit"

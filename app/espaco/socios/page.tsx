@@ -37,7 +37,7 @@ export default async function EspacoSociosPage({ searchParams }: Props) {
       .order("id", { ascending: false }),
     supabase
       .from("membership_requests")
-      .select("id, usuario_id, status, criado_em, matricula, identificador_tipo, identificador_valor, mensagem, profiles(nome)")
+      .select("id, usuario_id, status, criado_em, matricula, plano_socio_id, identificador_tipo, identificador_valor, mensagem, profiles(nome)")
       .eq("espaco_generico_id", selectedSpace.id)
       .eq("status", "pendente")
       .order("id", { ascending: false }),
@@ -77,6 +77,18 @@ export default async function EspacoSociosPage({ searchParams }: Props) {
                         <input type="hidden" name="espaco_id" value={selectedSpace.id} />
                         <input type="hidden" name="request_id" value={sol.id} />
                         <input type="hidden" name="decisao" value="aprovar" />
+                        <select
+                          name="plano_socio_id"
+                          defaultValue={String(sol.plano_socio_id ?? "")}
+                          className="eid-input-dark mr-2 rounded-lg px-2 py-1.5 text-[11px]"
+                        >
+                          <option value="">Sem mensalidade / pago presencial</option>
+                          {(planos ?? []).map((plano) => (
+                            <option key={plano.id} value={plano.id}>
+                              {plano.nome}
+                            </option>
+                          ))}
+                        </select>
                         <button className="rounded-lg border border-eid-primary-500/35 px-3 py-1.5 text-[11px] font-semibold text-eid-primary-300">
                           Aprovar entrada
                         </button>

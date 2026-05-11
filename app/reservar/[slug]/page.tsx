@@ -48,14 +48,32 @@ export default async function ReservarEspacoPage({ params }: Props) {
     redirect(`/espaco/${encodeURIComponent(slug)}`);
   }
 
-  const { data: unidadePrincipal } = await supabase
-    .from("espaco_unidades")
-    .select("id, esporte_id, nome")
-    .eq("espaco_generico_id", espaco.id)
-    .eq("ativo", true)
-    .order("ordem", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: unidadePrincipal }, { data: jogosAgendados }] = await Promise.all([
+    supabase
+      .from("espaco_unidades")
+      .select("id, esporte_id, nome")
+      .eq("espaco_generico_id", espaco.id)
+      .eq("ativo", true)
+      .order("ordem", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("partidas")
+      .select("id, data_partida, modalidade, esportes(nome)")
+      .or(`jogador1_id.eq.${user.id},jogador2_id.eq.${user.id}`)
+      .in("status", ["agendada", "aguardando_aceite_agendamento"])
+      .order("data_partida", { ascending: true, nullsFirst: false })
+      .limit(20),
+  ]);
+  const jogosOptions = (jogosAgendados ?? []).map((jogo) => {
+    const esporte = Array.isArray(jogo.esportes) ? jogo.esportes[0] : jogo.esportes;
+    const when = jogo.data_partida ? new Date(jogo.data_partida).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "sem data";
+    return {
+      id: Number(jogo.id),
+      data_partida: jogo.data_partida ?? null,
+      label: `#${jogo.id} · ${esporte?.nome ?? "Ranking"} · ${when}`,
+    };
+  });
 
   return (
     <main data-eid-touch-ui className="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6">
@@ -81,6 +99,7 @@ export default async function ReservarEspacoPage({ params }: Props) {
           esporteId={unidadePrincipal?.esporte_id ?? null}
           latitude={Number(espaco.lat ?? NaN)}
           longitude={Number(espaco.lng ?? NaN)}
+          jogosAgendados={jogosOptions}
         />
         <EspacoPublicWaitlistForm
           espacoId={espaco.id}

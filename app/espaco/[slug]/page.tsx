@@ -470,7 +470,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                         />
                       </>
                     ) : (
-                      <EspacoPublicJoinForm espacoId={espaco.id} planos={planos ?? []} regraEntrada={regraAssociacao} />
+                      <EspacoPublicJoinForm espacoId={espaco.id} planos={planos ?? []} regraEntrada={regraAssociacao} modoReserva={espaco.modo_reserva} />
                     )}
                   </>
                 )}
@@ -479,7 +479,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
           ) : (
             <>
               {espaco.aceita_socios ? (
-                <EspacoPublicJoinForm espacoId={espaco.id} planos={planos ?? []} regraEntrada={regraAssociacao} />
+                <EspacoPublicJoinForm espacoId={espaco.id} planos={planos ?? []} regraEntrada={regraAssociacao} modoReserva={espaco.modo_reserva} />
               ) : (
                 <div className={`${PROFILE_CARD_BASE} p-4 text-sm text-eid-text-secondary`}>
                   Este espaço não está com adesão de sócios aberta agora.

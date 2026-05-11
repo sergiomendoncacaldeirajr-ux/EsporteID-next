@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfilePrimaryCta, ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { ProfileSolicitarMatchMenu } from "@/components/perfil/profile-solicitar-match-menu";
@@ -225,6 +226,8 @@ export async function PerfilPublicoBelowFold({
       : { data: [] as Array<Record<string, unknown>> };
 
   const cooldownUntilBySport = new Map<number, string>();
+  // eslint-disable-next-line react-hooks/purity -- Server Component: snapshot do tempo para cálculo de cooldown.
+  const nowMs = Date.now();
   for (const c of confrontosComAlvo ?? []) {
     const esporteId = Number((c as { esporte_id?: number | null }).esporte_id ?? 0);
     if (!Number.isFinite(esporteId) || esporteId <= 0) continue;
@@ -244,7 +247,7 @@ export async function PerfilPublicoBelowFold({
     if (Number.isNaN(base.getTime())) continue;
     const until = new Date(base);
     until.setMonth(until.getMonth() + cooldownMeses);
-    if (until.getTime() <= Date.now()) continue;
+    if (until.getTime() <= nowMs) continue;
     const prev = cooldownUntilBySport.get(esporteId);
     if (!prev || new Date(prev).getTime() < until.getTime()) {
       cooldownUntilBySport.set(esporteId, until.toISOString());
@@ -631,42 +634,59 @@ async function PerfilPublicoLocaisSection({ profileId, canOpenLocais }: { profil
   const { supabase } = await getServerAuth();
   const [{ data: socioRows }, { data: frequentesRows }] = await Promise.all([
     supabase
-      .from("membership_requests")
-      .select("espaco_generico_id, espacos_genericos!inner(id, nome_publico, localizacao)")
+      .from("espaco_socios")
+      .select("status, espacos_genericos!inner(id, slug, nome_publico, localizacao, logo_arquivo)")
       .eq("usuario_id", profileId)
-      .eq("status", "aprovado")
+      .eq("status", "ativo")
       .limit(20),
     supabase
       .from("usuario_locais_frequentes")
-      .select("visitas, espacos_genericos!inner(id, nome_publico, localizacao)")
+      .select("visitas, espacos_genericos!inner(id, slug, nome_publico, localizacao, logo_arquivo)")
       .eq("usuario_id", profileId)
       .order("visitas", { ascending: false })
       .limit(10),
   ]);
   if ((socioRows ?? []).length === 0 && (frequentesRows ?? []).length === 0) return null;
   return (
-    <ProfileSection title="Locais" info="Espaços ou locais de jogo associados a este perfil (quando informados).">
+    <ProfileSection title="Locais" info="Espaços em que este perfil é membro ou costuma jogar.">
       <div className="mt-2 overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-2">
-        <ul className="grid gap-1.5">
+        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {[...(socioRows ?? []), ...(frequentesRows ?? [])].map((r, idx) => {
             const esp = Array.isArray(r.espacos_genericos) ? r.espacos_genericos[0] : r.espacos_genericos;
+            const href = esp?.slug ? `/espaco/${esp.slug}?from=/perfil/${profileId}` : `/local/${esp?.id}?from=/perfil/${profileId}`;
             const content = (
               <>
-                <span className="font-medium text-eid-fg">{esp?.nome_publico ?? "Local"}</span>
-                <span className="text-[10px] text-eid-text-secondary">{esp?.localizacao ?? "—"}</span>
+                {esp?.logo_arquivo ? (
+                  <Image
+                    src={esp.logo_arquivo}
+                    alt=""
+                    width={28}
+                    height={28}
+                    unoptimized
+                    className="h-7 w-7 rounded-lg border border-[color:var(--eid-border-subtle)] object-cover"
+                  />
+                ) : (
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-eid-primary-500/15 text-[10px] font-black text-eid-primary-300">
+                    {(esp?.nome_publico ?? "L").slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate font-semibold text-eid-fg">{esp?.nome_publico ?? "Local"}</span>
+                  <span className="block truncate text-[10px] text-eid-text-secondary">{esp?.localizacao ?? "Membro"}</span>
+                </span>
               </>
             );
             return (
               <li key={`${esp?.id ?? "loc"}-${idx}`}>
                 {canOpenLocais ? (
                   <Link
-                    href={`/local/${esp?.id}?from=/perfil/${profileId}`}
-                    className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px] transition hover:border-eid-primary-500/30"
+                    href={href}
+                    className="flex min-w-0 items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-2.5 py-2 text-[11px] transition hover:border-eid-primary-500/30"
                   >
                     {content}
                   </Link>
                 ) : (
-                  <div className="flex items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-[11px]">
+                  <div className="flex min-w-0 items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-2.5 py-2 text-[11px]">
                     {content}
                   </div>
                 )}

@@ -1,0 +1,52 @@
+{
+  "packageId": "com.esporteid.app",
+  "host": "esporteid.com.br",
+  "name": "EsporteID",
+  "launcherName": "EsporteID",
+  "display": "standalone",
+  "themeColor": "#121821",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#0B0F14",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://esporteid.com.br/pwa-icon-512.png",
+  "maskableIconUrl": "https://esporteid.com.br/pwa-icon-512.png",
+  "monochromeIconUrl": "https://esporteid.com.br/pwa-icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:\\secure\\esporteid-keystore\\esporteid-upload.jks",
+    "alias": "esporteid"
+  },
+  "appVersionName": "7",
+  "appVersionCode": 7,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://esporteid.com.br/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://esporteid.com.br/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
+  "appVersion": "7"
+}

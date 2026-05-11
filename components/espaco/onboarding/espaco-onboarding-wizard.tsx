@@ -325,6 +325,7 @@ function ajustarSlotsAposEdicao(
     fim: minutesToTimeClient(novoFimMin),
   });
 
+  const duracaoEditada = novoFimMin - novoInicioMin;
   let cursor = novoFimMin;
   if (novoFimMin < oldFimMin) {
     const fimRestante = Math.min(oldFimMin, fimDiaMin);
@@ -335,13 +336,9 @@ function ajustarSlotsAposEdicao(
     cursor = fimRestante;
   }
 
-  for (const slot of slots.slice(indexEditado + 1)) {
-    const inicioMin = timeToMinutesClient(slot.inicio);
-    const fimMin = timeToMinutesClient(slot.fim);
-    const duracao = inicioMin != null && fimMin != null && fimMin > inicioMin
-      ? fimMin - inicioMin
-      : intervaloPadrao;
-    const nextFim = cursor + duracao;
+  const slotsRestantes = slots.length - indexEditado - 1;
+  for (let i = 0; i < slotsRestantes; i++) {
+    const nextFim = cursor + duracaoEditada;
     if (nextFim > fimDiaMin) {
       if (fimDiaMin > cursor) {
         normalizados.push({

@@ -1154,7 +1154,7 @@ export async function solicitarSocioEspacoAction(
     const { data: espaco, error: espacoErr } = await supabase
       .from("espacos_genericos")
       .select(
-        "id, slug, nome_publico, aceita_socios, responsavel_usuario_id, criado_por_usuario_id, associacao_regra_json"
+        "id, slug, nome_publico, aceita_socios, responsavel_usuario_id, criado_por_usuario_id, associacao_regra_json, modo_reserva"
       )
       .eq("id", espacoId)
       .maybeSingle();
@@ -1168,11 +1168,12 @@ export async function solicitarSocioEspacoAction(
       };
     }
     const regraAssociacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);
+    const entradaAutomatica = String(espaco.modo_reserva ?? "").toLowerCase() === "paga";
     const identificadorEntrada = text(formData, "identificador_entrada");
-    if (regraAssociacao.modoEntrada === "matricula" && identificadorEntrada.length < 3) {
+    if (!entradaAutomatica && regraAssociacao.modoEntrada === "matricula" && identificadorEntrada.length < 3) {
       return { ok: false, message: "Informe a matrícula/código exigido pelo espaço." };
     }
-    if (regraAssociacao.modoEntrada === "cpf") {
+    if (!entradaAutomatica && regraAssociacao.modoEntrada === "cpf") {
       const digits = identificadorEntrada.replace(/\D/g, "");
       if (digits.length !== 11) {
         return { ok: false, message: "Informe um CPF válido (11 dígitos)." };
@@ -1192,7 +1193,7 @@ export async function solicitarSocioEspacoAction(
         file: formData.get("documento_comprovante") as File | null,
       },
     ];
-    if (docs.some((item) => !(item.file instanceof File) || item.file.size <= 0)) {
+    if (!entradaAutomatica && docs.some((item) => !(item.file instanceof File) || item.file.size <= 0)) {
       return {
         ok: false,
         message: "Envie RG, CPF e comprovante para solicitar a associação.",
@@ -1228,8 +1229,11 @@ export async function solicitarSocioEspacoAction(
             : identificadorEntrada || null,
         dados_json: {
           regra: regraAssociacao,
+          entradaAutomatica,
         },
-        status: "pendente",
+        status: entradaAutomatica ? "aprovado" : "pendente",
+        resolvido_em: entradaAutomatica ? new Date().toISOString() : null,
+        resolvido_por_usuario_id: entradaAutomatica ? user.id : null,
       })
       .select("id")
       .single();
@@ -1246,10 +1250,13 @@ export async function solicitarSocioEspacoAction(
           membership_request_id: membership.id,
           plano_socio_id: planoId,
           matricula,
-          status: "em_analise",
-          documentos_status: "pendente",
-          financeiro_status: "pendente",
-          beneficios_liberados: false,
+          status: entradaAutomatica ? "ativo" : "em_analise",
+          documentos_status: entradaAutomatica ? "aprovado" : "pendente",
+          financeiro_status: entradaAutomatica ? "em_dia" : "pendente",
+          beneficios_liberados: entradaAutomatica,
+          aprovado_por_usuario_id: entradaAutomatica ? user.id : null,
+          aprovado_em: entradaAutomatica ? new Date().toISOString() : null,
+          ativo_desde: entradaAutomatica ? new Date().toISOString() : null,
         },
         { onConflict: "espaco_generico_id,usuario_id" }
       )
@@ -1260,6 +1267,7 @@ export async function solicitarSocioEspacoAction(
     }
 
     for (const item of docs) {
+      if (!(item.file instanceof File) || item.file.size <= 0) continue;
       const path = await uploadDocumentoEspaco(item.file as File, user.id);
       const { error } = await supabase.from("espaco_documentos_socio").insert({
         espaco_generico_id: espacoId,
@@ -1276,7 +1284,7 @@ export async function solicitarSocioEspacoAction(
 
     const notifyOwnerId =
       espaco.responsavel_usuario_id ?? espaco.criado_por_usuario_id ?? null;
-    if (notifyOwnerId) {
+    if (notifyOwnerId && !entradaAutomatica) {
       const { data } = await supabase
         .from("notificacoes")
         .insert({
@@ -1300,7 +1308,7 @@ export async function solicitarSocioEspacoAction(
       p_entidade_tipo: "espaco_socio",
       p_entidade_id: socio.id,
       p_acao: "solicitacao_associacao_criada",
-      p_payload: { membershipRequestId: membership.id, planoId },
+      p_payload: { membershipRequestId: membership.id, planoId, entradaAutomatica },
       p_autor_usuario_id: user.id,
     });
 
@@ -1308,7 +1316,9 @@ export async function solicitarSocioEspacoAction(
     revalidatePath("/comunidade");
     return {
       ok: true,
-      message: "Solicitação enviada. O espaço vai revisar seus documentos.",
+      message: entradaAutomatica
+        ? "Você já é membro deste espaço. Agora pode reservar normalmente."
+        : "Solicitação enviada. O espaço vai revisar seus documentos.",
     };
   } catch (error) {
     return {
@@ -1442,11 +1452,15 @@ export async function responderSolicitacaoEntradaEspacoAction(formData: FormData
   if (reqErr) throw new Error(reqErr.message);
   if (!req) throw new Error("Solicitação não encontrada.");
   if (String(req.status) !== "pendente") throw new Error("Essa solicitação já foi respondida.");
+  const planoIdAprovacao = decisao === "aprovar"
+    ? (intOrNull(formData, "plano_socio_id") ?? req.plano_socio_id ?? null)
+    : req.plano_socio_id ?? null;
 
   await supabase
     .from("membership_requests")
     .update({
       status: decisao === "aprovar" ? "aprovado" : "recusado",
+      plano_socio_id: planoIdAprovacao,
       resolvido_em: new Date().toISOString(),
       resolvido_por_usuario_id: user.id,
     })
@@ -1456,7 +1470,7 @@ export async function responderSolicitacaoEntradaEspacoAction(formData: FormData
     .from("espaco_socios")
     .update({
       status: decisao === "aprovar" ? "ativo" : "rejeitado",
-      plano_socio_id: req.plano_socio_id ?? null,
+      plano_socio_id: planoIdAprovacao,
       motivo_rejeicao: decisao === "recusar" ? motivo || "Solicitação recusada pelo espaço." : null,
       aprovado_por_usuario_id: decisao === "aprovar" ? user.id : null,
       aprovado_em: decisao === "aprovar" ? new Date().toISOString() : null,
@@ -1989,6 +2003,13 @@ export async function criarReservaEspacoAction(
         reserva_gratuita: usarBeneficioGratis,
         espaco_socio_id: socio?.id ?? null,
         plano_socio_id: socio?.plano_socio_id ?? null,
+        detalhes_json: {
+          contexto: tipoReserva,
+          pagamento: calculo.brutoCentavos > 0 ? "checkout_externo" : "isento",
+          valor_centavos: calculo.brutoCentavos,
+          jogo_vinculado_id: partidaId,
+          torneio_jogo_id: torneioJogoId,
+        },
         atualizado_por: user.id,
       })
       .select("id")
