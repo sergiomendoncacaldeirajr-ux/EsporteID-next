@@ -1,6 +1,5 @@
 import webpush from "web-push";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getFcmMessaging, isFcmConfigured } from "@/lib/push/fcm-admin";
 
 type NotificacaoRow = {
   id: number;
@@ -243,7 +242,14 @@ async function dispatchFcmToAndroidApp(
   list: NotificacaoRow[],
   userIds: string[]
 ): Promise<{ sent: number; failed: number }> {
-  if (!isFcmConfigured()) return { sent: 0, failed: 0 };
+  void admin;
+  void list;
+  void userIds;
+  // Cloudflare Workers não executa o Firebase Admin SDK de forma confiável no mesmo bundle
+  // do app. Mantemos o registro de token FCM pronto, mas o envio nativo Android deve ser
+  // ligado por uma rota/worker compatível em etapa separada para não derrubar o site.
+  return { sent: 0, failed: 0 };
+/*
   const { data, error } = await admin
     .from("android_fcm_tokens")
     .select("id, usuario_id, token")
@@ -282,6 +288,7 @@ async function dispatchFcmToAndroidApp(
     }
   }
   return { sent, failed };
+*/
 }
 
 async function dispatchNotificationsToSubscriptions(
