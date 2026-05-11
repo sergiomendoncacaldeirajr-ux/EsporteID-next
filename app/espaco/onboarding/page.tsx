@@ -60,7 +60,7 @@ export default async function EspacoOnboardingPage() {
     supabase.from("esportes").select("id, nome").order("nome"),
     supabase
       .from("espacos_genericos")
-      .select("id, nome_publico, localizacao, logo_arquivo, cidade, uf, venue_config_json")
+      .select("id, slug, nome_publico, localizacao, logo_arquivo, cidade, uf, venue_config_json")
       .neq("id", selectedSpace.id)
       .order("nome_publico")
       .limit(500),
@@ -126,6 +126,7 @@ export default async function EspacoOnboardingPage() {
     const cfg = parseJsonRecord(local.venue_config_json);
     return {
       id: local.id,
+      slug: local.slug,
       nome_publico: local.nome_publico,
       localizacao: local.localizacao,
       logo_arquivo: resolveEspacoPublicAssetUrl(supabase, local.logo_arquivo),

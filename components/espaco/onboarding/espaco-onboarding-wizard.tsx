@@ -114,6 +114,7 @@ type Parceiro = {
 
 type LocalExistente = {
   id: number;
+  slug: string | null;
   nome_publico: string | null;
   localizacao: string | null;
   logo_arquivo: string | null;
@@ -215,6 +216,16 @@ function onlyDigits(value: string) {
 function formatCep(value: string) {
   const digits = onlyDigits(value).slice(0, 8);
   return digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
+}
+
+function slugifyClient(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
 }
 
 // ── Componentes auxiliares ─────────────────────────────────────────────────
@@ -715,6 +726,7 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
   const [state, action, pending] = useActionState<ActionState, FormData>(salvarPerfilWizardAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
   const [nomePublico, setNomePublico] = useState(space.nome_publico ?? "");
+  const [slug, setSlug] = useState(space.slug ?? "");
   const [claimMode, setClaimMode] = useState(false);
   const [cep, setCep] = useState(space.cep ?? "");
   const [endereco, setEndereco] = useState(space.endereco ?? "");
@@ -735,10 +747,31 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
     if (normalizedNome.length < 2) return null;
     return locaisExistentes.find((local) => normalizeEspacoDuplicateValue(local.nome_publico ?? "") === normalizedNome) ?? null;
   }, [locaisExistentes, normalizedNome]);
+  const sugestoesLocais = useMemo(() => {
+    if (normalizedNome.length < 3) return [];
+    return locaisExistentes
+      .map((local) => ({
+        ...local,
+        nomeNormalizado: normalizeEspacoDuplicateValue(local.nome_publico ?? ""),
+      }))
+      .filter((local) => {
+        if (!local.nomeNormalizado) return false;
+        return (
+          local.nomeNormalizado === normalizedNome ||
+          local.nomeNormalizado.includes(normalizedNome) ||
+          normalizedNome.includes(local.nomeNormalizado) ||
+          local.nomeNormalizado.split(" ").some((token) => token.startsWith(normalizedNome))
+        );
+      })
+      .slice(0, 5);
+  }, [locaisExistentes, normalizedNome]);
+  const slugNormalizado = slugifyClient(slug);
+  const slugEmUso = slugNormalizado.length >= 3 && locaisExistentes.some((local) => slugifyClient(local.slug ?? "") === slugNormalizado);
 
   useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
 
   function fillFromExistingLocal(local: LocalExistente) {
+    setNomePublico(local.nome_publico ?? "");
     setEndereco(local.endereco ?? "");
     setNumero(local.numero ?? "");
     setBairro(local.bairro ?? "");
@@ -746,6 +779,7 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
     setUf(local.estado ?? "");
     setCep(local.cep ?? "");
     setComplemento(local.complemento ?? "");
+    setClaimMode(true);
   }
 
   function handleNomePublicoChange(next: string) {
@@ -755,7 +789,15 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
     const match = normalized.length >= 2
       ? locaisExistentes.find((local) => normalizeEspacoDuplicateValue(local.nome_publico ?? "") === normalized)
       : null;
-    if (match) fillFromExistingLocal(match);
+    if (match) {
+      setEndereco(match.endereco ?? "");
+      setNumero(match.numero ?? "");
+      setBairro(match.bairro ?? "");
+      setCidade(match.cidade ?? "");
+      setUf(match.estado ?? "");
+      setCep(match.cep ?? "");
+      setComplemento(match.complemento ?? "");
+    }
   }
 
   useEffect(() => {
@@ -808,7 +850,7 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
           />
           <div className="mt-3">
             <TeamShieldControl
-              currentUrl={space.logo_arquivo ?? null}
+              currentUrl={exactMatch?.logo_arquivo ?? space.logo_arquivo ?? null}
               variant="espaco_logo"
               fileInputName="logo_file"
               removeFlagName="logo_remove"
@@ -837,6 +879,37 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
             placeholder="Ex.: Arena Tennis Club"
             required
           />
+          {sugestoesLocais.length > 0 ? (
+            <div className="mt-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-2.5">
+              <p className="text-[11px] font-black text-amber-200">
+                Encontramos locais cadastrados. Toque no local correto para puxar os dados.
+              </p>
+              <div className="mt-2 space-y-1.5">
+                {sugestoesLocais.map((local) => (
+                  <button
+                    key={local.id}
+                    type="button"
+                    onClick={() => fillFromExistingLocal(local)}
+                    className="flex w-full items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2.5 py-2 text-left transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/8"
+                  >
+                    {local.logo_arquivo ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={local.logo_arquivo} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-eid-primary-500/10 text-[9px] font-black text-eid-primary-300">
+                        EID
+                      </span>
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-black text-eid-fg">{local.nome_publico ?? "Local cadastrado"}</span>
+                      <span className="block truncate text-[11px] text-eid-text-secondary">{local.localizacao ?? "Sem localização"}</span>
+                    </span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-eid-primary-300" aria-hidden />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
         {exactMatch ? (
           <div className="sm:col-span-2 rounded-2xl border border-eid-primary-500/30 bg-eid-primary-500/10 p-3">
@@ -873,7 +946,26 @@ function StepPerfil({ space, esportes, locaisExistentes, onNext, onBack }: {
         ) : null}
         <div className="space-y-1.5">
           <Label>Link público (slug)</Label>
-          <IconInput Icon={Hash} name="slug" defaultValue={space.slug ?? ""} placeholder="arena-tennis-club" />
+          <IconInput
+            Icon={Hash}
+            name="slug"
+            value={slug}
+            onChange={(e) => setSlug(slugifyClient(e.target.value))}
+            placeholder="arena-tennis-club"
+          />
+          {slugNormalizado.length >= 3 ? (
+            <p className={`rounded-xl border px-3 py-2 text-[11px] font-semibold ${
+              slugEmUso
+                ? "border-red-500/30 bg-red-500/10 text-red-300"
+                : "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
+            }`}>
+              {slugEmUso ? "Este link público já está em uso. Escolha outro." : "Link público disponível."}
+            </p>
+          ) : slug.length > 0 ? (
+            <p className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-[11px] font-semibold text-amber-300">
+              Digite pelo menos 3 caracteres para verificar.
+            </p>
+          ) : null}
         </div>
         <div className="space-y-1.5">
           <Label>CEP</Label>

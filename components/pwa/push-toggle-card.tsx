@@ -22,18 +22,7 @@ export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boo
       setEnabled(hasSub);
 
       if (!hasSub && defaultEnabled && !getPushClientOptOut()) {
-        try {
-          setBusy(true);
-          await enablePushNotifications(vapidPublicKey);
-          if (!active) return;
-          setEnabled(true);
-          setMsg("Push ativo por padrão. Você pode desativar quando quiser.");
-        } catch {
-          if (!active) return;
-          setMsg("Toque em ativar para concluir o push neste navegador.");
-        } finally {
-          if (active) setBusy(false);
-        }
+        setMsg("Toque para ativar o push neste aparelho.");
       }
     }
     void bootstrap();

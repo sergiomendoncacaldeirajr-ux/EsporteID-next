@@ -28,7 +28,7 @@ export default function CityGpsLabel({ fallbackCity }: Props) {
   useEffect(() => {
     if (typeof window === "undefined" || !navigator.geolocation) return;
     let cancelled = false;
-    navigator.geolocation.getCurrentPosition(
+    const resolveGpsCity = () => navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
           const lat = pos.coords.latitude;
@@ -50,6 +50,15 @@ export default function CityGpsLabel({ fallbackCity }: Props) {
       },
       { enableHighAccuracy: false, maximumAge: 300000, timeout: 8000 }
     );
+    if (!("permissions" in navigator)) return;
+    navigator.permissions
+      .query({ name: "geolocation" as PermissionName })
+      .then((result) => {
+        if (result.state === "granted" && !cancelled) resolveGpsCity();
+      })
+      .catch(() => {
+        // Sem API de permissões confiável: evita abrir prompt nativo automaticamente.
+      });
     return () => {
       cancelled = true;
     };
