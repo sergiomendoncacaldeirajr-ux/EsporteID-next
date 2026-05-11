@@ -66,6 +66,49 @@ const barlowSemiCondensed = Barlow_Semi_Condensed({
   display: "swap",
 });
 
+const appleStartupImages = [
+  {
+    url: "/pwa-startup/apple-touch-startup-image-1290x2796.png",
+    media: "(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)",
+  },
+  {
+    url: "/pwa-startup/apple-touch-startup-image-1179x2556.png",
+    media: "(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)",
+  },
+  {
+    url: "/pwa-startup/apple-touch-startup-image-1170x2532.png",
+    media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
+  },
+  {
+    url: "/pwa-startup/apple-touch-startup-image-1284x2778.png",
+    media: "(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)",
+  },
+  {
+    url: "/pwa-startup/apple-touch-startup-image-1125x2436.png",
+    media: "(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)",
+  },
+  {
+    url: "/pwa-startup/apple-touch-startup-image-1242x2688.png",
+    media: "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)",
+  },
+  {
+    url: "/pwa-startup/apple-touch-startup-image-828x1792.png",
+    media: "(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)",
+  },
+  {
+    url: "/pwa-startup/apple-touch-startup-image-1242x2208.png",
+    media: "(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)",
+  },
+  {
+    url: "/pwa-startup/apple-touch-startup-image-750x1334.png",
+    media: "(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)",
+  },
+  {
+    url: "/pwa-startup/apple-touch-startup-image-640x1136.png",
+    media: "(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)",
+  },
+];
+
 export const metadata: Metadata = {
   title: {
     default: "EsporteID",
@@ -86,6 +129,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "EsporteID",
+    startupImage: appleStartupImages,
     /* SSR escuro; tema claro: `ThemeColorSync` troca para `default` (header branco). */
     statusBarStyle: "black-translucent",
   },

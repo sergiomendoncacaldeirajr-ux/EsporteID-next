@@ -31,9 +31,7 @@ export const EID_LOGO_ICON_E_HEIGHT = 1024;
 
 /**
  * Fundo do canvas do app no tema escuro — **igual** a `--eid-bg` em `globals.css` (:root).
- * `background_color` do manifest / overscroll; a barra do sistema usa `--eid-system-ui-chrome` / `EID_APP_CHROME_THEME_COLOR`.
- *
- * `--eid-brand-ink` (#0b1d2e) continua só para gradientes/marca, não para o fundo principal.
+ * A barra do sistema usa `--eid-system-ui-chrome` / `EID_APP_CHROME_THEME_COLOR`.
  */
 export const EID_APP_CANVAS_BG_DARK = "#0b0f14";
 
@@ -43,8 +41,8 @@ export const EID_APP_CANVAS_BG_DARK = "#0b0f14";
  */
 export const EID_SYSTEM_UI_THEME_COLOR_DARK = "#121821";
 
-/** Splash / `background_color` do manifest = canvas real do app. */
-export const EID_PWA_BACKGROUND = EID_APP_CANVAS_BG_DARK;
+/** Splash / `background_color` do manifest = ink da marca para launch nativo Android/iOS. */
+export const EID_PWA_BACKGROUND = "#0b1d2e";
 
 /** Meta `theme-color` inicial (layout) + `theme_color` do manifest — alinhado a `--eid-system-ui-chrome`. */
 export const EID_APP_CHROME_THEME_COLOR = EID_SYSTEM_UI_THEME_COLOR_DARK;
