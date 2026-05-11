@@ -1,6 +1,7 @@
 "use client";
 
 const EID_PUSH_OPT_OUT_KEY = "eid_push_opt_out";
+let enablePushInFlight: Promise<PushSubscription> | null = null;
 
 export function getPushClientOptOut(): boolean {
   if (typeof window === "undefined") return false;
@@ -121,6 +122,14 @@ async function getOrCreatePushSubscription(vapidPublicKey: string, createIfMissi
 }
 
 export async function enablePushNotifications(vapidPublicKey: string) {
+  if (enablePushInFlight) return enablePushInFlight;
+  enablePushInFlight = enablePushNotificationsOnce(vapidPublicKey).finally(() => {
+    enablePushInFlight = null;
+  });
+  return enablePushInFlight;
+}
+
+async function enablePushNotificationsOnce(vapidPublicKey: string) {
   if (!("Notification" in window) || !("serviceWorker" in navigator)) {
     throw new Error("Seu navegador não suporta notificações push.");
   }
@@ -129,7 +138,8 @@ export async function enablePushNotifications(vapidPublicKey: string) {
   }
   setPushClientOptOut(false);
 
-  const permission = await Notification.requestPermission();
+  const permission =
+    Notification.permission === "default" ? await Notification.requestPermission() : Notification.permission;
   if (permission !== "granted") {
     throw new Error("Permissão de notificação não concedida.");
   }

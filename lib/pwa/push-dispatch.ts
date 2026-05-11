@@ -152,10 +152,11 @@ async function claimPushDeliveryRow(
   return (claimed ?? []).length > 0;
 }
 
-function buildNotificationPayload(n: NotificacaoRow): string {
+function buildNotificationPayload(n: NotificacaoRow, platform = "Outro"): string {
   const tipo = String(n.tipo ?? "").toLowerCase().trim();
   const rawMsg = String(n.mensagem ?? "").trim();
   const body = rawMsg.length > 110 ? rawMsg.slice(0, 107) + "…" : rawMsg || "Você tem uma nova notificação.";
+  const isAndroid = platform.startsWith("Android/");
 
   let title: string;
   let url: string;
@@ -163,29 +164,29 @@ function buildNotificationPayload(n: NotificacaoRow): string {
   let category: string = tipo;
 
   if (tipo === "match") {
-    title = "⚔️ EsporteID · Desafio recebido";
+    title = isAndroid ? "EsporteID - Desafio recebido" : "⚔️ EsporteID · Desafio recebido";
     url = "/comunidade#desafios";
     requireInteraction = true;
   } else if (tipo === "desafio") {
-    title = "🏆 EsporteID · Placar / Agenda";
+    title = isAndroid ? "EsporteID - Placar / Agenda" : "🏆 EsporteID · Placar / Agenda";
     url = "/agenda#placares";
     requireInteraction = true;
   } else if (tipo === "agenda_status") {
-    title = "📅 EsporteID · Atualização de agenda";
+    title = isAndroid ? "EsporteID - Atualização de agenda" : "📅 EsporteID · Atualização de agenda";
     url = "/agenda#agenda-status-ranking";
   } else if (tipo.includes("candidatura")) {
-    title = "👥 EsporteID · Candidatura";
+    title = isAndroid ? "EsporteID - Candidatura" : "👥 EsporteID · Candidatura";
     url = "/comunidade";
     requireInteraction = true;
   } else if (tipo.includes("convite")) {
-    title = "👥 EsporteID · Convite de equipe";
+    title = isAndroid ? "EsporteID - Convite de equipe" : "👥 EsporteID · Convite de equipe";
     url = "/comunidade";
     requireInteraction = true;
   } else if (tipo.includes("time")) {
-    title = "👥 EsporteID · Equipe";
+    title = isAndroid ? "EsporteID - Equipe" : "👥 EsporteID · Equipe";
     url = "/comunidade";
   } else if (tipo.includes("professor")) {
-    title = "📚 EsporteID · Aulas";
+    title = isAndroid ? "EsporteID - Aulas" : "📚 EsporteID · Aulas";
     url = "/comunidade#aulas";
   } else {
     title = "EsporteID";
@@ -200,7 +201,8 @@ function buildNotificationPayload(n: NotificacaoRow): string {
     tag: `notif-${n.id}`,
     notifId: n.id,
     tipo: category,
-    requireInteraction,
+    requireInteraction: isAndroid ? false : requireInteraction,
+    platform,
   });
 }
 
@@ -253,9 +255,10 @@ async function dispatchNotificationsToSubscriptions(
       noDevice += 1;
       continue;
     }
-    const payload = buildNotificationPayload(n);
     const results = await Promise.all(
       userSubs.map(async (s) => {
+      const platform = inferPushPlatform(s.user_agent);
+      const payload = buildNotificationPayload(n, platform);
       const key = `${n.id}:${s.id}`;
       if (delivered.has(key)) return { sent: 0, failed: 0 };
       const claimed = await claimPushDeliveryRow(admin, n.id, s.id);
