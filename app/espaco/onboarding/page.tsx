@@ -7,6 +7,33 @@ import {
 import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import { EspacoOnboardingWizard } from "@/components/espaco/onboarding/espaco-onboarding-wizard";
 
+function parseJsonRecord(raw: unknown): Record<string, unknown> {
+  if (!raw) return {};
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+    } catch {
+      return {};
+    }
+  }
+  return typeof raw === "object" && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+}
+
+function parseEsportesIds(raw: unknown): number[] {
+  let value = raw;
+  if (typeof raw === "string") {
+    try {
+      value = JSON.parse(raw || "[]");
+    } catch {
+      value = [];
+    }
+  }
+  return Array.isArray(value)
+    ? value.map((item) => Number(item)).filter((item) => Number.isFinite(item) && item > 0)
+    : [];
+}
+
 export default async function EspacoOnboardingPage() {
   const { supabase, user, selectedSpace } = await getEspacoSelecionado({
     nextPath: "/espaco/onboarding",
@@ -84,7 +111,9 @@ export default async function EspacoOnboardingPage() {
       supabase,
       userId: user.id,
       space: selectedSpace,
-    }));
+      }));
+  const venueConfig = parseJsonRecord(selectedSpace.venue_config_json);
+  const reservaConfig = parseJsonRecord(selectedSpace.configuracao_reservas_json);
 
   return (
     <EspacoOnboardingWizard
@@ -95,10 +124,17 @@ export default async function EspacoOnboardingPage() {
         categoria_mensalidade: selectedSpace.categoria_mensalidade,
         modo_reserva: selectedSpace.modo_reserva,
         aceita_socios: selectedSpace.aceita_socios,
+        esportes_ids: parseEsportesIds(selectedSpace.esportes_ids),
         logo_arquivo: logoCadastradoNoOnboarding,
         cover_arquivo: selectedSpace.cover_arquivo,
         cidade: selectedSpace.cidade,
         uf: selectedSpace.uf,
+        endereco: String(venueConfig.endereco ?? ""),
+        numero: String(venueConfig.numero ?? ""),
+        bairro: String(venueConfig.bairro ?? ""),
+        cep: String(venueConfig.cep ?? ""),
+        complemento: String(venueConfig.complemento ?? ""),
+        reserva_observacoes: String(reservaConfig.observacoesPublicas ?? reservaConfig.politicaCancelamento ?? ""),
         descricao_curta: selectedSpace.descricao_curta,
         descricao_longa: selectedSpace.descricao_longa,
         whatsapp_contato: selectedSpace.whatsapp_contato,

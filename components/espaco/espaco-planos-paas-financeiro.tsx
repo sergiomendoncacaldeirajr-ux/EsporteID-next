@@ -32,9 +32,11 @@ export function EspacoPlanosPaaSFinanceiro({
 
   return (
     <div className="mt-4 space-y-3">
-      <p className="text-xs text-eid-text-secondary">
-        Cada plano define a <strong className="text-eid-fg">faixa de quadras/unidades</strong> que você pode cadastrar e o valor da mensalidade da plataforma. Escolha o plano antes de pagar; depois do pagamento aprovado, a criação de quadras e a grade são liberadas dentro do limite do plano.
-      </p>
+        <p className="text-xs text-eid-text-secondary">
+          Cada plano define a <strong className="text-eid-fg">faixa de quadras/unidades</strong> que você pode cadastrar
+          e o valor da mensalidade da plataforma. O cadastro das quadras pode ser concluído no wizard; a publicação
+          do espaço depende da forma de pagamento configurada quando houver mensalidade PaaS.
+        </p>
       <div className="grid gap-3 sm:grid-cols-2">
         {planos.map((plano) => {
           const faixa = descricaoFaixaUnidadesPaaS(plano.min_unidades, plano.max_unidades);

@@ -39,7 +39,7 @@ const RESERVA_MODELOS = ["livre", "socios", "pago", "misto"] as const;
 
 type Estrutura = (typeof ESTRUTURAS_VALIDAS)[number];
 
-type NextStep = "papeis" | "esportes" | "extras" | "perfil" | "dashboard" | "espaco_home";
+type NextStep = "papeis" | "esportes" | "extras" | "perfil" | "dashboard" | "espaco_home" | "espaco_onboarding";
 
 export type OnboardingActionResult =
   | { ok: true; nextStep?: NextStep; message?: string }
@@ -108,6 +108,39 @@ async function salvarDetalhesPapel(
   return upErr?.message ?? null;
 }
 
+async function garantirRascunhoEspacoDoDono(userId: string) {
+  const supabase = await createClient();
+  const { data: existente, error: getErr } = await supabase
+    .from("espacos_genericos")
+    .select("id")
+    .eq("responsavel_usuario_id", userId)
+    .order("id", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (getErr) return getErr.message;
+  if (existente?.id) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("nome, localizacao")
+    .eq("id", userId)
+    .maybeSingle();
+  const nomeBase = normalizePtBrNameCase(String(profile?.nome ?? "")).trim();
+  const nomePublico = nomeBase ? `Espaço de ${nomeBase}` : "Meu espaço";
+  const { error } = await supabase.from("espacos_genericos").insert({
+    nome_publico: nomePublico,
+    localizacao: profile?.localizacao ?? null,
+    criado_por_usuario_id: userId,
+    responsavel_usuario_id: userId,
+    ownership_status: "dono_cadastrado",
+    operacao_status: "rascunho",
+    status: "rascunho",
+    ativo_listagem: false,
+    aceita_socios: false,
+  });
+  return error?.message ?? null;
+}
+
 export async function salvarPapeisOnboarding(
   _prev: OnboardingActionResult | undefined,
   formData: FormData
@@ -139,6 +172,27 @@ export async function salvarPapeisOnboarding(
   if (insErr) return { ok: false, message: insErr.message };
 
   const needsSport = precisaEsportesPratica(papeis);
+  const somenteDonoEspaco = contaSomenteDonoEspaco(papeis);
+  if (somenteDonoEspaco) {
+    const draftErr = await garantirRascunhoEspacoDoDono(user.id);
+    if (draftErr) return { ok: false, message: draftErr };
+    const { error: upEspErr } = await supabase
+      .from("profiles")
+      .update({
+        tipo_usuario: legacyTipoUsuarioFromPapeis(papeis),
+        onboarding_etapa: 99,
+        perfil_completo: true,
+        onboarding_completo: true,
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+    if (upEspErr) return { ok: false, message: upEspErr.message };
+    revalidatePath("/onboarding");
+    revalidatePath("/espaco");
+    revalidatePath("/", "layout");
+    return { ok: true, nextStep: "espaco_onboarding" };
+  }
+
   const { error: upErr } = await supabase
     .from("profiles")
     .update({
@@ -918,7 +972,6 @@ export async function salvarExtrasOnboarding(
       .maybeSingle();
 
     let espacoId = existente?.id ?? null;
-    let reivindicarEspacoExistenteSemDono = false;
     const dupNomeGlobal = await findLocalDuplicadoByNome(
       espacoNome,
       localizacao,
@@ -930,13 +983,12 @@ export async function salvarExtrasOnboarding(
       const semDono = dupNomeGlobal.responsavel_usuario_id == null;
       if (semDono) {
         espacoId = dupNomeGlobal.id;
-        reivindicarEspacoExistenteSemDono = true;
       } else {
         return { ok: false, message: "Já existe um local cadastrado com esse nome. Use outro nome." };
       }
     }
 
-    if (espacoId && !reivindicarEspacoExistenteSemDono) {
+    if (espacoId) {
       const { error: upLocalErr } = await supabase
         .from("espacos_genericos")
         .update({
@@ -952,8 +1004,10 @@ export async function salvarExtrasOnboarding(
           configuracao_reservas_json: configuracaoReservas,
           aceita_socios: reservaModelo === "socios" || reservaModelo === "misto",
           responsavel_usuario_id: user.id,
+          ownership_status: "dono_cadastrado",
           operacao_status: "rascunho",
-          status: "pendente_validacao",
+          status: "rascunho",
+          ativo_listagem: false,
         })
         .eq("id", espacoId);
       if (upLocalErr) return { ok: false, message: upLocalErr.message };
@@ -970,12 +1024,14 @@ export async function salvarExtrasOnboarding(
           lng: lng || null,
           criado_por_usuario_id: user.id,
           responsavel_usuario_id: user.id,
-          status: "pendente_validacao",
           esportes_ids: JSON.stringify(espacoEsportes),
           venue_config_json: JSON.stringify(venueConfig),
           configuracao_reservas_json: configuracaoReservas,
           aceita_socios: reservaModelo === "socios" || reservaModelo === "misto",
+          ownership_status: "dono_cadastrado",
           operacao_status: "rascunho",
+          status: "rascunho",
+          ativo_listagem: false,
         })
         .select("id")
         .single();
@@ -1002,34 +1058,9 @@ export async function salvarExtrasOnboarding(
     }
 
     if (espacoId) {
-      const { data: pendRev } = await supabase
-        .from("espaco_reivindicacoes")
-        .select("id")
-        .eq("espaco_generico_id", espacoId)
-        .eq("solicitante_id", user.id)
-        .eq("status", "pendente")
-        .maybeSingle();
-
-      if (!pendRev) {
-        if (!docArquivo) {
-          return {
-            ok: false,
-            message: "Envie o documento de comprovação para concluir o onboarding de espaço.",
-          };
-        }
-        const { error: revErr } = await supabase.from("espaco_reivindicacoes").insert({
-          espaco_generico_id: espacoId,
-          solicitante_id: user.id,
-          documento_arquivo: docArquivo,
-          mensagem: docMensagem || null,
-          status: "pendente",
-        });
-        if (revErr) return { ok: false, message: revErr.message };
-        infoMessages.push("Documento enviado com sucesso. Cadastro do espaço em análise.");
-      } else {
-        infoMessages.push("Seu cadastro de espaço já está em análise.");
+      if (docArquivo || docMensagem) {
+        infoMessages.push("Dados de verificação guardados. A análise do admin acontece após concluir o wizard do espaço.");
       }
-
       const e = await salvarDetalhesPapel(user.id, "espaco", {
         espaco_generico_id: espacoId,
         nome_publico: espacoNome,

@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { EspacoMensalidadeGate } from "@/components/espaco/espaco-mensalidade-gate";
 import { EspacoPainelChrome } from "@/components/espaco/espaco-painel-chrome";
-import { EspacoValidacaoBanner } from "@/components/espaco/espaco-validacao-banner";
 import { getMensalidadePainelState } from "@/lib/espacos/mensalidade-acesso";
 import { requireEspacoManagerUser } from "@/lib/espacos/server";
 import { contaSomenteDonoEspaco, listarPapeis } from "@/lib/roles";
@@ -34,12 +33,6 @@ export default async function EspacoLayout({
       }
     : { id: 0, nome_publico: "Espaço", slug: null as string | null, oferecerCtaPerfilAtleta };
 
-  const emAnalise =
-    space &&
-    String(space.status ?? "")
-      .trim()
-      .toLowerCase() === "pendente_validacao";
-
   return (
     <main
       data-eid-touch-ui
@@ -48,7 +41,6 @@ export default async function EspacoLayout({
     >
       <EspacoPainelChrome space={chromeSpace} />
       <div className="mt-5 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
-        {emAnalise ? <EspacoValidacaoBanner nomePublico={space!.nome_publico} /> : null}
         {mensalidadeState ? (
           <EspacoMensalidadeGate state={mensalidadeState}>{children}</EspacoMensalidadeGate>
         ) : (

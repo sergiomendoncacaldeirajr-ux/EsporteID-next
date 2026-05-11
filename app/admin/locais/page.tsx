@@ -312,11 +312,12 @@ export default async function AdminLocaisPage({ searchParams }: PageProps) {
               trial_dias_override: number | null; isento_total: boolean | null;
               recorrencia_cartao_confirmada_em?: string | null; asaas_subscription_id?: string | null;
             } | undefined;
-            const cadastroConcluido = localRow.operacao_status !== "rascunho" && l.status !== "rascunho";
-            const exigeMensalidade = localRow.modo_reserva !== "paga" && localRow.modo_monetizacao !== "apenas_reservas";
+            const cadastroConcluido = isGenerico || (localRow.operacao_status !== "rascunho" && l.status !== "rascunho");
+            const exigeMensalidade =
+              !isGenerico && localRow.modo_reserva !== "paga" && localRow.modo_monetizacao !== "apenas_reservas";
             const mensalidadeConfigurada =
               !exigeMensalidade || Boolean(a?.isento_total) || Boolean(a?.recorrencia_cartao_confirmada_em);
-            const exigeRecebimentos = localRow.modo_reserva === "paga" || localRow.modo_reserva === "mista";
+            const exigeRecebimentos = !isGenerico && (localRow.modo_reserva === "paga" || localRow.modo_reserva === "mista");
             const recebimentosConfigurados =
               !exigeRecebimentos || Boolean(parceiroAsaas?.nome_razao_social) || Boolean(parceiroAsaas?.email);
             const prontoParaAprovar = cadastroConcluido && mensalidadeConfigurada && recebimentosConfigurados;

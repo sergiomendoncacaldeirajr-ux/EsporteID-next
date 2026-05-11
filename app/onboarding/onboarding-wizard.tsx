@@ -25,6 +25,7 @@ import { normalizarPapeisContaPrincipal } from "@/lib/roles";
 import { useUsernameCheck } from "@/lib/hooks/use-username-check";
 
 /* ── Seletor de localização via GPS ────────────────────────────────── */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function LocationPicker({
   latName,
   lngName,
@@ -1010,6 +1011,19 @@ export function OnboardingWizard({
     if (r.nextStep === "esportes") setStep("esportes");
     else if (r.nextStep === "extras") setStep("extras");
     else if (r.nextStep === "perfil") setStep("perfil");
+    else if (r.nextStep === "espaco_onboarding") {
+      window.localStorage.removeItem(draftKey);
+      void (async () => {
+        await fetch("/api/active-context", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ context: "espaco" }),
+        });
+        router.replace("/espaco/onboarding");
+        router.refresh();
+      })();
+      return;
+    }
     else if (r.nextStep === "espaco_home") {
       window.localStorage.removeItem(draftKey);
       void (async () => {
@@ -2230,7 +2244,7 @@ export function OnboardingWizard({
                       />
                       <span>
                         Declaro que li e aceito o contrato acima e que tenho poderes para vincular o espaço cadastrado.
-                        Entendo que o envio seguirá para análise da plataforma.
+                        Entendo que a validação final acontece depois de concluir o wizard do espaço.
                       </span>
                     </label>
                   </div>
@@ -2240,12 +2254,12 @@ export function OnboardingWizard({
                       name="espaco_documento"
                       accept=".pdf,.jpg,.jpeg,.png,.webp"
                       label="Enviar documento"
-                      hint="Comprovante do local (obrigatório para análise pelo administrador)"
+                      hint="Comprovante do local (opcional nesta etapa; a validação final acontece no wizard)"
                     />
                   </div>
                   <input
                     name="espaco_doc_msg"
-                    placeholder="Observação para aprovação (opcional)"
+                    placeholder="Observação para validação final (opcional)"
                     className="eid-input-dark mt-2 w-full rounded-xl px-3 py-2 text-sm text-eid-fg"
                   />
                 </section>
@@ -2734,7 +2748,7 @@ export function OnboardingWizard({
                     </p>
                   ) : (
                     <p className="mt-1.5 pl-1 text-[11px] text-eid-text-muted">
-                      Clique em "Detectar" para preencher automaticamente com sua cidade.
+                      Clique em &quot;Detectar&quot; para preencher automaticamente com sua cidade.
                     </p>
                   )}
                 </div>

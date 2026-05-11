@@ -9,7 +9,7 @@ import {
   Building2, MapPin, LayoutGrid, Clock, Calendar,
   Users, CreditCard, CheckCircle2, ChevronRight,
   ChevronLeft, Plus, Trash2, AlertCircle, Loader2,
-  Lightbulb, RefreshCw, ExternalLink,
+  Lightbulb, RefreshCw,
   AtSign, BadgeCheck, Banknote, FileText, Globe2,
   Hash, IdCard, Mail, MessageSquareText, Phone,
   Camera, ImageIcon, ShieldCheck, Sparkles, Type, Wallet,
@@ -55,10 +55,17 @@ type Space = {
   categoria_mensalidade: string | null;
   modo_reserva: string | null;
   aceita_socios: boolean | null;
+  esportes_ids: number[];
   logo_arquivo: string | null;
   cover_arquivo: string | null;
   cidade: string | null;
   uf: string | null;
+  endereco: string;
+  numero: string;
+  bairro: string;
+  cep: string;
+  complemento: string;
+  reserva_observacoes: string;
   descricao_curta: string | null;
   descricao_longa: string | null;
   whatsapp_contato: string | null;
@@ -527,8 +534,8 @@ function StepModelo({ space, onNext, onBack }: {
   );
 }
 
-function StepPerfil({ space, onNext, onBack }: {
-  space: Space; onNext: () => void; onBack?: () => void;
+function StepPerfil({ space, esportes, onNext, onBack }: {
+  space: Space; esportes: Array<{ id: number; nome: string }>; onNext: () => void; onBack?: () => void;
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(salvarPerfilWizardAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
@@ -536,6 +543,7 @@ function StepPerfil({ space, onNext, onBack }: {
   const [phoneCountry, setPhoneCountry] = useState<Country>("BR");
   const [websiteUrl, setWebsiteUrl] = useState(space.website_url ?? "");
   const [instagramUrl, setInstagramUrl] = useState(space.instagram_url ?? "");
+  const selectedSports = new Set(space.esportes_ids);
   useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
 
   return (
@@ -611,6 +619,46 @@ function StepPerfil({ space, onNext, onBack }: {
             {UFS.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
           </IconSelect>
         </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Endereço</Label>
+          <IconInput Icon={MapPin} name="endereco" defaultValue={space.endereco} placeholder="Rua, avenida ou nome da via" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Número</Label>
+          <IconInput Icon={Hash} name="numero" defaultValue={space.numero} placeholder="123" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Bairro</Label>
+          <IconInput Icon={MapPin} name="bairro" defaultValue={space.bairro} placeholder="Centro" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>CEP</Label>
+          <IconInput Icon={MapPin} name="cep" defaultValue={space.cep} placeholder="00000-000" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Complemento</Label>
+          <IconInput Icon={Building2} name="complemento" defaultValue={space.complemento} placeholder="Bloco, referência..." />
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          <Label>Esportes atendidos</Label>
+          <div className="flex flex-wrap gap-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-3">
+            {esportes.map((esporte) => (
+              <label
+                key={esporte.id}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/70 px-3 py-2 text-xs font-bold text-eid-fg transition hover:border-eid-primary-500/40"
+              >
+                <input
+                  type="checkbox"
+                  name="esportes_ids"
+                  value={esporte.id}
+                  defaultChecked={selectedSports.has(esporte.id)}
+                  className="h-4 w-4 rounded accent-eid-primary-500"
+                />
+                {esporte.nome}
+              </label>
+            ))}
+          </div>
+        </div>
         <div className="space-y-1.5">
           <Label>WhatsApp de contato</Label>
           <input type="hidden" name="whatsapp_contato" value={typeof whatsapp === "string" ? whatsapp : ""} />
@@ -684,6 +732,10 @@ function StepPerfil({ space, onNext, onBack }: {
           <Label>Sobre o espaço (texto completo)</Label>
           <IconTextarea Icon={FileText} name="descricao_longa" defaultValue={space.descricao_longa ?? ""} rows={4} placeholder="Descreva sua infraestrutura, diferenciais, história..." />
         </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>Observações sobre reservas</Label>
+          <IconTextarea Icon={Lightbulb} name="reserva_observacoes" defaultValue={space.reserva_observacoes} rows={3} placeholder="Regras iniciais, cancelamento, acesso de visitantes..." />
+        </div>
       </div>
 
       <Feedback state={state} />
@@ -753,8 +805,8 @@ function StepUnidades({ space, unidades, unidadeGate, onNext, onBack }: {
 
       {unidadeGate.motivoBloqueio ? (
         <div className="rounded-xl border border-amber-500/25 bg-amber-500/8 p-4 text-xs text-amber-100">
-          Você pode terminar o cadastro das quadras agora. A forma de pagamento e a aprovação do admin só controlam
-          quando o espaço aparece para os atletas na plataforma.
+          Você pode terminar o cadastro das quadras agora. A forma de pagamento só entra no fluxo de publicação ao
+          finalizar o wizard.
         </div>
       ) : null}
 
@@ -1411,25 +1463,14 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
     <form ref={formRef} action={action} className="space-y-5">
       <input type="hidden" name="espaco_id" value={space.id} />
       <StepHeader
-        title="Conta de recebimentos (Asaas)"
-        subtitle="Para cobrar reservas e mensalidades, precisamos vincular sua conta Asaas."
+        title="Conta de recebimentos"
+        subtitle="Informe os dados para preparar a integração Asaas dentro do EsporteID."
       />
 
       <div className="space-y-2 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-4 text-xs text-eid-text-secondary">
-        <p className="text-sm font-bold text-eid-fg">Como funciona?</p>
-        <p>1. Crie sua conta gratuita no Asaas (gateway BR líder para negócios).</p>
-        <p>2. Preencha os dados abaixo para vincular ao EsporteID.</p>
-        <p>3. Cobranças são geradas automaticamente via PIX ou cartão.</p>
-        <div className="mt-3 flex gap-2">
-          <a href="https://www.asaas.com" target="_blank" rel="noreferrer"
-            className="flex items-center gap-1 rounded-lg bg-eid-primary-500 px-3 py-2 text-xs font-bold text-white">
-            Criar conta <ExternalLink className="h-3 w-3" aria-hidden />
-          </a>
-          <a href="https://www.asaas.com/painel" target="_blank" rel="noreferrer"
-            className="flex items-center gap-1 rounded-lg border border-eid-primary-500/40 bg-eid-primary-500/10 px-3 py-2 text-xs font-bold text-eid-primary-200">
-            Já tenho — acessar <ExternalLink className="h-3 w-3" aria-hidden />
-          </a>
-        </div>
+        <p className="text-sm font-bold text-eid-fg">Tudo por aqui</p>
+        <p>O dono do espaço preenche os dados uma vez e o EsporteID prepara a conta de recebimentos de forma transparente.</p>
+        <p>Quando a operação exigir cobrança, reservas e mensalidades serão processadas pelo Asaas sem tirar o dono do wizard.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -1442,8 +1483,8 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
           <IconInput Icon={IdCard} name="cpf_cnpj" defaultValue={parceiro?.cpf_cnpj ?? ""} placeholder="000.000.000-00" />
         </div>
         <div className="space-y-1.5">
-          <Label>E-mail cadastrado no Asaas</Label>
-          <IconInput Icon={Mail} name="email" defaultValue={parceiro?.email ?? ""} placeholder="email@asaas.com" type="email" />
+          <Label>E-mail da conta de recebimentos</Label>
+          <IconInput Icon={Mail} name="email" defaultValue={parceiro?.email ?? ""} placeholder="financeiro@seuespaco.com" type="email" />
         </div>
       </div>
 
@@ -1464,7 +1505,7 @@ function StepConclusao({ space, unidades, horarios, planos, parceiro }: {
   space: Space; unidades: Unidade[]; horarios: Horario[];
   planos: Plano[]; parceiro: Parceiro;
 }) {
-  const [isPending, start] = useTransition();
+  const [state, action, pending] = useActionState<ActionState, FormData>(concluirOnboardingAction, undefined);
   const itens = [
     { done: !!space.modo_reserva, label: "Modelo de operação configurado" },
     { done: !!space.cidade, label: "Perfil público preenchido" },
@@ -1498,14 +1539,34 @@ function StepConclusao({ space, unidades, horarios, planos, parceiro }: {
         pagamento exigida estar configurada e o admin aprovar a publicação.
       </div>
 
-      <button
-        type="button" disabled={isPending}
-        onClick={() => start(async () => { await concluirOnboardingAction(space.id); })}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-eid-primary-500 px-6 py-4 text-base font-bold text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.6)] transition hover:bg-eid-primary-600 disabled:opacity-50"
-      >
-        {isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-        Enviar cadastro para análise
-      </button>
+      <form action={action} className="space-y-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/35 p-4">
+        <input type="hidden" name="espaco_id" value={space.id} />
+        <SectionTitle
+          Icon={FileText}
+          title="Documento de comprovação"
+          text="Envie contrato social, comprovante do local, autorização ou outro documento que comprove vínculo com o espaço."
+        />
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-eid-primary-500/40 bg-eid-primary-500/8 px-4 py-4 text-sm font-bold text-eid-primary-200 transition hover:bg-eid-primary-500/12">
+          <FileText className="h-4 w-4" aria-hidden />
+          Anexar documento
+          <input name="documento_validacao" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="sr-only" />
+        </label>
+        <IconTextarea
+          Icon={MessageSquareText}
+          name="mensagem_validacao"
+          rows={3}
+          placeholder="Observação para o admin (opcional)"
+        />
+        <Feedback state={state} />
+        <button
+          type="submit"
+          disabled={pending}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-eid-primary-500 px-6 py-4 text-base font-bold text-white shadow-[0_8px_24px_-8px_rgba(37,99,235,0.6)] transition hover:bg-eid-primary-600 disabled:opacity-50"
+        >
+          {pending ? <Loader2 className="h-5 w-5 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
+          Enviar cadastro para análise
+        </button>
+      </form>
     </div>
   );
 }
@@ -1513,7 +1574,7 @@ function StepConclusao({ space, unidades, horarios, planos, parceiro }: {
 // ── Wizard principal ───────────────────────────────────────────────────────
 
 export function EspacoOnboardingWizard({
-  space, unidades, unidadeGate, planosPaaS, horarios, feriados, planos, parceiro,
+  space, esportes, unidades, unidadeGate, planosPaaS, horarios, feriados, planos, parceiro,
 }: WizardProps) {
   const storageKey = `eid:onboarding-step-${space.id}`;
   const [step, setStep] = useState<number>(() => {
@@ -1576,7 +1637,7 @@ export function EspacoOnboardingWizard({
             />
           )}
           {currentStep?.id === "perfil" && (
-            <StepPerfil space={space} onNext={advance} onBack={goBack} />
+            <StepPerfil space={space} esportes={esportes} onNext={advance} onBack={goBack} />
           )}
           {currentStep?.id === "plano_plataforma" && (
             <StepPlanoPlataforma

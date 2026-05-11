@@ -514,53 +514,55 @@ export async function adminSetEspacoListagem(formData: FormData) {
     if (ativo) {
       const { data: espaco, error: espacoErr } = await db
         .from("espacos_genericos")
-        .select("id, status, operacao_status, modo_reserva, modo_monetizacao, responsavel_usuario_id")
+        .select("id, status, operacao_status, modo_reserva, modo_monetizacao, ownership_status, responsavel_usuario_id")
         .eq("id", id)
         .maybeSingle();
       if (espacoErr || !espaco) {
         redirect(`/admin/locais?adm_flash=listagem_erro${adminQueryDetail(espacoErr?.message ?? "Local não encontrado.")}`);
       }
 
-      const cadastroConcluido = espaco.operacao_status !== "rascunho" && espaco.status !== "rascunho";
-      if (!cadastroConcluido) {
-        redirect(
-          `/admin/locais?adm_flash=listagem_bloqueada${adminQueryDetail("O wizard ainda não foi concluído pelo dono do local.")}`
-        );
-      }
+      const isGenerico = espaco.ownership_status === "generico" || !espaco.responsavel_usuario_id;
 
-      const [{ data: assinatura }, { data: parceiro }] = await Promise.all([
-        db
-          .from("espaco_assinaturas_plataforma")
-          .select("id, isento_total, recorrencia_cartao_confirmada_em")
-          .eq("espaco_generico_id", id)
-          .maybeSingle(),
-        espaco.responsavel_usuario_id
-          ? db
-              .from("parceiro_conta_asaas")
-              .select("nome_razao_social, email, onboarding_status")
-              .eq("usuario_id", espaco.responsavel_usuario_id)
-              .maybeSingle()
-          : Promise.resolve({ data: null }),
-      ]);
-      const exigeMensalidade =
-        espaco.modo_reserva !== "paga" && espaco.modo_monetizacao !== "apenas_reservas";
-      const mensalidadeOk =
-        !exigeMensalidade ||
-        Boolean(assinatura?.isento_total) ||
-        Boolean(assinatura?.recorrencia_cartao_confirmada_em);
-      if (!mensalidadeOk) {
-        redirect(
-          `/admin/locais?adm_flash=listagem_bloqueada${adminQueryDetail("A mensalidade da plataforma precisa estar configurada no cartão de crédito antes da aprovação.")}`
-        );
-      }
+      if (!isGenerico) {
+        const cadastroConcluido = espaco.operacao_status !== "rascunho" && espaco.status !== "rascunho";
+        if (!cadastroConcluido) {
+          redirect(
+            `/admin/locais?adm_flash=listagem_bloqueada${adminQueryDetail("O wizard ainda não foi concluído pelo dono do local.")}`
+          );
+        }
 
-      const exigeRecebimentos = espaco.modo_reserva === "paga" || espaco.modo_reserva === "mista";
-      const recebimentosOk =
-        !exigeRecebimentos || Boolean(parceiro?.nome_razao_social) || Boolean(parceiro?.email);
-      if (!recebimentosOk) {
-        redirect(
-          `/admin/locais?adm_flash=listagem_bloqueada${adminQueryDetail("A conta Asaas de recebimentos ainda não foi configurada pelo dono do local.")}`
-        );
+        const [{ data: assinatura }, { data: parceiro }] = await Promise.all([
+          db
+            .from("espaco_assinaturas_plataforma")
+            .select("id, isento_total, recorrencia_cartao_confirmada_em")
+            .eq("espaco_generico_id", id)
+            .maybeSingle(),
+          db
+            .from("parceiro_conta_asaas")
+            .select("nome_razao_social, email, onboarding_status")
+            .eq("usuario_id", espaco.responsavel_usuario_id)
+            .maybeSingle(),
+        ]);
+        const exigeMensalidade =
+          espaco.modo_reserva !== "paga" && espaco.modo_monetizacao !== "apenas_reservas";
+        const mensalidadeOk =
+          !exigeMensalidade ||
+          Boolean(assinatura?.isento_total) ||
+          Boolean(assinatura?.recorrencia_cartao_confirmada_em);
+        if (!mensalidadeOk) {
+          redirect(
+            `/admin/locais?adm_flash=listagem_bloqueada${adminQueryDetail("A mensalidade da plataforma precisa estar configurada no cartão de crédito antes da aprovação.")}`
+          );
+        }
+
+        const exigeRecebimentos = espaco.modo_reserva === "paga" || espaco.modo_reserva === "mista";
+        const recebimentosOk =
+          !exigeRecebimentos || Boolean(parceiro?.nome_razao_social) || Boolean(parceiro?.email);
+        if (!recebimentosOk) {
+          redirect(
+            `/admin/locais?adm_flash=listagem_bloqueada${adminQueryDetail("A conta Asaas de recebimentos ainda não foi configurada pelo dono do local.")}`
+          );
+        }
       }
     }
 

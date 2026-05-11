@@ -32,6 +32,17 @@ function field(formData: FormData, key: string) {
 function bool(formData: FormData, key: string) {
   return formData.get(key) === "on";
 }
+function intList(formData: FormData, key: string) {
+  const out: number[] = [];
+  const seen = new Set<number>();
+  for (const value of formData.getAll(key)) {
+    const n = Number(value);
+    if (!Number.isInteger(n) || n <= 0 || seen.has(n)) continue;
+    seen.add(n);
+    out.push(n);
+  }
+  return out;
+}
 
 function normalizeWebsiteUrl(raw: string) {
   const value = raw.trim();
@@ -98,6 +109,22 @@ async function uploadImagemEspacoWizard(file: File, userId: string, prefix: "log
   return supabase.storage.from("espaco-logos").getPublicUrl(path).data.publicUrl;
 }
 
+async function uploadDocumentoEspacoWizard(file: File, userId: string) {
+  const supabase = await createClient();
+  if (file.size > 8 * 1024 * 1024) {
+    throw new Error("Documento acima de 8MB.");
+  }
+  const ext = (file.name.split(".").pop() || "pdf").toLowerCase();
+  const safeExt = ext.replace(/[^a-z0-9]/g, "") || "pdf";
+  const path = `${userId}/wizard_${Date.now()}_${Math.random().toString(16).slice(2, 8)}.${safeExt}`;
+  const { error } = await supabase.storage.from("espaco-documentos").upload(path, file, {
+    upsert: true,
+    contentType: file.type || "application/octet-stream",
+  });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
 // ── Step 1 ─────────────────────────────────────────────────────────────────
 export async function salvarModeloEspacoAction(
   _prev: State | undefined,
@@ -138,6 +165,14 @@ export async function salvarPerfilWizardAction(
     const { supabase, user } = await requireWizardManager(espacoId);
     const nomePublico = field(formData, "nome_publico");
     if (nomePublico.length < 2) throw new Error("Informe o nome do espaço.");
+    const cidade = field(formData, "cidade");
+    const uf = field(formData, "uf").toUpperCase();
+    const endereco = field(formData, "endereco");
+    const numero = field(formData, "numero");
+    const esportesIds = intList(formData, "esportes_ids");
+    if (cidade.length < 2 || uf.length < 2) throw new Error("Informe cidade e UF do espaço.");
+    if (endereco.length < 3 || numero.length < 1) throw new Error("Informe endereço completo com número.");
+    if (esportesIds.length === 0) throw new Error("Selecione ao menos um esporte atendido no espaço.");
     const slugBase = slugifyEspaco(
       field(formData, "slug") || nomePublico || `espaco-${espacoId}`
     );
@@ -161,8 +196,24 @@ export async function salvarPerfilWizardAction(
     const updatePayload: Record<string, unknown> = {
       nome_publico: nomePublico,
       slug: slugFinal,
-      cidade: field(formData, "cidade") || null,
-      uf: field(formData, "uf").toUpperCase() || null,
+      cidade,
+      uf,
+      localizacao: [cidade, uf].filter(Boolean).join(" - "),
+      esportes_ids: JSON.stringify(esportesIds),
+      venue_config_json: JSON.stringify({
+        endereco,
+        numero,
+        bairro: field(formData, "bairro") || null,
+        cep: field(formData, "cep") || null,
+        cidade,
+        estado: uf,
+        complemento: field(formData, "complemento") || null,
+        origem: "wizard-espaco",
+      }),
+      configuracao_reservas_json: JSON.stringify({
+        observacoesPublicas: field(formData, "reserva_observacoes") || null,
+        politicaCancelamento: field(formData, "reserva_observacoes") || null,
+      }),
       descricao_curta: field(formData, "descricao_curta") || null,
       descricao_longa: field(formData, "descricao_longa") || null,
       whatsapp_contato: field(formData, "whatsapp_contato") || null,
@@ -493,28 +544,73 @@ export async function salvarAsaasWizardAction(
     );
     if (error) throw new Error(error.message);
     revalidatePath("/espaco/onboarding");
-    return { ok: true, message: "Dados salvos. Acesse o Asaas para concluir a integração." };
+    return { ok: true, message: "Dados salvos. A integração de recebimentos continuará dentro do EsporteID." };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Erro ao salvar dados Asaas." };
   }
 }
 
 // ── Conclusão ──────────────────────────────────────────────────────────────
-export async function concluirOnboardingAction(espacoId: number): Promise<void> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Sessão expirada.");
-  await supabase
-    .from("espacos_genericos")
-    .update({
-      operacao_status: "pendente_admin",
-      status: "pendente_validacao",
-      ativo_listagem: false,
-    })
-    .eq("id", espacoId)
-    .eq("responsavel_usuario_id", user.id);
-  revalidatePath("/espaco");
+export async function concluirOnboardingAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    const espacoId = Number(formData.get("espaco_id") ?? 0);
+    const { supabase, user } = await requireWizardManager(espacoId);
+    const documento = formData.get("documento_validacao");
+    const mensagem = field(formData, "mensagem_validacao");
+    const { data: reivindicacao } = await supabase
+      .from("espaco_reivindicacoes")
+      .select("id")
+      .eq("espaco_generico_id", espacoId)
+      .eq("solicitante_id", user.id)
+      .eq("status", "pendente")
+      .maybeSingle();
+
+    let documentoArquivo: string | null = null;
+    if (documento instanceof File && documento.size > 0) {
+      documentoArquivo = await uploadDocumentoEspacoWizard(documento, user.id);
+    }
+    if (!reivindicacao && !documentoArquivo) {
+      return { ok: false, message: "Envie o documento de comprovação do espaço para finalizar." };
+    }
+
+    if (reivindicacao?.id) {
+      const patch: Record<string, unknown> = {
+        mensagem: mensagem || null,
+        observacoes_admin: null,
+      };
+      if (documentoArquivo) patch.documento_arquivo = documentoArquivo;
+      const { error } = await supabase
+        .from("espaco_reivindicacoes")
+        .update(patch)
+        .eq("id", reivindicacao.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabase.from("espaco_reivindicacoes").insert({
+        espaco_generico_id: espacoId,
+        solicitante_id: user.id,
+        documento_arquivo: documentoArquivo,
+        mensagem: mensagem || null,
+        status: "pendente",
+      });
+      if (error) throw new Error(error.message);
+    }
+
+    const { error: upErr } = await supabase
+      .from("espacos_genericos")
+      .update({
+        operacao_status: "pendente_admin",
+        status: "pendente_validacao",
+        ativo_listagem: false,
+      })
+      .eq("id", espacoId)
+      .eq("responsavel_usuario_id", user.id);
+    if (upErr) throw new Error(upErr.message);
+    revalidatePath("/espaco");
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Erro ao finalizar cadastro." };
+  }
   redirect("/espaco");
 }

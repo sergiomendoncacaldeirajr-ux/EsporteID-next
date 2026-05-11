@@ -2848,7 +2848,7 @@ export async function salvarDadosContaAsaasParceiroAction(
     return {
       ok: true,
       message:
-        "Dados guardados. Abra a conta no Asaas ou o painel pelos links abaixo. Quando a integração (API/subconta) for necessária, o suporte orienta a chave de ambiente.",
+        "Dados guardados. A validação da conta de recebimentos continua dentro do EsporteID.",
     };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Falha ao salvar." };

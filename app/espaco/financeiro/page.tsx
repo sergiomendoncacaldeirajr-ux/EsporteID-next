@@ -113,30 +113,14 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
       <section className="eid-mobile-section xl:col-span-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
         <h2 className="text-base font-bold text-eid-fg">Conta Asaas e integração</h2>
         <p className="mt-1 text-sm text-eid-text-secondary">
-          Para receber pagamentos no fluxo do espaço, você pode criar sua conta no Asaas agora ou abrir sua conta já existente para integrar.
+          Para receber pagamentos no fluxo do espaço, configure a conta de recebimentos diretamente pelo EsporteID.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <a
-            href="https://www.asaas.com"
-            target="_blank"
-            rel="noreferrer"
-            className="eid-btn-primary rounded-xl px-4 py-2.5 text-sm font-bold"
-          >
-            Criar conta no Asaas
-          </a>
-          <a
-            href="https://www.asaas.com/painel"
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/10 px-4 py-2.5 text-sm font-bold text-eid-primary-200"
-          >
-            Já tenho — entrar no Asaas
-          </a>
           <Link
             href="/espaco/integracao-asaas"
-            className="rounded-xl border border-[color:var(--eid-border-subtle)] px-4 py-2.5 text-sm font-bold text-eid-fg"
+            className="eid-btn-primary rounded-xl px-4 py-2.5 text-sm font-bold"
           >
-            Configurar integração no painel
+            Configurar conta de recebimentos
           </Link>
         </div>
       </section>
