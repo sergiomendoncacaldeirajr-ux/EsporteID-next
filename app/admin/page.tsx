@@ -319,6 +319,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
         const hasAndroidAppShown = ultimasEntregas.some(
           (e) => e.plataforma === "Android/App" && String(e.status ?? "").toLowerCase() === "shown"
         );
+        const hasAndroidAppFcmOnly = hasAndroidAppSuccess && !hasAndroidAppShown;
         const checklist: string[] = [];
         if (!isPushDispatchConfigured())
           checklist.push("Chaves VAPID incompletas — nenhum Web Push será enviado. Veja Admin → Push.");
@@ -336,6 +337,8 @@ export default async function AdminHomePage({ searchParams }: Props) {
           checklist.push("Sem sucesso recente de entrega para este usuário.");
         if (hasAndroidAppShown) checklist.push("Android/App exibiu a notificação pelo service worker.");
         if (hasAndroidAppSuccess) checklist.push("Android/App recebeu aceite recente do FCM.");
+        if (hasAndroidAppFcmOnly)
+          checklist.push("Android/App ainda não confirmou exibição: confira o AAB/TWA com DelegationService e POST_NOTIFICATIONS.");
         if (hasSuccess) checklist.push("Há entrega com sucesso recente em pelo menos uma plataforma.");
         pushDiag = {
           userId: pushUserId,

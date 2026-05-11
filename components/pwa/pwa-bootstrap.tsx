@@ -6,6 +6,7 @@ import { ensurePushReady, syncExistingPushSubscription } from "@/lib/pwa/push-cl
 
 const PUSH_SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 const PUSH_SYNC_STORAGE_KEY = "eid:last-push-sync-at";
+const EID_SW_VERSION = "2026-05-11-android-push-receipt-v2";
 
 function isStandaloneDisplayMode() {
   if (typeof window === "undefined") return false;
@@ -59,7 +60,7 @@ export function PwaBootstrap() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     return runWhenPageIsIdle(() => {
-      void navigator.serviceWorker.register("/sw.js").then((reg) => {
+      void navigator.serviceWorker.register(`/sw.js?v=${encodeURIComponent(EID_SW_VERSION)}`).then((reg) => {
         void reg.update().catch(() => {
           // best-effort: o navegador também atualiza sozinho.
         });

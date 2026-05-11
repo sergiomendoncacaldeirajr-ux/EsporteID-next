@@ -101,14 +101,13 @@ export default async function EspacoOnboardingPage() {
       .eq("usuario_id", user.id)
       .maybeSingle(),
     deveCarregarPlanosPaaS
-      ? supabase
-          .from("espaco_plano_mensal_plataforma")
-          .select("id, nome, min_unidades, max_unidades, valor_mensal_centavos, socios_mensal_modo")
-          .is("espaco_generico_id", null)
-          .eq("categoria_espaco", selectedSpace.categoria_mensalidade ?? "outro")
-          .eq("ativo", true)
-          .eq("liberacao", "publico")
-          .order("ordem", { ascending: true })
+        ? supabase
+            .from("espaco_plano_mensal_plataforma")
+          .select("id, nome, categoria_espaco, min_unidades, max_unidades, valor_mensal_centavos, socios_mensal_modo")
+            .is("espaco_generico_id", null)
+            .eq("ativo", true)
+            .eq("liberacao", "publico")
+            .order("ordem", { ascending: true })
       : Promise.resolve({ data: [] as never[] }),
     getPaaSUnidadeGateInfo(supabase, selectedSpace.id),
   ]);
@@ -126,6 +125,19 @@ export default async function EspacoOnboardingPage() {
       }));
   const venueConfig = parseJsonRecord(selectedSpace.venue_config_json);
   const reservaConfig = parseJsonRecord(selectedSpace.configuracao_reservas_json);
+  const categoriaPlano = selectedSpace.categoria_mensalidade ?? "outro";
+  const planosPaaSBrutos = (planosPaaS ?? []) as Array<{
+    id: number;
+    nome: string;
+    categoria_espaco: string;
+    min_unidades: number;
+    max_unidades: number | null;
+    valor_mensal_centavos: number;
+    socios_mensal_modo: string | null;
+  }>;
+  const planosCategoria = planosPaaSBrutos.filter((plano) => plano.categoria_espaco === categoriaPlano);
+  const planosFallback = planosPaaSBrutos.filter((plano) => plano.categoria_espaco === "condominio");
+  const planosPaaSWizard = planosCategoria.length > 0 ? planosCategoria : planosFallback.length > 0 ? planosFallback : planosPaaSBrutos;
   const locaisWizard = (locaisExistentes ?? []).map((local) => {
     const cfg = parseJsonRecord(local.venue_config_json);
     return {
@@ -182,7 +194,7 @@ export default async function EspacoOnboardingPage() {
         configuracao_agenda_json: unknown;
       }>}
       unidadeGate={unidadeGate}
-      planosPaaS={(planosPaaS ?? []) as Array<{
+      planosPaaS={planosPaaSWizard as Array<{
         id: number;
         nome: string;
         min_unidades: number;
