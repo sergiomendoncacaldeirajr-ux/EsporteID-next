@@ -235,7 +235,10 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                       R$ {((Number(plano.mensalidade_centavos ?? 0) || 0) / 100).toFixed(2).replace(".", ",")} / mês
                     </p>
                     <p className="mt-1 text-[11px] text-eid-text-secondary">
-                      {plano.reservas_gratuitas_semana ?? 0} reserva(s) grátis por semana · desconto avulso{" "}
+                      {Number(plano.reservas_gratuitas_semana ?? 0) === 0
+                        ? "Reservas grátis ilimitadas"
+                        : `${Number(plano.reservas_gratuitas_semana ?? 0)} reserva(s) grátis por semana`}{" "}
+                      · desconto avulso{" "}
                       {Number(plano.percentual_desconto_avulso ?? 0) * 100}%
                     </p>
                   </div>

@@ -1895,10 +1895,19 @@ export async function criarReservaEspacoAction(
         message: "Você atingiu o limite diário de reservas deste espaço.",
       };
     }
+    const reservasGratisPlanoRaw = plano?.reservas_gratuitas_semana;
+    const reservasGratisPlanoConfigurado =
+      reservasGratisPlanoRaw !== null &&
+      reservasGratisPlanoRaw !== undefined &&
+      Number.isFinite(Number(reservasGratisPlanoRaw));
+    const reservasGratisSemLimite =
+      benefit.ok &&
+      reservasGratisPlanoConfigurado &&
+      Number(reservasGratisPlanoRaw) === 0;
     const usarBeneficioGratis =
       checkbox(formData, "usar_beneficio_gratis") &&
       benefit.ok &&
-      benefit.reservasGratisSemana > 0;
+      (reservasGratisSemLimite || benefit.reservasGratisSemana > 0);
     if (usarBeneficioGratis) {
       const cfgReservas = normalizeEspacoReservaConfig(
         espaco.configuracao_reservas_json
@@ -1961,6 +1970,18 @@ export async function criarReservaEspacoAction(
       }
 
       if (
+        !reservasGratisSemLimite &&
+        benefit.reservasGratisSemana > 0 &&
+        Number(reservasGratisSemanaCount ?? 0) >= benefit.reservasGratisSemana
+      ) {
+        return {
+          ok: false,
+          message: `Seu plano permite ${benefit.reservasGratisSemana} reserva(s) gratuita(s) por semana.`,
+        };
+      }
+
+      if (
+        !reservasGratisPlanoConfigurado &&
         cfgReservas.gratisLimiteReservasSemanaMembro > 0 &&
         Number(reservasGratisSemanaCount ?? 0) >=
           cfgReservas.gratisLimiteReservasSemanaMembro

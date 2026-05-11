@@ -113,25 +113,31 @@ function setAndroidNativePushOptOut(optOut: boolean): void {
 }
 
 export async function hasAndroidNativePushEnabled(): Promise<boolean> {
-  return Boolean(getAndroidFcmToken()) && !getAndroidNativePushOptOut();
+  if (getAndroidNativePushOptOut()) return false;
+  if (getAndroidFcmToken()) return true;
+
+  const resp = await fetch("/api/push/fcm/preference", { cache: "no-store" });
+  if (!resp.ok) return false;
+  const data = (await resp.json().catch(() => ({}))) as { enabled?: boolean };
+  return data.enabled === true;
 }
 
 export async function setAndroidNativePushEnabled(enabled: boolean): Promise<void> {
   const token = getAndroidFcmToken();
-  if (!token) {
-    throw new Error("Abra o app novamente para concluir a ativação das notificações.");
-  }
-
   setAndroidNativePushOptOut(!enabled);
-  const resp = await fetch("/api/push/fcm/register", {
+  const resp = await fetch(token ? "/api/push/fcm/register" : "/api/push/fcm/preference", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      token,
-      device: navigator.userAgent,
-      appVersion: "7.0.1",
-      active: enabled,
-    }),
+    body: JSON.stringify(
+      token
+        ? {
+            token,
+            device: navigator.userAgent,
+            appVersion: "7.0.1",
+            active: enabled,
+          }
+        : { active: enabled }
+    ),
   });
   const data = (await resp.json().catch(() => ({}))) as { message?: string };
   if (!resp.ok) {

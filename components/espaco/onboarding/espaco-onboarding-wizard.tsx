@@ -2330,7 +2330,9 @@ function StepPlanos({ space, planos, onNext, onBack, onSkip }: {
                     ? `R$ ${(p.mensalidade_centavos / 100).toFixed(2).replace(".", ",")}/mês`
                     : "Gratuito"}
                   {" · "}
-                  {Number(p.reservas_gratuitas_semana ?? 0)} grátis/semana
+                  {Number(p.reservas_gratuitas_semana ?? 0) === 0
+                    ? "grátis ilimitadas"
+                    : `${Number(p.reservas_gratuitas_semana ?? 0)} grátis/semana`}
                   {" · "}
                   {Number(p.limite_reservas_semana ?? 0) > 0
                     ? `${Number(p.limite_reservas_semana)} marcações/semana`
@@ -2360,7 +2362,7 @@ function StepPlanos({ space, planos, onNext, onBack, onSkip }: {
             </div>
             <div className="space-y-1.5">
               <Label>Reservas gratuitas / semana</Label>
-              <IconInput Icon={Calendar} name="reservas_gratis" type="number" min={0} max={30} defaultValue={3} />
+              <IconInput Icon={Calendar} name="reservas_gratis" type="number" min={0} max={999} defaultValue={3} placeholder="0 = sem limite" />
             </div>
             <div className="space-y-1.5">
               <Label>Marcações totais / semana</Label>

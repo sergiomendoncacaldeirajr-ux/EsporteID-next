@@ -359,7 +359,9 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
             <input
               type="number"
               name="reservas_gratuitas_semana"
-              placeholder="Reservas grátis/semana"
+              min={0}
+              max={999}
+              placeholder="Reservas grátis/semana (0 = livre)"
               className="eid-input-dark rounded-xl px-3 py-2 text-sm"
             />
             <input
@@ -419,7 +421,9 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               <p className="mt-1 text-xs text-eid-text-secondary">
                 {moedaCentavos(plano.mensalidade_centavos)} · {plano.ativo ? "Ativo" : "Inativo"}
                 {" · "}
-                {Number(plano.reservas_gratuitas_semana ?? 0)} grátis/semana
+                {Number(plano.reservas_gratuitas_semana ?? 0) === 0
+                  ? "grátis ilimitadas"
+                  : `${Number(plano.reservas_gratuitas_semana ?? 0)} grátis/semana`}
                 {" · "}
                 {Number(plano.limite_reservas_semana ?? 0) > 0
                   ? `${Number(plano.limite_reservas_semana)} marcações/semana`
