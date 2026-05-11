@@ -287,6 +287,79 @@ function slotsToText(slots: Array<{ inicio: string; fim: string }>) {
   return slots.map((slot) => `${slot.inicio}-${slot.fim}`).join("\n");
 }
 
+function ajustarSlotsAposEdicao(
+  slots: Array<{ inicio: string; fim: string }>,
+  indexEditado: number,
+  slotAnterior: { inicio: string; fim: string },
+  fimDia: string,
+  intervaloPadrao: number
+) {
+  const fimDiaMin = timeToMinutesClient(fimDia) ?? 24 * 60;
+  const normalizados = slots.slice(0, indexEditado).filter((slot) => {
+    const inicioMin = timeToMinutesClient(slot.inicio);
+    const fimMin = timeToMinutesClient(slot.fim);
+    return inicioMin != null && fimMin != null && fimMin > inicioMin && fimMin <= fimDiaMin;
+  });
+  const prevFimMin = normalizados.length > 0
+    ? timeToMinutesClient(normalizados.at(-1)?.fim ?? "")
+    : null;
+  const oldInicioMin = timeToMinutesClient(slotAnterior.inicio);
+  const oldFimMin = timeToMinutesClient(slotAnterior.fim);
+  let novoInicioMin = timeToMinutesClient(slots[indexEditado]?.inicio ?? "");
+  let novoFimMin = timeToMinutesClient(slots[indexEditado]?.fim ?? "");
+  if (novoInicioMin == null || novoFimMin == null || oldInicioMin == null || oldFimMin == null) return slots;
+  if (prevFimMin != null && novoInicioMin < prevFimMin) novoInicioMin = prevFimMin;
+  if (novoFimMin <= novoInicioMin) novoFimMin = Math.min(fimDiaMin, novoInicioMin + intervaloPadrao);
+  if (novoInicioMin >= fimDiaMin || novoFimMin > fimDiaMin) return normalizados;
+
+  if (novoInicioMin > oldInicioMin && oldInicioMin >= (prevFimMin ?? oldInicioMin)) {
+    normalizados.push({
+      inicio: minutesToTimeClient(oldInicioMin),
+      fim: minutesToTimeClient(novoInicioMin),
+    });
+  }
+
+  normalizados.push({
+    inicio: minutesToTimeClient(novoInicioMin),
+    fim: minutesToTimeClient(novoFimMin),
+  });
+
+  let cursor = novoFimMin;
+  if (novoFimMin < oldFimMin) {
+    const fimRestante = Math.min(oldFimMin, fimDiaMin);
+    normalizados.push({
+      inicio: minutesToTimeClient(novoFimMin),
+      fim: minutesToTimeClient(fimRestante),
+    });
+    cursor = fimRestante;
+  }
+
+  for (const slot of slots.slice(indexEditado + 1)) {
+    const inicioMin = timeToMinutesClient(slot.inicio);
+    const fimMin = timeToMinutesClient(slot.fim);
+    const duracao = inicioMin != null && fimMin != null && fimMin > inicioMin
+      ? fimMin - inicioMin
+      : intervaloPadrao;
+    const nextFim = cursor + duracao;
+    if (nextFim > fimDiaMin) {
+      if (fimDiaMin > cursor) {
+        normalizados.push({
+          inicio: minutesToTimeClient(cursor),
+          fim: minutesToTimeClient(fimDiaMin),
+        });
+      }
+      break;
+    }
+    normalizados.push({
+      inicio: minutesToTimeClient(cursor),
+      fim: minutesToTimeClient(nextFim),
+    });
+    cursor = nextFim;
+  }
+
+  return normalizados;
+}
+
 // ── Componentes auxiliares ─────────────────────────────────────────────────
 
 function Feedback({ state }: { state: ActionState }) {
@@ -1772,11 +1845,15 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
     setSlotsDoDia(key, next);
   };
 
-  const atualizarSlot = (key: string, index: number, field: "inicio" | "fim", value: string, currentText: string) => {
+  const atualizarSlot = (key: string, index: number, field: "inicio" | "fim", value: string, currentText: string, unidadeId: number) => {
     const next = parseSlotsClient(currentText);
     if (!next[index]) return;
+    const slotAnterior = next[index];
     next[index] = { ...next[index], [field]: value };
-    setSlotsDoDia(key, next);
+    setSlotsDoDia(
+      key,
+      ajustarSlotsAposEdicao(next, index, slotAnterior, fim[key] ?? "23:59", intervaloAtual(unidadeId))
+    );
   };
 
   const adicionarSlot = (key: string, currentText: string, unidadeId: number) => {
@@ -1984,14 +2061,14 @@ function StepHorarios({ space, unidades, horarios, onNext, onBack }: {
                                         <input
                                           type="time"
                                           value={slot.inicio}
-                                          onChange={(e) => atualizarSlot(key, index, "inicio", e.target.value, gradeTexto)}
+                                          onChange={(e) => atualizarSlot(key, index, "inicio", e.target.value, gradeTexto, unidade.id)}
                                           className="w-[4.9rem] bg-transparent text-xs font-bold text-eid-fg focus:outline-none"
                                         />
                                         <span className="text-eid-text-secondary">-</span>
                                         <input
                                           type="time"
                                           value={slot.fim}
-                                          onChange={(e) => atualizarSlot(key, index, "fim", e.target.value, gradeTexto)}
+                                          onChange={(e) => atualizarSlot(key, index, "fim", e.target.value, gradeTexto, unidade.id)}
                                           className="w-[4.9rem] bg-transparent text-xs font-bold text-eid-fg focus:outline-none"
                                         />
                                       </>
