@@ -18,7 +18,7 @@
       
     
     </string-array>
-    <bool name="enableNotification">true</bool>
+    <bool name="enableNotification">false</bool>
     <bool name="enableSiteSettingsShortcut">true</bool>
     <color name="backgroundColor">#0B0F14</color>
     <color name="colorPrimary">#121821</color>

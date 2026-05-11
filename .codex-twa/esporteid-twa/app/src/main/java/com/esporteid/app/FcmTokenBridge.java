@@ -11,6 +11,10 @@ public final class FcmTokenBridge {
 
     private FcmTokenBridge() {}
 
+    public interface TokenCallback {
+        void onToken(String token);
+    }
+
     public static String getToken(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         return prefs.getString(KEY_TOKEN, "");
@@ -23,6 +27,15 @@ public final class FcmTokenBridge {
     }
 
     public static void refreshToken(Context context) {
-        FirebaseMessaging.getInstance().getToken().addOnSuccessListener((token) -> saveToken(context, token));
+        refreshToken(context, null);
+    }
+
+    public static void refreshToken(Context context, TokenCallback callback) {
+        FirebaseMessaging.getInstance().getToken().addOnSuccessListener((token) -> {
+            saveToken(context, token);
+            if (callback != null && token != null && !token.trim().isEmpty()) {
+                callback.onToken(token.trim());
+            }
+        });
     }
 }

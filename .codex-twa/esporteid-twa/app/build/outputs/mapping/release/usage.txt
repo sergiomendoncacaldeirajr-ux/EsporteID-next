@@ -9843,7 +9843,11 @@ com.esporteid.app.FcmTokenBridge:
     private static final java.lang.String KEY_TOKEN
     private static final java.lang.String PREFS
     private void <init>()
+    public static void refreshToken(android.content.Context)
 com.esporteid.app.LauncherActivity:
+    private static final java.lang.String KEY_LAST_TOKEN_OPENED
+    private static final java.lang.String KEY_PERMISSION_ASKED
+    private static final java.lang.String PREFS
     private static final int REQUEST_POST_NOTIFICATIONS
 com.esporteid.app.R$array
 com.esporteid.app.R$bool

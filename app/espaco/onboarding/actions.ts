@@ -29,6 +29,12 @@ async function requireWizardManager(espacoId: number) {
 function field(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
+function numberFieldOrNull(formData: FormData, key: string) {
+  const raw = field(formData, key);
+  if (!raw) return null;
+  const value = Number(raw.replace(",", "."));
+  return Number.isFinite(value) ? value : null;
+}
 function bool(formData: FormData, key: string) {
   return formData.get(key) === "on";
 }
@@ -623,24 +629,22 @@ export async function criarPlanoWizardAction(
     if (nome.length < 2) throw new Error("Informe o nome do plano.");
     const mensalidadeCentavos =
       Math.round(Number(field(formData, "mensalidade_reais").replace(",", ".")) * 100) || 0;
+    const reservasGratisInput = numberFieldOrNull(formData, "reservas_gratis");
+    const limiteReservasSemanaInput = numberFieldOrNull(formData, "limite_reservas_semana");
+    const cooldownHorasInput = numberFieldOrNull(formData, "cooldown_horas");
     const antecedenciaPreset = field(formData, "antecedencia_max_dias_preset");
     const antecedenciaCustom = Number(formData.get("antecedencia_max_dias_custom") ?? 0) || 0;
+    const herdarAntecedenciaMaxDias = !antecedenciaPreset || antecedenciaPreset === "inherit";
     const antecedenciaMaxDias = Math.max(
       1,
       Math.min(
         365,
-        antecedenciaPreset === "custom"
+        herdarAntecedenciaMaxDias
+          ? 30
+          : antecedenciaPreset === "custom"
           ? antecedenciaCustom || 5
           : Number(antecedenciaPreset) || 5
       )
-    );
-    const limiteReservasSemana = Math.max(
-      0,
-      Number(formData.get("limite_reservas_semana") ?? 0) || 0
-    );
-    const cooldownHoras = Math.max(
-      0,
-      Number(formData.get("cooldown_horas") ?? 0) || 0
     );
     const { error } = await supabase.from("espaco_planos_socio").insert({
       espaco_generico_id: espacoId,
@@ -648,16 +652,20 @@ export async function criarPlanoWizardAction(
       descricao: field(formData, "descricao") || null,
       mensalidade_centavos: mensalidadeCentavos,
       taxa_adesao_centavos: 0,
-      reservas_gratuitas_semana: Math.max(
-        0,
-        Number(formData.get("reservas_gratis") ?? 0) || 0
-      ),
-      limite_reservas_semana: limiteReservasSemana || null,
-      cooldown_horas: cooldownHoras,
+      reservas_gratuitas_semana: Math.max(0, reservasGratisInput ?? 0),
+      limite_reservas_semana:
+        limiteReservasSemanaInput === null ? null : Math.max(0, Math.round(limiteReservasSemanaInput)),
+      cooldown_horas: Math.max(0, Math.round(cooldownHorasInput ?? 0)),
       antecedencia_max_dias: antecedenciaMaxDias,
       beneficios_json: {
         uma_reserva_ativa_por_vez:
           formData.get("uma_reserva_ativa_por_vez") === "on",
+        herdar_regras_globais: {
+          reservas_gratuitas_semana: reservasGratisInput === null,
+          limite_reservas_semana: limiteReservasSemanaInput === null,
+          cooldown_horas: cooldownHorasInput === null,
+          antecedencia_max_dias: herdarAntecedenciaMaxDias,
+        },
       },
       percentual_desconto_avulso: 0,
       ativo: true,

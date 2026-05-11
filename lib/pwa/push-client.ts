@@ -133,7 +133,7 @@ export async function setAndroidNativePushEnabled(enabled: boolean): Promise<voi
         ? {
             token,
             device: navigator.userAgent,
-            appVersion: "7.0.1",
+            appVersion: "7.0.2",
             active: enabled,
           }
         : { active: enabled }

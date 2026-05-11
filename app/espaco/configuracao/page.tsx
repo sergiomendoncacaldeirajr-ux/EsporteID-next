@@ -21,6 +21,18 @@ function moedaCentavos(value: number | null | undefined) {
   }).format((Number(value ?? 0) || 0) / 100);
 }
 
+function planoHerdaRegra(plano: { beneficios_json?: unknown }, key: string) {
+  const beneficios = plano.beneficios_json;
+  if (!beneficios || typeof beneficios !== "object" || Array.isArray(beneficios)) return false;
+  const herdar = (beneficios as Record<string, unknown>).herdar_regras_globais;
+  return Boolean(
+    herdar &&
+      typeof herdar === "object" &&
+      !Array.isArray(herdar) &&
+      (herdar as Record<string, unknown>)[key] === true
+  );
+}
+
 export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const espacoId = Number(sp.espaco ?? 0) || null;
@@ -361,7 +373,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               name="reservas_gratuitas_semana"
               min={0}
               max={999}
-              placeholder="Reservas grátis/semana (0 = livre)"
+              placeholder="Reservas grátis/semana (vazio = global; 0 = livre)"
               className="eid-input-dark rounded-xl px-3 py-2 text-sm"
             />
             <input
@@ -377,7 +389,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               type="number"
               min={0}
               name="limite_reservas_semana"
-              placeholder="Marcações/semana (0 = livre)"
+              placeholder="Marcações/semana (vazio = global; 0 = livre)"
               className="eid-input-dark rounded-xl px-3 py-2 text-sm"
             />
             <input
@@ -385,7 +397,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               min={0}
               max={720}
               name="cooldown_horas"
-              placeholder="Intervalo entre marcações (h)"
+              placeholder="Intervalo entre marcações (vazio = global)"
               className="eid-input-dark rounded-xl px-3 py-2 text-sm"
             />
             <input
@@ -393,8 +405,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               min={1}
               max={365}
               name="antecedencia_max_dias"
-              defaultValue={5}
-              placeholder="Libera agenda em dias"
+              placeholder="Libera agenda em dias (vazio = global)"
               className="eid-input-dark rounded-xl px-3 py-2 text-sm"
             />
           </div>
@@ -421,15 +432,21 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               <p className="mt-1 text-xs text-eid-text-secondary">
                 {moedaCentavos(plano.mensalidade_centavos)} · {plano.ativo ? "Ativo" : "Inativo"}
                 {" · "}
-                {Number(plano.reservas_gratuitas_semana ?? 0) === 0
+                {planoHerdaRegra(plano, "reservas_gratuitas_semana")
+                  ? "segue grátis global"
+                  : Number(plano.reservas_gratuitas_semana ?? 0) === 0
                   ? "grátis ilimitadas"
                   : `${Number(plano.reservas_gratuitas_semana ?? 0)} grátis/semana`}
                 {" · "}
-                {Number(plano.limite_reservas_semana ?? 0) > 0
+                {planoHerdaRegra(plano, "limite_reservas_semana")
+                  ? "segue limite global"
+                  : Number(plano.limite_reservas_semana ?? 0) > 0
                   ? `${Number(plano.limite_reservas_semana)} marcações/semana`
                   : "sem limite semanal"}
-                {" · agenda "}
-                {Number(plano.antecedencia_max_dias ?? 30)} dia(s)
+                {" · "}
+                {planoHerdaRegra(plano, "antecedencia_max_dias")
+                  ? "segue agenda global"
+                  : `agenda ${Number(plano.antecedencia_max_dias ?? 30)} dia(s)`}
                 {typeof plano.beneficios_json === "object" &&
                 plano.beneficios_json &&
                 !Array.isArray(plano.beneficios_json) &&

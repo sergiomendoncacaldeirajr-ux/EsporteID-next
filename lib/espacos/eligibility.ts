@@ -38,6 +38,18 @@ function toDate(value: NullableDate) {
   return date && !Number.isNaN(date.getTime()) ? date : null;
 }
 
+function planoHerdaRegra(plano: EspacoPlanoResumo | null | undefined, key: string) {
+  const beneficios = plano?.beneficios_json;
+  if (!beneficios || typeof beneficios !== "object" || Array.isArray(beneficios)) return false;
+  const herdar = (beneficios as Record<string, unknown>).herdar_regras_globais;
+  return Boolean(
+    herdar &&
+      typeof herdar === "object" &&
+      !Array.isArray(herdar) &&
+      (herdar as Record<string, unknown>)[key] === true
+  );
+}
+
 export function avaliarBeneficiosSocioEspaco({
   socio,
   plano,
@@ -139,7 +151,11 @@ export function avaliarBeneficiosSocioEspaco({
     motivo: null,
     reservasGratisSemana: Math.max(
       0,
-      Number(plano?.reservas_gratuitas_semana ?? 0)
+      Number(
+        planoHerdaRegra(plano, "reservas_gratuitas_semana")
+          ? cfg.gratisLimiteReservasSemanaMembro
+          : plano?.reservas_gratuitas_semana ?? cfg.gratisLimiteReservasSemanaMembro
+      )
     ),
     descontoAvulso: Math.max(
       0,
@@ -147,7 +163,11 @@ export function avaliarBeneficiosSocioEspaco({
     ),
     cooldownHoras: Math.max(
       0,
-      Number(plano?.cooldown_horas ?? cfg.cooldownHoras)
+      Number(
+        planoHerdaRegra(plano, "cooldown_horas")
+          ? cfg.cooldownHoras
+          : plano?.cooldown_horas ?? cfg.cooldownHoras
+      )
     ),
     antecedenciaMinHoras: Math.max(
       0,
@@ -155,7 +175,11 @@ export function avaliarBeneficiosSocioEspaco({
     ),
     antecedenciaMaxDias: Math.max(
       1,
-      Number(plano?.antecedencia_max_dias ?? cfg.antecedenciaMaxDias)
+      Number(
+        planoHerdaRegra(plano, "antecedencia_max_dias")
+          ? cfg.antecedenciaMaxDias
+          : plano?.antecedencia_max_dias ?? cfg.antecedenciaMaxDias
+      )
     ),
     limiteReservasDia: Math.max(
       0,
@@ -163,7 +187,11 @@ export function avaliarBeneficiosSocioEspaco({
     ),
     limiteReservasSemana: Math.max(
       0,
-      Number(plano?.limite_reservas_semana ?? cfg.limiteReservasSemana)
+      Number(
+        planoHerdaRegra(plano, "limite_reservas_semana")
+          ? cfg.limiteReservasSemana
+          : plano?.limite_reservas_semana ?? cfg.limiteReservasSemana
+      )
     ),
   };
 }

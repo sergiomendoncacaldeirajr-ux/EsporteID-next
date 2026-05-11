@@ -50,7 +50,7 @@ async function registerAndroidFcmTokenFromUrl() {
     body: JSON.stringify({
       token,
       device: navigator.userAgent,
-      appVersion: "7.0.1",
+      appVersion: "7.0.2",
       active: !getAndroidNativePushOptOut(),
     }),
   });

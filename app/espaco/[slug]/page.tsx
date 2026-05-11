@@ -17,6 +17,18 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+function planoHerdaRegra(plano: { beneficios_json?: unknown }, key: string) {
+  const beneficios = plano.beneficios_json;
+  if (!beneficios || typeof beneficios !== "object" || Array.isArray(beneficios)) return false;
+  const herdar = (beneficios as Record<string, unknown>).herdar_regras_globais;
+  return Boolean(
+    herdar &&
+      typeof herdar === "object" &&
+      !Array.isArray(herdar) &&
+      (herdar as Record<string, unknown>)[key] === true
+  );
+}
+
 export default async function EspacoPublicLandingPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
@@ -62,7 +74,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
       .order("ordem", { ascending: true }),
     supabase
       .from("espaco_planos_socio")
-      .select("id, nome, descricao, mensalidade_centavos, reservas_gratuitas_semana, percentual_desconto_avulso")
+      .select("id, nome, descricao, mensalidade_centavos, reservas_gratuitas_semana, percentual_desconto_avulso, beneficios_json")
       .eq("espaco_generico_id", espaco.id)
       .eq("ativo", true)
       .order("ordem", { ascending: true }),
@@ -235,7 +247,9 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                       R$ {((Number(plano.mensalidade_centavos ?? 0) || 0) / 100).toFixed(2).replace(".", ",")} / mês
                     </p>
                     <p className="mt-1 text-[11px] text-eid-text-secondary">
-                      {Number(plano.reservas_gratuitas_semana ?? 0) === 0
+                      {planoHerdaRegra(plano, "reservas_gratuitas_semana")
+                        ? "Segue regra global de reservas grátis"
+                        : Number(plano.reservas_gratuitas_semana ?? 0) === 0
                         ? "Reservas grátis ilimitadas"
                         : `${Number(plano.reservas_gratuitas_semana ?? 0)} reserva(s) grátis por semana`}{" "}
                       · desconto avulso{" "}

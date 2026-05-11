@@ -2295,6 +2295,16 @@ function StepFeriados({ space, feriados, onNext, onBack }: {
   );
 }
 
+function planoHerdaRegraWizard(plano: Plano, key: string) {
+  const herdar = plano.beneficios_json?.herdar_regras_globais;
+  return Boolean(
+    herdar &&
+      typeof herdar === "object" &&
+      !Array.isArray(herdar) &&
+      (herdar as Record<string, unknown>)[key] === true
+  );
+}
+
 function StepPlanos({ space, planos, onNext, onBack, onSkip }: {
   space: Space; planos: Plano[]; onNext: () => void; onBack?: () => void; onSkip?: () => void;
 }) {
@@ -2330,15 +2340,21 @@ function StepPlanos({ space, planos, onNext, onBack, onSkip }: {
                     ? `R$ ${(p.mensalidade_centavos / 100).toFixed(2).replace(".", ",")}/mês`
                     : "Gratuito"}
                   {" · "}
-                  {Number(p.reservas_gratuitas_semana ?? 0) === 0
+                  {planoHerdaRegraWizard(p, "reservas_gratuitas_semana")
+                    ? "segue grátis global"
+                    : Number(p.reservas_gratuitas_semana ?? 0) === 0
                     ? "grátis ilimitadas"
                     : `${Number(p.reservas_gratuitas_semana ?? 0)} grátis/semana`}
                   {" · "}
-                  {Number(p.limite_reservas_semana ?? 0) > 0
+                  {planoHerdaRegraWizard(p, "limite_reservas_semana")
+                    ? "segue limite global"
+                    : Number(p.limite_reservas_semana ?? 0) > 0
                     ? `${Number(p.limite_reservas_semana)} marcações/semana`
                     : "sem limite semanal"}
-                  {" · agenda "}
-                  {Number(p.antecedencia_max_dias ?? 30)} dia(s)
+                  {" · "}
+                  {planoHerdaRegraWizard(p, "antecedencia_max_dias")
+                    ? "segue agenda global"
+                    : `agenda ${Number(p.antecedencia_max_dias ?? 30)} dia(s)`}
                   {p.beneficios_json?.uma_reserva_ativa_por_vez ? " · 1 ativa por vez" : ""}
                 </p>
               </div>
@@ -2362,23 +2378,24 @@ function StepPlanos({ space, planos, onNext, onBack, onSkip }: {
             </div>
             <div className="space-y-1.5">
               <Label>Reservas gratuitas / semana</Label>
-              <IconInput Icon={Calendar} name="reservas_gratis" type="number" min={0} max={999} defaultValue={3} placeholder="0 = sem limite" />
+              <IconInput Icon={Calendar} name="reservas_gratis" type="number" min={0} max={999} placeholder="Em branco = regra global; 0 = sem limite" />
             </div>
             <div className="space-y-1.5">
               <Label>Marcações totais / semana</Label>
-              <IconInput Icon={Calendar} name="limite_reservas_semana" type="number" min={0} max={60} placeholder="0 = sem limite" />
+              <IconInput Icon={Calendar} name="limite_reservas_semana" type="number" min={0} max={60} placeholder="Em branco = global; 0 = sem limite" />
             </div>
             <div className="space-y-1.5">
               <Label>Intervalo entre marcações (h)</Label>
-              <IconInput Icon={Clock} name="cooldown_horas" type="number" min={0} max={720} placeholder="0 = sem intervalo" />
+              <IconInput Icon={Clock} name="cooldown_horas" type="number" min={0} max={720} placeholder="Em branco = global; 0 = sem intervalo" />
             </div>
             <div className="space-y-1.5">
               <Label>Liberação da agenda</Label>
               <select
                 name="antecedencia_max_dias_preset"
-                defaultValue="5"
+                defaultValue="inherit"
                 className="h-11 w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface px-3 text-sm text-eid-fg outline-none transition focus:border-eid-primary-500"
               >
+                <option value="inherit">Seguir regra global</option>
                 <option value="2">2 dias</option>
                 <option value="5">5 dias</option>
                 <option value="7">7 dias</option>

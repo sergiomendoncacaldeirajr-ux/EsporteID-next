@@ -37,6 +37,18 @@ function exigeUmaReservaAtivaPorVez(plano: { beneficios_json?: unknown } | null 
   return record.uma_reserva_ativa_por_vez === true || record.umaReservaAtivaPorVez === true;
 }
 
+function planoHerdaRegraGlobal(plano: { beneficios_json?: unknown } | null | undefined, key: string) {
+  const beneficios = plano?.beneficios_json;
+  if (!beneficios || typeof beneficios !== "object" || Array.isArray(beneficios)) return false;
+  const herdar = (beneficios as Record<string, unknown>).herdar_regras_globais;
+  return Boolean(
+    herdar &&
+      typeof herdar === "object" &&
+      !Array.isArray(herdar) &&
+      (herdar as Record<string, unknown>)[key] === true
+  );
+}
+
 async function requireUser() {
   const supabase = await createClient();
   const {
@@ -105,6 +117,13 @@ function text(formData: FormData, field: string) {
 function intOrNull(formData: FormData, field: string) {
   const value = Number(formData.get(field) ?? 0);
   return Number.isFinite(value) && value > 0 ? Math.round(value) : null;
+}
+
+function numberInputOrNull(formData: FormData, field: string) {
+  const raw = text(formData, field);
+  if (!raw) return null;
+  const value = Number(raw.replace(",", "."));
+  return Number.isFinite(value) ? value : null;
 }
 
 function checkbox(formData: FormData, field: string) {
@@ -1087,6 +1106,10 @@ export async function criarPlanoSocioEspacoAction(formData: FormData) {
   const { supabase, user } = await requireEspacoManager(espacoId);
   const nome = text(formData, "nome");
   if (nome.length < 2) throw new Error("Informe o nome do plano.");
+  const reservasGratisSemana = numberInputOrNull(formData, "reservas_gratuitas_semana");
+  const limiteReservasSemana = numberInputOrNull(formData, "limite_reservas_semana");
+  const cooldownHoras = numberInputOrNull(formData, "cooldown_horas");
+  const antecedenciaMaxDias = numberInputOrNull(formData, "antecedencia_max_dias");
   const { data, error } = await supabase
     .from("espaco_planos_socio")
     .insert({
@@ -1103,23 +1126,27 @@ export async function criarPlanoSocioEspacoAction(formData: FormData) {
         Math.round(Number(formData.get("taxa_adesao_centavos") ?? 0) || 0)
       ),
       limite_reservas_dia: intOrNull(formData, "limite_reservas_dia"),
-      limite_reservas_semana: intOrNull(formData, "limite_reservas_semana"),
-      cooldown_horas: Math.max(0, Number(formData.get("cooldown_horas") ?? 0) || 0),
+      limite_reservas_semana:
+        limiteReservasSemana === null ? null : Math.max(0, Math.round(limiteReservasSemana)),
+      cooldown_horas: Math.max(0, Math.round(cooldownHoras ?? 0)),
       antecedencia_min_horas: Math.max(
         0,
         Number(formData.get("antecedencia_min_horas") ?? 0) || 0
       ),
       antecedencia_max_dias: Math.max(
         1,
-        Number(formData.get("antecedencia_max_dias") ?? 30) || 30
+        Math.round(antecedenciaMaxDias ?? 30)
       ),
-      reservas_gratuitas_semana: Math.max(
-        0,
-        Number(formData.get("reservas_gratuitas_semana") ?? 0) || 0
-      ),
+      reservas_gratuitas_semana: Math.max(0, Math.round(reservasGratisSemana ?? 0)),
       beneficios_json: {
         uma_reserva_ativa_por_vez:
           checkbox(formData, "uma_reserva_ativa_por_vez"),
+        herdar_regras_globais: {
+          reservas_gratuitas_semana: reservasGratisSemana === null,
+          limite_reservas_semana: limiteReservasSemana === null,
+          cooldown_horas: cooldownHoras === null,
+          antecedencia_max_dias: antecedenciaMaxDias === null,
+        },
       },
       percentual_desconto_avulso: Math.max(
         0,
@@ -1895,8 +1922,12 @@ export async function criarReservaEspacoAction(
         message: "Você atingiu o limite diário de reservas deste espaço.",
       };
     }
-    const reservasGratisPlanoRaw = plano?.reservas_gratuitas_semana;
+    const cfgBeneficiosGratis = normalizeEspacoReservaConfig(espaco.configuracao_reservas_json);
+    const reservasGratisPlanoRaw = planoHerdaRegraGlobal(plano, "reservas_gratuitas_semana")
+      ? cfgBeneficiosGratis.gratisLimiteReservasSemanaMembro
+      : plano?.reservas_gratuitas_semana;
     const reservasGratisPlanoConfigurado =
+      cfgBeneficiosGratis.reservasGratisLiberadas &&
       reservasGratisPlanoRaw !== null &&
       reservasGratisPlanoRaw !== undefined &&
       Number.isFinite(Number(reservasGratisPlanoRaw));
@@ -1907,11 +1938,10 @@ export async function criarReservaEspacoAction(
     const usarBeneficioGratis =
       checkbox(formData, "usar_beneficio_gratis") &&
       benefit.ok &&
+      cfgBeneficiosGratis.reservasGratisLiberadas &&
       (reservasGratisSemLimite || benefit.reservasGratisSemana > 0);
     if (usarBeneficioGratis) {
-      const cfgReservas = normalizeEspacoReservaConfig(
-        espaco.configuracao_reservas_json
-      );
+      const cfgReservas = cfgBeneficiosGratis;
       const inicioDia = new Date(
         new Date(inicioDate).setHours(0, 0, 0, 0)
       ).toISOString();

@@ -25,7 +25,7 @@
     <attr format="string" name="title"/>
     <bool name="abc_action_bar_embed_tabs">true</bool>
     <bool name="abc_config_actionMenuItemAllCaps">true</bool>
-    <bool name="enableNotification">true</bool>
+    <bool name="enableNotification">false</bool>
     <bool name="enableSiteSettingsShortcut">true</bool>
     <color name="abc_decor_view_status_guard">#ff000000</color>
     <color name="abc_decor_view_status_guard_light">#ffffffff</color>
