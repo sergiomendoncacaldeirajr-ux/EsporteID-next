@@ -132,7 +132,7 @@ async function garantirRascunhoEspacoDoDono(userId: string) {
     localizacao: profile?.localizacao ?? null,
     criado_por_usuario_id: userId,
     responsavel_usuario_id: userId,
-    ownership_status: "dono_cadastrado",
+    ownership_status: "pendente_validacao",
     operacao_status: "rascunho",
     status: "rascunho",
     ativo_listagem: false,
