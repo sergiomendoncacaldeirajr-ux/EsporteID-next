@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { adminDispararPushTesteParaUsuario, adminMarcarAlertaLido } from "@/app/admin/actions";
+import { AdminLocalNotificationTest } from "@/components/admin/admin-local-notification-test";
 import { AdminPushUsuarioPicker } from "@/components/admin/admin-push-usuario-picker";
 import { ADMIN_NAV_LINKS } from "@/lib/admin/nav-links";
 import { isPushDispatchConfigured } from "@/lib/pwa/push-dispatch";
@@ -600,6 +601,7 @@ export default async function AdminHomePage({ searchParams }: Props) {
               Subscriptions: <strong className="text-eid-fg">{pushDiag.subsAtivas}</strong> ativa(s) de{" "}
               <strong className="text-eid-fg">{pushDiag.subsTotais}</strong> total.
             </p>
+            <AdminLocalNotificationTest />
             {pushDiag.checklist.length > 0 && (
               <ul className="mt-2 space-y-1">
                 {pushDiag.checklist.map((msg, idx) => (

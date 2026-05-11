@@ -41,6 +41,7 @@ import {
 } from "@/app/espaco/onboarding/actions";
 import "react-phone-number-input/style.css";
 import "@/app/cadastro/cadastro-register.css";
+import { prepareCoverForUpload } from "@/lib/images/prepare-avatar-upload";
 
 const PhoneInput = dynamic(() => import("react-phone-number-input"), {
   ssr: false,
@@ -336,6 +337,123 @@ function SectionTitle({ Icon, title, text }: { Icon: LucideIcon; title: string; 
   );
 }
 
+function CoverUploadControl({ currentUrl }: { currentUrl: string | null }) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileName, setFileName] = useState("");
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [removeCurrent, setRemoveCurrent] = useState(false);
+  const displayUrl = previewUrl ?? (removeCurrent ? null : currentUrl);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  async function handlePick(file: File | undefined) {
+    if (!file) return;
+    setProcessing(true);
+    setError(null);
+    try {
+      const prepared = await prepareCoverForUpload(file);
+      if (!prepared.ok) {
+        setError(prepared.message);
+        if (inputRef.current) inputRef.current.value = "";
+        return;
+      }
+      const dt = new DataTransfer();
+      dt.items.add(prepared.file);
+      if (inputRef.current) inputRef.current.files = dt.files;
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(URL.createObjectURL(prepared.file));
+      setFileName(prepared.file.name);
+      setRemoveCurrent(false);
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  function clearCover() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    setFileName("");
+    setError(null);
+    if (inputRef.current) inputRef.current.value = "";
+  }
+
+  function removeCover() {
+    clearCover();
+    setRemoveCurrent(true);
+  }
+
+  return (
+    <div className="mt-3 space-y-3">
+      <div className="overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-primary-500/10">
+        {displayUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={displayUrl} alt="" className="h-28 w-full object-cover sm:h-32" />
+        ) : (
+          <div className="flex h-28 w-full items-center justify-center gap-2 text-xs font-bold text-eid-primary-300 sm:h-32">
+            <ImageIcon className="h-5 w-5" aria-hidden />
+            Sem capa
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-2">
+        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2.5 text-xs font-bold text-eid-primary-200 transition hover:bg-eid-primary-500/15">
+          {processing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Camera className="h-4 w-4" aria-hidden />}
+          {processing ? "Preparando capa..." : displayUrl ? "Trocar capa" : "Adicionar capa"}
+          <input
+            ref={inputRef}
+            name="cover_file"
+            type="file"
+            accept="image/*,.heic,.heif"
+            className="sr-only"
+            onChange={(e) => void handlePick(e.currentTarget.files?.[0])}
+          />
+        </label>
+
+        {previewUrl ? (
+          <button
+            type="button"
+            onClick={clearCover}
+            className="flex items-center justify-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-text-secondary transition hover:text-eid-fg"
+          >
+            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+            Cancelar troca
+          </button>
+        ) : null}
+
+        {currentUrl || previewUrl ? (
+          <button
+            type="button"
+            onClick={removeCover}
+            className="flex items-center justify-center gap-2 rounded-xl border border-red-400/35 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-300 transition hover:bg-red-500/15"
+          >
+            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+            Remover capa
+          </button>
+        ) : null}
+      </div>
+
+      <input type="hidden" name="cover_remove" value={removeCurrent ? "1" : "0"} />
+      {fileName ? (
+        <p className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 px-3 py-2 text-[11px] font-semibold text-eid-primary-300">
+          Capa pronta para envio. Toque em “Salvar e continuar” para salvar.
+        </p>
+      ) : null}
+      {error ? (
+        <p className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-[11px] font-semibold text-amber-300">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 // ── Steps ──────────────────────────────────────────────────────────────────
 
 const STEPS = [
@@ -606,28 +724,7 @@ function StepPerfil({ space, esportes, onNext, onBack }: {
             title="Foto de capa"
             text="Adicione uma imagem larga para destacar o espaço na página pública."
           />
-          <div className="mt-3 overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-primary-500/10">
-            {space.cover_arquivo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={space.cover_arquivo} alt="" className="h-28 w-full object-cover sm:h-32" />
-            ) : (
-              <div className="flex h-28 w-full items-center justify-center gap-2 text-xs font-bold text-eid-primary-300 sm:h-32">
-                <ImageIcon className="h-5 w-5" aria-hidden />
-                Sem capa
-              </div>
-            )}
-          </div>
-          <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2.5 text-xs font-bold text-eid-primary-200 transition hover:bg-eid-primary-500/15">
-            <Camera className="h-4 w-4" aria-hidden />
-            Adicionar ou trocar capa
-            <input name="cover_file" type="file" accept="image/*,.heic,.heif" className="sr-only" />
-          </label>
-          {space.cover_arquivo ? (
-            <label className="mt-2 flex items-center gap-2 text-xs font-semibold text-eid-text-secondary">
-              <input type="checkbox" name="cover_remove" value="1" className="h-4 w-4 rounded accent-eid-primary-500" />
-              Remover capa atual
-            </label>
-          ) : null}
+          <CoverUploadControl currentUrl={space.cover_arquivo ?? null} />
         </div>
       </div>
 
