@@ -41,7 +41,7 @@ public class LauncherActivity extends Activity {
     private static final String HOME_URL = "https://esporteid.com.br/dashboard";
     private static final String TRUSTED_HOST = "esporteid.com.br";
     private static final String TRUSTED_WWW_HOST = "www.esporteid.com.br";
-    private static final String APP_VERSION = "7.0.7";
+    private static final String APP_VERSION = "7.0.8";
     private static final int REQUEST_POST_NOTIFICATIONS = 7001;
     private static final int REQUEST_LOCATION = 7002;
     private static final int REQUEST_FILE_CHOOSER = 7003;
@@ -108,6 +108,10 @@ public class LauncherActivity extends Activity {
             return;
         }
         if (webView != null && webView.canGoBack()) {
+            if (isHomeUrl(webView.getUrl())) {
+                moveTaskToBack(true);
+                return;
+            }
             webView.goBack();
             return;
         }
@@ -186,7 +190,11 @@ public class LauncherActivity extends Activity {
         webView = new WebView(this);
         webView.setAlpha(0f);
         webView.setBackgroundColor(Color.parseColor("#0B0F14"));
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         webView.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            webView.setRendererPriorityPolicy(WebView.RENDERER_PRIORITY_IMPORTANT, true);
+        }
         webView.setLayoutParams(new SwipeRefreshLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -319,7 +327,15 @@ public class LauncherActivity extends Activity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setTextZoom(100);
+        settings.setSupportZoom(false);
+        settings.setBuiltInZoomControls(false);
+        settings.setDisplayZoomControls(false);
         settings.setUserAgentString(settings.getUserAgentString() + " EsporteIDAndroidApp/" + APP_VERSION);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            settings.setOffscreenPreRaster(true);
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         }
@@ -359,6 +375,19 @@ public class LauncherActivity extends Activity {
         if (webView == null || webView.getUrl() == null) return false;
         Uri uri = Uri.parse(webView.getUrl());
         return isTrustedUri(uri);
+    }
+
+    private boolean isHomeUrl(String url) {
+        if (url == null || url.trim().isEmpty()) return true;
+        try {
+            Uri uri = Uri.parse(url);
+            if (!isTrustedUri(uri)) return false;
+            String path = uri.getPath();
+            if (path == null || path.trim().isEmpty()) path = "/";
+            return "/".equals(path) || "/dashboard".equals(path);
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private void openExternalUrl(String url) {
@@ -732,7 +761,15 @@ public class LauncherActivity extends Activity {
         settings.setGeolocationEnabled(true);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setTextZoom(100);
+        settings.setSupportZoom(false);
+        settings.setBuiltInZoomControls(false);
+        settings.setDisplayZoomControls(false);
         settings.setUserAgentString(settings.getUserAgentString() + " EsporteIDAndroidApp/" + APP_VERSION);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            settings.setOffscreenPreRaster(true);
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         }

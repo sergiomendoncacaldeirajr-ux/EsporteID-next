@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { isNativeAndroidApp } from "@/lib/pwa/push-client";
 
-const NATIVE_PREFETCH_ROUTES = ["/dashboard", "/agenda", "/comunidade", "/ranking", "/perfil"] as const;
+const NATIVE_PREFETCH_ROUTES = ["/dashboard", "/agenda", "/comunidade", "/ranking", "/perfil", "/match", "/desafio", "/times"] as const;
 
 export function NativeAppRuntime() {
   const router = useRouter();

@@ -174,7 +174,7 @@ export function avaliarBeneficiosSocioEspaco({
       Number(plano?.antecedencia_min_horas ?? cfg.antecedenciaMinHoras)
     ),
     antecedenciaMaxDias: Math.max(
-      1,
+      0,
       Number(
         planoHerdaRegra(plano, "antecedencia_max_dias")
           ? cfg.antecedenciaMaxDias

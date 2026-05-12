@@ -312,35 +312,35 @@ export async function salvarRegrasReservasWizardAction(
     const espacoId = Number(formData.get("espaco_id") ?? 0);
     const { supabase } = await requireWizardManager(espacoId);
     const configuracao = serializarEspacoReservaConfig({
-      limiteReservasDia: Number(formData.get("limite_reservas_dia") ?? 1),
-      limiteReservasSemana: Number(formData.get("limite_reservas_semana") ?? 3),
-      cooldownHoras: Number(formData.get("cooldown_horas") ?? 2),
-      antecedenciaMinHoras: Number(formData.get("antecedencia_min_horas") ?? 1),
-      antecedenciaMaxDias: Number(formData.get("antecedencia_max_dias") ?? 5),
+      limiteReservasDia: Number(formData.get("limite_reservas_dia") ?? 0),
+      limiteReservasSemana: Number(formData.get("limite_reservas_semana") ?? 0),
+      cooldownHoras: Number(formData.get("cooldown_horas") ?? 0),
+      antecedenciaMinHoras: Number(formData.get("antecedencia_min_horas") ?? 0),
+      antecedenciaMaxDias: Number(formData.get("antecedencia_max_dias") ?? 0),
       gratisLimiteReservasDiaMembro: Number(
         formData.get("gratis_limite_reservas_dia_membro") ??
           formData.get("limite_reservas_dia") ??
-          1
+          0
       ),
       gratisLimiteReservasSemanaMembro: Number(
         formData.get("gratis_limite_reservas_semana_membro") ??
           formData.get("limite_reservas_semana") ??
-          3
+          0
       ),
       gratisIntervaloHorasEntreReservasMembro: Number(
         formData.get("gratis_intervalo_horas_entre_reservas_membro") ??
           formData.get("cooldown_horas") ??
-          2
+          0
       ),
       gratisAntecedenciaMaxDiasMembro: Number(
         formData.get("gratis_antecedencia_max_dias_membro") ??
           formData.get("antecedencia_max_dias") ??
-          5
+          0
       ),
       bloqueiaInadimplente: bool(formData, "bloqueia_inadimplente"),
       reservasGratisLiberadas: bool(formData, "reservas_gratis_liberadas"),
       cancelamentoGratuitaPermite: bool(formData, "cancelamento_gratuita_permite"),
-      cancelamentoGratuitaAntecedenciaHoras: Number(formData.get("cancelamento_gratuita_antecedencia_horas") ?? 2),
+      cancelamentoGratuitaAntecedenciaHoras: Number(formData.get("cancelamento_gratuita_antecedencia_horas") ?? 0),
       cancelamentoGratuitaPermiteAposPrazo: bool(formData, "cancelamento_gratuita_permite_apos_prazo"),
       cancelamentoGratuitaMultaTipo: field(formData, "cancelamento_gratuita_multa_tipo") || "nenhuma",
       cancelamentoGratuitaMultaPercentual: Number(formData.get("cancelamento_gratuita_multa_percentual") ?? 0),
@@ -348,7 +348,7 @@ export async function salvarRegrasReservasWizardAction(
         Number(field(formData, "cancelamento_gratuita_multa_reais").replace(",", ".")) * 100
       ) || 0,
       cancelamentoPagaPermite: bool(formData, "cancelamento_paga_permite"),
-      cancelamentoPagaAntecedenciaHoras: Number(formData.get("cancelamento_paga_antecedencia_horas") ?? 24),
+      cancelamentoPagaAntecedenciaHoras: Number(formData.get("cancelamento_paga_antecedencia_horas") ?? 0),
       cancelamentoPagaPermiteAposPrazo: bool(formData, "cancelamento_paga_permite_apos_prazo"),
       cancelamentoPagaMultaTipo: field(formData, "cancelamento_paga_multa_tipo") || "nenhuma",
       cancelamentoPagaMultaPercentual: Number(formData.get("cancelamento_paga_multa_percentual") ?? 0),
@@ -356,7 +356,7 @@ export async function salvarRegrasReservasWizardAction(
         Number(field(formData, "cancelamento_paga_multa_reais").replace(",", ".")) * 100
       ) || 0,
       permiteTransferenciaReserva: bool(formData, "permite_transferencia_reserva"),
-      transferenciaAntecedenciaHoras: Number(formData.get("transferencia_antecedencia_horas") ?? 2),
+      transferenciaAntecedenciaHoras: Number(formData.get("transferencia_antecedencia_horas") ?? 0),
       politicaCancelamento: field(formData, "politica_cancelamento"),
       observacoesPublicas: field(formData, "observacoes_publicas"),
     });
@@ -705,14 +705,14 @@ export async function criarPlanoWizardAction(
     const antecedenciaPreset = field(formData, "antecedencia_max_dias_preset");
     const antecedenciaCustom = Number(formData.get("antecedencia_max_dias_custom") ?? 0) || 0;
     const antecedenciaMaxDias = Math.max(
-      1,
+      0,
       Math.min(
         365,
         herdarAntecedenciaMaxDias || !antecedenciaPreset || antecedenciaPreset === "inherit"
-          ? antecedenciaCustom || 30
+          ? antecedenciaCustom
           : antecedenciaPreset === "custom"
-          ? antecedenciaCustom || 5
-          : Number(antecedenciaPreset) || 5
+          ? antecedenciaCustom
+          : Number(antecedenciaPreset) || 0
       )
     );
     const { error } = await supabase.from("espaco_planos_socio").insert({

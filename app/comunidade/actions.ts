@@ -5,6 +5,7 @@ import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger"
 import { MSG_CONFRONTO_REQUER_ESPORTE_NO_PERFIL_VIEWER } from "@/lib/match/viewer-esporte-confronto";
 import { fetchDashboardRankingCooldownBlocklists } from "@/lib/match/dashboard-ranking-cooldown-blocklists";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 import { getMatchAgendamentoJanelaHoras } from "@/lib/app-config/match-prazos";
 
 export type ResponderMatchState = { ok: true } | { ok: false; message: string };
@@ -558,6 +559,42 @@ function hasDuplicateDateTimeOptions(values: Array<string | null>): boolean {
   return new Set(normalized).size !== normalized.length;
 }
 
+type ComunidadeSupabase = Awaited<ReturnType<typeof createClient>>;
+
+function comunidadeWriter(supabase: ComunidadeSupabase) {
+  return hasServiceRoleConfig() ? createServiceRoleClient() : supabase;
+}
+
+async function userMayManageAcceptedMatch(
+  supabase: ComunidadeSupabase,
+  matchId: number,
+  userId: string
+): Promise<{ ok: true; row: Record<string, unknown> } | { ok: false; message: string }> {
+  const { data: row } = await supabase
+    .from("matches")
+    .select(
+      "id, usuario_id, adversario_id, desafiante_time_id, adversario_time_id, modalidade_confronto, esporte_id, status, cancel_requested_by, reschedule_requested_by, reschedule_kind, reschedule_deadline_at, scheduled_location, wo_auto_if_no_result"
+    )
+    .eq("id", matchId)
+    .maybeSingle();
+  if (!row) return { ok: false, message: "Desafio não encontrado." };
+
+  const participantIds = [row.usuario_id, row.adversario_id].map((v) => String(v ?? "").trim()).filter(Boolean);
+  if (participantIds.includes(userId)) return { ok: true, row: row as Record<string, unknown> };
+
+  const teamIds = [row.desafiante_time_id, row.adversario_time_id]
+    .map((v) => Number(v ?? 0))
+    .filter((v) => Number.isFinite(v) && v > 0);
+  if (teamIds.length > 0) {
+    const { data: teams } = await supabase.from("times").select("id, criador_id").in("id", teamIds);
+    if ((teams ?? []).some((t) => String((t as { criador_id?: string | null }).criador_id ?? "") === userId)) {
+      return { ok: true, row: row as Record<string, unknown> };
+    }
+  }
+
+  return { ok: false, message: "Sem permissão para este desafio." };
+}
+
 export async function gerenciarCancelamentoMatch(
   _prev: GerenciarCancelamentoState | undefined,
   formData: FormData
@@ -614,6 +651,99 @@ export async function gerenciarCancelamentoMatch(
     revalidatePath("/comunidade");
     revalidatePath("/dashboard");
     return { ok: true, message: "Solicitação de cancelamento enviada. O oponente tem 24h para responder." };
+  }
+
+  if (intent === "request_reschedule") {
+    const access = await userMayManageAcceptedMatch(supabase, matchId, user.id);
+    if (!access.ok) return access;
+    if (String(access.row.status ?? "") !== "Aceito") {
+      return { ok: false, message: "Apenas desafio aceito pode ser reagendado." };
+    }
+
+    const tzOff = Number(String(formData.get("tz_offset_minutes") ?? "").trim());
+    const op1 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_1") ?? ""), tzOff);
+    const op2 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_2") ?? ""), tzOff);
+    const op3 = parseFutureIsoFromDatetimeLocal(String(formData.get("opcao_3") ?? ""), tzOff);
+    const local = String(formData.get("local_reagendamento") ?? "").trim();
+    const agendamentoJanelaHoras = await getMatchAgendamentoJanelaHoras(supabase);
+    if (isPastDateTime(op1) || isPastDateTime(op2) || isPastDateTime(op3)) {
+      return { ok: false, message: "As opções de data e hora devem ser de agora em diante." };
+    }
+    if (
+      isBeyondAgendamentoJanelaDateTime(op1, agendamentoJanelaHoras) ||
+      isBeyondAgendamentoJanelaDateTime(op2, agendamentoJanelaHoras) ||
+      isBeyondAgendamentoJanelaDateTime(op3, agendamentoJanelaHoras)
+    ) {
+      return {
+        ok: false,
+        message: `As opções de data e hora devem estar dentro de ${agendamentoJanelaHoras} horas.`,
+      };
+    }
+    if (hasDuplicateDateTimeOptions([op1, op2, op3])) {
+      return { ok: false, message: "As 3 opções precisam ser diferentes entre si." };
+    }
+
+    const writer = comunidadeWriter(supabase);
+    const deadlineIso = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+    await writer.from("match_cancelamento_opcoes").delete().eq("match_id", matchId);
+    const { error: optsError } = await writer.from("match_cancelamento_opcoes").insert([
+      { match_id: matchId, option_idx: 1, suggested_by: user.id, scheduled_for: op1, location: local || null },
+      { match_id: matchId, option_idx: 2, suggested_by: user.id, scheduled_for: op2, location: local || null },
+      { match_id: matchId, option_idx: 3, suggested_by: user.id, scheduled_for: op3, location: local || null },
+    ]);
+    if (optsError) return { ok: false, message: optsError.message };
+
+    const { error: matchError } = await writer
+      .from("matches")
+      .update({
+        status: "ReagendamentoPendente",
+        cancel_requested_by: user.id,
+        cancel_requested_at: null,
+        cancel_response_deadline_at: null,
+        cancel_refused_at: null,
+        reschedule_requested_by: user.id,
+        reschedule_requested_at: new Date().toISOString(),
+        reschedule_deadline_at: deadlineIso,
+        reschedule_selected_option: null,
+        reschedule_kind: "direto",
+      })
+      .eq("id", matchId);
+    if (matchError) return { ok: false, message: matchError.message };
+
+    const targetId =
+      user.id === String(access.row.usuario_id ?? "")
+        ? String(access.row.adversario_id ?? "")
+        : String(access.row.usuario_id ?? "");
+    if (targetId) {
+      await writer.from("notificacoes").insert({
+        usuario_id: targetId,
+        mensagem:
+          "Seu oponente solicitou reagendamento do desafio. Aceite uma opção em até 72h; se não aceitar, o agendamento atual continua valendo.",
+        tipo: "match",
+        referencia_id: matchId,
+        lida: false,
+        remetente_id: user.id,
+        data_criacao: new Date().toISOString(),
+      });
+    }
+
+    await marcarNotificacoesPorAcao(supabase, user.id, {
+      referenciaId: matchId,
+      tipos: ["match", "desafio", "agenda_status"],
+    });
+    await triggerPushForMatchNotifications(
+      supabase,
+      matchId,
+      [participantsRow?.usuario_id, participantsRow?.adversario_id],
+      "comunidade/actions.gerenciarCancelamentoMatch.request_reschedule"
+    );
+    revalidatePath("/agenda");
+    revalidatePath("/comunidade");
+    revalidatePath("/dashboard");
+    return {
+      ok: true,
+      message: "Pedido de reagendamento enviado. O agendamento atual continua valendo até o oponente aceitar uma opção.",
+    };
   }
 
   if (intent === "respond_cancel") {
@@ -694,14 +824,163 @@ export async function gerenciarCancelamentoMatch(
     if (!Number.isInteger(optionIdx) || optionIdx < 1 || optionIdx > 3) {
       return { ok: false, message: "Opção inválida." };
     }
+
+    const access = await userMayManageAcceptedMatch(supabase, matchId, user.id);
+    if (!access.ok) return access;
+    if (
+      String(access.row.status ?? "") === "ReagendamentoPendente" &&
+      String(access.row.reschedule_kind ?? "") === "direto"
+    ) {
+      const requester = String(access.row.reschedule_requested_by ?? access.row.cancel_requested_by ?? "").trim();
+      if (!requester) return { ok: false, message: "Não foi possível identificar quem pediu o reagendamento." };
+      if (requester === user.id) {
+        return { ok: false, message: "Apenas o oponente pode responder ao pedido de reagendamento." };
+      }
+      const deadlineMs = access.row.reschedule_deadline_at
+        ? new Date(String(access.row.reschedule_deadline_at)).getTime()
+        : Number.NaN;
+      if (Number.isFinite(deadlineMs) && deadlineMs < Date.now()) {
+        return { ok: false, message: "Prazo de reagendamento expirado. O agendamento atual continua valendo." };
+      }
+
+      const writer = comunidadeWriter(supabase);
+      const { data: optionRow } = await writer
+        .from("match_cancelamento_opcoes")
+        .select("id, scheduled_for, location, status")
+        .eq("match_id", matchId)
+        .eq("option_idx", optionIdx)
+        .maybeSingle();
+      if (!optionRow) return { ok: false, message: "Opção inválida." };
+      if (String((optionRow as { status?: string | null }).status ?? "pendente") !== "pendente") {
+        return { ok: false, message: "Esta opção já foi respondida." };
+      }
+
+      if (aceitar) {
+        await writer
+          .from("match_cancelamento_opcoes")
+          .update({ status: "aceita", accepted_by: user.id, accepted_at: new Date().toISOString() })
+          .eq("id", Number((optionRow as { id?: number }).id));
+        await writer
+          .from("match_cancelamento_opcoes")
+          .update({ status: "recusada", rejected_by: user.id, rejected_at: new Date().toISOString() })
+          .eq("match_id", matchId)
+          .neq("id", Number((optionRow as { id?: number }).id))
+          .eq("status", "pendente");
+
+        const scheduledFor = String((optionRow as { scheduled_for?: string | null }).scheduled_for ?? "");
+        const location = String((optionRow as { location?: string | null }).location ?? "").trim();
+        const { error: matchError } = await writer
+          .from("matches")
+          .update({
+            status: "Aceito",
+            reschedule_selected_option: optionIdx,
+            scheduled_for: scheduledFor,
+            scheduled_location: location || access.row.scheduled_location || null,
+            cancel_requested_by: null,
+            cancel_requested_at: null,
+            cancel_response_deadline_at: null,
+            cancel_refused_at: null,
+            reschedule_requested_by: null,
+            reschedule_requested_at: null,
+            reschedule_deadline_at: null,
+            reschedule_kind: "cancelamento",
+          })
+          .eq("id", matchId);
+        if (matchError) return { ok: false, message: matchError.message };
+
+        const { data: partidaRows } = await writer
+          .from("partidas")
+          .select("id")
+          .eq("match_id", matchId)
+          .is("torneio_id", null)
+          .order("id", { ascending: false })
+          .limit(1);
+        const partidaId = Number((partidaRows?.[0] as { id?: number } | undefined)?.id ?? 0);
+        if (Number.isFinite(partidaId) && partidaId > 0) {
+          await writer
+            .from("partidas")
+            .update({
+              status: "agendada",
+              data_partida: scheduledFor,
+              ...(location ? { local_str: location } : {}),
+            })
+            .eq("id", partidaId);
+        }
+
+        await notify(
+          supabase,
+          requester,
+          "Reagendamento aceito. O desafio segue ativo com a nova data definida.",
+          matchId,
+          user.id
+        );
+      } else {
+        await writer
+          .from("match_cancelamento_opcoes")
+          .update({ status: "recusada", rejected_by: user.id, rejected_at: new Date().toISOString() })
+          .eq("id", Number((optionRow as { id?: number }).id));
+        const { count } = await writer
+          .from("match_cancelamento_opcoes")
+          .select("id", { count: "exact", head: true })
+          .eq("match_id", matchId)
+          .eq("status", "recusada");
+        if (Number(count ?? 0) >= 3) {
+          const { error: matchError } = await writer
+            .from("matches")
+            .update({
+              status: "Aceito",
+              cancel_requested_by: null,
+              cancel_requested_at: null,
+              cancel_response_deadline_at: null,
+              cancel_refused_at: null,
+              reschedule_requested_by: null,
+              reschedule_requested_at: null,
+              reschedule_deadline_at: null,
+              reschedule_kind: "cancelamento",
+            })
+            .eq("id", matchId);
+          if (matchError) return { ok: false, message: matchError.message };
+          await notify(
+            supabase,
+            requester,
+            "As opções de reagendamento foram recusadas. O agendamento já aceito continua valendo.",
+            matchId,
+            user.id
+          );
+        }
+      }
+
+      await marcarNotificacoesPorAcao(supabase, user.id, {
+        referenciaId: matchId,
+        tipos: ["match", "desafio", "agenda_status"],
+      });
+      await triggerPushForMatchNotifications(
+        supabase,
+        matchId,
+        [participantsRow?.usuario_id, participantsRow?.adversario_id],
+        "comunidade/actions.gerenciarCancelamentoMatch.respond_direct_reschedule"
+      );
+      revalidatePath("/agenda");
+      revalidatePath("/comunidade");
+      revalidatePath("/dashboard");
+      return {
+        ok: true,
+        message: aceitar
+          ? "Opção aceita. O confronto foi reagendado."
+          : "Opção recusada. Se todas forem recusadas, o agendamento atual continua valendo.",
+      };
+    }
+
     const { error } = await supabase.rpc("responder_opcao_reagendamento_match", {
       p_match_id: matchId,
       p_option_idx: optionIdx,
       p_aceitar: aceitar,
     });
     if (error) return { ok: false, message: error.message };
-    const { data: statusRow } = await supabase.from("matches").select("status").eq("id", matchId).maybeSingle();
+    const { data: statusRow } = await supabase.from("matches").select("status, reschedule_kind").eq("id", matchId).maybeSingle();
     const canceladoPorRecusas = String(statusRow?.status ?? "") === "Cancelado";
+    const reagendamentoDiretoMantido =
+      String(statusRow?.status ?? "") === "Aceito" && String(statusRow?.reschedule_kind ?? "") === "cancelamento" && !aceitar;
     await marcarNotificacoesPorAcao(supabase, user.id, {
       referenciaId: matchId,
       tipos: ["match", "desafio", "agenda_status"],
@@ -719,7 +998,9 @@ export async function gerenciarCancelamentoMatch(
       ok: true,
       message: aceitar
         ? "Opção aceita. O confronto segue agendado no sistema."
-        : "Opção recusada.",
+        : reagendamentoDiretoMantido
+          ? "Opção recusada. O agendamento já aceito continua valendo."
+          : "Opção recusada.",
     };
   }
 

@@ -2362,7 +2362,7 @@ function StepRegrasReservas({ space, reservaConfig, onNext, onBack }: {
         </div>
         <div className="space-y-1.5">
           <Label>Liberar agenda até</Label>
-          <IconInput Icon={Calendar} name="antecedencia_max_dias" type="number" min={1} max={365} defaultValue={reservaConfig.antecedenciaMaxDias} />
+          <IconInput Icon={Calendar} name="antecedencia_max_dias" type="number" min={0} max={365} defaultValue={reservaConfig.antecedenciaMaxDias} />
         </div>
       </div>
 
@@ -2391,7 +2391,7 @@ function StepRegrasReservas({ space, reservaConfig, onNext, onBack }: {
           </div>
           <div className="space-y-1.5">
             <Label>Agenda grátis até</Label>
-            <IconInput Icon={Calendar} name="gratis_antecedencia_max_dias_membro" type="number" min={1} max={365} defaultValue={reservaConfig.gratisAntecedenciaMaxDiasMembro} />
+            <IconInput Icon={Calendar} name="gratis_antecedencia_max_dias_membro" type="number" min={0} max={365} defaultValue={reservaConfig.gratisAntecedenciaMaxDiasMembro} />
           </div>
         </div>
       </div>
@@ -2554,7 +2554,9 @@ function StepPlanos({ space, planos, reservaConfig, onNext, onBack, onSkip }: {
                   {" · "}
                   {planoHerdaRegraWizard(p, "antecedencia_max_dias")
                     ? "segue agenda global"
-                    : `agenda ${Number(p.antecedencia_max_dias ?? 30)} dia(s)`}
+                    : Number(p.antecedencia_max_dias ?? 0) === 0
+                    ? "agenda sem limite"
+                    : `agenda ${Number(p.antecedencia_max_dias)} dia(s)`}
                   {p.beneficios_json?.uma_reserva_ativa_por_vez ? " · 1 ativa por vez" : ""}
                 </p>
               </div>
@@ -2603,7 +2605,7 @@ function StepPlanos({ space, planos, reservaConfig, onNext, onBack, onSkip }: {
             <div className="space-y-1.5">
               <Label>Liberação da agenda (dias)</Label>
               <input type="hidden" name="antecedencia_max_dias_preset" value="custom" />
-              <IconInput Icon={Calendar} name="antecedencia_max_dias_custom" type="number" min={1} max={365} defaultValue={reservaConfig.antecedenciaMaxDias} />
+              <IconInput Icon={Calendar} name="antecedencia_max_dias_custom" type="number" min={0} max={365} defaultValue={reservaConfig.antecedenciaMaxDias} />
               <label className="flex items-center gap-2 text-xs font-semibold text-eid-text-secondary">
                 <input type="checkbox" name="herdar_antecedencia_max_dias" defaultChecked className="h-4 w-4 accent-eid-action-500" />
                 Seguir regra global

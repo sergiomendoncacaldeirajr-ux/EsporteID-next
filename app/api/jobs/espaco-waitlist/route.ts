@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { normalizeEspacoReservaConfig } from "@/lib/espacos/config";
 import { avaliarBeneficiosSocioEspaco } from "@/lib/espacos/eligibility";
 import { assertCronSecret } from "@/lib/internal/cron-auth";
 import { triggerPushForNotificationIdsBestEffort } from "@/lib/pwa/push-trigger";
@@ -77,11 +78,12 @@ async function run(request: Request) {
         plano,
         configuracaoEspaco: espaco?.configuracao_reservas_json,
       });
+      const cfgReservas = normalizeEspacoReservaConfig(espaco?.configuracao_reservas_json);
       const inicioDate = new Date(String(item.inicio));
       const antecedenciaHoras = (inicioDate.getTime() - Date.now()) / (1000 * 60 * 60);
-      let elegivel = benefit.ok;
+      let elegivel = benefit.ok && cfgReservas.reservasGratisLiberadas;
       if (elegivel && antecedenciaHoras < benefit.antecedenciaMinHoras) elegivel = false;
-      if (elegivel && antecedenciaHoras > benefit.antecedenciaMaxDias * 24) elegivel = false;
+      if (elegivel && benefit.antecedenciaMaxDias > 0 && antecedenciaHoras > benefit.antecedenciaMaxDias * 24) elegivel = false;
 
       const inicioDia = new Date(new Date(inicioDate).setHours(0, 0, 0, 0)).toISOString();
       const fimDia = new Date(new Date(inicioDate).setHours(23, 59, 59, 999)).toISOString();

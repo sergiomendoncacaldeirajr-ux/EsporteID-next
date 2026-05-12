@@ -12,7 +12,7 @@ import { waMeHref } from "@/lib/perfil/whatsapp-visibility";
 import type { AceitosCancelaveisItem } from "@/components/agenda/agenda-aceitos-cancelaveis";
 
 const aceitosSelect =
-  "id, usuario_id, adversario_id, desafiante_time_id, adversario_time_id, modalidade_confronto, esporte_id, status, cancel_requested_by, cancel_requested_at, cancel_response_deadline_at, reschedule_deadline_at, reschedule_selected_option, scheduled_for, scheduled_location, data_confirmacao";
+  "id, usuario_id, adversario_id, desafiante_time_id, adversario_time_id, modalidade_confronto, esporte_id, status, cancel_requested_by, cancel_requested_at, cancel_response_deadline_at, reschedule_requested_by, reschedule_requested_at, reschedule_kind, reschedule_deadline_at, reschedule_selected_option, scheduled_for, scheduled_location, data_confirmacao";
 
 function dueloKey(a: string | null | undefined, b: string | null | undefined, esporteId: number | null | undefined): string | null {
   if (!a || !b || !Number.isFinite(Number(esporteId)) || Number(esporteId) <= 0) return null;
@@ -408,7 +408,12 @@ export async function loadAceitosCancelaveisItems(
         statusLabel = "Agendado";
       }
     }
-    const isRequester = String(m.cancel_requested_by ?? "") === userId;
+    const rescheduleKind = String((m as { reschedule_kind?: string | null }).reschedule_kind ?? "").trim().toLowerCase();
+    const rescheduleRequestedBy = String((m as { reschedule_requested_by?: string | null }).reschedule_requested_by ?? "").trim();
+    const isRequester =
+      status === "ReagendamentoPendente" && rescheduleKind === "direto"
+        ? rescheduleRequestedBy === userId
+        : String(m.cancel_requested_by ?? "") === userId;
     const tidOpp = resolveOponenteTimeIdAceitos(matchParaTimes);
     const timeRow = tidOpp != null ? aceitosTimesById.get(tidOpp) : undefined;
     const nomePerfilOpp = (opp ? oponenteMapAceitos.get(opp)?.nome : null) ?? "Oponente";
@@ -482,6 +487,8 @@ export async function loadAceitosCancelaveisItems(
         status,
         statusLabel,
         isRequester,
+        rescheduleKind: rescheduleKind || null,
+        rescheduleRequestedBy: rescheduleRequestedBy || null,
         cancelResponseDeadlineAt: m.cancel_response_deadline_at ? String(m.cancel_response_deadline_at) : null,
         rescheduleDeadlineAt: m.reschedule_deadline_at ? String(m.reschedule_deadline_at) : null,
         options: opcoesByMatch.get(Number(m.id)) ?? [],

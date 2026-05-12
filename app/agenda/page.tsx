@@ -19,14 +19,16 @@ export const metadata = {
   description: "Jogos agendados e lembretes no EsporteID",
 };
 
+type AgendaStreamContentProps = {
+  supabase: Awaited<ReturnType<typeof getServerAuth>>["supabase"];
+  userId: string;
+};
+
 export default async function AgendaPage() {
   const { supabase, user } = await getServerAuth();
   if (!user) redirect("/login?next=/agenda");
 
-  const [profile, { teamIds: agendaTeamIds, teamClause }] = await Promise.all([
-    getCachedProfileLegalRow(user.id),
-    getAgendaTeamContext(supabase, user.id),
-  ]);
+  const profile = await getCachedProfileLegalRow(user.id);
   if (!profile || !legalAcceptanceIsCurrent(profile)) redirect("/conta/aceitar-termos");
   if (!profile.perfil_completo) redirect("/onboarding");
 
@@ -87,16 +89,15 @@ export default async function AgendaPage() {
       </div>
 
       <div className="eid-progressive-enter space-y-0">
-        <EidStreamSection fallback={<AgendaStreamConfrontosSkeleton />}>
-          <AgendaStreamConfrontos
-            supabase={supabase}
-            userId={user.id}
-            teamClause={teamClause}
-            agendaTeamIds={agendaTeamIds}
-          />
-        </EidStreamSection>
-        <EidStreamSection fallback={<AgendaStreamRestSkeleton />}>
-          <AgendaStreamRest supabase={supabase} userId={user.id} teamClause={teamClause} agendaTeamIds={agendaTeamIds} />
+        <EidStreamSection
+          fallback={
+            <>
+              <AgendaStreamConfrontosSkeleton />
+              <AgendaStreamRestSkeleton />
+            </>
+          }
+        >
+          <AgendaStreamContent supabase={supabase} userId={user.id} />
         </EidStreamSection>
       </div>
 
@@ -114,5 +115,25 @@ export default async function AgendaPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+async function AgendaStreamContent({ supabase, userId }: AgendaStreamContentProps) {
+  const { teamIds: agendaTeamIds, teamClause } = await getAgendaTeamContext(supabase, userId);
+
+  return (
+    <>
+      <EidStreamSection fallback={<AgendaStreamConfrontosSkeleton />}>
+        <AgendaStreamConfrontos
+          supabase={supabase}
+          userId={userId}
+          teamClause={teamClause}
+          agendaTeamIds={agendaTeamIds}
+        />
+      </EidStreamSection>
+      <EidStreamSection fallback={<AgendaStreamRestSkeleton />}>
+        <AgendaStreamRest supabase={supabase} userId={userId} teamClause={teamClause} agendaTeamIds={agendaTeamIds} />
+      </EidStreamSection>
+    </>
   );
 }

@@ -58,33 +58,33 @@ function text(input: unknown, fallback = "") {
 export function normalizeEspacoReservaConfig(input: unknown): EspacoReservaConfig {
   const data = asRecord(input);
   return {
-    limiteReservasDia: Math.max(0, Math.round(num(data.limiteReservasDia, 1))),
-    limiteReservasSemana: Math.max(0, Math.round(num(data.limiteReservasSemana, 3))),
-    cooldownHoras: Math.max(0, Math.round(num(data.cooldownHoras, 2))),
-    antecedenciaMinHoras: Math.max(0, Math.round(num(data.antecedenciaMinHoras, 1))),
-    antecedenciaMaxDias: Math.max(1, Math.round(num(data.antecedenciaMaxDias, 30))),
+    limiteReservasDia: Math.max(0, Math.round(num(data.limiteReservasDia, 0))),
+    limiteReservasSemana: Math.max(0, Math.round(num(data.limiteReservasSemana, 0))),
+    cooldownHoras: Math.max(0, Math.round(num(data.cooldownHoras, 0))),
+    antecedenciaMinHoras: Math.max(0, Math.round(num(data.antecedenciaMinHoras, 0))),
+    antecedenciaMaxDias: Math.max(0, Math.round(num(data.antecedenciaMaxDias, 0))),
     gratisLimiteReservasDiaMembro: Math.max(
       0,
-      Math.round(num(data.gratisLimiteReservasDiaMembro, num(data.limiteReservasDia, 1)))
+      Math.round(num(data.gratisLimiteReservasDiaMembro, num(data.limiteReservasDia, 0)))
     ),
     gratisLimiteReservasSemanaMembro: Math.max(
       0,
-      Math.round(num(data.gratisLimiteReservasSemanaMembro, num(data.limiteReservasSemana, 3)))
+      Math.round(num(data.gratisLimiteReservasSemanaMembro, num(data.limiteReservasSemana, 0)))
     ),
     gratisIntervaloHorasEntreReservasMembro: Math.max(
       0,
-      Math.round(num(data.gratisIntervaloHorasEntreReservasMembro, num(data.cooldownHoras, 2)))
+      Math.round(num(data.gratisIntervaloHorasEntreReservasMembro, num(data.cooldownHoras, 0)))
     ),
     gratisAntecedenciaMaxDiasMembro: Math.max(
-      1,
-      Math.round(num(data.gratisAntecedenciaMaxDiasMembro, num(data.antecedenciaMaxDias, 30)))
+      0,
+      Math.round(num(data.gratisAntecedenciaMaxDiasMembro, num(data.antecedenciaMaxDias, 0)))
     ),
     bloqueiaInadimplente: bool(data.bloqueiaInadimplente, true),
     reservasGratisLiberadas: bool(data.reservasGratisLiberadas, true),
     cancelamentoGratuitaPermite: bool(data.cancelamentoGratuitaPermite, true),
     cancelamentoGratuitaAntecedenciaHoras: Math.max(
       0,
-      Math.round(num(data.cancelamentoGratuitaAntecedenciaHoras, num(data.cancelamentoAntecedenciaHoras, 2)))
+      Math.round(num(data.cancelamentoGratuitaAntecedenciaHoras, num(data.cancelamentoAntecedenciaHoras, 0)))
     ),
     cancelamentoGratuitaPermiteAposPrazo: bool(
       data.cancelamentoGratuitaPermiteAposPrazo,
@@ -104,7 +104,7 @@ export function normalizeEspacoReservaConfig(input: unknown): EspacoReservaConfi
     cancelamentoPagaPermite: bool(data.cancelamentoPagaPermite, false),
     cancelamentoPagaAntecedenciaHoras: Math.max(
       0,
-      Math.round(num(data.cancelamentoPagaAntecedenciaHoras, num(data.cancelamentoAntecedenciaHoras, 24)))
+      Math.round(num(data.cancelamentoPagaAntecedenciaHoras, num(data.cancelamentoAntecedenciaHoras, 0)))
     ),
     cancelamentoPagaPermiteAposPrazo: bool(data.cancelamentoPagaPermiteAposPrazo, false),
     cancelamentoPagaMultaTipo: ["nenhuma", "percentual", "fixa"].includes(String(data.cancelamentoPagaMultaTipo))
@@ -121,7 +121,7 @@ export function normalizeEspacoReservaConfig(input: unknown): EspacoReservaConfi
     permiteTransferenciaReserva: bool(data.permiteTransferenciaReserva, false),
     transferenciaAntecedenciaHoras: Math.max(
       0,
-      Math.round(num(data.transferenciaAntecedenciaHoras, num(data.cancelamentoGratuitaAntecedenciaHoras, 2)))
+      Math.round(num(data.transferenciaAntecedenciaHoras, num(data.cancelamentoGratuitaAntecedenciaHoras, 0)))
     ),
     politicaCancelamento: text(data.politicaCancelamento, ""),
     observacoesPublicas: text(data.observacoesPublicas, ""),

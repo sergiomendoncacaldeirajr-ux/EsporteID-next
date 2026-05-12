@@ -136,6 +136,7 @@ export function RealtimePageRefresh({ userId }: Props) {
 
     const notifyForeground = (notifId: number, mensagem: string) => {
       if (!Number.isFinite(notifId) || notifId < 1) return;
+      if (isNativeAndroidApp()) return;
       if (notifiedIdsRef.current.has(notifId)) return;
       notifiedIdsRef.current.add(notifId);
       if (typeof window === "undefined") return;
@@ -184,7 +185,7 @@ export function RealtimePageRefresh({ userId }: Props) {
 
     const channelTag = `${userId}-${instanceId}-${elencoVersion}`;
 
-    void (async () => {
+    const startSubscriptions = async () => {
       const [teamIds, ownedIds] = await Promise.all([
         fetchMyTeamIds(supabase, userId),
         fetchOwnedTeamIds(supabase, userId),
@@ -419,10 +420,16 @@ export function RealtimePageRefresh({ userId }: Props) {
           .subscribe()
       );
 
-    })();
+    };
+
+    const startDelay = isNativeAndroidApp()
+      ? window.setTimeout(() => void startSubscriptions(), 4200)
+      : 0;
+    if (!startDelay) void startSubscriptions();
 
     return () => {
       cancelled = true;
+      if (startDelay) window.clearTimeout(startDelay);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("eid:pwa-resume", onPwaResume);
       if (refreshTimerRef.current != null) {

@@ -444,11 +444,24 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       );
     }
 
-    const { data: perfil } = await supabase
-      .from("profiles")
-      .select("id, nome, avatar_url, genero, disponivel_amistoso, disponivel_amistoso_ate")
-      .eq("id", alvoKey)
-      .maybeSingle();
+    const [{ data: perfil }, { data: eidAlinhamento }, { data: viewerProfile }, cooldownMeses] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, nome, avatar_url, genero, disponivel_amistoso, disponivel_amistoso_ate")
+        .eq("id", alvoKey)
+        .maybeSingle(),
+      supabase
+        .from("usuario_eid")
+        .select("usuario_id")
+        .in("usuario_id", [user.id, alvoKey])
+        .eq("esporte_id", esporteId),
+      supabase
+        .from("profiles")
+        .select("genero, disponivel_amistoso, disponivel_amistoso_ate")
+        .eq("id", user.id)
+        .maybeSingle(),
+      getMatchRankCooldownMeses(supabase),
+    ]);
     if (!perfil || perfil.id === user.id) {
       return (
         <main className={DESAFIO_PAGE_MAIN_CLASS}>
@@ -461,11 +474,6 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       );
     }
 
-    const { data: eidAlinhamento } = await supabase
-      .from("usuario_eid")
-      .select("usuario_id")
-      .in("usuario_id", [user.id, perfil.id])
-      .eq("esporte_id", esporteId);
     const temViewer = (eidAlinhamento ?? []).some((r) => String((r as { usuario_id?: string }).usuario_id) === user.id);
     const temAlvo = (eidAlinhamento ?? []).some((r) => String((r as { usuario_id?: string }).usuario_id) === perfil.id);
     if (!temViewer) {
@@ -511,18 +519,11 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       );
     }
 
-    const { data: viewerProfile } = await supabase
-      .from("profiles")
-      .select("genero, disponivel_amistoso, disponivel_amistoso_ate")
-      .eq("id", user.id)
-      .maybeSingle();
-
     const rankGeneroIndividual = resolveIndividualRankGenero(viewerProfile?.genero, perfil.genero);
 
     const finRaw = String(sp.finalidade ?? "").trim().toLowerCase();
     const finalidadeEscolhida: "ranking" | "amistoso" | null =
       finRaw === "amistoso" ? "amistoso" : finRaw === "ranking" ? "ranking" : null;
-    const cooldownMeses = await getMatchRankCooldownMeses(supabase);
     const cutoff = new Date();
     cutoff.setMonth(cutoff.getMonth() - cooldownMeses);
     const cutoffMs = cutoff.getTime();
@@ -834,12 +835,22 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
     );
   }
 
-  const { data: viewerEidColetivoGate } = await supabase
-    .from("usuario_eid")
-    .select("esporte_id")
-    .eq("usuario_id", user.id)
-    .eq("esporte_id", esporteId)
-    .maybeSingle();
+  const [{ data: viewerEidColetivoGate }, cooldownMesesColetivo, { data: minhasLideradas }] = await Promise.all([
+    supabase
+      .from("usuario_eid")
+      .select("esporte_id")
+      .eq("usuario_id", user.id)
+      .eq("esporte_id", esporteId)
+      .maybeSingle(),
+    getMatchRankCooldownMeses(supabase),
+    supabase
+      .from("times")
+      .select("id, genero")
+      .eq("criador_id", user.id)
+      .eq("esporte_id", esporteId)
+      .eq("tipo", modalidade)
+      .limit(1),
+  ]);
   if (!viewerEidColetivoGate) {
     return (
       <main className={DESAFIO_PAGE_MAIN_CLASS}>
@@ -861,16 +872,6 @@ export default async function DesafioPage({ searchParams }: { searchParams?: Pro
       </main>
     );
   }
-
-  const cooldownMesesColetivo = await getMatchRankCooldownMeses(supabase);
-
-  const { data: minhasLideradas } = await supabase
-    .from("times")
-    .select("id, genero")
-    .eq("criador_id", user.id)
-    .eq("esporte_id", esporteId)
-    .eq("tipo", modalidade)
-    .limit(1);
 
   const meuTimeIdColetivo = Number(minhasLideradas?.[0]?.id ?? 0);
   const canConfirmarRanking = (minhasLideradas ?? []).length > 0;

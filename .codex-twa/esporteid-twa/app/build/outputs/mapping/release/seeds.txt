@@ -1,338 +1,338 @@
-com.google.android.gms.common.GooglePlayServicesIncorrectManifestValueException
-com.google.android.datatransport.runtime.backends.TransportBackendDiscovery
-androidx.activity.ComponentActivity$2
-androidx.versionedparcelable.CustomVersionedParcelable
-com.google.android.gms.common.util.DynamiteApi
-com.google.firebase.components.ComponentRegistrar
-com.google.android.gms.common.ErrorDialogFragment
-androidx.lifecycle.SingleGeneratedAdapterObserver
-com.google.firebase.messaging.FirebaseMessagingRegistrar
-com.google.android.gms.common.api.Scope
-androidx.lifecycle.Lifecycling$1
 com.google.android.gms.common.api.Status
-com.google.android.gms.common.internal.ReflectedParcelable
-com.esporteid.app.LauncherActivity
-com.google.firebase.components.ComponentDiscoveryService
-com.esporteid.app.EsporteIdFirebaseMessagingService
-com.google.android.gms.common.GooglePlayServicesManifestException
-android.support.v4.app.RemoteActionCompatParcelizer
-androidx.lifecycle.FullLifecycleObserverAdapter
-androidx.core.graphics.drawable.IconCompat
-com.google.firebase.concurrent.ExecutorsRegistrar
-com.google.firebase.messaging.FirebaseMessaging
-com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver
-com.google.firebase.datatransport.TransportRegistrar
-com.google.android.gms.common.api.GoogleApiActivity
-androidx.activity.ImmLeaksCleaner
-com.esporteid.app.Application
-com.google.android.gms.dynamite.DynamiteModule$DynamiteLoaderClassLoader
-androidx.activity.ComponentActivity$3
-androidx.fragment.app.Fragment$2
-kotlin.coroutines.jvm.internal.BaseContinuationImpl
-androidx.core.app.CoreComponentFactory
-com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService
-androidx.savedstate.SavedStateRegistry$1
-androidx.core.graphics.drawable.IconCompatParcelizer
-com.google.android.gms.common.annotation.KeepName
-androidx.annotation.Keep
-android.support.v4.graphics.drawable.IconCompatParcelizer
-com.google.android.gms.common.api.internal.BasePendingResult
-com.google.firebase.provider.FirebaseInitProvider
-com.google.firebase.installations.FirebaseInstallationsKtxRegistrar
-kotlinx.coroutines.internal.StackTraceRecoveryKt
-com.google.firebase.FirebaseCommonRegistrar
-com.google.firebase.messaging.FirebaseMessagingKtxRegistrar
-com.google.firebase.iid.FirebaseInstanceIdReceiver
-androidx.activity.OnBackPressedDispatcher$LifecycleOnBackPressedCancellable
-com.google.firebase.FirebaseCommonKtxRegistrar
-androidx.savedstate.Recreator
-com.google.android.gms.auth.api.signin.GoogleSignInAccount
-com.google.android.datatransport.cct.CctBackendFactory
-com.google.firebase.installations.FirebaseInstallationsRegistrar
-androidx.versionedparcelable.ParcelImpl
-androidx.core.app.RemoteActionCompatParcelizer
-androidx.core.app.RemoteActionCompat
-com.google.android.gms.common.api.internal.LifecycleCallback
-com.google.android.gms.common.api.internal.zzb
-androidx.lifecycle.CompositeGeneratedAdaptersObserver
-com.google.firebase.messaging.FirebaseMessagingService
-androidx.lifecycle.LiveData$LifecycleBoundObserver
-androidx.lifecycle.ReflectiveGenericLifecycleObserver
 com.google.android.gms.common.GooglePlayServicesMissingManifestValueException
+androidx.versionedparcelable.ParcelImpl
+androidx.lifecycle.CompositeGeneratedAdaptersObserver
+androidx.versionedparcelable.CustomVersionedParcelable
+com.google.android.gms.common.ErrorDialogFragment
+com.google.android.gms.common.GooglePlayServicesManifestException
+com.google.firebase.concurrent.ExecutorsRegistrar
+android.support.v4.graphics.drawable.IconCompatParcelizer
+androidx.lifecycle.Lifecycling$1
+androidx.annotation.Keep
+com.google.android.gms.common.util.DynamiteApi
+com.google.firebase.FirebaseCommonKtxRegistrar
+com.google.android.datatransport.runtime.backends.TransportBackendDiscovery
+android.support.v4.app.RemoteActionCompatParcelizer
+com.google.android.gms.common.annotation.KeepName
+androidx.activity.ComponentActivity$2
+com.google.firebase.components.ComponentRegistrar
+com.google.firebase.datatransport.TransportRegistrar
+com.google.firebase.installations.FirebaseInstallationsRegistrar
+com.google.android.datatransport.cct.CctBackendFactory
+androidx.activity.OnBackPressedDispatcher$LifecycleOnBackPressedCancellable
+com.google.firebase.provider.FirebaseInitProvider
+com.google.android.gms.common.internal.ReflectedParcelable
+kotlinx.coroutines.internal.StackTraceRecoveryKt
+androidx.core.app.CoreComponentFactory
+com.google.firebase.components.ComponentDiscoveryService
+com.google.android.gms.common.api.GoogleApiActivity
+com.google.firebase.messaging.FirebaseMessagingKtxRegistrar
+androidx.lifecycle.SingleGeneratedAdapterObserver
+com.google.firebase.installations.FirebaseInstallationsKtxRegistrar
+androidx.core.app.RemoteActionCompat
+androidx.lifecycle.LiveData$LifecycleBoundObserver
+androidx.activity.ComponentActivity$3
+com.google.android.gms.common.api.internal.BasePendingResult
+com.esporteid.app.EsporteIdFirebaseMessagingService
+com.esporteid.app.Application
+com.google.firebase.messaging.FirebaseMessagingRegistrar
+com.google.android.gms.common.GooglePlayServicesIncorrectManifestValueException
+com.google.android.gms.common.api.Scope
+com.google.firebase.messaging.FirebaseMessagingService
+androidx.fragment.app.Fragment$2
+androidx.lifecycle.FullLifecycleObserverAdapter
 androidx.loader.app.LoaderManagerImpl$LoaderViewModel
-androidx.concurrent.futures.AbstractResolvableFuture: androidx.concurrent.futures.AbstractResolvableFuture$Listener listeners
-kotlinx.coroutines.internal.LockFreeTaskQueue: java.lang.Object _cur$volatile
-com.google.android.gms.common.internal.zzk: android.os.Parcelable$Creator CREATOR
-androidx.concurrent.futures.AbstractResolvableFuture$Waiter: androidx.concurrent.futures.AbstractResolvableFuture$Waiter next
-kotlinx.coroutines.flow.StateFlowImpl: java.lang.Object _state$volatile
+com.esporteid.app.LauncherActivity
+androidx.savedstate.SavedStateRegistry$1
+com.google.android.gms.common.api.internal.zzb
+com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService
+com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver
+com.google.firebase.FirebaseCommonRegistrar
+androidx.core.graphics.drawable.IconCompat
+androidx.core.graphics.drawable.IconCompatParcelizer
+androidx.savedstate.Recreator
+com.google.firebase.iid.FirebaseInstanceIdReceiver
+com.google.android.gms.dynamite.DynamiteModule$DynamiteLoaderClassLoader
+kotlin.coroutines.jvm.internal.BaseContinuationImpl
+androidx.activity.ImmLeaksCleaner
+androidx.core.app.RemoteActionCompatParcelizer
+androidx.lifecycle.ReflectiveGenericLifecycleObserver
+com.google.firebase.messaging.FirebaseMessaging
+com.google.android.gms.common.api.internal.LifecycleCallback
+com.google.android.gms.auth.api.signin.GoogleSignInAccount
 com.google.android.gms.common.internal.zav: android.os.Parcelable$Creator CREATOR
-androidx.datastore.preferences.PreferencesProto$Value: int LONG_FIELD_NUMBER
-kotlinx.coroutines.JobSupport: java.lang.Object _parentHandle$volatile
-kotlinx.coroutines.scheduling.CoroutineScheduler: long controlState$volatile
-kotlinx.coroutines.JobSupport: java.lang.Object _state$volatile
-androidx.concurrent.futures.AbstractResolvableFuture$Waiter: java.lang.Thread thread
-androidx.datastore.preferences.PreferencesProto$PreferenceMap: androidx.datastore.preferences.PreferencesProto$PreferenceMap DEFAULT_INSTANCE
-kotlinx.coroutines.DispatchedCoroutine: int _decision$volatile
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout$SavedState: android.os.Parcelable$Creator CREATOR
-kotlinx.coroutines.internal.ThreadSafeHeap: int _size$volatile
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_PAUSE
-kotlinx.coroutines.scheduling.CoroutineScheduler: int _isTerminated$volatile
-kotlinx.coroutines.scheduling.WorkQueue: int producerIndex$volatile
-androidx.datastore.preferences.PreferencesProto$PreferenceMap: androidx.datastore.preferences.protobuf.MapFieldLite preferences_
-kotlinx.coroutines.EventLoopImplBase: int _isCompleted$volatile
-kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _prev$volatile
-kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: int workerCtl$volatile
-kotlinx.coroutines.scheduling.WorkQueue: int blockingTasksInBuffer$volatile
-kotlinx.coroutines.CancellableContinuationImpl: int _decisionAndIndex$volatile
-com.google.firebase.datatransport.TransportRegistrar: java.lang.String LIBRARY_NAME
-androidx.fragment.app.BackStackState: android.os.Parcelable$Creator CREATOR
-androidx.concurrent.futures.AbstractResolvableFuture: java.lang.Object value
-androidx.datastore.preferences.PreferencesProto$Value: java.lang.Object value_
-kotlinx.coroutines.JobSupport$Finishing: int _isCompleting$volatile
-com.google.android.gms.common.internal.zat: android.os.Parcelable$Creator CREATOR
-com.google.android.gms.common.internal.ConnectionTelemetryConfiguration: android.os.Parcelable$Creator CREATOR
-kotlinx.coroutines.channels.BufferedChannel: long sendersAndCloseStatus$volatile
-kotlinx.coroutines.internal.DispatchedContinuation: java.lang.Object _reusableCancellableContinuation$volatile
-kotlinx.coroutines.internal.ConcurrentLinkedListNode: java.lang.Object _next$volatile
-kotlinx.coroutines.internal.LockFreeTaskQueueCore: java.lang.Object _next$volatile
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_START
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event[] $VALUES
-kotlinx.coroutines.sync.SemaphoreAndMutexImpl: int _availablePermits$volatile
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_CREATE
-kotlinx.coroutines.sync.SemaphoreAndMutexImpl: long enqIdx$volatile
-kotlinx.coroutines.InvokeOnCancelling: int _invoked$volatile
-kotlinx.coroutines.internal.LimitedDispatcher: int runningWorkers$volatile
-com.google.android.gms.signin.internal.zag: android.os.Parcelable$Creator CREATOR
-com.google.android.gms.common.internal.GetServiceRequest: android.os.Parcelable$Creator CREATOR
-com.google.android.gms.cloudmessaging.CloudMessage: android.os.Parcelable$Creator CREATOR
-kotlinx.coroutines.channels.BufferedChannel: java.lang.Object closeHandler$volatile
-com.google.android.gms.dynamite.DynamiteModule$DynamiteLoaderClassLoader: java.lang.ClassLoader sClassLoader
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_STOP
-androidx.datastore.preferences.protobuf.GeneratedMessageLite: int UNINITIALIZED_SERIALIZED_SIZE
-kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: java.lang.Object nextParkedWorker
-androidx.datastore.preferences.PreferencesProto$Value: androidx.datastore.preferences.PreferencesProto$Value DEFAULT_INSTANCE
-com.google.android.gms.common.api.Status: android.os.Parcelable$Creator CREATOR
-com.google.android.gms.auth.api.signin.GoogleSignInAccount: android.os.Parcelable$Creator CREATOR
-kotlinx.coroutines.CancellableContinuationImpl: java.lang.Object _state$volatile
-androidx.datastore.preferences.PreferencesProto$Value: int INTEGER_FIELD_NUMBER
-kotlinx.coroutines.JobSupport$Finishing: java.lang.Object _exceptionsHolder$volatile
-kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _removedRef$volatile
-kotlinx.coroutines.channels.BufferedChannel: long bufferEnd$volatile
-androidx.datastore.preferences.PreferencesProto$Value: int BOOLEAN_FIELD_NUMBER
-androidx.datastore.preferences.PreferencesProto$Value: int STRING_SET_FIELD_NUMBER
-kotlinx.coroutines.sync.SemaphoreAndMutexImpl: java.lang.Object head$volatile
-com.google.android.gms.common.internal.TelemetryData: android.os.Parcelable$Creator CREATOR
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_ANY
-com.google.android.gms.common.Feature: android.os.Parcelable$Creator CREATOR
-androidx.concurrent.futures.AbstractResolvableFuture: androidx.concurrent.futures.AbstractResolvableFuture$Waiter waiters
-kotlinx.coroutines.sync.SemaphoreAndMutexImpl: java.lang.Object tail$volatile
-kotlinx.coroutines.EventLoopImplBase: java.lang.Object _queue$volatile
-androidx.datastore.preferences.protobuf.GeneratedMessageLite: androidx.datastore.preferences.protobuf.UnknownFieldSetLite unknownFields
-androidx.versionedparcelable.ParcelImpl: android.os.Parcelable$Creator CREATOR
-androidx.datastore.preferences.protobuf.GeneratedMessageLite: int MUTABLE_FLAG_MASK
-androidx.datastore.preferences.PreferencesProto$PreferenceMap: int PREFERENCES_FIELD_NUMBER
-androidx.datastore.preferences.PreferencesProto$StringSet: int STRINGS_FIELD_NUMBER
-kotlinx.coroutines.EventLoopImplBase: java.lang.Object _delayed$volatile
-kotlinx.coroutines.scheduling.WorkQueue: int consumerIndex$volatile
-androidx.datastore.preferences.PreferencesProto$Value: androidx.datastore.preferences.protobuf.Parser PARSER
-com.google.android.gms.common.internal.RootTelemetryConfiguration: android.os.Parcelable$Creator CREATOR
-kotlinx.coroutines.CompletedExceptionally: int _handled$volatile
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_RESUME
-kotlinx.coroutines.channels.BufferedChannel: java.lang.Object receiveSegment$volatile
-kotlinx.coroutines.internal.ResizableAtomicArray: java.util.concurrent.atomic.AtomicReferenceArray array
-com.google.android.gms.common.ConnectionResult: android.os.Parcelable$Creator CREATOR
-androidx.datastore.preferences.protobuf.GeneratedMessageLite: int UNINITIALIZED_HASH_CODE
 com.google.android.gms.common.api.Scope: android.os.Parcelable$Creator CREATOR
-kotlinx.coroutines.channels.BufferedChannel: long receivers$volatile
-androidx.datastore.preferences.protobuf.GeneratedMessageLite: java.util.Map defaultInstanceMap
-kotlinx.coroutines.sync.MutexImpl: java.lang.Object owner$volatile
-androidx.datastore.preferences.PreferencesProto$StringSet: androidx.datastore.preferences.protobuf.Parser PARSER
-com.google.android.gms.signin.internal.zai: android.os.Parcelable$Creator CREATOR
-androidx.fragment.app.FragmentManagerState: android.os.Parcelable$Creator CREATOR
-kotlinx.coroutines.channels.BufferedChannel: java.lang.Object _closeCause$volatile
-com.google.firebase.installations.FirebaseInstallationsRegistrar: java.lang.String LIBRARY_NAME
-androidx.datastore.preferences.protobuf.GeneratedMessageLite: int MEMOIZED_SERIALIZED_SIZE_MASK
-androidx.datastore.preferences.protobuf.AbstractMessageLite: int memoizedHashCode
-androidx.datastore.preferences.PreferencesProto$StringSet: androidx.datastore.preferences.PreferencesProto$StringSet DEFAULT_INSTANCE
-androidx.datastore.preferences.PreferencesProto$Value: int FLOAT_FIELD_NUMBER
-androidx.datastore.preferences.PreferencesProto$StringSet: androidx.datastore.preferences.protobuf.Internal$ProtobufList strings_
-kotlinx.coroutines.sync.SemaphoreAndMutexImpl: long deqIdx$volatile
-androidx.datastore.preferences.PreferencesProto$Value: int BYTES_FIELD_NUMBER
-kotlinx.coroutines.scheduling.WorkQueue: java.lang.Object lastScheduledTask$volatile
-com.google.android.gms.signin.internal.zak: android.os.Parcelable$Creator CREATOR
-com.google.firebase.messaging.RemoteMessage: android.os.Parcelable$Creator CREATOR
-com.google.firebase.messaging.FirebaseMessagingRegistrar: java.lang.String LIBRARY_NAME
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_DESTROY
-com.google.android.gms.signin.internal.zaa: android.os.Parcelable$Creator CREATOR
-kotlinx.coroutines.JobSupport$Finishing: java.lang.Object _rootCause$volatile
-kotlinx.coroutines.UndispatchedCoroutine: boolean threadLocalIsSet
-kotlinx.coroutines.internal.Segment: int cleanedAndPointers$volatile
-com.google.android.gms.cloudmessaging.zzd: android.os.Parcelable$Creator CREATOR
+com.google.android.gms.common.internal.TelemetryData: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.flow.StateFlowImpl: java.lang.Object _state$volatile
 androidx.datastore.preferences.PreferencesProto$Value: int STRING_FIELD_NUMBER
+androidx.concurrent.futures.AbstractResolvableFuture$Waiter: java.lang.Thread thread
+androidx.concurrent.futures.AbstractResolvableFuture: androidx.concurrent.futures.AbstractResolvableFuture$Waiter waiters
 kotlinx.coroutines.internal.LockFreeTaskQueueCore: long _state$volatile
-kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _next$volatile
-kotlinx.coroutines.channels.BufferedChannel: java.lang.Object bufferEndSegment$volatile
-androidx.datastore.preferences.PreferencesProto$PreferenceMap: androidx.datastore.preferences.protobuf.Parser PARSER
-androidx.datastore.preferences.PreferencesProto$Value: int DOUBLE_FIELD_NUMBER
-kotlinx.coroutines.channels.BufferedChannel: java.lang.Object sendSegment$volatile
-kotlinx.coroutines.CancelledContinuation: int _resumed$volatile
-kotlinx.coroutines.CancellableContinuationImpl: java.lang.Object _parentHandle$volatile
-androidx.datastore.preferences.protobuf.GeneratedMessageLite: int memoizedSerializedSize
-androidx.fragment.app.FragmentState: android.os.Parcelable$Creator CREATOR
-kotlinx.coroutines.DefaultExecutor: java.lang.Thread _thread
+androidx.datastore.preferences.protobuf.GeneratedMessageLite: int MEMOIZED_SERIALIZED_SIZE_MASK
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: long enqIdx$volatile
+kotlinx.coroutines.scheduling.WorkQueue: int consumerIndex$volatile
+kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _prev$volatile
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object _closeCause$volatile
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout$SavedState: android.os.Parcelable$Creator CREATOR
+com.google.firebase.messaging.FirebaseMessagingRegistrar: java.lang.String LIBRARY_NAME
+kotlinx.coroutines.channels.BufferedChannel: long sendersAndCloseStatus$volatile
+kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: int workerCtl$volatile
+com.google.android.gms.common.Feature: android.os.Parcelable$Creator CREATOR
+androidx.datastore.preferences.PreferencesProto$Value: int INTEGER_FIELD_NUMBER
+androidx.datastore.preferences.PreferencesProto$Value: int LONG_FIELD_NUMBER
+androidx.datastore.preferences.PreferencesProto$StringSet: int STRINGS_FIELD_NUMBER
+kotlinx.coroutines.CancellableContinuationImpl: int _decisionAndIndex$volatile
 kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: int indexInArray
-kotlinx.coroutines.DefaultExecutor: int debugStatus
-com.google.android.gms.common.internal.MethodInvocation: android.os.Parcelable$Creator CREATOR
 kotlinx.coroutines.scheduling.CoroutineScheduler: long parkedWorkersStack$volatile
+androidx.datastore.preferences.PreferencesProto$Value: int BOOLEAN_FIELD_NUMBER
+androidx.datastore.preferences.protobuf.AbstractMessageLite: int memoizedHashCode
+kotlinx.coroutines.internal.DispatchedContinuation: java.lang.Object _reusableCancellableContinuation$volatile
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object bufferEndSegment$volatile
+com.google.android.gms.signin.internal.zaa: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.internal.ResizableAtomicArray: java.util.concurrent.atomic.AtomicReferenceArray array
+kotlinx.coroutines.internal.ThreadSafeHeap: int _size$volatile
 kotlinx.coroutines.channels.BufferedChannel: long completedExpandBuffersAndPauseFlag$volatile
+androidx.datastore.preferences.PreferencesProto$PreferenceMap: androidx.datastore.preferences.protobuf.Parser PARSER
+androidx.datastore.preferences.protobuf.GeneratedMessageLite: int MUTABLE_FLAG_MASK
+androidx.datastore.preferences.PreferencesProto$Value: int STRING_SET_FIELD_NUMBER
+androidx.fragment.app.FragmentManagerState: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: long deqIdx$volatile
+androidx.concurrent.futures.AbstractResolvableFuture$Waiter: androidx.concurrent.futures.AbstractResolvableFuture$Waiter next
+kotlinx.coroutines.internal.LockFreeTaskQueueCore: java.lang.Object _next$volatile
+kotlinx.coroutines.JobSupport$Finishing: int _isCompleting$volatile
+kotlinx.coroutines.JobSupport$Finishing: java.lang.Object _exceptionsHolder$volatile
+kotlinx.coroutines.scheduling.WorkQueue: java.lang.Object lastScheduledTask$volatile
+com.google.android.gms.common.internal.MethodInvocation: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: java.lang.Object tail$volatile
+kotlinx.coroutines.CancellableContinuationImpl: java.lang.Object _state$volatile
+kotlinx.coroutines.DefaultExecutor: java.lang.Thread _thread
+androidx.concurrent.futures.AbstractResolvableFuture: java.lang.Object value
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_STOP
+androidx.datastore.preferences.protobuf.GeneratedMessageLite: int UNINITIALIZED_HASH_CODE
+androidx.concurrent.futures.AbstractResolvableFuture: androidx.concurrent.futures.AbstractResolvableFuture$Listener listeners
+kotlinx.coroutines.CancelledContinuation: int _resumed$volatile
+kotlinx.coroutines.channels.BufferedChannel: long bufferEnd$volatile
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_ANY
+com.google.firebase.messaging.RemoteMessage: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.EventLoopImplBase: java.lang.Object _queue$volatile
+kotlinx.coroutines.scheduling.CoroutineScheduler$Worker: java.lang.Object nextParkedWorker
+kotlinx.coroutines.JobSupport: java.lang.Object _parentHandle$volatile
+kotlinx.coroutines.internal.LockFreeTaskQueue: java.lang.Object _cur$volatile
+androidx.datastore.preferences.PreferencesProto$StringSet: androidx.datastore.preferences.protobuf.Parser PARSER
+androidx.datastore.preferences.PreferencesProto$StringSet: androidx.datastore.preferences.protobuf.Internal$ProtobufList strings_
+kotlinx.coroutines.InvokeOnCancelling: int _invoked$volatile
+androidx.datastore.preferences.PreferencesProto$Value: androidx.datastore.preferences.PreferencesProto$Value DEFAULT_INSTANCE
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event[] $VALUES
+androidx.datastore.preferences.protobuf.GeneratedMessageLite: int UNINITIALIZED_SERIALIZED_SIZE
+kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _next$volatile
+androidx.datastore.preferences.PreferencesProto$StringSet: androidx.datastore.preferences.PreferencesProto$StringSet DEFAULT_INSTANCE
+kotlinx.coroutines.DefaultExecutor: int debugStatus
+kotlinx.coroutines.internal.LockFreeLinkedListNode: java.lang.Object _removedRef$volatile
+androidx.datastore.preferences.PreferencesProto$PreferenceMap: int PREFERENCES_FIELD_NUMBER
+kotlinx.coroutines.EventLoopImplBase: int _isCompleted$volatile
+com.google.android.gms.signin.internal.zai: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.scheduling.WorkQueue: int blockingTasksInBuffer$volatile
+kotlinx.coroutines.channels.BufferedChannel: long receivers$volatile
+androidx.versionedparcelable.ParcelImpl: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.CancellableContinuationImpl: java.lang.Object _parentHandle$volatile
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: java.lang.Object head$volatile
+androidx.datastore.preferences.PreferencesProto$Value: int BYTES_FIELD_NUMBER
+androidx.fragment.app.FragmentState: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object closeHandler$volatile
+kotlinx.coroutines.sync.SemaphoreAndMutexImpl: int _availablePermits$volatile
+com.google.android.gms.common.internal.zzk: android.os.Parcelable$Creator CREATOR
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_START
+kotlinx.coroutines.scheduling.CoroutineScheduler: long controlState$volatile
+androidx.datastore.preferences.PreferencesProto$Value: int DOUBLE_FIELD_NUMBER
+androidx.datastore.preferences.protobuf.GeneratedMessageLite: int memoizedSerializedSize
+com.google.firebase.installations.FirebaseInstallationsRegistrar: java.lang.String LIBRARY_NAME
+com.google.android.gms.common.ConnectionResult: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.UndispatchedCoroutine: boolean threadLocalIsSet
+com.google.android.gms.signin.internal.zak: android.os.Parcelable$Creator CREATOR
+androidx.fragment.app.BackStackState: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.JobSupport: java.lang.Object _state$volatile
+kotlinx.coroutines.CompletedExceptionally: int _handled$volatile
+kotlinx.coroutines.sync.MutexImpl: java.lang.Object owner$volatile
+com.google.android.gms.cloudmessaging.zzd: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.scheduling.WorkQueue: int producerIndex$volatile
+com.google.android.gms.common.internal.ConnectionTelemetryConfiguration: android.os.Parcelable$Creator CREATOR
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_PAUSE
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object sendSegment$volatile
+androidx.datastore.preferences.PreferencesProto$PreferenceMap: androidx.datastore.preferences.PreferencesProto$PreferenceMap DEFAULT_INSTANCE
+com.google.android.gms.cloudmessaging.CloudMessage: android.os.Parcelable$Creator CREATOR
+androidx.datastore.preferences.PreferencesProto$PreferenceMap: androidx.datastore.preferences.protobuf.MapFieldLite preferences_
+com.google.android.gms.dynamite.DynamiteModule$DynamiteLoaderClassLoader: java.lang.ClassLoader sClassLoader
+kotlinx.coroutines.internal.Segment: int cleanedAndPointers$volatile
 androidx.datastore.preferences.PreferencesProto$Value: int valueCase_
+com.google.firebase.datatransport.TransportRegistrar: java.lang.String LIBRARY_NAME
+kotlinx.coroutines.channels.BufferedChannel: java.lang.Object receiveSegment$volatile
+kotlinx.coroutines.EventLoopImplBase: java.lang.Object _delayed$volatile
+com.google.android.gms.common.internal.GetServiceRequest: android.os.Parcelable$Creator CREATOR
+com.google.android.gms.auth.api.signin.GoogleSignInAccount: android.os.Parcelable$Creator CREATOR
+androidx.datastore.preferences.PreferencesProto$Value: androidx.datastore.preferences.protobuf.Parser PARSER
+androidx.datastore.preferences.protobuf.GeneratedMessageLite: androidx.datastore.preferences.protobuf.UnknownFieldSetLite unknownFields
+kotlinx.coroutines.internal.ConcurrentLinkedListNode: java.lang.Object _next$volatile
+kotlinx.coroutines.JobSupport$Finishing: java.lang.Object _rootCause$volatile
+androidx.datastore.preferences.PreferencesProto$Value: int FLOAT_FIELD_NUMBER
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_RESUME
+kotlinx.coroutines.DispatchedCoroutine: int _decision$volatile
+com.google.android.gms.common.api.Status: android.os.Parcelable$Creator CREATOR
+com.google.android.gms.signin.internal.zag: android.os.Parcelable$Creator CREATOR
+kotlinx.coroutines.internal.LimitedDispatcher: int runningWorkers$volatile
+com.google.android.gms.common.internal.zat: android.os.Parcelable$Creator CREATOR
+com.google.android.gms.common.internal.RootTelemetryConfiguration: android.os.Parcelable$Creator CREATOR
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_DESTROY
 kotlinx.coroutines.internal.ConcurrentLinkedListNode: java.lang.Object _prev$volatile
-androidx.core.graphics.drawable.IconCompatParcelizer: androidx.core.graphics.drawable.IconCompat read(androidx.versionedparcelable.VersionedParcel)
-com.google.firebase.FirebaseCommonKtxRegistrar: java.util.List getComponents()
-androidx.datastore.preferences.protobuf.WireFormat$JavaType: androidx.datastore.preferences.protobuf.WireFormat$JavaType valueOf(java.lang.String)
-com.google.firebase.messaging.reporting.MessagingClientEvent$Event: com.google.firebase.messaging.reporting.MessagingClientEvent$Event valueOf(java.lang.String)
-com.google.android.gms.common.api.internal.LifecycleCallback: com.google.android.gms.common.api.internal.LifecycleFragment getChimeraLifecycleFragmentImpl(com.google.android.gms.common.api.internal.LifecycleActivity)
-com.google.firebase.concurrent.UiExecutor: com.google.firebase.concurrent.UiExecutor valueOf(java.lang.String)
-com.google.firebase.messaging.reporting.MessagingClientEvent$Event: com.google.firebase.messaging.reporting.MessagingClientEvent$Event[] values()
-com.google.firebase.installations.remote.InstallationResponse$ResponseCode: com.google.firebase.installations.remote.InstallationResponse$ResponseCode valueOf(java.lang.String)
-com.google.android.datatransport.runtime.scheduling.jobscheduling.SchedulerConfig$Flag: com.google.android.datatransport.runtime.scheduling.jobscheduling.SchedulerConfig$Flag[] values()
-androidx.loader.app.LoaderManagerImpl$LoaderViewModel: LoaderManagerImpl$LoaderViewModel()
-androidx.lifecycle.Lifecycle$State: androidx.lifecycle.Lifecycle$State valueOf(java.lang.String)
-com.google.firebase.messaging.FirebaseMessagingRegistrar: FirebaseMessagingRegistrar()
-com.google.firebase.installations.FirebaseInstallationsException$Status: com.google.firebase.installations.FirebaseInstallationsException$Status[] values()
-com.google.firebase.messaging.FirebaseMessagingRegistrar: com.google.firebase.messaging.FirebaseMessaging lambda$getComponents$0(com.google.firebase.components.Qualified,com.google.firebase.components.ComponentContainer)
-com.esporteid.app.EsporteIdFirebaseMessagingService: EsporteIdFirebaseMessagingService()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setProgressBackgroundColorSchemeColor(int)
-kotlinx.coroutines.CoroutineStart: kotlinx.coroutines.CoroutineStart[] values()
-kotlinx.coroutines.selects.TrySelectDetailedResult: kotlinx.coroutines.selects.TrySelectDetailedResult valueOf(java.lang.String)
-androidx.core.app.RemoteActionCompatParcelizer: void write(androidx.core.app.RemoteActionCompat,androidx.versionedparcelable.VersionedParcel)
-kotlinx.coroutines.selects.TrySelectDetailedResult: kotlinx.coroutines.selects.TrySelectDetailedResult[] values()
-com.google.firebase.FirebaseCommonKtxRegistrar: FirebaseCommonKtxRegistrar()
-android.support.v4.app.RemoteActionCompatParcelizer: void write(androidx.core.app.RemoteActionCompat,androidx.versionedparcelable.VersionedParcel)
-com.esporteid.app.LauncherActivity: LauncherActivity()
-com.google.firebase.messaging.FirebaseMessagingService: FirebaseMessagingService()
-androidx.core.graphics.drawable.IconCompat: IconCompat()
-com.google.firebase.installations.FirebaseInstallationsRegistrar: FirebaseInstallationsRegistrar()
-com.google.firebase.concurrent.ExecutorsRegistrar: ExecutorsRegistrar()
-androidx.datastore.preferences.protobuf.GeneratedMessageLite$MethodToInvoke: androidx.datastore.preferences.protobuf.GeneratedMessageLite$MethodToInvoke[] values()
-com.google.android.datatransport.cct.CctBackendFactory: CctBackendFactory()
-androidx.datastore.preferences.protobuf.FieldType$Collection: androidx.datastore.preferences.protobuf.FieldType$Collection[] values()
-com.google.android.datatransport.cct.CctBackendFactory: com.google.android.datatransport.runtime.backends.TransportBackend create(com.google.android.datatransport.runtime.backends.CreationContext)
-com.google.firebase.concurrent.UiExecutor: com.google.firebase.concurrent.UiExecutor[] values()
-com.google.firebase.messaging.FirebaseMessaging: com.google.firebase.messaging.FirebaseMessaging getInstance(com.google.firebase.FirebaseApp)
-com.google.firebase.messaging.reporting.MessagingClientEvent$SDKPlatform: com.google.firebase.messaging.reporting.MessagingClientEvent$SDKPlatform[] values()
-androidx.datastore.preferences.protobuf.JavaType: androidx.datastore.preferences.protobuf.JavaType[] values()
-com.google.android.datatransport.runtime.scheduling.jobscheduling.SchedulerConfig$Flag: com.google.android.datatransport.runtime.scheduling.jobscheduling.SchedulerConfig$Flag valueOf(java.lang.String)
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setColorViewAlpha(int)
-com.google.firebase.installations.local.PersistedInstallation$RegistrationStatus: com.google.firebase.installations.local.PersistedInstallation$RegistrationStatus[] values()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: int getProgressCircleDiameter()
-com.google.android.gms.common.ErrorDialogFragment: ErrorDialogFragment()
-com.google.firebase.messaging.FirebaseMessagingRegistrar: java.util.List getComponents()
-com.google.firebase.messaging.FirebaseMessagingKtxRegistrar: FirebaseMessagingKtxRegistrar()
-androidx.datastore.preferences.protobuf.WireFormat$FieldType: androidx.datastore.preferences.protobuf.WireFormat$FieldType[] values()
-com.google.firebase.installations.FirebaseInstallationsException$Status: com.google.firebase.installations.FirebaseInstallationsException$Status valueOf(java.lang.String)
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setOnChildScrollUpCallback(androidx.swiperefreshlayout.widget.SwipeRefreshLayout$OnChildScrollUpCallback)
-androidx.versionedparcelable.CustomVersionedParcelable: CustomVersionedParcelable()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setColorScheme(int[])
-com.google.firebase.messaging.reporting.MessagingClientEvent$MessageType: com.google.firebase.messaging.reporting.MessagingClientEvent$MessageType[] values()
-androidx.datastore.preferences.protobuf.Writer$FieldOrder: androidx.datastore.preferences.protobuf.Writer$FieldOrder[] values()
-com.google.firebase.concurrent.SequentialExecutor$WorkerRunningState: com.google.firebase.concurrent.SequentialExecutor$WorkerRunningState[] values()
-com.google.android.datatransport.cct.internal.ClientInfo$ClientType: com.google.android.datatransport.cct.internal.ClientInfo$ClientType[] values()
-androidx.datastore.preferences.protobuf.ProtoSyntax: androidx.datastore.preferences.protobuf.ProtoSyntax valueOf(java.lang.String)
-com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService: JobInfoSchedulerService()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: int getProgressViewStartOffset()
-kotlin.coroutines.intrinsics.CoroutineSingletons: kotlin.coroutines.intrinsics.CoroutineSingletons[] values()
-com.google.firebase.installations.remote.TokenResult$ResponseCode: com.google.firebase.installations.remote.TokenResult$ResponseCode valueOf(java.lang.String)
-com.google.firebase.installations.remote.TokenResult$ResponseCode: com.google.firebase.installations.remote.TokenResult$ResponseCode[] values()
-android.support.v4.app.RemoteActionCompatParcelizer: androidx.core.app.RemoteActionCompat read(androidx.versionedparcelable.VersionedParcel)
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: int getNestedScrollAxes()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setColorSchemeResources(int[])
-com.google.firebase.datatransport.TransportRegistrar: com.google.android.datatransport.TransportFactory lambda$getComponents$2(com.google.firebase.components.ComponentContainer)
-androidx.datastore.preferences.protobuf.FieldType: androidx.datastore.preferences.protobuf.FieldType[] values()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setProgressBackgroundColorSchemeResource(int)
-com.google.android.datatransport.runtime.backends.BackendResponse$Status: com.google.android.datatransport.runtime.backends.BackendResponse$Status[] values()
-androidx.datastore.preferences.protobuf.GeneratedMessageLite$MethodToInvoke: androidx.datastore.preferences.protobuf.GeneratedMessageLite$MethodToInvoke valueOf(java.lang.String)
-com.google.firebase.installations.local.PersistedInstallation$RegistrationStatus: com.google.firebase.installations.local.PersistedInstallation$RegistrationStatus valueOf(java.lang.String)
-androidx.core.graphics.drawable.IconCompatParcelizer: IconCompatParcelizer()
-com.google.android.datatransport.runtime.firebase.transport.LogEventDropped$Reason: com.google.android.datatransport.runtime.firebase.transport.LogEventDropped$Reason[] values()
-com.google.firebase.encoders.proto.Protobuf$IntEncoding: com.google.firebase.encoders.proto.Protobuf$IntEncoding valueOf(java.lang.String)
-kotlinx.coroutines.channels.BufferOverflow: kotlinx.coroutines.channels.BufferOverflow valueOf(java.lang.String)
-androidx.datastore.migrations.SharedPreferencesMigration$Api24Impl: boolean deleteSharedPreferences(android.content.Context,java.lang.String)
-com.google.android.datatransport.cct.internal.NetworkConnectionInfo$MobileSubtype: com.google.android.datatransport.cct.internal.NetworkConnectionInfo$MobileSubtype[] values()
-androidx.datastore.preferences.protobuf.FieldType: androidx.datastore.preferences.protobuf.FieldType valueOf(java.lang.String)
-androidx.core.graphics.drawable.IconCompatParcelizer: void write(androidx.core.graphics.drawable.IconCompat,androidx.versionedparcelable.VersionedParcel)
-com.google.firebase.messaging.threads.ThreadPriority: com.google.firebase.messaging.threads.ThreadPriority[] values()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setSlingshotDistance(int)
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setNestedScrollingEnabled(boolean)
-com.google.firebase.iid.FirebaseInstanceIdReceiver: FirebaseInstanceIdReceiver()
-com.google.firebase.installations.FirebaseInstallationsRegistrar: java.util.List getComponents()
-com.google.firebase.components.ComponentDiscoveryService: ComponentDiscoveryService()
-com.google.firebase.datatransport.TransportRegistrar: com.google.android.datatransport.TransportFactory lambda$getComponents$1(com.google.firebase.components.ComponentContainer)
-androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event[] values()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setLegacyRequestDisallowInterceptTouchEventEnabled(boolean)
-com.google.android.datatransport.runtime.backends.TransportBackendDiscovery: TransportBackendDiscovery()
-com.google.firebase.datatransport.TransportRegistrar: java.util.List getComponents()
-com.google.firebase.concurrent.SequentialExecutor$WorkerRunningState: com.google.firebase.concurrent.SequentialExecutor$WorkerRunningState valueOf(java.lang.String)
-com.google.android.datatransport.cct.internal.ClientInfo$ClientType: com.google.android.datatransport.cct.internal.ClientInfo$ClientType valueOf(java.lang.String)
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setAnimationProgress(float)
-kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState: kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState[] values()
-androidx.datastore.preferences.protobuf.WireFormat$JavaType: androidx.datastore.preferences.protobuf.WireFormat$JavaType[] values()
-kotlin.coroutines.intrinsics.CoroutineSingletons: kotlin.coroutines.intrinsics.CoroutineSingletons valueOf(java.lang.String)
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setDistanceToTriggerSync(int)
-com.google.firebase.messaging.reporting.MessagingClientEvent$SDKPlatform: com.google.firebase.messaging.reporting.MessagingClientEvent$SDKPlatform valueOf(java.lang.String)
-androidx.lifecycle.Lifecycle$State: androidx.lifecycle.Lifecycle$State[] values()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setTargetOffsetTopAndBottom(int)
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: int getProgressViewEndOffset()
-androidx.datastore.preferences.PreferencesProto$Value$ValueCase: androidx.datastore.preferences.PreferencesProto$Value$ValueCase[] values()
+kotlinx.coroutines.scheduling.CoroutineScheduler: int _isTerminated$volatile
+androidx.datastore.preferences.protobuf.GeneratedMessageLite: java.util.Map defaultInstanceMap
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event ON_CREATE
+androidx.datastore.preferences.PreferencesProto$Value: java.lang.Object value_
 androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event valueOf(java.lang.String)
-com.google.android.gms.common.api.GoogleApiActivity: GoogleApiActivity()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setOnRefreshListener(androidx.swiperefreshlayout.widget.SwipeRefreshLayout$OnRefreshListener)
-android.support.v4.graphics.drawable.IconCompatParcelizer: androidx.core.graphics.drawable.IconCompat read(androidx.versionedparcelable.VersionedParcel)
-com.google.android.gms.common.GooglePlayServicesMissingManifestValueException: GooglePlayServicesMissingManifestValueException()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setProgressBackgroundColor(int)
+androidx.lifecycle.Lifecycle$State: androidx.lifecycle.Lifecycle$State valueOf(java.lang.String)
+androidx.datastore.preferences.protobuf.FieldType$Collection: androidx.datastore.preferences.protobuf.FieldType$Collection valueOf(java.lang.String)
 com.google.android.datatransport.Priority: com.google.android.datatransport.Priority[] values()
-androidx.datastore.preferences.protobuf.WireFormat$FieldType: androidx.datastore.preferences.protobuf.WireFormat$FieldType valueOf(java.lang.String)
+androidx.loader.app.LoaderManagerImpl$LoaderViewModel: LoaderManagerImpl$LoaderViewModel()
+com.google.firebase.messaging.reporting.MessagingClientEvent$MessageType: com.google.firebase.messaging.reporting.MessagingClientEvent$MessageType[] values()
+androidx.core.app.RemoteActionCompatParcelizer: RemoteActionCompatParcelizer()
+kotlinx.coroutines.CoroutineStart: kotlinx.coroutines.CoroutineStart valueOf(java.lang.String)
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setAnimationProgress(float)
+com.google.firebase.FirebaseCommonKtxRegistrar: FirebaseCommonKtxRegistrar()
+com.google.firebase.installations.FirebaseInstallationsKtxRegistrar: FirebaseInstallationsKtxRegistrar()
 kotlin.collections.AbstractList: AbstractList()
+com.google.firebase.installations.remote.TokenResult$ResponseCode: com.google.firebase.installations.remote.TokenResult$ResponseCode valueOf(java.lang.String)
+com.google.firebase.FirebaseCommonRegistrar: FirebaseCommonRegistrar()
+android.support.v4.graphics.drawable.IconCompatParcelizer: IconCompatParcelizer()
+com.google.android.datatransport.runtime.backends.BackendResponse$Status: com.google.android.datatransport.runtime.backends.BackendResponse$Status[] values()
+android.support.v4.app.RemoteActionCompatParcelizer: androidx.core.app.RemoteActionCompat read(androidx.versionedparcelable.VersionedParcel)
+com.google.firebase.installations.remote.TokenResult$ResponseCode: com.google.firebase.installations.remote.TokenResult$ResponseCode[] values()
+kotlinx.coroutines.selects.TrySelectDetailedResult: kotlinx.coroutines.selects.TrySelectDetailedResult[] values()
+androidx.core.app.RemoteActionCompatParcelizer: androidx.core.app.RemoteActionCompat read(androidx.versionedparcelable.VersionedParcel)
+com.google.firebase.installations.FirebaseInstallationsException$Status: com.google.firebase.installations.FirebaseInstallationsException$Status[] values()
+com.google.firebase.provider.FirebaseInitProvider: FirebaseInitProvider()
+com.google.firebase.installations.FirebaseInstallationsException$Status: com.google.firebase.installations.FirebaseInstallationsException$Status valueOf(java.lang.String)
+com.google.firebase.datatransport.TransportRegistrar: com.google.android.datatransport.TransportFactory lambda$getComponents$2(com.google.firebase.components.ComponentContainer)
+com.google.android.datatransport.cct.internal.NetworkConnectionInfo$NetworkType: com.google.android.datatransport.cct.internal.NetworkConnectionInfo$NetworkType[] values()
+com.google.firebase.FirebaseCommonKtxRegistrar: java.util.List getComponents()
 androidx.datastore.preferences.protobuf.JavaType: androidx.datastore.preferences.protobuf.JavaType valueOf(java.lang.String)
-androidx.core.app.RemoteActionCompat: RemoteActionCompat()
+androidx.datastore.preferences.protobuf.FieldType$Collection: androidx.datastore.preferences.protobuf.FieldType$Collection[] values()
+com.esporteid.app.Application: Application()
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: int getProgressViewEndOffset()
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setProgressBackgroundColorSchemeResource(int)
+com.google.firebase.encoders.proto.Protobuf$IntEncoding: com.google.firebase.encoders.proto.Protobuf$IntEncoding valueOf(java.lang.String)
+androidx.core.graphics.drawable.IconCompatParcelizer: androidx.core.graphics.drawable.IconCompat read(androidx.versionedparcelable.VersionedParcel)
+androidx.core.graphics.drawable.IconCompatParcelizer: IconCompatParcelizer()
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setOnChildScrollUpCallback(androidx.swiperefreshlayout.widget.SwipeRefreshLayout$OnChildScrollUpCallback)
+com.google.firebase.messaging.reporting.MessagingClientEvent$Event: com.google.firebase.messaging.reporting.MessagingClientEvent$Event valueOf(java.lang.String)
+androidx.datastore.preferences.protobuf.ProtoSyntax: androidx.datastore.preferences.protobuf.ProtoSyntax valueOf(java.lang.String)
+com.google.firebase.concurrent.UiExecutor: com.google.firebase.concurrent.UiExecutor[] values()
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setSlingshotDistance(int)
+android.support.v4.app.RemoteActionCompatParcelizer: RemoteActionCompatParcelizer()
+com.google.android.gms.common.api.GoogleApiActivity: GoogleApiActivity()
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setColorSchemeResources(int[])
+com.google.firebase.components.ComponentDiscoveryService: ComponentDiscoveryService()
 androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setRefreshing(boolean)
+androidx.datastore.preferences.protobuf.FieldType: androidx.datastore.preferences.protobuf.FieldType valueOf(java.lang.String)
+kotlin.coroutines.intrinsics.CoroutineSingletons: kotlin.coroutines.intrinsics.CoroutineSingletons valueOf(java.lang.String)
+com.google.firebase.installations.FirebaseInstallationsRegistrar: FirebaseInstallationsRegistrar()
+com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService: JobInfoSchedulerService()
+kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState: kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState[] values()
+com.google.firebase.messaging.threads.ThreadPriority: com.google.firebase.messaging.threads.ThreadPriority[] values()
+com.google.android.datatransport.runtime.firebase.transport.LogEventDropped$Reason: com.google.android.datatransport.runtime.firebase.transport.LogEventDropped$Reason valueOf(java.lang.String)
+com.google.android.datatransport.cct.internal.ClientInfo$ClientType: com.google.android.datatransport.cct.internal.ClientInfo$ClientType valueOf(java.lang.String)
+com.google.firebase.installations.FirebaseInstallationsRegistrar: com.google.firebase.installations.FirebaseInstallationsApi lambda$getComponents$0(com.google.firebase.components.ComponentContainer)
+com.esporteid.app.LauncherActivity: LauncherActivity()
+com.google.firebase.heartbeatinfo.HeartBeatInfo$HeartBeat: com.google.firebase.heartbeatinfo.HeartBeatInfo$HeartBeat[] values()
+androidx.datastore.preferences.protobuf.GeneratedMessageLite$MethodToInvoke: androidx.datastore.preferences.protobuf.GeneratedMessageLite$MethodToInvoke valueOf(java.lang.String)
+com.google.firebase.messaging.FirebaseMessagingService: FirebaseMessagingService()
+com.google.firebase.encoders.proto.Protobuf$IntEncoding: com.google.firebase.encoders.proto.Protobuf$IntEncoding[] values()
+com.google.android.datatransport.runtime.backends.TransportBackendDiscovery: TransportBackendDiscovery()
+androidx.lifecycle.Lifecycle$State: androidx.lifecycle.Lifecycle$State[] values()
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setProgressBackgroundColorSchemeColor(int)
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setColorScheme(int[])
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setSize(int)
+com.google.firebase.installations.local.PersistedInstallation$RegistrationStatus: com.google.firebase.installations.local.PersistedInstallation$RegistrationStatus[] values()
+kotlinx.coroutines.selects.TrySelectDetailedResult: kotlinx.coroutines.selects.TrySelectDetailedResult valueOf(java.lang.String)
+com.google.android.datatransport.runtime.backends.BackendResponse$Status: com.google.android.datatransport.runtime.backends.BackendResponse$Status valueOf(java.lang.String)
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setColorViewAlpha(int)
+androidx.datastore.preferences.protobuf.WireFormat$JavaType: androidx.datastore.preferences.protobuf.WireFormat$JavaType valueOf(java.lang.String)
+com.google.android.datatransport.runtime.firebase.transport.LogEventDropped$Reason: com.google.android.datatransport.runtime.firebase.transport.LogEventDropped$Reason[] values()
+com.google.firebase.datatransport.TransportRegistrar: TransportRegistrar()
+com.google.firebase.messaging.FirebaseMessagingRegistrar: com.google.firebase.messaging.FirebaseMessaging lambda$getComponents$0(com.google.firebase.components.Qualified,com.google.firebase.components.ComponentContainer)
+androidx.lifecycle.Lifecycle$Event: androidx.lifecycle.Lifecycle$Event[] values()
+com.google.firebase.messaging.FirebaseMessagingKtxRegistrar: FirebaseMessagingKtxRegistrar()
+com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver: AlarmManagerSchedulerBroadcastReceiver()
+com.google.firebase.messaging.reporting.MessagingClientEvent$MessageType: com.google.firebase.messaging.reporting.MessagingClientEvent$MessageType valueOf(java.lang.String)
+com.esporteid.app.EsporteIdFirebaseMessagingService: EsporteIdFirebaseMessagingService()
+com.google.android.gms.common.GooglePlayServicesMissingManifestValueException: GooglePlayServicesMissingManifestValueException()
+com.google.firebase.installations.remote.InstallationResponse$ResponseCode: com.google.firebase.installations.remote.InstallationResponse$ResponseCode[] values()
+com.google.firebase.messaging.FirebaseMessaging: com.google.firebase.messaging.FirebaseMessaging getInstance(com.google.firebase.FirebaseApp)
+com.google.firebase.iid.FirebaseInstanceIdReceiver: FirebaseInstanceIdReceiver()
+com.google.firebase.messaging.threads.ThreadPriority: com.google.firebase.messaging.threads.ThreadPriority valueOf(java.lang.String)
+com.google.android.datatransport.cct.internal.QosTier: com.google.android.datatransport.cct.internal.QosTier[] values()
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: int getProgressViewStartOffset()
+androidx.datastore.preferences.protobuf.GeneratedMessageLite$MethodToInvoke: androidx.datastore.preferences.protobuf.GeneratedMessageLite$MethodToInvoke[] values()
+com.google.firebase.messaging.reporting.MessagingClientEvent$Event: com.google.firebase.messaging.reporting.MessagingClientEvent$Event[] values()
+com.google.firebase.installations.FirebaseInstallationsRegistrar: java.util.List getComponents()
+com.google.android.datatransport.runtime.scheduling.jobscheduling.SchedulerConfig$Flag: com.google.android.datatransport.runtime.scheduling.jobscheduling.SchedulerConfig$Flag[] values()
+com.google.firebase.concurrent.SequentialExecutor$WorkerRunningState: com.google.firebase.concurrent.SequentialExecutor$WorkerRunningState[] values()
+com.google.android.gms.common.api.internal.LifecycleCallback: com.google.android.gms.common.api.internal.LifecycleFragment getChimeraLifecycleFragmentImpl(com.google.android.gms.common.api.internal.LifecycleActivity)
+kotlin.coroutines.intrinsics.CoroutineSingletons: kotlin.coroutines.intrinsics.CoroutineSingletons[] values()
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: int getNestedScrollAxes()
+kotlinx.coroutines.channels.BufferOverflow: kotlinx.coroutines.channels.BufferOverflow valueOf(java.lang.String)
+androidx.datastore.preferences.protobuf.WireFormat$JavaType: androidx.datastore.preferences.protobuf.WireFormat$JavaType[] values()
+com.google.android.datatransport.Priority: com.google.android.datatransport.Priority valueOf(java.lang.String)
+androidx.datastore.preferences.protobuf.Writer$FieldOrder: androidx.datastore.preferences.protobuf.Writer$FieldOrder valueOf(java.lang.String)
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setColorSchemeColors(int[])
+com.google.android.datatransport.runtime.scheduling.jobscheduling.SchedulerConfig$Flag: com.google.android.datatransport.runtime.scheduling.jobscheduling.SchedulerConfig$Flag valueOf(java.lang.String)
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: int getProgressCircleDiameter()
+androidx.core.graphics.drawable.IconCompat: IconCompat()
+com.google.firebase.messaging.reporting.MessagingClientEvent$SDKPlatform: com.google.firebase.messaging.reporting.MessagingClientEvent$SDKPlatform valueOf(java.lang.String)
+com.google.android.datatransport.cct.CctBackendFactory: CctBackendFactory()
+com.google.firebase.concurrent.ExecutorsRegistrar: ExecutorsRegistrar()
+com.google.android.datatransport.cct.CctBackendFactory: com.google.android.datatransport.runtime.backends.TransportBackend create(com.google.android.datatransport.runtime.backends.CreationContext)
+com.google.android.gms.common.ErrorDialogFragment: ErrorDialogFragment()
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setNestedScrollingEnabled(boolean)
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setLegacyRequestDisallowInterceptTouchEventEnabled(boolean)
+androidx.core.graphics.drawable.IconCompatParcelizer: void write(androidx.core.graphics.drawable.IconCompat,androidx.versionedparcelable.VersionedParcel)
 kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState: kotlinx.coroutines.scheduling.CoroutineScheduler$WorkerState valueOf(java.lang.String)
+com.google.firebase.concurrent.UiExecutor: com.google.firebase.concurrent.UiExecutor valueOf(java.lang.String)
+androidx.datastore.preferences.protobuf.JavaType: androidx.datastore.preferences.protobuf.JavaType[] values()
+android.support.v4.graphics.drawable.IconCompatParcelizer: androidx.core.graphics.drawable.IconCompat read(androidx.versionedparcelable.VersionedParcel)
+com.google.android.gms.dynamite.DynamiteModule$DynamiteLoaderClassLoader: DynamiteModule$DynamiteLoaderClassLoader()
+kotlinx.coroutines.channels.BufferOverflow: kotlinx.coroutines.channels.BufferOverflow[] values()
+android.support.v4.graphics.drawable.IconCompatParcelizer: void write(androidx.core.graphics.drawable.IconCompat,androidx.versionedparcelable.VersionedParcel)
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setDistanceToTriggerSync(int)
+androidx.core.app.CoreComponentFactory: CoreComponentFactory()
+com.google.firebase.heartbeatinfo.HeartBeatInfo$HeartBeat: com.google.firebase.heartbeatinfo.HeartBeatInfo$HeartBeat valueOf(java.lang.String)
+com.google.firebase.datatransport.TransportRegistrar: com.google.android.datatransport.TransportFactory lambda$getComponents$0(com.google.firebase.components.ComponentContainer)
+androidx.core.app.RemoteActionCompatParcelizer: void write(androidx.core.app.RemoteActionCompat,androidx.versionedparcelable.VersionedParcel)
+androidx.datastore.preferences.PreferencesProto$Value$ValueCase: androidx.datastore.preferences.PreferencesProto$Value$ValueCase valueOf(java.lang.String)
+androidx.datastore.preferences.protobuf.WireFormat$FieldType: androidx.datastore.preferences.protobuf.WireFormat$FieldType[] values()
+com.google.firebase.messaging.reporting.MessagingClientEvent$SDKPlatform: com.google.firebase.messaging.reporting.MessagingClientEvent$SDKPlatform[] values()
+com.google.firebase.messaging.FirebaseMessagingRegistrar: FirebaseMessagingRegistrar()
+com.google.firebase.concurrent.SequentialExecutor$WorkerRunningState: com.google.firebase.concurrent.SequentialExecutor$WorkerRunningState valueOf(java.lang.String)
+com.google.android.datatransport.cct.internal.NetworkConnectionInfo$MobileSubtype: com.google.android.datatransport.cct.internal.NetworkConnectionInfo$MobileSubtype[] values()
+androidx.datastore.preferences.protobuf.WireFormat$FieldType: androidx.datastore.preferences.protobuf.WireFormat$FieldType valueOf(java.lang.String)
+androidx.core.app.RemoteActionCompat: RemoteActionCompat()
+com.google.firebase.messaging.FirebaseMessagingRegistrar: java.util.List getComponents()
+androidx.datastore.preferences.protobuf.Writer$FieldOrder: androidx.datastore.preferences.protobuf.Writer$FieldOrder[] values()
+com.google.android.datatransport.cct.internal.NetworkConnectionInfo$MobileSubtype: com.google.android.datatransport.cct.internal.NetworkConnectionInfo$MobileSubtype valueOf(java.lang.String)
+androidx.versionedparcelable.CustomVersionedParcelable: CustomVersionedParcelable()
 com.google.android.datatransport.cct.internal.QosTier: com.google.android.datatransport.cct.internal.QosTier valueOf(java.lang.String)
 androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setEnabled(boolean)
-com.google.firebase.datatransport.TransportRegistrar: TransportRegistrar()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setColorSchemeColors(int[])
-com.google.android.datatransport.runtime.backends.BackendResponse$Status: com.google.android.datatransport.runtime.backends.BackendResponse$Status valueOf(java.lang.String)
-com.google.firebase.provider.FirebaseInitProvider: FirebaseInitProvider()
-androidx.datastore.preferences.protobuf.Writer$FieldOrder: androidx.datastore.preferences.protobuf.Writer$FieldOrder valueOf(java.lang.String)
-androidx.core.app.CoreComponentFactory: CoreComponentFactory()
-com.google.firebase.encoders.proto.Protobuf$IntEncoding: com.google.firebase.encoders.proto.Protobuf$IntEncoding[] values()
-kotlinx.coroutines.CoroutineStart: kotlinx.coroutines.CoroutineStart valueOf(java.lang.String)
-com.google.firebase.messaging.reporting.MessagingClientEvent$MessageType: com.google.firebase.messaging.reporting.MessagingClientEvent$MessageType valueOf(java.lang.String)
-androidx.datastore.preferences.PreferencesProto$Value$ValueCase: androidx.datastore.preferences.PreferencesProto$Value$ValueCase valueOf(java.lang.String)
-com.google.firebase.datatransport.TransportRegistrar: com.google.android.datatransport.TransportFactory lambda$getComponents$0(com.google.firebase.components.ComponentContainer)
-com.google.android.datatransport.cct.internal.NetworkConnectionInfo$MobileSubtype: com.google.android.datatransport.cct.internal.NetworkConnectionInfo$MobileSubtype valueOf(java.lang.String)
-com.google.android.gms.common.api.internal.zzb: zzb()
-com.google.android.datatransport.cct.internal.NetworkConnectionInfo$NetworkType: com.google.android.datatransport.cct.internal.NetworkConnectionInfo$NetworkType valueOf(java.lang.String)
-com.google.firebase.installations.FirebaseInstallationsKtxRegistrar: FirebaseInstallationsKtxRegistrar()
-androidx.datastore.preferences.protobuf.FieldType$Collection: androidx.datastore.preferences.protobuf.FieldType$Collection valueOf(java.lang.String)
-com.google.firebase.heartbeatinfo.HeartBeatInfo$HeartBeat: com.google.firebase.heartbeatinfo.HeartBeatInfo$HeartBeat valueOf(java.lang.String)
-com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver: AlarmManagerSchedulerBroadcastReceiver()
-com.google.android.datatransport.Priority: com.google.android.datatransport.Priority valueOf(java.lang.String)
-android.support.v4.app.RemoteActionCompatParcelizer: RemoteActionCompatParcelizer()
-androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setSize(int)
-com.google.firebase.installations.FirebaseInstallationsRegistrar: com.google.firebase.installations.FirebaseInstallationsApi lambda$getComponents$0(com.google.firebase.components.ComponentContainer)
-com.google.firebase.heartbeatinfo.HeartBeatInfo$HeartBeat: com.google.firebase.heartbeatinfo.HeartBeatInfo$HeartBeat[] values()
-com.google.android.datatransport.runtime.firebase.transport.LogEventDropped$Reason: com.google.android.datatransport.runtime.firebase.transport.LogEventDropped$Reason valueOf(java.lang.String)
-com.google.android.datatransport.cct.internal.QosTier: com.google.android.datatransport.cct.internal.QosTier[] values()
-androidx.core.app.RemoteActionCompatParcelizer: RemoteActionCompatParcelizer()
-com.google.firebase.FirebaseCommonRegistrar: FirebaseCommonRegistrar()
-com.google.firebase.messaging.threads.ThreadPriority: com.google.firebase.messaging.threads.ThreadPriority valueOf(java.lang.String)
-com.google.android.datatransport.cct.internal.NetworkConnectionInfo$NetworkType: com.google.android.datatransport.cct.internal.NetworkConnectionInfo$NetworkType[] values()
-android.support.v4.graphics.drawable.IconCompatParcelizer: void write(androidx.core.graphics.drawable.IconCompat,androidx.versionedparcelable.VersionedParcel)
-kotlinx.coroutines.channels.BufferOverflow: kotlinx.coroutines.channels.BufferOverflow[] values()
-android.support.v4.graphics.drawable.IconCompatParcelizer: IconCompatParcelizer()
-androidx.core.app.RemoteActionCompatParcelizer: androidx.core.app.RemoteActionCompat read(androidx.versionedparcelable.VersionedParcel)
-com.esporteid.app.Application: Application()
-com.google.android.gms.dynamite.DynamiteModule$DynamiteLoaderClassLoader: DynamiteModule$DynamiteLoaderClassLoader()
+kotlinx.coroutines.CoroutineStart: kotlinx.coroutines.CoroutineStart[] values()
+com.google.firebase.datatransport.TransportRegistrar: java.util.List getComponents()
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setTargetOffsetTopAndBottom(int)
+com.google.firebase.installations.remote.InstallationResponse$ResponseCode: com.google.firebase.installations.remote.InstallationResponse$ResponseCode valueOf(java.lang.String)
+androidx.datastore.preferences.protobuf.FieldType: androidx.datastore.preferences.protobuf.FieldType[] values()
+com.google.android.datatransport.cct.internal.ClientInfo$ClientType: com.google.android.datatransport.cct.internal.ClientInfo$ClientType[] values()
+android.support.v4.app.RemoteActionCompatParcelizer: void write(androidx.core.app.RemoteActionCompat,androidx.versionedparcelable.VersionedParcel)
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setProgressBackgroundColor(int)
+com.google.firebase.installations.local.PersistedInstallation$RegistrationStatus: com.google.firebase.installations.local.PersistedInstallation$RegistrationStatus valueOf(java.lang.String)
+com.google.firebase.datatransport.TransportRegistrar: com.google.android.datatransport.TransportFactory lambda$getComponents$1(com.google.firebase.components.ComponentContainer)
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout: void setOnRefreshListener(androidx.swiperefreshlayout.widget.SwipeRefreshLayout$OnRefreshListener)
 androidx.datastore.preferences.protobuf.ProtoSyntax: androidx.datastore.preferences.protobuf.ProtoSyntax[] values()
-com.google.firebase.installations.remote.InstallationResponse$ResponseCode: com.google.firebase.installations.remote.InstallationResponse$ResponseCode[] values()
+com.google.android.gms.common.api.internal.zzb: zzb()
+androidx.datastore.preferences.PreferencesProto$Value$ValueCase: androidx.datastore.preferences.PreferencesProto$Value$ValueCase[] values()
+com.google.android.datatransport.cct.internal.NetworkConnectionInfo$NetworkType: com.google.android.datatransport.cct.internal.NetworkConnectionInfo$NetworkType valueOf(java.lang.String)
+androidx.datastore.migrations.SharedPreferencesMigration$Api24Impl: boolean deleteSharedPreferences(android.content.Context,java.lang.String)

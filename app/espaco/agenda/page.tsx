@@ -243,7 +243,7 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
                   <input
                     type="number"
                     name="regra_limite_dia"
-                    defaultValue={1}
+                    defaultValue={0}
                     min={0}
                     placeholder="Limite geral/dia"
                     className="eid-input-dark rounded-xl px-3 py-2 text-sm"
@@ -251,7 +251,7 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
                   <input
                     type="number"
                     name="regra_limite_semana"
-                    defaultValue={3}
+                    defaultValue={0}
                     min={0}
                     placeholder="Limite geral/semana"
                     className="eid-input-dark rounded-xl px-3 py-2 text-sm"
@@ -259,7 +259,7 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
                   <input
                     type="number"
                     name="regra_cooldown_horas"
-                    defaultValue={2}
+                    defaultValue={0}
                     min={0}
                     placeholder="Cooldown (h)"
                     className="eid-input-dark rounded-xl px-3 py-2 text-sm"
@@ -267,7 +267,7 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
                   <input
                     type="number"
                     name="regra_antecedencia_min_horas"
-                    defaultValue={1}
+                    defaultValue={0}
                     min={0}
                     placeholder="Antecedência mínima (h)"
                     className="eid-input-dark rounded-xl px-3 py-2 text-sm"
@@ -275,8 +275,8 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
                   <input
                     type="number"
                     name="regra_antecedencia_max_dias"
-                    defaultValue={30}
-                    min={1}
+                    defaultValue={0}
+                    min={0}
                     placeholder="Antecedência máxima (dias)"
                     className="eid-input-dark rounded-xl px-3 py-2 text-sm"
                   />
@@ -290,7 +290,7 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
                     <input
                       type="number"
                       name="regra_gratis_limite_dia"
-                      defaultValue={1}
+                      defaultValue={0}
                       min={0}
                       placeholder="Grátis por dia"
                       className="eid-input-dark rounded-xl px-3 py-2 text-sm"
@@ -298,7 +298,7 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
                     <input
                       type="number"
                       name="regra_gratis_limite_semana"
-                      defaultValue={3}
+                      defaultValue={0}
                       min={0}
                       placeholder="Grátis por semana"
                       className="eid-input-dark rounded-xl px-3 py-2 text-sm"
@@ -306,7 +306,7 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
                     <input
                       type="number"
                       name="regra_gratis_intervalo_horas"
-                      defaultValue={2}
+                      defaultValue={0}
                       min={0}
                       placeholder="Intervalo grátis (h)"
                       className="eid-input-dark rounded-xl px-3 py-2 text-sm"
@@ -314,8 +314,8 @@ export default async function EspacoAgendaPage({ searchParams }: Props) {
                     <input
                       type="number"
                       name="regra_gratis_antecedencia_max_dias"
-                      defaultValue={30}
-                      min={1}
+                      defaultValue={0}
+                      min={0}
                       placeholder="Antecedência grátis (dias)"
                       className="eid-input-dark rounded-xl px-3 py-2 text-sm"
                     />

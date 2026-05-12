@@ -9,6 +9,7 @@ import {
   enablePushNotifications,
   hasAndroidNativePushEnabled,
   hasActivePushSubscription,
+  isNativeAndroidApp,
   isStandaloneAndroidApp,
   setAndroidNativePushEnabled,
 } from "@/lib/pwa/push-client";
@@ -76,13 +77,23 @@ let lastPushFlushAt = 0;
 const PUSH_FLUSH_COOLDOWN_MS = 5 * 60 * 1000;
 function scheduleNotificationIdle(task: () => void): () => void {
   if (typeof window === "undefined") return () => {};
-  const requestIdle = window.requestIdleCallback;
-  if (requestIdle) {
-    const id = requestIdle(task, { timeout: 3000 });
-    return () => window.cancelIdleCallback?.(id);
-  }
-  const id = window.setTimeout(task, 1000);
-  return () => window.clearTimeout(id);
+  let cancelIdle: (() => void) | null = null;
+  const schedule = () => {
+    const requestIdle = window.requestIdleCallback;
+    if (requestIdle) {
+      const id = requestIdle(task, { timeout: isNativeAndroidApp() ? 6500 : 3000 });
+      cancelIdle = () => window.cancelIdleCallback?.(id);
+      return;
+    }
+    const id = window.setTimeout(task, isNativeAndroidApp() ? 3500 : 1000);
+    cancelIdle = () => window.clearTimeout(id);
+  };
+  const delay = isNativeAndroidApp() ? window.setTimeout(schedule, 2200) : 0;
+  if (!delay) schedule();
+  return () => {
+    if (delay) window.clearTimeout(delay);
+    cancelIdle?.();
+  };
 }
 
 function SummaryGlyph({ kind }: { kind: "agenda" | "social" | "placar" }) {
@@ -199,10 +210,11 @@ export function NotificationBell({ userId }: { userId: string | null }) {
     pathnameRef.current = pathname;
   }, [pathname]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (force = false) => {
     if (!userId) return;
     const now = Date.now();
-    if (now - lastLoadAtRef.current < NOTIFICATION_LOAD_MIN_GAP_MS) return;
+    const minGap = isNativeAndroidApp() ? 8500 : NOTIFICATION_LOAD_MIN_GAP_MS;
+    if (!force && now - lastLoadAtRef.current < minGap) return;
     if (loadInFlightRef.current) return;
     lastLoadAtRef.current = now;
     loadInFlightRef.current = true;
@@ -513,6 +525,7 @@ export function NotificationBell({ userId }: { userId: string | null }) {
 
   useEffect(() => {
     if (!open) return;
+    void load(true);
     let cancelled = false;
     void (async () => {
       try {

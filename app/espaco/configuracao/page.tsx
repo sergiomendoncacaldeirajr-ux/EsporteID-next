@@ -402,7 +402,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
             />
             <input
               type="number"
-              min={1}
+              min={0}
               max={365}
               name="antecedencia_max_dias"
               placeholder="Libera agenda em dias (vazio = global)"
@@ -446,7 +446,9 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
                 {" · "}
                 {planoHerdaRegra(plano, "antecedencia_max_dias")
                   ? "segue agenda global"
-                  : `agenda ${Number(plano.antecedencia_max_dias ?? 30)} dia(s)`}
+                  : Number(plano.antecedencia_max_dias ?? 0) === 0
+                  ? "agenda sem limite"
+                  : `agenda ${Number(plano.antecedencia_max_dias)} dia(s)`}
                 {typeof plano.beneficios_json === "object" &&
                 plano.beneficios_json &&
                 !Array.isArray(plano.beneficios_json) &&

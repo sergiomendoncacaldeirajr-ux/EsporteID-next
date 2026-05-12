@@ -333,35 +333,35 @@ export async function salvarConfiguracoesEspacoAction(
       checkbox(formData, "reservas_gratis_liberadas")
     );
     const configuracaoReservas = serializarEspacoReservaConfig({
-      limiteReservasDia: Number(formData.get("limite_reservas_dia") ?? 1),
-      limiteReservasSemana: Number(formData.get("limite_reservas_semana") ?? 3),
-      cooldownHoras: Number(formData.get("cooldown_horas") ?? 2),
-      antecedenciaMinHoras: Number(formData.get("antecedencia_min_horas") ?? 1),
-      antecedenciaMaxDias: Number(formData.get("antecedencia_max_dias") ?? 30),
+      limiteReservasDia: Number(formData.get("limite_reservas_dia") ?? 0),
+      limiteReservasSemana: Number(formData.get("limite_reservas_semana") ?? 0),
+      cooldownHoras: Number(formData.get("cooldown_horas") ?? 0),
+      antecedenciaMinHoras: Number(formData.get("antecedencia_min_horas") ?? 0),
+      antecedenciaMaxDias: Number(formData.get("antecedencia_max_dias") ?? 0),
       gratisLimiteReservasDiaMembro: Number(
         formData.get("gratis_limite_reservas_dia_membro") ??
           formData.get("limite_reservas_dia") ??
-          1
+          0
       ),
       gratisLimiteReservasSemanaMembro: Number(
         formData.get("gratis_limite_reservas_semana_membro") ??
           formData.get("limite_reservas_semana") ??
-          3
+          0
       ),
       gratisIntervaloHorasEntreReservasMembro: Number(
         formData.get("gratis_intervalo_horas_entre_reservas_membro") ??
           formData.get("cooldown_horas") ??
-          2
+          0
       ),
       gratisAntecedenciaMaxDiasMembro: Number(
         formData.get("gratis_antecedencia_max_dias_membro") ??
           formData.get("antecedencia_max_dias") ??
-          30
+          0
       ),
       bloqueiaInadimplente: checkbox(formData, "bloqueia_inadimplente"),
       reservasGratisLiberadas,
       cancelamentoGratuitaPermite: checkbox(formData, "cancelamento_gratuita_permite"),
-      cancelamentoGratuitaAntecedenciaHoras: Number(formData.get("cancelamento_gratuita_antecedencia_horas") ?? 2),
+      cancelamentoGratuitaAntecedenciaHoras: Number(formData.get("cancelamento_gratuita_antecedencia_horas") ?? 0),
       cancelamentoGratuitaPermiteAposPrazo: checkbox(formData, "cancelamento_gratuita_permite_apos_prazo"),
       cancelamentoGratuitaMultaTipo: text(formData, "cancelamento_gratuita_multa_tipo") || "nenhuma",
       cancelamentoGratuitaMultaPercentual: Number(formData.get("cancelamento_gratuita_multa_percentual") ?? 0),
@@ -369,7 +369,7 @@ export async function salvarConfiguracoesEspacoAction(
         Number(text(formData, "cancelamento_gratuita_multa_reais").replace(",", ".")) * 100
       ) || 0,
       cancelamentoPagaPermite: checkbox(formData, "cancelamento_paga_permite"),
-      cancelamentoPagaAntecedenciaHoras: Number(formData.get("cancelamento_paga_antecedencia_horas") ?? 24),
+      cancelamentoPagaAntecedenciaHoras: Number(formData.get("cancelamento_paga_antecedencia_horas") ?? 0),
       cancelamentoPagaPermiteAposPrazo: checkbox(formData, "cancelamento_paga_permite_apos_prazo"),
       cancelamentoPagaMultaTipo: text(formData, "cancelamento_paga_multa_tipo") || "nenhuma",
       cancelamentoPagaMultaPercentual: Number(formData.get("cancelamento_paga_multa_percentual") ?? 0),
@@ -377,7 +377,7 @@ export async function salvarConfiguracoesEspacoAction(
         Number(text(formData, "cancelamento_paga_multa_reais").replace(",", ".")) * 100
       ) || 0,
       permiteTransferenciaReserva: checkbox(formData, "permite_transferencia_reserva"),
-      transferenciaAntecedenciaHoras: Number(formData.get("transferencia_antecedencia_horas") ?? 2),
+      transferenciaAntecedenciaHoras: Number(formData.get("transferencia_antecedencia_horas") ?? 0),
       politicaCancelamento: text(formData, "politica_cancelamento"),
       observacoesPublicas: text(formData, "observacoes_publicas"),
     });
@@ -689,35 +689,33 @@ export async function criarGradeAutomaticaEspacoAction(formData: FormData) {
     const atual = normalizeEspacoReservaConfig(espacoAtual.configuracao_reservas_json);
     const novoCfg = serializarEspacoReservaConfig({
       ...atual,
-      limiteReservasDia: Math.max(0, Number(formData.get("regra_limite_dia") ?? atual.limiteReservasDia) || atual.limiteReservasDia),
-      limiteReservasSemana: Math.max(0, Number(formData.get("regra_limite_semana") ?? atual.limiteReservasSemana) || atual.limiteReservasSemana),
-      cooldownHoras: Math.max(0, Number(formData.get("regra_cooldown_horas") ?? atual.cooldownHoras) || atual.cooldownHoras),
+      limiteReservasDia: Math.max(0, Number(formData.get("regra_limite_dia") ?? atual.limiteReservasDia)),
+      limiteReservasSemana: Math.max(0, Number(formData.get("regra_limite_semana") ?? atual.limiteReservasSemana)),
+      cooldownHoras: Math.max(0, Number(formData.get("regra_cooldown_horas") ?? atual.cooldownHoras)),
       antecedenciaMinHoras: Math.max(
         0,
-        Number(formData.get("regra_antecedencia_min_horas") ?? atual.antecedenciaMinHoras) || atual.antecedenciaMinHoras
+        Number(formData.get("regra_antecedencia_min_horas") ?? atual.antecedenciaMinHoras)
       ),
       antecedenciaMaxDias: Math.max(
-        1,
-        Number(formData.get("regra_antecedencia_max_dias") ?? atual.antecedenciaMaxDias) || atual.antecedenciaMaxDias
+        0,
+        Number(formData.get("regra_antecedencia_max_dias") ?? atual.antecedenciaMaxDias)
       ),
       reservasGratisLiberadas: checkbox(formData, "regra_reservas_gratis_liberadas"),
       gratisLimiteReservasDiaMembro: Math.max(
         0,
-        Number(formData.get("regra_gratis_limite_dia") ?? atual.gratisLimiteReservasDiaMembro) || atual.gratisLimiteReservasDiaMembro
+        Number(formData.get("regra_gratis_limite_dia") ?? atual.gratisLimiteReservasDiaMembro)
       ),
       gratisLimiteReservasSemanaMembro: Math.max(
         0,
-        Number(formData.get("regra_gratis_limite_semana") ?? atual.gratisLimiteReservasSemanaMembro) || atual.gratisLimiteReservasSemanaMembro
+        Number(formData.get("regra_gratis_limite_semana") ?? atual.gratisLimiteReservasSemanaMembro)
       ),
       gratisIntervaloHorasEntreReservasMembro: Math.max(
         0,
-        Number(formData.get("regra_gratis_intervalo_horas") ?? atual.gratisIntervaloHorasEntreReservasMembro) ||
-          atual.gratisIntervaloHorasEntreReservasMembro
+        Number(formData.get("regra_gratis_intervalo_horas") ?? atual.gratisIntervaloHorasEntreReservasMembro)
       ),
       gratisAntecedenciaMaxDiasMembro: Math.max(
-        1,
-        Number(formData.get("regra_gratis_antecedencia_max_dias") ?? atual.gratisAntecedenciaMaxDiasMembro) ||
-          atual.gratisAntecedenciaMaxDiasMembro
+        0,
+        Number(formData.get("regra_gratis_antecedencia_max_dias") ?? atual.gratisAntecedenciaMaxDiasMembro)
       ),
     });
     const { error: updCfgErr } = await supabase
@@ -1149,8 +1147,8 @@ export async function criarPlanoSocioEspacoAction(formData: FormData) {
         Number(formData.get("antecedencia_min_horas") ?? 0) || 0
       ),
       antecedencia_max_dias: Math.max(
-        1,
-        Math.round(antecedenciaMaxDias ?? 30)
+        0,
+        Math.round(antecedenciaMaxDias ?? 0)
       ),
       reservas_gratuitas_semana: Math.max(0, Math.round(reservasGratisSemana ?? 0)),
       beneficios_json: {
@@ -1783,7 +1781,7 @@ export async function criarReservaEspacoAction(
         message: `Esse horário precisa ser reservado com pelo menos ${benefit.antecedenciaMinHoras} hora(s) de antecedência.`,
       };
     }
-    if (antecedenciaHoras > benefit.antecedenciaMaxDias * 24) {
+    if (benefit.antecedenciaMaxDias > 0 && antecedenciaHoras > benefit.antecedenciaMaxDias * 24) {
       return {
         ok: false,
         message: `Seu plano permite reservar até ${benefit.antecedenciaMaxDias} dia(s) à frente.`,
@@ -1938,23 +1936,17 @@ export async function criarReservaEspacoAction(
       };
     }
     const cfgBeneficiosGratis = normalizeEspacoReservaConfig(espaco.configuracao_reservas_json);
-    const reservasGratisPlanoRaw = planoHerdaRegraGlobal(plano, "reservas_gratuitas_semana")
-      ? cfgBeneficiosGratis.gratisLimiteReservasSemanaMembro
-      : plano?.reservas_gratuitas_semana;
-    const reservasGratisPlanoConfigurado =
+    const reservasGratisPlanoCustomizado =
       cfgBeneficiosGratis.reservasGratisLiberadas &&
-      reservasGratisPlanoRaw !== null &&
-      reservasGratisPlanoRaw !== undefined &&
-      Number.isFinite(Number(reservasGratisPlanoRaw));
-    const reservasGratisSemLimite =
-      benefit.ok &&
-      reservasGratisPlanoConfigurado &&
-      Number(reservasGratisPlanoRaw) === 0;
+      !planoHerdaRegraGlobal(plano, "reservas_gratuitas_semana") &&
+      plano?.reservas_gratuitas_semana !== null &&
+      plano?.reservas_gratuitas_semana !== undefined &&
+      Number.isFinite(Number(plano.reservas_gratuitas_semana));
+    const reservasGratisSemLimite = benefit.ok && benefit.reservasGratisSemana === 0;
     const usarBeneficioGratis =
       checkbox(formData, "usar_beneficio_gratis") &&
       benefit.ok &&
-      cfgBeneficiosGratis.reservasGratisLiberadas &&
-      (reservasGratisSemLimite || benefit.reservasGratisSemana > 0);
+      cfgBeneficiosGratis.reservasGratisLiberadas;
     if (usarBeneficioGratis) {
       const cfgReservas = cfgBeneficiosGratis;
       const inicioDia = new Date(
@@ -2026,7 +2018,7 @@ export async function criarReservaEspacoAction(
       }
 
       if (
-        !reservasGratisPlanoConfigurado &&
+        !reservasGratisPlanoCustomizado &&
         cfgReservas.gratisLimiteReservasSemanaMembro > 0 &&
         Number(reservasGratisSemanaCount ?? 0) >=
           cfgReservas.gratisLimiteReservasSemanaMembro
@@ -2052,7 +2044,10 @@ export async function criarReservaEspacoAction(
         }
       }
 
-      if (antecedenciaHoras > cfgReservas.gratisAntecedenciaMaxDiasMembro * 24) {
+      if (
+        cfgReservas.gratisAntecedenciaMaxDiasMembro > 0 &&
+        antecedenciaHoras > cfgReservas.gratisAntecedenciaMaxDiasMembro * 24
+      ) {
         return {
           ok: false,
           message: `Nas reservas gratuitas, o máximo de antecedência é ${cfgReservas.gratisAntecedenciaMaxDiasMembro} dia(s).`,
@@ -2289,7 +2284,7 @@ export async function entrarFilaEsperaEspacoAction(
       configuracaoEspaco: espaco.configuracao_reservas_json,
     });
     const cfgReservas = normalizeEspacoReservaConfig(espaco.configuracao_reservas_json);
-    if (!benefit.ok || !cfgReservas.reservasGratisLiberadas || benefit.reservasGratisSemana < 1) {
+    if (!benefit.ok || !cfgReservas.reservasGratisLiberadas) {
       return { ok: false, message: "Fila de espera só está disponível para membros com reserva gratuita liberada." };
     }
     const limiteDia = Math.max(0, Number(benefit.limiteReservasDia ?? 0));

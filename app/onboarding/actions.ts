@@ -951,12 +951,11 @@ export async function salvarExtrasOnboarding(
     };
     const slug = slugifyEspaco(espacoNome);
     const configuracaoReservas = serializarEspacoReservaConfig({
-      limiteReservasDia: reservaModelo === "livre" ? 1 : 3,
-      limiteReservasSemana: reservaModelo === "socios" ? 7 : 3,
-      cooldownHoras: reservaModelo === "livre" ? 0 : 2,
-      antecedenciaMinHoras: 1,
-      antecedenciaMaxDias: 30,
-      waitlistExpiracaoMinutos: 60,
+      limiteReservasDia: 0,
+      limiteReservasSemana: 0,
+      cooldownHoras: 0,
+      antecedenciaMinHoras: 0,
+      antecedenciaMaxDias: 0,
       bloqueiaInadimplente: reservaModelo === "socios" || reservaModelo === "misto",
       reservasGratisLiberadas: reservaModelo === "socios" || reservaModelo === "misto",
       politicaCancelamento: reservaNotas,

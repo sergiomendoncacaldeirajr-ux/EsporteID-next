@@ -7,6 +7,7 @@ import { getContextHomeHref, type ActiveAppContext } from "@/lib/auth/active-con
 import { createClient } from "@/lib/supabase/client";
 import { partidaRowTemResultadoParaRevisaoOponente } from "@/lib/agenda/partidas-usuario";
 import { userMustActGestaoRankingCancel } from "@/lib/notificacoes/gestao-ranking-cancel";
+import { isNativeAndroidApp } from "@/lib/pwa/push-client";
 import type { ReactNode } from "react";
 
 /* ── Cores reativas ao tema ── */
@@ -102,13 +103,23 @@ function NavBadge({ n }: { n: number }) {
 
 function scheduleAfterNavigationIdle(task: () => void): () => void {
   if (typeof window === "undefined") return () => {};
-  const requestIdle = window.requestIdleCallback;
-  if (requestIdle) {
-    const id = requestIdle(task, { timeout: 3000 });
-    return () => window.cancelIdleCallback?.(id);
-  }
-  const id = window.setTimeout(task, 1000);
-  return () => window.clearTimeout(id);
+  let cancelIdle: (() => void) | null = null;
+  const schedule = () => {
+    const requestIdle = window.requestIdleCallback;
+    if (requestIdle) {
+      const id = requestIdle(task, { timeout: isNativeAndroidApp() ? 6500 : 3000 });
+      cancelIdle = () => window.cancelIdleCallback?.(id);
+      return;
+    }
+    const id = window.setTimeout(task, isNativeAndroidApp() ? 3500 : 1000);
+    cancelIdle = () => window.clearTimeout(id);
+  };
+  const delay = isNativeAndroidApp() ? window.setTimeout(schedule, 2200) : 0;
+  if (!delay) schedule();
+  return () => {
+    if (delay) window.clearTimeout(delay);
+    cancelIdle?.();
+  };
 }
 
 const MOBILE_NAV_LOAD_MIN_GAP_MS = 3500;
@@ -285,7 +296,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     const supabase = createClient();
     async function load() {
       const now = Date.now();
-      if (now - lastLoadAt < MOBILE_NAV_LOAD_MIN_GAP_MS) return;
+      const minGap = isNativeAndroidApp() ? 8500 : MOBILE_NAV_LOAD_MIN_GAP_MS;
+      if (now - lastLoadAt < minGap) return;
       if (loadInFlight) return;
       lastLoadAt = now;
       loadInFlight = true;

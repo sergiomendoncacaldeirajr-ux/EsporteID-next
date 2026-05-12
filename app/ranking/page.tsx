@@ -28,6 +28,10 @@ type Props = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+type RankingRulesConfigProps = {
+  supabase: Awaited<ReturnType<typeof getServerAuth>>["supabase"];
+};
+
 export default async function RankingPage({ searchParams }: Props) {
   const spRaw = (await searchParams) ?? {};
   const state = parseRankingSearch(spRaw);
@@ -35,7 +39,7 @@ export default async function RankingPage({ searchParams }: Props) {
   if (!user) redirect("/login?next=/ranking");
   const viewerId = user.id;
 
-  const [{ data: me }, { data: meusEsportesRaw }, { data: criados }, { data: membro }, { data: esportesCatalogoRaw }, limitesMensal, cooldownMeses, pendingLimitRow, autoAprovacaoRow] =
+  const [{ data: me }, { data: meusEsportesRaw }, { data: criados }, { data: membro }, { data: esportesCatalogoRaw }] =
     await Promise.all([
       supabase.from("profiles").select("localizacao, genero, lat, lng").eq("id", viewerId).maybeSingle(),
       supabase
@@ -47,14 +51,7 @@ export default async function RankingPage({ searchParams }: Props) {
       supabase.from("times").select("id").eq("criador_id", viewerId),
       supabase.from("membros_time").select("time_id").eq("usuario_id", viewerId).eq("status", "ativo"),
       supabase.from("esportes").select("id, nome").eq("ativo", true).order("ordem", { ascending: true }),
-      getMatchRankMonthlyLimitPerSport(supabase),
-      getMatchRankCooldownMeses(supabase),
-      supabase.from("app_config").select("value_json").eq("key", "match_rank_pending_result_limit").maybeSingle(),
-      supabase.from("app_config").select("value_json").eq("key", "match_resultado_autoaprovacao_horas").maybeSingle(),
     ]);
-  const pendingLimit = (() => { const v = (pendingLimitRow?.data?.value_json as { limite?: unknown } | null)?.limite; const n = Number(v); return Number.isFinite(n) && n >= 1 ? Math.min(20, n) : 2; })();
-  const autoAprovacaoHoras = (() => { const v = (autoAprovacaoRow?.data?.value_json as { horas?: unknown } | null)?.horas; const n = Number(v); return Number.isFinite(n) && n >= 1 ? Math.min(168, n) : 24; })();
-  const rulesConfig = { limitesMensal, cooldownMeses, pendingLimit, autoAprovacaoHoras };
 
   const meusEsportes = (meusEsportesRaw ?? []) as MeuEsporteRow[];
   const esportePrincipalId = meusEsportes[0]?.esporte_id ?? null;
@@ -165,8 +162,31 @@ export default async function RankingPage({ searchParams }: Props) {
           </EidStreamSection>
         )}
       </main>
-      <MatchRankingRulesModal config={rulesConfig} />
+      <EidStreamSection fallback={null}>
+        <RankingRulesConfig supabase={supabase} />
+      </EidStreamSection>
       <LocationPermissionBanner hasCoords={hasMyCoords} />
     </div>
   );
+}
+
+async function RankingRulesConfig({ supabase }: RankingRulesConfigProps) {
+  const [limitesMensal, cooldownMeses, pendingLimitRow, autoAprovacaoRow] = await Promise.all([
+    getMatchRankMonthlyLimitPerSport(supabase),
+    getMatchRankCooldownMeses(supabase),
+    supabase.from("app_config").select("value_json").eq("key", "match_rank_pending_result_limit").maybeSingle(),
+    supabase.from("app_config").select("value_json").eq("key", "match_resultado_autoaprovacao_horas").maybeSingle(),
+  ]);
+  const pendingLimit = (() => {
+    const v = (pendingLimitRow?.data?.value_json as { limite?: unknown } | null)?.limite;
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 1 ? Math.min(20, n) : 2;
+  })();
+  const autoAprovacaoHoras = (() => {
+    const v = (autoAprovacaoRow?.data?.value_json as { horas?: unknown } | null)?.horas;
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 1 ? Math.min(168, n) : 24;
+  })();
+
+  return <MatchRankingRulesModal config={{ limitesMensal, cooldownMeses, pendingLimit, autoAprovacaoHoras }} />;
 }

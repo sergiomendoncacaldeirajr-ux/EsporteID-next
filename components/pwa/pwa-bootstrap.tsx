@@ -12,7 +12,7 @@ import {
 
 const PUSH_SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 const PUSH_SYNC_STORAGE_KEY = "eid:last-push-sync-at";
-const EID_SW_VERSION = "2026-05-12-native-fast-cache-v1";
+const EID_SW_VERSION = "2026-05-12-native-fast-cache-v2";
 
 function isStandaloneDisplayMode() {
   if (typeof window === "undefined") return false;
@@ -26,13 +26,23 @@ function isStandaloneDisplayMode() {
 
 function runWhenPageIsIdle(task: () => void): () => void {
   if (typeof window === "undefined") return () => {};
-  const requestIdle = window.requestIdleCallback;
-  if (requestIdle) {
-    const id = requestIdle(task, { timeout: 2500 });
-    return () => window.cancelIdleCallback?.(id);
-  }
-  const id = window.setTimeout(task, 1200);
-  return () => window.clearTimeout(id);
+  let cancelIdle: (() => void) | null = null;
+  const schedule = () => {
+    const requestIdle = window.requestIdleCallback;
+    if (requestIdle) {
+      const id = requestIdle(task, { timeout: isNativeAndroidApp() ? 6000 : 2500 });
+      cancelIdle = () => window.cancelIdleCallback?.(id);
+      return;
+    }
+    const id = window.setTimeout(task, isNativeAndroidApp() ? 3200 : 1200);
+    cancelIdle = () => window.clearTimeout(id);
+  };
+  const delay = isNativeAndroidApp() ? window.setTimeout(schedule, 1800) : 0;
+  if (!delay) schedule();
+  return () => {
+    if (delay) window.clearTimeout(delay);
+    cancelIdle?.();
+  };
 }
 
 async function registerAndroidFcmTokenFromUrl() {
@@ -85,9 +95,11 @@ export function PwaBootstrap() {
         // O token sera reenviado pelo app em uma proxima abertura.
       });
       void navigator.serviceWorker.register(`/sw.js?v=${encodeURIComponent(EID_SW_VERSION)}`).then((reg) => {
-        void reg.update().catch(() => {
-          // best-effort: o navegador também atualiza sozinho.
-        });
+        if (!isNativeAndroidApp()) {
+          void reg.update().catch(() => {
+            // best-effort: o navegador também atualiza sozinho.
+          });
+        }
         void syncExistingPushSubscription(vapidPublicKey).catch(() => {
           // best-effort silencioso: o usuário pode reativar no toggle se necessário.
         });
