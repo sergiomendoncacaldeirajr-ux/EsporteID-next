@@ -341,6 +341,7 @@ export function AgendaAceitosCancelaveis({
                   {podeReagendar ? (
                     <button
                       type="button"
+                      data-eid-reagendar-compact-btn="true"
                       disabled={pending}
                       onClick={() => {
                         setClickedAction((prev) => ({ ...prev, [m.id]: "requestReschedule" }));
