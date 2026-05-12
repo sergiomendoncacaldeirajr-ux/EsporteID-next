@@ -1,9 +1,14 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { isNativeAndroidApp } from "@/lib/pwa/push-client";
 
+const NATIVE_PREFETCH_ROUTES = ["/dashboard", "/agenda", "/comunidade", "/ranking", "/perfil"] as const;
+
 export function NativeAppRuntime() {
+  const router = useRouter();
+
   useEffect(() => {
     if (!isNativeAndroidApp()) return;
 
@@ -19,6 +24,22 @@ export function NativeAppRuntime() {
       body.classList.remove("eid-native-android-app");
     };
   }, []);
+
+  useEffect(() => {
+    if (!isNativeAndroidApp()) return;
+    const run = () => {
+      for (const href of NATIVE_PREFETCH_ROUTES) {
+        router.prefetch(href);
+      }
+    };
+    const requestIdle = window.requestIdleCallback;
+    if (requestIdle) {
+      const id = requestIdle(run, { timeout: 2500 });
+      return () => window.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(run, 1200);
+    return () => window.clearTimeout(id);
+  }, [router]);
 
   return null;
 }

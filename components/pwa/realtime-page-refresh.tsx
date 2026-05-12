@@ -7,6 +7,7 @@ import {
   EID_REALTIME_REFRESH_THROTTLE_MS,
   eidShouldPauseAutoRefreshFromLocation,
 } from "@/lib/realtime/eid-realtime-config";
+import { isNativeAndroidApp } from "@/lib/pwa/push-client";
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 
 type Props = {
@@ -97,23 +98,33 @@ export function RealtimePageRefresh({ userId }: Props) {
     };
 
     const shouldPauseAutoRefresh = () => eidShouldPauseAutoRefreshFromLocation();
+    const currentRefreshThrottleMs = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") {
+        return Math.max(EID_REALTIME_REFRESH_THROTTLE_MS, 30_000);
+      }
+      return isNativeAndroidApp()
+        ? Math.max(EID_REALTIME_REFRESH_THROTTLE_MS, 15_000)
+        : EID_REALTIME_REFRESH_THROTTLE_MS;
+    };
 
     const runRefresh = () => {
       if (refreshTimerRef.current != null) return;
+      const delay = isNativeAndroidApp() ? 900 : 350;
       refreshTimerRef.current = window.setTimeout(() => {
         refreshTimerRef.current = null;
         if (cancelled) return;
+        if (document.visibilityState !== "visible") return;
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
         }
         router.refresh();
-      }, 350);
+      }, delay);
     };
 
     const refresh = () => {
       if (shouldPauseAutoRefresh()) return;
       const now = Date.now();
-      if (now - lastRefreshAt.current < EID_REALTIME_REFRESH_THROTTLE_MS) return;
+      if (now - lastRefreshAt.current < currentRefreshThrottleMs()) return;
       lastRefreshAt.current = now;
       runRefresh();
     };

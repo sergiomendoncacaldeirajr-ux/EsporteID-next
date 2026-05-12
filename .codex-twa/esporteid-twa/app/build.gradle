@@ -34,7 +34,7 @@ if (keystorePropertiesFile.exists()) {
 def twaManifest = [
     applicationId: 'com.esporteid.app',
     hostName: 'esporteid.com.br', // The domain being opened in the TWA.
-    launchUrl: '/', // The start path for the TWA. Must be relative to the domain.
+    launchUrl: '/dashboard', // The start path for the TWA. Must be relative to the domain.
     name: 'EsporteID', // The application name.
     launcherName: 'EsporteID', // The name shown on the Android Launcher.
     themeColor: '#121821', // The color used for the status bar.
@@ -68,8 +68,8 @@ android {
         applicationId "com.esporteid.app"
         minSdkVersion 23
         targetSdkVersion 35
-        versionCode 12
-        versionName "7.0.4"
+        versionCode 16
+        versionName "7.0.7"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name

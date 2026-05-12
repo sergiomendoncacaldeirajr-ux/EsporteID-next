@@ -5,13 +5,14 @@ import { useCallback, useEffect } from "react";
 import {
   ensurePushReady,
   rememberAndroidFcmToken,
+  isNativeAndroidApp,
   syncAndroidNativePushToken,
   syncExistingPushSubscription,
 } from "@/lib/pwa/push-client";
 
 const PUSH_SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 const PUSH_SYNC_STORAGE_KEY = "eid:last-push-sync-at";
-const EID_SW_VERSION = "2026-05-11-android-push-receipt-v2";
+const EID_SW_VERSION = "2026-05-12-native-fast-cache-v1";
 
 function isStandaloneDisplayMode() {
   if (typeof window === "undefined") return false;
@@ -98,14 +99,22 @@ export function PwaBootstrap() {
   useEffect(() => {
     let hiddenAt: number | null = null;
     let lastResumeAt = 0;
+    let lastRouteRefreshAt = 0;
     const recoverFromResume = (force = false) => {
       const now = Date.now();
-      if (!force && now - lastResumeAt < 2500) return;
+      const nativeAndroidApp = isNativeAndroidApp();
+      const minResumeGap = nativeAndroidApp ? 30_000 : 2500;
+      if (!force && now - lastResumeAt < minResumeGap) return;
       lastResumeAt = now;
       runPushSync(force || isStandaloneDisplayMode());
       window.dispatchEvent(new CustomEvent("eid:pwa-resume"));
       window.dispatchEvent(new CustomEvent("eid:realtime-refresh"));
-      window.setTimeout(() => router.refresh(), 120);
+      const shouldRefreshRoute =
+        force || !nativeAndroidApp || now - lastRouteRefreshAt > 90_000;
+      if (shouldRefreshRoute) {
+        lastRouteRefreshAt = now;
+        window.setTimeout(() => router.refresh(), nativeAndroidApp ? 900 : 120);
+      }
     };
     const onFocus = () => {
       recoverFromResume();

@@ -7,7 +7,6 @@ import { getContextHomeHref, type ActiveAppContext } from "@/lib/auth/active-con
 import { createClient } from "@/lib/supabase/client";
 import { partidaRowTemResultadoParaRevisaoOponente } from "@/lib/agenda/partidas-usuario";
 import { userMustActGestaoRankingCancel } from "@/lib/notificacoes/gestao-ranking-cancel";
-import { isNativeAndroidApp } from "@/lib/pwa/push-client";
 import type { ReactNode } from "react";
 
 /* ── Cores reativas ao tema ── */
@@ -124,11 +123,6 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const [socialBadge, setSocialBadge] = useState(0);
   const pendingHrefRef = useRef<string | null>(null);
   const releaseTimerRef = useRef<number | undefined>(undefined);
-  const [nativeAndroidApp, setNativeAndroidApp] = useState(false);
-
-  useEffect(() => {
-    setNativeAndroidApp(isNativeAndroidApp());
-  }, []);
 
   const onAuthPage = AUTH_PATH_PREFIXES.some((p) =>
     p.endsWith("/") ? pathname.startsWith(p) : pathname === p || pathname.startsWith(p + "/")
@@ -136,8 +130,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const showBottomChrome =
     Boolean(resolvedUserId) &&
     !onAuthPage &&
-    !pathname.startsWith("/admin") &&
-    !pathname.startsWith("/espaco");
+    !pathname.startsWith("/admin");
 
   /** Altura da barra inferior fixa (#eid-mobile-bottom-nav) → `--eid-shell-footer-offset-measured` no :root. */
   useLayoutEffect(() => {
@@ -534,15 +527,11 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     };
   }, [resolvedUserId, router]);
 
-  if (nativeAndroidApp) return null;
-
   if (!resolvedUserId) return null;
 
   if (onAuthPage) return null;
 
   if (pathname.startsWith("/admin")) return null;
-
-  if (pathname.startsWith("/espaco")) return null;
 
   const isHome =
     activeContext === "organizador"

@@ -158,7 +158,7 @@
     <string name="google_crash_reporting_api_key" translatable="false">AIzaSyAgYiDhB8GW48x2ECFI45csfcBOBwpw3Qw</string>
     <string name="google_storage_bucket" translatable="false">esporteid-5cae2.firebasestorage.app</string>
     <string name="hostName" translatable="false">esporteid.com.br</string>
-    <string name="launchUrl" translatable="false">https://esporteid.com.br/</string>
+    <string name="launchUrl" translatable="false">https://esporteid.com.br/dashboard</string>
     <string name="launcherName" translatable="false">EsporteID</string>
     <string name="orientation" translatable="false">portrait</string>
     <string name="project_id" translatable="false">esporteid-5cae2</string>

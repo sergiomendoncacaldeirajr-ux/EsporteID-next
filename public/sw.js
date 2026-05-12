@@ -1,9 +1,84 @@
+const EID_STATIC_CACHE = "eid-static-2026-05-12-v1";
+const EID_PAGE_CACHE = "eid-pages-2026-05-12-v1";
+const EID_CACHE_NAMES = [EID_STATIC_CACHE, EID_PAGE_CACHE];
+
 self.addEventListener("install", (event) => {
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(EID_STATIC_CACHE);
+      await cache.addAll(["/pwa-icon-192.png"]).catch(() => {});
+      await self.skipWaiting();
+    })()
+  );
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    (async () => {
+      const names = await caches.keys();
+      await Promise.all(names.filter((name) => name.startsWith("eid-") && !EID_CACHE_NAMES.includes(name)).map((name) => caches.delete(name)));
+      await self.clients.claim();
+    })()
+  );
+});
+
+function isCacheableStaticRequest(request, url) {
+  if (request.method !== "GET") return false;
+  if (url.origin !== self.location.origin) return false;
+  if (url.pathname.startsWith("/_next/static/")) return true;
+  if (url.pathname === "/favicon.ico" || url.pathname.startsWith("/brand/")) return true;
+  return ["style", "script", "font", "image"].includes(request.destination);
+}
+
+function isCacheableNavigation(request, url) {
+  if (request.method !== "GET") return false;
+  if (request.mode !== "navigate") return false;
+  if (url.origin !== self.location.origin) return false;
+  if (url.pathname.startsWith("/api/")) return false;
+  return true;
+}
+
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+  let url;
+  try {
+    url = new URL(request.url);
+  } catch {
+    return;
+  }
+
+  if (isCacheableStaticRequest(request, url)) {
+    event.respondWith(
+      caches.open(EID_STATIC_CACHE).then(async (cache) => {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        const response = await fetch(request);
+        if (response && response.ok) cache.put(request, response.clone()).catch(() => {});
+        return response;
+      })
+    );
+    return;
+  }
+
+  if (isCacheableNavigation(request, url)) {
+    event.respondWith(
+      caches.open(EID_PAGE_CACHE).then(async (cache) => {
+        try {
+          const response = await fetch(request);
+          if (response && response.ok && response.type === "basic") {
+            cache.put(request, response.clone()).catch(() => {});
+          }
+          return response;
+        } catch {
+          const cached = await cache.match(request);
+          if (cached) return cached;
+          const dashboard = await cache.match("/dashboard");
+          if (dashboard) return dashboard;
+          throw new Error("offline");
+        }
+      })
+    );
+  }
 });
 
 async function postPushReceipt(payload, status, error) {

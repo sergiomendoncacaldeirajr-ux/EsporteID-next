@@ -13,8 +13,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
@@ -40,10 +38,10 @@ import android.widget.TextView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class LauncherActivity extends Activity {
-    private static final String HOME_URL = "https://esporteid.com.br/";
+    private static final String HOME_URL = "https://esporteid.com.br/dashboard";
     private static final String TRUSTED_HOST = "esporteid.com.br";
     private static final String TRUSTED_WWW_HOST = "www.esporteid.com.br";
-    private static final String APP_VERSION = "7.0.4";
+    private static final String APP_VERSION = "7.0.7";
     private static final int REQUEST_POST_NOTIFICATIONS = 7001;
     private static final int REQUEST_LOCATION = 7002;
     private static final int REQUEST_FILE_CHOOSER = 7003;
@@ -60,13 +58,7 @@ public class LauncherActivity extends Activity {
     private WebChromeClient.CustomViewCallback customViewCallback;
     private ImageView splashLogo;
     private FrameLayout errorOverlay;
-    private LinearLayout nativeNavBar;
-    private View loadingBar;
-    private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private boolean mainPageLoading;
-    private final Runnable loadTimeoutRunnable = () -> {
-        if (mainPageLoading) showErrorOverlay();
-    };
+    private boolean hasLoadedTrustedPage;
     private String pendingGeolocationOrigin;
     private GeolocationPermissions.Callback pendingGeolocationCallback;
     private ValueCallback<Uri[]> filePathCallback;
@@ -93,6 +85,12 @@ public class LauncherActivity extends Activity {
         super.onNewIntent(intent);
         setIntent(intent);
         loadInitialUrl(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        dispatchWebEvent("eid:pwa-resume");
     }
 
     @Override
@@ -138,7 +136,6 @@ public class LauncherActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        mainHandler.removeCallbacks(loadTimeoutRunnable);
         closeFullscreenOverlay();
         if (webView != null) {
             webView.destroy();
@@ -215,9 +212,6 @@ public class LauncherActivity extends Activity {
         splashLogo.setLayoutParams(logoParams);
 
         errorOverlay = createErrorOverlay();
-        loadingBar = createLoadingBar();
-        nativeNavBar = createNativeNavBar();
-
         configureWebViewSettings();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             webView.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> updateSwipeRefreshEnabled());
@@ -225,55 +219,10 @@ public class LauncherActivity extends Activity {
 
         webFrame.addView(swipeRefreshLayout);
         webFrame.addView(errorOverlay);
-        webFrame.addView(loadingBar);
         webFrame.addView(splashLogo);
         appShell.addView(webFrame);
-        appShell.addView(nativeNavBar);
         rootLayout.addView(appShell);
         setContentView(rootLayout);
-    }
-
-    private LinearLayout createNativeNavBar() {
-        LinearLayout nav = new LinearLayout(this);
-        nav.setOrientation(LinearLayout.HORIZONTAL);
-        nav.setGravity(Gravity.CENTER);
-        nav.setPadding(dp(8), dp(6), dp(8), dp(8));
-        nav.setLayoutParams(new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(66)
-        ));
-        GradientDrawable background = new GradientDrawable(
-                GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] { Color.parseColor("#111827"), Color.parseColor("#0B0F14") }
-        );
-        background.setStroke(dp(1), Color.parseColor("#243247"));
-        nav.setBackground(background);
-
-        addNativeNavItem(nav, "Inicio", "/dashboard");
-        addNativeNavItem(nav, "Agenda", "/agenda");
-        addNativeNavItem(nav, "Comunidade", "/comunidade");
-        addNativeNavItem(nav, "Perfil", "/perfil");
-        return nav;
-    }
-
-    private void addNativeNavItem(LinearLayout nav, String label, String path) {
-        TextView item = new TextView(this);
-        item.setText(label);
-        item.setTag(path);
-        item.setGravity(Gravity.CENTER);
-        item.setTextColor(Color.parseColor("#94A3B8"));
-        item.setTextSize(11);
-        item.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        item.setClickable(true);
-        item.setMinHeight(dp(46));
-        item.setOnClickListener((v) -> {
-            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
-            navigateNative(path);
-        });
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
-        params.setMargins(dp(3), 0, dp(3), 0);
-        item.setLayoutParams(params);
-        nav.addView(item);
     }
 
     private FrameLayout createErrorOverlay() {
@@ -355,22 +304,6 @@ public class LauncherActivity extends Activity {
         return button;
     }
 
-    private View createLoadingBar() {
-        View bar = new View(this);
-        GradientDrawable background = new GradientDrawable(
-                GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[] { Color.parseColor("#2563EB"), Color.parseColor("#F97316") }
-        );
-        background.setCornerRadius(dp(2));
-        bar.setBackground(background);
-        bar.setAlpha(0f);
-        bar.setVisibility(View.GONE);
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(0, dp(3));
-        params.gravity = Gravity.TOP | Gravity.START;
-        bar.setLayoutParams(params);
-        return bar;
-    }
-
     private void configureWebViewSettings() {
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
@@ -411,18 +344,21 @@ public class LauncherActivity extends Activity {
         return TRUSTED_HOST.equalsIgnoreCase(host) || TRUSTED_WWW_HOST.equalsIgnoreCase(host);
     }
 
+    private boolean isWhatsAppUri(Uri uri) {
+        if (uri == null) return false;
+        String scheme = uri.getScheme() == null ? "" : uri.getScheme().toLowerCase();
+        String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+        return "whatsapp".equals(scheme) ||
+                "wa.me".equals(host) ||
+                "www.wa.me".equals(host) ||
+                "api.whatsapp.com".equals(host) ||
+                "web.whatsapp.com".equals(host);
+    }
+
     private boolean isTrustedEsporteIdPage() {
         if (webView == null || webView.getUrl() == null) return false;
         Uri uri = Uri.parse(webView.getUrl());
         return isTrustedUri(uri);
-    }
-
-    private void navigateNative(String path) {
-        if (webView == null) return;
-        if (fullscreenContainer != null) closeFullscreenOverlay();
-        String cleanPath = path == null || path.trim().isEmpty() ? "/dashboard" : path.trim();
-        String normalized = cleanPath.startsWith("/") ? cleanPath.substring(1) : cleanPath;
-        webView.loadUrl(HOME_URL + normalized);
     }
 
     private void openExternalUrl(String url) {
@@ -434,37 +370,40 @@ public class LauncherActivity extends Activity {
         }
     }
 
-    private void updateNativeNavSelection(String url) {
-        if (nativeNavBar == null || url == null) return;
-        String path = "/";
-        try {
-            path = Uri.parse(url).getPath();
-        } catch (Exception ignored) {
-            path = "/";
-        }
-        if (path == null || path.trim().isEmpty()) path = "/";
+    private String extractWhatsAppPhone(Uri uri) {
+        if (uri == null) return "";
+        String rawPhone = uri.getQueryParameter("phone");
+        String phone = (rawPhone == null ? "" : rawPhone).replaceAll("\\D", "");
+        if (!phone.isEmpty()) return phone;
+        String rawPath = uri.getPath();
+        String path = rawPath == null ? "" : rawPath;
+        return path.replaceAll("\\D", "");
+    }
 
-        for (int i = 0; i < nativeNavBar.getChildCount(); i += 1) {
-            View child = nativeNavBar.getChildAt(i);
-            if (!(child instanceof TextView)) continue;
-            TextView item = (TextView) child;
-            String itemPath = String.valueOf(item.getTag());
-            boolean active = path.equals(itemPath) || path.startsWith(itemPath + "/");
-            if ("/dashboard".equals(itemPath)) {
-                active = path.equals("/") || path.equals("/dashboard") || path.equals("/buscar");
-            }
-            item.setTextColor(active ? Color.WHITE : Color.parseColor("#94A3B8"));
-            item.setBackground(active ? activeNavBackground() : null);
+    private boolean tryStartWhatsAppIntent(Intent intent) {
+        try {
+            startActivity(intent);
+            return true;
+        } catch (ActivityNotFoundException ignored) {
+            return false;
         }
     }
 
-    private GradientDrawable activeNavBackground() {
-        GradientDrawable background = new GradientDrawable();
-        background.setShape(GradientDrawable.RECTANGLE);
-        background.setCornerRadius(dp(18));
-        background.setColor(Color.parseColor("#1E3A8A"));
-        background.setStroke(dp(1), Color.parseColor("#3457C8"));
-        return background;
+    private void openWhatsAppUri(Uri uri) {
+        String phone = extractWhatsAppPhone(uri);
+        Uri nativeUri = phone.isEmpty()
+                ? uri
+                : Uri.parse("whatsapp://send?phone=" + phone);
+        Intent nativeIntent = new Intent(Intent.ACTION_VIEW, nativeUri);
+        nativeIntent.setPackage("com.whatsapp");
+        if (tryStartWhatsAppIntent(nativeIntent)) return;
+
+        Intent businessIntent = new Intent(Intent.ACTION_VIEW, nativeUri);
+        businessIntent.setPackage("com.whatsapp.w4b");
+        if (tryStartWhatsAppIntent(businessIntent)) return;
+
+        Uri fallbackUri = phone.isEmpty() ? uri : Uri.parse("https://wa.me/" + phone);
+        tryStartWhatsAppIntent(new Intent(Intent.ACTION_VIEW, fallbackUri));
     }
 
     private void injectNativeAppRuntime(WebView target) {
@@ -473,10 +412,6 @@ public class LauncherActivity extends Activity {
                 "(function(){try{" +
                 "document.documentElement.dataset.eidRuntime='android-app';" +
                 "document.body.classList.add('eid-native-android-app');" +
-                "if(!document.getElementById('eid-native-android-style')){var s=document.createElement('style');" +
-                "s.id='eid-native-android-style';" +
-                "s.textContent='body.eid-app-shell{padding-bottom:0!important;--eid-shell-footer-offset:0px!important;--eid-shell-footer-offset-measured:0px!important;--eid-shell-content-bottom-pad:0px!important}#eid-mobile-bottom-nav,#eid-site-footer{display:none!important}';" +
-                "document.head.appendChild(s);}" +
                 "window.dispatchEvent(new Event('eid:native-app-ready'));" +
                 "}catch(e){}})();";
         target.evaluateJavascript(script, null);
@@ -484,14 +419,39 @@ public class LauncherActivity extends Activity {
 
     private void updateSwipeRefreshEnabled() {
         if (swipeRefreshLayout == null || webView == null) return;
-        swipeRefreshLayout.setEnabled(fullscreenContainer == null && webView.getScrollY() <= 0);
+        swipeRefreshLayout.setEnabled(
+                fullscreenContainer == null &&
+                webView.getScrollY() <= 0 &&
+                shouldEnablePullToRefresh()
+        );
+    }
+
+    private boolean shouldEnablePullToRefresh() {
+        if (webView == null || webView.getUrl() == null) return false;
+        try {
+            Uri uri = Uri.parse(webView.getUrl());
+            if (!isTrustedUri(uri)) return false;
+            String path = uri.getPath();
+            if (path == null || path.trim().isEmpty()) path = "/";
+            return !("/".equals(path) || "/dashboard".equals(path));
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private void dispatchWebEvent(String eventName) {
+        if (webView == null || eventName == null || eventName.trim().isEmpty()) return;
+        if (!isTrustedEsporteIdPage()) return;
+        String safeEvent = jsString(eventName);
+        webView.evaluateJavascript(
+                "(function(){try{window.dispatchEvent(new Event(" + safeEvent + "));}catch(e){}})();",
+                null
+        );
     }
 
     private void showErrorOverlay() {
         if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
-        mainPageLoading = false;
-        mainHandler.removeCallbacks(loadTimeoutRunnable);
-        updateLoadingProgress(100);
+        if (hasLoadedTrustedPage) return;
         if (errorOverlay == null) return;
         errorOverlay.setAlpha(0f);
         errorOverlay.setVisibility(View.VISIBLE);
@@ -504,37 +464,11 @@ public class LauncherActivity extends Activity {
     }
 
     private void startNativeLoading() {
-        mainPageLoading = true;
-        mainHandler.removeCallbacks(loadTimeoutRunnable);
-        mainHandler.postDelayed(loadTimeoutRunnable, 25000);
-        updateLoadingProgress(8);
+        if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
     }
 
     private void finishNativeLoading() {
-        mainPageLoading = false;
-        mainHandler.removeCallbacks(loadTimeoutRunnable);
-        updateLoadingProgress(100);
-    }
-
-    private void updateLoadingProgress(int progress) {
-        if (loadingBar == null || webFrame == null) return;
-        int width = webFrame.getWidth();
-        if (width <= 0) width = getResources().getDisplayMetrics().widthPixels;
-        int safeProgress = Math.max(6, Math.min(progress, 100));
-        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) loadingBar.getLayoutParams();
-        params.width = Math.max(dp(42), Math.round(width * (safeProgress / 100f)));
-        loadingBar.setLayoutParams(params);
-
-        if (progress >= 100) {
-            loadingBar.animate().alpha(0f).setDuration(170).withEndAction(() -> {
-                if (loadingBar != null) loadingBar.setVisibility(View.GONE);
-            }).start();
-            return;
-        }
-
-        loadingBar.animate().cancel();
-        loadingBar.setVisibility(View.VISIBLE);
-        loadingBar.setAlpha(1f);
+        if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
     }
 
     private void registerTokenInWebSession(String token) {
@@ -855,12 +789,15 @@ public class LauncherActivity extends Activity {
             super.onPageStarted(view, url, favicon);
             startNativeLoading();
             hideErrorOverlay();
-            updateNativeNavSelection(url);
         }
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             Uri uri = request.getUrl();
+            if (isWhatsAppUri(uri)) {
+                openWhatsAppUri(uri);
+                return true;
+            }
             if (isHttpUrl(uri)) {
                 if (isTrustedUri(uri)) return false;
                 showFullscreenWebView(uri.toString());
@@ -879,10 +816,10 @@ public class LauncherActivity extends Activity {
             super.onPageFinished(view, url);
             CookieManager.getInstance().flush();
             if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
+            if (url != null && isTrustedUri(Uri.parse(url))) hasLoadedTrustedPage = true;
             finishNativeLoading();
             hideErrorOverlay();
             injectNativeAppRuntime(view);
-            updateNativeNavSelection(url);
             updateSwipeRefreshEnabled();
             String token = FcmTokenBridge.getToken(LauncherActivity.this);
             registerTokenInWebSession(token);
@@ -911,7 +848,6 @@ public class LauncherActivity extends Activity {
         @Override
         public void onProgressChanged(WebView view, int newProgress) {
             super.onProgressChanged(view, newProgress);
-            if (view == webView) updateLoadingProgress(newProgress);
         }
 
         @Override
