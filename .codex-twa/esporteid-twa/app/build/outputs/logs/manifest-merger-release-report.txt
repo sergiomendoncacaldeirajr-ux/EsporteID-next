@@ -1,10 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:22:1-222:12
-INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:22:1-222:12
-INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:22:1-222:12
-INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:22:1-222:12
-MERGED from [com.google.androidbrowserhelper:androidbrowserhelper:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\dfe16bbeb16a02dcb959adb008d247d9\transformed\androidbrowserhelper-2.6.2\AndroidManifest.xml:17:1-32:12
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:1:1-52:12
+INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:1:1-52:12
+INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:1:1-52:12
+INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:1:1-52:12
 MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:17:1-66:12
 MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:2:1-24:12
 MERGED from [com.google.firebase:firebase-common:22.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d449c70023ebb0abdeab2a5c357e08b2\transformed\firebase-common-22.0.1\AndroidManifest.xml:15:1-41:12
@@ -12,82 +11,86 @@ MERGED from [com.google.firebase:firebase-datatransport:18.2.0] C:\Users\Sérgio\
 MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3cf6728792e122d984651f873f2f3a0c\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:15:1-37:12
 MERGED from [com.google.firebase:firebase-encoders-json:18.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\c1d2600842caab2eec0377972ac3638f\transformed\firebase-encoders-json-18.0.0\AndroidManifest.xml:15:1-23:12
 MERGED from [com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\391c9dea95fbcd2229b68c306b453415\transformed\transport-runtime-3.1.9\AndroidManifest.xml:15:1-41:12
+MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2d51ef0897710a0447a1a5a6688cf6bf\transformed\firebase-components-19.0.0\AndroidManifest.xml:15:1-20:12
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\b959ca896e1f15d06c302d97e74fd28f\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:2:1-10:12
+MERGED from [com.google.firebase:firebase-installations-interop:17.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3def2567dbe7b7bd2e38975ebb0fc62\transformed\firebase-installations-interop-17.1.1\AndroidManifest.xml:15:1-19:12
+MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\429c6e6abd2e12fde90d1127ec3db128\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:17:1-25:12
+MERGED from [com.google.android.datatransport:transport-api:3.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\141a44d768e8f91d4759633744f92a17\transformed\transport-api-3.1.0\AndroidManifest.xml:15:1-20:12
+MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4544f0c1ee0358ba424f140855f6d4a4\transformed\play-services-base-18.1.0\AndroidManifest.xml:16:1-24:12
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:2:1-13:12
 MERGED from [androidx.datastore:datastore-core-android:1.1.7] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\0373dcd97629525209775b6338f77039\transformed\datastore-core-release\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.datastore:datastore-preferences-core-android:1.1.7] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\67dbbcbc053642b1377ff419bfb0bc6e\transformed\datastore-preferences-core-release\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.datastore:datastore-android:1.1.7] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\0ccaf19f4a4090759b81892bf77e462e\transformed\datastore-release\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.datastore:datastore-preferences-android:1.1.7] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2542917350e9b914f963c2454a0832f3\transformed\datastore-preferences-release\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.appcompat:appcompat-resources:1.7.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4e2a561e0f7f8744a530fa8236bfdf04\transformed\appcompat-resources-1.7.0\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.appcompat:appcompat:1.7.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\e23c1a757bcab5760da1eaa3016b408a\transformed\appcompat-1.7.0\AndroidManifest.xml:2:1-7:12
-MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4544f0c1ee0358ba424f140855f6d4a4\transformed\play-services-base-18.1.0\AndroidManifest.xml:16:1-24:12
-MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\b959ca896e1f15d06c302d97e74fd28f\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:2:1-10:12
-MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\429c6e6abd2e12fde90d1127ec3db128\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:17:1-25:12
-MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:2:1-13:12
-MERGED from [com.google.firebase:firebase-installations-interop:17.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3def2567dbe7b7bd2e38975ebb0fc62\transformed\firebase-installations-interop-17.1.1\AndroidManifest.xml:15:1-19:12
 MERGED from [com.google.android.gms:play-services-tasks:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\bf734b5bb838ac3c4be724593e19b006\transformed\play-services-tasks-18.1.0\AndroidManifest.xml:2:1-6:12
 MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\38ac91640283a452e65d8b3c1c3836bb\transformed\play-services-stats-17.0.2\AndroidManifest.xml:2:1-9:12
 MERGED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3ff358d6d1eb2371997be9adf296884\transformed\play-services-basement-18.3.0\AndroidManifest.xml:16:1-26:12
-MERGED from [androidx.fragment:fragment:1.5.4] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\82712f3b3d914fb4f707b11597da5289\transformed\fragment-1.5.4\AndroidManifest.xml:17:1-24:12
-MERGED from [androidx.browser:browser:1.9.0-alpha04] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\eeab2447f00d8b1acb9b8b3a0085f47a\transformed\browser-1.9.0-alpha04\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.activity:activity:1.9.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d7c5ebf5d8fade52494e4cb2071f1161\transformed\activity-1.9.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.core:core-ktx:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\726738b9cd7b0c0f2bb9ba4b20dadd3b\transformed\core-ktx-1.13.0\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\1b672b038605f98e99c69bcc5b277ed5\transformed\drawerlayout-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\0746f10dfe88344199489cd3305cd638\transformed\emoji2-views-helper-1.3.0\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:17:1-35:12
+MERGED from [androidx.fragment:fragment:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\73d38f7c753df6f1beb231db101cd7df\transformed\fragment-1.1.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\36dc90d22104f4cfb84f8deaafd0a549\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\02e5398cfbc99af913c3135eb51ae9cd\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:17:1-24:12
-MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\a0d6082a317f718aa095b8b322fb2d9d\transformed\vectordrawable-1.1.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\429b33ecc7858d792a15c54164a7aff6\transformed\viewpager-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.customview:customview:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2fa5a169d5b57f1d9ef6adbda11ada95\transformed\customview-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.loader:loader:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\80def00725f405638f2c8f7569e30604\transformed\loader-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:17:1-30:12
-MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cf8065524220339e0d3acc12a2ec8ebe\transformed\lifecycle-livedata-2.6.2\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4b23ca9f1272b95abff0177326a76751\transformed\lifecycle-viewmodel-2.6.2\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d5f17511db82b13dace0580a5449e669\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:17:1-35:12
-MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\845cfde661293761d530a90699c1a62c\transformed\lifecycle-livedata-core-2.6.2\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\5d448b081316d5aa3c5b4374b37ecc3f\transformed\lifecycle-runtime-2.6.2\AndroidManifest.xml:2:1-7:12
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\94528e38e221b998ef340471ff02ab5e\transformed\lifecycle-viewmodel-savedstate-2.6.2\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\1b012ec9e5fe39c5f6efec774e48b859\transformed\savedstate-1.2.1\AndroidManifest.xml:17:1-22:12
-MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2d51ef0897710a0447a1a5a6688cf6bf\transformed\firebase-components-19.0.0\AndroidManifest.xml:15:1-20:12
-MERGED from [com.google.android.datatransport:transport-api:3.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\141a44d768e8f91d4759633744f92a17\transformed\transport-api-3.1.0\AndroidManifest.xml:15:1-20:12
-MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\63ceb9dd876ef548e93344599a34381d\transformed\cursoradapter-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:17:1-55:12
-MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9e10a6bfc845e502befe212484a749d0\transformed\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2ac009b7cd3fd6ca84438785081579b2\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:17:1-27:12
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\8cd36a1e33269e34ff8df8bda6f629c6\transformed\startup-runtime-1.1.1\AndroidManifest.xml:17:1-33:12
-MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\805e53f000de042d49713638882260dc\transformed\tracing-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.activity:activity:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\55a2457a73e37258d6edb6b2421a0d6b\transformed\activity-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2fa5a169d5b57f1d9ef6adbda11ada95\transformed\customview-1.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.core:core:1.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\c528c51351c89850b5d06f7d1f095825\transformed\core-1.2.0\AndroidManifest.xml:17:1-26:12
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4ee67bd0365b6a31d419fad92b3312a0\transformed\versionedparcelable-1.1.0\AndroidManifest.xml:17:1-27:12
 MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\04f0af8cbe6cec4c38dcfc1aebc9d921\transformed\documentfile-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\803baf77e0be5795fc2c3e51da2b3038\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.print:print:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\6a9a690627adf4389887829983a6701d\transformed\print-1.0.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4022146c971e1753efbd235b7f138087\transformed\core-runtime-2.2.0\AndroidManifest.xml:17:1-22:12
-MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\39f9f92edced7b52aff272c6e4a26292\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:2:1-7:12
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\6eed5dca6ce3499429ccfabcced9d39a\transformed\lifecycle-runtime-2.1.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3bc34b4b7b51c72117661f0de7872a7e\transformed\lifecycle-viewmodel-2.1.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.savedstate:savedstate:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\242c4d02adf2de09309f3d24daee56e9\transformed\savedstate-1.0.0\AndroidManifest.xml:17:1-24:12
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\7ea934cdaaad61522531591f992895e8\transformed\lifecycle-livedata-2.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\866d597161c603579159d3bbcf069409\transformed\lifecycle-livedata-core-2.0.0\AndroidManifest.xml:17:1-22:12
+MERGED from [androidx.arch.core:core-runtime:2.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\6c6bcb27ee47b45ed4d0625bb4aef503\transformed\core-runtime-2.0.0\AndroidManifest.xml:17:1-22:12
 	package
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:24:5-32
 		INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml
 	android:versionName
 		INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml
-	xmlns:tools
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:23:5-51
 	android:versionCode
 		INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml
 	xmlns:android
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:22:11-69
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:1:11-69
+uses-permission#android.permission.INTERNET
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:3:5-67
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:8:5-67
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:8:5-67
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3cf6728792e122d984651f873f2f3a0c\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:25:5-67
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3cf6728792e122d984651f873f2f3a0c\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:25:5-67
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:8:5-67
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:8:5-67
+	android:name
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:3:22-64
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:4:5-79
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:22:5-79
+MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:22:5-79
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:7:5-79
+MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:7:5-79
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3cf6728792e122d984651f873f2f3a0c\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:24:5-79
+MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3cf6728792e122d984651f873f2f3a0c\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:24:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\391c9dea95fbcd2229b68c306b453415\transformed\transport-runtime-3.1.9\AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\391c9dea95fbcd2229b68c306b453415\transformed\transport-runtime-3.1.9\AndroidManifest.xml:22:5-79
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:7:5-79
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:7:5-79
+	android:name
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:4:22-76
 uses-permission#android.permission.POST_NOTIFICATIONS
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:27:9-80
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:5:5-77
 MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:23:5-77
 MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:23:5-77
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:27:26-78
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:5:22-74
 uses-permission#android.permission.ACCESS_COARSE_LOCATION
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:28:9-84
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:6:5-81
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:28:26-82
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:6:22-78
 uses-permission#android.permission.ACCESS_FINE_LOCATION
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:29:9-82
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:7:5-79
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:29:26-80
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:7:22-76
 application
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:38:5-221:19
-INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:38:5-221:19
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:9:5-51:19
+INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:9:5-51:19
 MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:28:5-64:19
 MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:28:5-64:19
 MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:11:5-22:19
@@ -100,302 +103,108 @@ MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Us
 MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3cf6728792e122d984651f873f2f3a0c\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:27:5-35:19
 MERGED from [com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\391c9dea95fbcd2229b68c306b453415\transformed\transport-runtime-3.1.9\AndroidManifest.xml:25:5-39:19
 MERGED from [com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\391c9dea95fbcd2229b68c306b453415\transformed\transport-runtime-3.1.9\AndroidManifest.xml:25:5-39:19
-MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4544f0c1ee0358ba424f140855f6d4a4\transformed\play-services-base-18.1.0\AndroidManifest.xml:19:5-23:19
-MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4544f0c1ee0358ba424f140855f6d4a4\transformed\play-services-base-18.1.0\AndroidManifest.xml:19:5-23:19
 MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\b959ca896e1f15d06c302d97e74fd28f\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:7:5-8:19
 MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\b959ca896e1f15d06c302d97e74fd28f\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:7:5-8:19
 MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\429c6e6abd2e12fde90d1127ec3db128\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:22:5-23:19
 MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\429c6e6abd2e12fde90d1127ec3db128\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:22:5-23:19
+MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4544f0c1ee0358ba424f140855f6d4a4\transformed\play-services-base-18.1.0\AndroidManifest.xml:19:5-23:19
+MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4544f0c1ee0358ba424f140855f6d4a4\transformed\play-services-base-18.1.0\AndroidManifest.xml:19:5-23:19
 MERGED from [com.google.android.gms:play-services-tasks:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\bf734b5bb838ac3c4be724593e19b006\transformed\play-services-tasks-18.1.0\AndroidManifest.xml:5:5-20
 MERGED from [com.google.android.gms:play-services-tasks:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\bf734b5bb838ac3c4be724593e19b006\transformed\play-services-tasks-18.1.0\AndroidManifest.xml:5:5-20
 MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\38ac91640283a452e65d8b3c1c3836bb\transformed\play-services-stats-17.0.2\AndroidManifest.xml:7:5-20
 MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\38ac91640283a452e65d8b3c1c3836bb\transformed\play-services-stats-17.0.2\AndroidManifest.xml:7:5-20
 MERGED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3ff358d6d1eb2371997be9adf296884\transformed\play-services-basement-18.3.0\AndroidManifest.xml:20:5-24:19
 MERGED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3ff358d6d1eb2371997be9adf296884\transformed\play-services-basement-18.3.0\AndroidManifest.xml:20:5-24:19
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:28:5-89
-MERGED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:28:5-89
-MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d5f17511db82b13dace0580a5449e669\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d5f17511db82b13dace0580a5449e669\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:23:5-33:19
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:23:5-53:19
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2ac009b7cd3fd6ca84438785081579b2\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2ac009b7cd3fd6ca84438785081579b2\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:24:5-25:19
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\8cd36a1e33269e34ff8df8bda6f629c6\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\8cd36a1e33269e34ff8df8bda6f629c6\transformed\startup-runtime-1.1.1\AndroidManifest.xml:25:5-31:19
+MERGED from [androidx.core:core:1.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\c528c51351c89850b5d06f7d1f095825\transformed\core-1.2.0\AndroidManifest.xml:24:5-89
+MERGED from [androidx.core:core:1.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\c528c51351c89850b5d06f7d1f095825\transformed\core-1.2.0\AndroidManifest.xml:24:5-89
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4ee67bd0365b6a31d419fad92b3312a0\transformed\versionedparcelable-1.1.0\AndroidManifest.xml:24:5-25:19
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4ee67bd0365b6a31d419fad92b3312a0\transformed\versionedparcelable-1.1.0\AndroidManifest.xml:24:5-25:19
 	android:extractNativeLibs
 		INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml
 	android:appComponentFactory
-		ADDED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:28:18-86
+		ADDED from [androidx.core:core:1.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\c528c51351c89850b5d06f7d1f095825\transformed\core-1.2.0\AndroidManifest.xml:24:18-86
 	android:supportsRtl
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:46:9-35
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:15:9-35
 	android:label
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:42:9-40
-	android:manageSpaceActivity
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:44:9-105
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:14:9-40
+	android:hardwareAccelerated
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:12:9-43
 	android:icon
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:41:9-43
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:13:9-43
 	android:allowBackup
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:40:9-35
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:11:9-35
 	android:theme
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:47:9-68
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:16:9-40
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:39:9-35
-meta-data#asset_statements
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:49:9-51:58
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:51:13-55
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:50:13-44
-meta-data#web_manifest_url
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:54:13-56:58
-	android:value
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:56:17-55
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:55:17-48
-meta-data#twa_generator
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:59:9-61:52
-	android:value
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:61:13-49
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:60:13-41
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:10:9-36
 meta-data#firebase_messaging_notification_delegation_enabled
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:63:9-65:37
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:18:9-20:37
 	android:value
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:65:13-34
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:20:13-34
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:64:13-78
-activity#com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:72:13-83:24
-	android:enabled
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:74:17-39
-	android:excludeFromRecents
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:75:17-50
-	android:exported
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:73:17-41
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:72:23-104
-meta-data#android.support.customtabs.trusted.MANAGE_SPACE_URL
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:76:17-78:57
-	android:value
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:78:21-54
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:77:21-87
-intent-filter#action:name:android.intent.action.APPLICATION_PREFERENCES+category:name:android.intent.category.DEFAULT
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:79:17-82:33
-action#android.intent.action.APPLICATION_PREFERENCES
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:80:21-92
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:80:29-89
-category#android.intent.category.DEFAULT
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:81:21-80
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:81:31-77
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:19:13-78
 activity#com.esporteid.app.LauncherActivity
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:86:9-175:20
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:22:9-42:20
 	android:label
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:88:13-49
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:27:13-49
+	android:launchMode
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:28:13-44
 	android:exported
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:89:13-36
-	android:alwaysRetainTaskState
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:87:13-49
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:86:19-50
-meta-data#android.support.customtabs.trusted.DEFAULT_URL
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:90:13-91:53
-	android:value
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:91:17-50
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:90:24-85
-meta-data#android.support.customtabs.trusted.STATUS_BAR_COLOR
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:93:13-95:58
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:95:17-55
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:94:17-83
-meta-data#android.support.customtabs.trusted.STATUS_BAR_COLOR_DARK
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:99:13-101:62
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:101:17-59
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:100:17-88
-meta-data#android.support.customtabs.trusted.NAVIGATION_BAR_COLOR
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:103:13-105:61
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:105:17-58
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:104:17-87
-meta-data#android.support.customtabs.trusted.NAVIGATION_BAR_COLOR_DARK
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:107:13-109:65
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:109:17-62
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:108:17-92
-meta-data#androix.browser.trusted.NAVIGATION_BAR_DIVIDER_COLOR
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:111:13-113:68
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:113:17-65
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:112:17-84
-meta-data#androix.browser.trusted.NAVIGATION_BAR_DIVIDER_COLOR_DARK
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:115:13-117:72
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:117:17-69
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:116:17-89
-meta-data#android.support.customtabs.trusted.SPLASH_IMAGE_DRAWABLE
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:119:13-120:54
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:120:17-52
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:119:24-95
-meta-data#android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:122:13-123:60
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:123:17-58
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:122:24-104
-meta-data#android.support.customtabs.trusted.SPLASH_SCREEN_FADE_OUT_DURATION
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:125:13-126:71
-	android:value
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:126:17-69
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:125:24-105
-meta-data#android.support.customtabs.trusted.FILE_PROVIDER_AUTHORITY
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:128:13-129:60
-	android:value
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:129:17-58
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:128:24-97
-meta-data#android.app.shortcuts
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:131:13-97
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:131:61-94
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:131:24-60
-meta-data#android.support.customtabs.trusted.FALLBACK_STRATEGY
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:133:13-134:56
-	android:value
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:134:17-53
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:133:24-91
-meta-data#android.support.customtabs.trusted.SCREEN_ORIENTATION
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:140:13-141:54
-	android:value
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:141:17-52
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:140:24-92
-meta-data#android.support.customtabs.trusted.DISPLAY_OVERRIDE
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:146:17-148:66
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:148:21-63
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:147:21-87
-meta-data#android.support.customtabs.trusted.ADDITIONAL_TRUSTED_ORIGINS
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:150:13-152:72
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:152:17-69
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:151:17-93
-intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:157:13-160:29
-action#android.intent.action.MAIN
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:158:17-69
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:158:25-66
-category#android.intent.category.LAUNCHER
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:159:17-77
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:159:27-74
-intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:@string/hostName+data:scheme:https
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:162:13-170:29
-	android:autoVerify
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:162:28-53
-action#android.intent.action.VIEW
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:163:17-68
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:163:25-66
-category#android.intent.category.BROWSABLE
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:165:17-77
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:165:27-75
-data
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:166:17-169:19
-	android:host
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:167:21-52
-	android:scheme
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:166:23-45
-activity#com.google.androidbrowserhelper.trusted.FocusActivity
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:177:9-90
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:177:19-87
-activity#com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:179:9-180:62
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:26:13-36
 	android:configChanges
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:180:13-59
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:25:13-81
+	android:alwaysRetainTaskState
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:24:13-49
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:179:19-97
-activity#com.google.androidbrowserhelper.trusted.NotificationPermissionRequestActivity
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:182:9-184:35
-	tools:node
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:184:13-32
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:23:13-45
+intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:29:13-32:29
+action#android.intent.action.MAIN
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:30:17-69
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:183:13-105
-provider#androidx.core.content.FileProvider
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:186:9-194:20
-	android:grantUriPermissions
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:189:13-47
-	android:authorities
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:188:13-60
-	android:exported
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:190:13-37
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:30:25-66
+category#android.intent.category.LAUNCHER
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:31:17-77
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:187:13-62
-meta-data#android.support.FILE_PROVIDER_PATHS
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:191:13-193:53
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:193:17-50
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:31:27-74
+intent-filter#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+category:name:android.intent.category.DEFAULT+data:host:@string/hostName+data:scheme:https
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:34:13-41:29
+	android:autoVerify
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:34:28-53
+action#android.intent.action.VIEW
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:35:17-69
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:192:17-67
-service#com.esporteid.app.DelegationService
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:196:9-211:19
-	android:enabled
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:198:13-55
-	android:exported
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:199:13-56
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:35:25-66
+category#android.intent.category.DEFAULT
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:36:17-76
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:197:13-46
-meta-data#android.support.customtabs.trusted.SMALL_ICON
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:202:17-204:73
-	android:resource
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:204:21-70
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:36:27-73
+category#android.intent.category.BROWSABLE
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:37:17-78
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:203:21-81
-intent-filter#action:name:android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE+category:name:android.intent.category.DEFAULT
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:207:13-210:29
-action#android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:208:17-105
-	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:208:25-103
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:37:27-75
+data
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:38:17-40:46
+	android:host
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:39:21-52
+	android:scheme
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:40:21-43
 service#com.esporteid.app.EsporteIdFirebaseMessagingService
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:213:9-219:19
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:44:9-50:19
 	android:exported
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:215:13-37
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:46:13-37
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:214:13-62
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:45:13-62
 intent-filter#action:name:com.google.firebase.MESSAGING_EVENT
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:216:13-218:29
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:47:13-49:29
 action#com.google.firebase.MESSAGING_EVENT
-ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:217:17-78
+ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:48:17-78
 	android:name
-		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:217:25-75
+		ADDED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml:48:25-75
 uses-sdk
 INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml
 INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml
-MERGED from [com.google.androidbrowserhelper:androidbrowserhelper:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\dfe16bbeb16a02dcb959adb008d247d9\transformed\androidbrowserhelper-2.6.2\AndroidManifest.xml:20:5-44
-MERGED from [com.google.androidbrowserhelper:androidbrowserhelper:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\dfe16bbeb16a02dcb959adb008d247d9\transformed\androidbrowserhelper-2.6.2\AndroidManifest.xml:20:5-44
 MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:20:5-44
 MERGED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:20:5-44
 MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:5:5-44
@@ -410,6 +219,20 @@ MERGED from [com.google.firebase:firebase-encoders-json:18.0.0] C:\Users\Sérgio\
 MERGED from [com.google.firebase:firebase-encoders-json:18.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\c1d2600842caab2eec0377972ac3638f\transformed\firebase-encoders-json-18.0.0\AndroidManifest.xml:19:5-21:41
 MERGED from [com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\391c9dea95fbcd2229b68c306b453415\transformed\transport-runtime-3.1.9\AndroidManifest.xml:18:5-20:41
 MERGED from [com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\391c9dea95fbcd2229b68c306b453415\transformed\transport-runtime-3.1.9\AndroidManifest.xml:18:5-20:41
+MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2d51ef0897710a0447a1a5a6688cf6bf\transformed\firebase-components-19.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2d51ef0897710a0447a1a5a6688cf6bf\transformed\firebase-components-19.0.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\b959ca896e1f15d06c302d97e74fd28f\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\b959ca896e1f15d06c302d97e74fd28f\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.firebase:firebase-installations-interop:17.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3def2567dbe7b7bd2e38975ebb0fc62\transformed\firebase-installations-interop-17.1.1\AndroidManifest.xml:17:5-44
+MERGED from [com.google.firebase:firebase-installations-interop:17.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3def2567dbe7b7bd2e38975ebb0fc62\transformed\firebase-installations-interop-17.1.1\AndroidManifest.xml:17:5-44
+MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\429c6e6abd2e12fde90d1127ec3db128\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\429c6e6abd2e12fde90d1127ec3db128\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:20:5-44
+MERGED from [com.google.android.datatransport:transport-api:3.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\141a44d768e8f91d4759633744f92a17\transformed\transport-api-3.1.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.datatransport:transport-api:3.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\141a44d768e8f91d4759633744f92a17\transformed\transport-api-3.1.0\AndroidManifest.xml:18:5-44
+MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4544f0c1ee0358ba424f140855f6d4a4\transformed\play-services-base-18.1.0\AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4544f0c1ee0358ba424f140855f6d4a4\transformed\play-services-base-18.1.0\AndroidManifest.xml:18:5-43
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:5:5-44
+MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:5:5-44
 MERGED from [androidx.datastore:datastore-core-android:1.1.7] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\0373dcd97629525209775b6338f77039\transformed\datastore-core-release\AndroidManifest.xml:5:5-44
 MERGED from [androidx.datastore:datastore-core-android:1.1.7] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\0373dcd97629525209775b6338f77039\transformed\datastore-core-release\AndroidManifest.xml:5:5-44
 MERGED from [androidx.datastore:datastore-preferences-core-android:1.1.7] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\67dbbcbc053642b1377ff419bfb0bc6e\transformed\datastore-preferences-core-release\AndroidManifest.xml:5:5-44
@@ -418,114 +241,50 @@ MERGED from [androidx.datastore:datastore-android:1.1.7] C:\Users\Sérgio\.gradle
 MERGED from [androidx.datastore:datastore-android:1.1.7] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\0ccaf19f4a4090759b81892bf77e462e\transformed\datastore-release\AndroidManifest.xml:20:5-44
 MERGED from [androidx.datastore:datastore-preferences-android:1.1.7] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2542917350e9b914f963c2454a0832f3\transformed\datastore-preferences-release\AndroidManifest.xml:20:5-44
 MERGED from [androidx.datastore:datastore-preferences-android:1.1.7] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2542917350e9b914f963c2454a0832f3\transformed\datastore-preferences-release\AndroidManifest.xml:20:5-44
-MERGED from [androidx.appcompat:appcompat-resources:1.7.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4e2a561e0f7f8744a530fa8236bfdf04\transformed\appcompat-resources-1.7.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.appcompat:appcompat-resources:1.7.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4e2a561e0f7f8744a530fa8236bfdf04\transformed\appcompat-resources-1.7.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.appcompat:appcompat:1.7.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\e23c1a757bcab5760da1eaa3016b408a\transformed\appcompat-1.7.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.appcompat:appcompat:1.7.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\e23c1a757bcab5760da1eaa3016b408a\transformed\appcompat-1.7.0\AndroidManifest.xml:5:5-44
-MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4544f0c1ee0358ba424f140855f6d4a4\transformed\play-services-base-18.1.0\AndroidManifest.xml:18:5-43
-MERGED from [com.google.android.gms:play-services-base:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4544f0c1ee0358ba424f140855f6d4a4\transformed\play-services-base-18.1.0\AndroidManifest.xml:18:5-43
-MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\b959ca896e1f15d06c302d97e74fd28f\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:5:5-44
-MERGED from [com.google.firebase:firebase-iid-interop:17.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\b959ca896e1f15d06c302d97e74fd28f\transformed\firebase-iid-interop-17.1.0\AndroidManifest.xml:5:5-44
-MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\429c6e6abd2e12fde90d1127ec3db128\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:20:5-44
-MERGED from [com.google.firebase:firebase-measurement-connector:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\429c6e6abd2e12fde90d1127ec3db128\transformed\firebase-measurement-connector-19.0.0\AndroidManifest.xml:20:5-44
-MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:5:5-44
-MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:5:5-44
-MERGED from [com.google.firebase:firebase-installations-interop:17.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3def2567dbe7b7bd2e38975ebb0fc62\transformed\firebase-installations-interop-17.1.1\AndroidManifest.xml:17:5-44
-MERGED from [com.google.firebase:firebase-installations-interop:17.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3def2567dbe7b7bd2e38975ebb0fc62\transformed\firebase-installations-interop-17.1.1\AndroidManifest.xml:17:5-44
 MERGED from [com.google.android.gms:play-services-tasks:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\bf734b5bb838ac3c4be724593e19b006\transformed\play-services-tasks-18.1.0\AndroidManifest.xml:4:5-43
 MERGED from [com.google.android.gms:play-services-tasks:18.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\bf734b5bb838ac3c4be724593e19b006\transformed\play-services-tasks-18.1.0\AndroidManifest.xml:4:5-43
 MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\38ac91640283a452e65d8b3c1c3836bb\transformed\play-services-stats-17.0.2\AndroidManifest.xml:5:5-44
 MERGED from [com.google.android.gms:play-services-stats:17.0.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\38ac91640283a452e65d8b3c1c3836bb\transformed\play-services-stats-17.0.2\AndroidManifest.xml:5:5-44
 MERGED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3ff358d6d1eb2371997be9adf296884\transformed\play-services-basement-18.3.0\AndroidManifest.xml:18:5-43
 MERGED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3ff358d6d1eb2371997be9adf296884\transformed\play-services-basement-18.3.0\AndroidManifest.xml:18:5-43
-MERGED from [androidx.fragment:fragment:1.5.4] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\82712f3b3d914fb4f707b11597da5289\transformed\fragment-1.5.4\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.fragment:fragment:1.5.4] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\82712f3b3d914fb4f707b11597da5289\transformed\fragment-1.5.4\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.browser:browser:1.9.0-alpha04] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\eeab2447f00d8b1acb9b8b3a0085f47a\transformed\browser-1.9.0-alpha04\AndroidManifest.xml:5:5-44
-MERGED from [androidx.browser:browser:1.9.0-alpha04] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\eeab2447f00d8b1acb9b8b3a0085f47a\transformed\browser-1.9.0-alpha04\AndroidManifest.xml:5:5-44
-MERGED from [androidx.activity:activity:1.9.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d7c5ebf5d8fade52494e4cb2071f1161\transformed\activity-1.9.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.activity:activity:1.9.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d7c5ebf5d8fade52494e4cb2071f1161\transformed\activity-1.9.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.core:core-ktx:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\726738b9cd7b0c0f2bb9ba4b20dadd3b\transformed\core-ktx-1.13.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.core:core-ktx:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\726738b9cd7b0c0f2bb9ba4b20dadd3b\transformed\core-ktx-1.13.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\1b672b038605f98e99c69bcc5b277ed5\transformed\drawerlayout-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.drawerlayout:drawerlayout:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\1b672b038605f98e99c69bcc5b277ed5\transformed\drawerlayout-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\0746f10dfe88344199489cd3305cd638\transformed\emoji2-views-helper-1.3.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.emoji2:emoji2-views-helper:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\0746f10dfe88344199489cd3305cd638\transformed\emoji2-views-helper-1.3.0\AndroidManifest.xml:5:5-44
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:21:5-44
-MERGED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:21:5-44
+MERGED from [androidx.fragment:fragment:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\73d38f7c753df6f1beb231db101cd7df\transformed\fragment-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.fragment:fragment:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\73d38f7c753df6f1beb231db101cd7df\transformed\fragment-1.1.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\36dc90d22104f4cfb84f8deaafd0a549\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.legacy:legacy-support-core-utils:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\36dc90d22104f4cfb84f8deaafd0a549\transformed\legacy-support-core-utils-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\02e5398cfbc99af913c3135eb51ae9cd\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.vectordrawable:vectordrawable-animated:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\02e5398cfbc99af913c3135eb51ae9cd\transformed\vectordrawable-animated-1.1.0\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\a0d6082a317f718aa095b8b322fb2d9d\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.vectordrawable:vectordrawable:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\a0d6082a317f718aa095b8b322fb2d9d\transformed\vectordrawable-1.1.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\429b33ecc7858d792a15c54164a7aff6\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.viewpager:viewpager:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\429b33ecc7858d792a15c54164a7aff6\transformed\viewpager-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.customview:customview:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2fa5a169d5b57f1d9ef6adbda11ada95\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.customview:customview:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2fa5a169d5b57f1d9ef6adbda11ada95\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.loader:loader:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\80def00725f405638f2c8f7569e30604\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.loader:loader:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\80def00725f405638f2c8f7569e30604\transformed\loader-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cf8065524220339e0d3acc12a2ec8ebe\transformed\lifecycle-livedata-2.6.2\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cf8065524220339e0d3acc12a2ec8ebe\transformed\lifecycle-livedata-2.6.2\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4b23ca9f1272b95abff0177326a76751\transformed\lifecycle-viewmodel-2.6.2\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4b23ca9f1272b95abff0177326a76751\transformed\lifecycle-viewmodel-2.6.2\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d5f17511db82b13dace0580a5449e669\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:21:5-44
-MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d5f17511db82b13dace0580a5449e669\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:21:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\845cfde661293761d530a90699c1a62c\transformed\lifecycle-livedata-core-2.6.2\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\845cfde661293761d530a90699c1a62c\transformed\lifecycle-livedata-core-2.6.2\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\5d448b081316d5aa3c5b4374b37ecc3f\transformed\lifecycle-runtime-2.6.2\AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-runtime:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\5d448b081316d5aa3c5b4374b37ecc3f\transformed\lifecycle-runtime-2.6.2\AndroidManifest.xml:5:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\94528e38e221b998ef340471ff02ab5e\transformed\lifecycle-viewmodel-savedstate-2.6.2\AndroidManifest.xml:20:5-44
-MERGED from [androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\94528e38e221b998ef340471ff02ab5e\transformed\lifecycle-viewmodel-savedstate-2.6.2\AndroidManifest.xml:20:5-44
-MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\1b012ec9e5fe39c5f6efec774e48b859\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
-MERGED from [androidx.savedstate:savedstate:1.2.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\1b012ec9e5fe39c5f6efec774e48b859\transformed\savedstate-1.2.1\AndroidManifest.xml:20:5-44
-MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2d51ef0897710a0447a1a5a6688cf6bf\transformed\firebase-components-19.0.0\AndroidManifest.xml:18:5-44
-MERGED from [com.google.firebase:firebase-components:19.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2d51ef0897710a0447a1a5a6688cf6bf\transformed\firebase-components-19.0.0\AndroidManifest.xml:18:5-44
-MERGED from [com.google.android.datatransport:transport-api:3.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\141a44d768e8f91d4759633744f92a17\transformed\transport-api-3.1.0\AndroidManifest.xml:18:5-44
-MERGED from [com.google.android.datatransport:transport-api:3.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\141a44d768e8f91d4759633744f92a17\transformed\transport-api-3.1.0\AndroidManifest.xml:18:5-44
-MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\63ceb9dd876ef548e93344599a34381d\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.cursoradapter:cursoradapter:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\63ceb9dd876ef548e93344599a34381d\transformed\cursoradapter-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:21:5-44
-MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9e10a6bfc845e502befe212484a749d0\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9e10a6bfc845e502befe212484a749d0\transformed\interpolator-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2ac009b7cd3fd6ca84438785081579b2\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2ac009b7cd3fd6ca84438785081579b2\transformed\versionedparcelable-1.1.1\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\8cd36a1e33269e34ff8df8bda6f629c6\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\8cd36a1e33269e34ff8df8bda6f629c6\transformed\startup-runtime-1.1.1\AndroidManifest.xml:21:5-23:41
-MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\805e53f000de042d49713638882260dc\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
-MERGED from [androidx.tracing:tracing:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\805e53f000de042d49713638882260dc\transformed\tracing-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.activity:activity:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\55a2457a73e37258d6edb6b2421a0d6b\transformed\activity-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.activity:activity:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\55a2457a73e37258d6edb6b2421a0d6b\transformed\activity-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2fa5a169d5b57f1d9ef6adbda11ada95\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.customview:customview:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2fa5a169d5b57f1d9ef6adbda11ada95\transformed\customview-1.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.core:core:1.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\c528c51351c89850b5d06f7d1f095825\transformed\core-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.core:core:1.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\c528c51351c89850b5d06f7d1f095825\transformed\core-1.2.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4ee67bd0365b6a31d419fad92b3312a0\transformed\versionedparcelable-1.1.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4ee67bd0365b6a31d419fad92b3312a0\transformed\versionedparcelable-1.1.0\AndroidManifest.xml:20:5-22:41
 MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\04f0af8cbe6cec4c38dcfc1aebc9d921\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.documentfile:documentfile:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\04f0af8cbe6cec4c38dcfc1aebc9d921\transformed\documentfile-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\803baf77e0be5795fc2c3e51da2b3038\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\803baf77e0be5795fc2c3e51da2b3038\transformed\localbroadcastmanager-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.print:print:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\6a9a690627adf4389887829983a6701d\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
 MERGED from [androidx.print:print:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\6a9a690627adf4389887829983a6701d\transformed\print-1.0.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4022146c971e1753efbd235b7f138087\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.arch.core:core-runtime:2.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\4022146c971e1753efbd235b7f138087\transformed\core-runtime-2.2.0\AndroidManifest.xml:20:5-44
-MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\39f9f92edced7b52aff272c6e4a26292\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
-MERGED from [androidx.annotation:annotation-experimental:1.4.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\39f9f92edced7b52aff272c6e4a26292\transformed\annotation-experimental-1.4.1\AndroidManifest.xml:5:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\6eed5dca6ce3499429ccfabcced9d39a\transformed\lifecycle-runtime-2.1.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-runtime:2.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\6eed5dca6ce3499429ccfabcced9d39a\transformed\lifecycle-runtime-2.1.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3bc34b4b7b51c72117661f0de7872a7e\transformed\lifecycle-viewmodel-2.1.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.1.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3bc34b4b7b51c72117661f0de7872a7e\transformed\lifecycle-viewmodel-2.1.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.savedstate:savedstate:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\242c4d02adf2de09309f3d24daee56e9\transformed\savedstate-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.savedstate:savedstate:1.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\242c4d02adf2de09309f3d24daee56e9\transformed\savedstate-1.0.0\AndroidManifest.xml:20:5-22:41
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\7ea934cdaaad61522531591f992895e8\transformed\lifecycle-livedata-2.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata:2.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\7ea934cdaaad61522531591f992895e8\transformed\lifecycle-livedata-2.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\866d597161c603579159d3bbcf069409\transformed\lifecycle-livedata-core-2.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.lifecycle:lifecycle-livedata-core:2.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\866d597161c603579159d3bbcf069409\transformed\lifecycle-livedata-core-2.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\6c6bcb27ee47b45ed4d0625bb4aef503\transformed\core-runtime-2.0.0\AndroidManifest.xml:20:5-44
+MERGED from [androidx.arch.core:core-runtime:2.0.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\6c6bcb27ee47b45ed4d0625bb4aef503\transformed\core-runtime-2.0.0\AndroidManifest.xml:20:5-44
 	android:targetSdkVersion
 		INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml
 	android:minSdkVersion
 		INJECTED from C:\xampp\htdocs\esporteid-next\.codex-twa\esporteid-twa\app\src\main\AndroidManifest.xml
-queries
-ADDED from [com.google.androidbrowserhelper:androidbrowserhelper:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\dfe16bbeb16a02dcb959adb008d247d9\transformed\androidbrowserhelper-2.6.2\AndroidManifest.xml:22:5-30:15
-intent#action:name:android.intent.action.VIEW+category:name:android.intent.category.BROWSABLE+data:scheme:https
-ADDED from [com.google.androidbrowserhelper:androidbrowserhelper:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\dfe16bbeb16a02dcb959adb008d247d9\transformed\androidbrowserhelper-2.6.2\AndroidManifest.xml:23:9-29:18
-uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:22:5-79
-MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:7:5-79
-MERGED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:7:5-79
-MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3cf6728792e122d984651f873f2f3a0c\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:24:5-79
-MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3cf6728792e122d984651f873f2f3a0c\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:24:5-79
-MERGED from [com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\391c9dea95fbcd2229b68c306b453415\transformed\transport-runtime-3.1.9\AndroidManifest.xml:22:5-79
-MERGED from [com.google.android.datatransport:transport-runtime:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\391c9dea95fbcd2229b68c306b453415\transformed\transport-runtime-3.1.9\AndroidManifest.xml:22:5-79
-MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:7:5-79
-MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:7:5-79
-	android:name
-		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:22:22-76
 uses-permission#android.permission.WAKE_LOCK
 ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:24:5-68
 MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:9:5-68
@@ -594,14 +353,6 @@ ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.grad
 		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:62:17-82
 	android:name
 		ADDED from [com.google.firebase:firebase-messaging:25.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\cfb9d36abcc6c4acaab7d61e034c4583\transformed\firebase-messaging-25.0.1\AndroidManifest.xml:61:17-119
-uses-permission#android.permission.INTERNET
-ADDED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:8:5-67
-MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3cf6728792e122d984651f873f2f3a0c\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:25:5-67
-MERGED from [com.google.android.datatransport:transport-backend-cct:3.1.9] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\3cf6728792e122d984651f873f2f3a0c\transformed\transport-backend-cct-3.1.9\AndroidManifest.xml:25:5-67
-MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:8:5-67
-MERGED from [com.google.android.gms:play-services-cloud-messaging:17.2.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\9a6408c207b9dce56ab891379573b17b\transformed\play-services-cloud-messaging-17.2.0\AndroidManifest.xml:8:5-67
-	android:name
-		ADDED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:8:22-64
 meta-data#com.google.firebase.components:com.google.firebase.installations.FirebaseInstallationsKtxRegistrar
 ADDED from [com.google.firebase:firebase-installations:19.0.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\2729f9dc3a993ab6ea65366bb3e7bca1\transformed\firebase-installations-19.0.1\AndroidManifest.xml:15:13-17:85
 	android:value
@@ -680,93 +431,3 @@ ADDED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\Sérgi
 		ADDED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3ff358d6d1eb2371997be9adf296884\transformed\play-services-basement-18.3.0\AndroidManifest.xml:23:13-66
 	android:name
 		ADDED from [com.google.android.gms:play-services-basement:18.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\f3ff358d6d1eb2371997be9adf296884\transformed\play-services-basement-18.3.0\AndroidManifest.xml:22:13-58
-provider#androidx.startup.InitializationProvider
-ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d5f17511db82b13dace0580a5449e669\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d5f17511db82b13dace0580a5449e669\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:24:9-32:20
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\8cd36a1e33269e34ff8df8bda6f629c6\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
-MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\8cd36a1e33269e34ff8df8bda6f629c6\transformed\startup-runtime-1.1.1\AndroidManifest.xml:26:9-30:34
-	tools:node
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:28:13-31
-	android:authorities
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:26:13-68
-	android:exported
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:27:13-37
-	android:name
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:25:13-67
-meta-data#androidx.emoji2.text.EmojiCompatInitializer
-ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:29:13-31:52
-	android:value
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:31:17-49
-	android:name
-		ADDED from [androidx.emoji2:emoji2:1.3.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\aba51afa04f1a01cab5c844216887986\transformed\emoji2-1.3.0\AndroidManifest.xml:30:17-75
-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
-ADDED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:22:5-24:47
-	android:protectionLevel
-		ADDED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:24:9-44
-	android:name
-		ADDED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:23:9-81
-permission#com.esporteid.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
-ADDED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:22:5-24:47
-	android:protectionLevel
-		ADDED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:24:9-44
-	android:name
-		ADDED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:23:9-81
-uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
-ADDED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:26:5-97
-	android:name
-		ADDED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:26:22-94
-uses-permission#com.esporteid.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
-ADDED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:26:5-97
-	android:name
-		ADDED from [androidx.core:core:1.13.0] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\397c411bcfd49340faaac2a41b239bc0\transformed\core-1.13.0\AndroidManifest.xml:26:22-94
-meta-data#androidx.lifecycle.ProcessLifecycleInitializer
-ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d5f17511db82b13dace0580a5449e669\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:29:13-31:52
-	android:value
-		ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d5f17511db82b13dace0580a5449e669\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:31:17-49
-	android:name
-		ADDED from [androidx.lifecycle:lifecycle-process:2.6.2] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\d5f17511db82b13dace0580a5449e669\transformed\lifecycle-process-2.6.2\AndroidManifest.xml:30:17-78
-meta-data#androidx.profileinstaller.ProfileInstallerInitializer
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:29:13-31:52
-	android:value
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:31:17-49
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:30:17-85
-receiver#androidx.profileinstaller.ProfileInstallReceiver
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:34:9-52:20
-	android:enabled
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:37:13-35
-	android:exported
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:38:13-36
-	android:permission
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:39:13-57
-	android:directBootAware
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:36:13-44
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:35:13-76
-intent-filter#action:name:androidx.profileinstaller.action.INSTALL_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:40:13-42:29
-action#androidx.profileinstaller.action.INSTALL_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:17-91
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:41:25-88
-intent-filter#action:name:androidx.profileinstaller.action.SKIP_FILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:43:13-45:29
-action#androidx.profileinstaller.action.SKIP_FILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:17-85
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:44:25-82
-intent-filter#action:name:androidx.profileinstaller.action.SAVE_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:46:13-48:29
-action#androidx.profileinstaller.action.SAVE_PROFILE
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:17-88
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:47:25-85
-intent-filter#action:name:androidx.profileinstaller.action.BENCHMARK_OPERATION
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:49:13-51:29
-action#androidx.profileinstaller.action.BENCHMARK_OPERATION
-ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:17-95
-	android:name
-		ADDED from [androidx.profileinstaller:profileinstaller:1.3.1] C:\Users\Sérgio\.gradle\caches\8.11.1\transforms\58ec09435f5f17e4e66ec13f1b8485ed\transformed\profileinstaller-1.3.1\AndroidManifest.xml:50:25-92

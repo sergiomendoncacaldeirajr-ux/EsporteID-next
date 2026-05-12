@@ -61,4 +61,13 @@
     <string name="project_id" translatable="false">esporteid-5cae2</string>
     <string name="providerAuthority" translatable="false">com.esporteid.app.fileprovider</string>
     <string name="webManifestUrl" translatable="false">https://esporteid.com.br/manifest.webmanifest</string>
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowBackground">@color/backgroundColor</item>
+        <item name="android:colorAccent">@color/colorPrimary</item>
+    </style>
 </resources>

@@ -68,7 +68,7 @@ android {
         applicationId "com.esporteid.app"
         minSdkVersion 23
         targetSdkVersion 35
-        versionCode 9
+        versionCode 10
         versionName "7.0.2"
 
         // The name for the application
@@ -232,7 +232,6 @@ repositories {
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     
-        implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
         implementation platform('com.google.firebase:firebase-bom:34.7.0')
         implementation 'com.google.firebase:firebase-messaging'
     

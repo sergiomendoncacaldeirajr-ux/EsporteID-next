@@ -36,5 +36,6 @@ string orientation
 string project_id
 string providerAuthority
 string webManifestUrl
+style AppTheme
 xml filepaths
 xml shortcuts

@@ -3,6 +3,7 @@ package com.esporteid.app;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -25,7 +26,7 @@ public class EsporteIdFirebaseMessagingService extends FirebaseMessagingService 
     @Override
     public void onMessageReceived(RemoteMessage message) {
         super.onMessageReceived(message);
-        ensureNotificationChannel();
+        ensureNotificationChannel(this);
 
         String title = "EsporteID";
         String body = "Voce tem uma nova notificacao.";
@@ -59,9 +60,9 @@ public class EsporteIdFirebaseMessagingService extends FirebaseMessagingService 
         if (manager != null) manager.notify((int) System.currentTimeMillis(), builder.build());
     }
 
-    private void ensureNotificationChannel() {
+    public static void ensureNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
-        NotificationManager manager = getSystemService(NotificationManager.class);
+        NotificationManager manager = context.getSystemService(NotificationManager.class);
         if (manager == null || manager.getNotificationChannel(CHANNEL_ID) != null) return;
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
