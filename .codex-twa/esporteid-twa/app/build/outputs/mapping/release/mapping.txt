@@ -3,8 +3,8 @@
 # min_api: 23
 # common_typos_disable
 # {"id":"com.android.tools.r8.mapping","version":"2.2"}
-# pg_map_id: 60fb082
-# pg_map_hash: SHA-256 60fb082a99628269b5c6aed646b54f334e4fe90447710ac9cc735c563acd4446
+# pg_map_id: f5a74a3
+# pg_map_hash: SHA-256 f5a74a32539f28ac4a17ff6ef5b5fe7fc67a498172970c9a76b6a81b0abcaf42
 _COROUTINE.ArtificialStackFrames -> a.a:
 # {"id":"sourceFile","fileName":"CoroutineDebugging.kt"}
     1:4:void <init>():17:17 -> <init>
@@ -1106,7 +1106,9 @@ androidx.core.app.NotificationCompat$Builder -> d.c$e:
     11:12:void <init>(android.content.Context,java.lang.String):768:769 -> <init>
     13:17:void <init>(android.content.Context,java.lang.String):772:776 -> <init>
     18:18:void <init>(android.content.Context):785:785 -> <init>
-    1:5:androidx.core.app.NotificationCompat$Builder setWhen(long):793:793 -> A
+    1:3:androidx.core.app.NotificationCompat$Builder setVisibility(int):1494:1494 -> A
+      # {"id":"com.android.tools.r8.residualsignature","signature":"(I)Ld/c$e;"}
+    1:5:androidx.core.app.NotificationCompat$Builder setWhen(long):793:793 -> B
       # {"id":"com.android.tools.r8.residualsignature","signature":"(J)Ld/c$e;"}
     1:11:androidx.core.app.NotificationCompat$Builder addAction(int,java.lang.CharSequence,android.app.PendingIntent):1404:1404 -> a
       # {"id":"com.android.tools.r8.residualsignature","signature":"(ILjava/lang/CharSequence;Landroid/app/PendingIntent;)Ld/c$e;"}
@@ -1131,57 +1133,57 @@ androidx.core.app.NotificationCompat$Builder -> d.c$e:
     90:94:android.graphics.Bitmap reduceLargeIconSize(android.graphics.Bitmap):1051:1051 -> e
     3:6:androidx.core.app.NotificationCompat$Builder setAutoCancel(boolean):1188:1188 -> f
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Z)Ld/c$e;"}
-    1:3:androidx.core.app.NotificationCompat$Builder setChannelId(java.lang.String):1554:1554 -> g
+    1:3:androidx.core.app.NotificationCompat$Builder setCategory(java.lang.String):1211:1211 -> g
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Ljava/lang/String;)Ld/c$e;"}
-    1:3:androidx.core.app.NotificationCompat$Builder setColor(int):1482:1482 -> h
+    1:3:androidx.core.app.NotificationCompat$Builder setChannelId(java.lang.String):1554:1554 -> h
+      # {"id":"com.android.tools.r8.residualsignature","signature":"(Ljava/lang/String;)Ld/c$e;"}
+    1:3:androidx.core.app.NotificationCompat$Builder setColor(int):1482:1482 -> i
       # {"id":"com.android.tools.r8.residualsignature","signature":"(I)Ld/c$e;"}
-    1:3:androidx.core.app.NotificationCompat$Builder setContentIntent(android.app.PendingIntent):960:960 -> i
+    1:3:androidx.core.app.NotificationCompat$Builder setContentIntent(android.app.PendingIntent):960:960 -> j
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Landroid/app/PendingIntent;)Ld/c$e;"}
-    1:7:androidx.core.app.NotificationCompat$Builder setContentText(java.lang.CharSequence):877:877 -> j
+    1:7:androidx.core.app.NotificationCompat$Builder setContentText(java.lang.CharSequence):877:877 -> k
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Ljava/lang/CharSequence;)Ld/c$e;"}
-    1:7:androidx.core.app.NotificationCompat$Builder setContentTitle(java.lang.CharSequence):869:869 -> k
+    1:7:androidx.core.app.NotificationCompat$Builder setContentTitle(java.lang.CharSequence):869:869 -> l
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Ljava/lang/CharSequence;)Ld/c$e;"}
-    1:8:androidx.core.app.NotificationCompat$Builder setDefaults(int):1226:1226 -> l
+    1:8:androidx.core.app.NotificationCompat$Builder setDefaults(int):1226:1226 -> m
       # {"id":"com.android.tools.r8.residualsignature","signature":"(I)Ld/c$e;"}
-    9:15:androidx.core.app.NotificationCompat$Builder setDefaults(int):1228:1228 -> l
-    1:5:androidx.core.app.NotificationCompat$Builder setDeleteIntent(android.app.PendingIntent):972:972 -> m
+    9:15:androidx.core.app.NotificationCompat$Builder setDefaults(int):1228:1228 -> m
+    1:5:androidx.core.app.NotificationCompat$Builder setDeleteIntent(android.app.PendingIntent):972:972 -> n
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Landroid/app/PendingIntent;)Ld/c$e;"}
-    3:10:void setFlag(int,boolean):1235:1235 -> n
-    11:19:void setFlag(int,boolean):1237:1237 -> n
-    1:7:androidx.core.app.NotificationCompat$Builder setLargeIcon(android.graphics.Bitmap):1026:1026 -> o
+    3:10:void setFlag(int,boolean):1235:1235 -> o
+    11:19:void setFlag(int,boolean):1237:1237 -> o
+    1:7:androidx.core.app.NotificationCompat$Builder setLargeIcon(android.graphics.Bitmap):1026:1026 -> p
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Landroid/graphics/Bitmap;)Ld/c$e;"}
-    1:4:androidx.core.app.NotificationCompat$Builder setLights(int,int,int):1123:1123 -> p
+    1:4:androidx.core.app.NotificationCompat$Builder setLights(int,int,int):1123:1123 -> q
       # {"id":"com.android.tools.r8.residualsignature","signature":"(III)Ld/c$e;"}
-    5:6:androidx.core.app.NotificationCompat$Builder setLights(int,int,int):1124:1124 -> p
-    7:15:androidx.core.app.NotificationCompat$Builder setLights(int,int,int):1125:1125 -> p
-    16:23:androidx.core.app.NotificationCompat$Builder setLights(int,int,int):1127:1127 -> p
-    1:3:androidx.core.app.NotificationCompat$Builder setLocalOnly(boolean):1199:1199 -> q
+    5:6:androidx.core.app.NotificationCompat$Builder setLights(int,int,int):1124:1124 -> q
+    7:15:androidx.core.app.NotificationCompat$Builder setLights(int,int,int):1125:1125 -> q
+    16:23:androidx.core.app.NotificationCompat$Builder setLights(int,int,int):1127:1127 -> q
+    1:3:androidx.core.app.NotificationCompat$Builder setLocalOnly(boolean):1199:1199 -> r
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Z)Ld/c$e;"}
-    1:3:androidx.core.app.NotificationCompat$Builder setNumber(int):920:920 -> r
+    1:3:androidx.core.app.NotificationCompat$Builder setNumber(int):920:920 -> s
       # {"id":"com.android.tools.r8.residualsignature","signature":"(I)Ld/c$e;"}
-    1:3:androidx.core.app.NotificationCompat$Builder setPriority(int):1259:1259 -> s
+    1:3:androidx.core.app.NotificationCompat$Builder setPriority(int):1259:1259 -> t
       # {"id":"com.android.tools.r8.residualsignature","signature":"(I)Ld/c$e;"}
-    1:3:androidx.core.app.NotificationCompat$Builder setShowWhen(boolean):802:802 -> t
+    1:3:androidx.core.app.NotificationCompat$Builder setShowWhen(boolean):802:802 -> u
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Z)Ld/c$e;"}
-    1:5:androidx.core.app.NotificationCompat$Builder setSmallIcon(int):845:845 -> u
+    1:5:androidx.core.app.NotificationCompat$Builder setSmallIcon(int):845:845 -> v
       # {"id":"com.android.tools.r8.residualsignature","signature":"(I)Ld/c$e;"}
-    1:5:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1067:1067 -> v
+    1:5:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1067:1067 -> w
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Landroid/net/Uri;)Ld/c$e;"}
-    6:7:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1068:1068 -> v
-    8:13:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1070:1070 -> v
-    14:18:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1071:1071 -> v
-    19:22:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1072:1072 -> v
-    23:29:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1073:1073 -> v
-    1:4:androidx.core.app.NotificationCompat$Builder setStyle(androidx.core.app.NotificationCompat$Style):1465:1465 -> w
+    6:7:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1068:1068 -> w
+    8:13:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1070:1070 -> w
+    14:18:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1071:1071 -> w
+    19:22:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1072:1072 -> w
+    23:29:androidx.core.app.NotificationCompat$Builder setSound(android.net.Uri):1073:1073 -> w
+    1:4:androidx.core.app.NotificationCompat$Builder setStyle(androidx.core.app.NotificationCompat$Style):1465:1465 -> x
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Ld/c$f;)Ld/c$e;"}
-    5:8:androidx.core.app.NotificationCompat$Builder setStyle(androidx.core.app.NotificationCompat$Style):1466:1466 -> w
-    9:12:androidx.core.app.NotificationCompat$Builder setStyle(androidx.core.app.NotificationCompat$Style):1468:1468 -> w
-    1:9:androidx.core.app.NotificationCompat$Builder setTicker(java.lang.CharSequence):1006:1006 -> x
+    5:8:androidx.core.app.NotificationCompat$Builder setStyle(androidx.core.app.NotificationCompat$Style):1466:1466 -> x
+    9:12:androidx.core.app.NotificationCompat$Builder setStyle(androidx.core.app.NotificationCompat$Style):1468:1468 -> x
+    1:9:androidx.core.app.NotificationCompat$Builder setTicker(java.lang.CharSequence):1006:1006 -> y
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Ljava/lang/CharSequence;)Ld/c$e;"}
-    1:5:androidx.core.app.NotificationCompat$Builder setVibrate(long[]):1113:1113 -> y
+    1:5:androidx.core.app.NotificationCompat$Builder setVibrate(long[]):1113:1113 -> z
       # {"id":"com.android.tools.r8.residualsignature","signature":"([J)Ld/c$e;"}
-    1:3:androidx.core.app.NotificationCompat$Builder setVisibility(int):1494:1494 -> z
-      # {"id":"com.android.tools.r8.residualsignature","signature":"(I)Ld/c$e;"}
 androidx.core.app.NotificationCompat$Style -> d.c$f:
 # {"id":"sourceFile","fileName":"NotificationCompat.java"}
     androidx.core.app.NotificationCompat$Builder mBuilder -> a
@@ -10079,39 +10081,48 @@ com.esporteid.app.Application -> com.esporteid.app.Application:
     1:4:void onCreate():26:26 -> onCreate
 com.esporteid.app.EsporteIdFirebaseMessagingService -> com.esporteid.app.EsporteIdFirebaseMessagingService:
 # {"id":"sourceFile","fileName":"EsporteIdFirebaseMessagingService.java"}
-    1:4:void <init>():17:17 -> <init>
-    1:3:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):28:28 -> p
+    1:4:void <init>():19:19 -> <init>
+    1:3:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):30:30 -> p
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/google/firebase/messaging/T;)V"}
-    4:6:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):29:29 -> p
-    7:16:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):33:33 -> p
-    17:34:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):34:34 -> p
-    35:52:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):35:35 -> p
-    53:75:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):37:37 -> p
-    76:98:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):38:38 -> p
-    99:123:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):40:40 -> p
-    124:151:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):41:41 -> p
-    152:160:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):42:42 -> p
-    161:166:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):43:43 -> p
-    167:170:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):47:47 -> p
-    171:179:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):49:49 -> p
-    180:183:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):50:50 -> p
-    184:187:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):51:51 -> p
-    188:196:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):52:52 -> p
-    197:206:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):53:53 -> p
-    207:215:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):54:54 -> p
-    216:219:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):55:55 -> p
-    220:223:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):56:56 -> p
-    224:227:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):57:57 -> p
-    228:237:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):59:59 -> p
-    238:250:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):60:60 -> p
-    1:3:void onNewToken(java.lang.String):22:22 -> r
-    4:7:void onNewToken(java.lang.String):23:23 -> r
-    1:7:void ensureNotificationChannel(android.content.Context):64:64 -> u
-    8:17:void ensureNotificationChannel(android.content.Context):65:65 -> u
-    18:26:void ensureNotificationChannel(android.content.Context):66:66 -> u
-    27:33:void ensureNotificationChannel(android.content.Context):67:67 -> u
-    34:38:void ensureNotificationChannel(android.content.Context):72:72 -> u
-    39:42:void ensureNotificationChannel(android.content.Context):73:73 -> u
+    4:6:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):31:31 -> p
+    7:16:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):35:35 -> p
+    17:34:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):36:36 -> p
+    35:52:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):37:37 -> p
+    53:75:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):39:39 -> p
+    76:98:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):40:40 -> p
+    99:108:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):41:41 -> p
+    109:133:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):43:43 -> p
+    134:161:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):44:44 -> p
+    162:170:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):45:45 -> p
+    171:176:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):46:46 -> p
+    177:180:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):50:50 -> p
+    181:189:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):52:52 -> p
+    190:193:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):53:53 -> p
+    194:197:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):54:54 -> p
+    198:201:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):55:55 -> p
+    202:210:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):56:56 -> p
+    211:220:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):57:57 -> p
+    221:229:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):58:58 -> p
+    230:234:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):59:59 -> p
+    235:240:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):60:60 -> p
+    241:244:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):61:61 -> p
+    245:248:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):62:62 -> p
+    249:252:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):63:63 -> p
+    253:256:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):64:64 -> p
+    257:260:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):65:65 -> p
+    261:270:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):67:67 -> p
+    271:283:void onMessageReceived(com.google.firebase.messaging.RemoteMessage):68:68 -> p
+    1:3:void onNewToken(java.lang.String):24:24 -> r
+    4:7:void onNewToken(java.lang.String):25:25 -> r
+    1:7:void ensureNotificationChannel(android.content.Context):72:72 -> u
+    8:17:void ensureNotificationChannel(android.content.Context):73:73 -> u
+    18:26:void ensureNotificationChannel(android.content.Context):74:74 -> u
+    27:33:void ensureNotificationChannel(android.content.Context):75:75 -> u
+    34:39:void ensureNotificationChannel(android.content.Context):80:80 -> u
+    40:42:void ensureNotificationChannel(android.content.Context):81:81 -> u
+    43:51:void ensureNotificationChannel(android.content.Context):82:82 -> u
+    52:54:void ensureNotificationChannel(android.content.Context):83:83 -> u
+    55:58:void ensureNotificationChannel(android.content.Context):84:84 -> u
 com.esporteid.app.EsporteIdFirebaseMessagingService$$ExternalSyntheticApiModelOutline0 -> o.a:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
@@ -10130,7 +10141,22 @@ com.esporteid.app.EsporteIdFirebaseMessagingService$$ExternalSyntheticApiModelOu
 com.esporteid.app.EsporteIdFirebaseMessagingService$$ExternalSyntheticApiModelOutline3 -> o.d:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
-    1:1:void o.EsporteIdFirebaseMessagingService$$ExternalSyntheticApiModelOutline3.m(android.app.NotificationManager,android.app.NotificationChannel):0:0 -> a
+    1:1:void o.EsporteIdFirebaseMessagingService$$ExternalSyntheticApiModelOutline3.m(android.app.NotificationChannel,boolean):0:0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.EsporteIdFirebaseMessagingService$$ExternalSyntheticApiModelOutline4 -> o.e:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.EsporteIdFirebaseMessagingService$$ExternalSyntheticApiModelOutline4.m(android.app.NotificationChannel,int):0:0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.EsporteIdFirebaseMessagingService$$ExternalSyntheticApiModelOutline5 -> o.f:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.EsporteIdFirebaseMessagingService$$ExternalSyntheticApiModelOutline5.m(android.app.NotificationChannel,boolean):0:0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.EsporteIdFirebaseMessagingService$$ExternalSyntheticApiModelOutline6 -> o.g:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.EsporteIdFirebaseMessagingService$$ExternalSyntheticApiModelOutline6.m(android.app.NotificationManager,android.app.NotificationChannel):0:0 -> a
       # {"id":"com.android.tools.r8.synthesized"}
 com.esporteid.app.FcmTokenBridge -> com.esporteid.app.a:
 # {"id":"sourceFile","fileName":"FcmTokenBridge.java"}
@@ -10145,7 +10171,7 @@ com.esporteid.app.FcmTokenBridge -> com.esporteid.app.a:
     3:13:void saveToken(android.content.Context,java.lang.String):24:24 -> d
     14:20:void saveToken(android.content.Context,java.lang.String):25:25 -> d
     21:38:void saveToken(android.content.Context,java.lang.String):26:26 -> d
-com.esporteid.app.FcmTokenBridge$$ExternalSyntheticLambda0 -> o.e:
+com.esporteid.app.FcmTokenBridge$$ExternalSyntheticLambda0 -> o.h:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
     android.content.Context com.esporteid.app.FcmTokenBridge$$InternalSyntheticLambda$2$fa3dff7f825ef383c7d7d7042d5178743233a48c53d166fa67aecb0599e8f59d$0.f$0 -> a
@@ -10163,188 +10189,372 @@ com.esporteid.app.FcmTokenBridge$TokenCallback -> com.esporteid.app.a$a:
     void onToken(java.lang.String) -> a
 com.esporteid.app.LauncherActivity -> com.esporteid.app.LauncherActivity:
 # {"id":"sourceFile","fileName":"LauncherActivity.java"}
-    android.webkit.WebView webView -> a
-    android.widget.ImageView splashLogo -> b
-    java.lang.String pendingGeolocationOrigin -> c
-    android.webkit.GeolocationPermissions$Callback pendingGeolocationCallback -> d
-    android.webkit.ValueCallback filePathCallback -> e
-    1:4:void <init>():30:30 -> <init>
-    1:1:void $r8$lambda$TVtzu2rzf_Vgkv_zaWrMJNiNMws(com.esporteid.app.LauncherActivity,java.lang.String):0:0 -> a
+    android.widget.FrameLayout rootLayout -> a
+    android.webkit.WebView webView -> b
+    android.webkit.WebView fullscreenWebView -> c
+    android.widget.FrameLayout fullscreenContainer -> d
+    android.view.View customFullscreenView -> e
+    android.webkit.WebChromeClient$CustomViewCallback customViewCallback -> f
+    android.widget.ImageView splashLogo -> g
+    java.lang.String pendingGeolocationOrigin -> h
+    android.webkit.GeolocationPermissions$Callback pendingGeolocationCallback -> i
+    android.webkit.ValueCallback filePathCallback -> j
+    1:4:void <init>():34:34 -> <init>
+    1:4:boolean isHttpUrl(android.net.Uri):208:208 -> A
+    5:25:boolean isHttpUrl(android.net.Uri):209:209 -> A
+    1:11:boolean isTrustedEsporteIdPage():218:218 -> B
+    12:21:boolean isTrustedEsporteIdPage():219:219 -> B
+    22:28:boolean isTrustedEsporteIdPage():220:220 -> B
+    1:4:boolean isTrustedUri(android.net.Uri):213:213 -> C
+    5:25:boolean isTrustedUri(android.net.Uri):214:214 -> C
+    1:14:java.lang.String jsString(java.lang.String):244:244 -> D
+    15:20:java.lang.String jsString(java.lang.String):245:245 -> D
+    21:28:java.lang.String jsString(java.lang.String):246:246 -> D
+    29:36:java.lang.String jsString(java.lang.String):247:247 -> D
+    37:51:java.lang.String jsString(java.lang.String):248:248 -> D
+    3:10:void loadInitialUrl(android.content.Intent):202:202 -> E
+    11:23:void loadInitialUrl(android.content.Intent):203:203 -> E
+    24:29:void loadInitialUrl(android.content.Intent):204:204 -> E
+    3:13:void registerTokenInWebSession(java.lang.String):224:224 -> F
+    14:18:void registerTokenInWebSession(java.lang.String):225:225 -> F
+    19:27:void registerTokenInWebSession(java.lang.String):226:226 -> F
+    1:7:void requestNotificationPermissionIfNeeded():252:252 -> G
+    8:16:void requestNotificationPermissionIfNeeded():253:253 -> G
+    17:23:void requestNotificationPermissionIfNeeded():254:254 -> G
+    24:32:void requestNotificationPermissionIfNeeded():255:255 -> G
+    33:44:void requestNotificationPermissionIfNeeded():256:256 -> G
+    45:54:void requestNotificationPermissionIfNeeded():257:257 -> G
+    1:6:void setImmersiveMode(boolean):396:396 -> H
+    7:19:void setImmersiveMode(boolean):397:397 -> H
+    20:32:void setImmersiveMode(boolean):400:400 -> H
+    33:36:void setImmersiveMode(boolean):401:401 -> H
+    37:56:void setImmersiveMode(boolean):403:403 -> H
+    57:68:void setImmersiveMode(boolean):415:415 -> H
+    1:3:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):294:294 -> I
+    4:5:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):295:295 -> I
+    6:7:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):296:296 -> I
+    8:16:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):297:297 -> I
+    17:19:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):298:298 -> I
+    20:30:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):299:299 -> I
+    31:40:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):303:303 -> I
+    41:59:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):307:307 -> I
+    60:66:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):308:308 -> I
+    67:73:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):309:309 -> I
+    74:77:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):310:310 -> I
+    1:3:void showFullscreenWebView(java.lang.String):265:265 -> J
+    4:10:void showFullscreenWebView(java.lang.String):266:266 -> J
+    11:19:void showFullscreenWebView(java.lang.String):267:267 -> J
+    20:30:void showFullscreenWebView(java.lang.String):268:268 -> J
+    31:37:void showFullscreenWebView(java.lang.String):273:273 -> J
+    38:44:void showFullscreenWebView(java.lang.String):274:274 -> J
+    45:54:void showFullscreenWebView(java.lang.String):275:275 -> J
+    55:59:void showFullscreenWebView(java.lang.String):279:279 -> J
+    60:66:void showFullscreenWebView(java.lang.String):280:280 -> J
+    67:85:void showFullscreenWebView(java.lang.String):281:281 -> J
+    86:93:void showFullscreenWebView(java.lang.String):288:288 -> J
+    94:96:void showFullscreenWebView(java.lang.String):289:289 -> J
+    97:102:void showFullscreenWebView(java.lang.String):290:290 -> J
+    1:4:void lambda$createFullscreenControls$3(java.lang.Runnable,android.view.View):333:333 -> a
+    1:4:void lambda$createFullscreenControls$2(java.lang.Runnable,android.view.View):326:326 -> b
+    1:1:void $r8$lambda$JL6GTJA4VuLnH284tTtmkIo0bfs(com.esporteid.app.LauncherActivity):0:0 -> c
       # {"id":"com.android.tools.r8.synthesized"}
-    1:7:void lambda$registerTokenInWebSession$0(java.lang.String):192:192 -> b
+    1:1:void $r8$lambda$TVtzu2rzf_Vgkv_zaWrMJNiNMws(com.esporteid.app.LauncherActivity,java.lang.String):0:0 -> d
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:7:void lambda$registerTokenInWebSession$0(java.lang.String):227:227 -> e
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;Ljava/lang/String;)V"}
-    8:15:void lambda$registerTokenInWebSession$0(java.lang.String):193:193 -> b
-    16:21:void lambda$registerTokenInWebSession$0(java.lang.String):194:194 -> b
-    22:27:void lambda$registerTokenInWebSession$0(java.lang.String):195:195 -> b
-    28:73:void lambda$registerTokenInWebSession$0(java.lang.String):196:196 -> b
-    74:80:void lambda$registerTokenInWebSession$0(java.lang.String):204:204 -> b
-    1:5:boolean access$200(com.esporteid.app.LauncherActivity,android.net.Uri):30:30 -> c
-    1:4:void access$300(com.esporteid.app.LauncherActivity,java.lang.String):30:30 -> d
-    1:3:android.webkit.WebView access$400(com.esporteid.app.LauncherActivity):30:30 -> e
-    1:3:android.widget.ImageView access$500(com.esporteid.app.LauncherActivity):30:30 -> f
-    1:3:java.lang.String access$602(com.esporteid.app.LauncherActivity,java.lang.String):30:30 -> g
-    1:3:android.webkit.GeolocationPermissions$Callback access$702(com.esporteid.app.LauncherActivity,android.webkit.GeolocationPermissions$Callback):30:30 -> h
-    1:3:android.webkit.ValueCallback access$800(com.esporteid.app.LauncherActivity):30:30 -> i
-    1:3:android.webkit.ValueCallback access$802(com.esporteid.app.LauncherActivity,android.webkit.ValueCallback):30:30 -> j
-    1:5:void configureWebViewSettings():147:147 -> k
-    6:8:void configureWebViewSettings():148:148 -> k
-    9:13:void configureWebViewSettings():150:150 -> k
-    14:19:void configureWebViewSettings():153:153 -> k
-    20:22:void configureWebViewSettings():154:154 -> k
-    23:25:void configureWebViewSettings():155:155 -> k
-    26:28:void configureWebViewSettings():156:156 -> k
-    29:31:void configureWebViewSettings():157:157 -> k
-    32:34:void configureWebViewSettings():158:158 -> k
-    35:38:void configureWebViewSettings():159:159 -> k
-    39:41:void configureWebViewSettings():160:160 -> k
-    42:71:void configureWebViewSettings():161:161 -> k
-    72:74:void configureWebViewSettings():163:163 -> k
-    75:85:void configureWebViewSettings():166:166 -> k
-    86:96:void configureWebViewSettings():167:167 -> k
-    1:4:void configureWindow():111:111 -> l
-    5:15:void configureWindow():112:112 -> l
-    16:18:void configureWindow():113:113 -> l
-    19:24:void configureWindow():114:114 -> l
-    25:33:void configureWindow():115:115 -> l
-    1:5:void createWebView():121:121 -> m
-    6:14:void createWebView():122:122 -> m
-    15:22:void createWebView():124:124 -> m
-    23:25:void createWebView():125:125 -> m
-    26:34:void createWebView():126:126 -> m
-    35:45:void createWebView():127:127 -> m
-    46:52:void createWebView():132:132 -> m
-    53:57:void createWebView():133:133 -> m
-    58:63:void createWebView():134:134 -> m
-    64:70:void createWebView():135:135 -> m
-    71:87:void createWebView():136:136 -> m
-    88:89:void createWebView():137:137 -> m
-    90:94:void createWebView():138:138 -> m
-    95:97:void createWebView():140:140 -> m
-    98:102:void createWebView():141:141 -> m
-    103:107:void createWebView():142:142 -> m
-    108:111:void createWebView():143:143 -> m
-    2:17:int dp(int):226:226 -> n
-    1:4:boolean isHttpUrl(android.net.Uri):177:177 -> o
-    5:25:boolean isHttpUrl(android.net.Uri):178:178 -> o
-    1:7:void onActivityResult(int,int,android.content.Intent):82:82 -> onActivityResult
-    8:18:void onActivityResult(int,int,android.content.Intent):83:83 -> onActivityResult
-    19:25:void onActivityResult(int,int,android.content.Intent):86:86 -> onActivityResult
-    26:33:void onActivityResult(int,int,android.content.Intent):87:87 -> onActivityResult
-    34:37:void onActivityResult(int,int,android.content.Intent):88:88 -> onActivityResult
-    38:54:void onActivityResult(int,int,android.content.Intent):90:90 -> onActivityResult
-    55:61:void onActivityResult(int,int,android.content.Intent):92:92 -> onActivityResult
-    62:71:void onActivityResult(int,int,android.content.Intent):93:93 -> onActivityResult
-    72:76:void onActivityResult(int,int,android.content.Intent):96:96 -> onActivityResult
-    77:79:void onActivityResult(int,int,android.content.Intent):97:97 -> onActivityResult
-    1:10:void onBackPressed():73:73 -> onBackPressed
-    11:16:void onBackPressed():74:74 -> onBackPressed
-    17:20:void onBackPressed():77:77 -> onBackPressed
-    1:3:void onCreate(android.os.Bundle):49:49 -> onCreate
-    4:6:void onCreate(android.os.Bundle):50:50 -> onCreate
-    7:9:void onCreate(android.os.Bundle):51:51 -> onCreate
-    10:12:void onCreate(android.os.Bundle):52:52 -> onCreate
-    13:15:void onCreate(android.os.Bundle):53:53 -> onCreate
-    16:23:void onCreate(android.os.Bundle):54:54 -> onCreate
-    24:30:void onCreate(android.os.Bundle):55:55 -> onCreate
-    31:38:void onCreate(android.os.Bundle):57:57 -> onCreate
-    39:43:void onCreate(android.os.Bundle):58:58 -> onCreate
-    44:47:void onCreate(android.os.Bundle):60:60 -> onCreate
-    1:3:void onNewIntent(android.content.Intent):66:66 -> onNewIntent
-    4:6:void onNewIntent(android.content.Intent):67:67 -> onNewIntent
-    7:10:void onNewIntent(android.content.Intent):68:68 -> onNewIntent
-    1:7:void onRequestPermissionsResult(int,java.lang.String[],int[]):102:102 -> onRequestPermissionsResult
-    8:12:void onRequestPermissionsResult(int,java.lang.String[],int[]):103:103 -> onRequestPermissionsResult
-    13:23:void onRequestPermissionsResult(int,java.lang.String[],int[]):104:104 -> onRequestPermissionsResult
-    24:29:void onRequestPermissionsResult(int,java.lang.String[],int[]):105:105 -> onRequestPermissionsResult
-    30:31:void onRequestPermissionsResult(int,java.lang.String[],int[]):106:106 -> onRequestPermissionsResult
-    32:34:void onRequestPermissionsResult(int,java.lang.String[],int[]):107:107 -> onRequestPermissionsResult
-    1:12:boolean isTrustedEsporteIdPage():182:182 -> p
-    13:22:boolean isTrustedEsporteIdPage():183:183 -> p
-    23:26:boolean isTrustedEsporteIdPage():184:184 -> p
-    27:47:boolean isTrustedEsporteIdPage():185:185 -> p
-    1:14:java.lang.String jsString(java.lang.String):209:209 -> q
-    15:20:java.lang.String jsString(java.lang.String):210:210 -> q
-    21:28:java.lang.String jsString(java.lang.String):211:211 -> q
-    29:36:java.lang.String jsString(java.lang.String):212:212 -> q
-    37:51:java.lang.String jsString(java.lang.String):213:213 -> q
-    3:10:void loadInitialUrl(android.content.Intent):171:171 -> r
-    11:23:void loadInitialUrl(android.content.Intent):172:172 -> r
-    24:29:void loadInitialUrl(android.content.Intent):173:173 -> r
-    3:13:void registerTokenInWebSession(java.lang.String):189:189 -> s
-    14:18:void registerTokenInWebSession(java.lang.String):190:190 -> s
-    19:27:void registerTokenInWebSession(java.lang.String):191:191 -> s
-    1:7:void requestNotificationPermissionIfNeeded():217:217 -> t
-    8:16:void requestNotificationPermissionIfNeeded():218:218 -> t
-    17:23:void requestNotificationPermissionIfNeeded():219:219 -> t
-    24:32:void requestNotificationPermissionIfNeeded():220:220 -> t
-    33:44:void requestNotificationPermissionIfNeeded():221:221 -> t
-    45:54:void requestNotificationPermissionIfNeeded():222:222 -> t
-com.esporteid.app.LauncherActivity$$ExternalSyntheticApiModelOutline0 -> o.f:
+    8:15:void lambda$registerTokenInWebSession$0(java.lang.String):228:228 -> e
+    16:21:void lambda$registerTokenInWebSession$0(java.lang.String):229:229 -> e
+    22:27:void lambda$registerTokenInWebSession$0(java.lang.String):230:230 -> e
+    28:73:void lambda$registerTokenInWebSession$0(java.lang.String):231:231 -> e
+    74:80:void lambda$registerTokenInWebSession$0(java.lang.String):239:239 -> e
+    1:4:void lambda$showFullscreenWebView$1():283:283 -> f
+      # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;)V"}
+    5:16:void lambda$showFullscreenWebView$1():283:283 -> f
+    17:20:void lambda$showFullscreenWebView$1():284:284 -> f
+    1:3:java.lang.String access$1002(com.esporteid.app.LauncherActivity,java.lang.String):34:34 -> g
+    1:3:android.webkit.GeolocationPermissions$Callback access$1102(com.esporteid.app.LauncherActivity,android.webkit.GeolocationPermissions$Callback):34:34 -> h
+    1:3:android.webkit.ValueCallback access$1200(com.esporteid.app.LauncherActivity):34:34 -> i
+    1:3:android.webkit.ValueCallback access$1202(com.esporteid.app.LauncherActivity,android.webkit.ValueCallback):34:34 -> j
+    1:5:boolean access$200(com.esporteid.app.LauncherActivity,android.net.Uri):34:34 -> k
+    1:5:boolean access$300(com.esporteid.app.LauncherActivity,android.net.Uri):34:34 -> l
+    1:4:void access$400(com.esporteid.app.LauncherActivity,java.lang.String):34:34 -> m
+    1:4:void access$500(com.esporteid.app.LauncherActivity,java.lang.String):34:34 -> n
+    1:3:android.webkit.WebView access$600(com.esporteid.app.LauncherActivity):34:34 -> o
+    1:7:void onActivityResult(int,int,android.content.Intent):103:103 -> onActivityResult
+    8:18:void onActivityResult(int,int,android.content.Intent):104:104 -> onActivityResult
+    19:25:void onActivityResult(int,int,android.content.Intent):107:107 -> onActivityResult
+    26:33:void onActivityResult(int,int,android.content.Intent):108:108 -> onActivityResult
+    34:37:void onActivityResult(int,int,android.content.Intent):109:109 -> onActivityResult
+    38:54:void onActivityResult(int,int,android.content.Intent):111:111 -> onActivityResult
+    55:61:void onActivityResult(int,int,android.content.Intent):113:113 -> onActivityResult
+    62:71:void onActivityResult(int,int,android.content.Intent):114:114 -> onActivityResult
+    72:76:void onActivityResult(int,int,android.content.Intent):117:117 -> onActivityResult
+    77:79:void onActivityResult(int,int,android.content.Intent):118:118 -> onActivityResult
+    1:4:void onBackPressed():82:82 -> onBackPressed
+    5:8:void onBackPressed():83:83 -> onBackPressed
+    9:12:void onBackPressed():86:86 -> onBackPressed
+    13:18:void onBackPressed():87:87 -> onBackPressed
+    19:24:void onBackPressed():88:88 -> onBackPressed
+    25:28:void onBackPressed():90:90 -> onBackPressed
+    29:38:void onBackPressed():94:94 -> onBackPressed
+    39:44:void onBackPressed():95:95 -> onBackPressed
+    45:48:void onBackPressed():98:98 -> onBackPressed
+    1:3:void onCreate(android.os.Bundle):58:58 -> onCreate
+    4:6:void onCreate(android.os.Bundle):59:59 -> onCreate
+    7:9:void onCreate(android.os.Bundle):60:60 -> onCreate
+    10:12:void onCreate(android.os.Bundle):61:61 -> onCreate
+    13:15:void onCreate(android.os.Bundle):62:62 -> onCreate
+    16:23:void onCreate(android.os.Bundle):63:63 -> onCreate
+    24:30:void onCreate(android.os.Bundle):64:64 -> onCreate
+    31:38:void onCreate(android.os.Bundle):66:66 -> onCreate
+    39:43:void onCreate(android.os.Bundle):67:67 -> onCreate
+    44:47:void onCreate(android.os.Bundle):69:69 -> onCreate
+    1:3:void onDestroy():123:123 -> onDestroy
+    4:7:void onDestroy():124:124 -> onDestroy
+    8:11:void onDestroy():125:125 -> onDestroy
+    12:13:void onDestroy():126:126 -> onDestroy
+    14:17:void onDestroy():128:128 -> onDestroy
+    1:3:void onNewIntent(android.content.Intent):75:75 -> onNewIntent
+    4:6:void onNewIntent(android.content.Intent):76:76 -> onNewIntent
+    7:10:void onNewIntent(android.content.Intent):77:77 -> onNewIntent
+    1:7:void onRequestPermissionsResult(int,java.lang.String[],int[]):133:133 -> onRequestPermissionsResult
+    8:12:void onRequestPermissionsResult(int,java.lang.String[],int[]):134:134 -> onRequestPermissionsResult
+    13:23:void onRequestPermissionsResult(int,java.lang.String[],int[]):135:135 -> onRequestPermissionsResult
+    24:29:void onRequestPermissionsResult(int,java.lang.String[],int[]):136:136 -> onRequestPermissionsResult
+    30:31:void onRequestPermissionsResult(int,java.lang.String[],int[]):137:137 -> onRequestPermissionsResult
+    32:34:void onRequestPermissionsResult(int,java.lang.String[],int[]):138:138 -> onRequestPermissionsResult
+    1:3:android.widget.ImageView access$700(com.esporteid.app.LauncherActivity):34:34 -> p
+    1:4:void access$800(com.esporteid.app.LauncherActivity,android.view.View,android.webkit.WebChromeClient$CustomViewCallback):34:34 -> q
+    1:4:void access$900(com.esporteid.app.LauncherActivity):34:34 -> r
+    1:5:void closeFullscreenOverlay():377:377 -> s
+    6:8:void closeFullscreenOverlay():378:378 -> s
+    9:10:void closeFullscreenOverlay():379:379 -> s
+    11:12:void closeFullscreenOverlay():381:381 -> s
+    13:16:void closeFullscreenOverlay():382:382 -> s
+    17:19:void closeFullscreenOverlay():383:383 -> s
+    20:24:void closeFullscreenOverlay():384:384 -> s
+    25:26:void closeFullscreenOverlay():385:385 -> s
+    27:30:void closeFullscreenOverlay():387:387 -> s
+    31:35:void closeFullscreenOverlay():388:388 -> s
+    36:37:void closeFullscreenOverlay():389:389 -> s
+    38:45:void closeFullscreenOverlay():391:391 -> s
+    46:49:void closeFullscreenOverlay():392:392 -> s
+    1:5:void configureSecondaryWebView(android.webkit.WebView):357:357 -> t
+    6:8:void configureSecondaryWebView(android.webkit.WebView):358:358 -> t
+    9:11:void configureSecondaryWebView(android.webkit.WebView):360:360 -> t
+    12:15:void configureSecondaryWebView(android.webkit.WebView):362:362 -> t
+    16:18:void configureSecondaryWebView(android.webkit.WebView):363:363 -> t
+    19:21:void configureSecondaryWebView(android.webkit.WebView):364:364 -> t
+    22:24:void configureSecondaryWebView(android.webkit.WebView):365:365 -> t
+    25:27:void configureSecondaryWebView(android.webkit.WebView):366:366 -> t
+    28:30:void configureSecondaryWebView(android.webkit.WebView):367:367 -> t
+    31:60:void configureSecondaryWebView(android.webkit.WebView):368:368 -> t
+    61:63:void configureSecondaryWebView(android.webkit.WebView):370:370 -> t
+    64:71:void configureSecondaryWebView(android.webkit.WebView):372:372 -> t
+    72:80:void configureSecondaryWebView(android.webkit.WebView):373:373 -> t
+    1:5:void configureWebViewSettings():178:178 -> u
+    6:8:void configureWebViewSettings():179:179 -> u
+    9:13:void configureWebViewSettings():181:181 -> u
+    14:19:void configureWebViewSettings():184:184 -> u
+    20:22:void configureWebViewSettings():185:185 -> u
+    23:25:void configureWebViewSettings():186:186 -> u
+    26:28:void configureWebViewSettings():187:187 -> u
+    29:31:void configureWebViewSettings():188:188 -> u
+    32:34:void configureWebViewSettings():189:189 -> u
+    35:38:void configureWebViewSettings():190:190 -> u
+    39:41:void configureWebViewSettings():191:191 -> u
+    42:71:void configureWebViewSettings():192:192 -> u
+    72:74:void configureWebViewSettings():194:194 -> u
+    75:85:void configureWebViewSettings():197:197 -> u
+    86:96:void configureWebViewSettings():198:198 -> u
+    1:4:void configureWindow():142:142 -> v
+    5:15:void configureWindow():143:143 -> v
+    16:18:void configureWindow():144:144 -> v
+    19:24:void configureWindow():145:145 -> v
+    25:33:void configureWindow():146:146 -> v
+    1:5:android.widget.TextView createControlButton(java.lang.String):341:341 -> w
+    6:9:android.widget.TextView createControlButton(java.lang.String):342:342 -> w
+    10:14:android.widget.TextView createControlButton(java.lang.String):343:343 -> w
+    15:19:android.widget.TextView createControlButton(java.lang.String):344:344 -> w
+    20:22:android.widget.TextView createControlButton(java.lang.String):345:345 -> w
+    23:28:android.widget.TextView createControlButton(java.lang.String):346:346 -> w
+    29:31:android.widget.TextView createControlButton(java.lang.String):347:347 -> w
+    32:36:android.widget.TextView createControlButton(java.lang.String):348:348 -> w
+    37:39:android.widget.TextView createControlButton(java.lang.String):349:349 -> w
+    40:48:android.widget.TextView createControlButton(java.lang.String):350:350 -> w
+    49:61:android.widget.TextView createControlButton(java.lang.String):351:351 -> w
+    62:65:android.widget.TextView createControlButton(java.lang.String):352:352 -> w
+    1:6:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):314:314 -> x
+    7:9:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):315:315 -> x
+    10:18:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):316:316 -> x
+    19:24:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):321:321 -> x
+    25:42:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):322:322 -> x
+    43:46:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):323:323 -> x
+    47:59:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):324:324 -> x
+    60:62:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):325:325 -> x
+    63:70:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):326:326 -> x
+    71:76:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):328:328 -> x
+    77:92:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):329:329 -> x
+    93:94:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):330:330 -> x
+    95:105:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):331:331 -> x
+    106:108:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):332:332 -> x
+    109:116:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):333:333 -> x
+    117:119:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):335:335 -> x
+    120:123:android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable):336:336 -> x
+    1:7:void createWebView():152:152 -> y
+    8:16:void createWebView():153:153 -> y
+    17:24:void createWebView():155:155 -> y
+    25:27:void createWebView():156:156 -> y
+    28:36:void createWebView():157:157 -> y
+    37:47:void createWebView():158:158 -> y
+    48:54:void createWebView():163:163 -> y
+    55:59:void createWebView():164:164 -> y
+    60:65:void createWebView():165:165 -> y
+    66:72:void createWebView():166:166 -> y
+    73:89:void createWebView():167:167 -> y
+    90:91:void createWebView():168:168 -> y
+    92:96:void createWebView():169:169 -> y
+    97:99:void createWebView():171:171 -> y
+    100:106:void createWebView():172:172 -> y
+    107:113:void createWebView():173:173 -> y
+    114:119:void createWebView():174:174 -> y
+    2:17:int dp(int):261:261 -> z
+com.esporteid.app.LauncherActivity$$ExternalSyntheticApiModelOutline0 -> o.i:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
-    1:1:void o.LauncherActivity$$ExternalSyntheticApiModelOutline0.m(android.view.WindowManager$LayoutParams,int):0:0 -> a
+    1:1:android.view.WindowInsetsController o.LauncherActivity$$ExternalSyntheticApiModelOutline0.m(android.view.Window):0:0 -> a
       # {"id":"com.android.tools.r8.synthesized"}
-com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda1 -> o.g:
+com.esporteid.app.LauncherActivity$$ExternalSyntheticApiModelOutline1 -> o.j:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
-    com.esporteid.app.LauncherActivity com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$1$703b56c52777418748f6928b3c1090817335a35fa911689dc3ff9146b167d3be$0.f$0 -> a
+    1:1:int o.LauncherActivity$$ExternalSyntheticApiModelOutline1.m():0:0 -> a
       # {"id":"com.android.tools.r8.synthesized"}
-    1:1:void o.LauncherActivity$$ExternalSyntheticLambda1.<init>(com.esporteid.app.LauncherActivity):0:0 -> <init>
+com.esporteid.app.LauncherActivity$$ExternalSyntheticApiModelOutline2 -> o.k:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    1:1:int o.LauncherActivity$$ExternalSyntheticApiModelOutline2.m():0:0 -> a
       # {"id":"com.android.tools.r8.synthesized"}
-    1:1:void o.LauncherActivity$$ExternalSyntheticLambda1.onToken(java.lang.String):0:0 -> a
+com.esporteid.app.LauncherActivity$$ExternalSyntheticApiModelOutline3 -> o.l:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticApiModelOutline3.m(android.view.WindowInsetsController,int):0:0 -> a
       # {"id":"com.android.tools.r8.synthesized"}
-com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda2 -> o.h:
+com.esporteid.app.LauncherActivity$$ExternalSyntheticApiModelOutline4 -> o.m:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticApiModelOutline4.m(android.view.WindowInsetsController,int):0:0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.LauncherActivity$$ExternalSyntheticApiModelOutline5 -> o.n:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticApiModelOutline5.m(android.view.WindowInsetsController,int):0:0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.LauncherActivity$$ExternalSyntheticApiModelOutline6 -> o.o:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticApiModelOutline6.m(android.view.WindowManager$LayoutParams,int):0:0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda10 -> o.p:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    java.lang.Runnable com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$3$4665e13ccf2e8801231c6097f9db2cf7dd60391146866212d795f35512234021$0.f$0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda10.<init>(java.lang.Runnable):0:0 -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda10.onClick(android.view.View):0:0 -> onClick
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda11 -> o.q:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    java.lang.Runnable com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$3$4665e13ccf2e8801231c6097f9db2cf7dd60391146866212d795f35512234021$1.f$0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda11.<init>(java.lang.Runnable):0:0 -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda11.onClick(android.view.View):0:0 -> onClick
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda12 -> o.r:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
     com.esporteid.app.LauncherActivity com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$3$d5f3ac29a6e2a371d7ac7fa4474c30fdca274be5f9df92765502b7b9844761b0$0.f$0 -> e
       # {"id":"com.android.tools.r8.synthesized"}
     java.lang.String com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$3$d5f3ac29a6e2a371d7ac7fa4474c30fdca274be5f9df92765502b7b9844761b0$0.f$1 -> f
       # {"id":"com.android.tools.r8.synthesized"}
-    1:1:void o.LauncherActivity$$ExternalSyntheticLambda2.<init>(com.esporteid.app.LauncherActivity,java.lang.String):0:0 -> <init>
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda12.<init>(com.esporteid.app.LauncherActivity,java.lang.String):0:0 -> <init>
       # {"id":"com.android.tools.r8.synthesized"}
-    1:1:void o.LauncherActivity$$ExternalSyntheticLambda2.run():0:0 -> run
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda12.run():0:0 -> run
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda7 -> o.s:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    com.esporteid.app.LauncherActivity com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$1$703b56c52777418748f6928b3c1090817335a35fa911689dc3ff9146b167d3be$0.f$0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda7.<init>(com.esporteid.app.LauncherActivity):0:0 -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda7.onToken(java.lang.String):0:0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda8 -> o.t:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    com.esporteid.app.LauncherActivity com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$2$44b02161091adb57dae9090d38d24aea79d9d356f61122b8b3e6394b4ee0e18e$0.f$0 -> e
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda8.<init>(com.esporteid.app.LauncherActivity):0:0 -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda8.run():0:0 -> run
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda9 -> o.u:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    com.esporteid.app.LauncherActivity com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$2$44b02161091adb57dae9090d38d24aea79d9d356f61122b8b3e6394b4ee0e18e$1.f$0 -> e
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda9.<init>(com.esporteid.app.LauncherActivity):0:0 -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void o.LauncherActivity$$ExternalSyntheticLambda9.run():0:0 -> run
       # {"id":"com.android.tools.r8.synthesized"}
 com.esporteid.app.LauncherActivity$1 -> com.esporteid.app.LauncherActivity$a:
 # {"id":"sourceFile","fileName":"LauncherActivity.java"}
 com.esporteid.app.LauncherActivity$EsporteIdWebChromeClient -> com.esporteid.app.LauncherActivity$b:
 # {"id":"sourceFile","fileName":"LauncherActivity.java"}
     com.esporteid.app.LauncherActivity this$0 -> a
-    1:1:void <init>(com.esporteid.app.LauncherActivity):260:260 -> <init>
-    2:2:void <init>(com.esporteid.app.LauncherActivity,com.esporteid.app.LauncherActivity$1):260:260 -> <init>
+    1:1:void <init>(com.esporteid.app.LauncherActivity):453:453 -> <init>
+    2:2:void <init>(com.esporteid.app.LauncherActivity,com.esporteid.app.LauncherActivity$1):453:453 -> <init>
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;Lcom/esporteid/app/LauncherActivity$a;)V"}
-    1:2:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):263:263 -> onGeolocationPermissionsShowPrompt
-    3:14:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):264:264 -> onGeolocationPermissionsShowPrompt
-    15:21:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):265:265 -> onGeolocationPermissionsShowPrompt
-    22:26:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):269:269 -> onGeolocationPermissionsShowPrompt
-    27:31:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):270:270 -> onGeolocationPermissionsShowPrompt
-    32:45:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):271:271 -> onGeolocationPermissionsShowPrompt
-    46:49:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):266:266 -> onGeolocationPermissionsShowPrompt
-    1:9:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):276:276 -> onShowFileChooser
-    10:18:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):277:277 -> onShowFileChooser
-    19:23:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):279:279 -> onShowFileChooser
-    24:27:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):280:280 -> onShowFileChooser
-    28:36:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):282:282 -> onShowFileChooser
-    37:43:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):284:284 -> onShowFileChooser
+    1:2:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):466:466 -> onGeolocationPermissionsShowPrompt
+    3:14:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):467:467 -> onGeolocationPermissionsShowPrompt
+    15:21:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):468:468 -> onGeolocationPermissionsShowPrompt
+    22:26:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):472:472 -> onGeolocationPermissionsShowPrompt
+    27:31:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):473:473 -> onGeolocationPermissionsShowPrompt
+    32:45:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):474:474 -> onGeolocationPermissionsShowPrompt
+    46:49:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):469:469 -> onGeolocationPermissionsShowPrompt
+    1:6:void onHideCustomView():461:461 -> onHideCustomView
+    1:6:void onShowCustomView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):456:456 -> onShowCustomView
+    1:9:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):479:479 -> onShowFileChooser
+    10:18:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):480:480 -> onShowFileChooser
+    19:23:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):482:482 -> onShowFileChooser
+    24:27:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):483:483 -> onShowFileChooser
+    28:36:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):485:485 -> onShowFileChooser
+    37:43:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):487:487 -> onShowFileChooser
 com.esporteid.app.LauncherActivity$EsporteIdWebViewClient -> com.esporteid.app.LauncherActivity$c:
 # {"id":"sourceFile","fileName":"LauncherActivity.java"}
     com.esporteid.app.LauncherActivity this$0 -> a
-    1:1:void <init>(com.esporteid.app.LauncherActivity):229:229 -> <init>
-    2:2:void <init>(com.esporteid.app.LauncherActivity,com.esporteid.app.LauncherActivity$1):229:229 -> <init>
+    1:1:void <init>(com.esporteid.app.LauncherActivity):418:418 -> <init>
+    2:2:void <init>(com.esporteid.app.LauncherActivity,com.esporteid.app.LauncherActivity$1):418:418 -> <init>
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;Lcom/esporteid/app/LauncherActivity$a;)V"}
-    1:2:void lambda$onPageFinished$0():250:250 -> a
+    1:2:void lambda$onPageFinished$0():443:443 -> a
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity$c;)V"}
-    3:12:void lambda$onPageFinished$0():250:250 -> a
-    1:3:void onPageFinished(android.webkit.WebView,java.lang.String):244:244 -> onPageFinished
-    4:10:void onPageFinished(android.webkit.WebView,java.lang.String):245:245 -> onPageFinished
-    11:16:void onPageFinished(android.webkit.WebView,java.lang.String):246:246 -> onPageFinished
-    17:21:void onPageFinished(android.webkit.WebView,java.lang.String):247:247 -> onPageFinished
-    22:46:void onPageFinished(android.webkit.WebView,java.lang.String):248:248 -> onPageFinished
-    47:66:void onPageFinished(android.webkit.WebView,java.lang.String):249:249 -> onPageFinished
-    67:100:void onPageFinished(android.webkit.WebView,java.lang.String):250:250 -> onPageFinished
-    1:4:void onReceivedHttpError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceResponse):256:256 -> onReceivedHttpError
-    1:4:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):232:232 -> shouldOverrideUrlLoading
-    5:15:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):233:233 -> shouldOverrideUrlLoading
-    16:28:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):235:235 -> shouldOverrideUrlLoading
+    3:12:void lambda$onPageFinished$0():443:443 -> a
+    1:3:void onPageFinished(android.webkit.WebView,java.lang.String):437:437 -> onPageFinished
+    4:10:void onPageFinished(android.webkit.WebView,java.lang.String):438:438 -> onPageFinished
+    11:16:void onPageFinished(android.webkit.WebView,java.lang.String):439:439 -> onPageFinished
+    17:21:void onPageFinished(android.webkit.WebView,java.lang.String):440:440 -> onPageFinished
+    22:46:void onPageFinished(android.webkit.WebView,java.lang.String):441:441 -> onPageFinished
+    47:66:void onPageFinished(android.webkit.WebView,java.lang.String):442:442 -> onPageFinished
+    67:100:void onPageFinished(android.webkit.WebView,java.lang.String):443:443 -> onPageFinished
+    1:4:void onReceivedHttpError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceResponse):449:449 -> onReceivedHttpError
+    1:4:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):421:421 -> shouldOverrideUrlLoading
+    5:13:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):422:422 -> shouldOverrideUrlLoading
+    14:23:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):423:423 -> shouldOverrideUrlLoading
+    24:33:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):424:424 -> shouldOverrideUrlLoading
+    34:46:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):428:428 -> shouldOverrideUrlLoading
 com.esporteid.app.LauncherActivity$EsporteIdWebViewClient$$ExternalSyntheticLambda0 -> com.esporteid.app.b:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
@@ -10356,9 +10566,11 @@ com.esporteid.app.LauncherActivity$EsporteIdWebViewClient$$ExternalSyntheticLamb
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity$c;)V"}
     1:1:void run():0:0 -> run
       # {"id":"com.android.tools.r8.synthesized"}
-com.esporteid.app.R$drawable -> o.i:
-    int ic_notification_icon -> a
+com.esporteid.app.R$drawable -> o.v:
+    int ic_notification_small -> a
     int splash -> b
+com.esporteid.app.R$mipmap -> o.w:
+    int ic_launcher -> a
 com.google.android.datatransport.AutoValue_Event -> p.a:
 # {"id":"sourceFile","fileName":"AutoValue_Event.java"}
     java.lang.Integer code -> a

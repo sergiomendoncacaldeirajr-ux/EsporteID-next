@@ -42,10 +42,22 @@ async function run(request: Request) {
           .limit(1),
         admin
           .from("espacos_genericos")
-          .select("id, nome_publico, configuracao_reservas_json")
+          .select("id, nome_publico, modo_reserva, configuracao_reservas_json")
           .eq("id", item.espaco_generico_id)
           .maybeSingle(),
       ]);
+
+      if (String(espaco?.modo_reserva ?? "").toLowerCase() === "paga") {
+        await admin
+          .from("espaco_waitlist")
+          .update({
+            status: "cancelada",
+            atualizado_em: new Date().toISOString(),
+          })
+          .eq("id", item.id);
+        skipped += 1;
+        continue;
+      }
 
       const livre = !(reservas?.length || bloqueios?.length);
       if (!livre) continue;

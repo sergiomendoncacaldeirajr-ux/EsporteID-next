@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,6 +16,8 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
@@ -26,19 +29,25 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 public class LauncherActivity extends Activity {
     private static final String HOME_URL = "https://esporteid.com.br/";
     private static final String TRUSTED_HOST = "esporteid.com.br";
     private static final String TRUSTED_WWW_HOST = "www.esporteid.com.br";
-    private static final String APP_VERSION = "7.0.2";
+    private static final String APP_VERSION = "7.0.3";
     private static final int REQUEST_POST_NOTIFICATIONS = 7001;
     private static final int REQUEST_LOCATION = 7002;
     private static final int REQUEST_FILE_CHOOSER = 7003;
     private static final String PREFS = "esporteid_native";
     private static final String KEY_PERMISSION_ASKED = "notification_permission_asked";
 
+    private FrameLayout rootLayout;
     private WebView webView;
+    private WebView fullscreenWebView;
+    private FrameLayout fullscreenContainer;
+    private View customFullscreenView;
+    private WebChromeClient.CustomViewCallback customViewCallback;
     private ImageView splashLogo;
     private String pendingGeolocationOrigin;
     private GeolocationPermissions.Callback pendingGeolocationCallback;
@@ -70,6 +79,18 @@ public class LauncherActivity extends Activity {
 
     @Override
     public void onBackPressed() {
+        if (customFullscreenView != null) {
+            closeFullscreenOverlay();
+            return;
+        }
+        if (fullscreenWebView != null) {
+            if (fullscreenWebView.canGoBack()) {
+                fullscreenWebView.goBack();
+            } else {
+                closeFullscreenOverlay();
+            }
+            return;
+        }
         if (webView != null && webView.canGoBack()) {
             webView.goBack();
             return;
@@ -98,6 +119,16 @@ public class LauncherActivity extends Activity {
     }
 
     @Override
+    protected void onDestroy() {
+        closeFullscreenOverlay();
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode != REQUEST_LOCATION || pendingGeolocationCallback == null) return;
@@ -118,8 +149,8 @@ public class LauncherActivity extends Activity {
     }
 
     private void createWebView() {
-        FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.parseColor("#0B0F14"));
+        rootLayout = new FrameLayout(this);
+        rootLayout.setBackgroundColor(Color.parseColor("#0B0F14"));
 
         webView = new WebView(this);
         webView.setAlpha(0f);
@@ -138,9 +169,9 @@ public class LauncherActivity extends Activity {
         splashLogo.setLayoutParams(logoParams);
 
         configureWebViewSettings();
-        root.addView(webView);
-        root.addView(splashLogo);
-        setContentView(root);
+        rootLayout.addView(webView);
+        rootLayout.addView(splashLogo);
+        setContentView(rootLayout);
     }
 
     private void configureWebViewSettings() {
@@ -178,11 +209,15 @@ public class LauncherActivity extends Activity {
         return "https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme);
     }
 
+    private boolean isTrustedUri(Uri uri) {
+        String host = uri.getHost();
+        return TRUSTED_HOST.equalsIgnoreCase(host) || TRUSTED_WWW_HOST.equalsIgnoreCase(host);
+    }
+
     private boolean isTrustedEsporteIdPage() {
         if (webView == null || webView.getUrl() == null) return false;
         Uri uri = Uri.parse(webView.getUrl());
-        String host = uri.getHost();
-        return TRUSTED_HOST.equalsIgnoreCase(host) || TRUSTED_WWW_HOST.equalsIgnoreCase(host);
+        return isTrustedUri(uri);
     }
 
     private void registerTokenInWebSession(String token) {
@@ -226,11 +261,169 @@ public class LauncherActivity extends Activity {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
+    private void showFullscreenWebView(String url) {
+        closeFullscreenOverlay();
+        fullscreenContainer = new FrameLayout(this);
+        fullscreenContainer.setBackgroundColor(Color.parseColor("#0B0F14"));
+        fullscreenContainer.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+
+        fullscreenWebView = new WebView(this);
+        fullscreenWebView.setBackgroundColor(Color.parseColor("#0B0F14"));
+        fullscreenWebView.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        configureSecondaryWebView(fullscreenWebView);
+        fullscreenContainer.addView(fullscreenWebView);
+        fullscreenContainer.addView(createFullscreenControls(
+                () -> {
+                    if (fullscreenWebView != null && fullscreenWebView.canGoBack()) fullscreenWebView.goBack();
+                    else closeFullscreenOverlay();
+                },
+                this::closeFullscreenOverlay
+        ));
+        rootLayout.addView(fullscreenContainer);
+        setImmersiveMode(true);
+        fullscreenWebView.loadUrl(url);
+    }
+
+    private void showCustomFullscreenView(View view, WebChromeClient.CustomViewCallback callback) {
+        closeFullscreenOverlay();
+        customFullscreenView = view;
+        customViewCallback = callback;
+        fullscreenContainer = new FrameLayout(this);
+        fullscreenContainer.setBackgroundColor(Color.BLACK);
+        fullscreenContainer.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        fullscreenContainer.addView(view, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        fullscreenContainer.addView(createFullscreenControls(this::closeFullscreenOverlay, this::closeFullscreenOverlay));
+        rootLayout.addView(fullscreenContainer);
+        webView.setVisibility(View.INVISIBLE);
+        setImmersiveMode(true);
+    }
+
+    private View createFullscreenControls(Runnable onBack, Runnable onClose) {
+        FrameLayout controls = new FrameLayout(this);
+        controls.setClickable(false);
+        controls.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+
+        TextView back = createControlButton("<");
+        FrameLayout.LayoutParams backParams = new FrameLayout.LayoutParams(dp(44), dp(44));
+        backParams.gravity = Gravity.TOP | Gravity.START;
+        backParams.setMargins(dp(14), dp(22), 0, 0);
+        back.setLayoutParams(backParams);
+        back.setOnClickListener((v) -> onBack.run());
+
+        TextView close = createControlButton("X");
+        FrameLayout.LayoutParams closeParams = new FrameLayout.LayoutParams(dp(44), dp(44));
+        closeParams.gravity = Gravity.TOP | Gravity.END;
+        closeParams.setMargins(0, dp(22), dp(14), 0);
+        close.setLayoutParams(closeParams);
+        close.setOnClickListener((v) -> onClose.run());
+
+        controls.addView(back);
+        controls.addView(close);
+        return controls;
+    }
+
+    private TextView createControlButton(String text) {
+        TextView button = new TextView(this);
+        button.setText(text);
+        button.setTextColor(Color.WHITE);
+        button.setTextSize(20);
+        button.setGravity(Gravity.CENTER);
+        button.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        button.setClickable(true);
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.OVAL);
+        background.setColor(Color.parseColor("#CC0B0F14"));
+        background.setStroke(dp(1), Color.parseColor("#663B82F6"));
+        button.setBackground(background);
+        return button;
+    }
+
+    private void configureSecondaryWebView(WebView target) {
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            cookieManager.setAcceptThirdPartyCookies(target, true);
+        }
+        WebSettings settings = target.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setGeolocationEnabled(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        settings.setUserAgentString(settings.getUserAgentString() + " EsporteIDAndroidApp/" + APP_VERSION);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        }
+        target.setWebViewClient(new WebViewClient());
+        target.setWebChromeClient(new WebChromeClient());
+    }
+
+    private void closeFullscreenOverlay() {
+        if (customViewCallback != null) {
+            customViewCallback.onCustomViewHidden();
+            customViewCallback = null;
+        }
+        customFullscreenView = null;
+        if (fullscreenWebView != null) {
+            fullscreenWebView.stopLoading();
+            fullscreenWebView.destroy();
+            fullscreenWebView = null;
+        }
+        if (fullscreenContainer != null) {
+            rootLayout.removeView(fullscreenContainer);
+            fullscreenContainer = null;
+        }
+        if (webView != null) webView.setVisibility(View.VISIBLE);
+        setImmersiveMode(false);
+    }
+
+    private void setImmersiveMode(boolean enabled) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller == null) return;
+            if (enabled) {
+                controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            } else {
+                controller.show(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+            }
+            return;
+        }
+        int flags = enabled
+                ? View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                : View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
+        getWindow().getDecorView().setSystemUiVisibility(flags);
+    }
+
     private class EsporteIdWebViewClient extends WebViewClient {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             Uri uri = request.getUrl();
-            if (isHttpUrl(uri)) return false;
+            if (isHttpUrl(uri)) {
+                if (isTrustedUri(uri)) return false;
+                showFullscreenWebView(uri.toString());
+                return true;
+            }
             try {
                 startActivity(new Intent(Intent.ACTION_VIEW, uri));
             } catch (ActivityNotFoundException ignored) {
@@ -258,6 +451,16 @@ public class LauncherActivity extends Activity {
     }
 
     private class EsporteIdWebChromeClient extends WebChromeClient {
+        @Override
+        public void onShowCustomView(View view, CustomViewCallback callback) {
+            showCustomFullscreenView(view, callback);
+        }
+
+        @Override
+        public void onHideCustomView() {
+            closeFullscreenOverlay();
+        }
+
         @Override
         public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||

@@ -399,7 +399,6 @@ androidx.core.app.NotificationCompat$Builder:
     public androidx.core.app.NotificationCompat$Builder setAllowSystemGeneratedContextualActions(boolean)
     public androidx.core.app.NotificationCompat$Builder setBadgeIconType(int)
     public androidx.core.app.NotificationCompat$Builder setBubbleMetadata(androidx.core.app.NotificationCompat$BubbleMetadata)
-    public androidx.core.app.NotificationCompat$Builder setCategory(java.lang.String)
     public androidx.core.app.NotificationCompat$Builder setChronometerCountDown(boolean)
     public androidx.core.app.NotificationCompat$Builder setColorized(boolean)
     public androidx.core.app.NotificationCompat$Builder setContent(android.widget.RemoteViews)
@@ -3903,10 +3902,13 @@ com.esporteid.app.R$array
 com.esporteid.app.R$bool
 com.esporteid.app.R$color
 com.esporteid.app.R$drawable:
+    public static int ic_notification_icon
     public static int shortcut_legacy_background
     private void <init>()
 com.esporteid.app.R$integer
-com.esporteid.app.R$mipmap
+com.esporteid.app.R$mipmap:
+    public static int ic_maskable
+    private void <init>()
 com.esporteid.app.R$raw
 com.esporteid.app.R$string
 com.esporteid.app.R$style

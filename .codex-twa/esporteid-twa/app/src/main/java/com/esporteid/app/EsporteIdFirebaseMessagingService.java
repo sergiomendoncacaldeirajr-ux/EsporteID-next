@@ -5,6 +5,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -36,6 +38,7 @@ public class EsporteIdFirebaseMessagingService extends FirebaseMessagingService 
         }
         if (message.getData().containsKey("title")) title = message.getData().get("title");
         if (message.getData().containsKey("body")) body = message.getData().get("body");
+        Bitmap largeIcon = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
 
         String url = message.getData().containsKey("url") ? message.getData().get("url") : "/comunidade#notificacoes";
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://esporteid.com.br" + url));
@@ -47,12 +50,17 @@ public class EsporteIdFirebaseMessagingService extends FirebaseMessagingService 
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, flags);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_notification_icon)
+                .setSmallIcon(R.drawable.ic_notification_small)
+                .setLargeIcon(largeIcon)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
                 .setColor(Color.parseColor("#2563EB"))
                 .setAutoCancel(true)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setShowWhen(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent);
 
@@ -70,6 +78,9 @@ public class EsporteIdFirebaseMessagingService extends FirebaseMessagingService 
                 NotificationManager.IMPORTANCE_HIGH
         );
         channel.setDescription("Notificacoes importantes do EsporteID");
+        channel.enableLights(true);
+        channel.setLightColor(Color.parseColor("#2563EB"));
+        channel.enableVibration(true);
         manager.createNotificationChannel(channel);
     }
 }

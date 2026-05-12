@@ -1,24 +1,40 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { enablePushNotifications, isStandaloneAndroidApp, setAndroidNativePushEnabled } from "@/lib/pwa/push-client";
+import {
+  enablePushNotifications,
+  isNativeAndroidApp,
+  isStandaloneAndroidApp,
+  setAndroidNativePushEnabled,
+} from "@/lib/pwa/push-client";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
+const PLAY_STORE_INSTALL_URL = "https://play.google.com/store/apps/details?id=com.esporteid.app";
+
+function isAndroidBrowser() {
+  if (typeof navigator === "undefined") return false;
+  return /Android/i.test(navigator.userAgent || "") && !isNativeAndroidApp();
+}
+
 export function PwaQuickActions() {
   const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installReady, setInstallReady] = useState(false);
+  const [showPlayInstall, setShowPlayInstall] = useState(false);
   const [pushStatus, setPushStatus] = useState<"idle" | "enabling" | "enabled" | "error">("idle");
   const [pushMsg, setPushMsg] = useState<string | null>(null);
 
   const vapidPublicKey = useMemo(() => String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "").trim(), []);
 
   useEffect(() => {
+    if (isNativeAndroidApp()) return;
+    setShowPlayInstall(isAndroidBrowser());
     const onBeforeInstallPrompt = (ev: Event) => {
       ev.preventDefault();
+      if (isAndroidBrowser()) return;
       setInstallEvt(ev as BeforeInstallPromptEvent);
       setInstallReady(true);
     };
@@ -67,18 +83,29 @@ export function PwaQuickActions() {
 
   return (
     <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={onInstall}
-        disabled={!installReady}
-        className={`rounded-lg px-3 py-1.5 text-[11px] font-bold ${
-          installReady
-            ? "border border-eid-primary-500/35 bg-eid-primary-500/10 text-eid-primary-300"
-            : "cursor-not-allowed border border-[color:var(--eid-border-subtle)] text-eid-text-secondary/70"
-        }`}
-      >
-        Instalar
-      </button>
+      {isNativeAndroidApp() ? null : showPlayInstall ? (
+        <a
+          href={PLAY_STORE_INSTALL_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-lg border border-eid-action-500/35 bg-eid-action-500/10 px-3 py-1.5 text-[11px] font-bold text-eid-action-300"
+        >
+          Instalar pela Play Store
+        </a>
+      ) : (
+        <button
+          type="button"
+          onClick={onInstall}
+          disabled={!installReady}
+          className={`rounded-lg px-3 py-1.5 text-[11px] font-bold ${
+            installReady
+              ? "border border-eid-primary-500/35 bg-eid-primary-500/10 text-eid-primary-300"
+              : "cursor-not-allowed border border-[color:var(--eid-border-subtle)] text-eid-text-secondary/70"
+          }`}
+        >
+          Instalar
+        </button>
+      )}
       <button
         type="button"
         onClick={onEnablePush}

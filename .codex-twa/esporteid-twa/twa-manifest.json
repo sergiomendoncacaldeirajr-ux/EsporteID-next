@@ -21,8 +21,8 @@
     "path": "C:\\secure\\esporteid-keystore\\esporteid-upload.jks",
     "alias": "esporteid"
   },
-  "appVersionName": "7.0.2",
-  "appVersionCode": 10,
+  "appVersionName": "7.0.3",
+  "appVersionCode": 11,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://esporteid.com.br/manifest.webmanifest",
@@ -48,5 +48,5 @@
     "minimal-ui",
     "browser"
   ],
-  "appVersion": "7.0.2"
+  "appVersion": "7.0.3"
 }

@@ -70,7 +70,13 @@ function getPushClientContext() {
 
 export function isStandaloneAndroidApp() {
   if (typeof window === "undefined") return false;
-  return /Android/i.test(navigator.userAgent || "") && getPushClientContext().displayMode === "standalone";
+  const ua = navigator.userAgent || "";
+  return /Android/i.test(ua) && (getPushClientContext().displayMode === "standalone" || isNativeAndroidApp());
+}
+
+export function isNativeAndroidApp() {
+  if (typeof navigator === "undefined") return false;
+  return /EsporteIDAndroidApp\//i.test(navigator.userAgent || "");
 }
 
 export function rememberAndroidFcmToken(token: string): void {
@@ -102,7 +108,7 @@ export async function syncAndroidNativePushToken(): Promise<boolean> {
     body: JSON.stringify({
       token,
       device: navigator.userAgent,
-      appVersion: "7.0.2",
+      appVersion: "7.0.3",
       active: !getAndroidNativePushOptOut(),
     }),
   });
@@ -148,7 +154,7 @@ export async function setAndroidNativePushEnabled(enabled: boolean): Promise<voi
         body: JSON.stringify({
           token,
           device: navigator.userAgent,
-          appVersion: "7.0.2",
+          appVersion: "7.0.3",
           active: enabled,
         }),
       })

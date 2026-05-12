@@ -5,7 +5,7 @@ import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/se
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const token = String(url.searchParams.get("token") ?? "").trim();
-  const appVersion = String(url.searchParams.get("appVersion") ?? "7.0.2").slice(0, 40);
+  const appVersion = String(url.searchParams.get("appVersion") ?? "7.0.3").slice(0, 40);
   const redirectUrl = new URL("/", url.origin);
 
   if (token.length < 20 || token.length > 4096) {

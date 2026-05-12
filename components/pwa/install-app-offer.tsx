@@ -1,12 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Download, ExternalLink, Loader2, MoreVertical, Smartphone, X } from "lucide-react";
-
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-};
+import { Download, ExternalLink, Smartphone, X } from "lucide-react";
+import { isNativeAndroidApp } from "@/lib/pwa/push-client";
 
 const IOS_DISMISS_SESSION_KEY = "eid-ios-add-home-dismissed";
 const INSTALL_OFFER_LAST_SHOWN_DAY_KEY = "eid-install-offer-last-shown-day";
@@ -74,10 +70,7 @@ function IconPlusSquare({ className }: { className?: string }) {
 }
 
 export function InstallAppOffer() {
-  const [installEvt, setInstallEvt] = useState<BeforeInstallPromptEvent | null>(null);
   const [androidOpen, setAndroidOpen] = useState(false);
-  const [androidFallbackReady, setAndroidFallbackReady] = useState(false);
-  const [installStatus, setInstallStatus] = useState<"idle" | "installing" | "dismissed">("idle");
   const [iosOpen, setIosOpen] = useState(false);
   const [iosDismissed, setIosDismissed] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -111,15 +104,13 @@ export function InstallAppOffer() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (isNativeAndroidApp()) return;
     if (isStandaloneMode()) return;
 
     const dismissed = iosDismissed;
 
     const onBeforeInstallPrompt = (ev: Event) => {
       ev.preventDefault();
-      setInstallEvt(ev as BeforeInstallPromptEvent);
-      setAndroidFallbackReady(true);
-      setInstallStatus("idle");
       if (!canShowInstallOfferToday()) return;
       markInstallOfferShownToday();
       setCanShowToday(false);
@@ -128,8 +119,6 @@ export function InstallAppOffer() {
 
     const onAppInstalled = () => {
       setAndroidOpen(false);
-      setInstallEvt(null);
-      setInstallStatus("idle");
     };
 
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
@@ -139,7 +128,6 @@ export function InstallAppOffer() {
      * Em browser o id do timer é `number`; com @types/node, `setTimeout` vira `NodeJS.Timeout` — evitamos o conflito. */
     let iosOpenTimer: number | undefined;
     let androidOpenTimer: number | undefined;
-    let androidFallbackTimer: number | undefined;
     if (isIOSLike() && !dismissed && canShowInstallOfferToday()) {
       iosOpenTimer = window.setTimeout(() => {
         markInstallOfferShownToday();
@@ -152,8 +140,6 @@ export function InstallAppOffer() {
         markInstallOfferShownToday();
         setCanShowToday(false);
         setAndroidOpen(true);
-        setAndroidFallbackReady(false);
-        androidFallbackTimer = window.setTimeout(() => setAndroidFallbackReady(true), 2600);
       }, 900);
     }
 
@@ -162,35 +148,16 @@ export function InstallAppOffer() {
       window.removeEventListener("appinstalled", onAppInstalled);
       if (iosOpenTimer !== undefined) window.clearTimeout(iosOpenTimer);
       if (androidOpenTimer !== undefined) window.clearTimeout(androidOpenTimer);
-      if (androidFallbackTimer !== undefined) window.clearTimeout(androidFallbackTimer);
     };
   }, [iosDismissed]);
 
-  async function onInstallNow() {
-    if (!installEvt) return;
-    setInstallStatus("installing");
-    try {
-      await installEvt.prompt();
-      const choice = await installEvt.userChoice;
-      setInstallEvt(null);
-      if (choice.outcome === "accepted") {
-        setAndroidOpen(false);
-        setInstallStatus("idle");
-      } else {
-        setInstallStatus("dismissed");
-      }
-    } catch {
-      setInstallStatus("dismissed");
-    }
-  }
-
   function closeAndroidPanel() {
     setAndroidOpen(false);
-    setInstallStatus("idle");
   }
 
   const showAndroidModal = androidOpen && isAndroidLike() && !isStandaloneMode();
   const showIosModal = iosOpen && isIOSLike() && !isStandaloneMode();
+  if (isNativeAndroidApp()) return null;
 
   return (
     <>
@@ -211,7 +178,7 @@ export function InstallAppOffer() {
             <p className="mt-4 text-[10px] font-black uppercase tracking-[0.16em] text-eid-primary-300">EsporteID no Android</p>
             <h2 className="mt-2 text-xl font-black text-eid-fg">Instale o app no seu celular</h2>
             <p className="mt-2 text-sm text-eid-text-secondary">
-              Baixe o app oficial pela Play Store. Se preferir, também dá para instalar a versão web pelo navegador.
+              Baixe o app oficial pela Play Store para receber a melhor experiência no Android.
             </p>
             <div className="mt-4 flex flex-col gap-2">
               <a
@@ -224,59 +191,6 @@ export function InstallAppOffer() {
                 Instalar pela Play Store
                 <ExternalLink className="h-3.5 w-3.5" aria-hidden />
               </a>
-              {installEvt ? (
-                <div className="rounded-2xl border border-eid-action-500/25 bg-eid-action-500/10 p-3">
-                  <div className="flex items-start gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-eid-action-500 text-white">
-                      <Download className="h-5 w-5" aria-hidden />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-black text-eid-fg">Instalação disponível</p>
-                      <p className="mt-0.5 text-xs leading-relaxed text-eid-text-secondary">
-                        O Android já liberou a instalação direta do EsporteID neste aparelho.
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={onInstallNow}
-                    disabled={installStatus === "installing"}
-                    className="eid-btn-primary mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-4 py-2 text-center text-sm font-black disabled:cursor-wait disabled:opacity-80"
-                  >
-                    {installStatus === "installing" ? (
-                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    ) : (
-                      <Download className="h-4 w-4" aria-hidden />
-                    )}
-                    {installStatus === "installing" ? "Abrindo instalação..." : "Instalar aplicativo"}
-                  </button>
-                </div>
-              ) : !androidFallbackReady ? (
-                <div className="flex items-center gap-3 rounded-2xl border border-eid-primary-500/25 bg-eid-primary-500/10 p-3 text-sm text-eid-fg">
-                  <Loader2 className="h-5 w-5 shrink-0 animate-spin text-eid-primary-300" aria-hidden />
-                  <div>
-                    <p className="font-bold">Preparando botão de instalação</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-eid-text-secondary">
-                      O Android libera o botão assim que confirma que o app pode ser instalado neste navegador.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 p-3 text-sm text-eid-fg">
-                  <div className="flex items-center gap-2">
-                    {installStatus === "dismissed" ? (
-                      <CheckCircle2 className="h-4 w-4 text-eid-primary-300" aria-hidden />
-                    ) : (
-                      <MoreVertical className="h-4 w-4 text-eid-primary-300" aria-hidden />
-                    )}
-                    <p className="font-bold">Instalação pelo menu do navegador</p>
-                  </div>
-                  <p className="text-xs leading-relaxed text-eid-text-secondary">
-                    Toque no menu de três pontos do Chrome e escolha <strong className="text-eid-fg">Instalar app</strong> ou{" "}
-                    <strong className="text-eid-fg">Adicionar à tela inicial</strong>.
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         </div>

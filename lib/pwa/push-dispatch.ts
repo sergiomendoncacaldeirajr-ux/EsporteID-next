@@ -218,22 +218,15 @@ function buildFcmMessage(n: NotificacaoRow, token: string) {
 
   return {
     token,
-    notification: {
-      title: payload.title || "EsporteID",
-      body: payload.body || "Voce tem uma nova notificacao.",
-    },
     data: {
+      title: String(payload.title || "EsporteID"),
+      body: String(payload.body || "Voce tem uma nova notificacao."),
       url: String(payload.url || "/comunidade#notificacoes"),
       notifId: String(payload.notifId || n.id),
       tipo: String(payload.tipo || n.tipo || "geral"),
     },
     android: {
       priority: "high" as const,
-      notification: {
-        channelId: "esporteid_alerts",
-        icon: "ic_notification_icon",
-        color: "#2563eb",
-      },
     },
   };
 }
