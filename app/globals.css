@@ -668,6 +668,35 @@ header#eid-persistent-topbar textarea {
   user-select: none;
 }
 
+html[data-eid-runtime="android-app"] body.eid-app-shell,
+body.eid-native-android-app.eid-app-shell {
+  --eid-shell-footer-offset: 0px;
+  --eid-shell-footer-offset-measured: 0px;
+  --eid-shell-content-bottom-pad: 0px;
+  padding-bottom: 0 !important;
+}
+
+html[data-eid-runtime="android-app"] {
+  overscroll-behavior-y: none;
+}
+
+html[data-eid-runtime="android-app"] *,
+body.eid-native-android-app * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html[data-eid-runtime="android-app"] #eid-mobile-bottom-nav,
+body.eid-native-android-app #eid-mobile-bottom-nav,
+html[data-eid-runtime="android-app"] #eid-site-footer,
+body.eid-native-android-app #eid-site-footer {
+  display: none !important;
+}
+
+html[data-eid-runtime="android-app"] .eid-surface-panel,
+body.eid-native-android-app .eid-surface-panel {
+  box-shadow: 0 10px 28px -24px rgba(15, 23, 42, 0.6);
+}
+
 /* iOS Safari (mobile): pequeno ganho de escala visual sem afetar Android. */
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 767px) {

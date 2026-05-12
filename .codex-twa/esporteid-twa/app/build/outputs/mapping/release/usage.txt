@@ -926,7 +926,16 @@ androidx.core.util.Pools$Pool
 androidx.core.util.Pools$SimplePool
 androidx.core.util.Pools$SynchronizedPool
 androidx.core.util.Pools
-androidx.core.util.Preconditions
+androidx.core.util.Preconditions:
+    private void <init>()
+    public static void checkArgument(boolean)
+    public static void checkArgument(boolean,java.lang.Object)
+    public static int checkArgumentInRange(int,int,int,java.lang.String)
+    public static int checkArgumentNonnegative(int)
+    public static int checkArgumentNonnegative(int,java.lang.String)
+    public static java.lang.Object checkNotNull(java.lang.Object,java.lang.Object)
+    public static void checkState(boolean)
+    public static void checkState(boolean,java.lang.String)
 androidx.core.util.Predicate
 androidx.core.util.Supplier
 androidx.core.util.TimeUtils
@@ -965,12 +974,20 @@ androidx.core.view.MenuItemCompat
 androidx.core.view.MotionEventCompat
 androidx.core.view.NestedScrollingChild2
 androidx.core.view.NestedScrollingChild3
-androidx.core.view.NestedScrollingChild
-androidx.core.view.NestedScrollingChildHelper
-androidx.core.view.NestedScrollingParent2
-androidx.core.view.NestedScrollingParent3
-androidx.core.view.NestedScrollingParent
-androidx.core.view.NestedScrollingParentHelper
+androidx.core.view.NestedScrollingChild:
+    public abstract boolean dispatchNestedFling(float,float,boolean)
+    public abstract boolean dispatchNestedPreFling(float,float)
+    public abstract boolean dispatchNestedPreScroll(int,int,int[],int[])
+    public abstract boolean dispatchNestedScroll(int,int,int,int,int[])
+    public abstract boolean hasNestedScrollingParent()
+    public abstract void setNestedScrollingEnabled(boolean)
+    public abstract boolean startNestedScroll(int)
+androidx.core.view.NestedScrollingChildHelper:
+    public boolean dispatchNestedScroll(int,int,int,int,int[],int)
+    public void onDetachedFromWindow()
+    public void onStopNestedScroll(android.view.View)
+androidx.core.view.NestedScrollingParent:
+    public abstract int getNestedScrollAxes()
 androidx.core.view.OnApplyWindowInsetsListener
 androidx.core.view.PointerIconCompat
 androidx.core.view.ScaleGestureDetectorCompat
@@ -1047,7 +1064,6 @@ androidx.core.view.ViewCompat:
     private static java.lang.reflect.Field sMinWidthField
     private static boolean sMinWidthFieldFetched
     private static boolean sTempDetachBound
-    private static java.lang.ThreadLocal sThreadLocalRect
     protected void <init>()
     private static androidx.core.view.ViewCompat$AccessibilityViewProperty accessibilityHeadingProperty()
     public static int addAccessibilityAction(android.view.View,java.lang.CharSequence,androidx.core.view.accessibility.AccessibilityViewCommand)
@@ -1061,7 +1077,6 @@ androidx.core.view.ViewCompat:
     public static void cancelDragAndDrop(android.view.View)
     public static int combineMeasuredStates(int,int)
     private static void compatOffsetLeftAndRight(android.view.View,int)
-    private static void compatOffsetTopAndBottom(android.view.View,int)
     public static androidx.core.view.WindowInsetsCompat dispatchApplyWindowInsets(android.view.View,androidx.core.view.WindowInsetsCompat)
     public static void dispatchFinishTemporaryDetach(android.view.View)
     public static boolean dispatchNestedFling(android.view.View,float,float,boolean)
@@ -1088,7 +1103,6 @@ androidx.core.view.ViewCompat:
     public static android.graphics.Rect getClipBounds(android.view.View)
     public static android.view.Display getDisplay(android.view.View)
     public static float getElevation(android.view.View)
-    private static android.graphics.Rect getEmptyTempRect()
     public static boolean getFitsSystemWindows(android.view.View)
     public static int getImportantForAccessibility(android.view.View)
     public static int getImportantForAutofill(android.view.View)
@@ -1139,14 +1153,12 @@ androidx.core.view.ViewCompat:
     public static boolean isKeyboardNavigationCluster(android.view.View)
     public static boolean isLaidOut(android.view.View)
     public static boolean isLayoutDirectionResolved(android.view.View)
-    public static boolean isNestedScrollingEnabled(android.view.View)
     public static boolean isOpaque(android.view.View)
     public static boolean isPaddingRelative(android.view.View)
     public static boolean isScreenReaderFocusable(android.view.View)
     public static void jumpDrawablesToCurrentState(android.view.View)
     public static android.view.View keyboardNavigationClusterSearch(android.view.View,android.view.View,int)
     public static void offsetLeftAndRight(android.view.View,int)
-    public static void offsetTopAndBottom(android.view.View,int)
     public static androidx.core.view.WindowInsetsCompat onApplyWindowInsets(android.view.View,androidx.core.view.WindowInsetsCompat)
     public static void onInitializeAccessibilityEvent(android.view.View,android.view.accessibility.AccessibilityEvent)
     public static void onInitializeAccessibilityNodeInfo(android.view.View,androidx.core.view.accessibility.AccessibilityNodeInfoCompat)
@@ -1172,12 +1184,10 @@ androidx.core.view.ViewCompat:
     public static void setActivated(android.view.View,boolean)
     public static void setAlpha(android.view.View,float)
     public static varargs void setAutofillHints(android.view.View,java.lang.String[])
-    public static void setBackground(android.view.View,android.graphics.drawable.Drawable)
     public static void setBackgroundTintList(android.view.View,android.content.res.ColorStateList)
     public static void setBackgroundTintMode(android.view.View,android.graphics.PorterDuff$Mode)
     public static void setChildrenDrawingOrderEnabled(android.view.ViewGroup,boolean)
     public static void setClipBounds(android.view.View,android.graphics.Rect)
-    public static void setElevation(android.view.View,float)
     public static void setFitsSystemWindows(android.view.View,boolean)
     public static void setFocusedByDefault(android.view.View,boolean)
     public static void setHasTransientState(android.view.View,boolean)
@@ -1216,9 +1226,7 @@ androidx.core.view.ViewCompat:
     public static boolean startDragAndDrop(android.view.View,android.content.ClipData,android.view.View$DragShadowBuilder,java.lang.Object,int)
     public static boolean startNestedScroll(android.view.View,int)
     public static boolean startNestedScroll(android.view.View,int,int)
-    public static void stopNestedScroll(android.view.View)
     public static void stopNestedScroll(android.view.View,int)
-    private static void tickleInvalidationFlag(android.view.View)
     public static void updateDragShadow(android.view.View,android.view.View$DragShadowBuilder)
 androidx.core.view.ViewConfigurationCompat
 androidx.core.view.ViewGroupCompat:
@@ -1231,7 +1239,19 @@ androidx.core.view.ViewGroupCompat:
     public static void setLayoutMode(android.view.ViewGroup,int)
     public static void setMotionEventSplittingEnabled(android.view.ViewGroup,boolean)
     public static void setTransitionGroup(android.view.ViewGroup,boolean)
-androidx.core.view.ViewParentCompat
+androidx.core.view.ViewParentCompat:
+    private static final java.lang.String TAG
+    private static int[] sTempNestedScrollConsumed
+    private void <init>()
+    private static int[] getTempNestedScrollConsumed()
+    public static void notifySubtreeAccessibilityStateChanged(android.view.ViewParent,android.view.View,android.view.View,int)
+    public static void onNestedPreScroll(android.view.ViewParent,android.view.View,int,int,int[])
+    public static void onNestedScroll(android.view.ViewParent,android.view.View,int,int,int,int)
+    public static void onNestedScroll(android.view.ViewParent,android.view.View,int,int,int,int,int)
+    public static void onNestedScrollAccepted(android.view.ViewParent,android.view.View,android.view.View,int)
+    public static boolean onStartNestedScroll(android.view.ViewParent,android.view.View,android.view.View,int)
+    public static void onStopNestedScroll(android.view.ViewParent,android.view.View)
+    public static boolean requestSendAccessibilityEvent(android.view.ViewParent,android.view.View,android.view.accessibility.AccessibilityEvent)
 androidx.core.view.ViewPropertyAnimatorCompat$1
 androidx.core.view.ViewPropertyAnimatorCompat$2
 androidx.core.view.ViewPropertyAnimatorCompat$ViewPropertyAnimatorListenerApi14
@@ -1292,7 +1312,9 @@ androidx.core.widget.EdgeEffectCompat
 androidx.core.widget.ImageViewCompat
 androidx.core.widget.ListPopupWindowCompat
 androidx.core.widget.ListViewAutoScrollHelper
-androidx.core.widget.ListViewCompat
+androidx.core.widget.ListViewCompat:
+    private void <init>()
+    public static void scrollListBy(android.widget.ListView,int)
 androidx.core.widget.NestedScrollView$AccessibilityDelegate
 androidx.core.widget.NestedScrollView$OnScrollChangeListener
 androidx.core.widget.NestedScrollView$SavedState$1
@@ -3503,6 +3525,9 @@ androidx.fragment.app.FragmentTransition:
 androidx.fragment.app.ListFragment$1
 androidx.fragment.app.ListFragment$2
 androidx.fragment.app.ListFragment
+androidx.interpolator.R
+androidx.interpolator.view.animation.FastOutLinearInInterpolator
+androidx.interpolator.view.animation.LinearOutSlowInInterpolator
 androidx.legacy.content.WakefulBroadcastReceiver
 androidx.legacy.coreutils.R$attr
 androidx.legacy.coreutils.R$color
@@ -3720,6 +3745,134 @@ androidx.savedstate.SavedStateRegistry:
     public void unregisterSavedStateProvider(java.lang.String)
 androidx.savedstate.SavedStateRegistryController:
     public void performSave(android.os.Bundle)
+androidx.swiperefreshlayout.R$attr
+androidx.swiperefreshlayout.R$color
+androidx.swiperefreshlayout.R$dimen
+androidx.swiperefreshlayout.R$drawable
+androidx.swiperefreshlayout.R$id
+androidx.swiperefreshlayout.R$integer
+androidx.swiperefreshlayout.R$layout
+androidx.swiperefreshlayout.R$string
+androidx.swiperefreshlayout.R$style
+androidx.swiperefreshlayout.R$styleable:
+    public static int ColorStateListItem_alpha
+    public static int ColorStateListItem_android_alpha
+    public static int ColorStateListItem_android_color
+    public static int FontFamilyFont_android_font
+    public static int FontFamilyFont_android_fontStyle
+    public static int FontFamilyFont_android_fontVariationSettings
+    public static int FontFamilyFont_android_fontWeight
+    public static int FontFamilyFont_android_ttcIndex
+    public static int FontFamilyFont_font
+    public static int FontFamilyFont_fontStyle
+    public static int FontFamilyFont_fontVariationSettings
+    public static int FontFamilyFont_fontWeight
+    public static int FontFamilyFont_ttcIndex
+    public static int FontFamily_fontProviderAuthority
+    public static int FontFamily_fontProviderCerts
+    public static int FontFamily_fontProviderFetchStrategy
+    public static int FontFamily_fontProviderFetchTimeout
+    public static int FontFamily_fontProviderPackage
+    public static int FontFamily_fontProviderQuery
+    public static int GradientColorItem_android_color
+    public static int GradientColorItem_android_offset
+    public static int GradientColor_android_centerColor
+    public static int GradientColor_android_centerX
+    public static int GradientColor_android_centerY
+    public static int GradientColor_android_endColor
+    public static int GradientColor_android_endX
+    public static int GradientColor_android_endY
+    public static int GradientColor_android_gradientRadius
+    public static int GradientColor_android_startColor
+    public static int GradientColor_android_startX
+    public static int GradientColor_android_startY
+    public static int GradientColor_android_tileMode
+    public static int GradientColor_android_type
+    private void <init>()
+androidx.swiperefreshlayout.R
+androidx.swiperefreshlayout.widget.CircleImageView:
+    private static final int DEFAULT_BACKGROUND_COLOR
+    private static final int FILL_SHADOW_COLOR
+    private static final int KEY_SHADOW_COLOR
+    private static final int SHADOW_ELEVATION
+    private static final float SHADOW_RADIUS
+    private static final float X_OFFSET
+    private static final float Y_OFFSET
+    public int getBackgroundColor()
+androidx.swiperefreshlayout.widget.CircularProgressDrawable$ProgressDrawableSize
+androidx.swiperefreshlayout.widget.CircularProgressDrawable$Ring:
+    float getArrowHeight()
+    float getArrowScale()
+    float getArrowWidth()
+    int getBackgroundColor()
+    float getCenterRadius()
+    int[] getColors()
+    float getRotation()
+    boolean getShowArrow()
+    android.graphics.Paint$Cap getStrokeCap()
+    float getStrokeWidth()
+    void setBackgroundColor(int)
+    void setStrokeCap(android.graphics.Paint$Cap)
+androidx.swiperefreshlayout.widget.CircularProgressDrawable:
+    private static final int ANIMATION_DURATION
+    private static final int ARROW_HEIGHT
+    private static final int ARROW_HEIGHT_LARGE
+    private static final int ARROW_WIDTH
+    private static final int ARROW_WIDTH_LARGE
+    private static final float CENTER_RADIUS
+    private static final float CENTER_RADIUS_LARGE
+    private static final float COLOR_CHANGE_OFFSET
+    public static final int DEFAULT
+    private static final float GROUP_FULL_ROTATION
+    public static final int LARGE
+    private static final float MAX_PROGRESS_ARC
+    private static final float MIN_PROGRESS_ARC
+    private static final float RING_ROTATION
+    private static final float SHRINK_OFFSET
+    private static final float STROKE_WIDTH
+    private static final float STROKE_WIDTH_LARGE
+    public boolean getArrowEnabled()
+    public float getArrowHeight()
+    public float getArrowScale()
+    public float getArrowWidth()
+    public int getBackgroundColor()
+    public float getCenterRadius()
+    public int[] getColorSchemeColors()
+    public float getEndTrim()
+    public float getProgressRotation()
+    private float getRotation()
+    public float getStartTrim()
+    public android.graphics.Paint$Cap getStrokeCap()
+    public float getStrokeWidth()
+    public void setArrowDimensions(float,float)
+    public void setBackgroundColor(int)
+    public void setCenterRadius(float)
+    public void setStrokeCap(android.graphics.Paint$Cap)
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout:
+    private static final int ALPHA_ANIMATION_DURATION
+    private static final int ANIMATE_TO_START_DURATION
+    private static final int ANIMATE_TO_TRIGGER_DURATION
+    static final int CIRCLE_DIAMETER
+    static final int CIRCLE_DIAMETER_LARGE
+    private static final float DECELERATE_INTERPOLATION_FACTOR
+    public static final int DEFAULT
+    private static final int DEFAULT_CIRCLE_TARGET
+    public static final int DEFAULT_SLINGSHOT_DISTANCE
+    private static final float DRAG_RATE
+    private static final int INVALID_POINTER
+    public static final int LARGE
+    private static final int MAX_ALPHA
+    private static final float MAX_PROGRESS_ANGLE
+    private static final int SCALE_DOWN_DURATION
+    private static final int STARTING_PROGRESS_ALPHA
+    public boolean dispatchNestedPreScroll(int,int,int[],int[],int)
+    public boolean dispatchNestedScroll(int,int,int,int,int[],int)
+    public boolean hasNestedScrollingParent(int)
+    public boolean isRefreshing()
+    public void setProgressViewEndTarget(boolean,int)
+    public void setProgressViewOffset(boolean,int,int)
+    public boolean startNestedScroll(int,int)
+    public void stopNestedScroll(int)
 androidx.versionedparcelable.CustomVersionedParcelable:
     public void onPostParceling()
     public void onPreParceling(boolean)
@@ -3898,17 +4051,18 @@ com.esporteid.app.LauncherActivity:
     private static final int REQUEST_POST_NOTIFICATIONS
     private static final java.lang.String TRUSTED_HOST
     private static final java.lang.String TRUSTED_WWW_HOST
+    private android.widget.TextView createControlButton(java.lang.String)
+    private android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable)
+    private static synthetic void lambda$createFullscreenControls$14(java.lang.Runnable,android.view.View)
+    private static synthetic void lambda$createFullscreenControls$15(java.lang.Runnable,android.view.View)
 com.esporteid.app.R$array
 com.esporteid.app.R$bool
 com.esporteid.app.R$color
 com.esporteid.app.R$drawable:
-    public static int ic_notification_icon
     public static int shortcut_legacy_background
     private void <init>()
 com.esporteid.app.R$integer
-com.esporteid.app.R$mipmap:
-    public static int ic_maskable
-    private void <init>()
+com.esporteid.app.R$mipmap
 com.esporteid.app.R$raw
 com.esporteid.app.R$string
 com.esporteid.app.R$style
@@ -13415,7 +13569,8 @@ androidx.concurrent.futures.AbstractResolvableFuture$$InternalSyntheticThrowCCEI
 androidx.concurrent.futures.AbstractResolvableFuture$SetFuture
 androidx.concurrent.futures.AbstractResolvableFuture:
     static java.lang.Object getFutureValue(com.google.common.util.concurrent.ListenableFuture)
-androidx.core.R$id
+androidx.core.R$id:
+    public static int tag_transition_group
 androidx.core.app.CoreComponentFactory$$InternalSyntheticThrowCCEIfNotNull$12$28d6d52be828bd520f37653069cdb0fd59ddc413967dd43deec606fddf5e864e$0
 androidx.core.app.CoreComponentFactory$CompatWrapped
 androidx.core.app.NotificationCompat$Action:
@@ -13460,12 +13615,17 @@ androidx.core.content.ContextCompat:
 androidx.core.util.DebugUtils
 androidx.core.util.LogWriter
 androidx.core.view.LayoutInflaterCompat
+androidx.core.view.NestedScrollingChild
+androidx.core.view.NestedScrollingParent
 androidx.core.view.OneShotPreDrawListener
-androidx.core.view.ViewCompat$4$$InternalSyntheticApiModelOutline$1$9674492d628439082a7c87773fa4b2318fe747f131cc185bae2231f0395d78d7$0
-androidx.core.view.ViewCompat$4
-androidx.core.view.ViewCompat$AccessibilityPaneVisibilityManager
-androidx.core.view.ViewCompat$AccessibilityViewProperty
-androidx.core.view.ViewCompat
+androidx.core.view.ViewCompat:
+    private static java.lang.ThreadLocal sThreadLocalRect
+    private static java.util.WeakHashMap sTransitionNameMap
+    private static void compatOffsetTopAndBottom(android.view.View,int)
+    private static android.graphics.Rect getEmptyTempRect()
+    public static java.lang.String getTransitionName(android.view.View)
+    public static void setTransitionName(android.view.View,java.lang.String)
+    private static void tickleInvalidationFlag(android.view.View)
 androidx.core.view.ViewGroupCompat
 androidx.datastore.preferences.core.Preferences$Pair:
     public abstract androidx.datastore.preferences.core.Preferences$Key getKey$datastore_preferences_core_release()
@@ -13964,6 +14124,10 @@ androidx.savedstate.SavedStateRegistry$AutoRecreated
 androidx.savedstate.SavedStateRegistry
 androidx.savedstate.SavedStateRegistryController
 androidx.savedstate.SavedStateRegistryOwner
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout$OnChildScrollUpCallback:
+    public abstract boolean canChildScrollUp(androidx.swiperefreshlayout.widget.SwipeRefreshLayout,android.view.View)
+androidx.swiperefreshlayout.widget.SwipeRefreshLayout:
+    private androidx.swiperefreshlayout.widget.SwipeRefreshLayout$OnChildScrollUpCallback mChildScrollUpCallback
 com.google.android.datatransport.runtime.ProtoEncoderDoNotUse:
     public abstract com.google.android.datatransport.runtime.firebase.transport.ClientMetrics getClientMetrics()
 com.google.android.datatransport.runtime.dagger.internal.DoubleCheck:

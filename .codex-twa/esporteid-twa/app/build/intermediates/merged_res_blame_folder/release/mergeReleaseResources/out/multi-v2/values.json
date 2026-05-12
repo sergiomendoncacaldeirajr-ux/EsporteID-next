@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.esporteid.app-mergeReleaseResources-12:/values/values.xml",
+            "outputFile": "com.esporteid.app-mergeReleaseResources-13:/values/values.xml",
             "map": [
                 {
                     "source": "C:\\Users\\Sérgio\\.gradle\\caches\\8.11.1\\transforms\\c528c51351c89850b5d06f7d1f095825\\transformed\\core-1.2.0\\res\\values\\values.xml",
@@ -162,6 +162,25 @@
                         "startOffsets": "1850",
                         "endColumns": "53",
                         "endOffsets": "1899"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\Sérgio\\.gradle\\caches\\8.11.1\\transforms\\9f44303ba7534fd19bd0b20e5da3e9e7\\transformed\\swiperefreshlayout-1.1.0\\res\\values\\values.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "5",
+                        "endColumns": "24",
+                        "endOffsets": "287"
+                    },
+                    "to": {
+                        "startLines": "319",
+                        "startColumns": "4",
+                        "startOffsets": "16238",
+                        "endLines": "322",
+                        "endColumns": "24",
+                        "endOffsets": "16404"
                     }
                 }
             ]

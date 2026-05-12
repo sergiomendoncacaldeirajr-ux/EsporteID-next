@@ -7,6 +7,7 @@ import { getContextHomeHref, type ActiveAppContext } from "@/lib/auth/active-con
 import { createClient } from "@/lib/supabase/client";
 import { partidaRowTemResultadoParaRevisaoOponente } from "@/lib/agenda/partidas-usuario";
 import { userMustActGestaoRankingCancel } from "@/lib/notificacoes/gestao-ranking-cancel";
+import { isNativeAndroidApp } from "@/lib/pwa/push-client";
 import type { ReactNode } from "react";
 
 /* ── Cores reativas ao tema ── */
@@ -123,6 +124,11 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const [socialBadge, setSocialBadge] = useState(0);
   const pendingHrefRef = useRef<string | null>(null);
   const releaseTimerRef = useRef<number | undefined>(undefined);
+  const [nativeAndroidApp, setNativeAndroidApp] = useState(false);
+
+  useEffect(() => {
+    setNativeAndroidApp(isNativeAndroidApp());
+  }, []);
 
   const onAuthPage = AUTH_PATH_PREFIXES.some((p) =>
     p.endsWith("/") ? pathname.startsWith(p) : pathname === p || pathname.startsWith(p + "/")
@@ -527,6 +533,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [resolvedUserId, router]);
+
+  if (nativeAndroidApp) return null;
 
   if (!resolvedUserId) return null;
 

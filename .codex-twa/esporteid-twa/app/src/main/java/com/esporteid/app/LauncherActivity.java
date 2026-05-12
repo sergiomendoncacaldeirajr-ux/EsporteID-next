@@ -7,12 +7,16 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -22,6 +26,7 @@ import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -29,13 +34,16 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class LauncherActivity extends Activity {
     private static final String HOME_URL = "https://esporteid.com.br/";
     private static final String TRUSTED_HOST = "esporteid.com.br";
     private static final String TRUSTED_WWW_HOST = "www.esporteid.com.br";
-    private static final String APP_VERSION = "7.0.3";
+    private static final String APP_VERSION = "7.0.4";
     private static final int REQUEST_POST_NOTIFICATIONS = 7001;
     private static final int REQUEST_LOCATION = 7002;
     private static final int REQUEST_FILE_CHOOSER = 7003;
@@ -43,12 +51,22 @@ public class LauncherActivity extends Activity {
     private static final String KEY_PERMISSION_ASKED = "notification_permission_asked";
 
     private FrameLayout rootLayout;
+    private FrameLayout webFrame;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private WebView webView;
     private WebView fullscreenWebView;
     private FrameLayout fullscreenContainer;
     private View customFullscreenView;
     private WebChromeClient.CustomViewCallback customViewCallback;
     private ImageView splashLogo;
+    private FrameLayout errorOverlay;
+    private LinearLayout nativeNavBar;
+    private View loadingBar;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private boolean mainPageLoading;
+    private final Runnable loadTimeoutRunnable = () -> {
+        if (mainPageLoading) showErrorOverlay();
+    };
     private String pendingGeolocationOrigin;
     private GeolocationPermissions.Callback pendingGeolocationCallback;
     private ValueCallback<Uri[]> filePathCallback;
@@ -120,6 +138,7 @@ public class LauncherActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        mainHandler.removeCallbacks(loadTimeoutRunnable);
         closeFullscreenOverlay();
         if (webView != null) {
             webView.destroy();
@@ -152,13 +171,40 @@ public class LauncherActivity extends Activity {
         rootLayout = new FrameLayout(this);
         rootLayout.setBackgroundColor(Color.parseColor("#0B0F14"));
 
-        webView = new WebView(this);
-        webView.setAlpha(0f);
-        webView.setBackgroundColor(Color.parseColor("#0B0F14"));
-        webView.setLayoutParams(new FrameLayout.LayoutParams(
+        LinearLayout appShell = new LinearLayout(this);
+        appShell.setOrientation(LinearLayout.VERTICAL);
+        appShell.setBackgroundColor(Color.parseColor("#0B0F14"));
+        appShell.setLayoutParams(new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
+
+        webFrame = new FrameLayout(this);
+        webFrame.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                0,
+                1f
+        ));
+
+        webView = new WebView(this);
+        webView.setAlpha(0f);
+        webView.setBackgroundColor(Color.parseColor("#0B0F14"));
+        webView.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        webView.setLayoutParams(new SwipeRefreshLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+
+        swipeRefreshLayout = new SwipeRefreshLayout(this);
+        swipeRefreshLayout.setColorSchemeColors(Color.parseColor("#2563EB"), Color.parseColor("#F97316"));
+        swipeRefreshLayout.setProgressBackgroundColorSchemeColor(Color.parseColor("#111827"));
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            if (webView != null) {
+                webView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+                webView.reload();
+            }
+        });
+        swipeRefreshLayout.addView(webView);
 
         splashLogo = new ImageView(this);
         splashLogo.setImageResource(R.drawable.splash);
@@ -168,10 +214,161 @@ public class LauncherActivity extends Activity {
         logoParams.gravity = Gravity.CENTER;
         splashLogo.setLayoutParams(logoParams);
 
+        errorOverlay = createErrorOverlay();
+        loadingBar = createLoadingBar();
+        nativeNavBar = createNativeNavBar();
+
         configureWebViewSettings();
-        rootLayout.addView(webView);
-        rootLayout.addView(splashLogo);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            webView.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> updateSwipeRefreshEnabled());
+        }
+
+        webFrame.addView(swipeRefreshLayout);
+        webFrame.addView(errorOverlay);
+        webFrame.addView(loadingBar);
+        webFrame.addView(splashLogo);
+        appShell.addView(webFrame);
+        appShell.addView(nativeNavBar);
+        rootLayout.addView(appShell);
         setContentView(rootLayout);
+    }
+
+    private LinearLayout createNativeNavBar() {
+        LinearLayout nav = new LinearLayout(this);
+        nav.setOrientation(LinearLayout.HORIZONTAL);
+        nav.setGravity(Gravity.CENTER);
+        nav.setPadding(dp(8), dp(6), dp(8), dp(8));
+        nav.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(66)
+        ));
+        GradientDrawable background = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] { Color.parseColor("#111827"), Color.parseColor("#0B0F14") }
+        );
+        background.setStroke(dp(1), Color.parseColor("#243247"));
+        nav.setBackground(background);
+
+        addNativeNavItem(nav, "Inicio", "/dashboard");
+        addNativeNavItem(nav, "Agenda", "/agenda");
+        addNativeNavItem(nav, "Comunidade", "/comunidade");
+        addNativeNavItem(nav, "Perfil", "/perfil");
+        return nav;
+    }
+
+    private void addNativeNavItem(LinearLayout nav, String label, String path) {
+        TextView item = new TextView(this);
+        item.setText(label);
+        item.setTag(path);
+        item.setGravity(Gravity.CENTER);
+        item.setTextColor(Color.parseColor("#94A3B8"));
+        item.setTextSize(11);
+        item.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        item.setClickable(true);
+        item.setMinHeight(dp(46));
+        item.setOnClickListener((v) -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            navigateNative(path);
+        });
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+        params.setMargins(dp(3), 0, dp(3), 0);
+        item.setLayoutParams(params);
+        nav.addView(item);
+    }
+
+    private FrameLayout createErrorOverlay() {
+        FrameLayout overlay = new FrameLayout(this);
+        overlay.setVisibility(View.GONE);
+        overlay.setClickable(true);
+        overlay.setBackgroundColor(Color.parseColor("#0B0F14"));
+        overlay.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setGravity(Gravity.CENTER);
+        panel.setPadding(dp(28), dp(28), dp(28), dp(28));
+        FrameLayout.LayoutParams panelParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        panelParams.gravity = Gravity.CENTER;
+        panel.setLayoutParams(panelParams);
+
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.splash);
+        logo.setAdjustViewBounds(true);
+        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(dp(112), dp(112));
+        logoParams.gravity = Gravity.CENTER_HORIZONTAL;
+        logo.setLayoutParams(logoParams);
+
+        TextView title = new TextView(this);
+        title.setText("Nao foi possivel carregar");
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(20);
+        title.setGravity(Gravity.CENTER);
+        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        title.setPadding(0, dp(16), 0, dp(6));
+
+        TextView message = new TextView(this);
+        message.setText("Verifique sua conexao e tente novamente.");
+        message.setTextColor(Color.parseColor("#B6C2D4"));
+        message.setTextSize(14);
+        message.setGravity(Gravity.CENTER);
+        message.setPadding(dp(18), 0, dp(18), dp(20));
+
+        TextView retry = createRetryButton();
+        retry.setOnClickListener((v) -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            hideErrorOverlay();
+            if (webView != null) webView.reload();
+        });
+
+        panel.addView(logo);
+        panel.addView(title);
+        panel.addView(message);
+        panel.addView(retry);
+        overlay.addView(panel);
+        return overlay;
+    }
+
+    private TextView createRetryButton() {
+        TextView button = new TextView(this);
+        button.setText("Tentar de novo");
+        button.setTextColor(Color.WHITE);
+        button.setTextSize(14);
+        button.setGravity(Gravity.CENTER);
+        button.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        button.setClickable(true);
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.RECTANGLE);
+        background.setCornerRadius(dp(18));
+        background.setColor(Color.parseColor("#2563EB"));
+        background.setStroke(dp(1), Color.parseColor("#4F8CFF"));
+        button.setBackground(background);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp(174), dp(44));
+        params.gravity = Gravity.CENTER_HORIZONTAL;
+        button.setLayoutParams(params);
+        return button;
+    }
+
+    private View createLoadingBar() {
+        View bar = new View(this);
+        GradientDrawable background = new GradientDrawable(
+                GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[] { Color.parseColor("#2563EB"), Color.parseColor("#F97316") }
+        );
+        background.setCornerRadius(dp(2));
+        bar.setBackground(background);
+        bar.setAlpha(0f);
+        bar.setVisibility(View.GONE);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(0, dp(3));
+        params.gravity = Gravity.TOP | Gravity.START;
+        bar.setLayoutParams(params);
+        return bar;
     }
 
     private void configureWebViewSettings() {
@@ -218,6 +415,126 @@ public class LauncherActivity extends Activity {
         if (webView == null || webView.getUrl() == null) return false;
         Uri uri = Uri.parse(webView.getUrl());
         return isTrustedUri(uri);
+    }
+
+    private void navigateNative(String path) {
+        if (webView == null) return;
+        if (fullscreenContainer != null) closeFullscreenOverlay();
+        String cleanPath = path == null || path.trim().isEmpty() ? "/dashboard" : path.trim();
+        String normalized = cleanPath.startsWith("/") ? cleanPath.substring(1) : cleanPath;
+        webView.loadUrl(HOME_URL + normalized);
+    }
+
+    private void openExternalUrl(String url) {
+        if (url == null || url.trim().isEmpty()) return;
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (ActivityNotFoundException ignored) {
+            /* ignore */
+        }
+    }
+
+    private void updateNativeNavSelection(String url) {
+        if (nativeNavBar == null || url == null) return;
+        String path = "/";
+        try {
+            path = Uri.parse(url).getPath();
+        } catch (Exception ignored) {
+            path = "/";
+        }
+        if (path == null || path.trim().isEmpty()) path = "/";
+
+        for (int i = 0; i < nativeNavBar.getChildCount(); i += 1) {
+            View child = nativeNavBar.getChildAt(i);
+            if (!(child instanceof TextView)) continue;
+            TextView item = (TextView) child;
+            String itemPath = String.valueOf(item.getTag());
+            boolean active = path.equals(itemPath) || path.startsWith(itemPath + "/");
+            if ("/dashboard".equals(itemPath)) {
+                active = path.equals("/") || path.equals("/dashboard") || path.equals("/buscar");
+            }
+            item.setTextColor(active ? Color.WHITE : Color.parseColor("#94A3B8"));
+            item.setBackground(active ? activeNavBackground() : null);
+        }
+    }
+
+    private GradientDrawable activeNavBackground() {
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.RECTANGLE);
+        background.setCornerRadius(dp(18));
+        background.setColor(Color.parseColor("#1E3A8A"));
+        background.setStroke(dp(1), Color.parseColor("#3457C8"));
+        return background;
+    }
+
+    private void injectNativeAppRuntime(WebView target) {
+        if (target == null) return;
+        String script =
+                "(function(){try{" +
+                "document.documentElement.dataset.eidRuntime='android-app';" +
+                "document.body.classList.add('eid-native-android-app');" +
+                "if(!document.getElementById('eid-native-android-style')){var s=document.createElement('style');" +
+                "s.id='eid-native-android-style';" +
+                "s.textContent='body.eid-app-shell{padding-bottom:0!important;--eid-shell-footer-offset:0px!important;--eid-shell-footer-offset-measured:0px!important;--eid-shell-content-bottom-pad:0px!important}#eid-mobile-bottom-nav,#eid-site-footer{display:none!important}';" +
+                "document.head.appendChild(s);}" +
+                "window.dispatchEvent(new Event('eid:native-app-ready'));" +
+                "}catch(e){}})();";
+        target.evaluateJavascript(script, null);
+    }
+
+    private void updateSwipeRefreshEnabled() {
+        if (swipeRefreshLayout == null || webView == null) return;
+        swipeRefreshLayout.setEnabled(fullscreenContainer == null && webView.getScrollY() <= 0);
+    }
+
+    private void showErrorOverlay() {
+        if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
+        mainPageLoading = false;
+        mainHandler.removeCallbacks(loadTimeoutRunnable);
+        updateLoadingProgress(100);
+        if (errorOverlay == null) return;
+        errorOverlay.setAlpha(0f);
+        errorOverlay.setVisibility(View.VISIBLE);
+        errorOverlay.animate().alpha(1f).setDuration(160).start();
+    }
+
+    private void hideErrorOverlay() {
+        if (errorOverlay == null || errorOverlay.getVisibility() != View.VISIBLE) return;
+        errorOverlay.setVisibility(View.GONE);
+    }
+
+    private void startNativeLoading() {
+        mainPageLoading = true;
+        mainHandler.removeCallbacks(loadTimeoutRunnable);
+        mainHandler.postDelayed(loadTimeoutRunnable, 25000);
+        updateLoadingProgress(8);
+    }
+
+    private void finishNativeLoading() {
+        mainPageLoading = false;
+        mainHandler.removeCallbacks(loadTimeoutRunnable);
+        updateLoadingProgress(100);
+    }
+
+    private void updateLoadingProgress(int progress) {
+        if (loadingBar == null || webFrame == null) return;
+        int width = webFrame.getWidth();
+        if (width <= 0) width = getResources().getDisplayMetrics().widthPixels;
+        int safeProgress = Math.max(6, Math.min(progress, 100));
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) loadingBar.getLayoutParams();
+        params.width = Math.max(dp(42), Math.round(width * (safeProgress / 100f)));
+        loadingBar.setLayoutParams(params);
+
+        if (progress >= 100) {
+            loadingBar.animate().alpha(0f).setDuration(170).withEndAction(() -> {
+                if (loadingBar != null) loadingBar.setVisibility(View.GONE);
+            }).start();
+            return;
+        }
+
+        loadingBar.animate().cancel();
+        loadingBar.setVisibility(View.VISIBLE);
+        loadingBar.setAlpha(1f);
     }
 
     private void registerTokenInWebSession(String token) {
@@ -278,15 +595,21 @@ public class LauncherActivity extends Activity {
         ));
         configureSecondaryWebView(fullscreenWebView);
         fullscreenContainer.addView(fullscreenWebView);
-        fullscreenContainer.addView(createFullscreenControls(
+        fullscreenContainer.addView(createFullscreenToolbar(
+                "Link externo",
                 () -> {
                     if (fullscreenWebView != null && fullscreenWebView.canGoBack()) fullscreenWebView.goBack();
                     else closeFullscreenOverlay();
                 },
+                () -> {
+                    if (fullscreenWebView != null) fullscreenWebView.reload();
+                },
+                () -> openExternalUrl(fullscreenWebView != null && fullscreenWebView.getUrl() != null ? fullscreenWebView.getUrl() : url),
                 this::closeFullscreenOverlay
         ));
         rootLayout.addView(fullscreenContainer);
         setImmersiveMode(true);
+        updateSwipeRefreshEnabled();
         fullscreenWebView.loadUrl(url);
     }
 
@@ -304,10 +627,114 @@ public class LauncherActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
-        fullscreenContainer.addView(createFullscreenControls(this::closeFullscreenOverlay, this::closeFullscreenOverlay));
+        fullscreenContainer.addView(createFullscreenToolbar(
+                "Tela cheia",
+                this::closeFullscreenOverlay,
+                null,
+                null,
+                this::closeFullscreenOverlay
+        ));
         rootLayout.addView(fullscreenContainer);
         webView.setVisibility(View.INVISIBLE);
         setImmersiveMode(true);
+        updateSwipeRefreshEnabled();
+    }
+
+    private View createFullscreenToolbar(String title, Runnable onBack, Runnable onRefresh, Runnable onOpenExternal, Runnable onClose) {
+        FrameLayout controls = new FrameLayout(this);
+        controls.setClickable(false);
+        controls.setLayoutParams(new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+
+        LinearLayout bar = new LinearLayout(this);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setClickable(true);
+        bar.setPadding(dp(10), dp(8), dp(10), dp(8));
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.RECTANGLE);
+        background.setColor(Color.parseColor("#EE0B0F14"));
+        background.setStroke(dp(1), Color.parseColor("#263A56"));
+        background.setCornerRadius(dp(22));
+        bar.setBackground(background);
+        FrameLayout.LayoutParams barParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(56)
+        );
+        barParams.gravity = Gravity.TOP | Gravity.START;
+        barParams.setMargins(dp(10), dp(14), dp(10), 0);
+        bar.setLayoutParams(barParams);
+
+        TextView back = createToolbarButton("< Voltar");
+        back.setOnClickListener((v) -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            onBack.run();
+        });
+        bar.addView(back);
+
+        TextView label = new TextView(this);
+        label.setText(title);
+        label.setTextColor(Color.parseColor("#DCE7F7"));
+        label.setTextSize(12);
+        label.setGravity(Gravity.CENTER);
+        label.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        label.setSingleLine(true);
+        label.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f));
+        bar.addView(label);
+
+        if (onRefresh != null) {
+            TextView refresh = createToolbarButton("Atualizar");
+            refresh.setOnClickListener((v) -> {
+                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+                onRefresh.run();
+            });
+            bar.addView(refresh);
+        }
+
+        if (onOpenExternal != null) {
+            TextView open = createToolbarButton("Abrir");
+            open.setOnClickListener((v) -> {
+                v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+                onOpenExternal.run();
+            });
+            bar.addView(open);
+        }
+
+        TextView close = createToolbarButton("Fechar");
+        close.setOnClickListener((v) -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            onClose.run();
+        });
+        bar.addView(close);
+
+        controls.addView(bar);
+        return controls;
+    }
+
+    private TextView createToolbarButton(String text) {
+        TextView button = new TextView(this);
+        button.setText(text);
+        button.setTextColor(Color.WHITE);
+        button.setTextSize(11);
+        button.setGravity(Gravity.CENTER);
+        button.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        button.setClickable(true);
+        button.setMinWidth(dp(54));
+        GradientDrawable background = new GradientDrawable();
+        background.setShape(GradientDrawable.RECTANGLE);
+        background.setCornerRadius(dp(16));
+        background.setColor(Color.parseColor("#263A56"));
+        background.setStroke(dp(1), Color.parseColor("#35527A"));
+        button.setBackground(background);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                dp(34)
+        );
+        params.setMargins(dp(3), 0, dp(3), 0);
+        button.setLayoutParams(params);
+        return button;
     }
 
     private View createFullscreenControls(Runnable onBack, Runnable onClose) {
@@ -323,14 +750,20 @@ public class LauncherActivity extends Activity {
         backParams.gravity = Gravity.TOP | Gravity.START;
         backParams.setMargins(dp(14), dp(22), 0, 0);
         back.setLayoutParams(backParams);
-        back.setOnClickListener((v) -> onBack.run());
+        back.setOnClickListener((v) -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            onBack.run();
+        });
 
         TextView close = createControlButton("X");
         FrameLayout.LayoutParams closeParams = new FrameLayout.LayoutParams(dp(44), dp(44));
         closeParams.gravity = Gravity.TOP | Gravity.END;
         closeParams.setMargins(0, dp(22), dp(14), 0);
         close.setLayoutParams(closeParams);
-        close.setOnClickListener((v) -> onClose.run());
+        close.setOnClickListener((v) -> {
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+            onClose.run();
+        });
 
         controls.addView(back);
         controls.addView(close);
@@ -390,6 +823,7 @@ public class LauncherActivity extends Activity {
         }
         if (webView != null) webView.setVisibility(View.VISIBLE);
         setImmersiveMode(false);
+        updateSwipeRefreshEnabled();
     }
 
     private void setImmersiveMode(boolean enabled) {
@@ -417,6 +851,14 @@ public class LauncherActivity extends Activity {
 
     private class EsporteIdWebViewClient extends WebViewClient {
         @Override
+        public void onPageStarted(WebView view, String url, Bitmap favicon) {
+            super.onPageStarted(view, url, favicon);
+            startNativeLoading();
+            hideErrorOverlay();
+            updateNativeNavSelection(url);
+        }
+
+        @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             Uri uri = request.getUrl();
             if (isHttpUrl(uri)) {
@@ -436,6 +878,12 @@ public class LauncherActivity extends Activity {
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
             CookieManager.getInstance().flush();
+            if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
+            finishNativeLoading();
+            hideErrorOverlay();
+            injectNativeAppRuntime(view);
+            updateNativeNavSelection(url);
+            updateSwipeRefreshEnabled();
             String token = FcmTokenBridge.getToken(LauncherActivity.this);
             registerTokenInWebSession(token);
             webView.animate().alpha(1f).setDuration(180).start();
@@ -445,12 +893,27 @@ public class LauncherActivity extends Activity {
         }
 
         @Override
+        public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+            super.onReceivedError(view, request, error);
+            if (request != null && request.isForMainFrame()) showErrorOverlay();
+        }
+
+        @Override
         public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
             super.onReceivedHttpError(view, request, errorResponse);
+            if (request != null && request.isForMainFrame() && errorResponse != null && errorResponse.getStatusCode() >= 500) {
+                showErrorOverlay();
+            }
         }
     }
 
     private class EsporteIdWebChromeClient extends WebChromeClient {
+        @Override
+        public void onProgressChanged(WebView view, int newProgress) {
+            super.onProgressChanged(view, newProgress);
+            if (view == webView) updateLoadingProgress(newProgress);
+        }
+
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
             showCustomFullscreenView(view, callback);

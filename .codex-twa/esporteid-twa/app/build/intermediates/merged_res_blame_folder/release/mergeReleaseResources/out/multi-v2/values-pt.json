@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.esporteid.app-mergeReleaseResources-12:/values-pt/values-pt.xml",
+            "outputFile": "com.esporteid.app-mergeReleaseResources-13:/values-pt/values-pt.xml",
             "map": [
                 {
                     "source": "C:\\Users\\Sérgio\\.gradle\\caches\\8.11.1\\transforms\\c528c51351c89850b5d06f7d1f095825\\transformed\\core-1.2.0\\res\\values-pt\\values-pt.xml",

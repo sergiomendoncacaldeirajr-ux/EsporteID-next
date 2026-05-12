@@ -68,8 +68,8 @@ android {
         applicationId "com.esporteid.app"
         minSdkVersion 23
         targetSdkVersion 35
-        versionCode 11
-        versionName "7.0.3"
+        versionCode 12
+        versionName "7.0.4"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
@@ -234,5 +234,6 @@ dependencies {
     
         implementation platform('com.google.firebase:firebase-bom:34.7.0')
         implementation 'com.google.firebase:firebase-messaging'
+        implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     
 }

@@ -13,6 +13,7 @@ import { VisitorThemeToggleFloat } from "@/components/shell/visitor-theme-toggle
 import { GlobalScrollReset } from "@/components/system/global-scroll-reset";
 import { HashTargetHighlight } from "@/components/system/hash-target-highlight";
 import { InstallAppOfferDynamic } from "@/components/pwa/install-app-offer-dynamic";
+import { NativeAppRuntime } from "@/components/pwa/native-app-runtime";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { RealtimePageRefresh } from "@/components/pwa/realtime-page-refresh";
 import { ThemeColorSync } from "@/components/pwa/theme-color-sync";
@@ -236,6 +237,7 @@ export default async function RootLayout({
         className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}
       >
         <EidThemeHydration />
+        <NativeAppRuntime />
         <PwaBootstrap />
         <ThemeColorSync />
         <InstallAppOfferDynamic />

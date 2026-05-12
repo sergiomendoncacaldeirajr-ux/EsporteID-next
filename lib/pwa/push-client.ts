@@ -108,7 +108,7 @@ export async function syncAndroidNativePushToken(): Promise<boolean> {
     body: JSON.stringify({
       token,
       device: navigator.userAgent,
-      appVersion: "7.0.3",
+      appVersion: "7.0.4",
       active: !getAndroidNativePushOptOut(),
     }),
   });
@@ -154,7 +154,7 @@ export async function setAndroidNativePushEnabled(enabled: boolean): Promise<voi
         body: JSON.stringify({
           token,
           device: navigator.userAgent,
-          appVersion: "7.0.3",
+          appVersion: "7.0.4",
           active: enabled,
         }),
       })

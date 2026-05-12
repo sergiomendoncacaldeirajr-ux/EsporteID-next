@@ -18,6 +18,7 @@ attr fontWeight
 attr imageAspectRatio
 attr imageAspectRatioAdjust
 attr scopeUris
+attr swipeRefreshLayoutProgressSpinnerBackgroundColor
 attr ttcIndex
 bool enableNotification
 bool enableSiteSettingsShortcut
@@ -245,5 +246,6 @@ styleable GradientColor android_startColor android_endColor android_type android
 styleable GradientColorItem android_color android_offset
 styleable LoadingImageView circleCrop imageAspectRatio imageAspectRatioAdjust
 styleable SignInButton buttonSize colorScheme scopeUris
+styleable SwipeRefreshLayout swipeRefreshLayoutProgressSpinnerBackgroundColor
 xml filepaths
 xml shortcuts
