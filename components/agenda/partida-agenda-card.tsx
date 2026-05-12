@@ -18,6 +18,8 @@ import { EidCancelButton } from "@/components/ui/eid-cancel-button";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import type { PartidaAgendaFormacaoLado } from "@/lib/agenda/partida-formacao-lado";
 import { iniciaisFormacaoNome } from "@/lib/comunidade/iniciais-formacao";
+import { isNativeAndroidApp } from "@/lib/pwa/push-client";
+import { CalendarPlus } from "lucide-react";
 
 export type { PartidaAgendaFormacaoLado } from "@/lib/agenda/partida-formacao-lado";
 
@@ -60,6 +62,14 @@ type Props = {
   /** Query `from=` nos links de EID (ex.: `/comunidade` no painel). */
   perfilEidFrom?: string;
 };
+
+declare global {
+  interface Window {
+    EsporteIDAndroid?: {
+      addCalendarEvent?: (payload: string) => void;
+    };
+  }
+}
 
 const cancelInitial: GerenciarCancelamentoState = { ok: false, message: "" };
 const agendaInitial: ResponderAgendamentoState = { ok: false, message: "" };
@@ -126,8 +136,19 @@ export function PartidaAgendaCard({
   const [openCancel, setOpenCancel] = useState(false);
   const [openDesist, setOpenDesist] = useState(false);
   const [agendaActionClicked, setAgendaActionClicked] = useState<"accept" | "reject" | null>(null);
+  const [nativeCalendarAvailable, setNativeCalendarAvailable] = useState(false);
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, cancelInitial);
   const [agendaState, agendaAction, agendaPending] = useActionState(responderAgendamentoPartidaAction, agendaInitial);
+  useEffect(() => {
+    const checkNativeCalendar = () => {
+      setNativeCalendarAvailable(
+        isNativeAndroidApp() && typeof window.EsporteIDAndroid?.addCalendarEvent === "function"
+      );
+    };
+    checkNativeCalendar();
+    window.addEventListener("eid:native-app-ready", checkNativeCalendar);
+    return () => window.removeEventListener("eid:native-app-ready", checkNativeCalendar);
+  }, []);
   useEffect(() => {
     if (!state.ok) return;
     const id = window.setTimeout(() => {
@@ -145,6 +166,28 @@ export function PartidaAgendaCard({
   function tituloLado(formacao: PartidaAgendaFormacaoLado | undefined, nomePerfil: string | null) {
     if (formacao?.nome) return formacao.nome;
     return primeiroNome(nomePerfil);
+  }
+
+  const calendarTitle = `EsporteID: ${tituloLado(formacaoJ1, j1Nome)} vs ${tituloLado(formacaoJ2, j2Nome)}`;
+  const calendarStartMs = dataRef ? new Date(dataRef).getTime() : Number.NaN;
+  const canAddNativeCalendar =
+    nativeCalendarAvailable &&
+    Number.isFinite(calendarStartMs) &&
+    calendarStartMs > 0 &&
+    Boolean(localLabel?.trim()) &&
+    !agendamentoPendente;
+
+  function handleAddNativeCalendar() {
+    if (!canAddNativeCalendar) return;
+    window.EsporteIDAndroid?.addCalendarEvent?.(
+      JSON.stringify({
+        title: calendarTitle,
+        location: localLabel,
+        description: `${esporteNome} no EsporteID. Partida #${id}.`,
+        startMs: calendarStartMs,
+        endMs: calendarStartMs + 90 * 60 * 1000,
+      })
+    );
   }
 
   function renderLadoCol(
@@ -259,6 +302,20 @@ export function PartidaAgendaCard({
           <span className="text-center text-[10px] font-semibold text-eid-fg/90 md:text-[11px]">
             {localLabel}
           </span>
+        </div>
+      ) : null}
+
+      {canAddNativeCalendar ? (
+        <div className="mt-2.5 flex justify-center">
+          <button
+            type="button"
+            onClick={handleAddNativeCalendar}
+            className="inline-flex min-h-[30px] items-center justify-center gap-1.5 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/10 px-3 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-300 transition active:scale-[0.98] md:min-h-[34px] md:text-[10px]"
+            aria-label="Adicionar compromisso na agenda do Android"
+          >
+            <CalendarPlus className="h-3.5 w-3.5" aria-hidden />
+            <span>Agenda Android</span>
+          </button>
         </div>
       ) : null}
 

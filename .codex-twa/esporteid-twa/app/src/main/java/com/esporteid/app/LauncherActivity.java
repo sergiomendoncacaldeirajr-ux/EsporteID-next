@@ -13,6 +13,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.CalendarContract;
 import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
@@ -24,6 +25,7 @@ import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -36,6 +38,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import org.json.JSONObject;
 
 public class LauncherActivity extends Activity {
     private static final String HOME_URL = "https://esporteid.com.br/dashboard";
@@ -340,6 +344,7 @@ public class LauncherActivity extends Activity {
             settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         }
 
+        webView.addJavascriptInterface(new EsporteIdAndroidBridge(), "EsporteIDAndroid");
         webView.setWebViewClient(new EsporteIdWebViewClient());
         webView.setWebChromeClient(new EsporteIdWebChromeClient());
     }
@@ -476,6 +481,39 @@ public class LauncherActivity extends Activity {
                 "(function(){try{window.dispatchEvent(new Event(" + safeEvent + "));}catch(e){}})();",
                 null
         );
+    }
+
+    private class EsporteIdAndroidBridge {
+        @JavascriptInterface
+        public void addCalendarEvent(String payload) {
+            if (payload == null || payload.trim().isEmpty()) return;
+            runOnUiThread(() -> {
+                try {
+                    if (!isTrustedEsporteIdPage()) return;
+                    JSONObject json = new JSONObject(payload);
+                    String title = json.optString("title", "EsporteID");
+                    String location = json.optString("location", "");
+                    String description = json.optString("description", "");
+                    long startMs = json.optLong("startMs", 0L);
+                    long endMs = json.optLong("endMs", 0L);
+                    if (startMs <= 0L) return;
+                    if (endMs <= startMs) endMs = startMs + (90L * 60L * 1000L);
+                    if (webView != null) webView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+
+                    Intent intent = new Intent(Intent.ACTION_INSERT)
+                            .setData(CalendarContract.Events.CONTENT_URI)
+                            .putExtra(CalendarContract.Events.TITLE, title)
+                            .putExtra(CalendarContract.Events.EVENT_LOCATION, location)
+                            .putExtra(CalendarContract.Events.DESCRIPTION, description)
+                            .putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startMs)
+                            .putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endMs)
+                            .putExtra(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_BUSY);
+                    startActivity(intent);
+                } catch (Exception ignored) {
+                    /* Calendário nativo indisponível ou payload inválido: ignora sem quebrar o app. */
+                }
+            });
+        }
     }
 
     private void showErrorOverlay() {

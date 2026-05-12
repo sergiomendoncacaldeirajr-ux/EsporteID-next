@@ -762,26 +762,65 @@ export async function salvarAsaasWizardAction(
     const nome = field(formData, "nome_razao_social");
     const cpf = field(formData, "cpf_cnpj").replace(/\D/g, "");
     const email = field(formData, "email");
-    if (!nome) throw new Error("Informe o nome ou razão social.");
+    const asaasSenha = field(formData, "asaas_senha");
+    if (!email) throw new Error("Informe o e-mail da conta Asaas.");
     if (!cpf || ![11, 14].includes(cpf.length)) throw new Error("Informe um CPF ou CNPJ válido.");
-    if (!email) throw new Error("Informe o e-mail da conta de recebimentos.");
+    if (modoIntegracao === "conta_existente" && !asaasSenha) {
+      throw new Error("Informe a senha da conta Asaas.");
+    }
+    if (modoIntegracao === "criar_nova") {
+      if (!nome) throw new Error("Informe o nome ou razão social.");
+    }
     const onboardingStatus =
       modoIntegracao === "conta_existente"
         ? "aguardando_conexao_asaas"
         : "aguardando_criacao_asaas";
+    const cadastroAsaas =
+      modoIntegracao === "criar_nova"
+        ? {
+            name: nome,
+            email,
+            cpfCnpj: cpf,
+            birthDate: field(formData, "asaas_birth_date"),
+            companyType: field(formData, "asaas_company_type"),
+            phone: field(formData, "asaas_phone").replace(/\D/g, ""),
+            mobilePhone: field(formData, "asaas_mobile_phone").replace(/\D/g, ""),
+            address: field(formData, "asaas_address"),
+            addressNumber: field(formData, "asaas_address_number"),
+            complement: field(formData, "asaas_complement"),
+            province: field(formData, "asaas_province"),
+            postalCode: field(formData, "asaas_postal_code").replace(/\D/g, ""),
+          }
+        : null;
+    if (cadastroAsaas) {
+      const requiredFields = [
+        cadastroAsaas.birthDate,
+        cadastroAsaas.companyType,
+        cadastroAsaas.mobilePhone,
+        cadastroAsaas.address,
+        cadastroAsaas.addressNumber,
+        cadastroAsaas.province,
+        cadastroAsaas.postalCode,
+      ];
+      if (requiredFields.some((value) => !value)) {
+        throw new Error("Preencha os dados obrigatórios para criar a conta Asaas.");
+      }
+    }
     const dadosBancariosJson = JSON.stringify({
       fluxo_integracao_asaas: modoIntegracao,
       origem: "wizard_receber",
+      login_asaas_informado: modoIntegracao === "conta_existente",
+      senha_asaas_recebida_sem_persistir: modoIntegracao === "conta_existente" && !!asaasSenha,
+      cadastro_asaas: cadastroAsaas,
       proxima_acao:
         modoIntegracao === "conta_existente"
-          ? "validar conta existente e solicitar login/API no Asaas se necessario"
-          : "criar subconta Asaas e solicitar validacao no Asaas se necessario",
+          ? "autenticar conta existente no fluxo seguro Asaas e descartar senha apos uso"
+          : "criar subconta Asaas via POST /v3/accounts e abrir onboardingUrl se houver documentos",
     });
     const { error } = await supabase.from("parceiro_conta_asaas").upsert(
       {
         usuario_id: user.id,
-        espaco_generico_id: espacoId,
-        nome_razao_social: nome,
+        nome_razao_social: nome || email,
         cpf_cnpj: cpf,
         email,
         dados_bancarios_json: dadosBancariosJson,

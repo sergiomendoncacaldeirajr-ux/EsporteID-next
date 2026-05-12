@@ -2668,7 +2668,7 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
       <input type="hidden" name="modo_integracao" value={modoIntegracao} />
       <StepHeader
         title="Conta de recebimentos"
-        subtitle="Escolha como o espaço vai receber pelo Asaas e deixe o caminho pronto no EsporteID."
+        subtitle="Entre na conta Asaas existente ou crie uma nova conta de recebimentos pelo EsporteID."
       />
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -2676,14 +2676,14 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
           {
             id: "criar_nova",
             Icon: Sparkles,
-            title: "Criar uma conta Asaas",
-            text: "O EsporteID prepara a nova conta de recebimentos com os dados do titular.",
+            title: "Cadastrar no Asaas",
+            text: "Crie uma nova conta de recebimentos com os dados exigidos pelo Asaas.",
           },
           {
             id: "conta_existente",
             Icon: BadgeCheck,
-            title: "Usar conta Asaas existente",
-            text: "Informe os dados da conta atual para iniciarmos o vínculo pelo app.",
+            title: "Entrar com conta Asaas",
+            text: "Use o e-mail e senha da conta Asaas que o espaço já possui.",
           },
         ].map((option) => {
           const selected = modoIntegracao === option.id;
@@ -2713,35 +2713,93 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
 
       <div className="space-y-2 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-4 text-xs text-eid-text-secondary">
         <p className="text-sm font-bold text-eid-fg">
-          {modoIntegracao === "criar_nova" ? "Cadastro guiado pelo EsporteID" : "Conexão guiada pelo EsporteID"}
+          {modoIntegracao === "criar_nova" ? "Cadastro Asaas" : "Login Asaas"}
         </p>
         {modoIntegracao === "criar_nova" ? (
           <>
-            <p>O dono informa os dados principais agora e o EsporteID prepara a criação da conta Asaas.</p>
-            <p>Se o Asaas pedir selfie, documento ou aceite sensível, o usuário finaliza essa etapa no app ou site do Asaas e volta ao painel.</p>
+            <p>Preencha os dados da conta. O EsporteID usa essas informações para criar a subconta Asaas de recebimentos.</p>
+            <p>Selfie, documentos e prova de vida continuam no link seguro do Asaas quando forem exigidos.</p>
           </>
         ) : (
           <>
-            <p>Use o e-mail, CPF ou CNPJ da conta Asaas que o espaço já possui para iniciarmos a conexão.</p>
-            <p>Se a conexão exigir login, chave de API ou confirmação de segurança, o usuário finaliza no app ou site do Asaas.</p>
+            <p>Informe o login da conta Asaas existente para iniciar a conexão pelo EsporteID.</p>
+            <p>A senha não fica salva no cadastro; se o Asaas exigir confirmação, o usuário conclui no ambiente seguro do Asaas.</p>
           </>
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5 sm:col-span-2">
-          <Label>Nome / Razão social *</Label>
-          <IconInput Icon={Wallet} name="nome_razao_social" defaultValue={parceiro?.nome_razao_social ?? ""} placeholder="Seu nome ou nome da empresa" required />
+      {modoIntegracao === "conta_existente" ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>E-mail da conta Asaas *</Label>
+            <IconInput Icon={Mail} name="email" defaultValue={parceiro?.email ?? ""} placeholder="financeiro@seuespaco.com" type="email" required />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>CPF ou CNPJ da conta Asaas *</Label>
+            <IconInput Icon={IdCard} name="cpf_cnpj" defaultValue={parceiro?.cpf_cnpj ?? ""} placeholder="000.000.000-00" required />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Senha do Asaas *</Label>
+            <IconInput Icon={ShieldCheck} name="asaas_senha" placeholder="Senha da conta Asaas" type="password" autoComplete="current-password" required />
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <Label>CPF ou CNPJ *</Label>
-          <IconInput Icon={IdCard} name="cpf_cnpj" defaultValue={parceiro?.cpf_cnpj ?? ""} placeholder="000.000.000-00" required />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Nome / Razão social *</Label>
+            <IconInput Icon={Wallet} name="nome_razao_social" defaultValue={parceiro?.nome_razao_social ?? ""} placeholder="Seu nome ou nome da empresa" required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>CPF ou CNPJ *</Label>
+            <IconInput Icon={IdCard} name="cpf_cnpj" defaultValue={parceiro?.cpf_cnpj ?? ""} placeholder="000.000.000-00" required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>E-mail da nova conta *</Label>
+            <IconInput Icon={Mail} name="email" defaultValue={parceiro?.email ?? ""} placeholder="financeiro@seuespaco.com" type="email" required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Data de nascimento *</Label>
+            <IconInput Icon={Calendar} name="asaas_birth_date" type="date" required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Tipo de empresa *</Label>
+            <IconSelect Icon={Building2} name="asaas_company_type" defaultValue="MEI" required>
+              <option value="MEI">MEI</option>
+              <option value="LIMITED">LTDA</option>
+              <option value="INDIVIDUAL">Individual</option>
+              <option value="ASSOCIATION">Associação</option>
+            </IconSelect>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Telefone fixo</Label>
+            <IconInput Icon={Phone} name="asaas_phone" placeholder="11 3230-0606" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Celular *</Label>
+            <IconInput Icon={Phone} name="asaas_mobile_phone" placeholder="11 99336-7861" required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>CEP *</Label>
+            <IconInput Icon={MapPin} name="asaas_postal_code" defaultValue={space.cep ?? ""} placeholder="00000-000" required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Bairro *</Label>
+            <IconInput Icon={MapPin} name="asaas_province" defaultValue={space.bairro ?? ""} placeholder="Bairro" required />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label>Endereço *</Label>
+            <IconInput Icon={MapPin} name="asaas_address" defaultValue={space.endereco ?? ""} placeholder="Rua, avenida ou estrada" required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Número *</Label>
+            <IconInput Icon={Hash} name="asaas_address_number" defaultValue={space.numero ?? ""} placeholder="277" required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Complemento</Label>
+            <IconInput Icon={MapPin} name="asaas_complement" defaultValue={space.complemento ?? ""} placeholder="Sala, bloco, quadra..." />
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <Label>{modoIntegracao === "criar_nova" ? "E-mail para criar a conta *" : "E-mail da conta Asaas *"}</Label>
-          <IconInput Icon={Mail} name="email" defaultValue={parceiro?.email ?? ""} placeholder="financeiro@seuespaco.com" type="email" required />
-        </div>
-      </div>
+      )}
 
       {parceiro?.onboarding_status && (
         <p className="text-xs text-eid-text-secondary">
@@ -2751,7 +2809,7 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
 
       <Feedback state={state} />
       <NavButtons onBack={onBack} onNext={() => formRef.current?.requestSubmit()}
-        pending={pending} nextLabel="Preparar recebimentos" onSkip={onSkip} skipLabel="Configurar depois" />
+        pending={pending} nextLabel={modoIntegracao === "criar_nova" ? "Cadastrar no Asaas" : "Entrar no Asaas"} onSkip={onSkip} skipLabel="Configurar depois" />
     </form>
   );
 }
