@@ -2315,6 +2315,95 @@ function StepFeriados({ space, feriados, onNext, onBack }: {
   );
 }
 
+function StepRegrasReservas({ space, reservaConfig, onNext, onBack }: {
+  space: Space; reservaConfig: ReservaConfig; onNext: () => void; onBack?: () => void;
+}) {
+  const [state, action, pending] = useActionState<ActionState, FormData>(salvarRegrasReservasWizardAction, undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+  useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
+
+  return (
+    <form ref={formRef} action={action} className="space-y-5">
+      <input type="hidden" name="espaco_id" value={space.id} />
+      <StepHeader
+        title="Regras oficiais de reserva"
+        subtitle="Defina a regra padrão do espaço. Os planos de sócio vão abrir com estes valores e só precisam mudar quando forem exceção."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>Marcações por dia</Label>
+          <IconInput Icon={Calendar} name="limite_reservas_dia" type="number" min={0} defaultValue={reservaConfig.limiteReservasDia} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Marcações por semana</Label>
+          <IconInput Icon={Calendar} name="limite_reservas_semana" type="number" min={0} defaultValue={reservaConfig.limiteReservasSemana} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Intervalo entre marcações (h)</Label>
+          <IconInput Icon={Clock} name="cooldown_horas" type="number" min={0} max={720} defaultValue={reservaConfig.cooldownHoras} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Antecedência mínima (h)</Label>
+          <IconInput Icon={Clock} name="antecedencia_min_horas" type="number" min={0} defaultValue={reservaConfig.antecedenciaMinHoras} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Liberar agenda até</Label>
+          <IconInput Icon={Calendar} name="antecedencia_max_dias" type="number" min={1} max={365} defaultValue={reservaConfig.antecedenciaMaxDias} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Fila expira (min)</Label>
+          <IconInput Icon={Clock} name="waitlist_expiracao_minutos" type="number" min={5} defaultValue={reservaConfig.waitlistExpiracaoMinutos} />
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-4">
+        <p className="text-sm font-bold text-eid-fg">Reservas gratuitas de sócio</p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <label className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-3 text-sm font-semibold text-eid-fg">
+            <input type="checkbox" name="reservas_gratis_liberadas" defaultChecked={reservaConfig.reservasGratisLiberadas} className="h-4 w-4 accent-eid-action-500" />
+            Liberar benefício gratuito
+          </label>
+          <label className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-3 text-sm font-semibold text-eid-fg">
+            <input type="checkbox" name="bloqueia_inadimplente" defaultChecked={reservaConfig.bloqueiaInadimplente} className="h-4 w-4 accent-eid-action-500" />
+            Bloquear inadimplente
+          </label>
+          <div className="space-y-1.5">
+            <Label>Grátis por dia</Label>
+            <IconInput Icon={Calendar} name="gratis_limite_reservas_dia_membro" type="number" min={0} defaultValue={reservaConfig.gratisLimiteReservasDiaMembro} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Grátis por semana</Label>
+            <IconInput Icon={Calendar} name="gratis_limite_reservas_semana_membro" type="number" min={0} defaultValue={reservaConfig.gratisLimiteReservasSemanaMembro} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Intervalo grátis (h)</Label>
+            <IconInput Icon={Clock} name="gratis_intervalo_horas_entre_reservas_membro" type="number" min={0} max={720} defaultValue={reservaConfig.gratisIntervaloHorasEntreReservasMembro} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Agenda grátis até</Label>
+            <IconInput Icon={Calendar} name="gratis_antecedencia_max_dias_membro" type="number" min={1} max={365} defaultValue={reservaConfig.gratisAntecedenciaMaxDiasMembro} />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>Política de cancelamento</Label>
+          <IconTextarea Icon={FileText} name="politica_cancelamento" rows={3} defaultValue={reservaConfig.politicaCancelamento} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Observações públicas</Label>
+          <IconTextarea Icon={MessageSquareText} name="observacoes_publicas" rows={3} defaultValue={reservaConfig.observacoesPublicas} />
+        </div>
+      </div>
+
+      <Feedback state={state} />
+      <NavButtons onBack={onBack} onNext={() => formRef.current?.requestSubmit()} pending={pending} />
+    </form>
+  );
+}
+
 function planoHerdaRegraWizard(plano: Plano, key: string) {
   const herdar = plano.beneficios_json?.herdar_regras_globais;
   return Boolean(
@@ -2325,8 +2414,8 @@ function planoHerdaRegraWizard(plano: Plano, key: string) {
   );
 }
 
-function StepPlanos({ space, planos, onNext, onBack, onSkip }: {
-  space: Space; planos: Plano[]; onNext: () => void; onBack?: () => void; onSkip?: () => void;
+function StepPlanos({ space, planos, reservaConfig, onNext, onBack, onSkip }: {
+  space: Space; planos: Plano[]; reservaConfig: ReservaConfig; onNext: () => void; onBack?: () => void; onSkip?: () => void;
 }) {
   const [showForm, setShowForm] = useState(planos.length === 0);
   const [state, action, pending] = useActionState<ActionState, FormData>(criarPlanoWizardAction, undefined);
@@ -2398,35 +2487,36 @@ function StepPlanos({ space, planos, onNext, onBack, onSkip }: {
             </div>
             <div className="space-y-1.5">
               <Label>Reservas gratuitas / semana</Label>
-              <IconInput Icon={Calendar} name="reservas_gratis" type="number" min={0} max={999} placeholder="Em branco = regra global; 0 = sem limite" />
+              <IconInput Icon={Calendar} name="reservas_gratis" type="number" min={0} max={999} defaultValue={reservaConfig.gratisLimiteReservasSemanaMembro} />
+              <label className="flex items-center gap-2 text-xs font-semibold text-eid-text-secondary">
+                <input type="checkbox" name="herdar_reservas_gratuitas_semana" defaultChecked className="h-4 w-4 accent-eid-action-500" />
+                Seguir regra global
+              </label>
             </div>
             <div className="space-y-1.5">
               <Label>Marcações totais / semana</Label>
-              <IconInput Icon={Calendar} name="limite_reservas_semana" type="number" min={0} max={60} placeholder="Em branco = global; 0 = sem limite" />
+              <IconInput Icon={Calendar} name="limite_reservas_semana" type="number" min={0} max={60} defaultValue={reservaConfig.limiteReservasSemana} />
+              <label className="flex items-center gap-2 text-xs font-semibold text-eid-text-secondary">
+                <input type="checkbox" name="herdar_limite_reservas_semana" defaultChecked className="h-4 w-4 accent-eid-action-500" />
+                Seguir regra global
+              </label>
             </div>
             <div className="space-y-1.5">
               <Label>Intervalo entre marcações (h)</Label>
-              <IconInput Icon={Clock} name="cooldown_horas" type="number" min={0} max={720} placeholder="Em branco = global; 0 = sem intervalo" />
+              <IconInput Icon={Clock} name="cooldown_horas" type="number" min={0} max={720} defaultValue={reservaConfig.cooldownHoras} />
+              <label className="flex items-center gap-2 text-xs font-semibold text-eid-text-secondary">
+                <input type="checkbox" name="herdar_cooldown_horas" defaultChecked className="h-4 w-4 accent-eid-action-500" />
+                Seguir regra global
+              </label>
             </div>
             <div className="space-y-1.5">
-              <Label>Liberação da agenda</Label>
-              <select
-                name="antecedencia_max_dias_preset"
-                defaultValue="inherit"
-                className="h-11 w-full rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface px-3 text-sm text-eid-fg outline-none transition focus:border-eid-primary-500"
-              >
-                <option value="inherit">Seguir regra global</option>
-                <option value="2">2 dias</option>
-                <option value="5">5 dias</option>
-                <option value="7">7 dias</option>
-                <option value="15">15 dias</option>
-                <option value="30">30 dias</option>
-                <option value="custom">Personalizado</option>
-              </select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Dias personalizados</Label>
-              <IconInput Icon={Calendar} name="antecedencia_max_dias_custom" type="number" min={1} max={365} placeholder="Use se escolher personalizado" />
+              <Label>Liberação da agenda (dias)</Label>
+              <input type="hidden" name="antecedencia_max_dias_preset" value="custom" />
+              <IconInput Icon={Calendar} name="antecedencia_max_dias_custom" type="number" min={1} max={365} defaultValue={reservaConfig.antecedenciaMaxDias} />
+              <label className="flex items-center gap-2 text-xs font-semibold text-eid-text-secondary">
+                <input type="checkbox" name="herdar_antecedencia_max_dias" defaultChecked className="h-4 w-4 accent-eid-action-500" />
+                Seguir regra global
+              </label>
             </div>
             <label className="flex items-start gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3 text-sm text-eid-fg sm:col-span-2">
               <input type="checkbox" name="uma_reserva_ativa_por_vez" className="mt-1 h-4 w-4 accent-eid-action-500" />
@@ -2591,7 +2681,7 @@ function StepConclusao({ space, unidades, horarios, planos, parceiro }: {
 // ── Wizard principal ───────────────────────────────────────────────────────
 
 export function EspacoOnboardingWizard({
-  space, esportes, locaisExistentes, unidades, unidadeGate, planosPaaS, horarios, feriados, planos, parceiro,
+  space, esportes, locaisExistentes, unidades, unidadeGate, planosPaaS, horarios, feriados, planos, parceiro, reservaConfig,
 }: WizardProps) {
   const storageKey = `eid:onboarding-step-${space.id}`;
   const [step, setStep] = useState<number>(() => {
@@ -2682,8 +2772,11 @@ export function EspacoOnboardingWizard({
           {currentStep?.id === "feriados" && (
             <StepFeriados space={space} feriados={feriados} onNext={advance} onBack={goBack} />
           )}
+          {currentStep?.id === "regras" && (
+            <StepRegrasReservas space={space} reservaConfig={reservaConfig} onNext={advance} onBack={goBack} />
+          )}
           {currentStep?.id === "planos" && (
-            <StepPlanos space={space} planos={planos} onNext={advance} onBack={goBack} onSkip={advance} />
+            <StepPlanos space={space} planos={planos} reservaConfig={reservaConfig} onNext={advance} onBack={goBack} onSkip={advance} />
           )}
           {currentStep?.id === "pagamento" && (
             <StepPagamento space={space} parceiro={parceiro} onNext={advance} onBack={goBack} onSkip={advance} />

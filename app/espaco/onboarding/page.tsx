@@ -215,7 +215,14 @@ export default async function EspacoOnboardingPage() {
         hora_inicio: string | null; hora_fim: string | null; sobrepor_grade: boolean | null;
       }>}
       planos={(planos ?? []) as Array<{
-        id: number; nome: string; mensalidade_centavos: number;
+        id: number;
+        nome: string;
+        mensalidade_centavos: number;
+        reservas_gratuitas_semana?: number | null;
+        limite_reservas_semana?: number | null;
+        cooldown_horas?: number | null;
+        antecedencia_max_dias?: number | null;
+        beneficios_json?: Record<string, unknown> | null;
       }>}
       parceiro={(parceiro as {
         nome_razao_social: string | null;

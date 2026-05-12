@@ -258,10 +258,6 @@ export async function salvarPerfilWizardAction(
         complemento: field(formData, "complemento") || null,
         origem: "wizard-espaco",
       }),
-      configuracao_reservas_json: JSON.stringify({
-        observacoesPublicas: null,
-        politicaCancelamento: null,
-      }),
       descricao_curta: field(formData, "descricao_longa").slice(0, 160) || null,
       descricao_longa: field(formData, "descricao_longa") || null,
       whatsapp_contato: field(formData, "whatsapp_contato") || null,
@@ -685,15 +681,18 @@ export async function criarPlanoWizardAction(
     const reservasGratisInput = numberFieldOrNull(formData, "reservas_gratis");
     const limiteReservasSemanaInput = numberFieldOrNull(formData, "limite_reservas_semana");
     const cooldownHorasInput = numberFieldOrNull(formData, "cooldown_horas");
+    const herdarReservasGratis = bool(formData, "herdar_reservas_gratuitas_semana");
+    const herdarLimiteSemana = bool(formData, "herdar_limite_reservas_semana");
+    const herdarCooldown = bool(formData, "herdar_cooldown_horas");
+    const herdarAntecedenciaMaxDias = bool(formData, "herdar_antecedencia_max_dias");
     const antecedenciaPreset = field(formData, "antecedencia_max_dias_preset");
     const antecedenciaCustom = Number(formData.get("antecedencia_max_dias_custom") ?? 0) || 0;
-    const herdarAntecedenciaMaxDias = !antecedenciaPreset || antecedenciaPreset === "inherit";
     const antecedenciaMaxDias = Math.max(
       1,
       Math.min(
         365,
-        herdarAntecedenciaMaxDias
-          ? 30
+        herdarAntecedenciaMaxDias || !antecedenciaPreset || antecedenciaPreset === "inherit"
+          ? antecedenciaCustom || 30
           : antecedenciaPreset === "custom"
           ? antecedenciaCustom || 5
           : Number(antecedenciaPreset) || 5
@@ -714,9 +713,9 @@ export async function criarPlanoWizardAction(
         uma_reserva_ativa_por_vez:
           formData.get("uma_reserva_ativa_por_vez") === "on",
         herdar_regras_globais: {
-          reservas_gratuitas_semana: reservasGratisInput === null,
-          limite_reservas_semana: limiteReservasSemanaInput === null,
-          cooldown_horas: cooldownHorasInput === null,
+          reservas_gratuitas_semana: herdarReservasGratis,
+          limite_reservas_semana: herdarLimiteSemana,
+          cooldown_horas: herdarCooldown,
           antecedencia_max_dias: herdarAntecedenciaMaxDias,
         },
       },
