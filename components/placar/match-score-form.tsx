@@ -82,6 +82,8 @@ export function MatchScoreForm({
     config.type === "sets" ? setFormatOptions.find((opt) => opt.key === initialSelectedSetFormatKey)?.config ?? config : null;
   const [selectedSetFormatKey, setSelectedSetFormatKey] = useState<string | null>(initialSelectedSetFormatKey);
   const [payload, setPayload] = useState<MatchScorePayload>(() => buildInitialPayload(initialSelectedSetFormatConfig ?? config));
+  const [resultMode, setResultMode] = useState<"placar" | "wo">("placar");
+  const [woDesistente, setWoDesistente] = useState<"a" | "b">("b");
   const selectedSetFormatConfig = useMemo(() => {
     if (config.type !== "sets") return null;
     const found = setFormatOptions.find((opt) => opt.key === selectedSetFormatKey);
@@ -91,7 +93,8 @@ export function MatchScoreForm({
 
   const validation = useMemo(() => validateMatchScorePayload(activeConfig, payload), [activeConfig, payload]);
   const requiredSetFormatMissing = config.type === "sets" && setFormatOptions.length > 0 && !selectedSetFormatKey;
-  const disabled = !validation.valid || requiredSetFormatMissing;
+  const isWo = resultMode === "wo";
+  const disabled = isWo ? false : !validation.valid || requiredSetFormatMissing;
 
   const matchWinner =
     validation.valid &&
@@ -109,10 +112,77 @@ export function MatchScoreForm({
       <input type="hidden" name="partida_id" value={partidaId} />
       <input type="hidden" name="placar_1" value={validation.placar1 ?? 0} />
       <input type="hidden" name="placar_2" value={validation.placar2 ?? 0} />
+      {isWo ? (
+        <>
+          <input type="hidden" name="wo_ativo" value="1" />
+          <input type="hidden" name="wo_vencedor" value={woDesistente === "a" ? "j2" : "j1"} />
+          <input type="hidden" name="wo_desistente" value={woDesistente === "a" ? "j1" : "j2"} />
+        </>
+      ) : null}
       {config.type === "sets" && selectedSetFormatKey ? <input type="hidden" name="score_format_key" value={selectedSetFormatKey} /> : null}
       <input type="hidden" name="score_payload" value={JSON.stringify(payload)} />
 
-      {config.type === "sets" ? (
+      <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/30 p-2">
+        <div className="grid grid-cols-2 gap-1.5">
+          <button
+            type="button"
+            onClick={() => setResultMode("placar")}
+            className={`min-h-[30px] rounded-lg border px-2 text-[9px] font-black uppercase tracking-[0.06em] transition ${
+              !isWo
+                ? "border-eid-action-500/45 bg-eid-action-500/15 text-eid-action-200"
+                : "border-[color:var(--eid-border-subtle)] bg-eid-card/50 text-eid-text-secondary hover:bg-eid-card"
+            }`}
+          >
+            Placar
+          </button>
+          <button
+            type="button"
+            onClick={() => setResultMode("wo")}
+            className={`min-h-[30px] rounded-lg border px-2 text-[9px] font-black uppercase tracking-[0.06em] transition ${
+              isWo
+                ? "border-amber-500/45 bg-amber-500/14 text-[color:color-mix(in_srgb,var(--eid-fg)_58%,#f59e0b_42%)]"
+                : "border-[color:var(--eid-border-subtle)] bg-eid-card/50 text-eid-text-secondary hover:bg-eid-card"
+            }`}
+          >
+            W.O.
+          </button>
+        </div>
+
+        {isWo ? (
+          <div className="mt-2 rounded-lg border border-amber-500/20 bg-amber-500/8 p-2">
+            <p className="text-[9px] font-black uppercase tracking-[0.08em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)]">
+              Quem desistiu?
+            </p>
+            <div className="mt-2 grid gap-1.5">
+              {[
+                { key: "a" as const, label: sideALabel, winner: sideBLabel },
+                { key: "b" as const, label: sideBLabel, winner: sideALabel },
+              ].map((option) => {
+                const selected = woDesistente === option.key;
+                return (
+                  <button
+                    key={option.key}
+                    type="button"
+                    onClick={() => setWoDesistente(option.key)}
+                    className={`rounded-lg border px-2.5 py-2 text-left transition ${
+                      selected
+                        ? "border-amber-500/45 bg-amber-500/14"
+                        : "border-[color:var(--eid-border-subtle)] bg-eid-card/50 hover:bg-eid-card"
+                    }`}
+                  >
+                    <span className="block truncate text-[11px] font-black text-eid-fg">{option.label}</span>
+                    <span className="mt-0.5 block truncate text-[9px] font-semibold text-eid-text-secondary">
+                      Vitória para {option.winner}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {!isWo && config.type === "sets" ? (
         <>
           {setFormatOptions.length > 0 ? (
             <div className="overflow-hidden rounded-2xl border border-[rgba(37,99,235,0.16)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),var(--eid-card))]">
@@ -163,7 +233,7 @@ export function MatchScoreForm({
         )}
         </>
       ) : null}
-      {config.type === "gols" ? (
+      {!isWo && config.type === "gols" ? (
         <GoalsScore
           score={{
             a: payload.goals?.a ?? 0,
@@ -184,7 +254,7 @@ export function MatchScoreForm({
           hasPenalties={config.hasPenalties}
         />
       ) : null}
-      {config.type === "pontos" ? (
+      {!isWo && config.type === "pontos" ? (
         <PointsScore
           score={payload.points ?? { a: 0, b: 0 }}
           onChange={(points) => setPayload({ type: "pontos", points })}
@@ -193,7 +263,7 @@ export function MatchScoreForm({
           pointsLimit={config.pointsLimit}
         />
       ) : null}
-      {config.type === "rounds" ? (
+      {!isWo && config.type === "rounds" ? (
         <RoundsScore
           payload={
             payload.rounds ?? { method: "decision", winner: "a", items: Array.from({ length: config.maxRounds }, () => ({ a: 10, b: 9 })) }
@@ -205,7 +275,21 @@ export function MatchScoreForm({
         />
       ) : null}
 
-      {matchWinner ? (
+      {isWo ? (
+        <div
+          className="rounded-xl border border-amber-500/28 bg-[linear-gradient(135deg,color-mix(in_srgb,#f59e0b_11%,var(--eid-card)),var(--eid-card))] px-3 py-2"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="text-[9px] font-black uppercase tracking-[0.1em] text-[color:color-mix(in_srgb,var(--eid-fg)_55%,#f59e0b_45%)]">
+            Resultado por W.O.
+          </p>
+          <p className="mt-1 text-[11px] font-semibold text-eid-fg">
+            {woDesistente === "a" ? sideBLabel : sideALabel} vence por desistência de{" "}
+            {woDesistente === "a" ? sideALabel : sideBLabel}.
+          </p>
+        </div>
+      ) : matchWinner ? (
         <div
           className="relative overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-action-500)_55%,var(--eid-border-subtle)_45%)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_18%,var(--eid-card)_82%),color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-surface)_88%))] p-4 shadow-[0_0_0_1px_color-mix(in_srgb,var(--eid-action-500)_25%,transparent),0_16px_40px_-20px_color-mix(in_srgb,var(--eid-action-500)_45%,transparent)]"
           role="status"

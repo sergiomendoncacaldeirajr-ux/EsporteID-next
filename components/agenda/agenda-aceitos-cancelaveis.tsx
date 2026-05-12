@@ -331,7 +331,7 @@ export function AgendaAceitosCancelaveis({
               ) : null}
 
               {m.status === "Aceito" && !m.gestaoSomenteLeitura ? (
-                <div className="grid gap-2.5">
+                <div className="flex flex-col items-end gap-2">
                   <button
                     type="button"
                     disabled={pending}
@@ -339,14 +339,14 @@ export function AgendaAceitosCancelaveis({
                       setClickedAction((prev) => ({ ...prev, [m.id]: "requestReschedule" }));
                       setOpenRescheduleByMatch((prev) => ({ ...prev, [m.id]: !prev[m.id] }));
                     }}
-                    className="group inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-xl border border-eid-action-500/35 bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-500)_18%,var(--eid-surface)),color-mix(in_srgb,var(--eid-action-500)_8%,var(--eid-card)))] px-3 text-[10px] font-black uppercase tracking-[0.08em] text-[color:color-mix(in_srgb,var(--eid-fg)_76%,var(--eid-action-500)_24%)] shadow-[0_8px_22px_-14px_rgba(249,115,22,0.75),inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-eid-action-500/55 hover:bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-action-500)_24%,var(--eid-surface)),color-mix(in_srgb,var(--eid-action-500)_12%,var(--eid-card)))] active:scale-[0.99] disabled:opacity-50 md:min-h-[42px] md:text-[11px]"
+                    className="group inline-flex min-h-[30px] w-auto max-w-full items-center justify-center gap-1.5 rounded-full border border-eid-action-500/32 bg-eid-action-500/10 px-3 text-[8px] font-black uppercase tracking-[0.08em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-action-500)_28%)] shadow-[0_4px_14px_-10px_rgba(249,115,22,0.72)] transition hover:border-eid-action-500/50 hover:bg-eid-action-500/16 active:scale-[0.98] disabled:opacity-50 md:min-h-[32px] md:text-[9px]"
                   >
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-eid-action-500 text-white shadow-[0_4px_12px_-6px_rgba(249,115,22,0.9)] transition group-hover:bg-eid-action-600">
-                      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-eid-action-500 text-white shadow-[0_3px_10px_-6px_rgba(249,115,22,0.9)] transition group-hover:bg-eid-action-600">
+                      <svg viewBox="0 0 16 16" className="h-3 w-3" fill="currentColor" aria-hidden>
                         <path d="M4.5 1a.5.5 0 0 1 .5.5V2h6v-.5a.5.5 0 0 1 1 0V2h.5A1.5 1.5 0 0 1 14 3.5v9A1.5 1.5 0 0 1 12.5 14h-9A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H4v-.5a.5.5 0 0 1 .5-.5ZM3 5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7H3Zm1-2.5H3.5a.5.5 0 0 0-.5.5V4.5h10V3.5a.5.5 0 0 0-.5-.5H12v.5a.5.5 0 0 1-1 0V3H5v.5a.5.5 0 0 1-1 0V3Z" />
                       </svg>
                     </span>
-                    <span>Solicitar reagendamento</span>
+                    <span>Reagendar</span>
                   </button>
 
                   {openRescheduleByMatch[m.id] ? (

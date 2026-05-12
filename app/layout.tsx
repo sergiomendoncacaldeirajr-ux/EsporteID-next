@@ -237,7 +237,7 @@ export default async function RootLayout({
         className={`flex min-h-svh flex-col bg-eid-bg text-eid-fg${showAppChrome ? " eid-app-shell" : ""}`}
       >
         <EidThemeHydration />
-        <NativeAppRuntime />
+        <NativeAppRuntime userId={user?.id ?? null} activeContext={activeContext} />
         <PwaBootstrap />
         <ThemeColorSync />
         <InstallAppOfferDynamic />

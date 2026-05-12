@@ -282,6 +282,7 @@ export async function submitPlacarAction(formData: FormData) {
   const placarVariante = String(formData.get("placar_variante") ?? "").trim();
   const woAtivo = String(formData.get("wo_ativo") ?? "") === "1";
   const woVencedor = String(formData.get("wo_vencedor") ?? "").trim();
+  const woDesistente = String(formData.get("wo_desistente") ?? "").trim();
   if (!woAtivo && (placar1 == null || placar2 == null)) go(partidaId, "erro", "Informe placares válidos.");
   if (hasMaliciousPayload(observacao)) go(partidaId, "erro", "Observação inválida.");
 
@@ -408,7 +409,13 @@ export async function submitPlacarAction(formData: FormData) {
     finalPlacar2 = dynamicValidation.placar2;
   }
   if (woAtivo && woVencedor !== "j1" && woVencedor !== "j2") go(partidaId, "erro", "Selecione o vencedor por W.O.");
-  const woMsg = woAtivo ? "Vitória por W.O. (adversário não compareceu)." : "";
+  const woMsg = woAtivo
+    ? woDesistente === "j1"
+      ? "Vitória por W.O. (lado 1 desistiu)."
+      : woDesistente === "j2"
+        ? "Vitória por W.O. (lado 2 desistiu)."
+        : "Vitória por W.O. (oponente desistiu)."
+    : "";
   const payloadMsg = payloadFromUI ? `| score_payload:${JSON.stringify(payloadFromUI)}` : "";
   const mensagemFinal = [woMsg, observacao, payloadMsg].filter(Boolean).join(" ").trim();
 
@@ -428,6 +435,12 @@ export async function submitPlacarAction(formData: FormData) {
   const now = new Date().toISOString();
   const isTorneio = Boolean(p.torneio_id);
   const revisaoAposContestacao = isRankingStatus(p.status_ranking, "resultado_contestado");
+  const vencedorPerdedorWo =
+    woAtivo && p.time1_id && p.time2_id
+      ? woVencedor === "j2"
+        ? { vencedor_id: p.time2_id, perdedor_id: p.time1_id }
+        : { vencedor_id: p.time1_id, perdedor_id: p.time2_id }
+      : {};
   const updatePayload = {
     placar_1: finalPlacar1,
     placar_2: finalPlacar2,
@@ -441,6 +454,7 @@ export async function submitPlacarAction(formData: FormData) {
     status: isTorneio ? "concluida" : "aguardando_confirmacao",
     status_ranking: isTorneio ? "validado" : revisaoAposContestacao ? "pendente_confirmacao_revisao" : "pendente_confirmacao",
     data_validacao: isTorneio ? now : null,
+    ...vencedorPerdedorWo,
   };
   const { error } = await ctx.supabase.from("partidas").update(updatePayload).eq("id", partidaId);
   if (error) go(partidaId, "erro", "Não foi possível salvar o placar.");

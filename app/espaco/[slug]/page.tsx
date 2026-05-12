@@ -125,7 +125,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
   const unidadePrincipal = unidades?.[0] ?? null;
 
   return (
-    <main className={PROFILE_PUBLIC_MAIN_WIDE_CLASS}>
+    <main data-eid-no-route-enter className={`${PROFILE_PUBLIC_MAIN_WIDE_CLASS} eid-progressive-enter`}>
         <section
           className={`${PROFILE_HERO_PANEL_CLASS} mt-2 border border-eid-primary-500/25 p-4 sm:p-5`}
         >

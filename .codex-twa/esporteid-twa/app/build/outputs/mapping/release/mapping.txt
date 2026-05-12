@@ -3,8 +3,8 @@
 # min_api: 23
 # common_typos_disable
 # {"id":"com.android.tools.r8.mapping","version":"2.2"}
-# pg_map_id: 81579dc
-# pg_map_hash: SHA-256 81579dcc9e2e633da5095789ca761acbf7cf2a88db430a2143e0c6a43038acc5
+# pg_map_id: 2fbf54d
+# pg_map_hash: SHA-256 2fbf54dab9c29723f2065229069f09f0728b7bf475d4ed906b74d0034474716f
 _COROUTINE.ArtificialStackFrames -> a.a:
 # {"id":"sourceFile","fileName":"CoroutineDebugging.kt"}
     1:4:void <init>():17:17 -> <init>
@@ -11281,378 +11281,388 @@ com.esporteid.app.LauncherActivity -> com.esporteid.app.LauncherActivity:
     android.webkit.GeolocationPermissions$Callback pendingGeolocationCallback -> m
     android.webkit.ValueCallback filePathCallback -> n
     1:4:void <init>():40:40 -> <init>
-    1:3:android.webkit.ValueCallback access$2200(com.esporteid.app.LauncherActivity):40:40 -> A
-    1:3:android.webkit.ValueCallback access$2202(com.esporteid.app.LauncherActivity,android.webkit.ValueCallback):40:40 -> B
-    1:4:void access$300(com.esporteid.app.LauncherActivity):40:40 -> C
-    1:5:boolean access$400(com.esporteid.app.LauncherActivity,android.net.Uri):40:40 -> D
-    1:4:void access$500(com.esporteid.app.LauncherActivity,android.net.Uri):40:40 -> E
-    1:5:boolean access$600(com.esporteid.app.LauncherActivity,android.net.Uri):40:40 -> F
-    1:5:boolean access$700(com.esporteid.app.LauncherActivity,android.net.Uri):40:40 -> G
-    1:4:void access$800(com.esporteid.app.LauncherActivity,java.lang.String):40:40 -> H
-    1:3:androidx.swiperefreshlayout.widget.SwipeRefreshLayout access$900(com.esporteid.app.LauncherActivity):40:40 -> I
+    1:4:void access$300(com.esporteid.app.LauncherActivity):40:40 -> A
+    1:5:boolean access$400(com.esporteid.app.LauncherActivity,android.net.Uri):40:40 -> B
+    1:4:void access$500(com.esporteid.app.LauncherActivity,android.net.Uri):40:40 -> C
+    1:5:boolean access$600(com.esporteid.app.LauncherActivity,android.net.Uri):40:40 -> D
+    1:5:boolean access$700(com.esporteid.app.LauncherActivity,android.net.Uri):40:40 -> E
+    1:4:void access$800(com.esporteid.app.LauncherActivity,java.lang.String):40:40 -> F
+    1:3:androidx.swiperefreshlayout.widget.SwipeRefreshLayout access$900(com.esporteid.app.LauncherActivity):40:40 -> G
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;)Landroidx/swiperefreshlayout/widget/c;"}
-    1:5:void closeFullscreenOverlay():781:781 -> J
-    6:8:void closeFullscreenOverlay():782:782 -> J
-    9:10:void closeFullscreenOverlay():783:783 -> J
-    11:12:void closeFullscreenOverlay():785:785 -> J
-    13:16:void closeFullscreenOverlay():786:786 -> J
-    17:19:void closeFullscreenOverlay():787:787 -> J
-    20:24:void closeFullscreenOverlay():788:788 -> J
-    25:26:void closeFullscreenOverlay():789:789 -> J
-    27:30:void closeFullscreenOverlay():791:791 -> J
-    31:35:void closeFullscreenOverlay():792:792 -> J
-    36:37:void closeFullscreenOverlay():793:793 -> J
-    38:45:void closeFullscreenOverlay():795:795 -> J
-    46:48:void closeFullscreenOverlay():796:796 -> J
-    49:52:void closeFullscreenOverlay():797:797 -> J
-    1:5:void configureSecondaryWebView(android.webkit.WebView):753:753 -> K
-    6:8:void configureSecondaryWebView(android.webkit.WebView):754:754 -> K
-    9:11:void configureSecondaryWebView(android.webkit.WebView):756:756 -> K
-    12:15:void configureSecondaryWebView(android.webkit.WebView):758:758 -> K
-    16:18:void configureSecondaryWebView(android.webkit.WebView):759:759 -> K
-    19:21:void configureSecondaryWebView(android.webkit.WebView):760:760 -> K
-    22:24:void configureSecondaryWebView(android.webkit.WebView):761:761 -> K
-    25:27:void configureSecondaryWebView(android.webkit.WebView):762:762 -> K
-    28:31:void configureSecondaryWebView(android.webkit.WebView):763:763 -> K
-    32:36:void configureSecondaryWebView(android.webkit.WebView):764:764 -> K
-    37:40:void configureSecondaryWebView(android.webkit.WebView):765:765 -> K
-    41:43:void configureSecondaryWebView(android.webkit.WebView):766:766 -> K
-    44:46:void configureSecondaryWebView(android.webkit.WebView):767:767 -> K
-    47:49:void configureSecondaryWebView(android.webkit.WebView):768:768 -> K
-    50:78:void configureSecondaryWebView(android.webkit.WebView):769:769 -> K
-    79:82:void configureSecondaryWebView(android.webkit.WebView):771:771 -> K
-    83:85:void configureSecondaryWebView(android.webkit.WebView):774:774 -> K
-    86:93:void configureSecondaryWebView(android.webkit.WebView):776:776 -> K
-    94:102:void configureSecondaryWebView(android.webkit.WebView):777:777 -> K
-    1:5:void configureWebViewSettings():316:316 -> L
-    6:8:void configureWebViewSettings():317:317 -> L
-    9:13:void configureWebViewSettings():319:319 -> L
-    14:19:void configureWebViewSettings():322:322 -> L
-    20:22:void configureWebViewSettings():323:323 -> L
-    23:25:void configureWebViewSettings():324:324 -> L
-    26:28:void configureWebViewSettings():325:325 -> L
-    29:31:void configureWebViewSettings():326:326 -> L
-    32:34:void configureWebViewSettings():327:327 -> L
-    35:38:void configureWebViewSettings():328:328 -> L
-    39:42:void configureWebViewSettings():329:329 -> L
-    43:47:void configureWebViewSettings():330:330 -> L
-    48:50:void configureWebViewSettings():331:331 -> L
-    51:53:void configureWebViewSettings():332:332 -> L
-    54:56:void configureWebViewSettings():333:333 -> L
-    57:59:void configureWebViewSettings():334:334 -> L
-    60:88:void configureWebViewSettings():335:335 -> L
-    89:92:void configureWebViewSettings():337:337 -> L
-    93:95:void configureWebViewSettings():340:340 -> L
-    96:106:void configureWebViewSettings():343:343 -> L
-    107:117:void configureWebViewSettings():344:344 -> L
-    1:4:void configureWindow():162:162 -> M
-    5:15:void configureWindow():163:163 -> M
-    16:18:void configureWindow():164:164 -> M
-    19:24:void configureWindow():165:165 -> M
-    25:33:void configureWindow():166:166 -> M
-    1:7:android.widget.FrameLayout createErrorOverlay():237:237 -> N
-    8:11:android.widget.FrameLayout createErrorOverlay():238:238 -> N
-    12:14:android.widget.FrameLayout createErrorOverlay():239:239 -> N
-    15:23:android.widget.FrameLayout createErrorOverlay():240:240 -> N
-    24:32:android.widget.FrameLayout createErrorOverlay():241:241 -> N
-    33:37:android.widget.FrameLayout createErrorOverlay():246:246 -> N
-    38:42:android.widget.FrameLayout createErrorOverlay():247:247 -> N
-    43:47:android.widget.FrameLayout createErrorOverlay():248:248 -> N
-    48:66:android.widget.FrameLayout createErrorOverlay():249:249 -> N
-    67:72:android.widget.FrameLayout createErrorOverlay():250:250 -> N
-    73:74:android.widget.FrameLayout createErrorOverlay():254:254 -> N
-    75:77:android.widget.FrameLayout createErrorOverlay():255:255 -> N
-    78:82:android.widget.FrameLayout createErrorOverlay():257:257 -> N
-    83:87:android.widget.FrameLayout createErrorOverlay():258:258 -> N
-    88:90:android.widget.FrameLayout createErrorOverlay():259:259 -> N
-    91:95:android.widget.FrameLayout createErrorOverlay():260:260 -> N
-    96:110:android.widget.FrameLayout createErrorOverlay():261:261 -> N
-    111:112:android.widget.FrameLayout createErrorOverlay():262:262 -> N
-    113:115:android.widget.FrameLayout createErrorOverlay():263:263 -> N
-    116:120:android.widget.FrameLayout createErrorOverlay():265:265 -> N
-    121:125:android.widget.FrameLayout createErrorOverlay():266:266 -> N
-    126:130:android.widget.FrameLayout createErrorOverlay():267:267 -> N
-    131:133:android.widget.FrameLayout createErrorOverlay():268:268 -> N
-    134:136:android.widget.FrameLayout createErrorOverlay():269:269 -> N
-    137:143:android.widget.FrameLayout createErrorOverlay():270:270 -> N
-    144:156:android.widget.FrameLayout createErrorOverlay():271:271 -> N
-    157:161:android.widget.FrameLayout createErrorOverlay():273:273 -> N
-    162:166:android.widget.FrameLayout createErrorOverlay():274:274 -> N
-    167:177:android.widget.FrameLayout createErrorOverlay():275:275 -> N
-    178:180:android.widget.FrameLayout createErrorOverlay():276:276 -> N
-    181:185:android.widget.FrameLayout createErrorOverlay():277:277 -> N
-    186:202:android.widget.FrameLayout createErrorOverlay():278:278 -> N
-    203:206:android.widget.FrameLayout createErrorOverlay():280:280 -> N
-    207:214:android.widget.FrameLayout createErrorOverlay():281:281 -> N
-    215:217:android.widget.FrameLayout createErrorOverlay():287:287 -> N
-    218:220:android.widget.FrameLayout createErrorOverlay():288:288 -> N
-    221:223:android.widget.FrameLayout createErrorOverlay():289:289 -> N
-    224:226:android.widget.FrameLayout createErrorOverlay():290:290 -> N
-    227:230:android.widget.FrameLayout createErrorOverlay():291:291 -> N
-    1:6:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):607:607 -> O
-    7:9:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):608:608 -> O
-    10:18:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):609:609 -> O
-    19:23:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):614:614 -> O
-    24:28:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):615:615 -> O
-    29:32:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):616:616 -> O
-    33:37:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):617:617 -> O
-    38:58:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):618:618 -> O
-    59:63:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):619:619 -> O
-    64:66:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):620:620 -> O
-    67:75:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):621:621 -> O
-    76:90:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):622:622 -> O
-    91:98:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):623:623 -> O
-    99:101:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):624:624 -> O
-    102:105:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):625:625 -> O
-    106:115:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):627:627 -> O
-    116:117:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):629:629 -> O
-    118:134:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):630:630 -> O
-    135:137:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):631:631 -> O
-    138:143:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):633:633 -> O
-    144:151:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):634:634 -> O
-    152:154:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):638:638 -> O
-    155:159:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):640:640 -> O
-    160:162:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):641:641 -> O
-    163:173:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):642:642 -> O
-    174:178:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):643:643 -> O
-    179:181:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):644:644 -> O
-    182:186:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):645:645 -> O
-    187:189:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):646:646 -> O
-    190:199:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):647:647 -> O
-    200:204:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):648:648 -> O
-    205:210:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):651:651 -> O
-    211:218:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):652:652 -> O
-    219:223:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):656:656 -> O
-    224:229:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):660:660 -> O
-    230:237:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):661:661 -> O
-    238:240:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):665:665 -> O
-    241:246:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):668:668 -> O
-    247:254:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):669:669 -> O
-    255:257:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):673:673 -> O
-    258:261:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):675:675 -> O
-    1:5:android.widget.TextView createRetryButton():296:296 -> P
-    6:11:android.widget.TextView createRetryButton():297:297 -> P
-    12:16:android.widget.TextView createRetryButton():298:298 -> P
-    17:21:android.widget.TextView createRetryButton():299:299 -> P
-    22:24:android.widget.TextView createRetryButton():300:300 -> P
-    25:30:android.widget.TextView createRetryButton():301:301 -> P
-    31:33:android.widget.TextView createRetryButton():302:302 -> P
-    34:39:android.widget.TextView createRetryButton():303:303 -> P
-    40:44:android.widget.TextView createRetryButton():304:304 -> P
-    45:52:android.widget.TextView createRetryButton():305:305 -> P
-    53:61:android.widget.TextView createRetryButton():306:306 -> P
-    62:74:android.widget.TextView createRetryButton():307:307 -> P
-    75:77:android.widget.TextView createRetryButton():308:308 -> P
-    78:94:android.widget.TextView createRetryButton():309:309 -> P
-    95:96:android.widget.TextView createRetryButton():310:310 -> P
-    97:100:android.widget.TextView createRetryButton():311:311 -> P
-    1:5:android.widget.TextView createToolbarButton(java.lang.String):680:680 -> Q
-    6:9:android.widget.TextView createToolbarButton(java.lang.String):681:681 -> Q
-    10:14:android.widget.TextView createToolbarButton(java.lang.String):682:682 -> Q
-    15:19:android.widget.TextView createToolbarButton(java.lang.String):683:683 -> Q
-    20:22:android.widget.TextView createToolbarButton(java.lang.String):684:684 -> Q
-    23:28:android.widget.TextView createToolbarButton(java.lang.String):685:685 -> Q
-    29:33:android.widget.TextView createToolbarButton(java.lang.String):686:686 -> Q
-    34:40:android.widget.TextView createToolbarButton(java.lang.String):687:687 -> Q
-    41:46:android.widget.TextView createToolbarButton(java.lang.String):688:688 -> Q
-    47:51:android.widget.TextView createToolbarButton(java.lang.String):689:689 -> Q
-    52:59:android.widget.TextView createToolbarButton(java.lang.String):690:690 -> Q
-    60:68:android.widget.TextView createToolbarButton(java.lang.String):691:691 -> Q
-    69:81:android.widget.TextView createToolbarButton(java.lang.String):692:692 -> Q
-    82:84:android.widget.TextView createToolbarButton(java.lang.String):693:693 -> Q
-    85:88:android.widget.TextView createToolbarButton(java.lang.String):694:694 -> Q
-    89:97:android.widget.TextView createToolbarButton(java.lang.String):696:696 -> Q
-    98:108:android.widget.TextView createToolbarButton(java.lang.String):698:698 -> Q
-    109:112:android.widget.TextView createToolbarButton(java.lang.String):699:699 -> Q
-    1:7:void createWebView():172:172 -> R
-    8:16:void createWebView():173:173 -> R
-    17:22:void createWebView():175:175 -> R
-    23:25:void createWebView():176:176 -> R
-    26:32:void createWebView():177:177 -> R
-    33:41:void createWebView():178:178 -> R
-    42:48:void createWebView():183:183 -> R
-    49:59:void createWebView():184:184 -> R
-    60:67:void createWebView():190:190 -> R
-    68:70:void createWebView():191:191 -> R
-    71:79:void createWebView():192:192 -> R
-    80:86:void createWebView():193:193 -> R
-    87:91:void createWebView():194:194 -> R
-    92:97:void createWebView():195:195 -> R
-    98:102:void createWebView():196:196 -> R
-    103:112:void createWebView():198:198 -> R
-    113:119:void createWebView():203:203 -> R
-    120:138:void createWebView():204:204 -> R
-    139:149:void createWebView():205:205 -> R
-    150:159:void createWebView():206:206 -> R
-    160:166:void createWebView():212:212 -> R
-    167:173:void createWebView():214:214 -> R
-    174:178:void createWebView():215:215 -> R
-    179:183:void createWebView():216:216 -> R
-    184:190:void createWebView():217:217 -> R
-    191:207:void createWebView():218:218 -> R
-    208:209:void createWebView():219:219 -> R
-    210:214:void createWebView():220:220 -> R
-    215:220:void createWebView():222:222 -> R
-    221:223:void createWebView():223:223 -> R
-    224:233:void createWebView():225:225 -> R
-    234:240:void createWebView():228:228 -> R
-    241:247:void createWebView():229:229 -> R
-    248:254:void createWebView():230:230 -> R
-    255:259:void createWebView():231:231 -> R
-    260:264:void createWebView():232:232 -> R
-    265:270:void createWebView():233:233 -> R
-    1:17:void dispatchWebEvent(java.lang.String):472:472 -> S
-    18:24:void dispatchWebEvent(java.lang.String):473:473 -> S
-    25:28:void dispatchWebEvent(java.lang.String):474:474 -> S
-    29:57:void dispatchWebEvent(java.lang.String):475:475 -> S
-    2:17:int dp(int):541:541 -> T
-    1:5:java.lang.String extractWhatsAppPhone(android.net.Uri):403:403 -> U
-    6:14:java.lang.String extractWhatsAppPhone(android.net.Uri):404:404 -> U
-    15:20:java.lang.String extractWhatsAppPhone(android.net.Uri):405:405 -> U
-    21:27:java.lang.String extractWhatsAppPhone(android.net.Uri):406:406 -> U
-    28:34:java.lang.String extractWhatsAppPhone(android.net.Uri):407:407 -> U
-    35:39:java.lang.String extractWhatsAppPhone(android.net.Uri):409:409 -> U
-    1:9:void finishNativeLoading():500:500 -> V
-    1:11:void hideErrorOverlay():491:491 -> W
-    12:19:void hideErrorOverlay():492:492 -> W
-    4:6:void injectNativeAppRuntime(android.webkit.WebView):440:440 -> X
-    7:10:void injectNativeAppRuntime(android.webkit.WebView):446:446 -> X
-    4:15:boolean isHomeUrl(java.lang.String):381:381 -> Y
-    16:19:boolean isHomeUrl(java.lang.String):383:383 -> Y
-    20:26:boolean isHomeUrl(java.lang.String):384:384 -> Y
-    27:30:boolean isHomeUrl(java.lang.String):385:385 -> Y
-    31:45:boolean isHomeUrl(java.lang.String):386:386 -> Y
-    46:64:boolean isHomeUrl(java.lang.String):387:387 -> Y
-    1:4:boolean isHttpUrl(android.net.Uri):354:354 -> Z
-    5:25:boolean isHttpUrl(android.net.Uri):355:355 -> Z
+    1:5:void closeFullscreenOverlay():801:801 -> H
+    6:8:void closeFullscreenOverlay():802:802 -> H
+    9:10:void closeFullscreenOverlay():803:803 -> H
+    11:12:void closeFullscreenOverlay():805:805 -> H
+    13:16:void closeFullscreenOverlay():806:806 -> H
+    17:19:void closeFullscreenOverlay():807:807 -> H
+    20:24:void closeFullscreenOverlay():808:808 -> H
+    25:26:void closeFullscreenOverlay():809:809 -> H
+    27:30:void closeFullscreenOverlay():811:811 -> H
+    31:35:void closeFullscreenOverlay():812:812 -> H
+    36:37:void closeFullscreenOverlay():813:813 -> H
+    38:45:void closeFullscreenOverlay():815:815 -> H
+    46:48:void closeFullscreenOverlay():816:816 -> H
+    49:52:void closeFullscreenOverlay():817:817 -> H
+    1:5:void configureSecondaryWebView(android.webkit.WebView):773:773 -> I
+    6:8:void configureSecondaryWebView(android.webkit.WebView):774:774 -> I
+    9:11:void configureSecondaryWebView(android.webkit.WebView):776:776 -> I
+    12:15:void configureSecondaryWebView(android.webkit.WebView):778:778 -> I
+    16:18:void configureSecondaryWebView(android.webkit.WebView):779:779 -> I
+    19:21:void configureSecondaryWebView(android.webkit.WebView):780:780 -> I
+    22:24:void configureSecondaryWebView(android.webkit.WebView):781:781 -> I
+    25:27:void configureSecondaryWebView(android.webkit.WebView):782:782 -> I
+    28:31:void configureSecondaryWebView(android.webkit.WebView):783:783 -> I
+    32:36:void configureSecondaryWebView(android.webkit.WebView):784:784 -> I
+    37:40:void configureSecondaryWebView(android.webkit.WebView):785:785 -> I
+    41:43:void configureSecondaryWebView(android.webkit.WebView):786:786 -> I
+    44:46:void configureSecondaryWebView(android.webkit.WebView):787:787 -> I
+    47:49:void configureSecondaryWebView(android.webkit.WebView):788:788 -> I
+    50:78:void configureSecondaryWebView(android.webkit.WebView):789:789 -> I
+    79:82:void configureSecondaryWebView(android.webkit.WebView):791:791 -> I
+    83:85:void configureSecondaryWebView(android.webkit.WebView):794:794 -> I
+    86:93:void configureSecondaryWebView(android.webkit.WebView):796:796 -> I
+    94:102:void configureSecondaryWebView(android.webkit.WebView):797:797 -> I
+    1:5:void configureWebViewSettings():316:316 -> J
+    6:8:void configureWebViewSettings():317:317 -> J
+    9:13:void configureWebViewSettings():319:319 -> J
+    14:19:void configureWebViewSettings():322:322 -> J
+    20:22:void configureWebViewSettings():323:323 -> J
+    23:25:void configureWebViewSettings():324:324 -> J
+    26:28:void configureWebViewSettings():325:325 -> J
+    29:31:void configureWebViewSettings():326:326 -> J
+    32:34:void configureWebViewSettings():327:327 -> J
+    35:38:void configureWebViewSettings():328:328 -> J
+    39:42:void configureWebViewSettings():329:329 -> J
+    43:47:void configureWebViewSettings():330:330 -> J
+    48:50:void configureWebViewSettings():331:331 -> J
+    51:53:void configureWebViewSettings():332:332 -> J
+    54:56:void configureWebViewSettings():333:333 -> J
+    57:59:void configureWebViewSettings():334:334 -> J
+    60:88:void configureWebViewSettings():335:335 -> J
+    89:92:void configureWebViewSettings():337:337 -> J
+    93:95:void configureWebViewSettings():340:340 -> J
+    96:106:void configureWebViewSettings():343:343 -> J
+    107:117:void configureWebViewSettings():344:344 -> J
+    1:4:void configureWindow():162:162 -> K
+    5:15:void configureWindow():163:163 -> K
+    16:18:void configureWindow():164:164 -> K
+    19:24:void configureWindow():165:165 -> K
+    25:33:void configureWindow():166:166 -> K
+    1:7:android.widget.FrameLayout createErrorOverlay():237:237 -> L
+    8:11:android.widget.FrameLayout createErrorOverlay():238:238 -> L
+    12:14:android.widget.FrameLayout createErrorOverlay():239:239 -> L
+    15:23:android.widget.FrameLayout createErrorOverlay():240:240 -> L
+    24:32:android.widget.FrameLayout createErrorOverlay():241:241 -> L
+    33:37:android.widget.FrameLayout createErrorOverlay():246:246 -> L
+    38:42:android.widget.FrameLayout createErrorOverlay():247:247 -> L
+    43:47:android.widget.FrameLayout createErrorOverlay():248:248 -> L
+    48:66:android.widget.FrameLayout createErrorOverlay():249:249 -> L
+    67:72:android.widget.FrameLayout createErrorOverlay():250:250 -> L
+    73:74:android.widget.FrameLayout createErrorOverlay():254:254 -> L
+    75:77:android.widget.FrameLayout createErrorOverlay():255:255 -> L
+    78:82:android.widget.FrameLayout createErrorOverlay():257:257 -> L
+    83:87:android.widget.FrameLayout createErrorOverlay():258:258 -> L
+    88:90:android.widget.FrameLayout createErrorOverlay():259:259 -> L
+    91:95:android.widget.FrameLayout createErrorOverlay():260:260 -> L
+    96:110:android.widget.FrameLayout createErrorOverlay():261:261 -> L
+    111:112:android.widget.FrameLayout createErrorOverlay():262:262 -> L
+    113:115:android.widget.FrameLayout createErrorOverlay():263:263 -> L
+    116:120:android.widget.FrameLayout createErrorOverlay():265:265 -> L
+    121:125:android.widget.FrameLayout createErrorOverlay():266:266 -> L
+    126:130:android.widget.FrameLayout createErrorOverlay():267:267 -> L
+    131:133:android.widget.FrameLayout createErrorOverlay():268:268 -> L
+    134:136:android.widget.FrameLayout createErrorOverlay():269:269 -> L
+    137:143:android.widget.FrameLayout createErrorOverlay():270:270 -> L
+    144:156:android.widget.FrameLayout createErrorOverlay():271:271 -> L
+    157:161:android.widget.FrameLayout createErrorOverlay():273:273 -> L
+    162:166:android.widget.FrameLayout createErrorOverlay():274:274 -> L
+    167:177:android.widget.FrameLayout createErrorOverlay():275:275 -> L
+    178:180:android.widget.FrameLayout createErrorOverlay():276:276 -> L
+    181:185:android.widget.FrameLayout createErrorOverlay():277:277 -> L
+    186:202:android.widget.FrameLayout createErrorOverlay():278:278 -> L
+    203:206:android.widget.FrameLayout createErrorOverlay():280:280 -> L
+    207:214:android.widget.FrameLayout createErrorOverlay():281:281 -> L
+    215:217:android.widget.FrameLayout createErrorOverlay():287:287 -> L
+    218:220:android.widget.FrameLayout createErrorOverlay():288:288 -> L
+    221:223:android.widget.FrameLayout createErrorOverlay():289:289 -> L
+    224:226:android.widget.FrameLayout createErrorOverlay():290:290 -> L
+    227:230:android.widget.FrameLayout createErrorOverlay():291:291 -> L
+    1:6:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):627:627 -> M
+    7:9:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):628:628 -> M
+    10:18:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):629:629 -> M
+    19:23:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):634:634 -> M
+    24:28:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):635:635 -> M
+    29:32:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):636:636 -> M
+    33:37:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):637:637 -> M
+    38:58:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):638:638 -> M
+    59:63:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):639:639 -> M
+    64:66:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):640:640 -> M
+    67:75:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):641:641 -> M
+    76:90:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):642:642 -> M
+    91:98:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):643:643 -> M
+    99:101:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):644:644 -> M
+    102:105:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):645:645 -> M
+    106:115:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):647:647 -> M
+    116:117:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):649:649 -> M
+    118:134:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):650:650 -> M
+    135:137:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):651:651 -> M
+    138:143:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):653:653 -> M
+    144:151:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):654:654 -> M
+    152:154:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):658:658 -> M
+    155:159:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):660:660 -> M
+    160:162:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):661:661 -> M
+    163:173:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):662:662 -> M
+    174:178:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):663:663 -> M
+    179:181:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):664:664 -> M
+    182:186:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):665:665 -> M
+    187:189:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):666:666 -> M
+    190:199:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):667:667 -> M
+    200:204:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):668:668 -> M
+    205:210:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):671:671 -> M
+    211:218:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):672:672 -> M
+    219:223:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):676:676 -> M
+    224:229:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):680:680 -> M
+    230:237:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):681:681 -> M
+    238:240:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):685:685 -> M
+    241:246:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):688:688 -> M
+    247:254:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):689:689 -> M
+    255:257:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):693:693 -> M
+    258:261:android.view.View createFullscreenToolbar(java.lang.String,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable,java.lang.Runnable):695:695 -> M
+    1:5:android.widget.TextView createRetryButton():296:296 -> N
+    6:11:android.widget.TextView createRetryButton():297:297 -> N
+    12:16:android.widget.TextView createRetryButton():298:298 -> N
+    17:21:android.widget.TextView createRetryButton():299:299 -> N
+    22:24:android.widget.TextView createRetryButton():300:300 -> N
+    25:30:android.widget.TextView createRetryButton():301:301 -> N
+    31:33:android.widget.TextView createRetryButton():302:302 -> N
+    34:39:android.widget.TextView createRetryButton():303:303 -> N
+    40:44:android.widget.TextView createRetryButton():304:304 -> N
+    45:52:android.widget.TextView createRetryButton():305:305 -> N
+    53:61:android.widget.TextView createRetryButton():306:306 -> N
+    62:74:android.widget.TextView createRetryButton():307:307 -> N
+    75:77:android.widget.TextView createRetryButton():308:308 -> N
+    78:94:android.widget.TextView createRetryButton():309:309 -> N
+    95:96:android.widget.TextView createRetryButton():310:310 -> N
+    97:100:android.widget.TextView createRetryButton():311:311 -> N
+    1:5:android.widget.TextView createToolbarButton(java.lang.String):700:700 -> O
+    6:9:android.widget.TextView createToolbarButton(java.lang.String):701:701 -> O
+    10:14:android.widget.TextView createToolbarButton(java.lang.String):702:702 -> O
+    15:19:android.widget.TextView createToolbarButton(java.lang.String):703:703 -> O
+    20:22:android.widget.TextView createToolbarButton(java.lang.String):704:704 -> O
+    23:28:android.widget.TextView createToolbarButton(java.lang.String):705:705 -> O
+    29:33:android.widget.TextView createToolbarButton(java.lang.String):706:706 -> O
+    34:40:android.widget.TextView createToolbarButton(java.lang.String):707:707 -> O
+    41:46:android.widget.TextView createToolbarButton(java.lang.String):708:708 -> O
+    47:51:android.widget.TextView createToolbarButton(java.lang.String):709:709 -> O
+    52:59:android.widget.TextView createToolbarButton(java.lang.String):710:710 -> O
+    60:68:android.widget.TextView createToolbarButton(java.lang.String):711:711 -> O
+    69:81:android.widget.TextView createToolbarButton(java.lang.String):712:712 -> O
+    82:84:android.widget.TextView createToolbarButton(java.lang.String):713:713 -> O
+    85:88:android.widget.TextView createToolbarButton(java.lang.String):714:714 -> O
+    89:97:android.widget.TextView createToolbarButton(java.lang.String):716:716 -> O
+    98:108:android.widget.TextView createToolbarButton(java.lang.String):718:718 -> O
+    109:112:android.widget.TextView createToolbarButton(java.lang.String):719:719 -> O
+    1:7:void createWebView():172:172 -> P
+    8:16:void createWebView():173:173 -> P
+    17:22:void createWebView():175:175 -> P
+    23:25:void createWebView():176:176 -> P
+    26:32:void createWebView():177:177 -> P
+    33:41:void createWebView():178:178 -> P
+    42:48:void createWebView():183:183 -> P
+    49:59:void createWebView():184:184 -> P
+    60:67:void createWebView():190:190 -> P
+    68:70:void createWebView():191:191 -> P
+    71:79:void createWebView():192:192 -> P
+    80:86:void createWebView():193:193 -> P
+    87:91:void createWebView():194:194 -> P
+    92:97:void createWebView():195:195 -> P
+    98:102:void createWebView():196:196 -> P
+    103:112:void createWebView():198:198 -> P
+    113:119:void createWebView():203:203 -> P
+    120:138:void createWebView():204:204 -> P
+    139:149:void createWebView():205:205 -> P
+    150:159:void createWebView():206:206 -> P
+    160:166:void createWebView():212:212 -> P
+    167:173:void createWebView():214:214 -> P
+    174:178:void createWebView():215:215 -> P
+    179:183:void createWebView():216:216 -> P
+    184:190:void createWebView():217:217 -> P
+    191:207:void createWebView():218:218 -> P
+    208:209:void createWebView():219:219 -> P
+    210:214:void createWebView():220:220 -> P
+    215:220:void createWebView():222:222 -> P
+    221:223:void createWebView():223:223 -> P
+    224:233:void createWebView():225:225 -> P
+    234:240:void createWebView():228:228 -> P
+    241:247:void createWebView():229:229 -> P
+    248:254:void createWebView():230:230 -> P
+    255:259:void createWebView():231:231 -> P
+    260:264:void createWebView():232:232 -> P
+    265:270:void createWebView():233:233 -> P
+    1:17:void dispatchWebEvent(java.lang.String):472:472 -> Q
+    18:24:void dispatchWebEvent(java.lang.String):473:473 -> Q
+    25:28:void dispatchWebEvent(java.lang.String):474:474 -> Q
+    29:57:void dispatchWebEvent(java.lang.String):475:475 -> Q
+    2:17:int dp(int):561:561 -> R
+    1:5:java.lang.String extractWhatsAppPhone(android.net.Uri):403:403 -> S
+    6:14:java.lang.String extractWhatsAppPhone(android.net.Uri):404:404 -> S
+    15:20:java.lang.String extractWhatsAppPhone(android.net.Uri):405:405 -> S
+    21:27:java.lang.String extractWhatsAppPhone(android.net.Uri):406:406 -> S
+    28:34:java.lang.String extractWhatsAppPhone(android.net.Uri):407:407 -> S
+    35:39:java.lang.String extractWhatsAppPhone(android.net.Uri):409:409 -> S
+    1:9:void finishNativeLoading():500:500 -> T
+    1:11:void hideErrorOverlay():491:491 -> U
+    12:19:void hideErrorOverlay():492:492 -> U
+    4:6:void injectNativeAppRuntime(android.webkit.WebView):440:440 -> V
+    7:10:void injectNativeAppRuntime(android.webkit.WebView):446:446 -> V
+    4:15:boolean isHomeUrl(java.lang.String):381:381 -> W
+    16:19:boolean isHomeUrl(java.lang.String):383:383 -> W
+    20:26:boolean isHomeUrl(java.lang.String):384:384 -> W
+    27:30:boolean isHomeUrl(java.lang.String):385:385 -> W
+    31:45:boolean isHomeUrl(java.lang.String):386:386 -> W
+    46:64:boolean isHomeUrl(java.lang.String):387:387 -> W
+    1:4:boolean isHttpUrl(android.net.Uri):354:354 -> X
+    5:25:boolean isHttpUrl(android.net.Uri):355:355 -> X
+    1:11:boolean isTrustedEsporteIdPage():375:375 -> Y
+    12:21:boolean isTrustedEsporteIdPage():376:376 -> Y
+    22:28:boolean isTrustedEsporteIdPage():377:377 -> Y
+    1:4:boolean isTrustedUri(android.net.Uri):359:359 -> Z
+    5:25:boolean isTrustedUri(android.net.Uri):360:360 -> Z
     1:4:void lambda$createWebView$1(android.view.View,int,int,int,int):225:225 -> a
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;Landroid/view/View;IIII)V"}
-    1:11:boolean isTrustedEsporteIdPage():375:375 -> a0
-    12:21:boolean isTrustedEsporteIdPage():376:376 -> a0
-    22:28:boolean isTrustedEsporteIdPage():377:377 -> a0
-    2:4:void lambda$createFullscreenToolbar$8(java.lang.Runnable,android.view.View):653:653 -> b
-    5:8:void lambda$createFullscreenToolbar$8(java.lang.Runnable,android.view.View):654:654 -> b
-    1:4:boolean isTrustedUri(android.net.Uri):359:359 -> b0
-    5:25:boolean isTrustedUri(android.net.Uri):360:360 -> b0
-    2:4:void lambda$createFullscreenToolbar$7(java.lang.Runnable,android.view.View):635:635 -> c
-    5:8:void lambda$createFullscreenToolbar$7(java.lang.Runnable,android.view.View):636:636 -> c
-    5:22:boolean isWhatsAppUri(android.net.Uri):365:365 -> c0
-    23:37:boolean isWhatsAppUri(android.net.Uri):366:366 -> c0
-    38:47:boolean isWhatsAppUri(android.net.Uri):367:367 -> c0
-    48:55:boolean isWhatsAppUri(android.net.Uri):368:368 -> c0
-    56:63:boolean isWhatsAppUri(android.net.Uri):369:369 -> c0
-    64:71:boolean isWhatsAppUri(android.net.Uri):370:370 -> c0
-    72:81:boolean isWhatsAppUri(android.net.Uri):371:371 -> c0
-    1:4:void lambda$showFullscreenWebView$5():568:568 -> d
+    5:22:boolean isWhatsAppUri(android.net.Uri):365:365 -> a0
+    23:37:boolean isWhatsAppUri(android.net.Uri):366:366 -> a0
+    38:47:boolean isWhatsAppUri(android.net.Uri):367:367 -> a0
+    48:55:boolean isWhatsAppUri(android.net.Uri):368:368 -> a0
+    56:63:boolean isWhatsAppUri(android.net.Uri):369:369 -> a0
+    64:71:boolean isWhatsAppUri(android.net.Uri):370:370 -> a0
+    72:81:boolean isWhatsAppUri(android.net.Uri):371:371 -> a0
+    2:4:void lambda$createFullscreenToolbar$8(java.lang.Runnable,android.view.View):655:655 -> b
+    5:8:void lambda$createFullscreenToolbar$8(java.lang.Runnable,android.view.View):656:656 -> b
+    1:14:java.lang.String jsString(java.lang.String):544:544 -> b0
+    15:20:java.lang.String jsString(java.lang.String):545:545 -> b0
+    21:28:java.lang.String jsString(java.lang.String):546:546 -> b0
+    29:36:java.lang.String jsString(java.lang.String):547:547 -> b0
+    37:51:java.lang.String jsString(java.lang.String):548:548 -> b0
+    1:4:void lambda$showFullscreenWebView$5():584:584 -> c
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;)V"}
-    5:8:void lambda$showFullscreenWebView$5():568:568 -> d
-    1:14:java.lang.String jsString(java.lang.String):524:524 -> d0
-    15:20:java.lang.String jsString(java.lang.String):525:525 -> d0
-    21:28:java.lang.String jsString(java.lang.String):526:526 -> d0
-    29:36:java.lang.String jsString(java.lang.String):527:527 -> d0
-    37:51:java.lang.String jsString(java.lang.String):528:528 -> d0
-    1:5:void lambda$createWebView$0():207:207 -> e
+    5:16:void lambda$showFullscreenWebView$5():584:584 -> c
+    17:20:void lambda$showFullscreenWebView$5():585:585 -> c
+    3:10:void loadInitialUrl(android.content.Intent):348:348 -> c0
+    11:23:void loadInitialUrl(android.content.Intent):349:349 -> c0
+    24:29:void loadInitialUrl(android.content.Intent):350:350 -> c0
+    1:5:void lambda$createWebView$0():207:207 -> d
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;)V"}
-    6:8:void lambda$createWebView$0():208:208 -> e
-    9:14:void lambda$createWebView$0():209:209 -> e
-    3:10:void loadInitialUrl(android.content.Intent):348:348 -> e0
-    11:23:void loadInitialUrl(android.content.Intent):349:349 -> e0
-    24:29:void loadInitialUrl(android.content.Intent):350:350 -> e0
-    2:4:void lambda$createFullscreenToolbar$10(java.lang.Runnable,android.view.View):670:670 -> f
-    5:8:void lambda$createFullscreenToolbar$10(java.lang.Runnable,android.view.View):671:671 -> f
-    3:13:void openExternalUrl(java.lang.String):394:394 -> f0
-    14:28:void openExternalUrl(java.lang.String):396:396 -> f0
+    6:8:void lambda$createWebView$0():208:208 -> d
+    9:14:void lambda$createWebView$0():209:209 -> d
+    3:13:void openExternalUrl(java.lang.String):394:394 -> d0
+    14:28:void openExternalUrl(java.lang.String):396:396 -> d0
+    2:4:void lambda$createFullscreenToolbar$10(java.lang.Runnable,android.view.View):682:682 -> e
+    5:8:void lambda$createFullscreenToolbar$10(java.lang.Runnable,android.view.View):683:683 -> e
+    1:4:void openWhatsAppUri(android.net.Uri):422:422 -> e0
+    5:12:void openWhatsAppUri(android.net.Uri):423:423 -> e0
+    13:33:void openWhatsAppUri(android.net.Uri):425:425 -> e0
+    34:40:void openWhatsAppUri(android.net.Uri):426:426 -> e0
+    41:45:void openWhatsAppUri(android.net.Uri):427:427 -> e0
+    46:52:void openWhatsAppUri(android.net.Uri):428:428 -> e0
+    53:57:void openWhatsAppUri(android.net.Uri):430:430 -> e0
+    58:62:void openWhatsAppUri(android.net.Uri):431:431 -> e0
+    63:69:void openWhatsAppUri(android.net.Uri):432:432 -> e0
+    70:97:void openWhatsAppUri(android.net.Uri):434:434 -> e0
+    98:106:void openWhatsAppUri(android.net.Uri):435:435 -> e0
+    2:4:void lambda$createFullscreenToolbar$11(java.lang.Runnable,android.view.View):690:690 -> f
+    5:8:void lambda$createFullscreenToolbar$11(java.lang.Runnable,android.view.View):691:691 -> f
+    3:13:void registerTokenInWebSession(java.lang.String):524:524 -> f0
+    14:18:void registerTokenInWebSession(java.lang.String):525:525 -> f0
+    19:27:void registerTokenInWebSession(java.lang.String):526:526 -> f0
     1:1:void $r8$lambda$JL6GTJA4VuLnH284tTtmkIo0bfs(com.esporteid.app.LauncherActivity):0:0 -> g
       # {"id":"com.android.tools.r8.synthesized"}
-    1:4:void openWhatsAppUri(android.net.Uri):422:422 -> g0
-    5:12:void openWhatsAppUri(android.net.Uri):423:423 -> g0
-    13:33:void openWhatsAppUri(android.net.Uri):425:425 -> g0
-    34:40:void openWhatsAppUri(android.net.Uri):426:426 -> g0
-    41:45:void openWhatsAppUri(android.net.Uri):427:427 -> g0
-    46:52:void openWhatsAppUri(android.net.Uri):428:428 -> g0
-    53:57:void openWhatsAppUri(android.net.Uri):430:430 -> g0
-    58:62:void openWhatsAppUri(android.net.Uri):431:431 -> g0
-    63:69:void openWhatsAppUri(android.net.Uri):432:432 -> g0
-    70:97:void openWhatsAppUri(android.net.Uri):434:434 -> g0
-    98:106:void openWhatsAppUri(android.net.Uri):435:435 -> g0
+    1:7:void requestNotificationPermissionIfNeeded():552:552 -> g0
+    8:16:void requestNotificationPermissionIfNeeded():553:553 -> g0
+    17:23:void requestNotificationPermissionIfNeeded():554:554 -> g0
+    24:32:void requestNotificationPermissionIfNeeded():555:555 -> g0
+    33:44:void requestNotificationPermissionIfNeeded():556:556 -> g0
+    45:54:void requestNotificationPermissionIfNeeded():557:557 -> g0
     1:1:void $r8$lambda$TVtzu2rzf_Vgkv_zaWrMJNiNMws(com.esporteid.app.LauncherActivity,java.lang.String):0:0 -> h
       # {"id":"com.android.tools.r8.synthesized"}
-    3:13:void registerTokenInWebSession(java.lang.String):504:504 -> h0
-    14:18:void registerTokenInWebSession(java.lang.String):505:505 -> h0
-    19:27:void registerTokenInWebSession(java.lang.String):506:506 -> h0
-    1:4:void lambda$showFullscreenWebView$6(java.lang.String):570:570 -> i
+    6:9:void revealTrustedPage(android.webkit.WebView,java.lang.String):507:507 -> h0
+    10:17:void revealTrustedPage(android.webkit.WebView,java.lang.String):511:511 -> h0
+    18:19:void revealTrustedPage(android.webkit.WebView,java.lang.String):512:512 -> h0
+    20:22:void revealTrustedPage(android.webkit.WebView,java.lang.String):513:513 -> h0
+    23:25:void revealTrustedPage(android.webkit.WebView,java.lang.String):514:514 -> h0
+    26:39:void revealTrustedPage(android.webkit.WebView,java.lang.String):515:515 -> h0
+    40:58:void revealTrustedPage(android.webkit.WebView,java.lang.String):516:516 -> h0
+    59:68:void revealTrustedPage(android.webkit.WebView,java.lang.String):518:518 -> h0
+    69:98:void revealTrustedPage(android.webkit.WebView,java.lang.String):519:519 -> h0
+    1:7:void lambda$registerTokenInWebSession$4(java.lang.String):527:527 -> i
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;Ljava/lang/String;)V"}
-    5:20:void lambda$showFullscreenWebView$6(java.lang.String):570:570 -> i
-    1:7:void requestNotificationPermissionIfNeeded():532:532 -> i0
-    8:16:void requestNotificationPermissionIfNeeded():533:533 -> i0
-    17:23:void requestNotificationPermissionIfNeeded():534:534 -> i0
-    24:32:void requestNotificationPermissionIfNeeded():535:535 -> i0
-    33:44:void requestNotificationPermissionIfNeeded():536:536 -> i0
-    45:54:void requestNotificationPermissionIfNeeded():537:537 -> i0
-    1:7:void lambda$registerTokenInWebSession$3(java.lang.String):507:507 -> j
+    8:15:void lambda$registerTokenInWebSession$4(java.lang.String):528:528 -> i
+    16:21:void lambda$registerTokenInWebSession$4(java.lang.String):529:529 -> i
+    22:27:void lambda$registerTokenInWebSession$4(java.lang.String):530:530 -> i
+    28:73:void lambda$registerTokenInWebSession$4(java.lang.String):531:531 -> i
+    74:80:void lambda$registerTokenInWebSession$4(java.lang.String):539:539 -> i
+    1:6:void setImmersiveMode(boolean):821:821 -> i0
+    7:19:void setImmersiveMode(boolean):822:822 -> i0
+    20:32:void setImmersiveMode(boolean):825:825 -> i0
+    33:36:void setImmersiveMode(boolean):826:826 -> i0
+    37:56:void setImmersiveMode(boolean):828:828 -> i0
+    57:68:void setImmersiveMode(boolean):840:840 -> i0
+    1:4:void lambda$showFullscreenWebView$7(java.lang.String):590:590 -> j
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;Ljava/lang/String;)V"}
-    8:15:void lambda$registerTokenInWebSession$3(java.lang.String):508:508 -> j
-    16:21:void lambda$registerTokenInWebSession$3(java.lang.String):509:509 -> j
-    22:27:void lambda$registerTokenInWebSession$3(java.lang.String):510:510 -> j
-    28:73:void lambda$registerTokenInWebSession$3(java.lang.String):511:511 -> j
-    74:80:void lambda$registerTokenInWebSession$3(java.lang.String):519:519 -> j
-    1:6:void setImmersiveMode(boolean):801:801 -> j0
-    7:19:void setImmersiveMode(boolean):802:802 -> j0
-    20:32:void setImmersiveMode(boolean):805:805 -> j0
-    33:36:void setImmersiveMode(boolean):806:806 -> j0
-    37:56:void setImmersiveMode(boolean):808:808 -> j0
-    57:68:void setImmersiveMode(boolean):820:820 -> j0
-    2:4:void lambda$createFullscreenToolbar$9(java.lang.Runnable,android.view.View):662:662 -> k
-    5:8:void lambda$createFullscreenToolbar$9(java.lang.Runnable,android.view.View):663:663 -> k
-    1:12:boolean shouldEnablePullToRefresh():459:459 -> k0
-    13:22:boolean shouldEnablePullToRefresh():461:461 -> k0
-    23:29:boolean shouldEnablePullToRefresh():462:462 -> k0
-    30:33:boolean shouldEnablePullToRefresh():463:463 -> k0
-    34:48:boolean shouldEnablePullToRefresh():464:464 -> k0
-    49:65:boolean shouldEnablePullToRefresh():465:465 -> k0
+    5:20:void lambda$showFullscreenWebView$7(java.lang.String):590:590 -> j
+    1:12:boolean shouldEnablePullToRefresh():459:459 -> j0
+    13:22:boolean shouldEnablePullToRefresh():461:461 -> j0
+    23:29:boolean shouldEnablePullToRefresh():462:462 -> j0
+    30:33:boolean shouldEnablePullToRefresh():463:463 -> j0
+    34:48:boolean shouldEnablePullToRefresh():464:464 -> j0
+    49:65:boolean shouldEnablePullToRefresh():465:465 -> j0
+    2:4:void lambda$createFullscreenToolbar$9(java.lang.Runnable,android.view.View):673:673 -> k
+    5:8:void lambda$createFullscreenToolbar$9(java.lang.Runnable,android.view.View):674:674 -> k
+    1:3:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):600:600 -> k0
+    4:5:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):601:601 -> k0
+    6:7:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):602:602 -> k0
+    8:16:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):603:603 -> k0
+    17:19:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):604:604 -> k0
+    20:30:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):605:605 -> k0
+    31:40:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):609:609 -> k0
+    41:64:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):613:613 -> k0
+    65:71:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):620:620 -> k0
+    72:78:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):621:621 -> k0
+    79:81:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):622:622 -> k0
+    82:85:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):623:623 -> k0
     5:7:void lambda$createErrorOverlay$2(android.view.View):282:282 -> l
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;Landroid/view/View;)V"}
     8:10:void lambda$createErrorOverlay$2(android.view.View):283:283 -> l
     11:18:void lambda$createErrorOverlay$2(android.view.View):284:284 -> l
-    1:3:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):580:580 -> l0
-    4:5:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):581:581 -> l0
-    6:7:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):582:582 -> l0
-    8:16:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):583:583 -> l0
-    17:19:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):584:584 -> l0
-    20:30:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):585:585 -> l0
-    31:40:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):589:589 -> l0
-    41:64:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):593:593 -> l0
-    65:71:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):600:600 -> l0
-    72:78:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):601:601 -> l0
-    79:81:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):602:602 -> l0
-    82:85:void showCustomFullscreenView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):603:603 -> l0
-    1:4:void lambda$showFullscreenWebView$4():564:564 -> m
+    1:8:void showErrorOverlay():482:482 -> l0
+    9:13:void showErrorOverlay():483:483 -> l0
+    14:19:void showErrorOverlay():484:484 -> l0
+    20:22:void showErrorOverlay():485:485 -> l0
+    23:27:void showErrorOverlay():486:486 -> l0
+    28:49:void showErrorOverlay():487:487 -> l0
+    1:4:void lambda$revealTrustedPage$3():519:519 -> m
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;)V"}
-    5:16:void lambda$showFullscreenWebView$4():564:564 -> m
-    17:20:void lambda$showFullscreenWebView$4():565:565 -> m
-    1:8:void showErrorOverlay():482:482 -> m0
-    9:13:void showErrorOverlay():483:483 -> m0
-    14:19:void showErrorOverlay():484:484 -> m0
-    20:22:void showErrorOverlay():485:485 -> m0
-    23:27:void showErrorOverlay():486:486 -> m0
-    28:49:void showErrorOverlay():487:487 -> m0
-    1:3:boolean access$1002(com.esporteid.app.LauncherActivity,boolean):40:40 -> n
-    1:3:void showFullscreenWebView(java.lang.String):545:545 -> n0
-    4:10:void showFullscreenWebView(java.lang.String):546:546 -> n0
-    11:19:void showFullscreenWebView(java.lang.String):547:547 -> n0
-    20:30:void showFullscreenWebView(java.lang.String):548:548 -> n0
-    31:37:void showFullscreenWebView(java.lang.String):553:553 -> n0
-    38:44:void showFullscreenWebView(java.lang.String):554:554 -> n0
-    45:54:void showFullscreenWebView(java.lang.String):555:555 -> n0
-    55:59:void showFullscreenWebView(java.lang.String):559:559 -> n0
-    60:66:void showFullscreenWebView(java.lang.String):560:560 -> n0
-    67:98:void showFullscreenWebView(java.lang.String):561:561 -> n0
-    99:106:void showFullscreenWebView(java.lang.String):573:573 -> n0
-    107:109:void showFullscreenWebView(java.lang.String):574:574 -> n0
-    110:112:void showFullscreenWebView(java.lang.String):575:575 -> n0
-    113:118:void showFullscreenWebView(java.lang.String):576:576 -> n0
-    1:4:void access$1100(com.esporteid.app.LauncherActivity):40:40 -> o
-    1:9:void startNativeLoading():496:496 -> o0
+    5:8:void lambda$revealTrustedPage$3():519:519 -> m
+    1:3:void showFullscreenWebView(java.lang.String):565:565 -> m0
+    4:10:void showFullscreenWebView(java.lang.String):566:566 -> m0
+    11:19:void showFullscreenWebView(java.lang.String):567:567 -> m0
+    20:30:void showFullscreenWebView(java.lang.String):568:568 -> m0
+    31:37:void showFullscreenWebView(java.lang.String):573:573 -> m0
+    38:44:void showFullscreenWebView(java.lang.String):574:574 -> m0
+    45:54:void showFullscreenWebView(java.lang.String):575:575 -> m0
+    55:59:void showFullscreenWebView(java.lang.String):579:579 -> m0
+    60:66:void showFullscreenWebView(java.lang.String):580:580 -> m0
+    67:98:void showFullscreenWebView(java.lang.String):581:581 -> m0
+    99:106:void showFullscreenWebView(java.lang.String):593:593 -> m0
+    107:109:void showFullscreenWebView(java.lang.String):594:594 -> m0
+    110:112:void showFullscreenWebView(java.lang.String):595:595 -> m0
+    113:118:void showFullscreenWebView(java.lang.String):596:596 -> m0
+    1:4:void lambda$showFullscreenWebView$6():588:588 -> n
+      # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;)V"}
+    5:8:void lambda$showFullscreenWebView$6():588:588 -> n
+    1:9:void startNativeLoading():496:496 -> n0
+    1:4:void access$1000(com.esporteid.app.LauncherActivity):40:40 -> o
+    1:7:boolean tryStartWhatsAppIntent(android.content.Intent):414:414 -> o0
     1:7:void onActivityResult(int,int,android.content.Intent):123:123 -> onActivityResult
     8:18:void onActivityResult(int,int,android.content.Intent):124:124 -> onActivityResult
     19:25:void onActivityResult(int,int,android.content.Intent):127:127 -> onActivityResult
@@ -11700,23 +11710,22 @@ com.esporteid.app.LauncherActivity -> com.esporteid.app.LauncherActivity:
     32:34:void onRequestPermissionsResult(int,java.lang.String[],int[]):158:158 -> onRequestPermissionsResult
     1:3:void onResume():92:92 -> onResume
     4:9:void onResume():93:93 -> onResume
-    1:4:void access$1200(com.esporteid.app.LauncherActivity,android.webkit.WebView):40:40 -> p
-    1:7:boolean tryStartWhatsAppIntent(android.content.Intent):414:414 -> p0
-    1:4:void access$1300(com.esporteid.app.LauncherActivity):40:40 -> q
-    1:9:void updateSwipeRefreshEnabled():450:450 -> q0
-    10:13:void updateSwipeRefreshEnabled():451:451 -> q0
-    14:19:void updateSwipeRefreshEnabled():453:453 -> q0
-    20:28:void updateSwipeRefreshEnabled():454:454 -> q0
-    29:32:void updateSwipeRefreshEnabled():451:451 -> q0
-    1:4:void access$1400(com.esporteid.app.LauncherActivity,java.lang.String):40:40 -> r
-    1:3:android.webkit.WebView access$1500(com.esporteid.app.LauncherActivity):40:40 -> s
-    1:3:android.widget.ImageView access$1600(com.esporteid.app.LauncherActivity):40:40 -> t
-    1:4:void access$1700(com.esporteid.app.LauncherActivity):40:40 -> u
-    1:4:void access$1800(com.esporteid.app.LauncherActivity,android.view.View,android.webkit.WebChromeClient$CustomViewCallback):40:40 -> v
-    1:4:void access$1900(com.esporteid.app.LauncherActivity):40:40 -> w
-    1:4:void access$200(com.esporteid.app.LauncherActivity):40:40 -> x
-    1:3:java.lang.String access$2002(com.esporteid.app.LauncherActivity,java.lang.String):40:40 -> y
-    1:3:android.webkit.GeolocationPermissions$Callback access$2102(com.esporteid.app.LauncherActivity,android.webkit.GeolocationPermissions$Callback):40:40 -> z
+    1:4:void access$1100(com.esporteid.app.LauncherActivity,android.webkit.WebView,java.lang.String):40:40 -> p
+    1:9:void updateSwipeRefreshEnabled():450:450 -> p0
+    10:13:void updateSwipeRefreshEnabled():451:451 -> p0
+    14:19:void updateSwipeRefreshEnabled():453:453 -> p0
+    20:28:void updateSwipeRefreshEnabled():454:454 -> p0
+    29:32:void updateSwipeRefreshEnabled():451:451 -> p0
+    1:4:void access$1200(com.esporteid.app.LauncherActivity):40:40 -> q
+    1:4:void access$1300(com.esporteid.app.LauncherActivity,java.lang.String):40:40 -> r
+    1:4:void access$1400(com.esporteid.app.LauncherActivity):40:40 -> s
+    1:4:void access$1500(com.esporteid.app.LauncherActivity,android.view.View,android.webkit.WebChromeClient$CustomViewCallback):40:40 -> t
+    1:4:void access$1600(com.esporteid.app.LauncherActivity):40:40 -> u
+    1:3:java.lang.String access$1702(com.esporteid.app.LauncherActivity,java.lang.String):40:40 -> v
+    1:3:android.webkit.GeolocationPermissions$Callback access$1802(com.esporteid.app.LauncherActivity,android.webkit.GeolocationPermissions$Callback):40:40 -> w
+    1:3:android.webkit.ValueCallback access$1900(com.esporteid.app.LauncherActivity):40:40 -> x
+    1:3:android.webkit.ValueCallback access$1902(com.esporteid.app.LauncherActivity,android.webkit.ValueCallback):40:40 -> y
+    1:4:void access$200(com.esporteid.app.LauncherActivity):40:40 -> z
 com.esporteid.app.LauncherActivity$$ExternalSyntheticApiModelOutline0 -> t.i:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
@@ -11816,27 +11825,27 @@ com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda15 -> t.v:
 com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda16 -> t.w:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
-    com.esporteid.app.LauncherActivity com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$3$d5f3ac29a6e2a371d7ac7fa4474c30fdca274be5f9df92765502b7b9844761b0$0.f$0 -> e
+    com.esporteid.app.LauncherActivity com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$3$a806dda46190e1198237cd5e84a0f934ca0f09b0b2e93fa95a9fad63dd5639bc$0.f$0 -> e
       # {"id":"com.android.tools.r8.synthesized"}
-    java.lang.String com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$3$d5f3ac29a6e2a371d7ac7fa4474c30fdca274be5f9df92765502b7b9844761b0$0.f$1 -> f
-      # {"id":"com.android.tools.r8.synthesized"}
-    1:1:void t.LauncherActivity$$ExternalSyntheticLambda16.<init>(com.esporteid.app.LauncherActivity,java.lang.String):0:0 -> <init>
+    1:1:void t.LauncherActivity$$ExternalSyntheticLambda16.<init>(com.esporteid.app.LauncherActivity):0:0 -> <init>
       # {"id":"com.android.tools.r8.synthesized"}
     1:1:void t.LauncherActivity$$ExternalSyntheticLambda16.run():0:0 -> run
       # {"id":"com.android.tools.r8.synthesized"}
 com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda17 -> t.x:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
-    java.lang.Runnable com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$4$062c3ef4badcaa2e36afdcd9fdb2d1d2230ae9bf667b5954cdf7bb4be0300c04$0.f$0 -> a
+    com.esporteid.app.LauncherActivity com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$3$d5f3ac29a6e2a371d7ac7fa4474c30fdca274be5f9df92765502b7b9844761b0$0.f$0 -> e
       # {"id":"com.android.tools.r8.synthesized"}
-    1:1:void t.LauncherActivity$$ExternalSyntheticLambda17.<init>(java.lang.Runnable):0:0 -> <init>
+    java.lang.String com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$3$d5f3ac29a6e2a371d7ac7fa4474c30fdca274be5f9df92765502b7b9844761b0$0.f$1 -> f
       # {"id":"com.android.tools.r8.synthesized"}
-    1:1:void t.LauncherActivity$$ExternalSyntheticLambda17.onClick(android.view.View):0:0 -> onClick
+    1:1:void t.LauncherActivity$$ExternalSyntheticLambda17.<init>(com.esporteid.app.LauncherActivity,java.lang.String):0:0 -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void t.LauncherActivity$$ExternalSyntheticLambda17.run():0:0 -> run
       # {"id":"com.android.tools.r8.synthesized"}
 com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda18 -> t.y:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
-    java.lang.Runnable com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$4$062c3ef4badcaa2e36afdcd9fdb2d1d2230ae9bf667b5954cdf7bb4be0300c04$1.f$0 -> a
+    java.lang.Runnable com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$4$062c3ef4badcaa2e36afdcd9fdb2d1d2230ae9bf667b5954cdf7bb4be0300c04$0.f$0 -> a
       # {"id":"com.android.tools.r8.synthesized"}
     1:1:void t.LauncherActivity$$ExternalSyntheticLambda18.<init>(java.lang.Runnable):0:0 -> <init>
       # {"id":"com.android.tools.r8.synthesized"}
@@ -11845,7 +11854,7 @@ com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda18 -> t.y:
 com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda19 -> t.z:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
-    java.lang.Runnable com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$4$062c3ef4badcaa2e36afdcd9fdb2d1d2230ae9bf667b5954cdf7bb4be0300c04$2.f$0 -> a
+    java.lang.Runnable com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$4$062c3ef4badcaa2e36afdcd9fdb2d1d2230ae9bf667b5954cdf7bb4be0300c04$1.f$0 -> a
       # {"id":"com.android.tools.r8.synthesized"}
     1:1:void t.LauncherActivity$$ExternalSyntheticLambda19.<init>(java.lang.Runnable):0:0 -> <init>
       # {"id":"com.android.tools.r8.synthesized"}
@@ -11854,13 +11863,22 @@ com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda19 -> t.z:
 com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda20 -> t.A:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
-    java.lang.Runnable com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$4$062c3ef4badcaa2e36afdcd9fdb2d1d2230ae9bf667b5954cdf7bb4be0300c04$3.f$0 -> a
+    java.lang.Runnable com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$4$062c3ef4badcaa2e36afdcd9fdb2d1d2230ae9bf667b5954cdf7bb4be0300c04$2.f$0 -> a
       # {"id":"com.android.tools.r8.synthesized"}
     1:1:void t.LauncherActivity$$ExternalSyntheticLambda20.<init>(java.lang.Runnable):0:0 -> <init>
       # {"id":"com.android.tools.r8.synthesized"}
     1:1:void t.LauncherActivity$$ExternalSyntheticLambda20.onClick(android.view.View):0:0 -> onClick
       # {"id":"com.android.tools.r8.synthesized"}
-com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda8 -> t.B:
+com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda21 -> t.B:
+# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
+# {"id":"com.android.tools.r8.synthesized"}
+    java.lang.Runnable com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$4$062c3ef4badcaa2e36afdcd9fdb2d1d2230ae9bf667b5954cdf7bb4be0300c04$3.f$0 -> a
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void t.LauncherActivity$$ExternalSyntheticLambda21.<init>(java.lang.Runnable):0:0 -> <init>
+      # {"id":"com.android.tools.r8.synthesized"}
+    1:1:void t.LauncherActivity$$ExternalSyntheticLambda21.onClick(android.view.View):0:0 -> onClick
+      # {"id":"com.android.tools.r8.synthesized"}
+com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda8 -> t.C:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
     com.esporteid.app.LauncherActivity com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$1$703b56c52777418748f6928b3c1090817335a35fa911689dc3ff9146b167d3be$0.f$0 -> a
@@ -11869,7 +11887,7 @@ com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda8 -> t.B:
       # {"id":"com.android.tools.r8.synthesized"}
     1:1:void t.LauncherActivity$$ExternalSyntheticLambda8.onToken(java.lang.String):0:0 -> a
       # {"id":"com.android.tools.r8.synthesized"}
-com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda9 -> t.C:
+com.esporteid.app.LauncherActivity$$ExternalSyntheticLambda9 -> t.D:
 # {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
 # {"id":"com.android.tools.r8.synthesized"}
     com.esporteid.app.LauncherActivity com.esporteid.app.LauncherActivity$$InternalSyntheticLambda$2$b23b2d9aa0d2073a00a21dc74311da248c8007f72294b3d339a9a2d3be14892b$1.f$0 -> a
@@ -11883,74 +11901,57 @@ com.esporteid.app.LauncherActivity$1 -> com.esporteid.app.LauncherActivity$a:
 com.esporteid.app.LauncherActivity$EsporteIdWebChromeClient -> com.esporteid.app.LauncherActivity$b:
 # {"id":"sourceFile","fileName":"LauncherActivity.java"}
     com.esporteid.app.LauncherActivity this$0 -> a
-    1:1:void <init>(com.esporteid.app.LauncherActivity):884:884 -> <init>
-    2:2:void <init>(com.esporteid.app.LauncherActivity,com.esporteid.app.LauncherActivity$1):884:884 -> <init>
+    1:1:void <init>(com.esporteid.app.LauncherActivity):904:904 -> <init>
+    2:2:void <init>(com.esporteid.app.LauncherActivity,com.esporteid.app.LauncherActivity$1):904:904 -> <init>
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;Lcom/esporteid/app/LauncherActivity$a;)V"}
-    1:2:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):902:902 -> onGeolocationPermissionsShowPrompt
-    3:14:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):903:903 -> onGeolocationPermissionsShowPrompt
-    15:21:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):904:904 -> onGeolocationPermissionsShowPrompt
-    22:26:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):908:908 -> onGeolocationPermissionsShowPrompt
-    27:31:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):909:909 -> onGeolocationPermissionsShowPrompt
-    32:45:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):910:910 -> onGeolocationPermissionsShowPrompt
-    46:49:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):905:905 -> onGeolocationPermissionsShowPrompt
-    1:6:void onHideCustomView():897:897 -> onHideCustomView
-    1:4:void onProgressChanged(android.webkit.WebView,int):887:887 -> onProgressChanged
-    1:6:void onShowCustomView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):892:892 -> onShowCustomView
-    1:9:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):915:915 -> onShowFileChooser
-    10:18:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):916:916 -> onShowFileChooser
-    19:23:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):918:918 -> onShowFileChooser
-    24:27:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):919:919 -> onShowFileChooser
-    28:36:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):921:921 -> onShowFileChooser
-    37:43:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):923:923 -> onShowFileChooser
+    1:2:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):922:922 -> onGeolocationPermissionsShowPrompt
+    3:14:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):923:923 -> onGeolocationPermissionsShowPrompt
+    15:21:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):924:924 -> onGeolocationPermissionsShowPrompt
+    22:26:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):928:928 -> onGeolocationPermissionsShowPrompt
+    27:31:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):929:929 -> onGeolocationPermissionsShowPrompt
+    32:45:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):930:930 -> onGeolocationPermissionsShowPrompt
+    46:49:void onGeolocationPermissionsShowPrompt(java.lang.String,android.webkit.GeolocationPermissions$Callback):925:925 -> onGeolocationPermissionsShowPrompt
+    1:6:void onHideCustomView():917:917 -> onHideCustomView
+    1:4:void onProgressChanged(android.webkit.WebView,int):907:907 -> onProgressChanged
+    1:6:void onShowCustomView(android.view.View,android.webkit.WebChromeClient$CustomViewCallback):912:912 -> onShowCustomView
+    1:9:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):935:935 -> onShowFileChooser
+    10:18:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):936:936 -> onShowFileChooser
+    19:23:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):938:938 -> onShowFileChooser
+    24:27:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):939:939 -> onShowFileChooser
+    28:36:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):941:941 -> onShowFileChooser
+    37:43:boolean onShowFileChooser(android.webkit.WebView,android.webkit.ValueCallback,android.webkit.WebChromeClient$FileChooserParams):943:943 -> onShowFileChooser
 com.esporteid.app.LauncherActivity$EsporteIdWebViewClient -> com.esporteid.app.LauncherActivity$c:
 # {"id":"sourceFile","fileName":"LauncherActivity.java"}
     com.esporteid.app.LauncherActivity this$0 -> a
-    1:1:void <init>(com.esporteid.app.LauncherActivity):823:823 -> <init>
-    2:2:void <init>(com.esporteid.app.LauncherActivity,com.esporteid.app.LauncherActivity$1):823:823 -> <init>
+    1:1:void <init>(com.esporteid.app.LauncherActivity):843:843 -> <init>
+    2:2:void <init>(com.esporteid.app.LauncherActivity,com.esporteid.app.LauncherActivity$1):843:843 -> <init>
       # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity;Lcom/esporteid/app/LauncherActivity$a;)V"}
-    1:2:void lambda$onPageFinished$0():865:865 -> a
-      # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity$c;)V"}
-    3:12:void lambda$onPageFinished$0():865:865 -> a
-    1:3:void onPageFinished(android.webkit.WebView,java.lang.String):853:853 -> onPageFinished
-    4:10:void onPageFinished(android.webkit.WebView,java.lang.String):854:854 -> onPageFinished
-    11:30:void onPageFinished(android.webkit.WebView,java.lang.String):855:855 -> onPageFinished
-    31:48:void onPageFinished(android.webkit.WebView,java.lang.String):856:856 -> onPageFinished
-    49:53:void onPageFinished(android.webkit.WebView,java.lang.String):857:857 -> onPageFinished
-    54:58:void onPageFinished(android.webkit.WebView,java.lang.String):858:858 -> onPageFinished
-    59:63:void onPageFinished(android.webkit.WebView,java.lang.String):859:859 -> onPageFinished
-    64:68:void onPageFinished(android.webkit.WebView,java.lang.String):860:860 -> onPageFinished
-    69:74:void onPageFinished(android.webkit.WebView,java.lang.String):861:861 -> onPageFinished
-    75:79:void onPageFinished(android.webkit.WebView,java.lang.String):862:862 -> onPageFinished
-    80:104:void onPageFinished(android.webkit.WebView,java.lang.String):863:863 -> onPageFinished
-    105:124:void onPageFinished(android.webkit.WebView,java.lang.String):864:864 -> onPageFinished
-    125:158:void onPageFinished(android.webkit.WebView,java.lang.String):865:865 -> onPageFinished
-    1:3:void onPageStarted(android.webkit.WebView,java.lang.String,android.graphics.Bitmap):826:826 -> onPageStarted
-    4:8:void onPageStarted(android.webkit.WebView,java.lang.String,android.graphics.Bitmap):827:827 -> onPageStarted
-    9:14:void onPageStarted(android.webkit.WebView,java.lang.String,android.graphics.Bitmap):828:828 -> onPageStarted
-    1:5:void onReceivedError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceError):871:871 -> onReceivedError
-    6:17:void onReceivedError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceError):872:872 -> onReceivedError
-    1:5:void onReceivedHttpError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceResponse):877:877 -> onReceivedHttpError
-    6:21:void onReceivedHttpError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceResponse):878:878 -> onReceivedHttpError
-    22:27:void onReceivedHttpError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceResponse):879:879 -> onReceivedHttpError
-    1:4:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):833:833 -> shouldOverrideUrlLoading
-    5:13:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):834:834 -> shouldOverrideUrlLoading
-    14:19:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):835:835 -> shouldOverrideUrlLoading
-    20:27:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):838:838 -> shouldOverrideUrlLoading
-    28:37:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):839:839 -> shouldOverrideUrlLoading
-    38:47:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):840:840 -> shouldOverrideUrlLoading
-    48:60:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):844:844 -> shouldOverrideUrlLoading
-com.esporteid.app.LauncherActivity$EsporteIdWebViewClient$$ExternalSyntheticLambda0 -> com.esporteid.app.b:
-# {"id":"sourceFile","fileName":"R8$$SyntheticClass"}
-# {"id":"com.android.tools.r8.synthesized"}
-    com.esporteid.app.LauncherActivity$EsporteIdWebViewClient com.esporteid.app.LauncherActivity$EsporteIdWebViewClient$$InternalSyntheticLambda$3$64a06b6a7672e19fc0e1e138432b3968b5966d0188f9dd4bce0a2e57f11febb4$0.f$0 -> e
-      # {"id":"com.android.tools.r8.residualsignature","signature":"Lcom/esporteid/app/LauncherActivity$c;"}
-      # {"id":"com.android.tools.r8.synthesized"}
-    1:1:void <init>(com.esporteid.app.LauncherActivity$EsporteIdWebViewClient):0:0 -> <init>
-      # {"id":"com.android.tools.r8.synthesized"}
-      # {"id":"com.android.tools.r8.residualsignature","signature":"(Lcom/esporteid/app/LauncherActivity$c;)V"}
-    1:1:void run():0:0 -> run
-      # {"id":"com.android.tools.r8.synthesized"}
-com.esporteid.app.R$drawable -> t.D:
+    1:3:void onPageCommitVisible(android.webkit.WebView,java.lang.String):885:885 -> onPageCommitVisible
+    4:9:void onPageCommitVisible(android.webkit.WebView,java.lang.String):886:886 -> onPageCommitVisible
+    1:3:void onPageFinished(android.webkit.WebView,java.lang.String):873:873 -> onPageFinished
+    4:10:void onPageFinished(android.webkit.WebView,java.lang.String):874:874 -> onPageFinished
+    11:28:void onPageFinished(android.webkit.WebView,java.lang.String):875:875 -> onPageFinished
+    29:33:void onPageFinished(android.webkit.WebView,java.lang.String):876:876 -> onPageFinished
+    34:38:void onPageFinished(android.webkit.WebView,java.lang.String):877:877 -> onPageFinished
+    39:43:void onPageFinished(android.webkit.WebView,java.lang.String):878:878 -> onPageFinished
+    44:49:void onPageFinished(android.webkit.WebView,java.lang.String):879:879 -> onPageFinished
+    50:55:void onPageFinished(android.webkit.WebView,java.lang.String):880:880 -> onPageFinished
+    1:3:void onPageStarted(android.webkit.WebView,java.lang.String,android.graphics.Bitmap):846:846 -> onPageStarted
+    4:8:void onPageStarted(android.webkit.WebView,java.lang.String,android.graphics.Bitmap):847:847 -> onPageStarted
+    9:14:void onPageStarted(android.webkit.WebView,java.lang.String,android.graphics.Bitmap):848:848 -> onPageStarted
+    1:5:void onReceivedError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceError):891:891 -> onReceivedError
+    6:17:void onReceivedError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceError):892:892 -> onReceivedError
+    1:5:void onReceivedHttpError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceResponse):897:897 -> onReceivedHttpError
+    6:21:void onReceivedHttpError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceResponse):898:898 -> onReceivedHttpError
+    22:27:void onReceivedHttpError(android.webkit.WebView,android.webkit.WebResourceRequest,android.webkit.WebResourceResponse):899:899 -> onReceivedHttpError
+    1:4:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):853:853 -> shouldOverrideUrlLoading
+    5:13:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):854:854 -> shouldOverrideUrlLoading
+    14:19:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):855:855 -> shouldOverrideUrlLoading
+    20:27:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):858:858 -> shouldOverrideUrlLoading
+    28:37:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):859:859 -> shouldOverrideUrlLoading
+    38:47:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):860:860 -> shouldOverrideUrlLoading
+    48:60:boolean shouldOverrideUrlLoading(android.webkit.WebView,android.webkit.WebResourceRequest):864:864 -> shouldOverrideUrlLoading
+com.esporteid.app.R$drawable -> t.E:
     int ic_notification_icon -> a
     int ic_notification_small -> b
     int splash -> c

@@ -2657,20 +2657,75 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(salvarAsaasWizardAction, undefined);
   const formRef = useRef<HTMLFormElement>(null);
+  const [modoIntegracao, setModoIntegracao] = useState(
+    parceiro?.onboarding_status === "aguardando_conexao_asaas" ? "conta_existente" : "criar_nova"
+  );
   useEffect(() => { if (state?.ok) onNext(); }, [onNext, state]);
 
   return (
     <form ref={formRef} action={action} className="space-y-5">
       <input type="hidden" name="espaco_id" value={space.id} />
+      <input type="hidden" name="modo_integracao" value={modoIntegracao} />
       <StepHeader
         title="Conta de recebimentos"
-        subtitle="Informe os dados para preparar a integração Asaas dentro do EsporteID."
+        subtitle="Escolha como o espaço vai receber pelo Asaas e deixe o caminho pronto no EsporteID."
       />
 
+      <div className="grid gap-3 md:grid-cols-2">
+        {[
+          {
+            id: "criar_nova",
+            Icon: Sparkles,
+            title: "Criar uma conta Asaas",
+            text: "O EsporteID prepara a nova conta de recebimentos com os dados do titular.",
+          },
+          {
+            id: "conta_existente",
+            Icon: BadgeCheck,
+            title: "Usar conta Asaas existente",
+            text: "Informe os dados da conta atual para iniciarmos o vínculo pelo app.",
+          },
+        ].map((option) => {
+          const selected = modoIntegracao === option.id;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => setModoIntegracao(option.id)}
+              className={`flex min-h-28 items-start gap-3 rounded-xl border p-4 text-left transition ${
+                selected
+                  ? "border-eid-action-500/70 bg-eid-action-500/12 shadow-[0_10px_30px_-18px_rgba(249,115,22,0.85)]"
+                  : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 hover:border-eid-primary-500/45"
+              }`}
+              aria-pressed={selected}
+            >
+              <span className={`rounded-lg p-2 ${selected ? "bg-eid-action-500/18 text-eid-action-300" : "bg-eid-primary-500/10 text-eid-primary-300"}`}>
+                <option.Icon className="h-5 w-5" aria-hidden />
+              </span>
+              <span className="min-w-0 space-y-1">
+                <span className="block text-sm font-black text-eid-fg">{option.title}</span>
+                <span className="block text-xs leading-relaxed text-eid-text-secondary">{option.text}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="space-y-2 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-4 text-xs text-eid-text-secondary">
-        <p className="text-sm font-bold text-eid-fg">Tudo por aqui</p>
-        <p>O dono do espaço preenche os dados uma vez e o EsporteID prepara a conta de recebimentos de forma transparente.</p>
-        <p>Quando a operação exigir cobrança, reservas e mensalidades serão processadas pelo Asaas sem tirar o dono do wizard.</p>
+        <p className="text-sm font-bold text-eid-fg">
+          {modoIntegracao === "criar_nova" ? "Cadastro guiado pelo EsporteID" : "Conexão guiada pelo EsporteID"}
+        </p>
+        {modoIntegracao === "criar_nova" ? (
+          <>
+            <p>O dono informa os dados principais agora e o EsporteID prepara a criação da conta Asaas.</p>
+            <p>Se o Asaas pedir selfie, documento ou aceite sensível, o usuário finaliza essa etapa no app ou site do Asaas e volta ao painel.</p>
+          </>
+        ) : (
+          <>
+            <p>Use o e-mail, CPF ou CNPJ da conta Asaas que o espaço já possui para iniciarmos a conexão.</p>
+            <p>Se a conexão exigir login, chave de API ou confirmação de segurança, o usuário finaliza no app ou site do Asaas.</p>
+          </>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -2679,12 +2734,12 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
           <IconInput Icon={Wallet} name="nome_razao_social" defaultValue={parceiro?.nome_razao_social ?? ""} placeholder="Seu nome ou nome da empresa" required />
         </div>
         <div className="space-y-1.5">
-          <Label>CPF ou CNPJ</Label>
-          <IconInput Icon={IdCard} name="cpf_cnpj" defaultValue={parceiro?.cpf_cnpj ?? ""} placeholder="000.000.000-00" />
+          <Label>CPF ou CNPJ *</Label>
+          <IconInput Icon={IdCard} name="cpf_cnpj" defaultValue={parceiro?.cpf_cnpj ?? ""} placeholder="000.000.000-00" required />
         </div>
         <div className="space-y-1.5">
-          <Label>E-mail da conta de recebimentos</Label>
-          <IconInput Icon={Mail} name="email" defaultValue={parceiro?.email ?? ""} placeholder="financeiro@seuespaco.com" type="email" />
+          <Label>{modoIntegracao === "criar_nova" ? "E-mail para criar a conta *" : "E-mail da conta Asaas *"}</Label>
+          <IconInput Icon={Mail} name="email" defaultValue={parceiro?.email ?? ""} placeholder="financeiro@seuespaco.com" type="email" required />
         </div>
       </div>
 
@@ -2696,7 +2751,7 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
 
       <Feedback state={state} />
       <NavButtons onBack={onBack} onNext={() => formRef.current?.requestSubmit()}
-        pending={pending} onSkip={onSkip} skipLabel="Configurar depois" />
+        pending={pending} nextLabel="Preparar recebimentos" onSkip={onSkip} skipLabel="Configurar depois" />
     </form>
   );
 }

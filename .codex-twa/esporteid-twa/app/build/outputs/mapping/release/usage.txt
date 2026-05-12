@@ -4053,8 +4053,8 @@ com.esporteid.app.LauncherActivity:
     private static final java.lang.String TRUSTED_WWW_HOST
     private android.widget.TextView createControlButton(java.lang.String)
     private android.view.View createFullscreenControls(java.lang.Runnable,java.lang.Runnable)
-    private static synthetic void lambda$createFullscreenControls$11(java.lang.Runnable,android.view.View)
     private static synthetic void lambda$createFullscreenControls$12(java.lang.Runnable,android.view.View)
+    private static synthetic void lambda$createFullscreenControls$13(java.lang.Runnable,android.view.View)
 com.esporteid.app.R$array
 com.esporteid.app.R$bool
 com.esporteid.app.R$color

@@ -500,6 +500,26 @@ public class LauncherActivity extends Activity {
         if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
     }
 
+    private void revealTrustedPage(WebView view, String url) {
+        if (view == null || url == null) return;
+        Uri uri;
+        try {
+            uri = Uri.parse(url);
+        } catch (Exception ignored) {
+            return;
+        }
+        if (!isTrustedUri(uri)) return;
+        hasLoadedTrustedPage = true;
+        hideErrorOverlay();
+        injectNativeAppRuntime(view);
+        if (webView != null && webView.getAlpha() < 1f) {
+            webView.animate().alpha(1f).setDuration(140).start();
+        }
+        if (splashLogo != null && splashLogo.getVisibility() == View.VISIBLE) {
+            splashLogo.animate().alpha(0f).setDuration(130).withEndAction(() -> splashLogo.setVisibility(View.GONE)).start();
+        }
+    }
+
     private void registerTokenInWebSession(String token) {
         if (token == null || token.trim().isEmpty()) return;
         if (webView == null) return;
@@ -853,17 +873,17 @@ public class LauncherActivity extends Activity {
             super.onPageFinished(view, url);
             CookieManager.getInstance().flush();
             if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
-            if (url != null && isTrustedUri(Uri.parse(url))) hasLoadedTrustedPage = true;
             finishNativeLoading();
-            hideErrorOverlay();
-            injectNativeAppRuntime(view);
+            revealTrustedPage(view, url);
             updateSwipeRefreshEnabled();
             String token = FcmTokenBridge.getToken(LauncherActivity.this);
             registerTokenInWebSession(token);
-            webView.animate().alpha(1f).setDuration(180).start();
-            if (splashLogo != null && splashLogo.getVisibility() == View.VISIBLE) {
-                splashLogo.animate().alpha(0f).setDuration(160).withEndAction(() -> splashLogo.setVisibility(View.GONE)).start();
-            }
+        }
+
+        @Override
+        public void onPageCommitVisible(WebView view, String url) {
+            super.onPageCommitVisible(view, url);
+            revealTrustedPage(view, url);
         }
 
         @Override

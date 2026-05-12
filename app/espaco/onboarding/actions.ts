@@ -756,25 +756,49 @@ export async function salvarAsaasWizardAction(
   try {
     const espacoId = Number(formData.get("espaco_id") ?? 0);
     const { supabase, user } = await requireWizardManager(espacoId);
+    const modoIntegracao = field(formData, "modo_integracao") === "conta_existente"
+      ? "conta_existente"
+      : "criar_nova";
     const nome = field(formData, "nome_razao_social");
     const cpf = field(formData, "cpf_cnpj").replace(/\D/g, "");
     const email = field(formData, "email");
     if (!nome) throw new Error("Informe o nome ou razão social.");
+    if (!cpf || ![11, 14].includes(cpf.length)) throw new Error("Informe um CPF ou CNPJ válido.");
+    if (!email) throw new Error("Informe o e-mail da conta de recebimentos.");
+    const onboardingStatus =
+      modoIntegracao === "conta_existente"
+        ? "aguardando_conexao_asaas"
+        : "aguardando_criacao_asaas";
+    const dadosBancariosJson = JSON.stringify({
+      fluxo_integracao_asaas: modoIntegracao,
+      origem: "wizard_receber",
+      proxima_acao:
+        modoIntegracao === "conta_existente"
+          ? "validar conta existente e solicitar login/API no Asaas se necessario"
+          : "criar subconta Asaas e solicitar validacao no Asaas se necessario",
+    });
     const { error } = await supabase.from("parceiro_conta_asaas").upsert(
       {
         usuario_id: user.id,
         espaco_generico_id: espacoId,
         nome_razao_social: nome,
-        cpf_cnpj: cpf || null,
-        email: email || null,
-        onboarding_status: "aguardando_integracao",
+        cpf_cnpj: cpf,
+        email,
+        dados_bancarios_json: dadosBancariosJson,
+        onboarding_status: onboardingStatus,
         atualizado_em: new Date().toISOString(),
       },
       { onConflict: "usuario_id" }
     );
     if (error) throw new Error(error.message);
     revalidatePath("/espaco/onboarding");
-    return { ok: true, message: "Dados salvos. A integração de recebimentos continuará dentro do EsporteID." };
+    return {
+      ok: true,
+      message:
+        modoIntegracao === "conta_existente"
+          ? "Dados salvos. Vamos iniciar a conexão da conta Asaas existente pelo EsporteID."
+          : "Dados salvos. Vamos preparar a criação da conta Asaas pelo EsporteID.",
+    };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Erro ao salvar dados Asaas." };
   }

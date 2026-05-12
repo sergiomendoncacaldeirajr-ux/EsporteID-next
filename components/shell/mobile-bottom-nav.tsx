@@ -134,6 +134,7 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   const [socialBadge, setSocialBadge] = useState(0);
   const pendingHrefRef = useRef<string | null>(null);
   const releaseTimerRef = useRef<number | undefined>(undefined);
+  const prefetchCooldownsRef = useRef<Map<string, number>>(new Map());
 
   const onAuthPage = AUTH_PATH_PREFIXES.some((p) =>
     p.endsWith("/") ? pathname.startsWith(p) : pathname === p || pathname.startsWith(p + "/")
@@ -237,6 +238,16 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
     }, 450);
   }
 
+  function handlePrefetchNavHref(href: string) {
+    if (!isNativeAndroidApp()) return;
+    if (prefetchCooldownsRef.current.has(href)) return;
+    const timeoutId = window.setTimeout(() => {
+      prefetchCooldownsRef.current.delete(href);
+    }, 15_000);
+    prefetchCooldownsRef.current.set(href, timeoutId);
+    router.prefetch(href);
+  }
+
   useEffect(() => {
     pendingHrefRef.current = null;
     if (releaseTimerRef.current !== undefined) {
@@ -250,8 +261,13 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
   }, [pathname]);
 
   useEffect(() => {
+    const prefetchCooldowns = prefetchCooldownsRef.current;
     return () => {
       if (releaseTimerRef.current !== undefined) window.clearTimeout(releaseTimerRef.current);
+      for (const timeoutId of prefetchCooldowns.values()) {
+        window.clearTimeout(timeoutId);
+      }
+      prefetchCooldowns.clear();
     };
   }, []);
 
@@ -742,6 +758,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onPointerDown={() => handlePrefetchNavHref(item.href)}
+                    onTouchStart={() => handlePrefetchNavHref(item.href)}
                     onClickCapture={(ev) => onNavLinkClickCapture(ev, item.href)}
                     className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 pt-1.5 transition-opacity active:opacity-80"
                     aria-label={item.label}
@@ -783,6 +801,8 @@ export function MobileBottomNav({ userId, activeContext = "atleta" }: Props) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onPointerDown={() => handlePrefetchNavHref(item.href)}
+                  onTouchStart={() => handlePrefetchNavHref(item.href)}
                   onClickCapture={(ev) => onNavLinkClickCapture(ev, item.href)}
                   className="relative flex flex-1 flex-col items-center gap-0.5 pb-1.5 transition-opacity active:opacity-80"
                   aria-label={item.label}

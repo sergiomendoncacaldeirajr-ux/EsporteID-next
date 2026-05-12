@@ -682,6 +682,13 @@ body.eid-native-android-app .eid-surface-panel {
   box-shadow: 0 10px 28px -24px rgba(15, 23, 42, 0.6);
 }
 
+@media (max-width: 767px) {
+  html[data-eid-runtime="android-app"] #eid-mobile-bottom-nav,
+  body.eid-native-android-app #eid-mobile-bottom-nav {
+    bottom: 10px !important;
+  }
+}
+
 /* iOS Safari (mobile): pequeno ganho de escala visual sem afetar Android. */
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 767px) {
