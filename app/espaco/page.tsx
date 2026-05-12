@@ -2,7 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
 import {
+  ArrowRight,
   CalendarDays,
+  CheckCircle2,
+  Clock3,
   Landmark,
   Settings,
   Users,
@@ -16,8 +19,34 @@ function moedaCentavos(value: number | null | undefined) {
   }).format((Number(value ?? 0) || 0) / 100);
 }
 
+function asaasResumo(status: string | null | undefined, accountId: string | null | undefined) {
+  if (accountId) {
+    return {
+      label: "Asaas vinculado",
+      detail: "Conta de recebimentos identificada no painel.",
+      cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
+      Icon: CheckCircle2,
+    };
+  }
+  const value = String(status ?? "");
+  if (value.includes("aguardando") || value.includes("conexao") || value.includes("criacao")) {
+    return {
+      label: "Asaas em ativação",
+      detail: "Dados do wizard salvos. Continue a validação quando necessário.",
+      cls: "border-amber-500/30 bg-amber-500/10 text-amber-200",
+      Icon: Clock3,
+    };
+  }
+  return {
+    label: "Configurar Asaas",
+    detail: "Ative recebimentos online para reservas e planos pagos.",
+    cls: "border-eid-primary-500/25 bg-eid-primary-500/10 text-eid-primary-200",
+    Icon: Landmark,
+  };
+}
+
 export default async function EspacoHomePage() {
-  const { supabase, selectedSpace } = await getEspacoSelecionado({
+  const { supabase, user, selectedSpace } = await getEspacoSelecionado({
     nextPath: "/espaco",
   });
 
@@ -39,7 +68,7 @@ export default async function EspacoHomePage() {
     redirect("/espaco/financeiro?onboarding=pagamento");
   }
 
-  const [{ data: unidades }, { data: socios }, { data: waitlist }, { data: transacoes }] =
+  const [{ data: unidades }, { data: socios }, { data: waitlist }, { data: transacoes }, { data: parceiro }] =
     await Promise.all([
       supabase
         .from("espaco_unidades")
@@ -58,6 +87,11 @@ export default async function EspacoHomePage() {
         .from("espaco_transacoes")
         .select("id, status, valor_liquido_espaco_centavos")
         .eq("espaco_generico_id", selectedSpace.id),
+      supabase
+        .from("parceiro_conta_asaas")
+        .select("email, onboarding_status, asaas_account_id, wallet_id, atualizado_em")
+        .eq("usuario_id", user.id)
+        .maybeSingle(),
     ]);
 
   const sociosAtivos = (socios ?? []).filter((item) => item.status === "ativo").length;
@@ -66,6 +100,8 @@ export default async function EspacoHomePage() {
   const liquidoRecebido = (transacoes ?? [])
     .filter((item) => item.status === "received")
     .reduce((sum, item) => sum + Number(item.valor_liquido_espaco_centavos ?? 0), 0);
+  const asaas = asaasResumo(parceiro?.onboarding_status, parceiro?.asaas_account_id);
+  const AsaasIcon = asaas.Icon;
 
   const cards = [
     {
@@ -106,47 +142,66 @@ export default async function EspacoHomePage() {
   ] as const;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-bold text-eid-fg">Visão geral</h2>
-        <p className="mt-1 text-sm text-eid-text-secondary">
-          Toque nos atalhos abaixo para ir direto a cada área. Use a barra inferior no celular para navegar a qualquer
-          momento.
-        </p>
+    <div className="space-y-5">
+      <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-black text-eid-fg">Visão geral</h2>
+              <p className="mt-1 text-sm text-eid-text-secondary">
+                Operação, membros, agenda e recebimentos do espaço em um só lugar.
+              </p>
+            </div>
+            {selectedSpace.slug ? (
+              <Link
+                href={`/espaco/${selectedSpace.slug}`}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-eid-action-500/35 bg-eid-action-500/10 px-3 py-2 text-xs font-bold text-eid-action-400 transition hover:bg-eid-action-500/15"
+              >
+                Página pública
+                <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+            ) : null}
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              ["Unidades ativas", (unidades ?? []).length, "quadras e estruturas"],
+              ["Sócios ativos", sociosAtivos, "membros liberados"],
+              ["Em análise", sociosPendentes, "cadastros pendentes"],
+              ["Fila ativa", waitlistAtiva, "interessados aguardando"],
+            ].map(([label, value, hint]) => (
+              <div key={String(label)} className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-eid-text-secondary">{label}</p>
+                <p className="mt-2 text-3xl font-black text-eid-fg">{value}</p>
+                <p className="mt-1 text-xs text-eid-text-secondary">{hint}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 sm:p-5">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-eid-text-secondary">Recebimentos</p>
+          <p className="mt-2 text-3xl font-black text-eid-fg">{moedaCentavos(liquidoRecebido)}</p>
+          <p className="mt-1 text-sm text-eid-text-secondary">Líquido recebido no histórico do espaço.</p>
+          <Link
+            href="/espaco/financeiro"
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-eid-action-500/35 bg-eid-action-500/12 px-4 py-3 text-sm font-bold text-eid-action-400 transition hover:bg-eid-action-500/18"
+          >
+            Abrir financeiro
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+          <Link href="/espaco/integracao-asaas" className={`mt-3 flex gap-3 rounded-xl border p-3 transition hover:bg-eid-surface/60 ${asaas.cls}`}>
+            <AsaasIcon className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+            <span className="min-w-0">
+              <span className="block text-sm font-black">{asaas.label}</span>
+              <span className="mt-0.5 block text-xs opacity-90">{asaas.detail}</span>
+              {parceiro?.email ? <span className="mt-1 block truncate text-[11px] opacity-80">{parceiro.email}</span> : null}
+            </span>
+          </Link>
+        </section>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-4 sm:col-span-2 lg:col-span-3">
-          <div className="grid gap-3 sm:grid-cols-4">
-            <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-4">
-              <p className="text-xs text-eid-text-secondary">Unidades ativas</p>
-              <p className="mt-1 text-2xl font-bold text-eid-fg">{(unidades ?? []).length}</p>
-            </div>
-            <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-4">
-              <p className="text-xs text-eid-text-secondary">Sócios ativos</p>
-              <p className="mt-1 text-2xl font-bold text-eid-fg">{sociosAtivos}</p>
-            </div>
-            <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-4">
-              <p className="text-xs text-eid-text-secondary">Em análise</p>
-              <p className="mt-1 text-2xl font-bold text-eid-fg">{sociosPendentes}</p>
-            </div>
-            <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-4">
-              <p className="text-xs text-eid-text-secondary">Fila ativa</p>
-              <p className="mt-1 text-2xl font-bold text-eid-fg">{waitlistAtiva}</p>
-            </div>
-          </div>
-          <div className="mt-4 rounded-xl border border-eid-action-500/20 bg-eid-action-500/10 p-4">
-            <p className="text-xs text-eid-text-secondary">Líquido recebido (histórico)</p>
-            <p className="mt-1 text-xl font-bold text-eid-fg sm:text-2xl">{moedaCentavos(liquidoRecebido)}</p>
-            <Link
-              href="/espaco/financeiro"
-              className="mt-2 inline-flex text-xs font-semibold text-eid-action-400 underline"
-            >
-              Abrir financeiro
-            </Link>
-          </div>
-        </div>
-
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(({ href, title, desc, Icon, accent }) => (
           <Link
             key={href}
@@ -164,16 +219,7 @@ export default async function EspacoHomePage() {
             </div>
           </Link>
         ))}
-
-        {selectedSpace.slug ? (
-          <Link
-            href={`/espaco/${selectedSpace.slug}`}
-            className="flex items-center justify-center rounded-2xl border border-dashed border-eid-action-500/40 bg-eid-action-500/5 p-4 text-center text-sm font-semibold text-eid-action-400 transition hover:bg-eid-action-500/10"
-          >
-            Ver página pública do espaço
-          </Link>
-        ) : null}
-      </div>
+      </section>
     </div>
   );
 }

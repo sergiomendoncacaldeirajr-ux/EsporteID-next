@@ -21,6 +21,13 @@ export default async function EspacoLayout({
     .from("usuario_papeis")
     .select("papel")
     .eq("usuario_id", user.id);
+  const { data: parceiroAsaas } = space
+    ? await supabase
+        .from("parceiro_conta_asaas")
+        .select("onboarding_status, asaas_account_id")
+        .eq("usuario_id", user.id)
+        .maybeSingle()
+    : { data: null };
   const papeis = listarPapeis(papeisRows);
   const oferecerCtaPerfilAtleta = contaSomenteDonoEspaco(papeis);
 
@@ -29,9 +36,11 @@ export default async function EspacoLayout({
         id: space.id,
         nome_publico: space.nome_publico,
         slug: space.slug,
+        asaasStatus: parceiroAsaas?.onboarding_status ?? null,
+        asaasAccountId: parceiroAsaas?.asaas_account_id ?? null,
         oferecerCtaPerfilAtleta,
       }
-    : { id: 0, nome_publico: "Espaço", slug: null as string | null, oferecerCtaPerfilAtleta };
+    : { id: 0, nome_publico: "Espaço", slug: null as string | null, asaasStatus: null, asaasAccountId: null, oferecerCtaPerfilAtleta };
 
   return (
     <main

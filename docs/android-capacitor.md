@@ -5,9 +5,9 @@ Este projeto agora tambem gera Android via Capacitor, usando a mesma base web pu
 ## Build atual
 
 - Application ID: `com.esporteid.app`
-- Version name: `7.0.9`
-- Version code: `19`
-- Arquivo gerado: `C:\apps\esporteid-7.0.9-v19-capacitor-release.aab`
+- Version name: `7.0.10`
+- Version code: `20`
+- Arquivo gerado: `C:\apps\esporteid-7.0.10-v20-capacitor-native-shell.aab`
 
 ## Assinatura
 
@@ -37,4 +37,3 @@ Saida padrao:
 ```text
 android\app\build\outputs\bundle\release\app-release.aab
 ```
-

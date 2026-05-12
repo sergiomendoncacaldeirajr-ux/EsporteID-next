@@ -768,6 +768,69 @@ body.eid-native-android-app .eid-surface-panel {
   }
 }
 
+body.eid-capacitor-app {
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.eid-native-offline-shell {
+  position: fixed;
+  inset: auto 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 90;
+  pointer-events: none;
+}
+
+.eid-native-offline-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 10px;
+  border: 1px solid var(--eid-border);
+  border-radius: var(--eid-radius-md);
+  background: color-mix(in srgb, var(--eid-card) 94%, transparent);
+  color: var(--eid-fg);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.34);
+  pointer-events: auto;
+}
+
+.eid-native-offline-mark {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--eid-warning-500);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--eid-warning-500) 16%, transparent);
+}
+
+.eid-native-offline-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.eid-native-offline-text {
+  margin: 2px 0 0;
+  color: var(--eid-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.eid-native-offline-action {
+  min-height: 36px;
+  border: 0;
+  border-radius: var(--eid-radius-sm);
+  background: var(--eid-action-500);
+  color: #fff;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
 /* iOS Safari (mobile): pequeno ganho de escala visual sem afetar Android. */
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 767px) {

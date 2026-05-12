@@ -10,30 +10,33 @@ export function FormAsaasParceiro({
   defaultNome,
   defaultCpf,
   defaultEmail,
+  defaultModo = "criar_nova",
 }: {
   espacoId: number;
   defaultNome: string;
   defaultCpf: string;
   defaultEmail: string;
+  defaultModo?: "criar_nova" | "conta_existente";
 }) {
   const [state, formAction, pending] = useActionState(salvarDadosContaAsaasParceiroAction, initial);
-  const [modoIntegracao, setModoIntegracao] = useState("criar_nova");
+  const [modoIntegracao, setModoIntegracao] = useState(defaultModo);
   return (
-    <form action={formAction} className="space-y-3 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-4">
+    <form action={formAction} className="space-y-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-4 sm:p-5">
       <input type="hidden" name="espaco_id" value={espacoId} />
       <input type="hidden" name="modo_integracao" value={modoIntegracao} />
-      <h2 className="text-sm font-bold text-eid-fg">Conta de recebimentos Asaas</h2>
+      <h2 className="text-sm font-bold text-eid-fg">Atualizar dados de recebimento</h2>
       <div className="grid gap-2 sm:grid-cols-2">
         {[
           ["criar_nova", "Cadastrar no Asaas", "Criar uma nova conta de recebimentos."],
           ["conta_existente", "Entrar no Asaas", "Usar e-mail e senha da conta atual."],
         ].map(([id, title, text]) => {
-          const selected = modoIntegracao === id;
+          const modo = id as "criar_nova" | "conta_existente";
+          const selected = modoIntegracao === modo;
           return (
             <button
               key={id}
               type="button"
-              onClick={() => setModoIntegracao(id)}
+              onClick={() => setModoIntegracao(modo)}
               className={`rounded-xl border p-3 text-left transition ${
                 selected
                   ? "border-eid-action-500/70 bg-eid-action-500/12"
@@ -141,7 +144,7 @@ export function FormAsaasParceiro({
         disabled={pending}
         className="eid-btn-primary w-full rounded-xl px-4 py-3 text-sm font-bold"
       >
-        {pending ? "Salvando..." : modoIntegracao === "criar_nova" ? "Cadastrar no Asaas" : "Entrar no Asaas"}
+        {pending ? "Salvando..." : "Salvar dados da conta"}
       </button>
       {state.message ? (
         <p className={`text-xs ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>

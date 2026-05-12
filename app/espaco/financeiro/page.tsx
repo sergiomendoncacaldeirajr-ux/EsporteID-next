@@ -4,6 +4,7 @@ import { EspacoPlanosPaaSFinanceiro } from "@/components/espaco/espaco-planos-pa
 import { EspacoSimularPagamentoDev } from "@/components/espaco/espaco-simular-pagamento-dev";
 import { isAsaasSimulationEnabledFor } from "@/lib/asaas/simulate-payments";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
+import { ArrowRight, CheckCircle2, Clock3, Landmark, ReceiptText, WalletCards } from "lucide-react";
 
 type PlanoPaaSFinanceiroRow = {
   id: number;
@@ -25,10 +26,19 @@ function moeda(value: number | null | undefined) {
   }).format((Number(value ?? 0) || 0) / 100);
 }
 
+function asaasStatus(status: string | null | undefined, accountId: string | null | undefined) {
+  if (accountId) return { label: "Conta vinculada", tone: "ok", Icon: CheckCircle2 };
+  const value = String(status ?? "");
+  if (value.includes("aguardando") || value.includes("conexao") || value.includes("criacao")) {
+    return { label: "Em ativação", tone: "wait", Icon: Clock3 };
+  }
+  return { label: "Pendente", tone: "todo", Icon: Landmark };
+}
+
 export default async function EspacoFinanceiroPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const espacoId = Number(sp.espaco ?? 0) || null;
-  const { supabase, selectedSpace } = await getEspacoSelecionado({
+  const { supabase, user, selectedSpace } = await getEspacoSelecionado({
     nextPath: "/espaco/financeiro",
     espacoId,
   });
@@ -43,7 +53,14 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
     outro: "Outro",
   };
 
-  const [{ data: transacoes }, { data: assinatura }, { data: extrato }, { data: auditoria }, { data: planosPaaS }] =
+  const [
+    { data: transacoes },
+    { data: assinatura },
+    { data: extrato },
+    { data: auditoria },
+    { data: planosPaaS },
+    { data: parceiroAsaas },
+  ] =
     await Promise.all([
       supabase
         .from("espaco_transacoes")
@@ -85,6 +102,11 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
             .eq("liberacao", "publico")
             .order("ordem", { ascending: true })
         : Promise.resolve({ data: [] as never[] }),
+      supabase
+        .from("parceiro_conta_asaas")
+        .select("nome_razao_social, cpf_cnpj, email, onboarding_status, asaas_account_id, wallet_id, atualizado_em")
+        .eq("usuario_id", user.id)
+        .maybeSingle(),
     ]);
   const ocultarMensalidadePlataforma = Boolean(assinatura?.isento_total);
   const simularPagamentoDev = await isAsaasSimulationEnabledFor("locais");
@@ -98,11 +120,20 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
       (sum, item) => sum + Number(item.valor_liquido_espaco_centavos ?? 0),
       0
     );
+  const pendentes = (transacoes ?? []).filter((item) => item.status === "pending").length;
+  const asaas = asaasStatus(parceiroAsaas?.onboarding_status, parceiroAsaas?.asaas_account_id);
+  const AsaasIcon = asaas.Icon;
+  const asaasTone =
+    asaas.tone === "ok"
+      ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-200"
+      : asaas.tone === "wait"
+        ? "border-amber-500/35 bg-amber-500/10 text-amber-200"
+        : "border-eid-primary-500/30 bg-eid-primary-500/10 text-eid-primary-200";
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+    <div className="space-y-5">
       {onboardingPagamento ? (
-        <section className="xl:col-span-2 rounded-2xl border border-eid-action-500/30 bg-eid-action-500/10 p-4">
+        <section className="rounded-2xl border border-eid-action-500/30 bg-eid-action-500/10 p-4">
           <h2 className="text-base font-bold text-eid-fg">Primeiro passo: ativar pagamento para ganhar o mês grátis</h2>
           <p className="mt-1 text-sm text-eid-text-secondary">
             Para concluir o onboarding do espaço, confirme agora o cartão e ative a recorrência.
@@ -110,20 +141,45 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
           </p>
         </section>
       ) : null}
-      <section className="eid-mobile-section xl:col-span-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-        <h2 className="text-base font-bold text-eid-fg">Conta Asaas e integração</h2>
-        <p className="mt-1 text-sm text-eid-text-secondary">
-          Para receber pagamentos no fluxo do espaço, configure a conta de recebimentos diretamente pelo EsporteID.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
+
+      <section className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-eid-primary-300">Financeiro</p>
+            <h2 className="mt-1 text-2xl font-black text-eid-fg">Recebimentos do espaço</h2>
+            <p className="mt-1 text-sm text-eid-text-secondary">{selectedSpace.nome_publico}</p>
+          </div>
           <Link
             href="/espaco/integracao-asaas"
-            className="eid-btn-primary rounded-xl px-4 py-2.5 text-sm font-bold"
+            className="inline-flex items-center gap-2 rounded-xl border border-eid-action-500/35 bg-eid-action-500/12 px-4 py-2.5 text-sm font-bold text-eid-action-400 transition hover:bg-eid-action-500/18"
           >
-            Configurar conta de recebimentos
+            Conta Asaas
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+        </div>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-4">
+            <WalletCards className="h-5 w-5 text-eid-action-400" aria-hidden />
+            <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-eid-text-secondary">Líquido recebido</p>
+            <p className="mt-1 text-3xl font-black text-eid-fg">{moeda(totalRecebido)}</p>
+          </div>
+          <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-4">
+            <ReceiptText className="h-5 w-5 text-eid-primary-300" aria-hidden />
+            <p className="mt-3 text-[11px] font-bold uppercase tracking-wide text-eid-text-secondary">Transações</p>
+            <p className="mt-1 text-3xl font-black text-eid-fg">{(transacoes ?? []).length}</p>
+            <p className="mt-1 text-xs text-eid-text-secondary">{pendentes} pendente(s)</p>
+          </div>
+          <Link href="/espaco/integracao-asaas" className={`rounded-xl border p-4 transition hover:bg-eid-surface/55 ${asaasTone}`}>
+            <AsaasIcon className="h-5 w-5" aria-hidden />
+            <p className="mt-3 text-[11px] font-bold uppercase tracking-wide opacity-80">Asaas</p>
+            <p className="mt-1 text-xl font-black">{asaas.label}</p>
+            <p className="mt-1 truncate text-xs opacity-85">{parceiroAsaas?.email ?? "Conta ainda não informada"}</p>
           </Link>
         </div>
       </section>
+
+      <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
       <section className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
         <h2 className="text-lg font-bold text-eid-fg">Transações</h2>
         <p className="mt-2 text-sm text-eid-text-secondary">
@@ -284,6 +340,7 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
           </div>
         </div>
       </section>
+      </div>
     </div>
   );
 }
