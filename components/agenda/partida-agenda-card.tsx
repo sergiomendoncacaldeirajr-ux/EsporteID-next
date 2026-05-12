@@ -306,15 +306,16 @@ export function PartidaAgendaCard({
       ) : null}
 
       {canAddNativeCalendar ? (
-        <div className="mt-2.5 flex justify-center">
+        <div className="mt-2 flex justify-center">
           <button
             type="button"
             onClick={handleAddNativeCalendar}
-            className="inline-flex min-h-[30px] items-center justify-center gap-1.5 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/10 px-3 text-[9px] font-black uppercase tracking-[0.06em] text-eid-primary-300 transition active:scale-[0.98] md:min-h-[34px] md:text-[10px]"
-            aria-label="Adicionar compromisso na agenda do Android"
+            data-eid-compact-chip-btn="true"
+            className="inline-flex min-h-[24px] items-center justify-center gap-1 rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 px-2.5 text-[7px] font-black uppercase leading-none tracking-[0.06em] text-eid-primary-300 transition active:scale-[0.98] md:min-h-[26px] md:text-[8px]"
+            aria-label="Adicionar este compromisso na agenda do celular"
           >
-            <CalendarPlus className="h-3.5 w-3.5" aria-hidden />
-            <span>Agenda Android</span>
+            <CalendarPlus className="h-3 w-3" aria-hidden />
+            <span>Adicionar à agenda do celular</span>
           </button>
         </div>
       ) : null}
