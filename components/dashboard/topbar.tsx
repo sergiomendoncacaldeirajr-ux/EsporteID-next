@@ -23,6 +23,7 @@ type Props = {
   initialMeId?: string | null;
   initialPapeis?: string[];
   initialActiveContext?: ActiveAppContext;
+  initialIsPlatformAdmin?: boolean;
 };
 
 /** Sincroniza o input com `?q=` em `/buscar` (useSearchParams precisa de Suspense no pai). */
@@ -41,6 +42,7 @@ export function DashboardTopbar({
   initialMeId = null,
   initialPapeis = [],
   initialActiveContext = "atleta",
+  initialIsPlatformAdmin = false,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -48,15 +50,20 @@ export function DashboardTopbar({
   const [q, setQ] = useState("");
   const [meId, setMeId] = useState<string | null>(initialMeId);
   const [papeis, setPapeis] = useState<string[]>(initialPapeis);
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(initialIsPlatformAdmin);
 
   useEffect(() => {
     const sb = createClient();
     let disposed = false;
 
     async function loadPapeis(uid: string) {
-      const { data: papeisRows } = await sb.from("usuario_papeis").select("papel").eq("usuario_id", uid);
+      const [{ data: papeisRows }, { data: adminRow }] = await Promise.all([
+        sb.from("usuario_papeis").select("papel").eq("usuario_id", uid),
+        sb.from("platform_admins").select("user_id").eq("user_id", uid).maybeSingle(),
+      ]);
       if (disposed) return;
       setPapeis(listarPapeis(papeisRows));
+      setIsPlatformAdmin(adminRow != null);
     }
 
     const {
@@ -67,6 +74,7 @@ export function DashboardTopbar({
       setMeId(uid);
       if (!uid) {
         setPapeis([]);
+        setIsPlatformAdmin(false);
       } else {
         void loadPapeis(uid);
       }
@@ -277,6 +285,18 @@ export function DashboardTopbar({
                 {contextToAtletaPending ? "…" : "Atleta"}
               </button>
             ) : null}
+            {isPlatformAdmin ? (
+              <Link
+                href="/admin"
+                className={`md:hidden shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-wide transition ${
+                  pathname.startsWith("/admin")
+                    ? "border-eid-action-500/45 bg-eid-action-500/16 text-eid-fg"
+                    : "border-eid-action-500/35 bg-eid-action-500/10 text-eid-fg hover:bg-eid-action-500/16"
+                }`}
+              >
+                Admin
+              </Link>
+            ) : null}
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -287,6 +307,18 @@ export function DashboardTopbar({
                   className="rounded-full border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wide text-eid-fg transition hover:bg-eid-primary-500/16"
                 >
                   Ser atleta
+                </Link>
+              ) : null}
+              {isPlatformAdmin ? (
+                <Link
+                  href="/admin"
+                  className={`rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-wide transition ${
+                    pathname.startsWith("/admin")
+                      ? "border-eid-action-500/45 bg-eid-action-500/16 text-eid-fg"
+                      : "border-eid-action-500/35 bg-eid-action-500/10 text-eid-fg hover:bg-eid-action-500/16"
+                  }`}
+                >
+                  Admin
                 </Link>
               ) : null}
               <ActiveContextSwitch activeContext={activeContext} availableContexts={availableContexts} />

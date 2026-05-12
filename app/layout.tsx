@@ -156,6 +156,7 @@ export default async function RootLayout({
   let user: User | null = null;
   let canShowAuthenticatedChrome = false;
   let papeis: string[] = [];
+  let isPlatformAdmin = false;
   let activeContext: ActiveAppContext = "atleta";
   let supportModulosEmBreve: SystemFeatureKey[] = [];
   let hdrs: Awaited<ReturnType<typeof headers>>;
@@ -169,11 +170,13 @@ export default async function RootLayout({
       // Capturar userId antes dos awaits: TypeScript perde o narrowing de `user`
       // dentro de callbacks/closures após operações assíncronas (variável `let` mutável).
       const userId = user.id;
-      const [papeisResult, profile] = await Promise.all([
+      const [papeisResult, profile, adminResult] = await Promise.all([
         getCachedUsuarioPapeis(userId),
         getCachedProfileLegalRow(userId),
+        auth.supabase.from("platform_admins").select("user_id").eq("user_id", userId).maybeSingle(),
       ]);
       papeis = papeisResult;
+      isPlatformAdmin = adminResult.data != null;
       // Exibe o chrome completo (nav + topbar) somente se o onboarding foi concluído.
       // `perfil_completo` já vem em getCachedProfileLegalRow — sem query extra.
       canShowAuthenticatedChrome = legalAcceptanceIsCurrent(profile) && !!profile?.perfil_completo;
@@ -193,6 +196,7 @@ export default async function RootLayout({
     user = null;
     canShowAuthenticatedChrome = false;
     papeis = [];
+    isPlatformAdmin = false;
     supportModulosEmBreve = [];
     try {
       hdrs = await headers();
@@ -252,6 +256,7 @@ export default async function RootLayout({
             initialMeId={user?.id ?? null}
             initialPapeis={papeis}
             initialActiveContext={activeContext}
+            initialIsPlatformAdmin={isPlatformAdmin}
           />
         ) : null}
         {showAppChrome ? (

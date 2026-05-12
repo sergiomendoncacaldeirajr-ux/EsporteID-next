@@ -85,6 +85,25 @@ function addMinutesToDatetimeLocal(base: string, minutes: number): string {
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
 }
 
+function WhatsAppContatoButton({ href, nome }: { href: string; nome: string | null | undefined }) {
+  const primeiroNome = nome ? nome.split(" ")[0] : "WhatsApp";
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Chamar ${primeiroNome === "WhatsApp" ? "no WhatsApp" : primeiroNome} no WhatsApp`}
+      className="inline-flex min-h-[24px] min-w-0 max-w-[min(9.5rem,100%)] items-center gap-1 rounded-full bg-[#25D366] px-2 text-[7px] font-black text-white shadow-[0_3px_14px_-6px_rgba(37,211,102,0.65)] transition hover:bg-[#1fbb5a] active:scale-[0.97] md:min-h-[26px] md:text-[8px]"
+    >
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden>
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+      </svg>
+      <span className="truncate">Conversar com {primeiroNome}</span>
+    </a>
+  );
+}
+
 function readLocalPrefillFromUrl():
   | { matchId: number; prefill: string; nextUrl: string }
   | null {
@@ -108,7 +127,7 @@ function readLocalPrefillFromUrl():
 type Props = {
   items: AceitosCancelaveisItem[];
   agendamentoJanelaHoras: number;
-  /** Na Agenda: só status e prazos; ações ficam no Painel social (Comunidade). */
+  /** Na Agenda: cancelamento e disputa ficam no Painel social; contato e reagendamento continuam disponíveis. */
   somenteInformativo?: boolean;
   /** Base para `return_to` ao cadastrar local no fluxo de recusar cancelamento (ex.: `/comunidade`). */
   cadastrarLocalReturnBase?: string;
@@ -190,11 +209,14 @@ export function AgendaAceitosCancelaveis({
             {err}
           </p>
         ) : null}
-        {items.map((m) => (
-          <article
-            key={m.id}
-            className="rounded-2xl border border-[rgba(37,99,235,0.08)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-2.5 py-2.5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.25),inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-sm md:px-3 md:py-3"
-          >
+        {items.map((m) => {
+          const podeReagendar = m.status === "Aceito" && !m.gestaoSomenteLeitura;
+
+          return (
+            <article
+              key={m.id}
+              className="rounded-2xl border border-[rgba(37,99,235,0.08)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--eid-card)_97%,var(--eid-primary-500)_3%),color-mix(in_srgb,var(--eid-surface)_95%,transparent))] px-2.5 py-2.5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.25),inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-sm md:px-3 md:py-3"
+            >
             <div className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-start gap-2 md:grid-cols-[40px_minmax(0,1fr)_auto]">
               <div className="flex w-[40px] shrink-0 flex-col items-center">
                 {m.avatarOponente ? (
@@ -244,25 +266,6 @@ export function AgendaAceitosCancelaveis({
                 <div className="text-[10px] md:text-[11px]">
                   <EidCityState location={m.localizacaoOponente?.trim() ? m.localizacaoOponente : null} compact align="start" />
                 </div>
-
-                {m.whatsappContato ? (
-                  <div className="mt-2 flex justify-start">
-                    <a
-                      href={m.whatsappContato}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Chamar ${m.whatsappContatoNome ? m.whatsappContatoNome.split(" ")[0] : "no WhatsApp"} no WhatsApp`}
-                      className="inline-flex min-h-[30px] items-center gap-1.5 whitespace-nowrap rounded-full bg-[#25D366] px-3 py-1 text-[10px] font-black text-white shadow-[0_3px_14px_-4px_rgba(37,211,102,0.65)] transition hover:bg-[#1fbb5a] active:scale-[0.97] md:min-h-[32px] md:text-[11px]"
-                    >
-                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 md:h-4 md:w-4" fill="currentColor" aria-hidden>
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                      </svg>
-                      <span>
-                        Conversar com {m.whatsappContatoNome ? m.whatsappContatoNome.split(" ")[0] : "WhatsApp"}
-                      </span>
-                    </a>
-                  </div>
-                ) : null}
               </div>
               <div className="flex justify-end">
                 {String(m.status ?? "").includes("Pendente") ? (
@@ -329,26 +332,34 @@ export function AgendaAceitosCancelaveis({
                 </p>
               ) : null}
 
-              {m.status === "Aceito" && !m.gestaoSomenteLeitura ? (
-                <div className="flex flex-col items-end gap-2">
-                  <button
-                    type="button"
-                    disabled={pending}
-                    onClick={() => {
-                      setClickedAction((prev) => ({ ...prev, [m.id]: "requestReschedule" }));
-                      setOpenRescheduleByMatch((prev) => ({ ...prev, [m.id]: !prev[m.id] }));
-                    }}
-                    className="group inline-flex min-h-[24px] w-auto max-w-full items-center justify-center gap-1 rounded-full border border-eid-action-500/32 bg-eid-action-500/10 px-2 text-[7px] font-black uppercase tracking-[0.07em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-action-500)_28%)] shadow-[0_4px_14px_-10px_rgba(249,115,22,0.72)] transition hover:border-eid-action-500/50 hover:bg-eid-action-500/16 active:scale-[0.98] disabled:opacity-50 md:min-h-[26px] md:text-[8px]"
-                  >
-                    <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-eid-action-500 text-white shadow-[0_3px_10px_-6px_rgba(249,115,22,0.9)] transition group-hover:bg-eid-action-600">
-                      <svg viewBox="0 0 16 16" className="h-2.5 w-2.5" fill="currentColor" aria-hidden>
-                        <path d="M4.5 1a.5.5 0 0 1 .5.5V2h6v-.5a.5.5 0 0 1 1 0V2h.5A1.5 1.5 0 0 1 14 3.5v9A1.5 1.5 0 0 1 12.5 14h-9A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H4v-.5a.5.5 0 0 1 .5-.5ZM3 5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7H3Zm1-2.5H3.5a.5.5 0 0 0-.5.5V4.5h10V3.5a.5.5 0 0 0-.5-.5H12v.5a.5.5 0 0 1-1 0V3H5v.5a.5.5 0 0 1-1 0V3Z" />
-                      </svg>
-                    </span>
-                    <span>Reagendar</span>
-                  </button>
+              {m.whatsappContato || podeReagendar ? (
+                <div className="flex w-full items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    {m.whatsappContato ? <WhatsAppContatoButton href={m.whatsappContato} nome={m.whatsappContatoNome} /> : null}
+                  </div>
 
-                  {openRescheduleByMatch[m.id] ? (
+                  {podeReagendar ? (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => {
+                        setClickedAction((prev) => ({ ...prev, [m.id]: "requestReschedule" }));
+                        setOpenRescheduleByMatch((prev) => ({ ...prev, [m.id]: !prev[m.id] }));
+                      }}
+                      className="group inline-flex min-h-[24px] w-auto max-w-full shrink-0 items-center justify-center gap-1 rounded-full border border-eid-action-500/32 bg-eid-action-500/10 px-2 text-[7px] font-black uppercase tracking-[0.07em] text-[color:color-mix(in_srgb,var(--eid-fg)_72%,var(--eid-action-500)_28%)] shadow-[0_4px_14px_-10px_rgba(249,115,22,0.72)] transition hover:border-eid-action-500/50 hover:bg-eid-action-500/16 active:scale-[0.98] disabled:opacity-50 md:min-h-[26px] md:text-[8px]"
+                    >
+                      <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-eid-action-500 text-white shadow-[0_3px_10px_-6px_rgba(249,115,22,0.9)] transition group-hover:bg-eid-action-600">
+                        <svg viewBox="0 0 16 16" className="h-2.5 w-2.5" fill="currentColor" aria-hidden>
+                          <path d="M4.5 1a.5.5 0 0 1 .5.5V2h6v-.5a.5.5 0 0 1 1 0V2h.5A1.5 1.5 0 0 1 14 3.5v9A1.5 1.5 0 0 1 12.5 14h-9A1.5 1.5 0 0 1 2 12.5v-9A1.5 1.5 0 0 1 3.5 2H4v-.5a.5.5 0 0 1 .5-.5ZM3 5.5v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-7H3Zm1-2.5H3.5a.5.5 0 0 0-.5.5V4.5h10V3.5a.5.5 0 0 0-.5-.5H12v.5a.5.5 0 0 1-1 0V3H5v.5a.5.5 0 0 1-1 0V3Z" />
+                        </svg>
+                      </span>
+                      <span>Reagendar</span>
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {podeReagendar && openRescheduleByMatch[m.id] ? (
                     <form
                       action={formAction}
                       className="grid gap-2 rounded-xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-border-subtle)_70%)] bg-[color:color-mix(in_srgb,var(--eid-primary-500)_6%,var(--eid-card)_94%)] p-2.5"
@@ -406,8 +417,6 @@ export function AgendaAceitosCancelaveis({
                         Enviar pedido de reagendamento
                       </button>
                     </form>
-                  ) : null}
-                </div>
               ) : null}
 
               {!somenteInformativo && m.status === "CancelamentoPendente" && !m.isRequester && !m.gestaoSomenteLeitura ? (
@@ -580,8 +589,9 @@ export function AgendaAceitosCancelaveis({
                 </p>
               ) : null}
             </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
     </div>
   );

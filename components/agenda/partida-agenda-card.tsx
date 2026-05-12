@@ -470,7 +470,7 @@ export function PartidaAgendaCard({
                 compact
                 inline
                 label="Cancelar"
-                className="shrink-0 !min-h-[28px] rounded-lg !px-2.5 active:scale-[0.98]"
+                className="shrink-0 active:scale-[0.98]"
                 onClick={() => setOpenCancel(true)}
               />
             ) : null}
