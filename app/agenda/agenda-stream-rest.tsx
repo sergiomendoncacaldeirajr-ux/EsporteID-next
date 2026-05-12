@@ -153,7 +153,7 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
               items={p.aceitosItems}
               agendamentoJanelaHoras={agendamentoJanelaHoras}
               somenteInformativo
-              cadastrarLocalReturnBase="/comunidade"
+              cadastrarLocalReturnBase="/agenda"
             />
           ) : null}
         </section>
