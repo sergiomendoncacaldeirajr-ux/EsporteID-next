@@ -11,7 +11,7 @@
   "navigationDividerColor": "#000000",
   "navigationDividerColorDark": "#000000",
   "backgroundColor": "#0B0F14",
-  "enableNotifications": true,
+  "enableNotifications": false,
   "startUrl": "/",
   "iconUrl": "https://esporteid.com.br/pwa-icon-512.png",
   "maskableIconUrl": "https://esporteid.com.br/pwa-icon-512.png",
@@ -21,8 +21,8 @@
     "path": "C:\\secure\\esporteid-keystore\\esporteid-upload.jks",
     "alias": "esporteid"
   },
-  "appVersionName": "7.0.1",
-  "appVersionCode": 8,
+  "appVersionName": "7.0.2",
+  "appVersionCode": 9,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://esporteid.com.br/manifest.webmanifest",
@@ -48,5 +48,5 @@
     "minimal-ui",
     "browser"
   ],
-  "appVersion": "7.0.1"
+  "appVersion": "7.0.2"
 }

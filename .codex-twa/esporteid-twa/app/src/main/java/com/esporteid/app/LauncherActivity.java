@@ -60,7 +60,7 @@ public class LauncherActivity
 
         String token = FcmTokenBridge.getToken(this);
         if (token != null && !token.isEmpty() && uri.getQueryParameter("eid_fcm_token") == null) {
-            uri = uri.buildUpon().appendQueryParameter("eid_fcm_token", token).build();
+            uri = buildNativeRegisterUri(token);
             rememberOpenedToken(token);
         }
 
@@ -89,11 +89,7 @@ public class LauncherActivity
         if (token.equals(lastToken)) return;
         rememberOpenedToken(token);
 
-        Uri uri = Uri.parse("https://esporteid.com.br/")
-                .buildUpon()
-                .appendQueryParameter("eid_fcm_token", token)
-                .appendQueryParameter("eid_app", "android")
-                .build();
+        Uri uri = buildNativeRegisterUri(token);
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
         intent.setPackage(getPackageName());
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -105,5 +101,13 @@ public class LauncherActivity
                 .edit()
                 .putString(KEY_LAST_TOKEN_OPENED, token)
                 .apply();
+    }
+
+    private Uri buildNativeRegisterUri(String token) {
+        return Uri.parse("https://esporteid.com.br/api/push/fcm/native-register")
+                .buildUpon()
+                .appendQueryParameter("token", token)
+                .appendQueryParameter("appVersion", "7.0.2")
+                .build();
     }
 }

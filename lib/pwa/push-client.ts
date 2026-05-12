@@ -93,6 +93,22 @@ function getAndroidFcmToken(): string {
   }
 }
 
+export async function syncAndroidNativePushToken(): Promise<boolean> {
+  const token = getAndroidFcmToken();
+  if (!token) return false;
+  const resp = await fetch("/api/push/fcm/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      token,
+      device: navigator.userAgent,
+      appVersion: "7.0.2",
+      active: !getAndroidNativePushOptOut(),
+    }),
+  });
+  return resp.ok;
+}
+
 export function getAndroidNativePushOptOut(): boolean {
   if (typeof window === "undefined") return false;
   try {
@@ -125,20 +141,22 @@ export async function hasAndroidNativePushEnabled(): Promise<boolean> {
 export async function setAndroidNativePushEnabled(enabled: boolean): Promise<void> {
   const token = getAndroidFcmToken();
   setAndroidNativePushOptOut(!enabled);
-  const resp = await fetch(token ? "/api/push/fcm/register" : "/api/push/fcm/preference", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(
-      token
-        ? {
-            token,
-            device: navigator.userAgent,
-            appVersion: "7.0.2",
-            active: enabled,
-          }
-        : { active: enabled }
-    ),
-  });
+  const resp = token
+    ? await fetch("/api/push/fcm/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          device: navigator.userAgent,
+          appVersion: "7.0.2",
+          active: enabled,
+        }),
+      })
+    : await fetch("/api/push/fcm/preference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: enabled }),
+      });
   const data = (await resp.json().catch(() => ({}))) as { message?: string };
   if (!resp.ok) {
     setAndroidNativePushOptOut(enabled);

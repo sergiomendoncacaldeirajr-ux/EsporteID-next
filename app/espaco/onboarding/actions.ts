@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { slugifyEspaco } from "@/lib/espacos/slug";
 import { fetchAutomaticHolidaysForYear } from "@/lib/espacos/calendar";
 import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
+import { serializarEspacoReservaConfig } from "@/lib/espacos/config";
 import { escolherPlanoMensalidadePaaSAction } from "@/app/espaco/actions";
 
 type State = { ok: true; message: string } | { ok: false; message: string };
@@ -303,6 +304,58 @@ export async function salvarPerfilWizardAction(
     return { ok: true, message: "Perfil salvo." };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Erro ao salvar perfil." };
+  }
+}
+
+// ── Step 2.5 — regras globais ─────────────────────────────────────────────
+export async function salvarRegrasReservasWizardAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    const espacoId = Number(formData.get("espaco_id") ?? 0);
+    const { supabase } = await requireWizardManager(espacoId);
+    const configuracao = serializarEspacoReservaConfig({
+      limiteReservasDia: Number(formData.get("limite_reservas_dia") ?? 1),
+      limiteReservasSemana: Number(formData.get("limite_reservas_semana") ?? 3),
+      cooldownHoras: Number(formData.get("cooldown_horas") ?? 2),
+      antecedenciaMinHoras: Number(formData.get("antecedencia_min_horas") ?? 1),
+      antecedenciaMaxDias: Number(formData.get("antecedencia_max_dias") ?? 5),
+      gratisLimiteReservasDiaMembro: Number(
+        formData.get("gratis_limite_reservas_dia_membro") ??
+          formData.get("limite_reservas_dia") ??
+          1
+      ),
+      gratisLimiteReservasSemanaMembro: Number(
+        formData.get("gratis_limite_reservas_semana_membro") ??
+          formData.get("limite_reservas_semana") ??
+          3
+      ),
+      gratisIntervaloHorasEntreReservasMembro: Number(
+        formData.get("gratis_intervalo_horas_entre_reservas_membro") ??
+          formData.get("cooldown_horas") ??
+          2
+      ),
+      gratisAntecedenciaMaxDiasMembro: Number(
+        formData.get("gratis_antecedencia_max_dias_membro") ??
+          formData.get("antecedencia_max_dias") ??
+          5
+      ),
+      waitlistExpiracaoMinutos: Number(formData.get("waitlist_expiracao_minutos") ?? 60),
+      bloqueiaInadimplente: bool(formData, "bloqueia_inadimplente"),
+      reservasGratisLiberadas: bool(formData, "reservas_gratis_liberadas"),
+      politicaCancelamento: field(formData, "politica_cancelamento"),
+      observacoesPublicas: field(formData, "observacoes_publicas"),
+    });
+    const { error } = await supabase
+      .from("espacos_genericos")
+      .update({ configuracao_reservas_json: JSON.stringify(configuracao) })
+      .eq("id", espacoId);
+    if (error) throw new Error(error.message);
+    revalidatePath("/espaco/onboarding");
+    return { ok: true, message: "Regras oficiais salvas." };
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : "Erro ao salvar regras." };
   }
 }
 

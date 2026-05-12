@@ -28,6 +28,7 @@ import type { PaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import {
   salvarModeloEspacoAction,
   salvarPerfilWizardAction,
+  salvarRegrasReservasWizardAction,
   criarUnidadeWizardAction,
   atualizarFotoUnidadeWizardAction,
   removerUnidadeWizardAction,
@@ -116,6 +117,23 @@ type PlanoPaaS = {
   socios_mensal_modo: string | null;
 };
 
+type ReservaConfig = {
+  limiteReservasDia: number;
+  limiteReservasSemana: number;
+  cooldownHoras: number;
+  antecedenciaMinHoras: number;
+  antecedenciaMaxDias: number;
+  gratisLimiteReservasDiaMembro: number;
+  gratisLimiteReservasSemanaMembro: number;
+  gratisIntervaloHorasEntreReservasMembro: number;
+  gratisAntecedenciaMaxDiasMembro: number;
+  waitlistExpiracaoMinutos: number;
+  bloqueiaInadimplente: boolean;
+  reservasGratisLiberadas: boolean;
+  politicaCancelamento: string;
+  observacoesPublicas: string;
+};
+
 type Parceiro = {
   nome_razao_social: string | null; cpf_cnpj: string | null;
   email: string | null; onboarding_status: string | null;
@@ -147,6 +165,7 @@ type WizardProps = {
   feriados: Feriado[];
   planos: Plano[];
   parceiro: Parceiro;
+  reservaConfig: ReservaConfig;
 };
 
 type ActionState = { ok: boolean; message: string } | undefined;
@@ -628,6 +647,7 @@ const STEPS = [
   { id: "unidades", label: "Quadras", Icon: LayoutGrid },
   { id: "horarios", label: "Horários", Icon: Clock },
   { id: "feriados", label: "Feriados", Icon: Calendar },
+  { id: "regras", label: "Regras", Icon: ShieldCheck },
   { id: "planos", label: "Sócios", Icon: Users },
   { id: "pagamento", label: "Receber", Icon: Wallet },
   { id: "conclusao", label: "Pronto", Icon: CheckCircle2 },

@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect } from "react";
 import {
   ensurePushReady,
-  getAndroidNativePushOptOut,
   rememberAndroidFcmToken,
+  syncAndroidNativePushToken,
   syncExistingPushSubscription,
 } from "@/lib/pwa/push-client";
 
@@ -43,17 +43,7 @@ async function registerAndroidFcmTokenFromUrl() {
   url.searchParams.delete("eid_fcm_token");
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
   rememberAndroidFcmToken(token);
-
-  await fetch("/api/push/fcm/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      token,
-      device: navigator.userAgent,
-      appVersion: "7.0.2",
-      active: !getAndroidNativePushOptOut(),
-    }),
-  });
+  await syncAndroidNativePushToken();
 }
 
 export function PwaBootstrap() {
@@ -78,6 +68,9 @@ export function PwaBootstrap() {
     if (!shouldRunPushSync(force)) return;
     void ensurePushReady(vapidPublicKey).catch(() => {
       // best-effort silencioso.
+    });
+    void syncAndroidNativePushToken().catch(() => {
+      // best-effort: se o login ainda nao estiver pronto, tentamos de novo na proxima retomada.
     });
     void fetch("/api/push/flush-user", { method: "POST" }).catch(() => {
       // best-effort: falhas aqui não devem quebrar o bootstrap.
