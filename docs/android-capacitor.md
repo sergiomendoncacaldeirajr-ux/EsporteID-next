@@ -5,9 +5,9 @@ Este projeto agora tambem gera Android via Capacitor, usando a mesma base web pu
 ## Build atual
 
 - Application ID: `com.esporteid.app`
-- Version name: `7.0.10`
-- Version code: `20`
-- Arquivo gerado: `C:\apps\esporteid-7.0.10-v20-capacitor-native-shell.aab`
+- Version name: `7.0.11`
+- Version code: `21`
+- Arquivo gerado: `C:\apps\esporteid-7.0.11-v21-capacitor-share-camera.aab`
 
 ## Assinatura
 

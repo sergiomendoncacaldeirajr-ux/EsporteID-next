@@ -24,6 +24,12 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>O EsporteID usa a câmera para você atualizar sua foto de perfil e enviar imagens quando necessário.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>O EsporteID acessa suas fotos para você escolher imagens de perfil e anexos do app.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>O EsporteID pode salvar imagens geradas pelo app na sua galeria quando você solicitar.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { LocationPermissionBanner } from "@/components/location/location-permission-banner";
+import { NativeShareButton } from "@/components/native/native-share-button";
 import { RankingFilterBar } from "@/components/ranking/ranking-compact";
 import { PROFILE_HERO_PANEL_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { parseRankingSearch, type RankingSearchState } from "@/lib/ranking/ranking-href";
@@ -115,6 +116,15 @@ export default async function RankingPage({ searchParams }: Props) {
         <div className={`eid-ranking-hero mt-3 overflow-hidden ${PROFILE_HERO_PANEL_CLASS} px-3 py-3 sm:px-6 sm:py-5`}>
           <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-eid-action-500/8 blur-3xl" aria-hidden />
           <div className="pointer-events-none absolute -bottom-6 -left-6 h-28 w-28 rounded-full bg-eid-primary-500/10 blur-3xl" aria-hidden />
+          <div className="absolute right-3 top-3 z-[2]">
+            <NativeShareButton
+              title="Ranking EID"
+              text="Veja o ranking do EsporteID"
+              path="/ranking"
+              iconOnly
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/75 text-eid-fg shadow-sm backdrop-blur-md transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10"
+            />
+          </div>
           <div className="relative grid grid-cols-[minmax(0,1fr)_132px] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_320px] sm:gap-4">
             <div>
               <p className="text-[8px] font-black uppercase tracking-[0.12em] text-eid-action-400 sm:text-[13px]">Painel competitivo</p>

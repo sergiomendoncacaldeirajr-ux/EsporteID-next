@@ -2,6 +2,7 @@ import { ProfileAvatarControl } from "@/components/perfil/profile-avatar-control
 import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileCoverControl } from "@/components/perfil/profile-cover-control";
 import { ProfileDenunciarButton } from "@/components/perfil/profile-denunciar-button";
+import { NativeShareButton } from "@/components/native/native-share-button";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { PROFILE_HERO_PANEL_CLASS, PROFILE_HERO_ROLE_BADGE_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { ProfileFriendlyStatusToggle } from "@/components/perfil/profile-friendly-status-toggle";
@@ -69,6 +70,13 @@ export function PerfilPublicoHero({
         )}
 
         <div className="absolute right-2 top-2 z-[3] flex items-center gap-1.5">
+          <NativeShareButton
+            title={`${perfil.nome ?? "Perfil"} no EsporteID`}
+            text="Veja este perfil no EsporteID"
+            path={`/perfil/${id}`}
+            iconOnly
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/45 text-white/85 shadow-sm backdrop-blur-md transition hover:bg-black/60"
+          />
           {isSelf ? <ProfileCoverControl hasCover={Boolean(perfil.foto_capa)} /> : null}
           {!isSelf ? <ProfileDenunciarButton alvoUsuarioId={id} compact /> : null}
         </div>

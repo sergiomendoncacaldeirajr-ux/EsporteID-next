@@ -5,6 +5,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { salvarPerfilOnboarding, type OnboardingActionResult } from "@/app/onboarding/actions";
 import { CONTA_ESPORTES_EID_HREF } from "@/lib/routes/conta";
+import { attachFileToInput, isNativeCameraAvailable, pickNativeImage } from "@/lib/native/camera";
 import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
 import { useUsernameCheck } from "@/lib/hooks/use-username-check";
 
@@ -75,6 +76,32 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
   }, [genero, hasAtletaProfessor, lado, localizacao, nome, perfilAlturaNum, perfilPesoNum, username, usernameStatus]);
 
   const hasFotoSelecionada = Boolean(fotoPreviewUrl);
+
+  async function selectNativeFoto(source: "camera" | "gallery") {
+    if (!isNativeCameraAvailable()) {
+      if (source === "camera") fotoCameraInputRef.current?.click();
+      else fotoGaleriaInputRef.current?.click();
+      return;
+    }
+
+    try {
+      const file = await pickNativeImage(source);
+      if (!file) return;
+      const input = fotoInputRef.current;
+      if (!attachFileToInput(input, file)) {
+        const nextUrl = URL.createObjectURL(file);
+        if (fotoPreviewUrl) URL.revokeObjectURL(fotoPreviewUrl);
+        setFotoPreviewUrl(nextUrl);
+        setFotoSelecionadaNome(file.name);
+        setFotoPosX(50);
+        setFotoPosY(50);
+        setFotoZoom(1);
+      }
+    } catch (error) {
+      if ((error as { message?: string })?.message?.toLowerCase().includes("cancel")) return;
+      setMessage("Não foi possível abrir a câmera/galeria agora.");
+    }
+  }
 
   function handleFotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.currentTarget.files?.[0];
@@ -167,14 +194,14 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => fotoCameraInputRef.current?.click()}
+              onClick={() => void selectNativeFoto("camera")}
               className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-fg"
             >
               Câmera
             </button>
             <button
               type="button"
-              onClick={() => fotoGaleriaInputRef.current?.click()}
+              onClick={() => void selectNativeFoto("gallery")}
               className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-fg"
             >
               Galeria

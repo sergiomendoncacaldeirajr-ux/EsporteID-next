@@ -7,6 +7,7 @@ import {
   EspacoPublicReservaForm,
   EspacoPublicWaitlistForm,
 } from "@/components/espaco/espaco-public-cta";
+import { NativeShareButton } from "@/components/native/native-share-button";
 import { ProfileSection } from "@/components/perfil/profile-layout-blocks";
 import { PROFILE_CARD_BASE, PROFILE_HERO_PANEL_CLASS, PROFILE_PUBLIC_MAIN_WIDE_CLASS } from "@/components/perfil/profile-ui-tokens";
 import { EidCityState } from "@/components/ui/eid-city-state";
@@ -168,6 +169,12 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                     Reservas online
                   </span>
                 ) : null}
+                <NativeShareButton
+                  title={`${espaco.nome_publico} no EsporteID`}
+                  text="Veja este espaço no EsporteID"
+                  path={`/espaco/${slug}`}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-3 py-1.5 text-xs font-semibold text-eid-fg transition hover:border-eid-primary-500/45 hover:bg-eid-primary-500/10"
+                />
               </div>
               <div className="mt-4 space-y-2 text-sm text-eid-text-secondary">
                 <p>{espaco.localizacao ?? "Endereço sob consulta"}</p>
