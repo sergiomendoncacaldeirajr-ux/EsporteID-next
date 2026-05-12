@@ -3032,6 +3032,15 @@ a.eid-list-item:hover, button.eid-list-item:hover {
 [data-eid-admin] {
   --eid-admin-panel: color-mix(in srgb, var(--eid-card) 82%, var(--eid-bg) 18%);
   --eid-admin-panel-soft: color-mix(in srgb, var(--eid-surface) 72%, transparent);
+  overflow-x: clip;
+}
+
+[data-eid-admin] :where(.flex > *, .grid > *) {
+  min-width: 0;
+}
+
+[data-eid-admin] :where(p, li, dd, td, th, span, a, button, label) {
+  overflow-wrap: break-word;
 }
 
 [data-eid-admin] h1,
@@ -3054,6 +3063,12 @@ a.eid-list-item:hover, button.eid-list-item:hover {
 [data-eid-admin] table {
   border-collapse: separate;
   border-spacing: 0;
+}
+
+[data-eid-admin] :where(.overflow-x-auto) {
+  max-width: 100%;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 [data-eid-admin] thead {
@@ -3108,6 +3123,22 @@ a.eid-list-item:hover, button.eid-list-item:hover {
   min-height: 2rem;
 }
 
+[data-eid-admin] :where(form.flex, div.flex, section.flex) {
+  min-width: 0;
+}
+
+[data-eid-admin] form.flex {
+  flex-wrap: wrap;
+}
+
+[data-eid-admin] :where(input:not([type="checkbox"]):not([type="radio"]), select, textarea, .eid-input-dark) {
+  max-width: 100%;
+}
+
+[data-eid-admin] :where(button, [role="button"], a[class*="rounded"], a[class*="eid-btn-"]) {
+  max-width: 100%;
+}
+
 .eid-admin-card {
   border: 1px solid var(--eid-border-subtle);
   border-radius: var(--eid-radius-md);
@@ -3150,4 +3181,73 @@ a.eid-list-item:hover, button.eid-list-item:hover {
 [data-eid-theme="light"] [data-eid-admin] {
   --eid-admin-panel: var(--eid-card);
   --eid-admin-panel-soft: var(--eid-surface);
+}
+
+@media (max-width: 640px) {
+  [data-eid-admin] {
+    font-size: 0.9375rem;
+  }
+
+  [data-eid-admin] h2:first-child {
+    font-size: 1.25rem;
+    line-height: 1.18;
+  }
+
+  [data-eid-admin] :where(section, article, details, .eid-admin-card, .eid-admin-kpi) {
+    border-radius: var(--eid-radius-md);
+  }
+
+  [data-eid-admin] :where(section, article, .eid-admin-card, .eid-admin-kpi) {
+    padding: 0.875rem;
+  }
+
+  [data-eid-admin] :where(.grid-cols-2) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  [data-eid-admin] :where(.grid-cols-3, .grid-cols-4, .grid-cols-5, .grid-cols-6) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  [data-eid-admin] :where(.items-center.justify-between) {
+    flex-wrap: wrap;
+  }
+
+  [data-eid-admin] :where(form.flex, form[class*="flex"]) {
+    align-items: stretch;
+  }
+
+  [data-eid-admin] :where(form.flex input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), form.flex select, form.flex textarea) {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  [data-eid-admin] :where(form.flex button, form.flex a, button[type="submit"]) {
+    min-height: 2.5rem;
+    white-space: normal;
+  }
+
+  [data-eid-admin] :where(.overflow-x-auto) {
+    margin-inline: -0.125rem;
+    border-radius: var(--eid-radius-sm);
+  }
+
+  [data-eid-admin] table {
+    font-size: 0.71875rem;
+  }
+
+  [data-eid-admin] :where(th, td) {
+    padding-inline: 0.5rem;
+  }
+}
+
+@media (max-width: 380px) {
+  [data-eid-admin] :where(section, article, .eid-admin-card, .eid-admin-kpi) {
+    padding: 0.75rem;
+  }
+
+  [data-eid-admin] :where(.px-4) {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
 }

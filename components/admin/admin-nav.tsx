@@ -233,7 +233,7 @@ export function AdminSidebar({ hasServiceRole }: { hasServiceRole: boolean }) {
       {/* Mobile drawer */}
       <aside
         aria-label="Menu admin"
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[86vw] flex-col border-r border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl shadow-black/40 transition-transform duration-200 md:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(22rem,92vw)] flex-col border-r border-[color:var(--eid-border-subtle)] bg-eid-card shadow-2xl shadow-black/40 transition-transform duration-200 md:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -252,7 +252,7 @@ export function AdminSidebar({ hasServiceRole }: { hasServiceRole: boolean }) {
         />
       </aside>
 
-      <header className="fixed left-0 right-0 top-0 z-30 flex h-14 items-center gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-bg/95 px-3 backdrop-blur-sm md:hidden">
+      <header className="fixed left-0 right-0 top-0 z-30 flex h-[calc(3.5rem+env(safe-area-inset-top,0px))] items-end gap-3 border-b border-[color:var(--eid-border-subtle)] bg-eid-bg/95 px-3 pb-2 backdrop-blur-sm md:hidden">
         <button
           type="button"
           aria-label="Abrir menu"
@@ -261,11 +261,11 @@ export function AdminSidebar({ hasServiceRole }: { hasServiceRole: boolean }) {
         >
           <Menu className="h-5 w-5" aria-hidden />
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-eid-primary-500/30 bg-eid-primary-500/15 text-[9px] font-black text-eid-primary-300">
             EID
           </div>
-          <span className="text-sm font-bold text-eid-fg">EsporteID Admin</span>
+          <span className="truncate text-sm font-bold text-eid-fg">EsporteID Admin</span>
         </div>
       </header>
     </>
