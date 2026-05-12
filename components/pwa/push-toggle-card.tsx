@@ -45,14 +45,25 @@ export function PushToggleCard({ defaultEnabled = true }: { defaultEnabled?: boo
     };
   }, [defaultEnabled, vapidPublicKey]);
 
+  function nativeHaptic(strong = false) {
+    if (!androidApp || typeof navigator === "undefined") return;
+    try {
+      navigator.vibrate?.(strong ? 28 : 12);
+    } catch {
+      /* ignore */
+    }
+  }
+
   async function onToggle() {
     try {
       setBusy(true);
       setMsg(null);
       if (androidApp) {
+        nativeHaptic();
         const nextEnabled = !enabled;
         await setAndroidNativePushEnabled(nextEnabled);
         setEnabled(nextEnabled);
+        nativeHaptic(true);
         setMsg(nextEnabled ? "Notificações ativadas." : "Notificações desativadas neste aparelho.");
         return;
       }
