@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -19,8 +20,13 @@ export async function GET(request: Request) {
     redirectUrl.searchParams.set("eid_fcm_token", token);
     return NextResponse.redirect(redirectUrl);
   }
+  if (!hasServiceRoleConfig()) {
+    redirectUrl.searchParams.set("eid_fcm_token", token);
+    return NextResponse.redirect(redirectUrl);
+  }
 
-  await supabase.from("android_fcm_tokens").upsert(
+  const admin = createServiceRoleClient();
+  await admin.from("android_fcm_tokens").upsert(
     {
       usuario_id: user.id,
       token,

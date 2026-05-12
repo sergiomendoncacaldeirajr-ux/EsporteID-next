@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 type RegisterFcmBody = {
   token?: string;
@@ -14,6 +15,9 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, message: "Sessao invalida." }, { status: 401 });
+  if (!hasServiceRoleConfig()) {
+    return NextResponse.json({ ok: false, message: "Push Android indisponivel no servidor." }, { status: 500 });
+  }
 
   const body = (await request.json().catch(() => ({}))) as RegisterFcmBody;
   const token = String(body.token ?? "").trim();
@@ -21,7 +25,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Token FCM invalido." }, { status: 400 });
   }
 
-  const { error } = await supabase.from("android_fcm_tokens").upsert(
+  const admin = createServiceRoleClient();
+  const { error } = await admin.from("android_fcm_tokens").upsert(
     {
       usuario_id: user.id,
       token,

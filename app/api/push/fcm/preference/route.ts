@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase/server";
+import { createServiceRoleClient, hasServiceRoleConfig } from "@/lib/supabase/service-role";
 
 type PreferenceBody = {
   active?: boolean;
@@ -11,8 +12,12 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, message: "Sessao invalida." }, { status: 401 });
+  if (!hasServiceRoleConfig()) {
+    return NextResponse.json({ ok: false, message: "Push Android indisponivel no servidor." }, { status: 500 });
+  }
 
-  const { data, error } = await supabase
+  const admin = createServiceRoleClient();
+  const { data, error } = await admin
     .from("android_fcm_tokens")
     .select("id, ativo")
     .eq("usuario_id", user.id)
@@ -34,11 +39,15 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ ok: false, message: "Sessao invalida." }, { status: 401 });
+  if (!hasServiceRoleConfig()) {
+    return NextResponse.json({ ok: false, message: "Push Android indisponivel no servidor." }, { status: 500 });
+  }
 
   const body = (await request.json().catch(() => ({}))) as PreferenceBody;
   const active = body.active === true;
 
-  const { data, error } = await supabase
+  const admin = createServiceRoleClient();
+  const { data, error } = await admin
     .from("android_fcm_tokens")
     .update({ ativo: active })
     .eq("usuario_id", user.id)
