@@ -127,9 +127,22 @@ type ReservaConfig = {
   gratisLimiteReservasSemanaMembro: number;
   gratisIntervaloHorasEntreReservasMembro: number;
   gratisAntecedenciaMaxDiasMembro: number;
-  waitlistExpiracaoMinutos: number;
   bloqueiaInadimplente: boolean;
   reservasGratisLiberadas: boolean;
+  cancelamentoGratuitaPermite: boolean;
+  cancelamentoGratuitaAntecedenciaHoras: number;
+  cancelamentoGratuitaPermiteAposPrazo: boolean;
+  cancelamentoGratuitaMultaTipo: "nenhuma" | "percentual" | "fixa";
+  cancelamentoGratuitaMultaPercentual: number;
+  cancelamentoGratuitaMultaCentavos: number;
+  cancelamentoPagaPermite: boolean;
+  cancelamentoPagaAntecedenciaHoras: number;
+  cancelamentoPagaPermiteAposPrazo: boolean;
+  cancelamentoPagaMultaTipo: "nenhuma" | "percentual" | "fixa";
+  cancelamentoPagaMultaPercentual: number;
+  cancelamentoPagaMultaCentavos: number;
+  permiteTransferenciaReserva: boolean;
+  transferenciaAntecedenciaHoras: number;
   politicaCancelamento: string;
   observacoesPublicas: string;
 };
@@ -2351,10 +2364,6 @@ function StepRegrasReservas({ space, reservaConfig, onNext, onBack }: {
           <Label>Liberar agenda até</Label>
           <IconInput Icon={Calendar} name="antecedencia_max_dias" type="number" min={1} max={365} defaultValue={reservaConfig.antecedenciaMaxDias} />
         </div>
-        <div className="space-y-1.5">
-          <Label>Fila expira (min)</Label>
-          <IconInput Icon={Clock} name="waitlist_expiracao_minutos" type="number" min={5} defaultValue={reservaConfig.waitlistExpiracaoMinutos} />
-        </div>
       </div>
 
       <div className="rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-4">
@@ -2387,11 +2396,93 @@ function StepRegrasReservas({ space, reservaConfig, onNext, onBack }: {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>Política de cancelamento</Label>
-          <IconTextarea Icon={FileText} name="politica_cancelamento" rows={3} defaultValue={reservaConfig.politicaCancelamento} />
+      <div className="rounded-2xl border border-eid-action-500/20 bg-eid-action-500/5 p-4">
+        <p className="text-sm font-bold text-eid-fg">Cancelamento de reservas gratuitas</p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <label className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-3 text-sm font-semibold text-eid-fg">
+            <input type="checkbox" name="cancelamento_gratuita_permite" defaultChecked={reservaConfig.cancelamentoGratuitaPermite} className="h-4 w-4 accent-eid-action-500" />
+            Aceitar cancelamento gratuito
+          </label>
+          <div className="space-y-1.5">
+            <Label>Pode cancelar até (h antes)</Label>
+            <IconInput Icon={Clock} name="cancelamento_gratuita_antecedencia_horas" type="number" min={0} max={720} defaultValue={reservaConfig.cancelamentoGratuitaAntecedenciaHoras} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Multa de cancelamento</Label>
+            <IconSelect Icon={Wallet} name="cancelamento_gratuita_multa_tipo" defaultValue={reservaConfig.cancelamentoGratuitaMultaTipo}>
+              <option value="nenhuma">Sem multa</option>
+              <option value="percentual">Percentual</option>
+              <option value="fixa">Valor fixo</option>
+            </IconSelect>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Multa (%)</Label>
+            <IconInput Icon={Wallet} name="cancelamento_gratuita_multa_percentual" type="number" min={0} max={100} step="0.01" defaultValue={reservaConfig.cancelamentoGratuitaMultaPercentual} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Multa fixa (R$)</Label>
+            <IconInput Icon={Banknote} name="cancelamento_gratuita_multa_reais" type="number" min={0} step="0.01" defaultValue={(reservaConfig.cancelamentoGratuitaMultaCentavos / 100).toFixed(2)} />
+          </div>
+          <label className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-3 text-sm font-semibold text-eid-fg">
+            <input type="checkbox" name="cancelamento_gratuita_permite_apos_prazo" defaultChecked={reservaConfig.cancelamentoGratuitaPermiteAposPrazo} className="h-4 w-4 accent-eid-action-500" />
+            Permitir cancelamento fora do prazo
+          </label>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-eid-action-500/20 bg-eid-action-500/5 p-4">
+        <p className="text-sm font-bold text-eid-fg">Cancelamento de reservas pagas</p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <label className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-3 text-sm font-semibold text-eid-fg">
+            <input type="checkbox" name="cancelamento_paga_permite" defaultChecked={reservaConfig.cancelamentoPagaPermite} className="h-4 w-4 accent-eid-action-500" />
+            Aceitar cancelamento pago
+          </label>
+          <div className="space-y-1.5">
+            <Label>Pode cancelar até (h antes)</Label>
+            <IconInput Icon={Clock} name="cancelamento_paga_antecedencia_horas" type="number" min={0} max={720} defaultValue={reservaConfig.cancelamentoPagaAntecedenciaHoras} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Multa de cancelamento</Label>
+            <IconSelect Icon={Wallet} name="cancelamento_paga_multa_tipo" defaultValue={reservaConfig.cancelamentoPagaMultaTipo}>
+              <option value="nenhuma">Sem multa</option>
+              <option value="percentual">Percentual</option>
+              <option value="fixa">Valor fixo</option>
+            </IconSelect>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Multa (%)</Label>
+            <IconInput Icon={Wallet} name="cancelamento_paga_multa_percentual" type="number" min={0} max={100} step="0.01" defaultValue={reservaConfig.cancelamentoPagaMultaPercentual} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Multa fixa (R$)</Label>
+            <IconInput Icon={Banknote} name="cancelamento_paga_multa_reais" type="number" min={0} step="0.01" defaultValue={(reservaConfig.cancelamentoPagaMultaCentavos / 100).toFixed(2)} />
+          </div>
+          <label className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-3 text-sm font-semibold text-eid-fg">
+            <input type="checkbox" name="cancelamento_paga_permite_apos_prazo" defaultChecked={reservaConfig.cancelamentoPagaPermiteAposPrazo} className="h-4 w-4 accent-eid-action-500" />
+            Permitir cancelamento fora do prazo
+          </label>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-4">
+        <p className="text-sm font-bold text-eid-fg">Transferência e fila</p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <label className="flex items-center gap-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 px-3 py-3 text-sm font-semibold text-eid-fg">
+            <input type="checkbox" name="permite_transferencia_reserva" defaultChecked={reservaConfig.permiteTransferenciaReserva} className="h-4 w-4 accent-eid-action-500" />
+            Membro pode transferir reserva
+          </label>
+          <div className="space-y-1.5">
+            <Label>Transferir até (h antes)</Label>
+            <IconInput Icon={Clock} name="transferencia_antecedencia_horas" type="number" min={0} max={720} defaultValue={reservaConfig.transferenciaAntecedenciaHoras} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Observação da regra</Label>
+            <IconInput Icon={FileText} name="politica_cancelamento" defaultValue={reservaConfig.politicaCancelamento} placeholder="Ex.: estorno em até 2 dias úteis" />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label>Observações públicas</Label>
           <IconTextarea Icon={MessageSquareText} name="observacoes_publicas" rows={3} defaultValue={reservaConfig.observacoesPublicas} />

@@ -358,11 +358,26 @@ export async function salvarConfiguracoesEspacoAction(
           formData.get("antecedencia_max_dias") ??
           30
       ),
-      waitlistExpiracaoMinutos: Number(
-        formData.get("waitlist_expiracao_minutos") ?? 60
-      ),
       bloqueiaInadimplente: checkbox(formData, "bloqueia_inadimplente"),
       reservasGratisLiberadas,
+      cancelamentoGratuitaPermite: checkbox(formData, "cancelamento_gratuita_permite"),
+      cancelamentoGratuitaAntecedenciaHoras: Number(formData.get("cancelamento_gratuita_antecedencia_horas") ?? 2),
+      cancelamentoGratuitaPermiteAposPrazo: checkbox(formData, "cancelamento_gratuita_permite_apos_prazo"),
+      cancelamentoGratuitaMultaTipo: text(formData, "cancelamento_gratuita_multa_tipo") || "nenhuma",
+      cancelamentoGratuitaMultaPercentual: Number(formData.get("cancelamento_gratuita_multa_percentual") ?? 0),
+      cancelamentoGratuitaMultaCentavos: Math.round(
+        Number(text(formData, "cancelamento_gratuita_multa_reais").replace(",", ".")) * 100
+      ) || 0,
+      cancelamentoPagaPermite: checkbox(formData, "cancelamento_paga_permite"),
+      cancelamentoPagaAntecedenciaHoras: Number(formData.get("cancelamento_paga_antecedencia_horas") ?? 24),
+      cancelamentoPagaPermiteAposPrazo: checkbox(formData, "cancelamento_paga_permite_apos_prazo"),
+      cancelamentoPagaMultaTipo: text(formData, "cancelamento_paga_multa_tipo") || "nenhuma",
+      cancelamentoPagaMultaPercentual: Number(formData.get("cancelamento_paga_multa_percentual") ?? 0),
+      cancelamentoPagaMultaCentavos: Math.round(
+        Number(text(formData, "cancelamento_paga_multa_reais").replace(",", ".")) * 100
+      ) || 0,
+      permiteTransferenciaReserva: checkbox(formData, "permite_transferencia_reserva"),
+      transferenciaAntecedenciaHoras: Number(formData.get("transferencia_antecedencia_horas") ?? 2),
       politicaCancelamento: text(formData, "politica_cancelamento"),
       observacoesPublicas: text(formData, "observacoes_publicas"),
     });
@@ -2244,7 +2259,7 @@ export async function entrarFilaEsperaEspacoAction(
     const [{ data: espaco }, { data: socio }, { data: plano }] = await Promise.all([
       supabase
         .from("espacos_genericos")
-        .select("id, configuracao_reservas_json")
+        .select("id, modo_reserva, configuracao_reservas_json")
         .eq("id", espacoId)
         .maybeSingle(),
       supabase
@@ -2264,12 +2279,19 @@ export async function entrarFilaEsperaEspacoAction(
     if (!espaco) {
       return { ok: false, message: "Espaço não encontrado." };
     }
+    if (String(espaco.modo_reserva ?? "").toLowerCase() === "paga") {
+      return { ok: false, message: "Fila de espera só está disponível para reservas gratuitas de membro." };
+    }
 
     const benefit = avaliarBeneficiosSocioEspaco({
       socio,
       plano,
       configuracaoEspaco: espaco.configuracao_reservas_json,
     });
+    const cfgReservas = normalizeEspacoReservaConfig(espaco.configuracao_reservas_json);
+    if (!benefit.ok || !cfgReservas.reservasGratisLiberadas || benefit.reservasGratisSemana < 1) {
+      return { ok: false, message: "Fila de espera só está disponível para membros com reserva gratuita liberada." };
+    }
     const limiteDia = Math.max(0, Number(benefit.limiteReservasDia ?? 0));
     const limiteSemana = Math.max(0, Number(benefit.limiteReservasSemana ?? 0));
 
@@ -2353,6 +2375,98 @@ export async function entrarFilaEsperaEspacoAction(
       ok: false,
       message:
         error instanceof Error ? error.message : "Falha ao entrar na fila de espera.",
+    };
+  }
+}
+
+export async function transferirReservaEspacoAction(
+  _prev: State | undefined,
+  formData: FormData
+): Promise<State> {
+  try {
+    const { supabase, user } = await requireUser();
+    const reservaId = Number(formData.get("reserva_id") ?? 0);
+    const novoUsuarioId = text(formData, "novo_usuario_id");
+    if (!reservaId || !novoUsuarioId || novoUsuarioId === user.id) {
+      return { ok: false, message: "Informe outro membro para receber a reserva." };
+    }
+
+    const { data: reserva, error: reservaErr } = await supabase
+      .from("reservas_quadra")
+      .select("id, espaco_generico_id, inicio, fim, usuario_solicitante_id, status_reserva")
+      .eq("id", reservaId)
+      .maybeSingle();
+    if (reservaErr) return { ok: false, message: reservaErr.message };
+    if (!reserva || String(reserva.usuario_solicitante_id ?? "") !== user.id) {
+      return { ok: false, message: "Reserva não encontrada para sua conta." };
+    }
+    if (["cancelada", "finalizada"].includes(String(reserva.status_reserva ?? ""))) {
+      return { ok: false, message: "Essa reserva não pode mais ser transferida." };
+    }
+
+    const { data: espaco, error: espacoErr } = await supabase
+      .from("espacos_genericos")
+      .select("id, slug, configuracao_reservas_json")
+      .eq("id", Number(reserva.espaco_generico_id))
+      .maybeSingle();
+    if (espacoErr) return { ok: false, message: espacoErr.message };
+    const cfg = normalizeEspacoReservaConfig(espaco?.configuracao_reservas_json);
+    if (!cfg.permiteTransferenciaReserva) {
+      return { ok: false, message: "Este espaço não permite transferência de reserva entre membros." };
+    }
+    const inicioDate = new Date(String(reserva.inicio));
+    const horasAntes = (inicioDate.getTime() - Date.now()) / (1000 * 60 * 60);
+    if (horasAntes < cfg.transferenciaAntecedenciaHoras) {
+      return {
+        ok: false,
+        message: `A transferência precisa ser feita com pelo menos ${cfg.transferenciaAntecedenciaHoras} hora(s) de antecedência.`,
+      };
+    }
+
+    const { data: socioDestino, error: socioErr } = await supabase
+      .from("espaco_socios")
+      .select("id, status, documentos_status, financeiro_status, beneficios_liberados")
+      .eq("espaco_generico_id", Number(reserva.espaco_generico_id))
+      .eq("usuario_id", novoUsuarioId)
+      .maybeSingle();
+    if (socioErr) return { ok: false, message: socioErr.message };
+    if (
+      !socioDestino ||
+      socioDestino.status !== "ativo" ||
+      socioDestino.documentos_status !== "aprovado" ||
+      socioDestino.financeiro_status !== "em_dia" ||
+      !socioDestino.beneficios_liberados
+    ) {
+      return { ok: false, message: "A reserva só pode ser transferida para um membro ativo e liberado do espaço." };
+    }
+
+    const { error } = await supabase
+      .from("reservas_quadra")
+      .update({
+        usuario_solicitante_id: novoUsuarioId,
+        espaco_socio_id: socioDestino.id,
+        atualizado_em: new Date().toISOString(),
+      })
+      .eq("id", reservaId)
+      .eq("usuario_solicitante_id", user.id);
+    if (error) return { ok: false, message: error.message };
+
+    await supabase.rpc("espaco_criar_auditoria", {
+      p_espaco_id: Number(reserva.espaco_generico_id),
+      p_entidade_tipo: "reserva_quadra",
+      p_entidade_id: reservaId,
+      p_acao: "reserva_transferida",
+      p_payload: { de: user.id, para: novoUsuarioId },
+      p_autor_usuario_id: user.id,
+    });
+
+    revalidatePath(`/espaco/${espaco?.slug ?? ""}`);
+    revalidatePath("/agenda");
+    return { ok: true, message: "Reserva transferida para o membro selecionado." };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Falha ao transferir reserva.",
     };
   }
 }

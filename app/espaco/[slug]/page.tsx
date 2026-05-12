@@ -48,6 +48,7 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
   if (!espaco) notFound();
   const regraAssociacao = normalizeEspacoAssociacaoConfig(espaco.associacao_regra_json);
   const acessoPublicoPago = String(espaco.modo_reserva ?? "").toLowerCase() === "paga";
+  const permiteFilaGratuita = String(espaco.modo_reserva ?? "").toLowerCase() !== "paga";
   const { data: membership } = user
     ? await supabase
         .from("espaco_socios")
@@ -478,13 +479,6 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                           latitude={Number(espaco.lat ?? NaN)}
                           longitude={Number(espaco.lng ?? NaN)}
                         />
-                        <EspacoPublicWaitlistForm
-                          espacoId={espaco.id}
-                          unidadeId={unidadePrincipal?.id ?? null}
-                          esporteId={unidadePrincipal?.esporte_id ?? null}
-                          latitude={Number(espaco.lat ?? NaN)}
-                          longitude={Number(espaco.lng ?? NaN)}
-                        />
                       </>
                     ) : (
                       <EspacoPublicJoinForm espacoId={espaco.id} planos={planos ?? []} regraEntrada={regraAssociacao} modoReserva={espaco.modo_reserva} />
@@ -510,13 +504,15 @@ export default async function EspacoPublicLandingPage({ params }: Props) {
                 longitude={Number(espaco.lng ?? NaN)}
               />
               {acessoPublicoPago ? <EspacoPublicAddReservaAtalhoForm espacoId={espaco.id} /> : null}
-              <EspacoPublicWaitlistForm
-                espacoId={espaco.id}
-                unidadeId={unidadePrincipal?.id ?? null}
-                esporteId={unidadePrincipal?.esporte_id ?? null}
-                latitude={Number(espaco.lat ?? NaN)}
-                longitude={Number(espaco.lng ?? NaN)}
-              />
+              {permiteFilaGratuita ? (
+                <EspacoPublicWaitlistForm
+                  espacoId={espaco.id}
+                  unidadeId={unidadePrincipal?.id ?? null}
+                  esporteId={unidadePrincipal?.esporte_id ?? null}
+                  latitude={Number(espaco.lat ?? NaN)}
+                  longitude={Number(espaco.lng ?? NaN)}
+                />
+              ) : null}
             </>
           )}
         </section>

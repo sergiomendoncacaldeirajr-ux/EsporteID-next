@@ -10,9 +10,22 @@ export type EspacoReservaConfig = {
   gratisLimiteReservasSemanaMembro: number;
   gratisIntervaloHorasEntreReservasMembro: number;
   gratisAntecedenciaMaxDiasMembro: number;
-  waitlistExpiracaoMinutos: number;
   bloqueiaInadimplente: boolean;
   reservasGratisLiberadas: boolean;
+  cancelamentoGratuitaPermite: boolean;
+  cancelamentoGratuitaAntecedenciaHoras: number;
+  cancelamentoGratuitaPermiteAposPrazo: boolean;
+  cancelamentoGratuitaMultaTipo: "nenhuma" | "percentual" | "fixa";
+  cancelamentoGratuitaMultaPercentual: number;
+  cancelamentoGratuitaMultaCentavos: number;
+  cancelamentoPagaPermite: boolean;
+  cancelamentoPagaAntecedenciaHoras: number;
+  cancelamentoPagaPermiteAposPrazo: boolean;
+  cancelamentoPagaMultaTipo: "nenhuma" | "percentual" | "fixa";
+  cancelamentoPagaMultaPercentual: number;
+  cancelamentoPagaMultaCentavos: number;
+  permiteTransferenciaReserva: boolean;
+  transferenciaAntecedenciaHoras: number;
   politicaCancelamento: string;
   observacoesPublicas: string;
 };
@@ -66,9 +79,50 @@ export function normalizeEspacoReservaConfig(input: unknown): EspacoReservaConfi
       1,
       Math.round(num(data.gratisAntecedenciaMaxDiasMembro, num(data.antecedenciaMaxDias, 30)))
     ),
-    waitlistExpiracaoMinutos: Math.max(5, Math.round(num(data.waitlistExpiracaoMinutos, 60))),
     bloqueiaInadimplente: bool(data.bloqueiaInadimplente, true),
     reservasGratisLiberadas: bool(data.reservasGratisLiberadas, true),
+    cancelamentoGratuitaPermite: bool(data.cancelamentoGratuitaPermite, true),
+    cancelamentoGratuitaAntecedenciaHoras: Math.max(
+      0,
+      Math.round(num(data.cancelamentoGratuitaAntecedenciaHoras, num(data.cancelamentoAntecedenciaHoras, 2)))
+    ),
+    cancelamentoGratuitaPermiteAposPrazo: bool(
+      data.cancelamentoGratuitaPermiteAposPrazo,
+      bool(data.cancelamentoPermiteAposPrazo, false)
+    ),
+    cancelamentoGratuitaMultaTipo: ["nenhuma", "percentual", "fixa"].includes(String(data.cancelamentoGratuitaMultaTipo ?? data.cancelamentoMultaTipo))
+      ? (String(data.cancelamentoGratuitaMultaTipo ?? data.cancelamentoMultaTipo) as "nenhuma" | "percentual" | "fixa")
+      : "nenhuma",
+    cancelamentoGratuitaMultaPercentual: Math.max(
+      0,
+      Math.min(100, num(data.cancelamentoGratuitaMultaPercentual, num(data.cancelamentoMultaPercentual, 0)))
+    ),
+    cancelamentoGratuitaMultaCentavos: Math.max(
+      0,
+      Math.round(num(data.cancelamentoGratuitaMultaCentavos, num(data.cancelamentoMultaCentavos, 0)))
+    ),
+    cancelamentoPagaPermite: bool(data.cancelamentoPagaPermite, false),
+    cancelamentoPagaAntecedenciaHoras: Math.max(
+      0,
+      Math.round(num(data.cancelamentoPagaAntecedenciaHoras, num(data.cancelamentoAntecedenciaHoras, 24)))
+    ),
+    cancelamentoPagaPermiteAposPrazo: bool(data.cancelamentoPagaPermiteAposPrazo, false),
+    cancelamentoPagaMultaTipo: ["nenhuma", "percentual", "fixa"].includes(String(data.cancelamentoPagaMultaTipo))
+      ? (String(data.cancelamentoPagaMultaTipo) as "nenhuma" | "percentual" | "fixa")
+      : "nenhuma",
+    cancelamentoPagaMultaPercentual: Math.max(
+      0,
+      Math.min(100, num(data.cancelamentoPagaMultaPercentual, 0))
+    ),
+    cancelamentoPagaMultaCentavos: Math.max(
+      0,
+      Math.round(num(data.cancelamentoPagaMultaCentavos, 0))
+    ),
+    permiteTransferenciaReserva: bool(data.permiteTransferenciaReserva, false),
+    transferenciaAntecedenciaHoras: Math.max(
+      0,
+      Math.round(num(data.transferenciaAntecedenciaHoras, num(data.cancelamentoGratuitaAntecedenciaHoras, 2)))
+    ),
     politicaCancelamento: text(data.politicaCancelamento, ""),
     observacoesPublicas: text(data.observacoesPublicas, ""),
   };

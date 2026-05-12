@@ -282,17 +282,6 @@ export function EspacoConfigForm({
         </div>
         <div>
           <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
-            Fila de espera expira (min)
-          </label>
-          <input
-            name="waitlist_expiracao_minutos"
-            type="number"
-            defaultValue={cfg.waitlistExpiracaoMinutos}
-            className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-          <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
             Antecedência mínima (h)
           </label>
           <input
@@ -368,16 +357,157 @@ export function EspacoConfigForm({
           </div>
         </div>
       </div>
-      <div className="sm:col-span-2">
-        <label className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
-          Política de cancelamento
-        </label>
-        <textarea
-          name="politica_cancelamento"
-          rows={3}
-          defaultValue={cfg.politicaCancelamento}
-          className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm"
-        />
+      <div className="sm:col-span-2 rounded-2xl border border-eid-action-500/20 bg-eid-action-500/5 p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-eid-action-300">
+          Cancelamento de reservas gratuitas
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <label className="flex items-center gap-2 text-xs text-eid-fg">
+            <input type="checkbox" name="cancelamento_gratuita_permite" defaultChecked={cfg.cancelamentoGratuitaPermite} />
+            Aceitar cancelamento gratuito
+          </label>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+              Cancelar até (h antes)
+            </label>
+            <input
+              name="cancelamento_gratuita_antecedencia_horas"
+              type="number"
+              min={0}
+              defaultValue={cfg.cancelamentoGratuitaAntecedenciaHoras}
+              className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+              Multa
+            </label>
+            <select
+              name="cancelamento_gratuita_multa_tipo"
+              defaultValue={cfg.cancelamentoGratuitaMultaTipo}
+              className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
+            >
+              <option value="nenhuma">Sem multa</option>
+              <option value="percentual">Percentual</option>
+              <option value="fixa">Valor fixo</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+              Multa (%)
+            </label>
+            <input
+              name="cancelamento_gratuita_multa_percentual"
+              type="number"
+              min={0}
+              max={100}
+              step="0.01"
+              defaultValue={cfg.cancelamentoGratuitaMultaPercentual}
+              className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+              Multa fixa (R$)
+            </label>
+            <input
+              name="cancelamento_gratuita_multa_reais"
+              type="number"
+              min={0}
+              step="0.01"
+              defaultValue={(cfg.cancelamentoGratuitaMultaCentavos / 100).toFixed(2)}
+              className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-xs text-eid-fg">
+            <input
+              type="checkbox"
+              name="cancelamento_gratuita_permite_apos_prazo"
+              defaultChecked={cfg.cancelamentoGratuitaPermiteAposPrazo}
+            />
+            Permitir cancelamento fora do prazo
+          </label>
+        </div>
+      </div>
+      <div className="sm:col-span-2 rounded-2xl border border-eid-action-500/20 bg-eid-action-500/5 p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-eid-action-300">
+          Cancelamento de reservas pagas
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <label className="flex items-center gap-2 text-xs text-eid-fg">
+            <input type="checkbox" name="cancelamento_paga_permite" defaultChecked={cfg.cancelamentoPagaPermite} />
+            Aceitar cancelamento pago
+          </label>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+              Cancelar até (h antes)
+            </label>
+            <input name="cancelamento_paga_antecedencia_horas" type="number" min={0} defaultValue={cfg.cancelamentoPagaAntecedenciaHoras} className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+              Multa
+            </label>
+            <select name="cancelamento_paga_multa_tipo" defaultValue={cfg.cancelamentoPagaMultaTipo} className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm">
+              <option value="nenhuma">Sem multa</option>
+              <option value="percentual">Percentual</option>
+              <option value="fixa">Valor fixo</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+              Multa (%)
+            </label>
+            <input name="cancelamento_paga_multa_percentual" type="number" min={0} max={100} step="0.01" defaultValue={cfg.cancelamentoPagaMultaPercentual} className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+              Multa fixa (R$)
+            </label>
+            <input name="cancelamento_paga_multa_reais" type="number" min={0} step="0.01" defaultValue={(cfg.cancelamentoPagaMultaCentavos / 100).toFixed(2)} className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm" />
+          </div>
+          <label className="flex items-center gap-2 text-xs text-eid-fg">
+            <input type="checkbox" name="cancelamento_paga_permite_apos_prazo" defaultChecked={cfg.cancelamentoPagaPermiteAposPrazo} />
+            Permitir cancelamento fora do prazo
+          </label>
+        </div>
+      </div>
+      <div className="sm:col-span-2 rounded-2xl border border-eid-primary-500/20 bg-eid-primary-500/5 p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-eid-primary-300">
+          Transferência e fila
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <label className="flex items-center gap-2 text-xs text-eid-fg">
+            <input
+              type="checkbox"
+              name="permite_transferencia_reserva"
+              defaultChecked={cfg.permiteTransferenciaReserva}
+            />
+            Membro pode transferir reserva
+          </label>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+              Transferir até (h antes)
+            </label>
+            <input
+              name="transferencia_antecedencia_horas"
+              type="number"
+              min={0}
+              defaultValue={cfg.transferenciaAntecedenciaHoras}
+              className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">
+              Observação da regra
+            </label>
+            <input
+              name="politica_cancelamento"
+              defaultValue={cfg.politicaCancelamento}
+              className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
       </div>
       <div className="sm:col-span-2">
         <label className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">

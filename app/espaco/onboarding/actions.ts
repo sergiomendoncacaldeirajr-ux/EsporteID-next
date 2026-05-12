@@ -337,9 +337,26 @@ export async function salvarRegrasReservasWizardAction(
           formData.get("antecedencia_max_dias") ??
           5
       ),
-      waitlistExpiracaoMinutos: Number(formData.get("waitlist_expiracao_minutos") ?? 60),
       bloqueiaInadimplente: bool(formData, "bloqueia_inadimplente"),
       reservasGratisLiberadas: bool(formData, "reservas_gratis_liberadas"),
+      cancelamentoGratuitaPermite: bool(formData, "cancelamento_gratuita_permite"),
+      cancelamentoGratuitaAntecedenciaHoras: Number(formData.get("cancelamento_gratuita_antecedencia_horas") ?? 2),
+      cancelamentoGratuitaPermiteAposPrazo: bool(formData, "cancelamento_gratuita_permite_apos_prazo"),
+      cancelamentoGratuitaMultaTipo: field(formData, "cancelamento_gratuita_multa_tipo") || "nenhuma",
+      cancelamentoGratuitaMultaPercentual: Number(formData.get("cancelamento_gratuita_multa_percentual") ?? 0),
+      cancelamentoGratuitaMultaCentavos: Math.round(
+        Number(field(formData, "cancelamento_gratuita_multa_reais").replace(",", ".")) * 100
+      ) || 0,
+      cancelamentoPagaPermite: bool(formData, "cancelamento_paga_permite"),
+      cancelamentoPagaAntecedenciaHoras: Number(formData.get("cancelamento_paga_antecedencia_horas") ?? 24),
+      cancelamentoPagaPermiteAposPrazo: bool(formData, "cancelamento_paga_permite_apos_prazo"),
+      cancelamentoPagaMultaTipo: field(formData, "cancelamento_paga_multa_tipo") || "nenhuma",
+      cancelamentoPagaMultaPercentual: Number(formData.get("cancelamento_paga_multa_percentual") ?? 0),
+      cancelamentoPagaMultaCentavos: Math.round(
+        Number(field(formData, "cancelamento_paga_multa_reais").replace(",", ".")) * 100
+      ) || 0,
+      permiteTransferenciaReserva: bool(formData, "permite_transferencia_reserva"),
+      transferenciaAntecedenciaHoras: Number(formData.get("transferencia_antecedencia_horas") ?? 2),
       politicaCancelamento: field(formData, "politica_cancelamento"),
       observacoesPublicas: field(formData, "observacoes_publicas"),
     });
