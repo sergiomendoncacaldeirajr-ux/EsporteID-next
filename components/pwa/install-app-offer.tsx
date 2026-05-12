@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 import { Download, ExternalLink, Smartphone, X } from "lucide-react";
 import { isNativeAndroidApp } from "@/lib/pwa/push-client";
 
@@ -48,6 +49,10 @@ function isIOSLike() {
 function isAndroidLike() {
   if (typeof navigator === "undefined") return false;
   return /Android/i.test(navigator.userAgent);
+}
+
+function isNativeAppRuntime() {
+  return isNativeAndroidApp() || Capacitor.isNativePlatform();
 }
 
 function IconShareIOS({ className }: { className?: string }) {
@@ -104,7 +109,7 @@ export function InstallAppOffer() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (isNativeAndroidApp()) return;
+    if (isNativeAppRuntime()) return;
     if (isStandaloneMode()) return;
 
     const dismissed = iosDismissed;
@@ -157,7 +162,7 @@ export function InstallAppOffer() {
 
   const showAndroidModal = androidOpen && isAndroidLike() && !isStandaloneMode();
   const showIosModal = iosOpen && isIOSLike() && !isStandaloneMode();
-  if (isNativeAndroidApp()) return null;
+  if (isNativeAppRuntime()) return null;
 
   return (
     <>

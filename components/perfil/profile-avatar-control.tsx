@@ -8,6 +8,7 @@ import {
   type ProfileUploadState,
 } from "@/app/perfil/actions";
 import { prepareAvatarForUpload } from "@/lib/images/prepare-avatar-upload";
+import { isNativeCameraAvailable, pickNativeImage } from "@/lib/native/camera";
 import { EidCancelAction } from "@/components/ui/eid-cancel-action";
 
 type Props = {
@@ -90,8 +91,8 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
     setActionOpen(true);
   }
 
-  async function onFileChange() {
-    const raw = pickerRef.current?.files?.[0];
+  async function onFileChange(file?: File | null) {
+    const raw = file ?? pickerRef.current?.files?.[0];
     if (!raw) return;
     setPrepErr(null);
     const p = await prepareAvatarForUpload(raw);
@@ -114,6 +115,20 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
     setPosY(0);
     setEditorOpen(true);
     setActionOpen(false);
+  }
+
+  async function pickProfilePhoto(source: "camera" | "gallery") {
+    if (!isNativeCameraAvailable()) {
+      pickerRef.current?.click();
+      return;
+    }
+    try {
+      const file = await pickNativeImage(source);
+      if (file) await onFileChange(file);
+    } catch (error) {
+      const message = String((error as { message?: string })?.message ?? "");
+      if (!/cancel/i.test(message)) setPrepErr("Não foi possível abrir a câmera/galeria agora.");
+    }
   }
 
   function closeEditor() {
@@ -167,7 +182,7 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
         <input ref={uploadInputRef} type="file" name="avatar_file" accept="image/jpeg" className="sr-only" />
       </form>
       <form ref={removeFormRef} action={removeProfileAvatarAction} />
-      <input ref={pickerRef} type="file" accept="image/*" className="sr-only" onChange={onFileChange} />
+      <input ref={pickerRef} type="file" accept="image/*" className="sr-only" onChange={() => void onFileChange()} />
       <div className="absolute -bottom-1 -right-1 z-[5]">
         <button
           type="button"
@@ -275,13 +290,22 @@ export function ProfileAvatarControl({ hasAvatar }: Props) {
               Adicione, reposicione ou remova sua foto.
             </p>
             <div className="mt-3 grid gap-2">
-              <button
-                type="button"
-                onClick={() => pickerRef.current?.click()}
-                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/12 px-3 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg"
-              >
-                {hasAvatar ? "Trocar foto" : "Adicionar foto"}
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => void pickProfilePhoto("camera")}
+                  className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/12 px-3 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg"
+                >
+                  Câmera
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void pickProfilePhoto("gallery")}
+                  className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/12 px-3 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg"
+                >
+                  Galeria
+                </button>
+              </div>
               {hasAvatar ? (
                 <button
                   type="button"

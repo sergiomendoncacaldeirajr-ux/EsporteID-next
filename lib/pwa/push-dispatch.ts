@@ -218,6 +218,10 @@ function buildFcmMessage(n: NotificacaoRow, token: string) {
 
   return {
     token,
+    notification: {
+      title: String(payload.title || "EsporteID"),
+      body: String(payload.body || "Voce tem uma nova notificacao."),
+    },
     data: {
       title: String(payload.title || "EsporteID"),
       body: String(payload.body || "Voce tem uma nova notificacao."),

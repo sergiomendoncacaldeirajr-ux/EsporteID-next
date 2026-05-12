@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { ActiveAppContext } from "@/lib/auth/active-context";
 import { EID_SYSTEM_UI_THEME_COLOR_DARK, EID_SYSTEM_UI_THEME_COLOR_LIGHT } from "@/lib/branding";
-import { isNativeAndroidApp } from "@/lib/pwa/push-client";
+import {
+  getAndroidNativePushOptOut,
+  isNativeAndroidApp,
+  rememberAndroidFcmToken,
+  syncAndroidNativePushToken,
+} from "@/lib/pwa/push-client";
 
 const NATIVE_PREFETCH_ROUTES = ["/dashboard", "/agenda", "/comunidade", "/ranking", "/match", "/desafio", "/times"] as const;
 
@@ -21,6 +26,10 @@ type NativeSharePayload = {
   dialogTitle?: string;
 };
 
+type NativePushData = {
+  url?: unknown;
+};
+
 declare global {
   interface Window {
     eidNativeShare?: (payload?: NativeSharePayload) => Promise<void>;
@@ -29,6 +38,10 @@ declare global {
 
 function isCapacitorNativeApp() {
   return Capacitor.isNativePlatform();
+}
+
+function isCapacitorAndroidApp() {
+  return Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
 }
 
 function isAnyNativeApp() {
@@ -42,6 +55,27 @@ function currentSystemChromeColor() {
 
 function statusBarStyleForTheme() {
   return document.documentElement.getAttribute("data-eid-theme") === "light" ? "DARK" : "LIGHT";
+}
+
+function appHrefFromUrl(rawUrl: string) {
+  let url: URL;
+  try {
+    url = new URL(rawUrl, window.location.origin);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  if (url.hostname !== "esporteid.com.br" && url.hostname !== window.location.hostname) return null;
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
+function notificationHrefFromData(data: NativePushData | undefined) {
+  const rawUrl = typeof data?.url === "string" ? data.url : "/comunidade#notificacoes";
+  return appHrefFromUrl(rawUrl) ?? "/comunidade#notificacoes";
+}
+
+function isExternalHttpUrl(url: URL) {
+  return (url.protocol === "https:" || url.protocol === "http:") && url.origin !== window.location.origin;
 }
 
 function getNativeWarmRoutes(userId: string | null | undefined, activeContext: ActiveAppContext | undefined) {
@@ -95,11 +129,12 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
     let cleanup = false;
 
     async function configureNativeShell() {
-      const [{ StatusBar, Style }, { Keyboard, KeyboardResize }, { Network }, { App }] = await Promise.all([
+      const [{ StatusBar, Style }, { Keyboard, KeyboardResize }, { Network }, { App }, { Browser }] = await Promise.all([
         import("@capacitor/status-bar"),
         import("@capacitor/keyboard"),
         import("@capacitor/network"),
         import("@capacitor/app"),
+        import("@capacitor/browser"),
       ]);
 
       const applySystemBars = async () => {
@@ -121,7 +156,7 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       const networkStatus = await Network.getStatus();
       if (!cleanup) setIsOffline(!networkStatus.connected);
 
-      const [networkHandle, appStateHandle, backHandle] = await Promise.all([
+      const [networkHandle, appStateHandle, backHandle, urlOpenHandle] = await Promise.all([
         Network.addListener("networkStatusChange", (status) => setIsOffline(!status.connected)),
         App.addListener("appStateChange", (state) => {
           if (state.isActive) void applySystemBars();
@@ -133,18 +168,64 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
           }
           void App.exitApp();
         }),
+        App.addListener("appUrlOpen", ({ url }) => {
+          const href = appHrefFromUrl(url);
+          if (href) router.push(href);
+        }),
       ]);
 
       const themeObserver = new MutationObserver(() => void applySystemBars());
       themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-eid-theme"] });
 
+      const onDocumentClick = (event: MouseEvent) => {
+        if (event.defaultPrevented) return;
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const anchor = target.closest("a[href]");
+        if (!(anchor instanceof HTMLAnchorElement)) return;
+        if (anchor.hasAttribute("download")) return;
+        if (anchor.target && anchor.target !== "_self") {
+          let external: URL;
+          try {
+            external = new URL(anchor.href, window.location.href);
+          } catch {
+            return;
+          }
+          if (isExternalHttpUrl(external)) {
+            event.preventDefault();
+            void Browser.open({ url: external.toString() });
+          }
+          return;
+        }
+
+        let url: URL;
+        try {
+          url = new URL(anchor.href, window.location.href);
+        } catch {
+          return;
+        }
+        if (isExternalHttpUrl(url)) {
+          event.preventDefault();
+          void Browser.open({ url: url.toString() });
+          return;
+        }
+        const href = appHrefFromUrl(url.toString());
+        if (href && url.origin !== window.location.origin) {
+          event.preventDefault();
+          router.push(href);
+        }
+      };
+      document.addEventListener("click", onDocumentClick, { capture: true });
+
       window.dispatchEvent(new CustomEvent("eid:native-app-ready"));
 
       return () => {
         themeObserver.disconnect();
+        document.removeEventListener("click", onDocumentClick, { capture: true });
         void networkHandle.remove();
         void appStateHandle.remove();
         void backHandle.remove();
+        void urlOpenHandle.remove();
       };
     }
 
@@ -190,6 +271,43 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       if (disposed && window.eidNativeShare) delete window.eidNativeShare;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isCapacitorAndroidApp()) return;
+    let disposed = false;
+    const handles: Array<{ remove: () => Promise<void> }> = [];
+
+    async function configureNativePush() {
+      const { PushNotifications } = await import("@capacitor/push-notifications");
+
+      const [registrationHandle, registrationErrorHandle, actionHandle] = await Promise.all([
+        PushNotifications.addListener("registration", (token) => {
+          rememberAndroidFcmToken(token.value);
+          if (!getAndroidNativePushOptOut()) void syncAndroidNativePushToken();
+        }),
+        PushNotifications.addListener("registrationError", (error) => {
+          console.warn("Falha ao registrar push nativo.", error);
+        }),
+        PushNotifications.addListener("pushNotificationActionPerformed", (event) => {
+          router.push(notificationHrefFromData(event.notification.data as NativePushData | undefined));
+        }),
+      ]);
+      handles.push(registrationHandle, registrationErrorHandle, actionHandle);
+
+      const permission = await PushNotifications.checkPermissions();
+      const receive =
+        permission.receive === "prompt" ? (await PushNotifications.requestPermissions()).receive : permission.receive;
+      if (disposed || receive !== "granted") return;
+
+      await PushNotifications.register();
+    }
+
+    void configureNativePush();
+    return () => {
+      disposed = true;
+      for (const handle of handles) void handle.remove();
+    };
+  }, [router]);
 
   useEffect(() => {
     if (!isAnyNativeApp()) return;

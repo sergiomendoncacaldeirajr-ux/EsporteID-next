@@ -16,6 +16,7 @@ import {
   type ProfessorTipoAtuacao,
 } from "@/lib/professor/constants";
 import { prepareAvatarForUpload } from "@/lib/images/prepare-avatar-upload";
+import { attachFileToInput, isNativeCameraAvailable, pickNativeImage } from "@/lib/native/camera";
 import {
   CONTRATO_OPERADOR_ESPACO_PARAGRAFOS,
   CONTRATO_OPERADOR_ESPACO_TITULO,
@@ -210,6 +211,22 @@ function EidFilePicker({
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState<string>("");
+  const acceptsImage = !accept || accept.includes("image") || accept.includes(".jpg") || accept.includes(".jpeg") || accept.includes(".png") || accept.includes(".webp");
+
+  async function pickWithNativeCamera() {
+    if (!isNativeCameraAvailable() || !acceptsImage) {
+      ref.current?.click();
+      return;
+    }
+    try {
+      const file = await pickNativeImage("camera");
+      if (!file) return;
+      attachFileToInput(ref.current, file);
+      setFileName(file.name);
+    } catch {
+      ref.current?.click();
+    }
+  }
 
   return (
     <div>
@@ -217,7 +234,7 @@ function EidFilePicker({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={() => ref.current?.click()}
+          onClick={pickWithNativeCamera}
           className="flex items-center gap-1.5 rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-1.5 text-xs font-semibold text-eid-fg transition hover:border-eid-primary-500/40 hover:bg-eid-primary-500/5"
         >
           <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 text-eid-text-secondary" fill="none">
@@ -226,6 +243,15 @@ function EidFilePicker({
           </svg>
           {label}
         </button>
+        {acceptsImage ? (
+          <button
+            type="button"
+            onClick={() => ref.current?.click()}
+            className="rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-1.5 text-xs font-semibold text-eid-text-secondary transition hover:border-eid-primary-500/40 hover:text-eid-fg"
+          >
+            Arquivo
+          </button>
+        ) : null}
         {fileName && (
           <span className="truncate text-[11px] text-eid-text-secondary max-w-[180px]">{fileName}</span>
         )}
@@ -1344,9 +1370,7 @@ export function OnboardingWizard({
     startTransition(async () => applyResult(await salvarPerfilOnboarding(undefined, fd)));
   }
 
-  async function handleFotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const input = e.currentTarget;
-    const file = input.files?.[0];
+  async function processFotoFile(file: File | null | undefined, input?: HTMLInputElement | null) {
     if (!file) {
       if (fotoPreviewUrl) URL.revokeObjectURL(fotoPreviewUrl);
       setFotoPreviewUrl(null);
@@ -1362,7 +1386,7 @@ export function OnboardingWizard({
 
     if (!prepared.ok) {
       setFotoErro(prepared.message);
-      input.value = "";
+      if (input) input.value = "";
       return;
     }
 
@@ -1371,7 +1395,7 @@ export function OnboardingWizard({
     if (fotoInputRef.current) {
       fotoInputRef.current.files = dt.files;
     }
-    if (input !== fotoInputRef.current) {
+    if (input && input !== fotoInputRef.current) {
       input.value = "";
     }
     if (fotoCameraInputRef.current && input !== fotoCameraInputRef.current) {
@@ -1391,6 +1415,25 @@ export function OnboardingWizard({
     setFotoEditorMode(hasFotoParaFinalizar ? "edit" : "add");
     setFotoActionOpen(false);
     setFotoEditorOpen(true);
+  }
+
+  async function handleFotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    await processFotoFile(e.currentTarget.files?.[0], e.currentTarget);
+  }
+
+  async function pickOnboardingFoto(source: "camera" | "gallery") {
+    if (!isNativeCameraAvailable()) {
+      if (source === "camera") fotoCameraInputRef.current?.click();
+      else fotoGaleriaInputRef.current?.click();
+      return;
+    }
+    try {
+      const file = await pickNativeImage(source);
+      await processFotoFile(file, null);
+    } catch (error) {
+      const message = String((error as { message?: string })?.message ?? "");
+      if (!/cancel/i.test(message)) setFotoErro("Não foi possível abrir a câmera/galeria agora.");
+    }
   }
 
   function removeFotoSelecionada() {
@@ -2471,7 +2514,7 @@ export function OnboardingWizard({
                         <div className="mt-3 grid gap-2">
                           <button
                             type="button"
-                            onClick={() => fotoCameraInputRef.current?.click()}
+                            onClick={() => void pickOnboardingFoto("camera")}
                             className="flex items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 text-sm font-semibold text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-primary-500/8"
                           >
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-eid-primary-500/15 text-eid-primary-400">
@@ -2483,7 +2526,7 @@ export function OnboardingWizard({
                           </button>
                           <button
                             type="button"
-                            onClick={() => fotoGaleriaInputRef.current?.click()}
+                            onClick={() => void pickOnboardingFoto("gallery")}
                             className="flex items-center gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/40 px-4 py-3 text-sm font-semibold text-eid-fg transition hover:border-eid-primary-500/35 hover:bg-eid-primary-500/8"
                           >
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-eid-primary-500/15 text-eid-primary-400">

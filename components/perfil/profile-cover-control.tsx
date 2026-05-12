@@ -9,6 +9,7 @@ import {
   type ProfileUploadState,
 } from "@/app/perfil/actions";
 import { prepareCoverForUpload } from "@/lib/images/prepare-avatar-upload";
+import { isNativeCameraAvailable, pickNativeImage } from "@/lib/native/camera";
 
 type Props = {
   hasCover: boolean;
@@ -89,8 +90,8 @@ export function ProfileCoverControl({ hasCover }: Props) {
     setOpen(true);
   }
 
-  async function onFileChange() {
-    const raw = fileRef.current?.files?.[0];
+  async function onFileChange(file?: File | null) {
+    const raw = file ?? fileRef.current?.files?.[0];
     if (!raw) return;
     setPrepErr(null);
     const p = await prepareCoverForUpload(raw);
@@ -109,6 +110,20 @@ export function ProfileCoverControl({ hasCover }: Props) {
     setPosY(0);
     setEditorOpen(true);
     setOpen(false);
+  }
+
+  async function pickCoverPhoto(source: "camera" | "gallery") {
+    if (!isNativeCameraAvailable()) {
+      fileRef.current?.click();
+      return;
+    }
+    try {
+      const file = await pickNativeImage(source);
+      if (file) await onFileChange(file);
+    } catch (error) {
+      const message = String((error as { message?: string })?.message ?? "");
+      if (!/cancel/i.test(message)) setPrepErr("Não foi possível abrir a câmera/galeria agora.");
+    }
   }
 
   function closeEditor() {
@@ -219,13 +234,22 @@ export function ProfileCoverControl({ hasCover }: Props) {
               Adicione uma nova capa, reposicione e salve no padrão da plataforma.
             </p>
             <div className="mt-3 grid gap-2">
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/12 px-3 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg"
-              >
-                {hasCover ? "Trocar capa" : "Adicionar capa"}
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => void pickCoverPhoto("camera")}
+                  className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/12 px-3 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg"
+                >
+                  Câmera
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void pickCoverPhoto("gallery")}
+                  className="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/12 px-3 text-[11px] font-black uppercase tracking-[0.04em] text-eid-fg"
+                >
+                  Galeria
+                </button>
+              </div>
               {hasCover ? (
                 <button
                   type="button"

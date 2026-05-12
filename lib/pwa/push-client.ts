@@ -1,8 +1,11 @@
 "use client";
 
+import { Capacitor } from "@capacitor/core";
+
 const EID_PUSH_OPT_OUT_KEY = "eid_push_opt_out";
 const EID_ANDROID_FCM_TOKEN_KEY = "eid_android_fcm_token";
 const EID_ANDROID_FCM_OPT_OUT_KEY = "eid_android_fcm_opt_out";
+const EID_NATIVE_APP_VERSION = "7.0.12";
 let enablePushInFlight: Promise<PushSubscription> | null = null;
 
 export function getPushClientOptOut(): boolean {
@@ -76,6 +79,7 @@ export function isStandaloneAndroidApp() {
 
 export function isNativeAndroidApp() {
   if (typeof navigator === "undefined") return false;
+  if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android") return true;
   return /EsporteIDAndroidApp\//i.test(navigator.userAgent || "");
 }
 
@@ -108,7 +112,7 @@ export async function syncAndroidNativePushToken(): Promise<boolean> {
     body: JSON.stringify({
       token,
       device: navigator.userAgent,
-      appVersion: "7.0.4",
+      appVersion: EID_NATIVE_APP_VERSION,
       active: !getAndroidNativePushOptOut(),
     }),
   });
@@ -154,7 +158,7 @@ export async function setAndroidNativePushEnabled(enabled: boolean): Promise<voi
         body: JSON.stringify({
           token,
           device: navigator.userAgent,
-          appVersion: "7.0.4",
+          appVersion: EID_NATIVE_APP_VERSION,
           active: enabled,
         }),
       })

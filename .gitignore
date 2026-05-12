@@ -28,6 +28,7 @@
 *.keystore
 keystore.properties
 /android/keystore.properties
+/android/app/google-services.json
 
 # Claude Code worktrees
 .claude/

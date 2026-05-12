@@ -43,6 +43,7 @@ import {
 import "react-phone-number-input/style.css";
 import "@/app/cadastro/cadastro-register.css";
 import { prepareCoverForUpload } from "@/lib/images/prepare-avatar-upload";
+import { isNativeCameraAvailable, pickNativeImage } from "@/lib/native/camera";
 import { normalizeEspacoDuplicateValue } from "@/lib/espacos/duplicate";
 
 const PhoneInput = dynamic(() => import("react-phone-number-input"), {
@@ -572,6 +573,20 @@ function CoverUploadControl({ currentUrl }: { currentUrl: string | null }) {
     }
   }
 
+  async function pickNativeCover(source: "camera" | "gallery") {
+    if (!isNativeCameraAvailable()) {
+      inputRef.current?.click();
+      return;
+    }
+    try {
+      const file = await pickNativeImage(source);
+      if (file) await handlePick(file);
+    } catch (err) {
+      const message = String((err as { message?: string })?.message ?? "");
+      if (!/cancel/i.test(message)) setError("Não foi possível abrir a câmera/galeria agora.");
+    }
+  }
+
   function clearCover() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
@@ -600,9 +615,25 @@ function CoverUploadControl({ currentUrl }: { currentUrl: string | null }) {
       </div>
 
       <div className="grid gap-2">
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2.5 text-xs font-bold text-eid-primary-200 transition hover:bg-eid-primary-500/15">
-          {processing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Camera className="h-4 w-4" aria-hidden />}
-          {processing ? "Preparando capa..." : displayUrl ? "Trocar capa" : "Adicionar capa"}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => void pickNativeCover("camera")}
+            className="flex items-center justify-center gap-2 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2.5 text-xs font-bold text-eid-primary-200 transition hover:bg-eid-primary-500/15"
+          >
+            {processing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Camera className="h-4 w-4" aria-hidden />}
+            Câmera
+          </button>
+          <button
+            type="button"
+            onClick={() => void pickNativeCover("gallery")}
+            className="flex items-center justify-center gap-2 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-3 py-2.5 text-xs font-bold text-eid-primary-200 transition hover:bg-eid-primary-500/15"
+          >
+            <ImageIcon className="h-4 w-4" aria-hidden />
+            {processing ? "Preparando..." : displayUrl ? "Trocar capa" : "Adicionar capa"}
+          </button>
+        </div>
+        <label className="sr-only">
           <input
             ref={inputRef}
             name="cover_file"
