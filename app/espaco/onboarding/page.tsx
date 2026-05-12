@@ -6,6 +6,7 @@ import {
 } from "@/lib/espacos/server";
 import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import { EspacoOnboardingWizard } from "@/components/espaco/onboarding/espaco-onboarding-wizard";
+import { normalizeEspacoReservaConfig } from "@/lib/espacos/config";
 
 function parseJsonRecord(raw: unknown): Record<string, unknown> {
   if (!raw) return {};
@@ -126,7 +127,7 @@ export default async function EspacoOnboardingPage() {
       space: selectedSpace,
       }));
   const venueConfig = parseJsonRecord(selectedSpace.venue_config_json);
-  const reservaConfig = parseJsonRecord(selectedSpace.configuracao_reservas_json);
+  const reservaConfig = normalizeEspacoReservaConfig(selectedSpace.configuracao_reservas_json);
   const categoriaPlano = selectedSpace.categoria_mensalidade ?? "outro";
   const planosPaaSBrutos = (planosPaaS ?? []) as Array<{
     id: number;
@@ -222,6 +223,7 @@ export default async function EspacoOnboardingPage() {
         email: string | null;
         onboarding_status: string | null;
       } | null) ?? null}
+      reservaConfig={reservaConfig}
     />
   );
 }
