@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import { salvarPerfilOnboarding, type OnboardingActionResult } from "@/app/onboarding/actions";
 import { CONTA_ESPORTES_EID_HREF } from "@/lib/routes/conta";
 import { attachFileToInput, isNativeCameraAvailable, pickNativeImage } from "@/lib/native/camera";
+import {
+  detectCurrentLocation,
+  geolocationErrorMessage,
+  isGeolocationPositionError,
+} from "@/lib/location/current-location";
 import { normalizePtBrNameCase, normalizePtBrNameCaseLoose } from "@/lib/text/pt-br-name-case";
 import { useUsernameCheck } from "@/lib/hooks/use-username-check";
 
@@ -39,6 +44,8 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
   const [username, setUsername] = useState(profileInitial.username);
   const usernameStatus = useUsernameCheck(username, "profiles", userId);
   const [localizacao, setLocalizacao] = useState(profileInitial.localizacao);
+  const [locGeoStatus, setLocGeoStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [locGeoError, setLocGeoError] = useState<string | null>(null);
   const [alturaCm, setAlturaCm] = useState(profileInitial.alturaCm ? String(profileInitial.alturaCm) : "");
   const [pesoKg, setPesoKg] = useState(profileInitial.pesoKg ? String(profileInitial.pesoKg) : "");
   const [lado, setLado] = useState(profileInitial.lado ?? "");
@@ -140,6 +147,25 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
     setMessage(null);
     router.refresh();
     router.push(`/perfil/${userId}`);
+  }
+
+  async function detectarLocalizacao() {
+    setLocGeoError(null);
+    setLocGeoStatus("loading");
+    try {
+      const result = await detectCurrentLocation();
+      setLocalizacao(result.localizacao);
+      setLocGeoStatus("ok");
+    } catch (err) {
+      setLocGeoStatus("error");
+      setLocGeoError(
+        isGeolocationPositionError(err)
+          ? geolocationErrorMessage(err)
+          : err instanceof Error
+            ? err.message
+            : "Não foi possível obter a localização. Tente novamente."
+      );
+    }
   }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -339,15 +365,32 @@ export function ContaPerfilForm({ userId, hasAtletaProfessor, hasProfessor, prof
         ) : (
           <p className="text-[11px] text-eid-text-secondary">3–24 caracteres: a-z, 0-9 e _</p>
         )}
-        <input
-          name="localizacao"
-          required
-          value={localizacao}
-          onChange={(ev) => setLocalizacao(ev.target.value)}
-          onBlur={(ev) => setLocalizacao(normalizePtBrNameCaseLoose(ev.target.value))}
-          placeholder="Cidade / Estado"
-          className="eid-input-dark w-full rounded-xl px-3 py-3 text-sm text-eid-fg"
-        />
+        <div>
+          <div className="flex min-w-0 gap-2">
+            <input
+              name="localizacao"
+              required
+              value={localizacao}
+              onChange={(ev) => setLocalizacao(ev.target.value)}
+              onBlur={(ev) => setLocalizacao(normalizePtBrNameCaseLoose(ev.target.value))}
+              placeholder="Cidade / Estado"
+              className="eid-input-dark min-w-0 flex-1 rounded-xl px-3 py-3 text-sm text-eid-fg"
+            />
+            <button
+              type="button"
+              onClick={() => void detectarLocalizacao()}
+              disabled={locGeoStatus === "loading"}
+              className="shrink-0 rounded-xl border border-eid-primary-500/30 bg-eid-primary-500/10 px-3 text-[11px] font-bold uppercase text-eid-primary-300 transition hover:border-eid-primary-500/55 hover:bg-eid-primary-500/18 disabled:opacity-50"
+            >
+              {locGeoStatus === "loading" ? "..." : locGeoStatus === "ok" ? "Atualizar" : "Detectar"}
+            </button>
+          </div>
+          {locGeoError ? (
+            <p className="mt-1.5 text-[11px] text-amber-400">{locGeoError}</p>
+          ) : locGeoStatus === "ok" ? (
+            <p className="mt-1.5 text-[11px] text-emerald-400">Localização atualizada</p>
+          ) : null}
+        </div>
         <input
           name="estilo_jogo"
           value={estiloJogo}

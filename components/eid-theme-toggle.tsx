@@ -43,6 +43,7 @@ export function EidThemeToggle({ className, variant = "default" }: Props) {
 
   useLayoutEffect(() => {
     const t = document.documentElement.dataset.eidTheme === "light" ? "light" : "dark";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTheme(t);
   }, []);
 
@@ -59,7 +60,7 @@ export function EidThemeToggle({ className, variant = "default" }: Props) {
 
   const toolbarCls =
     variant === "toolbar"
-      ? "eid-btn-ghost inline-flex h-9 w-9 shrink-0 rounded-xl p-0 text-eid-text-muted hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50 [touch-action:manipulation]"
+      ? "eid-btn-ghost inline-flex h-8 w-8 shrink-0 rounded-xl p-0 text-eid-text-muted hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50 [touch-action:manipulation] sm:h-9 sm:w-9"
       : "inline-flex h-10 items-center gap-2 rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/90 px-3 text-eid-text-muted shadow-sm backdrop-blur-sm transition hover:border-eid-primary-500/30 hover:text-eid-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500/50 [touch-action:manipulation]";
 
   return (

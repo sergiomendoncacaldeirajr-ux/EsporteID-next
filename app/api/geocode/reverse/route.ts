@@ -30,8 +30,10 @@ function pickLocation(address: NominatimAddress | undefined): string {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const lat = Number(url.searchParams.get("lat"));
-  const lng = Number(url.searchParams.get("lng"));
+  const latRaw = url.searchParams.get("lat");
+  const lngRaw = url.searchParams.get("lng") ?? url.searchParams.get("lon");
+  const lat = latRaw == null ? NaN : Number(latRaw);
+  const lng = lngRaw == null ? NaN : Number(lngRaw);
 
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
     return Response.json({ error: "Coordenadas inválidas." }, { status: 400 });

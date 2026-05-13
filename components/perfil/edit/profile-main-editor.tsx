@@ -4,6 +4,11 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveProfileMainAction } from "@/app/editar/actions";
 import { useUsernameCheck } from "@/lib/hooks/use-username-check";
+import {
+  detectCurrentLocation,
+  geolocationErrorMessage,
+  isGeolocationPositionError,
+} from "@/lib/location/current-location";
 
 type Props = {
   userId: string;
@@ -65,45 +70,21 @@ export function ProfileMainEditor({ userId, initial }: Props) {
 
   async function detectarLocalizacao() {
     setLocGeoError(null);
-    if (!navigator.geolocation) {
-      setLocGeoStatus("error");
-      setLocGeoError("Seu navegador não suporta geolocalização.");
-      return;
-    }
     setLocGeoStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude: la, longitude: ln } = pos.coords;
-        try {
-          const r = await fetch(`/api/geocode/reverse?lat=${la}&lon=${ln}`);
-          const d = (await r.json()) as {
-            address?: { city?: string; town?: string; village?: string; state?: string };
-          };
-          const cidade = d.address?.city || d.address?.town || d.address?.village || "";
-          const estado = d.address?.state || "";
-          const v = cidade && estado ? `${cidade} - ${estado}` : cidade || estado || "";
-          if (v) {
-            setLocalizacao(v);
-            setLocGeoStatus("ok");
-          } else {
-            setLocGeoStatus("error");
-            setLocGeoError("Não conseguimos identificar sua cidade. Tente novamente.");
-          }
-        } catch {
-          setLocGeoStatus("error");
-          setLocGeoError("Falha ao obter localização. Verifique sua conexão.");
-        }
-      },
-      (err) => {
-        setLocGeoStatus("error");
-        setLocGeoError(
-          err.code === 1
-            ? "Permissão negada. Habilite a localização nas configurações do navegador."
+    try {
+      const result = await detectCurrentLocation();
+      setLocalizacao(result.localizacao);
+      setLocGeoStatus("ok");
+    } catch (err) {
+      setLocGeoStatus("error");
+      setLocGeoError(
+        isGeolocationPositionError(err)
+          ? geolocationErrorMessage(err)
+          : err instanceof Error
+            ? err.message
             : "Não foi possível obter a localização. Tente novamente."
-        );
-      },
-      { enableHighAccuracy: false, timeout: 10000 }
-    );
+      );
+    }
   }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {

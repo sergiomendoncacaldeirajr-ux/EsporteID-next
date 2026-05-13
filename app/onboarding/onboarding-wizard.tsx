@@ -22,6 +22,11 @@ import {
   CONTRATO_OPERADOR_ESPACO_TITULO,
 } from "@/lib/legal/contrato-operador-espaco";
 import { LEGAL_VERSIONS } from "@/lib/legal/versions";
+import {
+  detectCurrentLocation,
+  geolocationErrorMessage,
+  isGeolocationPositionError,
+} from "@/lib/location/current-location";
 import { normalizarPapeisContaPrincipal } from "@/lib/roles";
 import { useUsernameCheck } from "@/lib/hooks/use-username-check";
 
@@ -44,29 +49,24 @@ function LocationPicker({
   const [gpsError, setGpsError] = useState("");
   const [showManual, setShowManual] = useState(false);
 
-  function captureGps() {
-    if (!navigator.geolocation) {
-      setGpsStatus("error");
-      setGpsError("Seu navegador não suporta geolocalização.");
-      return;
-    }
+  async function captureGps() {
+    setGpsError("");
     setGpsStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        onCapture(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6));
-        setGpsStatus("ok");
-        setShowManual(false);
-      },
-      (err) => {
-        setGpsStatus("error");
-        setGpsError(
-          err.code === 1
-            ? "Permissão negada. Habilite a localização no navegador."
-            : "Não foi possível obter a localização. Tente novamente.",
-        );
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
+    try {
+      const result = await detectCurrentLocation();
+      onCapture(result.lat.toFixed(6), result.lng.toFixed(6));
+      setGpsStatus("ok");
+      setShowManual(false);
+    } catch (err) {
+      setGpsStatus("error");
+      setGpsError(
+        isGeolocationPositionError(err)
+          ? geolocationErrorMessage(err)
+          : err instanceof Error
+            ? err.message
+            : "Não foi possível obter a localização. Tente novamente."
+      );
+    }
   }
 
   function clear() {
@@ -108,7 +108,7 @@ function LocationPicker({
           {/* GPS — para quem está fisicamente no local */}
           <button
             type="button"
-            onClick={captureGps}
+            onClick={() => void captureGps()}
             disabled={gpsStatus === "loading"}
             className="flex items-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card px-3 py-2 text-xs font-semibold text-eid-fg transition hover:border-eid-primary-500/40 hover:bg-eid-primary-500/5 disabled:opacity-60"
           >
@@ -1307,45 +1307,21 @@ export function OnboardingWizard({
 
   async function detectarLocalizacao() {
     setLocGeoError(null);
-    if (!navigator.geolocation) {
-      setLocGeoStatus("error");
-      setLocGeoError("Seu navegador não suporta geolocalização.");
-      return;
-    }
     setLocGeoStatus("loading");
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude: la, longitude: ln } = pos.coords;
-        try {
-          const r = await fetch(`/api/geocode/reverse?lat=${la}&lon=${ln}`);
-          const d = (await r.json()) as {
-            address?: { city?: string; town?: string; village?: string; state?: string };
-          };
-          const cidade = d.address?.city || d.address?.town || d.address?.village || "";
-          const estado = d.address?.state || "";
-          const v = cidade && estado ? `${cidade} - ${estado}` : cidade || estado || "";
-          if (v) {
-            setLocalizacao(v);
-            setLocGeoStatus("ok");
-          } else {
-            setLocGeoStatus("error");
-            setLocGeoError("Não conseguimos identificar sua cidade. Tente novamente.");
-          }
-        } catch {
-          setLocGeoStatus("error");
-          setLocGeoError("Falha ao obter localização. Verifique sua conexão.");
-        }
-      },
-      (err) => {
-        setLocGeoStatus("error");
-        setLocGeoError(
-          err.code === 1
-            ? "Permissão de localização negada. Habilite nas configurações do navegador."
+    try {
+      const result = await detectCurrentLocation();
+      setLocalizacao(result.localizacao);
+      setLocGeoStatus("ok");
+    } catch (err) {
+      setLocGeoStatus("error");
+      setLocGeoError(
+        isGeolocationPositionError(err)
+          ? geolocationErrorMessage(err)
+          : err instanceof Error
+            ? err.message
             : "Não foi possível obter a localização. Tente novamente."
-        );
-      },
-      { enableHighAccuracy: false, timeout: 10000 }
-    );
+      );
+    }
   }
 
   function submitPerfil(e: React.FormEvent<HTMLFormElement>) {
