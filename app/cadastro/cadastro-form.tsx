@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Capacitor } from "@capacitor/core";
 import { useState } from "react";
 import type { Country, Value } from "react-phone-number-input";
 import { isPossiblePhoneNumber } from "react-phone-number-input";
@@ -132,6 +133,11 @@ type ReverseGeocodeResponse = {
   localizacao?: string;
 };
 
+type LocationCoords = {
+  latitude: number;
+  longitude: number;
+};
+
 function coordinateFallback(la: number, ln: number): string {
   return `Localização capturada (${la.toFixed(5)}, ${ln.toFixed(5)})`;
 }
@@ -144,6 +150,62 @@ function geolocationErrorMessage(err: GeolocationPositionError): string {
     return "Não consegui obter sua localização a tempo. Tente novamente em um local com melhor sinal.";
   }
   return "Não consegui obter sua localização atual. Verifique se o GPS/localização está ativo e tente novamente.";
+}
+
+function isGeolocationPositionError(err: unknown): err is GeolocationPositionError {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    "message" in err &&
+    typeof (err as { code: unknown }).code === "number"
+  );
+}
+
+function getBrowserLocation(): Promise<LocationCoords> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error("Este navegador não permite acessar a localização atual."));
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => resolve(position.coords),
+      reject,
+      {
+        enableHighAccuracy: true,
+        maximumAge: 60_000,
+        timeout: 15_000,
+      }
+    );
+  });
+}
+
+async function getCurrentCoords(): Promise<LocationCoords> {
+  if (Capacitor.isNativePlatform()) {
+    const { Geolocation } = await import("@capacitor/geolocation");
+    const permission = await Geolocation.checkPermissions();
+
+    if (permission.location !== "granted" && permission.coarseLocation !== "granted") {
+      const requested = await Geolocation.requestPermissions({
+        permissions: ["location", "coarseLocation"],
+      });
+
+      if (requested.location !== "granted" && requested.coarseLocation !== "granted") {
+        throw new Error("Permita o acesso à localização do app para preencher sua cidade automaticamente.");
+      }
+    }
+
+    const position = await Geolocation.getCurrentPosition({
+      enableHighAccuracy: true,
+      maximumAge: 60_000,
+      timeout: 15_000,
+    });
+
+    return position.coords;
+  }
+
+  return getBrowserLocation();
 }
 
 export function CadastroForm() {
@@ -293,7 +355,7 @@ export function CadastroForm() {
     );
   }
 
-  function useCurrentLocation() {
+  async function useCurrentLocation() {
     setError(null);
     setLocalizacao("");
     setLat(null);
@@ -303,45 +365,37 @@ export function CadastroForm() {
     if (locInput) {
       locInput.placeholder = "Buscando...";
     }
-    if (!navigator.geolocation) {
-      if (locInput) locInput.placeholder = "Cidade - Estado";
-      setError("Este navegador não permite acessar a localização atual.");
-      setLocating(false);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      async (p) => {
-        const la = p.coords.latitude;
-        const ln = p.coords.longitude;
-        setLat(la);
-        setLng(ln);
-        try {
-          const r = await fetch(
-            `/api/geocode/reverse?lat=${encodeURIComponent(String(la))}&lng=${encodeURIComponent(
-              String(ln)
-            )}`,
-            { headers: { Accept: "application/json" } }
-          );
-          const d = (await r.json()) as ReverseGeocodeResponse;
-          setLocalizacao(d.localizacao?.trim() || coordinateFallback(la, ln));
-        } catch {
-          setLocalizacao(coordinateFallback(la, ln));
-        } finally {
-          if (locInput) locInput.placeholder = "Cidade - Estado";
-          setLocating(false);
-        }
-      },
-      (err) => {
-        if (locInput) locInput.placeholder = "Cidade - Estado";
-        setError(geolocationErrorMessage(err));
-        setLocating(false);
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 60_000,
-        timeout: 15_000,
+    try {
+      const coords = await getCurrentCoords();
+      const la = coords.latitude;
+      const ln = coords.longitude;
+      setLat(la);
+      setLng(ln);
+
+      try {
+        const r = await fetch(
+          `/api/geocode/reverse?lat=${encodeURIComponent(String(la))}&lng=${encodeURIComponent(
+            String(ln)
+          )}`,
+          { headers: { Accept: "application/json" } }
+        );
+        const d = (await r.json()) as ReverseGeocodeResponse;
+        setLocalizacao(d.localizacao?.trim() || coordinateFallback(la, ln));
+      } catch {
+        setLocalizacao(coordinateFallback(la, ln));
       }
-    );
+    } catch (err) {
+      setError(
+        isGeolocationPositionError(err)
+          ? geolocationErrorMessage(err)
+          : err instanceof Error
+            ? err.message
+            : "Não consegui obter sua localização atual. Verifique se o GPS/localização está ativo e tente novamente."
+      );
+    } finally {
+      if (locInput) locInput.placeholder = "Cidade - Estado";
+      setLocating(false);
+    }
   }
 
   return (
@@ -546,7 +600,8 @@ export function CadastroForm() {
               />
             </div>
             <p className="mb-2 text-[11px] leading-snug text-eid-text-secondary">
-              A localização é obrigatória e preenchida automaticamente ao clicar em "Usar localização atual".
+              A localização é obrigatória e preenchida automaticamente ao clicar em &quot;Usar localização
+              atual&quot;.
             </p>
 
             <button

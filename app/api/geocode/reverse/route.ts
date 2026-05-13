@@ -37,17 +37,22 @@ export async function GET(request: Request) {
     return Response.json({ error: "Coordenadas inválidas." }, { status: 400 });
   }
 
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?lat=${encodeURIComponent(
-      String(lat)
-    )}&lon=${encodeURIComponent(String(lng))}&format=json&addressdetails=1`,
-    {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "EsporteID/1.0 (https://esporteid.com.br)",
-      },
-    }
-  );
+  let response: Response;
+  try {
+    response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${encodeURIComponent(
+        String(lat)
+      )}&lon=${encodeURIComponent(String(lng))}&format=json&addressdetails=1`,
+      {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "EsporteID/1.0 (https://esporteid.com.br)",
+        },
+      }
+    );
+  } catch {
+    return Response.json({ error: "Não foi possível consultar a localização." }, { status: 502 });
+  }
 
   if (!response.ok) {
     return Response.json({ error: "Não foi possível consultar a localização." }, { status: 502 });
