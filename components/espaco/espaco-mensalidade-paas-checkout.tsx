@@ -107,17 +107,17 @@ export function EspacoMensalidadePaasCheckout({ espacoId }: { espacoId: number }
               <Field label="Nome impresso no cartão" hint="Use exatamente como aparece no cartão." wide>
                 <input name="card_holder_name" autoComplete="cc-name" className={inputClass} placeholder="NOME SOBRENOME" minLength={3} required />
               </Field>
-              <Field label="Número do cartão" hint="13 a 19 dígitos. O campo agrupa de 4 em 4 automaticamente." wide>
+              <Field label="Número do cartão" hint="16 dígitos. O campo agrupa de 4 em 4 automaticamente." wide>
                 <input
                   name="card_number"
                   inputMode="numeric"
                   autoComplete="cc-number"
                   className={inputClass}
                   placeholder="0000 0000 0000 0000"
-                  minLength={16}
-                  maxLength={23}
-                  pattern="[0-9 ]{16,23}"
-                  onInput={(event) => applyMask(event, 19, (digits) => groupDigits(digits))}
+                  minLength={19}
+                  maxLength={19}
+                  pattern="[0-9]{4} [0-9]{4} [0-9]{4} [0-9]{4}"
+                  onInput={(event) => applyMask(event, 16, (digits) => groupDigits(digits))}
                   required
                 />
               </Field>

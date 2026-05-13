@@ -29,6 +29,7 @@ export type ConviteTimeEnviadoItem = {
   equipeAvatarUrl?: string | null;
   equipeNotaEid?: number | null;
   equipeLocalizacao?: string | null;
+  esporteId?: number | null;
   esporteNome: string;
   convidadoId: string;
   convidadoNome: string;
@@ -55,6 +56,18 @@ function statusLabel(status: string): string {
   if (s === "recusado") return "Recusado";
   if (s === "cancelado") return "Cancelado";
   return "Status desconhecido";
+}
+
+function equipeEidHref(c: ConviteTimeEnviadoItem): string {
+  return Number(c.esporteId ?? 0) > 0
+    ? `/perfil-time/${c.equipeId}/eid/${Number(c.esporteId)}?from=${encodeURIComponent("/comunidade")}`
+    : `/perfil-time/${c.equipeId}?from=/comunidade`;
+}
+
+function convidadoEidHref(c: ConviteTimeEnviadoItem): string {
+  return Number(c.esporteId ?? 0) > 0
+    ? `/perfil/${encodeURIComponent(c.convidadoId)}/eid/${Number(c.esporteId)}?from=${encodeURIComponent("/comunidade")}`
+    : `/perfil/${c.convidadoId}?from=/comunidade`;
 }
 
 function statusClass(status: string): string {
@@ -140,7 +153,7 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
                 <div className="min-w-0 px-2 pb-3 pt-1 sm:px-3">
                   <p className="text-[10px] font-black uppercase tracking-[0.08em] text-eid-primary-300/90">Formação</p>
                   <ProfileEditDrawerTrigger
-                    href={`/perfil-time/${c.equipeId}?from=/comunidade`}
+                    href={equipeEidHref(c)}
                     title={c.equipeNome}
                     fullscreen
                     topMode="backOnly"
@@ -205,7 +218,7 @@ export function ComunidadeConvitesEnviadosTime({ items }: { items: ConviteTimeEn
                 <div className="min-w-0 px-2 pb-3 pt-1 sm:px-3">
                   <p className="text-right text-[10px] font-black uppercase tracking-[0.08em] text-eid-primary-300/90">Convidado</p>
                   <ProfileEditDrawerTrigger
-                    href={`/perfil/${c.convidadoId}?from=/comunidade`}
+                    href={convidadoEidHref(c)}
                     title={c.convidadoNome}
                     fullscreen
                     topMode="backOnly"

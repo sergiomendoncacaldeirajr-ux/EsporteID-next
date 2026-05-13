@@ -189,6 +189,7 @@ export async function ComunidadeStreamEquipe({
       meuTimeNotaEid: sugTimeEidMap.get(Number(s.sugeridor_time_id ?? 0)) ?? 0,
       meuTimeLocalizacao: sugTimeLocMap.get(Number(s.sugeridor_time_id ?? 0)) || null,
       alvoTimeNome: sugTimeMap.get(s.alvo_time_id) ?? "Formação",
+      esporteId: Number(s.esporte_id ?? 0),
       esporte: (s.esporte_id ? sugEspMap.get(s.esporte_id) : null) ?? "Esporte",
       modalidade: s.modalidade ?? "time",
       mensagem: s.mensagem ?? null,
@@ -238,6 +239,7 @@ export async function ComunidadeStreamEquipe({
         meuTimeNotaEid: Number((time as { eid_time?: number | null } | null)?.eid_time ?? 0),
         meuTimeLocalizacao: String((time as { localizacao?: string | null } | null)?.localizacao ?? "") || null,
         alvoTimeNome: String((sugEnvTimesMap.get(Number(s.alvo_time_id ?? 0)) as { nome?: string | null } | null)?.nome ?? "Formação"),
+        esporteId: Number(s.esporte_id ?? 0),
         alvoLocalizacao:
           String(
             (sugEnvTimesMap.get(Number(s.alvo_time_id ?? 0)) as { localizacao?: string | null } | null)?.localizacao ?? "",
@@ -261,7 +263,7 @@ export async function ComunidadeStreamEquipe({
   const { data: convites } = await supabase
     .from("time_convites")
     .select(
-      "id, time_id, convidado_por_usuario_id, criado_em, times!inner(id, nome, tipo, escudo, eid_time, localizacao, lat, lng, esportes(nome))",
+      "id, time_id, convidado_por_usuario_id, criado_em, times!inner(id, nome, tipo, escudo, eid_time, localizacao, lat, lng, esporte_id, esportes(nome))",
     )
     .eq("convidado_usuario_id", viewerUserId)
     .eq("status", "pendente")
@@ -301,6 +303,7 @@ export async function ComunidadeStreamEquipe({
               Number((t as { lng?: number | null } | null)?.lng ?? NaN),
             )
           : null,
+      esporteId: Number((t as { esporte_id?: number | null } | null)?.esporte_id ?? 0),
       esporteNome: esp?.nome ?? "Esporte",
       criadoEm: String((c as { criado_em?: string | null }).criado_em ?? new Date().toISOString()),
       convidadoPorUsuarioId: inviterId,
@@ -374,6 +377,7 @@ export async function ComunidadeStreamEquipe({
         equipeAvatarUrl: (t as { escudo?: string | null } | null)?.escudo ?? null,
         equipeNotaEid: Number((t as { eid_time?: number | null } | null)?.eid_time ?? 0),
         equipeLocalizacao: (t as { localizacao?: string | null } | null)?.localizacao ?? null,
+        esporteId,
         esporteNome: esp?.nome ?? "Esporte",
         convidadoId,
         convidadoNome: perfilRow?.nome ?? "Atleta",
@@ -494,6 +498,7 @@ export async function ComunidadeStreamEquipe({
       timeEscudoUrl: team?.escudo ?? null,
       timeNotaEid: Number(team?.eid_time ?? 0),
       timeLocalizacao: team?.localizacao ?? null,
+      esporteId,
       esporteNome,
       isDuplaTipo,
     };
@@ -602,6 +607,7 @@ export async function ComunidadeStreamEquipe({
         timeEscudoUrl: team?.escudo ?? null,
         timeNotaEid: Number(team?.eid_time ?? 0),
         timeLocalizacao: team?.localizacao ?? null,
+        esporteId: espId,
         esporteNome: espNome,
         meuPrimeiroNome: primeiroNome(profile.nome ?? null),
         meuAvatarUrl: profile.avatar_url ?? null,
@@ -672,8 +678,16 @@ export async function ComunidadeStreamEquipe({
               <ul id={candidaturasEquipe.length === 1 ? "equipe-pedidos-entrada" : undefined} className="space-y-4">
                 {candidaturasEquipe.map((c) => {
                   const criado = formatSolicitacaoParts(c.criadoEm);
+                  const candidatoHref =
+                    Number(c.esporteId) > 0
+                      ? `/perfil/${encodeURIComponent(c.candidatoId)}/eid/${Number(c.esporteId)}?from=${encodeURIComponent("/comunidade")}`
+                      : `/perfil/${c.candidatoId}?from=/comunidade`;
                   const formacaoHref =
-                    Number.isFinite(c.timeId) && c.timeId > 0 ? `/perfil-time/${c.timeId}?from=/comunidade` : "/comunidade";
+                    Number.isFinite(c.timeId) && c.timeId > 0
+                      ? Number(c.esporteId) > 0
+                        ? `/perfil-time/${c.timeId}/eid/${Number(c.esporteId)}?from=${encodeURIComponent("/comunidade")}`
+                        : `/perfil-time/${c.timeId}?from=/comunidade`
+                      : "/comunidade";
                   return (
                     <li key={c.id} className={`${getSocialStatusPanelItemShell("pendente")} p-0 text-sm`}>
                       <div className="flex items-center justify-between gap-2 border-b border-transparent bg-[color:color-mix(in_srgb,var(--eid-card)_62%,transparent)] px-3.5 py-2 sm:px-4.5 eid-light:bg-white/95">
@@ -698,7 +712,7 @@ export async function ComunidadeStreamEquipe({
                               <span className="shrink-0">Candidato</span>
                             </p>
                             <ProfileEditDrawerTrigger
-                              href={`/perfil/${c.candidatoId}?from=/comunidade`}
+                              href={candidatoHref}
                               title={c.nome}
                               fullscreen
                               topMode="backOnly"
@@ -829,7 +843,15 @@ export async function ComunidadeStreamEquipe({
                   const criado = formatSolicitacaoParts(c.criadoEm);
                   const resp = c.respondidoEm ? formatSolicitacaoParts(c.respondidoEm) : null;
                   const formacaoHref =
-                    Number.isFinite(c.timeId) && c.timeId > 0 ? `/perfil-time/${c.timeId}?from=/comunidade` : "/comunidade";
+                    Number.isFinite(c.timeId) && c.timeId > 0
+                      ? Number(c.esporteId) > 0
+                        ? `/perfil-time/${c.timeId}/eid/${Number(c.esporteId)}?from=${encodeURIComponent("/comunidade")}`
+                        : `/perfil-time/${c.timeId}?from=/comunidade`
+                      : "/comunidade";
+                  const meuPerfilHref =
+                    Number(c.esporteId) > 0
+                      ? `/perfil/${encodeURIComponent(viewerUserId)}/eid/${Number(c.esporteId)}?from=${encodeURIComponent("/comunidade")}`
+                      : `/perfil/${viewerUserId}?from=/comunidade`;
                   return (
                     <li key={c.id} className={`${getSocialStatusPanelItemShell(c.statusRaw)} p-0 text-sm`}>
                       <div className={`${EID_SOCIAL_GRID_3} pt-2`}>
@@ -894,7 +916,7 @@ export async function ComunidadeStreamEquipe({
                         <div className="flex min-w-0 flex-col items-center px-2 pb-2 pt-1 sm:px-3">
                           <p className="text-center text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">Você</p>
                           <ProfileEditDrawerTrigger
-                            href={`/perfil/${viewerUserId}?from=/comunidade`}
+                            href={meuPerfilHref}
                             title="Meu perfil"
                             fullscreen
                             topMode="backOnly"

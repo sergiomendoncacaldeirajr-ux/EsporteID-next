@@ -69,6 +69,7 @@ export function FormacaoEidEsporteHeroStrip({
         <div className={`flex flex-wrap items-start gap-3 ${PROFILE_CARD_PAD_MD}`}>
           <Link
             href={linkPerfilFormacao}
+            target="_top"
             className="shrink-0 rounded-2xl ring-2 ring-eid-action-500/40 transition hover:ring-eid-action-500/80 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-400"
             aria-label={`Ver perfil da formação ${titulo}`}
           >
@@ -90,6 +91,7 @@ export function FormacaoEidEsporteHeroStrip({
             </span>
             <Link
               href={linkPerfilFormacao}
+              target="_top"
               className="mt-1 block text-base font-black leading-tight text-eid-fg transition hover:text-eid-primary-300 focus:outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-eid-primary-400 sm:text-lg"
             >
               {titulo}

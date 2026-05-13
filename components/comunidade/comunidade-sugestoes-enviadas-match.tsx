@@ -39,6 +39,7 @@ export type SugestaoEnviadaMatchItem = {
   meuTimeNotaEid?: number | null;
   meuTimeLocalizacao?: string | null;
   alvoTimeNome: string;
+  esporteId?: number | null;
   alvoLocalizacao?: string | null;
   esporte: string;
   modalidade: string;
@@ -51,6 +52,12 @@ function firstName(value?: string | null): string {
   const clean = String(value ?? "").trim();
   if (!clean) return "";
   return clean.split(/\s+/)[0] ?? clean;
+}
+
+function formacaoHref(item: SugestaoEnviadaMatchItem): string {
+  return Number(item.esporteId ?? 0) > 0
+    ? `/perfil-time/${item.meuTimeId}/eid/${Number(item.esporteId)}?from=${encodeURIComponent("/comunidade")}`
+    : `/perfil-time/${item.meuTimeId}?from=/comunidade`;
 }
 
 export function ComunidadeSugestoesEnviadasMatch({
@@ -98,10 +105,6 @@ export function ComunidadeSugestoesEnviadasMatch({
       router.refresh();
     }
   }, [state, router]);
-
-  function formacaoHref(item: SugestaoEnviadaMatchItem): string {
-    return `/perfil-time/${item.meuTimeId}?from=/comunidade`;
-  }
 
   if (!items.length) {
     return (

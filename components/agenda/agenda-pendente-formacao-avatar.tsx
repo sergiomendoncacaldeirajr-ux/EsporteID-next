@@ -10,14 +10,18 @@ type Props = {
   nome: string;
   escudoUrl: string | null;
   eidTime: number;
+  esporteId?: number | null;
   /** Ex.: `/agenda` — vira query `from` no perfil embed. */
   fromPath?: string;
 };
 
-export function AgendaPendenteFormacaoAvatar({ timeId, nome, escudoUrl, eidTime, fromPath = "/agenda" }: Props) {
+export function AgendaPendenteFormacaoAvatar({ timeId, nome, escudoUrl, eidTime, esporteId, fromPath = "/agenda" }: Props) {
   const inic = iniciaisFormacaoNome(nome).slice(0, 2) || "?";
-  const href = `/perfil-time/${timeId}?from=${encodeURIComponent(fromPath)}`;
-  const label = `Abrir perfil: ${nome}`;
+  const href =
+    Number(esporteId ?? 0) > 0
+      ? `/perfil-time/${timeId}/eid/${Number(esporteId)}?from=${encodeURIComponent(fromPath)}`
+      : `/perfil-time/${timeId}?from=${encodeURIComponent(fromPath)}`;
+  const label = Number(esporteId ?? 0) > 0 ? `Abrir estatísticas EID: ${nome}` : `Abrir perfil: ${nome}`;
 
   return (
     <div className="flex flex-col items-center gap-1">

@@ -35,6 +35,7 @@ export type SugestaoMatchItem = {
   meuTimeNotaEid?: number | null;
   meuTimeLocalizacao?: string | null;
   alvoTimeNome: string;
+  esporteId?: number | null;
   esporte: string;
   modalidade: string;
   mensagem: string | null;
@@ -49,7 +50,15 @@ function firstName(value?: string | null): string {
 }
 
 function formacaoHref(item: SugestaoMatchItem): string {
-  return `/perfil-time/${item.meuTimeId}?from=/comunidade`;
+  return Number(item.esporteId ?? 0) > 0
+    ? `/perfil-time/${item.meuTimeId}/eid/${Number(item.esporteId)}?from=${encodeURIComponent("/comunidade")}`
+    : `/perfil-time/${item.meuTimeId}?from=/comunidade`;
+}
+
+function sugeridorHref(item: SugestaoMatchItem): string {
+  return item.sugeridorId && Number(item.esporteId ?? 0) > 0
+    ? `/perfil/${encodeURIComponent(item.sugeridorId)}/eid/${Number(item.esporteId)}?from=${encodeURIComponent("/comunidade")}`
+    : `/perfil/${item.sugeridorId}?from=/comunidade`;
 }
 
 const sugestaoCardShell =
@@ -173,7 +182,7 @@ export function ComunidadeSugestoesMatch({ items }: { items: SugestaoMatchItem[]
                   <p className="text-right text-[10px] font-black uppercase tracking-[0.08em] text-amber-200/90">Sugerido por</p>
                   {s.sugeridorId ? (
                     <ProfileEditDrawerTrigger
-                      href={`/perfil/${s.sugeridorId}?from=/comunidade`}
+                      href={sugeridorHref(s)}
                       title={s.sugeridorNome}
                       fullscreen
                       topMode="backOnly"

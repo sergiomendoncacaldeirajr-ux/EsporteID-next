@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AgendaAceitosCancelaveis } from "@/components/agenda/agenda-aceitos-cancelaveis";
 import { AgendaPendenteFormacaoAvatar } from "@/components/agenda/agenda-pendente-formacao-avatar";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { EidCityState } from "@/components/ui/eid-city-state";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
@@ -126,6 +127,7 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
                               nome={nome1}
                               escudoUrl={row1?.escudo ?? null}
                               eidTime={row1?.eid_time ?? 0}
+                              esporteId={Number(m.esporte_id ?? 0)}
                               fromPath="/agenda"
                             />
                           ) : null}
@@ -137,6 +139,7 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
                               nome={nome2}
                               escudoUrl={row2?.escudo ?? null}
                               eidTime={row2?.eid_time ?? 0}
+                              esporteId={Number(m.esporte_id ?? 0)}
                               fromPath="/agenda"
                             />
                           ) : null}
@@ -177,7 +180,30 @@ export async function AgendaStreamRest({ supabase, userId, teamClause, agendaTea
                   >
                     <div className="flex min-w-0 items-center gap-2.5 md:gap-3">
                       <div className="flex w-[44px] shrink-0 flex-col items-center">
-                        {adv?.avatar_url ? (
+                        {adv && Number(m.esporte_id ?? 0) > 0 ? (
+                          <ProfileEditDrawerTrigger
+                            href={`/perfil/${encodeURIComponent(String(adv.id))}/eid/${Number(m.esporte_id)}?from=${encodeURIComponent("/agenda")}`}
+                            title={`Estatísticas EID de ${adv.nome ?? "Oponente"}`}
+                            fullscreen
+                            topMode="backOnly"
+                            className="block rounded-xl border-0 bg-transparent p-0 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500"
+                          >
+                            {adv.avatar_url ? (
+                              <Image
+                                src={adv.avatar_url}
+                                alt=""
+                                width={44}
+                                height={44}
+                                unoptimized
+                                className="pointer-events-none h-10 w-10 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover md:h-11 md:w-11"
+                              />
+                            ) : (
+                              <div className="pointer-events-none flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[10px] font-black text-eid-primary-300 md:h-11 md:w-11">
+                                EID
+                              </div>
+                            )}
+                          </ProfileEditDrawerTrigger>
+                        ) : adv?.avatar_url ? (
                           <Image
                             src={adv.avatar_url}
                             alt=""

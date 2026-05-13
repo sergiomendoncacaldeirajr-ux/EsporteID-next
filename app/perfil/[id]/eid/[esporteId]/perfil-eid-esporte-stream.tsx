@@ -700,6 +700,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
             <div className="flex min-w-0 items-center gap-3">
               <Link
                 href={perfilHref}
+                target="_top"
                 className="shrink-0 rounded-full ring-2 ring-eid-primary-500/35 transition hover:ring-eid-primary-500/70 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-400"
                 aria-label={`Ver perfil de ${perfil.nome ?? "Atleta"}`}
               >
@@ -722,6 +723,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                 </p>
                 <Link
                   href={perfilHref}
+                  target="_top"
                   className="mt-1 block text-[17px] font-black leading-tight tracking-tight text-eid-fg transition hover:text-eid-primary-300 focus:outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-eid-primary-400 sm:text-xl"
                 >
                   {perfil.nome ?? "Atleta"}

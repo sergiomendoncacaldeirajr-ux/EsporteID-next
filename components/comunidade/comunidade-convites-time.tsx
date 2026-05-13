@@ -35,6 +35,7 @@ export type ConviteTimeItem = {
   equipeNotaEid?: number | null;
   equipeLocalizacao?: string | null;
   equipeDistanceKm?: number | null;
+  esporteId?: number | null;
   esporteNome: string;
   criadoEm: string;
   /** Perfil de quem enviou o convite (`convidado_por_usuario_id`). */
@@ -80,7 +81,14 @@ function ConviteTimeRow({ c }: { c: ConviteTimeItem }) {
   const isDupla = String(c.equipeTipo ?? "")
     .trim()
     .toLowerCase() === "dupla";
-  const formacaoHref = `/perfil-time/${c.equipeId}?from=/comunidade`;
+  const formacaoHref =
+    Number(c.esporteId ?? 0) > 0
+      ? `/perfil-time/${c.equipeId}/eid/${Number(c.esporteId)}?from=${encodeURIComponent("/comunidade")}`
+      : `/perfil-time/${c.equipeId}?from=/comunidade`;
+  const convidadoPorHref =
+    Number(c.esporteId ?? 0) > 0
+      ? `/perfil/${encodeURIComponent(c.convidadoPorUsuarioId)}/eid/${Number(c.esporteId)}?from=${encodeURIComponent("/comunidade")}`
+      : `/perfil/${c.convidadoPorUsuarioId}?from=/comunidade`;
 
   return (
     <li className={`${EID_SOCIAL_PANEL_ITEM_AMBER} w-full min-w-0`}>
@@ -159,7 +167,7 @@ function ConviteTimeRow({ c }: { c: ConviteTimeItem }) {
             Convidado por
           </p>
           <ProfileEditDrawerTrigger
-            href={`/perfil/${c.convidadoPorUsuarioId}?from=/comunidade`}
+            href={convidadoPorHref}
             title={c.convidadoPorNome}
             fullscreen
             topMode="backOnly"

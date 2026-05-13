@@ -363,41 +363,42 @@ export async function salvarConfiguracoesEspacoAction(
     );
     const { data: espacoModo } = await supabase
       .from("espacos_genericos")
-      .select("modo_reserva")
+      .select("modo_reserva, configuracao_reservas_json")
       .eq("id", espacoId)
       .maybeSingle();
-    const modoR = (espacoModo as { modo_reserva?: string } | null)?.modo_reserva;
+    const espacoModoRow = espacoModo as { modo_reserva?: string | null; configuracao_reservas_json?: unknown } | null;
+    const modoR = espacoModoRow?.modo_reserva;
     const reservasGratisLiberadas = forcarReservasGratisLiberadasFalsas(
       modoR ?? null,
       checkbox(formData, "reservas_gratis_liberadas")
     );
+    const atualReservas = normalizeEspacoReservaConfig(espacoModoRow?.configuracao_reservas_json);
     const configuracaoReservas = serializarEspacoReservaConfig({
-      limiteReservasDia: Number(formData.get("limite_reservas_dia") ?? 0),
-      limiteReservasSemana: Number(formData.get("limite_reservas_semana") ?? 0),
-      cooldownHoras: Number(formData.get("cooldown_horas") ?? 0),
-      antecedenciaMinHoras: Number(formData.get("antecedencia_min_horas") ?? 0),
-      antecedenciaMaxDias: Number(formData.get("antecedencia_max_dias") ?? 0),
+      ...atualReservas,
+      limiteReservasDia: Number(formData.get("limite_reservas_dia") ?? atualReservas.limiteReservasDia),
+      limiteReservasSemana: Number(formData.get("limite_reservas_semana") ?? atualReservas.limiteReservasSemana),
+      cooldownHoras: Number(formData.get("cooldown_horas") ?? atualReservas.cooldownHoras),
+      antecedenciaMinHoras: Number(formData.get("antecedencia_min_horas") ?? atualReservas.antecedenciaMinHoras),
+      antecedenciaMaxDias: Number(formData.get("antecedencia_max_dias") ?? atualReservas.antecedenciaMaxDias),
       gratisLimiteReservasDiaMembro: Number(
         formData.get("gratis_limite_reservas_dia_membro") ??
-          formData.get("limite_reservas_dia") ??
-          0
+          atualReservas.gratisLimiteReservasDiaMembro
       ),
       gratisLimiteReservasSemanaMembro: Number(
         formData.get("gratis_limite_reservas_semana_membro") ??
-          formData.get("limite_reservas_semana") ??
-          0
+          atualReservas.gratisLimiteReservasSemanaMembro
       ),
       gratisIntervaloHorasEntreReservasMembro: Number(
         formData.get("gratis_intervalo_horas_entre_reservas_membro") ??
-          formData.get("cooldown_horas") ??
-          0
+          atualReservas.gratisIntervaloHorasEntreReservasMembro
       ),
       gratisAntecedenciaMaxDiasMembro: Number(
         formData.get("gratis_antecedencia_max_dias_membro") ??
-          formData.get("antecedencia_max_dias") ??
-          0
+          atualReservas.gratisAntecedenciaMaxDiasMembro
       ),
-      valorReservaPadraoCentavos: dinheiroCentavos(formData, "valor_reserva_padrao_reais"),
+      valorReservaPadraoCentavos: formData.has("valor_reserva_padrao_reais")
+        ? dinheiroCentavos(formData, "valor_reserva_padrao_reais")
+        : atualReservas.valorReservaPadraoCentavos,
       bloqueiaInadimplente: checkbox(formData, "bloqueia_inadimplente"),
       reservasGratisLiberadas,
       cancelamentoGratuitaPermite: checkbox(formData, "cancelamento_gratuita_permite"),
@@ -641,6 +642,190 @@ export async function removerHorarioSemanalEspacoAction(formData: FormData) {
   revalidatePath("/espaco/agenda");
   revalidatePath("/espaco");
   revalidatePath("/espaco/configuracao");
+}
+
+export async function criarPermissaoOperadorEspacoAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const tipoOperador = text(formData, "tipo_operador");
+  const usuarioId = text(formData, "usuario_id");
+  const unidadeId = intOrNull(formData, "espaco_unidade_id");
+  const diaSemana = Number(formData.get("dia_semana") ?? -1);
+  const horaInicio = text(formData, "hora_inicio");
+  const horaFim = text(formData, "hora_fim");
+  const vigenciaInicio = text(formData, "vigencia_inicio") || null;
+  const prazoIndeterminado = checkbox(formData, "prazo_indeterminado");
+  const vigenciaFim = prazoIndeterminado ? null : text(formData, "vigencia_fim") || null;
+
+  if (tipoOperador !== "professor" && tipoOperador !== "organizador") {
+    throw new Error("Escolha se a permissão é para professor ou organizador.");
+  }
+  if (!usuarioId) throw new Error("Selecione um perfil na busca.");
+  if (!unidadeId) throw new Error("Selecione a quadra/unidade liberada.");
+  if (diaSemana < 0 || diaSemana > 6 || !horaInicio || !horaFim) {
+    throw new Error("Preencha dia e faixa horária válidos.");
+  }
+  const iniMin = timeToMinutes(horaInicio);
+  const fimMin = timeToMinutes(horaFim);
+  if (iniMin == null || fimMin == null || fimMin <= iniMin) {
+    throw new Error("O horário final precisa ser maior que o horário inicial.");
+  }
+  if (!vigenciaInicio) throw new Error("Informe a data de início da permissão.");
+  if (!prazoIndeterminado && !vigenciaFim) throw new Error("Informe a data final ou marque prazo indeterminado.");
+  if (vigenciaFim && vigenciaFim < vigenciaInicio) {
+    throw new Error("A data final precisa ser posterior à data inicial.");
+  }
+
+  const { supabase, user } = await requireEspacoManager(espacoId);
+  const { data: unidade, error: unidadeErr } = await supabase
+    .from("espaco_unidades")
+    .select("id")
+    .eq("id", unidadeId)
+    .eq("espaco_generico_id", espacoId)
+    .maybeSingle();
+  if (unidadeErr) throw new Error(unidadeErr.message);
+  if (!unidade?.id) throw new Error("A quadra selecionada não pertence a este espaço.");
+
+  const admin = createServiceRoleClient();
+  const { data: roleRow, error: roleErr } = await admin
+    .from("usuario_papeis")
+    .select("usuario_id")
+    .eq("usuario_id", usuarioId)
+    .eq("papel", tipoOperador)
+    .maybeSingle();
+  if (roleErr) throw new Error(roleErr.message);
+  if (!roleRow?.usuario_id) {
+    throw new Error(
+      tipoOperador === "professor"
+        ? "Esse perfil não está cadastrado como professor."
+        : "Esse perfil não está cadastrado como organizador."
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("espaco_horarios_semanais")
+    .insert({
+      espaco_generico_id: espacoId,
+      espaco_unidade_id: unidadeId,
+      dia_semana: diaSemana,
+      hora_inicio: horaInicio,
+      hora_fim: horaFim,
+      liberar_professor: tipoOperador === "professor",
+      liberar_torneio: tipoOperador === "organizador",
+      liberar_para_usuario_id: usuarioId,
+      vigencia_inicio: vigenciaInicio,
+      vigencia_fim: vigenciaFim,
+      observacoes: text(formData, "observacoes") || null,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco_horario",
+    p_entidade_id: data.id,
+    p_acao: "permissao_operador_criada",
+    p_payload: { tipoOperador, usuarioId, unidadeId, diaSemana, horaInicio, horaFim, vigenciaInicio, vigenciaFim },
+    p_autor_usuario_id: user.id,
+  });
+
+  revalidatePath("/espaco/configuracao");
+  revalidatePath("/espaco/agenda");
+  revalidatePath("/espaco");
+}
+
+export async function alternarPermissaoOperadorEspacoAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const horarioId = Number(formData.get("horario_id") ?? 0);
+  const ativo = text(formData, "ativo") === "true";
+  if (!espacoId || !horarioId) throw new Error("Identificador inválido.");
+
+  const { supabase, user } = await requireEspacoManager(espacoId);
+  const { error } = await supabase
+    .from("espaco_horarios_semanais")
+    .update({ ativo })
+    .eq("id", horarioId)
+    .eq("espaco_generico_id", espacoId);
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco_horario",
+    p_entidade_id: horarioId,
+    p_acao: ativo ? "permissao_operador_ativada" : "permissao_operador_desativada",
+    p_payload: {},
+    p_autor_usuario_id: user.id,
+  });
+
+  revalidatePath("/espaco/configuracao");
+  revalidatePath("/espaco/agenda");
+  revalidatePath("/espaco");
+}
+
+export async function atualizarPermissaoOperadorEspacoAction(formData: FormData) {
+  const espacoId = Number(formData.get("espaco_id") ?? 0);
+  const horarioId = Number(formData.get("horario_id") ?? 0);
+  const unidadeId = intOrNull(formData, "espaco_unidade_id");
+  const diaSemana = Number(formData.get("dia_semana") ?? -1);
+  const horaInicio = text(formData, "hora_inicio");
+  const horaFim = text(formData, "hora_fim");
+  const vigenciaInicio = text(formData, "vigencia_inicio") || null;
+  const prazoIndeterminado = checkbox(formData, "prazo_indeterminado");
+  const vigenciaFim = prazoIndeterminado ? null : text(formData, "vigencia_fim") || null;
+
+  if (!espacoId || !horarioId) throw new Error("Identificador inválido.");
+  if (!unidadeId) throw new Error("Selecione a quadra/unidade liberada.");
+  if (diaSemana < 0 || diaSemana > 6 || !horaInicio || !horaFim) {
+    throw new Error("Preencha dia e faixa horária válidos.");
+  }
+  const iniMin = timeToMinutes(horaInicio);
+  const fimMin = timeToMinutes(horaFim);
+  if (iniMin == null || fimMin == null || fimMin <= iniMin) {
+    throw new Error("O horário final precisa ser maior que o horário inicial.");
+  }
+  if (!vigenciaInicio) throw new Error("Informe a data de início da permissão.");
+  if (!prazoIndeterminado && !vigenciaFim) throw new Error("Informe a data final ou marque prazo indeterminado.");
+  if (vigenciaFim && vigenciaFim < vigenciaInicio) {
+    throw new Error("A data final precisa ser posterior à data inicial.");
+  }
+
+  const { supabase, user } = await requireEspacoManager(espacoId);
+  const { data: unidade, error: unidadeErr } = await supabase
+    .from("espaco_unidades")
+    .select("id")
+    .eq("id", unidadeId)
+    .eq("espaco_generico_id", espacoId)
+    .maybeSingle();
+  if (unidadeErr) throw new Error(unidadeErr.message);
+  if (!unidade?.id) throw new Error("A quadra selecionada não pertence a este espaço.");
+
+  const { error } = await supabase
+    .from("espaco_horarios_semanais")
+    .update({
+      espaco_unidade_id: unidadeId,
+      dia_semana: diaSemana,
+      hora_inicio: horaInicio,
+      hora_fim: horaFim,
+      vigencia_inicio: vigenciaInicio,
+      vigencia_fim: vigenciaFim,
+      observacoes: text(formData, "observacoes") || null,
+    })
+    .eq("id", horarioId)
+    .eq("espaco_generico_id", espacoId);
+  if (error) throw new Error(error.message);
+
+  await supabase.rpc("espaco_criar_auditoria", {
+    p_espaco_id: espacoId,
+    p_entidade_tipo: "espaco_horario",
+    p_entidade_id: horarioId,
+    p_acao: "permissao_operador_atualizada",
+    p_payload: { unidadeId, diaSemana, horaInicio, horaFim, vigenciaInicio, vigenciaFim },
+    p_autor_usuario_id: user.id,
+  });
+
+  revalidatePath("/espaco/configuracao");
+  revalidatePath("/espaco/agenda");
+  revalidatePath("/espaco");
 }
 
 export async function criarGradeAutomaticaEspacoAction(formData: FormData) {
@@ -1768,7 +1953,7 @@ export async function criarReservaEspacoAction(
 
       const { data: horariosLiberados, error: horariosErr } = await supabase
         .from("espaco_horarios_semanais")
-        .select("id, hora_inicio, hora_fim, liberar_para_usuario_id")
+        .select("id, hora_inicio, hora_fim, liberar_para_usuario_id, vigencia_inicio, vigencia_fim")
         .eq("espaco_generico_id", espacoId)
         .eq("espaco_unidade_id", unidadeId)
         .eq("dia_semana", diaSemana)
@@ -1784,7 +1969,11 @@ export async function criarReservaEspacoAction(
         const alvo = slot.liberar_para_usuario_id ? String(slot.liberar_para_usuario_id) : null;
         const dentroFaixa = inicioHorario >= inicioSlot && fimHorario <= fimSlot;
         const usuarioPermitido = !alvo || alvo === user.id;
-        return dentroFaixa && usuarioPermitido;
+        const dataReserva = inicioDate.toISOString().slice(0, 10);
+        const vigenciaInicio = slot.vigencia_inicio ? String(slot.vigencia_inicio).slice(0, 10) : null;
+        const vigenciaFim = slot.vigencia_fim ? String(slot.vigencia_fim).slice(0, 10) : null;
+        const dentroVigencia = (!vigenciaInicio || dataReserva >= vigenciaInicio) && (!vigenciaFim || dataReserva <= vigenciaFim);
+        return dentroFaixa && usuarioPermitido && dentroVigencia;
       });
 
       if (!permitido) {

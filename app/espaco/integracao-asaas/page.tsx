@@ -72,12 +72,6 @@ export default async function EspacoIntegracaoAsaasPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      <p className="text-[11px] font-semibold text-eid-text-secondary">
-        <Link href="/espaco" className="text-eid-primary-300 hover:underline">
-          ← Painel
-        </Link>
-      </p>
-
       <section className="eid-mobile-section overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90">
         <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="p-5 sm:p-6">

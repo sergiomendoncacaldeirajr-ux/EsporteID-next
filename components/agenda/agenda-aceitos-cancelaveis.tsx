@@ -7,6 +7,7 @@ import { CadastrarLocalOverlayTrigger } from "@/components/locais/cadastrar-loca
 import { LocalAutocompleteInput } from "@/components/locais/local-autocomplete-input";
 import { gerenciarCancelamentoMatch, type GerenciarCancelamentoState } from "@/app/comunidade/actions";
 import { DESAFIO_FLOW_SECONDARY_CLASS } from "@/lib/desafio/flow-ui";
+import { ProfileEditDrawerTrigger } from "@/components/perfil/profile-edit-drawer-trigger";
 import { ModalidadeGlyphIcon, SportGlyphIcon } from "@/lib/perfil/formacao-glyphs";
 import { ProfileEidPerformanceSeal } from "@/components/perfil/profile-eid-performance-seal";
 import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
@@ -26,9 +27,11 @@ export type AceitosCancelaveisItem = {
   avatarOponente: string | null;
   /** Logo de time/dupla (bordas arredondadas), senão avatar de perfil (circular). */
   oponenteAvatarEhTime?: boolean;
+  oponenteTimeId?: number | null;
   localizacaoOponente?: string | null;
   notaEidOponente?: number | null;
   oponenteId: string;
+  esporteId?: number | null;
   esporte: string;
   modalidade: string;
   status: string;
@@ -211,6 +214,14 @@ export function AgendaAceitosCancelaveis({
         ) : null}
         {items.map((m) => {
           const podeReagendar = m.status === "Aceito" && !m.gestaoSomenteLeitura;
+          const eidHref =
+            Number(m.esporteId ?? 0) > 0
+              ? m.oponenteAvatarEhTime && Number(m.oponenteTimeId ?? 0) > 0
+                ? `/perfil-time/${Number(m.oponenteTimeId)}/eid/${Number(m.esporteId)}?from=${encodeURIComponent("/agenda")}`
+                : m.oponenteId
+                  ? `/perfil/${encodeURIComponent(m.oponenteId)}/eid/${Number(m.esporteId)}?from=${encodeURIComponent("/agenda")}`
+                  : null
+              : null;
 
           return (
             <article
@@ -219,7 +230,37 @@ export function AgendaAceitosCancelaveis({
             >
             <div className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-start gap-2 md:grid-cols-[40px_minmax(0,1fr)_auto]">
               <div className="flex w-[40px] shrink-0 flex-col items-center">
-                {m.avatarOponente ? (
+                {eidHref ? (
+                  <ProfileEditDrawerTrigger
+                    href={eidHref}
+                    title={`Estatísticas EID de ${m.nomeOponente}`}
+                    fullscreen
+                    topMode="backOnly"
+                    className={`block border-0 bg-transparent p-0 transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-500 ${
+                      m.oponenteAvatarEhTime ? "rounded-xl" : "rounded-full"
+                    }`}
+                  >
+                    {m.avatarOponente ? (
+                      <img
+                        src={m.avatarOponente}
+                        alt=""
+                        className={
+                          m.oponenteAvatarEhTime
+                            ? "pointer-events-none h-9 w-9 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
+                            : "pointer-events-none h-9 w-9 rounded-full border border-[color:var(--eid-border-subtle)] object-cover md:h-10 md:w-10"
+                        }
+                      />
+                    ) : (
+                      <span
+                        className={`pointer-events-none inline-flex h-9 w-9 items-center justify-center border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[11px] font-black text-eid-primary-300 md:h-10 md:w-10 md:text-xs ${
+                          m.oponenteAvatarEhTime ? "rounded-xl" : "rounded-full"
+                        }`}
+                      >
+                        {iniciaisFormacaoNome(m.nomeOponente).slice(0, 2) || "O"}
+                      </span>
+                    )}
+                  </ProfileEditDrawerTrigger>
+                ) : m.avatarOponente ? (
                   <img
                     src={m.avatarOponente}
                     alt=""
