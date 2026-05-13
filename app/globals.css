@@ -3451,6 +3451,48 @@ a.eid-list-item:hover, button.eid-list-item:hover {
   }
 }
 
+[data-eid-espaco-panel] :where(input.eid-input-dark, select.eid-input-dark, textarea.eid-input-dark) {
+  min-height: 2.85rem !important;
+  border-radius: var(--eid-radius-md) !important;
+  padding: 0.72rem 0.9rem !important;
+  font-size: 0.95rem !important;
+  line-height: 1.25rem !important;
+}
+
+[data-eid-espaco-panel] :where(input.eid-input-dark::placeholder, textarea.eid-input-dark::placeholder) {
+  font-size: 0.88rem !important;
+}
+
+[data-eid-espaco-panel] :where(label) {
+  font-size: 0.82rem;
+  line-height: 1.25rem;
+}
+
+[data-eid-espaco-panel] :where(button.eid-btn-primary, a.eid-btn-primary) {
+  min-height: 3rem !important;
+  padding: 0.8rem 1rem !important;
+  font-size: 0.92rem !important;
+  line-height: 1.15rem !important;
+  font-weight: 900 !important;
+}
+
+@media (max-width: 640px) {
+  [data-eid-espaco-panel] :where(input.eid-input-dark, select.eid-input-dark, textarea.eid-input-dark) {
+    min-height: 3rem !important;
+    font-size: 1rem !important;
+    line-height: 1.3rem !important;
+  }
+
+  [data-eid-espaco-panel] :where(input.eid-input-dark::placeholder, textarea.eid-input-dark::placeholder) {
+    font-size: 0.92rem !important;
+  }
+
+  [data-eid-espaco-panel] :where(button.eid-btn-primary, a.eid-btn-primary) {
+    min-height: 3.15rem !important;
+    font-size: 0.95rem !important;
+  }
+}
+
 /* ─── Capacitor native motion/cache affordances ─────────────────────────── */
 .eid-native-pull-refresh {
   position: fixed;
@@ -3503,6 +3545,27 @@ a.eid-list-item:hover, button.eid-list-item:hover {
   border-radius: 999px;
   background: linear-gradient(90deg, transparent, var(--eid-primary-500), var(--eid-action-500));
   animation: eid-native-progress 0.95s ease-in-out infinite;
+}
+
+.eid-native-upload-headsup {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 5.25rem);
+  z-index: 2147483640;
+  display: inline-flex;
+  min-height: 2.5rem;
+  max-width: calc(100vw - 2rem);
+  align-items: center;
+  gap: 0.55rem;
+  transform: translateX(-50%);
+  border: 1px solid color-mix(in srgb, var(--eid-primary-500) 32%, var(--eid-border-subtle));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--eid-card) 94%, transparent);
+  padding: 0.45rem 0.85rem;
+  color: var(--eid-fg);
+  font-size: 0.75rem;
+  font-weight: 800;
+  box-shadow: 0 18px 40px -26px rgba(0, 0, 0, 0.88);
 }
 
 @keyframes eid-native-spin {

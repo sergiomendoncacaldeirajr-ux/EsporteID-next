@@ -45,6 +45,7 @@ export default async function EspacoLayout({
   return (
     <main
       data-eid-touch-ui
+      data-eid-espaco-panel
       data-eid-no-route-enter
       className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-4 sm:px-6"
     >

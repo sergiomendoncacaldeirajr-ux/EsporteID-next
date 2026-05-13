@@ -43,6 +43,11 @@ type NativeCalendarPayload = {
   endMs?: number;
 };
 
+type NativeReminderPayload = NativeCalendarPayload & {
+  matchId?: number | string | null;
+  url?: string | null;
+};
+
 type NativePushData = {
   url?: unknown;
 };
@@ -95,6 +100,8 @@ declare global {
     eidNativeShare?: (payload?: NativeSharePayload) => Promise<void>;
     eidNativeShareFile?: (payload: NativeFileSharePayload) => Promise<void>;
     eidNativeAddCalendarEvent?: (payload: NativeCalendarPayload) => Promise<void>;
+    eidNativeScheduleMatchReminder?: (payload: NativeReminderPayload) => Promise<void>;
+    eidNativeOpenMaps?: (payload: { query: string }) => Promise<void>;
     eidNativeExplainPermission?: (payload: { kind: NativePermissionKind }) => Promise<boolean>;
     EsporteIDAndroid?: {
       addCalendarEvent?: (payload: string) => void;
@@ -287,6 +294,13 @@ function androidCalendarIntent(payload: NativeCalendarPayload) {
   return `intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.item/event;S.title=${title};S.eventLocation=${location};S.description=${description};l.beginTime=${startMs};l.endTime=${endMs};end`;
 }
 
+function localNotificationIdFromMatch(matchId: string | number | null | undefined, startMs: number) {
+  const seed = `${matchId ?? "match"}:${startMs}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  return Math.abs(hash % 2_000_000_000) + 1000;
+}
+
 function getNativeWarmRoutes(userId: string | null | undefined, activeContext: ActiveAppContext | undefined) {
   const routes = new Set<string>(NATIVE_PREFETCH_ROUTES);
   if (userId) routes.add(`/perfil/${userId}`);
@@ -359,6 +373,7 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
   const [nativeUnlocking, setNativeUnlocking] = useState(false);
   const [nativeRefreshing, setNativeRefreshing] = useState(false);
   const [nativeTransitioning, setNativeTransitioning] = useState(false);
+  const [nativeUploadBusy, setNativeUploadBusy] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [offlineCacheAt, setOfflineCacheAt] = useState(0);
 
@@ -401,6 +416,7 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         { AppLauncher },
         { Filesystem, Directory },
         { Share },
+        { LocalNotifications },
       ] = await Promise.all([
         import("@capacitor/status-bar"),
         import("@capacitor/keyboard"),
@@ -410,6 +426,7 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         import("@capacitor/app-launcher"),
         import("@capacitor/filesystem"),
         import("@capacitor/share"),
+        import("@capacitor/local-notifications"),
       ]);
 
       const applySystemBars = async () => {
@@ -426,6 +443,17 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         applySystemBars(),
         Keyboard.setResizeMode({ mode: KeyboardResize.Native }),
         Keyboard.setAccessoryBarVisible({ isVisible: false }),
+        LocalNotifications.registerActionTypes({
+          types: [
+            {
+              id: "EID_AGENDA_REMINDER",
+              actions: [
+                { id: "open", title: "Ver agenda", foreground: true },
+                { id: "maps", title: "Abrir rota", foreground: true },
+              ],
+            },
+          ],
+        }),
       ]);
 
       const networkStatus = await Network.getStatus();
@@ -454,6 +482,14 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
           if (href) router.push(href);
         }),
       ]);
+      const localNotificationHandle = await LocalNotifications.addListener("localNotificationActionPerformed", (event) => {
+        const extra = event.notification.extra as { url?: string; mapsQuery?: string } | undefined;
+        if (event.actionId === "maps" && extra?.mapsQuery) {
+          void window.eidNativeOpenMaps?.({ query: extra.mapsQuery });
+          return;
+        }
+        router.push(extra?.url || "/agenda");
+      });
 
       const themeObserver = new MutationObserver(() => void applySystemBars());
       themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-eid-theme"] });
@@ -489,6 +525,13 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
           files: [saved.uri],
           dialogTitle: "Abrir ou compartilhar arquivo",
         });
+      };
+
+      const openNativeExternalUrl = async (rawUrl: string) => {
+        const url = new URL(rawUrl, window.location.href);
+        if (!isExternalHttpUrl(url)) return null;
+        await Browser.open({ url: url.toString() });
+        return true;
       };
 
       const onDocumentClick = (event: MouseEvent) => {
@@ -566,6 +609,21 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         }
       };
       document.addEventListener("click", onDocumentClick, { capture: true });
+      const originalWindowOpen = window.open.bind(window);
+      window.open = ((url?: string | URL, target?: string, features?: string) => {
+        if (url) {
+          const rawUrl = typeof url === "string" ? url : url.toString();
+          void openNativeExternalUrl(rawUrl).then((handled) => {
+            if (handled) {
+              window.setTimeout(() => router.refresh(), 1200);
+              return;
+            }
+            originalWindowOpen(rawUrl, target, features);
+          });
+          return null;
+        }
+        return originalWindowOpen(url, target, features);
+      }) as typeof window.open;
       window.eidNativeExplainPermission = explainPermission;
       window.eidNativeShareFile = shareNativeFile;
 
@@ -580,6 +638,44 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
           return;
         }
         await Browser.open({ url: calendarFileHref(payload) });
+      };
+      window.eidNativeScheduleMatchReminder = async (payload) => {
+        if (!Number.isFinite(Number(payload.startMs))) return;
+        const allowed = await explainPermission({ kind: "notifications" });
+        if (!allowed) return;
+        const permission = await LocalNotifications.checkPermissions();
+        const display =
+          permission.display === "prompt" ? (await LocalNotifications.requestPermissions()).display : permission.display;
+        if (display !== "granted") return;
+        const startMs = Number(payload.startMs);
+        const reminderAt = new Date(Math.max(Date.now() + 60_000, startMs - 60 * 60_000));
+        const id = localNotificationIdFromMatch(payload.matchId, startMs);
+        await LocalNotifications.cancel({ notifications: [{ id }] }).catch(() => undefined);
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              id,
+              title: payload.title || "EsporteID",
+              body: payload.location ? `Seu compromisso começa em breve em ${payload.location}.` : "Seu compromisso começa em breve.",
+              schedule: { at: reminderAt },
+              actionTypeId: "EID_AGENDA_REMINDER",
+              extra: {
+                url: payload.url || "/agenda",
+                mapsQuery: payload.location || "",
+              },
+            },
+          ],
+        });
+      };
+      window.eidNativeOpenMaps = async ({ query }) => {
+        const clean = query.trim();
+        if (!clean) return;
+        const encoded = encodeURIComponent(clean);
+        const appUrl =
+          Capacitor.getPlatform() === "ios" ? `maps://?q=${encoded}` : `geo:0,0?q=${encoded}`;
+        await AppLauncher.openUrl({ url: appUrl }).catch(() =>
+          Browser.open({ url: `https://www.google.com/maps/search/?api=1&query=${encoded}` })
+        );
       };
       window.EsporteIDAndroid = {
         ...(window.EsporteIDAndroid ?? {}),
@@ -598,14 +694,18 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       return () => {
         themeObserver.disconnect();
         document.removeEventListener("click", onDocumentClick, { capture: true });
+        window.open = originalWindowOpen;
         delete window.eidNativeExplainPermission;
         delete window.eidNativeShareFile;
         delete window.eidNativeAddCalendarEvent;
+        delete window.eidNativeScheduleMatchReminder;
+        delete window.eidNativeOpenMaps;
         if (window.EsporteIDAndroid?.addCalendarEvent) delete window.EsporteIDAndroid.addCalendarEvent;
         void networkHandle.remove();
         void appStateHandle.remove();
         void backHandle.remove();
         void urlOpenHandle.remove();
+        void localNotificationHandle.remove();
       };
     }
 
@@ -1042,6 +1142,32 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
     };
   }, [router]);
 
+  useEffect(() => {
+    if (!isAnyNativeApp()) return;
+    let hideTimer = 0;
+    const onSubmit = (event: SubmitEvent) => {
+      const form = event.target;
+      if (!(form instanceof HTMLFormElement)) return;
+      if (!form.querySelector('input[type="file"]')) return;
+      setNativeUploadBusy(true);
+      window.clearTimeout(hideTimer);
+      hideTimer = window.setTimeout(() => setNativeUploadBusy(false), 12_000);
+    };
+    const onPageShow = () => {
+      window.clearTimeout(hideTimer);
+      setNativeUploadBusy(false);
+    };
+    document.addEventListener("submit", onSubmit, { capture: true });
+    window.addEventListener("pageshow", onPageShow);
+    window.addEventListener("eid:native-upload-done", onPageShow);
+    return () => {
+      window.clearTimeout(hideTimer);
+      document.removeEventListener("submit", onSubmit, { capture: true });
+      window.removeEventListener("pageshow", onPageShow);
+      window.removeEventListener("eid:native-upload-done", onPageShow);
+    };
+  }, []);
+
   const handleRetry = useCallback(() => {
     window.location.reload();
   }, []);
@@ -1085,6 +1211,12 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         </div>
       ) : null}
       {nativeTransitioning ? <div className="eid-native-transition-bar" aria-hidden="true" /> : null}
+      {nativeUploadBusy ? (
+        <div className="eid-native-upload-headsup" role="status" aria-live="polite">
+          <span className="eid-native-pull-spinner is-spinning" aria-hidden="true" />
+          <span>Enviando arquivo...</span>
+        </div>
+      ) : null}
       {showStartup ? (
         <div className="eid-native-startup-shell" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element */}

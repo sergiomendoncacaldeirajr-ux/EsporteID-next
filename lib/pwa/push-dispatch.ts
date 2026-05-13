@@ -163,32 +163,40 @@ function buildNotificationPayload(n: NotificacaoRow, platform = "Outro"): string
   let url: string;
   let requireInteraction = false;
   let category: string = tipo;
+  let actionLabel = "Abrir";
 
   if (tipo === "match") {
     title = isAndroid ? "EsporteID - Desafio recebido" : "⚔️ EsporteID · Desafio recebido";
     url = "/comunidade#desafios";
     requireInteraction = true;
+    actionLabel = "Ver desafio";
   } else if (tipo === "desafio") {
     title = isAndroid ? "EsporteID - Placar / Agenda" : "🏆 EsporteID · Placar / Agenda";
     url = "/agenda#placares";
     requireInteraction = true;
+    actionLabel = "Ver agenda";
   } else if (tipo === "agenda_status") {
     title = isAndroid ? "EsporteID - Atualização de agenda" : "📅 EsporteID · Atualização de agenda";
     url = "/agenda#agenda-status-ranking";
+    actionLabel = "Ver agenda";
   } else if (tipo.includes("candidatura")) {
     title = isAndroid ? "EsporteID - Candidatura" : "👥 EsporteID · Candidatura";
     url = "/comunidade";
     requireInteraction = true;
+    actionLabel = "Responder";
   } else if (tipo.includes("convite")) {
     title = isAndroid ? "EsporteID - Convite de equipe" : "👥 EsporteID · Convite de equipe";
     url = "/comunidade";
     requireInteraction = true;
+    actionLabel = "Responder";
   } else if (tipo.includes("time")) {
     title = isAndroid ? "EsporteID - Equipe" : "👥 EsporteID · Equipe";
     url = "/comunidade";
+    actionLabel = "Ver equipe";
   } else if (tipo.includes("professor")) {
     title = isAndroid ? "EsporteID - Aulas" : "📚 EsporteID · Aulas";
     url = "/comunidade#aulas";
+    actionLabel = "Ver aulas";
   } else {
     title = "EsporteID";
     url = "/comunidade#notificacoes";
@@ -202,6 +210,8 @@ function buildNotificationPayload(n: NotificacaoRow, platform = "Outro"): string
     tag: `notif-${n.id}`,
     notifId: n.id,
     tipo: category,
+    actionLabel,
+    referenceId: n.referencia_id,
     requireInteraction: isAndroid ? false : requireInteraction,
     platform,
   });
@@ -225,6 +235,8 @@ function buildFcmMessage(n: NotificacaoRow, token: string) {
     url?: string;
     notifId?: number;
     tipo?: string;
+    actionLabel?: string;
+    referenceId?: number | null;
   };
 
   return {
@@ -239,6 +251,8 @@ function buildFcmMessage(n: NotificacaoRow, token: string) {
       url: String(payload.url || "/comunidade#notificacoes"),
       notifId: String(payload.notifId || n.id),
       tipo: String(payload.tipo || n.tipo || "geral"),
+      actionLabel: String(payload.actionLabel || "Abrir"),
+      referenceId: String(payload.referenceId || n.referencia_id || ""),
     },
     android: {
       priority: "high" as const,

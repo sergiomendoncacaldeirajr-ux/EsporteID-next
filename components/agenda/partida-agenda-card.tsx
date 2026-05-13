@@ -20,7 +20,7 @@ import { EidPendingBadge } from "@/components/ui/eid-pending-badge";
 import type { PartidaAgendaFormacaoLado } from "@/lib/agenda/partida-formacao-lado";
 import { iniciaisFormacaoNome } from "@/lib/comunidade/iniciais-formacao";
 import { isNativeAndroidApp } from "@/lib/pwa/push-client";
-import { CalendarPlus } from "lucide-react";
+import { Bell, CalendarPlus, MapPin } from "lucide-react";
 
 export type { PartidaAgendaFormacaoLado } from "@/lib/agenda/partida-formacao-lado";
 
@@ -145,6 +145,7 @@ export function PartidaAgendaCard({
   const [openDesist, setOpenDesist] = useState(false);
   const [agendaActionClicked, setAgendaActionClicked] = useState<"accept" | "reject" | null>(null);
   const [nativeCalendarPlatform, setNativeCalendarPlatform] = useState<"android" | "ios" | null>(null);
+  const [nativeToolsAvailable, setNativeToolsAvailable] = useState(false);
   const [state, formAction, pending] = useActionState(gerenciarCancelamentoMatch, cancelInitial);
   const [agendaState, agendaAction, agendaPending] = useActionState(responderAgendamentoPartidaAction, agendaInitial);
   useEffect(() => {
@@ -155,6 +156,10 @@ export function PartidaAgendaCard({
         (typeof window.eidNativeAddCalendarEvent === "function" ||
           typeof window.EsporteIDAndroid?.addCalendarEvent === "function");
       setNativeCalendarPlatform(available ? platform : null);
+      setNativeToolsAvailable(
+        (platform === "android" || platform === "ios") &&
+          (typeof window.eidNativeScheduleMatchReminder === "function" || typeof window.eidNativeOpenMaps === "function")
+      );
     };
     checkNativeCalendar();
     window.addEventListener("eid:native-app-ready", checkNativeCalendar);
@@ -204,6 +209,24 @@ export function PartidaAgendaCard({
     window.EsporteIDAndroid?.addCalendarEvent?.(
       JSON.stringify(payload)
     );
+  }
+
+  function handleNativeReminder() {
+    if (!canAddNativeCalendar) return;
+    void window.eidNativeScheduleMatchReminder?.({
+      title: calendarTitle,
+      location: localLabel,
+      description: `${esporteNome} no EsporteID. Partida #${id}.`,
+      startMs: calendarStartMs,
+      endMs: calendarStartMs + 90 * 60 * 1000,
+      matchId: id,
+      url: "/agenda",
+    });
+  }
+
+  function handleOpenNativeMaps() {
+    if (!localLabel?.trim()) return;
+    void window.eidNativeOpenMaps?.({ query: localLabel });
   }
 
   function renderLadoCol(
@@ -321,8 +344,9 @@ export function PartidaAgendaCard({
         </div>
       ) : null}
 
-      {canAddNativeCalendar ? (
-        <div className="mt-2 flex justify-center">
+      {canAddNativeCalendar || (nativeToolsAvailable && localLabel?.trim()) ? (
+        <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+          {canAddNativeCalendar ? (
           <button
             type="button"
             onClick={handleAddNativeCalendar}
@@ -333,6 +357,31 @@ export function PartidaAgendaCard({
             <CalendarPlus className="h-3 w-3" aria-hidden />
             <span>{nativeCalendarPlatform === "ios" ? "Adicionar à agenda do iPhone" : "Adicionar à agenda do Android"}</span>
           </button>
+          ) : null}
+          {canAddNativeCalendar && nativeToolsAvailable ? (
+            <button
+              type="button"
+              onClick={handleNativeReminder}
+              data-eid-compact-chip-btn="true"
+              className="inline-flex min-h-[24px] items-center justify-center gap-1 rounded-full border border-eid-action-500/25 bg-eid-action-500/10 px-2.5 text-[7px] font-black uppercase leading-none tracking-[0.06em] text-eid-action-300 transition active:scale-[0.98] md:min-h-[26px] md:text-[8px]"
+              aria-label="Criar lembrete no celular"
+            >
+              <Bell className="h-3 w-3" aria-hidden />
+              <span>Lembrete</span>
+            </button>
+          ) : null}
+          {nativeToolsAvailable && localLabel?.trim() ? (
+            <button
+              type="button"
+              onClick={handleOpenNativeMaps}
+              data-eid-compact-chip-btn="true"
+              className="inline-flex min-h-[24px] items-center justify-center gap-1 rounded-full border border-eid-primary-500/25 bg-eid-primary-500/10 px-2.5 text-[7px] font-black uppercase leading-none tracking-[0.06em] text-eid-primary-300 transition active:scale-[0.98] md:min-h-[26px] md:text-[8px]"
+              aria-label="Abrir rota no aplicativo de mapas"
+            >
+              <MapPin className="h-3 w-3" aria-hidden />
+              <span>Rota</span>
+            </button>
+          ) : null}
         </div>
       ) : null}
 
