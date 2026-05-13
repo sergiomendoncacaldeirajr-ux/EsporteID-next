@@ -221,7 +221,7 @@ export async function updateSession(request: NextRequest) {
 
   // Rotas internas da plataforma — requerem autenticação.
   const internalPlatformPaths = [
-    "/agenda", "/ranking", "/comunidade", "/match", "/desafio",
+    "/agenda", "/ranking", "/confrontos", "/comunidade", "/match", "/desafio",
     "/performance", "/vagas", "/espaco", "/professor", "/minhas-aulas", "/times",
   ];
   if (!user && !authCode && internalPlatformPaths.some((p) => path.startsWith(p))) {
@@ -250,6 +250,7 @@ export async function updateSession(request: NextRequest) {
       p.startsWith("/buscar") ||
       p.startsWith("/agenda") ||
       p.startsWith("/ranking") ||
+      p.startsWith("/confrontos") ||
       p.startsWith("/comunidade") ||
       p.startsWith("/match") ||
       p.startsWith("/desafio") ||

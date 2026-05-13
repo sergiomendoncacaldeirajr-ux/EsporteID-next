@@ -1409,6 +1409,8 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
     ? new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date(offlineCacheAt))
     : null;
   const permissionCopy = permissionPrompt ? nativePermissionCopy(permissionPrompt.kind) : null;
+  const permissionTitleId = permissionPrompt ? `eid-native-permission-title-${permissionPrompt.kind}` : undefined;
+  const permissionBodyId = permissionPrompt ? `eid-native-permission-body-${permissionPrompt.kind}` : undefined;
 
   return (
     <>
@@ -1445,22 +1447,35 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         </div>
       ) : null}
       {permissionPrompt && permissionCopy ? (
-        <div className="fixed inset-0 z-[2147483645] flex items-end justify-center bg-black/55 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-eid-fg sm:items-center sm:pb-4">
-          <div className="w-full max-w-sm rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 shadow-2xl">
-            <p className="text-[14px] font-black uppercase tracking-[0.08em] text-eid-fg">{permissionCopy.title}</p>
-            <p className="mt-2 text-[13px] leading-relaxed text-eid-text-muted">{permissionCopy.body}</p>
-            <div className="mt-4 grid grid-cols-2 gap-2">
+        <div
+          className="eid-native-permission-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={permissionTitleId}
+          aria-describedby={permissionBodyId}
+        >
+          <div className="eid-native-permission-card">
+            <span className="eid-native-permission-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 3 4 7v6c0 4.5 3.2 7.4 8 8 4.8-.6 8-3.5 8-8V7l-8-4Z" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="m9 12 2 2 4-5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <p id={permissionTitleId} className="eid-native-permission-title">{permissionCopy.title}</p>
+            <p id={permissionBodyId} className="eid-native-permission-body">{permissionCopy.body}</p>
+            <p className="eid-native-permission-note">Você pode alterar isso depois nas permissões do aparelho.</p>
+            <div className="eid-native-permission-actions">
               <button
                 type="button"
                 onClick={handlePermissionCancel}
-                className="h-11 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[13px] font-bold text-eid-text-muted"
+                className="eid-native-permission-cancel"
               >
                 Agora não
               </button>
               <button
                 type="button"
                 onClick={handlePermissionContinue}
-                className="h-11 rounded-xl bg-eid-action-500 text-[13px] font-black uppercase tracking-wide text-white"
+                className="eid-native-permission-continue"
               >
                 {permissionCopy.action}
               </button>

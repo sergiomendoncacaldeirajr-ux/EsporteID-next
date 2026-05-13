@@ -177,6 +177,7 @@ export async function PerfilEidEsporteHistoricoStream({ params, searchParams }: 
                   opponentId={oid}
                   opponentNome={op?.nome ?? "Atleta"}
                   opponentAvatarUrl={op?.avatar_url ?? null}
+                  opponentEidHref={`/perfil/${encodeURIComponent(oid)}/eid/${Number(esporteId)}?from=${encodeURIComponent(historicoPageHref)}`}
                   opponentNotaEid={op?.nota_eid ?? null}
                   res={res}
                   profileLinkFrom={historicoPageHref}

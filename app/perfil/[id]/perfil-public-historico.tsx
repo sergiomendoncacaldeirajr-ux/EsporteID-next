@@ -272,6 +272,11 @@ export async function PerfilPublicoHistoricoSection({ profileId, viewerId, perfi
                         opponentId={oponenteId ?? id}
                         opponentNome={op?.nome ?? "Atleta"}
                         opponentAvatarUrl={op?.avatarUrl ?? null}
+                        opponentEidHref={
+                          oponenteId && row.esporte_id != null
+                            ? `/perfil/${encodeURIComponent(oponenteId)}/eid/${Number(row.esporte_id)}?from=${encodeURIComponent(`/perfil/${id}`)}`
+                            : null
+                        }
                         opponentNotaEid={
                           oponenteId && row.esporte_id != null
                             ? oponenteNotaHistoricoMap.get(`${oponenteId}:${Number(row.esporte_id)}`) ?? null

@@ -31,6 +31,7 @@ type Props = {
   opponentId: string;
   opponentNome: string;
   opponentAvatarUrl: string | null;
+  opponentEidHref?: string | null;
   res: { label: "V" | "D" | "E" | "—"; tone: string };
   profileLinkFrom: string;
   torneioLabel?: string | null;
@@ -61,6 +62,7 @@ export function EidIndividualPartidaRow({
   opponentId,
   opponentNome,
   opponentAvatarUrl,
+  opponentEidHref,
   res,
   profileLinkFrom,
   torneioLabel,
@@ -89,6 +91,7 @@ export function EidIndividualPartidaRow({
       : `${p.placar_2} × ${p.placar_1}`
     : "—";
   const perfilHref = `/perfil/${encodeURIComponent(opponentId)}?from=${encodeURIComponent(profileLinkFrom)}`;
+  const eidHref = opponentEidHref ?? perfilHref;
   const origemLinha = origemLabel === "Ranking" ? "Rank" : origemLabel;
 
   const resultadoClass =
@@ -122,7 +125,7 @@ export function EidIndividualPartidaRow({
       saldoResumo={saldoResumo}
       ultimosConfrontos={ultimosConfrontos}
       asListItem
-      rowClassName={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} relative flex items-center gap-3 border-[color:var(--eid-border-subtle)] cursor-pointer`}
+      rowClassName={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} relative flex min-h-[4.9rem] touch-manipulation items-center gap-3 border-[color:var(--eid-border-subtle)] cursor-pointer transition hover:border-eid-primary-500/35 active:scale-[0.995]`}
     >
       <span
         className={`absolute right-2 top-2 inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-1.5 text-[10px] font-black ring-1 ${resultadoClass}`}
@@ -132,10 +135,10 @@ export function EidIndividualPartidaRow({
       </span>
       <div className="flex shrink-0 flex-col items-center justify-center">
         <Link
-          href={perfilHref}
+          href={eidHref}
           data-no-modal="1"
           className="rounded-full ring-2 ring-transparent transition hover:ring-eid-primary-500/40"
-          aria-label={`Perfil de ${opponentNome}`}
+          aria-label={`Estatísticas EID de ${opponentNome}`}
         >
           {opponentAvatarUrl ? (
             <img
@@ -155,13 +158,9 @@ export function EidIndividualPartidaRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pr-8">
-          <Link
-            href={perfilHref}
-            data-no-modal="1"
-            className="truncate text-[12px] font-bold text-eid-fg hover:text-eid-primary-300 hover:underline"
-          >
+          <span className="truncate text-[12px] font-bold text-eid-fg">
             {opponentNome}
-          </Link>
+          </span>
         </div>
         <p className="mt-0.5 text-[10px] text-eid-text-secondary">
           {esporteLabel ?? "Esporte"}

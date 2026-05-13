@@ -29,7 +29,7 @@ export function ProfileSportsMetricsCard({
   const toY = (value: number) => 32 - Math.max(0.8, value) * 3;
 
   return (
-    <div className="border-t border-[color:var(--eid-border-subtle)] px-2.5 pb-2.5 pt-2">
+    <div className="min-w-0 border-t border-[color:var(--eid-border-subtle)] px-2.5 pb-2.5 pt-2">
       {showScoreTiles ? (
         <div className="flex flex-wrap gap-2">
           <EidNotaMetric value={eidValue} label={eidLabel} size="sm" />
@@ -37,7 +37,7 @@ export function ProfileSportsMetricsCard({
         </div>
       ) : null}
       <div
-        className={`rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 p-2.5 sm:p-3 ${showScoreTiles ? "mt-2" : ""}`}
+        className={`min-w-0 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 p-2.5 sm:p-3 ${showScoreTiles ? "mt-2" : ""}`}
       >
         <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-eid-text-secondary">
           {trendLabel} · {sportName}

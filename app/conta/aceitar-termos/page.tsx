@@ -8,7 +8,7 @@ import { AceitarForm } from "./aceitar-form";
 function AceitarFormFallback() {
   return (
     <div
-      className="eid-auth-card mx-auto flex max-h-[200px] min-h-[120px] w-full max-w-lg animate-pulse rounded-2xl p-8"
+      className="eid-auth-card eid-public-auth-card mx-auto flex max-h-[200px] min-h-[120px] w-full max-w-lg animate-pulse rounded-2xl p-8"
       aria-hidden
     />
   );
@@ -22,7 +22,11 @@ export default async function AceitarTermosPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+      <div
+        data-eid-public-auth
+        data-eid-touch-ui
+        className="eid-auth-bg eid-public-auth-shell mx-auto flex min-h-[100svh] w-full flex-col items-center justify-center px-4 py-16 text-center"
+      >
         <p className="text-zinc-700 dark:text-zinc-300">
           Você precisa estar logado para aceitar os termos.
         </p>
@@ -44,7 +48,11 @@ export default async function AceitarTermosPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col px-4 py-12">
+    <div
+      data-eid-public-auth
+      data-eid-touch-ui
+      className="eid-auth-bg eid-public-auth-shell flex flex-1 flex-col px-4 py-12"
+    >
       <Suspense fallback={<AceitarFormFallback />}>
         <AceitarForm />
       </Suspense>

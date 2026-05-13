@@ -82,6 +82,7 @@ export function RedefinirForm() {
           id="new-pass"
           type="password"
           autoComplete="new-password"
+          enterKeyHint="next"
           required
           minLength={6}
           value={password}
@@ -97,6 +98,7 @@ export function RedefinirForm() {
           id="new-pass2"
           type="password"
           autoComplete="new-password"
+          enterKeyHint="done"
           required
           value={password2}
           onChange={(e) => setPassword2(e.target.value)}

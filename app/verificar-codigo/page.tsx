@@ -249,8 +249,12 @@ function VerificarCodigoPageInner() {
   }
 
   return (
-    <main className="eid-auth-bg flex min-h-[100svh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.25rem,env(safe-area-inset-top,0px)+0.75rem)] text-eid-fg sm:px-6 sm:py-8">
-      <div className="eid-native-auth-enter w-full max-w-[360px] pb-6">
+    <main
+      data-eid-public-auth
+      data-eid-touch-ui
+      className="eid-auth-bg eid-public-auth-shell flex min-h-[100svh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.25rem,env(safe-area-inset-top,0px)+0.75rem)] text-eid-fg sm:px-6 sm:py-8"
+    >
+      <div className="eid-native-auth-enter eid-public-auth-stack w-full max-w-[360px] pb-6">
         <Link
           href={
             mode === "recovery"
@@ -263,7 +267,7 @@ function VerificarCodigoPageInner() {
         </Link>
         <LogoFull size="auth" className="mb-6 mt-1" />
 
-        <div className="eid-auth-card p-5 sm:p-7">
+        <div className="eid-auth-card eid-public-auth-card p-5 sm:p-7">
           {/* Header */}
           <div className="mb-5 flex flex-col items-center text-center">
             <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_28%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-500)_12%,var(--eid-card)))] shadow-[0_0_28px_-6px_rgba(37,99,235,0.5),inset_0_1px_0_rgba(255,255,255,0.12)] ring-1 ring-eid-primary-500/30">
@@ -313,6 +317,7 @@ function VerificarCodigoPageInner() {
                     }}
                     inputMode="numeric"
                     autoComplete={idx === 0 ? "one-time-code" : "off"}
+                    enterKeyHint={idx === OTP_LENGTH - 1 ? "done" : "next"}
                     maxLength={1}
                     value={codeDigits[idx]}
                     onPaste={onPasteOtp}

@@ -37,19 +37,23 @@ export function AceitarForm() {
   }
 
   return (
-    <main className="eid-auth-bg flex min-h-[100svh] w-full flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.5rem,env(safe-area-inset-top,0px)+1rem)] sm:px-6 sm:py-10">
+    <main
+      data-eid-public-auth
+      data-eid-touch-ui
+      className="eid-auth-bg eid-public-auth-shell flex min-h-[100svh] w-full flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.5rem,env(safe-area-inset-top,0px)+1rem)] sm:px-6 sm:py-10"
+    >
       {/* Toolbar */}
       <div className="mb-4 flex w-full max-w-[440px] items-center justify-end gap-2">
         <EidThemeToggle variant="toolbar" />
         <SignOutButton variant="icon" />
       </div>
 
-      <div className="eid-native-auth-enter w-full max-w-[440px] pb-6">
+      <div className="eid-native-auth-enter eid-public-auth-stack w-full max-w-[440px] pb-6">
         <LogoFull size="auth" className="mb-6 flex justify-center" />
 
         <form
           onSubmit={onSubmit}
-          className="eid-auth-card flex flex-col gap-0 p-5 sm:p-7"
+          className="eid-auth-card eid-public-auth-card flex flex-col gap-0 p-5 sm:p-7"
         >
           {/* Header */}
           <div className="mb-6 flex flex-col items-center text-center">

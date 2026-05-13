@@ -618,7 +618,11 @@ export function PerfilHistoricoListaSkeleton({
 /** Onboarding (shell global oculto): indicadores de passo + painel principal. */
 export function OnboardingStreamSkeleton() {
   return (
-    <main className="mx-auto w-full max-w-lg px-3 pb-8 pt-4 sm:max-w-2xl sm:px-6" aria-hidden>
+    <main
+      data-eid-onboarding-native
+      className="eid-onboarding-native-shell mx-auto w-full max-w-lg px-3 pb-8 pt-4 sm:max-w-2xl sm:px-6"
+      aria-hidden
+    >
       <div className="mb-4 flex gap-2">
         {Array.from({ length: 4 }).map((_, i) => (
           <SkBlock key={i} className="h-2 flex-1 rounded-full" />

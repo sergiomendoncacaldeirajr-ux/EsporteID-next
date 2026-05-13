@@ -1113,6 +1113,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                               opponentTimeId={oppId}
                               opponentNome={onome}
                               opponentEscudoUrl={det?.escudo ?? null}
+                              opponentEidHref={`/perfil-time/${Number(oppId)}/eid/${Number(esporteId)}?from=${encodeURIComponent(eidPageHref)}`}
                               opponentNotaEid={det != null && Number.isFinite(det.eid_time) ? det.eid_time : null}
                               res={res}
                               profileLinkFrom={eidPageHref}
@@ -1221,6 +1222,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
                       opponentId={oid}
                       opponentNome={op?.nome ?? "Atleta"}
                       opponentAvatarUrl={op?.avatar_url ?? null}
+                      opponentEidHref={`/perfil/${encodeURIComponent(oid)}/eid/${Number(esporteId)}?from=${encodeURIComponent(eidPageHref)}`}
                       opponentNotaEid={op?.nota_eid ?? null}
                       res={res}
                       profileLinkFrom={eidPageHref}

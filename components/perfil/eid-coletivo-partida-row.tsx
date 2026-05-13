@@ -19,6 +19,7 @@ type Props = {
   opponentTimeId: number;
   opponentNome: string;
   opponentEscudoUrl: string | null;
+  opponentEidHref?: string | null;
   opponentNotaEid: number | null;
   res: { label: "V" | "D" | "E" | "—"; tone: string };
   profileLinkFrom: string;
@@ -55,6 +56,7 @@ export function EidColetivoPartidaRow({
   opponentTimeId,
   opponentNome,
   opponentEscudoUrl,
+  opponentEidHref,
   opponentNotaEid,
   res,
   profileLinkFrom,
@@ -80,6 +82,7 @@ export function EidColetivoPartidaRow({
   const placarComGolsDetalhado =
     scorePayload?.type === "gols" && scorePayload.goals && goalsPayloadHasAny(scorePayload.goals);
   const perfilOponenteHref = `/perfil-time/${encodeURIComponent(opponentTimeId)}?from=${encodeURIComponent(profileLinkFrom)}`;
+  const eidOponenteHref = opponentEidHref ?? perfilOponenteHref;
   const origemLinha = origemLabel === "Ranking" ? "Rank" : origemLabel;
   const localStr = String(p.local_str ?? "").trim();
   const selfTimeId =
@@ -120,7 +123,7 @@ export function EidColetivoPartidaRow({
       saldoResumo={saldoResumo}
       ultimosConfrontos={ultimosConfrontos}
       asListItem
-      rowClassName={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} relative flex items-center gap-3 border-[color:var(--eid-border-subtle)] cursor-pointer`}
+      rowClassName={`${PROFILE_CARD_BASE} ${PROFILE_CARD_PAD_MD} relative flex min-h-[4.9rem] touch-manipulation items-center gap-3 border-[color:var(--eid-border-subtle)] cursor-pointer transition hover:border-eid-primary-500/35 active:scale-[0.995]`}
     >
       <span
         className={`absolute right-2 top-2 inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-1.5 text-[10px] font-black ring-1 ${resultadoClass}`}
@@ -130,10 +133,10 @@ export function EidColetivoPartidaRow({
       </span>
       <div className="flex shrink-0 flex-col items-center justify-center">
         <Link
-          href={perfilOponenteHref}
+          href={eidOponenteHref}
           data-no-modal="1"
           className="rounded-2xl ring-2 ring-transparent transition hover:ring-eid-primary-500/40"
-          aria-label={`Perfil da formação ${opponentNome}`}
+          aria-label={`Estatísticas EID da formação ${opponentNome}`}
         >
           {opponentEscudoUrl ? (
             <img src={opponentEscudoUrl} alt="" className={AVATAR_COLETIVO} />
@@ -147,13 +150,9 @@ export function EidColetivoPartidaRow({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pr-8">
-          <Link
-            href={perfilOponenteHref}
-            data-no-modal="1"
-            className="truncate text-[12px] font-bold text-eid-fg hover:text-eid-primary-300 hover:underline"
-          >
+          <span className="truncate text-[12px] font-bold text-eid-fg">
             {opponentNome}
-          </Link>
+          </span>
         </div>
         <p className="mt-0.5 text-[10px] leading-snug text-eid-text-secondary">
           {esporteLabel ?? "Esporte"}

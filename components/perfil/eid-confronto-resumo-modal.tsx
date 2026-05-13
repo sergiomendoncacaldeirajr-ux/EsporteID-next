@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Calendar, MapPin, X } from "lucide-react";
+import { Calendar, Download, ImageIcon, Loader2, MapPin, RotateCcw, Share2, X } from "lucide-react";
 import Link from "next/link";
 import { GoalsScoreboardSummary } from "@/components/placar/goals-scoreboard-summary";
 import {
@@ -21,6 +21,8 @@ const AVATAR_LG =
   "h-11 w-11 shrink-0 rounded-full border-2 border-[color:color-mix(in_srgb,var(--eid-card)_70%,var(--eid-primary-500)_30%)] object-cover shadow-[0_4px_14px_-4px_rgba(15,23,42,0.45)]";
 const AVATAR_FALLBACK_LG =
   "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[color:color-mix(in_srgb,var(--eid-card)_70%,var(--eid-primary-500)_30%)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_35%,var(--eid-surface)_65%),var(--eid-surface))] text-sm font-black text-eid-primary-200 shadow-[0_4px_14px_-4px_rgba(15,23,42,0.45)]";
+const RESULT_SHARE_BUTTON =
+  "inline-flex min-h-[2.55rem] flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-[11px] font-black transition active:scale-[0.99] disabled:cursor-wait disabled:opacity-70";
 
 type ResumoHistoricoItem = {
   id: number | string;
@@ -70,6 +72,321 @@ type Props = {
    */
   swapSets?: boolean;
 };
+
+type ResultadoSharePayload = {
+  ladoA: string;
+  ladoB: string;
+  placar: string;
+  origem: "Ranking" | "Torneio";
+  dataHora: string;
+  local: string | null;
+  sportLabel: string | null;
+  backgroundDataUrl?: string | null;
+  overlayPosition: { x: number; y: number };
+  overlayScale: number;
+  cardVariant: "dark" | "light" | "glass" | "compact";
+  backgroundFilter: "normal" | "dim" | "blur";
+  showMeta: boolean;
+  showBrand: boolean;
+};
+
+const RESULT_SHARE_STORAGE_KEY = "eid:result-share-editor:v1";
+
+function cleanShareText(value: string | null | undefined, fallback = "EsporteID") {
+  const clean = String(value ?? "").replace(/\s+/g, " ").trim();
+  return clean || fallback;
+}
+
+function wrapCanvasText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number) {
+  const words = cleanShareText(text).split(" ");
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const next = current ? `${current} ${word}` : word;
+    if (ctx.measureText(next).width <= maxWidth || !current) {
+      current = next;
+      continue;
+    }
+    lines.push(current);
+    current = word;
+    if (lines.length >= maxLines) break;
+  }
+  if (current && lines.length < maxLines) lines.push(current);
+  if (lines.length === maxLines && words.join(" ").length > lines.join(" ").length) {
+    lines[maxLines - 1] = `${lines[maxLines - 1].replace(/\.+$/u, "")}...`;
+  }
+  return lines;
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Não foi possível gerar a imagem do resultado."));
+    }, "image/png", 0.96);
+  });
+}
+
+function fileToDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error("Falha ao preparar imagem."));
+    reader.onload = () => {
+      if (typeof reader.result === "string") resolve(reader.result);
+      else reject(new Error("Imagem inválida."));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function drawCenteredWrappedText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+  maxLines: number,
+) {
+  const lines = wrapCanvasText(ctx, text, maxWidth, maxLines);
+  lines.forEach((line, idx) => ctx.fillText(line, x, y + idx * lineHeight));
+  return y + Math.max(0, lines.length - 1) * lineHeight;
+}
+
+function canvasColorVar(styles: CSSStyleDeclaration, name: string, fallback: string) {
+  return styles.getPropertyValue(name).trim() || fallback;
+}
+
+function loadCanvasImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Não foi possível carregar a imagem de fundo."));
+    img.src = src;
+  });
+}
+
+function drawImageCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, width: number, height: number) {
+  const scale = Math.max(width / img.naturalWidth, height / img.naturalHeight);
+  const sw = width / scale;
+  const sh = height / scale;
+  const sx = (img.naturalWidth - sw) / 2;
+  const sy = (img.naturalHeight - sh) / 2;
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, width, height);
+}
+
+function overlayTextColor(variant: ResultadoSharePayload["cardVariant"], colors: { fg: string; ink: string }) {
+  return variant === "light" ? colors.ink : colors.fg;
+}
+
+function sportShareTheme(sportLabel: string | null) {
+  const label = cleanShareText(sportLabel, "").toLowerCase();
+  if (/fut|soccer|campo|society|futsal/u.test(label)) return "field";
+  if (/tenis|tênis|padel|beach tennis|pickle/u.test(label)) return "court";
+  if (/basquete|basket/u.test(label)) return "basket";
+  if (/corrida|run|cicl|bike|triathlon/u.test(label)) return "track";
+  if (/volei|vôlei|volley|beach/u.test(label)) return "sand";
+  return "ink";
+}
+
+function drawDefaultSportBackground(ctx: CanvasRenderingContext2D, payload: ResultadoSharePayload, colors: { ink: string; surface: string; primary: string; action: string }) {
+  const theme = sportShareTheme(payload.sportLabel);
+  const gradient = ctx.createLinearGradient(0, 0, 1080, 1920);
+  gradient.addColorStop(0, colors.ink);
+  gradient.addColorStop(0.56, colors.surface);
+  gradient.addColorStop(1, colors.ink);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 1080, 1920);
+
+  ctx.save();
+  ctx.globalAlpha = 0.38;
+  ctx.strokeStyle = theme === "basket" || theme === "sand" ? colors.action : colors.primary;
+  ctx.lineWidth = 10;
+  if (theme === "field") {
+    ctx.strokeRect(90, 300, 900, 1320);
+    ctx.beginPath();
+    ctx.moveTo(90, 960);
+    ctx.lineTo(990, 960);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(540, 960, 150, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (theme === "court") {
+    ctx.strokeRect(120, 300, 840, 1320);
+    ctx.beginPath();
+    ctx.moveTo(120, 960);
+    ctx.lineTo(960, 960);
+    ctx.moveTo(540, 300);
+    ctx.lineTo(540, 1620);
+    ctx.stroke();
+  } else if (theme === "basket") {
+    ctx.beginPath();
+    ctx.arc(540, 1020, 420, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.stroke();
+    ctx.strokeRect(250, 360, 580, 380);
+    ctx.beginPath();
+    ctx.arc(540, 740, 110, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (theme === "track") {
+    for (let i = 0; i < 5; i += 1) {
+      ctx.strokeRect(120 + i * 44, 330 + i * 72, 840 - i * 88, 1280 - i * 144);
+    }
+  } else if (theme === "sand") {
+    ctx.lineWidth = 5;
+    for (let y = 360; y < 1580; y += 90) {
+      ctx.beginPath();
+      ctx.moveTo(130, y);
+      ctx.bezierCurveTo(320, y - 36, 520, y + 36, 760, y - 16);
+      ctx.bezierCurveTo(850, y - 32, 930, y - 10, 990, y + 12);
+      ctx.stroke();
+    }
+  } else {
+    ctx.beginPath();
+    ctx.arc(780, 420, 310, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(280, 1460, 360, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  const glowA = ctx.createRadialGradient(860, 160, 20, 860, 160, 520);
+  glowA.addColorStop(0, colors.primary);
+  glowA.addColorStop(1, "rgba(37, 99, 235, 0)");
+  ctx.fillStyle = glowA;
+  ctx.fillRect(360, -300, 900, 900);
+
+  const glowB = ctx.createRadialGradient(160, 1610, 20, 160, 1610, 520);
+  glowB.addColorStop(0, colors.action);
+  glowB.addColorStop(1, "rgba(249, 115, 22, 0)");
+  ctx.fillStyle = glowB;
+  ctx.fillRect(-260, 1120, 880, 880);
+}
+
+function drawShareResultCard(
+  ctx: CanvasRenderingContext2D,
+  payload: ResultadoSharePayload,
+  colors: { primarySoft: string; action: string; fg: string; muted: string; ink: string },
+) {
+  const baseWidth = payload.cardVariant === "compact" ? 690 : 840;
+  const baseHeight = payload.cardVariant === "compact" ? 500 : 650;
+  const cardWidth = baseWidth * payload.overlayScale;
+  const cardHeight = baseHeight * payload.overlayScale;
+  const x = Math.min(1080 - cardWidth - 70, Math.max(70, payload.overlayPosition.x * 1080 - cardWidth / 2));
+  const y = Math.min(1920 - cardHeight - 120, Math.max(120, payload.overlayPosition.y * 1920 - cardHeight / 2));
+  const text = overlayTextColor(payload.cardVariant, colors);
+  const muted = payload.cardVariant === "light" ? "rgba(11, 29, 46, 0.72)" : colors.muted;
+
+  ctx.fillStyle = "rgba(5, 14, 25, 0.42)";
+  ctx.roundRect(x + 16, y + 20, cardWidth, cardHeight, 54);
+  ctx.fill();
+  ctx.fillStyle =
+    payload.cardVariant === "light"
+      ? "rgba(255, 255, 255, 0.86)"
+      : payload.cardVariant === "glass"
+        ? "rgba(11, 29, 46, 0.48)"
+        : "rgba(11, 29, 46, 0.82)";
+  ctx.roundRect(x, y, cardWidth, cardHeight, 54);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const scale = payload.overlayScale;
+  const center = x + cardWidth / 2;
+  if (payload.showBrand) {
+    ctx.fillStyle = text;
+    ctx.font = `900 ${42 * scale}px Arial, sans-serif`;
+    ctx.fillText("EsporteID", center, y + 72 * scale);
+  }
+
+  ctx.fillStyle = colors.primarySoft;
+  ctx.font = `800 ${24 * scale}px Arial, sans-serif`;
+  ctx.fillText(cleanShareText(payload.sportLabel, "Resultado oficial"), center, y + (payload.showBrand ? 122 : 82) * scale);
+
+  ctx.fillStyle = text;
+  ctx.font = `900 ${42 * scale}px Arial, sans-serif`;
+  drawCenteredWrappedText(ctx, payload.ladoA, center, y + (payload.cardVariant === "compact" ? 160 : 220) * scale, cardWidth * 0.84, 50 * scale, 2);
+
+  ctx.fillStyle = colors.primarySoft;
+  ctx.font = `900 ${28 * scale}px Arial, sans-serif`;
+  ctx.fillText("vs", center, y + (payload.cardVariant === "compact" ? 238 : 318) * scale);
+
+  ctx.fillStyle = text;
+  ctx.font = `900 ${42 * scale}px Arial, sans-serif`;
+  drawCenteredWrappedText(ctx, payload.ladoB, center, y + (payload.cardVariant === "compact" ? 305 : 395) * scale, cardWidth * 0.84, 50 * scale, 2);
+
+  ctx.fillStyle = "rgba(249, 115, 22, 0.18)";
+  ctx.roundRect(center - 210 * scale, y + (payload.cardVariant === "compact" ? 378 : 472) * scale, 420 * scale, 112 * scale, 30 * scale);
+  ctx.fill();
+  ctx.strokeStyle = colors.action;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  ctx.fillStyle = text;
+  ctx.font = `900 ${72 * scale}px Arial, sans-serif`;
+  ctx.fillText(cleanShareText(payload.placar, "-"), center, y + (payload.cardVariant === "compact" ? 436 : 530) * scale);
+
+  if (payload.showMeta && payload.cardVariant !== "compact") {
+    ctx.fillStyle = muted;
+    ctx.font = `800 ${22 * scale}px Arial, sans-serif`;
+    const footer = [payload.origem, payload.dataHora, payload.local?.trim()].filter(Boolean).join(" · ");
+    drawCenteredWrappedText(ctx, footer, center, y + 620 * scale, cardWidth * 0.86, 28 * scale, 1);
+  }
+}
+
+async function createResultadoShareImage(payload: ResultadoSharePayload) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1920;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas indisponível para gerar o resultado.");
+  const styles = getComputedStyle(document.documentElement);
+  const ink = canvasColorVar(styles, "--eid-brand-ink", "rgb(11, 29, 46)");
+  const surface = canvasColorVar(styles, "--eid-surface", "rgb(18, 52, 90)");
+  const primary = canvasColorVar(styles, "--eid-primary-500", "rgb(37, 99, 235)");
+  const primarySoft = canvasColorVar(styles, "--eid-primary-200", "rgb(191, 219, 254)");
+  const action = canvasColorVar(styles, "--eid-action-500", "rgb(249, 115, 22)");
+  const fg = canvasColorVar(styles, "--eid-fg", "rgb(255, 255, 255)");
+  const muted = canvasColorVar(styles, "--eid-text-muted", "rgba(255, 255, 255, 0.72)");
+
+  if (payload.backgroundDataUrl) {
+    const image = await loadCanvasImage(payload.backgroundDataUrl);
+    ctx.save();
+    if (payload.backgroundFilter === "blur") ctx.filter = "blur(10px) saturate(1.08)";
+    drawImageCover(ctx, image, 1080, 1920);
+    ctx.restore();
+    ctx.fillStyle = payload.backgroundFilter === "normal" ? "rgba(0, 0, 0, 0.12)" : "rgba(0, 0, 0, 0.34)";
+    ctx.fillRect(0, 0, 1080, 1920);
+  } else {
+    drawDefaultSportBackground(ctx, payload, { ink, surface, primary, action });
+  }
+
+  drawShareResultCard(ctx, payload, { primarySoft, action, fg, muted, ink });
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.font = "800 30px Arial, sans-serif";
+  if (payload.showBrand) ctx.fillText("esporteid.com.br", 540, 1718);
+
+  const blob = await canvasToBlob(canvas);
+  return new File([blob], `esporteid-resultado-${Date.now()}.png`, { type: "image/png" });
+}
+
+function downloadResultadoFile(file: File) {
+  const url = URL.createObjectURL(file);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = file.name;
+  anchor.rel = "noopener";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
 
 function HistoricoPlacarDisplay({
   item,
@@ -336,6 +653,17 @@ export function EidConfrontoResumoModal({
   const [mounted, setMounted] = useState(false);
   const payload = useMemo(() => parseScorePayloadFromPartidaMensagem(mensagem), [mensagem]);
   const [closing, setClosing] = useState(false);
+  const [shareState, setShareState] = useState<"idle" | "sharing" | "saving" | "done" | "saved" | "error">("idle");
+  const [shareBackgroundDataUrl, setShareBackgroundDataUrl] = useState<string | null>(null);
+  const [shareBackgroundLabel, setShareBackgroundLabel] = useState("Fundo padrão");
+  const [shareOverlayPosition, setShareOverlayPosition] = useState({ x: 0.5, y: 0.58 });
+  const [shareOverlayScale, setShareOverlayScale] = useState(1);
+  const [shareCardVariant, setShareCardVariant] = useState<ResultadoSharePayload["cardVariant"]>("dark");
+  const [shareBackgroundFilter, setShareBackgroundFilter] = useState<ResultadoSharePayload["backgroundFilter"]>("dim");
+  const [shareShowMeta, setShareShowMeta] = useState(true);
+  const [shareShowBrand, setShareShowBrand] = useState(true);
+  const sharePreviewRef = useRef<HTMLDivElement | null>(null);
+  const shareFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const hrefA =
     (ladoAProfileHref && String(ladoAProfileHref).trim()) ||
@@ -378,6 +706,179 @@ export function EidConfrontoResumoModal({
       document.body.style.overflow = prevOverflow;
     };
   }, [open, closeWithAnimation]);
+
+  const sharePayload = useMemo<ResultadoSharePayload>(
+    () => ({
+      ladoA,
+      ladoB,
+      placar: placarBase,
+      origem,
+      dataHora,
+      local,
+      sportLabel: sportLabel ?? null,
+      backgroundDataUrl: shareBackgroundDataUrl,
+      overlayPosition: shareOverlayPosition,
+      overlayScale: shareOverlayScale,
+      cardVariant: shareCardVariant,
+      backgroundFilter: shareBackgroundFilter,
+      showMeta: shareShowMeta,
+      showBrand: shareShowBrand,
+    }),
+    [
+      dataHora,
+      ladoA,
+      ladoB,
+      local,
+      origem,
+      placarBase,
+      shareBackgroundDataUrl,
+      shareBackgroundFilter,
+      shareCardVariant,
+      shareOverlayPosition,
+      shareOverlayScale,
+      shareShowBrand,
+      shareShowMeta,
+      sportLabel,
+    ],
+  );
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(RESULT_SHARE_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<ResultadoSharePayload>;
+      if (saved.overlayPosition) setShareOverlayPosition(saved.overlayPosition);
+      if (typeof saved.overlayScale === "number") setShareOverlayScale(Math.min(1.18, Math.max(0.74, saved.overlayScale)));
+      if (saved.cardVariant) setShareCardVariant(saved.cardVariant);
+      if (saved.backgroundFilter) setShareBackgroundFilter(saved.backgroundFilter);
+      if (typeof saved.showMeta === "boolean") setShareShowMeta(saved.showMeta);
+      if (typeof saved.showBrand === "boolean") setShareShowBrand(saved.showBrand);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        RESULT_SHARE_STORAGE_KEY,
+        JSON.stringify({
+          overlayPosition: shareOverlayPosition,
+          overlayScale: shareOverlayScale,
+          cardVariant: shareCardVariant,
+          backgroundFilter: shareBackgroundFilter,
+          showMeta: shareShowMeta,
+          showBrand: shareShowBrand,
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+  }, [shareBackgroundFilter, shareCardVariant, shareOverlayPosition, shareOverlayScale, shareShowBrand, shareShowMeta]);
+
+  const updateShareOverlayFromPointer = useCallback((clientX: number, clientY: number) => {
+    const preview = sharePreviewRef.current;
+    if (!preview) return;
+    const rect = preview.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    setShareOverlayPosition({
+      x: Math.min(0.86, Math.max(0.14, (clientX - rect.left) / rect.width)),
+      y: Math.min(0.82, Math.max(0.18, (clientY - rect.top) / rect.height)),
+    });
+  }, []);
+
+  const handleSharePhotoChange = useCallback(async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    if (!file) return;
+    try {
+      setShareBackgroundDataUrl(await fileToDataUrl(file));
+      setShareBackgroundLabel(file.name || "Foto personalizada");
+    } catch {
+      setShareState("error");
+      window.setTimeout(() => setShareState("idle"), 2200);
+    } finally {
+      event.currentTarget.value = "";
+    }
+  }, []);
+
+  const resetSharePhoto = useCallback(() => {
+    setShareBackgroundDataUrl(null);
+    setShareBackgroundLabel("Fundo padrão");
+    setShareOverlayPosition({ x: 0.5, y: 0.58 });
+    setShareOverlayScale(1);
+  }, []);
+
+  const shareCaption = useMemo(
+    () =>
+      `${ladoA} ${placarBase} ${ladoB}${sportLabel ? ` · ${sportLabel}` : ""}. Resultado registrado no EsporteID.`,
+    [ladoA, ladoB, placarBase, sportLabel],
+  );
+
+  const handleShareResultado = useCallback(async () => {
+    setShareState("sharing");
+    try {
+      const file = await createResultadoShareImage(sharePayload);
+      if (window.eidNativeShareFile) {
+        await window.eidNativeShareFile({
+          url: await fileToDataUrl(file),
+          fileName: file.name,
+          mimeType: file.type,
+          title: "Resultado EsporteID",
+          text: shareCaption,
+        });
+        setShareState("done");
+        return;
+      }
+      const nav = navigator as Navigator & {
+        canShare?: (data: ShareData) => boolean;
+        share?: (data: ShareData) => Promise<void>;
+      };
+      const data: ShareData = {
+        title: "Resultado EsporteID",
+        text: shareCaption,
+        files: [file],
+      };
+      if (nav.share && (!nav.canShare || nav.canShare(data))) {
+        await nav.share(data);
+        setShareState("done");
+      } else {
+        downloadResultadoFile(file);
+        setShareState("saved");
+      }
+    } catch (error) {
+      if ((error as { name?: string })?.name === "AbortError") {
+        setShareState("idle");
+        return;
+      }
+      setShareState("error");
+    } finally {
+      window.setTimeout(() => setShareState("idle"), 2200);
+    }
+  }, [shareCaption, sharePayload]);
+
+  const handleSaveResultado = useCallback(async () => {
+    setShareState("saving");
+    try {
+      const file = await createResultadoShareImage(sharePayload);
+      if (window.eidNativeShareFile) {
+        await window.eidNativeShareFile({
+          url: await fileToDataUrl(file),
+          fileName: file.name,
+          mimeType: file.type,
+          title: "Salvar resultado EsporteID",
+          text: shareCaption,
+        });
+        setShareState("saved");
+        return;
+      }
+      downloadResultadoFile(file);
+      setShareState("saved");
+    } catch {
+      setShareState("error");
+    } finally {
+      window.setTimeout(() => setShareState("idle"), 2200);
+    }
+  }, [shareCaption, sharePayload]);
 
   const overlay =
     mounted && open ? (
@@ -586,6 +1087,217 @@ export function EidConfrontoResumoModal({
                     </div>
                   </div>
                 )}
+                <div className="mt-4 rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-border-subtle)_82%)] bg-eid-surface/35 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                  <input
+                    ref={shareFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleSharePhotoChange}
+                    aria-label="Escolher foto de fundo"
+                  />
+                  <div className="mb-2.5 grid gap-2 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                    <div
+                      ref={sharePreviewRef}
+                      data-eid-result-share-preview
+                      className="relative mx-auto aspect-[9/16] w-full max-w-[11rem] touch-none overflow-hidden rounded-2xl border border-[color:color-mix(in_srgb,var(--eid-primary-500)_22%,var(--eid-border-subtle)_78%)] bg-[linear-gradient(155deg,var(--eid-brand-ink),color-mix(in_srgb,var(--eid-primary-500)_34%,var(--eid-surface)),var(--eid-brand-ink))] shadow-[0_12px_28px_-22px_rgba(0,0,0,0.8)]"
+                      style={
+                        shareBackgroundDataUrl
+                          ? {
+                              backgroundImage: `linear-gradient(rgba(0,0,0,${
+                                shareBackgroundFilter === "normal" ? "0.12" : "0.34"
+                              }),rgba(0,0,0,${shareBackgroundFilter === "normal" ? "0.12" : "0.34"})), url(${shareBackgroundDataUrl})`,
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
+                              filter: shareBackgroundFilter === "blur" ? "saturate(1.05)" : undefined,
+                            }
+                          : undefined
+                      }
+                      onPointerDown={(event) => {
+                        event.currentTarget.setPointerCapture(event.pointerId);
+                        updateShareOverlayFromPointer(event.clientX, event.clientY);
+                      }}
+                      onPointerMove={(event) => {
+                        if (event.buttons !== 1) return;
+                        updateShareOverlayFromPointer(event.clientX, event.clientY);
+                      }}
+                    >
+                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_12%,color-mix(in_srgb,var(--eid-primary-500)_34%,transparent),transparent_42%),radial-gradient(circle_at_16%_88%,color-mix(in_srgb,var(--eid-action-500)_26%,transparent),transparent_42%)]" />
+                      <div
+                        className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-xl border px-2.5 py-2 text-center shadow-[0_10px_24px_-14px_rgba(0,0,0,0.85)] ${
+                          shareCardVariant === "light"
+                            ? "border-white/50 bg-white/85 text-eid-brand-ink"
+                            : shareCardVariant === "glass"
+                              ? "border-white/25 bg-eid-brand-ink/55 text-eid-fg backdrop-blur-sm"
+                              : "border-white/20 bg-[rgba(11,29,46,0.82)] text-eid-fg"
+                        }`}
+                        style={{
+                          left: `${shareOverlayPosition.x * 100}%`,
+                          top: `${shareOverlayPosition.y * 100}%`,
+                          width: `${(shareCardVariant === "compact" ? 64 : 78) * shareOverlayScale}%`,
+                        }}
+                      >
+                        {shareShowBrand ? <p className="text-[8px] font-black uppercase tracking-[0.12em] text-eid-primary-200">EsporteID</p> : null}
+                        <p className="mt-1 line-clamp-1 text-[10px] font-black leading-tight text-eid-fg">{ladoA}</p>
+                        <p className="text-[8px] font-black text-eid-primary-200">vs</p>
+                        <p className="line-clamp-1 text-[10px] font-black leading-tight text-eid-fg">{ladoB}</p>
+                        <p className="mt-1 rounded-lg border border-eid-action-500/40 bg-eid-action-500/15 py-1 text-base font-black tabular-nums text-eid-fg">
+                          {placarBase}
+                        </p>
+                        {shareShowMeta && shareCardVariant !== "compact" ? (
+                          <p className="mt-1 line-clamp-1 text-[7px] font-bold text-eid-text-secondary">{origem}</p>
+                        ) : null}
+                      </div>
+                    </div>
+                    <div className="flex min-w-0 flex-col justify-center gap-2">
+                      <p className="text-[10px] font-black uppercase tracking-[0.12em] text-eid-primary-300">Arte para Stories</p>
+                      <p className="truncate text-[11px] font-semibold text-eid-text-secondary">{shareBackgroundLabel}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => shareFileInputRef.current?.click()}
+                          className="inline-flex min-h-[2.45rem] items-center justify-center gap-1.5 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/12 px-2 text-[10px] font-black text-eid-primary-100 transition hover:bg-eid-primary-500/18"
+                        >
+                          <ImageIcon className="h-3.5 w-3.5" aria-hidden />
+                          Foto
+                        </button>
+                        <button
+                          type="button"
+                          onClick={resetSharePhoto}
+                          className="inline-flex min-h-[2.45rem] items-center justify-center gap-1.5 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 text-[10px] font-black text-eid-text-secondary transition hover:text-eid-fg"
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" aria-hidden />
+                          Padrão
+                        </button>
+                      </div>
+                      <p className="text-[10px] leading-snug text-eid-text-secondary">
+                        Arraste o cartão na prévia para posicionar o resultado sobre a foto.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mb-2.5 space-y-2 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/45 p-2">
+                    <label className="block text-[10px] font-black uppercase tracking-[0.12em] text-eid-text-secondary">
+                      Tamanho
+                      <input
+                        type="range"
+                        min="0.74"
+                        max="1.18"
+                        step="0.02"
+                        value={shareOverlayScale}
+                        onChange={(event) => setShareOverlayScale(Number(event.currentTarget.value))}
+                        className="mt-1 block w-full accent-[color:var(--eid-action-500)]"
+                      />
+                    </label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[
+                        ["Topo", 0.5, 0.28],
+                        ["Centro", 0.5, 0.5],
+                        ["Baixo", 0.5, 0.72],
+                      ].map(([label, x, y]) => (
+                        <button
+                          key={String(label)}
+                          type="button"
+                          onClick={() => setShareOverlayPosition({ x: Number(x), y: Number(y) })}
+                          className="min-h-[2.15rem] rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 text-[10px] font-black text-eid-text-secondary transition hover:text-eid-fg"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {[
+                        ["dark", "Escuro"],
+                        ["light", "Claro"],
+                        ["glass", "Vidro"],
+                        ["compact", "Mini"],
+                      ].map(([value, label]) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setShareCardVariant(value as ResultadoSharePayload["cardVariant"])}
+                          className={`min-h-[2.15rem] rounded-lg border px-1.5 text-[9px] font-black transition ${
+                            shareCardVariant === value
+                              ? "border-eid-primary-500/45 bg-eid-primary-500/16 text-eid-primary-100"
+                              : "border-[color:var(--eid-border-subtle)] bg-eid-surface/70 text-eid-text-secondary"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[
+                        ["normal", "Natural"],
+                        ["dim", "Escuro"],
+                        ["blur", "Blur"],
+                      ].map(([value, label]) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setShareBackgroundFilter(value as ResultadoSharePayload["backgroundFilter"])}
+                          className={`min-h-[2.15rem] rounded-lg border px-1.5 text-[9px] font-black transition ${
+                            shareBackgroundFilter === value
+                              ? "border-eid-action-500/45 bg-eid-action-500/16 text-eid-action-100"
+                              : "border-[color:var(--eid-border-subtle)] bg-eid-surface/70 text-eid-text-secondary"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <label className="flex min-h-[2.25rem] items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 text-[10px] font-black text-eid-text-secondary">
+                        Data/local
+                        <input type="checkbox" checked={shareShowMeta} onChange={(event) => setShareShowMeta(event.currentTarget.checked)} />
+                      </label>
+                      <label className="flex min-h-[2.25rem] items-center justify-between rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/70 px-2 text-[10px] font-black text-eid-text-secondary">
+                        Marca
+                        <input type="checkbox" checked={shareShowBrand} onChange={(event) => setShareShowBrand(event.currentTarget.checked)} />
+                      </label>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={handleShareResultado}
+                      disabled={shareState === "sharing" || shareState === "saving"}
+                      className={`${RESULT_SHARE_BUTTON} border-eid-primary-500/38 bg-eid-primary-500/14 text-eid-primary-100 hover:border-eid-primary-400/55 hover:bg-eid-primary-500/20`}
+                    >
+                      {shareState === "sharing" ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      ) : (
+                        <Share2 className="h-4 w-4" aria-hidden />
+                      )}
+                      {shareState === "sharing"
+                        ? "Gerando imagem"
+                        : shareState === "done"
+                          ? "Compartilhado"
+                          : "Compartilhar resultado"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveResultado}
+                      disabled={shareState === "sharing" || shareState === "saving"}
+                      className={`${RESULT_SHARE_BUTTON} border-eid-action-500/38 bg-eid-action-500/14 text-eid-action-100 hover:border-eid-action-400/55 hover:bg-eid-action-500/20`}
+                    >
+                      {shareState === "saving" ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      ) : (
+                        <Download className="h-4 w-4" aria-hidden />
+                      )}
+                      {shareState === "saving" ? "Salvando" : shareState === "saved" ? "Imagem salva" : "Salvar imagem"}
+                    </button>
+                  </div>
+                  {shareState === "error" ? (
+                    <p className="mt-2 text-center text-[10px] font-semibold text-rose-300">
+                      Não foi possível gerar a imagem agora.
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-center text-[10px] leading-snug text-eid-text-secondary">
+                      No celular, escolha Instagram, Stories ou outro app na tela de compartilhamento.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -767,6 +1479,7 @@ export function EidConfrontoResumoModal({
     <>
       {asListItem ? (
         <li
+          data-eid-confronto-row
           role="button"
           tabIndex={0}
           onClick={(event) => {
@@ -786,6 +1499,7 @@ export function EidConfrontoResumoModal({
         </li>
       ) : (
         <div
+          data-eid-confronto-row
           role="button"
           tabIndex={0}
           onClick={(event) => {

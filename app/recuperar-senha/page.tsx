@@ -36,11 +36,15 @@ export default function RecuperarSenhaPage() {
   }
 
   return (
-    <main className="eid-auth-bg flex min-h-[100svh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.25rem,env(safe-area-inset-top,0px)+0.75rem)] text-eid-fg sm:px-6 sm:py-8">
-      <div className="eid-native-auth-enter w-full max-w-[340px] pb-6">
+    <main
+      data-eid-public-auth
+      data-eid-touch-ui
+      className="eid-auth-bg eid-public-auth-shell flex min-h-[100svh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.25rem,env(safe-area-inset-top,0px)+0.75rem)] text-eid-fg sm:px-6 sm:py-8"
+    >
+      <div className="eid-native-auth-enter eid-public-auth-stack w-full max-w-[340px] pb-6">
         <LogoFull className="mb-5 mt-1 flex justify-center" />
 
-        <div className="eid-auth-card p-5 sm:p-6">
+        <div className="eid-auth-card eid-public-auth-card p-5 sm:p-6">
           <div className="mb-5 flex flex-col items-center">
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--eid-action-500)_20%,var(--eid-card)),color-mix(in_srgb,var(--eid-action-500)_8%,var(--eid-card)))] shadow-[0_0_22px_-6px_rgba(249,115,22,0.4),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-eid-action-500/25">
               <svg viewBox="0 0 24 24" className="h-[22px] w-[22px] text-eid-action-400" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -78,6 +82,10 @@ export default function RecuperarSenhaPage() {
                 id="rec-email"
                 type="email"
                 autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="email"
+                enterKeyHint="send"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

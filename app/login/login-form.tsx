@@ -202,8 +202,12 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
   }
 
   return (
-    <main className="eid-auth-bg flex min-h-[100svh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.25rem,env(safe-area-inset-top,0px)+0.75rem)] text-eid-fg sm:px-6 sm:py-8">
-      <div className="eid-native-auth-enter w-full max-w-[340px] pb-6">
+    <main
+      data-eid-public-auth
+      data-eid-touch-ui
+      className="eid-auth-bg eid-public-auth-shell flex min-h-[100svh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.25rem,env(safe-area-inset-top,0px)+0.75rem)] text-eid-fg sm:px-6 sm:py-8"
+    >
+      <div className="eid-native-auth-enter eid-public-auth-stack w-full max-w-[340px] pb-6">
         <Link
           href="/?home=1"
           className="mb-4 hidden max-w-none text-[13px] leading-snug text-eid-text-muted no-underline transition hover:text-eid-fg sm:inline-block"
@@ -213,7 +217,7 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
 
         <LogoFull size="auth" className="mb-6 mt-2 sm:mb-7" />
 
-        <div className="eid-auth-card p-5 sm:p-6">
+        <div className="eid-auth-card eid-public-auth-card p-5 sm:p-6">
           <div className="mb-5 flex flex-col items-center">
             <h2 className="text-[16px] font-black uppercase tracking-[0.1em] text-eid-fg">
               Acesse sua conta
@@ -338,6 +342,10 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
                 name="email"
                 type="email"
                 autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="email"
+                enterKeyHint="next"
                 placeholder="E-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -357,6 +365,7 @@ export function LoginForm({ nextPath, cadastroOk, codigoOk, bootstrapError = nul
                 name="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
+                enterKeyHint="done"
                 placeholder="Senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

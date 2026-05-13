@@ -321,11 +321,15 @@ export function CadastroForm() {
   }
 
   return (
-    <main className="eid-auth-bg flex min-h-[100svh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.25rem,env(safe-area-inset-top,0px)+0.75rem)] text-eid-fg sm:px-6 sm:py-8">
-      <div className="eid-native-auth-enter w-full max-w-[340px] pb-6">
+    <main
+      data-eid-public-auth
+      data-eid-touch-ui
+      className="eid-auth-bg eid-public-auth-shell flex min-h-[100svh] w-full flex-1 flex-col items-center justify-center overflow-x-hidden px-4 py-[max(1.25rem,env(safe-area-inset-top,0px)+0.75rem)] text-eid-fg sm:px-6 sm:py-8"
+    >
+      <div className="eid-native-auth-enter eid-public-auth-stack w-full max-w-[340px] pb-6">
         <LogoFull className="mb-5 mt-1" />
 
-        <div className="eid-auth-card p-5">
+        <div className="eid-auth-card eid-public-auth-card p-5">
           <h2 className="mb-[15px] mt-0 text-center text-[14px] font-extrabold uppercase tracking-[1px] text-eid-primary-500">
             Criar Conta
           </h2>
@@ -352,6 +356,8 @@ export function CadastroForm() {
                 name="nome"
                 placeholder="Nome completo"
                 required
+                autoComplete="name"
+                enterKeyHint="next"
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 onBlur={(e) => setNome(normalizePtBrNameCase(e.target.value))}
@@ -372,6 +378,11 @@ export function CadastroForm() {
                 id="cad-email"
                 placeholder="E-mail"
                 required
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="email"
+                enterKeyHint="next"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="min-w-0 flex-1 border-0 bg-transparent pl-2.5 text-[15px] text-eid-fg outline-none placeholder:text-eid-text-secondary/85"
@@ -392,6 +403,8 @@ export function CadastroForm() {
                 placeholder="Crie uma senha"
                 required
                 minLength={6}
+                autoComplete="new-password"
+                enterKeyHint="next"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="min-w-0 flex-1 border-0 bg-transparent pl-2.5 text-[15px] text-eid-fg outline-none placeholder:text-eid-text-secondary/85"
@@ -418,6 +431,7 @@ export function CadastroForm() {
                 required
                 value={genero}
                 onChange={(e) => setGenero(e.target.value)}
+                autoComplete="sex"
                 className={`eid-select min-w-0 flex-1 cursor-pointer border-0 pl-2.5 text-[15px] outline-none ${genero ? "text-eid-fg" : "text-eid-text-secondary"}`}
               >
                 <option value="" disabled>
@@ -463,6 +477,7 @@ export function CadastroForm() {
                   required: true,
                   autoComplete: "tel",
                   inputMode: "tel",
+                  enterKeyHint: "next",
                   "aria-label": "Número de WhatsApp (internacional)",
                 }}
                 countrySelectProps={{
@@ -500,6 +515,8 @@ export function CadastroForm() {
                 required
                 value={localizacao}
                 readOnly
+                autoComplete="address-level2"
+                enterKeyHint="done"
                 onBlur={(e) => setLocalizacao(normalizePtBrNameCaseLoose(e.target.value))}
                 className="min-w-0 flex-1 border-0 bg-transparent pl-2.5 text-[15px] text-eid-fg outline-none placeholder:text-eid-text-secondary/85"
               />

@@ -138,6 +138,11 @@ export async function PerfilHistoricoCompletoListaStream({ profileId, perfilNome
             opponentId={oponenteId ?? id}
             opponentNome={oponenteNome}
             opponentAvatarUrl={oponente?.avatarUrl ?? null}
+            opponentEidHref={
+              oponenteId && p.esporte_id != null
+                ? `/perfil/${encodeURIComponent(oponenteId)}/eid/${Number(p.esporte_id)}?from=${encodeURIComponent(`/perfil/${id}/historico`)}`
+                : null
+            }
             opponentNotaEid={oponenteNota}
             res={res}
             profileLinkFrom={`/perfil/${id}/historico`}

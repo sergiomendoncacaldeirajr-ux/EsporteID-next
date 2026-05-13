@@ -9,7 +9,11 @@ export const metadata: Metadata = {
 
 export default function TermosPage() {
   return (
-    <article className="mx-auto max-w-3xl flex-1 px-4 py-12 text-eid-text-secondary">
+    <article
+      data-eid-public-legal
+      data-eid-touch-ui
+      className="eid-public-legal-page mx-auto max-w-3xl flex-1 px-4 py-12 text-eid-text-secondary"
+    >
       <p className="text-sm text-eid-text-muted">Versão {LEGAL_VERSIONS.termos}</p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-eid-fg">Termos de Uso</h1>
       <p className="mt-4 text-sm leading-relaxed">

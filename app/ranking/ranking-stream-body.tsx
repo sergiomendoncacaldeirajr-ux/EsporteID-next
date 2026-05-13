@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import Link from "next/link";
 import {
   RankingGenderToggle,
   RankingPeriodToggle,
@@ -440,6 +441,29 @@ export async function RankingStreamBody({
 
       {rankingAll.length > 0 ? (
         <>
+          <section className="relative z-[1] mt-4">
+            <Link
+              href={`/confrontos?tipo=${state.tipo}${selectedEsporteId ? `&esporte=${selectedEsporteId}` : ""}`}
+              className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-2xl border border-eid-primary-500/25 bg-[linear-gradient(150deg,color-mix(in_srgb,var(--eid-card)_92%,var(--eid-primary-500)_8%),color-mix(in_srgb,var(--eid-surface)_90%,var(--eid-action-500)_10%))] px-3 py-3 shadow-[0_16px_38px_-32px_rgba(15,23,42,0.82)] transition hover:border-eid-primary-500/45 active:scale-[0.995]"
+            >
+              <span className="min-w-0">
+                <span className="block text-[9px] font-black uppercase tracking-[0.12em] text-eid-action-300">
+                  Central de confrontos
+                </span>
+                <span className="mt-0.5 block truncate text-[13px] font-black text-eid-fg">
+                  Próximos jogos e resultados perto de você
+                </span>
+                <span className="mt-1 block text-[10px] text-eid-text-secondary">
+                  {state.tipo === "individual" ? "Individual" : state.tipo === "dupla" ? "Duplas" : "Times"}
+                  {esporteNomeAtual ? ` · ${esporteNomeAtual}` : ""}
+                </span>
+              </span>
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-eid-action-500/35 bg-eid-action-500/15 text-eid-action-300 transition group-hover:bg-eid-action-500/22">
+                VS
+              </span>
+            </Link>
+          </section>
+
           <section className="relative z-[1] mt-4 md:mt-6">
             <div className={rankingCardShellClass}>
               <div className={rankingCardHeadWrapClass}>

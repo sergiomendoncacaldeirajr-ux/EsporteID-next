@@ -1500,7 +1500,9 @@ export function OnboardingWizard({
   return (
     <main
       data-eid-onboarding-step={step}
-      className="eid-auth-bg flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7"
+      data-eid-onboarding-native
+      data-eid-touch-ui
+      className="eid-auth-bg eid-onboarding-native-shell flex w-full flex-1 flex-col items-center overflow-x-hidden px-4 pb-28 pt-14 text-eid-fg sm:px-6 sm:pt-7"
     >
       <OnboardingTopbar />
       <div ref={topAnchorRef} />
@@ -1519,7 +1521,7 @@ export function OnboardingWizard({
           <LogoFull className="mb-5 mt-1" />
         </div>
 
-        <div className="eid-auth-card p-6 sm:p-8">
+        <div className="eid-auth-card eid-onboarding-native-card p-6 sm:p-8">
           <div className="mb-5">
             <div className="mb-2.5 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">

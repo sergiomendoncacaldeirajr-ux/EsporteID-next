@@ -935,6 +935,117 @@ body.eid-capacitor-app {
   opacity: 1;
 }
 
+.eid-native-permission-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483645;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  background:
+    linear-gradient(180deg, rgba(11, 29, 46, 0.16), rgba(11, 29, 46, 0.74)),
+    rgba(0, 0, 0, 0.58);
+  color: var(--eid-fg);
+}
+
+.eid-native-permission-card {
+  width: min(100%, 25rem);
+  border: 1px solid color-mix(in srgb, var(--eid-primary-500) 18%, var(--eid-border-subtle));
+  border-radius: var(--eid-radius-lg);
+  background:
+    linear-gradient(155deg, color-mix(in srgb, var(--eid-card) 95%, var(--eid-primary-500) 5%), var(--eid-card));
+  box-shadow:
+    0 24px 72px -28px rgba(0, 0, 0, 0.72),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: 1rem;
+  padding-bottom: max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.65rem));
+  transform: translateZ(0);
+}
+
+.eid-native-permission-mark {
+  display: inline-flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--eid-primary-500) 18%, var(--eid-card));
+  color: var(--eid-primary-300);
+  box-shadow: 0 0 28px -10px color-mix(in srgb, var(--eid-primary-500) 70%, transparent);
+}
+
+.eid-native-permission-title {
+  margin-top: 0.75rem;
+  color: var(--eid-fg);
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.eid-native-permission-body,
+.eid-native-permission-note {
+  margin-top: 0.5rem;
+  color: var(--eid-text-muted);
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.eid-native-permission-note {
+  color: var(--eid-text-secondary);
+  font-size: 0.75rem;
+}
+
+.eid-native-permission-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.eid-native-permission-cancel,
+.eid-native-permission-continue {
+  min-height: 2.85rem;
+  border-radius: var(--eid-radius-md);
+  font-size: 0.8125rem;
+  font-weight: 850;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.eid-native-permission-cancel {
+  border: 1px solid var(--eid-border-subtle);
+  background: color-mix(in srgb, var(--eid-surface) 82%, transparent);
+  color: var(--eid-text-muted);
+}
+
+.eid-native-permission-continue {
+  border: 0;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--eid-action-400) 72%, white 28%),
+    var(--eid-action-500) 48%,
+    var(--eid-action-600)
+  );
+  color: white;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 24px -13px color-mix(in srgb, var(--eid-action-500) 85%, transparent);
+}
+
+.eid-native-permission-cancel:active,
+.eid-native-permission-continue:active {
+  transform: scale(0.98);
+}
+
+@media (min-width: 640px) {
+  .eid-native-permission-panel {
+    align-items: center;
+  }
+}
+
 .eid-native-diagnostics-panel {
   position: fixed;
   inset: 0;
@@ -2330,6 +2441,160 @@ button[data-eid-remove-media-btn="true"]:active {
     inset 0 -1px 0 rgba(0, 0, 0, 0.12);
 }
 
+.eid-public-auth-shell {
+  min-height: 100dvh;
+  scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 1rem);
+  scroll-padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.25rem);
+  -webkit-text-size-adjust: 100%;
+}
+
+.eid-public-auth-stack {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  transform: translateZ(0);
+}
+
+.eid-public-auth-card {
+  transform: translateZ(0);
+  touch-action: manipulation;
+}
+
+[data-eid-public-auth] input:not([type="checkbox"]):not([type="radio"]):not(.sr-only),
+[data-eid-public-auth] select,
+[data-eid-public-auth] textarea {
+  min-height: 2.875rem;
+  font-size: 16px;
+  caret-color: var(--eid-primary-500);
+  -webkit-tap-highlight-color: transparent;
+}
+
+[data-eid-public-auth] button,
+[data-eid-public-auth] a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+[data-eid-public-auth] button {
+  min-height: 2.75rem;
+}
+
+[data-eid-public-auth] [role="alert"],
+[data-eid-public-auth] [aria-live] {
+  scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 1rem);
+}
+
+[data-eid-public-auth] .cadastro-phone {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+[data-eid-public-auth] .cadastro-phone .PhoneInputInput {
+  min-height: 2.875rem;
+  font-size: 16px;
+}
+
+[data-eid-public-auth] .cadastro-country-select {
+  min-height: 2.75rem;
+}
+
+@media (max-width: 420px) {
+  .eid-public-auth-shell {
+    justify-content: flex-start;
+  }
+
+  .eid-public-auth-stack {
+    max-width: min(100%, 23rem);
+    padding-top: 0.25rem;
+  }
+}
+
+@supports (padding: max(0px)) {
+  .eid-public-auth-shell {
+    padding-bottom: max(1.25rem, calc(env(safe-area-inset-bottom, 0px) + 0.875rem));
+  }
+}
+
+.eid-public-legal-page {
+  width: 100%;
+  padding-top: max(2rem, calc(env(safe-area-inset-top, 0px) + 1.25rem));
+  padding-bottom: max(3rem, calc(env(safe-area-inset-bottom, 0px) + 2rem));
+  scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 4rem);
+  -webkit-text-size-adjust: 100%;
+}
+
+.eid-public-legal-page h1 {
+  font-size: clamp(1.75rem, 8vw, 2.5rem);
+  line-height: 1.05;
+}
+
+.eid-public-legal-page h2,
+.eid-public-legal-page h3 {
+  scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 4rem);
+}
+
+.eid-public-legal-page p,
+.eid-public-legal-page li {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+}
+
+.eid-public-legal-page a {
+  min-height: 2rem;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+@media (max-width: 640px) {
+  .eid-public-legal-page {
+    padding-left: 1.125rem;
+    padding-right: 1.125rem;
+  }
+
+  .eid-public-legal-page section {
+    margin-top: 2rem;
+  }
+
+  .eid-public-legal-page ul {
+    list-style-position: outside;
+    padding-left: 1.125rem;
+  }
+}
+
+.eid-onboarding-native-shell {
+  min-height: 100dvh;
+  padding-top: max(3.5rem, calc(env(safe-area-inset-top, 0px) + 1.75rem));
+  padding-bottom: max(7rem, calc(env(safe-area-inset-bottom, 0px) + 6rem));
+  scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 4rem);
+  scroll-padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6rem);
+  -webkit-text-size-adjust: 100%;
+}
+
+.eid-onboarding-native-card {
+  transform: translateZ(0);
+  touch-action: manipulation;
+}
+
+[data-eid-onboarding-native] button,
+[data-eid-onboarding-native] a,
+[data-eid-onboarding-native] label {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+[data-eid-onboarding-native] input:not([type="checkbox"]):not([type="radio"]):not(.sr-only),
+[data-eid-onboarding-native] select,
+[data-eid-onboarding-native] textarea {
+  min-height: 2.75rem;
+  font-size: 16px;
+  caret-color: var(--eid-primary-500);
+}
+
+@media (max-width: 640px) {
+  .eid-onboarding-native-card {
+    padding-left: 1.125rem !important;
+    padding-right: 1.125rem !important;
+  }
+}
+
 /* Onboarding: ajuste fino (maior que o padrão, sem exagero). */
 :where([data-eid-onboarding-step]) :where(input.eid-input-dark, select.eid-input-dark, textarea.eid-input-dark) {
   min-height: 2.1rem !important;
@@ -2352,6 +2617,12 @@ button[data-eid-remove-media-btn="true"]:active {
   min-height: 3.25rem !important;
   padding: 0.85rem 1.25rem !important;
   letter-spacing: 0.01em !important;
+}
+
+[data-eid-onboarding-native] :where(input.eid-input-dark, select.eid-input-dark, textarea.eid-input-dark) {
+  min-height: 2.75rem !important;
+  font-size: 16px !important;
+  line-height: 1.35 !important;
 }
 
 @media (min-width: 640px) {
@@ -4051,6 +4322,27 @@ body.eid-capacitor-app [data-eid-profile-eid-page] :where([href*="/desafio"], [h
 body.eid-native-android-app [data-eid-perfil-page] :where([href*="/desafio"], [href*="/match"], button[type="submit"]),
 body.eid-capacitor-app [data-eid-perfil-page] :where([href*="/desafio"], [href*="/match"], button[type="submit"]) {
   min-height: 3rem;
+}
+
+body.eid-native-android-app [data-eid-confronto-row],
+body.eid-capacitor-app [data-eid-confronto-row] {
+  scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 4.5rem);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.eid-native-android-app [data-eid-confronto-row] :where(a[href], button),
+body.eid-capacitor-app [data-eid-confronto-row] :where(a[href], button) {
+  touch-action: manipulation;
+}
+
+body.eid-native-android-app [data-eid-confronto-row] :where(img),
+body.eid-capacitor-app [data-eid-confronto-row] :where(img) {
+  background: color-mix(in srgb, var(--eid-surface) 78%, var(--eid-primary-500));
+}
+
+body.eid-native-android-app [data-eid-profile-eid-page] :where([role="dialog"]),
+body.eid-capacitor-app [data-eid-profile-eid-page] :where([role="dialog"]) {
+  overscroll-behavior: contain;
 }
 
 body.eid-native-android-app .eid-profile-edit-screen :where(textarea),
