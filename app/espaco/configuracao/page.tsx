@@ -194,8 +194,8 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
 
       <SettingsSection
         defaultOpen
-        title="Perfil e reservas"
-        description="Dados públicos, contatos, entrada de sócios, limites e políticas de cancelamento."
+        title="Dados, regras e valores"
+        description="Cards separados para perfil público, contatos, preço de reserva, regras e cancelamento."
         meta={`Modo atual: ${modoReserva}`}
       >
           <EspacoConfigForm
@@ -253,24 +253,40 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
           {(unidades ?? []).map((u) => {
             const sim = (v: boolean) => (v ? "sim" : "nao");
             return (
-              <div
+              <details
                 key={u.id}
-                className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-4"
+                className="group overflow-hidden rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50"
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 p-4 transition hover:bg-eid-surface/60 [&::-webkit-details-marker]:hidden">
+                  <span className="min-w-0">
+                    <span className="block text-sm font-black text-eid-fg">{u.nome}</span>
+                    <span className="mt-1 flex flex-wrap gap-2 text-[11px] font-semibold text-eid-text-secondary">
+                      <span>{u.tipo_unidade ?? "Unidade"}</span>
+                      {u.superficie ? <span>· {u.superficie}</span> : null}
+                      <span>· {u.status_operacao ?? "ativa"}</span>
+                      <span>· {u.logo_arquivo ? "foto cadastrada" : "sem foto"}</span>
+                    </span>
+                  </span>
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-card/70 text-base font-black text-eid-fg transition group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <div className="border-t border-[color:var(--eid-border-subtle)] p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
                   <form
                     action={atualizarUnidadeEspacoAction}
                     encType="multipart/form-data"
-                    className="min-w-0 flex-1 space-y-2"
+                    className="min-w-0 flex-1 space-y-4"
                   >
                     <input type="hidden" name="espaco_id" value={selectedSpace.id} />
                     <input type="hidden" name="unidade_id" value={u.id} />
-                    <p className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">Editar unidade</p>
-                    <input
-                      name="nome"
-                      defaultValue={u.nome}
-                      className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
-                    />
+                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
+                        Nome da unidade
+                        <input name="nome" defaultValue={u.nome} className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2 text-sm" />
+                      </label>
+                      <EspacoUnidadeLogoControl currentUrl={u.logo_arquivo ?? null} />
+                    </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <FieldChoice label="Tipo">
                         <ChoiceGroup name="tipo_unidade" value={u.tipo_unidade ?? "quadra"} options={TIPO_UNIDADE_OPTIONS} />
@@ -283,13 +299,6 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
                       name="modalidade"
                       defaultValue={u.modalidade ?? ""}
                       placeholder="Modalidade (opcional)"
-                      className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
-                    />
-                    <textarea
-                      name="observacoes"
-                      rows={2}
-                      defaultValue={u.observacoes ?? ""}
-                      placeholder="Observações internas"
                       className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
                     />
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -321,7 +330,13 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
                         <ChoiceGroup name="aceita_torneios" value={sim(Boolean(u.aceita_torneios))} options={SIM_NAO_OPTIONS} />
                       </FieldChoice>
                     </div>
-                    <EspacoUnidadeLogoControl currentUrl={u.logo_arquivo ?? null} />
+                    <textarea
+                      name="observacoes"
+                      rows={2}
+                      defaultValue={u.observacoes ?? ""}
+                      placeholder="Observações internas"
+                      className="eid-input-dark w-full rounded-xl px-3 py-2 text-sm"
+                    />
                     <button
                       type="submit"
                       className="rounded-xl border border-eid-primary-500/40 bg-eid-primary-500/15 px-4 py-2 text-xs font-bold text-eid-primary-200"
@@ -340,7 +355,8 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
                     </button>
                   </form>
                 </div>
-              </div>
+                </div>
+              </details>
             );
           })}
         </div>
