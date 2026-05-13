@@ -1982,6 +1982,58 @@ select,
     border-radius: 9999px !important;
   }
 
+  [data-eid-perfil-page] .eid-profile-friendly-toggle {
+    min-height: 22px !important;
+    height: 22px !important;
+    padding: 0 0.5rem !important;
+    font-size: 10px !important;
+    line-height: 1 !important;
+    border-radius: 9999px !important;
+  }
+
+  .eid-agenda-compact-whatsapp {
+    min-height: 24px !important;
+    height: 24px !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 7px !important;
+    line-height: 1 !important;
+    border-radius: 9999px !important;
+  }
+
+  [data-eid-team-management] .eid-team-type-option {
+    min-height: 0 !important;
+    height: 100% !important;
+    padding: 0 0.375rem !important;
+    font-size: 10px !important;
+    line-height: 1 !important;
+  }
+
+  [data-eid-team-management] .eid-team-sport-chip {
+    min-height: 30px !important;
+    height: 30px !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+  }
+
+  [data-eid-team-management] .eid-team-gps-btn {
+    min-height: 29px !important;
+    height: 29px !important;
+    padding: 0 0.5rem !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+    border-radius: 9999px !important;
+  }
+
+  [data-eid-team-management] .eid-team-submit-btn {
+    min-height: 40px !important;
+    padding: 0 1rem !important;
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+  }
+
   :where([data-eid-touch-ui]:not([data-eid-touch-ui-compact])) :where(form) {
     gap: 0.6rem;
   }

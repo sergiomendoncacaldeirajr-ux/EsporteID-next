@@ -386,15 +386,15 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
                 <button
                   type="button"
                   onClick={() => setTipo("time")}
-                  className={`inline-flex min-w-0 flex-1 items-center justify-center rounded-sm px-1.5 ${
+                  className={`eid-team-type-option inline-flex min-w-0 flex-1 items-center justify-center rounded-sm px-1.5 ${
                     isCadastrarStyle ? "gap-1 text-[10px] font-black tracking-[0.02em]" : "text-[9px] font-semibold uppercase leading-none tracking-[0.03em]"
                   } transition-all duration-200 ${
                     tipo === "time"
                       ? isCadastrarStyle
-                        ? "bg-[#DDE9FF] text-[#2563EB]"
+                        ? "bg-eid-primary-500/15 text-eid-primary-300 shadow-[0_6px_14px_-12px_rgba(37,99,235,0.45)]"
                         : "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
                       : isCadastrarStyle
-                        ? "text-[#334155] hover:bg-eid-surface/35"
+                        ? "text-eid-text-secondary hover:bg-eid-surface/35 hover:text-eid-fg"
                       : "text-eid-text-secondary hover:bg-eid-surface/35"
                   }`}
                 >
@@ -404,15 +404,15 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
                 <button
                   type="button"
                   onClick={() => setTipo("dupla")}
-                  className={`inline-flex min-w-0 flex-1 items-center justify-center rounded-sm px-1.5 ${
+                  className={`eid-team-type-option inline-flex min-w-0 flex-1 items-center justify-center rounded-sm px-1.5 ${
                     isCadastrarStyle ? "gap-1 text-[10px] font-black tracking-[0.02em]" : "text-[9px] font-semibold uppercase leading-none tracking-[0.03em]"
                   } transition-all duration-200 ${
                     tipo === "dupla"
                       ? isCadastrarStyle
-                        ? "bg-[#DDE9FF] text-[#2563EB]"
+                        ? "bg-eid-primary-500/15 text-eid-primary-300 shadow-[0_6px_14px_-12px_rgba(37,99,235,0.45)]"
                         : "bg-[color-mix(in_srgb,var(--eid-primary-500)_30%,var(--eid-surface)_70%)] text-eid-fg shadow-[0_6px_16px_-10px_rgba(37,99,235,0.42)]"
                       : isCadastrarStyle
-                        ? "text-[#334155] hover:bg-eid-surface/35"
+                        ? "text-eid-text-secondary hover:bg-eid-surface/35 hover:text-eid-fg"
                       : "text-eid-text-secondary hover:bg-eid-surface/35"
                   }`}
                 >
@@ -439,7 +439,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
                     key={e.id}
                     type="button"
                     onClick={() => setEsporteId(String(e.id))}
-                    className={`inline-flex h-[1.45rem] shrink-0 items-center justify-center rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.025em] transition-all duration-200 ${
+                    className={`eid-team-sport-chip inline-flex h-[1.45rem] shrink-0 items-center justify-center rounded-md px-1.5 text-[8px] font-semibold uppercase leading-none tracking-[0.025em] transition-all duration-200 ${
                       esporteId === String(e.id)
                         ? "bg-eid-primary-500/14 text-eid-fg shadow-[0_7px_16px_-11px_rgba(37,99,235,0.4)]"
                         : "text-eid-text-secondary hover:bg-eid-surface/55"
@@ -469,7 +469,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
               <button
                 type="button"
                 onClick={obterLocalizacao}
-                className={`${isCadastrarStyle ? "inline-flex min-h-[29px] items-center gap-1 rounded-full border border-[#C9D8F6] bg-white px-2 text-[8px] font-black uppercase tracking-[0.02em] text-[#2563EB] transition-colors hover:bg-[#EEF4FF]" : "inline-flex items-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.07em] text-eid-fg transition-colors hover:border-eid-primary-500/35"}`}
+                className={`eid-team-gps-btn ${isCadastrarStyle ? "inline-flex min-h-[29px] items-center gap-1 rounded-full border border-[color:color-mix(in_srgb,var(--eid-border-subtle)_72%,var(--eid-primary-500)_28%)] bg-eid-surface/70 px-2 text-[8px] font-black uppercase tracking-[0.02em] text-eid-primary-300 transition-colors hover:bg-eid-primary-500/10" : "inline-flex items-center rounded-lg border border-[color:var(--eid-border-subtle)] bg-eid-surface/65 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.07em] text-eid-fg transition-colors hover:border-eid-primary-500/35"}`}
               >
                 {isCadastrarStyle ? (
                   <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -567,7 +567,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
               <button
                 type="submit"
                 disabled={createPending || createUsernameStatus === "taken"}
-                className="mt-2.5 inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-[12px] border border-[#F97316] bg-[#FF6A00] px-4 text-[11px] font-black uppercase tracking-[0.03em] text-white shadow-[0_10px_20px_-14px_rgba(249,115,22,0.8)] transition hover:brightness-105 disabled:opacity-60"
+                className="eid-team-submit-btn mt-2.5 inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-[12px] border border-[#F97316] bg-[#FF6A00] px-4 text-[11px] font-black uppercase tracking-[0.03em] text-white shadow-[0_10px_20px_-14px_rgba(249,115,22,0.8)] transition hover:brightness-105 disabled:opacity-60"
               >
                 {createPending ? (
                   <>
@@ -594,7 +594,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
           <button
             type="submit"
             disabled={createPending || createUsernameStatus === "taken"}
-            className="rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/22 px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/65 hover:bg-eid-primary-500/30 disabled:opacity-60 sm:col-span-2"
+            className="eid-team-submit-btn rounded-xl border border-eid-primary-500/45 bg-eid-primary-500/22 px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-eid-fg transition-all duration-200 hover:-translate-y-[1px] hover:border-eid-primary-500/65 hover:bg-eid-primary-500/30 disabled:opacity-60 sm:col-span-2"
           >
             {createPending
               ? "Criando…"
@@ -758,7 +758,7 @@ export function TeamManagementPanel(props: TeamManagementPanelProps) {
   );
 
   return (
-    <section className="mb-4 min-w-0 space-y-3">
+    <section className="mb-4 min-w-0 space-y-3" data-eid-team-management data-eid-team-create-style={createStyle}>
       {showCreate ? (
         panelMode === "create" ? (
           <div className="eid-surface-panel overflow-hidden rounded-2xl p-0">

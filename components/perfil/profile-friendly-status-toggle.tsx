@@ -117,7 +117,7 @@ export function ProfileFriendlyStatusToggle({ userId, initialOn, initialExpiresA
       type="button"
       onClick={toggle}
       disabled={pending}
-      className={`inline-flex min-h-[22px] items-center gap-1 rounded-full border px-2 py-px text-[10px] font-semibold transition-all duration-200 ${tone} ${pending ? "opacity-70" : ""}`}
+      className={`eid-profile-friendly-toggle inline-flex min-h-[22px] items-center gap-1 rounded-full border px-2 py-px text-[10px] font-semibold transition-all duration-200 ${tone} ${pending ? "opacity-70" : ""}`}
       aria-pressed={effectiveOn}
       aria-label={`Amistoso ${effectiveOn ? "ligado" : "desligado"}${titleExtra}`}
       title={`Alternar disponibilidade para amistoso (até 4 h ligado)${titleExtra}`}
