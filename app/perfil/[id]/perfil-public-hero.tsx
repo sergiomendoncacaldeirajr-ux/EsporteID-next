@@ -75,7 +75,7 @@ export function PerfilPublicoHero({
             text="Veja este perfil no EsporteID"
             path={`/perfil/${id}`}
             iconOnly
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-black/45 text-white/85 shadow-sm backdrop-blur-md transition hover:bg-black/60"
+            className="eid-profile-share-action inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/25 bg-black/60 text-white shadow-sm backdrop-blur-md transition hover:bg-black/70"
           />
           {isSelf ? <ProfileCoverControl hasCover={Boolean(perfil.foto_capa)} /> : null}
           {!isSelf ? <ProfileDenunciarButton alvoUsuarioId={id} compact /> : null}

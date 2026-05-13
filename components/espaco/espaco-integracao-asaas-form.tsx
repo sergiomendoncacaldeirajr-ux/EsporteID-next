@@ -22,36 +22,71 @@ export function FormAsaasParceiro({
 }) {
   const [state, formAction, pending] = useActionState(salvarDadosContaAsaasParceiroAction, initial);
   const [modoIntegracao, setModoIntegracao] = useState(defaultModo);
+  const [editing, setEditing] = useState(!defaultEmail && !defaultWalletId);
+  const hasWallet = Boolean(defaultWalletId?.trim());
   return (
     <form action={formAction} className="space-y-4 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/80 p-4 sm:p-5">
       <input type="hidden" name="espaco_id" value={espacoId} />
       <input type="hidden" name="modo_integracao" value={modoIntegracao} />
-      <h2 className="text-sm font-bold text-eid-fg">Atualizar dados de recebimento</h2>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {[
-          ["criar_nova", "Cadastrar no Asaas", "Criar uma nova conta de recebimentos."],
-          ["conta_existente", "Informar conta existente", "Use os dados cadastrais da conta Asaas atual."],
-        ].map(([id, title, text]) => {
-          const modo = id as "criar_nova" | "conta_existente";
-          const selected = modoIntegracao === modo;
-          return (
+      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+        <p className="text-sm font-black text-emerald-100">
+          {hasWallet ? "Recebimentos ativos" : "Dados de recebimento"}
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-emerald-100/85">
+          {hasWallet
+            ? "Wallet ID salvo. As próximas cobranças pagas já conseguem repassar o líquido ao espaço."
+            : "Complete os dados para liberar repasses das cobranças pagas."}
+        </p>
+        {hasWallet ? (
+          <div className="mt-3 flex flex-wrap gap-2">
             <button
-              key={id}
               type="button"
-              onClick={() => setModoIntegracao(modo)}
-              className={`rounded-xl border p-3 text-left transition ${
-                selected
-                  ? "border-eid-action-500/70 bg-eid-action-500/12"
-                  : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 hover:border-eid-primary-500/45"
-              }`}
-              aria-pressed={selected}
+              onClick={() => setEditing((value) => !value)}
+              className="rounded-xl border border-emerald-400/35 bg-emerald-400/10 px-3 py-2 text-xs font-bold text-emerald-100"
             >
-              <span className="block text-xs font-bold text-eid-fg">{title}</span>
-              <span className="mt-1 block text-[11px] leading-relaxed text-eid-text-secondary">{text}</span>
+              {editing ? "Ocultar edição" : "Atualizar dados"}
             </button>
-          );
-        })}
+            <button
+              type="button"
+              onClick={() => {
+                setModoIntegracao("conta_existente");
+                setEditing(true);
+              }}
+              className="rounded-xl border border-eid-action-500/40 bg-eid-action-500/12 px-3 py-2 text-xs font-bold text-eid-action-400"
+            >
+              Trocar conta
+            </button>
+          </div>
+        ) : null}
       </div>
+      {editing ? (
+        <>
+      <h2 className="text-sm font-bold text-eid-fg">{hasWallet ? "Editar dados de recebimento" : "Atualizar dados de recebimento"}</h2>
+      <div className="grid gap-2 sm:grid-cols-2">
+          {[
+            ["criar_nova", "Cadastrar no Asaas", "Criar uma nova conta de recebimentos."],
+            ["conta_existente", "Informar conta existente", "Use os dados cadastrais da conta Asaas atual."],
+          ].map(([id, title, text]) => {
+            const modo = id as "criar_nova" | "conta_existente";
+            const selected = modoIntegracao === modo;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setModoIntegracao(modo)}
+                className={`rounded-xl border p-3 text-left transition ${
+                  selected
+                    ? "border-eid-action-500/70 bg-eid-action-500/12"
+                    : "border-[color:var(--eid-border-subtle)] bg-eid-surface/45 hover:border-eid-primary-500/45"
+                }`}
+                aria-pressed={selected}
+              >
+                <span className="block text-xs font-bold text-eid-fg">{title}</span>
+                <span className="mt-1 block text-[11px] leading-relaxed text-eid-text-secondary">{text}</span>
+              </button>
+            );
+          })}
+        </div>
       <p className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-3 text-xs leading-relaxed text-eid-text-secondary">
         {modoIntegracao === "criar_nova"
           ? "Preencha os dados da conta. O EsporteID cria a subconta no Asaas e guarda o Wallet ID para os recebimentos."
@@ -150,8 +185,10 @@ export function FormAsaasParceiro({
         disabled={pending}
         className="eid-btn-primary w-full rounded-xl px-4 py-3 text-sm font-bold"
       >
-        {pending ? "Salvando..." : "Salvar dados da conta"}
+        {pending ? "Salvando..." : hasWallet ? "Salvar alterações" : "Salvar dados da conta"}
       </button>
+        </>
+      ) : null}
       {state.message ? (
         <p className={`text-xs ${state.ok ? "text-eid-primary-300" : "text-red-300"}`}>{state.message}</p>
       ) : null}

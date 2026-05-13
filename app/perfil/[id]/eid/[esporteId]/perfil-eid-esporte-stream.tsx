@@ -87,6 +87,18 @@ function EidPanelFallback({ rows = 2 }: { rows?: number }) {
   );
 }
 
+function iniciaisEidPerfil(nome: string | null | undefined): string {
+  const parts = String(nome ?? "")
+    .trim()
+    .split(/\s+/u)
+    .filter(Boolean);
+  if (parts.length === 0) return "AT";
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 function EidGridFallback() {
   return (
     <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -149,6 +161,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
   if (!perfil) notFound();
   const ue = ueRes.data;
   if (!ue) notFound();
+  const perfilHref = `/perfil/${encodeURIComponent(profileId)}?from=${encodeURIComponent(nextPath)}`;
   const partidasIndividuaisPromise = supabase
     .from("partidas")
     .select(
@@ -684,14 +697,40 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
           <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-eid-action-500/8 blur-3xl" aria-hidden />
           <div className="pointer-events-none absolute -bottom-6 left-4 h-24 w-24 rounded-full bg-eid-primary-500/10 blur-3xl" aria-hidden />
           <div className="relative px-3 py-3 sm:px-4 sm:py-4">
-            <p className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-eid-action-400">
-              <span aria-hidden>{esporteIcon}</span>
-              {nomeEsporte}
-            </p>
-            <h1 className="mt-1 text-[17px] font-black leading-tight tracking-tight text-eid-fg sm:text-xl">{perfil.nome ?? "Atleta"}</h1>
-            <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary">
-              {resumoAtivo.experienceLabel}
-            </p>
+            <div className="flex min-w-0 items-center gap-3">
+              <Link
+                href={perfilHref}
+                className="shrink-0 rounded-full ring-2 ring-eid-primary-500/35 transition hover:ring-eid-primary-500/70 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-eid-primary-400"
+                aria-label={`Ver perfil de ${perfil.nome ?? "Atleta"}`}
+              >
+                {perfil.avatar_url ? (
+                  <img
+                    src={perfil.avatar_url}
+                    alt=""
+                    className="h-12 w-12 rounded-full border border-[color:var(--eid-border-subtle)] object-cover sm:h-14 sm:w-14"
+                  />
+                ) : (
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full border border-eid-primary-500/40 bg-eid-surface text-sm font-black text-eid-primary-300 sm:h-14 sm:w-14">
+                    {iniciaisEidPerfil(perfil.nome)}
+                  </span>
+                )}
+              </Link>
+              <div className="min-w-0">
+                <p className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-eid-action-400">
+                  <span aria-hidden>{esporteIcon}</span>
+                  {nomeEsporte}
+                </p>
+                <Link
+                  href={perfilHref}
+                  className="mt-1 block text-[17px] font-black leading-tight tracking-tight text-eid-fg transition hover:text-eid-primary-300 focus:outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-eid-primary-400 sm:text-xl"
+                >
+                  {perfil.nome ?? "Atleta"}
+                </Link>
+                <p className="mt-1 text-[10px] leading-relaxed text-eid-text-secondary">
+                  {resumoAtivo.experienceLabel}
+                </p>
+              </div>
+            </div>
 
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <div className="overflow-hidden rounded-xl border border-[rgba(37,99,235,0.3)] bg-[linear-gradient(145deg,color-mix(in_srgb,var(--eid-primary-500)_18%,var(--eid-card)),color-mix(in_srgb,var(--eid-primary-700)_10%,var(--eid-surface)))] px-2 py-2.5 text-center shadow-[0_6px_18px_-10px_rgba(37,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.06)]">

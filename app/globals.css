@@ -1982,6 +1982,22 @@ select,
     border-radius: 9999px !important;
   }
 
+  [data-eid-perfil-page] .eid-profile-share-action {
+    width: 2rem !important;
+    height: 2rem !important;
+    min-height: 2rem !important;
+    min-width: 2rem !important;
+    padding: 0 !important;
+    color: #fff !important;
+    border-radius: 9999px !important;
+  }
+
+  [data-eid-perfil-page] .eid-profile-share-action svg {
+    width: 0.875rem !important;
+    height: 0.875rem !important;
+    stroke-width: 2.35 !important;
+  }
+
   [data-eid-perfil-page] .eid-profile-friendly-toggle {
     min-height: 22px !important;
     height: 22px !important;

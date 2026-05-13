@@ -88,7 +88,12 @@ export function FormacaoEidEsporteHeroStrip({
             <span className="inline-block rounded border border-eid-action-500/35 bg-eid-action-500/10 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-eid-action-500">
               {tipoLabel} · {nomeEsporte}
             </span>
-            <h1 className="mt-1 text-base font-black leading-tight text-eid-fg sm:text-lg">{titulo}</h1>
+            <Link
+              href={linkPerfilFormacao}
+              className="mt-1 block text-base font-black leading-tight text-eid-fg transition hover:text-eid-primary-300 focus:outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-eid-primary-400 sm:text-lg"
+            >
+              {titulo}
+            </Link>
             {subtitulo ? <p className="mt-0.5 text-[11px] text-eid-text-secondary">{subtitulo}</p> : null}
             {duplaRegistroLinks && duplaRegistroLinks.length > 0 ? (
               <p className="mt-1 text-[10px] text-eid-text-secondary">

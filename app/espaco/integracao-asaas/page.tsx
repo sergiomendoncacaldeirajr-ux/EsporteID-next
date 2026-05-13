@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FormAsaasParceiro } from "@/components/espaco/espaco-integracao-asaas-form";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
-import { ArrowRight, CheckCircle2, Clock3, Landmark, ShieldCheck, WalletCards } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock3, ExternalLink, Landmark, ShieldCheck, WalletCards } from "lucide-react";
 
 function statusInfo(status: string | null | undefined, walletId: string | null | undefined) {
   if (String(walletId ?? "").trim()) {
@@ -67,6 +67,8 @@ export default async function EspacoIntegracaoAsaasPage() {
     }
   })();
   const fluxo = dados.fluxo_integracao_asaas === "conta_existente" ? "conta_existente" : "criar_nova";
+  const hasContaDados = Boolean(parceiro?.email && parceiro?.cpf_cnpj);
+  const hasWallet = Boolean(String(parceiro?.wallet_id ?? "").trim());
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
@@ -110,8 +112,13 @@ export default async function EspacoIntegracaoAsaasPage() {
                 <dd className="mt-1 text-sm font-semibold text-eid-fg">{maskCpfCnpj(parceiro?.cpf_cnpj)}</dd>
               </div>
               <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/70 p-3">
-                <dt className="font-bold uppercase tracking-wide text-eid-text-secondary">ID Asaas</dt>
-                <dd className="mt-1 break-all font-mono text-[11px] text-eid-fg">{parceiro?.asaas_account_id ?? "Ainda não gerado"}</dd>
+                <dt className="font-bold uppercase tracking-wide text-eid-text-secondary">Tipo de vínculo</dt>
+                <dd className="mt-1 text-sm font-semibold text-eid-fg">
+                  {parceiro?.asaas_account_id ? "Subconta criada pelo EsporteID" : "Conta Asaas existente"}
+                </dd>
+                {parceiro?.asaas_account_id ? (
+                  <p className="mt-1 break-all font-mono text-[11px] text-eid-text-secondary">{parceiro.asaas_account_id}</p>
+                ) : null}
               </div>
               <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-card/70 p-3">
                 <dt className="font-bold uppercase tracking-wide text-eid-text-secondary">Wallet</dt>
@@ -129,21 +136,38 @@ export default async function EspacoIntegracaoAsaasPage() {
             Próximos passos
           </h2>
           <div className="mt-4 space-y-3">
-            {[
-              "Confirmar dados da conta de recebimento.",
-              "Para conta Asaas existente, pegar o Wallet ID em Minha conta > Integrações no site do Asaas.",
-              "Concluir validações sensíveis no ambiente seguro do Asaas quando solicitado.",
-              "Usar o financeiro do espaço para acompanhar cobranças e recebimentos.",
-            ].map((item) => (
-              <div key={item} className="flex gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3 text-sm text-eid-text-secondary">
-                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-eid-action-400" aria-hidden />
-                <p>{item}</p>
-              </div>
-            ))}
+            <a href="#dados-recebimento" className="flex gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3 text-sm text-eid-text-secondary transition hover:border-eid-primary-500/45 hover:bg-eid-surface/70">
+              {hasContaDados ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" aria-hidden /> : <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-eid-action-400" aria-hidden />}
+              <span className="min-w-0">
+                <span className="block font-semibold text-eid-fg">Confirmar dados da conta de recebimento</span>
+                <span className="mt-0.5 block text-xs">Abrir o formulário para revisar e salvar e-mail, CPF/CNPJ e Wallet ID.</span>
+              </span>
+            </a>
+            <a href="https://www.asaas.com/painel/integracoes" target="_blank" rel="noreferrer" className="flex gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3 text-sm text-eid-text-secondary transition hover:border-eid-action-500/45 hover:bg-eid-surface/70">
+              {hasWallet ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" aria-hidden /> : <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-eid-action-400" aria-hidden />}
+              <span className="min-w-0">
+                <span className="block font-semibold text-eid-fg">Pegar Wallet ID no Asaas</span>
+                <span className="mt-0.5 block text-xs">No site do Asaas, acesse Minha conta &gt; Integrações.</span>
+              </span>
+            </a>
+            <a href="https://www.asaas.com" target="_blank" rel="noreferrer" className="flex gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3 text-sm text-eid-text-secondary transition hover:border-eid-action-500/45 hover:bg-eid-surface/70">
+              <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-eid-action-400" aria-hidden />
+              <span className="min-w-0">
+                <span className="block font-semibold text-eid-fg">Concluir validações no Asaas</span>
+                <span className="mt-0.5 block text-xs">Quando o Asaas solicitar documentos ou prova de vida, conclua dentro do ambiente seguro deles.</span>
+              </span>
+            </a>
+            <Link href="/espaco/financeiro" className="flex gap-3 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3 text-sm text-eid-text-secondary transition hover:border-eid-primary-500/45 hover:bg-eid-surface/70">
+              <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-eid-action-400" aria-hidden />
+              <span className="min-w-0">
+                <span className="block font-semibold text-eid-fg">Acompanhar cobranças e recebimentos</span>
+                <span className="mt-0.5 block text-xs">Abrir o financeiro do espaço.</span>
+              </span>
+            </Link>
           </div>
         </section>
 
-        <section className="eid-mobile-section rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-3 sm:p-4">
+        <section id="dados-recebimento" className="eid-mobile-section scroll-mt-24 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-3 sm:p-4">
           <FormAsaasParceiro
             espacoId={selectedSpace.id}
             defaultNome={parceiro?.nome_razao_social ?? ""}
