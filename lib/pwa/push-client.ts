@@ -5,8 +5,14 @@ import { Capacitor } from "@capacitor/core";
 const EID_PUSH_OPT_OUT_KEY = "eid_push_opt_out";
 const EID_ANDROID_FCM_TOKEN_KEY = "eid_android_fcm_token";
 const EID_ANDROID_FCM_OPT_OUT_KEY = "eid_android_fcm_opt_out";
-const EID_NATIVE_APP_VERSION = "7.0.12";
+const EID_NATIVE_APP_VERSION = "7.0.13";
 let enablePushInFlight: Promise<PushSubscription> | null = null;
+
+declare global {
+  interface Window {
+    eidNativeExplainPermission?: (payload: { kind: "camera" | "photos" | "notifications" | "calendar" | "files" }) => Promise<boolean>;
+  }
+}
 
 export function getPushClientOptOut(): boolean {
   if (typeof window === "undefined") return false;
@@ -245,6 +251,11 @@ async function enablePushNotificationsOnce(vapidPublicKey: string) {
     throw new Error("Não foi possível ativar as notificações agora.");
   }
   setPushClientOptOut(false);
+
+  if (Notification.permission === "default") {
+    const allowed = await window.eidNativeExplainPermission?.({ kind: "notifications" });
+    if (allowed === false) throw new Error("Permissão de notificação não concedida.");
+  }
 
   const permission =
     Notification.permission === "default" && !isStandaloneAndroidApp()

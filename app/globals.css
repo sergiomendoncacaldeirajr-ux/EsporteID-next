@@ -3450,3 +3450,72 @@ a.eid-list-item:hover, button.eid-list-item:hover {
     font-size: 0.875rem;
   }
 }
+
+/* ─── Capacitor native motion/cache affordances ─────────────────────────── */
+.eid-native-pull-refresh {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top, 0px) + 0.35rem);
+  z-index: 2147483642;
+  display: inline-flex;
+  width: 2.35rem;
+  height: 2.35rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--eid-primary-500) 28%, var(--eid-border-subtle));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--eid-card) 92%, transparent);
+  box-shadow: 0 16px 34px -24px rgba(0, 0, 0, 0.86);
+  pointer-events: none;
+  transition: transform 0.16s ease, opacity 0.16s ease;
+}
+
+.eid-native-pull-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid color-mix(in srgb, var(--eid-primary-500) 24%, transparent);
+  border-top-color: var(--eid-action-500);
+  border-radius: 999px;
+}
+
+.eid-native-pull-spinner.is-spinning {
+  animation: eid-native-spin 0.72s linear infinite;
+}
+
+.eid-native-transition-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483641;
+  width: 100%;
+  height: calc(env(safe-area-inset-top, 0px) + 2px);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.eid-native-transition-bar::after {
+  content: "";
+  position: absolute;
+  left: -42%;
+  bottom: 0;
+  width: 42%;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, var(--eid-primary-500), var(--eid-action-500));
+  animation: eid-native-progress 0.95s ease-in-out infinite;
+}
+
+@keyframes eid-native-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes eid-native-progress {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(340%);
+  }
+}

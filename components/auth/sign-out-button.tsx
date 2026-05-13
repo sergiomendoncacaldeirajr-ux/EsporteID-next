@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { clearNativeBiometricLogin } from "@/lib/native/secure-session";
 
 function IconPower({ className }: { className?: string }) {
   return (
@@ -20,6 +21,7 @@ export function SignOutButton({ variant = "default" }: Props) {
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
+    await clearNativeBiometricLogin();
     /* Navegação cheia: cookies + middleware + RSC ficam alinhados (evita `refresh` + `push` em estado inconsistente). */
     window.location.assign("/");
   }

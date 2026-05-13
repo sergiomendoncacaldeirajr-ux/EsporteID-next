@@ -4,6 +4,12 @@ import { Capacitor } from "@capacitor/core";
 
 type NativeImageSource = "camera" | "gallery";
 
+declare global {
+  interface Window {
+    eidNativeExplainPermission?: (payload: { kind: "camera" | "photos" | "notifications" | "calendar" | "files" }) => Promise<boolean>;
+  }
+}
+
 function base64ToFile(base64: string, fileName: string, mimeType: string) {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
@@ -18,6 +24,9 @@ export function isNativeCameraAvailable() {
 }
 
 export async function pickNativeImage(source: NativeImageSource) {
+  const allowed = await window.eidNativeExplainPermission?.({ kind: source === "camera" ? "camera" : "photos" });
+  if (allowed === false) return null;
+
   const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
   const photo = await Camera.getPhoto({
     quality: 86,

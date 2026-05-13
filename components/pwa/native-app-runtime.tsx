@@ -1,10 +1,11 @@
 "use client";
 
 import { Capacitor } from "@capacitor/core";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { ActiveAppContext } from "@/lib/auth/active-context";
 import { EID_SYSTEM_UI_THEME_COLOR_DARK, EID_SYSTEM_UI_THEME_COLOR_LIGHT } from "@/lib/branding";
+import { authenticateNativeUser, getNativeBiometricLogin } from "@/lib/native/secure-session";
 import {
   getAndroidNativePushOptOut,
   isNativeAndroidApp,
@@ -26,6 +27,14 @@ type NativeSharePayload = {
   dialogTitle?: string;
 };
 
+type NativeFileSharePayload = {
+  url: string;
+  fileName?: string;
+  mimeType?: string;
+  title?: string;
+  text?: string;
+};
+
 type NativeCalendarPayload = {
   title?: string;
   location?: string | null;
@@ -37,6 +46,16 @@ type NativeCalendarPayload = {
 type NativePushData = {
   url?: unknown;
 };
+
+type NativePermissionKind = "camera" | "photos" | "notifications" | "calendar" | "files";
+
+type NativePermissionPrompt = {
+  kind: NativePermissionKind;
+  resolve: (allowed: boolean) => void;
+};
+
+const EID_NATIVE_ROUTE_CACHE = "eid-native-route-cache-v1";
+const EID_NATIVE_CACHE_META_KEY = "eidNativeRouteCacheMeta";
 
 const EID_ANDROID_PUSH_CHANNELS = [
   {
@@ -74,7 +93,9 @@ const EID_ANDROID_PUSH_CHANNELS = [
 declare global {
   interface Window {
     eidNativeShare?: (payload?: NativeSharePayload) => Promise<void>;
+    eidNativeShareFile?: (payload: NativeFileSharePayload) => Promise<void>;
     eidNativeAddCalendarEvent?: (payload: NativeCalendarPayload) => Promise<void>;
+    eidNativeExplainPermission?: (payload: { kind: NativePermissionKind }) => Promise<boolean>;
     EsporteIDAndroid?: {
       addCalendarEvent?: (payload: string) => void;
     };
@@ -122,6 +143,109 @@ function notificationHrefFromData(data: NativePushData | undefined) {
 
 function isExternalHttpUrl(url: URL) {
   return (url.protocol === "https:" || url.protocol === "http:") && url.origin !== window.location.origin;
+}
+
+function safeNativeFileName(fileName: string) {
+  const cleaned = fileName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w.-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 96);
+  return cleaned || `esporteid-${Date.now()}`;
+}
+
+function fileNameFromUrl(url: URL, fallback = "esporteid-arquivo") {
+  const lastPathPart = decodeURIComponent(url.pathname.split("/").filter(Boolean).at(-1) ?? "");
+  const withoutQueryNoise = lastPathPart.split("?")[0]?.trim();
+  return withoutQueryNoise || fallback;
+}
+
+function mimeTypeFromFileName(fileName: string) {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+  switch (extension) {
+    case "pdf":
+      return "application/pdf";
+    case "ics":
+      return "text/calendar";
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "png":
+      return "image/png";
+    case "webp":
+      return "image/webp";
+    case "csv":
+      return "text/csv";
+    case "doc":
+      return "application/msword";
+    case "docx":
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    case "xls":
+      return "application/vnd.ms-excel";
+    case "xlsx":
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    default:
+      return "application/octet-stream";
+  }
+}
+
+function isNativeFileUrl(url: URL, anchor?: HTMLAnchorElement) {
+  if (anchor?.hasAttribute("download")) return true;
+  if (url.pathname.startsWith("/api/calendar/event.ics")) return true;
+  if (url.pathname.includes("/storage/v1/object/")) return true;
+  return /\.(?:pdf|ics|csv|docx?|xlsx?|png|jpe?g|webp)$/i.test(url.pathname);
+}
+
+function blobToBase64(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error("Falha ao preparar arquivo."));
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== "string") {
+        reject(new Error("Arquivo invalido."));
+        return;
+      }
+      resolve(result.split(",")[1] ?? "");
+    };
+    reader.readAsDataURL(blob);
+  });
+}
+
+function nativePermissionCopy(kind: NativePermissionKind) {
+  switch (kind) {
+    case "camera":
+      return {
+        title: "Usar câmera",
+        body: "O EsporteID vai abrir a câmera do aparelho para você enviar ou atualizar uma imagem.",
+        action: "Continuar",
+      };
+    case "photos":
+      return {
+        title: "Escolher foto",
+        body: "O EsporteID vai abrir sua galeria para você selecionar uma imagem.",
+        action: "Abrir galeria",
+      };
+    case "notifications":
+      return {
+        title: "Ativar notificações",
+        body: "Você receberá avisos de agenda, desafios, ranking e comunidade pelo sistema do aparelho.",
+        action: "Ativar",
+      };
+    case "calendar":
+      return {
+        title: "Adicionar à agenda",
+        body: "O EsporteID vai enviar este evento para a agenda oficial do seu aparelho.",
+        action: "Adicionar",
+      };
+    case "files":
+      return {
+        title: "Abrir arquivo",
+        body: "O EsporteID vai preparar o arquivo e abrir as opções nativas do aparelho.",
+        action: "Abrir",
+      };
+  }
 }
 
 function whatsAppUrlFromUrl(url: URL) {
@@ -187,10 +311,56 @@ function getNativeWarmRoutes(userId: string | null | undefined, activeContext: A
   return [...routes];
 }
 
+function nativeCacheableHref(rawHref: string) {
+  let url: URL;
+  try {
+    url = new URL(rawHref, window.location.href);
+  } catch {
+    return null;
+  }
+  if (url.origin !== window.location.origin) return null;
+  if (!url.pathname.startsWith("/")) return null;
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_next/")) return null;
+  return `${url.pathname}${url.search}`;
+}
+
+function rememberNativeCacheMeta(path: string) {
+  try {
+    const raw = window.localStorage.getItem(EID_NATIVE_CACHE_META_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    parsed[path] = Date.now();
+    const entries = Object.entries(parsed)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 24);
+    window.localStorage.setItem(EID_NATIVE_CACHE_META_KEY, JSON.stringify(Object.fromEntries(entries)));
+  } catch {
+    /* ignore */
+  }
+}
+
+function lastNativeCacheAt(path: string) {
+  try {
+    const raw = window.localStorage.getItem(EID_NATIVE_CACHE_META_KEY);
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw) as Record<string, number>;
+    return Number(parsed[path] ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
 export function NativeAppRuntime({ userId, activeContext }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isOffline, setIsOffline] = useState(false);
   const [showStartup, setShowStartup] = useState(false);
+  const [permissionPrompt, setPermissionPrompt] = useState<NativePermissionPrompt | null>(null);
+  const [nativeLocked, setNativeLocked] = useState(false);
+  const [nativeUnlocking, setNativeUnlocking] = useState(false);
+  const [nativeRefreshing, setNativeRefreshing] = useState(false);
+  const [nativeTransitioning, setNativeTransitioning] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [offlineCacheAt, setOfflineCacheAt] = useState(0);
 
   useEffect(() => {
     if (!isAnyNativeApp()) return;
@@ -222,13 +392,24 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
     let cleanup = false;
 
     async function configureNativeShell() {
-      const [{ StatusBar, Style }, { Keyboard, KeyboardResize }, { Network }, { App }, { Browser }, { AppLauncher }] = await Promise.all([
+      const [
+        { StatusBar, Style },
+        { Keyboard, KeyboardResize },
+        { Network },
+        { App },
+        { Browser },
+        { AppLauncher },
+        { Filesystem, Directory },
+        { Share },
+      ] = await Promise.all([
         import("@capacitor/status-bar"),
         import("@capacitor/keyboard"),
         import("@capacitor/network"),
         import("@capacitor/app"),
         import("@capacitor/browser"),
         import("@capacitor/app-launcher"),
+        import("@capacitor/filesystem"),
+        import("@capacitor/share"),
       ]);
 
       const applySystemBars = async () => {
@@ -249,11 +430,17 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
 
       const networkStatus = await Network.getStatus();
       if (!cleanup) setIsOffline(!networkStatus.connected);
+      let lastInactiveAt = 0;
 
       const [networkHandle, appStateHandle, backHandle, urlOpenHandle] = await Promise.all([
         Network.addListener("networkStatusChange", (status) => setIsOffline(!status.connected)),
         App.addListener("appStateChange", (state) => {
-          if (state.isActive) void applySystemBars();
+          if (!state.isActive) {
+            lastInactiveAt = Date.now();
+            return;
+          }
+          void applySystemBars();
+          if (lastInactiveAt && Date.now() - lastInactiveAt > 1500) router.refresh();
         }),
         App.addListener("backButton", ({ canGoBack }) => {
           if (canGoBack) {
@@ -271,18 +458,60 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       const themeObserver = new MutationObserver(() => void applySystemBars());
       themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-eid-theme"] });
 
+      const explainPermission = ({ kind }: { kind: NativePermissionKind }) => {
+        if (!isCapacitorNativeApp()) return Promise.resolve(true);
+        return new Promise<boolean>((resolve) => {
+          setPermissionPrompt({ kind, resolve });
+        });
+      };
+
+      const shareNativeFile = async (payload: NativeFileSharePayload) => {
+        const allowed = await explainPermission({ kind: "files" });
+        if (!allowed) return;
+        const source = new URL(payload.url, window.location.href);
+        const response = await fetch(source.toString(), { credentials: "include" });
+        if (!response.ok) throw new Error("Falha ao baixar arquivo.");
+
+        const blob = await response.blob();
+        const fallbackName = fileNameFromUrl(source);
+        const fileName = safeNativeFileName(payload.fileName || fallbackName);
+        const base64Data = await blobToBase64(blob);
+        const saved = await Filesystem.writeFile({
+          path: `shared/${Date.now()}-${fileName}`,
+          data: base64Data,
+          directory: Directory.Cache,
+          recursive: true,
+        });
+
+        await Share.share({
+          title: payload.title ?? "EsporteID",
+          text: payload.text,
+          files: [saved.uri],
+          dialogTitle: "Abrir ou compartilhar arquivo",
+        });
+      };
+
       const onDocumentClick = (event: MouseEvent) => {
         if (event.defaultPrevented) return;
         const target = event.target;
         if (!(target instanceof Element)) return;
         const anchor = target.closest("a[href]");
         if (!(anchor instanceof HTMLAnchorElement)) return;
-        if (anchor.hasAttribute("download")) return;
         if (anchor.target && anchor.target !== "_self") {
           let external: URL;
           try {
             external = new URL(anchor.href, window.location.href);
           } catch {
+            return;
+          }
+          if (isNativeFileUrl(external, anchor)) {
+            event.preventDefault();
+            void shareNativeFile({
+              url: external.toString(),
+              fileName: anchor.download || fileNameFromUrl(external),
+              mimeType: mimeTypeFromFileName(anchor.download || fileNameFromUrl(external)),
+              title: anchor.textContent?.trim() || "EsporteID",
+            }).catch(() => Browser.open({ url: external.toString() }));
             return;
           }
           const targetWhatsAppUrl = whatsAppUrlFromUrl(external);
@@ -304,6 +533,16 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         } catch {
           return;
         }
+        if (isNativeFileUrl(url, anchor)) {
+          event.preventDefault();
+          void shareNativeFile({
+            url: url.toString(),
+            fileName: anchor.download || fileNameFromUrl(url),
+            mimeType: mimeTypeFromFileName(anchor.download || fileNameFromUrl(url)),
+            title: anchor.textContent?.trim() || "EsporteID",
+          }).catch(() => Browser.open({ url: url.toString() }));
+          return;
+        }
         const whatsAppUrl = whatsAppUrlFromUrl(url);
         if (whatsAppUrl) {
           event.preventDefault();
@@ -315,6 +554,11 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
           void Browser.open({ url: url.toString() });
           return;
         }
+        const internalHref = nativeCacheableHref(url.toString());
+        if (internalHref && internalHref !== `${window.location.pathname}${window.location.search}`) {
+          setNativeTransitioning(true);
+          window.setTimeout(() => setNativeTransitioning(false), 1400);
+        }
         const href = appHrefFromUrl(url.toString());
         if (href && url.origin !== window.location.origin) {
           event.preventDefault();
@@ -322,9 +566,13 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
         }
       };
       document.addEventListener("click", onDocumentClick, { capture: true });
+      window.eidNativeExplainPermission = explainPermission;
+      window.eidNativeShareFile = shareNativeFile;
 
       window.eidNativeAddCalendarEvent = async (payload) => {
         if (!Number.isFinite(Number(payload.startMs))) return;
+        const allowed = await explainPermission({ kind: "calendar" });
+        if (!allowed) return;
         if (Capacitor.getPlatform() === "android") {
           await AppLauncher.openUrl({ url: androidCalendarIntent(payload) }).catch(() =>
             Browser.open({ url: calendarFileHref(payload) })
@@ -350,6 +598,8 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       return () => {
         themeObserver.disconnect();
         document.removeEventListener("click", onDocumentClick, { capture: true });
+        delete window.eidNativeExplainPermission;
+        delete window.eidNativeShareFile;
         delete window.eidNativeAddCalendarEvent;
         if (window.EsporteIDAndroid?.addCalendarEvent) delete window.EsporteIDAndroid.addCalendarEvent;
         void networkHandle.remove();
@@ -443,8 +693,12 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       handles.push(registrationHandle, registrationErrorHandle, receivedHandle, actionHandle);
 
       const permission = await PushNotifications.checkPermissions();
-      const receive =
-        permission.receive === "prompt" ? (await PushNotifications.requestPermissions()).receive : permission.receive;
+      let receive = permission.receive;
+      if (receive === "prompt") {
+        const allowed = await window.eidNativeExplainPermission?.({ kind: "notifications" });
+        if (allowed === false) return;
+        receive = (await PushNotifications.requestPermissions()).receive;
+      }
       if (disposed || receive !== "granted") return;
 
       await PushNotifications.register();
@@ -457,6 +711,103 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       for (const handle of handles) void handle.remove();
     };
   }, [router]);
+
+  useEffect(() => {
+    if (!isCapacitorNativeApp()) return;
+    let disposed = false;
+    let lastHapticAt = 0;
+
+    async function installNativeHaptics() {
+      const { Haptics, ImpactStyle } = await import("@capacitor/haptics");
+      if (disposed) return;
+
+      const onPointerUp = (event: PointerEvent) => {
+        if (event.defaultPrevented || event.pointerType === "mouse") return;
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const interactive = target.closest(
+          'button,a[href],[role="button"],summary,input[type="checkbox"],input[type="radio"],input[type="range"],select'
+        );
+        if (!(interactive instanceof HTMLElement)) return;
+        if (interactive.matches("[disabled],[aria-disabled='true'],[data-eid-no-haptic='true']")) return;
+
+        const now = Date.now();
+        if (now - lastHapticAt < 90) return;
+        lastHapticAt = now;
+        void Haptics.impact({ style: ImpactStyle.Light });
+      };
+
+      document.addEventListener("pointerup", onPointerUp, { capture: true, passive: true });
+
+      return () => {
+        document.removeEventListener("pointerup", onPointerUp, { capture: true });
+      };
+    }
+
+    let dispose: void | (() => void);
+    void installNativeHaptics().then((fn) => {
+      dispose = fn;
+      if (disposed) dispose?.();
+    });
+
+    return () => {
+      disposed = true;
+      dispose?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isCapacitorNativeApp() || !userId) return;
+    let disposed = false;
+    let backgroundAt = 0;
+    let authenticating = false;
+
+    async function lockIfNeeded() {
+      if (disposed || authenticating) return;
+      const saved = await getNativeBiometricLogin();
+      if (!saved) return;
+      const awayMs = backgroundAt ? Date.now() - backgroundAt : 0;
+      if (awayMs < 10 * 60_000) return;
+
+      authenticating = true;
+      setNativeLocked(true);
+      setNativeUnlocking(true);
+      try {
+        await authenticateNativeUser("Desbloqueie o EsporteID para continuar.");
+        if (!disposed) setNativeLocked(false);
+      } catch {
+        if (!disposed) setNativeLocked(true);
+      } finally {
+        authenticating = false;
+        if (!disposed) setNativeUnlocking(false);
+      }
+    }
+
+    async function installResumeLock() {
+      const { App } = await import("@capacitor/app");
+      const handle = await App.addListener("appStateChange", (state) => {
+        if (!state.isActive) {
+          backgroundAt = Date.now();
+          return;
+        }
+        void lockIfNeeded();
+      });
+      return () => {
+        void handle.remove();
+      };
+    }
+
+    let dispose: void | (() => void);
+    void installResumeLock().then((fn) => {
+      dispose = fn;
+      if (disposed) dispose?.();
+    });
+
+    return () => {
+      disposed = true;
+      dispose?.();
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!isAnyNativeApp()) return;
@@ -494,6 +845,165 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [activeContext, router, userId]);
+
+  useEffect(() => {
+    if (!isAnyNativeApp()) return;
+    setNativeTransitioning(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isAnyNativeApp()) return;
+    if (isOffline) setOfflineCacheAt(lastNativeCacheAt(`${window.location.pathname}${window.location.search}`));
+  }, [isOffline, pathname]);
+
+  useEffect(() => {
+    if (!isAnyNativeApp() || !("caches" in window)) return;
+    let cancelled = false;
+
+    async function cacheRoutes() {
+      if (!navigator.onLine) return;
+      const cache = await caches.open(EID_NATIVE_ROUTE_CACHE);
+      const routes = new Set<string>([
+        `${window.location.pathname}${window.location.search}`,
+        ...getNativeWarmRoutes(userId, activeContext),
+      ]);
+
+      for (const href of routes) {
+        if (cancelled) return;
+        const cacheable = nativeCacheableHref(href);
+        if (!cacheable) continue;
+        try {
+          const response = await fetch(cacheable, {
+            credentials: "include",
+            headers: { "X-EsporteID-Native-Cache": "1" },
+          });
+          if (!response.ok || response.type === "opaque") continue;
+          await cache.put(cacheable, response.clone());
+          rememberNativeCacheMeta(cacheable);
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+
+    const timeout = window.setTimeout(() => void cacheRoutes(), 1800);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [activeContext, pathname, userId]);
+
+  useEffect(() => {
+    if (!isAnyNativeApp()) return;
+    let startY = 0;
+    let tracking = false;
+    let armed = false;
+
+    const isInteractiveTarget = (target: EventTarget | null) =>
+      target instanceof Element &&
+      Boolean(target.closest("input,textarea,select,button,a,[role='button'],[data-eid-no-pull-refresh='true']"));
+
+    const onTouchStart = (event: TouchEvent) => {
+      if (nativeRefreshing || window.scrollY > 0 || isInteractiveTarget(event.target)) return;
+      const touch = event.touches[0];
+      if (!touch) return;
+      startY = touch.clientY;
+      tracking = true;
+      armed = false;
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      if (!tracking) return;
+      const touch = event.touches[0];
+      if (!touch) return;
+      const distance = Math.max(0, touch.clientY - startY);
+      if (distance <= 0) return;
+      if (window.scrollY > 0) {
+        tracking = false;
+        setPullDistance(0);
+        return;
+      }
+      if (distance > 8) event.preventDefault();
+      const nextDistance = Math.min(96, Math.round(distance * 0.45));
+      armed = nextDistance >= 58;
+      setPullDistance(nextDistance);
+    };
+
+    const onTouchEnd = () => {
+      if (!tracking) return;
+      tracking = false;
+      if (!armed) {
+        setPullDistance(0);
+        return;
+      }
+      setNativeRefreshing(true);
+      setPullDistance(72);
+      router.refresh();
+      window.setTimeout(() => {
+        setNativeRefreshing(false);
+        setPullDistance(0);
+      }, 1100);
+    };
+
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+    document.addEventListener("touchend", onTouchEnd, { passive: true });
+    document.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    return () => {
+      document.removeEventListener("touchstart", onTouchStart);
+      document.removeEventListener("touchmove", onTouchMove);
+      document.removeEventListener("touchend", onTouchEnd);
+      document.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [nativeRefreshing, router]);
+
+  useEffect(() => {
+    if (!isCapacitorNativeApp()) return;
+    let startX = 0;
+    let startY = 0;
+    let tracking = false;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "mouse") return;
+      if (event.clientX > 28) return;
+      const target = event.target;
+      if (target instanceof Element && target.closest("input,textarea,select,[data-eid-no-edge-back='true']")) return;
+      startX = event.clientX;
+      startY = event.clientY;
+      tracking = true;
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (!tracking) return;
+      const dx = event.clientX - startX;
+      const dy = Math.abs(event.clientY - startY);
+      if (dy > 45) {
+        tracking = false;
+        return;
+      }
+      if (dx > 86) {
+        tracking = false;
+        setNativeTransitioning(true);
+        router.back();
+        window.setTimeout(() => setNativeTransitioning(false), 900);
+      }
+    };
+
+    const stop = () => {
+      tracking = false;
+    };
+
+    document.addEventListener("pointerdown", onPointerDown, { capture: true, passive: true });
+    document.addEventListener("pointermove", onPointerMove, { capture: true, passive: true });
+    document.addEventListener("pointerup", stop, { capture: true, passive: true });
+    document.addEventListener("pointercancel", stop, { capture: true, passive: true });
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, { capture: true });
+      document.removeEventListener("pointermove", onPointerMove, { capture: true });
+      document.removeEventListener("pointerup", stop, { capture: true });
+      document.removeEventListener("pointercancel", stop, { capture: true });
+    };
+  }, [router]);
 
   useEffect(() => {
     if (!isAnyNativeApp()) return;
@@ -536,12 +1046,93 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
     window.location.reload();
   }, []);
 
+  const handlePermissionCancel = useCallback(() => {
+    permissionPrompt?.resolve(false);
+    setPermissionPrompt(null);
+  }, [permissionPrompt]);
+
+  const handlePermissionContinue = useCallback(() => {
+    permissionPrompt?.resolve(true);
+    setPermissionPrompt(null);
+  }, [permissionPrompt]);
+
+  const handleNativeUnlock = useCallback(async () => {
+    setNativeUnlocking(true);
+    try {
+      await authenticateNativeUser("Desbloqueie o EsporteID para continuar.");
+      setNativeLocked(false);
+    } catch {
+      setNativeLocked(true);
+    } finally {
+      setNativeUnlocking(false);
+    }
+  }, []);
+
+  const cacheTimeLabel = offlineCacheAt
+    ? new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date(offlineCacheAt))
+    : null;
+  const permissionCopy = permissionPrompt ? nativePermissionCopy(permissionPrompt.kind) : null;
+
   return (
     <>
+      {pullDistance > 0 || nativeRefreshing ? (
+        <div
+          className="eid-native-pull-refresh"
+          style={{ transform: `translate3d(-50%, ${Math.max(0, pullDistance)}px, 0)` }}
+          aria-hidden="true"
+        >
+          <span className={nativeRefreshing ? "eid-native-pull-spinner is-spinning" : "eid-native-pull-spinner"} />
+        </div>
+      ) : null}
+      {nativeTransitioning ? <div className="eid-native-transition-bar" aria-hidden="true" /> : null}
       {showStartup ? (
         <div className="eid-native-startup-shell" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/pwa-splash-open-mark.png" alt="" className="eid-native-startup-logo" />
+        </div>
+      ) : null}
+      {permissionPrompt && permissionCopy ? (
+        <div className="fixed inset-0 z-[2147483645] flex items-end justify-center bg-black/55 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-eid-fg sm:items-center sm:pb-4">
+          <div className="w-full max-w-sm rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card p-4 shadow-2xl">
+            <p className="text-[14px] font-black uppercase tracking-[0.08em] text-eid-fg">{permissionCopy.title}</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-eid-text-muted">{permissionCopy.body}</p>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={handlePermissionCancel}
+                className="h-11 rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface text-[13px] font-bold text-eid-text-muted"
+              >
+                Agora não
+              </button>
+              <button
+                type="button"
+                onClick={handlePermissionContinue}
+                className="h-11 rounded-xl bg-eid-action-500 text-[13px] font-black uppercase tracking-wide text-white"
+              >
+                {permissionCopy.action}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {nativeLocked ? (
+        <div className="fixed inset-0 z-[2147483646] flex items-center justify-center bg-[color:var(--eid-brand-ink)] px-5 text-eid-fg">
+          <div className="w-full max-w-xs text-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/pwa-splash-open-mark.png" alt="" className="mx-auto h-16 w-16 object-contain" />
+            <p className="mt-5 text-[15px] font-black uppercase tracking-[0.1em]">EsporteID bloqueado</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-eid-text-muted">
+              Confirme sua identidade para continuar usando o app.
+            </p>
+            <button
+              type="button"
+              onClick={handleNativeUnlock}
+              disabled={nativeUnlocking}
+              className="mt-5 h-12 w-full rounded-xl bg-eid-action-500 text-[13px] font-black uppercase tracking-wide text-white disabled:opacity-70"
+            >
+              {nativeUnlocking ? "Desbloqueando..." : "Desbloquear"}
+            </button>
+          </div>
         </div>
       ) : null}
       {isOffline ? (
@@ -550,7 +1141,11 @@ export function NativeAppRuntime({ userId, activeContext }: Props) {
             <div className="eid-native-offline-mark" aria-hidden="true" />
             <div className="min-w-0">
               <p className="eid-native-offline-title">Sem conexao</p>
-              <p className="eid-native-offline-text">Confira sua internet para continuar usando o EsporteID.</p>
+              <p className="eid-native-offline-text">
+                {cacheTimeLabel
+                  ? `Mostrando dados recentes salvos as ${cacheTimeLabel}.`
+                  : "Confira sua internet para continuar usando o EsporteID."}
+              </p>
             </div>
             <button type="button" className="eid-native-offline-action" onClick={handleRetry}>
               Tentar de novo

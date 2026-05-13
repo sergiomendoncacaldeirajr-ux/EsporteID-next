@@ -1,7 +1,5 @@
 import { createIcsEvent } from "@/lib/calendar/ics";
 
-export const runtime = "edge";
-
 function textParam(url: URL, name: string, fallback = "") {
   return (url.searchParams.get(name) ?? fallback).trim().slice(0, 180);
 }
