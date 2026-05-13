@@ -50,6 +50,7 @@ export function EspacoConfigForm({
   return (
     <form action={formAction} className="grid gap-3 sm:grid-cols-2">
       <input type="hidden" name="espaco_id" value={espaco.id} />
+      <input type="hidden" name="cover_arquivo" value={espaco.cover_arquivo ?? ""} />
       <div className="sm:col-span-2">
         <label className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
           Nome público
@@ -99,16 +100,6 @@ export function EspacoConfigForm({
           defaultValue={espaco.uf ?? ""}
           maxLength={2}
           className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm uppercase"
-        />
-      </div>
-      <div>
-        <label className="text-xs font-semibold uppercase tracking-wide text-eid-text-secondary">
-          Cover (URL)
-        </label>
-        <input
-          name="cover_arquivo"
-          defaultValue={espaco.cover_arquivo ?? ""}
-          className="eid-input-dark mt-1.5 w-full rounded-xl px-3 py-2.5 text-sm"
         />
       </div>
       <div>
@@ -177,6 +168,24 @@ export function EspacoConfigForm({
         <p className="mt-2 text-xs leading-relaxed text-eid-fg">
           {modoReservaLabels[modo] ?? modoReservaLabels.mista}
         </p>
+      </div>
+      <div className="sm:col-span-2 rounded-2xl border border-eid-action-500/25 bg-eid-action-500/8 p-4">
+        <label className="text-[11px] font-semibold uppercase tracking-wide text-eid-action-400">
+          Valor padrão da reserva paga
+        </label>
+        <div className="mt-2 grid gap-3 sm:grid-cols-[minmax(0,220px)_1fr] sm:items-center">
+          <input
+            name="valor_reserva_padrao_reais"
+            type="number"
+            min={0}
+            step="0.01"
+            defaultValue={(cfg.valorReservaPadraoCentavos / 100).toFixed(2)}
+            className="eid-input-dark rounded-xl px-3 py-2.5 text-sm"
+          />
+          <p className="text-xs leading-relaxed text-eid-text-secondary">
+            Esse é o valor base cobrado do atleta nas reservas pagas. Taxas e repasses da plataforma continuam seguindo a configuração financeira do admin.
+          </p>
+        </div>
       </div>
       <div className="sm:col-span-2 rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/30 p-4">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-eid-text-secondary">

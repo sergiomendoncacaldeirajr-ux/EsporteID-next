@@ -123,6 +123,7 @@ export default async function EspacoIntegracaoAsaasPage() {
           <div className="mt-4 space-y-3">
             {[
               "Confirmar dados da conta de recebimento.",
+              "Para conta Asaas existente, pegar o Wallet ID em Minha conta > Integrações no site do Asaas.",
               "Concluir validações sensíveis no ambiente seguro do Asaas quando solicitado.",
               "Usar o financeiro do espaço para acompanhar cobranças e recebimentos.",
             ].map((item) => (

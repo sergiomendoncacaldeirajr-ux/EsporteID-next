@@ -27,12 +27,29 @@ function moeda(value: number | null | undefined) {
 }
 
 function asaasStatus(status: string | null | undefined, accountId: string | null | undefined) {
-  if (accountId) return { label: "Conta vinculada", tone: "ok", Icon: CheckCircle2 };
+  if (accountId) {
+    return {
+      label: "Conta vinculada",
+      description: "Recebimentos prontos para split nas cobranças do espaço.",
+      tone: "ok",
+      Icon: CheckCircle2,
+    };
+  }
   const value = String(status ?? "");
   if (value.includes("aguardando") || value.includes("conexao") || value.includes("criacao")) {
-    return { label: "Em ativação", tone: "wait", Icon: Clock3 };
+    return {
+      label: "Aguardando ativação",
+      description: "Dados recebidos. Conclua as validações exigidas no Asaas para liberar repasses.",
+      tone: "wait",
+      Icon: Clock3,
+    };
   }
-  return { label: "Pendente", tone: "todo", Icon: Landmark };
+  return {
+    label: "Conta não informada",
+    description: "Cadastre ou vincule a conta Asaas para receber reservas e mensalidades.",
+    tone: "todo",
+    Icon: Landmark,
+  };
 }
 
 function formatDatePtBr(value: string | null | undefined) {
@@ -216,7 +233,8 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
             <AsaasIcon className="h-5 w-5" aria-hidden />
             <p className="mt-3 text-[11px] font-bold uppercase tracking-wide opacity-80">Asaas</p>
             <p className="mt-1 text-xl font-black">{asaas.label}</p>
-            <p className="mt-1 truncate text-xs opacity-85">{parceiroAsaas?.email ?? "Conta ainda não informada"}</p>
+            <p className="mt-1 text-xs leading-relaxed opacity-85">{asaas.description}</p>
+            <p className="mt-2 truncate text-[11px] opacity-75">{parceiroAsaas?.email ?? "Nenhum e-mail vinculado"}</p>
           </Link>
         </div>
       </section>

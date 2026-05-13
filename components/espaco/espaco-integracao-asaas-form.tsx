@@ -55,7 +55,7 @@ export function FormAsaasParceiro({
       <p className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-3 text-xs leading-relaxed text-eid-text-secondary">
         {modoIntegracao === "criar_nova"
           ? "Preencha os dados da conta. O EsporteID cria a subconta no Asaas e guarda o Wallet ID para os recebimentos."
-          : "Informe e-mail, CPF/CNPJ e Wallet ID da conta Asaas existente. Sem Wallet ID não há como direcionar o dinheiro."}
+          : "Informe e-mail, CPF/CNPJ e Wallet ID da conta Asaas existente. Para localizar o Wallet ID, entre no site do Asaas e acesse Minha conta > Integrações."}
       </p>
       {modoIntegracao === "criar_nova" ? (
         <label className="block text-xs text-eid-text-secondary">
@@ -99,6 +99,9 @@ export function FormAsaasParceiro({
             placeholder="ID da carteira Asaas"
             className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
           />
+          <span className="mt-1.5 block text-[11px] leading-relaxed text-eid-text-secondary">
+            No Asaas, acesse Minha conta, depois Integrações. O Wallet ID aparece nessa área e é necessário para direcionar os recebimentos do espaço.
+          </span>
         </label>
       ) : null}
       {modoIntegracao === "criar_nova" ? (

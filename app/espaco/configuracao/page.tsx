@@ -1,13 +1,14 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import {
   alternarAtivoUnidadeEspacoAction,
+  atualizarPlanoSocioEspacoAction,
   atualizarUnidadeEspacoAction,
   criarPlanoSocioEspacoAction,
   criarUnidadeEspacoAction,
 } from "@/app/espaco/actions";
 import { EspacoConfigForm } from "@/components/espaco/espaco-config-form";
+import { EspacoUnidadeFoto } from "@/components/espaco/espaco-unidade-foto";
 import { EspacoUnidadeLogoControl } from "@/components/espaco/espaco-unidade-logo-control";
 import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import { getEspacoSelecionado } from "@/lib/espacos/server";
@@ -33,6 +34,19 @@ function planoHerdaRegra(plano: { beneficios_json?: unknown }, key: string) {
       !Array.isArray(herdar) &&
       (herdar as Record<string, unknown>)[key] === true
   );
+}
+
+function planoBeneficiosTexto(plano: { beneficios_json?: unknown }) {
+  const beneficios = plano.beneficios_json;
+  if (!beneficios || typeof beneficios !== "object" || Array.isArray(beneficios)) return "";
+  const record = beneficios as Record<string, unknown>;
+  return typeof record.itens_beneficios === "string" ? record.itens_beneficios : "";
+}
+
+function planoUmaReservaAtiva(plano: { beneficios_json?: unknown }) {
+  const beneficios = plano.beneficios_json;
+  if (!beneficios || typeof beneficios !== "object" || Array.isArray(beneficios)) return false;
+  return Boolean((beneficios as Record<string, unknown>).uma_reserva_ativa_por_vez);
 }
 
 function SettingsSection({
@@ -86,7 +100,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
       .order("ordem", { ascending: true }),
     supabase
       .from("espaco_planos_socio")
-      .select("id, nome, mensalidade_centavos, ativo, reservas_gratuitas_semana, limite_reservas_semana, cooldown_horas, antecedencia_max_dias, beneficios_json")
+      .select("id, nome, descricao, mensalidade_centavos, taxa_adesao_centavos, ativo, reservas_gratuitas_semana, limite_reservas_semana, cooldown_horas, antecedencia_max_dias, percentual_desconto_avulso, beneficios_json")
       .eq("espaco_generico_id", selectedSpace.id)
       .order("ordem", { ascending: true }),
     getPaaSUnidadeGateInfo(supabase, selectedSpace.id),
@@ -174,19 +188,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
                 className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-4"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                  {u.logo_arquivo ? (
-                    <Image
-                      src={u.logo_arquivo}
-                      alt=""
-                      width={80}
-                      height={80}
-                      className="h-20 w-20 shrink-0 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover"
-                    />
-                  ) : (
-                    <div className="grid h-20 w-20 shrink-0 place-items-center rounded-xl border border-dashed border-[color:var(--eid-border-subtle)] text-[10px] text-eid-text-secondary">
-                      Sem foto
-                    </div>
-                  )}
+                  <EspacoUnidadeFoto src={u.logo_arquivo ?? null} alt={`Foto de ${u.nome}`} />
                   <form
                     action={atualizarUnidadeEspacoAction}
                     encType="multipart/form-data"
@@ -384,21 +386,15 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
             className="eid-input-dark rounded-xl px-3 py-2 text-sm"
           />
           <div className="grid gap-2 sm:grid-cols-2">
-            <input
-              type="number"
-              name="mensalidade_centavos"
-              step={100}
-              placeholder="Mensalidade (centavos)"
-              className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-            />
-            <input
-              type="number"
-              name="taxa_adesao_centavos"
-              step={100}
-              placeholder="Taxa de adesão"
-              className="eid-input-dark rounded-xl px-3 py-2 text-sm"
-            />
+            <input type="number" name="mensalidade_reais" min={0} step="0.01" placeholder="Mensalidade (R$)" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+            <input type="number" name="taxa_adesao_reais" min={0} step="0.01" placeholder="Taxa de adesão (R$)" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
           </div>
+          <textarea
+            name="itens_beneficios"
+            rows={3}
+            placeholder="Benefícios extras: bolinhas, rifas, descontos em aulas, brindes..."
+            className="eid-input-dark rounded-xl px-3 py-2 text-sm"
+          />
           <div className="grid gap-2 sm:grid-cols-2">
             <input
               type="number"
@@ -456,14 +452,26 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
         </form>
         <div className="mt-4 space-y-2">
           {(planos ?? []).map((plano) => (
-            <div
+            <form
               key={plano.id}
+              action={atualizarPlanoSocioEspacoAction}
               className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/50 p-3"
             >
-              <p className="text-sm font-semibold text-eid-fg">{plano.nome}</p>
+              <input type="hidden" name="espaco_id" value={selectedSpace.id} />
+              <input type="hidden" name="plano_id" value={plano.id} />
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-eid-fg">{plano.nome}</p>
+                  <p className="mt-1 text-xs text-eid-text-secondary">
+                    {moedaCentavos(plano.mensalidade_centavos)} · {plano.ativo ? "Ativo" : "Inativo"}
+                  </p>
+                </div>
+                <label className="flex items-center gap-2 rounded-lg border border-[color:var(--eid-border-subtle)] px-3 py-2 text-xs font-semibold text-eid-fg">
+                  <input type="checkbox" name="ativo" defaultChecked={Boolean(plano.ativo)} />
+                  Ativo
+                </label>
+              </div>
               <p className="mt-1 text-xs text-eid-text-secondary">
-                {moedaCentavos(plano.mensalidade_centavos)} · {plano.ativo ? "Ativo" : "Inativo"}
-                {" · "}
                 {planoHerdaRegra(plano, "reservas_gratuitas_semana")
                   ? "segue grátis global"
                   : Number(plano.reservas_gratuitas_semana ?? 0) === 0
@@ -489,7 +497,27 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
                   ? " · 1 ativa por vez"
                   : ""}
               </p>
-            </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <input name="nome" defaultValue={plano.nome} className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+                <input type="number" name="mensalidade_reais" min={0} step="0.01" defaultValue={(Number(plano.mensalidade_centavos ?? 0) / 100).toFixed(2)} className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+                <input type="number" name="taxa_adesao_reais" min={0} step="0.01" defaultValue={(Number(plano.taxa_adesao_centavos ?? 0) / 100).toFixed(2)} className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+                <input type="number" step="0.01" name="percentual_desconto_avulso" defaultValue={Number(plano.percentual_desconto_avulso ?? 0)} className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+              </div>
+              <textarea name="descricao" rows={2} defaultValue={plano.descricao ?? ""} className="eid-input-dark mt-2 w-full rounded-xl px-3 py-2 text-sm" />
+              <textarea name="itens_beneficios" rows={2} defaultValue={planoBeneficiosTexto(plano)} className="eid-input-dark mt-2 w-full rounded-xl px-3 py-2 text-sm" />
+              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                <input type="number" min={0} name="reservas_gratuitas_semana" defaultValue={planoHerdaRegra(plano, "reservas_gratuitas_semana") ? "" : Number(plano.reservas_gratuitas_semana ?? 0)} placeholder="Grátis/semana" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+                <input type="number" min={0} name="limite_reservas_semana" defaultValue={planoHerdaRegra(plano, "limite_reservas_semana") ? "" : Number(plano.limite_reservas_semana ?? 0)} placeholder="Limite/semana" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+                <input type="number" min={0} name="antecedencia_max_dias" defaultValue={planoHerdaRegra(plano, "antecedencia_max_dias") ? "" : Number(plano.antecedencia_max_dias ?? 0)} placeholder="Agenda em dias" className="eid-input-dark rounded-xl px-3 py-2 text-sm" />
+              </div>
+              <label className="mt-2 flex items-center gap-2 text-xs text-eid-fg">
+                <input type="checkbox" name="uma_reserva_ativa_por_vez" defaultChecked={planoUmaReservaAtiva(plano)} />
+                1 marcação ativa por vez
+              </label>
+              <button className="mt-3 rounded-xl border border-eid-primary-500/35 bg-eid-primary-500/10 px-4 py-2 text-xs font-bold text-eid-primary-300">
+                Salvar plano
+              </button>
+            </form>
           ))}
         </div>
       </SettingsSection>
