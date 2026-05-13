@@ -12,7 +12,7 @@ import {
 
 const PUSH_SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 const PUSH_SYNC_STORAGE_KEY = "eid:last-push-sync-at";
-const EID_SW_VERSION = "2026-05-12-native-fast-cache-v2";
+const EID_SW_VERSION = "2026-05-13-native-offline-fallback-v3";
 
 function isStandaloneDisplayMode() {
   if (typeof window === "undefined") return false;

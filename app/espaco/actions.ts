@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   cancelAsaasSubscription,
+  createAsaasAccount,
   createAsaasCustomer,
   createAsaasPayment,
   createAsaasSubscription,
@@ -29,6 +30,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { createClient } from "@/lib/supabase/server";
 
 type State = { ok: true; message: string } | { ok: false; message: string };
+type SupabaseAdminClient = ReturnType<typeof createServiceRoleClient>;
 
 function exigeUmaReservaAtivaPorVez(plano: { beneficios_json?: unknown } | null | undefined) {
   const beneficios = plano?.beneficios_json;
@@ -112,6 +114,36 @@ async function getActiveSuspensaoMarcacao(
 
 function text(formData: FormData, field: string) {
   return String(formData.get(field) ?? "").trim();
+}
+
+function asaasSplitDoEspaco(walletId: string | null | undefined, valorLiquidoCentavos: number) {
+  const wallet = String(walletId ?? "").trim();
+  const valor = Math.max(0, Math.floor(Number(valorLiquidoCentavos) || 0));
+  if (!wallet || valor <= 0) return null;
+  return [{ walletId: wallet, fixedValue: Number((valor / 100).toFixed(2)) }];
+}
+
+async function buscarWalletRecebedorEspaco(
+  admin: SupabaseAdminClient,
+  espacoId: number,
+  responsavelUsuarioId?: string | null
+) {
+  let usuarioId = responsavelUsuarioId ?? null;
+  if (!usuarioId) {
+    const { data: espaco } = await admin
+      .from("espacos_genericos")
+      .select("responsavel_usuario_id, criado_por_usuario_id")
+      .eq("id", espacoId)
+      .maybeSingle();
+    usuarioId = espaco?.responsavel_usuario_id ?? espaco?.criado_por_usuario_id ?? null;
+  }
+  if (!usuarioId) return null;
+  const { data } = await admin
+    .from("parceiro_conta_asaas")
+    .select("wallet_id")
+    .eq("usuario_id", usuarioId)
+    .maybeSingle();
+  return data?.wallet_id ? String(data.wallet_id) : null;
 }
 
 function intOrNull(formData: FormData, field: string) {
@@ -2142,6 +2174,18 @@ export async function criarReservaEspacoAction(
     let checkoutUrl: string | null = null;
     if (calculo.brutoCentavos > 0) {
       const customerId = await ensureProfileAsaasCustomer(user.id);
+      const walletRecebedor = await buscarWalletRecebedorEspaco(
+        admin,
+        espacoId,
+        espaco.responsavel_usuario_id ?? espaco.criado_por_usuario_id
+      );
+      const split = asaasSplitDoEspaco(walletRecebedor, calculo.liquidoEspacoCentavos);
+      if (!split) {
+        return {
+          ok: false,
+          message: "Configure a conta Asaas de recebimentos do espaço antes de criar reservas pagas.",
+        };
+      }
       const payment = await createAsaasPayment({
         customer: customerId,
         billingType: "PIX",
@@ -2149,6 +2193,7 @@ export async function criarReservaEspacoAction(
         dueDate: new Date().toISOString().slice(0, 10),
         description: `Reserva EsporteID · ${espaco.nome_publico}`,
         externalReference: `espaco_reserva:${reserva.id}`,
+        split,
       });
       checkoutUrl = payment.invoiceUrl ?? payment.bankSlipUrl ?? null;
 
@@ -2714,6 +2759,11 @@ export async function gerarCobrancaSocioEspacoAction(formData: FormData) {
     .eq("id", 1)
     .maybeSingle();
   const calculo = calcularFinanceiroEspaco({ valorCentavos, config: cfg });
+  const walletRecebedor = await buscarWalletRecebedorEspaco(admin, espacoId);
+  const split = asaasSplitDoEspaco(walletRecebedor, calculo.liquidoEspacoCentavos);
+  if (!split) {
+    throw new Error("Configure a conta Asaas de recebimentos do espaço antes de gerar mensalidades pagas.");
+  }
   const payment = await createAsaasPayment({
     customer: customerId,
     billingType: "PIX",
@@ -2721,6 +2771,7 @@ export async function gerarCobrancaSocioEspacoAction(formData: FormData) {
     dueDate: new Date().toISOString().slice(0, 10),
     description: `Mensalidade de sócio · ${plano?.nome ?? "Espaço"}`,
     externalReference: `espaco_socio:${socioId}:${Date.now()}`,
+    split,
   });
 
   await admin.from("espaco_transacoes").insert({
@@ -3049,7 +3100,6 @@ export async function salvarDadosContaAsaasParceiroAction(
     const nomeRazao = text(formData, "nome_razao_social");
     const cpfCnpj = text(formData, "cpf_cnpj").replace(/\D/g, "");
     const email = text(formData, "email");
-    const asaasSenha = text(formData, "asaas_senha");
     if (modoIntegracao === "criar_nova" && nomeRazao.length < 3) {
       return { ok: false, message: "Informe a razão social (ou seu nome) como constará no Asaas." };
     }
@@ -3059,13 +3109,13 @@ export async function salvarDadosContaAsaasParceiroAction(
     if (!email.includes("@")) {
       return { ok: false, message: "Informe o e-mail que usará no Asaas." };
     }
-    if (modoIntegracao === "conta_existente" && !asaasSenha) {
-      return { ok: false, message: "Informe a senha da conta Asaas." };
+    const walletIdInformado = text(formData, "wallet_id");
+    if (modoIntegracao === "conta_existente" && !walletIdInformado) {
+      return {
+        ok: false,
+        message: "Informe o Wallet ID da conta Asaas para direcionar os recebimentos.",
+      };
     }
-    const onboardingStatus =
-      modoIntegracao === "conta_existente"
-        ? "aguardando_conexao_asaas"
-        : "aguardando_criacao_asaas";
     const cadastroAsaas =
       modoIntegracao === "criar_nova"
         ? {
@@ -3096,18 +3146,39 @@ export async function salvarDadosContaAsaasParceiroAction(
         return { ok: false, message: "Preencha os dados obrigatórios para criar a conta Asaas." };
       }
     }
+    const admin = createServiceRoleClient();
+    const { data: contaAtual } = await admin
+      .from("parceiro_conta_asaas")
+      .select("asaas_account_id, wallet_id, api_key_subconta")
+      .eq("usuario_id", user.id)
+      .maybeSingle();
+    const contaCriada =
+      cadastroAsaas && !contaAtual?.asaas_account_id && !contaAtual?.wallet_id
+        ? await createAsaasAccount(cadastroAsaas)
+        : null;
+    const asaasAccountId =
+      contaCriada?.id ?? contaCriada?.accountId ?? contaAtual?.asaas_account_id ?? null;
+    const walletId =
+      contaCriada?.walletId ?? contaAtual?.wallet_id ?? (modoIntegracao === "conta_existente" ? walletIdInformado : null);
+    const apiKeySubconta = contaCriada?.apiKey ?? contaAtual?.api_key_subconta ?? null;
+    const onboardingStatus = walletId
+      ? "conectado"
+      : modoIntegracao === "conta_existente"
+        ? "aguardando_conexao_asaas"
+        : "aguardando_criacao_asaas";
     const dadosBancariosJson = JSON.stringify({
       fluxo_integracao_asaas: modoIntegracao,
       origem: "painel_integracao_asaas",
       login_asaas_informado: modoIntegracao === "conta_existente",
-      senha_asaas_recebida_sem_persistir: modoIntegracao === "conta_existente" && !!asaasSenha,
+      senha_asaas_recebida_sem_persistir: false,
       cadastro_asaas: cadastroAsaas,
+      wallet_id_informado: modoIntegracao === "conta_existente",
+      conta_criada_via_api: Boolean(contaCriada),
       proxima_acao:
         modoIntegracao === "conta_existente"
-          ? "autenticar conta existente no fluxo seguro Asaas e descartar senha apos uso"
-          : "criar subconta Asaas via POST /v3/accounts e abrir onboardingUrl se houver documentos",
+          ? "usar walletId informado para split de recebimentos; validar titularidade no processo operacional Asaas"
+          : "subconta criada via POST /v3/accounts; concluir verificações/documentos no ambiente Asaas quando exigido",
     });
-    const admin = createServiceRoleClient();
     const { error } = await admin.from("parceiro_conta_asaas").upsert(
       {
         usuario_id: user.id,
@@ -3115,6 +3186,9 @@ export async function salvarDadosContaAsaasParceiroAction(
         cpf_cnpj: cpfCnpj,
         email,
         dados_bancarios_json: dadosBancariosJson,
+        asaas_account_id: asaasAccountId,
+        wallet_id: walletId,
+        api_key_subconta: apiKeySubconta,
         onboarding_status: onboardingStatus,
         atualizado_em: new Date().toISOString(),
       } as Record<string, unknown>,
@@ -3129,8 +3203,10 @@ export async function salvarDadosContaAsaasParceiroAction(
       ok: true,
       message:
         modoIntegracao === "conta_existente"
-          ? "Dados guardados. Vamos iniciar a conexão da conta Asaas existente pelo EsporteID."
-          : "Dados guardados. Vamos preparar a criação da conta Asaas pelo EsporteID.",
+          ? "Conta registrada. As próximas cobranças pagas já usam o Wallet ID informado para recebimentos."
+          : contaCriada
+            ? "Conta Asaas criada e vinculada. As próximas cobranças pagas já usam split para o espaço."
+            : "Conta Asaas já estava vinculada. Mantive os dados de recebimento.",
     };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Falha ao salvar." };

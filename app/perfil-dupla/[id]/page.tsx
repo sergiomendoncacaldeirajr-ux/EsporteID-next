@@ -24,7 +24,7 @@ export default async function PerfilDuplaPage({ params, searchParams }: Props) {
   if (!user) redirect(loginNextWithOptionalFrom(`/perfil-dupla/${id}`, sp));
 
   return (
-    <main data-eid-formacao-page data-eid-no-route-enter className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-progressive-enter`}>
+    <main data-eid-formacao-page data-eid-touch-ui data-eid-no-route-enter className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-progressive-enter`}>
       <PerfilDuplaHeroStream duplaId={id} viewerId={user.id} />
       <PerfilDuplaBodyStream duplaId={id} viewerId={user.id} />
     </main>

@@ -35,6 +35,54 @@ function asaasStatus(status: string | null | undefined, accountId: string | null
   return { label: "Pendente", tone: "todo", Icon: Landmark };
 }
 
+function formatDatePtBr(value: string | null | undefined) {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+}
+
+function assinaturaInfo(assinatura: {
+  status?: string | null;
+  recorrencia_cartao_confirmada_em?: string | null;
+  isento_total?: boolean | null;
+} | null) {
+  if (!assinatura) {
+    return {
+      label: "Pendente",
+      description: "Escolha um plano e ative a recorrência para liberar a mensalidade da plataforma.",
+      cls: "border-amber-500/35 bg-amber-500/10 text-amber-200",
+    };
+  }
+  if (assinatura.isento_total) {
+    return {
+      label: "Isento",
+      description: "Este espaço está liberado de mensalidade pela plataforma.",
+      cls: "border-emerald-500/35 bg-emerald-500/10 text-emerald-200",
+    };
+  }
+  if (assinatura.recorrencia_cartao_confirmada_em) {
+    return {
+      label: "Ativa",
+      description: `Recorrência confirmada em ${formatDatePtBr(assinatura.recorrencia_cartao_confirmada_em)}.`,
+      cls: "border-emerald-500/35 bg-emerald-500/10 text-emerald-200",
+    };
+  }
+  const status = String(assinatura.status ?? "").toLowerCase();
+  if (status === "cancelled" || status === "canceled" || status === "cancelada" || status === "cancelado") {
+    return {
+      label: "Recorrência pendente",
+      description: "O plano foi escolhido, mas o cartão ainda precisa ser validado para ativar a assinatura.",
+      cls: "border-amber-500/35 bg-amber-500/10 text-amber-200",
+    };
+  }
+  return {
+    label: "Aguardando cartão",
+    description: "Valide o cartão para ativar a recorrência da mensalidade.",
+    cls: "border-amber-500/35 bg-amber-500/10 text-amber-200",
+  };
+}
+
 export default async function EspacoFinanceiroPage({ searchParams }: Props) {
   const sp = (await searchParams) ?? {};
   const espacoId = Number(sp.espaco ?? 0) || null;
@@ -122,6 +170,7 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
       : asaas.tone === "wait"
         ? "border-amber-500/35 bg-amber-500/10 text-amber-200"
         : "border-eid-primary-500/30 bg-eid-primary-500/10 text-eid-primary-200";
+  const assinaturaResumo = assinaturaInfo(assinatura);
 
   return (
     <div className="space-y-5">
@@ -250,36 +299,54 @@ export default async function EspacoFinanceiroPage({ searchParams }: Props) {
             </div>
           ) : null}
           {assinatura ? (
-            <div className="mt-3 space-y-2 text-sm text-eid-text-secondary">
-              <p>
-                Plano <span className="font-semibold text-eid-fg">{assinatura.plano_nome}</span>
-              </p>
-              <p>Status {assinatura.status}</p>
-              <p>Mensalidade {moeda(assinatura.valor_mensal_centavos)}</p>
-              <p>
-                Mês grátis {assinatura.trial_inicio ?? "-"} até {assinatura.trial_ate ?? "-"}
-              </p>
-              <p>
-                Recorrência no cartão{" "}
-                {assinatura.recorrencia_cartao_confirmada_em
-                  ? `confirmada em ${new Date(assinatura.recorrencia_cartao_confirmada_em).toLocaleString("pt-BR")}`
-                  : "ainda não confirmada"}
-              </p>
-              <p>
-                Cancelamento liberado a partir de{" "}
-                {assinatura.cancelamento_bloqueado_ate ?? "-"}
-              </p>
-              <p>
-                Desconto progressivo{" "}
-                {Number(assinatura.desconto_progressivo_percentual ?? 0) * 100}%
-              </p>
-              <p>Próxima cobrança {assinatura.proxima_cobranca ?? "-"}</p>
+            <div className="mt-4 space-y-4">
+              <div className={`rounded-2xl border p-4 ${assinaturaResumo.cls}`}>
+                <div className="flex items-start gap-3">
+                  <Clock3 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+                  <div className="min-w-0">
+                    <p className="text-sm font-black">{assinaturaResumo.label}</p>
+                    <p className="mt-1 text-xs leading-relaxed opacity-90">{assinaturaResumo.description}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-eid-text-secondary">Plano</p>
+                  <p className="mt-1 text-sm font-black text-eid-fg">{assinatura.plano_nome ?? "Plataforma"}</p>
+                </div>
+                <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-eid-text-secondary">Mensalidade</p>
+                  <p className="mt-1 text-sm font-black text-eid-fg">{moeda(assinatura.valor_mensal_centavos)}</p>
+                </div>
+                {assinatura.trial_ate ? (
+                  <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-eid-text-secondary">Mês grátis</p>
+                    <p className="mt-1 text-sm font-black text-eid-fg">Até {formatDatePtBr(assinatura.trial_ate)}</p>
+                  </div>
+                ) : null}
+                {assinatura.proxima_cobranca ? (
+                  <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-eid-text-secondary">Próxima cobrança</p>
+                    <p className="mt-1 text-sm font-black text-eid-fg">{formatDatePtBr(assinatura.proxima_cobranca)}</p>
+                  </div>
+                ) : null}
+                {Number(assinatura.desconto_progressivo_percentual ?? 0) > 0 ? (
+                  <div className="rounded-xl border border-[color:var(--eid-border-subtle)] bg-eid-surface/45 p-3">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-eid-text-secondary">Desconto progressivo</p>
+                    <p className="mt-1 text-sm font-black text-eid-fg">
+                      {Math.round(Number(assinatura.desconto_progressivo_percentual ?? 0) * 100)}%
+                    </p>
+                  </div>
+                ) : null}
+              </div>
               <EspacoMensalidadePaasCheckout espacoId={selectedSpace.id} />
             </div>
           ) : (
-            <p className="mt-3 text-sm text-eid-text-secondary">
-              Assinatura da plataforma ainda não configurada.
-            </p>
+            <div className={`mt-4 rounded-2xl border p-4 ${assinaturaResumo.cls}`}>
+              <p className="text-sm font-black">{assinaturaResumo.label}</p>
+              <p className="mt-1 text-xs leading-relaxed opacity-90">{assinaturaResumo.description}</p>
+            </div>
           )}
         </div>
         ) : null}

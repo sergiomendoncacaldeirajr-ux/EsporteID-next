@@ -4,8 +4,10 @@ import { PerfilEidEsporteStream, type PerfilEidEsporteStreamProps } from "./perf
 
 export default function PerfilEidEsportePage(props: PerfilEidEsporteStreamProps) {
   return (
-    <EidStreamSection fallback={<PerfilEidEsporteSkeleton />}>
-      <PerfilEidEsporteStream {...props} />
-    </EidStreamSection>
+    <div data-eid-profile-eid-page data-eid-touch-ui className="eid-profile-eid-native-shell">
+      <EidStreamSection fallback={<PerfilEidEsporteSkeleton />}>
+        <PerfilEidEsporteStream {...props} />
+      </EidStreamSection>
+    </div>
   );
 }

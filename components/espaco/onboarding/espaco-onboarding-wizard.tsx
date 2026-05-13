@@ -150,7 +150,7 @@ type ReservaConfig = {
 
 type Parceiro = {
   nome_razao_social: string | null; cpf_cnpj: string | null;
-  email: string | null; onboarding_status: string | null;
+  email: string | null; onboarding_status: string | null; wallet_id?: string | null;
 } | null;
 
 type LocalExistente = {
@@ -2699,7 +2699,7 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
       <input type="hidden" name="modo_integracao" value={modoIntegracao} />
       <StepHeader
         title="Conta de recebimentos"
-        subtitle="Entre na conta Asaas existente ou crie uma nova conta de recebimentos pelo EsporteID."
+        subtitle="Informe uma conta Asaas existente ou crie uma nova conta de recebimentos pelo EsporteID."
       />
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -2713,8 +2713,8 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
           {
             id: "conta_existente",
             Icon: BadgeCheck,
-            title: "Entrar com conta Asaas",
-            text: "Use o e-mail e senha da conta Asaas que o espaço já possui.",
+            title: "Informar conta Asaas",
+            text: "Use o e-mail e CPF/CNPJ da conta Asaas que o espaço já possui.",
           },
         ].map((option) => {
           const selected = modoIntegracao === option.id;
@@ -2744,7 +2744,7 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
 
       <div className="space-y-2 rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-4 text-xs text-eid-text-secondary">
         <p className="text-sm font-bold text-eid-fg">
-          {modoIntegracao === "criar_nova" ? "Cadastro Asaas" : "Login Asaas"}
+          {modoIntegracao === "criar_nova" ? "Cadastro Asaas" : "Conta Asaas existente"}
         </p>
         {modoIntegracao === "criar_nova" ? (
           <>
@@ -2753,8 +2753,8 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
           </>
         ) : (
           <>
-            <p>Informe o login da conta Asaas existente para iniciar a conexão pelo EsporteID.</p>
-            <p>A senha não fica salva no cadastro; se o Asaas exigir confirmação, o usuário conclui no ambiente seguro do Asaas.</p>
+            <p>Informe os dados cadastrais e o Wallet ID da conta Asaas existente para direcionar os recebimentos.</p>
+            <p>O EsporteID não pede nem salva a senha da conta Asaas; sem Wallet ID não há como saber para qual carteira enviar o dinheiro.</p>
           </>
         )}
       </div>
@@ -2770,8 +2770,8 @@ function StepPagamento({ space, parceiro, onNext, onBack, onSkip }: {
             <IconInput Icon={IdCard} name="cpf_cnpj" defaultValue={parceiro?.cpf_cnpj ?? ""} placeholder="000.000.000-00" required />
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <Label>Senha do Asaas *</Label>
-            <IconInput Icon={ShieldCheck} name="asaas_senha" placeholder="Senha da conta Asaas" type="password" autoComplete="current-password" required />
+            <Label>Wallet ID da conta Asaas *</Label>
+            <IconInput Icon={Wallet} name="wallet_id" defaultValue={parceiro?.wallet_id ?? ""} placeholder="ID da carteira Asaas" required />
           </div>
         </div>
       ) : (

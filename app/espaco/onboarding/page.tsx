@@ -100,7 +100,7 @@ export default async function EspacoOnboardingPage() {
       .order("ordem"),
     supabase
       .from("parceiro_conta_asaas")
-      .select("nome_razao_social, cpf_cnpj, email, onboarding_status")
+      .select("nome_razao_social, cpf_cnpj, email, onboarding_status, wallet_id")
       .eq("usuario_id", user.id)
       .maybeSingle(),
     deveCarregarPlanosPaaS

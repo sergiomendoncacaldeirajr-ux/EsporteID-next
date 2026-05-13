@@ -10,12 +10,14 @@ export function FormAsaasParceiro({
   defaultNome,
   defaultCpf,
   defaultEmail,
+  defaultWalletId,
   defaultModo = "criar_nova",
 }: {
   espacoId: number;
   defaultNome: string;
   defaultCpf: string;
   defaultEmail: string;
+  defaultWalletId?: string | null;
   defaultModo?: "criar_nova" | "conta_existente";
 }) {
   const [state, formAction, pending] = useActionState(salvarDadosContaAsaasParceiroAction, initial);
@@ -28,7 +30,7 @@ export function FormAsaasParceiro({
       <div className="grid gap-2 sm:grid-cols-2">
         {[
           ["criar_nova", "Cadastrar no Asaas", "Criar uma nova conta de recebimentos."],
-          ["conta_existente", "Entrar no Asaas", "Usar e-mail e senha da conta atual."],
+          ["conta_existente", "Informar conta existente", "Use os dados cadastrais da conta Asaas atual."],
         ].map(([id, title, text]) => {
           const modo = id as "criar_nova" | "conta_existente";
           const selected = modoIntegracao === modo;
@@ -52,8 +54,8 @@ export function FormAsaasParceiro({
       </div>
       <p className="rounded-xl border border-eid-primary-500/25 bg-eid-primary-500/8 p-3 text-xs leading-relaxed text-eid-text-secondary">
         {modoIntegracao === "criar_nova"
-          ? "Preencha os dados da conta. Selfie, documentos e prova de vida continuam no link seguro do Asaas quando forem exigidos."
-          : "Informe o login da conta Asaas existente. A senha não fica salva no cadastro."}
+          ? "Preencha os dados da conta. O EsporteID cria a subconta no Asaas e guarda o Wallet ID para os recebimentos."
+          : "Informe e-mail, CPF/CNPJ e Wallet ID da conta Asaas existente. Sem Wallet ID não há como direcionar o dinheiro."}
       </p>
       {modoIntegracao === "criar_nova" ? (
         <label className="block text-xs text-eid-text-secondary">
@@ -89,16 +91,17 @@ export function FormAsaasParceiro({
       </label>
       {modoIntegracao === "conta_existente" ? (
         <label className="block text-xs text-eid-text-secondary">
-          Senha do Asaas
+          Wallet ID da conta Asaas
           <input
-            name="asaas_senha"
-            type="password"
+            name="wallet_id"
             required
-            autoComplete="current-password"
+            defaultValue={defaultWalletId ?? ""}
+            placeholder="ID da carteira Asaas"
             className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm"
           />
         </label>
-      ) : (
+      ) : null}
+      {modoIntegracao === "criar_nova" ? (
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block text-xs text-eid-text-secondary">
             Data de nascimento
@@ -138,7 +141,7 @@ export function FormAsaasParceiro({
             <input name="asaas_complement" className="eid-input-dark mt-1 w-full rounded-xl px-3 py-2 text-sm" />
           </label>
         </div>
-      )}
+      ) : null}
       <button
         type="submit"
         disabled={pending}

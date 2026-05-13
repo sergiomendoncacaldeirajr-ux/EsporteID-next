@@ -662,7 +662,7 @@ export async function PerfilEidEsporteStream({ params, searchParams }: PerfilEid
   }
 
   return (
-      <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+      <main data-eid-profile-eid-page data-eid-touch-ui className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-profile-eid-native-shell`}>
         {!isEmbed ? <PerfilBackLink href={backHref} label="Voltar ao perfil" /> : null}
 
         {isVisitante && !viewerTemEidNesteEsporte ? (

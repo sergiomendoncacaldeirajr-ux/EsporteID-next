@@ -8,6 +8,7 @@ import { fetchAutomaticHolidaysForYear } from "@/lib/espacos/calendar";
 import { getPaaSUnidadeGateInfo } from "@/lib/espacos/paas-unidades-gate";
 import { serializarEspacoReservaConfig } from "@/lib/espacos/config";
 import { escolherPlanoMensalidadePaaSAction } from "@/app/espaco/actions";
+import { createAsaasAccount } from "@/lib/asaas/client";
 
 type State = { ok: true; message: string } | { ok: false; message: string };
 
@@ -762,19 +763,15 @@ export async function salvarAsaasWizardAction(
     const nome = field(formData, "nome_razao_social");
     const cpf = field(formData, "cpf_cnpj").replace(/\D/g, "");
     const email = field(formData, "email");
-    const asaasSenha = field(formData, "asaas_senha");
+    const walletIdInformado = field(formData, "wallet_id");
     if (!email) throw new Error("Informe o e-mail da conta Asaas.");
     if (!cpf || ![11, 14].includes(cpf.length)) throw new Error("Informe um CPF ou CNPJ válido.");
-    if (modoIntegracao === "conta_existente" && !asaasSenha) {
-      throw new Error("Informe a senha da conta Asaas.");
+    if (modoIntegracao === "conta_existente" && !walletIdInformado) {
+      throw new Error("Informe o Wallet ID da conta Asaas para direcionar os recebimentos.");
     }
     if (modoIntegracao === "criar_nova") {
       if (!nome) throw new Error("Informe o nome ou razão social.");
     }
-    const onboardingStatus =
-      modoIntegracao === "conta_existente"
-        ? "aguardando_conexao_asaas"
-        : "aguardando_criacao_asaas";
     const cadastroAsaas =
       modoIntegracao === "criar_nova"
         ? {
@@ -806,16 +803,37 @@ export async function salvarAsaasWizardAction(
         throw new Error("Preencha os dados obrigatórios para criar a conta Asaas.");
       }
     }
+    const { data: contaAtual } = await supabase
+      .from("parceiro_conta_asaas")
+      .select("asaas_account_id, wallet_id, api_key_subconta")
+      .eq("usuario_id", user.id)
+      .maybeSingle();
+    const contaCriada =
+      cadastroAsaas && !contaAtual?.asaas_account_id && !contaAtual?.wallet_id
+        ? await createAsaasAccount(cadastroAsaas)
+        : null;
+    const asaasAccountId =
+      contaCriada?.id ?? contaCriada?.accountId ?? contaAtual?.asaas_account_id ?? null;
+    const walletId =
+      contaCriada?.walletId ?? contaAtual?.wallet_id ?? (modoIntegracao === "conta_existente" ? walletIdInformado : null);
+    const apiKeySubconta = contaCriada?.apiKey ?? contaAtual?.api_key_subconta ?? null;
+    const onboardingStatus = walletId
+      ? "conectado"
+      : modoIntegracao === "conta_existente"
+        ? "aguardando_conexao_asaas"
+        : "aguardando_criacao_asaas";
     const dadosBancariosJson = JSON.stringify({
       fluxo_integracao_asaas: modoIntegracao,
       origem: "wizard_receber",
       login_asaas_informado: modoIntegracao === "conta_existente",
-      senha_asaas_recebida_sem_persistir: modoIntegracao === "conta_existente" && !!asaasSenha,
+      senha_asaas_recebida_sem_persistir: false,
       cadastro_asaas: cadastroAsaas,
+      wallet_id_informado: modoIntegracao === "conta_existente",
+      conta_criada_via_api: Boolean(contaCriada),
       proxima_acao:
         modoIntegracao === "conta_existente"
-          ? "autenticar conta existente no fluxo seguro Asaas e descartar senha apos uso"
-          : "criar subconta Asaas via POST /v3/accounts e abrir onboardingUrl se houver documentos",
+          ? "usar walletId informado para split de recebimentos; validar titularidade no processo operacional Asaas"
+          : "subconta criada via POST /v3/accounts; concluir verificações/documentos no ambiente Asaas quando exigido",
     });
     const { error } = await supabase.from("parceiro_conta_asaas").upsert(
       {
@@ -824,6 +842,9 @@ export async function salvarAsaasWizardAction(
         cpf_cnpj: cpf,
         email,
         dados_bancarios_json: dadosBancariosJson,
+        asaas_account_id: asaasAccountId,
+        wallet_id: walletId,
+        api_key_subconta: apiKeySubconta,
         onboarding_status: onboardingStatus,
         atualizado_em: new Date().toISOString(),
       },
@@ -835,8 +856,10 @@ export async function salvarAsaasWizardAction(
       ok: true,
       message:
         modoIntegracao === "conta_existente"
-          ? "Dados salvos. Vamos iniciar a conexão da conta Asaas existente pelo EsporteID."
-          : "Dados salvos. Vamos preparar a criação da conta Asaas pelo EsporteID.",
+          ? "Conta registrada. As próximas cobranças pagas já usam o Wallet ID informado para recebimentos."
+          : contaCriada
+            ? "Conta Asaas criada e vinculada. As próximas cobranças pagas já usam split para o espaço."
+            : "Conta Asaas já estava vinculada. Mantive os dados de recebimento.",
     };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : "Erro ao salvar dados Asaas." };

@@ -41,6 +41,33 @@ export type AsaasCustomerPayload = {
   externalReference?: string | null;
 };
 
+export type AsaasAccountPayload = {
+  name: string;
+  email: string;
+  cpfCnpj: string;
+  birthDate: string;
+  companyType: string;
+  phone?: string | null;
+  mobilePhone: string;
+  address: string;
+  addressNumber: string;
+  complement?: string | null;
+  province: string;
+  postalCode: string;
+};
+
+export async function createAsaasAccount(payload: AsaasAccountPayload) {
+  return asaasFetch<{
+    id?: string;
+    accountId?: string;
+    walletId?: string;
+    apiKey?: string;
+  }>("/accounts", {
+    method: "POST",
+    body: payload,
+  });
+}
+
 export async function createAsaasCustomer(payload: AsaasCustomerPayload) {
   return asaasFetch<{ id: string }>("/customers", {
     method: "POST",

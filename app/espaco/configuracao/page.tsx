@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   alternarAtivoUnidadeEspacoAction,
   atualizarUnidadeEspacoAction,
@@ -30,6 +32,39 @@ function planoHerdaRegra(plano: { beneficios_json?: unknown }, key: string) {
       typeof herdar === "object" &&
       !Array.isArray(herdar) &&
       (herdar as Record<string, unknown>)[key] === true
+  );
+}
+
+function SettingsSection({
+  title,
+  description,
+  meta,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  description: string;
+  meta?: string;
+  children: ReactNode;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className="group overflow-hidden rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90"
+    >
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-4 transition hover:bg-eid-surface/45 sm:p-5 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">
+          <span className="block text-base font-black text-eid-fg">{title}</span>
+          <span className="mt-1 block text-sm leading-relaxed text-eid-text-secondary">{description}</span>
+          {meta ? <span className="mt-2 block text-xs font-semibold text-eid-primary-300">{meta}</span> : null}
+        </span>
+        <span className="mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[color:var(--eid-border-subtle)] bg-eid-surface/60 text-lg font-black text-eid-fg transition group-open:rotate-45">
+          +
+        </span>
+      </summary>
+      <div className="border-t border-[color:var(--eid-border-subtle)] p-4 sm:p-5">{children}</div>
+    </details>
   );
 }
 
@@ -65,22 +100,20 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
       : `${unidadeGate.unidadesTotal} unidade(s)`;
 
   return (
-    <div className="space-y-6">
+    <div data-eid-espaco-settings className="space-y-4">
       <div>
         <h2 className="text-lg font-bold text-eid-fg">Configuração do espaço</h2>
         <p className="mt-1 text-sm text-eid-text-secondary">
-          Dados públicos, regras de reserva, unidades e planos de mensalidade — tudo que define como o local aparece e
-          cobra.
+          Abra uma categoria por vez para ajustar presença pública, regras, quadras e mensalidades.
         </p>
       </div>
 
-      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-        <h3 className="text-base font-bold text-eid-fg">Perfil e regras de reserva</h3>
-        <p className="mt-2 text-sm text-eid-text-secondary">
-          Landing, contatos, limites, cooldown e política de cancelamento. O modo de reserva (paga / mista / gratuita)
-          vem do contrato com a plataforma; em modo só paga, benefícios gratuitos ficam bloqueados automaticamente.
-        </p>
-        <div className="mt-4">
+      <SettingsSection
+        defaultOpen
+        title="Perfil e reservas"
+        description="Dados públicos, contatos, entrada de sócios, limites e políticas de cancelamento."
+        meta={`Modo atual: ${modoReserva}`}
+      >
           <EspacoConfigForm
             modoReserva={modoReserva}
             espaco={{
@@ -103,17 +136,15 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               associacao_regra_json: selectedSpace.associacao_regra_json,
             }}
           />
-        </div>
-      </div>
+      </SettingsSection>
 
-      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-        <h3 className="text-base font-bold text-eid-fg">Quadras e unidades</h3>
-        <p className="mt-2 text-sm text-eid-text-secondary">
-          Cadastre quadras ou salas com nome, foto, características e uso. Você pode pausar uma unidade sem apagar o
-          histórico de reservas.
-        </p>
+      <SettingsSection
+        title="Quadras e unidades"
+        description="Cadastre quadras ou salas, edite foto, características, uso e status."
+        meta={limiteTxt}
+      >
         {monetPaaS ? (
-          <p className="mt-2 text-xs text-eid-text-secondary">
+          <p className="text-xs text-eid-text-secondary">
             Plano PaaS: <span className="font-semibold text-eid-fg">{unidadeGate.planoNome ?? "não selecionado"}</span> ·{" "}
             {limiteTxt}
             {unidadeGate.maxUnidadesPlano != null ? (
@@ -144,9 +175,11 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
                   {u.logo_arquivo ? (
-                    <img
+                    <Image
                       src={u.logo_arquivo}
                       alt=""
+                      width={80}
+                      height={80}
                       className="h-20 w-20 shrink-0 rounded-xl border border-[color:var(--eid-border-subtle)] object-cover"
                     />
                   ) : (
@@ -329,15 +362,14 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
             </button>
           </fieldset>
         </form>
-      </div>
+      </SettingsSection>
 
-      <div className="rounded-2xl border border-[color:var(--eid-border-subtle)] bg-eid-card/90 p-5">
-        <h3 className="text-base font-bold text-eid-fg">Planos de sócio (mensalidade)</h3>
-        <p className="mt-2 text-sm text-eid-text-secondary">
-          Valores e benefícios dos planos. Edição avançada de planos existentes pode ser feita pelo time ou em telas
-          futuras; aqui você cria novos planos rapidamente.
-        </p>
-        <p className="mt-2 text-xs text-eid-text-secondary">
+      <SettingsSection
+        title="Planos de sócio"
+        description="Valores, benefícios e regras de mensalidade dos membros do espaço."
+        meta={`${(planos ?? []).length} plano(s) cadastrado(s)`}
+      >
+        <p className="text-xs text-eid-text-secondary">
           Clube de assinaturas entre sócios:{" "}
           <span className="font-semibold text-eid-fg">{selectedSpace.clube_assinaturas_socios ?? "em_breve"}</span>.
           Esse módulo está em preparação e será liberado gradualmente.
@@ -460,7 +492,7 @@ export default async function EspacoConfiguracaoPage({ searchParams }: Props) {
             </div>
           ))}
         </div>
-      </div>
+      </SettingsSection>
     </div>
   );
 }

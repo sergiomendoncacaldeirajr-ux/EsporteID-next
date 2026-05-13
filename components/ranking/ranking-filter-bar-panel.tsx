@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 function cn(...xs: (string | false | undefined)[]) {
   return xs.filter(Boolean).join(" ");
@@ -15,15 +15,43 @@ type Props = {
 export function RankingFilterBarPanel({ summaryRight, children }: Props) {
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("eid:ranking-filter-open");
+      if (saved === "1") {
+        setOpen(true);
+        return;
+      }
+      if (document.body.classList.contains("eid-capacitor-app") || document.body.classList.contains("eid-native-android-app")) {
+        setOpen(true);
+      }
+    } catch {
+      /* best-effort */
+    }
+  }, []);
+
+  const toggleOpen = () => {
+    setOpen((v) => {
+      const next = !v;
+      try {
+        window.localStorage.setItem("eid:ranking-filter-open", next ? "1" : "0");
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+
   return (
     <div
       data-eid-ranking-filter="true"
+      data-eid-ranking-filter-open={open ? "true" : "false"}
       className="overflow-hidden rounded-2xl border border-transparent bg-eid-surface/40 shadow-none [&_a]:[-webkit-tap-highlight-color:transparent]"
     >
       <div className="flex items-center justify-between gap-2 border-b border-transparent px-3 py-2">
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={toggleOpen}
           className="eid-ranking-filter-toggle flex min-w-0 flex-1 items-center gap-2 rounded-lg py-0.5 text-left outline-none ring-offset-2 ring-offset-eid-bg focus-visible:ring-2 focus-visible:ring-eid-primary-500"
           aria-expanded={open}
           aria-controls="eid-ranking-filter-panel"

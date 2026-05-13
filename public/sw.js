@@ -1,6 +1,32 @@
-const EID_STATIC_CACHE = "eid-static-2026-05-12-v1";
-const EID_PAGE_CACHE = "eid-pages-2026-05-12-v1";
+const EID_STATIC_CACHE = "eid-static-2026-05-13-v2";
+const EID_PAGE_CACHE = "eid-pages-2026-05-13-v2";
 const EID_CACHE_NAMES = [EID_STATIC_CACHE, EID_PAGE_CACHE];
+const EID_OFFLINE_HTML = `<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1d2e" />
+  <title>EsporteID offline</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0b1d2e; color: #f8fafc; }
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px; background: #0b1d2e; }
+    main { width: min(100%, 420px); }
+    img { width: 76px; height: 76px; object-fit: contain; }
+    h1 { margin: 24px 0 8px; font-size: 22px; line-height: 1.15; }
+    p { margin: 0; color: #b8c4d2; font-size: 14px; line-height: 1.55; }
+    button { min-height: 44px; margin-top: 20px; border: 0; border-radius: 8px; background: #f97316; color: #fff; padding: 0 16px; font: inherit; font-weight: 800; }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="/pwa-icon-192.png" alt="" />
+    <h1>Sem conexão</h1>
+    <p>Não encontramos uma versão salva desta tela. Volte quando a internet estabilizar ou tente abrir uma área visitada recentemente.</p>
+    <button type="button" onclick="location.reload()">Tentar de novo</button>
+  </main>
+</body>
+</html>`;
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -38,6 +64,42 @@ function isCacheableNavigation(request, url) {
   return true;
 }
 
+async function bestNavigationFallback(cache, request, url) {
+  const exact = await cache.match(request);
+  if (exact) return exact;
+
+  const pathOnly = await cache.match(url.pathname);
+  if (pathOnly) return pathOnly;
+
+  const section = url.pathname.split("/").filter(Boolean)[0];
+  if (section) {
+    const keys = await cache.keys();
+    for (const key of keys.reverse()) {
+      let cachedUrl;
+      try {
+        cachedUrl = new URL(key.url);
+      } catch {
+        continue;
+      }
+      if (cachedUrl.origin === url.origin && cachedUrl.pathname.split("/").filter(Boolean)[0] === section) {
+        const cached = await cache.match(key);
+        if (cached) return cached;
+      }
+    }
+  }
+
+  const dashboard = await cache.match("/dashboard");
+  if (dashboard) return dashboard;
+
+  return new Response(EID_OFFLINE_HTML, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
+    status: 200,
+  });
+}
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   let url;
@@ -52,9 +114,13 @@ self.addEventListener("fetch", (event) => {
       caches.open(EID_STATIC_CACHE).then(async (cache) => {
         const cached = await cache.match(request);
         if (cached) return cached;
-        const response = await fetch(request);
-        if (response && response.ok) cache.put(request, response.clone()).catch(() => {});
-        return response;
+        try {
+          const response = await fetch(request);
+          if (response && response.ok) cache.put(request, response.clone()).catch(() => {});
+          return response;
+        } catch {
+          throw new Error("offline-static");
+        }
       })
     );
     return;
@@ -67,18 +133,37 @@ self.addEventListener("fetch", (event) => {
           const response = await fetch(request);
           if (response && response.ok && response.type === "basic") {
             cache.put(request, response.clone()).catch(() => {});
+            cache.put(url.pathname, response.clone()).catch(() => {});
           }
           return response;
         } catch {
-          const cached = await cache.match(request);
-          if (cached) return cached;
-          const dashboard = await cache.match("/dashboard");
-          if (dashboard) return dashboard;
-          throw new Error("offline");
+          return bestNavigationFallback(cache, request, url);
         }
       })
     );
   }
+});
+
+self.addEventListener("message", (event) => {
+  const data = event.data || {};
+  if (data.type !== "EID_CACHE_ROUTES" || !Array.isArray(data.routes)) return;
+  event.waitUntil(
+    caches.open(EID_PAGE_CACHE).then(async (cache) => {
+      for (const route of data.routes.slice(0, 24)) {
+        if (typeof route !== "string" || !route.startsWith("/") || route.startsWith("/api/")) continue;
+        try {
+          const response = await fetch(route, { credentials: "include", headers: { "X-EsporteID-Native-Cache": "1" } });
+          if (response && response.ok && response.type === "basic") {
+            cache.put(route, response.clone()).catch(() => {});
+            const url = new URL(route, self.location.origin);
+            cache.put(url.pathname, response.clone()).catch(() => {});
+          }
+        } catch {
+          /* best-effort */
+        }
+      }
+    })
+  );
 });
 
 async function postPushReceipt(payload, status, error) {

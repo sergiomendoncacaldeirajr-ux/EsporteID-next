@@ -27,6 +27,7 @@ service = "esporteid-next"
 NEXT_PUBLIC_SUPABASE_URL = "https://mszefppevculardthqrt.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_TIxdH94fmzrKT8wJjdx0kg_Q57FYrqh"
 NEXT_PUBLIC_VAPID_PUBLIC_KEY = "BIqBwZ3McyoNuPFn2DcZA66oDdIoVGFUuuL5gXt8gWd4ovmhvWBiQcgHUkxI19Iv1Oa6h-xwNqtdY-8yPeKhG38"
+EID_SIMULATE_ASAAS_PAYMENTS = "false"
 
 # Opcional: otimização `/_next/image` com Cloudflare Images (habilite na conta e descomente).
 # [images]

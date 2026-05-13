@@ -140,6 +140,7 @@ export default async function EspacoIntegracaoAsaasPage() {
             defaultNome={parceiro?.nome_razao_social ?? ""}
             defaultCpf={parceiro?.cpf_cnpj ?? ""}
             defaultEmail={parceiro?.email ?? ""}
+            defaultWalletId={parceiro?.wallet_id ?? ""}
             defaultModo={fluxo}
           />
         </section>

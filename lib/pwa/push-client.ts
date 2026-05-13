@@ -5,7 +5,7 @@ import { Capacitor } from "@capacitor/core";
 const EID_PUSH_OPT_OUT_KEY = "eid_push_opt_out";
 const EID_ANDROID_FCM_TOKEN_KEY = "eid_android_fcm_token";
 const EID_ANDROID_FCM_OPT_OUT_KEY = "eid_android_fcm_opt_out";
-const EID_NATIVE_APP_VERSION = "7.0.13";
+export const EID_NATIVE_APP_VERSION = "7.0.14";
 let enablePushInFlight: Promise<PushSubscription> | null = null;
 
 declare global {
@@ -100,7 +100,7 @@ export function rememberAndroidFcmToken(token: string): void {
   }
 }
 
-function getAndroidFcmToken(): string {
+export function getRememberedAndroidFcmToken(): string {
   if (typeof window === "undefined") return "";
   try {
     return window.localStorage.getItem(EID_ANDROID_FCM_TOKEN_KEY)?.trim() ?? "";
@@ -110,7 +110,7 @@ function getAndroidFcmToken(): string {
 }
 
 export async function syncAndroidNativePushToken(): Promise<boolean> {
-  const token = getAndroidFcmToken();
+  const token = getRememberedAndroidFcmToken();
   if (!token) return false;
   const resp = await fetch("/api/push/fcm/register", {
     method: "POST",
@@ -146,7 +146,7 @@ function setAndroidNativePushOptOut(optOut: boolean): void {
 
 export async function hasAndroidNativePushEnabled(): Promise<boolean> {
   if (getAndroidNativePushOptOut()) return false;
-  if (getAndroidFcmToken()) return true;
+  if (getRememberedAndroidFcmToken()) return true;
 
   const resp = await fetch("/api/push/fcm/preference", { cache: "no-store" });
   if (!resp.ok) return false;
@@ -155,7 +155,7 @@ export async function hasAndroidNativePushEnabled(): Promise<boolean> {
 }
 
 export async function setAndroidNativePushEnabled(enabled: boolean): Promise<void> {
-  const token = getAndroidFcmToken();
+  const token = getRememberedAndroidFcmToken();
   setAndroidNativePushOptOut(!enabled);
   const resp = token
     ? await fetch("/api/push/fcm/register", {

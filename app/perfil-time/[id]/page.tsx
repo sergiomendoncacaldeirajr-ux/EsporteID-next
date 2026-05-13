@@ -47,7 +47,7 @@ export default async function PerfilTimePage({ params, searchParams }: Props) {
   }
 
   return (
-    <main data-eid-formacao-page data-eid-no-route-enter className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-progressive-enter`}>
+    <main data-eid-formacao-page data-eid-touch-ui data-eid-no-route-enter className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-progressive-enter`}>
       <PerfilTimeHeroStream timeId={id} viewerId={user.id} sairEquipeAction={sairEquipeAction} />
       <PerfilTimeBodyStream timeId={id} viewerId={user.id} removerMembroAction={removerMembroAction} />
     </main>

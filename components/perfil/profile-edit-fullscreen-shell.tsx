@@ -13,9 +13,13 @@ type Props = {
 
 export function ProfileEditFullscreenShell({ title, subtitle, backHref, children, topAction, showBack = true, hideHeader = false }: Props) {
   return (
-    <main data-eid-no-route-enter className="eid-profile-edit-screen mx-auto w-full max-w-3xl px-3 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] pt-1.5 sm:px-5 sm:pt-2.5">
+    <main
+      data-eid-no-route-enter
+      data-eid-touch-ui
+      className="eid-profile-edit-screen mx-auto w-full max-w-3xl px-3 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] pt-1.5 sm:px-5 sm:pt-2.5"
+    >
       {!hideHeader ? (
-        <section className="mb-2.5 flex items-start justify-between gap-3">
+        <section className="eid-profile-edit-head mb-2.5 flex items-start justify-between gap-3">
           <div>
             {showBack ? <PerfilBackLink href={backHref} label="Voltar" /> : null}
             <h1 className="mt-1.5 text-base font-black tracking-tight text-eid-fg sm:text-lg">{title}</h1>
@@ -28,4 +32,3 @@ export function ProfileEditFullscreenShell({ title, subtitle, backHref, children
     </main>
   );
 }
-

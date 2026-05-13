@@ -7,7 +7,7 @@ import type { PerfilDuplaEidRouteInput } from "./perfil-dupla-eid-session";
 
 export default function PerfilDuplaEidEsportePage(props: PerfilDuplaEidRouteInput) {
   return (
-    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main data-eid-profile-eid-page data-eid-touch-ui className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-profile-eid-native-shell`}>
       <EidStreamSection fallback={<FormacaoEidHeroStreamSkeleton />}>
         <PerfilDuplaEidHeroStream {...props} />
       </EidStreamSection>

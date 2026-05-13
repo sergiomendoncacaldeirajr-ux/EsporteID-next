@@ -7,7 +7,7 @@ import type { PerfilTimeEidRouteInput } from "./perfil-time-eid-session";
 
 export default function PerfilTimeEidEsportePage(props: PerfilTimeEidRouteInput) {
   return (
-    <main className={PROFILE_PUBLIC_MAIN_CLASS}>
+    <main data-eid-profile-eid-page data-eid-touch-ui className={`${PROFILE_PUBLIC_MAIN_CLASS} eid-profile-eid-native-shell`}>
       <EidStreamSection fallback={<FormacaoEidHeroStreamSkeleton />}>
         <PerfilTimeEidHeroStream {...props} />
       </EidStreamSection>
